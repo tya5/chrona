@@ -2,5 +2,7 @@
 # and deliberately kept. Every entry needs a reason and an owning issue; anything
 # not listed here and not reachable fails tools/check_module_reachability.py.
 #
-# There are currently no staged modules. A future entry must name its owning
-# issue, why it cannot yet be product-reachable, and its planned removal date.
+#467: Neutral Layout lane allocator is tested independently while render-review
+# remains fail-closed for lanes. Remove this entry when L3b imports the module
+# into the composer; planned removal: 2026-10-04.
+chrona.presentation.layout.lane_allocation
