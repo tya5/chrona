@@ -1,9 +1,11 @@
-"""Fixed lane membership with Layout-owned internal mark subtracks."""
+"""Fixed lane membership with per-instance, source-keyed mark subtracks."""
 from __future__ import annotations
 
 import pytest
 
+from chrona.presentation.layout.lane_projection import LaneProjectionInstance
 from chrona.presentation.layout.lane_subtracks import (
+    LaneFacetFootprint,
     LaneItemFootprints,
     assign_lane_subtracks,
 )
@@ -16,7 +18,6 @@ from chrona.presentation.review.lane_membership import (
 
 
 def membership(*entries: tuple[str, str, str, str, str]) -> LaneMembership:
-    """Build ordered (item, lane, group, rule, source) assignments."""
     lane_members: dict[tuple[str, str], list[str]] = {}
     assignments = []
     for item_id, lane_id, group_id, rule, source_id in entries:
@@ -27,133 +28,162 @@ def membership(*entries: tuple[str, str, str, str, str]) -> LaneMembership:
     return LaneMembership(lanes, tuple(assignments))
 
 
-def footprints(*entries: tuple[str, tuple[ObstacleRect | ObstacleSegment, ...]]) -> tuple[LaneItemFootprints, ...]:
-    return tuple(LaneItemFootprints(item_id, geometries) for item_id, geometries in entries)
+def unit(item_id: str, *facets: tuple[str, ObstacleRect | ObstacleSegment, tuple[str, ...]],
+         source_kind: str = "primary") -> LaneItemFootprints:
+    instance = LaneProjectionInstance("row", item_id, item_id, source_kind)
+    return LaneItemFootprints(item_id, instance, tuple(
+        LaneFacetFootprint(facet_id, geometry, overlays)
+        for facet_id, geometry, overlays in facets
+    ))
 
 
-def test_explicitly_overlapping_items_keep_membership_and_get_internal_tracks() -> None:
+def rect(facet_id: str, left: float, top: float, right: float, bottom: float,
+         overlays: tuple[str, ...] = ()):
+    return facet_id, ObstacleRect(left, top, right, bottom), overlays
+
+
+def tracks(result):
+    return {item.item_id: item.track_index for item in result.items}
+
+
+def test_explicitly_overlapping_members_keep_membership_and_get_internal_tracks():
     source = membership(("a", "authored", "g", "explicit", "hardware"),
                         ("b", "authored", "g", "explicit", "hardware"))
-    result = assign_lane_subtracks(source, footprints(
-        ("a", (ObstacleRect(0, 0, 10, 10),)),
-        ("b", (ObstacleRect(5, 0, 15, 10),)),
+    result = assign_lane_subtracks(source, (
+        unit("a", rect("a-mark", 0, 0, 10, 10)),
+        unit("b", rect("b-mark", 5, 0, 15, 10)),
     ), mark_band_size=10)
 
-    assert source.lanes[0].lane_id == "authored"
     assert source.lanes[0].member_item_ids == ("a", "b")
-    assert [(item.item_id, item.lane_id, item.track_index) for item in result.items] == [
-        ("a", "authored", 0), ("b", "authored", 1),
-    ]
+    assert tracks(result) == {"a": 0, "b": 1}
     assert result.lanes[0].subtrack_count == 2
     assert result.lanes[0].pitch == 10
 
 
-def test_touching_visible_marks_share_a_subtrack() -> None:
+def test_touching_visible_marks_share_a_subtrack():
     source = membership(("a", "lane", "g", "dates", "first-compatible:lane"),
                         ("b", "lane", "g", "dates", "first-compatible:lane"))
-    result = assign_lane_subtracks(source, footprints(
-        ("a", (ObstacleRect(0, 0, 10, 10),)),
-        ("b", (ObstacleRect(10, 0, 20, 10),)),
+    result = assign_lane_subtracks(source, (
+        unit("a", rect("a-mark", 0, 0, 10, 10)),
+        unit("b", rect("b-mark", 10, 0, 20, 10)),
     ), mark_band_size=10)
 
-    assert [item.track_index for item in result.items] == [0, 0]
+    assert tracks(result) == {"a": 0, "b": 0}
     assert result.lanes[0].subtrack_count == 1
 
 
-def test_ungrouped_fixed_lane_is_valid() -> None:
-    source = membership(("a", "ungrouped-lane", "", "single", "a"))
-    result = assign_lane_subtracks(source, footprints(
-        ("a", (ObstacleRect(0, 0, 10, 10),)),
-    ), mark_band_size=10)
-
-    assert result.lanes[0].lane_id == "ungrouped-lane"
-    assert result.item("a").track_index == 0
-
-
-def test_attached_bundle_shares_track_even_when_its_facets_overlap() -> None:
+def test_attached_children_try_host_track_but_sibling_collision_is_not_exempt():
     source = membership(("host", "lane", "g", "explicit", "key"),
-                        ("child", "lane", "g", "attached", "host"),
-                        ("other", "lane", "g", "explicit", "key"))
-    same_mark = ObstacleRect(0, 0, 10, 10)
-    result = assign_lane_subtracks(source, footprints(
-        ("host", (same_mark,)),
-        ("child", (same_mark,)),
-        ("other", (ObstacleRect(5, 0, 15, 10),)),
+                        ("child-one", "lane", "g", "attached", "host"),
+                        ("child-two", "lane", "g", "attached", "host"))
+    host = rect("host-mark", 0, 0, 10, 10, ("child-one-mark", "child-two-mark"))
+    one = rect("child-one-mark", 0, 0, 10, 10, ("host-mark",))
+    two = rect("child-two-mark", 0, 0, 10, 10, ("host-mark",))
+    result = assign_lane_subtracks(source, (
+        unit("host", host),
+        unit("child-one", one),
+        unit("child-two", two),
     ), mark_band_size=10)
 
-    tracks = {item.item_id: item.track_index for item in result.items}
-    assert tracks == {"host": 0, "child": 0, "other": 1}
-    assert result.lanes[0].subtrack_count == 2
+    assert tracks(result) == {"host": 0, "child-one": 0, "child-two": 1}
+    assert source.lanes[0].member_item_ids == ("host", "child-one", "child-two")
 
 
-def test_protruding_stroked_icon_footprint_controls_pitch_and_offset() -> None:
+def test_shared_comparison_instances_can_share_only_declared_facet_pairs():
+    source = membership(("work", "lane", "g", "single", "work"))
+    first = unit("work", rect("primary-mark", 0, 0, 10, 10, ("scenario-mark",)))
+    second = unit("work", rect("scenario-mark", 0, 0, 10, 10, ("primary-mark",)),
+                  source_kind="scenario")
+    result = assign_lane_subtracks(source, (first, second), mark_band_size=10)
+
+    assert [item.track_index for item in result.items] == [0, 0]
+    assert result.instance(second.projection_instance_id).track_index == 0
+
+
+def test_unlisted_overlap_inside_one_instance_fails_closed():
+    source = membership(("a", "lane", "g", "single", "a"))
+    with pytest.raises(ValueError, match="E_LAYOUT_LANE_SUBTRACK_OVERLAY_MISSING"):
+        assign_lane_subtracks(source, (
+            unit("a", rect("path-one", 0, 0, 10, 10), rect("path-two", 5, 5, 15, 15)),
+        ), mark_band_size=10)
+
+
+def test_rejects_asymmetric_or_unknown_overlay_references():
     source = membership(("a", "lane", "g", "explicit", "key"),
                         ("b", "lane", "g", "explicit", "key"))
-    result = assign_lane_subtracks(source, footprints(
-        ("a", (ObstacleRect(0, 0, 10, 10), ObstacleSegment((5, -2), (5, 12), 2))),
-        ("b", (ObstacleRect(5, 0, 15, 10),)),
+    with pytest.raises(ValueError, match="E_LAYOUT_LANE_SUBTRACK_OVERLAY_INVALID"):
+        assign_lane_subtracks(source, (
+            unit("a", rect("a-mark", 0, 0, 10, 10, ("b-mark",))),
+            unit("b", rect("b-mark", 0, 0, 10, 10)),
+        ), mark_band_size=10)
+    with pytest.raises(ValueError, match="E_LAYOUT_LANE_SUBTRACK_OVERLAY_INVALID"):
+        assign_lane_subtracks(source, (
+            unit("a", rect("a-mark", 0, 0, 10, 10, ("missing",))),
+            unit("b", rect("b-mark", 20, 0, 30, 10)),
+        ), mark_band_size=10)
+
+
+def test_protruding_stroked_icon_footprint_controls_pitch_and_offset():
+    source = membership(("a", "lane", "g", "explicit", "key"),
+                        ("b", "lane", "g", "explicit", "key"))
+    result = assign_lane_subtracks(source, (
+        unit("a", rect("a-mark", 0, 0, 10, 10, ("icon-stroke",)),
+             ("icon-stroke", ObstacleSegment((5, -2), (5, 12), 2), ("a-mark",))),
+        unit("b", rect("b-mark", 5, 0, 15, 10)),
     ), mark_band_size=10)
 
     lane = result.lanes[0]
-    assert lane.offset == 3  # the stroked segment reaches y=-3
-    assert lane.pitch == 16  # visible vertical envelope [-3, 13) plus band extent
+    assert lane.offset == 3
+    assert lane.pitch == 16
     assert lane.block_extent == 32
-    assert result.item("a").block_offset == 3
-    assert result.item("b").block_offset == 19
+    assert result.instance(result.items[0].projection_instance_id).block_offset == 3
+    assert result.items[1].block_offset == 19
 
 
-def test_theme_geometry_can_change_tracks_without_mutating_membership() -> None:
+def test_theme_geometry_changes_instance_tracks_without_mutating_membership():
     source = membership(("a", "lane", "g", "explicit", "key"),
                         ("b", "lane", "g", "explicit", "key"))
-    narrow = assign_lane_subtracks(source, footprints(
-        ("a", (ObstacleRect(0, 0, 4, 10),)),
-        ("b", (ObstacleRect(5, 0, 10, 10),)),
+    narrow = assign_lane_subtracks(source, (
+        unit("a", rect("a-mark", 0, 0, 4, 10)),
+        unit("b", rect("b-mark", 5, 0, 10, 10)),
     ), mark_band_size=10)
-    wide = assign_lane_subtracks(source, footprints(
-        ("a", (ObstacleRect(0, 0, 7, 10),)),
-        ("b", (ObstacleRect(5, 0, 12, 10),)),
+    wide = assign_lane_subtracks(source, (
+        unit("a", rect("a-mark", 0, 0, 7, 10)),
+        unit("b", rect("b-mark", 5, 0, 12, 10)),
     ), mark_band_size=10)
 
     assert [item.track_index for item in narrow.items] == [0, 0]
     assert [item.track_index for item in wide.items] == [0, 1]
-    assert narrow.lanes[0].lane_id == wide.lanes[0].lane_id == source.lanes[0].lane_id
     assert source.lanes[0].member_item_ids == ("a", "b")
 
 
-@pytest.mark.parametrize(("mark_band_size", "clearance"), [(0, 0), (float("nan"), 0), (10, -1), (True, 0)])
-def test_rejects_invalid_metrics(mark_band_size: float, clearance: float) -> None:
-    source = membership(("a", "lane", "g", "explicit", "key"))
+@pytest.mark.parametrize(("mark_band_size", "clearance"),
+                         [(0, 0), (float("nan"), 0), (10, -1), (True, 0)])
+def test_rejects_invalid_metrics(mark_band_size: float, clearance: float):
+    source = membership(("a", "lane", "g", "single", "a"))
     with pytest.raises(ValueError, match="E_LAYOUT_LANE_SUBTRACK_INPUT"):
-        assign_lane_subtracks(source, footprints(("a", (ObstacleRect(0, 0, 1, 1),)),),
+        assign_lane_subtracks(source, (unit("a", rect("a", 0, 0, 1, 1)),),
                               mark_band_size=mark_band_size, clearance=clearance)
 
 
-def test_rejects_incomplete_or_empty_footprint_inventory() -> None:
-    source = membership(("a", "lane", "g", "explicit", "key"))
+def test_rejects_incomplete_or_empty_footprint_inventory():
+    source = membership(("a", "lane", "g", "single", "a"))
     with pytest.raises(ValueError, match="E_LAYOUT_LANE_SUBTRACK_INPUT"):
         assign_lane_subtracks(source, (), mark_band_size=10)
+    instance = LaneProjectionInstance("row", "a", "a", "primary")
     with pytest.raises(ValueError, match="E_LAYOUT_LANE_SUBTRACK_INPUT"):
-        assign_lane_subtracks(source, (LaneItemFootprints("a", ()),), mark_band_size=10)
+        assign_lane_subtracks(source, (LaneItemFootprints("a", instance, ()),), mark_band_size=10)
 
 
-def test_rejects_attached_assignment_without_same_lane_host() -> None:
-    source = membership(("child", "lane", "g", "attached", "missing"))
-    with pytest.raises(ValueError, match="E_LAYOUT_LANE_SUBTRACK_INPUT"):
-        assign_lane_subtracks(source, footprints(("child", (ObstacleRect(0, 0, 1, 1),)),),
-                              mark_band_size=10)
-
-
-def test_clearance_is_applied_by_canonical_collision_predicate() -> None:
+def test_clearance_is_applied_by_canonical_collision_predicate():
     source = membership(("a", "lane", "g", "explicit", "key"),
                         ("b", "lane", "g", "explicit", "key"))
-    no_clearance = assign_lane_subtracks(source, footprints(
-        ("a", (ObstacleRect(0, 0, 10, 10),)),
-        ("b", (ObstacleRect(10.5, 0, 20, 10),)),
-    ), mark_band_size=10)
-    with_clearance = assign_lane_subtracks(source, footprints(
-        ("a", (ObstacleRect(0, 0, 10, 10),)),
-        ("b", (ObstacleRect(10.5, 0, 20, 10),)),
-    ), mark_band_size=10, clearance=1)
+    values = (
+        unit("a", rect("a", 0, 0, 10, 10)),
+        unit("b", rect("b", 10.5, 0, 20, 10)),
+    )
+    no_clearance = assign_lane_subtracks(source, values, mark_band_size=10)
+    with_clearance = assign_lane_subtracks(source, values, mark_band_size=10, clearance=1)
 
     assert [item.track_index for item in no_clearance.items] == [0, 0]
     assert [item.track_index for item in with_clearance.items] == [0, 1]

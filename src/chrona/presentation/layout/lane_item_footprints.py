@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
+from dataclasses import replace
 from datetime import date
 from typing import Any
 
@@ -11,10 +12,17 @@ from chrona.presentation.layout.lane_bundle_mapper import (
     _compose_progress,
     _item_by_instance,
     _mark_facets,
+    _overlay_compound_facets,
     _with_mark_visuals,
 )
-from chrona.presentation.layout.lane_projection import close_lane_projection
-from chrona.presentation.layout.lane_subtracks import LaneFootprint, LaneItemFootprints
+from chrona.presentation.layout.lane_projection import (
+    LaneProjectionInstance,
+    close_lane_projection,
+)
+from chrona.presentation.layout.lane_subtracks import (
+    LaneFacetFootprint,
+    LaneItemFootprints,
+)
 from chrona.presentation.layout.lane_visual_binding import bind_lane_visual_requests
 from chrona.presentation.layout.mark_geometry import compose_item_marks
 from chrona.presentation.layout.model import LayoutError
@@ -92,11 +100,11 @@ def compose_lane_item_footprints(
     all_marks = tuple(mark for instance in closure.instances for mark in marks_by_instance[instance])
     icons = _compose_mark_icons(all_marks, bound_marks, icon_assets, theme_tokens)
     progress, _ = _compose_progress(closure, items, marks_by_instance, progress_fill_source, theme_tokens)
-    collected: dict[str, list[LaneFootprint]] = defaultdict(list)
+    collected: dict[LaneProjectionInstance, list[LaneFacetFootprint]] = defaultdict(list)
     for instance in closure.instances:
         item = items[instance]
         for mark in marks_by_instance[instance]:
-            facets = _mark_facets(item, instance, mark, theme_tokens)
+            facets = _overlay_compound_facets(_mark_facets(item, instance, mark, theme_tokens))
             visible = _with_mark_visuals(item, instance, mark, facets,
                                          icons.get(mark.placement_id, ()),
                                          progress.get(mark.placement_id, ()), theme_tokens)
@@ -104,8 +112,50 @@ def compose_lane_item_footprints(
                 footprint = facet.visible_footprint
                 if not isinstance(footprint, (ObstacleRect, ObstacleSegment)):
                     raise LayoutError("E_LAYOUT_LANE_FOOTPRINT_INVALID", mark.placement_id)
-                collected[owner_for_instance[instance]].append(footprint)
-    if any(not collected.get(member_id) for member_id in member_order):
+                collected[instance].append(LaneFacetFootprint(
+                    facet.facet_id, footprint, facet.overlay_with,
+                ))
+    instances_by_member: dict[str, list[LaneProjectionInstance]] = defaultdict(list)
+    for instance in closure.instances:
+        instances_by_member[owner_for_instance[instance]].append(instance)
+
+    # Shared comparison composition is an exact cross-instance facet relation.
+    for member_id, instances in instances_by_member.items():
+        for index, left in enumerate(instances):
+            for right in instances[index + 1:]:
+                if items[left].track == items[right].track == "shared":
+                    _add_overlay_pairs(collected, left, right)
+    # Attachments permit only host↔each-child overlays, never child↔child.
+    assignments = {assignment.item_id: assignment for assignment in membership.assignments}
+    for member_id in member_order:
+        assignment = assignments[member_id]
+        if assignment.rule == "attached":
+            host_instances = instances_by_member.get(assignment.source_id, ())
+            child_instances = instances_by_member.get(member_id, ())
+            if not host_instances or not child_instances:
+                raise LayoutError("E_LAYOUT_LANE_FOOTPRINT_MEMBERSHIP_MISMATCH", "/projection/laneRows")
+            for host in host_instances:
+                for child in child_instances:
+                    _add_overlay_pairs(collected, host, child)
+
+    if any(not any(collected.get(instance) for instance in instances_by_member.get(member_id, ()))
+           for member_id in member_order):
         raise LayoutError("E_LAYOUT_LANE_FOOTPRINT_EMPTY", "/projection/laneRows")
-    return tuple(LaneItemFootprints(member_id, tuple(collected[member_id]))
-                 for member_id in member_order)
+    return tuple(
+        LaneItemFootprints(member_id, instance, tuple(collected[instance]))
+        for member_id in member_order
+        for instance in instances_by_member[member_id]
+    )
+
+
+def _add_overlay_pairs(
+    collected: dict[LaneProjectionInstance, list[LaneFacetFootprint]],
+    left: LaneProjectionInstance,
+    right: LaneProjectionInstance,
+) -> None:
+    left_ids = tuple(facet.facet_id for facet in collected[left])
+    right_ids = tuple(facet.facet_id for facet in collected[right])
+    collected[left] = [replace(facet, overlay_with=tuple(dict.fromkeys((*facet.overlay_with, *right_ids))))
+                       for facet in collected[left]]
+    collected[right] = [replace(facet, overlay_with=tuple(dict.fromkeys((*facet.overlay_with, *left_ids))))
+                        for facet in collected[right]]

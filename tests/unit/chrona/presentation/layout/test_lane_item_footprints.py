@@ -56,9 +56,11 @@ def test_footprints_follow_fixed_lane_member_identity_and_zero_origin_geometry()
         slot_id="lane-slot", icon_assets={},
     )
 
-    assert tuple(value.item_id for value in footprints) == ("work-view",)
-    assert len(footprints[0].footprints) == 1
-    footprint = footprints[0].footprints[0]
+    assert tuple((value.item_id, value.projection_instance_id.item_id) for value in footprints) == (
+        ("work-view", "work-view"),
+    )
+    assert len(footprints[0].facets) == 1
+    footprint = footprints[0].facets[0].footprint
     assert isinstance(footprint, ObstacleRect)
     assert footprint.top == 0
     assert footprint.bottom == 6
