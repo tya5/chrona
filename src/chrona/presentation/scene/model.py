@@ -332,6 +332,57 @@ class SceneLaneMember:
 
 
 @dataclass(frozen=True)
+class SceneLaneRectObstacle:
+    """One Layout-completed rectangular visible lane obstacle."""
+
+    left: float
+    top: float
+    right: float
+    bottom: float
+
+    def __post_init__(self) -> None:
+        if (not all(math.isfinite(value) for value in (self.left, self.top, self.right, self.bottom))
+                or self.right <= self.left or self.bottom <= self.top):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+
+
+@dataclass(frozen=True)
+class SceneLaneSegmentObstacle:
+    """One Layout-completed stroked path segment visible footprint."""
+
+    start: tuple[float, float]
+    end: tuple[float, float]
+    stroke_width: float
+
+    def __post_init__(self) -> None:
+        if (len(self.start) != 2 or len(self.end) != 2
+                or not all(math.isfinite(value) for value in (*self.start, *self.end, self.stroke_width))
+                or self.start == self.end or self.stroke_width < 0):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+
+
+@dataclass(frozen=True)
+class SceneLaneObstacle:
+    """Layout-owned visible obstacle evidence for one emitted Scene primitive."""
+
+    facet_id: str
+    primitive_id: str
+    row_id: str
+    member_id: str
+    obstacle_class: str
+    geometry: SceneLaneRectObstacle | SceneLaneSegmentObstacle
+    clearance: float
+
+    def __post_init__(self) -> None:
+        if (not all(isinstance(value, str) and value for value in
+                    (self.facet_id, self.primitive_id, self.row_id, self.member_id))
+                or self.obstacle_class not in {"mark", "required-label"}
+                or not isinstance(self.geometry, (SceneLaneRectObstacle, SceneLaneSegmentObstacle))
+                or not math.isfinite(self.clearance) or self.clearance < 0):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+
+
+@dataclass(frozen=True)
 class SurfaceScaleManifest:
     """Closed temporal scale evidence carried by one completed surface."""
 
@@ -402,6 +453,7 @@ class SceneSurface:
     info_diagnostics: tuple[PresentationInfo, ...] = ()
     lane_mode: str | None = None
     lane_members: tuple[SceneLaneMember, ...] = ()
+    lane_obstacles: tuple[SceneLaneObstacle, ...] = ()
 
     def __post_init__(self) -> None:
         """Reject incomplete clip references before any adapter can serialize them."""
@@ -416,13 +468,14 @@ class SceneSurface:
         if self.lane_mode not in (None, "lanes"):
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         if self.lane_mode is None:
-            if self.lane_members:
+            if self.lane_members or self.lane_obstacles:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         else:
-            if not self.lane_members or any(
+            if (not self.lane_members or not self.lane_obstacles
+                    or any(not isinstance(item, SceneLaneObstacle) for item in self.lane_obstacles) or any(
                     not member.row_id or member.row_id not in lane_rows
                     or lane_rows[member.row_id].lane_mark_band_block is None
-                    for member in self.lane_members):
+                    for member in self.lane_members)):
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             if (len(lane_rows) != len(self.rows)
                     or any(row.lane_mark_band_block is None for row in self.rows)):
@@ -449,6 +502,18 @@ class SceneSurface:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             if any(requires_lane_member_provenance(item.kind, item.purpose)
                    and item.lane_row_id is None for item in self.primitives):
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            obstacle_facets = [item.facet_id for item in self.lane_obstacles]
+            obstacle_owners: dict[str, tuple[str, str]] = {}
+            for obstacle in self.lane_obstacles:
+                if obstacle.primitive_id in obstacle_owners and obstacle_owners[obstacle.primitive_id] != (
+                        obstacle.row_id, obstacle.member_id):
+                    raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                obstacle_owners[obstacle.primitive_id] = (obstacle.row_id, obstacle.member_id)
+                if expected.get(obstacle.primitive_id) != (obstacle.row_id, obstacle.member_id):
+                    raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            if (len(set(obstacle_facets)) != len(obstacle_facets)
+                    or set(obstacle_owners) != set(expected)):
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         for index, item in enumerate(self.primitives):
             if item.lane_row_id is not None:
