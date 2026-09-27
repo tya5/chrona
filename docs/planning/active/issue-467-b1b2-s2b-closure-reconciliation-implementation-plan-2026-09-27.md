@@ -19,6 +19,14 @@ paint was rejected because compound icons and conservative stroke envelopes
 cannot be reconstructed exactly. The optional lane-only v0.6 fields require
 schema/serializer migration, not automatic/explicit output changes.
 
+B2 publication order: (1) add the typed lane obstacle carrier, v0.6 schema,
+serializer, and missing/extra/untagged tests; (2) project final translated
+obstacles and primitives from the one Layout plan, then check 02 and unchanged
+automatic bytes; (3) run the read-only bidirectional Scene audit and lower-
+bound report on committed lane slides. Each unit gets focused tests and a
+separate push. The third unit cannot substitute Layout-only footprints for
+the serialized Scene evidence.
+
 | Publishable slice | Files/owners and migration | Focused acceptance and evidence |
 | --- | --- | --- |
 | **S2b-1 shared frame extraction** | `layout/surface_composer.py`, shared Layout mark-geometry module, `layout/presentation.py`, focused Layout tests. Introduce `MarkBandFrame` and one placement composer; automatic/explicit pass their existing track frames, lanes pass zero-origin mark band. No schema/resource change. | Characterize planned, snapshot, Actual/open Actual, point/glyph/icon, progress, ports and symbols before/after extraction. Exact automatic/explicit Scene/SVG bytes, local-frame bounds/ports and one-translation tests. Publish with guard closed. |
