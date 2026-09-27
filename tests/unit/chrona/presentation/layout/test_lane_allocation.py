@@ -7,9 +7,10 @@ behavior belongs to L1/L3.
 from __future__ import annotations
 
 import pytest
+from decimal import Decimal
 
 from chrona.presentation.layout.lane_allocation import (
-    LaneCandidate, LaneFacetPort, LaneMark, LaneMarkFacet, LaneMember, allocate_lanes,
+    LaneCandidate, LaneFacetPort, LaneIconProjection, LaneMark, LaneMarkFacet, LaneMember, allocate_lanes,
 )
 from chrona.presentation.layout.mark_geometry import symbol_parts
 from chrona.presentation.layout.surface_quality import MarkPlacement
@@ -22,7 +23,8 @@ def facet(facet_id: str, footprint, *, projection_instance_id: str = "row:item",
           source_kind: str = "primary", purpose: str = "planned",
           primitive_id: str | None = None, primitive_type: str | None = None,
           ports: tuple[LaneFacetPort, ...] = (), overlay_with: tuple[str, ...] = (),
-          port_host_bounds: tuple[float, float, float, float] | None = None) -> LaneMarkFacet:
+          port_host_bounds: tuple[float, float, float, float] | None = None,
+          icon_projection: LaneIconProjection | None = None) -> LaneMarkFacet:
     if isinstance(footprint, ObstacleRect):
         geometry = (("rect", ((footprint.left, footprint.top), (footprint.right, footprint.bottom))),)
         default_type = "Rect"
@@ -38,7 +40,8 @@ def facet(facet_id: str, footprint, *, projection_instance_id: str = "row:item",
     return LaneMarkFacet(facet_id, projection_instance_id, source_item_id, source_ref,
                          source_kind, purpose, primitive_id or facet_id,
                          primitive_type or default_type, geometry, bounds, footprint, ports, overlay_with,
-                         port_host_bounds if port_host_bounds is not None else (bounds if ports else None))
+                         port_host_bounds if port_host_bounds is not None else (bounds if ports else None),
+                         icon_projection)
 
 
 def candidate(candidate_id: str, group_key: str, left: float, right: float, title_width: float = 30.0,
@@ -391,6 +394,90 @@ def test_closed_candidate_requires_facets_and_preserves_unexpanded_primitive_bou
             ports=(LaneFacetPort("bad-port", "outside", (2.0, 4.5)),),
             port_host_bounds=(2.0, 5.0, 8.0, 5.0),
         )
+
+
+def icon_projection(*, placement_id: str = "placed-icon", kind: str = "vector",
+                    path_index: int | None = 0, path_count: int | None = 2,
+                    asset_identity: str = "sha256:asset", paint: str | None = "fill",
+                    stroke_width: float | None = None, raster_payload: bytes | None = None
+                    ) -> LaneIconProjection:
+    if kind == "raster":
+        path_index = path_count = None
+        paint = None
+    return LaneIconProjection(
+        placement_id, "catalog-icon", kind, asset_identity, (24, 16),
+        Rect(Decimal("0"), Decimal("0"), Decimal("10"), Decimal("10")),
+        "/body/visuals/0", "", True, "timeline", 300, 2.0,
+        path_index, path_count, paint, stroke_width,
+        "round" if paint == "stroke" else None,
+        "bevel" if paint == "stroke" else None,
+        raster_payload,
+    )
+
+
+def test_vector_icon_projection_keeps_two_completed_paths_and_common_emission_identity() -> None:
+    first_projection = icon_projection(path_index=0, paint="fill")
+    second_projection = icon_projection(path_index=1, paint="stroke", stroke_width=3.5)
+    first = facet("icon:path0", ObstacleRect(1, 1, 3, 3), primitive_id="placed-icon",
+                  primitive_type="Icon", icon_projection=first_projection)
+    second = facet("icon:path1", ObstacleSegment((5, 5), (9, 5), stroke_width=3.5),
+                   primitive_id="placed-icon", primitive_type="Icon", icon_projection=second_projection)
+
+    mark = LaneMark(0, 10, (first, second))
+
+    assert tuple(item.path_index for item in
+                 (first.icon_projection, second.icon_projection)) == (0, 1)
+    assert (first.icon_projection.paint, second.icon_projection.paint) == ("fill", "stroke")
+    assert second.icon_projection.stroke_width == 3.5
+    assert (second.icon_projection.line_cap, second.icon_projection.line_join) == ("round", "bevel")
+    assert mark.footprints == (first.visible_footprint, second.visible_footprint)
+    assert all(item.bounds.inline_size == 10 for item in
+               (first.icon_projection, second.icon_projection))
+
+
+@pytest.mark.parametrize("indices", [(0,), (0, 0)])
+def test_vector_icon_projection_rejects_missing_or_duplicate_path_indices(indices) -> None:
+    projections = [icon_projection(path_index=index) for index in indices]
+    facets = tuple(facet(f"p{index}", ObstacleRect(index, 0, index + 1, 1),
+                         primitive_id="placed-icon", primitive_type="Icon",
+                         icon_projection=projection)
+                   for index, projection in enumerate(projections))
+    with pytest.raises(ValueError, match="E_LAYOUT_LANE_CANDIDATE_INPUT"):
+        LaneMark(0, 10, facets)
+
+
+def test_icon_projection_rejects_shared_asset_mismatch_and_preserves_raster_bytes() -> None:
+    first = facet("p0", ObstacleRect(0, 0, 1, 1), primitive_id="placed-icon",
+                  primitive_type="Icon", icon_projection=icon_projection(path_index=0))
+    second = facet("p1", ObstacleRect(1, 0, 2, 1), primitive_id="placed-icon",
+                   primitive_type="Icon", icon_projection=icon_projection(
+                       path_index=1, asset_identity="sha256:other"))
+    with pytest.raises(ValueError, match="E_LAYOUT_LANE_CANDIDATE_INPUT"):
+        LaneMark(0, 10, (first, second))
+
+    payload = b"\x89PNG\r\n\x1a\nexact"
+    raster = icon_projection(kind="raster", raster_payload=payload)
+    facet_value = LaneMarkFacet(
+        "raster-facet", "row:item", "item", "project:item", "primary", "iconMark",
+        "placed-icon", "Icon", (("rect", ((0.0, 0.0), (10.0, 10.0))),),
+        (0.0, 0.0, 10.0, 10.0), ObstacleRect(0.0, 0.0, 10.0, 10.0),
+        icon_projection=raster,
+    )
+    assert facet_value.icon_projection.raster_payload is payload
+    assert facet_value.icon_projection.viewport == (24, 16)
+    LaneMark(0, 10, (facet_value,))
+
+    repeated = LaneMarkFacet(
+        "raster-facet-copy", "row:item-copy", "item-copy", "project:item", "primary", "iconMark",
+        "placed-icon-copy", "Icon", (("rect", ((0.0, 0.0), (10.0, 10.0))),),
+        (0.0, 0.0, 10.0, 10.0), ObstacleRect(0.0, 0.0, 10.0, 10.0),
+        icon_projection=icon_projection(placement_id="placed-icon-copy", kind="raster",
+                                        raster_payload=payload),
+    )
+    repeated_mark = LaneMark(0, 10, (facet_value, repeated))
+    assert repeated_mark.facets[0].source_ref == repeated_mark.facets[1].source_ref
+    assert repeated_mark.facets[0].projection_instance_id != repeated_mark.facets[1].projection_instance_id
+    assert repeated_mark.facets[0].icon_projection.placement_id != repeated_mark.facets[1].icon_projection.placement_id
 
 
 def test_attached_countable_member_also_requires_its_own_facet() -> None:

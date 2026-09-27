@@ -40,6 +40,7 @@ from types import MappingProxyType
 from typing import Mapping, Sequence
 from urllib.parse import quote
 
+from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.obstacles import (
     ObstacleRect,
     ObstacleGeometry,
@@ -79,6 +80,86 @@ class LaneFacetPort:
 
 
 @dataclass(frozen=True)
+class LaneIconProjection:
+    """Completed renderer-neutral icon emission data copied from IconPlacement."""
+
+    placement_id: str
+    icon_id: str
+    kind: str
+    asset_identity: str
+    viewport: tuple[int, int]
+    bounds: Rect
+    visual_capability_source_ref: str
+    alternative: str
+    decorative: bool
+    slot_id: str
+    paint_order: int
+    stroke_scale: float
+    path_index: int | None = None
+    path_count: int | None = None
+    paint: str | None = None
+    stroke_width: float | None = None
+    line_cap: str | None = None
+    line_join: str | None = None
+    raster_payload: bytes | None = None
+
+    def __post_init__(self) -> None:
+        common_strings = (self.placement_id, self.icon_id, self.asset_identity,
+                          self.visual_capability_source_ref, self.slot_id)
+        valid_rect = (isinstance(self.bounds, Rect)
+                      and all(isfinite(float(value)) for value in
+                              (self.bounds.inline, self.bounds.block,
+                               self.bounds.inline_size, self.bounds.block_size))
+                      and self.bounds.inline_size > 0 and self.bounds.block_size > 0)
+        if not (
+            all(isinstance(value, str) and value for value in common_strings)
+            and isinstance(self.kind, str) and self.kind in {"vector", "raster"}
+            and isinstance(self.viewport, tuple) and len(self.viewport) == 2
+            and all(isinstance(value, int) and not isinstance(value, bool) and value > 0
+                    for value in self.viewport)
+            and valid_rect and isinstance(self.alternative, str)
+            and isinstance(self.decorative, bool)
+            and isinstance(self.paint_order, int) and not isinstance(self.paint_order, bool)
+            and self.paint_order >= 0
+            and isinstance(self.stroke_scale, (int, float)) and not isinstance(self.stroke_scale, bool)
+            and isfinite(self.stroke_scale) and self.stroke_scale > 0
+        ):
+            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+        if self.kind == "vector":
+            valid_path = (
+                isinstance(self.path_index, int) and not isinstance(self.path_index, bool)
+                and isinstance(self.path_count, int) and not isinstance(self.path_count, bool)
+                and self.path_count > 0 and 0 <= self.path_index < self.path_count
+                and isinstance(self.paint, str) and self.paint in {"fill", "stroke"}
+                and self.raster_payload is None
+                and (self.stroke_width is None or (
+                    isinstance(self.stroke_width, (int, float)) and not isinstance(self.stroke_width, bool)
+                    and isfinite(self.stroke_width) and self.stroke_width >= 0))
+                and (self.line_cap is None or (isinstance(self.line_cap, str)
+                                               and self.line_cap in {"butt", "round", "square"}))
+                and (self.line_join is None or (isinstance(self.line_join, str)
+                                                and self.line_join in {"miter", "round", "bevel"}))
+            )
+        else:
+            valid_path = (
+                self.path_index is None and self.path_count is None
+                and self.paint is None and self.stroke_width is None
+                and self.line_cap is None and self.line_join is None
+                and isinstance(self.raster_payload, bytes) and bool(self.raster_payload)
+            )
+        if not valid_path:
+            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+
+    @property
+    def common_metadata(self) -> tuple[object, ...]:
+        """Fields that must agree across facets belonging to one emitted icon."""
+        return (self.placement_id, self.icon_id, self.kind, self.asset_identity,
+                self.viewport, self.bounds, self.visual_capability_source_ref,
+                self.alternative, self.decorative, self.slot_id, self.paint_order,
+                self.stroke_scale)
+
+
+@dataclass(frozen=True)
 class LaneMarkFacet:
     """One source-keyed, completed primitive and its collision footprint.
 
@@ -106,6 +187,7 @@ class LaneMarkFacet:
     ports: tuple[LaneFacetPort, ...] = ()
     overlay_with: tuple[str, ...] = ()
     port_host_bounds: tuple[float, float, float, float] | None = None
+    icon_projection: LaneIconProjection | None = None
 
     def __post_init__(self) -> None:
         identities = (self.facet_id, self.projection_instance_id, self.source_item_id,
@@ -161,6 +243,22 @@ class LaneMarkFacet:
                     and host[1] - tolerance <= port.position[1] <= host[3] + tolerance)
                for port in self.ports):
             raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+        if self.icon_projection is not None:
+            projection = self.icon_projection
+            if (not isinstance(projection, LaneIconProjection)
+                    or self.primitive_id != projection.placement_id
+                    or self.primitive_type != "Icon"):
+                raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+            if projection.kind == "raster":
+                rect = projection.bounds
+                expected = (float(rect.inline), float(rect.block),
+                            float(rect.inline + rect.inline_size),
+                            float(rect.block + rect.block_size))
+                if (self.primitive_bounds != expected
+                        or not isinstance(self.visible_footprint, ObstacleRect)
+                        or (self.visible_footprint.left, self.visible_footprint.top,
+                            self.visible_footprint.right, self.visible_footprint.bottom) != expected):
+                    raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
 
 
 @dataclass(frozen=True)
@@ -184,6 +282,20 @@ class LaneMark:
                 or any(not isinstance(facet, LaneMarkFacet) for facet in self.facets)
                 or len({facet.facet_id for facet in self.facets}) != len(self.facets)):
             raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+        icon_groups: dict[str, list[LaneIconProjection]] = {}
+        for facet in self.facets:
+            if facet.icon_projection is not None:
+                icon_groups.setdefault(facet.icon_projection.placement_id, []).append(facet.icon_projection)
+        for members in icon_groups.values():
+            first = members[0]
+            if any(item.common_metadata != first.common_metadata for item in members[1:]):
+                raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+            if first.kind == "raster":
+                if len(members) != 1:
+                    raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+            elif (len(members) != first.path_count
+                  or sorted(item.path_index for item in members) != list(range(first.path_count or 0))):
+                raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
 
     @property
     def footprints(self) -> tuple[ObstacleGeometry, ...]:
