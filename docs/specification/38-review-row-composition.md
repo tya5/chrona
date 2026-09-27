@@ -190,6 +190,14 @@ A selected primary Review row is one atomic lane candidate bundle. Its
 comparison/Actual facets contribute geometry without duplicate names or
 counts; a point attached under #486 stays on its host candidate's lane but
 retains its own required title/date/delta, mark, port and count identity.
+Semantic relation/annotation ports belong to the completed mark slot, not
+necessarily to an emitted primitive part's unexpanded bounds. A source-keyed
+owning facet carries separate completed `port_host_bounds`; its ports MUST lie
+inside those host bounds, while its primitive commands MUST remain inside
+their exact `primitive_bounds`. The first emitted facet of each semantic mark
+owns its ports in stable part order; siblings do not duplicate them. Host
+bounds are not an added collision footprint and MUST NOT widen primitive
+geometry. See the [S2b port-host correction](../design/issue-467-b1b2-s2b-port-host-bounds-correction-2026-09-27.md).
 Layout admits a bundle only when all member marks and required labels fit;
 it cannot place a child later or flatten its name into the host's text.
 Unattached points are independent candidates. The natural lane frame contains
