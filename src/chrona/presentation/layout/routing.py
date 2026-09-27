@@ -1,10 +1,87 @@
 """Deterministic renderer-neutral routing used while building a presentation Scene."""
 from __future__ import annotations
 
+from dataclasses import dataclass
 from heapq import heappop, heappush
+from math import isfinite
 
 from chrona.presentation.layout.model import geometry_sum
 from chrona.presentation.layout.obstacles import ObstacleSegment, SurfaceObstacleIndex, obstacle_envelope
+
+
+class RouteSearchFailure(ValueError):
+    """A bounded orthogonal search found no route; unrelated ValueErrors propagate."""
+
+
+@dataclass(frozen=True)
+class RouteAttemptEvidence:
+    source_side: str
+    target_side: str
+    outcome: str
+    blocker_ids: tuple[str, ...] = ()
+    search_failure: str | None = None
+    length: float | None = None
+    direct_length: float | None = None
+    bends: int | None = None
+    max_bends: int | None = None
+    max_detour_ratio: float | None = None
+
+    def __post_init__(self) -> None:
+        if (self.outcome not in {"egress-collision", "no-route-found", "quality-rejected", "accepted"}
+                or not self.source_side or not self.target_side):
+            raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+        if self.outcome == "egress-collision":
+            if (not self.blocker_ids or self.search_failure is not None
+                    or any(value is not None for value in self._quality_values())):
+                raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+        elif self.outcome == "no-route-found":
+            if (self.blocker_ids or self.search_failure not in {
+                    "E_PRESENTATION_ROUTE_LIMIT", "E_CONNECTOR_UNROUTABLE"}
+                    or any(value is not None for value in self._quality_values())):
+                raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+        else:
+            values = self._quality_values()
+            if (self.blocker_ids or self.search_failure is not None
+                    or any(value is None for value in values)
+                    or not all(isfinite(value) for value in (self.length, self.direct_length, self.max_detour_ratio))
+                    or self.length < 0 or self.direct_length < 0 or self.bends < 0
+                    or self.max_bends < 0 or self.max_detour_ratio <= 0):
+                raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+            within = self.bends <= self.max_bends and (
+                self.direct_length == 0 or self.length <= self.direct_length * self.max_detour_ratio)
+            if within != (self.outcome == "accepted"):
+                raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+
+    def _quality_values(self) -> tuple[float | int | None, ...]:
+        return (self.length, self.direct_length, self.bends, self.max_bends, self.max_detour_ratio)
+
+
+@dataclass(frozen=True)
+class RouteSuppressionEvidence:
+    relation_id: str
+    attempts: tuple[RouteAttemptEvidence, ...]
+
+    def __post_init__(self) -> None:
+        if not self.relation_id or not self.attempts or any(
+                attempt.outcome == "accepted" for attempt in self.attempts):
+            raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+
+    @property
+    def primary_cause(self) -> str:
+        outcomes = {attempt.outcome for attempt in self.attempts}
+        if "quality-rejected" in outcomes:
+            return "quality-rejected"
+        if "no-route-found" in outcomes:
+            return "no-route-found"
+        return "egress-collision"
+
+    @property
+    def diagnostic(self) -> str:
+        counts = {outcome: sum(attempt.outcome == outcome for attempt in self.attempts)
+                  for outcome in ("egress-collision", "no-route-found", "quality-rejected")}
+        return (f"I_LAYOUT_LANE_ROUTE_CAUSE:{self.relation_id}:{self.primary_cause}:"
+                f"egress={counts['egress-collision']}:search={counts['no-route-found']}:"
+                f"quality={counts['quality-rejected']}")
 
 
 def place_relation_route(*, source_port: tuple[float, float], target_port: tuple[float, float],
@@ -22,11 +99,32 @@ def relation_route_quality(points: tuple[tuple[float, float], ...], *,
     """Evaluate a completed route against the explicit Layout Profile limits."""
     if len(points) < 2:
         return False
+    length, direct, bends = route_quality_metrics(points)
+    return bends <= max_bends and (direct == 0 or length <= direct * max_detour_ratio)
+
+
+def route_quality_metrics(points: tuple[tuple[float, float], ...]) -> tuple[float, float, int]:
+    """Return the exact metrics used by the route-quality decision and evidence."""
+    if len(points) < 2:
+        raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
     bends = max(0, len(points) - 2)
     length = geometry_sum(abs(right[0] - left[0]) + abs(right[1] - left[1])
                           for left, right in zip(points, points[1:]))
     direct = abs(points[-1][0] - points[0][0]) + abs(points[-1][1] - points[0][1])
-    return bends <= max_bends and (direct == 0 or length <= direct * max_detour_ratio)
+    return length, direct, bends
+
+
+def route_quality_attempt(
+    source_side: str, target_side: str, points: tuple[tuple[float, float], ...], *,
+    max_bends: int, max_detour_ratio: float,
+) -> RouteAttemptEvidence:
+    """Close a measured attempt using the same metrics as the quality predicate."""
+    length, direct, bends = route_quality_metrics(points)
+    accepted = bends <= max_bends and (direct == 0 or length <= direct * max_detour_ratio)
+    return RouteAttemptEvidence(source_side, target_side,
+                                "accepted" if accepted else "quality-rejected",
+                                length=length, direct_length=direct, bends=bends,
+                                max_bends=max_bends, max_detour_ratio=max_detour_ratio)
 
 
 def route_orthogonal(start: tuple[float, float], end: tuple[float, float],
@@ -116,7 +214,7 @@ def route_orthogonal(start: tuple[float, float], end: tuple[float, float],
                 next_heuristic = heuristic(new_state)
                 heappush(queue, (new_cost + next_heuristic, next_heuristic, new_cost, new_state))
     if finish is None:
-        raise ValueError("E_PRESENTATION_ROUTE_LIMIT" if limited else "E_CONNECTOR_UNROUTABLE")
+        raise RouteSearchFailure("E_PRESENTATION_ROUTE_LIMIT" if limited else "E_CONNECTOR_UNROUTABLE")
     path = []
     while True:
         path.append((xs[finish[0]], ys[finish[1]]))
