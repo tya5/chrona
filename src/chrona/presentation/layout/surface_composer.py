@@ -36,7 +36,9 @@ from chrona.presentation.layout.annotation_topology import (
 )
 from chrona.presentation.layout.comparison_marks import ComparisonMark
 from chrona.presentation.layout.labels import LabelRect, LabelRequest, place_label
-from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
+from chrona.presentation.layout.obstacles import (
+    ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex, obstacles_intersect,
+)
 from chrona.presentation.layout.ports import ConnectorEgress, coincident_endpoint_port_ids, connector_egress_candidates
 from chrona.presentation.model.placement_candidates import candidate_order
 from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
@@ -50,7 +52,7 @@ from chrona.presentation.layout.mark_geometry import MarkFacetAbsence, compose_i
 from chrona.presentation.layout.icon_geometry import complete_icon_paths
 from chrona.presentation.layout.surface_quality import (
     AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, ColumnPlacement, FitWarning, GroupPlacement, MarkPlacement, PathCommand, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
-    IconPlacement, LayoutImageFill, ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest, annotation_presentation, intersects,
+    IconPlacement, LayoutImageFill, ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest, TextPlacement, annotation_presentation, intersects,
 )
 from chrona.presentation.layout.image_slice_geometry import image_slice_tiles
 
@@ -77,6 +79,20 @@ class _LaneLayoutRow:
     table_subject_id: str = ""
     depth: int = 0
     rollup_presentation: str = "none"
+
+
+def _lane_fallback_clears_required_labels(
+    points: tuple[tuple[float, float], ...], placed_text: tuple[TextPlacement, ...],
+) -> bool:
+    """A lane-only direct route may overflow marks, never required member text."""
+    labels = tuple(ObstacleRect(*(
+        float(item.bounds.inline), float(item.bounds.block),
+        float(item.bounds.inline + item.bounds.inline_size),
+        float(item.bounds.block + item.bounds.block_size),
+    )) for item in placed_text if item.semantic_id in {"memberLabel", "finishDelta"}
+                    and item.required and item.overflow != "suppressed")
+    return all(not obstacles_intersect(ObstacleSegment(start, end), label)
+               for start, end in zip(points, points[1:]) for label in labels)
 
 
 def _review_rows(projection: Any) -> tuple[Any, ...]:
@@ -1933,6 +1949,14 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                               if first_source.semantic_port != first_target.semantic_port
                               else (first_source.semantic_port,
                                     (first_source.semantic_port[0] + 1.0, first_source.semantic_port[1])))
+                    if (lane_selection is not None
+                            and not _lane_fallback_clears_required_labels(points, tuple(text))):
+                        relations.append(RelationPlacement(scene_id, f"{source_id}:{relation.source_endpoint}",
+                                                           f"{target_id}:{relation.target_endpoint}",
+                                                           suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))
+                        diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
+                        diagnostics.append(RouteSuppressionEvidence(scene_id, lane_selection.attempts).diagnostic)
+                        continue
                 source_egress, target_egress = selected_pair
                 source_port_id = f"{source_id}:{relation.source_endpoint}:{source_egress.side}"
                 target_port_id = f"{target_id}:{relation.target_endpoint}:{target_egress.side}"

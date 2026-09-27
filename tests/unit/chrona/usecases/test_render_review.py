@@ -5,6 +5,7 @@ import tempfile
 import json
 from dataclasses import replace
 from datetime import date
+from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -13,8 +14,10 @@ import jsonschema
 import yaml
 
 import chrona.usecases.render_review as render_usecase
-from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, obstacles_intersect
+from chrona.presentation.layout.surface_composer import _lane_fallback_clears_required_labels
+from chrona.presentation.layout.surface_quality import TextPlacement
 from chrona.presentation.contracts.resources import ViewLaneLabel, ViewLaneTable, ViewRowMode
 from chrona.presentation.contracts import parse_contract
 from chrona.presentation.model.surface_content import TableCellContent, TableColumnContent, TableColumnWidth, TableContent
@@ -96,6 +99,17 @@ from tools.materialize_example import _copy_context_closure
 
 ROOT = Path(__file__).resolve().parents[4]
 EXAMPLE = ROOT / "examples/halcyon-1"
+
+
+def test_lane_visible_route_fallback_never_crosses_required_member_text():
+    label = TextPlacement("member-label:a", "a", "A",
+                          Rect(Decimal(10), Decimal(10), Decimal(20), Decimal(10)),
+                          "text", semantic_id="memberLabel")
+    crossing = ((0.0, 15.0), (40.0, 15.0))
+    clear = ((0.0, 25.0), (40.0, 25.0))
+    assert not _lane_fallback_clears_required_labels(crossing, (label,))
+    assert _lane_fallback_clears_required_labels(clear, (label,))
+    assert _lane_fallback_clears_required_labels(crossing, (replace(label, overflow="suppressed"),))
 
 
 def _closure(temporary: Path, context_name: str = "02-programme-board"):
