@@ -61,6 +61,8 @@ Write design and review records in English. Prefer one concise, living issue
 work record in `docs/planning/active/` for the baseline, design plan, design,
 architecture review, implementation plan, and progress. Update it in place as
 the current decision changes; Git history is sufficient for superseded text.
+Keep only the latest actionable rule, decision, status, and evidence; do not
+append chronological status logs or restate the same contract in several files.
 Do not create a new plan, correction, amendment, or review file for every
 small slice. Keep normative behavior in the relevant living specification,
 not duplicated across issue records. Use a separate ADR only when an enduring
