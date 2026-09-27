@@ -16,8 +16,14 @@ from chrona.presentation.layout.sources import SourceInput, measure_sources
 
 
 def _candidate(item_id, left, right, *, width=50, predecessors=()):
+    mark = LaneMark(left, right, (LaneMarkFacet(
+        f"{item_id}:planned", f"row:{item_id}", item_id, f"project:{item_id}",
+        "primary", "planned", f"planned:{item_id}", "Rect",
+        (("rect", ((left, 0.0), (right, 10.0))),),
+        (left, 0.0, right, 10.0), ObstacleRect(left, 0, right, 10),
+    ),))
     return LaneCandidate(item_id, "systems", (left, right, item_id, item_id),
-                         LaneMark(left, right), width, predecessors=predecessors)
+                         mark, width, predecessors=predecessors)
 
 
 def _frame(timeline_size="100"):
@@ -83,17 +89,17 @@ def test_lane_table_count_includes_attached_item_but_not_comparison_facet():
     host_plan = LaneMarkFacet(
         "host:planned", "row:host", "host", "project:host", "primary", "planned",
         "planned:row:host", "Rect", (("rect", ((0.0, 0.0), (10.0, 10.0))),),
-        ObstacleRect(0, 0, 10, 10),
+        (0, 0, 10, 10), ObstacleRect(0, 0, 10, 10),
     )
     host_snapshot = LaneMarkFacet(
         "host:snapshot", "row:snapshot", "snapshot", "baseline:host", "snapshot", "snapshot",
         "snapshot:row:snapshot", "Rect", (("rect", ((0.0, 0.0), (10.0, 10.0))),),
-        ObstacleRect(0, 0, 10, 10), overlay_with=("host:planned",),
+        (0, 0, 10, 10), ObstacleRect(0, 0, 10, 10), overlay_with=("host:planned",),
     )
     attached_point = LaneMarkFacet(
         "gate:planned", "row:gate", "gate", "project:gate", "primary", "planned",
         "planned:row:gate", "Symbol", (("move", ((5.0, 0.0),)), ("line", ((6.0, 1.0),))),
-        ObstacleRect(5, 0, 6, 1), overlay_with=("host:planned", "host:snapshot"),
+        (5, 0, 6, 1), ObstacleRect(5, 0, 6, 1), overlay_with=("host:planned", "host:snapshot"),
     )
     host_mark = LaneMark(0, 10, (host_plan, host_snapshot))
     candidate = LaneCandidate(

@@ -86,6 +86,9 @@ class LaneMarkFacet:
     different Review rows; ``source_ref`` separately retains the stable
     source/object reference. A compound semantic mark has one facet per
     emitted primitive/part, all nested under its countable LaneMember.
+    ``primitive_bounds`` are the completed, unexpanded bounds consumed by
+    downstream projection; ``visible_footprint`` is the separately completed
+    stroke/clearance-aware collision geometry.
     """
 
     facet_id: str
@@ -97,6 +100,7 @@ class LaneMarkFacet:
     primitive_id: str
     primitive_type: str
     completed_geometry: tuple[tuple[str, tuple[tuple[float, float], ...]], ...]
+    primitive_bounds: tuple[float, float, float, float]
     visible_footprint: ObstacleGeometry
     ports: tuple[LaneFacetPort, ...] = ()
     overlay_with: tuple[str, ...] = ()
@@ -118,6 +122,11 @@ class LaneMarkFacet:
         )
         if (not all(isinstance(identity, str) and identity for identity in identities)
                 or not geometry_valid
+                or not isinstance(self.primitive_bounds, tuple) or len(self.primitive_bounds) != 4
+                or not all(isinstance(value, (int, float)) and not isinstance(value, bool)
+                           and isfinite(value) for value in self.primitive_bounds)
+                or self.primitive_bounds[2] < self.primitive_bounds[0]
+                or self.primitive_bounds[3] < self.primitive_bounds[1]
                 or not isinstance(self.visible_footprint, (ObstacleRect, ObstacleSegment))
                 or not isinstance(self.ports, tuple)
                 or any(not isinstance(port, LaneFacetPort) for port in self.ports)
@@ -128,13 +137,17 @@ class LaneMarkFacet:
                 or len(set(self.overlay_with)) != len(self.overlay_with)):
             raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
         left, top, right, bottom = obstacle_envelope(self.visible_footprint)
+        bounds_left, bounds_top, bounds_right, bounds_bottom = self.primitive_bounds
+        if not (left - 1e-9 <= bounds_left <= bounds_right <= right + 1e-9
+                and top - 1e-9 <= bounds_top <= bounds_bottom <= bottom + 1e-9):
+            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
         points = (point for _, command_points in self.completed_geometry for point in command_points)
         tolerance = 1e-9
-        if any(not (left - tolerance <= point[0] <= right + tolerance
-                    and top - tolerance <= point[1] <= bottom + tolerance) for point in points):
+        if any(not (bounds_left - tolerance <= point[0] <= bounds_right + tolerance
+                    and bounds_top - tolerance <= point[1] <= bounds_bottom + tolerance) for point in points):
             raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
-        if any(not (left - tolerance <= port.position[0] <= right + tolerance
-                    and top - tolerance <= port.position[1] <= bottom + tolerance)
+        if any(not (bounds_left - tolerance <= port.position[0] <= bounds_right + tolerance
+                    and bounds_top - tolerance <= port.position[1] <= bounds_bottom + tolerance)
                for port in self.ports):
             raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
 
@@ -229,7 +242,7 @@ class LaneCandidate:
         port_ids = [port.port_id for facet in facets for port in facet.ports]
         if len(facet_ids) != len(facets) or any(
                 target not in facet_ids for facet in facets for target in facet.overlay_with
-        ) or len(set(port_ids)) != len(port_ids):
+        ) or len(set(port_ids)) != len(port_ids) or any(not member.mark.facets for member in members):
             raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
 
     @property
