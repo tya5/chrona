@@ -2,6 +2,23 @@
 
 **Public design base:** `a02ccc03d8bc5b5b2187402b10f4ca495220b156`. **Authority:** [design plan](issue-467-b1b2-s2b-closure-reconciliation-design-plan-2026-09-27.md), [selected correction](../../design/issue-467-b1b2-s2b-closure-reconciliation-correction-2026-09-27.md), [architecture review](../../reviews/current/issue-467-b1b2-s2b-closure-reconciliation-architecture-review-2026-09-27.md), Specs [38](../../specification/38-review-row-composition.md) and [46](../../specification/46-completed-scene-paint.md). Supersedes S2b/B2 assumptions in the older [facet-count implementation plan](issue-467-b1b2-facet-count-asof-implementation-plan-amendment-2026-09-27.md), not its historical record. Public lane mode stays fail-closed until B2/B3 and activation gates. No fixed 12/14 lane ceiling, above-ten quota or compulsory third label row.
 
+## Current B2 design and architecture review (2026-09-27)
+
+A read-only Scene audit cannot identify an untagged lane primitive from optional
+primitive tags alone: automatic/explicit primitives are legitimately untagged.
+The selected correction is a lane-only `SceneSurface` mode discriminator plus
+typed member inventory (row/member IDs, emitted primitive IDs, primary-mark
+IDs). B2 derives it from the immutable Layout plan. Scene validates exact
+inventory↔tagged-primitive correspondence and rejects untagged lane-bearing
+purposes. The checker then reads the closed Scene, not Layout-only data. This
+keeps Project/View semantics upstream, geometry in Layout, structural identity
+in Scene, and adapters as serializers. Optional fields extend Scene v0.6 only
+for lane surfaces; automatic/explicit bytes stay unchanged. No new View syntax
+or Theme policy is needed. This resolves the completeness gap without spatial
+or `source_ref` inference. [Spec 38](../../specification/38-review-row-composition.md)
+is the normative authority; B2 tests must prove missing/extra/untagged member
+primitives fail before the #467 Scene rule audit.
+
 | Publishable slice | Files/owners and migration | Focused acceptance and evidence |
 | --- | --- | --- |
 | **S2b-1 shared frame extraction** | `layout/surface_composer.py`, shared Layout mark-geometry module, `layout/presentation.py`, focused Layout tests. Introduce `MarkBandFrame` and one placement composer; automatic/explicit pass their existing track frames, lanes pass zero-origin mark band. No schema/resource change. | Characterize planned, snapshot, Actual/open Actual, point/glyph/icon, progress, ports and symbols before/after extraction. Exact automatic/explicit Scene/SVG bytes, local-frame bounds/ports and one-translation tests. Publish with guard closed. |

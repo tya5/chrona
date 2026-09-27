@@ -149,6 +149,17 @@ lower bound; full-footprint inline concurrency and concrete collision witnesses
 explain any gap. Scene lane-mode primitives MUST retain typed lane-row and
 countable-member provenance for this audit without adding placement policy to
 Scene. See the [rule-based acceptance correction](../design/issue-467-494-rule-based-lane-acceptance-correction-2026-09-27.md).
+The lane-only Scene surface also carries a closed member inventory: each
+countable member's row/member IDs, exact emitted primitive IDs, and primary
+mark IDs. Layout derives it from the same immutable plan that emitted those
+primitives. Scene validates a bijection between inventory IDs and tagged
+primitives, rejects missing/duplicate IDs or mismatched row/member tags, and
+requires membership-bearing mark, required-text, delta and icon purposes to
+be tagged on a lane surface. A typed lane-mode discriminator distinguishes
+this obligation from automatic/explicit surfaces, whose bytes remain
+unchanged. The inventory is structural completeness evidence, not Scene
+placement policy. The read-only checker MUST fail closed on an incomplete
+inventory rather than guess membership spatially or parse `source_ref`.
 For this read-only Scene audit, each lane Scene row carries the completed
 absolute block coordinate of its shared mark-band top. The checker aligns
 source and target mark-band coordinates in both directions; it MUST NOT infer
