@@ -1,9 +1,8 @@
 """Close Review projection identity and expected mark emission for lanes.
 
-This module is deliberately geometry-free. The View/normalization caller
-declares which mark roles are selected for each Review item; Layout verifies
-that declaration covers the selected projection exactly and pins every role
-to an explicit projection instance before geometry is composed.
+This module is deliberately geometry-free. Layout derives mark roles from
+selected Review facts and pins every role to an explicit projection instance
+before geometry is composed.
 """
 from __future__ import annotations
 
@@ -13,9 +12,6 @@ from urllib.parse import quote
 
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.model.projection import ObservationState, ReviewProjection
-
-
-LANE_MARK_ROLES = frozenset({"planned", "snapshot", "scenario", "actual", "missing-actual"})
 
 
 @dataclass(frozen=True, order=True)
@@ -81,9 +77,11 @@ def close_lane_projection(
     instances: list[LaneProjectionInstance] = []
     row_instances: dict[str, list[LaneProjectionInstance]] = {}
     source_by_instance: dict[LaneProjectionInstance, object] = {}
+    seen_row_ids: set[str] = set()
     for row in projection.rows:
-        if not row.row_id:
+        if not row.row_id or row.row_id in seen_row_ids:
             raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", "/projection/rows")
+        seen_row_ids.add(row.row_id)
         for item in row.items:
             item_id = item.item_id or item.object_id
             if not item_id or not item.object_id:
@@ -104,6 +102,11 @@ def close_lane_projection(
         actual = item.actual or {}
         if instance.source_kind not in {"primary", "actual", "combined", "snapshot", "scenario"}:
             raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", f"{path}/source_kind")
+        if actual.get("openUntil") == "asOf" and as_of is None:
+            raise LayoutError("E_LAYOUT_LANE_AS_OF_REQUIRED", f"{path}/actual/openUntil")
+        if actual and item.observation_state != ObservationState.RECORDED:
+            raise LayoutError("E_LAYOUT_LANE_EXPECTED_MARK_SET_INVALID", path,
+                              detail="Actual payload conflicts with observation_state")
         roles = set(item.roles)
         expected_observation_role = (
             "actual" if item.observation_state == ObservationState.RECORDED else
@@ -123,6 +126,9 @@ def close_lane_projection(
         if not planned_complete:
             raise LayoutError("E_LAYOUT_LANE_EXPECTED_MARK_INVALID", f"{path}/planned")
         if instance.source_kind == "actual":
+            if item.observation_state != ObservationState.RECORDED or not actual:
+                raise LayoutError("E_LAYOUT_LANE_EXPECTED_MARK_SET_INVALID", path,
+                                  detail="selected Actual source has no recorded payload")
             intentional_absences.append(LaneIntentionalAbsence(instance, "planned", "actual-source-only"))
         else:
             _expect_mark(expected_marks, instance, planned_role, "planned")

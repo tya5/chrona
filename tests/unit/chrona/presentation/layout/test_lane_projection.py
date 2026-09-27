@@ -108,3 +108,55 @@ def test_open_actual_is_bound_to_selected_cutoff_and_incomplete_payload_is_typed
     assert [(entry.role, entry.reason) for entry in absence] == [
         ("actual", "open-actual-empty-at-cutoff"),
     ]
+    missing_start = replace(item, actual={"openUntil": "asOf"})
+    missing_start_projection = _projection(ReviewRowProjection(
+        "row", "Row", "g", "item", (missing_start,)))
+    with pytest.raises(LayoutError, match="E_LAYOUT_LANE_AS_OF_REQUIRED"):
+        close_lane_projection(missing_start_projection, as_of=None)
+
+
+def test_primary_recorded_actual_is_an_explicit_absence():
+    item = _item("item", actual={"start": date(2026, 1, 1), "finish": date(2026, 1, 2)},
+                 state=ObservationState.RECORDED)
+    result = close_lane_projection(_projection(ReviewRowProjection(
+        "row", "Row", "g", "item", (item,))), as_of=None)
+    assert [(mark.role, mark.purpose) for mark in result.expected_marks] == [("planned", "planned")]
+    assert [(absence.role, absence.reason) for absence in result.intentional_absences] == [
+        ("actual", "actual-owned-by-selected-source"),
+    ]
+
+
+def test_actual_source_complete_payload_emits_actual_and_not_planned():
+    item = _item("item", source_kind="actual",
+                 actual={"start": date(2026, 1, 1), "finish": date(2026, 1, 2)},
+                 state=ObservationState.RECORDED)
+    result = close_lane_projection(_projection(ReviewRowProjection(
+        "row", "Row", "g", "item", (item,))), as_of=None)
+    assert [(mark.role, mark.purpose) for mark in result.expected_marks] == [("actual", "actual")]
+    assert [(absence.role, absence.reason) for absence in result.intentional_absences] == [
+        ("planned", "actual-source-only"),
+    ]
+
+
+def test_incomplete_recorded_actual_is_typed_absence_and_state_conflicts_fail():
+    incomplete = _item("item", source_kind="combined", actual={"start": date(2026, 1, 1)},
+                       state=ObservationState.RECORDED)
+    result = close_lane_projection(_projection(ReviewRowProjection(
+        "row", "Row", "g", "item", (incomplete,))), as_of=None)
+    assert [(absence.role, absence.reason) for absence in result.intentional_absences] == [
+        ("actual", "incomplete-actual-payload"),
+    ]
+    contradictory = replace(incomplete, observation_state=ObservationState.UNAVAILABLE,
+                             roles=("planned",))
+    projection = _projection(ReviewRowProjection("row", "Row", "g", "item", (contradictory,)))
+    with pytest.raises(LayoutError, match="E_LAYOUT_LANE_EXPECTED_MARK_SET_INVALID"):
+        close_lane_projection(projection, as_of=None)
+
+
+def test_duplicate_review_row_ids_fail_closed():
+    rows = (
+        ReviewRowProjection("row", "First", "g", "one", (_item("one"),)),
+        ReviewRowProjection("row", "Second", "g", "two", (_item("two"),)),
+    )
+    with pytest.raises(LayoutError, match="E_LAYOUT_LANE_PROJECTION_INVALID"):
+        close_lane_projection(_projection(*rows), as_of=None)
