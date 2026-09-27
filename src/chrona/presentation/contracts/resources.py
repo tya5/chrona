@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+from enum import StrEnum
 from functools import cache
 import math
 import re
@@ -164,6 +165,35 @@ class ViewRowItem:
     scenario_id: str | None = None
 
 
+class ViewRowMode(StrEnum):
+    """Closed row-composition vocabulary accepted by the live View contract."""
+
+    AUTOMATIC = "automatic"
+    EXPLICIT = "explicit"
+    LANES = "lanes"
+
+
+class ViewLaneLabel(StrEnum):
+    """Meaning of the generated lane table's first column."""
+
+    GROUP = "group"
+    LANE = "lane"
+
+
+class ViewTrackAllocation(StrEnum):
+    """Explicit-row subtrack policy accepted by View v0.27."""
+
+    COLLISION = "collision"
+
+
+@dataclass(frozen=True)
+class ViewLaneTable:
+    """Finite aggregate summary intent for generated lane rows."""
+
+    label: ViewLaneLabel
+    count: bool = False
+
+
 @dataclass(frozen=True)
 class ViewRow:
     id: str
@@ -178,9 +208,11 @@ class ViewRow:
 
 @dataclass(frozen=True)
 class ViewRows:
-    mode: str
+    mode: ViewRowMode
     items: tuple[ViewRow, ...]
     points: str = "attached"
+    track_allocation: ViewTrackAllocation | None = None
+    lane_table: ViewLaneTable | None = None
 
 
 @dataclass(frozen=True)
@@ -564,6 +596,7 @@ _SCHEMAS = {
     ("render-context", "chrona/render-context/v0.16"): "render-context-v0.16.schema.yaml",
     ("project", "timeline/v0.7"): "project-v0.7.schema.yaml",
     ("view", "chrona/view/v0.26"): "view-v0.26.schema.yaml",
+    ("view", "chrona/view/v0.27"): "view-v0.27.schema.yaml",
     ("theme", "chrona/theme/v0.11"): "theme-v0.11.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.2"): "color-scheme-v0.2.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.9"): "layout-profile-v0.9.schema.yaml",
@@ -762,7 +795,12 @@ def _view_input(body: FrozenDict) -> ViewInput:
     return ViewInput(
         selection, grouping, ordering, window, comparison, visibility,
         table_columns,
-        tuple(body.get("annotations", ())), ViewRows(str(rows["mode"]), row_items, str(rows.get("points", "attached"))), body.get("axis"),
+        tuple(body.get("annotations", ())), ViewRows(
+            ViewRowMode(str(rows["mode"])), row_items, str(rows.get("points", "attached")),
+            ViewTrackAllocation(str(rows["trackAllocation"])) if "trackAllocation" in rows else None,
+            (ViewLaneTable(ViewLaneLabel(str(rows["laneTable"]["label"])), bool(rows["laneTable"].get("count", False)))
+             if "laneTable" in rows else None),
+        ), body.get("axis"),
         tuple(body.get("markers", ())), body.get("shading"), body.get("timePresentation"),
         str(body["annotationPresentation"]) if "annotationPresentation" in body else None,
         str(body["surface"]), body.get("colorEncoding"),

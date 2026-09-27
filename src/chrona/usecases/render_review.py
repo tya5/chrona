@@ -36,7 +36,7 @@ from chrona.core.attachments import AttachmentWarning, attachment_warnings
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
 from chrona.presentation.model.projection import build_review_projection
 from chrona.presentation.model.surface_content import SummaryContent, TableContent
-from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput
+from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput, ViewRowMode
 from chrona.presentation.review.v05_content import normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content
 from chrona.presentation.scene.model import (
     ContentFamilyCounts, InspectionScene, SceneManifest, SceneProvenance,
@@ -441,6 +441,9 @@ def _visual_request(visual: Any, projection: Any, index: int, closure: RenderClo
 def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClosure,
                     manifests: dict[str, dict[str, Any]], scheduler: Scheduler) -> Any:
     """Schedule the Project, and its Snapshot when one is bound, then project the review."""
+    if view.rows.mode is ViewRowMode.LANES:
+        raise RenderFailed("E_REVIEW_LANE_ENGINE_UNAVAILABLE",
+                           "lane row mode is accepted but requires the Layout lane engine", "layout", "/body/rows/mode")
     result = scheduler.schedule(project, extension_diagnostics=validate_profiles(project, manifests))
     if not result.ok:
         raise RenderRejected(result.diagnostics)

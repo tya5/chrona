@@ -16,7 +16,7 @@ from chrona.presentation.contracts import (
 from chrona.presentation.contracts.resources import (
     ActualSetContract, ColorSchemeContract, LayoutProfileContract, ProfilePackageContract,
     ProjectContract, RenderContextContract, ReviewDetailProfileContract, SchemaContractError, SnapshotRefContract,
-    SummaryProfileContract, UnsupportedResourceVersionError, ViewContract, _SCHEMAS,
+    SummaryProfileContract, UnsupportedResourceVersionError, ViewContract, ViewLaneLabel, ViewLaneTable, ViewRowMode, _SCHEMAS,
 )
 
 
@@ -343,6 +343,30 @@ def test_live_closed_resources_become_named_presentation_records():
     assert isinstance(view_contract.view.visibility.labels, bool)
     assert isinstance(summary_contract, SummaryProfileContract)
     assert summary_contract.summary.panels[0].metrics
+
+
+def test_v027_lane_contract_normalizes_typed_intent_and_fails_closed_before_projection():
+    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
+    body = value["body"]
+    body.pop("tableColumns", None)
+    body["rows"] = {"mode": "lanes", "laneTable": {"label": "group", "count": True}}
+    body["visibility"]["labels"] = {
+        "placement": "plot", "content": ["title", "finishDelta"],
+        "side": "auto", "overflow": "visible-overflow",
+    }
+    contract = parse_contract(
+        ClosureIdentity("view", value["id"], "r", "sha256:" + "a" * 64), value,
+    )
+    assert isinstance(contract, ViewContract)
+    assert contract.view.rows.mode is ViewRowMode.LANES
+    assert contract.view.rows.lane_table == ViewLaneTable(ViewLaneLabel.GROUP, True)
+
+    from chrona.usecases.render_review import RenderFailed, _project_review
+
+    with pytest.raises(RenderFailed) as failure:
+        _project_review({}, contract.view, None, {}, None)
+    assert failure.value.code == "E_REVIEW_LANE_ENGINE_UNAVAILABLE"
+    assert failure.value.source_ref == "/body/rows/mode"
 
 
 def test_downstream_presentation_code_has_no_raw_contract_input_escape_hatch():

@@ -25,17 +25,19 @@ def _json_value(value: Any) -> Any:
 
 
 def _validator() -> jsonschema.Draft202012Validator:
-    schema = yaml.safe_load(schema_resource("view-v0.26.schema.yaml").read_text(encoding="utf-8"))
+    schema = yaml.safe_load(schema_resource("view-v0.27.schema.yaml").read_text(encoding="utf-8"))
     foundation = yaml.safe_load(schema_resource("presentation-resource-v0.1.schema.yaml").read_text(encoding="utf-8"))
     return jsonschema.Draft202012Validator(
-        schema, resolver=jsonschema.RefResolver.from_schema(schema, store={foundation["$id"]: foundation})
+        schema, resolver=jsonschema.RefResolver.from_schema(
+            schema, store={foundation["$id"]: foundation, schema["$id"]: schema}
+        )
     )
 
 
 @pytest.mark.parametrize("path", reachable_view_paths(ROOT))
 def test_declared_public_v03_view_validates(path: Path):
     value = yaml.safe_load(path.read_text(encoding="utf-8"))
-    assert value.get("version") == "chrona/view/v0.26", path
+    assert value.get("version") == "chrona/view/v0.27", path
     assert next(_validator().iter_errors(_json_value(value)), None) is None, path
 
 
@@ -58,7 +60,7 @@ def test_view_admits_inside_at_each_member_label_side_ingress():
     }
     value["body"]["visibility"]["fallback"] = {"labels": ["inside", "end", "suppress"]}
     assert next(_validator().iter_errors(_json_value(value)), None) is None
-    schema = yaml.safe_load(schema_resource("view-v0.26.schema.yaml").read_text(encoding="utf-8"))
+    schema = yaml.safe_load(schema_resource("view-v0.27.schema.yaml").read_text(encoding="utf-8"))
     assert "inside" in schema["$defs"]["presentationIntent"]["properties"]["label"]["properties"]["side"]["enum"]
 
 
@@ -67,6 +69,47 @@ def test_view_accepts_only_closed_progress_fill_sources():
     assert next(_validator().iter_errors(_json_value(value)), None) is None
     value["body"]["progressFill"] = {"source": "derived"}
     assert next(_validator().iter_errors(_json_value(value)), None) is not None
+
+
+def test_v027_lane_rows_require_closed_lane_intent_and_visible_names():
+    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
+    body = value["body"]
+    body.pop("tableColumns", None)
+    body["rows"] = {"mode": "lanes", "laneTable": {"label": "group", "count": True}}
+    body["visibility"]["labels"] = {
+        "placement": "plot", "content": ["title", "finishDelta"],
+        "side": "auto", "overflow": "visible-overflow",
+    }
+    assert next(_validator().iter_errors(_json_value(value)), None) is None
+
+    invalid = deepcopy(value)
+    invalid["body"]["visibility"]["labels"]["overflow"] = "suppress"
+    assert next(_validator().iter_errors(_json_value(invalid)), None) is not None
+
+    invalid = deepcopy(value)
+    invalid["body"]["rows"].pop("laneTable")
+    assert next(_validator().iter_errors(_json_value(invalid)), None) is not None
+
+    automatic = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
+    automatic["body"]["rows"]["laneTable"] = {"label": "group"}
+    assert next(_validator().iter_errors(_json_value(automatic)), None) is not None
+
+    invalid = deepcopy(value)
+    invalid["body"]["grouping"]["by"] = "hierarchy"
+    assert next(_validator().iter_errors(_json_value(invalid)), None) is not None
+
+    invalid = deepcopy(value)
+    invalid["body"]["rows"]["trackAllocation"] = "collision"
+    assert next(_validator().iter_errors(_json_value(invalid)), None) is not None
+
+    explicit = yaml.safe_load((ROOT / "tests/fixtures/multi-lane-milestones/view.yaml").read_text(encoding="utf-8"))
+    explicit["body"]["rows"]["trackAllocation"] = "collision"
+    assert next(_validator().iter_errors(_json_value(explicit)), None) is None
+    explicit["body"]["rows"]["laneTable"] = {"label": "group"}
+    assert next(_validator().iter_errors(_json_value(explicit)), None) is not None
+    explicit["body"]["rows"].pop("laneTable")
+    explicit["body"]["rows"]["trackAllocation"] = "member-index"
+    assert next(_validator().iter_errors(_json_value(explicit)), None) is not None
 
 
 def test_v018_requires_closed_axis_and_table_header_orientation():
