@@ -18,6 +18,7 @@ from chrona.presentation.layout.lane_bundle_mapper import (
 from chrona.presentation.layout.lane_projection import (
     LaneProjectionInstance,
     close_lane_projection,
+    lane_missing_actual_visible,
 )
 from chrona.presentation.layout.lane_subtracks import (
     LaneFacetFootprint,
@@ -94,7 +95,7 @@ def compose_lane_item_footprints(
             item=items[instance], instance_id=instance.placement_key,
             source_kind=instance.source_kind, frame=frame, as_of=as_of,
             theme_tokens=theme_tokens, slot_id=slot_id,
-            emit_missing_actual=True, emit_diagnostics=False,
+            emit_missing_actual=lane_missing_actual_visible(projection), emit_diagnostics=False,
         )
         marks_by_instance[instance] = composition.marks
     all_marks = tuple(mark for instance in closure.instances for mark in marks_by_instance[instance])
@@ -128,6 +129,11 @@ def compose_lane_item_footprints(
         observed_ids = tuple(facet_purposes[instance].get("actual", ())) + tuple(
             facet_purposes[instance].get("missing-actual", ()))
         _add_intra_instance_overlay_pairs(collected, instance, planned_ids, observed_ids)
+        if progress_fill_source == "actual":
+            _add_intra_instance_overlay_pairs(
+                collected, instance, planned_ids,
+                tuple(facet_purposes[instance].get("progress", ())),
+            )
     instances_by_member: dict[str, list[LaneProjectionInstance]] = defaultdict(list)
     for instance in closure.instances:
         instances_by_member[owner_for_instance[instance]].append(instance)

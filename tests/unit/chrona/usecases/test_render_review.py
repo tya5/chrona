@@ -137,7 +137,7 @@ def test_render_review_renders_a_closure_without_the_cli():
 
 
 @pytest.mark.parametrize("context_name", ["02-programme-board", "11-overlay-briefing", "12-glyph-gates"])
-def test_hidden_lane_layout_projects_fixed_membership_before_public_activation(context_name):
+def test_public_lane_layout_projects_fixed_membership(context_name):
     with tempfile.TemporaryDirectory() as temporary:
         closure, snapshot = _closure(Path(temporary), context_name)
         value = yaml.safe_load((EXAMPLE / "views/02-programme-board.yaml").read_text(encoding="utf-8"))
@@ -152,9 +152,7 @@ def test_hidden_lane_layout_projects_fixed_membership_before_public_activation(c
                           for resource in closure.resources)
         lane_closure = replace(closure, resources=resources)
         render_request = _request(lane_closure, snapshot)
-        with pytest.raises(RenderFailed, match="E_REVIEW_LANE_ENGINE_UNAVAILABLE"):
-            render_review(render_request)
-        rendered = render_usecase._render_review(render_request)
+        rendered = render_review(render_request)
         validate_scene_document(scene_document(rendered.scene))
         manifests = {item.package_id: item.profile_input for item in lane_closure.profile_packages}
         oracle, _, _ = render_usecase._project_review(
@@ -358,7 +356,7 @@ def test_scene_validation_requires_layout_completed_canvas_bounds():
 
 def test_scene_lane_anchor_and_primitive_identity_are_optional_and_serialized_typed():
     with tempfile.TemporaryDirectory() as temporary:
-        closure, snapshot = _closure(Path(temporary))
+        closure, snapshot = _closure(Path(temporary), "04-tvac-slip")
         scene = render_review(_request(closure, snapshot)).scene
     original = serialize_scene(scene)
     surface = scene.surfaces[0]
@@ -394,7 +392,7 @@ def test_scene_lane_carrier_rejects_partial_or_unanchored_references():
 
 def test_scene_document_lane_reference_requires_an_in_bounds_anchor():
     with tempfile.TemporaryDirectory() as temporary:
-        closure, snapshot = _closure(Path(temporary))
+        closure, snapshot = _closure(Path(temporary), "04-tvac-slip")
         document = scene_document(render_review(_request(closure, snapshot)).scene)
     surface = document["surfaces"][0]
     row = surface["rows"][0]

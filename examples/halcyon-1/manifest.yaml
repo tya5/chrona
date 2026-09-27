@@ -64,7 +64,7 @@ slides:
     expectedSvg: generated/12-glyph-gates.svg
     expectedScene: generated/12-glyph-gates.scene.json
   - id: gallery-editorial
-    evidence: "Mission brief under the packaged Editorial preset (#383, #429): warm-paper ground, two-tier navy/grey axis band, capsule bars with an inset progress fill, and a horizontal real-primitive legend."
+    evidence: "Editorial Reference: mission brief under the retained row-oriented Editorial reference View (#383, #429)."
     context: contexts/13-gallery-editorial.yaml
     expectedSvg: generated/13-gallery-editorial.svg
     expectedScene: generated/13-gallery-editorial.scene.json
@@ -78,3 +78,8 @@ slides:
     context: contexts/15-gallery-image-notes.yaml
     expectedSvg: generated/15-gallery-image-notes.svg
     expectedScene: generated/15-gallery-image-notes.scene.json
+  - id: gallery-editorial-lanes
+    evidence: "Reusable Editorial lane variant; the original Editorial Reference remains slide 13."
+    context: contexts/16-gallery-editorial-lanes.yaml
+    expectedSvg: generated/16-gallery-editorial-lanes.svg
+    expectedScene: generated/16-gallery-editorial-lanes.scene.json

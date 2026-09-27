@@ -8,7 +8,7 @@ from typing import Any, Mapping
 import jsonschema
 
 from chrona.presentation.scene.model import (
-    LANE_MEMBER_PURPOSES, PRIMARY_LANE_MARK_PURPOSES, DecorationDisposition, InspectionScene, LinearGradient,
+    PRIMARY_LANE_MARK_PURPOSES, DecorationDisposition, InspectionScene, LinearGradient,
     PatternGeometry, SceneIconPath, SceneLaneObstacle, SceneLaneRectObstacle,
     SceneLaneSegmentObstacle, ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish,
     TextLayout, requires_lane_member_provenance,
@@ -167,9 +167,7 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
             if any(by_id[item][1].get("purpose") not in PRIMARY_LANE_MARK_PURPOSES
                    for item in primary_ids):
                 return False
-            if any((item.get("kind") == "Icon"
-                    or (item.get("purpose") in LANE_MEMBER_PURPOSES
-                        and requires_lane_member_provenance(item.get("kind"), item.get("purpose"))))
+            if any(requires_lane_member_provenance(item.get("kind"), item.get("purpose"))
                    and item.get("laneRowId") is None for item in primitives):
                 return False
             expected_obstacles = set(inventory)

@@ -1,4 +1,4 @@
-version: chrona/view/v0.27
+version: chrona/view/v0.28
 kind: view
 id: chrona-preset-elevated-light
 body:
@@ -35,9 +35,10 @@ body:
     - finishDelta
   visibility:
     labels:
-      placement: both
+      placement: plot
       content:
       - title
+      - finishDelta
       side: end
       overflow: suppress
     fallback:
@@ -86,23 +87,10 @@ body:
   backgroundDecoration:
     rows: none
     groups: all
-  tableColumns:
-  - id: Work item
-    source: title
-    missing: em-dash
-    align: start
-    width: content
-    headerOrientation: horizontal
-  - id: Δ
-    source:
-      facet: finishDelta
-    format: signedDays
-    missing: em-dash
-    align: end
-    width: content
-    headerOrientation: horizontal
   rows:
-    mode: automatic
+    mode: lanes
+    packing: [explicit, attached]
+    laneTable: {label: group, count: true}
   markers:
   - kind: asOf
     source: actual

@@ -445,7 +445,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                                     path_commands=actual_mark.path_commands, slot_id=actual_mark.slot_id,
                                                     paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
         missing_mark = mark_placements.get(f"missing-actual:{instance_id}")
-        if missing_mark is not None and "missingActual" in (getattr(projection, "comparison_facets", ()) or ("missingActual",)):
+        if missing_mark is not None and (projection.lane_membership is not None or
+                                         "missingActual" in (getattr(projection, "comparison_facets", ()) or ("missingActual",))):
             missing_ids = lane_scene_ids("mark", missing_mark.placement_id)
             missing_id = missing_ids[0] if missing_ids else missing_mark.placement_id
             bounds = (float(missing_mark.bounds.inline), float(missing_mark.bounds.block),
@@ -706,14 +707,15 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                     facet.obstacle_class, geometry,
                 ))
         primitive_by_id = {item.scene_id: item for item in completed_primitives}
-        if (not owner_by_primitive or any(identifier not in primitive_by_id for identifier in owner_by_primitive)
-                or any(requires_lane_member_provenance(item.kind, item.purpose)
-                       and item.scene_id not in owner_by_primitive for item in completed_primitives)):
-            missing = next((item.scene_id for item in completed_primitives
-                            if requires_lane_member_provenance(item.kind, item.purpose)
-                            and item.scene_id not in owner_by_primitive), "lane-emission-inventory")
-            raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", missing,
-                                  f"Scene lane emission differs from typed Layout handoff: {missing}")
+        unexpected = next((identifier for identifier in owner_by_primitive
+                           if identifier not in primitive_by_id), None)
+        missing = next((item.scene_id for item in completed_primitives
+                        if requires_lane_member_provenance(item.kind, item.purpose)
+                        and item.scene_id not in owner_by_primitive), None)
+        if not owner_by_primitive or unexpected is not None or missing is not None:
+            mismatch = unexpected or missing or "lane-emission-inventory"
+            raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", mismatch,
+                                  f"Scene lane emission differs from typed Layout handoff: {mismatch}")
         completed_primitives = tuple(
             replace(item, lane_row_id=owner_by_primitive[item.scene_id][0],
                     lane_member_id=owner_by_primitive[item.scene_id][1])

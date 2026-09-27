@@ -41,7 +41,7 @@ entries:
   - id: editorial
     gallerySet: generated-design-directions
     members:
-      view: {id: chrona-preset-editorial, kind: view, sourceRoot: presets/bundles/editorial, sourcePath: view.yaml}
+      view: {id: chrona-preset-editorial-lanes, kind: view, sourceRoot: presets/bundles/editorial, sourcePath: view-lanes.yaml}
       theme: {id: chrona-builtin-editorial, kind: theme, sourceRoot: presets/bundles/editorial, sourcePath: theme.yaml}
       colorScheme: {id: chrona-builtin-editorial, kind: color-scheme, sourceRoot: presets/bundles/editorial, sourcePath: scheme.yaml}
       layout: {id: chrona-builtin-editorial, kind: layout-profile, sourceRoot: presets/bundles/editorial, sourcePath: layout.yaml}

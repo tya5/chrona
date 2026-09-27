@@ -28,6 +28,7 @@ SCHEMAS = (
     "view-v0.22.schema.yaml",
     "view-v0.23.schema.yaml",
     "view-v0.24.schema.yaml",
+    "view-v0.28.schema.yaml",
     "layout-profile-v0.3.schema.yaml",
     "layout-profile-v0.4.schema.yaml",
     "layout-profile-v0.5.schema.yaml",
@@ -100,6 +101,8 @@ def test_package_owned_runtime_resources_exist():
         "presets/bundles/print-mono/theme.yaml",
         "presets/bundles/print-mono/view.yaml",
         "presets/bundles/editorial-readable-default/view.yaml",
+        "presets/bundles/editorial/view.yaml",
+        "presets/bundles/editorial/view-lanes.yaml",
         "presets/bundles/editorial-readable-default/theme.yaml",
     ):
         assert RESOURCES.joinpath(*resource_path.split("/")).is_file(), resource_path

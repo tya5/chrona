@@ -177,19 +177,10 @@ class ClosureReadLedger:
 def render_review(request: RenderRequest) -> RenderedReview:
     """Transport detector-owned presentation pointers across the use-case boundary."""
     try:
-        if isinstance(request, RenderRequest):
-            _assert_public_lane_guard(request.closure.view.view)
         return _render_review(request)
     except (LayoutError, ThemeTokenError, ScenePaintError) as error:
         raise RenderFailed(error.diagnostic_id, getattr(error, "detail", None) or error.diagnostic_id,
                            "presentation", error.path or "/") from error
-
-
-def _assert_public_lane_guard(view: ViewInput) -> None:
-    """Keep unreleased lane rendering private while Layout/Scene gates close."""
-    if view.rows.mode is ViewRowMode.LANES:
-        raise RenderFailed("E_REVIEW_LANE_ENGINE_UNAVAILABLE",
-                           "lane row mode is accepted but requires the Layout lane engine", "layout", "/body/rows/mode")
 
 
 def _render_review(request: RenderRequest) -> RenderedReview:

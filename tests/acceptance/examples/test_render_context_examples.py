@@ -19,6 +19,7 @@ def test_current_example_contexts_bind_exact_source_bytes():
         "examples/halcyon-1/contexts/01-mission-brief.yaml",
         "examples/halcyon-1/contexts/02-programme-board.yaml",
         "examples/halcyon-1/contexts/03-launch-campaign.yaml",
+        "examples/halcyon-1/contexts/16-gallery-editorial-lanes.yaml",
     ):
         path = ROOT / relative
         context = yaml.safe_load(path.read_text(encoding="utf-8"))

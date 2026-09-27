@@ -37,9 +37,12 @@ def _finite_number(value: object) -> bool:
 
 
 def requires_lane_member_provenance(kind: str, purpose: str) -> bool:
-    """Whether current semantic bindings make a completed Scene primitive lane-owned."""
-    return kind == "Icon" or (purpose in LANE_MEMBER_PURPOSES
-                               and (kind, purpose) in _LANE_PURPOSE_KINDS)
+    """Whether a non-icon primitive's semantics alone imply lane ownership.
+
+    Icons can decorate global labels as well as lane members. Member icons are
+    instead closed by the exact typed Layout emission inventory.
+    """
+    return kind != "Icon" and purpose in LANE_MEMBER_PURPOSES and (kind, purpose) in _LANE_PURPOSE_KINDS
 
 
 @dataclass(frozen=True)

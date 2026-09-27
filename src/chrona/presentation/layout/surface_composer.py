@@ -53,7 +53,7 @@ from chrona.presentation.layout.icon_geometry import complete_icon_paths
 from chrona.presentation.layout.lane_bundle_mapper import (
     _mark_facets, _overlay_compound_facets, _with_mark_visuals,
 )
-from chrona.presentation.layout.lane_projection import LaneProjectionInstance
+from chrona.presentation.layout.lane_projection import LaneProjectionInstance, lane_missing_actual_visible
 from chrona.presentation.layout.surface_quality import (
     AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, ColumnPlacement, FitWarning, GroupPlacement, MarkPlacement, PathCommand, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
     IconPlacement, LayoutImageFill, ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest,
@@ -1574,6 +1574,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 item=item, instance_id=instance_id, source_kind=source_kind, frame=frame,
                 as_of=contract.time.as_of, theme_tokens=request.theme_tokens,
                 slot_id=timeline.slot_id, paint_order_base=MARK_PAINT_ORDER_BASE,
+                emit_missing_actual=(lane_missing_actual_visible(projection)
+                                     if lane_owner is not None else True),
             )
             marks.extend(replace(mark, lane_row_id=lane_owner[0], lane_member_id=lane_owner[1],
                                  lane_source_kind=source_kind)

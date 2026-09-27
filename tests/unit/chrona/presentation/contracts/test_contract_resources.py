@@ -196,8 +196,12 @@ def test_v16_table_intent_contract_rejects_duplicate_columns_and_keeps_explicit_
 
 
 def test_boolean_comparison_columns_require_a_complete_typed_presence_presentation():
-    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/01-mission-brief.yaml").read_text(encoding="utf-8"))
-    column = next(item for item in value["body"]["tableColumns"] if item["id"] == "Obs")
+    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/04-tvac-slip.yaml").read_text(encoding="utf-8"))
+    column = {"id": "Obs", "source": {"comparisonFacet": "missingActual"},
+              "format": {"kind": "presence", "whenTrue": "Missing", "whenFalse": "Recorded"},
+              "missing": "em-dash", "align": "center", "width": "content",
+              "headerOrientation": "horizontal"}
+    value["body"]["tableColumns"].append(column)
     contract = _view_contract(value)
     assert contract.view.table_columns[-1].format.when_true == "Missing"
     column["format"] = "text"
@@ -345,14 +349,14 @@ def test_live_closed_resources_become_named_presentation_records():
     assert summary_contract.summary.panels[0].metrics
 
 
-def test_v027_lane_contract_normalizes_typed_intent_and_fails_closed_before_projection():
+def test_v028_lane_contract_normalizes_typed_intent():
     value = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
     body = value["body"]
     body.pop("tableColumns", None)
     body["rows"] = {"mode": "lanes", "laneTable": {"label": "group", "count": True}}
     body["visibility"]["labels"] = {
         "placement": "plot", "content": ["title", "finishDelta"],
-        "side": "auto", "overflow": "visible-overflow",
+        "side": "auto", "overflow": "suppress",
     }
     contract = parse_contract(
         ClosureIdentity("view", value["id"], "r", "sha256:" + "a" * 64), value,
@@ -361,12 +365,6 @@ def test_v027_lane_contract_normalizes_typed_intent_and_fails_closed_before_proj
     assert contract.view.rows.mode is ViewRowMode.LANES
     assert contract.view.rows.lane_table == ViewLaneTable(ViewLaneLabel.GROUP, True)
 
-    from chrona.usecases.render_review import RenderFailed, _assert_public_lane_guard
-
-    with pytest.raises(RenderFailed) as failure:
-        _assert_public_lane_guard(contract.view)
-    assert failure.value.code == "E_REVIEW_LANE_ENGINE_UNAVAILABLE"
-    assert failure.value.source_ref == "/body/rows/mode"
 
 
 def test_v028_lane_contract_parses_packing_defaults_and_explicit_keys():
