@@ -1,6 +1,9 @@
 version: chrona/example-reachability/v0.1
 supportingFiles:
   - {path: README.md, reason: corpus index documentation}
+  - {path: attached-milestones/README.md, reason: reusable attached milestone rendering instructions}
+  - {path: attached-milestones/project.yaml, reason: committed long-task and intermediate-gate example}
+  - {path: attached-milestones/actual.yaml, reason: observed point delta example}
   - {path: aster-ssd/README.md, reason: ASTER corpus documentation}
   - {path: aster-ssd/themes/onboarding-variation.yaml, reason: executable five-line derived Theme tutorial source}
   - {path: controller-z/README.md, reason: Controller Z corpus and curriculum documentation}

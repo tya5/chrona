@@ -1,0 +1,23 @@
+version: timeline/v0.7
+project:
+  id: attached-milestones
+  title: Intermediate campaign gates
+  calendar: weekdays
+calendars:
+  weekdays:
+    working_days: [mon, tue, wed, thu, fri]
+objects:
+  campaign:
+    type: task
+    title: Launch campaign
+    schedule: {mode: fixed-span, start: '2027-09-21', end: '2027-10-20'}
+  readiness:
+    type: gate
+    title: Readiness review
+    attachesTo: campaign
+    schedule: {mode: fixed-point, at: '2027-09-30'}
+  range-clearance:
+    type: gate
+    title: Range clearance
+    attachesTo: campaign
+    schedule: {mode: fixed-point, at: '2027-10-12'}
