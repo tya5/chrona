@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from chrona.presentation.layout.routing import (
@@ -29,8 +31,14 @@ def test_lane_route_attempts_retain_measured_quality_and_primary_suppression_cau
         rejected,
     ))
     assert evidence.primary_cause == "quality-rejected"
-    assert evidence.diagnostic == (
-        "I_LAYOUT_LANE_ROUTE_CAUSE:r1:quality-rejected:egress=1:search=1:quality=1")
+    assert evidence.diagnostic.startswith("I_LAYOUT_LANE_ROUTE_CAUSE:")
+    payload = json.loads(evidence.diagnostic.removeprefix("I_LAYOUT_LANE_ROUTE_CAUSE:"))
+    assert payload["relationId"] == "r1"
+    assert payload["primaryCause"] == "quality-rejected"
+    assert payload["attempts"][0]["blockerIds"] == ["name:task"]
+    assert payload["attempts"][1]["searchFailure"] == "E_CONNECTOR_UNROUTABLE"
+    assert payload["attempts"][2]["length"] == 20.0
+    assert payload["attempts"][2]["maxBends"] == 0
 
 
 def test_route_attempt_rejects_unmeasured_or_falsely_classified_quality():

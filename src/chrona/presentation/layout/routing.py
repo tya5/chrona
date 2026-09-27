@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from heapq import heappop, heappush
+import json
 from math import isfinite
 
 from chrona.presentation.layout.model import geometry_sum
@@ -77,11 +78,23 @@ class RouteSuppressionEvidence:
 
     @property
     def diagnostic(self) -> str:
-        counts = {outcome: sum(attempt.outcome == outcome for attempt in self.attempts)
-                  for outcome in ("egress-collision", "no-route-found", "quality-rejected")}
-        return (f"I_LAYOUT_LANE_ROUTE_CAUSE:{self.relation_id}:{self.primary_cause}:"
-                f"egress={counts['egress-collision']}:search={counts['no-route-found']}:"
-                f"quality={counts['quality-rejected']}")
+        """Stable lane-only evidence, including each measured rejected port pair."""
+        attempts = []
+        for attempt in self.attempts:
+            record = {"sourceSide": attempt.source_side, "targetSide": attempt.target_side,
+                      "outcome": attempt.outcome}
+            if attempt.blocker_ids:
+                record["blockerIds"] = list(attempt.blocker_ids)
+            if attempt.search_failure is not None:
+                record["searchFailure"] = attempt.search_failure
+            if attempt.length is not None:
+                record.update(length=attempt.length, directLength=attempt.direct_length,
+                              bends=attempt.bends, maxBends=attempt.max_bends,
+                              maxDetourRatio=attempt.max_detour_ratio)
+            attempts.append(record)
+        payload = {"relationId": self.relation_id, "primaryCause": self.primary_cause,
+                   "attempts": attempts}
+        return "I_LAYOUT_LANE_ROUTE_CAUSE:" + json.dumps(payload, sort_keys=True, separators=(",", ":"))
 
 
 def place_relation_route(*, source_port: tuple[float, float], target_port: tuple[float, float],

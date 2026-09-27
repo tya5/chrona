@@ -36,7 +36,7 @@ from chrona.presentation.layout.ports import ConnectorEgress, coincident_endpoin
 from chrona.presentation.model.placement_candidates import candidate_order
 from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
 from chrona.presentation.layout.relation_terminals import marker_geometry
-from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
+from chrona.presentation.layout.routing import RouteSearchFailure, place_relation_route, relation_route_quality
 from chrona.presentation.layout.path_geometry import open_span_path, rounded_diamond_path, rounded_orthogonal_path
 from chrona.presentation.layout.mark_geometry import symbol_parts
 from chrona.presentation.layout.icon_geometry import complete_icon_paths
@@ -1810,7 +1810,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                             port_ids=existing_ports,
                             bounds=(timeline_bounds[0], route_top,
                                     timeline_bounds[0] + timeline_bounds[2], route_bottom)))
-                    except ValueError:
+                    except RouteSearchFailure:
                         continue
                     candidate_points = combined_connector_points(source_egress, middle, target_egress)
                     if len(candidate_points) < 2:
