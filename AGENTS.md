@@ -170,6 +170,11 @@ The existing backlog is several hundred plans and reviews of closed issues. Arch
   introduced by the slice from independent failures, and record the disposition
   before declaring release acceptance. Do not close a ticket while its required
   release gate or user-visible acceptance remains unverified.
+- Reference issues from design, review and plan commits (and from partial
+  slices) with `Refs #n` only. GitHub closes an issue on `closes`, `fixes` or
+  `resolves` followed by its number anywhere in a commit message reaching
+  `main`, including prose such as "closes #n together with ...". Close an issue
+  by hand, with the literal-acceptance comment, once every row is verified.
 
 ## Handing off and resuming
 
