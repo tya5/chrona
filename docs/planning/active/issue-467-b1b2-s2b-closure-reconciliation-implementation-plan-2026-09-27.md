@@ -33,6 +33,8 @@ Against Specs 09/24/38/46/50/64: schedule and View selection remain upstream of 
 
 **B2 subtrack review:** Fixed membership does not imply overlapping marks may paint illegibly. Layout assigns first-compatible internal subtracks from completed mark facets (including Actual/comparison/icons/strokes), with only declared intra-member or attached-bundle overlays exempt. This can change row height across Themes, never lane identity/count. Labels follow the shared obstacle search afterwards; they cannot create a subtrack or lane. This preserves Spec 38's predictable membership and Specs 24/46/50's measured geometry and paint boundaries. The old allocator's facet closure can be reused, but its candidate-to-lane selection and label-driven lane opening cannot.
 
+**B2 label-contract correction and architecture review:** The pre-pivot v0.28 lane schema required plot `title` but still required `visible-overflow`, while the owner now requires an unplaceable name to be suppressed and counted; a table-only View would also lose names because a lane table has no item rows. Spec 38 therefore requires lane-mode `visibility.labels` to contain both `title` and `finishDelta` with `overflow: suppress`; ingress rejects incompatible intent rather than silently overriding it. Layout's end/start, stagger and short-leader phases are after fixed membership, and a completed leader belongs to Layout/Scene, never the adapter. This is consistent with Spec 50's general author-selected overflow policy by making lanes a stricter mode; Specs 24/46/64 keep the same measurement, paint and icon ownership. Automatic/explicit remain unchanged.
+
 ## Implementation and publication units
 
 | Unit | Owners and migration | Acceptance before serial push |
