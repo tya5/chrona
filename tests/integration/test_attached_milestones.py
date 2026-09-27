@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from xml.etree import ElementTree
 
 import yaml
 
@@ -15,7 +16,9 @@ GATES = {"campaign-readiness": ("Campaign readiness review", "2027-09-24"),
          "range-safety": ("Range safety review", "2027-10-01")}
 
 
-def _render(tmp_path: Path, monkeypatch, points: str | None = None) -> dict:
+def _render(tmp_path: Path, monkeypatch, points: str | None = None, *,
+            lanes: bool = False, packing: list[str] | None = None,
+            with_delta: bool = False) -> tuple[dict, str]:
     project = yaml.safe_load((HALCYON / "project.yaml").read_text(encoding="utf-8"))
     for object_id, (title, at) in GATES.items():
         project["objects"][object_id] = {"type": "gate", "title": title, "attachesTo": "campaign",
@@ -27,22 +30,34 @@ def _render(tmp_path: Path, monkeypatch, points: str | None = None) -> dict:
     main()
     view_path = preset / "view.yaml"
     view = yaml.safe_load(view_path.read_text(encoding="utf-8"))
-    # This test covers the established attached-point row behavior. Lane mode
-    # gives points lane membership and is covered by the lane acceptance suite.
-    view["body"]["rows"]["mode"] = "automatic"
-    for key in ("packing", "laneTable", "laneKeys"):
-        view["body"]["rows"].pop(key, None)
+    if lanes:
+        if packing is not None:
+            view["body"]["rows"]["packing"] = packing
+    else:
+        view["body"]["rows"]["mode"] = "automatic"
+        for key in ("packing", "laneTable", "laneKeys"):
+            view["body"]["rows"].pop(key, None)
     view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
     if points is not None:
         view = yaml.safe_load(view_path.read_text(encoding="utf-8"))
         view["body"]["rows"]["points"] = points
         view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+    actual_path = HALCYON / "actual.yaml"
+    if with_delta:
+        actual = yaml.safe_load(actual_path.read_text(encoding="utf-8"))
+        actual["body"]["asOf"] = "2027-10-05"
+        actual["body"]["observations"].append({"id": "campaign-readiness-held", "sequence": 1,
+                                                 "projectObjectId": "campaign-readiness",
+                                                 "actual": {"at": "2027-09-25"}})
+        actual_path = tmp_path / "actual.yaml"
+        actual_path.write_text(yaml.safe_dump(actual, sort_keys=False), encoding="utf-8")
     scene = tmp_path / "scene.json"
-    monkeypatch.setattr(sys, "argv", ["chrona", "render", str(project_path), "--actual", str(HALCYON / "actual.yaml"),
-                                      "--preset", str(preset / "preset.yaml"), "--output", str(tmp_path / "out.svg"),
+    svg = tmp_path / "out.svg"
+    monkeypatch.setattr(sys, "argv", ["chrona", "render", str(project_path), "--actual", str(actual_path),
+                                      "--preset", str(preset / "preset.yaml"), "--output", str(svg),
                                       "--emit-scene", str(scene)])
     main()
-    return json.loads(scene.read_text(encoding="utf-8"))["surfaces"][0]
+    return json.loads(scene.read_text(encoding="utf-8"))["surfaces"][0], svg.read_text(encoding="utf-8")
 
 
 def _row_of(surface: dict, object_id: str) -> str:
@@ -55,7 +70,7 @@ def _primitive(surface: dict, prefix: str) -> dict:
 
 
 def test_attached_gates_sit_on_the_host_row_with_title_and_date(tmp_path, monkeypatch):
-    surface = _render(tmp_path, monkeypatch)
+    surface, svg = _render(tmp_path, monkeypatch)
     rows = {row["id"]: row["bounds"] for row in surface["rows"]}
     host = next(bounds for row_id, bounds in rows.items() if row_id.endswith("campaign"))
     assert not any(row_id.endswith(gate) for row_id in rows for gate in GATES)  # no row of their own
@@ -66,10 +81,40 @@ def test_attached_gates_sit_on_the_host_row_with_title_and_date(tmp_path, monkey
         label = _primitive(surface, f"member-label:campaign:{object_id}")
         day, month = at[8:], {"09": "Sep", "10": "Oct"}[at[5:7]]
         assert label["text"].startswith(f"{title} · {day} {month}")
+        assert title in "".join(ElementTree.fromstring(svg).itertext())
 
 
 def test_own_row_restores_a_row_per_point(tmp_path, monkeypatch):
-    surface = _render(tmp_path, monkeypatch, points="own-row")
+    surface, _ = _render(tmp_path, monkeypatch, points="own-row")
     rows = [row["id"] for row in surface["rows"]]
     for gate in GATES:
         assert any(row_id.endswith(gate) for row_id in rows)
+
+
+def test_attached_gates_share_host_lane_and_keep_facts_in_svg(tmp_path, monkeypatch):
+    surface, svg = _render(tmp_path, monkeypatch, lanes=True, with_delta=True)
+    host = next(item for item in surface["primitives"]
+                if item["sourceRef"] == "campaign" and item["id"].startswith("planned:"))
+    visible_text = "".join(ElementTree.fromstring(svg).itertext())
+    for object_id, (title, at) in GATES.items():
+        mark = next(item for item in surface["primitives"]
+                    if item["sourceRef"] == object_id and item["id"].startswith("planned:"))
+        assert mark["laneRowId"] == host["laneRowId"]
+        label = next(item for item in surface["primitives"]
+                     if item["sourceRef"] == object_id and item["id"].startswith("member-label:"))
+        day, month = at[8:], {"09": "Sep", "10": "Oct"}[at[5:7]]
+        expected = f"{title} · {day} {month}"
+        assert label["text"].startswith(expected)
+        assert expected in visible_text
+    assert "+1d" in next(item["text"] for item in surface["primitives"]
+                          if item["sourceRef"] == "campaign-readiness"
+                          and item["id"].startswith("member-label:"))
+    assert "+1d" in visible_text
+
+
+def test_lane_packing_without_attached_restores_independent_membership(tmp_path, monkeypatch):
+    surface, _ = _render(tmp_path, monkeypatch, lanes=True, packing=["explicit"])
+    lane_by_source = {item["sourceRef"]: item["laneRowId"] for item in surface["primitives"]
+                      if item["id"].startswith("planned:") and item["sourceRef"] in {*GATES, "campaign"}}
+    for gate in GATES:
+        assert lane_by_source[gate] != lane_by_source["campaign"]

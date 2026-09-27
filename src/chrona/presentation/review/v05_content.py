@@ -272,16 +272,17 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
 
 
 def _attached_labels(projection: ReviewProjection, locale: str) -> tuple[tuple[str, str], ...]:
-    """Title, planned date and delta of each attached point, in its View locale (#486)."""
+    """Title, planned date and point delta of each attached point, in its View locale (#486)."""
     labels = []
-    for row in projection.rows:
+    active_rows = projection.lane_rows if projection.lane_membership is not None else projection.rows
+    for row in active_rows:
         for item in row.items:
             at = item.planned.get("at")
             if item.attached_to is None or not isinstance(at, date):
                 continue
             parts = [item.title, _format_compact_date(at, include_year=False, locale=locale)]
-            if item.finish_delta is not None:
-                parts.append(f"{item.finish_delta:+d}d")
+            if item.at_delta is not None:
+                parts.append(f"{item.at_delta:+d}d")
             labels.append((item.object_id, " · ".join(parts)))
     return tuple(labels)
 
