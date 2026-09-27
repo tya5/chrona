@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
+from re import fullmatch
 
 
 class CapabilityDisposition(StrEnum):
@@ -99,3 +100,178 @@ def validate_substitution_request(capability_id: str) -> None:
     capability = _BY_IDENTIFIER.get(capability_id)
     if capability is None or capability.substitution_owner is None:
         raise ValueError("E_VISUAL_CAPABILITY_SUBSTITUTION")
+
+
+# Theme admission is a consumer projection of the same presentation ceiling.
+# These sets describe completed renderer-neutral uses, not current YAML usage.
+_TEXT_MEASUREMENT = frozenset(("fontFamily", "fontWeight", "fontSize", "lineHeight",
+                               "letterSpacing", "textTransform", "numericSpacing"))
+_ICON_MEASUREMENT = frozenset(("iconScale", "iconGap"))
+_AXIS_MEASUREMENT = frozenset(("laneBlockSize", "labelInset"))
+_RECT_PAINT = frozenset(("fill", "stroke", "strokeWidth", "dash", "opacity",
+                         "gradientStart", "gradientEnd", "gradientAngle", "gradientFidelity",
+                         "shadowColor", "shadowOffsetX", "shadowOffsetY", "shadowBlur",
+                         "shadowOpacity", "shadowFidelity", "strokeLineCap", "strokeLineJoin",
+                         "strokeFinishFidelity"))
+_PATH_PAINT = frozenset(("stroke", "strokeWidth", "dash", "opacity", "shadowColor",
+                         "shadowOffsetX", "shadowOffsetY", "shadowBlur", "shadowOpacity",
+                         "shadowFidelity", "strokeLineCap", "strokeLineJoin", "strokeFinishFidelity"))
+_TEXT_PAINT = frozenset(("fill", "opacity", "gradientStart", "gradientEnd", "gradientAngle",
+                         "gradientFidelity", "shadowColor", "shadowOffsetX", "shadowOffsetY",
+                         "shadowBlur", "shadowOpacity", "shadowFidelity"))
+_SHARED_TEXT_ICON_PAINT = frozenset(("fill", "opacity"))
+_CANVAS_PAINT = frozenset(("fill", "opacity", "gradientStart", "gradientEnd", "gradientAngle",
+                           "gradientFidelity", "shadowColor", "shadowOffsetX", "shadowOffsetY",
+                           "shadowBlur", "shadowOpacity", "shadowFidelity"))
+_PATTERNED_RECT_PAINT = _RECT_PAINT | frozenset(("pattern",))
+_LAYOUT_TYPOGRAPHY = _TEXT_MEASUREMENT | _ICON_MEASUREMENT
+_LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | frozenset((
+    "cellGap", "chipPadding", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius",
+    "progressInset", "summaryBarHeight", "swatchInlineSize", "annotationContainer", "marker", "symbol",
+))
+_LAYOUT_POLICY = frozenset(("backgroundTreatment", "backgroundPaintOrder"))
+_CLOSURE_POLICY = frozenset(("contrastTreatment",))
+_PAINT_GEOMETRY = frozenset(("strokeWidth",))
+_SCENE_PAINT = (_RECT_PAINT | _PATH_PAINT | _TEXT_PAINT | _CANVAS_PAINT
+                | frozenset(("pattern",))) - _PAINT_GEOMETRY
+
+
+def _property_owner(property_name: str) -> str:
+    if property_name in _LAYOUT_TYPOGRAPHY:
+        return "Layout typography"
+    if property_name in _LAYOUT_GEOMETRY:
+        return "Layout/Scene completed geometry"
+    if property_name in _LAYOUT_POLICY:
+        return "Layout background policy"
+    if property_name in _CLOSURE_POLICY:
+        return "Theme contrast policy"
+    if property_name in _PAINT_GEOMETRY:
+        return "Layout relation width and Scene paint"
+    if property_name in _SCENE_PAINT:
+        return "Scene paint"
+    raise AssertionError(f"unclassified Theme property consumer: {property_name}")
+
+
+@dataclass(frozen=True)
+class RolePropertyContract:
+    """A named Theme consumer with the exact properties that reach it."""
+
+    consumer: str
+    properties: frozenset[str]
+    scene_kinds: frozenset[str] = frozenset()
+    property_owners: tuple[tuple[str, str], ...] = ()
+
+    def owner_of(self, property_name: str) -> str | None:
+        return dict(self.property_owners).get(property_name)
+
+
+def _role_contracts() -> dict[str, RolePropertyContract]:
+    roles: dict[str, RolePropertyContract] = {}
+
+    def register(names: str, consumer: str, properties: frozenset[str],
+                 *, scene_kinds: frozenset[str] = frozenset()) -> None:
+        for name in names.split():
+            if name in roles:
+                raise AssertionError(f"duplicate Theme role contract: {name}")
+            roles[name] = RolePropertyContract(
+                consumer, properties, scene_kinds,
+                tuple((property_name, _property_owner(property_name)) for property_name in sorted(properties)),
+            )
+
+    register("text", "Layout text and Scene Text/Icon", _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _SHARED_TEXT_ICON_PAINT,
+             scene_kinds=frozenset(("Text", "Icon")))
+    register("heading groupHeader legend numeric summary", "Layout text measurement",
+             _TEXT_MEASUREMENT | _ICON_MEASUREMENT)
+    register("axis", "Layout axis-tier measurement and inline visual reservation",
+             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _AXIS_MEASUREMENT)
+    register("axisMonth axisQuarter axis2 axis3", "Layout axis-tier measurement",
+             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _AXIS_MEASUREMENT)
+    register("annotation", "Layout annotation text and Scene Text",
+             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT, scene_kinds=frozenset(("Text",)))
+    register("metric subtitle", "Layout text and Scene Text", _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT,
+             scene_kinds=frozenset(("Text",)))
+    register("annotation-callout-text annotation-highlight-text annotation-note-text annotation-arrow-text",
+             "Layout annotation text and Scene Text", _TEXT_MEASUREMENT | _TEXT_PAINT,
+             scene_kinds=frozenset(("Text",)))
+    register("variance-ahead variance-on-track variance-behind missing-actual-cell",
+             "Scene state Text and contrast policy", _TEXT_PAINT | frozenset(("contrastTreatment",)),
+             scene_kinds=frozenset(("Text",)))
+    register("member-label-inside-planned member-label-inside-actual member-label-inside-snapshot member-label-inside-scenario",
+             "Scene inside-label Text", _TEXT_PAINT, scene_kinds=frozenset(("Text",)))
+    register("axis-label2 axis-label3 group-header note-index", "Scene Text", _TEXT_PAINT,
+             scene_kinds=frozenset(("Text",)))
+    register("background", "Scene canvas", _CANVAS_PAINT, scene_kinds=frozenset(("Canvas",)))
+    register("planned actual snapshot scenario",
+             "Layout marks and Scene Rect/Symbol", _PATTERNED_RECT_PAINT | frozenset((
+                 "markHeight", "markOffset", "markPaintOrder", "markCornerRadius")),
+             scene_kinds=frozenset(("Rect", "Symbol")))
+    register("missing-actual", "Layout mark and Scene Rect", _PATTERNED_RECT_PAINT | frozenset((
+        "markHeight", "markOffset", "markPaintOrder", "markCornerRadius")), scene_kinds=frozenset(("Rect",)))
+    register("network-node", "Scene Rect", _PATTERNED_RECT_PAINT, scene_kinds=frozenset(("Rect",)))
+    register("milestone", "Scene Symbol", _PATTERNED_RECT_PAINT, scene_kinds=frozenset(("Symbol",)))
+    register("progress-fill", "Layout progress mark and Scene Rect", _RECT_PAINT | frozenset((
+        "pattern", "progressInset", "markPaintOrder", "markCornerRadius")), scene_kinds=frozenset(("Rect",)))
+    register("summary-bar", "Layout summary mark and Scene Rect", _PATTERNED_RECT_PAINT | frozenset(("markHeight",)),
+             scene_kinds=frozenset(("Rect",)))
+    register("milestoneSymbol milestoneSymbolActual milestoneSymbolBaseline", "Layout/Scene symbol geometry",
+             frozenset(("symbol",)))
+    register("icon-mark", "Layout icon size and Scene Icon", _ICON_MEASUREMENT | _SHARED_TEXT_ICON_PAINT,
+             scene_kinds=frozenset(("Icon",)))
+    register("dependency-critical network-edge critical-edge axis-major axis-minor axis-rule axis-cell-separator as-of",
+             "Layout relation and Scene Path", _PATH_PAINT, scene_kinds=frozenset(("Path",)))
+    register("dependency", "Scene Path and Layout legend swatch marker", _PATH_PAINT | frozenset(("marker",)),
+             scene_kinds=frozenset(("Path",)))
+    register("annotation-callout-leader annotation-note-leader", "Layout annotation leader and Scene Path", _PATH_PAINT,
+             scene_kinds=frozenset(("Path",)))
+    register("annotation-arrow-leader", "Layout explanatory arrow and Scene Path",
+             _PATH_PAINT | frozenset(("marker",)), scene_kinds=frozenset(("Path",)))
+    register("asOf", "Layout as-of relation width", frozenset(("dash", "strokeWidth")))
+    register("relationSourceTerminal relationTargetTerminal", "Layout relation terminal geometry",
+             frozenset(("marker",)))
+    register("annotation-callout-box annotation-highlight-box annotation-note-box annotation-arrow-box",
+             "Layout annotation container and Scene Rect", _PATTERNED_RECT_PAINT | frozenset(("annotationContainer",)),
+             scene_kinds=frozenset(("Rect",)))
+    register("group-band row-band group-header-band calendar-closed", "Layout background and Scene Rect",
+             _RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder")),
+             scene_kinds=frozenset(("Rect",)))
+    register("axis-band-decoration axis-band-decoration2", "Layout axis band and Scene Rect",
+             _PATTERNED_RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder", "cellGap")),
+             scene_kinds=frozenset(("Rect",)))
+    register("as-of-label-chip member-label-chip finish-delta-chip", "Layout label chip and Scene Rect",
+             _PATTERNED_RECT_PAINT | frozenset(("backgroundTreatment", "chipPadding", "markCornerRadius")),
+             scene_kinds=frozenset(("Rect",)))
+    register("legend-swatch", "Layout legend swatch size", frozenset(("swatchInlineSize",)))
+    register("baseline", "Retired Theme paint alias", frozenset())
+    return roles
+
+
+_ROLE_PROPERTY_CONTRACTS = _role_contracts()
+_OPEN_AXIS_PROPERTIES = _TEXT_MEASUREMENT | _AXIS_MEASUREMENT
+_OPEN_LEGEND_PROPERTIES = _RECT_PAINT
+
+
+def theme_role_contract(role: str) -> RolePropertyContract | None:
+    """Expose the finite known-role entry for structural consumer checks."""
+    return _ROLE_PROPERTY_CONTRACTS.get(role)
+
+
+def theme_role_property_consumer(role: str, property_name: str) -> str | None:
+    """Return the capable owner, or None for a role/property with no consumer.
+
+    An unknown name may be produced by either an axis tier or the #427
+    fixed-square legend fallback. Known names never inherit that fallback.
+    """
+    contract = _ROLE_PROPERTY_CONTRACTS.get(role)
+    if contract is not None:
+        return contract.consumer if property_name in contract.properties else None
+    # The registered group colour namespace takes precedence over both
+    # open-name producers; it is not an arbitrary axis/legend role.
+    if role.startswith("group:"):
+        return ("Layout group colour encoding"
+                if property_name == "fill" and fullmatch(r"group:[A-Za-z][A-Za-z0-9_-]*", role)
+                else None)
+    if property_name in _OPEN_AXIS_PROPERTIES:
+        return "View-named axis-tier measurement"
+    if property_name in _OPEN_LEGEND_PROPERTIES:
+        return "Detail Profile legend fixed-square Rect"
+    return None
