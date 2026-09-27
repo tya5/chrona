@@ -2,9 +2,9 @@ version: chrona/actual-set/v0.3
 kind: actual-set
 id: attached-milestones-observed
 body:
-  asOf: '2027-10-15'
+  asOf: '2027-10-20'
   observations:
     - id: readiness-held
       sequence: 1
       projectObjectId: readiness
-      actual: {at: '2027-10-01'}
+      actual: {at: '2027-10-08'}
