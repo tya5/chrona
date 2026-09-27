@@ -173,8 +173,13 @@ item cannot reorder existing lane IDs relative to one another.
 The immutable membership result records each generated lane ID, group,
 ordered countable member IDs, rule and source fact that placed each bundle.
 It is computed before Theme measurement and passed unchanged to Layout and
-Scene. Layout alone derives final row height, internal mark tracks, table
-cells, text/icon bounds, label placement, visible obstacles and routes.
+Scene. View normalization derives the exact lane-table cell **content** and
+count from this result before measurement; no conservative seed-table solve
+or geometry-driven membership preflight is needed. Layout measures and places
+those cells in one solve, then owns final row height, internal mark tracks,
+text/icon bounds, label placement, visible obstacles and routes. If authored
+members overlap on one lane, Layout may add internal mark tracks or grow that
+lane's block extent but cannot create another lane or change its member IDs.
 Scene projects completed primitives and serializes the same membership for
 a data-only oracle comparison; adapters do not choose lanes. A Scene
 footprint cannot approve, reject, merge or split a lane. The previous
