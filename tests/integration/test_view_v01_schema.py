@@ -128,7 +128,7 @@ def test_v028_lane_packing_and_lane_keys_are_closed_and_lane_only():
     value["body"].pop("tableColumns", None)
     value["body"]["rows"] = {"mode": "lanes", "laneTable": {"label": "group"}}
     value["body"]["visibility"]["labels"] = {
-        "placement": "plot", "content": ["title"], "side": "auto", "overflow": "visible-overflow",
+        "placement": "plot", "content": ["title"], "side": "auto", "overflow": "suppress",
     }
     validator = _validator_v028()
     assert next(validator.iter_errors(_json_value(value)), None) is None
