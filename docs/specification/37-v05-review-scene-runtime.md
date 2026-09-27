@@ -88,8 +88,9 @@ The builder executes this bounded sequence:
    overflow policy; assign member subtracks only after row bounds are complete;
 4. derive calendar axis intervals using existing `layout.axis` functions and the
    versioned ISO fit rule below; measure labels before creating axis primitives;
-5. create table cells from `SurfaceContentInput.table_cells`, marks from
-   `ReviewProjection`, and all conditional Actual/variance/missing-Actual families;
+5. project Layout-completed table cells, marks, point-symbol paths, icon paths,
+   and all conditional Actual/variance/missing-Actual families; the Scene builder
+   does not derive or transform mark/icon geometry;
 6. create optional families only from present normalized content and matching slots;
 7. route selected relations/annotations with the existing finite router; and
 8. validate source provenance, text layouts, bounds, required slot-family completion,

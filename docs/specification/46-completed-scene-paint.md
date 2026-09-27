@@ -116,7 +116,67 @@ This is an intentional clean-boundary migration. Callers constructing old
 role-only `ScenePrimitive` values must migrate; no adapter preserves the
 incomplete contract.
 
-## 7. Completed contrast evidence (#459)
+## 7. Layout-only visible stroke extents for lane footprints (#467)
+
+For lane candidate footprints and all final mark/icon placement, Layout
+derives geometry-only visible extents from validated resolved Theme geometry
+metrics and normalized icon closure. This does not make Layout a paint
+resolver. `ScenePaintResolver` remains the sole conversion of Theme/Scheme
+paint policy into completed `ScenePaint`; Layout MUST NOT resolve color, paint
+family, opacity, dash, gradient, shadow, or a replacement stroke style, and
+it MUST NOT construct or pass `ScenePaint` as a candidate footprint input.
+
+The geometry footprint uses the same concrete mark role, selected glyph
+variant, Theme geometry metrics, temporal scale, and icon stroke scale as final
+Layout/Scene composition. An `ObstacleSegment` stores its unexpanded
+centerline and stroke width; an `ObstacleRect` stores already expanded
+visible bounds. Stroke and collision clearance remain separate. A primitive's
+visible stroke is represented exactly once, and an implementation MUST test
+that segment and rectangle paths do not double-expand or omit it.
+
+Rectangles expand by half their resolved stroke width on each side. Segment
+geometry carries its stroke width and the obstacle collision machinery
+accounts for its extent. A path represented by a conservative control-point
+envelope expands that envelope by twice its stroke width on every
+side; this bounds butt/round/square caps and bevel/round/miter joins only when
+the effective miter limit is at most four. Because `ScenePaint` has no
+miter-limit member, the existing adapter's effective limit MUST be verified
+for every admitted materializer before this bound is used as acceptance
+evidence. If an output target can exceed it or cannot establish its bound,
+implementation returns to design; Layout cannot set renderer paint policy to
+make the footprint fit.
+
+Layout returns completed point-symbol and icon path geometry before Scene
+construction. This includes Theme-selected built-in shape geometry, Theme
+glyph-part paths, point legend swatches, and normalized vector icon paths
+transformed into their placed viewport with per-path stroke widths scaled
+once. Theme glyphs retain contain-center fitting, `paint: none` omission,
+part order/IDs, the built-in diamond outline override rule, and deterministic
+path closure/arithmetic. Vector icons retain normalized path commands and
+asset cap/join. Raster icons reserve the complete placed viewport, without
+alpha-based geometry inference. Theme color/Scheme changes alone cannot
+affect these footprints; changes to geometry-bearing Theme metrics or
+normalized icon assets may.
+
+The Scene builder receives those completed path values and does not resolve
+Theme symbol variants, construct glyph outlines, transform normalized icon
+commands, or scale icon strokes. It supplies each completed primitive/path's
+typed paint intent to `ScenePaintResolver`, which returns completed paint.
+That resolver is the only location permitted to convert glyph-part or
+icon-path fill/stroke modes and authored colors into `ScenePaint`; a helper
+MUST NOT modify a `ScenePaint` after resolution. This keeps paint conversion
+after geometry without giving Scene a second geometry or paint authority.
+Implementations characterize existing automatic/explicit Scene/SVG bytes,
+point legend swatches, and material-icon SVG/materializer outputs across this
+move before acceptance.
+
+These are Layout extents only. Scene still resolves paint after geometry is
+complete, and SVG/PNG/TikZ adapters still serialize or reject the completed
+Scene value according to this specification. No renderer may repair or
+reinterpret a lane candidate footprint. See the
+[#467 B1b-2 correction](../design/issue-467-l3b-b1b-2-stroke-aware-footprint-correction-2026-09-27.md).
+
+## 8. Completed contrast evidence (#459)
 
 For finite classified text, decoration and data-mark roles, contrast is
 measured against the topmost earlier opaque, flat-filled Rect covering the

@@ -184,6 +184,50 @@ and `fill`; role-specific marks never stretch with surplus. Automatic and
 explicit member-index track placement is unchanged. See the
 [candidate-footprint correction](../design/issue-467-l3b-candidate-footprint-correction-2026-09-27.md).
 
+The B1b-2 candidate mapper closes each mark and selected icon to a
+stroke-aware, renderer-neutral visible-extent footprint before allocation.
+It uses the same resolved Theme geometry roles, mark variant, seed scale,
+normalized icon closure, and icon stroke scale as final composition. It does
+not resolve or construct Scene paint. A stroked segment retains its
+unexpanded centerline and carries stroke width once in `ObstacleSegment`; a
+rectangular footprint carries already expanded bounds in `ObstacleRect`.
+Visible stroke extent and collision clearance are separate quantities and
+MUST NOT be applied twice. Multi-part glyphs retain their primitive identity
+and contribute the union of their part footprints. A raster icon reserves
+its placed viewport; a vector icon reserves its transformed control-point
+envelope and per-path stroke extent. A clipped progress fill contributes only
+its visible clipped extent and its own stroke, if any. Missing geometry,
+unsupported commands, or invalid metrics fail before allocation with
+`E_LAYOUT_LANE_FOOTPRINT_UNAVAILABLE` or the underlying stable Theme
+diagnostic; an incomplete mark is never silently omitted.
+
+For a stroked rectangle, the visible envelope expands the emitted bounds by
+half its stroke width on each side. For a segment, the obstacle index applies
+half the stroke width from its centerline. For a stroked path represented by
+a control-point envelope, Layout expands that envelope by twice the
+stroke width on every side, covering caps and joins when the effective miter
+limit is at most four. Until every admitted renderer/materializer is verified
+to meet that bound, B1b-2 implementation acceptance is gated; a wider or
+unknown miter extent requires a design/specification correction. `ScenePaint`
+does not currently carry a miter-limit field, and Layout MUST NOT invent a
+paint conversion or miter-limit override. See the
+[stroke-aware footprint correction](../design/issue-467-l3b-b1b-2-stroke-aware-footprint-correction-2026-09-27.md).
+
+Layout also owns the geometry currently constructed after layout in
+`scene/v05_builder.py`: Theme-selected built-in point shapes, Theme glyph
+parts, point legend swatches, and transformed normalized vector icon paths.
+The completed Layout result carries path coordinates, primitive/part identity
+and paint order, and geometry-bearing stroke widths before candidate collision
+checks and Scene construction. It preserves the existing contain-center glyph
+fit, built-in diamond outline override (ignored for glyphs), `paint: none`
+omission, part ordering and IDs, close-point conversion, deterministic float
+arithmetic, vector icon cap/join and scaled stroke width, and point legend
+variant. Scene projects these completed values without deriving or
+transforming path geometry. Theme glyph and icon path paint intents are passed
+to `ScenePaintResolver`; Scene MUST NOT modify the completed `ScenePaint`
+after resolution. Existing automatic/explicit and material-icon SVG outputs
+are byte-characterized across the ownership move before it is accepted.
+
 `automatic` is still the exact per-object row behavior, including its original
 table cells, points policy and output. `rows.points: key-row` is not created by
 lane mode. Hierarchical rows remain `automatic` or authored `explicit` until a

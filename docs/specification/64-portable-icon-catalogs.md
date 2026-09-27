@@ -21,9 +21,10 @@ local Iconify JSON -> normalized catalog -> pinned Context catalog set
 An icon is a visual companion to an existing textual or semantic source. It
 cannot be the only carrier of required meaning. View owns occurrence, catalog
 reference, side, and field-to-icon mapping; Theme owns size ratio, gap ratio,
-and visual paint; Layout owns all sizing, cap-height alignment, measurement,
-wrapping, overflow, and reading order; Scene owns completed primitives; an
-adapter serializes only completed data.
+and visual paint; Layout owns all sizing, path transforms, stroke scaling,
+cap-height alignment, measurement, wrapping, overflow, and reading order;
+Scene projects completed primitives and `ScenePaintResolver` supplies their
+completed paint; an adapter serializes only completed data.
 
 The former v0.1 local-file catalog is superseded. No compatibility alias,
 one-catalog bridge, raw-SVG fallback, or silently downgraded source is retained.
@@ -92,9 +93,11 @@ Every normalized path has exactly one paint mode:
 - `stroke`, with finite positive source-unit width and closed
   `butt|round|square` cap plus `miter|round|bevel` join.
 
-At Layout/Scene completion a uniform viewport scale transforms stroke width to
-target-independent completed geometry. The owning Theme/Colour Scheme supplies
-the resolved paint colour; asset source never supplies a literal colour.
+Layout applies the uniform viewport scale to path coordinates and stroke width
+and returns target-independent completed geometry before Scene construction.
+The owning Theme/Colour Scheme supplies the resolved paint colour through
+`ScenePaintResolver`; asset source never supplies a literal color for catalog
+icons. Scene does not transform paths or scale widths.
 
 The importer rejects `style`, class, transform in SVG body, opacity, literal
 colour, gradient, filter, mask, clip, image, text, `use`, `defs`, URL, external
@@ -154,11 +157,12 @@ change appearance without selecting asset or occurrence.
 
 ## 6. Scene, accessibility, and targets
 
-`Icon` remains a dedicated Scene primitive. It carries one normalized vector
-path list or one verified PNG payload, complete bounds, complete paint/strokes,
+`Icon` remains a dedicated Scene primitive. It carries one Layout-completed
+vector path list or one verified PNG payload, complete bounds and paint/strokes,
 asset identity, alternative, decorative state, visual order, source reference,
 and binding pointer. It carries no catalog lookup, raw XML, Theme object, font
-metric, text measurement, or coordinate policy.
+metric, text measurement, or coordinate policy. Scene does not derive path
+coordinates or stroke scale.
 
 Decorative visuals beside present text are hidden from the accessibility tree.
 Meaningful visual use requires a non-empty catalog alternative and an equivalent
