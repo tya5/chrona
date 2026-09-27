@@ -12,7 +12,7 @@ from PIL import Image
 
 from chrona.presentation.model.closure import ClosureError, resolve_render_context
 from chrona.core.identity import content_identity
-from chrona.scheduling.scheduler import ReferenceScheduler
+from chrona.scheduling.scheduler import ReferenceScheduler, schedule
 from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.core.ports import SnapshotReadError
 from chrona.storage.revision_store import ProjectSnapshot
@@ -101,12 +101,20 @@ def test_context_font_assets_resolve_from_context_revision_not_theme_revision(tm
     shutil.copytree(ROOT / "examples/halcyon-1", example)
     context_path = example / "contexts/02-programme-board.yaml"
     context = yaml.safe_load(context_path.read_bytes())
-    context["body"]["project"]["revision"]["token"] = "example-v2"
+    context["body"]["project"]["revision"]["token"] = "font-root-probe-v2"
+    for asset in context["body"]["environment"]["fontMetrics"]["assets"]:
+        locator = asset["metrics"]["locator"]
+        source = ROOT / "src/chrona/resources" / locator["address"]
+        target = example / locator["address"]
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+        locator["provider"] = "context"
+        locator.pop("identity", None)
     context_path.write_text(yaml.safe_dump(context, sort_keys=False), encoding="utf-8")
 
     snapshot = tmp_path / "snapshot"
     reference, revision = copy_context_closure(example, context_path, snapshot)
-    assert revision == "example-v2"
+    assert revision == "font-root-probe-v2"
     assert context["body"]["theme"]["revision"]["token"] == "example-v1"
     metric = "font_metrics/noto-sans-regular-v2.json"
     assert (snapshot_directory(snapshot, revision) / metric).is_file()
@@ -455,6 +463,44 @@ def test_materializer_rejects_an_authored_stale_pin_before_write(tmp_path):
     with pytest.raises(ValueError, match="E_CONTENT_IDENTITY"):
         materialize(copied_example / "manifest.yaml", "mission-brief", tmp_path / "out", write=True)
 
+
+def test_halcyon_current_project_pin_rejects_changed_source_bytes(tmp_path):
+    copied_example = tmp_path / "halcyon"
+    shutil.copytree(ROOT / "examples/halcyon-1", copied_example)
+    context_path = copied_example / "contexts/02-programme-board.yaml"
+    project_reference = yaml.safe_load(context_path.read_bytes())["body"]["project"]
+    project_path = copied_example / "project.yaml"
+    assert project_reference["revision"]["token"] == "example-v2"
+    assert project_reference["contentIdentity"] == "sha256:" + sha256(project_path.read_bytes()).hexdigest()
+
+    project_path.write_bytes(project_path.read_bytes() + b"\n# stale Project bytes\n")
+    with pytest.raises(ValueError, match="E_CONTENT_IDENTITY"):
+        copy_context_closure(copied_example, context_path, tmp_path / "snapshot")
+
+
+def test_every_halcyon_context_pins_current_project_without_repinning_theme():
+    example = ROOT / "examples/halcyon-1"
+    expected_identity = "sha256:e196a21b0162e28d318f7e6512ada534cc1b6cdc35edb8fad6d84926bc4ca840"
+    assert "sha256:" + sha256((example / "project.yaml").read_bytes()).hexdigest() == expected_identity
+    contexts = sorted((example / "contexts").glob("*.yaml"))
+    assert len(contexts) == 15
+    for path in contexts:
+        body = yaml.safe_load(path.read_bytes())["body"]
+        assert body["project"]["revision"]["token"] == "example-v2", path.name
+        assert body["project"]["contentIdentity"] == expected_identity, path.name
+        assert body["theme"]["revision"]["token"] == "example-v1", path.name
+
+
+def test_halcyon_four_workday_lag_places_bus_test_on_may_third():
+    example = ROOT / "examples/halcyon-1"
+    project = yaml.safe_load((example / "project.yaml").read_bytes())
+    relation = next(item for item in project["relations"] if item["id"] == "avionics-bustest")
+    assert relation["lag"] == "4wd"
+    result = schedule(project)
+    assert result.placements["bus-test"]["start"].isoformat() == "2027-05-03"
+    assert result.placements["bus-test"]["end"].isoformat() == "2027-05-17"
+    assert result.analysis.total_float["bus-test"] == 39
+
 def test_materializer_uses_each_declared_halcyon_slide_context(tmp_path):
     example = ROOT / "examples/halcyon-1"
     manifest = yaml.safe_load((example / "manifest.yaml").read_text(encoding="utf-8"))
@@ -641,6 +687,11 @@ def test_materializer_records_selected_scenario_evidence_and_omits_unselected_sc
     changed = yaml.safe_load(project.read_text(encoding="utf-8"))
     changed["scenarios"]["tvac-slip"]["objects"]["tvac"]["schedule"]["amount"] = "20d"
     project.write_text(yaml.safe_dump(changed, sort_keys=False))
+    context_path = copied / "contexts/04-tvac-slip.yaml"
+    context = yaml.safe_load(context_path.read_bytes())
+    context["body"]["project"]["revision"]["token"] = "scenario-probe-v3"
+    context["body"]["project"]["contentIdentity"] = "sha256:" + sha256(project.read_bytes()).hexdigest()
+    context_path.write_text(yaml.safe_dump(context, sort_keys=False), encoding="utf-8")
     materialize(copied / "manifest.yaml", "tvac-slip", tmp_path / "changed-output", write=True)
     changed_evidence = yaml.safe_load((tmp_path / "changed-output/closure.yaml").read_text(encoding="utf-8"))
     assert changed_evidence["scenarios"][0]["contentIdentity"] != evidence["scenarios"][0]["contentIdentity"]
