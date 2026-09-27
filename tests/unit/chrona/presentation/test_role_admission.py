@@ -179,6 +179,17 @@ def test_every_public_authored_theme_resolves_with_its_declared_scheme():
                       scheme_content_identity="test")
         observed.add(theme_path.resolve())
 
+    # The bundled default is deliberately separate from the named Editorial
+    # catalogue entry, but both package and corpus mirrors are authored roots.
+    editorial_scheme = ROOT / "src/chrona/resources/presets/bundles/editorial/scheme.yaml"
+    for theme_path in (
+        ROOT / "src/chrona/resources/presets/bundles/editorial-readable-default/theme.yaml",
+        ROOT / "examples/halcyon-1/themes/editorial-readable-default.yaml",
+    ):
+        resolve_theme(safe_load(theme_path.read_bytes()), safe_load(editorial_scheme.read_bytes()),
+                      scheme_content_identity="test")
+        observed.add(theme_path.resolve())
+
     authored = {path.resolve() for path in (ROOT / "examples").glob("*/themes/*.yaml")}
     authored |= {path.resolve() for path in (ROOT / "src/chrona/resources/presets/bundles").glob("*/theme.yaml")}
     assert observed == authored

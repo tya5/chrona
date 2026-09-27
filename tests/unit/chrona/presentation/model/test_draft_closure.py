@@ -87,8 +87,8 @@ def test_bundled_default_preset_resolves_a_non_halcyon_project_with_or_without_a
     without_actual = resolve_draft_render(**values)
     with_actual = resolve_draft_render(**values, actual_path=root / "examples/controller-z/actual.yaml")
     # #383/#429: the bundled default's own top-level id stays chrona-default-draft
-    # (D1: no rename), but its resources now resolve to the Editorial preset.
-    assert without_actual.closure.resource("view").id == with_actual.closure.resource("view").id == "chrona-preset-editorial"
+    # (D1: no rename); its View is the readable Editorial-derived default.
+    assert without_actual.closure.resource("view").id == with_actual.closure.resource("view").id == "chrona-preset-editorial-readable-default"
     assert without_actual.closure.actual_set is None
     assert with_actual.closure.actual_set is not None
     assert without_actual.auto_block is with_actual.auto_block is True
