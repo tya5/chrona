@@ -8,10 +8,11 @@ to an explicit projection instance before geometry is composed.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Mapping, Sequence
+from datetime import date
+from urllib.parse import quote
 
 from chrona.presentation.layout.model import LayoutError
-from chrona.presentation.model.projection import ReviewProjection
+from chrona.presentation.model.projection import ObservationState, ReviewProjection
 
 
 LANE_MARK_ROLES = frozenset({"planned", "snapshot", "scenario", "actual", "missing-actual"})
@@ -28,8 +29,8 @@ class LaneProjectionInstance:
 
     @property
     def placement_key(self) -> str:
-        """Stable Layout placement key for existing completed placement IDs."""
-        return f"{self.row_id}:{self.item_id}"
+        """Collision-free lane-only encoding of the typed instance key."""
+        return f"{quote(self.row_id, safe='-._~')}:{quote(self.item_id, safe='-._~')}"
 
 
 @dataclass(frozen=True)
@@ -38,7 +39,17 @@ class ExpectedLaneMark:
 
     instance: LaneProjectionInstance
     role: str
+    purpose: str
     placement_id: str
+
+
+@dataclass(frozen=True)
+class LaneIntentionalAbsence:
+    """One selected semantic role intentionally has no emitted primitive."""
+
+    instance: LaneProjectionInstance
+    role: str
+    reason: str
 
 
 @dataclass(frozen=True)
@@ -47,27 +58,29 @@ class LaneProjectionClosure:
 
     instances: tuple[LaneProjectionInstance, ...]
     expected_marks: tuple[ExpectedLaneMark, ...]
+    intentional_absences: tuple[LaneIntentionalAbsence, ...]
     attached_hosts: tuple[tuple[LaneProjectionInstance, LaneProjectionInstance], ...]
 
 
 def close_lane_projection(
     projection: ReviewProjection,
-    selected_roles: Mapping[tuple[str, str], Sequence[str]],
+    *,
+    as_of: date | None,
 ) -> LaneProjectionClosure:
-    """Validate normalized role selection and resolve exact attached hosts.
+    """Derive the exact mark inventory from selected Review semantics.
 
-    ``selected_roles`` is keyed by ``(row_id, item_id)`` and must contain one
-    entry for every and only selected row item. Roles represent normalized
-    semantics after cutoff/scenario/comparison selection; this helper does not
-    infer which marks ought to exist from incomplete source dictionaries.
+    The caller cannot declare away an expected role. In particular, open
+    Actual uses the selected cutoff and malformed/incomplete Actual payloads
+    are retained as typed intentional absences for later diagnostics.
     """
     if projection.surface != "table-timeline" or not projection.rows or projection.folded_points:
         raise LayoutError("E_LAYOUT_LANE_PROJECTION_UNSUPPORTED", "/projection/rows")
+    if as_of is not None and type(as_of) is not date:
+        raise LayoutError("E_LAYOUT_LANE_AS_OF_INVALID", "/presentationContract/time/as_of")
 
     instances: list[LaneProjectionInstance] = []
     row_instances: dict[str, list[LaneProjectionInstance]] = {}
     source_by_instance: dict[LaneProjectionInstance, object] = {}
-    selected_keys: list[tuple[str, str]] = []
     for row in projection.rows:
         if not row.row_id:
             raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", "/projection/rows")
@@ -76,31 +89,87 @@ def close_lane_projection(
             if not item_id or not item.object_id:
                 raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", f"/projection/rows/{row.row_id}/items")
             key = (row.row_id, item_id)
-            if key in selected_keys:
+            if any((candidate.row_id, candidate.item_id) == key for candidate in instances):
                 raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", f"/projection/rows/{row.row_id}/items/{item_id}")
-            selected_keys.append(key)
             instance = LaneProjectionInstance(row.row_id, item_id, item.object_id, item.source_kind)
             instances.append(instance)
             row_instances.setdefault(row.row_id, []).append(instance)
             source_by_instance[instance] = item
 
-    if len(set(instances)) != len(instances) or set(selected_roles) != set(selected_keys):
-        raise LayoutError("E_LAYOUT_LANE_EXPECTED_MARK_SET_MISMATCH", "/projection/rows")
-
     expected_marks: list[ExpectedLaneMark] = []
+    intentional_absences: list[LaneIntentionalAbsence] = []
     for instance in instances:
-        key = (instance.row_id, instance.item_id)
-        roles = tuple(selected_roles[key])
-        if (not roles or len(set(roles)) != len(roles)
-                or any(role not in LANE_MARK_ROLES for role in roles)):
-            raise LayoutError("E_LAYOUT_LANE_EXPECTED_MARK_SET_INVALID",
-                              f"/projection/rows/{instance.row_id}/items/{instance.item_id}")
-        for role in roles:
-            # This is the completed SurfacePlacement naming convention. The
-            # typed ``instance`` remains the identity authority; consumers must
-            # not parse this serialization back into source identities.
-            expected_marks.append(ExpectedLaneMark(instance, role,
-                                                   f"{role}:{instance.placement_key}"))
+        item = source_by_instance[instance]
+        path = f"/projection/rows/{instance.row_id}/items/{instance.item_id}"
+        actual = item.actual or {}
+        if instance.source_kind not in {"primary", "actual", "combined", "snapshot", "scenario"}:
+            raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", f"{path}/source_kind")
+        roles = set(item.roles)
+        expected_observation_role = (
+            "actual" if item.observation_state == ObservationState.RECORDED else
+            "missing-actual" if item.observation_state == ObservationState.DUE_UNOBSERVED else None)
+        status_roles = roles & {"actual", "missing-actual"}
+        expected_status_roles = {expected_observation_role} if expected_observation_role else set()
+        if "planned" not in roles or status_roles != expected_status_roles:
+            raise LayoutError("E_LAYOUT_LANE_EXPECTED_MARK_SET_INVALID", path)
+        planned_role = {"snapshot": "snapshot", "scenario": "scenario"}.get(
+            instance.source_kind, "planned")
+        if item.source_type not in {"point", "span"}:
+            raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", f"{path}/source_type")
+        planned_complete = (isinstance(item.planned.get("at"), date)
+                            if item.source_type == "point" else
+                            isinstance(item.planned.get("start"), date)
+                            and isinstance(item.planned.get("end"), date))
+        if not planned_complete:
+            raise LayoutError("E_LAYOUT_LANE_EXPECTED_MARK_INVALID", f"{path}/planned")
+        if instance.source_kind == "actual":
+            intentional_absences.append(LaneIntentionalAbsence(instance, "planned", "actual-source-only"))
+        else:
+            _expect_mark(expected_marks, instance, planned_role, "planned")
+
+        if instance.source_kind not in {"actual", "combined", "primary"}:
+            continue
+        if instance.source_kind == "primary":
+            if item.observation_state == ObservationState.DUE_UNOBSERVED and not actual:
+                anchor = item.planned.get("end" if item.source_type == "span" else "at")
+                if not isinstance(anchor, date):
+                    raise LayoutError("E_LAYOUT_LANE_EXPECTED_MARK_INVALID", f"{path}/planned")
+                _expect_mark(expected_marks, instance, "missing-actual", "missing-actual")
+            else:
+                if item.observation_state == ObservationState.RECORDED:
+                    intentional_absences.append(LaneIntentionalAbsence(
+                        instance, "actual", "actual-owned-by-selected-source"))
+                if item.observation_state == ObservationState.DUE_UNOBSERVED and actual:
+                    intentional_absences.append(LaneIntentionalAbsence(
+                        instance, "missing-actual", "incomplete-actual-payload"))
+            continue
+
+        if _has_complete_actual(item.source_type, actual):
+            if actual.get("openUntil") == "asOf":
+                start = actual.get("start")
+                if as_of is None:
+                    raise LayoutError("E_LAYOUT_LANE_AS_OF_REQUIRED", f"{path}/actual/openUntil")
+                if not isinstance(start, date):
+                    intentional_absences.append(LaneIntentionalAbsence(
+                        instance, "actual", "incomplete-open-actual"))
+                elif as_of <= start:
+                    intentional_absences.append(LaneIntentionalAbsence(
+                        instance, "actual", "open-actual-empty-at-cutoff"))
+                else:
+                    _expect_mark(expected_marks, instance, "actual", "actual")
+            else:
+                _expect_mark(expected_marks, instance, "actual", "actual")
+        elif actual:
+            intentional_absences.append(LaneIntentionalAbsence(
+                instance, "actual", "incomplete-actual-payload"))
+        elif item.observation_state == ObservationState.DUE_UNOBSERVED:
+            anchor = item.planned.get("end" if item.source_type == "span" else "at")
+            if not isinstance(anchor, date):
+                raise LayoutError("E_LAYOUT_LANE_EXPECTED_MARK_INVALID", f"{path}/planned")
+            _expect_mark(expected_marks, instance, "missing-actual", "missing-actual")
+        elif item.observation_state == ObservationState.RECORDED:
+            intentional_absences.append(LaneIntentionalAbsence(
+                instance, "actual", "incomplete-actual-payload"))
 
     attached_hosts: list[tuple[LaneProjectionInstance, LaneProjectionInstance]] = []
     for child in instances:
@@ -117,4 +186,23 @@ def close_lane_projection(
                               detail=f"expected one selected host, found {len(matches)}")
         attached_hosts.append((child, matches[0]))
 
-    return LaneProjectionClosure(tuple(instances), tuple(expected_marks), tuple(attached_hosts))
+    return LaneProjectionClosure(tuple(instances), tuple(expected_marks),
+                                 tuple(intentional_absences), tuple(attached_hosts))
+
+
+def _has_complete_actual(source_type: str, actual: dict) -> bool:
+    if source_type == "point":
+        return isinstance(actual.get("at"), date)
+    return (isinstance(actual.get("start"), date)
+            and isinstance(actual.get("finish"), date)) or (
+                actual.get("openUntil") == "asOf"
+                and isinstance(actual.get("start"), date))
+
+
+def _expect_mark(target: list[ExpectedLaneMark], instance: LaneProjectionInstance,
+                 role: str, purpose: str) -> None:
+    # This is the completed SurfacePlacement naming convention. The typed
+    # instance remains the identity authority; consumers must not parse this
+    # serialization back into source identities.
+    target.append(ExpectedLaneMark(instance, role, purpose,
+                                   f"{purpose}:{instance.placement_key}"))
