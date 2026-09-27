@@ -32,6 +32,10 @@ _LANE_PURPOSE_KINDS = frozenset(
 )
 
 
+def _finite_number(value: object) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+
+
 def requires_lane_member_provenance(kind: str, purpose: str) -> bool:
     """Whether current semantic bindings make a completed Scene primitive lane-owned."""
     return kind == "Icon" or (purpose in LANE_MEMBER_PURPOSES
@@ -341,7 +345,7 @@ class SceneLaneRectObstacle:
     bottom: float
 
     def __post_init__(self) -> None:
-        if (not all(math.isfinite(value) for value in (self.left, self.top, self.right, self.bottom))
+        if (not all(_finite_number(value) for value in (self.left, self.top, self.right, self.bottom))
                 or self.right <= self.left or self.bottom <= self.top):
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
 
@@ -355,8 +359,9 @@ class SceneLaneSegmentObstacle:
     stroke_width: float
 
     def __post_init__(self) -> None:
-        if (len(self.start) != 2 or len(self.end) != 2
-                or not all(math.isfinite(value) for value in (*self.start, *self.end, self.stroke_width))
+        if (not isinstance(self.start, tuple) or len(self.start) != 2
+                or not isinstance(self.end, tuple) or len(self.end) != 2
+                or not all(_finite_number(value) for value in (*self.start, *self.end, self.stroke_width))
                 or self.start == self.end or self.stroke_width < 0):
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
 
@@ -371,14 +376,12 @@ class SceneLaneObstacle:
     member_id: str
     obstacle_class: str
     geometry: SceneLaneRectObstacle | SceneLaneSegmentObstacle
-    clearance: float
 
     def __post_init__(self) -> None:
         if (not all(isinstance(value, str) and value for value in
                     (self.facet_id, self.primitive_id, self.row_id, self.member_id))
                 or self.obstacle_class not in {"mark", "required-label"}
-                or not isinstance(self.geometry, (SceneLaneRectObstacle, SceneLaneSegmentObstacle))
-                or not math.isfinite(self.clearance) or self.clearance < 0):
+                or not isinstance(self.geometry, (SceneLaneRectObstacle, SceneLaneSegmentObstacle))):
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
 
 
@@ -454,6 +457,7 @@ class SceneSurface:
     lane_mode: str | None = None
     lane_members: tuple[SceneLaneMember, ...] = ()
     lane_obstacles: tuple[SceneLaneObstacle, ...] = ()
+    lane_clearance: float | None = None
 
     def __post_init__(self) -> None:
         """Reject incomplete clip references before any adapter can serialize them."""
@@ -468,10 +472,12 @@ class SceneSurface:
         if self.lane_mode not in (None, "lanes"):
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         if self.lane_mode is None:
-            if self.lane_members or self.lane_obstacles:
+            if self.lane_members or self.lane_obstacles or self.lane_clearance is not None:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         else:
             if (not self.lane_members or not self.lane_obstacles
+                    or not _finite_number(self.lane_clearance)
+                    or self.lane_clearance < 0
                     or any(not isinstance(item, SceneLaneObstacle) for item in self.lane_obstacles) or any(
                     not member.row_id or member.row_id not in lane_rows
                     or lane_rows[member.row_id].lane_mark_band_block is None

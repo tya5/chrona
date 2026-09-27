@@ -226,14 +226,14 @@ def test_lane_surface_carries_closed_member_emission_inventory():
     member = SceneLaneMember("lane-1", "member-1", ("mark-1", "label-1"), ("mark-1",))
     obstacles = (
         SceneLaneObstacle("facet-mark", "mark-1", "lane-1", "member-1", "mark",
-                          SceneLaneRectObstacle(1, 2, 5, 4), 0.5),
+                          SceneLaneRectObstacle(1, 2, 5, 4)),
         SceneLaneObstacle("facet-label", "label-1", "lane-1", "member-1", "required-label",
-                          SceneLaneSegmentObstacle((2, 5), (8, 5), 1), 0.5),
+                          SceneLaneSegmentObstacle((2, 5), (8, 5), 1)),
     )
     surface = SceneSurface("s", (SceneSlot("slot", "timeline", None, (0, 0, 20, 12)),),
                            (row,), (), None, (mark, label), lane_mode="lanes",
                            canvas_bounds=(0, 0, 20, 12),
-                           lane_members=(member,), lane_obstacles=obstacles)
+                           lane_members=(member,), lane_obstacles=obstacles, lane_clearance=0.5)
 
     document = _surface(surface)
     schema = schema_document("scene-v0.6.schema.yaml")
@@ -247,13 +247,15 @@ def test_lane_surface_carries_closed_member_emission_inventory():
     assert document["laneObstacles"] == [
         {"facetId": "facet-mark", "primitiveId": "mark-1", "rowId": "lane-1",
          "memberId": "member-1", "class": "mark",
-         "geometry": {"kind": "rect", "left": 1, "top": 2, "right": 5, "bottom": 4},
-         "clearance": 0.5},
+         "geometry": {"kind": "rect", "left": 1, "top": 2, "right": 5, "bottom": 4}},
         {"facetId": "facet-label", "primitiveId": "label-1", "rowId": "lane-1",
          "memberId": "member-1", "class": "required-label",
          "geometry": {"kind": "stroked-segment", "start": [2, 5], "end": [8, 5],
-                      "strokeWidth": 1}, "clearance": 0.5},
+                      "strokeWidth": 1}},
     ]
+    assert document["laneClearance"] == 0.5
+    with pytest.raises(ValueError, match="E_PRESENTATION_PRIMITIVE_INVALID"):
+        replace(surface, lane_clearance=-0.1)
     with pytest.raises(jsonschema.ValidationError):
         jsonschema.Draft202012Validator({"$ref": "#/$defs/surface", "$defs": schema["$defs"]}).validate(
             {key: value for key, value in document.items() if key != "laneMode"})
@@ -261,6 +263,33 @@ def test_lane_surface_carries_closed_member_emission_inventory():
     with pytest.raises(jsonschema.ValidationError):
         jsonschema.Draft202012Validator({"$ref": "#/$defs/surface", "$defs": schema["$defs"]}).validate(
             without_inventory)
+
+
+def test_lane_document_reference_check_rejects_malformed_geometry_without_type_error():
+    row = SceneRow("object", "group", (0, 0, 20, 12), "lane-1", 2)
+    mark = ScenePrimitive("mark-1", "Rect", "object", "object", "planned", "planned",
+                          (1, 2, 4, 2), slot_id="slot", lane_row_id="lane-1", lane_member_id="member-1")
+    member = SceneLaneMember("lane-1", "member-1", ("mark-1",), ("mark-1",))
+    obstacle = SceneLaneObstacle("facet-mark", "mark-1", "lane-1", "member-1", "mark",
+                                  SceneLaneRectObstacle(1, 2, 5, 4))
+    surface = SceneSurface("s", (SceneSlot("slot", "timeline", None, (0, 0, 20, 12)),),
+                           (row,), (), None, (mark,), lane_mode="lanes",
+                           canvas_bounds=(0, 0, 20, 12), lane_members=(member,),
+                           lane_obstacles=(obstacle,), lane_clearance=0.5)
+    document = _surface(surface)
+    document["laneObstacles"][0]["geometry"]["left"] = "not-a-number"
+    assert not _references_are_closed({"surfaces": [document]})
+
+    document["laneObstacles"][0]["geometry"]["left"] = 1
+    document["laneClearance"] = "not-a-number"
+    assert not _references_are_closed({"surfaces": [document]})
+
+    document["laneClearance"] = 0.5
+    document["laneObstacles"][0]["geometry"] = {
+        "kind": "stroked-segment", "start": [1, "not-a-number"],
+        "end": [5, 4], "strokeWidth": 1,
+    }
+    assert not _references_are_closed({"surfaces": [document]})
 
 
 @pytest.mark.parametrize("broken", ["missing", "unknown-primitive", "wrong-member", "duplicate-facet"])
@@ -272,9 +301,9 @@ def test_lane_surface_requires_exact_obstacle_identity_coverage(broken):
                            (2, 5, 6, 2), lane_row_id="lane-1", lane_member_id="member-1")
     member = SceneLaneMember("lane-1", "member-1", ("mark-1", "label-1"), ("mark-1",))
     mark_obstacle = SceneLaneObstacle("facet-mark", "mark-1", "lane-1", "member-1", "mark",
-                                      SceneLaneRectObstacle(1, 2, 5, 4), 0.5)
+                                      SceneLaneRectObstacle(1, 2, 5, 4))
     label_obstacle = SceneLaneObstacle("facet-label", "label-1", "lane-1", "member-1", "required-label",
-                                       SceneLaneRectObstacle(2, 5, 8, 7), 0.5)
+                                       SceneLaneRectObstacle(2, 5, 8, 7))
     obstacles = (mark_obstacle, label_obstacle)
     if broken == "missing":
         obstacles = (mark_obstacle,)
@@ -287,7 +316,7 @@ def test_lane_surface_requires_exact_obstacle_identity_coverage(broken):
 
     with pytest.raises(ValueError, match="E_PRESENTATION_PRIMITIVE_INVALID"):
         SceneSurface("s", (), (row,), (), None, (mark, label), lane_mode="lanes",
-                     lane_members=(member,), lane_obstacles=obstacles)
+                     lane_members=(member,), lane_obstacles=obstacles, lane_clearance=0.5)
 
 
 @pytest.mark.parametrize("broken", [

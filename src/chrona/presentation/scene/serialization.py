@@ -121,11 +121,13 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
         lane_mode = surface.get("laneMode")
         lane_members = surface.get("laneMembers", ())
         if lane_mode is None:
-            if lane_members or surface.get("laneObstacles"):
+            if lane_members or surface.get("laneObstacles") or "laneClearance" in surface:
                 return False
         else:
             lane_obstacles = surface.get("laneObstacles", ())
-            if lane_mode != "lanes" or not lane_members or not lane_obstacles:
+            lane_clearance = surface.get("laneClearance")
+            if (lane_mode != "lanes" or not lane_members or not lane_obstacles
+                    or not _valid_number(lane_clearance) or lane_clearance < 0):
                 return False
             if (len(lane_rows) != len(row_items)
                     or any(not isinstance(item, Mapping) or "laneMarkBandBlock" not in item
@@ -188,12 +190,18 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
                 if not isinstance(geometry, Mapping):
                     return False
                 if geometry.get("kind") == "rect":
-                    if not (geometry.get("right", -math.inf) > geometry.get("left", math.inf)
-                            and geometry.get("bottom", -math.inf) > geometry.get("top", math.inf)):
+                    left, top = geometry.get("left"), geometry.get("top")
+                    right, bottom = geometry.get("right"), geometry.get("bottom")
+                    if (not all(_valid_number(value) for value in (left, top, right, bottom))
+                            or right <= left or bottom <= top):
                         return False
                 elif geometry.get("kind") == "stroked-segment":
                     start, end = geometry.get("start"), geometry.get("end")
-                    if not isinstance(start, list) or not isinstance(end, list) or start == end:
+                    stroke_width = geometry.get("strokeWidth")
+                    if (not isinstance(start, list) or len(start) != 2
+                            or not isinstance(end, list) or len(end) != 2
+                            or not all(_valid_number(value) for value in (*start, *end, stroke_width))
+                            or stroke_width < 0 or start == end):
                         return False
                 else:
                     return False
@@ -289,6 +297,7 @@ def _surface(surface: SceneSurface) -> dict[str, Any]:
             for item in surface.lane_members
         ]
         result["laneObstacles"] = [_lane_obstacle(item) for item in surface.lane_obstacles]
+        result["laneClearance"] = surface.lane_clearance
     return result
 
 
@@ -305,8 +314,12 @@ def _lane_obstacle(item: SceneLaneObstacle) -> dict[str, Any]:
         raise SceneSerializationError("E_SCENE_SERIALIZATION")
     return {"facetId": item.facet_id, "primitiveId": item.primitive_id,
             "rowId": item.row_id, "memberId": item.member_id,
-            "class": item.obstacle_class, "geometry": geometry,
-            "clearance": item.clearance}
+            "class": item.obstacle_class, "geometry": geometry}
+
+
+def _valid_number(value: Any) -> bool:
+    return (isinstance(value, (int, float)) and not isinstance(value, bool)
+            and math.isfinite(value))
 
 
 def _fit_warning(value: Any) -> dict[str, Any]:
