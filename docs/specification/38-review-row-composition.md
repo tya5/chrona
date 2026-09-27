@@ -201,6 +201,11 @@ The `combined` primary instance deliberately composes its planned facet
 with its recorded Actual facet (or the missing-Actual marker) in one mark
 band; those exact planned↔Actual/missing-Actual facet pairs are declared
 overlays. This does not exempt either facet from another instance's marks.
+When a `combined` instance selects Actual-sourced progress fill, that fill
+also paints over its own planned facet in the same band. Layout declares
+only the exact progress↔planned facet pairs for that instance as overlays;
+the fill gains no exemption against another instance, attached child, or
+unrelated mark. Planned-sourced progress keeps only its own host overlay.
 Scene projects completed primitives and serializes the same membership for
 a data-only oracle comparison; adapters do not choose lanes. A Scene
 footprint cannot approve, reject, merge or split a lane. The previous
