@@ -118,3 +118,37 @@ def test_lane_packing_without_attached_restores_independent_membership(tmp_path,
                       if item["id"].startswith("planned:") and item["sourceRef"] in {*GATES, "campaign"}}
     for gate in GATES:
         assert lane_by_source[gate] != lane_by_source["campaign"]
+
+
+def test_committed_example_has_two_intermediate_gates_with_visible_lane_facts(tmp_path, monkeypatch):
+    example = ROOT / "examples/attached-milestones"
+    project = yaml.safe_load((example / "project.yaml").read_text(encoding="utf-8"))
+    host = project["objects"]["campaign"]["schedule"]
+    gates = ("readiness", "range-clearance")
+    for gate in gates:
+        point = project["objects"][gate]
+        assert point["attachesTo"] == "campaign"
+        assert host["start"] < point["schedule"]["at"] < host["end"]
+
+    preset = tmp_path / "preset"
+    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", "mission-light", "--output", str(preset)])
+    main()
+    scene = tmp_path / "scene.json"
+    svg = tmp_path / "attached.svg"
+    monkeypatch.setattr(sys, "argv", ["chrona", "render", str(example / "project.yaml"),
+                                      "--actual", str(example / "actual.yaml"),
+                                      "--preset", str(preset / "preset.yaml"),
+                                      "--output", str(svg), "--emit-scene", str(scene)])
+    main()
+    surface = json.loads(scene.read_text(encoding="utf-8"))["surfaces"][0]
+    visible_text = "".join(ElementTree.fromstring(svg.read_text(encoding="utf-8")).itertext())
+    marks = {item["sourceRef"]: item for item in surface["primitives"]
+             if item["id"].startswith("planned:")}
+    for gate in gates:
+        assert marks[gate]["laneRowId"] == marks["campaign"]["laneRowId"]
+        label = next(item["text"] for item in surface["primitives"]
+                     if item["sourceRef"] == gate and item["id"].startswith("member-label:"))
+        assert label in visible_text
+        assert project["objects"][gate]["title"] in label
+    assert "Readiness review · 30 Sep · +1d" in visible_text
+    assert "Range clearance · 12 Oct" in visible_text
