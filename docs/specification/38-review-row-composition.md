@@ -210,7 +210,12 @@ and role offsets are explicit. One Layout mark-geometry composer serves
 automatic/explicit track frames and lane-local frames without changing the
 former formulas or conversion order. Preflight retains exact candidate/facet
 and required-label closure, selected `as_of`, and measurement, Theme, font and
-scale identities. The content-height solve and final composer consume this
+scale identities. It also freezes the positive finite mark-row and label-row
+heights used by the allocator. Each lane extent MUST equal the mark-row height
+plus its selected label-row count times the label-row height. Final Layout
+centers that exact extent in its solved row and derives the mark-band anchor
+from the frozen heights, never from a second measurement. These are internal
+Layout plan facts, not View or Scene schema. The content-height solve and final composer consume this
 immutable lineage. The final composer checks those identities, then translates
 completed local geometry exactly once through the final mark-band anchor
 carried as `SceneRow.lane_mark_band_block`; it MUST NOT remeasure, reconstruct
