@@ -53,7 +53,8 @@ from chrona.presentation.layout.icon_geometry import complete_icon_paths
 from chrona.presentation.layout.lane_bundle_mapper import (
     _mark_facets, _overlay_compound_facets, _with_mark_visuals,
 )
-from chrona.presentation.layout.lane_projection import LaneProjectionInstance, lane_missing_actual_visible
+from chrona.presentation.layout.lane_projection import LaneProjectionClosure, LaneProjectionInstance, close_lane_projection, lane_missing_actual_visible
+from chrona.presentation.layout.lane_visual_binding import bind_lane_visual_requests
 from chrona.presentation.layout.surface_quality import (
     AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, ColumnPlacement, FitWarning, GroupPlacement, MarkPlacement, PathCommand, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
     IconPlacement, LayoutImageFill, ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest,
@@ -124,6 +125,29 @@ def _lane_owner(review_row: Any, item: Any) -> tuple[str, str] | None:
     if len(matches) != 1:
         raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", f"/projection/laneRows/{review_row.row_id}")
     return review_row.row_id, matches[0]
+
+
+def _lane_instance_owners(projection: Any, closure: LaneProjectionClosure) -> dict[LaneProjectionInstance, tuple[str, str]]:
+    """Join original Review occurrences to final lanes without decoding IDs."""
+    lane_rows = {row.lane_id: row for row in projection.lane_rows}
+    source_rows = {row.row_id: row for row in projection.rows}
+    owners: dict[LaneProjectionInstance, tuple[str, str]] = {}
+    for instance in closure.instances:
+        row = source_rows.get(instance.row_id)
+        if row is None or not row.items:
+            raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", "/projection/rows")
+        member_id = row.items[0].item_id or row.items[0].object_id
+        assignment = projection.lane_membership.assignment_for(member_id)
+        lane_row = lane_rows.get(assignment.lane_id)
+        if lane_row is None or not any(
+            candidate_member_id == member_id
+            and (item.item_id or item.object_id, item.object_id, item.source_kind)
+            == (instance.item_id, instance.object_id, instance.source_kind)
+            for item, candidate_member_id in zip(lane_row.items, lane_row.member_item_ids, strict=True)
+        ):
+            raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", "/projection/laneRows")
+        owners[instance] = (lane_row.lane_id, instance.item_id)
+    return owners
 
 
 def _lane_emissions(projection: Any, review_rows: tuple[Any, ...], marks: list[MarkPlacement],
@@ -858,7 +882,8 @@ def resolve_mark_visual_requests(marks: list[MarkPlacement], request: SurfaceLay
     for visual in request.visual_requests:
         if visual.target_kind != "mark":
             continue
-        placement_id = visual_target_placement_id("mark", dict(visual.selector))
+        selector = dict(visual.selector)
+        placement_id = selector.get("placementId") or visual_target_placement_id("mark", selector)
         if placement_id in occupied:
             raise LayoutError("E_LAYOUT_VISUAL_DUPLICATE", visual.source_ref)
         occupied.add(placement_id)
@@ -866,7 +891,7 @@ def resolve_mark_visual_requests(marks: list[MarkPlacement], request: SurfaceLay
         # the stable View selector; the selector itself never guesses an
         # instance suffix.
         mark = [item for item in marks if item.placement_id == placement_id
-                or item.placement_id.startswith(placement_id + ":")]
+                or ("placementId" not in selector and item.placement_id.startswith(placement_id + ":"))]
         icon = request.icon_assets.get(visual.ref or "")
         if len(mark) != 1 or icon is None:
             raise LayoutError("E_LAYOUT_VISUAL_TARGET" if len(mark) != 1 else "E_ICON_NAME_UNKNOWN", visual.source_ref)
@@ -961,6 +986,26 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 or preflight.seed_inline_frame != lane_inline_frame_for_manifest(
                     layout_manifest, window=(start, end))):
             raise LayoutError("E_LAYOUT_LANE_PREFLIGHT_INVALID", "/layoutManifest")
+        if request.visual_requests:
+            # Spec 64: one object selector fans out to every selected lane
+            # occurrence. Keep the View selector outside Layout placement IDs;
+            # the typed projection instance supplies each final identity.
+            closure = close_lane_projection(projection, as_of=request.surface_content.as_of)
+            label_visuals, mark_visuals = bind_lane_visual_requests(
+                projection, closure, request.visual_requests)
+            owners = _lane_instance_owners(projection, closure)
+            resolved_visuals = [visual for visual in request.visual_requests
+                                if visual.target_kind not in {"plot-label", "mark"}]
+            for instance, visuals in label_visuals.items():
+                lane_id, item_id = owners[instance]
+                placement_id = f"member-label:{lane_id}:{item_id}"
+                resolved_visuals.extend(replace(visual, selector=(("placementId", placement_id),))
+                                        for visual in visuals)
+            for (instance, purpose), visual in mark_visuals.items():
+                lane_id, item_id = owners[instance]
+                placement_id = f"{purpose}:{lane_id}:{item_id}"
+                resolved_visuals.append(replace(visual, selector=(("placementId", placement_id),)))
+            request = replace(request, visual_requests=tuple(resolved_visuals))
     if ("timeline.row.minBlockSize" not in metric_values
             or "timeline.row.paddingBlock" not in metric_values
             or "timeline.mark.blockSize" not in metric_values):

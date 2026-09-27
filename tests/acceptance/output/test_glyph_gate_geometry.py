@@ -50,24 +50,29 @@ def test_glyph_gate_parts_reach_the_mark_bounds_left_and_right_edge_at_the_centr
 def test_every_dependency_route_terminal_touching_a_glyph_gate_lies_on_its_box_edge():
     surface = _scene()["surfaces"][0]
     groups = _glyph_gate_symbols(surface["primitives"])
-    bounds_by_object = {mark_id.split(":")[1]: parts[0]["bounds"] for mark_id, parts in groups.items()}
+    bounds_by_object: dict[str, list[dict]] = {}
+    for parts in groups.values():
+        # Lane placement IDs contain the generated lane identity; object
+        # identity remains the typed source reference on each primitive.
+        bounds_by_object.setdefault(parts[0]["sourceRef"], []).append(parts[0]["bounds"])
     routes = [item for item in surface["primitives"] if item["kind"] == "Path" and item["purpose"] == "dependency"]
     assert routes
     checked = 0
     for route in routes:
         source_ref = route["sourceRef"]
-        for object_id, bounds in bounds_by_object.items():
+        for object_id, candidates in bounds_by_object.items():
             if object_id not in source_ref:
                 continue
-            left_edge, right_edge = bounds["inline"], bounds["inline"] + bounds["inlineSize"]
-            top_edge, bottom_edge = bounds["block"], bounds["block"] + bounds["blockSize"]
-            for point in (route["points"][0], route["points"][-1]):
-                on_vertical_edge = (abs(point[0] - left_edge) <= TOLERANCE or abs(point[0] - right_edge) <= TOLERANCE)
-                on_horizontal_edge = (abs(point[1] - top_edge) <= TOLERANCE or abs(point[1] - bottom_edge) <= TOLERANCE)
-                inside_inline = left_edge - TOLERANCE <= point[0] <= right_edge + TOLERANCE
-                inside_block = top_edge - TOLERANCE <= point[1] <= bottom_edge + TOLERANCE
-                if inside_inline and inside_block and (on_vertical_edge or on_horizontal_edge):
-                    checked += 1
+            for bounds in candidates:
+                left_edge, right_edge = bounds["inline"], bounds["inline"] + bounds["inlineSize"]
+                top_edge, bottom_edge = bounds["block"], bounds["block"] + bounds["blockSize"]
+                for point in (route["points"][0], route["points"][-1]):
+                    on_vertical_edge = (abs(point[0] - left_edge) <= TOLERANCE or abs(point[0] - right_edge) <= TOLERANCE)
+                    on_horizontal_edge = (abs(point[1] - top_edge) <= TOLERANCE or abs(point[1] - bottom_edge) <= TOLERANCE)
+                    inside_inline = left_edge - TOLERANCE <= point[0] <= right_edge + TOLERANCE
+                    inside_block = top_edge - TOLERANCE <= point[1] <= bottom_edge + TOLERANCE
+                    if inside_inline and inside_block and (on_vertical_edge or on_horizontal_edge):
+                        checked += 1
     assert checked > 0, "no dependency route terminal was found on a glyph gate's box edge"
 
 

@@ -394,7 +394,8 @@ class LaneMarkFacet:
             isinstance(self.completed_geometry, tuple) and bool(self.completed_geometry)
             and all(isinstance(command, tuple) and len(command) == 2
                     and isinstance(command[0], str) and command[0]
-                    and isinstance(command[1], tuple) and bool(command[1])
+                    and isinstance(command[1], tuple)
+                    and (bool(command[1]) or command[0] == "close")
                     and all(isinstance(point, tuple) and len(point) == 2
                             and all(isinstance(value, (int, float)) and not isinstance(value, bool)
                                     and isfinite(value) for value in point)

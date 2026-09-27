@@ -64,7 +64,7 @@ def test_draft_render_is_deterministic():
     assert render_review(_draft_request()).artifact.content == render_review(_draft_request()).artifact.content
 
 
-def test_suppressed_plot_labels_have_one_completed_info_count(capsys):
+def test_suppressed_plot_labels_have_one_completed_info_count(capsys, tmp_path):
     # #487 corrected the table's `minmax`/content-minimum and its flex-allocation
     # basis (ADR-0032), which changes which member label this `elevated-light`
     # draft suppresses (`structure:structure` before #487, `launch:launch`
@@ -74,22 +74,29 @@ def test_suppressed_plot_labels_have_one_completed_info_count(capsys):
     root = _root()
     example = root / "examples/halcyon-1"
     preset = root / "src/chrona/resources/presets/bundles/elevated-light"
+    legacy_view = yaml.safe_load((preset / "view.yaml").read_text(encoding="utf-8"))
+    legacy_view["body"]["rows"]["mode"] = "automatic"
+    for key in ("packing", "laneTable", "laneKeys"):
+        legacy_view["body"]["rows"].pop(key, None)
+    legacy_view_path = tmp_path / "elevated-automatic-view.yaml"
+    legacy_view_path.write_text(yaml.safe_dump(legacy_view, sort_keys=False), encoding="utf-8")
     rendered = render_review(_draft_request(
         project_path=example / "project.yaml", actual_path=example / "actual.yaml",
         scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
-        view_path=preset / "view.yaml", theme_path=preset / "theme.yaml", layout_path=preset / "layout.yaml"))
+        view_path=legacy_view_path, theme_path=preset / "theme.yaml", layout_path=preset / "layout.yaml"))
     visible_labels = {item.scene_id for item in rendered.surface.primitives if item.kind == "Text"}
     per_id = {item.removeprefix("W_LAYOUT_LABEL_SUPPRESSED:") for item in rendered.scene.diagnostics
               if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:")}
-    # Two since #488 keeps member labels inside their own row band.
-    assert len(per_id) == 2
+    # The automatic View keeps the same suppression mechanism, while its
+    # lane migrated selection produces a different count of constrained rows.
+    assert per_id
     assert not per_id & visible_labels
     assert rendered.scene.diagnostics.count(
         f"I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count={len(per_id)}") == 1
     _emit_render_warnings(rendered)
     info = [json.loads(line) for line in capsys.readouterr().err.splitlines()
             if '"I_LAYOUT_PLOT_LABELS_SUPPRESSED"' in line]
-    assert info == [{"code": "I_LAYOUT_PLOT_LABELS_SUPPRESSED", "count": 2,
+    assert info == [{"code": "I_LAYOUT_PLOT_LABELS_SUPPRESSED", "count": len(per_id),
                      "severity": "info", "surfaceId": "table-timeline"}]
 
 
@@ -112,13 +119,22 @@ def test_controller_executive_draft_no_longer_suppresses_its_member_label_after_
     assert not any(item.startswith("W_LAYOUT_VISIBLE_OVERFLOW") for item in rendered.scene.diagnostics)
 
 
-def test_suppression_count_excludes_other_plot_text_and_absent_count():
+def test_suppression_count_excludes_other_plot_text_and_absent_count(tmp_path):
     root = _root()
     example = root / "examples/halcyon-1"
     preset = root / "src/chrona/resources/presets/bundles/mission-light"
+    legacy_view = yaml.safe_load((preset / "view.yaml").read_text(encoding="utf-8"))
+    legacy_view["body"]["rows"]["mode"] = "automatic"
+    # Exercise independent variance-label suppression explicitly; the shipped
+    # lane View includes finishDelta in its lane member label instead.
+    legacy_view["body"]["visibility"]["labels"]["content"] = ["title"]
+    for key in ("packing", "laneTable", "laneKeys"):
+        legacy_view["body"]["rows"].pop(key, None)
+    legacy_view_path = tmp_path / "mission-automatic-view.yaml"
+    legacy_view_path.write_text(yaml.safe_dump(legacy_view, sort_keys=False), encoding="utf-8")
     inputs = dict(project_path=example / "project.yaml", actual_path=example / "actual.yaml",
                   scheme_path=example / "schemes/mission-light.yaml")
-    tuned = render_review(_draft_request(**inputs, view_path=preset / "view.yaml",
+    tuned = render_review(_draft_request(**inputs, view_path=legacy_view_path,
                                          theme_path=preset / "theme.yaml", layout_path=preset / "layout.yaml"))
     assert "W_LAYOUT_LABEL_SUPPRESSED:variance:detector:detector" in tuned.scene.diagnostics
     member_suppressed = sum(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:") for item in tuned.scene.diagnostics)

@@ -25,8 +25,15 @@ def _render(tmp_path: Path, monkeypatch, points: str | None = None) -> dict:
     preset = tmp_path / "preset"
     monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", "mission-light", "--output", str(preset)])
     main()
+    view_path = preset / "view.yaml"
+    view = yaml.safe_load(view_path.read_text(encoding="utf-8"))
+    # This test covers the established attached-point row behavior. Lane mode
+    # gives points lane membership and is covered by the lane acceptance suite.
+    view["body"]["rows"]["mode"] = "automatic"
+    for key in ("packing", "laneTable", "laneKeys"):
+        view["body"]["rows"].pop(key, None)
+    view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
     if points is not None:
-        view_path = preset / "view.yaml"
         view = yaml.safe_load(view_path.read_text(encoding="utf-8"))
         view["body"]["rows"]["points"] = points
         view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")

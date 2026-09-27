@@ -80,10 +80,10 @@ def test_public_svg_renders_axis_table_independently_of_context_locale(tmp_path,
     assert labels == [expected]
 
 
-def test_immutable_context_completes_narrow_programme_board_with_visible_warning(tmp_path):
+def test_immutable_automatic_context_completes_narrow_board_with_visible_warning(tmp_path):
     example = tmp_path / "halcyon-1"
     shutil.copytree(ROOT / "examples/halcyon-1", example)
-    context_path = example / "contexts/02-programme-board.yaml"
+    context_path = example / "contexts/01-mission-brief.yaml"
     context = yaml.safe_load(context_path.read_text(encoding="utf-8"))
     context["body"]["environment"]["viewport"] = {"inlineSize": 800, "blockSize": 450}
     context_path.write_text(yaml.safe_dump(context, sort_keys=False), encoding="utf-8")
@@ -237,11 +237,15 @@ def test_controller_elevated_public_evidence_uses_only_portable_completed_treatm
 def test_halcyon_programme_board_derives_owner_scale_paint_and_legend(tmp_path):
     materialize(ROOT / "examples/halcyon-1/manifest.yaml", "programme-board", tmp_path / "board", write=False)
     svg = (tmp_path / "board/review.svg").read_text(encoding="utf-8")
-    assert 'data-scene-id="planned:payload-tvac:payload-tvac"' in svg
-    assert 'data-scene-id="legend-swatch:scale:owner:payload"' in svg
-    assert 'data-scene-id="legend:scale:owner:payload"' in svg
-    assert 'data-scene-id="progress-fill:planned:campaign:campaign"' in svg
-    assert 'data-purpose="progress-fill"' in svg
+    svg_elements = list(ET.fromstring(svg))
+    assert any(item.get("data-purpose") == "planned" and item.get("data-source-ref") == "payload-tvac"
+               for item in svg_elements)
+    assert any(item.get("data-purpose") == "legend-swatch"
+               and item.get("data-source-ref") == "scale:owner:payload" for item in svg_elements)
+    assert any(item.get("data-purpose") == "legend-label"
+               and item.get("data-source-ref") == "scale:owner:payload" for item in svg_elements)
+    assert any(item.get("data-purpose") == "progress-fill" and item.get("data-source-ref") == "campaign"
+               for item in svg_elements)
     scene = json.loads((tmp_path / "board/review.scene.json").read_text(encoding="utf-8"))
     surface = scene["surfaces"][0]
     legend = next(slot["bounds"] for slot in surface["slots"] if slot["id"] == "legend")
@@ -483,7 +487,7 @@ def test_every_halcyon_context_pins_current_project_without_repinning_theme():
     expected_identity = "sha256:e196a21b0162e28d318f7e6512ada534cc1b6cdc35edb8fad6d84926bc4ca840"
     assert "sha256:" + sha256((example / "project.yaml").read_bytes()).hexdigest() == expected_identity
     contexts = sorted((example / "contexts").glob("*.yaml"))
-    assert len(contexts) == 15
+    assert len(contexts) == 16
     for path in contexts:
         body = yaml.safe_load(path.read_bytes())["body"]
         assert body["project"]["revision"]["token"] == "example-v2", path.name

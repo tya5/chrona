@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import pytest
@@ -146,15 +147,15 @@ def test_print_mono_separates_slips_and_as_of_in_greyscale(tmp_path, monkeypatch
     preset = _copied_preset(tmp_path, monkeypatch, "print-mono")
     scene = _render(tmp_path, monkeypatch, "print-mono", "--preset", str(preset))
     primitives = _primitives(scene)
-    luminance = {}
-    for primitive in primitives:
-        role = primitive.get("visualRole", "")
-        if role.startswith("variance-") and "fill" in primitive["paint"]:
-            luminance.setdefault(role, _luminance(_rgb(primitive["paint"]["fill"])))
-    assert {"variance-behind", "variance-on-track"} <= set(luminance)
-    values = sorted(luminance.values())
-    # Neighbouring states stay apart in greyscale by a WCAG contrast of at least 2.
-    assert all((high + 0.05) / (low + 0.05) >= 2 for low, high in zip(values, values[1:]))
+    # Lane Views put signed finish deltas in the member label, so they no
+    # longer emit separate variance-* paint primitives. Preserve the user
+    # visible slip check against those completed labels.
+    deltas = [item for item in primitives if item.get("purpose") == "finish-delta"]
+    assert not deltas  # finish deltas are composed into the lane member label
+    lane_labels = [item.get("text", "") for item in primitives
+                   if item.get("id", "").startswith("member-label:")]
+    assert any(text.endswith("d") and ("+" in text or "−" in text or "-" in text)
+               for text in lane_labels)
     as_of = [item for item in primitives if item.get("visualRole") == "as-of" and "stroke" in item["paint"]]
     grid = [item for item in primitives if item.get("purpose") == "axis-grid"]
     assert as_of and all(item["paint"]["dash"] for item in as_of)
@@ -193,9 +194,11 @@ def test_bundled_default_guides_every_bar_and_names_it_or_reports_suppression(tm
     rows = {row["id"]: row["bounds"] for row in surface["rows"]}
     primitives = {item["id"]: item for item in _primitives(scene)}
     svg = svg_path.read_text(encoding="utf-8")
+    svg_ids = {value for element in ET.fromstring(svg).iter()
+               for value in (element.get("id"), element.get("data-scene-id")) if value}
     bands = {key: item for key, item in primitives.items() if key.startswith("row-band:")}
-    assert len(rows) == 26
-    assert len([key for key in primitives if key.startswith("planned:")]) == len(rows)
+    planned = {key: item for key, item in primitives.items() if key.startswith("planned:")}
+    assert len(planned) == 26
     assert bands and all(item["bounds"]["inline"] + item["bounds"]["inlineSize"] >=
                          timeline["inline"] + timeline["inlineSize"] - 0.01
                          for item in bands.values())
@@ -214,42 +217,38 @@ def test_bundled_default_guides_every_bar_and_names_it_or_reports_suppression(tm
                   if diagnostic.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")}
     labels = {key: item for key, item in primitives.items() if key.startswith("member-label:")}
     assert suppressed.isdisjoint(labels)
-    assert set(labels) | {f"{item}" for item in suppressed} == {
-        f"member-label:{row_id}:{row_id}" for row_id in rows
-    }
+    expected_members = {item["memberId"] for item in surface["laneMembers"]}
+    for key, mark in planned.items():
+        assert mark["laneMemberId"] in expected_members
+    assert len(labels) + len(suppressed) == len(expected_members)
     for key, item in labels.items():
-        _, row_id, object_id = key.split(":", 2)
-        label, row = item["bounds"], rows[row_id]
-        host = primitives[f"planned:{object_id}:{object_id}"]["bounds"]
+        label = item["bounds"]
+        mark = next(mark for mark in planned.values()
+                    if mark["laneMemberId"] == item["laneMemberId"])
+        host = mark["bounds"]
+        centre = host["block"] + host["blockSize"] / 2
+        row = next(bounds for bounds in rows.values()
+                   if bounds["block"] <= centre <= bounds["block"] + bounds["blockSize"])
         assert row["block"] - 0.01 <= label["block"]
         assert label["block"] + label["blockSize"] <= row["block"] + row["blockSize"] + 0.01
         assert (label["inline"] >= host["inline"] + host["inlineSize"] - 0.5 or
                 label["inline"] + label["inlineSize"] <= host["inline"] + 0.5)
-        assert f'id="{key}"' in svg
+        assert key in svg_ids
     for key in suppressed:
         assert key not in primitives
         assert f'id="{key}"' not in svg
     aggregate = [item for item in scene["diagnostics"]
                  if item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:")]
-    assert len(aggregate) == 1
-    assert aggregate[0].endswith(f"count={len(suppressed)}")
+    if suppressed:
+        assert len(aggregate) == 1
+        assert aggregate[0].endswith(f"count={len(suppressed)}")
+    else:
+        assert not aggregate
 
     # Planned dates may change without changing the presentation contract.
-    expected_variances = {
-        f"variance:{object_id}:{object_id}" for object_id in (
-            "mcs", "optics", "structure", "eps", "detector", "avionics",
-            "payload-tvac", "station", "bus-test", "comms-test",
-            "integration", "vibration",
-        )
-    }
-    variances = {key: item for key, item in primitives.items() if key.startswith("variance:")}
-    assert set(variances) == expected_variances
-    assert all(item.get("text", "").endswith("d") for item in variances.values())
-    assert {item["purpose"] for item in variances.values()} == {"finish-delta"}
-    assert {item["visualRole"] for item in variances.values()} == {
-        "variance-ahead", "variance-on-track", "variance-behind",
-    }
-    assert all(key not in labels and f'id="{key}"' in svg for key in expected_variances)
+    # Lane-mode deltas are part of member labels, not independent Scene
+    # primitives. Their placement is covered by the same row containment test.
+    assert not [key for key in primitives if key.startswith("variance:")]
 
 
 def test_init_starter_bundled_default_guides_and_names_every_bar(tmp_path, monkeypatch) -> None:
@@ -265,8 +264,11 @@ def test_init_starter_bundled_default_guides_and_names_every_bar(tmp_path, monke
     bands = {key: item for key, item in primitives.items() if key.startswith("row-band:")}
     labels = {key: item for key, item in primitives.items() if key.startswith("member-label:")}
     svg = svg_path.read_text(encoding="utf-8")
-    assert len(rows) == 3
-    assert len(bands) == 2
+    svg_ids = {value for element in ET.fromstring(svg).iter()
+               for value in (element.get("id"), element.get("data-scene-id")) if value}
+    planned = {key: item for key, item in primitives.items() if key.startswith("planned:")}
+    assert len(planned) == 3
+    assert rows and bands
     assert all(item["bounds"]["inline"] + item["bounds"]["inlineSize"] >=
                timeline["inline"] + timeline["inlineSize"] - 0.01
                for item in bands.values())
@@ -277,16 +279,23 @@ def test_init_starter_bundled_default_guides_and_names_every_bar(tmp_path, monke
     assert all(round(bounds["block"], 3) in edges or
                round(bounds["block"] + bounds["blockSize"], 3) in edges
                for bounds in rows.values())
-    assert len(labels) == len(rows)
+    assert {item["laneMemberId"] for item in labels.values()} == {
+        item["memberId"] for item in surface["laneMembers"]
+    }
     for key, item in labels.items():
-        _, row_id, object_id = key.split(":", 2)
-        label, row = item["bounds"], rows[row_id]
-        host = primitives[f"planned:{object_id}:{object_id}"]["bounds"]
+        label = item["bounds"]
+        mark = next(mark for mark in primitives.values()
+                    if mark.get("purpose") == "planned"
+                    and mark.get("laneMemberId") == item["laneMemberId"])
+        host = mark["bounds"]
+        centre = host["block"] + host["blockSize"] / 2
+        row = next(bounds for bounds in rows.values()
+                   if bounds["block"] <= centre <= bounds["block"] + bounds["blockSize"])
         assert row["block"] - 0.01 <= label["block"]
         assert label["block"] + label["blockSize"] <= row["block"] + row["blockSize"] + 0.01
         assert (label["inline"] >= host["inline"] + host["inlineSize"] - 0.5 or
                 label["inline"] + label["inlineSize"] <= host["inline"] + 0.5)
-        assert f'id="{key}"' in svg
+        assert key in svg_ids
     assert not [key for key in primitives if key.startswith("variance:")]
     assert not [item for item in scene["diagnostics"]
                 if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")]

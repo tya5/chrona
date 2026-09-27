@@ -1,6 +1,6 @@
 # Current work record — data-only lane membership (#467, #494)
 
-**Public base:** `fa2db029` on `main`. Units A–C, including the typed Layout→Scene handoff and #494 route correction, are published. Unit D resource migration, lane activation and acceptance evidence are under verification, not yet published. The issue body and latest owner comments govern; superseded proposals remain in Git history.
+**Public base:** `a1c1601d` on `main`. Units A–D, including typed Layout→Scene handoff, #494 routing, lane resource migration, and 29 public slides, are published. Release acceptance remains open: the first CI matrix exposed outdated fixture assertions and lane icon visual binding; the corrective gate is being verified. The issue body and latest owner comments govern; superseded proposals remain in Git history.
 
 ## Design plan and selected contract
 
@@ -31,7 +31,7 @@ Whole-architecture review: Project dates/relations and View declarations determi
 | A–B1, published | View v0.28 schema and pure membership kernel; Review lane/table projection. Data-only oracle, key/interval and stability tests. |
 | B2–B3, published | Fixed-lane Layout preflight/composition and typed emission inventory; Scene projects exact marks, icons, labels and obstacles. Focused facet, suppression, repeated-instance, Theme and non-lane byte tests. |
 | C, published | Layout route search and measured suppression evidence. #494 02/11/12 crossing and cause tests. |
-| D, current | Migrate bundled default/catalogue Views and at least three public slides; retain 01 Mission Brief as an unchanged automatic/table witness and Editorial Reference separately from the new Editorial lane variant. Activate public lanes, regenerate Scene/SVG and derived reports as one batch. Focused tests, public materializer check, conformance, artifact review, then one serial push and CI matrix. |
+| D, published; gate open | Bundled default/catalogue Views and five public lane slides are published; 01 Mission Brief remains an unchanged automatic/table witness and Editorial Reference remains separate. Correct the CI-discovered visual binding and obsolete test fixtures, regenerate derived reports, then verify focused tests, all public materializers, and the three-OS CI matrix before acceptance. |
 | Acceptance | Publish a concise review with every literal row above, exact commit/CI links, 02 membership per group, visible/suppressed counts, generated differences and architecture findings. Close #467/#494 only when all rows and release gates pass. |
 
 Current local evidence: 217 focused tests passed before the final icon-handoff and 01-preservation adjustments; the two-Theme integration regression and 29-slide regeneration also pass. Re-run affected focused checks and the generated-report checks on the final tree. CI supplies full three-OS pytest/conformance, wheel/smoke and newest-Python materializer evidence after D publication. An unexpected remote update or red required gate pauses closure.

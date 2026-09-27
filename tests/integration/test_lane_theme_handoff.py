@@ -46,6 +46,18 @@ def test_same_lane_view_under_two_themes_reaches_identical_scene_membership(tmp_
         item for item in view_body["visuals"]
         if item.get("target", {}).get("kind") == "title" and item.get("side", "leading") == "leading"
     ]
+    view_body["visuals"].append({
+        "target": {"kind": "plot-label", "id": "firmware"},
+        "ref": "chrona:risk", "side": "leading", "decorative": True,
+    })
+    view_body["visuals"].append({
+        "target": {"kind": "mark", "object": "firmware", "facet": "planned"},
+        "ref": "chrona:risk", "side": "leading", "decorative": True,
+    })
+    view_body["visuals"].append({
+        "target": {"kind": "mark", "object": "firmware", "facet": "actual"},
+        "ref": "chrona:risk", "side": "leading", "decorative": True,
+    })
     view_path = tmp_path / "same-lane-view.yaml"
     view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
     theme_source = example / "themes/executive-light.yaml"
@@ -106,7 +118,17 @@ def test_same_lane_view_under_two_themes_reaches_identical_scene_membership(tmp_
     icon_ids = {identifier for identifier, item in first_primitives.items() if item.kind == "Icon"}
     assert icon_ids and icon_ids <= second_primitives.keys()
     assert "visual:title:leading" in icon_ids
-    assert all(first_primitives[item].lane_row_id is None for item in icon_ids)
+    assert first_primitives["visual:title:leading"].lane_row_id is None
+    member_icon_ids = icon_ids - {"visual:title:leading"}
+    assert member_icon_ids
+    assert all(first_primitives[item].lane_row_id is not None for item in member_icon_ids)
+    assert member_icon_ids == {
+        "visual:" + identifier + (":leading" if identifier.startswith("member-label:") else "")
+        for identifier, primitive in first_primitives.items()
+        if primitive.source_ref == "firmware"
+        and (identifier.startswith("member-label:") or primitive.purpose in {"planned", "actual"})
+    }
+    assert all(first_primitives[item].lane_member_id == "firmware" for item in member_icon_ids)
     assert any(first_primitives[item].bounds != second_primitives[item].bounds for item in icon_ids)
 
     planned_ids = {identifier for identifier, item in first_primitives.items() if item.purpose == "planned"}

@@ -465,6 +465,17 @@ def test_cli_content_sized_table_slot_holds_the_print_theme_delta_column(tmp_pat
     preset = tmp_path / "print-mono"
     monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", "print-mono", "--output", str(preset)])
     main()
+    view_path = preset / "view.yaml"
+    view = yaml.safe_load(view_path.read_text(encoding="utf-8"))
+    # Keep this a regression of content-sized conventional table columns;
+    # lane-table behavior is exercised by the lane-specific tests.
+    view["body"]["rows"]["mode"] = "automatic"
+    for key in ("packing", "laneTable", "laneKeys"):
+        view["body"]["rows"].pop(key, None)
+    view["body"]["tableColumns"] = yaml.safe_load(
+        Path("examples/halcyon-1/views/01-mission-brief.yaml").read_text(encoding="utf-8")
+    )["body"]["tableColumns"]
+    view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
     layout_path = preset / "layout.yaml"
     layout = yaml.safe_load(layout_path.read_text(encoding="utf-8"))
     review = next(child for child in layout["root"]["children"] if child["id"] == "review")

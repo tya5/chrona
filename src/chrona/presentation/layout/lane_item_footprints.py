@@ -103,6 +103,7 @@ def compose_lane_item_footprints(
     progress, _ = _compose_progress(closure, items, marks_by_instance, progress_fill_source, theme_tokens)
     collected: dict[LaneProjectionInstance, list[LaneFacetFootprint]] = defaultdict(list)
     facet_purposes: dict[LaneProjectionInstance, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
+    hosted_icons: dict[LaneProjectionInstance, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
     for instance in closure.instances:
         item = items[instance]
         for mark in marks_by_instance[instance]:
@@ -118,6 +119,8 @@ def compose_lane_item_footprints(
                     facet.facet_id, footprint, facet.overlay_with,
                 ))
                 facet_purposes[instance][facet.purpose].append(facet.facet_id)
+                if facet.purpose == "icon":
+                    hosted_icons[instance][mark.semantic_id].append(facet.facet_id)
 
     # A combined source explicitly paints its Plan and Actual state in one
     # band. Name only those exact pairs; common object identity is not a
@@ -128,7 +131,14 @@ def compose_lane_item_footprints(
         planned_ids = tuple(facet_purposes[instance].get("planned", ()))
         observed_ids = tuple(facet_purposes[instance].get("actual", ())) + tuple(
             facet_purposes[instance].get("missing-actual", ()))
-        _add_intra_instance_overlay_pairs(collected, instance, planned_ids, observed_ids)
+        # Each mark's hosted icon follows that exact mark into the already
+        # declared Plan↔Actual overlay, including when both marks have icons.
+        _add_intra_instance_overlay_pairs(
+            collected, instance,
+            planned_ids + tuple(hosted_icons[instance].get("planned", ())),
+            observed_ids + tuple(hosted_icons[instance].get("actual", ()))
+            + tuple(hosted_icons[instance].get("missing-actual", ())),
+        )
         if progress_fill_source == "actual":
             _add_intra_instance_overlay_pairs(
                 collected, instance, planned_ids,

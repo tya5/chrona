@@ -1,4 +1,5 @@
 from datetime import date
+from dataclasses import replace
 
 import pytest
 
@@ -8,7 +9,9 @@ from chrona.presentation.layout.lane_projection import (
 from chrona.presentation.layout.lane_visual_binding import bind_lane_visual_requests
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.surface_quality import VisualRequest
-from chrona.presentation.model.projection import ReviewItem, ReviewProjection, ReviewRowProjection
+from chrona.presentation.layout.surface_composer import _lane_instance_owners
+from chrona.presentation.model.projection import ReviewItem, ReviewProjection, ReviewRowProjection, ReviewLaneRowProjection
+from chrona.presentation.review.lane_membership import Lane, LaneAssignment, LaneMembership
 
 
 def _item(object_id, item_id, source_kind="primary", attached_to=None):
@@ -59,6 +62,27 @@ def test_object_plot_label_fans_out_per_countable_occurrence_and_attached_child(
     assert snapshot_a not in labels
     assert all(len(values) == 1 for values in labels.values())
     assert marks == {}
+
+
+def test_bound_occurrences_join_final_lane_rows_including_attached_child():
+    projection, closure, primary_a, snapshot_a, attached_a, primary_b = _fixture()
+    first, second = projection.rows
+    membership = LaneMembership(
+        (Lane("lane-a", "g", ("work-a",)), Lane("lane-b", "g", ("work-b",))),
+        (LaneAssignment("work-a", "lane-a", "g", "explicit", "work-a"),
+         LaneAssignment("work-b", "lane-b", "g", "explicit", "work-b")),
+    )
+    projection = replace(
+        projection, lane_membership=membership,
+        lane_rows=(ReviewLaneRowProjection("lane-a", "g", first.items, ("work-a",) * 3),
+                   ReviewLaneRowProjection("lane-b", "g", second.items, ("work-b",))),
+    )
+    assert _lane_instance_owners(projection, closure) == {
+        primary_a: ("lane-a", "work-a"),
+        snapshot_a: ("lane-a", "work-snapshot"),
+        attached_a: ("lane-a", "gate-a"),
+        primary_b: ("lane-b", "work-b"),
+    }
 
 
 def test_semantic_mark_visual_fans_out_to_primary_and_comparison_roles():

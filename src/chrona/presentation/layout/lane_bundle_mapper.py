@@ -714,7 +714,7 @@ def _icon_facets(item: Any, instance: LaneProjectionInstance,
         )
         result.append(_facet(instance, item, None, icon.placement_id, "Icon",
                              commands, bounds, _path_footprint(points, width, icon.placement_id),
-                             None, icon=projection, facet_suffix=f"path:{index}"))
+                             None, icon=projection, facet_suffix=f"{icon.placement_id}:path:{index}"))
     return tuple(result)
 
 
