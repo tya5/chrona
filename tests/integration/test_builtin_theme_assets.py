@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 
 from PIL import Image
+import pytest
+import yaml
 
 from chrona.app.cli import main
 from chrona.presentation.scene.contrast_policy import evaluate_scene_contrast
@@ -66,3 +68,22 @@ def test_builtin_catalogue_copy_and_no_asset_flag_render_are_visible_in_svg_and_
         assert image.width > 1000 and image.height > 500
         colors = {pixel[:3] for _count, pixel in image.crop((560, 120, 700, 170)).getcolors(maxcolors=100000)}
         assert (242, 242, 242) in colors and (13, 13, 13) in colors
+
+
+def test_missing_preset_glyph_reports_exact_theme_pointer_and_set_name(tmp_path, monkeypatch, capsys):
+    preset = copy_builtin_preset("technical-print", tmp_path / "copied")
+    theme_path = preset.parent / "theme.yaml"
+    theme = yaml.safe_load(theme_path.read_bytes())
+    theme["body"]["values"]["milestone-symbol"]["value"]["shape"] = {"catalog": "missing:pin"}
+    theme_path.write_text(yaml.safe_dump(theme, sort_keys=False), encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", ["chrona", "render", str(PROJECT), "--preset", str(preset),
+                                      "--output", str(tmp_path / "unwritten.svg")])
+    with pytest.raises(SystemExit) as error:
+        main()
+    assert error.value.code == 1
+    rejected = json.loads(capsys.readouterr().out)
+    diagnostic = rejected["diagnostics"][0]
+    assert diagnostic["code"] == "E_THEME_ASSET_REFERENCE"
+    assert diagnostic["sourceRef"] == "/body/values/milestone-symbol/value/shape/catalog"
+    assert "missing:pin" in diagnostic["message"]
+    assert not (tmp_path / "unwritten.svg").exists()
