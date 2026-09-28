@@ -1,0 +1,3 @@
+# #496 Slice 2 network pattern amendment
+
+**Design/review:** [correction](../../design/issue-496-network-pattern-handoff-correction-2026-09-29.md), [architecture review](../../reviews/current/issue-496-network-pattern-handoff-architecture-review-2026-09-29.md). Add `layout/dependency_network.py` to Slice 2 owned files and pass resolved pattern assets through the `scene/v05_builder.py` Layout call. Extend the typed network Layout result with exact node-ID pattern placements; add network-node positive Scene/SVG/PNG and negative reference tests. All other Slice 2 and release gates remain as planned.
