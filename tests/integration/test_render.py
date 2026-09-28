@@ -14,6 +14,7 @@ import pytest
 import yaml
 
 from chrona.presentation.model.closure import resolve_draft_render
+from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, obstacles_intersect
 from chrona.presentation.model.info_diagnostics import PaintOmission
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
 from chrona.presentation.review.detail import ReviewDetailError
@@ -62,6 +63,185 @@ def test_draft_render_materializes_the_review_surface():
 
 def test_draft_render_is_deterministic():
     assert render_review(_draft_request()).artifact.content == render_review(_draft_request()).artifact.content
+
+
+def test_halcyon_02_routed_note_trial_is_bounded_clear_and_deterministic(monkeypatch, tmp_path):
+    import chrona.presentation.scene.v05_builder as builder
+
+    root = _root()
+    example = root / "examples/halcyon-1"
+    request = _draft_request(
+        project_path=example / "project.yaml",
+        view_path=example / "views/02-programme-board.yaml",
+        theme_path=example / "themes/wallboard.yaml",
+        scheme_path=example / "schemes/control-room-dark.yaml",
+        layout_path=example / "layouts/wallboard.yaml",
+        actual_path=example / "actual.yaml",
+        viewport=(1920, 1080),
+    )
+    original = builder.compose_surface_layout
+    compositions = []
+
+    def capture(layout_request):
+        composition = original(layout_request)
+        compositions.append(composition)
+        return composition
+
+    monkeypatch.setattr(builder, "compose_surface_layout", capture)
+    rendered = render_review(request)
+    rendered_again = render_review(request)
+    placement = compositions[0].placement
+    repeated = compositions[1].placement
+    decisions = {item.source_ref: item for item in placement.decisions
+                 if item.decision_id.startswith("annotation:")}
+    assert {key: value.selected_topology for key, value in decisions.items()} == {
+        "window-note": "direct-tail", "tvac-note": "routed-tail",
+        "station-note": "routed-tail",
+    }
+    assert all(0 < item.search_count <= 3 * 1024 for item in decisions.values())
+    assert all(item.box_positions_examined <= item.box_position_limit == 1024
+               for item in decisions.values())
+    assert all(item.route_states_examined <= item.route_state_limit == 1024
+               and not item.route_search_exhausted
+               for key, item in decisions.items() if key != "window-note")
+    assert [(item.decision_id, item.selected_topology, item.search_count)
+            for item in placement.decisions if item.decision_id.startswith("annotation:")] == [
+        (item.decision_id, item.selected_topology, item.search_count)
+        for item in repeated.decisions if item.decision_id.startswith("annotation:")
+    ]
+    assert rendered.artifact.content == rendered_again.artifact.content
+    assert b'data-scene-id="annotation-box:window-note"' in rendered.artifact.content
+    assert b'data-scene-id="annotation-box:tvac-note"' in rendered.artifact.content
+    assert b'data-scene-id="annotation-box:station-note"' in rendered.artifact.content
+    (tmp_path / "halcyon-02-c3-trial.svg").write_bytes(rendered.artifact.content)
+    (tmp_path / "halcyon-02-c3-trial.scene.json").write_bytes(serialize_scene(rendered.scene))
+
+    marks = placement.marks
+    visible_text = tuple(item for item in placement.text
+                         if item.required and item.overflow != "suppressed"
+                         and item.bounds.inline_size > 0 and item.bounds.block_size > 0)
+    label_footprints = tuple(item for item in placement.shapes
+                             if item.placement_id.startswith("chip:"))
+    as_of = next(item for item in placement.shapes if item.placement_id == "as-of")
+    as_of_x = as_of.points[0][0]
+    balloons = {item.source_ref: item for item in placement.shapes
+                if item.kind == "Balloon" and item.source_ref in decisions}
+    leaders = {item.source_ref: item for item in placement.relations
+               if item.semantic_id == "annotationNoteLeader"}
+    for note_id in ("tvac-note", "station-note"):
+        leader = leaders[note_id]
+        balloon = balloons[note_id]
+        box = ObstacleRect(float(balloon.bounds.inline), float(balloon.bounds.block),
+                           float(balloon.bounds.inline + balloon.bounds.inline_size),
+                           float(balloon.bounds.block + balloon.bounds.block_size))
+        assert all(a[0] == b[0] or a[1] == b[1]
+                   for a, b in zip(leader.points, leader.points[1:]))
+        source_ref = "payload-tvac" if note_id == "tvac-note" else "station"
+        anchor = next(mark for mark in marks
+                      if mark.source_ref == source_ref
+                      and float(mark.bounds.inline) - 1e-6 <= leader.points[0][0]
+                      <= float(mark.bounds.inline + mark.bounds.inline_size) + 1e-6
+                      and float(mark.bounds.block) - 1e-6 <= leader.points[0][1]
+                      <= float(mark.bounds.block + mark.bounds.block_size) + 1e-6)
+        assert anchor.placement_id.startswith("actual:" if note_id == "tvac-note" else "planned:")
+        source_cluster = {anchor.placement_id}
+        for mark in marks:
+            if mark.source_ref != source_ref:
+                continue
+            if (mark.bounds.inline < anchor.bounds.inline + anchor.bounds.inline_size
+                    and anchor.bounds.inline < mark.bounds.inline + mark.bounds.inline_size
+                    and mark.bounds.block < anchor.bounds.block + anchor.bounds.block_size
+                    and anchor.bounds.block < mark.bounds.block + mark.bounds.block_size):
+                source_cluster.add(mark.placement_id)
+
+        route_segments = tuple(ObstacleSegment(start, end)
+                              for start, end in zip(leader.points, leader.points[1:]))
+        for segment in route_segments:
+            assert not obstacles_intersect(segment, box), (note_id, "route enters pending box")
+            assert not any(obstacles_intersect(segment, ObstacleRect(
+                float(mark.bounds.inline), float(mark.bounds.block),
+                float(mark.bounds.inline + mark.bounds.inline_size),
+                float(mark.bounds.block + mark.bounds.block_size)))
+                for mark in marks if mark.placement_id not in source_cluster), (note_id, "route hits mark")
+            assert not any(obstacles_intersect(segment, ObstacleRect(
+                float(item.bounds.inline), float(item.bounds.block),
+                float(item.bounds.inline + item.bounds.inline_size),
+                float(item.bounds.block + item.bounds.block_size)))
+                for item in visible_text), (note_id, "route hits text")
+            assert not any(obstacles_intersect(segment, ObstacleRect(
+                float(item.bounds.inline), float(item.bounds.block),
+                float(item.bounds.inline + item.bounds.inline_size),
+                float(item.bounds.block + item.bounds.block_size)))
+                for item in label_footprints), (note_id, "route hits label footprint")
+            assert not any(obstacles_intersect(segment, ObstacleSegment(a, b))
+                for relation in placement.relations if relation.semantic_id == "dependency"
+                for a, b in zip(relation.points, relation.points[1:])), (note_id, "route hits dependency")
+            assert not obstacles_intersect(segment, ObstacleSegment(*as_of.points)), (note_id, "route crosses as-of")
+
+        outline = tuple(command.points[0] for command in balloon.path_commands)
+        outline_segments = tuple(ObstacleSegment(a, b)
+                                 for a, b in zip(outline, outline[1:]) if a != b)
+        outside_vertices = [index for index, point in enumerate(outline)
+                            if point[0] < box.left or point[0] > box.right
+                            or point[1] < box.top or point[1] > box.bottom]
+        assert len(outside_vertices) == 1
+        tip_index = outside_vertices[0]
+        assert leader.points[-1] == outline[tip_index]
+        tail_edges = {
+            tuple(sorted((outline[(tip_index - 1) % len(outline)], outline[tip_index]))),
+            tuple(sorted((outline[tip_index], outline[(tip_index + 1) % len(outline)]))),
+        }
+        for segment in outline_segments:
+            if tuple(sorted((segment.start, segment.end))) in tail_edges:
+                assert not obstacles_intersect(segment, box), (note_id, "balloon tip edge enters its box")
+            assert not any(obstacles_intersect(segment, ObstacleRect(
+                float(mark.bounds.inline), float(mark.bounds.block),
+                float(mark.bounds.inline + mark.bounds.inline_size),
+                float(mark.bounds.block + mark.bounds.block_size)))
+                for mark in marks), (note_id, "balloon edge hits mark")
+            assert not any(obstacles_intersect(segment, ObstacleRect(
+                float(item.bounds.inline), float(item.bounds.block),
+                float(item.bounds.inline + item.bounds.inline_size),
+                float(item.bounds.block + item.bounds.block_size)))
+                for item in visible_text if not item.placement_id.startswith(f"annotation-text:{note_id}")), (
+                    note_id, "balloon edge hits text")
+            assert not any(obstacles_intersect(segment, ObstacleRect(
+                float(item.bounds.inline), float(item.bounds.block),
+                float(item.bounds.inline + item.bounds.inline_size),
+                float(item.bounds.block + item.bounds.block_size)))
+                for item in label_footprints), (note_id, "balloon edge hits label footprint")
+            assert not any(obstacles_intersect(segment, ObstacleSegment(a, b))
+                for relation in placement.relations if relation.semantic_id == "dependency"
+                for a, b in zip(relation.points, relation.points[1:])), (note_id, "balloon edge hits dependency")
+            assert not obstacles_intersect(segment, ObstacleSegment(*as_of.points)), (note_id, "balloon crosses as-of")
+        source_x = float(anchor.bounds.inline + anchor.bounds.inline_size / 2)
+        if source_x < as_of_x:
+            assert float(balloon.bounds.inline + balloon.bounds.inline_size) <= as_of_x
+        else:
+            assert float(balloon.bounds.inline) >= as_of_x
+
+
+def test_hosted_note_index_resolves_single_and_multipart_mark_identity():
+    root = _root()
+    example = root / "examples/halcyon-1"
+    for theme_name, expected_suffix in (("wallboard", ""), ("12-glyph-gates", ":part:0")):
+        rendered = render_review(_draft_request(
+            project_path=example / "project.yaml",
+            view_path=example / "views/02-programme-board.yaml",
+            theme_path=example / f"themes/{theme_name}.yaml",
+            scheme_path=example / "schemes/control-room-dark.yaml",
+            layout_path=example / "layouts/wallboard.yaml",
+            actual_path=example / "actual.yaml", viewport=(1920, 1080)))
+        primitives = {item.scene_id: item for surface in rendered.scene.surfaces
+                      for item in surface.primitives}
+        number = primitives["note-index:window-note"]
+        assert number.host_placement_id is not None
+        if expected_suffix:
+            assert number.host_placement_id.endswith(expected_suffix)
+        else:
+            assert ":part:" not in number.host_placement_id
+        assert number.host_placement_id in primitives
+        assert primitives[number.host_placement_id].paint_order < number.paint_order
 
 
 def test_suppressed_plot_labels_have_one_completed_info_count(capsys, tmp_path):

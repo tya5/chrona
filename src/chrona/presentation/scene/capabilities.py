@@ -229,8 +229,9 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
     register("relationSourceTerminal relationTargetTerminal", "Layout relation terminal geometry",
              frozenset(("marker",)))
     register("annotation-callout-box annotation-highlight-box annotation-note-box annotation-arrow-box",
-             "Layout annotation container and Scene Rect", _PATTERNED_RECT_PAINT | frozenset(("annotationContainer",)),
-             scene_kinds=frozenset(("Rect",)))
+             "Layout annotation container and Scene Rect/Symbol",
+             _PATTERNED_RECT_PAINT | frozenset(("annotationContainer",)),
+             scene_kinds=frozenset(("Rect", "Symbol")))
     register("group-band row-band group-header-band calendar-closed", "Layout background and Scene Rect",
              _RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder")),
              scene_kinds=frozenset(("Rect",)))

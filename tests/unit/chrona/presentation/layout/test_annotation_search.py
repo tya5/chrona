@@ -1,6 +1,10 @@
 from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
 from chrona.presentation.layout.annotation_search import lattice_positions, nearest_free_box, nearest_free_tail_box
+from chrona.presentation.layout.annotation_search import nearest_free_routed_tail_box
+from chrona.presentation.layout.model import Rect
+from chrona.presentation.layout.surface_quality import MarkPlacement
+from chrona.presentation.layout.balloon_geometry import nearest_eligible_edge, tail_base_points
 
 
 def test_lattice_positions_are_nearest_first_and_deterministic() -> None:
@@ -101,3 +105,73 @@ def test_nearest_free_tail_box_rejects_positions_whose_tail_crosses_a_route_the_
     assert trials > 1  # at least one earlier candidate was rejected on tail collision
     assert not index.collisions(ObstacleRect(box.x, box.y, box.right, box.bottom),
                                 classes=("mark", "dependency-route"), host_id="mark:anchor")
+
+
+def test_routed_tail_search_returns_bounded_strict_route_and_keeps_box_out_of_index() -> None:
+    region = LabelRect(0, 0, 120, 100)
+    index = SurfaceObstacleIndex()
+    mark = MarkPlacement("mark:anchor", "anchor", Rect(40, 40, 10, 10),
+                         (40, 45), (50, 45), mark_shape="point")
+    index.add(SurfaceObstacle("mark:anchor", "mark", "plot", ObstacleRect(40, 40, 50, 50)))
+    result = nearest_free_routed_tail_box(
+        region=region, anchor=mark, endpoint="at", siblings=(mark,), box_size=(30, 20),
+        max_positions=128, obstacles=index, obstacle_classes=("mark", "text", "dependency-route"),
+        corner_radius=3, tail_base=8, content_bounds=(0, 0, 120, 100), host_id="mark:anchor",
+        route_state_limit=1024)
+    assert result.box is not None and result.tip is not None
+    assert result.egress is not None and result.route is not None
+    assert result.route.topology == "strict"
+    assert result.full_points[0] == result.egress.semantic_port
+    assert result.full_points[-1] == result.tip
+    assert 0 < result.route_states <= 1024
+    assert not result.exhausted
+    assert not index.has("candidate:balloon-box")
+    candidate_index = SurfaceObstacleIndex()
+    candidate_index.extend(index.all())
+    candidate_index.add(SurfaceObstacle("candidate:box", "annotation-box", "plot",
+                                        ObstacleRect(result.box.x, result.box.y,
+                                                     result.box.right, result.box.bottom)))
+    assert not any(candidate_index.collisions(ObstacleSegment(a, b))
+                   for a, b in zip(result.route.points, result.route.points[1:]))
+    edge = nearest_eligible_edge(result.box, result.tip)
+    base_a, base_b = tail_base_points(
+        result.box, result.tip, edge=edge, tail_base=8,
+        corner_radius=min(3, result.box.width / 2, result.box.height / 2))
+    assert not any(candidate_index.collisions(ObstacleSegment(a, b),
+                                               classes=("mark", "text", "dependency-route"))
+                   for a, b in ((base_a, result.tip), (result.tip, base_b)))
+
+
+def test_routed_tail_distinguishes_no_box_from_connector_budget_exhaustion() -> None:
+    index = SurfaceObstacleIndex()
+    mark = MarkPlacement("mark:anchor", "anchor", Rect(40, 40, 10, 10),
+                         (40, 45), (50, 45), mark_shape="point")
+    index.add(SurfaceObstacle("mark:anchor", "mark", "plot", ObstacleRect(40, 40, 50, 50)))
+    common = dict(anchor=mark, endpoint="at", siblings=(mark,), box_size=(30, 20),
+                  max_positions=128, obstacles=index,
+                  obstacle_classes=("mark", "text", "dependency-route", "port"),
+                  corner_radius=3, tail_base=8, content_bounds=(0, 0, 120, 100),
+                  host_id="mark:anchor")
+    no_box = nearest_free_routed_tail_box(region=LabelRect(0, 0, 20, 20),
+                                          route_state_limit=1, **common)
+    assert no_box.box is None and no_box.box_trials == 0 and not no_box.exhausted
+    capped = nearest_free_routed_tail_box(region=LabelRect(0, 0, 120, 100),
+                                          route_state_limit=1, **common)
+    assert capped.box is None and capped.exhausted and capped.route_states == 1
+
+
+def test_routed_tail_exempts_only_the_named_source_port_on_egress() -> None:
+    index = SurfaceObstacleIndex()
+    mark = MarkPlacement("mark:anchor", "anchor", Rect(40, 40, 10, 10),
+                         (40, 45), (50, 45), mark_shape="span")
+    index.add(SurfaceObstacle("mark:anchor", "mark", "plot", ObstacleRect(40, 40, 50, 50)))
+    index.add(SurfaceObstacle("port:mark:anchor:end", "port", "plot",
+                              ObstacleRect(49.5, 44.5, 50.5, 45.5)))
+    result = nearest_free_routed_tail_box(
+        region=LabelRect(0, 0, 120, 100), anchor=mark, endpoint="finish",
+        siblings=(mark,), box_size=(30, 20), max_positions=128,
+        obstacles=index, obstacle_classes=("mark", "text", "dependency-route", "port"),
+        corner_radius=3, tail_base=8, content_bounds=(0, 0, 120, 100),
+        host_id="mark:anchor")
+    assert result.box is not None and result.egress is not None
+    assert result.egress.semantic_port == (50, 45)

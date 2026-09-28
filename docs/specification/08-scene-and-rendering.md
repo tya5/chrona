@@ -338,6 +338,11 @@ adapter must not repair it.
 
 ### Annotation note contrast ground
 
+Hosted note-number text carries a completed `hostPlacementId` naming an
+actually emitted mark primitive. For a Theme glyph, Layout resolves the
+abstract mark to its first painted lane-emission part before Scene projection;
+Scene does not choose or invent that part and rejects a dangling host.
+
 The semantic registry classifies `annotation-note-text` as state text and
 `annotation-note-box` as decoration. In the completed paired annotation,
 Layout/Scene paint order places the box before its text. Contrast evaluation
@@ -352,8 +357,11 @@ ground. Findings identify the selected ground primitive and color.
 
 For `annotation-note-text`, the generic ground search is not sufficient by
 itself: a prior Rect with no fill is skipped and generic search may then select
-a lower host or canvas. C4 therefore requires a prior `annotation-note-box`
-with the same `sourceRef`, containing the note text's sample point and carrying
+a lower host or canvas. C4 therefore requires `contrastTreatment: required`
+on typed and serialized note-text primitives; missing or weaker treatment is
+invalid even if a generic state-text evaluator would allow a 3.0:1
+`deemphasized` case. C4 also requires a prior `annotation-note-box` with the
+same `sourceRef`, containing the note text's sample point and carrying
 opaque flat fill. Missing pair/fill or non-opaque fill yields
 `E_SCENE_CONTRAST_GROUND_UNSUPPORTED`; it cannot fall through to another host
 or the canvas. This pairs the reported ground with the declared content area
@@ -481,7 +489,7 @@ The remaining I3 families are closed as follows.  `table-timeline` owns table fr
 header band, column-label Text, group surface/header, alternating row surface, row
 rule, and one measured table-cell Text per selected `(objectId,columnId)`.  A selected
 semantic relation owns exactly one `dependency-connector` Path with two Layout-completed
-ports. A visible View annotation owns a completed box Rect or balloon Path, measured Text, and its declared completed connector, if any. A Project annotation selected by stable View reference supplies text and object identity to that View annotation; it is not duplicated in the notes slot. Unselected Project notes still own measured Text in the notes slot. Layout, not Scene, owns all ports and geometry under the [#466 candidate contract](../design/issue-466-candidate-placement-design-2026-09-26.md). A present legend slot owns its swatches, measured labels, and
+ports. A visible View annotation owns a completed box `Rect` (including a rectangular image-backed container) or balloon `Symbol`, measured `Text`, and its declared completed connector `Path`, if any. A Project annotation selected by stable View reference supplies text and object identity to that View annotation; it is not duplicated in the notes slot. Unselected Project notes still own measured Text in the notes slot. Layout, not Scene, owns all ports and geometry under the [#466 candidate contract](../design/issue-466-candidate-placement-design-2026-09-26.md). A present legend slot owns its swatches, measured labels, and
 coverage Text.  A present summary slot owns a panel Rect, measured header Text, and
 one measured metric Text per declared metric. `review` receives its remaining
 connector, annotation, and summary families only in I3-F. `minimal` receives its
