@@ -261,6 +261,7 @@ class ScenePrimitive:
         classified = contrast_binding(self.visual_role)
         if ((classified is not None and classified.contrast_class == ContrastClass.STATE_TEXT
              and self.contrast_treatment not in {"required", "deemphasized"})
+                or (self.visual_role == "annotation-note-text" and self.contrast_treatment != "required")
                 or ((classified is None or classified.contrast_class != ContrastClass.STATE_TEXT)
                     and self.contrast_treatment is not None)):
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")

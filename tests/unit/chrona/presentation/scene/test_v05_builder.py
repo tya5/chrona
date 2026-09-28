@@ -310,6 +310,19 @@ def test_scene_records_declared_background_absence_without_a_drawable_primitive(
     assert completed.decoration_dispositions == (DecorationDisposition("row-band", "absent"),)
 
 
+def test_painted_note_box_is_not_an_absent_background_decoration():
+    themed = _theme()
+    value = build_scene_input(projection=ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 2)), (), ()),
+                              surface_content=surface_content(), layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
+                              resolved_theme=themed, font_metrics=_Font(), measured_sources=_measurements(), capabilities={"svg": True})
+    from chrona.presentation.scene.v05_builder import _complete_surface_paint
+    note_box = ScenePrimitive("annotation-box:note-1", "Rect", "note-1", "annotation", "annotation-box",
+                              "annotation-note-box", (0, 0, 20, 10))
+    completed = _complete_surface_paint(SceneSurface("s", (), (), (), None, (note_box,)), value.theme_tokens)
+    assert completed.primitives[0].paint.fill == "#102030"
+    assert DecorationDisposition("annotation-note-box", "absent") not in completed.decoration_dispositions
+
+
 def test_scene_projects_title_links_only_to_selected_current_title_cells():
     item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 2, 1)},
                       None, None, ("planned",), link={"href": "https://example.test/a", "title": "Open A"})

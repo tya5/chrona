@@ -124,7 +124,8 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
     absent_decorations = tuple(
         DecorationDisposition(binding.scene_role, "absent")
         for binding in contrast_bindings(ContrastClass.DECORATION)
-        if tokens.has_role(binding.scene_role) and tokens.background(binding.scene_role)[0] == "none"
+        if (background := tokens.optional_background(binding.scene_role)) is not None
+        and background[0] == "none"
     )
     omissions = (*canvas.omissions, *(omission for _, facts in completed for omission in facts))
     unique_omissions: list[PaintOmission] = []

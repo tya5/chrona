@@ -68,3 +68,71 @@ def test_theme_state_text_requires_declared_treatment_and_composited_floor():
         resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
     assert error.value.diagnostic_id == "E_SCHEME_STATE_TEXT_TREATMENT"
     assert error.value.source_ref == "/body/roles/variance-ahead"
+
+
+def _note_theme():
+    theme = {"version": "chrona/theme/v0.11", "kind": "theme", "id": "note", "body": {
+        "values": {}, "roles": {
+            "variance-ahead": {"contrastTreatment": "deemphasized"},
+            "variance-on-track": {"contrastTreatment": "required"},
+            "variance-behind": {"contrastTreatment": "required"},
+            "missing-actual-cell": {"contrastTreatment": "required"},
+            "annotation-note-box": {},
+            "annotation-note-text": {"contrastTreatment": "required"},
+        }, "colorBindings": {
+            "variance-ahead.fill": "positive",
+            "variance-on-track.fill": "textMuted",
+            "variance-behind.fill": "negative",
+            "missing-actual-cell.fill": "textMuted",
+            "annotation-note-box.fill": "accent",
+            "annotation-note-text.fill": "text",
+        }, "metrics": {},
+    }}
+    return theme
+
+
+def test_annotation_note_text_requires_required_treatment():
+    theme = _note_theme()
+    theme["body"]["roles"]["annotation-note-text"]["contrastTreatment"] = "deemphasized"
+    with pytest.raises(ColorSchemeError) as error:
+        resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
+    assert error.value.diagnostic_id == "E_SCHEME_STATE_TEXT_TREATMENT"
+    assert error.value.source_ref == "/body/roles/annotation-note-text/contrastTreatment"
+
+
+def test_annotation_note_box_requires_effective_flat_opaque_fill():
+    theme = _note_theme()
+    theme["body"]["colorBindings"].pop("annotation-note-box.fill")
+    with pytest.raises(ColorSchemeError) as error:
+        resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
+    assert error.value.diagnostic_id == "E_SCHEME_ANNOTATION_NOTE_GROUND"
+    assert error.value.source_ref == "/body/roles/annotation-note-box/fill"
+
+    theme = _note_theme()
+    theme["body"]["roles"]["annotation-note-box"]["opacity"] = "note-opacity"
+    theme["body"]["values"]["note-opacity"] = {"type": "number", "value": 0.5}
+    with pytest.raises(ColorSchemeError) as error:
+        resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
+    assert error.value.diagnostic_id == "E_SCHEME_ANNOTATION_NOTE_GROUND"
+    assert error.value.source_ref == "/body/roles/annotation-note-box/opacity"
+
+
+def test_annotation_note_box_accepts_scheme_inserted_opaque_fill_and_default_opacity():
+    resolved = resolve_theme(_note_theme(), scheme(), scheme_content_identity="sha256:" + "a" * 64)
+    assert resolved["body"]["roles"]["annotation-note-box"]["fill"].startswith("__scheme.accent.")
+
+
+def test_annotation_note_box_rejects_gradient_or_pattern_ground_with_exact_pointer():
+    theme = _note_theme()
+    theme["body"]["colorBindings"]["annotation-note-box.gradientStart"] = "accent"
+    with pytest.raises(ColorSchemeError) as error:
+        resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
+    assert error.value.diagnostic_id == "E_SCHEME_ANNOTATION_NOTE_GROUND"
+    assert error.value.source_ref == "/body/colorBindings/annotation-note-box.gradientStart"
+
+    theme = _note_theme()
+    theme["body"]["roles"]["annotation-note-box"]["pattern"] = "box-pattern"
+    with pytest.raises(ColorSchemeError) as error:
+        resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
+    assert error.value.diagnostic_id == "E_SCHEME_ANNOTATION_NOTE_GROUND"
+    assert error.value.source_ref == "/body/roles/annotation-note-box/pattern"

@@ -126,7 +126,9 @@ def render_markdown(report: Mapping[str, Any]) -> str:
             ground_kind=finding.get("groundKind") or "—",
             channel=finding.get("paintChannel") or "—", ratio=number(finding["contrastRatio"]),
             floor=number(finding["floor"]), severity=finding["severity"]))
-    lines.extend(("", "## Five-decoration witness", "",
+    lines.extend(("", "## Decoration corpus witness", "",
+                  "Every non-exclusive decoration role is enabled in committed Scene evidence; "
+                  "group-band or group-header-band supplies the group concept when there are no corpus errors.", "",
                   *(f"- `{scene}`" for scene in report["witnessScenes"]),
                   *(f"- ERROR `{code}`" for code in report["corpusErrors"]),
                   "", f"Findings: {report['findingCount']}; errors: {report['errorCount']}.", ""))
