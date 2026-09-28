@@ -184,6 +184,10 @@ collection. Manifest fields and diagnostics are never cache or semantic authorit
 
 Catalogue-backed pattern bindings use Theme v0.13 and complete into Scene
 v0.7. Layout owns the patterned region bounds, clip bounds, and tile origin.
+For a patterned Rect, the repeated region is that Rect's completed bounds;
+the tile origin is its inline/block top-left, and the clip is the same bounds
+(including the Rect's completed corner shape when present). This fixes the
+repeat phase per primitive, independent of SVG document origin or paint order.
 Scene carries normalized tile primitives, angle, density, origin, clip bounds,
 and completed `ScenePaint`; `paint.fill` is the substrate and `paint.stroke`
 is the ink. PatternGeometry carries no color. No catalogue reference, Theme

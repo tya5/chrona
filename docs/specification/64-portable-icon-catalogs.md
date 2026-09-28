@@ -229,6 +229,12 @@ viewport, ordered closed path parts, `fill|stroke` mode, and no fixed color.
 Theme may select it for the existing milestone/gate symbol roles. Theme owns
 role paint and variant choice; the existing mark-fit logic consumes resolved
 parts and Layout completes the mark geometry.
+For a catalogue stroke part, its source-unit `strokeWidth` scales by the same
+uniform mark-fit factor as its path. Its `lineCap` and `lineJoin` remain exact.
+These three values are geometry, not Theme color; Theme supplies the role's
+stroke color, without requiring a redundant role `strokeWidth`. Layout carries
+the completed width/finish through lane footprints and Scene projection.
+Inline #464 glyphs retain their existing Theme-width behavior.
 
 A pattern is a finite repeat tile with positive dimensions, an angle in
 `[0,360)` clockwise about tile center, and an ordered list of at most 64
