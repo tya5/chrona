@@ -8,9 +8,10 @@ stale wording in Specifications 07/08. The geometry and rendered behavior are
 correct; the declared Scene contract is incomplete.
 
 Admit `Symbol` as well as `Rect` for all annotation box roles that may bind
-`annotationContainer`. `Rect` remains the unbound rectangle; `Symbol` carries
-the Layout-completed balloon or image-backed outline, with one resolved paint
-and exact bounds. `Path` remains the connector/relation kind. No adapter may
+`annotationContainer`. `Rect` carries an unbound rectangle or a rectangular
+image-backed container (with completed image tiles); `Symbol` carries the
+Layout-completed balloon outline. Each has one resolved paint and exact bounds.
+`Path` remains the connector/relation kind. No adapter may
 convert kinds or recalculate the outline. Do not special-case only
 `annotation-note-box`: the shared Theme token is available to callout,
 highlight, note and arrow boxes. Keep their existing property allowlist.
