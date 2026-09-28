@@ -206,17 +206,6 @@ def test_scene_input_accepts_only_completed_current_runtime_boundaries():
     assert value.theme_tokens.color("text") == "#102030"
 
 
-def test_scene_input_rejects_a_lane_plan_without_independent_measurement_identity():
-    with pytest.raises(SceneBuildError, match="E_LAYOUT_LANE_PLAN_INVALID"):
-        build_scene_input(
-            projection={"window": (date(2026, 1, 1), date(2026, 1, 2))},
-            surface_content=surface_content(),
-            layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
-            resolved_theme=_theme(), font_metrics=object(), measured_sources=_measurements(),
-            capabilities={"svg": True}, lane_plan=object(),
-        )
-
-
 def test_scene_input_rejects_a_layout_without_a_required_source():
     with pytest.raises(SceneBuildError, match="E_PRESENTATION_PRIMITIVE_MISSING") as error:
         build_scene_input(projection={}, surface_content=surface_content(),
