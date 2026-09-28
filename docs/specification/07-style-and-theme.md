@@ -193,6 +193,11 @@ registered by the Theme applicability contract. The flat fill remains the
 opaque representative substrate and the role's resolved stroke is the pattern
 ink; catalogue data supplies geometry and density only. Unknown, wrong-kind,
 or unregistered bindings fail before Scene construction.
+For a catalogue pattern, role `strokeWidth`, `dash`, stroke finish, and gradient
+properties are invalid: the catalogue tile supplies its own stroke geometry
+and the role fill is a flat substrate. If `backgroundTreatment` is present it
+must be `fill`. These conflicts fail at the exact Theme role-property pointer;
+they are never silently ignored by Scene or an adapter.
 The completed pattern preserves both effective paint channels for
 perceptibility and contrast checks; adapters cannot add a fallback color.
 Catalogue pattern tokens are admitted only on roles whose current completed
