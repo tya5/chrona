@@ -23,6 +23,10 @@ Focused Layout/Scene/integration tests passed, including a crowded clone retaini
 | 6 | A Theme can draw the tail and balloon outline. A Theme without it renders as today. | met | [Wallboard Theme](../../../examples/halcyon-1/themes/wallboard.yaml), rendered 02/11/12; [no-binding Theme test](../../../tests/unit/chrona/presentation/model/test_theme_tokens.py) and [#465 byte-parity review](issue-465-image-annotation-container-acceptance-review-2026-09-27.md). | — |
 | 7 | The specification describes the model once, and no longer as a list of per-rung behaviours; `06-view-model.md` and `44-usable-explicit-rows-and-annotation-rail.md` point at it. | met | [Spec 33](../../specification/33-intent-oriented-layout.md), [Spec 06](../../specification/06-view-model.md), [Spec 44](../../specification/44-usable-explicit-rows-and-annotation-rail.md). | — |
 
+## Programme-level criteria (optional)
+
+C3 is accepted; #466 remains open for the C4 note contrast gate.
+
 ## Architecture conclusion
 
 Layout owns the shared obstacle index, bounded search, text geometry and completed tail route. Scene only projects the completed placement; Theme supplies paint. The new hosted-index resolution uses the actual emitted glyph facet, including multipart marks. This C3 slice is accepted for merge on the green CI above. #466 remains open for the separately planned C4 note contrast/perceptibility gate; this review does not claim final release acceptance.
