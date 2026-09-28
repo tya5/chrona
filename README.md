@@ -142,6 +142,14 @@ chrona render project.yaml --view view.yaml --theme theme.yaml --scheme scheme.y
   --visual-profile chrona-output/visual/v0.7-svg --output review.svg
 ```
 
+A declarative Theme asset source can instead provide licensed glyphs and
+patterns; its SPDX identifier and complete notice travel in the catalog.
+
+<!-- chrona:doc-check skip: requires an author-provided theme-asset-source YAML -->
+```bash
+chrona icon-catalog import --theme-assets assets.yaml --output assets-catalog.yaml
+```
+
 In the View, attach a catalog entry to an existing target. `decorative: false`
 requires the catalog alternative and retains the existing text as equivalent
 meaning:

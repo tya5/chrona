@@ -19,6 +19,8 @@ SCHEMAS = (
     "profile-v0.3.schema.yaml",
     "revision-store-resource-ref-v0.1.schema.yaml",
     "icon-catalog-v0.3.schema.yaml",
+    "icon-catalog-v0.4.schema.yaml",
+    "theme-asset-source-v0.1.schema.yaml",
     "render-context-v0.12.schema.yaml",
     "render-context-v0.15.schema.yaml",
     "render-context-v0.16.schema.yaml",

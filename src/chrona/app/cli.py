@@ -32,7 +32,7 @@ from chrona.operational.resources import parse_document
 from chrona.usecases.materialize import MaterializationError, materialize
 from chrona.usecases.local_authoring import discover_store_configuration, initialize_project
 from chrona.usecases.preset_library import copy_builtin_preset, is_builtin_preset_id, list_builtin_presets
-from chrona.presentation.icons.importer import IconImportError, copy_material_symbols_outline_rounded_catalog, import_iconify
+from chrona.presentation.icons.importer import IconImportError, copy_material_symbols_outline_rounded_catalog, import_iconify, import_theme_assets
 from chrona.presentation.fonts.importer import FontImportError, import_font
 from chrona.presentation.scene.serialization import SceneSerializationError, serialize_scene
 from chrona.resources import default_preset_resource, default_preset_root, safe_load
@@ -304,11 +304,12 @@ def _parser() -> JsonArgumentParser:
 
     icon = sub.add_parser("icon-catalog", help="create a normalized local icon catalog")
     icon_sub = icon.add_subparsers(dest="icon_command", required=True, parser_class=JsonArgumentParser)
-    command = icon_sub.add_parser("import", help="import one local Iconify JSON collection")
-    command.add_argument("source", help="local Iconify JSON collection")
-    command.add_argument("--output", required=True, help="new v0.3 catalog YAML")
-    command.add_argument("--license-spdx", required=True, help="declared upstream SPDX identifier")
-    command.add_argument("--notice-file", required=True, help="local complete upstream license notice")
+    command = icon_sub.add_parser("import", help="import a local Iconify JSON collection or declared Theme assets")
+    command.add_argument("source", nargs="?", help="local Iconify JSON collection (omit with --theme-assets)")
+    command.add_argument("--theme-assets", help="local chrona/theme-asset-source/v0.1 YAML")
+    command.add_argument("--output", required=True, help="new v0.3 or v0.4 catalog YAML")
+    command.add_argument("--license-spdx", help="declared upstream SPDX identifier for Iconify input")
+    command.add_argument("--notice-file", help="local complete upstream license notice for Iconify input")
     command.add_argument("--set", dest="icon_set", help="canonical set name (defaults to collection prefix)")
     command.add_argument("--alias", action="append", default=[], help="additional set alias; repeatable")
     command.add_argument("--include", help="optional local newline-delimited canonical icon-name manifest")
@@ -674,12 +675,20 @@ def _run(args: argparse.Namespace) -> None:
         print(json.dumps(result, sort_keys=True))
         return
     if args.command == "icon-catalog":
-        result = (import_iconify(Path(args.source), Path(args.output), set_name=args.icon_set, aliases=tuple(args.alias),
-                                 license_spdx=args.license_spdx, notice_path=Path(args.notice_file),
-                                 include_path=Path(args.include) if args.include else None,
-                                 source_version=args.source_version)
-                  if args.icon_command == "import" else
-                  copy_material_symbols_outline_rounded_catalog(Path(args.output)))
+        if args.icon_command == "import":
+            if args.theme_assets:
+                if args.source or args.license_spdx or args.notice_file or args.icon_set or args.alias or args.include or args.source_version:
+                    raise CliFailure("E_COMMAND_SYNTAX", "--theme-assets is a self-contained source; do not combine it with Iconify inputs", exit_code=2)
+                result = import_theme_assets(Path(args.theme_assets), Path(args.output))
+            else:
+                if not args.source or not args.license_spdx or not args.notice_file:
+                    raise CliFailure("E_COMMAND_SYNTAX", "Iconify import requires SOURCE, --license-spdx, and --notice-file", exit_code=2)
+                result = import_iconify(Path(args.source), Path(args.output), set_name=args.icon_set, aliases=tuple(args.alias),
+                                        license_spdx=args.license_spdx, notice_path=Path(args.notice_file),
+                                        include_path=Path(args.include) if args.include else None,
+                                        source_version=args.source_version)
+        else:
+            result = copy_material_symbols_outline_rounded_catalog(Path(args.output))
         print(json.dumps(result, sort_keys=True))
         return
     if args.command in {"command-check", "command-apply", "actual-intake", "actual-resolve", "baseline-capture"}:

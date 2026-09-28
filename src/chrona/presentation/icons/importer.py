@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from hashlib import sha256
 import json
+import re
 import os
 from pathlib import Path
 import tempfile
@@ -13,6 +14,10 @@ from importlib.resources import files
 
 from fontTools.pens.cu2quPen import Cu2QuPen
 from fontTools.svgLib.path import parse_path
+import jsonschema
+
+from chrona.presentation.icons.normalizer import IconNormalizationError, normalize_glyph_entry, normalize_pattern_entry
+from chrona.resources import safe_load, schema_document
 
 
 class IconImportError(ValueError):
@@ -24,6 +29,101 @@ class IconImportError(ValueError):
     def detail(self) -> str:
         identity = f" icon={self.icon}" if self.icon else ""
         return f"{self.code}{identity} source={self.source_ref}"
+
+
+_THEME_ASSET_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
+
+
+def _write_catalog(destination: Path, catalog: dict[str, object]) -> str:
+    encoded = json.dumps(catalog, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode()
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix=f".{destination.name}.", dir=destination.parent)
+    try:
+        with os.fdopen(fd, "wb") as out:
+            out.write(encoded); out.flush(); os.fsync(out.fileno())
+        os.replace(temporary, destination)
+    finally:
+        Path(temporary).unlink(missing_ok=True)
+    return "sha256:" + sha256(encoded).hexdigest()
+
+
+def import_theme_assets(source: Path, destination: Path) -> dict[str, object]:
+    """Import a closed declarative glyph/pattern source as a v0.4 catalogue."""
+    try:
+        source_bytes = source.read_bytes()
+        if not source_bytes or len(source_bytes) > 4_000_000:
+            raise IconImportError("E_THEME_ASSET_SOURCE_LIMIT")
+        document = safe_load(source_bytes)
+    except OSError as error:
+        raise IconImportError("E_THEME_ASSET_SOURCE_IO") from error
+    except Exception as error:
+        if isinstance(error, IconImportError):
+            raise
+        raise IconImportError("E_THEME_ASSET_SOURCE_YAML") from error
+    if not isinstance(document, dict) or set(document) != {"version", "kind", "id", "body"}:
+        raise IconImportError("E_THEME_ASSET_SOURCE_SCHEMA")
+    if document["version"] != "chrona/theme-asset-source/v0.1" or document["kind"] != "theme-asset-source":
+        raise IconImportError("E_THEME_ASSET_SOURCE_SCHEMA", source_ref="/version")
+    if not isinstance(document["id"], str) or not _THEME_ASSET_NAME.fullmatch(document["id"]):
+        raise IconImportError("E_THEME_ASSET_SOURCE_SCHEMA", source_ref="/id")
+    source_schema = schema_document("theme-asset-source-v0.1.schema.yaml")
+    validation = tuple(jsonschema.Draft202012Validator(source_schema).iter_errors(document))
+    if validation:
+        error = min(validation, key=lambda item: (tuple(str(part) for part in item.absolute_path), item.message))
+        pointer = "/" + "/".join(str(part).replace("~", "~0").replace("/", "~1") for part in error.absolute_path)
+        raise IconImportError("E_THEME_ASSET_SOURCE_SCHEMA", source_ref=pointer)
+    body = document["body"]
+    expected = {"set", "aliases", "license", "glyphs", "patterns"}
+    if not isinstance(body, dict) or set(body) != expected:
+        raise IconImportError("E_THEME_ASSET_SOURCE_SCHEMA", source_ref="/body")
+    set_name, aliases = body["set"], body["aliases"]
+    if not isinstance(set_name, str) or not _THEME_ASSET_NAME.fullmatch(set_name):
+        raise IconImportError("E_THEME_ASSET_SOURCE_SCHEMA", source_ref="/body/set")
+    if not isinstance(aliases, list) or any(not isinstance(alias, str) or not _THEME_ASSET_NAME.fullmatch(alias) for alias in aliases):
+        raise IconImportError("E_THEME_ASSET_SOURCE_ALIAS", source_ref="/body/aliases")
+    if len(set(aliases)) != len(aliases) or set_name in aliases:
+        raise IconImportError("E_THEME_ASSET_SOURCE_ALIAS", source_ref="/body/aliases")
+    license_value = body["license"]
+    if (not isinstance(license_value, dict) or set(license_value) != {"spdx", "notice"}
+            or not isinstance(license_value.get("spdx"), str) or not license_value["spdx"].strip()
+            or not isinstance(license_value.get("notice"), str) or not license_value["notice"].strip()):
+        raise IconImportError("E_THEME_ASSET_SOURCE_LICENSE", source_ref="/body/license")
+    glyphs, patterns = body["glyphs"], body["patterns"]
+    if not isinstance(glyphs, dict) or not isinstance(patterns, dict) or not glyphs and not patterns:
+        raise IconImportError("E_THEME_ASSET_SOURCE_SCHEMA", source_ref="/body")
+    names: set[str] = set()
+    def normalize_entries(entries: object, normalizer: Any, pointer: str) -> dict[str, object]:
+        if not isinstance(entries, dict):
+            raise IconImportError("E_THEME_ASSET_SOURCE_SCHEMA", source_ref=pointer)
+        output: dict[str, object] = {}
+        for name, entry in sorted(entries.items()):
+            entry_pointer = f"{pointer}/{name}"
+            if not isinstance(name, str) or not _THEME_ASSET_NAME.fullmatch(name) or name in names:
+                raise IconImportError("E_THEME_ASSET_SOURCE_NAME", source_ref=entry_pointer)
+            names.add(name)
+            try:
+                output[name] = normalizer(entry)
+            except IconNormalizationError as error:
+                raise IconImportError(error.diagnostic_id, source_ref=entry_pointer) from error
+        return output
+    normalized_glyphs = normalize_entries(glyphs, normalize_glyph_entry, "/body/glyphs")
+    normalized_patterns = normalize_entries(patterns, normalize_pattern_entry, "/body/patterns")
+    catalog: dict[str, object] = {
+        "version": "chrona/icon-catalog/v0.4", "kind": "icon-catalog", "id": document["id"],
+        "body": {
+            "set": set_name, "aliases": sorted(aliases),
+            "provenance": {
+                "sourceKind": "theme-asset-source",
+                "sourceContentIdentity": "sha256:" + sha256(source_bytes).hexdigest(),
+                "license": {"spdx": license_value["spdx"], "notice": license_value["notice"]},
+            },
+            "icons": {}, "entryAliases": {},
+            "glyphs": normalized_glyphs, "patterns": normalized_patterns,
+        },
+    }
+    identity = _write_catalog(destination, catalog)
+    return {"set": set_name, "glyphs": len(normalized_glyphs), "patterns": len(normalized_patterns),
+            "license": license_value["spdx"], "contentIdentity": identity}
 
 
 def material_symbols_outline_rounded_catalog() -> bytes:

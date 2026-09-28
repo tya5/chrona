@@ -1,0 +1,17 @@
+version: chrona/theme-asset-source/v0.1
+kind: theme-asset-source
+id: test-assets-bad-density
+body:
+  set: fixture
+  aliases: []
+  license:
+    spdx: MIT
+    notice: "Test fixture notice for normalization and import behavior."
+  glyphs: {}
+  patterns:
+    dither-12-5:
+      tile: {inlineSize: 8, blockSize: 8}
+      angle: 0
+      densityBasisPoints: 1300
+      primitives:
+        - {kind: rect, x: 0, y: 0, inlineSize: 8, blockSize: 1}
