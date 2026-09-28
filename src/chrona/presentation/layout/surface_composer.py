@@ -261,6 +261,37 @@ def _lane_emissions(projection: Any, review_rows: tuple[Any, ...], marks: list[M
                  for (kind, placement_id, row_id, member_id, purpose), facets in grouped.items())
 
 
+def _complete_hosted_text_identity(
+        text: tuple[TextPlacement, ...], marks: tuple[MarkPlacement, ...],
+        lane_emissions: tuple[LaneEmissionPlacement, ...]) -> tuple[TextPlacement, ...]:
+    """Resolve abstract lane-mark hosts to their first emitted glyph part."""
+    emitted_mark_hosts: dict[str, str] = {}
+    for emission in lane_emissions:
+        if emission.placement_type != "mark":
+            continue
+        ordered = sorted(emission.facets, key=lambda facet: (
+            -1 if facet.part_index is None else facet.part_index, facet.primitive_id))
+        host_id = ordered[0].primitive_id
+        previous = emitted_mark_hosts.setdefault(emission.placement_id, host_id)
+        if previous != host_id:
+            raise LayoutError("E_LAYOUT_HOST_EMISSION_INVALID", emission.placement_id)
+    lane_marks_by_id = {mark.placement_id: mark for mark in marks if mark.lane_row_id is not None}
+    completed = []
+    for placed in text:
+        host_id = placed.host_placement_id
+        if host_id not in lane_marks_by_id:
+            completed.append(placed)
+            continue
+        mark = lane_marks_by_id[host_id]
+        emitted_id = emitted_mark_hosts.get(host_id)
+        if (emitted_id is None or placed.slot_id != mark.slot_id
+                or placed.paint_order <= mark.paint_order):
+            raise LayoutError("E_LAYOUT_HOST_EMISSION_INVALID", placed.placement_id)
+        completed.append(replace(placed, host_placement_id=emitted_id)
+                         if emitted_id != host_id else placed)
+    return tuple(completed)
+
+
 def _lane_label_candidates(side: str, fallback: tuple[str, ...], preferred: str | None) -> tuple[str, ...]:
     """Preserve authored side/fallback; auto alone supplies end/start defaults."""
     ordered = []
@@ -3056,7 +3087,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                               "completed lane mark band falls outside its row bounds") from error
     lane_emissions = _lane_emissions(projection, tuple(review_rows), marks, text,
                                      shapes, completed_icons, request.theme_tokens)
-    placement = SurfacePlacement(text=tuple(text), slots=slots, rows=rows, columns=column_placements,
+    # Abstract mark IDs remain Layout anchors; hosted text needs the actual
+    # Scene primitive ID completed by this typed lane-emission closure.
+    completed_text = _complete_hosted_text_identity(tuple(text), tuple(marks), lane_emissions)
+    placement = SurfacePlacement(text=completed_text, slots=slots, rows=rows, columns=column_placements,
                                  groups=tuple(groups), scale=scale,
                                  marks=tuple(marks), shapes=tuple(shapes), relations=tuple(relations),
                                  decisions=tuple(placement_decisions),

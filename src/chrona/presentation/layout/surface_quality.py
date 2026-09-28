@@ -567,12 +567,20 @@ class SurfacePlacement:
                     raise ValueError(f"E_LAYOUT_CLIP_HOST_INVALID:{shape.placement_id}")
         hosts = {item.placement_id: item for item in self.marks}
         hosts.update({item.placement_id: item for item in self.shapes})
+        emitted_mark_hosts = {
+            facet.primitive_id: (hosts.get(emission.placement_id), facet.part_index or 0)
+            for emission in self.lane_emissions if emission.placement_type == "mark"
+            for facet in emission.facets
+        }
         for item in self.text:
             if item.host_placement_id is None:
                 continue
             host = hosts.get(item.host_placement_id)
+            part_index = 0
+            if host is None and item.host_placement_id in emitted_mark_hosts:
+                host, part_index = emitted_mark_hosts[item.host_placement_id]
             if (host is None or host.slot_id != item.slot_id
-                    or host.paint_order >= item.paint_order):
+                    or host.paint_order + part_index >= item.paint_order):
                 raise ValueError(f"E_LAYOUT_TEXT_HOST_INVALID:{item.placement_id}")
             if item.semantic_id in axis_label_semantic_ids():
                 allowed = isinstance(host, ShapePlacement) and host.semantic_id in axis_band_semantic_ids()
