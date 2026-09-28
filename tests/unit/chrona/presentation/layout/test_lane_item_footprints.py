@@ -122,6 +122,48 @@ def test_theme_stroke_geometry_changes_footprint_without_changing_lane_membershi
     assert thick_footprint.right > thin_footprint.right
 
 
+def test_catalog_glyph_stroke_fit_reaches_lane_projection_and_footprint():
+    item = ReviewItem(
+        "gate", "Gate", "point", {"at": date(2026, 1, 5)}, None, None, ("planned",),
+        group_id="systems", item_id="gate-view", source_kind="primary",
+    )
+    membership = LaneMembership((Lane("lane-fixed", "systems", ("gate-view",)),), (
+        LaneAssignment("gate-view", "lane-fixed", "systems", "single", "gate-view"),
+    ))
+    projection = ReviewProjection(
+        (item,), (date(2026, 1, 1), date(2026, 2, 1)), (), (),
+        rows=(ReviewRowProjection("row-1", "Gate", "systems", "gate-view", (item,)),),
+        lane_membership=membership,
+        lane_rows=(ReviewLaneRowProjection("lane-fixed", "systems", (item,), ("gate-view",)),),
+    )
+
+    class CatalogTheme(_Theme):
+        def variant_symbol(self, _variant):
+            return {"shape": "catalog-glyph", "ref": "starter:gate",
+                    "viewport": {"inlineSize": 10, "blockSize": 10},
+                    "parts": [{"paint": "stroke", "data": "M 0 0 L 10 10",
+                               "strokeWidth": 1.5, "lineCap": "round", "lineJoin": "bevel"}]}
+
+    footprints = compose_lane_item_footprints(
+        projection,
+        scale=ScalePlacement("timeline", "scale:test", date(2026, 1, 1), date(2026, 2, 1), 0, 100, 0, 2),
+        as_of=None,
+        theme_tokens=CatalogTheme(),
+        mark_band_size=10,
+        role_geometries={
+            "planned": MarkGeometry(0.5, 0.1, 0, 0),
+            "actual": MarkGeometry(0.4, 0.5, 1, 0),
+            "missing-actual": MarkGeometry(0.4, 0.5, 2, 0),
+        },
+        slot_id="lane-slot", icon_assets={},
+    )
+
+    glyph_footprint = footprints[0].facets[0].footprint
+    # A 10x10 viewport fitted into a 5x5 mark scales the authored 1.5-unit
+    # stroke to .75 before it becomes the exact segment footprint.
+    assert glyph_footprint.stroke_width == 0.75
+
+
 def test_combined_plan_actual_and_missing_facets_have_exact_overlays():
     base = ReviewItem(
         "work", "Work", "span",

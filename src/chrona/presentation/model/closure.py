@@ -5,7 +5,9 @@ from difflib import get_close_matches
 from dataclasses import dataclass
 from hashlib import sha256
 from importlib.metadata import version
+import math
 from pathlib import Path, PurePosixPath
+import re
 from typing import Any, Mapping
 
 import jsonschema  # Kept as the closure module's validator seam for snapshot tests.
@@ -13,6 +15,7 @@ import yaml
 
 
 from chrona.presentation.color_scheme import ColorSchemeError, resolve_theme
+from chrona.presentation.scene.capabilities import theme_catalog_pattern_consumer
 from chrona.presentation.icons import IconNormalizationError, IconPathCommand, NormalizedIconPath, NormalizedVectorIcon, validate_png
 from chrona.presentation.contracts import (
     ActualSetContract, AuthoringWorkspaceContract, ClosureIdentity, ContractError, SchemaContractError, IconCatalogContract, IconEntry, IconPath, LayoutProfileContract,
@@ -21,7 +24,7 @@ from chrona.presentation.contracts import (
     ResolvedThemeContract, ResourceContract, ReviewDetailProfileContract,
     SnapshotRefContract, SummaryProfileContract, TypesetterIdentity, ViewContract,
     PresentationIngressRejected, PresentationResourceSource, collect_presentation_contracts,
-    freeze, parse_contract, validate_icon_catalog_entry, IconRasterSource,
+    freeze, parse_contract, validate_icon_catalog_entry, validate_theme_asset_entry, IconRasterSource,
 )
 from chrona.presentation.model.authoring import AuthoringError, normalize_authoring_workspace
 from chrona.presentation.model.theme_inheritance import (
@@ -414,14 +417,19 @@ def _draft_render_from_resources(
     by_kind = {item.kind: item for item in resources}
 
     try:
-        resolved_theme = ResolvedThemeContract(
-            by_kind["theme"].id,
-            freeze(resolve_theme(
+        theme_value = resolve_theme(
                 by_kind["theme"].contract.theme_input,
                 by_kind["color-scheme"].contract.scheme_input,
                 scheme_content_identity=by_kind["color-scheme"].content_identity,
-            )),
-        )
+            )
+        draft_catalogs = tuple(item for item in resources if item.kind == "icon-catalog")
+        _validate_icon_catalog_set(draft_catalogs)
+        glyphs, patterns = _resolve_theme_catalog_assets(
+            theme_value, draft_catalogs)
+        if isinstance(theme_value.get("body"), dict):
+            theme_value["body"]["catalogAssets"] = {"glyphs": glyphs, "patterns": patterns}
+        resolved_theme = ResolvedThemeContract(by_kind["theme"].id, freeze(theme_value),
+                                               freeze(glyphs), freeze(patterns))
     except ColorSchemeError as error:
         raise ClosureError(error.diagnostic_id, error.source_ref, error.detail) from error
 
@@ -699,11 +707,14 @@ def _resolve_layout_context(context_contract: RenderContextContract, reader: Sna
     theme, scheme = resources[2], resources[3]
     try:
         value = resolve_theme(theme.contract.theme_input, scheme.contract.scheme_input, scheme_content_identity=scheme.content_identity)
-        resolved_theme = ResolvedThemeContract(theme.id, freeze(value))
     except ColorSchemeError as error:
         raise ClosureError(error.diagnostic_id, error.source_ref, error.detail) from error
     catalog_resources = tuple(item for item in resources if item.kind == "icon-catalog")
     _validate_icon_catalog_set(catalog_resources)
+    glyphs, patterns = _resolve_theme_catalog_assets(value, catalog_resources)
+    if isinstance(value.get("body"), dict):
+        value["body"]["catalogAssets"] = {"glyphs": glyphs, "patterns": patterns}
+    resolved_theme = ResolvedThemeContract(theme.id, freeze(value), freeze(glyphs), freeze(patterns))
     if catalog_resources:
         view_contract = resources[1].contract
         if not isinstance(view_contract, ViewContract):
@@ -726,6 +737,102 @@ def _validate_icon_catalog_set(resources: tuple[ClosureResource, ...]) -> None:
         if len(names) != len(set(names)) or any(name in namespaces for name in names):
             raise ClosureError("E_ICON_SET_AMBIGUOUS")
         namespaces.update(names)
+
+
+def _resolve_theme_catalog_assets(theme: Mapping[str, Any],
+                                 resources: tuple[ClosureResource, ...]) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Resolve every Theme catalogue reference before Layout receives tokens."""
+    body = theme.get("body")
+    roles = body.get("roles") if isinstance(body, Mapping) else None
+    values = body.get("values") if isinstance(body, Mapping) else None
+    if not isinstance(roles, Mapping) or not isinstance(values, Mapping):
+        return {}, {}
+    catalogs = [item.contract for item in resources if isinstance(item.contract, IconCatalogContract)]
+    glyphs: dict[str, Any] = {}
+    patterns: dict[str, Any] = {}
+
+    def fail(pointer: str, reference: str, reason: str) -> None:
+        raise ClosureError("E_THEME_ASSET_REFERENCE", pointer,
+                           f"reference={reference}; {reason}")
+
+    def resolve(reference: object, kind: str, pointer: str) -> None:
+        if not isinstance(reference, str) or reference.count(":") != 1:
+            fail(pointer, str(reference), "malformed set:name")
+        set_name, name = reference.split(":", 1)
+        matches = [catalog for catalog in catalogs if set_name in {catalog.set_name, *catalog.aliases}]
+        if len(matches) != 1:
+            fail(pointer, reference, "unknown or ambiguous catalogue set")
+        catalog = matches[0]
+        collection = catalog.raw_glyphs if kind == "glyph" else catalog.raw_patterns
+        if name not in collection:
+            fail(pointer, reference, f"missing {kind} entry")
+        try:
+            entry = validate_theme_asset_entry(catalog, kind, name)
+        except ContractError as error:
+            fail(pointer, reference, f"invalid {kind} entry ({error.diagnostic_id})")
+        target = glyphs if kind == "glyph" else patterns
+        target[reference] = entry
+
+    def validate_pattern_paint(role: str, binding: Mapping[str, Any]) -> None:
+        conflicting = ("strokeWidth", "dash", "strokeLineCap", "strokeLineJoin",
+                       "strokeFinishFidelity", "gradientStart", "gradientEnd",
+                       "gradientAngle", "gradientFidelity")
+        for property_name in conflicting:
+            if property_name in binding:
+                raise ClosureError("E_THEME_ROLE_PROPERTY_UNSUPPORTED",
+                                   f"/body/roles/{role}/{property_name}")
+        if ("backgroundTreatment" in binding
+                and binding["backgroundTreatment"] != "fill"):
+            raise ClosureError("E_THEME_ROLE_PROPERTY_UNSUPPORTED",
+                               f"/body/roles/{role}/backgroundTreatment")
+        for property_name in ("fill", "stroke"):
+            token_id = binding.get(property_name)
+            role_pointer = f"/body/roles/{role}/{property_name}"
+            if not isinstance(token_id, str):
+                raise ClosureError("E_THEME_ROLE_REQUIRED", role_pointer)
+            token = values.get(token_id)
+            token_value = token.get("value") if isinstance(token, Mapping) else None
+            if (not isinstance(token, Mapping) or token.get("type") != "color"
+                    or not isinstance(token_value, str)
+                    or not re.fullmatch(r"#[0-9A-Fa-f]{6}", token_value)):
+                raise ClosureError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", role_pointer)
+        token_id = binding.get("opacity")
+        if isinstance(token_id, str):
+            token = values.get(token_id)
+            try:
+                opacity = float(token.get("value")) if isinstance(token, Mapping) and token.get("type") == "number" else float("nan")
+            except (TypeError, ValueError):
+                opacity = float("nan")
+            if not math.isfinite(opacity) or opacity != 1:
+                raise ClosureError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", f"/body/roles/{role}/opacity")
+
+    for role, binding in roles.items():
+        if not isinstance(binding, Mapping):
+            continue
+        for property_name, expected_kind, ref_pointer in (
+                ("symbol", "glyph", "shape/catalog"), ("pattern", "pattern", "ref")):
+            token_id = binding.get(property_name)
+            if not isinstance(token_id, str):
+                continue
+            token = values.get(token_id)
+            token_value = token.get("value") if isinstance(token, Mapping) else None
+            reference = None
+            if property_name == "symbol" and isinstance(token_value, Mapping):
+                shape = token_value.get("shape")
+                if isinstance(shape, Mapping):
+                    reference = shape.get("catalog")
+            elif property_name == "pattern" and isinstance(token_value, Mapping) and token_value.get("kind") == "catalog":
+                reference = token_value.get("ref")
+            if reference is None:
+                continue
+            pointer = f"/body/values/{token_id}/value/{ref_pointer}"
+            if property_name == "pattern" and theme_catalog_pattern_consumer(str(role), property_name) is None:
+                raise ClosureError("E_THEME_ROLE_PROPERTY_UNSUPPORTED",
+                                   f"/body/roles/{role}/{property_name}")
+            if property_name == "pattern":
+                validate_pattern_paint(str(role), binding)
+            resolve(reference, expected_kind, pointer)
+    return glyphs, patterns
 
 
 def _safe_icon_address(address: str) -> bool:

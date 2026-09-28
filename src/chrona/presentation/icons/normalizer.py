@@ -177,6 +177,11 @@ def normalize_glyph_entry(value: object) -> dict[str, object]:
 
 def _arc_commands(cx: float, cy: float, radius: float, start: float, end: float) -> list[dict[str, object]]:
     """Approximate a circular arc with quadratics at ≤0.001 tile-unit error."""
+    def canonical_coordinate(value: float) -> float:
+        # libm may differ in the last binary ULP across supported platforms.
+        # Quantize generated coordinates before both density and wire output.
+        return float(_number_text(value))
+
     span = math.radians(end - start)
     # For a circular arc, quadratic control at r/cos(delta/2) gives radial
     # error bounded by r*(sec(delta/2)-1). Pick the largest safe subdivision.
@@ -185,12 +190,16 @@ def _arc_commands(cx: float, cy: float, radius: float, start: float, end: float)
     step = span / segments
     commands: list[dict[str, object]] = []
     first = math.radians(start)
-    commands.append({"kind": "move", "points": [cx + radius * math.cos(first), cy + radius * math.sin(first)]})
+    commands.append({"kind": "move", "points": [canonical_coordinate(cx + radius * math.cos(first)),
+                                                 canonical_coordinate(cy + radius * math.sin(first))]})
     for index in range(segments):
         a0, a1 = first + index * step, first + (index + 1) * step
         middle = (a0 + a1) / 2
         control_radius = radius / math.cos(step / 2)
-        commands.append({"kind": "quadratic", "points": [cx + control_radius * math.cos(middle), cy + control_radius * math.sin(middle), cx + radius * math.cos(a1), cy + radius * math.sin(a1)]})
+        commands.append({"kind": "quadratic", "points": [canonical_coordinate(cx + control_radius * math.cos(middle)),
+                                                      canonical_coordinate(cy + control_radius * math.sin(middle)),
+                                                      canonical_coordinate(cx + radius * math.cos(a1)),
+                                                      canonical_coordinate(cy + radius * math.sin(a1))]})
     return commands
 
 

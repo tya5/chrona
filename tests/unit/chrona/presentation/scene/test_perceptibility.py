@@ -19,8 +19,8 @@ def _primitive(identifier, kind="Text", *, bounds=None, slot="slot", order=0, ho
     return value
 
 
-def _scene(*primitives, overflow="fit", canvas_paint="#FFFFFF"):
-    return {"version": "chrona/scene/v0.6", "kind": "scene", "surfaces": [{"id": "review", "slots": [
+def _scene(*primitives, overflow="fit", canvas_paint="#FFFFFF", version="chrona/scene/v0.6"):
+    return {"version": version, "kind": "scene", "surfaces": [{"id": "review", "slots": [
         {"id": "slot", "bounds": _bounds(), "overflow": overflow},
     ], "canvasPaint": {"fill": canvas_paint, "opacity": 1}, "primitives": list(primitives)}]}
 
@@ -118,6 +118,43 @@ def test_paint_observation_composites_opacity_without_selecting_a_policy_floor()
 def test_shared_flat_paint_analysis_composites_translucent_and_opaque_values():
     assert composited_contrast(fill="#000000", opacity=1, ground="#FFFFFF") == 21
     assert 1 < composited_contrast(fill="#000000", opacity=0.1, ground="#FFFFFF") < 1.3
+
+
+def test_catalog_pattern_observation_exposes_effective_channels_geometry_and_intrinsic_density():
+    pattern = {"tileInlineSize": 8, "tileBlockSize": 4, "angleDegrees": 45,
+               "densityBasisPoints": 1250, "primitives": [{"kind": "rect", "x": 0, "y": 0,
+               "inlineSize": 1, "blockSize": 4}], "origin": [10, 10],
+               "regionBounds": {"inline": 10, "block": 10, "inlineSize": 20, "blockSize": 10},
+               "clipBounds": {"inline": 10, "block": 10, "inlineSize": 20, "blockSize": 10},
+               "cornerRadius": 2}
+    primitive = _primitive("pattern", "Rect", paint={"fill": "#EEEEEE", "stroke": "#222222", "opacity": 1})
+    primitive["pattern"] = pattern
+    document = _scene(primitive, version="chrona/scene/v0.7")
+    finding = next(item for item in evaluate_scene_perceptibility(document)
+                   if item.code == "I_SCENE_PATTERN_PERCEPTIBILITY")
+    facts = dict(finding.measured_facts)
+    assert finding.severity == "info" and finding.disposition == "observed"
+    assert facts["substrate"] == "#EEEEEE" and facts["ink"] == "#222222"
+    assert facts == {
+        "substrate": "#EEEEEE", "ink": "#222222", "densityBasisPoints": 1250.0,
+        "tileInlineSize": 8.0, "tileBlockSize": 4.0, "angleDegrees": 45.0,
+        "originInline": 10.0, "originBlock": 10.0,
+        "regionInline": 10.0, "regionBlock": 10.0,
+        "regionInlineSize": 20.0, "regionBlockSize": 10.0,
+        "clipInline": 10.0, "clipBlock": 10.0,
+        "clipInlineSize": 20.0, "clipBlockSize": 10.0,
+        "cornerRadius": 2.0,
+    }
+    mapping = finding.as_mapping()
+    assert mapping["version"] == "v1" and mapping["code"] == "I_SCENE_PATTERN_PERCEPTIBILITY"
+    assert mapping["primitiveIds"] == ["pattern"] and mapping["slotId"] == "slot"
+    assert mapping["disposition"] == "observed"
+
+
+def test_v06_pattern_does_not_change_legacy_perceptibility_findings():
+    primitive = _primitive("pattern", "Rect", paint={"fill": "#EEEEEE", "opacity": 1})
+    primitive["pattern"] = {"kind": "diagonal-hatch"}
+    assert "I_SCENE_PATTERN_PERCEPTIBILITY" not in _codes(_scene(primitive))
 
 
 def test_findings_are_ordered_independently_of_primitive_input_order():

@@ -67,7 +67,49 @@ def render_v05_svg(surface: SceneSurface) -> str:
     def marker_id(color: str, geometry: object) -> str:
         return "marker-" + sha256(repr((color, geometry)).encode()).hexdigest()[:12]
     def pattern_id(geometry: object, paint: ScenePaint) -> str:
-        return "pattern-" + sha256(repr((geometry, paint.stroke, paint.opacity)).encode()).hexdigest()[:12]
+        if geometry.primitives:
+            payload = repr((geometry, paint.stroke, paint.fill, paint.opacity))
+        else:
+            # Preserve the v0.6 identifier byte-for-byte even though the typed
+            # PatternGeometry now also carries optional v0.7 fields.
+            legacy = (f"PatternGeometry(tile_inline_size={geometry.tile_inline_size!r}, "
+                      f"tile_block_size={geometry.tile_block_size!r}, "
+                      f"angle_degrees={geometry.angle_degrees!r}, strokes={geometry.strokes!r})")
+            payload = f"({legacy}, {paint.stroke!r}, {paint.opacity!r})"
+        return "pattern-" + sha256(payload.encode()).hexdigest()[:12]
+    def catalog_pattern_body(pattern: object, paint: ScenePaint) -> str:
+        if paint.fill is None or paint.stroke is None or paint.opacity != 1:
+            raise ValueError("E_PRESENTATION_PAINT_INVALID")
+        ink = escape(paint.stroke, quote=True)
+        substrate = escape(paint.fill, quote=True)
+        parts = [f'<rect x="0" y="0" width="{number(pattern.tile_inline_size)}" height="{number(pattern.tile_block_size)}" fill="{substrate}"/>']
+        for item in pattern.primitives:
+            if item.kind == "circle":
+                parts.append(f'<circle cx="{number(item.cx)}" cy="{number(item.cy)}" r="{number(item.radius)}" fill="{ink}"/>')
+            elif item.kind == "rect":
+                parts.append(f'<rect x="{number(item.x)}" y="{number(item.y)}" width="{number(item.inline_size)}" height="{number(item.block_size)}" fill="{ink}"/>')
+            elif item.kind == "path":
+                commands = []
+                for command in item.commands:
+                    if command.kind == "close":
+                        commands.append("Z")
+                    elif command.kind in {"move", "line"}:
+                        commands.append(("M" if command.kind == "move" else "L") +
+                                        " ".join(number(value) for value in command.points[0]))
+                    elif command.kind == "quadratic":
+                        commands.append("Q" + " ".join(number(value) for point in command.points for value in point))
+                    else:
+                        raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                shape = f'd="{"".join(commands)}"'
+                if item.paint == "fill":
+                    parts.append(f'<path {shape} fill="{ink}"/>')
+                elif item.paint == "stroke":
+                    parts.append(f'<path {shape} fill="none" stroke="{ink}" stroke-width="{number(item.stroke_width)}" stroke-linecap="{item.line_cap}" stroke-linejoin="{item.line_join}"/>')
+                else:
+                    raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            else:
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        return "".join(parts)
     marker_pairs = {(completed(node).stroke, marker) for node in surface.primitives if node.kind == "Path"
                     for marker in (node.marker_start, node.marker_end) if marker}
     patterns = {(node.pattern, completed(node)) for node in surface.primitives if node.pattern}
@@ -91,9 +133,17 @@ def render_v05_svg(surface: SceneSurface) -> str:
                           else f'fill="none" stroke="{escape(color, quote=True)}"')
             definitions.append(f'<marker id="{marker_id(color, marker)}" viewBox="0 0 {number(marker.head_length)} {number(marker.head_width)}" refX="{number(marker.head_length - marker.attachment_offset)}" refY="{number(marker.head_width / 2)}" markerWidth="{number(marker.head_length)}" markerHeight="{number(marker.head_width)}" orient="auto"><path d="{commands_data(marker.outline)}" {appearance}/></marker>')
         for pattern, paint in sorted(patterns, key=repr):
-            if paint.stroke is None or paint.stroke_width is None: raise ValueError("E_PRESENTATION_PAINT_INVALID")
-            strokes = "".join(f'<line x1="{number(stroke.start[0])}" y1="{number(stroke.start[1])}" x2="{number(stroke.end[0])}" y2="{number(stroke.end[1])}" opacity="{number(paint.opacity)}" fill="none" stroke="{escape(paint.stroke, quote=True)}" stroke-width="{number(stroke.width)}"/>' for stroke in pattern.strokes)
-            definitions.append(f'<pattern id="{pattern_id(pattern, paint)}" patternUnits="userSpaceOnUse" width="{number(pattern.tile_inline_size)}" height="{number(pattern.tile_block_size)}" patternTransform="rotate({number(pattern.angle_degrees)})">{strokes}</pattern>')
+            if pattern.primitives:
+                if pattern.origin is None or pattern.clip_bounds is None:
+                    raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                transform = (f'translate({number(pattern.origin[0])} {number(pattern.origin[1])}) '
+                             f'rotate({number(pattern.angle_degrees)} '
+                             f'{number(pattern.tile_inline_size / 2)} {number(pattern.tile_block_size / 2)})')
+                definitions.append(f'<pattern id="{pattern_id(pattern, paint)}" patternUnits="userSpaceOnUse" x="0" y="0" width="{number(pattern.tile_inline_size)}" height="{number(pattern.tile_block_size)}" patternTransform="{transform}">{catalog_pattern_body(pattern, paint)}</pattern>')
+            else:
+                if paint.stroke is None or paint.stroke_width is None: raise ValueError("E_PRESENTATION_PAINT_INVALID")
+                strokes = "".join(f'<line x1="{number(stroke.start[0])}" y1="{number(stroke.start[1])}" x2="{number(stroke.end[0])}" y2="{number(stroke.end[1])}" opacity="{number(paint.opacity)}" fill="none" stroke="{escape(paint.stroke, quote=True)}" stroke-width="{number(stroke.width)}"/>' for stroke in pattern.strokes)
+                definitions.append(f'<pattern id="{pattern_id(pattern, paint)}" patternUnits="userSpaceOnUse" width="{number(pattern.tile_inline_size)}" height="{number(pattern.tile_block_size)}" patternTransform="rotate({number(pattern.angle_degrees)})">{strokes}</pattern>')
         for identifier, gradient in sorted(gradients.items()):
             assert gradient is not None
             definitions.append(f'<linearGradient id="{identifier}" gradientUnits="userSpaceOnUse" x1="{number(gradient.start[0])}" y1="{number(gradient.start[1])}" x2="{number(gradient.end[0])}" y2="{number(gradient.end[1])}">' + "".join(f'<stop offset="{number(position * 100)}%" stop-color="{escape(color, quote=True)}"/>' for position, color in gradient.stops) + '</linearGradient>')
@@ -166,7 +216,11 @@ def render_v05_svg(surface: SceneSurface) -> str:
         common = f'data-scene-id="{escape(node.scene_id)}" data-source-ref="{escape(node.source_ref)}" data-purpose="{escape(node.purpose)}"'
         paint, (x, y, w, h) = completed(node), node.bounds
         if node.kind == "Rect":
-            appearance = (attrs(paint, fill=False, stroke=True,
+            if node.pattern is not None and node.pattern.primitives:
+                if (node.pattern.region_bounds != node.bounds or node.pattern.clip_bounds != node.bounds
+                        or node.pattern.corner_radius != (node.corner_radius or 0.0)):
+                    raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            appearance = (attrs(paint, fill=False, stroke=not bool(node.pattern.primitives),
                                 fill_override=f"url(#{pattern_id(node.pattern, paint)})")
                           if node.pattern is not None else attrs(paint, fill=paint.fill is not None, stroke=paint.stroke is not None))
             radius = f' rx="{number(node.corner_radius)}" ry="{number(node.corner_radius)}"' if node.corner_radius else ""

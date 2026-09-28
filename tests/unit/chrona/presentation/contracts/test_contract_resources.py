@@ -62,7 +62,8 @@ def test_stale_string_version_has_a_typed_resource_local_diagnostic():
     assert diagnostic.resource_kind == "theme"
     assert diagnostic.resource_id == "theme"
     assert diagnostic.found_version == "chrona/theme/v0.10"
-    assert diagnostic.supported_versions == ("chrona/theme/v0.11",)
+    assert diagnostic.supported_versions == (
+        "chrona/theme/v0.11", "chrona/theme/v0.13", "chrona/theme/v0.14")
     assert diagnostic.source_ref == "/version"
 
 

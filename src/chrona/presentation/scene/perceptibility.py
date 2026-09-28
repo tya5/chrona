@@ -14,7 +14,7 @@ OCCLUSION_RATIO = 0.5
 
 
 class ScenePerceptibilityError(ValueError):
-    """A mapping is not a complete scene-v0.6 document for observation."""
+    """A mapping is not a complete supported Scene document for observation."""
 
 
 @dataclass(frozen=True)
@@ -48,8 +48,10 @@ class ScenePerceptibilityFinding:
 
 
 def evaluate_scene_perceptibility(document: Mapping[str, Any]) -> tuple[ScenePerceptibilityFinding, ...]:
-    """Evaluate serialized scene-v0.6 facts without measuring or changing them."""
-    _require(document.get("version") == "chrona/scene/v0.6", "unsupported scene version")
+    """Evaluate serialized completed Scene facts without measuring or changing them."""
+    version = document.get("version")
+    _require(version == "chrona/scene/v0.6" or version == "chrona/scene/v0.7",
+             "unsupported scene version")
     _require(document.get("kind") == "scene", "invalid scene kind")
     surfaces = _list(document.get("surfaces"), "surfaces")
     _require(bool(surfaces), "scene has no surfaces")
@@ -75,7 +77,8 @@ def evaluate_scene_perceptibility(document: Mapping[str, Any]) -> tuple[ScenePer
         findings.extend(_slot_findings(scene_path, slots, primitives))
         findings.extend(_occlusion_findings(scene_path, primitives))
         findings.extend(_text_intersection_findings(scene_path, primitives))
-        findings.extend(_paint_findings(scene_path, surface, primitives))
+        findings.extend(_paint_findings(scene_path, surface, primitives,
+                                        catalog_patterns=version == "chrona/scene/v0.7"))
     return tuple(sorted(findings, key=lambda item: (item.scene_path, item.code, item.primitive_ids)))
 
 
@@ -107,6 +110,7 @@ class _Primitive:
     paint_order: int
     host_placement_id: str | None
     paint: Mapping[str, Any] | None
+    pattern: Mapping[str, Any] | None
 
 
 @dataclass(frozen=True)
@@ -141,9 +145,11 @@ def _primitives(raw_primitives: Any, scene_path: str) -> tuple[_Primitive, ...]:
         _require(host is None or isinstance(host, str), f"invalid host relation for {primitive_id}")
         paint = primitive.get("paint")
         _require(paint is None or isinstance(paint, Mapping), f"invalid paint for {primitive_id}")
+        pattern = primitive.get("pattern")
+        _require(pattern is None or isinstance(pattern, Mapping), f"invalid pattern for {primitive_id}")
         primitives.append(_Primitive(index, primitive_id, kind, slot_id,
                                      _rect(primitive.get("bounds"), f"{scene_path}.primitives[{index}].bounds"),
-                                     paint_order, host, paint))
+                                     paint_order, host, paint, pattern))
     return tuple(primitives)
 
 
@@ -203,14 +209,55 @@ def _text_intersection_findings(scene_path: str, primitives: Sequence[_Primitive
     return findings
 
 
-def _paint_findings(scene_path: str, surface: Mapping[str, Any], primitives: Sequence[_Primitive]) -> list[ScenePerceptibilityFinding]:
+def _paint_findings(scene_path: str, surface: Mapping[str, Any], primitives: Sequence[_Primitive], *,
+                    catalog_patterns: bool = False) -> list[ScenePerceptibilityFinding]:
+    findings: list[ScenePerceptibilityFinding] = []
+    if catalog_patterns:
+        for item in primitives:
+            pattern, paint = item.pattern, item.paint
+            is_catalog = isinstance(pattern, Mapping) and any(
+                key in pattern for key in ("densityBasisPoints", "primitives", "origin", "regionBounds", "clipBounds"))
+            if not is_catalog:
+                continue
+            density = pattern.get("densityBasisPoints")
+            _require(isinstance(density, int) and not isinstance(density, bool) and 1 <= density <= 10000,
+                     f"invalid catalogue pattern density for {item.primitive_id}")
+            _require(isinstance(paint, Mapping) and _opacity(paint) == 1.0
+                     and is_hex_color(paint.get("fill")) and is_hex_color(paint.get("stroke")),
+                     f"invalid catalogue pattern channels for {item.primitive_id}")
+            tile_inline, tile_block, angle = (pattern.get(key) for key in
+                                               ("tileInlineSize", "tileBlockSize", "angleDegrees"))
+            _require(_positive_finite(tile_inline) and _positive_finite(tile_block) and _finite(angle),
+                     f"invalid catalogue pattern geometry for {item.primitive_id}")
+            facts: tuple[tuple[str, float | str], ...] = (
+                ("substrate", str(paint["fill"])), ("ink", str(paint["stroke"])),
+                ("densityBasisPoints", float(density)), ("tileInlineSize", float(tile_inline)),
+                ("tileBlockSize", float(tile_block)), ("angleDegrees", float(angle)),
+            )
+            origin = pattern.get("origin")
+            _require(isinstance(origin, list) and len(origin) == 2 and all(_finite(value) for value in origin),
+                     f"invalid catalogue pattern origin for {item.primitive_id}")
+            facts += (("originInline", float(origin[0])), ("originBlock", float(origin[1])))
+            for key, labels in (("regionBounds", ("regionInline", "regionBlock", "regionInlineSize", "regionBlockSize")),
+                                ("clipBounds", ("clipInline", "clipBlock", "clipInlineSize", "clipBlockSize"))):
+                bounds = pattern.get(key)
+                _require(isinstance(bounds, Mapping), f"invalid catalogue pattern {key} for {item.primitive_id}")
+                coordinates = tuple(bounds.get(name) for name in ("inline", "block", "inlineSize", "blockSize"))
+                _require(all(_finite(value) for value in coordinates),
+                         f"invalid catalogue pattern {key} for {item.primitive_id}")
+                facts += tuple((label, float(value)) for label, value in zip(labels, coordinates))
+            corner_radius = pattern.get("cornerRadius")
+            _require(_finite(corner_radius) and float(corner_radius) >= 0,
+                     f"invalid catalogue pattern corner radius for {item.primitive_id}")
+            facts += (("cornerRadius", float(corner_radius)),)
+            findings.append(_finding("I_SCENE_PATTERN_PERCEPTIBILITY", "info", scene_path,
+                                     (item.primitive_id,), item.slot_id, facts, "observed"))
     canvas = surface.get("canvasPaint")
     if not isinstance(canvas, Mapping) or not is_hex_color(canvas.get("fill")):
-        return []
+        return findings
     ground_opacity = _opacity(canvas)
     if ground_opacity != 1.0:
-        return []
-    findings: list[ScenePerceptibilityFinding] = []
+        return findings
     for item in primitives:
         if not item.bounds.positive_area or not isinstance(item.paint, Mapping) or not is_hex_color(item.paint.get("fill")):
             continue
@@ -262,6 +309,14 @@ def _opacity(paint: Mapping[str, Any]) -> float:
     _require(isinstance(value, (int, float)) and not isinstance(value, bool) and isfinite(float(value)) and 0 <= float(value) <= 1,
              "invalid paint opacity")
     return float(value)
+
+
+def _finite(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and isfinite(float(value))
+
+
+def _positive_finite(value: Any) -> bool:
+    return _finite(value) and float(value) > 0
 
 
 def _mapping(value: Any, label: str) -> Mapping[str, Any]:

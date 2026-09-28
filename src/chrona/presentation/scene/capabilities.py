@@ -252,6 +252,11 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
 _ROLE_PROPERTY_CONTRACTS = _role_contracts()
 _OPEN_AXIS_PROPERTIES = _TEXT_MEASUREMENT | _AXIS_MEASUREMENT
 _OPEN_LEGEND_PROPERTIES = _RECT_PAINT
+_CATALOG_PATTERN_ROLES = frozenset((
+    "missing-actual", "network-node", "progress-fill", "summary-bar",
+    "annotation-highlight-box", "axis-band-decoration", "axis-band-decoration2",
+    "as-of-label-chip", "member-label-chip", "finish-delta-chip",
+))
 
 
 def theme_role_contract(role: str) -> RolePropertyContract | None:
@@ -278,4 +283,16 @@ def theme_role_property_consumer(role: str, property_name: str) -> str | None:
         return "View-named axis-tier measurement"
     if property_name in _OPEN_LEGEND_PROPERTIES:
         return "Detail Profile legend fixed-square Rect"
+    return None
+
+
+def theme_catalog_pattern_consumer(role: str, property_name: str) -> str | None:
+    """Return the completed-Rect owner allowed to consume a catalogue pattern.
+
+    Legacy inline patterns retain their existing role applicability. This
+    narrower check applies only to typed `{kind: catalog}` values because the
+    current completed pattern clip contract covers Rect primitives only.
+    """
+    if property_name == "pattern" and role in _CATALOG_PATTERN_ROLES:
+        return "Layout-completed Rect pattern geometry"
     return None

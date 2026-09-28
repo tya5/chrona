@@ -7,6 +7,7 @@ import math
 from typing import Any
 
 from chrona.presentation.layout.surface_quality import FitWarning, MarkerGeometry, PathCommand
+from chrona.presentation.layout.pattern_placement import PatternTilePrimitive
 from chrona.presentation.model.font_metrics import FontTabularWarning
 from chrona.presentation.model.info_diagnostics import PresentationInfo
 from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding, semantic_binding
@@ -168,11 +169,25 @@ class PatternGeometry:
     tile_inline_size: float
     tile_block_size: float
     angle_degrees: float
-    strokes: tuple[PatternStroke, ...]
+    strokes: tuple[PatternStroke, ...] = ()
+    density_basis_points: int | None = None
+    primitives: tuple[PatternTilePrimitive, ...] = ()
+    origin: tuple[float, float] | None = None
+    region_bounds: tuple[float, float, float, float] | None = None
+    clip_bounds: tuple[float, float, float, float] | None = None
+    corner_radius: float | None = None
 
     def __post_init__(self) -> None:
+        catalog = bool(self.primitives)
         if (self.tile_inline_size <= 0 or self.tile_block_size <= 0
-                or not 0 <= self.angle_degrees < 360 or not self.strokes):
+                or not 0 <= self.angle_degrees < 360
+                or (catalog and (self.strokes or self.density_basis_points is None
+                                 or not 1 <= self.density_basis_points <= 10_000
+                                 or self.origin is None or self.region_bounds is None
+                                 or self.clip_bounds is None or self.corner_radius is None))
+                or (not catalog and (not self.strokes or self.density_basis_points is not None
+                                     or self.origin is not None or self.region_bounds is not None
+                                     or self.clip_bounds is not None or self.corner_radius is not None))):
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
 
 
@@ -230,6 +245,9 @@ class ScenePrimitive:
     contrast_treatment: str | None = None
     glyph_paint_mode: str | None = None
     glyph_paint_color: str | None = None
+    glyph_stroke_width: float | None = None
+    glyph_line_cap: str | None = None
+    glyph_line_join: str | None = None
     image_fill_pending: "ImageFill | None" = None
     lane_row_id: str | None = None
     lane_member_id: str | None = None
@@ -243,6 +261,12 @@ class ScenePrimitive:
                 or (self.glyph_paint_mode is not None and self.kind != "Symbol")
                 or (self.glyph_paint_mode not in (None, "fill", "stroke"))
                 or (self.glyph_paint_color is not None and self.glyph_paint_mode is None)
+                or (self.glyph_stroke_width is not None and (self.glyph_paint_mode != "stroke"
+                    or self.glyph_stroke_width <= 0 or not math.isfinite(self.glyph_stroke_width)))
+                or ((self.glyph_line_cap is None) != (self.glyph_stroke_width is None))
+                or ((self.glyph_line_join is None) != (self.glyph_stroke_width is None))
+                or (self.glyph_line_cap not in (None, "butt", "round", "square"))
+                or (self.glyph_line_join not in (None, "miter", "round", "bevel"))
                 or (self.purpose == "table-cell" and self.table_row_id is None)
                 or (self.purpose == "table-cell" and self.table_column_id is None)
                 or (self.purpose != "table-cell" and self.table_row_id is not None)

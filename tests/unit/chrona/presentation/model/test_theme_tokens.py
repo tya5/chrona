@@ -133,6 +133,28 @@ def test_variant_symbol_uses_its_own_role_when_declared():
     assert tokens.variant_symbol("baseline") == {"shape": "circle"}
 
 
+def test_catalogued_variant_symbol_resolves_the_frozen_canonical_entry():
+    theme = _theme()
+    theme["body"]["values"]["gate"] = {"type": "symbol", "value": {"shape": {"catalog": "local:pin"}}}
+    theme["body"]["roles"]["milestoneSymbol"] = {"symbol": "gate"}
+    entry = {"viewport": {"inlineSize": 8, "blockSize": 8},
+             "parts": [{"paint": "fill", "data": "M 0 0 L 8 0 Z"}]}
+    theme["body"]["catalogAssets"] = {"glyphs": {"local:pin": entry}, "patterns": {}}
+    assert ThemeTokenView(theme).variant_symbol("planned") == {
+        "shape": "catalog-glyph", "ref": "local:pin", **entry}
+
+
+def test_catalogued_pattern_token_resolves_by_exact_authored_reference():
+    theme = _theme()
+    theme["body"]["values"]["hatch"] = {"type": "pattern", "value": {"kind": "catalog", "ref": "local:hatch"}}
+    theme["body"]["roles"]["summary-bar"] = {"pattern": "hatch"}
+    entry = {"tile": {"inlineSize": 8, "blockSize": 8}, "angle": 0,
+             "densityBasisPoints": 1000, "primitives": [{"kind": "circle", "cx": 4, "cy": 4, "radius": 1}]}
+    theme["body"]["catalogAssets"] = {"glyphs": {}, "patterns": {"local:hatch": entry}}
+    assert ThemeTokenView(theme).optional_pattern("summary-bar") == {
+        "kind": "catalog", "ref": "local:hatch", **entry}
+
+
 @pytest.mark.parametrize(("inset", "radius", "expected"), [
     (None, None, (Decimal(0), Decimal(0))),
     (0.2, 0.5, (Decimal("0.2"), Decimal("0.5"))),

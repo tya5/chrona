@@ -7,6 +7,7 @@ from PIL import Image
 import pytest
 
 from chrona.presentation.layout.surface_quality import PathCommand
+from chrona.presentation.layout.pattern_placement import PatternTilePrimitive
 from chrona.presentation.renderers.v05_svg import render_v05_svg
 from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.scene.model import DropShadow, LinearGradient, PatternGeometry, PatternStroke, ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish, SurfaceScaleManifest, SymbolGeometry, TextLayout
@@ -57,6 +58,28 @@ def test_svg_pattern_rect_has_one_explicit_pattern_fill():
     line = next(line for line in output.splitlines() if 'data-scene-id="hatched"' in line)
     assert line.count('fill="url(#pattern-') == 1
     assert 'fill="none"' not in line
+
+
+def test_catalogue_pattern_uses_completed_origin_substrate_and_ink_in_svg_and_png():
+    pattern = PatternGeometry(
+        4, 4, 0, density_basis_points=5000,
+        primitives=(PatternTilePrimitive("rect", x=0, y=0, inline_size=2, block_size=4),),
+        origin=(1, 1), region_bounds=(1, 1, 8, 8), clip_bounds=(1, 1, 8, 8),
+        corner_radius=0,
+    )
+    primitive = ScenePrimitive(
+        "catalogued", "Rect", "a", "object", "planned", "planned", (1, 1, 8, 8),
+        paint=ScenePaint("#FFFFFF", "#000000", None, (), 1), pattern=pattern,
+    )
+    output = render_v05_svg(_surface(primitive))
+    assert 'patternTransform="translate(1 1) rotate(0 2 2)"' in output
+    assert '<rect x="0" y="0" width="4" height="4" fill="#FFFFFF"/>' in output
+    assert '<rect x="0" y="0" width="2" height="4" fill="#000000"/>' in output
+    resvg_py = pytest.importorskip("resvg_py")
+    image = Image.open(BytesIO(resvg_py.svg_to_bytes(svg_string=output, dpi=96,
+                                                     skip_system_fonts=True))).convert("RGB")
+    assert image.getpixel((2, 3)) == (0, 0, 0)
+    assert image.getpixel((4, 3)) == (255, 255, 255)
 
 
 def test_svg_serializes_the_completed_canvas_not_a_caller_supplied_viewport():

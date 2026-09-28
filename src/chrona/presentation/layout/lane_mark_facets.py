@@ -63,12 +63,21 @@ class LaneGlyphPartProjection:
     mark_shape: str
     corner_radius: float
     end_treatment: str
+    stroke_width: float | None = None
+    line_cap: str | None = None
+    line_join: str | None = None
 
     def __post_init__(self) -> None:
         if (self.part_index < 0 or not self.semantic_role or self.paint_order < 0
                 or self.paint_mode not in {None, "fill", "stroke"}
                 or (self.paint_color is not None and not isinstance(self.paint_color, str))
                 or self.mark_shape not in {"point", "open-span"}
+                or (self.stroke_width is not None and (
+                    not isfinite(self.stroke_width) or self.stroke_width <= 0))
+                or (self.line_cap is not None and self.line_cap not in {"butt", "round", "square"})
+                or (self.line_join is not None and self.line_join not in {"miter", "round", "bevel"})
+                or (self.paint_mode != "stroke" and any(
+                    value is not None for value in (self.stroke_width, self.line_cap, self.line_join)))
                 or not isfinite(self.corner_radius) or self.corner_radius < 0
                 or self.end_treatment not in {"closed", "open"}
                 or (self.mark_shape == "open-span") != (self.end_treatment == "open")):
@@ -408,7 +417,8 @@ def _mark_facets(item: Any, instance: LaneProjectionInstance, mark: MarkPlacemen
         if not points:
             raise LayoutError("E_LAYOUT_LANE_FACET_UNAVAILABLE", mark.placement_id)
         bounds = _point_bounds(points)
-        stroke_width = _stroke_width(theme, mark.semantic_id) if part.paint_mode == "stroke" else None
+        stroke_width = (part.stroke_width if part.stroke_width is not None else
+                        _stroke_width(theme, mark.semantic_id) if part.paint_mode == "stroke" else None)
         if part.paint_mode == "stroke" and (stroke_width is None or stroke_width <= 0):
             raise LayoutError("E_LAYOUT_LANE_FACET_UNAVAILABLE", mark.placement_id,
                               detail="stroke glyph has no finite positive Theme width")
@@ -417,6 +427,7 @@ def _mark_facets(item: Any, instance: LaneProjectionInstance, mark: MarkPlacemen
             index, mark.semantic_id, mark.paint_order + index,
             part.paint_mode, part.paint_color,
             mark.mark_shape, mark.corner_radius, mark.end_treatment,
+            stroke_width, part.line_cap, part.line_join,
         )
         primitive_id = mark.placement_id if len(mark.symbol_parts) == 1 else f"{mark.placement_id}:part:{index}"
         result.append(_facet(instance, item, mark, primitive_id, "Symbol", commands,
