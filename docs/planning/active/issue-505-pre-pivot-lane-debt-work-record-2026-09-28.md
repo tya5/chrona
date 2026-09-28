@@ -67,3 +67,32 @@ unchanged. The test must render the actual 02/11/12 closures, inspect each
 completed Scene dependency segment against required lane/member text bounds,
 and cite its real name in the release review. Historical design/review records
 remain history; correct the current acceptance review's false test claim.
+
+## Implementation plan
+
+1. **Prune withdrawn audit and staging.** Delete `scene/lane_audit.py`
+   and its sole test, remove `lane_seed.py` and its test-only calls, clear
+   `staged_modules.txt`, and add a reachability assertion for retired entry
+   points. Focused tests: reachability, remaining fixed-lane frame, Scene
+   serialization. Publish this unit independently.
+2. **Extract live facet composition, then remove dead allocator.** Move the
+   projection/facet records and helpers used by `lane_item_footprints.py` and
+   `surface_composer.py` from `lane_allocation.py` / `lane_bundle_mapper.py`
+   into a Layout-owned module. Delete the test-only geometry allocator and
+   candidate/preflight APIs, their dormant request/Scene plumbing, and tests
+   that assert only withdrawn behavior. Preserve `LaneInlineFrame` and the
+   live fixed-membership preflight. Focused tests: footprints, subtracks,
+   composer, Scene builder, and the float/reachability guards. Review imports
+   and generated Scene/SVG as a batch; unchanged bytes are expected. Publish
+   this structural unit independently.
+3. **Close the route evidence gap.** Parameterize the actual Scene route-to-
+   required-label intersection assertion over 02/11/12; keep membership
+   Theme-independence separate. Cite the actual test in the current #467/#494
+   acceptance review. Focused three-slide test and public materializers;
+   inspect Scene and rendered SVG for any changed bytes (none expected).
+   Publish this unit independently.
+4. **Release review.** Run focused conformance/materializer checks locally
+   using the project venv, let CI run the full matrix, inspect its result,
+   and write one concise `docs/reviews/current/` acceptance review with
+   direct evidence for all four literal #505 rows. Merge the PR only after
+   the release gate; close #505 after verifying merged `main`.
