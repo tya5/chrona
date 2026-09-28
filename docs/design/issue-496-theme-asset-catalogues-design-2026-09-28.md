@@ -1,6 +1,7 @@
 # #496 Theme asset catalogues design
 
 **Status:** Design complete; implementation plan follows.
+**Correction:** [pattern density precision](issue-496-theme-asset-catalogues-design-correction-2026-09-28.md).
 **Plan:** [#496 work record](../planning/active/issue-496-theme-asset-catalogues-work-record-2026-09-28.md).
 **Review:** [whole-architecture review](../reviews/current/issue-496-theme-asset-catalogues-architecture-review-2026-09-28.md).
 **Normative contracts:** [Spec 64](../specification/64-portable-icon-catalogs.md), [Spec 07](../specification/07-style-and-theme.md), [Spec 08](../specification/08-scene-and-rendering.md), [Spec 62](../specification/62-declarative-presentation-packages.md).

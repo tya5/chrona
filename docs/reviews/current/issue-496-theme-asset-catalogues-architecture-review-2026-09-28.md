@@ -5,6 +5,7 @@
 **Plan and literal acceptance:** [#496 work record](../../planning/active/issue-496-theme-asset-catalogues-work-record-2026-09-28.md).
 **Base:** `bbe6734fa8a4db25f6b87c088262163f1bc840dd` (`origin/main`).
 **Design publication:** `03551c355d51d173cbe52228658d3d4bba2a1ce1`.
+**Correction review:** [pattern density precision](issue-496-theme-asset-catalogues-architecture-review-correction-2026-09-28.md).
 
 ## Architecture findings
 

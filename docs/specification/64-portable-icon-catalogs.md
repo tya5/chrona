@@ -234,10 +234,12 @@ A pattern is a finite repeat tile with positive dimensions, an angle in
 `[0,360)` clockwise about tile center, and an ordered list of at most 64
 bounded primitives: filled circles/rectangles and stroked lines/arcs. Arc
 input is approximated by quadratic segments with maximum 0.001 tile-unit
-deviation, then discarded. Density is the declared integer percent of covered
-tile samples on a fixed 128×128 grid at cell centers after rotation with
-periodic wrap at tile edges, rounded half-up; the importer recomputes it and
-rejects a mismatch. Stroke widths are finite,
+deviation, then discarded. One basis point is 0.01%. The importer counts covered cell
+centers on a fixed 128×128 grid after rotation, with periodic wrap at tile
+edges. Its required `densityBasisPoints` field is an integer from 1 through
+10,000 and must equal the covered fraction rounded half-up to the nearest
+basis point. Thus the starter's 12.5% dither uses 1,250 basis
+points exactly; it is never rounded to a whole percent. Stroke widths are finite,
 positive, and at most 16 units. It has no paint, target syntax, executable
 content, or arbitrary transform data. Theme's existing role `pattern`
 property names a typed pattern token whose value is
