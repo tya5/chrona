@@ -75,3 +75,39 @@ identity rule is selected here. The living Specs 06/44 should describe the
 candidate model as current, with the rail as one configuration, rather than
 pointing to it as a future successor. If the three-note trial fails, that is
 a new design question and this review does not authorize a local workaround.
+
+## Implementation plan
+
+1. **C3 measurement gate (no product publication).** Once #505 is merged,
+   use a clean current-`main` worktree to add the three WIP-intended Project
+   note candidates to a temporary copy of current v0.28 HALCYON 02 and the
+   balloon treatment to current wallboard. Keep every other current field.
+   Focused candidate/annotation tests and one rendered Scene+SVG+PNG trial
+   must show all three selected, no forbidden intersection/as-of crossing,
+   and bounded decisions. Record the exact current base and result here. A
+   failure returns to design/review/plan before any production fixture edit.
+2. **C3 atomic resource adoption.** Owned files: HALCYON 02 View, wallboard
+   Theme, affected derived Theme pins (notably 12), context/resource mirrors,
+   and generated 02/11/12 Scene/SVG plus any other affected slides and reports.
+   Add a crowded clone with plot-first/rail-second candidates and assert the
+   chosen rail ID/diagnostic. Check source consumption once, no rail slot in
+   public 02, visible balloons/tails, exact obstacle/as-of geometry, focused
+   View/Layout/Scene tests, and all 29 public materializers as one batch.
+   Publish resources and regenerated evidence together; no intermediate
+   unmaterializable context. Compare intended bytes and inspect rendered
+   SVG/PNG at readable scale.
+3. **C4 atomic contrast closure.** Follow the published C4 design and plan:
+   semantic classes, role-property admission, effective opaque note-box
+   ground and same-source Scene pair guard; migrate the six Theme roots and
+   derived pins atomically. Update tests for direct/inherited Theme closure,
+   Scheme pointers, rectangle/balloon/image hosts, wrong/missing/transparent
+   host, state-text floor and decoration witness. Rebuild the public batch,
+   contrast/perceptibility reports and visual evidence. Publish this separately
+   from accepted C3 without a temporarily invalid Theme.
+4. **Acceptance.** Verify Specs 06/44 against actual behavior, run focused
+   conformance and public checks in the project venv, rely on the CI matrix
+   for full pytest/wheel/newest-Python materializers, then publish one
+   `docs/reviews/current/` review with a direct evidence row for each of the
+   seven literal criteria. Close only after the final PR is merged and CI and
+   rendered-output gates are verified. Do not use the old WIP branch or an
+   historical green run as the release base.
