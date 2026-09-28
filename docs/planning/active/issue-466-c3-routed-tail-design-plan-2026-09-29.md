@@ -14,8 +14,9 @@ balloon Theme binding, 15 focused candidate tests passed, but actual
 Scene/SVG/PNG failed issue #466 criterion 3. `window-note` fit directly in 6
 trials; `tvac-note` and `station-note` exhausted their complete 348-position
 12em lattice and visibly overflowed across marks, labels, and dependencies.
-A bounded 18em probe also failed (387 and 301 positions). Both notes have
-many collision-free box positions below the packed rows, but no direct
+A bounded 18em probe also failed (387 and 301 positions). A 24em one-line
+probe still found 56 body-clear boxes per failed note but no clear direct
+tail. Both notes have many collision-free box positions below the packed rows, but no direct
 triangular tail from the specified anchor clears the intervening geometry.
 The as-of side, obstacle classes, 1024-position declaration, and anchor facts
 were not weakened. These are diagnostic local artifacts, not published C3
@@ -45,9 +46,12 @@ must still commit box and connector atomically from the one obstacle index.
 
 1. Reproduce the 8-lane failure and prove whether strict routed-tail paths
    exist for `tvac-note` and `station-note` with the exact current obstacles,
-   box dimensions, as-of side, and connector-quality bounds.
-2. Publish a minimal design correction, normative specification changes and
-   whole-architecture review. Do not change product code before that review.
+   box dimensions, as-of side, connector-quality bounds, and no penetration
+   of the note's own box. This is established for TVAC `actual/body` and
+   station `planned/finish` in the selected correction.
+2. Publish the [routed-tail correction](../../design/issue-466-c3-routed-tail-correction-2026-09-29.md),
+   normative specification changes and whole-architecture review. Do not
+   change product code before that review.
 3. Amend the C3 implementation plan with affected files, version/resource
    migration, focused geometry/Scene tests, public materializers and a
    separate publication boundary. C4 remains after accepted C3.

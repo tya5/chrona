@@ -284,7 +284,15 @@ port other than a named endpoint, or rule barrier. Layout completes a visible
 gap in the later annotation connector at each crossing; the crossed stroke
 remains continuous. The connector remains a single source-linked placement,
 and Scene/adapters MUST NOT decide the crossing or gap. A tail connector MUST
-use strict topology. The local search corridor, route quality, crossing count,
+use strict topology. For a nearest-free balloon, Layout MUST try the integrated
+direct tail first. If blocked, it MAY complete a strict local orthogonal route
+to a short exterior balloon tip. The route, tip and pending balloon body MUST
+clear the same obstacles together, including the body's interior, and stay on
+the anchor's as-of side. Layout records `direct-tail` or `routed-tail` and
+commits box, outline and route atomically. Scene/adapters only project the
+completed geometry. See the
+[#466 C3 correction](../design/issue-466-c3-routed-tail-correction-2026-09-29.md).
+The local search corridor, route quality, crossing count,
 and exhaustion are bounded and recorded in the placement decision. If all
 declared candidates fail, an explicit suppress outcome or the visible
 fallback policy applies; fallback MUST NOT be reported as a collision-free

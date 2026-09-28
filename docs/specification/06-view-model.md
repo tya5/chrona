@@ -245,6 +245,11 @@ geometry-based recovery is allowed.
 
 View selection, grouping, hierarchy expansion, visibility, and annotation anchoring are semantic inputs, not renderer geometry. An annotation has one source (`text` or a stable Project annotation reference), a typed anchor, and an ordered candidate list. A Project reference inherits narrative text and object identity; View owns facet, endpoint, purpose and placement. A referenced Project note is not duplicated in the notes slot. Each candidate declares a region, search, obstacle classes and connector; Layout evaluates the list against one completed surface obstacle set, records the selected candidate and bounded search count, and owns box and connector geometry. The rail, adjacent sides and plot search are configurations of this one model; legacy named rungs normalize to candidates without changing their output. No View field contains concrete coordinates. `layoutMetrics` is the revision-bound metrics/algorithm artifact declared by Render Context, never a renderer font default.
 
+For a plot `tail` candidate, the same View intent may complete as a direct
+integrated balloon tail or a strict routed connection to a short balloon tip.
+Layout records the topology; View does not declare path coordinates. See
+[the C3 correction](../design/issue-466-c3-routed-tail-correction-2026-09-29.md).
+
 ## 10. Diagnostics
 
 View evaluation SHOULD report stable diagnostics for unknown Project, Snapshot, Actual, or object references; incompatible temporal domains; duplicate comparison identity; and invalid explicit windows. Exact identifiers and schema are deferred to the View schema and Application Architecture work.
