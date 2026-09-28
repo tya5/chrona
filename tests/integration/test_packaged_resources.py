@@ -52,6 +52,7 @@ SCHEMAS = (
     "theme-v0.13.schema.yaml",
     "theme-v0.14.schema.yaml",
     "preset-library-v0.1.schema.yaml",
+    "preset-library-v0.2.schema.yaml",
 )
 
 

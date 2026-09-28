@@ -1,4 +1,4 @@
-version: chrona/theme/v0.11
+version: chrona/theme/v0.13
 kind: theme
 id: chrona-builtin-technical-print
 body:
@@ -88,7 +88,10 @@ body:
     milestone-symbol:
       type: symbol
       value:
-        shape: circle
+        shape: {catalog: 'chrona-starter:pin'}
+    starter-halftone:
+      type: pattern
+      value: {kind: catalog, ref: 'chrona-starter:halftone'}
     stroke-width:
       type: number
       value: 1
@@ -227,6 +230,7 @@ body:
       backgroundPaintOrder: 10
       opacity: opacity.axis-band
       cellGap: axis-cell-gap
+      pattern: starter-halftone
     text:
       fontFamily: sans
       fontWeight: weight.regular
@@ -372,6 +376,8 @@ body:
       markOffset: mark-offset-start
       markPaintOrder: mark-paint-middle
       markCornerRadius: mark-radius-capsule
+    progress-fill:
+      pattern: starter-halftone
     axis-major:
       strokeWidth: stroke-width
     axis-minor:
@@ -422,6 +428,7 @@ body:
   colorBindings:
     axis-band-decoration.fill: text
     axis-band-decoration2.fill: surfaceRaised
+    axis-band-decoration2.stroke: text
     axis-label2.fill: surface
     axis-label3.fill: text
     axis-cell-separator.stroke: surfaceRaised
@@ -446,6 +453,8 @@ body:
     note-index.fill: accent
     planned.fill: surface
     planned.stroke: text
+    progress-fill.fill: surfaceRaised
+    progress-fill.stroke: text
     network-node.fill: surfaceRaised
     network-node.stroke: text
     network-edge.stroke: textMuted

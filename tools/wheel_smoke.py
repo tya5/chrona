@@ -50,6 +50,7 @@ def run() -> None:
         draft = root / "draft-project.yaml"
         default_svg, starter_svg = root / "default.svg", starter / "plan.svg"
         catalog, raster = root / "material.yaml", root / "smoke.png"
+        asset_preset, asset_svg = root / "asset-preset", root / "asset-preset.svg"
         draft.write_text(json.dumps(PROJECT), encoding="utf-8")
         for arguments in (
             ["init", str(starter)],
@@ -58,6 +59,8 @@ def run() -> None:
             ["render", str(draft), "--output", str(default_svg)],
             ["materialize", str(corpus / "manifest.yaml"), "--slide", "mission-brief", "--output", str(output)],
             ["icon-catalog", "material-default", "--output", str(catalog)],
+            ["preset", "copy", "technical-print", "--output", str(asset_preset)],
+            ["render", str(corpus / "project.yaml"), "--preset", "technical-print", "--output", str(asset_svg)],
             ["render", str(corpus / "project.yaml"),
              "--view", str(corpus / "views/01-mission-brief.yaml"),
              "--theme", str(corpus / "themes/briefing.yaml"),
@@ -76,6 +79,10 @@ def run() -> None:
             raise AssertionError("no-preset Draft render did not use the bundled default")
         if not starter_svg.read_bytes().startswith(b"<svg"):
             raise AssertionError("minimal initialized project did not render with the bundled default")
+        if not asset_svg.read_bytes().startswith(b"<svg"):
+            raise AssertionError("wheel-owned catalogue preset did not render without asset flags")
+        if not (asset_preset / "catalogs/chrona-theme-starter-v2026-09-29.NOTICE").is_file():
+            raise AssertionError("wheel-owned catalogue notice was not copied")
         catalog_value = safe_load(catalog.read_bytes())
         catalog_body = catalog_value.get("body") if isinstance(catalog_value, dict) else None
         if (not isinstance(catalog_value, dict) or catalog_value.get("version") != "chrona/icon-catalog/v0.3"

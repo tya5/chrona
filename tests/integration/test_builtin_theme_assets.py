@@ -1,0 +1,68 @@
+"""The wheel preset closes the same visible assets after copy and by name."""
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+from PIL import Image
+
+from chrona.app.cli import main
+from chrona.presentation.scene.contrast_policy import evaluate_scene_contrast
+from chrona.presentation.scene.perceptibility import evaluate_scene_perceptibility
+from chrona.usecases.preset_library import copy_builtin_preset
+
+
+ROOT = Path(__file__).resolve().parents[2]
+PROJECT = ROOT / "examples/controller-z/project.yaml"
+
+
+def _render(monkeypatch, project: Path, preset: str, output: Path,
+            *, scene: Path | None = None, profile: str | None = None) -> None:
+    args = ["chrona", "render", str(project), "--preset", preset]
+    if profile is not None:
+        args.extend(("--visual-profile", profile))
+    args.extend(("--output", str(output)))
+    if scene is not None:
+        args.extend(("--emit-scene", str(scene)))
+    monkeypatch.setattr(sys, "argv", args)
+    main()
+
+
+def test_builtin_catalogue_copy_and_no_asset_flag_render_are_visible_in_svg_and_png(tmp_path, monkeypatch):
+    copied = copy_builtin_preset("technical-print", tmp_path / "copied")
+    named_svg = tmp_path / "named.svg"
+    copied_svg = tmp_path / "copied.svg"
+    scene_path = tmp_path / "named.scene.json"
+    _render(monkeypatch, PROJECT, "technical-print", named_svg, scene=scene_path)
+    _render(monkeypatch, PROJECT, str(copied), copied_svg)
+
+    svg = named_svg.read_bytes()
+    assert svg == copied_svg.read_bytes()
+    assert b"<pattern " in svg and b'patternTransform="translate(' in svg
+    assert b"Planned" in svg and b"Actual" in svg
+    scene = json.loads(scene_path.read_bytes())
+    assert scene["version"] == "chrona/scene/v0.7"
+    primitives = [item for surface in scene["surfaces"] for item in surface["primitives"]]
+    assert any(item.get("visualRole") == "axis-band-decoration2" and item.get("pattern") for item in primitives)
+    assert any(item.get("visualRole") == "milestone" and item.get("kind") == "Symbol"
+               and len(item.get("symbol", {}).get("outline", ())) > 8 for item in primitives)
+    assert any(item.get("id", "").startswith("legend-swatch:milestone") for item in primitives)
+    pattern_id = next(item["id"] for item in primitives if item.get("visualRole") == "axis-band-decoration2"
+                      and item.get("pattern"))
+    contrast = [item for item in evaluate_scene_contrast(scene) if item.primitive_id == pattern_id]
+    assert {(item.paint_channel, item.ground_kind) for item in contrast} == {
+        ("fill", "canvas"), ("stroke", "pattern-substrate"), ("stroke", "canvas")}
+    observations = [item for item in evaluate_scene_perceptibility(scene)
+                    if item.code == "I_SCENE_PATTERN_PERCEPTIBILITY" and item.primitive_ids == (pattern_id,)]
+    assert len(observations) == 1
+    assert dict(observations[0].measured_facts)["densityBasisPoints"] == 1279
+
+    png = tmp_path / "named.png"
+    _render(monkeypatch, PROJECT, "technical-print", png,
+            profile="chrona-output/visual/v0.7-png")
+    with Image.open(png) as image:
+        image.load()
+        assert image.width > 1000 and image.height > 500
+        colors = {pixel[:3] for _count, pixel in image.crop((560, 120, 700, 170)).getcolors(maxcolors=100000)}
+        assert (242, 242, 242) in colors and (13, 13, 13) in colors
