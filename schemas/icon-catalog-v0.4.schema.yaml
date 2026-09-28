@@ -1,0 +1,241 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:icon-catalog-v0.4"
+title: "Chrona Theme Asset Catalog v0.4"
+description: "A canonical offline catalog of normalized icons, glyphs, and repeatable pattern tiles. Raw SVG/XML is never a render input."
+allOf:
+  - $ref: "urn:chrona:presentation-resource-v0.1"
+  - description: "Catalog fields extending the shared presentation resource envelope."
+    type: object
+    properties:
+      version: {description: "This canonical catalog contract version.", const: "chrona/icon-catalog/v0.4"}
+      kind: {description: "Resource kind identifying this document as an icon catalog.", const: icon-catalog}
+      body:
+        description: "Closed catalog content, provenance, entries, and aliases."
+        type: object
+        required: [set, aliases, provenance, icons, glyphs, patterns, entryAliases]
+        additionalProperties: false
+        properties:
+          set: {description: "Canonical namespace used by `set:name` references.", $ref: "#/$defs/name"}
+          aliases:
+            description: "Additional Context-local namespaces resolving to this same catalog set."
+            type: array
+            uniqueItems: true
+            items: {$ref: "#/$defs/name"}
+          provenance:
+            type: object
+            description: "Importer-recorded local source identity and complete licensing notice."
+            required: [sourceKind, sourceContentIdentity, license]
+            additionalProperties: false
+            properties:
+              sourceKind: {description: "Authoring ingress that created this normalized catalog.", enum: [iconify-json, theme-asset-source]}
+              sourcePrefix: {description: "Original Iconify collection prefix; present only for Iconify JSON ingress.", $ref: "#/$defs/name"}
+              sourceContentIdentity: {description: "SHA-256 of the exact supplied local source bytes.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+              sourceVersion: {description: "Optional upstream collection version supplied by the local source.", type: string, minLength: 1}
+              lastModified: {description: "Optional upstream collection modification marker.", type: string, minLength: 1}
+              license:
+                type: object
+                required: [spdx, notice]
+                additionalProperties: false
+                properties:
+                  spdx: {description: "Declared SPDX identifier; policy remains the author's decision.", type: string, minLength: 1}
+                  notice: {description: "Complete notice that must travel with this catalog.", type: string, minLength: 1}
+            allOf:
+              - description: "Iconify provenance includes its source prefix."
+                examples: [{sourceKind: iconify-json, sourcePrefix: material-symbols}]
+                if: {properties: {sourceKind: {const: iconify-json}}, required: [sourceKind]}
+                then: {required: [sourcePrefix]}
+              - description: "Declarative Theme asset provenance has no Iconify metadata."
+                examples: [{sourceKind: theme-asset-source}]
+                if: {properties: {sourceKind: {const: theme-asset-source}}, required: [sourceKind]}
+                then: {not: {anyOf: [{required: [sourcePrefix]}, {required: [sourceVersion]}, {required: [lastModified]}]}}
+          icons:
+            description: "Canonical icon entry names and their normalized payloads."
+            type: object
+            propertyNames: {$ref: "#/$defs/name"}
+            additionalProperties: {$ref: "#/$defs/icon"}
+          glyphs:
+            description: "Canonical Theme glyph names and normalized ordered path parts."
+            type: object
+            propertyNames: {$ref: "#/$defs/name"}
+            additionalProperties: {$ref: "#/$defs/glyph"}
+          patterns:
+            description: "Canonical Theme pattern names and normalized repeat tiles."
+            type: object
+            propertyNames: {$ref: "#/$defs/name"}
+            additionalProperties: {$ref: "#/$defs/pattern"}
+          entryAliases:
+            description: "Alias name to canonical icon entry name; geometry-bearing aliases are normalized as entries instead."
+            type: object
+            additionalProperties: {$ref: "#/$defs/name"}
+$defs:
+  name:
+    description: "Portable identifier component used in a catalog set, alias, or entry name."
+    examples: [material-symbols]
+    type: string
+    pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*$"
+  viewport:
+    description: "Positive source-unit dimensions used to preserve aspect ratio."
+    type: object
+    required: [inlineSize, blockSize]
+    additionalProperties: false
+    properties:
+      inlineSize: {description: "Positive source-unit width.", type: integer, minimum: 1, maximum: 4096}
+      blockSize: {description: "Positive source-unit height.", type: integer, minimum: 1, maximum: 4096}
+  path:
+    description: "One normalized fill or stroke path part; geometry is renderer-neutral and has no fixed color."
+    type: object
+    required: [paint, data]
+    additionalProperties: false
+    properties:
+      paint: {description: "Theme-owned paint mode.", enum: [fill, stroke]}
+      data: {description: "Canonical normalized primitive stream: uppercase M, L, Q, Z and finite decimal coordinates.", type: string, minLength: 1, maxLength: 65536}
+      strokeWidth: {description: "Positive source-unit stroke width.", type: number, exclusiveMinimum: 0, maximum: 1024}
+      lineCap: {description: "Stroke endpoint shape.", enum: [butt, round, square]}
+      lineJoin: {description: "Stroke corner shape.", enum: [miter, round, bevel]}
+    allOf:
+      - description: "Stroke paths require width, cap, and join."
+        examples: [{paint: stroke, data: "M 0 0 L 1 1", strokeWidth: 1, lineCap: round, lineJoin: round}]
+        if: {properties: {paint: {const: stroke}}, required: [paint]}
+        then: {required: [strokeWidth, lineCap, lineJoin]}
+      - description: "Fill paths do not carry stroke-only fields."
+        examples: [{paint: fill, data: "M 0 0 L 1 1 Z"}]
+        if: {properties: {paint: {const: fill}}, required: [paint]}
+        then: {not: {anyOf: [{required: [strokeWidth]}, {required: [lineCap]}, {required: [lineJoin]}]}}
+  glyph:
+    description: "A bounded normalized #464 glyph fitted by existing mark geometry."
+    type: object
+    required: [viewport, parts]
+    additionalProperties: false
+    properties:
+      viewport: {$ref: "#/$defs/viewport"}
+      parts: {description: "Ordered normalized paths, without fixed colors.", type: array, minItems: 1, maxItems: 32, items: {$ref: "#/$defs/path"}}
+  pattern:
+    description: "A finite repeat tile; coordinates and density are verified by the importer."
+    type: object
+    required: [tile, angle, densityBasisPoints, primitives]
+    additionalProperties: false
+    properties:
+      tile:
+        description: "Positive tile dimensions in normalized tile units."
+        type: object
+        required: [inlineSize, blockSize]
+        additionalProperties: false
+        properties:
+          inlineSize: {description: "Tile width in units.", type: number, minimum: 1, maximum: 256}
+          blockSize: {description: "Tile height in units.", type: number, minimum: 1, maximum: 256}
+      angle: {description: "Clockwise rotation about tile center in degrees.", type: number, minimum: 0, exclusiveMaximum: 360}
+      densityBasisPoints: {description: "Covered fraction of the fixed rotated 128x128 center grid, in basis points (100 basis points = 1%); importer verifies using periodic edge wrapping and half-up rounding.", type: integer, minimum: 1, maximum: 10000}
+      primitives: {description: "Ordered closed tile primitives; importer checks coordinates against tile and lowers arcs to quadratic segments within 0.001 tile units.", type: array, minItems: 1, maxItems: 64, items: {$ref: "#/$defs/patternPrimitive"}}
+  patternPrimitive:
+    description: "A bounded filled circle/rectangle or normalized path. Arc input is lowered to quadratic path commands and is never retained."
+    examples: [{kind: circle, cx: 4, cy: 4, radius: 1}]
+    oneOf:
+      - description: "One filled circle."
+        type: object
+        required: [kind, cx, cy, radius]
+        additionalProperties: false
+        properties:
+          kind: {description: "Filled circle primitive kind.", const: circle}
+          cx: {description: "Center x coordinate within the tile.", type: number, minimum: 0, maximum: 256}
+          cy: {description: "Center y coordinate within the tile.", type: number, minimum: 0, maximum: 256}
+          radius: {description: "Positive circle radius.", type: number, exclusiveMinimum: 0, maximum: 128}
+      - description: "One filled rectangle."
+        type: object
+        required: [kind, x, y, inlineSize, blockSize]
+        additionalProperties: false
+        properties:
+          kind: {description: "Filled rectangle primitive kind.", const: rect}
+          x: {description: "Rectangle left coordinate within the tile.", type: number, minimum: 0, maximum: 256}
+          y: {description: "Rectangle top coordinate within the tile.", type: number, minimum: 0, maximum: 256}
+          inlineSize: {description: "Positive rectangle width.", type: number, exclusiveMinimum: 0, maximum: 256}
+          blockSize: {description: "Positive rectangle height.", type: number, exclusiveMinimum: 0, maximum: 256}
+      - description: "One normalized filled or stroked path."
+        type: object
+        required: [kind, paint, commands]
+        additionalProperties: false
+        properties:
+          kind: {description: "Normalized path primitive kind.", const: path}
+          paint: {description: "Path paint mode supplied by Theme.", enum: [fill, stroke]}
+          commands: {description: "Normalized absolute M/L/Q/Z command sequence.", type: array, minItems: 1, maxItems: 2048, items: {$ref: "#/$defs/pathCommand"}}
+          strokeWidth: {description: "Positive path width, at most 16 units.", type: number, exclusiveMinimum: 0, maximum: 16}
+          lineCap: {description: "Stroke endpoint shape.", enum: [butt, round, square]}
+          lineJoin: {description: "Stroke corner shape.", enum: [miter, round, bevel]}
+        allOf:
+          - description: "Stroke pattern paths require width, cap, and join."
+            examples: [{paint: stroke, strokeWidth: 1, lineCap: round, lineJoin: round}]
+            if: {properties: {paint: {const: stroke}}, required: [paint]}
+            then: {required: [strokeWidth, lineCap, lineJoin]}
+          - description: "Fill pattern paths cannot carry stroke-only fields."
+            examples: [{paint: fill}]
+            if: {properties: {paint: {const: fill}}, required: [paint]}
+            then: {not: {anyOf: [{required: [strokeWidth]}, {required: [lineCap]}, {required: [lineJoin]}]}}
+  pathCommand:
+    description: "One bounded renderer-neutral pattern path command."
+    type: object
+    required: [kind, points]
+    additionalProperties: false
+    properties:
+      kind: {description: "Closed normalized path command.", enum: [move, line, quadratic, close]}
+      points: {description: "Finite absolute tile coordinates required by the command.", type: array, minItems: 0, maxItems: 4, items: {description: "One finite tile coordinate.", type: number, minimum: 0, maximum: 256}}
+    allOf:
+      - description: "Close commands carry no coordinates."
+        examples: [{kind: close, points: []}]
+        if: {properties: {kind: {const: close}}, required: [kind]}
+        then: {properties: {points: {maxItems: 0}}}
+      - description: "Move and line commands carry one point."
+        examples: [{kind: line, points: [1, 1]}]
+        if: {properties: {kind: {enum: [move, line]}}, required: [kind]}
+        then: {properties: {points: {minItems: 2, maxItems: 2}}}
+      - description: "Quadratic commands carry control and endpoint coordinates."
+        examples: [{kind: quadratic, points: [1, 1, 2, 2]}]
+        if: {properties: {kind: {const: quadratic}}, required: [kind]}
+        then: {properties: {points: {minItems: 4, maxItems: 4}}}
+  icon:
+    description: "One vector or verified raster icon entry, retained unchanged from v0.3."
+    type: object
+    required: [kind, viewport, alternative]
+    additionalProperties: false
+    properties:
+      kind: {description: "Payload family for this entry.", enum: [vector, raster]}
+      viewport: {$ref: "#/$defs/viewport"}
+      alternative: {description: "Textual equivalent required when this entry is used meaningfully.", type: string}
+      paths: {description: "Normalized paths for a vector entry.", type: array, minItems: 1, maxItems: 1024, items: {$ref: "#/$defs/iconPath"}}
+      source: {description: "Verified source descriptor for a raster entry.", $ref: "#/$defs/rasterSource"}
+    allOf:
+      - description: "Vector icons carry normalized paths."
+        examples: [{kind: vector, paths: [{paint: fill, data: "M 0 0 Z"}]}]
+        if: {properties: {kind: {const: vector}}, required: [kind]}
+        then: {required: [paths], not: {required: [source]}}
+      - description: "Raster icons carry verified PNG data."
+        examples: [{kind: raster, source: {encoding: base64, data: AA==}}]
+        if: {properties: {kind: {const: raster}}, required: [kind]}
+        then: {required: [source], not: {required: [paths]}}
+  iconPath:
+    description: "Legacy v0.3 normalized icon path."
+    type: object
+    required: [paint, data]
+    additionalProperties: false
+    properties:
+      paint: {description: "Legacy icon path paint mode.", enum: [fill, stroke]}
+      data: {description: "Canonical normalized icon path data.", type: string, minLength: 1, maxLength: 65536}
+      strokeWidth: {description: "Positive source-unit stroke width.", type: number, exclusiveMinimum: 0, maximum: 1024}
+      lineCap: {description: "Stroke endpoint shape.", enum: [butt, round, square]}
+      lineJoin: {description: "Stroke corner shape.", enum: [miter, round, bevel]}
+    allOf:
+      - description: "Stroke icon paths require width, cap, and join."
+        examples: [{paint: stroke, data: "M 0 0 L 1 1", strokeWidth: 1, lineCap: round, lineJoin: round}]
+        if: {properties: {paint: {const: stroke}}, required: [paint]}
+        then: {required: [strokeWidth, lineCap, lineJoin]}
+      - description: "Fill icon paths cannot carry stroke-only fields."
+        examples: [{paint: fill, data: "M 0 0 Z"}]
+        if: {properties: {paint: {const: fill}}, required: [paint]}
+        then: {not: {anyOf: [{required: [strokeWidth]}, {required: [lineCap]}, {required: [lineJoin]}]}}
+  rasterSource:
+    description: "Immutable local source for a purpose-built raster icon."
+    examples: [{address: icons/sample.png, contentIdentity: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}]
+    type: object
+    required: [address, contentIdentity]
+    additionalProperties: false
+    properties:
+      address: {description: "Relative traversal-free catalog asset address.", examples: [icons/sample.png], type: string, minLength: 1, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$"}
+      contentIdentity: {description: "SHA-256 of the exact raster bytes.", examples: ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}

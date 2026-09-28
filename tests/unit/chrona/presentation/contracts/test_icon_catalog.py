@@ -1,11 +1,13 @@
 from hashlib import sha256
 from types import SimpleNamespace
 
+import jsonschema
 import pytest
 
 from chrona.presentation.contracts import ClosureIdentity, SchemaContractError, parse_contract, validate_icon_catalog_entry
 from chrona.presentation.contracts.resources import _compact_commands
 from chrona.presentation.model.closure import ClosureError, _selected_catalog_entries
+from chrona.resources import schema_document
 
 
 def _catalog(source: str = "assets/risk.png"):
@@ -20,12 +22,67 @@ def _catalog(source: str = "assets/risk.png"):
     }
 
 
+def _catalog_v04():
+    return {
+        "version": "chrona/icon-catalog/v0.4", "kind": "icon-catalog", "id": "theme-assets",
+        "body": {
+            "set": "starter", "aliases": [],
+            "provenance": {"sourceKind": "theme-asset-source", "sourceContentIdentity": "sha256:" + "b" * 64,
+                           "license": {"spdx": "CC0-1.0", "notice": "CC0 notice"}},
+            "icons": {}, "entryAliases": {},
+            "glyphs": {"pin": {"viewport": {"inlineSize": 24, "blockSize": 24},
+                                "parts": [{"paint": "fill", "data": "M 12 0 L 24 12 Q 12 24 0 12 Z"}]}},
+            "patterns": {"dots": {"tile": {"inlineSize": 8, "blockSize": 8}, "angle": 0,
+                                   "densityBasisPoints": 1250,
+                                   "primitives": [{"kind": "circle", "cx": 2, "cy": 2, "radius": 1}] }},
+        },
+    }
+
+
 def test_icon_catalog_contract_keeps_set_name_and_closed_raster_source():
     value = _catalog()
     contract = parse_contract(ClosureIdentity("icon-catalog", "acme-icons", "r1", "sha256:" + sha256(b"x").hexdigest()), value)
     assert contract.set_name == "acme"
     assert contract.entry_names == ("risk",)
     validate_icon_catalog_entry(contract, "risk")
+
+
+def test_icon_catalog_v04_accepts_glyph_and_pattern_only_catalogues():
+    value = _catalog_v04()
+    contract = parse_contract(ClosureIdentity("icon-catalog", "theme-assets", "r1", "sha256:" + "c" * 64), value)
+    assert contract.version == "chrona/icon-catalog/v0.4"
+    assert contract.entry_names == ()
+    assert tuple(contract.raw_glyphs) == ("pin",)
+    assert tuple(contract.raw_patterns) == ("dots",)
+
+
+@pytest.mark.parametrize("mutate", [
+    lambda value: value["body"]["patterns"]["dots"].update(densityBasisPoints=0),
+    lambda value: value["body"]["patterns"]["dots"]["primitives"].append(
+        {"kind": "arc", "cx": 1, "cy": 1, "radius": 1, "startAngle": 0, "endAngle": 90, "strokeWidth": 1}),
+    lambda value: value["body"]["glyphs"]["pin"].update(parts=[{"paint": "fill", "data": "M 0 0 Z"}] * 33),
+])
+def test_icon_catalog_v04_rejects_invalid_density_raw_arc_and_part_limit(mutate):
+    value = _catalog_v04()
+    mutate(value)
+    with pytest.raises(SchemaContractError):
+        parse_contract(ClosureIdentity("icon-catalog", "theme-assets", "r1", "sha256:" + "c" * 64), value)
+
+
+def test_theme_asset_source_schema_accepts_one_kind_and_requires_declared_density():
+    schema = schema_document("theme-asset-source-v0.1.schema.yaml")
+    source = {
+        "version": "chrona/theme-asset-source/v0.1", "kind": "theme-asset-source", "id": "local-assets",
+        "body": {"set": "local", "aliases": [], "license": {"spdx": "MIT", "notice": "MIT notice"},
+                 "glyphs": {}, "patterns": {"hatch": {
+                     "tile": {"inlineSize": 8, "blockSize": 8}, "angle": 0, "densityBasisPoints": 1250,
+                     "primitives": [{"kind": "rect", "x": 0, "y": 0, "inlineSize": 8, "blockSize": 1}],
+                 }}},
+    }
+    jsonschema.Draft202012Validator(schema).validate(source)
+    del source["body"]["patterns"]["hatch"]["densityBasisPoints"]
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.Draft202012Validator(schema).validate(source)
 
 
 def test_icon_catalog_decodes_only_canonical_compact_geometry():

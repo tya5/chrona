@@ -5,7 +5,8 @@ import pytest
 import yaml
 from pathlib import Path
 
-from chrona.presentation.icons.importer import IconImportError, copy_material_symbols_outline_rounded_catalog, import_iconify
+from chrona.presentation.icons.importer import IconImportError, copy_material_symbols_outline_rounded_catalog, import_iconify, import_theme_assets
+from chrona.presentation.contracts.resources import ClosureIdentity, parse_contract
 
 
 def _collection(body: str) -> dict:
@@ -147,3 +148,61 @@ def test_bundled_material_catalog_matches_the_offline_iconify_utils_conformance_
         assert canonical == expected["canonical"]
         assert entry["viewport"] == {"inlineSize": expected_width, "blockSize": expected_height}
         assert sha256(json.dumps(entry, sort_keys=True, separators=(",", ":")).encode()).hexdigest() == expected["catalogGeometrySha256"]
+
+
+def test_theme_assets_import_emits_canonical_v04_catalogue_with_license_and_exact_densities(tmp_path):
+    root = Path(__file__).resolve().parents[5]
+    source = root / "tests/fixtures/icons/theme-assets-valid.yaml"
+    first, second = tmp_path / "one.yaml", tmp_path / "two.yaml"
+
+    result = import_theme_assets(source, first)
+    repeated = import_theme_assets(source, second)
+    catalog = yaml.safe_load(first.read_bytes())
+    body = catalog["body"]
+
+    assert catalog["version"] == "chrona/icon-catalog/v0.4"
+    assert body["provenance"]["sourceKind"] == "theme-asset-source"
+    assert body["provenance"]["sourceContentIdentity"] == "sha256:" + sha256(source.read_bytes()).hexdigest()
+    assert body["provenance"]["license"] == {
+        "spdx": "MIT",
+        "notice": "Test fixture notice for normalization and import behavior.",
+    }
+    assert {name: entry["densityBasisPoints"] for name, entry in body["patterns"].items()
+            if name.startswith("dither-")} == {"dither-12-5": 1250, "dither-25": 2500, "dither-50": 5000}
+    assert body["glyphs"]["pin"]["parts"][0]["data"].startswith("M 12 1 Q 5 1 5 8")
+    parsed = parse_contract(ClosureIdentity("icon-catalog", catalog["id"], "r1", result["contentIdentity"]), catalog)
+    assert parsed.version == "chrona/icon-catalog/v0.4"
+    assert first.read_bytes() == second.read_bytes()
+    assert first.read_bytes() == (root / "tests/fixtures/icons/theme-assets-valid.normalized-v0.4.yaml").read_bytes()
+    assert result["contentIdentity"] == repeated["contentIdentity"]
+
+
+def test_theme_assets_import_rejects_mismatched_density_without_replacing_output(tmp_path):
+    root = Path(__file__).resolve().parents[5]
+    source = root / "tests/fixtures/icons/theme-assets-invalid-density.yaml"
+    output = tmp_path / "existing.yaml"
+    output.write_text("keep this output\n", encoding="utf-8")
+
+    with pytest.raises(IconImportError) as error:
+        import_theme_assets(source, output)
+
+    assert error.value.code == "E_THEME_ASSET_SOURCE_DENSITY"
+    assert error.value.source_ref == "/body/patterns/dither-12-5"
+    assert output.read_text(encoding="utf-8") == "keep this output\n"
+
+
+@pytest.mark.parametrize("change,source_ref", [
+    (lambda source: source["body"].update(aliases=["fixture"]), "/body/aliases"),
+    (lambda source: source["body"]["patterns"].update(pin=source["body"]["patterns"]["dither-12-5"]), "/body/patterns/pin"),
+    (lambda source: source["body"]["license"].update(notice=""), "/body/license/notice"),
+])
+def test_theme_assets_import_rejects_namespace_and_provenance_errors(tmp_path, change, source_ref):
+    root = Path(__file__).resolve().parents[5]
+    source_value = yaml.safe_load((root / "tests/fixtures/icons/theme-assets-valid.yaml").read_text(encoding="utf-8"))
+    change(source_value)
+    source = tmp_path / "invalid.yaml"
+    source.write_text(yaml.safe_dump(source_value, sort_keys=False), encoding="utf-8")
+    with pytest.raises(IconImportError) as error:
+        import_theme_assets(source, tmp_path / "catalog.yaml")
+    assert error.value.code in {"E_THEME_ASSET_SOURCE_ALIAS", "E_THEME_ASSET_SOURCE_NAME", "E_THEME_ASSET_SOURCE_SCHEMA", "E_THEME_ASSET_SOURCE_LICENSE"}
+    assert error.value.source_ref == source_ref
