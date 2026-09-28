@@ -195,16 +195,18 @@ ink; catalogue data supplies geometry and density only. Unknown, wrong-kind,
 or unregistered bindings fail before Scene construction.
 The completed pattern preserves both effective paint channels for
 perceptibility and contrast checks; adapters cannot add a fallback color.
-Catalogue pattern tokens are admitted only on these existing role/property
-pairs: `planned.pattern`, `actual.pattern`, `snapshot.pattern`,
-`scenario.pattern`, `missing-actual.pattern`, `network-node.pattern`,
-`milestone.pattern`, `progress-fill.pattern`, `summary-bar.pattern`,
-`annotation-callout-box.pattern`, `annotation-highlight-box.pattern`,
-`annotation-arrow-box.pattern`,
-`axis-band-decoration.pattern`, `axis-band-decoration2.pattern`,
+Catalogue pattern tokens are admitted only on roles whose current completed
+primitive is always Rect: `missing-actual.pattern`, `network-node.pattern`,
+`progress-fill.pattern`, `summary-bar.pattern`,
+`annotation-highlight-box.pattern`, `axis-band-decoration.pattern`,
+`axis-band-decoration2.pattern`,
 `as-of-label-chip.pattern`, `member-label-chip.pattern`, and
 `finish-delta-chip.pattern`. Other pattern values and all other
 role/property pairs retain their current contracts.
+`planned`, `actual`, `snapshot`, and `scenario` can emit either Rect or Symbol;
+`milestone` emits Symbol; callout/arrow boxes can be balloon Symbols. Catalogue
+patterns on these roles require a separate completed Symbol clip/paint design
+and are not admitted by Theme v0.13.
 `annotation-note-box.pattern` is deliberately not admitted: required note text
 uses that box's opaque flat representative fill as its same-source ground under
 the #466 contract. A patterned note host requires a separate text-versus-ink
