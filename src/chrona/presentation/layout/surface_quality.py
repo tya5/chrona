@@ -332,10 +332,20 @@ class PlacementDecision:
     search_count: int = 0
     selected_topology: str | None = None
     crossing_ids: tuple[str, ...] = ()
+    box_position_limit: int = 0
+    box_positions_examined: int = 0
+    route_state_limit: int = 0
+    route_states_examined: int = 0
+    route_search_exhausted: bool = False
 
     def __post_init__(self) -> None:
-        if (self.search_count < 0 or self.selected_topology not in {None, "strict", "bridge"}
-                or (self.crossing_ids and self.selected_topology != "bridge")):
+        if (self.search_count < 0 or self.selected_topology not in {
+                None, "strict", "bridge", "direct-tail", "routed-tail"}
+                or (self.crossing_ids and self.selected_topology != "bridge")
+                or self.box_position_limit < 0
+                or not 0 <= self.box_positions_examined <= self.box_position_limit
+                or self.route_state_limit < 0
+                or not 0 <= self.route_states_examined <= self.route_state_limit):
             raise ValueError("E_LAYOUT_PLACEMENT_DECISION_INVALID")
 
 
