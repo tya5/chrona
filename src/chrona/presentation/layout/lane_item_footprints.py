@@ -7,7 +7,7 @@ from dataclasses import replace
 from datetime import date
 from typing import Any
 
-from chrona.presentation.layout.lane_bundle_mapper import (
+from chrona.presentation.layout.lane_mark_facets import (
     _compose_mark_icons,
     _compose_progress,
     _item_by_instance,
@@ -100,7 +100,7 @@ def compose_lane_item_footprints(
         marks_by_instance[instance] = composition.marks
     all_marks = tuple(mark for instance in closure.instances for mark in marks_by_instance[instance])
     icons = _compose_mark_icons(all_marks, bound_marks, icon_assets, theme_tokens)
-    progress, _ = _compose_progress(closure, items, marks_by_instance, progress_fill_source, theme_tokens)
+    progress = _compose_progress(closure, items, marks_by_instance, progress_fill_source, theme_tokens)
     collected: dict[LaneProjectionInstance, list[LaneFacetFootprint]] = defaultdict(list)
     facet_purposes: dict[LaneProjectionInstance, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
     hosted_icons: dict[LaneProjectionInstance, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))

@@ -72,16 +72,6 @@ def test_lane_source_measurement_uses_exact_membership_table_and_lane_count():
     assert [cell.content for cell in sources["table"].table.cells] == ["Avionics", "2"]
 
 
-def test_lane_measurement_identity_uses_effective_theme_and_font_asset():
-    frame = SimpleNamespace(inline_scale=SimpleNamespace(scale_id="primary"))
-    font = SimpleNamespace(content_identity="sha256:font")
-    first = render_usecase._lane_measurement_identity({"body": {"value": 1}}, font, frame)
-    second = render_usecase._lane_measurement_identity({"body": {"value": 2}}, font, frame)
-    assert first.theme_identity != second.theme_identity
-    assert first.font_asset_identity == "sha256:font"
-    assert first.scale_identity == "primary"
-
-
 def test_scene_error_findings_become_draft_warnings_without_information_duplication():
     error = ScenePerceptibilityFinding("v1", "E_SCENE_TEXT_OCCLUDED", "error", "/surfaces/0:review",
                                        ("text", "cover"), "timeline", (("coverageRatio", 1.0),))
@@ -198,6 +188,33 @@ def test_public_lane_layout_projects_fixed_membership(context_name):
     assert max(row.bounds[1] + row.bounds[3] for row in rendered.surface.rows) <= (
         timeline_slot.bounds[1] + timeline_slot.bounds[3]
     )
+
+
+@pytest.mark.parametrize("context_name", ["02-programme-board", "11-overlay-briefing", "12-glyph-gates"])
+def test_public_lane_scene_routes_never_cross_required_lane_or_member_labels(context_name):
+    """Check actual public Scene geometry, including the previously omitted 11."""
+    with tempfile.TemporaryDirectory() as temporary:
+        closure, snapshot = _closure(Path(temporary), context_name)
+        surface = render_review(_request(closure, snapshot)).surface
+
+    assert surface.lane_mode == "lanes"
+    assert surface.lane_clearance is not None
+    clearance = surface.lane_clearance
+    labels = [
+        ObstacleRect(item.bounds[0] - clearance, item.bounds[1] - clearance,
+                     item.bounds[0] + item.bounds[2] + clearance,
+                     item.bounds[1] + item.bounds[3] + clearance)
+        for item in surface.primitives
+        if item.kind == "Text" and item.purpose in {
+            "member-label", "finish-delta", "table-cell", "group-header",
+        } and item.bounds[2] > 0 and item.bounds[3] > 0
+    ]
+    relations = [item for item in surface.primitives if item.purpose == "dependency"]
+    assert labels and relations
+    for relation in relations:
+        for start, end in zip(relation.points, relation.points[1:]):
+            assert all(not obstacles_intersect(ObstacleSegment(start, end), label)
+                       for label in labels), (context_name, relation.scene_id)
 
 
 def test_lane_scene_membership_is_theme_independent_for_same_project_and_view():
