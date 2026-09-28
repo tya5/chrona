@@ -52,6 +52,7 @@ SCHEMAS = (
     "theme-v0.13.schema.yaml",
     "theme-v0.14.schema.yaml",
     "preset-library-v0.1.schema.yaml",
+    "preset-library-v0.2.schema.yaml",
 )
 
 
@@ -90,6 +91,10 @@ def test_package_owned_runtime_resources_exist():
         "font_metrics/noto-color-emoji-check-v1.json",
         "fonts/draft-substitute-font-metrics.yaml",
         "fonts/NotoColorEmoji.LICENSE",
+        "icons/chrona-theme-starter-v2026-09-29.source.yaml",
+        "icons/chrona-theme-starter-v2026-09-29.yaml",
+        "icons/chrona-theme-starter-v2026-09-29.manifest",
+        "icons/chrona-theme-starter.NOTICE",
         "presets/library.yaml",
         "presets/bundles/control-room-dark/layout.yaml",
         "presets/bundles/control-room-dark/theme.yaml",

@@ -1,0 +1,28 @@
+catalog:
+  file: chrona-theme-starter-v2026-09-29.yaml
+  version: chrona/icon-catalog/v0.4
+  set: chrona-starter
+  aliases: [chrona-theme-starter]
+  sha256: 9e7328de7c437fb927ecd0522431f7ef0efe82ea4bdab9774e3264330ec171f1
+source:
+  file: chrona-theme-starter-v2026-09-29.source.yaml
+  version: chrona/theme-asset-source/v0.1
+  sha256: 6bb48f64923bb499c98b5af1f1d1fe37a00b79810cc7d50af87e981e2ebced3c
+license:
+  spdx: MIT
+  noticeFile: chrona-theme-starter.NOTICE
+  noticeSha256: b07fa7bbb7bff0acdfb2cf02905b7ca7ad1db3ead9f59b13f47c4ced097f3eb6
+  copyright: Copyright (c) 2026 Chrona Contributors
+entries:
+  glyphs: [chest, diamond, hexagon, lantern, pin, star, ticked-circle]
+  patterns:
+    halftone: {densityBasisPoints: 1279}
+    seigaiha: {densityBasisPoints: 1917}
+    ordered-dither-12-5: {displayDensity: 12.5%, densityBasisPoints: 1250}
+    ordered-dither-25: {displayDensity: 25%, densityBasisPoints: 2500}
+    ordered-dither-50: {displayDensity: 50%, densityBasisPoints: 5000}
+    dense-hatch: {densityBasisPoints: 5610}
+normalization:
+  profile: chrona/theme-asset-normalization/v0.1
+  importer: chrona.presentation.icons.importer.import_theme_assets
+  command: chrona icon-catalog import --theme-assets SOURCE.yaml --output CATALOG.yaml

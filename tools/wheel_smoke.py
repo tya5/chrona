@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 from chrona.app.cli import main
 from chrona.core.validation import validate_project
-from chrona.resources import schema_resource
+from chrona.resources import builtin_preset_source_root, schema_resource
 from chrona.resources import safe_load
 from chrona.scheduling.scheduler import schedule
 
@@ -36,6 +36,12 @@ def run() -> None:
     assert validate_project(PROJECT) == []
     assert schedule(PROJECT).ok
     assert schema_resource("layout-profile-v0.3.schema.yaml").is_file()
+    icons = builtin_preset_source_root("icons")
+    for name in ("chrona-theme-starter-v2026-09-29.source.yaml",
+                 "chrona-theme-starter-v2026-09-29.yaml",
+                 "chrona-theme-starter-v2026-09-29.manifest",
+                 "chrona-theme-starter.NOTICE"):
+        assert icons.joinpath(name).is_file(), name
     try:
         with patch.object(sys, "argv", ["chrona", "--help"]):
             main()
@@ -50,6 +56,7 @@ def run() -> None:
         draft = root / "draft-project.yaml"
         default_svg, starter_svg = root / "default.svg", starter / "plan.svg"
         catalog, raster = root / "material.yaml", root / "smoke.png"
+        asset_preset, asset_svg = root / "asset-preset", root / "asset-preset.svg"
         draft.write_text(json.dumps(PROJECT), encoding="utf-8")
         for arguments in (
             ["init", str(starter)],
@@ -58,6 +65,8 @@ def run() -> None:
             ["render", str(draft), "--output", str(default_svg)],
             ["materialize", str(corpus / "manifest.yaml"), "--slide", "mission-brief", "--output", str(output)],
             ["icon-catalog", "material-default", "--output", str(catalog)],
+            ["preset", "copy", "technical-print", "--output", str(asset_preset)],
+            ["render", str(corpus / "project.yaml"), "--preset", "technical-print", "--output", str(asset_svg)],
             ["render", str(corpus / "project.yaml"),
              "--view", str(corpus / "views/01-mission-brief.yaml"),
              "--theme", str(corpus / "themes/briefing.yaml"),
@@ -76,6 +85,10 @@ def run() -> None:
             raise AssertionError("no-preset Draft render did not use the bundled default")
         if not starter_svg.read_bytes().startswith(b"<svg"):
             raise AssertionError("minimal initialized project did not render with the bundled default")
+        if not asset_svg.read_bytes().startswith(b"<svg"):
+            raise AssertionError("wheel-owned catalogue preset did not render without asset flags")
+        if not (asset_preset / "catalogs/chrona-theme-starter-v2026-09-29.NOTICE").is_file():
+            raise AssertionError("wheel-owned catalogue notice was not copied")
         catalog_value = safe_load(catalog.read_bytes())
         catalog_body = catalog_value.get("body") if isinstance(catalog_value, dict) else None
         if (not isinstance(catalog_value, dict) or catalog_value.get("version") != "chrona/icon-catalog/v0.3"

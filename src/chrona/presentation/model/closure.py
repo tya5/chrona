@@ -231,6 +231,9 @@ def resolve_draft_render(
     """
     preset = _load_draft_resource("presentation-preset", preset_path) if preset_path is not None else None
     preset_paths = _draft_preset_paths(preset, preset_path, preset_root) if preset is not None and preset_path is not None else {}
+    declared_catalog_paths = (_draft_preset_catalog_paths(preset, preset_path, preset_root)
+                              if not icon_catalog_paths and preset is not None and preset_path is not None else ())
+    selected_catalog_paths = icon_catalog_paths or declared_catalog_paths
     visual_profile = _preset_visual_profile(preset.contract if preset is not None else None, visual_profile, target_kind)
     paths = (("project", project_path),
              ("view", view_path or preset_paths.get("view")),
@@ -247,13 +250,13 @@ def resolve_draft_render(
     )
     sources = [_load_draft_source(kind, path) for kind, path in paths if path is not None]
     sources.extend(_load_draft_source(kind, path) for kind, path in optional if path is not None)
-    sources.extend(_load_draft_source("icon-catalog", path) for path in icon_catalog_paths)
+    sources.extend(_load_draft_source("icon-catalog", path) for path in selected_catalog_paths)
     resources = _collect_presentation_resources(sources)
     catalog_resources = tuple(resource for resource in resources if resource.kind == "icon-catalog")
     _validate_icon_catalog_set(catalog_resources)
     return _draft_render_from_resources(resources, viewport=viewport, locale=locale, target_kind=target_kind,
                                         visual_profile=visual_profile, typesetter=typesetter,
-                                        icon_assets=_load_draft_icon_assets(catalog_resources, icon_catalog_paths,
+                                        icon_assets=_load_draft_icon_assets(catalog_resources, selected_catalog_paths,
                                                                             _draft_view(resources), _draft_theme_refs(resources)),
                                         font_metrics=(safe_load(font_metrics_path.read_bytes()) if font_metrics_path else None),
                                         font_asset_root=(font_metrics_path.parent.resolve() if font_metrics_path else None),
@@ -303,6 +306,26 @@ def _draft_preset_paths(preset: Any, preset_path: Path, preset_root: Path | None
             raise ClosureError("E_DRAFT_PRESET_RESOURCE")
         paths[kind] = path
     return paths
+
+
+def _draft_preset_catalog_paths(preset: Any, preset_path: Path,
+                                preset_root: Path | None = None) -> tuple[Path, ...]:
+    """Close only the catalogue paths explicitly pinned by a Draft preset."""
+    if not isinstance(preset.contract, PresentationPresetContract):
+        raise ClosureError("E_DRAFT_PRESET_SCHEMA")
+    declarations = preset.contract.resources.get("iconCatalogs", ())
+    if not isinstance(declarations, (tuple, list)):
+        raise ClosureError("E_DRAFT_PRESET_SCHEMA")
+    paths: list[Path] = []
+    for declaration in declarations:
+        if not isinstance(declaration, Mapping):
+            raise ClosureError("E_DRAFT_PRESET_SCHEMA")
+        path = _declared_child(preset_root or preset_path.parent, str(declaration["path"]))
+        resource = _load_draft_resource("icon-catalog", path)
+        if resource.id != declaration["id"]:
+            raise ClosureError("E_DRAFT_PRESET_RESOURCE")
+        paths.append(path)
+    return tuple(paths)
 
 
 def resolve_guided_draft_render(
