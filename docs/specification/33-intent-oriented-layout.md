@@ -301,6 +301,12 @@ policies. The local corridor is based on the source mark and selected box
 attachment point, not the full box extent; see the
 [#466 corridor amendment](../design/issue-466-connector-corridor-amendment-2026-09-26.md).
 
+When a hosted annotation number refers to a Theme glyph mark, Layout MUST
+resolve its abstract mark host to an actual emitted lane-facet primitive ID
+before Scene projection. The host identity and paint order are completed
+placement facts; Scene MUST reject a missing host rather than infer a glyph
+part. See the [#466 host correction](../design/issue-466-c3-hosted-note-index-correction-2026-09-29.md).
+
 ## 9. Diagnostics
 
 The implementation exposes at least:

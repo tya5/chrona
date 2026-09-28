@@ -318,6 +318,11 @@ adapter must not repair it.
 
 ### Annotation note contrast ground
 
+Hosted note-number text carries a completed `hostPlacementId` naming an
+actually emitted mark primitive. For a Theme glyph, Layout resolves the
+abstract mark to its first painted lane-emission part before Scene projection;
+Scene does not choose or invent that part and rejects a dangling host.
+
 The semantic registry classifies `annotation-note-text` as state text and
 `annotation-note-box` as decoration. In the completed paired annotation,
 Layout/Scene paint order places the box before its text. Contrast evaluation
