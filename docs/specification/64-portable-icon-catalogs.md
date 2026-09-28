@@ -234,16 +234,18 @@ A pattern is a finite repeat tile with positive dimensions, an angle in
 `[0,360)` clockwise about tile center, and an ordered list of at most 64
 bounded primitives: filled circles/rectangles and stroked lines/arcs. Arc
 input is approximated by quadratic segments with maximum 0.001 tile-unit
-deviation, then discarded. One basis point is 0.01%. The importer counts covered cell
-centers on a fixed 128×128 grid after rotation, with periodic wrap at tile
-edges. For density only, each normalized quadratic is expanded to exactly 16
+deviation, then discarded. One basis point is 0.01%. The importer counts
+covered centers on a fixed 128×128 grid in the tile-local fundamental cell,
+with periodic wrap at tile edges. For density only, each normalized quadratic
+is expanded to exactly 16
 equal-parameter chords; straight commands remain straight. Source lines and
 arcs use round caps and joins. A center is covered by a stroke when its
 distance to any chord is at most half the stroke width; circle boundaries are
 included and rectangles include left/top but exclude right/bottom. Coverage
 is the union over primitives and all periodic integer tile translations.
-Clockwise rotation applies to both tile geometry and the repeat lattice about
-the tile center before sampling; inverse-rotating the sample is equivalent.
+Clockwise rotation applies to both the tile geometry and this fundamental
+cell for rendering, so intrinsic `densityBasisPoints` is invariant to angle;
+sampling an unrotated axis-aligned viewport instead is not equivalent.
 The fixed chords define density measurement only: Scene and adapters retain
 the normalized quadratic geometry. Its required `densityBasisPoints` field is
 an integer from 1 through 10,000 and must equal the covered fraction rounded

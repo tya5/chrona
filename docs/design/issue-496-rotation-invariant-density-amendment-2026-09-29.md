@@ -1,0 +1,5 @@
+# #496 amendment: intrinsic pattern density
+
+**Amends:** [density coverage correction](issue-496-density-and-note-host-correction-2026-09-29.md). **Review:** [architecture review](../reviews/current/issue-496-rotation-invariant-density-architecture-review-2026-09-29.md). **Authority:** [Specification 64 §8](../specification/64-portable-icon-catalogs.md).
+
+`densityBasisPoints` is an intrinsic fraction of one periodic fundamental tile, not the fraction of an arbitrary axis-aligned viewport. Place the fixed 128×128 cell-center grid in tile-local coordinates, evaluate the declared periodic union there, and rotate both that cell and the pattern geometry together for rendering. The rotation therefore does not change the derived density. The prior inverse-rotated sampling phrase applies only if the sampling cell is likewise the rotated fundamental tile; using an unrotated axis-aligned viewport as the cell is incorrect. Keep the fixed 16-chord coverage predicate and half-up rounding unchanged. This changes no Scene geometry, paint, schema version, or existing public artifact.
