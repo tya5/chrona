@@ -855,6 +855,43 @@ def test_cli_icon_import_diagnostic_identifies_the_rejected_icon_source(tmp_path
     }
 
 
+def test_cli_imports_a_declared_theme_asset_source_without_iconify_flags(tmp_path, monkeypatch, capsys):
+    root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+    source = root / "tests/fixtures/icons/theme-assets-valid.yaml"
+    output = tmp_path / "theme-assets.yaml"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "icon-catalog", "import", "--theme-assets", str(source), "--output", str(output),
+    ])
+
+    main()
+
+    result = json.loads(capsys.readouterr().out)
+    catalog = yaml.safe_load(output.read_bytes())
+    assert result["set"] == "fixture"
+    assert result["glyphs"] == 1
+    assert result["patterns"] == 4
+    assert catalog["version"] == "chrona/icon-catalog/v0.4"
+
+
+def test_cli_theme_asset_import_reports_density_pointer_and_keeps_existing_output(tmp_path, monkeypatch, capsys):
+    root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+    source = root / "tests/fixtures/icons/theme-assets-invalid-density.yaml"
+    output = tmp_path / "theme-assets.yaml"
+    output.write_text("preserve\n", encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "icon-catalog", "import", "--theme-assets", str(source), "--output", str(output),
+    ])
+
+    with pytest.raises(SystemExit) as exited:
+        main()
+
+    assert exited.value.code == 1
+    failure = json.loads(capsys.readouterr().out)["diagnostics"][0]
+    assert failure["code"] == "E_THEME_ASSET_SOURCE_DENSITY"
+    assert failure["sourceRef"] == "/body/patterns/dither-12-5"
+    assert output.read_text(encoding="utf-8") == "preserve\n"
+
+
 def test_cli_draft_schema_diagnostic_keeps_the_author_facing_explanation(tmp_path, monkeypatch, capsys):
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     view = yaml.safe_load((root / "examples/controller-z/views/plan-only.yaml").read_text(encoding="utf-8"))
