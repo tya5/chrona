@@ -236,9 +236,18 @@ bounded primitives: filled circles/rectangles and stroked lines/arcs. Arc
 input is approximated by quadratic segments with maximum 0.001 tile-unit
 deviation, then discarded. One basis point is 0.01%. The importer counts covered cell
 centers on a fixed 128×128 grid after rotation, with periodic wrap at tile
-edges. Its required `densityBasisPoints` field is an integer from 1 through
-10,000 and must equal the covered fraction rounded half-up to the nearest
-basis point. Thus the starter's 12.5% dither uses 1,250 basis
+edges. For density only, each normalized quadratic is expanded to exactly 16
+equal-parameter chords; straight commands remain straight. Source lines and
+arcs use round caps and joins. A center is covered by a stroke when its
+distance to any chord is at most half the stroke width; circle boundaries are
+included and rectangles include left/top but exclude right/bottom. Coverage
+is the union over primitives and all periodic integer tile translations.
+Clockwise rotation applies to both tile geometry and the repeat lattice about
+the tile center before sampling; inverse-rotating the sample is equivalent.
+The fixed chords define density measurement only: Scene and adapters retain
+the normalized quadratic geometry. Its required `densityBasisPoints` field is
+an integer from 1 through 10,000 and must equal the covered fraction rounded
+half-up to the nearest basis point. Thus the starter's 12.5% dither uses 1,250 basis
 points exactly; it is never rounded to a whole percent. Stroke widths are finite,
 positive, and at most 16 units. It has no paint, target syntax, executable
 content, or arbitrary transform data. Theme's existing role `pattern`

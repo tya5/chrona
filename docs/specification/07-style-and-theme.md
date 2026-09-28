@@ -200,11 +200,15 @@ pairs: `planned.pattern`, `actual.pattern`, `snapshot.pattern`,
 `scenario.pattern`, `missing-actual.pattern`, `network-node.pattern`,
 `milestone.pattern`, `progress-fill.pattern`, `summary-bar.pattern`,
 `annotation-callout-box.pattern`, `annotation-highlight-box.pattern`,
-`annotation-note-box.pattern`, `annotation-arrow-box.pattern`,
+`annotation-arrow-box.pattern`,
 `axis-band-decoration.pattern`, `axis-band-decoration2.pattern`,
 `as-of-label-chip.pattern`, `member-label-chip.pattern`, and
 `finish-delta-chip.pattern`. Other pattern values and all other
 role/property pairs retain their current contracts.
+`annotation-note-box.pattern` is deliberately not admitted: required note text
+uses that box's opaque flat representative fill as its same-source ground under
+the #466 contract. A patterned note host requires a separate text-versus-ink
+ground policy before admission.
 
 Theme authoring is additionally closed by a role/property applicability
 contract. After base inheritance and Color Scheme bindings are resolved, but
