@@ -10,6 +10,7 @@ measures text, reads a Theme or serializes a primitive.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import fsum
 
 from chrona.presentation.layout.annotations import nearest_box_port
 from chrona.presentation.layout.balloon_geometry import nearest_eligible_edge, tail_base_points
@@ -264,8 +265,8 @@ def nearest_free_routed_tail_box(*, region: LabelRect, anchor: MarkPlacement, en
                     if ((side == "start" and max(all_x) > x)
                             or (side == "end" and min(all_x) < x)):
                         continue
-                route_length = sum(abs(b[0] - a[0]) + abs(b[1] - a[1])
-                                   for a, b in zip(route.points, route.points[1:]))
+                route_length = fsum(abs(b[0] - a[0]) + abs(b[1] - a[1])
+                                    for a, b in zip(route.points, route.points[1:]))
                 source_order = {"end": 0, "start": 1, "above": 2, "below": 3}[egress.side]
                 rank = (len(route.points) - 2, route_length, source_order, edge_order,
                         egress.exposed_port, tip, route.points)

@@ -109,6 +109,18 @@ def test_capable_roles_include_layout_annotation_and_bounded_open_producers():
     assert theme_role_property_consumer("annotation-arrow-box", "annotationContainer")
 
 
+@pytest.mark.parametrize("role", [
+    "annotation-callout-box", "annotation-highlight-box",
+    "annotation-note-box", "annotation-arrow-box",
+])
+def test_annotation_box_roles_admit_only_completed_box_scene_kinds(role):
+    contract = theme_role_contract(role)
+
+    assert contract is not None
+    assert contract.scene_kinds == frozenset(("Rect", "Symbol"))
+    assert contract.owner_of("annotationContainer")
+
+
 def test_every_public_theme_declaration_and_scene_paint_role_has_a_consumer():
     themes = sorted((ROOT / "examples").glob("*/themes/*.yaml"))
     themes += sorted((ROOT / "src/chrona/resources/presets/bundles").glob("*/theme.yaml"))
