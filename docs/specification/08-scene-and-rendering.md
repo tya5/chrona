@@ -180,6 +180,26 @@ collection. Manifest fields and diagnostics are never cache or semantic authorit
 
 ## 4. Coordinate system and temporal scale
 
+### 4.0.1 Theme catalogue patterns (#496)
+
+Catalogue-backed pattern bindings use Theme v0.13 and complete into Scene
+v0.7. Layout owns the patterned region bounds, clip bounds, and tile origin.
+Scene carries normalized tile primitives, angle, density, origin, clip bounds,
+and completed `ScenePaint`; `paint.fill` is the substrate and `paint.stroke`
+is the ink. PatternGeometry carries no color. No catalogue reference, Theme
+token, target syntax, or source document crosses into Scene. The adapter may
+encode repetition using SVG's user-space pattern syntax, but all tile values,
+angle, origin, and clip bounds come from Scene. PNG consumes that same SVG via
+the pinned resvg route. The adapter does not look up assets, alter geometry,
+choose clipping, recolor, or select a fallback.
+
+The contrast gate checks substrate against the actual host ground and ink
+against both substrate and host ground; the minimum pairwise ratio must meet
+the semantic floor (3.0:1 for marks, 1.10:1 for decorations). The existing
+opaque representative-ground rule applies to all three colors. Perceptibility
+inspection receives the same channels and geometry/density facts; it does not
+reconstruct effective paint from the catalogue.
+
 ### 4.0 v0.1 Scene profile
 
 A Scene profile declares layout policy, not geometry. The first Date-only profile is

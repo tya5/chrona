@@ -1,9 +1,9 @@
-# Portable Icon Catalogs and Immutable Visual Assets
+# Portable Icon Catalogs and Theme Assets
 
-**Status:** Implemented — v0.3 successor contract
-**Owns:** local Iconify collection ingestion, normalized monochrome icon
-catalogs, catalog-set closure, label/mark visual selection, completed Icon
-primitives, icon accessibility, and SVG/PNG target capability.
+**Status:** v0.3 implemented; v0.4 asset-catalog successor designed in #496
+**Owns:** local Iconify ingestion, licensed normalized icon/glyph/pattern
+catalog entries, catalog-set closure, visual selection, completed Scene
+primitives and paint, accessibility, and SVG/PNG target capability.
 **Does not own:** Project facts, arbitrary images/artwork (§7 records the one
 narrow exception: a purpose-built PNG entry reused as Theme-bound container
 artwork), raw SVG at render time, concrete colours, Layout coordinates,
@@ -211,7 +211,74 @@ the same `set:name` reference form is reused, but the *consumer* differs.
   licensed exactly as any other purpose-built PNG entry is today — no new
   import path, catalog resource kind, or Context input is introduced.
 
-## 8. Acceptance and evolution
+## 8. Theme glyph and pattern assets (#496 successor)
+
+The v0.4 successor retains resource kind `icon-catalog`, Context input
+`iconCatalogs`, catalogue set names, `set:name` references, and the existing
+identity/notice closure. It adds closed `glyphs` and `patterns` entry maps;
+v0.3 is not reinterpreted and migration to v0.4 is explicit. All entries share
+catalogue provenance with a declared SPDX identifier and complete notice.
+Normalization profile is `chrona/theme-asset-normalization/v0.1`. A glyph
+viewport side is an integer from 1 through 4096; a glyph has 1–32 normalized
+paths, each no longer than 65,536 characters. A pattern tile side is 1–256
+units and contains 1–64 ordered primitives. Coordinates are finite and within
+the tile; out-of-range input rejects rather than clips or repairs.
+
+A glyph is the normalized #464 multi-part glyph representation: positive
+viewport, ordered closed path parts, `fill|stroke` mode, and no fixed color.
+Theme may select it for the existing milestone/gate symbol roles. Theme owns
+role paint and variant choice; the existing mark-fit logic consumes resolved
+parts and Layout completes the mark geometry.
+
+A pattern is a finite repeat tile with positive dimensions, an angle in
+`[0,360)` clockwise about tile center, and an ordered list of at most 64
+bounded primitives: filled circles/rectangles and stroked lines/arcs. Arc
+input is approximated by quadratic segments with maximum 0.001 tile-unit
+deviation, then discarded. Density is the declared integer percent of covered
+tile samples on a fixed 128×128 grid at cell centers after rotation with
+periodic wrap at tile edges, rounded half-up; the importer recomputes it and
+rejects a mismatch. Stroke widths are finite,
+positive, and at most 16 units. It has no paint, target syntax, executable
+content, or arbitrary transform data. Theme's existing role `pattern`
+property names a typed pattern token whose value is
+`{kind: catalog, ref: set:name}` on one of the exact registered role/property
+pairs in Specification 07. Theme `fill` is the opaque substrate and Theme
+`stroke` is opaque ink; pattern roles require opacity 1.0. Catalogue
+references resolve after Theme inheritance
+and before Layout; unknown set/name or wrong entry kind reports the exact Theme
+pointer and authored `set:name`.
+
+Authored Theme v0.13 adds catalog glyph references and catalog-valued pattern
+tokens; derived Theme v0.14 carries inherited resolved declarations. Existing
+Theme v0.11/v0.12 documents remain unchanged. Layout owns repeated-region
+bounds, clipping, and tile origin. Scene v0.7 extends the completed pattern
+value with normalized tile primitives, angle, density, tile origin, and clip
+bounds. `ScenePaint.fill` is the substrate and `ScenePaint.stroke` is the ink;
+PatternGeometry carries no colors. Scene does not read catalogue or Theme
+resources. An adapter may serialize periodic repetition using target-native
+syntax, but the completed tile, angle, origin, and clip bounds determine it.
+Contrast evaluates substrate against the actual host ground and ink against
+both substrate and host ground. The lowest applicable ratio must meet the
+semantic floor: 3.0:1 for mark roles, 1.10:1 for decoration roles. All
+channels are opaque under the existing representative-ground contract.
+Perceptibility inspection receives the same channels and tile/density facts;
+neither gate infers color from a catalogue. SVG serializes completed geometry;
+PNG is generated from that SVG by the pinned resvg route. Other targets reject
+these bindings until separately profiled. Import accepts declarative YAML with
+explicit SPDX and notice, validates the whole input, and emits canonical
+catalogue bytes atomically. No raw SVG reaches rendering; a source SVG importer
+is deferred.
+
+Render Context keeps its current schema because its `iconCatalogs` field and
+reference shape do not change; closure resolution is extended to validate and
+pin catalogue v0.4. The existing presentation-preset v0.1 already pins
+`iconCatalogs` and an optional detail profile. Builtin-library v0.2 adds catalogue members. Copy
+preserves exact catalogue bytes and notices and writes
+their pinned references into the preset; `render --preset` uses that closure.
+This does not define package acquisition. Spec 62 may admit v0.4 as an
+ordinary verified static asset member under its existing package boundary.
+
+## 9. Acceptance and evolution
 
 Release evidence must include real Material Symbols, Lucide, and Tabler import
 fixtures; a packaged Material default; user-owned import; direct and encoded

@@ -173,6 +173,39 @@ roles, `milestoneSymbolActual` and `milestoneSymbolBaseline`, each falling back 
 when a variant needs a different asset altogether (a ghost sprite for a baseline
 gate), not merely a different treatment of the same asset.
 
+The #496 asset-catalog successor permits `shape: {catalog: set:name}` on
+milestone/gate symbol roles. It resolves only a normalized glyph entry and
+then uses the same mark-fit and paint rules above; unknown or wrong-kind
+references fail before Layout with `E_THEME_ASSET_REFERENCE` at the Theme
+property pointer, including the authored reference. Inline glyphs remain a
+valid migration form.
+
+This authoring form is Theme v0.13; derived Theme inheritance advances from
+v0.12 to v0.14. These are successor contracts, so v0.11 authored Themes and
+v0.12 derived Themes retain their existing closed schemas. Theme v0.13 admits
+catalog glyph references only on `milestoneSymbol`,
+`milestoneSymbolActual`, and `milestoneSymbolBaseline`.
+
+A fill role may select a catalogue pattern through its existing `pattern`
+role property, which names a typed pattern token with value
+`{kind: catalog, ref: set:name}` when that exact role/property pair is
+registered by the Theme applicability contract. The flat fill remains the
+opaque representative substrate and the role's resolved stroke is the pattern
+ink; catalogue data supplies geometry and density only. Unknown, wrong-kind,
+or unregistered bindings fail before Scene construction.
+The completed pattern preserves both effective paint channels for
+perceptibility and contrast checks; adapters cannot add a fallback color.
+Catalogue pattern tokens are admitted only on these existing role/property
+pairs: `planned.pattern`, `actual.pattern`, `snapshot.pattern`,
+`scenario.pattern`, `missing-actual.pattern`, `network-node.pattern`,
+`milestone.pattern`, `progress-fill.pattern`, `summary-bar.pattern`,
+`annotation-callout-box.pattern`, `annotation-highlight-box.pattern`,
+`annotation-note-box.pattern`, `annotation-arrow-box.pattern`,
+`axis-band-decoration.pattern`, `axis-band-decoration2.pattern`,
+`as-of-label-chip.pattern`, `member-label-chip.pattern`, and
+`finish-delta-chip.pattern`. Other pattern values and all other
+role/property pairs retain their current contracts.
+
 Theme authoring is additionally closed by a role/property applicability
 contract. After base inheritance and Color Scheme bindings are resolved, but
 before Layout or Scene construction, every declared `roles` property and every
