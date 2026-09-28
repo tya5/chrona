@@ -32,3 +32,38 @@ plan, remove only unreachable code and stale staging, add the three-context
 Scene assertion and focused gate, then review the literal rows against current
 public artifacts and CI. Any changed Scene schema or generated evidence must
 ship atomically with its producer and serializer.
+
+## Selected design and whole-architecture review
+
+Keep Scene v0.6 intact. `laneMode` distinguishes a fixed-membership Scene;
+`laneMembers` is the public Project/View-only membership and exact primitive
+ownership oracle (`test_public_lane_layout_projects_fixed_membership` and
+`test_readable_defaults` consume it); `laneObstacles` is the typed, Layout-
+completed visible-footprint inventory checked against emitted primitives by
+`SceneSurface` and serialization; `laneClearance` is the serialized tolerance
+for interpreting that inventory, validated by serialization and used by the
+Scene-level route/label test. This is current release evidence, not the retired
+pairwise non-redundancy audit. Document these purposes at the public schema.
+Removing fields would need a new Scene version and migration for evidence that
+is still consumed; that would add churn without improving ownership.
+
+Remove the test-only `lane_audit` and the geometry-driven allocation/preflight
+entry points. The fixed-membership path still uses `LaneInlineFrame`, its
+inline-frame derivation, and mark/icon/facet helper functions. Extract the
+shared facet value types and composition into a live Layout module before
+deleting the allocator and mapper. Remove dormant `LaneMeasurementIdentity` /
+`SurfaceLanePlan` request/Scene plumbing; the live preflight is
+`preflight_fixed_lane_layout` and does not use them. Remove the unused
+`lane_seed` adapter too; its stated staging condition can no longer become
+true after the data-only pivot. A narrow
+function-level reachability assertion should name the retired entry points;
+generic call-graph analysis is not warranted by this issue and risks false
+positives from dynamic dispatch. Remove any stale float-sum exception tied
+only to the retired function.
+
+Specs 38/49/50 already put membership in Project/View and finished geometry
+in Layout. This decision leaves the Scene/adapter boundary and public bytes
+unchanged. The test must render the actual 02/11/12 closures, inspect each
+completed Scene dependency segment against required lane/member text bounds,
+and cite its real name in the release review. Historical design/review records
+remain history; correct the current acceptance review's false test claim.
