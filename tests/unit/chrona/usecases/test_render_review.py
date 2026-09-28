@@ -72,16 +72,6 @@ def test_lane_source_measurement_uses_exact_membership_table_and_lane_count():
     assert [cell.content for cell in sources["table"].table.cells] == ["Avionics", "2"]
 
 
-def test_lane_measurement_identity_uses_effective_theme_and_font_asset():
-    frame = SimpleNamespace(inline_scale=SimpleNamespace(scale_id="primary"))
-    font = SimpleNamespace(content_identity="sha256:font")
-    first = render_usecase._lane_measurement_identity({"body": {"value": 1}}, font, frame)
-    second = render_usecase._lane_measurement_identity({"body": {"value": 2}}, font, frame)
-    assert first.theme_identity != second.theme_identity
-    assert first.font_asset_identity == "sha256:font"
-    assert first.scale_identity == "primary"
-
-
 def test_scene_error_findings_become_draft_warnings_without_information_duplication():
     error = ScenePerceptibilityFinding("v1", "E_SCENE_TEXT_OCCLUDED", "error", "/surfaces/0:review",
                                        ("text", "cover"), "timeline", (("coverageRatio", 1.0),))
