@@ -222,10 +222,11 @@ separate not-yet-due treatment requires a future versioned View policy.
 
 Semantic annotations remain Project data and are selected with their anchors. Presentation annotations are View-local callouts, highlights, notes, or explanatory arrows. They MAY anchor to a selected object, relation, group, or temporal coordinate. The View owns the stable anchor and logical placement preference; Layout owns every concrete offset, coordinate, collision decision, and connector route. Scene projects completed Layout geometry and Rendering serializes it. Deleting a presentation annotation MUST NOT alter a Project object, semantic annotation, or dependency.
 
-### 9.1 v0.1 presentation annotation intent
+### 9.1 Presentation annotation intent
 
 A presentation annotation has a stable View-local ID, one typed anchor, a purpose, and
-a logical placement preference. It is not a free coordinate blob:
+a logical placement preference. It is not a free coordinate blob. This
+legacy shorthand normalizes to an ordered candidate:
 
 ```yaml
 annotations:
@@ -242,7 +243,7 @@ projected with source kind `explanatory-arrow` and can never satisfy, replace, o
 a semantic dependency. A missing anchor produces a View diagnostic; no title or
 geometry-based recovery is allowed.
 
-View selection, grouping, hierarchy expansion, visibility, and annotation anchoring are semantic inputs, not renderer geometry. v0.22 annotation placement uses a finite named fallback ladder. The [#466 candidate contract](../design/issue-466-candidate-placement-design-2026-09-26.md) defines v0.23 annotations with one source (`text` or a stable Project annotation reference), a typed anchor, and an ordered candidate list. A Project reference inherits narrative text and object identity; View owns facet, endpoint, purpose and placement. A referenced Project note is not duplicated in the notes slot. Each candidate declares region, search, obstacle classes and connector; no View field contains concrete coordinates. v0.22 rungs normalize to the same typed model without changing their public output. `layoutMetrics` is the revision-bound metrics/algorithm artifact declared by Render Context, never a renderer font default.
+View selection, grouping, hierarchy expansion, visibility, and annotation anchoring are semantic inputs, not renderer geometry. An annotation has one source (`text` or a stable Project annotation reference), a typed anchor, and an ordered candidate list. A Project reference inherits narrative text and object identity; View owns facet, endpoint, purpose and placement. A referenced Project note is not duplicated in the notes slot. Each candidate declares a region, search, obstacle classes and connector; Layout evaluates the list against one completed surface obstacle set, records the selected candidate and bounded search count, and owns box and connector geometry. The rail, adjacent sides and plot search are configurations of this one model; legacy named rungs normalize to candidates without changing their output. No View field contains concrete coordinates. `layoutMetrics` is the revision-bound metrics/algorithm artifact declared by Render Context, never a renderer font default.
 
 ## 10. Diagnostics
 

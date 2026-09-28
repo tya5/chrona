@@ -43,3 +43,35 @@ diagnostic, rendered SVG/PNG, generated Scene and public materializer diff,
 contrast/perceptibility reports, focused tests and CI matrix. The next
 independently publishable slice is this rebaseline design/architecture review,
 then an implementation plan; product work waits for #505 merge.
+
+## Selected design and whole-architecture review
+
+Keep the published C2 candidate contract and deterministic Layout search;
+no engine policy is authorized merely to make 02 fit. Reapply only the WIP's
+three Project-note references and one balloon Theme binding to the current
+v0.28 View/Theme closure. Retain lane membership, plot labels, chain/date
+packing and other current fields. The three notes consume Project text once;
+the no-rail target uses only plot/nearest-free/tail candidates. A separate
+crowded fixture adds rail as the second candidate to prove fallback, without
+weakening the public no-rail case.
+
+Each candidate remains a typed region, search, obstacle-class set and
+connector. The selected candidate ID, bounded search count and any overflow
+are Layout decisions; Scene neither searches nor re-routes. Tail geometry
+and representative box paint are resolved from Theme before search. The
+single obstacle inventory includes completed marks, required text, rule and
+dependency paths. A failure to find a valid box is not silently converted
+to success: existing visible-overflow behavior must be reported, and row 3
+cannot pass when it overlaps or crosses the as-of line. Missing Project note
+IDs, duplicate use or stale pins fail before materialization.
+
+Architecture check: this preserves Specs 02/06 (Project versus View intent),
+07 (Theme treatment and note contrast), 08/50 (completed Scene and adapter
+delivery), 33/44 (Layout-owned placement), and 38 (#467 data-only lanes).
+C4 uses the already published opaque representative-ground/same-source note
+pair design; its six-root Theme migration, role admission, Scene contrast
+and public evidence form one atomic later slice. No new public schema or
+identity rule is selected here. The living Specs 06/44 should describe the
+candidate model as current, with the rail as one configuration, rather than
+pointing to it as a future successor. If the three-note trial fails, that is
+a new design question and this review does not authorize a local workaround.

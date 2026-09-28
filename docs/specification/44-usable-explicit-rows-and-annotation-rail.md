@@ -12,7 +12,7 @@ A snapshot member uses visual role `snapshot`; Theme defines `snapshot.fill`. Pr
 
 ## Annotation rail
 
-For an object-anchored callout and an `annotations` Layout slot, Layout places the annotation box in that rail at the anchor's block coordinate, constrained by completed surface obstacles and requested viewport bounds where possible. Its leader starts at the mark port and routes from timeline to rail. Timeline row rectangles are not candidate-placement obstacles. Scene projects the completed box and leader. This is the published rail behavior. The [#466 candidate model](../design/issue-466-candidate-placement-design-2026-09-26.md) defines its successor as a `slot` region, `row-aligned` search, shared obstacle query and `leader` connector; normalization of the legacy rung MUST be byte-identical before new plot behavior is enabled.
+The rail is one configuration of the [unified annotation candidate model](06-view-model.md#9-annotations-and-layout-intent): an `annotations` slot region, row-aligned search, shared completed-surface obstacle query and leader connector from the mark port. Timeline row rectangles are not candidate-placement obstacles. Layout completes the box and leader; Scene projects them unchanged. Legacy rail declarations normalize to this candidate without changing their output.
 
 A required annotation with no fitting rail position uses a stable visible
 placement and, when necessary, a direct leader route with Layout warnings.
