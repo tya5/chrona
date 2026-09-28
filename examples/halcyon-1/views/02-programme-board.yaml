@@ -98,6 +98,49 @@ body:
     annotations:
       mode: presentation
       marker: numbered
+  annotations:
+  - id: window-note
+    purpose: note
+    anchor:
+      kind: object
+      id: launch
+      facet: planned
+      endpoint: at
+    projectAnnotation: window
+    candidates:
+    - id: plot-near
+      region: {kind: plot}
+      search: {kind: nearest-free, maxPositions: 1024, maxInlineEm: 12}
+      obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
+      connector: {kind: tail}
+  - id: tvac-note
+    purpose: note
+    anchor:
+      kind: object
+      id: payload-tvac
+      facet: actual
+      endpoint: body
+    projectAnnotation: tvac
+    candidates:
+    - id: plot-near
+      region: {kind: plot}
+      search: {kind: nearest-free, maxPositions: 1024, maxInlineEm: 12}
+      obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
+      connector: {kind: tail}
+  - id: station-note
+    purpose: note
+    anchor:
+      kind: object
+      id: station
+      facet: planned
+      endpoint: finish
+    projectAnnotation: station
+    candidates:
+    - id: plot-near
+      region: {kind: plot}
+      search: {kind: nearest-free, maxPositions: 1024, maxInlineEm: 12}
+      obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
+      connector: {kind: tail}
   axis:
     tiers:
     - unit: quarter
