@@ -5,6 +5,8 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | actual | `actual` | required | 3.000 | 25 | 176 | 3.204 | 7.730 | 0 |
+| annotation-box | `annotation-note-box` | enabled | 1.100 | 5 | 13 | 1.435 | 1.435 | 0 |
+| annotation-text | `annotation-note-text` | required | 4.500 | 5 | 13 | 13.973 | 13.973 | 0 |
 | axis-band | `axis-band-decoration` | enabled | 1.100 | 27 | 78 | 1.574 | 1.773 | 0 |
 | axis-band | `axis-band-decoration2` | enabled | 1.100 | 4 | 32 | 1.119 | 1.154 | 0 |
 | calendar-closed | `calendar-closed` | enabled | 1.100 | 27 | 1008 | 1.388 | 1.414 | 0 |
@@ -131,6 +133,8 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/controller-z/generated/annotations.scene.json` | `actual:firmware:firmware` | `actual` | 591.968, 244.800 | `planned:firmware:firmware` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `actual:performance:performance` | `actual` | 1112.507, 480.800 | `planned:performance:performance` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `actual:silicon-bringup:silicon-bringup` | `actual` | 1069.723, 316.800 | `planned:silicon-bringup:silicon-bringup` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
+| `examples/controller-z/generated/annotations.scene.json` | `annotation-box:performance-note` | `annotation-note-box` | 24.000, 1101.800 | `canvas` | canvas | `#FFFFFF` | stroke | 6.219 | 1.100 | info |
+| `examples/controller-z/generated/annotations.scene.json` | `annotation-text:performance-note` | `annotation-note-text` | 181.010, 1101.800 | `annotation-box:performance-note` | flat | `#EAF0F8` | fill | 14.191 | 4.500 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 716.755, 92.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.579 | 1.100 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `axis-band-rect:0:1` | `axis-band-decoration` | 1251.555, 92.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.579 | 1.100 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `calendar-closed:2026-02-01` | `calendar-closed` | 506.400, 470.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
@@ -1046,6 +1050,12 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `actual:review-lane:["generated","payload","optics"]:optics` | `actual` | 912.761, 195.500 | `planned:review-lane:["generated","payload","optics"]:optics` | flat | `#12302B` | fill | 7.201 | 3.000 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `actual:review-lane:["generated","payload","optics"]:payload-delivery` | `actual` | 1319.720, 195.500 | `group:payload` | flat | `#142642` | fill | 7.708 | 3.000 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `actual:review-lane:["generated","payload","optics"]:payload-tvac` | `actual` | 1064.188, 206.500 | `group:payload` | flat | `#142642` | fill | 7.708 | 3.000 | info |
+| `examples/halcyon-1/generated/02-programme-board.scene.json` | `annotation-box:station-note` | `annotation-note-box` | 1008.710, 444.875 | `group:ops` | flat | `#142642` | stroke | 1.435 | 1.100 | info |
+| `examples/halcyon-1/generated/02-programme-board.scene.json` | `annotation-box:tvac-note` | `annotation-note-box` | 924.163, 249.125 | `group:ait` | flat | `#142642` | stroke | 1.435 | 1.100 | info |
+| `examples/halcyon-1/generated/02-programme-board.scene.json` | `annotation-box:window-note` | `annotation-note-box` | 1639.025, 314.375 | `group:ground` | flat | `#142642` | stroke | 1.435 | 1.100 | info |
+| `examples/halcyon-1/generated/02-programme-board.scene.json` | `annotation-text:station-note` | `annotation-note-text` | 1093.595, 444.875 | `annotation-box:station-note` | flat | `#16213A` | fill | 13.973 | 4.500 | info |
+| `examples/halcyon-1/generated/02-programme-board.scene.json` | `annotation-text:tvac-note` | `annotation-note-text` | 1009.385, 249.125 | `annotation-box:tvac-note` | flat | `#16213A` | fill | 13.973 | 4.500 | info |
+| `examples/halcyon-1/generated/02-programme-board.scene.json` | `annotation-text:window-note` | `annotation-note-text` | 1711.760, 314.375 | `annotation-box:window-note` | flat | `#16213A` | fill | 13.973 | 4.500 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 897.618, 63.000 | `canvas` | canvas | `#0B1220` | fill | 1.773 | 1.100 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `axis-band-rect:0:1` | `axis-band-decoration` | 1128.544, 63.000 | `canvas` | canvas | `#0B1220` | fill | 1.773 | 1.100 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `axis-band-rect:0:2` | `axis-band-decoration` | 1474.933, 63.000 | `canvas` | canvas | `#0B1220` | fill | 1.773 | 1.100 | info |
@@ -1599,6 +1609,12 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `actual:review-lane:["generated","payload","optics"]:optics` | `actual` | 884.940, 380.500 | `planned:review-lane:["generated","payload","optics"]:optics` | flat | `#12302B` | fill | 7.201 | 3.000 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `actual:review-lane:["generated","payload","optics"]:payload-delivery` | `actual` | 1314.940, 380.500 | `group:payload` | flat | `#142642` | fill | 7.708 | 3.000 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `actual:review-lane:["generated","payload","optics"]:payload-tvac` | `actual` | 1044.940, 391.500 | `group:payload` | flat | `#142642` | fill | 7.708 | 3.000 | info |
+| `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `annotation-box:station-note` | `annotation-note-box` | 806.940, 564.625 | `group:launch` | flat | `#142642` | stroke | 1.435 | 1.100 | info |
+| `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `annotation-box:tvac-note` | `annotation-note-box` | 892.163, 434.125 | `group:ait` | flat | `#142642` | stroke | 1.435 | 1.100 | info |
+| `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `annotation-box:window-note` | `annotation-note-box` | 1679.760, 499.375 | `group:ground` | flat | `#142642` | stroke | 1.435 | 1.100 | info |
+| `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `annotation-text:station-note` | `annotation-note-text` | 891.825, 564.625 | `annotation-box:station-note` | flat | `#16213A` | fill | 13.973 | 4.500 | info |
+| `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `annotation-text:tvac-note` | `annotation-note-text` | 977.385, 434.125 | `annotation-box:tvac-note` | flat | `#16213A` | fill | 13.973 | 4.500 | info |
+| `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `annotation-text:window-note` | `annotation-note-text` | 1752.495, 499.375 | `annotation-box:window-note` | flat | `#16213A` | fill | 13.973 | 4.500 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 868.940, 248.000 | `canvas` | canvas | `#0B1220` | fill | 1.773 | 1.100 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `axis-band-rect:0:1` | `axis-band-decoration` | 1112.940, 248.000 | `canvas` | canvas | `#0B1220` | fill | 1.773 | 1.100 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `axis-band-rect:0:2` | `axis-band-decoration` | 1478.940, 248.000 | `canvas` | canvas | `#0B1220` | fill | 1.773 | 1.100 | info |
@@ -1658,6 +1674,12 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","payload","optics"]:payload-delivery:part:0` | `actual` | 1319.720, 195.500 | `group:payload` | flat | `#142642` | fill | 7.708 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","payload","optics"]:payload-delivery:part:1` | `actual` | 1319.720, 195.500 | `actual:review-lane:["generated","payload","optics"]:payload-delivery:part:0` | flat | `#35D0A0` | fill | 8.761 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","payload","optics"]:payload-tvac` | `actual` | 1064.188, 206.500 | `group:payload` | flat | `#142642` | fill | 7.708 | 3.000 | info |
+| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `annotation-box:station-note` | `annotation-note-box` | 1008.710, 444.875 | `group:ops` | flat | `#142642` | stroke | 1.435 | 1.100 | info |
+| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `annotation-box:tvac-note` | `annotation-note-box` | 924.163, 249.125 | `group:ait` | flat | `#142642` | stroke | 1.435 | 1.100 | info |
+| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `annotation-box:window-note` | `annotation-note-box` | 1639.025, 314.375 | `group:ground` | flat | `#142642` | stroke | 1.435 | 1.100 | info |
+| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `annotation-text:station-note` | `annotation-note-text` | 1093.595, 444.875 | `annotation-box:station-note` | flat | `#16213A` | fill | 13.973 | 4.500 | info |
+| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `annotation-text:tvac-note` | `annotation-note-text` | 1009.385, 249.125 | `annotation-box:tvac-note` | flat | `#16213A` | fill | 13.973 | 4.500 | info |
+| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `annotation-text:window-note` | `annotation-note-text` | 1711.760, 314.375 | `annotation-box:window-note` | flat | `#16213A` | fill | 13.973 | 4.500 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 897.618, 63.000 | `canvas` | canvas | `#0B1220` | fill | 1.773 | 1.100 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `axis-band-rect:0:1` | `axis-band-decoration` | 1128.544, 63.000 | `canvas` | canvas | `#0B1220` | fill | 1.773 | 1.100 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `axis-band-rect:0:2` | `axis-band-decoration` | 1474.933, 63.000 | `canvas` | canvas | `#0B1220` | fill | 1.773 | 1.100 | info |
@@ -1865,6 +1887,12 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/halcyon-1/generated/15-gallery-image-notes.scene.json` | `actual:station:station` | `actual` | 1149.834, 661.000 | `planned:station:station` | flat | `#33261A` | fill | 7.454 | 3.000 | info |
 | `examples/halcyon-1/generated/15-gallery-image-notes.scene.json` | `actual:structure:structure` | `actual` | 998.585, 151.000 | `planned:structure:structure` | flat | `#142642` | fill | 7.708 | 3.000 | info |
 | `examples/halcyon-1/generated/15-gallery-image-notes.scene.json` | `actual:vibration:vibration` | `actual` | 1454.070, 491.000 | `planned:vibration:vibration` | flat | `#2C2138` | fill | 7.730 | 3.000 | info |
+| `examples/halcyon-1/generated/15-gallery-image-notes.scene.json` | `annotation-box:station-note` | `annotation-note-box` | 1176.190, 578.000 | `group:ait` | flat | `#142642` | stroke | 1.435 | 1.100 | info |
+| `examples/halcyon-1/generated/15-gallery-image-notes.scene.json` | `annotation-box:tvac-note` | `annotation-note-box` | 923.830, 455.000 | `group:ait` | flat | `#142642` | stroke | 1.435 | 1.100 | info |
+| `examples/halcyon-1/generated/15-gallery-image-notes.scene.json` | `annotation-box:window-note` | `annotation-note-box` | 1639.055, 762.500 | `group:launch` | flat | `#142642` | stroke | 1.435 | 1.100 | info |
+| `examples/halcyon-1/generated/15-gallery-image-notes.scene.json` | `annotation-text:station-note` | `annotation-note-text` | 1302.370, 578.000 | `annotation-box:station-note` | flat | `#16213A` | fill | 13.973 | 4.500 | info |
+| `examples/halcyon-1/generated/15-gallery-image-notes.scene.json` | `annotation-text:tvac-note` | `annotation-note-text` | 1043.868, 455.000 | `annotation-box:tvac-note` | flat | `#16213A` | fill | 13.973 | 4.500 | info |
+| `examples/halcyon-1/generated/15-gallery-image-notes.scene.json` | `annotation-text:window-note` | `annotation-note-text` | 1759.528, 762.500 | `annotation-box:window-note` | flat | `#16213A` | fill | 13.973 | 4.500 | info |
 | `examples/halcyon-1/generated/15-gallery-image-notes.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 977.723, 63.000 | `canvas` | canvas | `#0B1220` | fill | 1.773 | 1.100 | info |
 | `examples/halcyon-1/generated/15-gallery-image-notes.scene.json` | `axis-band-rect:0:1` | `axis-band-decoration` | 1189.819, 63.000 | `canvas` | canvas | `#0B1220` | fill | 1.773 | 1.100 | info |
 | `examples/halcyon-1/generated/15-gallery-image-notes.scene.json` | `axis-band-rect:0:2` | `axis-band-decoration` | 1507.963, 63.000 | `canvas` | canvas | `#0B1220` | fill | 1.773 | 1.100 | info |
@@ -2050,7 +2078,9 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/orion-asic/generated/gates.scene.json` | `cell:fab-a0:Δ` | `variance-behind` | 456.087, 380.800 | `canvas` | canvas | `#FFFFFF` | fill | 6.219 | 4.500 | info |
 | `examples/orion-asic/generated/gates.scene.json` | `cell:rtl-freeze:Δ` | `variance-behind` | 456.087, 168.800 | `canvas` | canvas | `#FFFFFF` | fill | 6.219 | 4.500 | info |
 
-## Five-decoration witness
+## Decoration corpus witness
+
+Every non-exclusive decoration role is enabled in committed Scene evidence; group-band or group-header-band supplies the group concept when there are no corpus errors.
 
 
-Findings: 2018; errors: 0.
+Findings: 2044; errors: 0.

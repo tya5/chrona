@@ -1,6 +1,7 @@
 """Immutable Color Scheme validation and deterministic paint resolution."""
 from __future__ import annotations
 
+from re import fullmatch
 from typing import Any, Mapping
 
 from chrona.presentation.model.semantic_registry import ContrastClass, contrast_bindings
@@ -56,7 +57,11 @@ def _state_text_contrast(*, declared_roles: Mapping[str, Any], resolved_roles: M
         role = binding.theme_role
         path = f"/body/roles/{role}"
         declared = declared_roles.get(role)
+        if role == "annotation-note-text" and not isinstance(declared, Mapping) and role not in resolved_roles:
+            continue
         treatment = declared.get("contrastTreatment") if isinstance(declared, Mapping) else None
+        if role == "annotation-note-text" and treatment != "required":
+            raise ColorSchemeError("E_SCHEME_STATE_TEXT_TREATMENT", f"{path}/contrastTreatment")
         if treatment not in _STATE_TEXT_CONTRAST_FLOORS:
             raise ColorSchemeError("E_SCHEME_STATE_TEXT_TREATMENT", path)
         if role == "variance-behind" and treatment != "required":
@@ -81,6 +86,45 @@ def _state_text_contrast(*, declared_roles: Mapping[str, Any], resolved_roles: M
         if contrast < _STATE_TEXT_CONTRAST_FLOORS[treatment]:
             raise ColorSchemeError("E_SCHEME_STATE_TEXT_CONTRAST", f"{path}/fill",
                                    detail=f"{role}:{contrast:.2f}")
+
+
+def _annotation_note_ground(*, declared_roles: Mapping[str, Any], resolved_roles: Mapping[str, Any],
+                            values: Mapping[str, Any], color_bindings: Mapping[str, Any]) -> None:
+    """Require the note box's resolved representative fill to be opaque and flat."""
+    role = "annotation-note-box"
+    declared = declared_roles.get(role)
+    if (not isinstance(declared, Mapping) and role not in resolved_roles
+            and "annotation-note-text" not in declared_roles
+            and not any(isinstance(target, str) and target.startswith(f"{role}.")
+                        for target in color_bindings)):
+        return
+    resolved = resolved_roles.get(role)
+    if isinstance(resolved, Mapping):
+        for property_name in ("gradientStart", "gradientEnd", "gradientAngle", "gradientFidelity", "pattern"):
+            if property_name not in resolved:
+                continue
+            target = f"{role}.{property_name}"
+            pointer = (f"/body/colorBindings/{target}" if target in color_bindings
+                       else f"/body/roles/{role}/{property_name}")
+            raise ColorSchemeError("E_SCHEME_ANNOTATION_NOTE_GROUND", pointer)
+    fill_pointer = (f"/body/colorBindings/{role}.fill" if f"{role}.fill" in color_bindings
+                    else f"/body/roles/{role}/fill")
+    token = resolved.get("fill") if isinstance(resolved, Mapping) else None
+    value = values.get(token) if isinstance(token, str) else None
+    if (not isinstance(value, Mapping) or value.get("type") != "color"
+            or not isinstance(value.get("value"), str)
+            or fullmatch(r"#[0-9A-Fa-f]{6}", value["value"]) is None):
+        raise ColorSchemeError("E_SCHEME_ANNOTATION_NOTE_GROUND", fill_pointer)
+
+    opacity_token = resolved.get("opacity") if isinstance(resolved, Mapping) else None
+    if opacity_token is None:
+        return
+    opacity_value = values.get(opacity_token) if isinstance(opacity_token, str) else None
+    if (not isinstance(opacity_value, Mapping) or opacity_value.get("type") != "number"
+            or not isinstance(opacity_value.get("value"), (int, float))
+            or isinstance(opacity_value.get("value"), bool)
+            or float(opacity_value["value"]) != 1.0):
+        raise ColorSchemeError("E_SCHEME_ANNOTATION_NOTE_GROUND", f"/body/roles/{role}/opacity")
 
 
 def resolve_color_scheme(scheme: Mapping[str, Any], *, content_identity: str) -> dict[str, str]:
@@ -134,6 +178,8 @@ def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme
         roles.setdefault(role, {})[property_name] = token
     _state_text_contrast(declared_roles=body.get("roles", {}), resolved_roles=roles,
                          values=values, surface=colors["surface"])
+    _annotation_note_ground(declared_roles=body.get("roles", {}), resolved_roles=roles,
+                            values=values, color_bindings=body["colorBindings"])
     inside_roles = set(_INSIDE_LABEL_HOSTS)
     if inside_roles & set(roles):
         for label_role, host_role in _INSIDE_LABEL_HOSTS.items():

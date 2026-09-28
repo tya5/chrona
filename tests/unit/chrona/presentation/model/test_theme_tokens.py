@@ -64,6 +64,20 @@ def test_background_treatment_preserves_explicit_nondrawable_absence():
         "backgroundTreatment": "none", "backgroundPaintOrder": 10,
     }
     assert ThemeTokenView(theme).background("decoration") == ("none", 10)
+    assert ThemeTokenView(theme).optional_background("decoration") == ("none", 10)
+
+
+def test_optional_background_does_not_infer_absence_for_painted_decoration():
+    theme = _theme()
+    theme["body"]["roles"]["annotation-note-box"] = {"fill": "text"}
+    assert ThemeTokenView(theme).optional_background("annotation-note-box") is None
+
+
+def test_optional_background_preserves_partial_binding_error():
+    theme = _theme()
+    theme["body"]["roles"]["decoration"] = {"backgroundPaintOrder": 10}
+    with pytest.raises(ThemeTokenError, match="E_THEME_TOKEN_TYPE"):
+        ThemeTokenView(theme).optional_background("decoration")
 
 
 def test_declared_token_type_must_match_the_requested_property():

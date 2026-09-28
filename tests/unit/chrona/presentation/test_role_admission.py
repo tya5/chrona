@@ -98,6 +98,7 @@ def test_capable_roles_include_layout_annotation_and_bounded_open_producers():
     })
     theme["body"]["colorBindings"].update({
         "customLegend.fill": "accent", "fiscalAxis.fill": "accent", "group:team-a.fill": "accent",
+        "annotation-note-box.fill": "surfaceRaised",
     })
     resolved = _resolve(theme)
     assert resolved["body"]["roles"]["annotation-note-box"]["annotationContainer"] == "box"
@@ -119,6 +120,16 @@ def test_annotation_box_roles_admit_only_completed_box_scene_kinds(role):
     assert contract is not None
     assert contract.scene_kinds == frozenset(("Rect", "Symbol"))
     assert contract.owner_of("annotationContainer")
+
+
+def test_annotation_note_text_admits_required_treatment_to_scene_contrast_policy():
+    contract = theme_role_contract("annotation-note-text")
+
+    assert contract is not None
+    assert contract.scene_kinds == frozenset(("Text",))
+    assert contract.owner_of("contrastTreatment") == "Theme contrast policy"
+    assert theme_role_property_consumer("annotation-note-text", "contrastTreatment") == (
+        "Scene state Text and contrast policy")
 
 
 def test_every_public_theme_declaration_and_scene_paint_role_has_a_consumer():

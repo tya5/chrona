@@ -239,6 +239,12 @@ not relax this note-specific contract. The
 decoration visibility policy and corpus witness. These classes are registered
 semantic facts, not inferred from the role spelling or paint.
 
+Decoration classification does not imply a `backgroundTreatment` binding.
+Only a role that explicitly declares that property has a background-treatment
+decision; `none` is an explicit no-draw disposition. A painted annotation
+box without the property remains a decoration with an emitted primitive,
+not an absent background.
+
 The `annotation-note-box.fill` binding is also the declared representative
 content-area color for the note text. For rectangle, balloon, and image-backed
 containers, Theme/Scheme closure MUST resolve this representative to opaque

@@ -246,6 +246,7 @@ body:
     annotation-note-leader:
       strokeWidth: stroke-width
     annotation-note-text:
+      contrastTreatment: required
       fontFamily: editorial
       fontWeight: weight.regular
       fontSize: size.note

@@ -346,6 +346,9 @@ Scene does not choose or invent that part and rejects a dangling host.
 The semantic registry classifies `annotation-note-text` as state text and
 `annotation-note-box` as decoration. In the completed paired annotation,
 Layout/Scene paint order places the box before its text. Contrast evaluation
+does not infer a background-treatment absence from decoration classification:
+only an explicit Theme `backgroundTreatment: none` yields an absent-decoration
+disposition; a painted note box is an emitted witness. Contrast evaluation
 uses the topmost prior opaque Rect or Symbol containing the text's policy sample
 point as its ground; this is the note box when paired. The box fill is the
 Theme-declared representative content-area color, including when its

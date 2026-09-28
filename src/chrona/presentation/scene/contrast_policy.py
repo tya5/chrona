@@ -93,8 +93,10 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
         code = "E_SCENE_MARK_CONTRAST"
     else:
         treatment = primitive.get("contrastTreatment")
-        if treatment not in STATE_TEXT_FLOORS or (role == "variance-behind" and treatment != "required"):
-            return (SceneContrastFinding("E_SCENE_STATE_TEXT_CONTRAST_TREATMENT", "error", scene_path,
+        if (treatment not in STATE_TEXT_FLOORS
+                or (role in {"variance-behind", "annotation-note-text"} and treatment != "required")):
+            pointer = f"{scene_path}/primitives/{index}/contrastTreatment"
+            return (SceneContrastFinding("E_SCENE_STATE_TEXT_CONTRAST_TREATMENT", "error", pointer,
                                          purpose, role, primitive_id, None, None, "invalid-treatment"),)
         floor, disposition = STATE_TEXT_FLOORS[treatment], treatment
         code = "E_SCENE_STATE_TEXT_CONTRAST"
@@ -109,6 +111,7 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
     channels = ("fill",) if binding.contrast_class == ContrastClass.STATE_TEXT else ("fill", "stroke")
     candidates = []
     unsupported_host: str | None = None
+    unsupported_ground = False
     for channel in channels:
         if not is_hex_color(paint.get(channel)):
             continue
@@ -116,22 +119,67 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
                                     or paint["strokeWidth"] <= 0):
             continue
         sample = _sample_point(primitive, channel)
-        ground_id, ground, unsupported, ground_kind = _ground_under(primitive, primitives, index, canvas, sample)
+        if role == "annotation-note-text":
+            ground_id, ground, unsupported, ground_kind = _note_box_ground(
+                primitive, primitives, index, sample)
+        else:
+            ground_id, ground, unsupported, ground_kind = _ground_under(
+                primitive, primitives, index, canvas, sample)
         if unsupported:
             unsupported_host = ground_id
+            unsupported_ground = True
             continue
         if ground is None:
             continue
         ratio = composited_contrast(fill=paint[channel], opacity=float(opacity), ground=ground)
         candidates.append((ratio, channel, ground_id, ground, sample, ground_kind))
     if not candidates:
-        error_code = "E_SCENE_CONTRAST_GROUND_UNSUPPORTED" if unsupported_host else "E_SCENE_CONTRAST_PAINT"
+        error_code = "E_SCENE_CONTRAST_GROUND_UNSUPPORTED" if unsupported_ground else "E_SCENE_CONTRAST_PAINT"
         return (SceneContrastFinding(error_code, "error", scene_path, purpose, role,
                                      primitive_id, None, floor, disposition, unsupported_host),)
     ratio, channel, ground_id, ground, sample, ground_kind = max(candidates, key=lambda item: item[0])
     severity = "error" if ratio < floor else "info"
     return (SceneContrastFinding(code, severity, scene_path, purpose, role, primitive_id, ratio, floor,
                                  disposition, ground_id, ground, channel, *sample, ground_kind),)
+
+
+def _note_box_ground(primitive: Mapping[str, Any], primitives: list[Any], index: int,
+                     sample: tuple[float | None, float | None]
+                     ) -> tuple[str | None, str | None, bool, str]:
+    """Resolve note prose only against its earlier, same-source opaque note box."""
+    source_ref = primitive.get("sourceRef")
+    if not isinstance(source_ref, str) or not source_ref or sample[0] is None or sample[1] is None:
+        return None, None, True, "unsupported"
+    x, y = sample
+    order = primitive.get("paintOrder", 0)
+    candidates: list[tuple[int, int, Mapping[str, Any]]] = []
+    for prior_index, prior in enumerate(primitives):
+        if (not isinstance(prior, Mapping) or prior.get("visualRole") != "annotation-note-box"
+                or prior.get("sourceRef") != source_ref or prior.get("kind") not in {"Rect", "Symbol"}):
+            continue
+        prior_order = prior.get("paintOrder", 0)
+        if not isinstance(prior_order, int) or (prior_order, prior_index) >= (order, index):
+            continue
+        box = prior.get("bounds")
+        if not isinstance(box, Mapping):
+            continue
+        try:
+            inside = (float(box["inline"]) <= x < float(box["inline"]) + float(box["inlineSize"])
+                      and float(box["block"]) <= y < float(box["block"]) + float(box["blockSize"]))
+        except (KeyError, TypeError, ValueError):
+            inside = False
+        if inside:
+            candidates.append((prior_order, prior_index, prior))
+    if not candidates:
+        return None, None, True, "unsupported"
+    host = max(candidates, key=lambda item: item[:2])[2]
+    paint = host.get("paint")
+    host_id = host.get("id") if isinstance(host.get("id"), str) else None
+    if (not isinstance(paint, Mapping) or paint.get("opacity", 1.0) != 1.0
+            or paint.get("gradient") is not None or host.get("pattern") is not None
+            or not is_hex_color(paint.get("fill"))):
+        return host_id, None, True, "unsupported"
+    return host_id, str(paint["fill"]), False, "flat"
 
 
 def _sample_point(primitive: Mapping[str, Any], channel: str) -> tuple[float | None, float | None]:

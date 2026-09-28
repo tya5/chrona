@@ -338,6 +338,15 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", path)
         return treatment, order
 
+    def optional_background(self, role: str) -> tuple[str, int] | None:
+        """Return a declared background treatment, or none when not applicable."""
+        binding = self._body["roles"].get(role)
+        if not isinstance(binding, Mapping):
+            return None
+        if "backgroundTreatment" not in binding and "backgroundPaintOrder" not in binding:
+            return None
+        return self.background(role)
+
     def contrast_treatment(self, role: str) -> str:
         """Return the finite completed state-text treatment for one role."""
         binding = self._body["roles"].get(role)
