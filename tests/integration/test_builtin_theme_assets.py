@@ -7,6 +7,7 @@ from pathlib import Path
 
 from PIL import Image
 import pytest
+import resvg_py
 import yaml
 
 from chrona.app.cli import main
@@ -17,6 +18,7 @@ from chrona.usecases.preset_library import copy_builtin_preset
 
 ROOT = Path(__file__).resolve().parents[2]
 PROJECT = ROOT / "examples/controller-z/project.yaml"
+FONTS = ROOT / "src/chrona/resources/fonts"
 
 
 def _render(monkeypatch, project: Path, preset: str, output: Path,
@@ -63,11 +65,21 @@ def test_builtin_catalogue_copy_and_no_asset_flag_render_are_visible_in_svg_and_
     png = tmp_path / "named.png"
     _render(monkeypatch, PROJECT, "technical-print", png,
             profile="chrona-output/visual/v0.7-png")
+    rasterized_svg = resvg_py.svg_to_bytes(
+        svg_string=svg.decode("utf-8"), dpi=96,
+        font_files=[str(FONTS / name) for name in (
+            "noto-sans-regular-v1.ttf", "noto-sans-bold-v1.ttf", "noto-sans-mono-regular-v1.ttf")],
+        skip_system_fonts=True,
+    )
+    assert png.read_bytes() == rasterized_svg
     with Image.open(png) as image:
         image.load()
         assert image.width > 1000 and image.height > 500
-        colors = {pixel[:3] for _count, pixel in image.crop((560, 120, 700, 170)).getcolors(maxcolors=100000)}
-        assert (242, 242, 242) in colors and (13, 13, 13) in colors
+        pattern_colors = {pixel[:3] for _count, pixel in image.crop((554, 118, 570, 135)).getcolors(maxcolors=100000)}
+        assert (242, 242, 242) in pattern_colors and (127, 127, 127) in pattern_colors
+        legend_glyph = image.crop((213, 821, 249, 857))
+        assert sum(count for count, pixel in legend_glyph.getcolors(maxcolors=100000)
+                   if pixel[:3] == (13, 13, 13)) > 400
 
 
 def test_missing_preset_glyph_reports_exact_theme_pointer_and_set_name(tmp_path, monkeypatch, capsys):

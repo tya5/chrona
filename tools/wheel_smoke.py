@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 from chrona.app.cli import main
 from chrona.core.validation import validate_project
-from chrona.resources import schema_resource
+from chrona.resources import builtin_preset_source_root, schema_resource
 from chrona.resources import safe_load
 from chrona.scheduling.scheduler import schedule
 
@@ -36,6 +36,12 @@ def run() -> None:
     assert validate_project(PROJECT) == []
     assert schedule(PROJECT).ok
     assert schema_resource("layout-profile-v0.3.schema.yaml").is_file()
+    icons = builtin_preset_source_root("icons")
+    for name in ("chrona-theme-starter-v2026-09-29.source.yaml",
+                 "chrona-theme-starter-v2026-09-29.yaml",
+                 "chrona-theme-starter-v2026-09-29.manifest",
+                 "chrona-theme-starter.NOTICE"):
+        assert icons.joinpath(name).is_file(), name
     try:
         with patch.object(sys, "argv", ["chrona", "--help"]):
             main()
