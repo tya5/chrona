@@ -74,7 +74,8 @@ remain history; correct the current acceptance review's false test claim.
    and its sole test, remove `lane_seed.py` and its test-only calls, clear
    `staged_modules.txt`, and add a reachability assertion for retired entry
    points. Focused tests: reachability, remaining fixed-lane frame, Scene
-   serialization. Publish this unit independently.
+   serialization. Publish together with slice 2 because the retired seed
+   test and allocator tests share the same preflight test module.
 2. **Extract live facet composition, then remove dead allocator.** Move the
    projection/facet records and helpers used by `lane_item_footprints.py` and
    `surface_composer.py` from `lane_allocation.py` / `lane_bundle_mapper.py`
@@ -84,7 +85,7 @@ remain history; correct the current acceptance review's false test claim.
    live fixed-membership preflight. Focused tests: footprints, subtracks,
    composer, Scene builder, and the float/reachability guards. Review imports
    and generated Scene/SVG as a batch; unchanged bytes are expected. Publish
-   this structural unit independently.
+   this structural unit together with slice 1.
 3. **Close the route evidence gap.** Parameterize the actual Scene route-to-
    required-label intersection assertion over 02/11/12; keep membership
    Theme-independence separate. Cite the actual test in the current #467/#494
