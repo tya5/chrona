@@ -8,13 +8,22 @@
 
 The `met` rows describe published implementation evidence after PR #525's CI and merge.
 
+### Issue #496
+
+- Source: [Issue #496](https://github.com/tya5/chrona/issues/496)
+- Observed: 2026-09-29
+
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | A catalogue can hold `glyph` and `pattern` entries, validated and normalized with licence and notice. | met | v0.4 schema/importer in #523; starter source, normalized catalogue, MIT notice, pinned hashes and reproducibility test in #525. | — |
-| 2 | A Theme can bind a catalogue glyph as a milestone or gate shape, reusing #464's glyph path, and a pattern as a role's fill. SVG and PNG render them identically, and the perceptibility and contrast gates see their effective paint. | met | #524 Layout→Scene projection and effective-paint tests; #525 public `technical-print` SVG/decoded PNG integration test asserts visible pin, halftone, three contrast pairs and perceptibility density. | — |
-| 3 | A builtin preset can declare catalogues and a detail profile. `chrona preset copy` copies them with notices, and `chrona render --preset` uses them with no extra flags. | met | #525 exact-copy/pin test and public CLI test: builtin ID and copied path produce byte-identical SVG with no asset flag; installed-wheel smoke copies notice and renders preset. | — |
-| 4 | A builtin starter catalogue ships the glyphs and patterns listed above. At least one builtin preset uses a glyph and a pattern, and at least one ships a legend through its detail profile. | met | #525 manifest verifies pin, lantern, hexagon, star, chest, ticked-circle, diamond; halftone, seigaiha, 12.5/25/50% dither, dense hatch. `technical-print` renders pin and halftone with its legend in SVG and decoded PNG. | — |
-| 5 | A missing asset reference fails with a Theme pointer and the `set:name`. | met | #525 public CLI regression asserts `E_THEME_ASSET_REFERENCE`, `/body/values/milestone-symbol/value/shape/catalog`, `missing:pin`, and no output file. | — |
+| 1 | A catalogue can hold `glyph` and `pattern` entries, validated and normalized with licence and notice. | met | [PR #523](https://github.com/tya5/chrona/pull/523) contains the v0.4 importer; [PR #525](https://github.com/tya5/chrona/pull/525) ships source, normalized catalogue, MIT notice, hashes and reproducibility test. | — |
+| 2 | A Theme can bind a catalogue glyph as a milestone or gate shape, reusing #464's glyph path, and a pattern as a role's fill. SVG and PNG render them identically, and the perceptibility and contrast gates see their effective paint. | met | [PR #524](https://github.com/tya5/chrona/pull/524) covers Layout→Scene projection and effective paint; [PR #525](https://github.com/tya5/chrona/pull/525) tests the public SVG/decoded PNG pin, halftone, contrast and perceptibility. | — |
+| 3 | A builtin preset can declare catalogues and a detail profile. `chrona preset copy` copies them with notices, and `chrona render --preset` uses them with no extra flags. | met | [PR #525](https://github.com/tya5/chrona/pull/525) tests exact copy, byte-identical builtin/copied SVG without asset flags, and installed-wheel smoke. | — |
+| 4 | A builtin starter catalogue ships the glyphs and patterns listed above. At least one builtin preset uses a glyph and a pattern, and at least one ships a legend through its detail profile. | met | [PR #525](https://github.com/tya5/chrona/pull/525) verifies seven glyphs and halftone, seigaiha, three dither densities and dense hatch; `technical-print` renders pin, halftone and legend. | — |
+| 5 | A missing asset reference fails with a Theme pointer and the `set:name`. | met | [PR #525](https://github.com/tya5/chrona/pull/525) asserts `E_THEME_ASSET_REFERENCE`, the exact Theme pointer, `missing:pin`, and no output. | — |
+
+## Programme-level criteria (optional)
+
+None.
 
 ## Release and architecture conclusion
 

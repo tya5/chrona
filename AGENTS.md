@@ -101,4 +101,7 @@ report cannot prove adapter output is correct.
 - If CI is red, identify every failing check from the run, distinguish changes
   introduced by the slice from independent failures, and record the disposition
   before declaring release acceptance. Do not close a ticket while its required
-  release gate or user-visible acceptance remains unverified.
+  release gate or user-visible acceptance remains unverified. In particular,
+  wait for CI on the exact `main` commit that publishes the issue's acceptance
+  review, and cite that run when closing; an earlier implementation-PR run is
+  not a substitute.
