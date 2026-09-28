@@ -35,11 +35,11 @@ OWNERS = {
     "TextLayout": (_owner("inspection", "scene/serialization.py", "bounds baseline lines family weight font_size line_height asset_identity letter_spacing text_transform numeric_spacing orientation rotation_degrees"),),
     "SceneIconPath": (_owner("inspection", "scene/serialization.py", "commands fill stroke stroke_width line_cap line_join opacity"),),
     "PatternStroke": (_owner("inspection", "scene/serialization.py", "start end width"),),
-    "PatternGeometry": (_owner("inspection", "scene/serialization.py", "tile_inline_size tile_block_size angle_degrees strokes"),),
+    "PatternGeometry": (_owner("inspection", "scene/serialization.py", "tile_inline_size tile_block_size angle_degrees strokes density_basis_points primitives origin region_bounds clip_bounds corner_radius"),),
     "SymbolGeometry": (_owner("inspection", "scene/serialization.py", "outline"),),
     "ScenePrimitive": (
         _owner("inspection", "scene/serialization.py", "scene_id kind source_ref source_kind purpose visual_role bounds slot_id text baseline text_layout marker_start marker_end pattern symbol paint corner_radius path_commands points href link_title icon_kind icon_asset_identity icon_viewport icon_paths icon_alternative icon_decorative table_row_id table_column_id paint_order host_placement_id clip_source_id end_treatment contrast_treatment lane_row_id lane_member_id"),
-        _owner("derived", "scene/v05_builder.py", "icon_path_geometry glyph_paint_mode glyph_paint_color"),
+        _owner("derived", "scene/v05_builder.py", "icon_path_geometry glyph_paint_mode glyph_paint_color glyph_stroke_width glyph_line_cap glyph_line_join"),
         _owner("adapter", "renderers/v05_svg.py", "icon_raster"),
         _owner("derived", "scene/visual_capabilities.py", "visual_capability_source_ref"),
         _owner("derived", "scene/v05_builder.py", "image_fill_pending"),

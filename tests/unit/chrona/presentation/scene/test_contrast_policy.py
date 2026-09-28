@@ -3,8 +3,8 @@ from __future__ import annotations
 from chrona.presentation.scene.contrast_policy import evaluate_scene_contrast
 
 
-def _scene(*primitives, dispositions=()):
-    return {"version": "chrona/scene/v0.6", "kind": "scene", "surfaces": [{
+def _scene(*primitives, dispositions=(), version="chrona/scene/v0.6"):
+    return {"version": version, "kind": "scene", "surfaces": [{
         "id": "review", "canvasPaint": {"fill": "#FFFFFF", "opacity": 1},
         "primitives": list(primitives), "decorationDispositions": list(dispositions),
     }]}
@@ -238,3 +238,61 @@ def test_category_fill_can_be_carried_by_a_contrasting_explicit_outline():
     assert finding.paint_channel == "stroke"
     assert finding.ground_id == "panel"
     assert (finding.sample_inline, finding.sample_block) == (10, 15)
+
+
+def test_catalog_pattern_checks_substrate_and_ink_pairs_independently_with_density():
+    pattern = {"tileInlineSize": 8, "tileBlockSize": 4, "angleDegrees": 45,
+               "densityBasisPoints": 1250, "primitives": [{"kind": "rect", "x": 0, "y": 0,
+               "inlineSize": 1, "blockSize": 4}], "origin": [10, 10],
+               "regionBounds": {"inline": 10, "block": 10, "inlineSize": 20, "blockSize": 10},
+               "clipBounds": {"inline": 10, "block": 10, "inlineSize": 20, "blockSize": 10},
+               "cornerRadius": 0}
+    primitive = _primitive("pattern", "progress-fill", "progress-fill", "#FFFFFF", order=20,
+                           bounds={"inline": 10, "block": 10, "inlineSize": 20, "blockSize": 10})
+    primitive["paint"]["stroke"] = "#000000"
+    primitive["pattern"] = pattern
+    findings = evaluate_scene_contrast(_scene(primitive, version="chrona/scene/v0.7"))
+    assert len(findings) == 3
+    by_pair = {(item.paint_channel, item.ground_kind): item for item in findings}
+    substrate = by_pair[("fill", "canvas")]
+    assert substrate.severity == "error"
+    assert by_pair[("stroke", "pattern-substrate")].severity == "info"
+    assert by_pair[("stroke", "canvas")].severity == "info"
+    assert all(item.as_mapping()["densityBasisPoints"] == 1250 for item in findings)
+
+
+def test_catalog_pattern_checks_host_substrate_and_host_ink_with_effective_paints():
+    host = _primitive("host", "unclassified", "panel", "#333333", order=10,
+                      bounds={"inline": 10, "block": 10, "inlineSize": 20, "blockSize": 10})
+    primitive = _primitive("pattern", "progress-fill", "progress-fill", "#EEEEEE", order=20,
+                           bounds={"inline": 10, "block": 10, "inlineSize": 20, "blockSize": 10})
+    primitive["paint"]["stroke"] = "#111111"
+    primitive["pattern"] = {
+        "tileInlineSize": 8, "tileBlockSize": 4, "angleDegrees": 45,
+        "densityBasisPoints": 1250, "primitives": [{"kind": "rect", "x": 0, "y": 0,
+        "inlineSize": 1, "blockSize": 4}], "origin": [10, 10],
+        "regionBounds": {"inline": 10, "block": 10, "inlineSize": 20, "blockSize": 10},
+        "clipBounds": {"inline": 10, "block": 10, "inlineSize": 20, "blockSize": 10},
+        "cornerRadius": 0,
+    }
+
+    findings = evaluate_scene_contrast(_scene(host, primitive, version="chrona/scene/v0.7"))
+    by_pair = {(item.paint_channel, item.ground_id): item for item in findings}
+    assert set(by_pair) == {("fill", "host"), ("stroke", "pattern"), ("stroke", "host")}
+    assert (by_pair[("fill", "host")].ground_color,
+            by_pair[("fill", "host")].ground_kind) == ("#333333", "flat")
+    assert (by_pair[("stroke", "pattern")].ground_color,
+            by_pair[("stroke", "pattern")].ground_kind) == ("#EEEEEE", "pattern-substrate")
+    assert (by_pair[("stroke", "host")].ground_color,
+            by_pair[("stroke", "host")].ground_kind) == ("#333333", "flat")
+    assert all(item.density_basis_points == 1250 for item in findings)
+
+
+def test_v06_pattern_policy_result_remains_the_legacy_single_best_candidate():
+    primitive = _primitive("pattern", "progress-fill", "progress-fill", "#FFFFFF", order=20)
+    primitive["paint"]["stroke"] = "#000000"
+    primitive["paint"]["strokeWidth"] = 1
+    primitive["pattern"] = {"kind": "diagonal-hatch"}
+    findings = evaluate_scene_contrast(_scene(primitive))
+    assert len(findings) == 1
+    assert findings[0].paint_channel == "stroke"

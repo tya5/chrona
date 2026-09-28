@@ -7,6 +7,7 @@ from decimal import Decimal
 from typing import Any
 
 from chrona.presentation.layout.model import Rect
+from chrona.presentation.layout.pattern_placement import PatternedPlacement
 from chrona.presentation.layout.obstacles import ObstacleGeometry
 from chrona.presentation.layout.lane_subtracks import FixedLanePreflight
 from chrona.presentation.model.info_diagnostics import PresentationInfo, SuppressedPlotLabels
@@ -509,6 +510,7 @@ class SurfacePlacement:
     fit_warnings: tuple[FitWarning, ...] = ()
     info_diagnostics: tuple[PresentationInfo, ...] = ()
     lane_emissions: tuple[LaneEmissionPlacement, ...] = ()
+    patterns: tuple[PatternedPlacement, ...] = ()
 
     def assert_valid(self) -> None:
         """Reject invalid required geometry before a renderer receives it."""
@@ -565,6 +567,17 @@ class SurfacePlacement:
                 host = next((mark for mark in self.marks if mark.placement_id == shape.clip_host_id), None)
                 if host is None or host.slot_id != shape.slot_id:
                     raise ValueError(f"E_LAYOUT_CLIP_HOST_INVALID:{shape.placement_id}")
+        pattern_ids = [item.placement_id for item in self.patterns]
+        if len(pattern_ids) != len(set(pattern_ids)):
+            raise ValueError("E_LAYOUT_PATTERN_PLACEMENT_DUPLICATE")
+        marks_by_id = {item.placement_id: item for item in self.marks}
+        shapes_by_id = {item.placement_id: item for item in self.shapes}
+        for item in self.patterns:
+            mark = marks_by_id.get(item.placement_id)
+            shape = shapes_by_id.get(item.placement_id)
+            if not ((mark is not None and mark.mark_shape == "span")
+                    or (shape is not None and shape.kind == "Rect")):
+                raise ValueError(f"E_LAYOUT_PATTERN_REGION_INVALID:{item.placement_id}")
         hosts = {item.placement_id: item for item in self.marks}
         hosts.update({item.placement_id: item for item in self.shapes})
         emitted_mark_hosts = {

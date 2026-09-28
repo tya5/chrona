@@ -1,10 +1,24 @@
-"""Completed tiled pattern treatment geometry owned by Scene projection."""
+"""Projection of Layout-completed pattern geometry into Scene values."""
 from __future__ import annotations
 
 from collections.abc import Mapping
 from math import isfinite
 
 from chrona.presentation.scene.model import PatternGeometry, PatternStroke
+from chrona.presentation.layout.pattern_placement import PatternPlacement
+
+
+def project_pattern_placement(value: PatternPlacement) -> PatternGeometry:
+    """Copy closed Layout facts; do not infer tile phase, clipping, or paint."""
+    def bounds(rect: object) -> tuple[float, float, float, float]:
+        return (float(rect.inline), float(rect.block),
+                float(rect.inline_size), float(rect.block_size))
+
+    return PatternGeometry(value.tile_inline_size, value.tile_block_size,
+                           value.angle_degrees, density_basis_points=value.density_basis_points,
+                           primitives=value.primitives, origin=value.origin,
+                           region_bounds=bounds(value.region), clip_bounds=bounds(value.clip),
+                           corner_radius=value.corner_radius)
 
 
 def pattern_geometry(value: Mapping[str, object]) -> PatternGeometry | None:

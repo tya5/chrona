@@ -36,6 +36,7 @@ SCHEMAS = (
     "layout-profile-v0.5.schema.yaml",
     "layout-profile-v0.9.schema.yaml",
     "scene-v0.6.schema.yaml",
+    "scene-v0.7.schema.yaml",
     "review-detail-profile-v0.1.schema.yaml",
     "actual-intake-batch-v0.2.schema.yaml",
     "actual-set-v0.3.schema.yaml",
@@ -47,6 +48,9 @@ SCHEMAS = (
     "theme-v0.9.schema.yaml",
     "theme-v0.10.schema.yaml",
     "theme-v0.11.schema.yaml",
+    "theme-v0.12.schema.yaml",
+    "theme-v0.13.schema.yaml",
+    "theme-v0.14.schema.yaml",
     "preset-library-v0.1.schema.yaml",
 )
 

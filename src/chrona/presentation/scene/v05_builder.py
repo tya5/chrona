@@ -15,6 +15,7 @@ from chrona.presentation.layout.lane_subtracks import FixedLanePreflight
 from chrona.presentation.layout.surface_composer import compose_surface_layout
 from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
 from chrona.presentation.layout.sources import MeasuredSources
+from chrona.presentation.layout.pattern_placement import PatternedPlacement
 from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.semantic_registry import (
@@ -23,7 +24,7 @@ from chrona.presentation.model.semantic_registry import (
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.model.info_diagnostics import PaintOmission
 from chrona.presentation.model.theme_tokens import ThemeTokenView
-from chrona.presentation.scene.pattern_geometry import pattern_geometry, pattern_kind
+from chrona.presentation.scene.pattern_geometry import pattern_geometry, pattern_kind, project_pattern_placement
 from chrona.presentation.scene.model import DecorationDisposition, ImageFill, ImageTile, SceneColumn, SceneGroup, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, SymbolGeometry, TextLayout
 from chrona.presentation.scene.model import (
     SceneLaneMember, SceneLaneObstacle, SceneLaneRectObstacle, SceneLaneSegmentObstacle,
@@ -68,6 +69,8 @@ _REQUIRED_SOURCES = {
 
 
 def _paint_family(primitive: ScenePrimitive, tokens: ThemeTokenView) -> PaintFamily:
+    if primitive.pattern is not None and primitive.pattern.primitives:
+        return PaintFamily.SOLID
     if primitive.kind == PrimitiveKind.TEXT:
         return PaintFamily.TEXT
     if primitive.kind == PrimitiveKind.PATH:
@@ -102,8 +105,30 @@ def _symbol_primitives(scene_id: str, source_ref: str, source_kind: str, purpose
                             f"{scene_id}:part{index}" if part.paint_mode is not None else scene_id),
                            PrimitiveKind.SYMBOL, source_ref, source_kind, purpose, visual_role,
                            bounds, symbol=SymbolGeometry(part.commands), paint_order=base_paint_order + index,
-                           glyph_paint_mode=part.paint_mode, glyph_paint_color=part.paint_color, **shared)
+                           glyph_paint_mode=part.paint_mode, glyph_paint_color=part.paint_color,
+                           glyph_stroke_width=part.stroke_width,
+                           glyph_line_cap=part.line_cap, glyph_line_join=part.line_join, **shared)
             for index, part in enumerate(completed_parts)]
+
+
+def _attach_completed_patterns(primitives: tuple[ScenePrimitive, ...],
+                               placements: tuple[PatternedPlacement, ...]) -> tuple[ScenePrimitive, ...]:
+    """Project exact Layout-owned tile placements onto matching Rect IDs."""
+    by_id = {item.placement_id: item for item in placements}
+    if len(by_id) != len(placements):
+        raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", "/patterns", "duplicate placement ID")
+    projected = []
+    for primitive in primitives:
+        placed = by_id.pop(primitive.scene_id, None)
+        if placed is not None and primitive.kind != PrimitiveKind.RECT:
+            raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", primitive.scene_id,
+                                  "catalogue pattern requires completed Rect")
+        projected.append(replace(primitive, pattern=project_pattern_placement(placed.pattern))
+                         if placed is not None else primitive)
+    if by_id:
+        raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", next(iter(by_id)),
+                              "Layout pattern has no emitted Rect")
+    return tuple(projected)
 
 
 def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visual_profile: VisualProfile | None = None,
@@ -147,7 +172,11 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
     resolution = resolve_scene_paint(tokens, primitive.visual_role, family,
                                      visual_profile=visual_profile, gradient_bounds=primitive.bounds,
                                      part_mode=primitive.glyph_paint_mode,
-                                     part_color=primitive.glyph_paint_color)
+                                     part_color=primitive.glyph_paint_color,
+                                     catalog_pattern=bool(primitive.pattern and primitive.pattern.primitives),
+                                     catalog_glyph_stroke_width=primitive.glyph_stroke_width,
+                                     catalog_glyph_line_cap=primitive.glyph_line_cap,
+                                     catalog_glyph_line_join=primitive.glyph_line_join)
     paint = resolution.paint
     if primitive.glyph_paint_mode is None:
         override = (scale_paints.get(primitive.source_ref)
@@ -161,8 +190,11 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
         completed = replace(completed, image=primitive.image_fill_pending)
     treatment = tokens.optional_pattern(primitive.visual_role)
     result = replace(primitive, paint=completed,
-                     pattern=pattern_geometry(treatment) if treatment is not None else None,
-                     glyph_paint_mode=None, glyph_paint_color=None, image_fill_pending=None)
+                     pattern=(primitive.pattern if primitive.pattern is not None and primitive.pattern.primitives
+                              else pattern_geometry(treatment) if treatment is not None else None),
+                     glyph_paint_mode=None, glyph_paint_color=None,
+                     glyph_stroke_width=None, glyph_line_cap=None, glyph_line_join=None,
+                     image_fill_pending=None)
     if result.kind == "Icon" and result.icon_kind == "vector":
         try:
             icon_paths = complete_icon_path_paints(completed, primitive.icon_path_geometry, primitive.visual_role)
@@ -730,6 +762,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         lane_members = tuple(member_values)
         lane_obstacles = tuple(obstacle_values)
     canvas = placed_surface.canvas_bounds
+    completed_primitives = _attach_completed_patterns(completed_primitives, placed_surface.patterns)
     return SceneSurface("table-timeline", slots, rows, groups, scale, completed_primitives, columns=columns,
                         diagnostics=placed_surface.diagnostics,
                         canvas_bounds=(float(canvas.inline), float(canvas.block), float(canvas.inline_size),
@@ -758,7 +791,8 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
             measured_sources=value.measured_sources, flow_direction=value.layout_manifest.dependency_network_flow_direction,
             max_bends=value.layout_manifest.relation_max_bends,
             max_detour_ratio=value.layout_manifest.relation_max_detour_ratio,
-            canvas_bounds=value.layout_manifest.viewport)
+            canvas_bounds=value.layout_manifest.viewport,
+            theme_tokens=value.theme_tokens)
     except LayoutError as error:
         raise SceneBuildError(error.diagnostic_id, error.path) from error
     slots = tuple(SceneSlot(item.node_id, item.source, None,
@@ -808,6 +842,7 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
         completed_primitives = tuple(replace(item, slot_id=ownership[item.scene_id]) for item in primitives)
     except KeyError as error:
         raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", str(error)) from error
+    completed_primitives = _attach_completed_patterns(completed_primitives, placed.patterns)
     return SceneSurface("dependency-network", slots, (), (), None, completed_primitives,
                         canvas_bounds=(float(placed.canvas_bounds.inline), float(placed.canvas_bounds.block),
                                        float(placed.canvas_bounds.inline_size), float(placed.canvas_bounds.block_size)),

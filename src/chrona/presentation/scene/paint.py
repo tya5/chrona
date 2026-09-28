@@ -43,7 +43,11 @@ class PaintResolution:
 def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
                         *, visual_profile: VisualProfile | None = None,
                         gradient_bounds: tuple[float, float, float, float] | None = None,
-                        part_mode: str | None = None, part_color: str | None = None) -> PaintResolution:
+                        part_mode: str | None = None, part_color: str | None = None,
+                        catalog_pattern: bool = False,
+                        catalog_glyph_stroke_width: float | None = None,
+                        catalog_glyph_line_cap: str | None = None,
+                        catalog_glyph_line_join: str | None = None) -> PaintResolution:
     """Resolve one closed role into renderer-neutral channels, without defaults."""
     fill_required = family in {PaintFamily.TEXT, PaintFamily.SOLID, PaintFamily.CANVAS}
     stroke_required = family in {PaintFamily.OUTLINE, PaintFamily.HATCH, PaintFamily.PATH}
@@ -61,10 +65,17 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
         raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/fill")
     if stroke_required and stroke is None:
         raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/stroke")
+    if stroke is None and (catalog_pattern or catalog_glyph_stroke_width is not None):
+        raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/stroke")
     if stroke is None and (width is not None or dash):
         raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", path)
-    if stroke is not None and width is None:
+    if stroke is not None and width is None and not (catalog_pattern or catalog_glyph_stroke_width is not None
+                                                    or part_mode == "fill"):
         raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/strokeWidth")
+    if catalog_pattern and fill is None:
+        raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/fill")
+    if catalog_pattern and opacity not in (None, 1, 1.0):
+        raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", f"{path}/opacity")
     if width is not None and width <= 0:
         raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", f"{path}/strokeWidth")
     if opacity is not None and (opacity < 0 or opacity > 1):
@@ -93,9 +104,14 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
             paint = replace(paint, fill=part_fill, stroke=None, stroke_width=None, dash=())
         else:
             part_stroke = part_color if part_color is not None else paint.stroke
-            if part_stroke is None or paint.stroke_width is None:
+            part_width = (catalog_glyph_stroke_width if catalog_glyph_stroke_width is not None
+                          else paint.stroke_width)
+            if part_stroke is None or part_width is None:
                 raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/stroke")
-            paint = replace(paint, fill=None, stroke=part_stroke)
+            paint = replace(paint, fill=None, stroke=part_stroke, stroke_width=part_width,
+                            stroke_finish=(StrokeFinish(catalog_glyph_line_cap, catalog_glyph_line_join, "required")
+                                           if catalog_glyph_line_cap is not None and catalog_glyph_line_join is not None
+                                           else paint.stroke_finish))
     omissions = tuple(_omission(role, treatment, property_name, visual_profile, required)
                       for omitted, treatment, property_name, required in (
                           (gradient_omitted, "linear-gradient", "gradientAngle", frozenset((LINEAR_GRADIENT,))),

@@ -38,7 +38,8 @@ schemas:
   - {file: scene-v0.3.schema.yaml, kind: inspection-scene, state: transitioning, consumers: [src/chrona/presentation/scene/serialization.py], successor: scene-v0.4.schema.yaml, removalSlice: I394-2}
   - {file: scene-v0.4.schema.yaml, kind: inspection-scene, state: transitioning, consumers: [src/chrona/presentation/scene/serialization.py], successor: scene-v0.5.schema.yaml, removalSlice: I412-A}
   - {file: scene-v0.5.schema.yaml, kind: inspection-scene, state: transitioning, consumers: [src/chrona/presentation/scene/serialization.py], successor: scene-v0.6.schema.yaml, removalSlice: I449-1}
-  - {file: scene-v0.6.schema.yaml, kind: inspection-scene, state: live, consumers: [src/chrona/presentation/scene/serialization.py]}
+  - {file: scene-v0.6.schema.yaml, kind: inspection-scene, state: transitioning, consumers: [src/chrona/presentation/scene/serialization.py], successor: scene-v0.7.schema.yaml, removalSlice: issue-496-scene-v06-retirement}
+  - {file: scene-v0.7.schema.yaml, kind: inspection-scene, state: live, consumers: [src/chrona/presentation/scene/serialization.py]}
   - {file: revision-store-resource-ref-v0.1.schema.yaml, kind: revision-store-resource-reference, state: live, consumers: [src/chrona/operational/resources.py]}
   - {file: snapshot-ref-v0.2.schema.yaml, kind: snapshot-ref, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: store-config-v0.1.schema.yaml, kind: store-config, state: live, consumers: [src/chrona/operational/resources.py]}
@@ -49,8 +50,10 @@ schemas:
   - {file: theme-v0.8.schema.yaml, kind: theme, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: theme-v0.9.schema.yaml, removalSlice: I394-1}
   - {file: theme-v0.9.schema.yaml, kind: theme, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: theme-v0.10.schema.yaml, removalSlice: I2}
   - {file: theme-v0.10.schema.yaml, kind: theme, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: theme-v0.11.schema.yaml, removalSlice: I410-1}
-  - {file: theme-v0.11.schema.yaml, kind: theme, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
-  - {file: theme-v0.12.schema.yaml, kind: derived-theme, state: live, consumers: [src/chrona/presentation/model/theme_inheritance.py]}
+  - {file: theme-v0.11.schema.yaml, kind: theme, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: theme-v0.13.schema.yaml, removalSlice: issue-496-theme-v0.11-retirement}
+  - {file: theme-v0.12.schema.yaml, kind: derived-theme, state: transitioning, consumers: [src/chrona/presentation/model/theme_inheritance.py], successor: theme-v0.14.schema.yaml, removalSlice: issue-496-theme-v0.12-retirement}
+  - {file: theme-v0.13.schema.yaml, kind: theme, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
+  - {file: theme-v0.14.schema.yaml, kind: derived-theme, state: live, consumers: [src/chrona/presentation/model/theme_inheritance.py]}
   - {file: view-v0.12.schema.yaml, kind: view, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: view-v0.14.schema.yaml, removalSlice: I387-2}
   - {file: view-v0.13.schema.yaml, kind: view, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: view-v0.14.schema.yaml, removalSlice: I398-1}
   - {file: view-v0.14.schema.yaml, kind: view, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: view-v0.15.schema.yaml, removalSlice: I395-1}

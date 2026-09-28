@@ -6,6 +6,7 @@ from decimal import Decimal
 from typing import Any, Mapping
 
 from chrona.presentation.layout.model import LayoutError, Rect
+from chrona.presentation.layout.pattern_placement import PatternedPlacement, complete_pattern_placement
 from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, RelationPlacement, TextPlacement, intersects
@@ -22,6 +23,10 @@ class NetworkNodePlacement:
     slot_id: str = "network"
     paint_order: int = 200
 
+    @property
+    def placement_id(self) -> str:
+        return f"network-node:{self.object_id}"
+
 
 @dataclass(frozen=True)
 class DependencyNetworkLayout:
@@ -32,6 +37,7 @@ class DependencyNetworkLayout:
     relations: tuple[RelationPlacement, ...]
     canvas_bounds: Rect
     fit_warnings: tuple[FitWarning, ...] = ()
+    patterns: tuple[PatternedPlacement, ...] = ()
 
 
 def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bounds: Rect,
@@ -39,7 +45,8 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bound
                                       flow_direction: str,
                                       max_bends: int = 4,
                                       max_detour_ratio: float = 2.0,
-                                      canvas_bounds: Rect | None = None) -> DependencyNetworkLayout:
+                                      canvas_bounds: Rect | None = None,
+                                      theme_tokens: Any | None = None) -> DependencyNetworkLayout:
     """Place a typed View graph without reading Project, View syntax, or Scene state."""
     nodes, edges = tuple(network.nodes), tuple(network.edges)
     ids = {node.object_id for node in nodes}
@@ -71,6 +78,14 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bound
     canvas = _completed_canvas(requested_canvas, title_bounds, tuple(node.bounds for node in placed),
                                tuple(item.bounds for item in text))
     relations, route_warnings = _route_edges(edges, placed, canvas, max_bends, max_detour_ratio)
+    patterns: tuple[PatternedPlacement, ...] = ()
+    optional_pattern = getattr(theme_tokens, "optional_pattern", None)
+    if callable(optional_pattern):
+        token = optional_pattern("network-node")
+        if isinstance(token, Mapping) and token.get("kind") == "catalog":
+            patterns = tuple(PatternedPlacement(
+                node.placement_id, complete_pattern_placement(token, node.bounds))
+                for node in placed)
     overflowed = (canvas.inline_size > requested_canvas.inline_size
                   or canvas.block_size > requested_canvas.block_size)
     title_overflow = (title_placement.bounds.inline_size > title_bounds.inline_size
@@ -87,7 +102,7 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bound
                        float(title_bounds.block_size)) if title_overflow else None,
         ) if item is not None
     ) + route_warnings
-    return DependencyNetworkLayout(tuple(placed), text, relations, canvas, warnings)
+    return DependencyNetworkLayout(tuple(placed), text, relations, canvas, warnings, patterns)
 
 
 def _title_measurement(measured_sources: MeasuredSources) -> MeasuredTextRun:

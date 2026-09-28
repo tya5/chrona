@@ -37,9 +37,10 @@ class SceneContrastFinding:
     sample_inline: float | None = None
     sample_block: float | None = None
     ground_kind: str | None = None
+    density_basis_points: int | None = None
 
     def as_mapping(self) -> dict[str, Any]:
-        return {
+        result = {
             "code": self.code, "severity": self.severity, "scenePath": self.scene_path,
             "purpose": self.purpose, "visualRole": self.visual_role,
             "primitiveId": self.primitive_id, "contrastRatio": self.contrast_ratio,
@@ -49,11 +50,16 @@ class SceneContrastFinding:
             "sampleInline": self.sample_inline, "sampleBlock": self.sample_block,
             "groundKind": self.ground_kind,
         }
+        if self.density_basis_points is not None:
+            result["densityBasisPoints"] = self.density_basis_points
+        return result
 
 
 def evaluate_scene_contrast(document: Mapping[str, Any]) -> tuple[SceneContrastFinding, ...]:
     """Evaluate every finite classified role from serialized completed facts."""
-    _require(document.get("version") == "chrona/scene/v0.6", "unsupported scene version")
+    version = document.get("version")
+    _require(version == "chrona/scene/v0.6" or version == "chrona/scene/v0.7",
+             "unsupported scene version")
     _require(document.get("kind") == "scene", "invalid scene kind")
     surfaces = document.get("surfaces")
     _require(isinstance(surfaces, list) and surfaces, "scene has no surfaces")
@@ -68,7 +74,8 @@ def evaluate_scene_contrast(document: Mapping[str, Any]) -> tuple[SceneContrastF
         _require(isinstance(primitives, list), f"missing primitives at {scene_path}")
         for index, primitive in enumerate(primitives):
             _require(isinstance(primitive, Mapping), f"invalid primitive {index} at {scene_path}")
-            findings.extend(_primitive_findings(scene_path, primitive, ground, primitives, index))
+            findings.extend(_primitive_findings(scene_path, primitive, ground, primitives, index,
+                                                catalog_patterns=version == "chrona/scene/v0.7"))
         findings.extend(_absence_findings(scene_path, raw_surface.get("decorationDispositions", [])))
     return tuple(sorted(findings, key=lambda item: (
         item.scene_path, item.purpose, item.visual_role, item.disposition, item.primitive_id or "", item.code,
@@ -76,7 +83,8 @@ def evaluate_scene_contrast(document: Mapping[str, Any]) -> tuple[SceneContrastF
 
 
 def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: str | None,
-                        primitives: list[Any], index: int) -> tuple[SceneContrastFinding, ...]:
+                        primitives: list[Any], index: int, *,
+                        catalog_patterns: bool = False) -> tuple[SceneContrastFinding, ...]:
     role = primitive.get("visualRole")
     if not isinstance(role, str):
         return ()
@@ -108,6 +116,13 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
     if not _opacity(opacity):
         return (SceneContrastFinding("E_SCENE_CONTRAST_PAINT", "error", scene_path, purpose, role,
                                      primitive_id, None, floor, disposition),)
+    pattern = primitive.get("pattern") if catalog_patterns else None
+    is_catalog_pattern = isinstance(pattern, Mapping) and any(
+        key in pattern for key in ("densityBasisPoints", "primitives", "origin", "regionBounds", "clipBounds"))
+    if is_catalog_pattern:
+        return _pattern_findings(scene_path, primitive, pattern, paint, opacity, floor,
+                                 disposition, code, purpose, role, primitive_id, canvas,
+                                 primitives, index)
     channels = ("fill",) if binding.contrast_class == ContrastClass.STATE_TEXT else ("fill", "stroke")
     candidates = []
     unsupported_host: str | None = None
@@ -141,6 +156,48 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
     severity = "error" if ratio < floor else "info"
     return (SceneContrastFinding(code, severity, scene_path, purpose, role, primitive_id, ratio, floor,
                                  disposition, ground_id, ground, channel, *sample, ground_kind),)
+
+
+def _pattern_findings(scene_path: str, primitive: Mapping[str, Any], pattern: Any,
+                      paint: Mapping[str, Any], opacity: float, floor: float,
+                      disposition: str, code: str, purpose: str, role: str, primitive_id: str,
+                      canvas: str | None, primitives: list[Any], index: int
+                      ) -> tuple[SceneContrastFinding, ...]:
+    """Gate each effective pattern channel pair; neither channel can mask another."""
+    if (not isinstance(pattern, Mapping)
+            or not isinstance(pattern.get("densityBasisPoints"), int)
+            or isinstance(pattern.get("densityBasisPoints"), bool)
+            or not 1 <= pattern["densityBasisPoints"] <= 10000):
+        return (SceneContrastFinding("E_SCENE_CONTRAST_PAINT", "error", scene_path, purpose,
+                                     role, primitive_id, None, floor, disposition),)
+    density = int(pattern["densityBasisPoints"])
+    if (opacity != 1.0 or not is_hex_color(paint.get("fill"))
+            or not is_hex_color(paint.get("stroke"))):
+        return (SceneContrastFinding("E_SCENE_CONTRAST_PAINT", "error", scene_path, purpose,
+                                     role, primitive_id, None, floor, disposition,
+                                     density_basis_points=density),)
+    sample = _sample_point(primitive, "fill")
+    if role == "annotation-note-text":
+        host_id, host, unsupported, host_kind = _note_box_ground(primitive, primitives, index, sample)
+    else:
+        host_id, host, unsupported, host_kind = _ground_under(primitive, primitives, index, canvas, sample)
+    if unsupported or host is None:
+        return (SceneContrastFinding("E_SCENE_CONTRAST_GROUND_UNSUPPORTED", "error", scene_path,
+                                     purpose, role, primitive_id, None, floor, disposition,
+                                     host_id, paint_channel="fill", ground_kind="unsupported",
+                                     density_basis_points=density),)
+    substrate, ink = str(paint["fill"]), str(paint["stroke"])
+    pairs = (("fill", host_id, host, host_kind, substrate),
+             ("stroke", primitive_id, substrate, "pattern-substrate", ink),
+             ("stroke", host_id, host, host_kind, ink))
+    findings = []
+    for channel, ground_id, ground, ground_kind, foreground in pairs:
+        ratio = composited_contrast(fill=foreground, opacity=1.0, ground=ground)
+        severity = "error" if ratio < floor else "info"
+        findings.append(SceneContrastFinding(code, severity, scene_path, purpose, role, primitive_id,
+                                             ratio, floor, disposition, ground_id, ground, channel,
+                                             *sample, ground_kind, density))
+    return tuple(findings)
 
 
 def _note_box_ground(primitive: Mapping[str, Any], primitives: list[Any], index: int,

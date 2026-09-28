@@ -20,6 +20,7 @@ from chrona.presentation.layout.surface_composer import _lane_fallback_clears_re
 from chrona.presentation.layout.surface_quality import TextPlacement
 from chrona.presentation.contracts.resources import ViewLaneLabel, ViewLaneTable, ViewRowMode
 from chrona.presentation.contracts import parse_contract
+from chrona.presentation.contracts.resources import freeze
 from chrona.presentation.model.surface_content import TableCellContent, TableColumnContent, TableColumnWidth, TableContent
 from chrona.presentation.model.closure import RenderClosure, resolve_render_context
 from chrona.presentation.model.theme_tokens import ThemeTokenError
@@ -124,6 +125,63 @@ def test_render_review_renders_a_closure_without_the_cli():
     assert rendered.scene.provenance.mode == "immutable"
     assert rendered.scene.manifest.visual_role_counts
     assert {"project", "view", "layout-profile"} <= rendered.read_inputs
+
+
+def test_catalogue_pattern_crosses_layout_scene_and_svg_without_adapter_lookup():
+    with tempfile.TemporaryDirectory() as temporary:
+        closure, snapshot = _closure(Path(temporary))
+        resolved = json.loads(json.dumps(closure.resolved_theme.resolved_input))
+        body = resolved["body"]
+        body["values"]["fixture-pattern"] = {"type": "pattern", "value": {
+            "kind": "catalog", "ref": "fixture:stripes"}}
+        body["values"]["fixture-ink"] = {"type": "color", "value": "#FFFFFF"}
+        body["roles"]["axis-band-decoration"].update(
+            pattern="fixture-pattern", stroke="fixture-ink")
+        body["catalogAssets"] = {"glyphs": {}, "patterns": {"fixture:stripes": {
+            "tile": {"inlineSize": 4, "blockSize": 4}, "angle": 0,
+            "densityBasisPoints": 5000,
+            "primitives": [{"kind": "rect", "x": 0, "y": 0,
+                            "inlineSize": 2, "blockSize": 4}],
+        }}}
+        closure = replace(closure, resolved_theme=replace(
+            closure.resolved_theme, resolved_input=freeze(resolved)))
+        rendered = render_review(_request(closure, snapshot))
+    patterned = [item for item in rendered.surface.primitives if item.pattern and item.pattern.primitives]
+    assert patterned and all(item.visual_role == "axis-band-decoration" for item in patterned)
+    document = scene_document(rendered.scene)
+    assert document["version"] == "chrona/scene/v0.7"
+    validate_scene_document(document)
+    assert b'patternTransform="translate(' in rendered.artifact.content
+
+
+def test_catalogue_glyph_stroke_finish_crosses_layout_scene_and_svg():
+    with tempfile.TemporaryDirectory() as temporary:
+        closure, snapshot = _closure(Path(temporary), "12-glyph-gates")
+        resolved = json.loads(json.dumps(closure.resolved_theme.resolved_input))
+        body = resolved["body"]
+        body["values"]["milestone-symbol"]["value"] = {
+            "shape": {"catalog": "fixture:pin"}}
+        body["values"]["fixture-glyph-ink"] = {"type": "color", "value": "#FFFFFF"}
+        body["roles"]["milestone"]["stroke"] = "fixture-glyph-ink"
+        body["catalogAssets"] = {"glyphs": {"fixture:pin": {
+            "viewport": {"inlineSize": 24, "blockSize": 24},
+            "parts": [
+                {"paint": "fill", "data": "M 12 1 Q 22 10 12 23 Q 2 10 12 1 Z"},
+                {"paint": "stroke", "data": "M 4 12 L 20 12", "strokeWidth": 2,
+                 "lineCap": "round", "lineJoin": "round"},
+            ],
+        }}, "patterns": {}}
+        closure = replace(closure, resolved_theme=replace(
+            closure.resolved_theme, resolved_input=freeze(resolved)),
+            context=replace(closure.context, target=replace(
+                closure.context.target, visual_profile="chrona-output/visual/v0.6-svg")))
+        rendered = render_review(_request(closure, snapshot))
+    stroked = [item for item in rendered.surface.primitives
+               if item.kind == "Symbol" and item.paint and item.paint.stroke_finish
+               and item.paint.stroke_finish.line_cap == "round"]
+    assert stroked and all(item.paint.stroke_width > 0 for item in stroked)
+    assert b'stroke-linecap="round"' in rendered.artifact.content
+    validate_scene_document(scene_document(rendered.scene))
 
 
 @pytest.mark.parametrize("context_name", ["02-programme-board", "11-overlay-briefing", "12-glyph-gates"])

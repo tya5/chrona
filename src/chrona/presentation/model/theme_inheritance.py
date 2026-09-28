@@ -21,8 +21,9 @@ class ThemeInheritanceError(ValueError):
 
 
 def is_derived_theme(value: object) -> bool:
-    """Recognize the source syntax before ordinary Theme contract parsing."""
-    return isinstance(value, dict) and value.get("version") == "chrona/theme/v0.12"
+    """Recognize derived Theme source forms before ordinary contract parsing."""
+    return (isinstance(value, dict)
+            and value.get("version") in {"chrona/theme/v0.12", "chrona/theme/v0.14"})
 
 
 def _safe_relative(address: object) -> PurePosixPath:
@@ -36,7 +37,12 @@ def _safe_relative(address: object) -> PurePosixPath:
 
 
 def _validated_derived(value: dict[str, Any]) -> Mapping[str, Any]:
-    schema = schema_document("theme-v0.12.schema.yaml")
+    version = value.get("version")
+    schema_name = {"chrona/theme/v0.12": "theme-v0.12.schema.yaml",
+                   "chrona/theme/v0.14": "theme-v0.14.schema.yaml"}.get(version)
+    if schema_name is None:
+        raise ThemeInheritanceError("E_THEME_INHERITANCE_SCHEMA")
+    schema = schema_document(schema_name)
     if tuple(jsonschema.Draft202012Validator(schema).iter_errors(value)):
         raise ThemeInheritanceError("E_THEME_INHERITANCE_SCHEMA")
     return value["body"]["extends"]
@@ -90,7 +96,10 @@ def _resolve(value: dict[str, Any], key: str, load_base: BaseLoader,
     if source_identity != declaration["sourceContentIdentity"]:
         raise ThemeInheritanceError("E_THEME_INHERITANCE_SOURCE_IDENTITY")
     base = _resolve(base_value, child_key, load_base, (*stack, key))
-    if (base.get("kind") != "theme" or base.get("version") != "chrona/theme/v0.11"
+    derived_version = str(value.get("version"))
+    expected_base_version = ("chrona/theme/v0.11" if derived_version == "chrona/theme/v0.12"
+                             else "chrona/theme/v0.13")
+    if (base.get("kind") != "theme" or base.get("version") != expected_base_version
             or base.get("id") != declaration["id"]):
         raise ThemeInheritanceError("E_THEME_INHERITANCE_BASE_KIND")
     if content_identity(base) != declaration["contentIdentity"]:
@@ -107,7 +116,9 @@ def _resolve(value: dict[str, Any], key: str, load_base: BaseLoader,
         if any(entry not in target for entry in replacement):
             raise ThemeInheritanceError("E_THEME_INHERITANCE_OVERRIDE_UNKNOWN")
         target.update(deepcopy(replacement))
-    schema = schema_document("theme-v0.11.schema.yaml")
+    effective_schema = {"chrona/theme/v0.12": "theme-v0.11.schema.yaml",
+                        "chrona/theme/v0.14": "theme-v0.13.schema.yaml"}[derived_version]
+    schema = schema_document(effective_schema)
     if tuple(jsonschema.Draft202012Validator(schema).iter_errors(effective)):
         raise ThemeInheritanceError("E_THEME_INHERITANCE_EFFECTIVE_SCHEMA")
     return effective

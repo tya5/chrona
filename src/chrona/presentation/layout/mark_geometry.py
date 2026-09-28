@@ -5,6 +5,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
+from math import isfinite
 from typing import Any
 
 from chrona.presentation.icons.normalizer import IconNormalizationError, parse_path_commands
@@ -21,6 +22,9 @@ class SymbolPartPlacement:
     commands: tuple[PathCommand, ...]
     paint_mode: str | None = None
     paint_color: str | None = None
+    stroke_width: float | None = None
+    line_cap: str | None = None
+    line_join: str | None = None
 
 
 @dataclass(frozen=True)
@@ -168,8 +172,20 @@ def compose_item_marks(*, item: Any, instance_id: str, source_kind: str,
 
 
 def symbol_parts(value: Mapping[str, object], bounds: tuple[float, float, float, float],
-                 layout_outline: tuple[PathCommand, ...] = ()) -> tuple[SymbolPartPlacement, ...]:
+                 layout_outline: tuple[PathCommand, ...] = (), *,
+                 catalog_glyphs: Mapping[str, Mapping[str, object]] | None = None
+                 ) -> tuple[SymbolPartPlacement, ...]:
     """Return the exact completed built-in or glyph paths for one point mark."""
+    shape_value = value.get("shape")
+    if isinstance(shape_value, Mapping) and set(shape_value) == {"catalog"}:
+        reference = shape_value.get("catalog")
+        glyph = (catalog_glyphs.get(reference) if isinstance(reference, str)
+                 and catalog_glyphs is not None else None)
+        if not isinstance(glyph, Mapping):
+            raise ValueError("E_THEME_TOKEN_TYPE")
+        value = {"shape": "glyph", **glyph}
+    elif shape_value == "catalog-glyph":
+        value = {**value, "shape": "glyph"}
     if value.get("shape") != "glyph":
         if layout_outline:
             return (SymbolPartPlacement(layout_outline),)
@@ -194,7 +210,8 @@ def symbol_parts(value: Mapping[str, object], bounds: tuple[float, float, float,
                         PathCommand("quadratic", ((x, y + height), (x, cy))),
                         PathCommand("quadratic", ((x, y), (cx, y))))
         return (SymbolPartPlacement(commands),)
-    return tuple(SymbolPartPlacement(part.outline, part.paint, part.color)
+    return tuple(SymbolPartPlacement(part.outline, part.paint, part.color,
+                                     part.stroke_width, part.line_cap, part.line_join)
                  for part in glyph_parts(value, bounds))
 
 
@@ -217,8 +234,11 @@ def compose_mark_placement(*, frame: MarkBandFrame, placement_id: str, source_re
         variant = "baseline" if semantic_id in {"snapshot", "scenario"} else semantic_id
         token = theme_tokens.variant_symbol(variant)
         try:
-            completed_symbols = symbol_parts(token, (float(bounds.inline), float(bounds.block),
-                                                       float(bounds.inline_size), float(bounds.block_size)), commands)
+            completed_symbols = symbol_parts(
+                token, (float(bounds.inline), float(bounds.block),
+                        float(bounds.inline_size), float(bounds.block_size)), commands,
+                catalog_glyphs=getattr(theme_tokens, "catalog_glyphs", None),
+            )
         except ValueError as error:
             raise LayoutError("E_LAYOUT_LANE_FOOTPRINT_UNAVAILABLE", placement_id) from error
     return MarkPlacement(placement_id, source_ref, bounds, start_port, end_port,
@@ -233,10 +253,16 @@ class _GlyphPart:
     outline: tuple[PathCommand, ...]
     paint: str
     color: str | None
+    stroke_width: float | None = None
+    line_cap: str | None = None
+    line_join: str | None = None
 
 
 def glyph_parts(value: Mapping[str, object], bounds: tuple[float, float, float, float]) -> tuple[_GlyphPart, ...]:
-    view_box = value.get("viewBox")
+    catalog_glyph = "viewport" in value
+    view_box = value.get("viewport") if catalog_glyph else value.get("viewBox")
+    if catalog_glyph and isinstance(view_box, Mapping):
+        view_box = (view_box.get("inlineSize"), view_box.get("blockSize"))
     if (not isinstance(view_box, (list, tuple)) or len(view_box) != 2
             or any(not isinstance(item, (int, float)) or isinstance(item, bool) or item <= 0 for item in view_box)):
         raise ValueError("E_THEME_TOKEN_TYPE")
@@ -257,18 +283,23 @@ def glyph_parts(value: Mapping[str, object], bounds: tuple[float, float, float, 
         if not isinstance(part, Mapping):
             raise ValueError("E_THEME_TOKEN_TYPE")
         paint = _choice(part, "paint", {"fill", "stroke", "none"})
+        if catalog_glyph and paint not in {"fill", "stroke"}:
+            raise ValueError("E_THEME_TOKEN_TYPE")
         color = part.get("color")
         if color is not None and not isinstance(color, str):
             raise ValueError("E_THEME_TOKEN_TYPE")
         if paint == "none":
             continue
-        raw = part.get("d")
+        raw = part.get("data") if catalog_glyph else part.get("d")
         if not isinstance(raw, str) or not raw:
             raise ValueError("E_THEME_TOKEN_TYPE")
         try:
             parsed = parse_path_commands(raw)
         except IconNormalizationError as error:
             raise ValueError("E_THEME_TOKEN_TYPE") from error
+        if catalog_glyph and any(command.kind not in {"move", "line", "quadratic", "close"}
+                                 for command in parsed):
+            raise ValueError("E_THEME_TOKEN_TYPE")
         outline = []
         start = None
         for command in parsed:
@@ -278,6 +309,8 @@ def glyph_parts(value: Mapping[str, object], bounds: tuple[float, float, float, 
                 start = point
             elif command.kind == "line":
                 outline.append(PathCommand("line", (transform(command.points[0]),)))
+            elif command.kind == "quadratic" and catalog_glyph:
+                outline.append(PathCommand("quadratic", tuple(transform(point) for point in command.points)))
             elif command.kind == "close":
                 if start is None:
                     raise ValueError("E_THEME_TOKEN_TYPE")
@@ -286,7 +319,20 @@ def glyph_parts(value: Mapping[str, object], bounds: tuple[float, float, float, 
                 raise ValueError("E_THEME_TOKEN_TYPE")
         if not outline:
             raise ValueError("E_THEME_TOKEN_TYPE")
-        result.append(_GlyphPart(tuple(outline), paint, color))
+        stroke_width = part.get("strokeWidth") if catalog_glyph else None
+        line_cap = part.get("lineCap") if catalog_glyph else None
+        line_join = part.get("lineJoin") if catalog_glyph else None
+        if catalog_glyph and paint == "stroke":
+            if (not isinstance(stroke_width, (int, float)) or isinstance(stroke_width, bool)
+                    or not isfinite(float(stroke_width)) or float(stroke_width) <= 0
+                    or line_cap not in {"butt", "round", "square"}
+                    or line_join not in {"miter", "round", "bevel"}):
+                raise ValueError("E_THEME_TOKEN_TYPE")
+            stroke_width = float(stroke_width) * scale
+        result.append(_GlyphPart(tuple(outline), paint, color,
+                                 float(stroke_width) if stroke_width is not None else None,
+                                 line_cap if isinstance(line_cap, str) else None,
+                                 line_join if isinstance(line_join, str) else None))
     return tuple(result)
 
 

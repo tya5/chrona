@@ -9,6 +9,7 @@ import re
 from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect, geometry_sum
+from chrona.presentation.layout.pattern_placement import PatternedPlacement, complete_pattern_placement
 from chrona.presentation.layout.label_visual_measurement import (
     resolve_label_visual_advances, visual_target_placement_id,
 )
@@ -1742,7 +1743,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         height = float(request.theme_tokens.summary_bar_height("summary-bar")) * float(metric_values["timeline.mark.blockSize"])
         shapes.append(ShapePlacement(f"summary-bar:{review_row.row_id}", subject.object_id, "Rect",
                                      Rect(Decimal(str(x1)), row.bounds.block,
-                                          Decimal(str(max(1.0, x2 - x1))), Decimal(str(height)))))
+                                          Decimal(str(max(1.0, x2 - x1))), Decimal(str(height))),
+                                     semantic_id="summaryBar"))
     placement_decisions: list[PlacementDecision] = list(axis_decisions)
     label_requests: list[LabelRequest] = []
     candidate_icons: list[IconPlacement] = []
@@ -2279,7 +2281,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         def emit_swatch(role: str, x: float, y: float, width: float, height: float, bucket: str) -> None:
             if bucket == "point":
                 bounds = Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height)))
-                parts = symbol_parts(request.theme_tokens.variant_symbol("planned"), (x, y, width, height))
+                parts = symbol_parts(
+                    request.theme_tokens.variant_symbol("planned"), (x, y, width, height),
+                    catalog_glyphs=getattr(request.theme_tokens, "catalog_glyphs", None),
+                )
                 marks.append(MarkPlacement(f"legend-swatch:{role}", role,
                                            bounds,
                                            (x + width / 2, y + height / 2), (x + width / 2, y + height / 2),
@@ -3090,6 +3095,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     # Abstract mark IDs remain Layout anchors; hosted text needs the actual
     # Scene primitive ID completed by this typed lane-emission closure.
     completed_text = _complete_hosted_text_identity(tuple(text), tuple(marks), lane_emissions)
+    patterns = _complete_catalog_patterns(tuple(marks), tuple(shapes), request.theme_tokens)
     placement = SurfacePlacement(text=completed_text, slots=slots, rows=rows, columns=column_placements,
                                  groups=tuple(groups), scale=scale,
                                  marks=tuple(marks), shapes=tuple(shapes), relations=tuple(relations),
@@ -3099,13 +3105,57 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                  canvas_bounds=canvas, fit_warnings=tuple(fit_warnings),
                                  info_diagnostics=((SuppressedPlotLabels("table-timeline", suppressed_plot_labels),)
                                                    if suppressed_plot_labels else ()),
-                                 lane_emissions=lane_emissions)
+                                 lane_emissions=lane_emissions, patterns=patterns)
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks, tuple(mark_absences))
 
 
 def _rect(bounds: tuple[float, float, float, float]) -> Rect:
     return Rect(*(Decimal(str(value)) for value in bounds))
+
+
+_RECT_PATTERN_THEME_ROLES = {
+    "missing-actual": "missing-actual",
+    "progressFill": "progress-fill",
+    "summaryBar": "summary-bar",
+    "annotationHighlightBox": "annotation-highlight-box",
+    "axisBandDecoration": "axis-band-decoration",
+    "axisBandDecoration2": "axis-band-decoration2",
+    "asOfLabelChip": "as-of-label-chip",
+    "memberLabelChip": "member-label-chip",
+    "finishDeltaChip": "finish-delta-chip",
+}
+
+
+def _complete_catalog_patterns(marks: tuple[MarkPlacement, ...],
+                               shapes: tuple[ShapePlacement, ...],
+                               theme_tokens: Any) -> tuple[PatternedPlacement, ...]:
+    """Attach only allowlisted catalogue patterns to completed Rect placements."""
+    optional_pattern = getattr(theme_tokens, "optional_pattern", None)
+    if not callable(optional_pattern):
+        return ()
+    result: list[PatternedPlacement] = []
+    for shape in shapes:
+        role = _RECT_PATTERN_THEME_ROLES.get(shape.semantic_id)
+        if shape.kind != "Rect" or role is None:
+            continue
+        pattern = optional_pattern(role)
+        if isinstance(pattern, Mapping) and pattern.get("kind") == "catalog":
+            result.append(PatternedPlacement(
+                shape.placement_id,
+                complete_pattern_placement(pattern, shape.bounds, shape.corner_radius),
+            ))
+    for mark in marks:
+        role = _RECT_PATTERN_THEME_ROLES.get(mark.semantic_id)
+        if role is None or mark.mark_shape != "span":
+            continue
+        pattern = optional_pattern(role)
+        if isinstance(pattern, Mapping) and pattern.get("kind") == "catalog":
+            result.append(PatternedPlacement(
+                mark.placement_id,
+                complete_pattern_placement(pattern, mark.bounds, mark.corner_radius),
+            ))
+    return tuple(result)
 
 
 def _bounds(rect: Rect) -> tuple[float, float, float, float]:
