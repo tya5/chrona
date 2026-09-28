@@ -13,7 +13,7 @@ from chrona.presentation.layout.label_visual_measurement import (
     resolve_label_visual_advances, visual_target_placement_id,
 )
 from chrona.presentation.layout.lane_preflight import (
-    SurfaceLanePlan, assert_lane_plan_compatible, lane_inline_frame_for_manifest,
+    lane_inline_frame_for_manifest,
 )
 from chrona.presentation.layout.lane_subtracks import FixedLanePreflight, LaneSubtrackPlan, assign_lane_subtracks
 from chrona.presentation.layout.lane_item_footprints import compose_lane_item_footprints
@@ -50,7 +50,7 @@ from chrona.presentation.layout.routing import (
 from chrona.presentation.layout.path_geometry import rounded_orthogonal_path
 from chrona.presentation.layout.mark_geometry import MarkFacetAbsence, compose_item_marks, symbol_parts
 from chrona.presentation.layout.icon_geometry import complete_icon_paths
-from chrona.presentation.layout.lane_bundle_mapper import (
+from chrona.presentation.layout.lane_mark_facets import (
     _mark_facets, _overlay_compound_facets, _with_mark_visuals,
 )
 from chrona.presentation.layout.lane_projection import LaneProjectionClosure, LaneProjectionInstance, close_lane_projection, lane_missing_actual_visible
@@ -641,11 +641,8 @@ def _axis_label_inset(theme_tokens: Any, tier: Any, font_size: float) -> float:
 
 def timeline_content_block_requirement(*, projection: Any, group_presentation: str,
                                        metric_values: dict[str, Decimal], role_geometries: dict[str, MarkGeometry] | None = None,
-                                       text_line_block: float = 0.0,
-                                       lane_plan: SurfaceLanePlan | None = None) -> Decimal:
+                                       text_line_block: float = 0.0) -> Decimal:
     """Return the minimum timeline block extent for explicit review rows."""
-    if lane_plan is not None:
-        return lane_plan.natural_block_requirement
     rows = _review_rows(projection) or tuple(
         type("_Row", (), {"group_id": item.group_id, "items": (item,)})()
         for item in projection.items
@@ -971,15 +968,6 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     start, end = projection.window
     if not isinstance(start, date) or not isinstance(end, date) or start >= end:
         raise LayoutError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection/window")
-    if request.lane_plan is not None:
-        if request.lane_measurement_identity is None:
-            raise LayoutError("E_LAYOUT_LANE_PLAN_INVALID", "/measuredSources")
-        assert_lane_plan_compatible(
-            request.lane_plan,
-            final_inline_frame=lane_inline_frame_for_manifest(layout_manifest, window=(start, end)),
-            measurement_identity=request.lane_measurement_identity,
-            as_of=request.surface_content.as_of,
-        )
     if projection.lane_membership is not None:
         preflight = request.fixed_lane_preflight
         if (preflight is None or preflight.as_of != request.surface_content.as_of
