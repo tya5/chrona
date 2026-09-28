@@ -317,6 +317,7 @@ body:
       strokeWidth: stroke-width
       annotationContainer: annotation-container-frame
     annotation-note-text:
+      contrastTreatment: required
       fontFamily: editorial
       fontWeight: weight.regular
       fontSize: size.note

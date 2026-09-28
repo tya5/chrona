@@ -190,8 +190,11 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT, scene_kinds=frozenset(("Text",)))
     register("metric subtitle", "Layout text and Scene Text", _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT,
              scene_kinds=frozenset(("Text",)))
-    register("annotation-callout-text annotation-highlight-text annotation-note-text annotation-arrow-text",
+    register("annotation-callout-text annotation-highlight-text annotation-arrow-text",
              "Layout annotation text and Scene Text", _TEXT_MEASUREMENT | _TEXT_PAINT,
+             scene_kinds=frozenset(("Text",)))
+    register("annotation-note-text", "Scene state Text and contrast policy",
+             _TEXT_MEASUREMENT | _TEXT_PAINT | frozenset(("contrastTreatment",)),
              scene_kinds=frozenset(("Text",)))
     register("variance-ahead variance-on-track variance-behind missing-actual-cell",
              "Scene state Text and contrast policy", _TEXT_PAINT | frozenset(("contrastTreatment",)),

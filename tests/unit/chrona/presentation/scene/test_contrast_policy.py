@@ -42,6 +42,15 @@ def test_policy_rejects_missing_state_treatment_instead_of_inferring_a_floor():
     assert finding.severity == "error"
 
 
+def test_note_text_requires_required_treatment_at_serialized_boundary():
+    finding = evaluate_scene_contrast(_scene(
+        _primitive("note-text", "annotation-note-text", "annotation-note-text", "#000000",
+                   treatment="deemphasized"),
+    ))[0]
+    assert finding.code == "E_SCENE_STATE_TEXT_CONTRAST_TREATMENT"
+    assert finding.scene_path == "/surfaces/0:review/primitives/0/contrastTreatment"
+
+
 def test_policy_reports_explicit_decoration_absence_separately_from_paint():
     finding = evaluate_scene_contrast(_scene(
         dispositions=({"visualRole": "calendar-closed", "disposition": "absent"},),
@@ -84,6 +93,8 @@ def test_an_image_backed_container_grounds_note_text_by_its_declared_fill_465():
     """
     ground = _primitive("annotation-box", "unclassified", "annotation", "#16213A", order=10,
                         bounds={"inline": 0, "block": 0, "inlineSize": 200, "blockSize": 60})
+    ground["visualRole"] = "annotation-note-box"
+    ground["sourceRef"] = "note:1"
     ground["paint"]["image"] = {
         "assetIdentity": "sha256:" + "0" * 64,
         "viewport": {"inlineSize": 40, "blockSize": 40},
@@ -92,11 +103,90 @@ def test_an_image_backed_container_grounds_note_text_by_its_declared_fill_465():
     }
     findings = evaluate_scene_contrast(_scene(
         ground,
-        _primitive("note-text", "variance-ahead", "table-cell", "#FFFFFF", treatment="required",
-                  order=100, bounds={"inline": 10, "block": 10, "inlineSize": 100, "blockSize": 20}),
+        {**_primitive("note-text", "annotation-note-text", "annotation-note-text", "#FFFFFF",
+                      treatment="required", order=100,
+                      bounds={"inline": 10, "block": 10, "inlineSize": 100, "blockSize": 20}),
+         "sourceRef": "note:1"},
     ))
     finding = next(item for item in findings if item.primitive_id == "note-text")
     assert (finding.ground_id, finding.ground_color, finding.ground_kind) == ("annotation-box", "#16213A", "flat")
+
+
+def test_note_text_cannot_fall_back_to_unpaired_or_wrong_source_ground():
+    text = {**_primitive("note-text", "annotation-note-text", "annotation-note-text", "#FFFFFF",
+                         treatment="required"), "sourceRef": "note:1"}
+    unrelated = {**_primitive("other-box", "annotation-note-box", "annotation-note-box", "#000000",
+                               order=10), "sourceRef": "note:2"}
+    finding = next(item for item in evaluate_scene_contrast(_scene(unrelated, text))
+                   if item.primitive_id == "note-text")
+    assert finding.code == "E_SCENE_CONTRAST_GROUND_UNSUPPORTED"
+    assert finding.ground_id is None
+
+
+def test_note_text_rejects_missing_later_and_non_containing_paired_boxes():
+    text = {**_primitive("note-text", "annotation-note-text", "annotation-note-text", "#FFFFFF",
+                         treatment="required", order=100), "sourceRef": "note:1"}
+    valid_box = {**_primitive("box", "annotation-note-box", "annotation-note-box", "#000000",
+                              order=10), "sourceRef": "note:1"}
+    later_box = {**valid_box, "paintOrder": 101}
+    outside_box = {**valid_box, "bounds": {"inline": 100, "block": 100,
+                                            "inlineSize": 20, "blockSize": 10}}
+    for primitives in ((text,), (later_box, text), (outside_box, text)):
+        finding = next(item for item in evaluate_scene_contrast(_scene(*primitives))
+                       if item.primitive_id == "note-text")
+        assert finding.code == "E_SCENE_CONTRAST_GROUND_UNSUPPORTED"
+
+
+def test_note_text_rejects_invalid_topmost_box_without_falling_back_to_lower_box():
+    lower = {**_primitive("lower", "annotation-note-box", "annotation-note-box", "#000000",
+                           order=10), "sourceRef": "note:1"}
+    top = {**_primitive("top", "annotation-note-box", "annotation-note-box", None,
+                        order=20), "sourceRef": "note:1"}
+    text = {**_primitive("note-text", "annotation-note-text", "annotation-note-text", "#FFFFFF",
+                         treatment="required", order=100), "sourceRef": "note:1"}
+    finding = next(item for item in evaluate_scene_contrast(_scene(lower, top, text))
+                   if item.primitive_id == "note-text")
+    assert finding.code == "E_SCENE_CONTRAST_GROUND_UNSUPPORTED"
+    assert finding.ground_id == "top"
+
+
+def test_note_text_rejects_absent_and_partial_opacity_box_fills():
+    for fill, opacity in ((None, 1), ("#000000", 0.5)):
+        box = {**_primitive("box", "annotation-note-box", "annotation-note-box", fill,
+                            opacity=opacity, order=10), "sourceRef": "note:1"}
+        text = {**_primitive("note-text", "annotation-note-text", "annotation-note-text", "#FFFFFF",
+                             treatment="required", order=100), "sourceRef": "note:1"}
+        finding = next(item for item in evaluate_scene_contrast(_scene(box, text))
+                       if item.primitive_id == "note-text")
+        assert finding.code == "E_SCENE_CONTRAST_GROUND_UNSUPPORTED"
+
+
+def test_note_text_rejects_gradient_or_pattern_note_box_ground():
+    for feature in ("gradient", "pattern"):
+        box = {**_primitive("box", "annotation-note-box", "annotation-note-box", "#000000",
+                            order=10), "sourceRef": "note:1"}
+        if feature == "gradient":
+            box["paint"]["gradient"] = {"start": [10, 10], "end": [30, 10],
+                                         "stops": [{"offset": 0, "color": "#000000"},
+                                                   {"offset": 1, "color": "#FFFFFF"}]}
+        else:
+            box["pattern"] = {"kind": "diagonal"}
+        text = {**_primitive("note-text", "annotation-note-text", "annotation-note-text", "#FFFFFF",
+                             treatment="required", order=100), "sourceRef": "note:1"}
+        finding = next(item for item in evaluate_scene_contrast(_scene(box, text))
+                       if item.primitive_id == "note-text")
+        assert finding.code == "E_SCENE_CONTRAST_GROUND_UNSUPPORTED"
+
+
+def test_note_text_can_use_paired_symbol_box_ground():
+    box = {**_primitive("box", "annotation-note-box", "annotation-note-box", "#16213A",
+                        kind="Symbol", order=10), "sourceRef": "note:1"}
+    text = {**_primitive("note-text", "annotation-note-text", "annotation-note-text", "#FFFFFF",
+                         treatment="required", order=100), "sourceRef": "note:1"}
+    finding = next(item for item in evaluate_scene_contrast(_scene(box, text))
+                   if item.primitive_id == "note-text")
+    assert finding.ground_id == "box"
+    assert finding.ground_color == "#16213A"
 
 
 def test_stroke_only_rect_samples_painted_edge_not_unpainted_centre():
