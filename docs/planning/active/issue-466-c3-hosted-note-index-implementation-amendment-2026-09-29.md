@@ -1,0 +1,5 @@
+# #466 C3 hosted note-index implementation amendment
+
+**Design/review:** [host identity correction](../../design/issue-466-c3-hosted-note-index-correction-2026-09-29.md) and [architecture review](../../reviews/current/issue-466-c3-hosted-note-index-architecture-review-2026-09-29.md), published at `83163737`. **Amends:** [C3 routed-tail plan](issue-466-c3-routed-tail-implementation-amendment-2026-09-29.md).
+
+Before the C3 resource/evidence publication, update `layout/surface_composer.py` after `_lane_emissions` to resolve any hosted text's abstract mark ID through its emitted mark facets. Require one stable first painted part, compatible slot and earlier paint order; fail typed Layout validation if none. Keep Scene's strict host check. Add a focused Layout/Scene test using both built-in single-part and Theme two-part glyph marks, then rerun #12 materialization plus the complete 29-slide batch. Compare Scene host-reference bytes and inspect #12 SVG/PNG note number and glyph. Publish this code/test fix as a separate C3 correction commit before the View/Theme/generated-resource unit.
