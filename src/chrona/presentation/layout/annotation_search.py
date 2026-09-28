@@ -10,11 +10,20 @@ measures text, reads a Theme or serializes a primitive.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import fsum
 
 from chrona.presentation.layout.annotations import nearest_box_port
 from chrona.presentation.layout.balloon_geometry import nearest_eligible_edge, tail_base_points
 from chrona.presentation.layout.labels import LabelRect
-from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacleIndex
+from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
+from chrona.presentation.layout.annotation_topology import (
+    AnnotationRouteTrial, route_strict_bounded,
+)
+from chrona.presentation.layout.ports import (
+    ConnectorEgress, coincident_endpoint_port_ids, connector_egress_candidates,
+)
+from chrona.presentation.layout.routing import relation_route_quality
+from chrona.presentation.layout.surface_quality import MarkPlacement
 
 
 @dataclass(frozen=True)
@@ -23,6 +32,18 @@ class NearestFreeTrial:
 
     box: LabelRect
     accepted: bool
+
+
+@dataclass(frozen=True)
+class RoutedTailSearchResult:
+    box: LabelRect | None
+    tip: tuple[float, float] | None
+    egress: ConnectorEgress | None
+    route: AnnotationRouteTrial | None
+    full_points: tuple[tuple[float, float], ...]
+    box_trials: int
+    route_states: int
+    exhausted: bool = False
 
 
 def lattice_positions(region: LabelRect, box_size: tuple[float, float],
@@ -135,3 +156,128 @@ def nearest_free_tail_box(*, region: LabelRect, anchor: LabelRect,
         if not tail_collides:
             return box, tip, trials
     return None, None, trials
+
+
+def nearest_free_routed_tail_box(*, region: LabelRect, anchor: MarkPlacement, endpoint: str,
+                                 siblings: tuple[MarkPlacement, ...],
+                                 box_size: tuple[float, float], max_positions: int,
+                                 obstacles: SurfaceObstacleIndex,
+                                 obstacle_classes: tuple[str, ...], corner_radius: float,
+                                 tail_base: float, content_bounds: tuple[float, float, float, float],
+                                 host_id: str | None = None,
+                                 side_of_as_of: tuple[float, str] | None = None,
+                                 max_bends: int = 4, max_detour_ratio: float = 2.0,
+                                 route_state_limit: int = 1024) -> RoutedTailSearchResult:
+    """Find a free box with a strict routed connector ending at an exterior tip.
+
+    Candidate-box trials and connector states have independent finite limits.
+    The candidate box is inserted into a private obstacle index for route checks;
+    accepted geometry is never written to the caller's monotone index here.
+    """
+    if route_state_limit < 1:
+        raise ValueError("E_LAYOUT_ANNOTATION_SEARCH_INPUT")
+    anchor_center = (float(anchor.bounds.inline + anchor.bounds.inline_size / 2),
+                     float(anchor.bounds.block + anchor.bounds.block_size / 2))
+    route_states = box_trials = 0
+    for box in lattice_positions(region, box_size, anchor_center, max_positions):
+        box_trials += 1
+        if side_of_as_of is not None:
+            x, side = side_of_as_of
+            if (side == "start" and box.right > x) or (side == "end" and box.x < x):
+                continue
+        if obstacles.collisions(ObstacleRect(box.x, box.y, box.right, box.bottom),
+                                classes=obstacle_classes, host_id=host_id):
+            continue
+        target = (box.x + box.width / 2, box.y + box.height / 2)
+        box_best = None
+        for egress in connector_egress_candidates(anchor, endpoint, target, siblings):
+            if route_states >= route_state_limit:
+                return RoutedTailSearchResult(None, None, None, None, (), box_trials,
+                                              route_states, True)
+            for edge_order, edge in enumerate(("top", "right", "bottom", "left")):
+                if route_states >= route_state_limit:
+                    return RoutedTailSearchResult(None, None, None, None, (), box_trials,
+                                                  route_states, True)
+                clearance = 2.0
+                if edge == "top":
+                    tip = (box.x + box.width / 2, box.y - clearance)
+                elif edge == "right":
+                    tip = (box.right + clearance, box.y + box.height / 2)
+                elif edge == "bottom":
+                    tip = (box.x + box.width / 2, box.bottom + clearance)
+                else:
+                    tip = (box.x - clearance, box.y + box.height / 2)
+                radius = min(corner_radius, box.width / 2, box.height / 2)
+                base_a, base_b = tail_base_points(box, tip, edge=edge, tail_base=tail_base,
+                                                  corner_radius=radius)
+                candidate_index = SurfaceObstacleIndex()
+                candidate_index.extend(obstacles.all())
+                candidate_index.add(SurfaceObstacle("candidate:balloon-box", "annotation-box",
+                                                    "plot", ObstacleRect(
+                                                        box.x, box.y, box.right, box.bottom)))
+                source_points = egress.corridor or (egress.exposed_port,)
+                endpoint_ports = tuple(dict.fromkeys((
+                    *coincident_endpoint_port_ids(obstacles, egress.semantic_port, egress.host_ids),
+                    *coincident_endpoint_port_ids(obstacles, egress.exposed_port, egress.host_ids),
+                )))
+                egress_clear = True
+                for start, end in zip(source_points, source_points[1:]):
+                    segment = ObstacleSegment(start, end)
+                    if obstacles.egress_collisions(segment, host_ids=egress.host_ids,
+                                                   classes=obstacle_classes,
+                                                   port_ids=endpoint_ports):
+                        egress_clear = False
+                        break
+                if not egress_clear:
+                    continue
+                for start, end in ((base_a, tip), (tip, base_b)):
+                    if candidate_index.collisions(ObstacleSegment(start, end),
+                                                  classes=obstacle_classes):
+                        egress_clear = False
+                        break
+                if not egress_clear:
+                    continue
+                left, top, right, bottom = content_bounds
+                bounds = (max(left, min(egress.exposed_port[0], tip[0]) - box.width / 2),
+                          max(top, min(egress.exposed_port[1], tip[1]) - box.height / 2),
+                          min(right, max(egress.exposed_port[0], tip[0]) + box.width / 2),
+                          min(bottom, max(egress.exposed_port[1], tip[1]) + box.height / 2))
+                if bounds[2] <= bounds[0] or bounds[3] <= bounds[1]:
+                    continue
+                route, count, exhausted = route_strict_bounded(
+                    egress.exposed_port, tip, candidate_index, bounds=bounds,
+                    port_ids=endpoint_ports,
+                    limit=route_state_limit - route_states, max_bends=max_bends,
+                    max_detour_ratio=max_detour_ratio)
+                route_states += count
+                if exhausted and route is None:
+                    return RoutedTailSearchResult(None, None, None, None, (), box_trials,
+                                                  route_states, True)
+                if route is None:
+                    continue
+                points = (*source_points, *route.points[1:])
+                if not relation_route_quality(points, max_bends=max_bends,
+                                              max_detour_ratio=max_detour_ratio):
+                    continue
+                if side_of_as_of is not None:
+                    x, side = side_of_as_of
+                    all_x = tuple(point[0] for point in (*points, base_a, base_b))
+                    if ((side == "start" and max(all_x) > x)
+                            or (side == "end" and min(all_x) < x)):
+                        continue
+                route_length = fsum(abs(b[0] - a[0]) + abs(b[1] - a[1])
+                                    for a, b in zip(route.points, route.points[1:]))
+                source_order = {"end": 0, "start": 1, "above": 2, "below": 3}[egress.side]
+                rank = (len(route.points) - 2, route_length, source_order, edge_order,
+                        egress.exposed_port, tip, route.points)
+                if box_best is None or rank < box_best[0]:
+                    # A valid bounded-prefix route is a fit, not a failed
+                    # search. Exhaustion means no fit before the state cap.
+                    box_best = (rank, RoutedTailSearchResult(
+                        box, tip, egress, route, points, box_trials, route_states, False))
+                if exhausted:
+                    return box_best[1]
+        if box_best is not None:
+            # Egress and target order are ranked only after route shape and length.
+            return box_best[1]
+    return RoutedTailSearchResult(None, None, None, None, (), box_trials, route_states, False)

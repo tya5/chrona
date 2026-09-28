@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from itertools import product
 
 from chrona.presentation.layout.model import geometry_sum
 from chrona.presentation.layout.obstacles import (
@@ -95,6 +96,89 @@ def route_annotation_candidate(start: tuple[float, float], end: tuple[float, flo
             return AnnotationRouteTrial(points, commands, topology,
                                         tuple(item[2] for item in crossings))
     return None
+
+
+def route_strict_bounded(start: tuple[float, float], end: tuple[float, float],
+                         index: SurfaceObstacleIndex, *,
+                         bounds: tuple[float, float, float, float],
+                         port_ids: tuple[str, ...] = (), limit: int = 1024,
+                         max_bends: int, max_detour_ratio: float
+                         ) -> tuple[AnnotationRouteTrial | None, int, bool]:
+    """Search finite obstacle-envelope corridors, returning tried states and exhaustion.
+
+    Axis candidates come from the endpoints and every expanded obstacle envelope;
+    no nearest-axis truncation is used. Paths are yielded in deterministic order
+    and the separate connector-state budget applies to examined paths.
+    """
+    if limit < 1:
+        raise ValueError("E_LAYOUT_ANNOTATION_SEARCH_INPUT")
+    left, top, right, bottom = bounds
+    xs = {start[0], end[0]}
+    ys = {start[1], end[1]}
+    for item in index.all():
+        x1, y1, x2, y2 = obstacle_envelope(item.geometry)
+        xs.update((x1 - 2.0, x2 + 2.0))
+        ys.update((y1 - 2.0, y2 + 2.0))
+    xs = tuple(sorted((x for x in xs if left <= x <= right),
+                      key=lambda x: (min(abs(x - start[0]), abs(x - end[0])),
+                                    abs(x - end[0]), x)))
+    ys = tuple(sorted((y for y in ys if top <= y <= bottom),
+                      key=lambda y: (min(abs(y - start[1]), abs(y - end[1])),
+                                    abs(y - end[1]), y)))
+    candidates: list[tuple[tuple[float, float], ...]] = []
+    seen = set()
+
+    def add(points: tuple[tuple[float, float], ...]) -> None:
+        compact = []
+        for point in points:
+            if compact and compact[-1] == point:
+                continue
+            if len(compact) >= 2 and ((compact[-2][0] == compact[-1][0] == point[0])
+                                      or (compact[-2][1] == compact[-1][1] == point[1])):
+                compact[-1] = point
+            else:
+                compact.append(point)
+        path = tuple(compact)
+        if (len(path) >= 2 and path[0] == start and path[-1] == end and path not in seen
+                and len(candidates) <= limit):
+            seen.add(path)
+            candidates.append(path)
+
+    if start[0] == end[0] or start[1] == end[1]:
+        add((start, end))
+    # One and two corridor coordinates cover all orthogonal paths up to four bends.
+    for x in xs:
+        add((start, (x, start[1]), (x, end[1]), end))
+        if len(candidates) > limit:
+            break
+    for y in ys:
+        if len(candidates) > limit:
+            break
+        add((start, (start[0], y), (end[0], y), end))
+    if len(candidates) <= limit:
+        for x, y in product(xs, ys):
+            add((start, (x, start[1]), (x, y), (end[0], y), end))
+            if len(candidates) > limit:
+                break
+            add((start, (start[0], y), (x, y), (x, end[1]), end))
+            if len(candidates) > limit:
+                break
+    examined = min(len(candidates), limit)
+    exhausted = len(candidates) > limit
+    valid = []
+    for points in candidates[:limit]:
+        if (all(a != b and (a[0] == b[0] or a[1] == b[1])
+                for a, b in zip(points, points[1:]))
+                and relation_route_quality(points, max_bends=max_bends,
+                                   max_detour_ratio=max_detour_ratio)
+                and not any(index.collisions(ObstacleSegment(a, b), port_ids=port_ids)
+                            for a, b in zip(points, points[1:]))):
+            length = geometry_sum(abs(b[0] - a[0]) + abs(b[1] - a[1])
+                                  for a, b in zip(points, points[1:]))
+            valid.append(((len(points) - 2, length, points),
+                          AnnotationRouteTrial(points, (), "strict")))
+    return (min(valid, key=lambda item: item[0])[1] if valid else None,
+            examined, exhausted)
 
 
 def _sparse_elbows(start: tuple[float, float], end: tuple[float, float],

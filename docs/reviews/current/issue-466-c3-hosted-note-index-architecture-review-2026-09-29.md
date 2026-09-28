@@ -1,0 +1,3 @@
+# #466 C3 hosted note-index architecture review
+
+**Reviewed:** [correction](../../design/issue-466-c3-hosted-note-index-correction-2026-09-29.md), lane-emission closure and Scene part projection, Specs 08/33, #505 placement foundation, #464 glyph treatment, and #466 candidate/contrast designs. **Decision:** accepted. Abstract marks remain Layout anchors; emitted facets provide the sole Scene host IDs. Resolving the link after lane-emission closure and before the placement result keeps identity composition in Layout, with Scene retaining its strict existing validation. Selecting the first painted facet is deterministic for built-in and Theme glyph marks; it does not alter geometry or paint. No unrelated policy or adapter change is needed.

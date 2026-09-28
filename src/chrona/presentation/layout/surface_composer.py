@@ -28,7 +28,9 @@ from chrona.presentation.layout.annotations import (
     AnnotationBox, annotation_rail_candidates, nearest_box_port, place_annotation_rail, project_annotation_box,
     resolve_annotation_anchor, route_annotation_leader,
 )
-from chrona.presentation.layout.annotation_search import lattice_positions, nearest_free_box, nearest_free_tail_box
+from chrona.presentation.layout.annotation_search import (
+    lattice_positions, nearest_free_box, nearest_free_tail_box, nearest_free_routed_tail_box,
+)
 from chrona.presentation.layout.balloon_geometry import balloon_outline
 from chrona.presentation.layout.labels import LabelPlacement
 from chrona.presentation.layout.annotation_topology import (
@@ -257,6 +259,37 @@ def _lane_emissions(projection: Any, review_rows: tuple[Any, ...], marks: list[M
     return tuple(LaneEmissionPlacement(kind, placement_id, row_id, member_id, purpose,
                                        tuple(facets))
                  for (kind, placement_id, row_id, member_id, purpose), facets in grouped.items())
+
+
+def _complete_hosted_text_identity(
+        text: tuple[TextPlacement, ...], marks: tuple[MarkPlacement, ...],
+        lane_emissions: tuple[LaneEmissionPlacement, ...]) -> tuple[TextPlacement, ...]:
+    """Resolve abstract lane-mark hosts to their first emitted glyph part."""
+    emitted_mark_hosts: dict[str, str] = {}
+    for emission in lane_emissions:
+        if emission.placement_type != "mark":
+            continue
+        ordered = sorted(emission.facets, key=lambda facet: (
+            -1 if facet.part_index is None else facet.part_index, facet.primitive_id))
+        host_id = ordered[0].primitive_id
+        previous = emitted_mark_hosts.setdefault(emission.placement_id, host_id)
+        if previous != host_id:
+            raise LayoutError("E_LAYOUT_HOST_EMISSION_INVALID", emission.placement_id)
+    lane_marks_by_id = {mark.placement_id: mark for mark in marks if mark.lane_row_id is not None}
+    completed = []
+    for placed in text:
+        host_id = placed.host_placement_id
+        if host_id not in lane_marks_by_id:
+            completed.append(placed)
+            continue
+        mark = lane_marks_by_id[host_id]
+        emitted_id = emitted_mark_hosts.get(host_id)
+        if (emitted_id is None or placed.slot_id != mark.slot_id
+                or placed.paint_order <= mark.paint_order):
+            raise LayoutError("E_LAYOUT_HOST_EMISSION_INVALID", placed.placement_id)
+        completed.append(replace(placed, host_placement_id=emitted_id)
+                         if emitted_id != host_id else placed)
+    return tuple(completed)
 
 
 def _lane_label_candidates(side: str, fallback: tuple[str, ...], preferred: str | None) -> tuple[str, ...]:
@@ -2443,6 +2476,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             width = annotation_leading + text_width + annotation_trailing
             annotation_lines = (content,)
             annotation_search_count = 0
+            tail_box_position_limit = tail_box_positions_examined = 0
+            tail_route_state_limit = tail_route_states_examined = 0
+            tail_route_search_exhausted = False
+            tail_topology: str | None = None
+            routed_tail_tip: tuple[float, float] | None = None
             selected_leader: tuple[ConnectorEgress, AnnotationRouteTrial,
                                    tuple[tuple[float, float], ...],
                                    tuple[tuple[float, float], ...]] | None = None
@@ -2594,9 +2632,50 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                     obstacle_classes=candidate.obstacles.classes, corner_radius=corner_radius,
                                     tail_base=tail_base, host_id=host_id, side_of_as_of=as_of_side_constraint)
                                 annotation_search_count += trials
+                                tail_box_position_limit = candidate.search.max_positions
+                                tail_box_positions_examined = trials
                                 if free_box is not None:
                                     box = AnnotationBox(resolved, LabelPlacement(rung, free_box, False), False)
                                     selected_rung, tail_tip = rung, trial_tip
+                                    tail_topology = "direct-tail"
+                                elif anchor_host is not None:
+                                    anchor_instance = anchor_host.placement_id.split(":", 1)[1]
+                                    anchor_row = instance_rows.get(anchor_instance)
+                                    viewport = request.layout_manifest.viewport
+                                    routed = nearest_free_routed_tail_box(
+                                        region=region_bounds, anchor=anchor_host,
+                                        endpoint=resolved.endpoint,
+                                        siblings=comparison_clusters.get(
+                                            (anchor_host.source_ref, anchor_row), (anchor_host,)),
+                                        box_size=annotation_size,
+                                        max_positions=candidate.search.max_positions,
+                                        obstacles=surface_obstacles,
+                                        obstacle_classes=candidate.obstacles.classes,
+                                        corner_radius=corner_radius, tail_base=tail_base,
+                                        content_bounds=(
+                                            float(viewport.inline), float(viewport.block),
+                                            float(viewport.inline + viewport.inline_size),
+                                            float(viewport.block + viewport.block_size)),
+                                        host_id=host_id, side_of_as_of=as_of_side_constraint,
+                                        max_bends=layout_manifest.annotation_max_bends,
+                                        max_detour_ratio=layout_manifest.annotation_max_detour_ratio)
+                                    annotation_search_count += routed.box_trials + routed.route_states
+                                    tail_box_positions_examined = max(trials, routed.box_trials)
+                                    tail_route_state_limit = 1024
+                                    tail_route_states_examined = routed.route_states
+                                    tail_route_search_exhausted = routed.exhausted and routed.box is None
+                                    if routed.exhausted and routed.box is None:
+                                        diagnostics.append(
+                                            f"W_LAYOUT_ANNOTATION_ROUTE_SEARCH_EXHAUSTED:{annotation_id}:{rung}")
+                                    if routed.box is not None and routed.egress is not None and routed.route is not None:
+                                        box = AnnotationBox(resolved, LabelPlacement(rung, routed.box, False), False)
+                                        selected_rung, tail_tip = rung, routed.tip
+                                        routed_tail_tip = routed.tip
+                                        tail_topology = "routed-tail"
+                                        prefix = (routed.egress.corridor if routed.egress.corridor
+                                                  else (routed.egress.exposed_port,))
+                                        selected_leader = (routed.egress, routed.route,
+                                                           routed.full_points, prefix)
                             else:
                                 anchor_center = (anchor_bounds.x + anchor_bounds.width / 2,
                                                  anchor_bounds.y + anchor_bounds.height / 2)
@@ -2627,6 +2706,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                 break
                         if box is not None:
                             break
+                    if (box is not None and annotation.candidates
+                            and selected_rung != candidates[0].candidate_id):
+                        diagnostics.append(
+                            f"W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK:{annotation_id}:{selected_rung}")
                     if box is None:
                         if "suppress" in ladder:
                             placement_decisions.append(PlacementDecision(f"annotation:{annotation_id}", annotation_id,
@@ -2668,10 +2751,16 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                     placement_decisions.append(PlacementDecision(f"annotation:{annotation_id}", annotation_id,
                                                                  tuple(ladder), selected_rung, "placed",
                                                                  search_count=annotation_search_count,
-                                                                 selected_topology=(selected_leader[1].topology
-                                                                                    if selected_leader else None),
+                                                                 selected_topology=(tail_topology or
+                                                                                    (selected_leader[1].topology
+                                                                                     if selected_leader else None)),
                                                                  crossing_ids=(selected_leader[1].crossing_ids
-                                                                               if selected_leader else ())))
+                                                                               if selected_leader else ()),
+                                                                 box_position_limit=tail_box_position_limit,
+                                                                 box_positions_examined=tail_box_positions_examined,
+                                                                 route_state_limit=tail_route_state_limit,
+                                                                 route_states_examined=tail_route_states_examined,
+                                                                 route_search_exhausted=tail_route_search_exhausted))
                 else:
                     box = project_annotation_box(annotation, resolved, anchor_bounds=anchor_bounds, text_size=(width, size * line_height),
                                                  candidate_sides=(annotation.side,),
@@ -2792,8 +2881,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                                  visual.decorative, icon_bounds, "labelVisual",
                                                                  icon_width / icon.viewport[0], annotation_slot_id,
                                                                  paint_order=note_index_text.paint_order))
-            if box.leader_required and presentation.leader_semantic_id is not None:
-                target = nearest_box_port(bounds, (anchor_bounds.x + anchor_bounds.width / 2, anchor_bounds.y + anchor_bounds.height / 2))
+            if (box.leader_required or routed_tail_tip is not None) and presentation.leader_semantic_id is not None:
+                target = (routed_tail_tip if routed_tail_tip is not None else nearest_box_port(
+                    bounds, (anchor_bounds.x + anchor_bounds.width / 2,
+                             anchor_bounds.y + anchor_bounds.height / 2)))
                 if anchor_host is None:
                     raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
                 target_port_obstacle_id = f"port:annotation:{annotation_id}:target"
@@ -2996,7 +3087,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                               "completed lane mark band falls outside its row bounds") from error
     lane_emissions = _lane_emissions(projection, tuple(review_rows), marks, text,
                                      shapes, completed_icons, request.theme_tokens)
-    placement = SurfacePlacement(text=tuple(text), slots=slots, rows=rows, columns=column_placements,
+    # Abstract mark IDs remain Layout anchors; hosted text needs the actual
+    # Scene primitive ID completed by this typed lane-emission closure.
+    completed_text = _complete_hosted_text_identity(tuple(text), tuple(marks), lane_emissions)
+    placement = SurfacePlacement(text=completed_text, slots=slots, rows=rows, columns=column_placements,
                                  groups=tuple(groups), scale=scale,
                                  marks=tuple(marks), shapes=tuple(shapes), relations=tuple(relations),
                                  decisions=tuple(placement_decisions),
