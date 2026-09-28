@@ -1,0 +1,3 @@
+# #466 C4 required note-text architecture review
+
+**Reviewed:** [amendment](../../design/issue-466-c4-required-note-text-amendment-2026-09-29.md), C4 design/review/plan, Specs 07/08, semantic registry, Theme closure, typed/serialized Scene contrast and adapter ownership. **Decision:** accepted. The generic STATE_TEXT treatment set is intentionally broader for other roles, so enforce the note-specific `required` invariant at each public/typed boundary rather than changing every state-text role. This closes the 3.0:1 bypass without changing note geometry, Project/View data, Theme color resolution, or renderer logic. No unresolved architectural dependency beyond the existing C3 public gate.

@@ -332,8 +332,11 @@ ground. Findings identify the selected ground primitive and color.
 
 For `annotation-note-text`, the generic ground search is not sufficient by
 itself: a prior Rect with no fill is skipped and generic search may then select
-a lower host or canvas. C4 therefore requires a prior `annotation-note-box`
-with the same `sourceRef`, containing the note text's sample point and carrying
+a lower host or canvas. C4 therefore requires `contrastTreatment: required`
+on typed and serialized note-text primitives; missing or weaker treatment is
+invalid even if a generic state-text evaluator would allow a 3.0:1
+`deemphasized` case. C4 also requires a prior `annotation-note-box` with the
+same `sourceRef`, containing the note text's sample point and carrying
 opaque flat fill. Missing pair/fill or non-opaque fill yields
 `E_SCENE_CONTRAST_GROUND_UNSUPPORTED`; it cannot fall through to another host
 or the canvas. This pairs the reported ground with the declared content area

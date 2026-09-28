@@ -199,6 +199,9 @@ The note annotation roles have explicit contrast responsibilities. The
 `contrastTreatment: required`; its Theme/Scheme closure is checked against the
 4.5:1 state-text floor on the resolved Scheme surface, and its completed Scene
 paint is checked against its actual declared host ground. The
+effective note-text role MUST reject a missing or weaker treatment after
+inheritance and Scheme insertion; the generic state-text treatment set does
+not relax this note-specific contract. The
 `annotation-note-box` role is a decoration and participates in the 1.10:1
 decoration visibility policy and corpus witness. These classes are registered
 semantic facts, not inferred from the role spelling or paint.
