@@ -190,6 +190,33 @@ def test_public_lane_layout_projects_fixed_membership(context_name):
     )
 
 
+@pytest.mark.parametrize("context_name", ["02-programme-board", "11-overlay-briefing", "12-glyph-gates"])
+def test_public_lane_scene_routes_never_cross_required_lane_or_member_labels(context_name):
+    """Check actual public Scene geometry, including the previously omitted 11."""
+    with tempfile.TemporaryDirectory() as temporary:
+        closure, snapshot = _closure(Path(temporary), context_name)
+        surface = render_review(_request(closure, snapshot)).surface
+
+    assert surface.lane_mode == "lanes"
+    assert surface.lane_clearance is not None
+    clearance = surface.lane_clearance
+    labels = [
+        ObstacleRect(item.bounds[0] - clearance, item.bounds[1] - clearance,
+                     item.bounds[0] + item.bounds[2] + clearance,
+                     item.bounds[1] + item.bounds[3] + clearance)
+        for item in surface.primitives
+        if item.kind == "Text" and item.purpose in {
+            "member-label", "finish-delta", "table-cell", "group-header",
+        } and item.bounds[2] > 0 and item.bounds[3] > 0
+    ]
+    relations = [item for item in surface.primitives if item.purpose == "dependency"]
+    assert labels and relations
+    for relation in relations:
+        for start, end in zip(relation.points, relation.points[1:]):
+            assert all(not obstacles_intersect(ObstacleSegment(start, end), label)
+                       for label in labels), (context_name, relation.scene_id)
+
+
 def test_lane_scene_membership_is_theme_independent_for_same_project_and_view():
     outputs = []
     for context_name in ("02-programme-board", "12-glyph-gates"):
