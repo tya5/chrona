@@ -17,17 +17,16 @@ def test_crowded_halcyon_plot_selects_declared_rail_with_named_diagnostic(tmp_pa
 
     example = ROOT / "examples/halcyon-1"
     view = yaml.safe_load((example / "views/02-programme-board.yaml").read_text(encoding="utf-8"))
-    station = next(item for item in view["body"]["annotations"] if item["id"] == "station-note")
-    view["body"]["annotations"] = [station]
-    station["candidates"][0]["search"]["maxPositions"] = 1
-    station["candidates"].append({
-        "id": "rail-after-crowding",
-        "region": {"kind": "slot", "source": "annotations"},
-        "search": {"kind": "row-aligned"},
-        "obstacles": {"classes": ["mark", "text", "label-visual", "dependency-route",
-                                  "leader-route", "annotation-box", "port", "rule"]},
-        "connector": {"kind": "leader"},
-    })
+    for note in view["body"]["annotations"]:
+        note["candidates"][0]["search"]["maxPositions"] = 1
+        note["candidates"].append({
+            "id": "rail-after-crowding",
+            "region": {"kind": "slot", "source": "annotations"},
+            "search": {"kind": "row-aligned"},
+            "obstacles": {"classes": ["mark", "text", "label-visual", "dependency-route",
+                                      "leader-route", "annotation-box", "port", "rule"]},
+            "connector": {"kind": "leader"},
+        })
     view_path = tmp_path / "crowded-view.yaml"
     view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
 
@@ -68,9 +67,14 @@ def test_crowded_halcyon_plot_selects_declared_rail_with_named_diagnostic(tmp_pa
         scheduler=ReferenceScheduler(), renderer=V05SvgRenderer(),
         draft_auto_block=draft.auto_block,
     ))
-    decision = next(item for item in compositions[0].placement.decisions
-                    if item.decision_id == "annotation:station-note")
-    assert decision.selected_rung == "rail-after-crowding"
-    assert decision.search_count > 1
-    assert "W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK:station-note:rail-after-crowding" in rendered.scene.diagnostics
-    assert b'data-scene-id="annotation-box:station-note"' in rendered.artifact.content
+    decisions = {item.source_ref: item for item in compositions[0].placement.decisions
+                 if item.decision_id.startswith("annotation:")}
+    assert set(decisions) == {"window-note", "tvac-note", "station-note"}
+    rail_ids = {note_id for note_id, decision in decisions.items()
+                if decision.selected_rung == "rail-after-crowding"}
+    assert rail_ids
+    for note_id in rail_ids:
+        decision = decisions[note_id]
+        assert decision.search_count > 1
+        assert f"W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK:{note_id}:rail-after-crowding" in rendered.scene.diagnostics
+        assert f'data-scene-id="annotation-box:{note_id}"'.encode() in rendered.artifact.content
