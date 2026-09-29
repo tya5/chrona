@@ -183,123 +183,90 @@ def test_cli_names_colliding_scale_values(tmp_path, monkeypatch, capsys) -> None
     assert [(item["values"], item["vision"], item["deltaE"]) for item in collisions] == [(["bus", "launch"], "normal", 0.0)]
 
 
-def test_bundled_default_guides_every_bar_and_names_it_or_reports_suppression(tmp_path, monkeypatch) -> None:
+def test_bundled_default_uses_task_and_planned_date_columns(tmp_path, monkeypatch) -> None:
     scene, svg_path = _render_project(
         tmp_path, monkeypatch, "bundled-default",
         ROOT / "examples/halcyon-1/project.yaml",
         ROOT / "examples/halcyon-1/actual.yaml",
     )
-    surface = scene["surfaces"][0]
-    timeline = next(slot for slot in surface["slots"] if slot["id"] == "timeline")["bounds"]
-    rows = {row["id"]: row["bounds"] for row in surface["rows"]}
     primitives = {item["id"]: item for item in _primitives(scene)}
     svg = svg_path.read_text(encoding="utf-8")
     svg_ids = {value for element in ET.fromstring(svg).iter()
                for value in (element.get("id"), element.get("data-scene-id")) if value}
-    bands = {key: item for key, item in primitives.items() if key.startswith("row-band:")}
-    planned = {key: item for key, item in primitives.items() if key.startswith("planned:")}
-    assert len(planned) == 26
-    assert bands and all(item["bounds"]["inline"] + item["bounds"]["inlineSize"] >=
-                         timeline["inline"] + timeline["inlineSize"] - 0.01
-                         for item in bands.values())
-    # Alternate bands and their shared edges give continuous guidance to all rows.
-    edges = {round(item["bounds"]["block"], 3) for item in bands.values()} | {
-        round(item["bounds"]["block"] + item["bounds"]["blockSize"], 3)
-        for item in bands.values()
-    }
-    assert all(round(bounds["block"], 3) in edges or
-               round(bounds["block"] + bounds["blockSize"], 3) in edges
-               for bounds in rows.values())
-    assert svg.count('id="row-band:') == len(bands)
-
-    suppressed = {diagnostic.split("W_LAYOUT_LABEL_SUPPRESSED:", 1)[1]
-                  for diagnostic in scene["diagnostics"]
-                  if diagnostic.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")}
-    labels = {key: item for key, item in primitives.items() if key.startswith("member-label:")}
-    assert suppressed.isdisjoint(labels)
-    expected_members = {item["memberId"] for item in surface["laneMembers"]}
-    for key, mark in planned.items():
-        assert mark["laneMemberId"] in expected_members
-    assert len(labels) + len(suppressed) == len(expected_members)
-    for key, item in labels.items():
-        label = item["bounds"]
-        mark = next(mark for mark in planned.values()
-                    if mark["laneMemberId"] == item["laneMemberId"])
-        host = mark["bounds"]
-        centre = host["block"] + host["blockSize"] / 2
-        row = next(bounds for bounds in rows.values()
-                   if bounds["block"] <= centre <= bounds["block"] + bounds["blockSize"])
-        assert row["block"] - 0.01 <= label["block"]
-        assert label["block"] + label["blockSize"] <= row["block"] + row["blockSize"] + 0.01
-        assert (label["inline"] >= host["inline"] + host["inlineSize"] - 0.5 or
-                label["inline"] + label["inlineSize"] <= host["inline"] + 0.5)
-        assert key in svg_ids
-    for key in suppressed:
-        assert key not in primitives
-        assert f'id="{key}"' not in svg
-    aggregate = [item for item in scene["diagnostics"]
-                 if item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:")]
-    if suppressed:
-        assert len(aggregate) == 1
-        assert aggregate[0].endswith(f"count={len(suppressed)}")
-    else:
-        assert not aggregate
-
-    # Planned dates may change without changing the presentation contract.
-    # Lane-mode deltas are part of member labels, not independent Scene
-    # primitives. Their placement is covered by the same row containment test.
-    assert not [key for key in primitives if key.startswith("variance:")]
+    columns = {item["text"] for item in primitives.values()
+               if item.get("purpose") == "table-column-label"}
+    cells = {item["id"]: item["text"] for item in primitives.values()
+             if item.get("purpose") == "table-cell"}
+    assert columns == {"Task", "Plan"}
+    assert len([key for key in cells if key.endswith(":Task")]) == 26
+    assert len([key for key in cells if key.endswith(":Plan")]) == 26
+    assert all(cells[key].strip() for key in cells if key.endswith(":Plan"))
+    assert "Owner" not in columns
+    assert "Launch campaign" in {text for key, text in cells.items() if key.endswith(":Task")}
+    assert all(key in svg_ids for key in primitives if key.startswith("cell:"))
 
 
-def test_init_starter_bundled_default_guides_and_names_every_bar(tmp_path, monkeypatch) -> None:
+def test_init_starter_default_uses_task_and_planned_date_columns(tmp_path, monkeypatch) -> None:
     starter = tmp_path / "starter"
     monkeypatch.setattr(sys, "argv", ["chrona", "init", str(starter)])
     main()
     scene, svg_path = _render_project(tmp_path, monkeypatch, "starter-default",
                                       starter / "project.yaml", starter / "actual.yaml")
-    surface = scene["surfaces"][0]
-    timeline = next(slot for slot in surface["slots"] if slot["id"] == "timeline")["bounds"]
-    rows = {row["id"]: row["bounds"] for row in surface["rows"]}
     primitives = {item["id"]: item for item in _primitives(scene)}
-    bands = {key: item for key, item in primitives.items() if key.startswith("row-band:")}
-    labels = {key: item for key, item in primitives.items() if key.startswith("member-label:")}
     svg = svg_path.read_text(encoding="utf-8")
     svg_ids = {value for element in ET.fromstring(svg).iter()
                for value in (element.get("id"), element.get("data-scene-id")) if value}
-    planned = {key: item for key, item in primitives.items() if key.startswith("planned:")}
-    assert len(planned) == 3
-    assert rows and bands
-    assert all(item["bounds"]["inline"] + item["bounds"]["inlineSize"] >=
-               timeline["inline"] + timeline["inlineSize"] - 0.01
-               for item in bands.values())
-    edges = {round(item["bounds"]["block"], 3) for item in bands.values()} | {
-        round(item["bounds"]["block"] + item["bounds"]["blockSize"], 3)
-        for item in bands.values()
-    }
-    assert all(round(bounds["block"], 3) in edges or
-               round(bounds["block"] + bounds["blockSize"], 3) in edges
-               for bounds in rows.values())
-    assert {item["laneMemberId"] for item in labels.values()} == {
-        item["memberId"] for item in surface["laneMembers"]
-    }
-    for key, item in labels.items():
-        label = item["bounds"]
-        mark = next(mark for mark in primitives.values()
-                    if mark.get("purpose") == "planned"
-                    and mark.get("laneMemberId") == item["laneMemberId"])
-        host = mark["bounds"]
-        centre = host["block"] + host["blockSize"] / 2
-        row = next(bounds for bounds in rows.values()
-                   if bounds["block"] <= centre <= bounds["block"] + bounds["blockSize"])
-        assert row["block"] - 0.01 <= label["block"]
-        assert label["block"] + label["blockSize"] <= row["block"] + row["blockSize"] + 0.01
-        assert (label["inline"] >= host["inline"] + host["inlineSize"] - 0.5 or
-                label["inline"] + label["inlineSize"] <= host["inline"] + 0.5)
-        assert key in svg_ids
-    assert not [key for key in primitives if key.startswith("variance:")]
-    assert not [item for item in scene["diagnostics"]
-                if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")]
-    assert svg.count('id="row-band:') == len(bands)
+    columns = {item["text"] for item in primitives.values()
+               if item.get("purpose") == "table-column-label"}
+    cells = {item["id"]: item["text"] for item in primitives.values()
+             if item.get("purpose") == "table-cell"}
+    assert columns == {"Task", "Plan"}
+    assert len([key for key in cells if key.endswith(":Task")]) == 3
+    assert len([key for key in cells if key.endswith(":Plan")]) == 3
+    assert all(key in svg_ids for key in primitives if key.startswith("cell:"))
+    assert "Owner" not in svg
+
+
+def test_halcyon_readable_default_mirror_renders_task_and_plan_columns(tmp_path, monkeypatch) -> None:
+    packaged = ROOT / "src/chrona/resources/presets/bundles/editorial-readable-default/view.yaml"
+    mirror = ROOT / "examples/halcyon-1/views/editorial-readable-default.yaml"
+    assert packaged.read_bytes() == mirror.read_bytes()
+    scene, _ = _render_project(tmp_path, monkeypatch, "halcyon-mirror-default",
+                               ROOT / "examples/halcyon-1/project.yaml",
+                               ROOT / "examples/halcyon-1/actual.yaml",
+                               "--view", str(mirror))
+    primitives = _primitives(scene)
+    columns = {item["text"] for item in primitives
+               if item.get("purpose") == "table-column-label"}
+    assert columns == {"Task", "Plan"}
+    assert "Owner" not in columns
+
+
+def test_attached_milestones_default_keeps_host_title_visible(tmp_path, monkeypatch) -> None:
+    example = ROOT / "examples/attached-milestones"
+    scene, svg_path = _render_project(tmp_path, monkeypatch, "attached-default",
+                                      example / "project.yaml", example / "actual.yaml")
+    primitives = _primitives(scene)
+    task_cells = [item["text"] for item in primitives
+                  if item.get("purpose") == "table-cell" and item["id"].endswith(":Task")]
+    svg_text = "".join(ET.fromstring(svg_path.read_text(encoding="utf-8")).itertext())
+    assert "Launch campaign" in task_cells
+    assert "Launch campaign" in svg_text
+
+
+def test_public_halcyon_03_lane_table_uses_stable_nonblank_lane_identity() -> None:
+    scene_path = ROOT / "examples/halcyon-1/generated/03-launch-campaign.scene.json"
+    svg_path = ROOT / "examples/halcyon-1/generated/03-launch-campaign.svg"
+    scene = json.loads(scene_path.read_text(encoding="utf-8"))
+    primitives = _primitives(scene)
+    labels = [item["text"] for item in primitives
+              if item.get("purpose") == "table-cell" and item["id"].endswith(":Lane")]
+    svg_text = "".join(ET.fromstring(svg_path.read_text(encoding="utf-8")).itertext())
+    assert labels
+    assert all(label.strip() for label in labels)
+    assert all(label.startswith("Lane ") for label in labels)
+    assert len(labels) == len(set(labels))
+    assert all(label in svg_text for label in labels)
 
 
 def test_pinned_default_draft_guides_every_bar_across_the_plot_and_names_it_at_its_end(tmp_path, monkeypatch) -> None:
