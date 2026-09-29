@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass, field, replace
-from decimal import Decimal
+from decimal import Decimal, ROUND_CEILING
 from importlib.metadata import version
 from pathlib import Path
 from typing import Any, Mapping
@@ -19,7 +19,8 @@ from chrona.core.diagnostics import Diagnostic
 from chrona.usecases.warning_ledger import RenderWarning, collect_render_warnings
 from chrona.core.ports import RenderArtifact, Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
-from chrona.presentation.layout.engine import resolve_content_block_extent, solve_layout
+from chrona.presentation.layout.engine import (measure_natural_normal_flow_block,
+                                               resolve_content_block_extent, solve_layout)
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.presentation import table_text_line_block
 from chrona.presentation.layout.profile import resolve_layout_profile
@@ -253,6 +254,9 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     resolved_layout = resolve_layout_profile(layout, available_sources=set(source_inputs), theme=theme)
     viewport = {"inlineSize": environment.viewport_inline, "blockSize": environment.viewport_block}
     measurements = _slot_measurements(resolved_layout.profile["root"], measured)
+    natural_block_floor = max(1, int(measure_natural_normal_flow_block(
+        resolved_layout, viewport_inline=viewport["inlineSize"], measurements=measurements
+    ).to_integral_value(rounding=ROUND_CEILING))) if request.draft_auto_block else viewport["blockSize"]
     required_block = None
     if view.surface == "table-timeline":
         timeline_requirement = timeline_content_block_requirement(
@@ -265,8 +269,10 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         )
         initial_resolution = resolve_content_block_extent(
             resolved_layout, viewport_inline=viewport["inlineSize"],
-            seed_block=viewport["blockSize"], measurements=measurements,
+            minimum_block=natural_block_floor if request.draft_auto_block else viewport["blockSize"],
+            measurements=measurements,
             required_blocks={"timeline": timeline_requirement},
+            content_sized=request.draft_auto_block,
         )
         required_block = initial_resolution.extent
         viewport["blockSize"] = required_block
@@ -277,6 +283,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     manifest = solve_layout(
         resolved_layout, viewport_inline=viewport["inlineSize"],
         viewport_block=viewport["blockSize"], measurements=measurements,
+        content_sized=request.draft_auto_block,
     )
 
     fixed_lane_preflight = None
@@ -296,8 +303,10 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         )
         exact_resolution = resolve_content_block_extent(
             resolved_layout, viewport_inline=viewport["inlineSize"],
-            seed_block=viewport["blockSize"], measurements=measurements,
+            minimum_block=natural_block_floor if request.draft_auto_block else viewport["blockSize"],
+            measurements=measurements,
             required_blocks={"timeline": fixed_lane_preflight.natural_block_requirement},
+            content_sized=request.draft_auto_block,
         )
         exact_block = exact_resolution.extent
         capacity_short_sources = tuple(CapacitySourceEvidence(
@@ -308,6 +317,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             manifest = solve_layout(
                 resolved_layout, viewport_inline=viewport["inlineSize"],
                 viewport_block=viewport["blockSize"], measurements=measurements,
+                content_sized=request.draft_auto_block,
             )
 
     surface_content = normalize_v05_surface_content(

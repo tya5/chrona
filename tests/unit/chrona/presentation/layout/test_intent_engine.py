@@ -1,11 +1,13 @@
-from decimal import Decimal
+from decimal import ROUND_CEILING, Decimal
 from copy import deepcopy
 from pathlib import Path
 
 import pytest
 import yaml
 
-from chrona.presentation.layout.engine import resolve_content_block_extent, solve_layout
+from chrona.presentation.layout.engine import (_unresolved_normal_flow_warnings,
+                                               measure_natural_normal_flow_block,
+                                               resolve_content_block_extent, solve_layout)
 from chrona.presentation.layout.model import LayoutError, Measurement
 from chrona.presentation.layout.profile import resolve_layout_profile
 
@@ -51,7 +53,7 @@ def test_center_fraction_content_and_baseline_reflow_without_author_coordinates(
 def test_content_requirement_reallocates_the_whole_normal_flow_profile():
     resolved = profile()
     required = Decimal(850)
-    extent = resolve_content_block_extent(resolved, viewport_inline=1600, seed_block=900,
+    extent = resolve_content_block_extent(resolved, viewport_inline=1600, minimum_block=900,
                                           measurements=MEASUREMENTS,
                                           required_blocks={"timeline": required})
     assert extent.extent > 900
@@ -64,6 +66,256 @@ def test_content_requirement_reallocates_the_whole_normal_flow_profile():
     assert placed["notes"].block >= placed["table"].block + placed["table"].block_size
 
 
+def test_auto_content_sizing_uses_positive_floor_and_rounds_deterministically():
+    resolved = profile()
+    required = Decimal("300.2")
+    natural_floor = max(1, int(measure_natural_normal_flow_block(
+        resolved, viewport_inline=1600, measurements=MEASUREMENTS
+    ).to_integral_value(rounding="ROUND_CEILING")))
+    first = resolve_content_block_extent(resolved, viewport_inline=1600, minimum_block=natural_floor,
+                                        measurements=MEASUREMENTS,
+                                        required_blocks={"timeline": required}, content_sized=True)
+    second = resolve_content_block_extent(resolved, viewport_inline=1600, minimum_block=natural_floor,
+                                         measurements=MEASUREMENTS,
+                                         required_blocks={"timeline": required}, content_sized=True)
+    assert 0 < first.extent < 900
+    assert first.extent == second.extent
+    manifest = solve_layout(resolved, viewport_inline=1600, viewport_block=first.extent,
+                            measurements=MEASUREMENTS)
+    assert decisions(manifest)["timeline"].block_size >= required
+
+
+def test_finite_900_minimum_and_profile_intrinsic_minimum_are_preserved():
+    resolved = profile()
+    finite = resolve_content_block_extent(resolved, viewport_inline=1600, minimum_block=900,
+                                          measurements=MEASUREMENTS,
+                                          required_blocks={"timeline": Decimal(300)})
+    assert finite.extent == 900
+    auto_measurements = dict(MEASUREMENTS)
+    auto_measurements["title"] = m(300, 1400)
+    natural_floor = int(measure_natural_normal_flow_block(
+        resolved, viewport_inline=1600, measurements=auto_measurements
+    ).to_integral_value(rounding="ROUND_CEILING"))
+    auto = resolve_content_block_extent(resolved, viewport_inline=1600, minimum_block=natural_floor,
+                                        measurements=auto_measurements,
+                                        required_blocks={"timeline": Decimal(300)}, content_sized=True)
+    assert auto.extent > 900
+    placed = decisions(solve_layout(resolved, viewport_inline=1600, viewport_block=auto.extent,
+                                    measurements=auto_measurements))
+    assert placed["title"].block_size >= Decimal(700)
+
+
+def test_auto_content_requirement_above_900_expands_beyond_intrinsic_floor():
+    resolved = profile()
+    floor = int(measure_natural_normal_flow_block(
+        resolved, viewport_inline=1600, measurements=MEASUREMENTS
+    ).to_integral_value(rounding="ROUND_CEILING"))
+    result = resolve_content_block_extent(resolved, viewport_inline=1600, minimum_block=floor,
+                                          measurements=MEASUREMENTS,
+                                          required_blocks={"timeline": Decimal(850)},
+                                          content_sized=True)
+    assert result.extent > 900
+    placed = decisions(solve_layout(resolved, viewport_inline=1600, viewport_block=result.extent,
+                                    measurements=MEASUREMENTS))
+    assert placed["timeline"].block_size >= Decimal(850)
+
+
+def test_auto_block_growth_ignores_unrelated_inline_only_overflow():
+    resolved = profile()
+    measurements = dict(MEASUREMENTS)
+    measurements["title"] = Measurement(
+        Decimal(2000), Decimal(3000), Decimal(4000),
+        Decimal(20), Decimal(40), Decimal(60),
+    )
+    floor = max(1, int(measure_natural_normal_flow_block(
+        resolved, viewport_inline=1600, measurements=measurements,
+    ).to_integral_value(rounding=ROUND_CEILING)))
+    at_floor = solve_layout(resolved, viewport_inline=1600, viewport_block=floor,
+                            measurements=measurements, content_sized=True)
+    assert any(warning.placement_id == "title"
+               and warning.required_inline > warning.available_inline
+               and warning.required_block <= warning.available_block
+               for warning in at_floor.fit_warnings)
+    result = resolve_content_block_extent(
+        resolved, viewport_inline=1600, minimum_block=floor, measurements=measurements,
+        required_blocks={"timeline": Decimal(850)}, content_sized=True,
+    )
+    assert result.extent > floor
+    assert not result.short_sources
+    final = solve_layout(resolved, viewport_inline=1600, viewport_block=result.extent,
+                         measurements=measurements, content_sized=True)
+    assert decisions(final)["timeline"].block_size >= Decimal(850)
+
+
+def test_auto_empty_requirement_uses_one_unit_floor_and_unknown_source_fails():
+    resolved = profile()
+    empty_measurements = {source: m(0, 0, baseline=0) for source in SOURCES}
+    natural_floor = int(measure_natural_normal_flow_block(
+        resolved, viewport_inline=1600, measurements=empty_measurements
+    ).to_integral_value(rounding="ROUND_CEILING"))
+    empty = resolve_content_block_extent(resolved, viewport_inline=1600, minimum_block=max(1, natural_floor),
+                                         measurements=empty_measurements, required_blocks={},
+                                         content_sized=True)
+    assert 0 < empty.extent < 900
+    with pytest.raises(LayoutError, match="E_LAYOUT_DRAFT_AUTO_UNSUPPORTED"):
+        resolve_content_block_extent(resolved, viewport_inline=1600, minimum_block=1,
+                                     measurements=MEASUREMENTS,
+                                     required_blocks={"missing": Decimal(2)}, content_sized=True)
+
+
+def test_natural_grid_requirement_sums_single_span_track_bases_and_keeps_span_overflow():
+    raw = yaml.safe_load((ROOT / "examples/halcyon-1/layouts/print-portrait.yaml").read_text(encoding="utf-8"))
+    tokens = {name: {"type": "number", "value": value} for name, value in {
+        "panel.timeline": 200, "spacing.m": 16, "spacing.none": 0, "spacing.xl": 32,
+    }.items()}
+    resolved = resolve_layout_profile(raw, available_sources=SOURCES,
+                                      theme={"body": {"values": tokens}})
+    natural = measure_natural_normal_flow_block(resolved, viewport_inline=1600, measurements=MEASUREMENTS)
+    assert natural == Decimal(416)
+
+    # Notes spans both columns, so its oversized inline requirement remains
+    # visible overflow and does not invent extra grid row height.
+    oversized = dict(MEASUREMENTS)
+    oversized["notes"] = Measurement(Decimal(2000), Decimal(4000), Decimal(5000),
+                                     Decimal(16), Decimal(32), Decimal(64),
+                                     Decimal(20), Decimal(20))
+    same_natural = measure_natural_normal_flow_block(resolved, viewport_inline=1600,
+                                                     measurements=oversized)
+    assert same_natural == natural
+    manifest = solve_layout(resolved, viewport_inline=1600, viewport_block=int(natural),
+                            measurements=oversized)
+    assert any(warning.placement_id == "notes" for warning in manifest.fit_warnings)
+
+
+def test_capped_minmax_grid_row_warning_is_valid_fallback_for_auto_closure():
+    raw = yaml.safe_load((ROOT / "conformance/layout-profile-intent-v0.2.yaml").read_text(encoding="utf-8"))
+    child = {"id": "capped-child", "kind": "slot", "source": "title",
+             "inlineSize": "fill", "blockSize": "content",
+             "place": {"inline": "start", "block": "start", "safety": "safe"},
+             "priority": "required", "overflow": "visible-overflow",
+             "cell": {"column": 1, "row": 1}}
+    raw["root"].update(
+        kind="grid", columnTracks=["fill"],
+        rowTracks=[{"minmax": {"min": "content", "max": {"fixed": 180}}}, "fill"],
+        alignItems="stretch", justifyContent="start", children=[child],
+    )
+    raw["requiredThemeTokens"] = ["spacing.l", "spacing.m"]
+    values = {name: {"type": "number", "value": value} for name, value in {
+        "spacing.none": 0, "spacing.s": 8, "spacing.m": 16,
+        "spacing.l": 24, "panel.minimum": 180,
+    }.items()}
+    resolved = resolve_layout_profile(raw, available_sources={"title"},
+                                      theme={"body": {"values": values}})
+    measured = {"capped-child": m(300, 400)}
+    natural = measure_natural_normal_flow_block(resolved, viewport_inline=1600, measurements=measured)
+    assert natural == Decimal(244)
+    manifest = solve_layout(resolved, viewport_inline=1600, viewport_block=int(natural),
+                            measurements=measured, content_sized=True)
+    assert any(warning.placement_id == "capped-child" for warning in manifest.fit_warnings)
+    assert not _unresolved_normal_flow_warnings(resolved, manifest)
+
+
+def test_nested_grid_measurement_sums_rows_for_outer_content_track():
+    raw = yaml.safe_load((ROOT / "conformance/layout-profile-intent-v0.2.yaml").read_text(encoding="utf-8"))
+    title = {"id": "nested-title", "kind": "slot", "source": "title",
+             "inlineSize": "fill", "blockSize": "content",
+             "place": {"inline": "start", "block": "start", "safety": "safe"},
+             "priority": "required", "overflow": "visible-overflow",
+             "cell": {"column": 1, "row": 1}}
+    notes = {"id": "nested-notes", "kind": "slot", "source": "notes",
+             "inlineSize": "fill", "blockSize": "content",
+             "place": {"inline": "start", "block": "start", "safety": "safe"},
+             "priority": "required", "overflow": "visible-overflow",
+             "cell": {"column": 1, "row": 2}}
+    spanning = {"id": "nested-spanning", "kind": "slot", "source": "timeline",
+                "inlineSize": "fill", "blockSize": "content",
+                "place": {"inline": "start", "block": "start", "safety": "safe"},
+                "priority": "required", "overflow": "visible-overflow",
+                "cell": {"column": 1, "row": 1, "rowSpan": 2}}
+    root_spanning = {"id": "root-spanning", "kind": "slot", "source": "legend",
+                     "inlineSize": "fill", "blockSize": "content",
+                     "place": {"inline": "start", "block": "start", "safety": "safe"},
+                     "priority": "required", "overflow": "visible-overflow",
+                     "cell": {"column": 1, "row": 1, "rowSpan": 2}}
+    nested = {"id": "nested-grid", "kind": "grid", "inlineSize": "fill",
+              "blockSize": "content", "columnTracks": ["fill"],
+              "rowTracks": ["content", "content"], "gap": {"token": "spacing.m"},
+              "padding": {"token": "spacing.none"}, "alignItems": "stretch",
+              "justifyContent": "start",
+              "children": [title, notes, spanning]}
+    raw["root"].update(kind="grid", columnTracks=["fill"], rowTracks=["content", {"fixed": 0}],
+                        alignItems="stretch", justifyContent="start", children=[nested, root_spanning])
+    raw["requiredThemeTokens"] = ["spacing.l", "spacing.m", "spacing.none"]
+    nested["cell"] = {"column": 1, "row": 1}
+    values = {name: {"type": "number", "value": value} for name, value in {
+        "spacing.none": 0, "spacing.s": 8, "spacing.m": 16,
+        "spacing.l": 24, "panel.minimum": 180,
+    }.items()}
+    resolved = resolve_layout_profile(raw, available_sources={"title", "notes", "timeline", "legend"},
+                                      theme={"body": {"values": values}})
+    nested_measurements = {**MEASUREMENTS, "nested-title": MEASUREMENTS["title"],
+                          "nested-notes": MEASUREMENTS["notes"],
+                          "nested-spanning": m(300, 1800),
+                          "root-spanning": m(300, 2200)}
+    natural = measure_natural_normal_flow_block(resolved, viewport_inline=1600,
+                                               measurements=nested_measurements)
+    assert natural == Decimal(152)
+    larger = dict(MEASUREMENTS)
+    larger["title"] = m(300, 400)
+    larger["notes"] = m(300, 300)
+    larger["nested-title"] = larger["title"]
+    larger["nested-notes"] = larger["notes"]
+    larger["nested-spanning"] = m(300, 2400)
+    larger["root-spanning"] = m(300, 2800)
+    larger_natural = measure_natural_normal_flow_block(resolved, viewport_inline=1600,
+                                                       measurements=larger)
+    assert larger_natural == Decimal(780)
+    placed = solve_layout(resolved, viewport_inline=1600, viewport_block=int(larger_natural),
+                          measurements=larger, content_sized=True)
+    nested_bounds = decisions(placed)["nested-grid"]
+    assert nested_bounds.block_size == larger_natural - 64
+    assert {warning.placement_id for warning in placed.fit_warnings} == {
+        "nested-spanning", "root-spanning",
+    }
+    auto = resolve_content_block_extent(
+        resolved, viewport_inline=1600, minimum_block=int(larger_natural),
+        measurements=larger, required_blocks={"timeline": Decimal(600)}, content_sized=True,
+    )
+    assert auto.extent == larger_natural
+
+
+def test_natural_flow_requirement_wraps_at_resolved_inline_width():
+    raw = yaml.safe_load((ROOT / "conformance/layout-profile-intent-v0.2.yaml").read_text(encoding="utf-8"))
+    raw["root"]["children"] = [raw["root"]["children"][2]]
+    values = {name: {"type": "number", "value": value} for name, value in {
+        "spacing.none": 0, "spacing.s": 8, "spacing.m": 16,
+        "spacing.l": 24, "panel.minimum": 180,
+    }.items()}
+    resolved = resolve_layout_profile(raw, available_sources=SOURCES, theme={"body": {"values": values}})
+    wide = measure_natural_normal_flow_block(resolved, viewport_inline=800, measurements=MEASUREMENTS)
+    narrow = measure_natural_normal_flow_block(resolved, viewport_inline=400, measurements=MEASUREMENTS)
+    assert narrow > wide
+
+
+def test_anchored_overlay_decoration_does_not_increase_natural_flow_floor():
+    raw = yaml.safe_load((ROOT / "examples/halcyon-1/layouts/overlay-briefing.yaml").read_text(encoding="utf-8"))
+    tokens = {name: {"type": "number", "value": value} for name, value in {
+        "panel.review.block": 200, "panel.side": 240, "spacing.l": 24,
+        "spacing.m": 16, "spacing.none": 0,
+    }.items()}
+    raw["root"]["blockSize"] = "content"
+    resolved = resolve_layout_profile(raw, available_sources=SOURCES,
+                                      theme={"body": {"values": tokens}})
+    # Exercise the content-sized overlay intrinsic path: anchored panel content
+    # must not set the root's normal-flow floor through `_measure_node`.
+    baseline = measure_natural_normal_flow_block(resolved, viewport_inline=1600,
+                                                 measurements=MEASUREMENTS)
+    larger = dict(MEASUREMENTS)
+    larger["timeline"] = m(500, 2000)
+    assert measure_natural_normal_flow_block(resolved, viewport_inline=1600,
+                                             measurements=larger) == baseline
+
+
 def test_content_requirement_does_not_inflate_a_fixed_timeline_host():
     raw = yaml.safe_load((ROOT / "conformance/layout-profile-intent-v0.2.yaml").read_text(encoding="utf-8"))
     raw["root"]["children"][1]["children"][1]["children"][1]["blockSize"] = {"fixed": 800}
@@ -72,7 +324,7 @@ def test_content_requirement_does_not_inflate_a_fixed_timeline_host():
         "panel.minimum": 180,
     }.items()}
     resolved = resolve_layout_profile(raw, available_sources=SOURCES, theme={"body": {"values": values}})
-    result = resolve_content_block_extent(resolved, viewport_inline=1600, seed_block=900,
+    result = resolve_content_block_extent(resolved, viewport_inline=1600, minimum_block=900,
                                           measurements=MEASUREMENTS,
                                           required_blocks={"timeline": Decimal(850)})
     assert result.extent == 900
@@ -80,6 +332,16 @@ def test_content_requirement_does_not_inflate_a_fixed_timeline_host():
     assert result.short_sources[0].source_id == "timeline"
     assert result.short_sources[0].required_block == Decimal(850)
     assert result.short_sources[0].allocated_block < Decimal(850)
+
+    auto_floor = int(measure_natural_normal_flow_block(
+        resolved, viewport_inline=1600, measurements=MEASUREMENTS
+    ).to_integral_value(rounding="ROUND_CEILING"))
+    auto = resolve_content_block_extent(resolved, viewport_inline=1600, minimum_block=auto_floor,
+                                        measurements=MEASUREMENTS,
+                                        required_blocks={"timeline": Decimal(850)},
+                                        content_sized=True)
+    assert auto.extent == auto_floor
+    assert auto.short_sources == result.short_sources
 
 
 def test_content_change_recenters_title():
