@@ -102,8 +102,11 @@ MUST stay within a two-em two-dimensional nearest-perimeter gap of that exact
 mark on either side. Layout rejects a farther candidate before trying the
 next declared side. Default `auto` tries end then start; authored side/fallback
 order remains authoritative. A suppressible request with no legal candidate
-records its source-keyed suppression and aggregate count. A required or
-visible-overflow request with an own mark instead fails with
+records its source-keyed suppression and aggregate count. After legal
+candidates are exhausted, a declared `visible-overflow` request may emit the
+first declared near-mark candidate despite a collision or viewport escape,
+with the ordinary overflow warning; it cannot waive the association bound.
+A required request with no valid near-mark candidate fails with
 `E_LAYOUT_LABEL_ASSOCIATION_UNPLACEABLE`; it never emits detached text. The
 Scene acceptance check pairs each emitted member label to its own completed
 mark through `hostPlacementId`, additionally checking lane/member identity
