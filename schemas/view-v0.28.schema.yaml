@@ -16,6 +16,7 @@ allOf:
         additionalProperties: false
         properties:
           surface: {description: "Review surface family.", enum: [table-timeline, dependency-network]}
+          proofOptionalA: {description: "Temporary #591 merge-proof field A; absence leaves current behavior unchanged.", type: string}
           colorEncoding:
             type: object
             description: "One closed field-to-colour encoding for eligible planned marks."
