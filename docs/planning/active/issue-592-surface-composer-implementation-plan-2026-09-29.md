@@ -15,7 +15,7 @@ Before I592-1, record the manifest-derived output paths and design-base hashes f
 
 | Slice | Owned files and typed boundary | Focused review |
 | --- | --- | --- |
-| I592-1 pure foundations | Extract `surface_geometry`, `surface_base`, and `surface_lanes` preflight helpers from `surface_composer.py`; add private typed base result. | Slot/row/scale, lane preflight, geometry tests; no import cycle. |
+| I592-1 pure foundations | Extract `surface_geometry`, `surface_base`, and `surface_lanes` preflight helpers from `surface_composer.py`; first move only the shared pure `resolve_mark_geometries` closure to its approved `surface_marks` owner so lane preflight can import it without a composer cycle. Add private typed base result; leave mark placement/Theme policy to I592-3. | Slot/row/scale, lane preflight, geometry tests; no import cycle or mark-policy change. |
 | I592-2 fixed geometry | Extract `surface_table`, `surface_groups`, `surface_axis`, `surface_backgrounds`; retain existing phase and tuple append order. | Table, group and axis placement tests; source-slot/target identity and overflow bytes. |
 | I592-3 marks and visuals | Extract `surface_marks`, `surface_visuals` with typed mark/visual batches; keep Theme reads in Layout and preserve pattern/paint-order facts. | Mark, pattern, progress and visual reservation tests. |
 | I592-4 shared obstacle phases | Extract `surface_member_labels` and `surface_routes`; pass one ordered `SurfaceObstacleIndex`, with pre-route as-of/lane-required labels and post-route optional labels. | Label/routing tests, #466 route priority, #467 lane visibility, obstacle registration order. |
@@ -24,3 +24,5 @@ Before I592-1, record the manifest-derived output paths and design-base hashes f
 | A592 acceptance | Add one current review with four literal rows, exact commits/CI, hash comparison and architecture findings; close/archive only when all rows are met. | Confirm review-bearing main full CI and issue disposition. |
 
 Do not combine a behavior correction with extraction. If moving a closure reveals an implicit ordering rule, missing typed result, or concern that cannot meet the owner map without duplicated mutable state, stop, publish a design correction and amend this plan before resuming. #590 derived-evidence workflow and #591 schema policy are independent; use their latest public gate when each code PR is submitted.
+
+I592-1 sequencing review: `preflight_fixed_lane_layout` reads `resolve_mark_geometries`, which is mark-role geometry shared with base placement. The Spec 33 §8.3 owner is already `surface_marks`; moving that pure function before lane preflight is an implementation-order correction, not a new owner or policy. This amendment is published before that extraction resumes.
