@@ -7,6 +7,10 @@ from decimal import Decimal
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.surface_quality import ScalePlacement
 
+GEOMETRY_TOLERANCE = Decimal("0.000001")
+BACKGROUND_PAINT_ORDER = 10
+HOSTED_TEXT_PAINT_ORDER = 200
+
 
 def rect_from_bounds(bounds: tuple[float, float, float, float]) -> Rect:
     """Convert presentation bounds to the canonical Decimal-backed Rect."""

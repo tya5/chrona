@@ -15,18 +15,26 @@ from chrona.presentation.layout.label_visual_measurement import (
 )
 from chrona.presentation.layout.lane_subtracks import LaneSubtrackPlan
 from chrona.presentation.layout.mark_aware_scale import PointMarkFootprint, inset_scale_for_point_facets
-from chrona.presentation.layout.surface_lanes import (
-    _LaneLayoutRow, lane_owner as _lane_owner, review_rows as _review_rows,
-)
-from chrona.presentation.layout.surface_marks import MARK_GEOMETRY_ROLES, resolve_mark_geometries
+from chrona.presentation.layout.surface_lanes import lane_owner as _lane_owner, review_rows as _review_rows
+from chrona.presentation.layout.surface_marks import MARK_GEOMETRY_ROLES, folded_instance_id as _folded_instance_id
 from chrona.presentation.layout.surface_base import prepare_surface_base
+from chrona.presentation.layout.surface_table import compose_table
+from chrona.presentation.layout.surface_groups import (
+    GroupHeaderExtentUpdate, compose_group_presentation, replace_group_header_extent,
+)
+from chrona.presentation.layout.surface_backgrounds import (
+    BACKGROUND_SEMANTIC_IDS, compose_calendar_backgrounds,
+    compose_row_group_backgrounds, replace_group_header_band,
+    validate_background_shapes,
+)
+from chrona.presentation.layout.surface_axis import compose_axis
 from chrona.presentation.layout.asof_label import find_asof_label_candidate
 from chrona.presentation.model.semantic_registry import (
-    axis_band_semantic_ids, axis_label_semantic_ids, label_chip_semantic, semantic_binding)
+    axis_band_semantic_ids, label_chip_semantic, semantic_binding)
 from chrona.presentation.model.projection import shared_track_member_key
-from chrona.presentation.layout.presentation import MarkBandFrame, MarkGeometry, TrackPlacement, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents, table_cell_indent, table_text_line_block, table_text_measurer
-from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, format_axis_tier_label, thinning_schedule
-from chrona.presentation.model.axis_names import axis_name_table
+from chrona.presentation.layout.presentation import (
+    MarkBandFrame, MarkGeometry, TrackPlacement, required_row_block_extents,
+)
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_family, metric_for_role, paint_text, place_text, wrap_text
 from chrona.presentation.layout.annotations import (
     AnnotationBox, annotation_rail_candidates, nearest_box_port, place_annotation_rail, project_annotation_box,
@@ -74,6 +82,7 @@ from chrona.presentation.layout.surface_quality import (
 )
 from chrona.presentation.layout.image_slice_geometry import image_slice_tiles
 from chrona.presentation.layout.surface_geometry import (
+    BACKGROUND_PAINT_ORDER, GEOMETRY_TOLERANCE, HOSTED_TEXT_PAINT_ORDER,
     bounds_from_rect as _bounds, coordinate_for_date as _coordinate,
     rect_from_bounds as _rect,
 )
@@ -271,118 +280,12 @@ def _lane_label_candidates(side: str, fallback: tuple[str, ...], preferred: str 
     return tuple(candidates)
 
 
-def _place_lane_mark_tracks(*, review_rows: tuple[_LaneLayoutRow, ...],
-                            row_placements: tuple[Any, ...], plan: LaneSubtrackPlan,
-                            mark_block_size: float) -> tuple[TrackPlacement, ...]:
-    """Project typed source-instance subtracks without revisiting membership."""
-    lane_plan = {lane.lane_id: lane for lane in plan.lanes}
-    item_plan = {(item.item_id, item.projection_instance_id.item_id,
-                  item.projection_instance_id.object_id, item.projection_instance_id.source_kind): item
-                 for item in plan.items}
-    if len(review_rows) != len(row_placements) or len(review_rows) != len(lane_plan):
-        raise LayoutError("E_LAYOUT_LANE_SUBTRACK_INVALID", "/projection/laneRows")
-    tracks: list[TrackPlacement] = []
-    for review_row, row in zip(review_rows, row_placements, strict=True):
-        lane = lane_plan.get(review_row.row_id)
-        if lane is None or row.row_id != review_row.row_id or row.bounds[3] < lane.block_extent:
-            raise LayoutError("E_LAYOUT_LANE_SUBTRACK_INVALID", "/projection/laneRows")
-        origin = row.bounds[1] + (row.bounds[3] - lane.block_extent) / 2
-        for member_id, item in zip(review_row.member_item_ids, review_row.items, strict=True):
-            subtrack = item_plan.get((member_id, item.item_id or item.object_id,
-                                      item.object_id, item.source_kind))
-            if subtrack is None or subtrack.lane_id != lane.lane_id:
-                raise LayoutError("E_LAYOUT_LANE_SUBTRACK_INVALID", "/projection/laneRows")
-            block = origin + subtrack.block_offset
-            if block < row.bounds[1] or block + mark_block_size > row.bounds[1] + row.bounds[3]:
-                raise LayoutError("E_LAYOUT_MARK_OVERFLOW", "/projection/laneRows")
-            tracks.append(TrackPlacement(f"{review_row.row_id}:{item.item_id or item.object_id}",
-                                         block, block, mark_block_size))
-    if len(tracks) != len(plan.items) or len(item_plan) != len(plan.items):
-        raise LayoutError("E_LAYOUT_LANE_SUBTRACK_INVALID", "/projection/laneRows")
-    return tuple(tracks)
-
-
-BACKGROUND_SEMANTIC_IDS = frozenset({"rowBand", "groupBand", "groupHeaderBand", "calendarClosed", *axis_band_semantic_ids()})
-BACKGROUND_PAINT_ORDER = 10
 MARK_PAINT_ORDER_BASE = 100
-HOSTED_TEXT_PAINT_ORDER = 200
 FOREGROUND_TEXT_PAINT_ORDER = 300
 ANNOTATION_PAINT_ORDER = 400
 # Layout emits coordinates at micro-point precision.  Intermediate measurement
 # APIs are float-based, so containment must not turn a sub-micro-point binary
 # conversion residue into a user-visible overflow diagnostic.
-GEOMETRY_TOLERANCE = Decimal("0.000001")
-
-
-def _background_bounds(*, semantic_id: str, extent: str, source_bounds: Rect, table_bounds: tuple[float, float, float, float],
-                       timeline_bounds: tuple[float, float, float, float]) -> tuple[Rect, str]:
-    """Resolve one finite background extent without exposing coordinates to View."""
-    if semantic_id == "calendarClosed":
-        if extent != "timeline":
-            raise LayoutError("E_LAYOUT_BACKGROUND_EXTENT", "/layoutManifest/reviewSurface/backgroundExtents")
-        _, timeline_block, _, timeline_block_size = timeline_bounds
-        return (Rect(source_bounds.inline, Decimal(str(timeline_block)), source_bounds.inline_size,
-                     Decimal(str(timeline_block_size)),), "timeline")
-    table_inline, _, table_inline_size, _ = table_bounds
-    timeline_inline, _, timeline_inline_size, _ = timeline_bounds
-    if extent == "table":
-        return Rect(Decimal(str(table_inline)), source_bounds.block, Decimal(str(table_inline_size)), source_bounds.block_size), "table"
-    if extent == "timeline":
-        return Rect(Decimal(str(timeline_inline)), source_bounds.block, Decimal(str(timeline_inline_size)), source_bounds.block_size), "timeline"
-    if extent == "both":
-        return (Rect(Decimal(str(table_inline)), source_bounds.block,
-                     Decimal(str(timeline_inline + timeline_inline_size - table_inline)), source_bounds.block_size),
-                "review-surface")
-    raise LayoutError("E_LAYOUT_BACKGROUND_EXTENT", "/layoutManifest/reviewSurface/backgroundExtents")
-
-
-def _validate_background_shapes(shapes: list[ShapePlacement], theme_tokens: Any) -> None:
-    """Reject completed translucent background fills that would compound."""
-    translucent: list[ShapePlacement] = []
-    for shape in shapes:
-        if shape.semantic_id not in BACKGROUND_SEMANTIC_IDS:
-            continue
-        role = semantic_binding(shape.semantic_id).scene_role
-        treatment, _ = theme_tokens.background(role)
-        if treatment == "fill" and theme_tokens.opacity(role) < 1:
-            translucent.append(shape)
-    for index, shape in enumerate(translucent):
-        for other in translucent[index + 1:]:
-            # A group's own band intentionally includes its own header row
-            # (Specification 45, Specification 50 §3.4), so its groupBand and
-            # groupHeaderBand shapes are one group's two decoration layers,
-            # not two conflicting decorations, and may legitimately overlap.
-            if (shape.source_ref == other.source_ref
-                    and {shape.semantic_id, other.semantic_id} == {"groupBand", "groupHeaderBand"}):
-                continue
-            # Calendar closure is an intentional translucent overlay over
-            # row/group identity. Admit only that semantic pair when its
-            # declared Theme paint order is strictly later; calendar cells
-            # may never compound with one another, and unrelated fills keep
-            # the general no-overlap rule.
-            if _is_later_calendar_overlay(shape, other, theme_tokens):
-                continue
-            if _is_later_calendar_overlay(other, shape, theme_tokens):
-                continue
-            if intersects(shape.bounds, other.bounds):
-                raise LayoutError("E_LAYOUT_BACKGROUND_OVERLAP", "/layoutManifest/reviewSurface/backgroundExtents",
-                                  detail=f"{shape.placement_id}:{other.placement_id}")
-
-
-def _is_later_calendar_overlay(calendar: ShapePlacement, band: ShapePlacement, theme_tokens: Any) -> bool:
-    """Permit only a later-painted translucent calendar cell over a band."""
-    if calendar.semantic_id != "calendarClosed" or band.semantic_id not in {
-        "rowBand", "groupBand", "groupHeaderBand",
-    }:
-        return False
-    calendar_role = semantic_binding(calendar.semantic_id).scene_role
-    band_role = semantic_binding(band.semantic_id).scene_role
-    calendar_treatment, calendar_order = theme_tokens.background(calendar_role)
-    band_treatment, band_order = theme_tokens.background(band_role)
-    return (calendar_treatment == "fill" and band_treatment == "fill"
-            and calendar_order == calendar.paint_order
-            and band_order == band.paint_order
-            and calendar_order > band_order)
 
 
 def _contains_block_interval(*, container_start: Decimal, container_end: Decimal,
@@ -633,64 +536,6 @@ def _validate_detail_panel_placement(text: list[Any], slots: tuple[SlotPlacement
             if (group.overflow != "visible-overflow" and milestone.overflow != "visible-overflow"
                     and intersects(group.bounds, milestone.bounds)):
                 raise LayoutError("E_LAYOUT_DETAIL_PANEL_OVERLAP", f"{group.placement_id}:{milestone.placement_id}")
-
-
-def _provisional_surface_point_facets(
-    *, projection: Any, review_rows: tuple[Any, ...], scale: ScalePlacement,
-    as_of: date | None, theme_tokens: Any, slot_id: str, mark_block_size: float,
-    role_geometries: Mapping[str, MarkGeometry],
-) -> tuple[PointMarkFootprint, ...]:
-    """Resolve exact visible point facet bounds against one provisional scale."""
-    frame = MarkBandFrame.zero_origin(scale, mark_block_size, role_geometries)
-    result: list[PointMarkFootprint] = []
-
-    def include(item: Any, instance_id: str, source_kind: str, row_id: str,
-                *, emit_missing_actual: bool = True) -> None:
-        composition = compose_item_marks(
-            item=item, instance_id=instance_id, source_kind=source_kind, frame=frame,
-            as_of=as_of, theme_tokens=theme_tokens, slot_id=slot_id,
-            emit_missing_actual=emit_missing_actual, emit_diagnostics=False,
-        )
-        instance = LaneProjectionInstance(row_id, item.item_id or item.object_id,
-                                          item.object_id, item.source_kind)
-        for mark in composition.marks:
-            if mark.mark_shape != "point":
-                continue
-            anchor = ((item.actual or {}).get("at") if mark.semantic_id == "actual"
-                      else item.planned.get("at"))
-            if not isinstance(anchor, date):
-                continue
-            for facet in _mark_facets(item, instance, mark, theme_tokens):
-                left, _, right, _ = obstacle_envelope(facet.visible_footprint)
-                result.append(PointMarkFootprint(anchor, left, right))
-
-    for row in review_rows:
-        for item in row.items:
-            layout_id = f"{row.row_id}:{item.item_id or item.object_id}"
-            instance_id = layout_id if projection.rows else item.object_id
-            source_kind = item.source_kind if projection.rows else "combined"
-            include(item, instance_id, source_kind, row.row_id,
-                    emit_missing_actual=(lane_missing_actual_visible(projection)
-                                         if projection.lane_membership is not None else True))
-    for folded in getattr(projection, "folded_points", ()):
-        for item in folded.all_items:
-            include(item, _folded_instance_id(folded, item), item.source_kind,
-                    f"folded:{folded.group_id}", emit_missing_actual=False)
-    return tuple(result)
-
-
-def _centred_cell_baseline(row: Rect, treatment: Any) -> float:
-    """Centre a table cell's line box in its row, in the cell's own role."""
-    line_block = float(treatment.font_size * treatment.line_height)
-    return float(row.block) + (float(row.block_size) - line_block) / 2 + float(treatment.font_size)
-
-
-def _axis_label_inset(theme_tokens: Any, tier: Any, font_size: float) -> float:
-    """Return a start-aligned axis label's declared inset from its cell edge (#426 row 8)."""
-    if tier.label is None or tier.label.align != "start":
-        return 0.0
-    ratio = theme_tokens.optional_number(tier.typography_role or "axis", "labelInset")
-    return float(ratio) * font_size if ratio is not None else 0.0
 
 
 def timeline_content_block_requirement(*, projection: Any, group_presentation: str,
@@ -971,82 +816,20 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     layout_manifest = base.layout_manifest
     measured_sources = base.measured_sources
     metric_values = base.metric_values
-    decisions = base.decisions
     start, end = projection.window
     slots, by_source, table, timeline = base.slots, base.by_source, base.table, base.timeline
     review_rows, timeline_bounds = base.review_rows, base.timeline_bounds
     slot_ids = base.slot_ids
     text_slot = base.text_slot
-    provisional_scale = ScalePlacement("table-timeline", "primary", start, end, timeline_bounds[0],
-                                       timeline_bounds[0] + timeline_bounds[2], timeline_bounds[0],
-                                       timeline_bounds[2] / max(1, (end - start).days))
-    group_header_size = (float(metric_values["timeline.groupHeader.blockSize"])
-                         if request.surface_content.group_presentation == "header" else 0.0)
-    role_geometries = resolve_mark_geometries(request.theme_tokens)
-    mark_block_size = float(metric_values["timeline.mark.blockSize"])
-    if projection.lane_membership is not None:
-        assert request.fixed_lane_preflight is not None
-        scale = request.fixed_lane_preflight.scale
-    else:
-        point_facets = _provisional_surface_point_facets(
-            projection=projection, review_rows=tuple(review_rows), scale=provisional_scale,
-            as_of=request.surface_content.as_of, theme_tokens=request.theme_tokens,
-            slot_id=timeline.slot_id, mark_block_size=mark_block_size,
-            role_geometries=role_geometries,
-        )
-        scale = inset_scale_for_point_facets(provisional_scale, point_facets)
-    row_padding = float(metric_values["timeline.row.paddingBlock"])
-    text_line_block = table_text_line_block(
-        request.theme_tokens, (cell.typography_role for cell in request.surface_content.table_cells))
-    lane_subtracks = None
-    if projection.lane_membership is not None:
-        assert request.fixed_lane_preflight is not None
-        lane_subtracks = request.fixed_lane_preflight.subtracks
-        requirement_by_row = dict(request.fixed_lane_preflight.row_requirements)
-        requirements = tuple(requirement_by_row[row.row_id] for row in review_rows)
-    else:
-        requirements = required_row_block_extents(
-            review_rows=tuple(review_rows), row_minimum=float(metric_values["timeline.row.minBlockSize"]),
-            row_padding=row_padding, mark_block_size=mark_block_size,
-            role_geometries=role_geometries, text_line_block=text_line_block,
-        )
-    raw_rows = place_rows(review_rows=tuple(review_rows), timeline_bounds=timeline_bounds,
-                          group_header_size=group_header_size, required_block_sizes=requirements,
-                          distribution=layout_manifest.row_distribution)
-    rows = tuple(
-        RowPlacement(item.row_id, item.table_subject_id, placement.group_id or "", _rect(placement.bounds),
-                     depth=int(getattr(item, "depth", 0)))
-        for item, placement in zip(review_rows, raw_rows, strict=True)
-    )
-    groups: list[GroupPlacement] = []
-    table_bounds = _bounds(table.bounds)
-    for row in rows:
-        if groups and groups[-1].group_id == row.group_id:
-            previous = groups[-1]
-            content = Rect(previous.content_bounds.inline, previous.content_bounds.block,
-                           previous.content_bounds.inline_size,
-                           previous.content_bounds.block_size + row.bounds.block_size)
-            groups[-1] = GroupPlacement(previous.group_id, content, previous.header_bounds)
-        else:
-            header = None
-            content = row.bounds
-            if row.group_id and group_header_size:
-                header = Rect(Decimal(str(table_bounds[0])), row.bounds.block - Decimal(str(group_header_size)),
-                              Decimal(str(timeline_bounds[0] + timeline_bounds[2] - table_bounds[0])),
-                              Decimal(str(group_header_size)))
-                # A group's own band includes its own header row, so the
-                # header is never painted as if it belonged to the group
-                # before it (Specification 45, Specification 50 §3.4).
-                content = Rect(row.bounds.inline, header.block, row.bounds.inline_size,
-                               row.bounds.block_size + Decimal(str(group_header_size)))
-            groups.append(GroupPlacement(row.group_id, content, header))
+    scale, rows, raw_rows = base.scale, base.rows, base.raw_rows
+    groups, tracks = base.groups, base.tracks
+    role_geometries, mark_block_size = base.role_geometries, base.mark_block_size
+    table_bounds = base.table_bounds
     if request.theme_tokens is None or request.font_metrics is None:
         raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources")
     def metric_for(typography_role: str) -> Any:
         return metric_for_role(request.theme_tokens, typography_role, request.font_metrics)
-    body_treatment = request.theme_tokens.text_treatment("text")
-    body_metrics = metric_for("text")
-    body_size = float(body_treatment.font_size)
+    body_size = float(request.theme_tokens.text_treatment("text").font_size)
     title_input = measured_sources.inputs.get("title")
     title_measurement = measured_sources.measurements.get("title")
     if title_measurement is None:
@@ -1065,469 +848,31 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     )
     by_source = {slot.source_ref: slot for slot in slots}
     text.extend(detail_panel_text)
-    table_columns = request.surface_content.table_columns
-    table_cells = request.surface_content.table_cells
-    measure_table_text = table_text_measurer(request.theme_tokens, request.font_metrics)
-    indent_token = metric_values.get("table.indent.inlineSize")
-    cell_indents: dict[str, float] = {}
-    for row in rows:
-        row_indent = table_cell_indent(grouped=bool(row.group_id), depth=row.depth, inset=body_size,
-                                       indent=float(indent_token) if indent_token is not None else None)
-        cell_indents[row.row_id] = cell_indents[row.object_id] = row_indent
-    columns = place_table_columns(columns=table_columns, cells=table_cells, bounds=table_bounds,
-                                  measure_text=measure_table_text, minimum_inline=body_size,
-                                  overflow=table.overflow,
-                                  gutter=float(metric_values.get("table.column.gutter.inlineSize", 0)),
-                                  hierarchy_column=request.surface_content.table_hierarchy_column,
-                                  cell_indents=cell_indents)
-    positions = {item.column_id: (item.inline, item.inline_size) for item in columns}
-    column_widths = {item.column_id: item.inline_size for item in columns}
-    column_intents = {item.column_id: item for item in table_columns}
-
-    def table_text(content: str, available_inline: float, typography_role: str) -> tuple[str, str]:
-        if table.overflow != "ellipsize-with-source":
-            return content, "fit"
-        treatment = request.theme_tokens.text_treatment(typography_role)
-        resolved = ellipsize_text(content, available_inline=available_inline, font_size=float(treatment.font_size),
-                                  font_metrics=metric_for(typography_role), letter_spacing=float(treatment.letter_spacing),
-                                  text_transform=treatment.transform,
-                                  numeric_spacing=treatment.numeric_spacing)
-        return resolved, "ellipsized" if resolved != content else "fit"
-
-    def aligned_inline(content: str, column_id: str, start: float, available_inline: float,
-                       typography_role: str, orientation: str = "horizontal") -> float:
-        width = measure_table_text(content, typography_role, orientation)
-        align = column_intents[column_id].align
-        if align == "end":
-            return start + max(0.0, available_inline - width)
-        if align == "center":
-            return start + max(0.0, (available_inline - width) / 2)
-        return start
-
-    for column in table_columns:
-        column_id, label = column.column_id, column.header
-        available = max(0.0, column_widths[column_id] - body_size)
-        resolved, overflow = table_text(label, available, "text")
-        header_width = measure_text_width(resolved, font_size=body_size, font_metrics=body_metrics,
-                                          letter_spacing=float(body_treatment.letter_spacing),
-                                          text_transform=body_treatment.transform,
-                                          numeric_spacing=body_treatment.numeric_spacing)
-        header_block = timeline_bounds[1] - table_bounds[1]
-        if column.header_orientation == "rotate-cw":
-            baseline = table_bounds[1]
-        elif column.header_orientation == "rotate-ccw":
-            baseline = table_bounds[1] + header_width
-        else:
-            baseline = table_bounds[1] + body_size
-        text.append(place_text(placement_id=f"column:{column_id}", source_ref="view:tableColumns", content=resolved,
-                               inline=aligned_inline(resolved, column_id, positions[column_id][0], available, "text", column.header_orientation), baseline_block=baseline,
-                               typography_role="text", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                               overflow=overflow, collision_region="table", collision_domain=CollisionDomain("table", "header"),
-                               source_content=label, available_inline_start=positions[column_id][0],
-                               available_inline_size=available, orientation=column.header_orientation))
-        # A rotated header may need more block extent than its allocated table
-        # header.  Its completed text remains visible; the warning and canvas
-        # expansion are assembled with all other Layout geometry below.
-    row_by_subject = {item.row_id: item for item in rows} | {item.object_id: item for item in rows}
-    for cell in table_cells:
-        object_id, column_id, content, typography_role = cell.object_id, cell.column_id, cell.content, cell.typography_role
-        row = row_by_subject.get(object_id)
-        position = positions.get(column_id)
-        if row is not None and position is not None and column_id in column_intents:
-            indent = (cell_indents[object_id]
-                      if column_id == request.surface_content.table_hierarchy_column else 0)
-            available = max(0.0, column_widths[column_id] - indent - body_size)
-            resolved, overflow = table_text(content, available, typography_role)
-            text.append(place_text(placement_id=f"cell:{object_id}:{column_id}", source_ref=object_id, content=resolved,
-                                   inline=aligned_inline(resolved, column_id, position[0] + indent, available, typography_role),
-                                   baseline_block=_centred_cell_baseline(row.bounds, request.theme_tokens.text_treatment(typography_role)),
-                                   typography_role=typography_role, theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                   overflow=overflow, collision_region="table",
-                                   collision_domain=CollisionDomain("table", f"row:{row.row_id}"), source_content=content,
-                                   available_inline_start=position[0] + indent,
-                                   available_inline_size=available, semantic_id=cell.semantic_id))
-    labels = {row.group_id: next((item.group_label for item in review_row.items if item.group_label), row.group_id)
-              for review_row, row in zip(review_rows, rows, strict=True) if row.group_id}
-    group_header_font_size = (float(request.theme_tokens.text_treatment("groupHeader").font_size)
-                              if any(group.header_bounds is not None for group in groups) else body_size)
-    for group in groups:
-        if group.header_bounds is not None:
-            text.append(place_text(placement_id=f"group-header:{group.group_id}", source_ref=group.group_id,
-                                       content=labels[group.group_id], inline=float(group.header_bounds.inline),
-                                       baseline_block=float(group.header_bounds.block) + group_header_font_size,
-                                       typography_role="groupHeader",
-                                   theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                   collision_region=f"group:{group.group_id}",
-                                   collision_domain=CollisionDomain("group-header", group.group_id),
-                                   source_content=labels[group.group_id], semantic_id="groupHeader",
-                                   available_inline_start=float(group.header_bounds.inline),
-                                   available_inline_size=float(group.header_bounds.inline_size)))
-    axis = by_source["timeline-axis"]
+    table_batch = compose_table(base)
+    column_placements = table_batch.columns
+    text.extend(table_batch.text)
+    group_batch = compose_group_presentation(
+        request=request, rows=rows, review_rows=review_rows, groups=groups, body_size=body_size)
+    text.extend(group_batch.text)
     shapes: list[ShapePlacement] = []
-    axis_tier_outcomes: list[AxisTierOutcome] = []
-    axis_decisions: list[PlacementDecision] = []
-    axis_label_targets: dict[tuple[str, str, str], str] = {}
-    axis_band_targets: dict[tuple[str, str, str], str] = {}
-    diagnostics: list[str] = []
-    visible_label_overflows: list[tuple[Any, LabelRect]] = []
-    background_extents = layout_manifest.background_extents
-
-    def background_shape(placement_id: str, source_ref: str, semantic_id: str,
-                         source_bounds: Rect) -> ShapePlacement | None:
-        role = semantic_binding(semantic_id).scene_role
-        treatment, paint_order = request.theme_tokens.background(role)
-        if treatment == "none":
-            return None
-        bounds, slot_id = _background_bounds(semantic_id=semantic_id, extent=background_extents.get(semantic_id, ""), source_bounds=source_bounds,
-                                             table_bounds=table_bounds, timeline_bounds=timeline_bounds)
-        return ShapePlacement(placement_id, source_ref, "Rect", bounds, slot_id=slot_id,
-                              paint_order=paint_order, semantic_id=semantic_id)
-
-    row_decoration = request.surface_content.row_decoration
-    group_decoration = request.surface_content.group_decoration
-    # Group bands are emitted before row stripes so that, at the same
-    # declared Theme backgroundPaintOrder (the default in every shipped
-    # preset), a row stripe is the later/topmost primitive and remains
-    # visible over an opaque group band (Specification 50 §3.4).
-    for index, group in enumerate(groups):
-        banded = group_decoration in {"all", "alternate"} and (group_decoration == "all" or index % 2 == 0)
-        group_shape = None
-        if banded:
-            group_shape = background_shape(f"group:{group.group_id}", group.group_id, "groupBand", group.content_bounds)
-            if group_shape is not None:
-                shapes.append(group_shape)
-        # A group's own band already includes its own header row (see the
-        # group-building loop above), so a group the body decoration painted
-        # needs no separate header accent: painting one would double-tint the
-        # header row under its own band, at a contrast ratio the band's own
-        # colour was never chosen against. The header-only band (`groups:
-        # none`, or a selected group whose Theme suppresses the body fill)
-        # remains the sole source of header decoration in those cases; an
-        # unselected `alternate` group gets neither, so its header is never
-        # painted as an extension of the group before it.
-        if group.header_bounds is not None and (group_decoration == "none" or (banded and group_shape is None)):
-            shape = background_shape(f"group-header-band:{group.group_id}", group.group_id,
-                                     "groupHeaderBand", group.header_bounds)
-            if shape is not None:
-                shapes.append(shape)
-    if row_decoration == "alternate":
-        for index, row in enumerate(rows):
-            if index % 2 == 0:
-                shape = background_shape(f"row-band:{row.row_id}", row.row_id, "rowBand", row.bounds)
-                if shape is not None:
-                    shapes.append(shape)
-    # Band and labels tiers each stack in their own independent, monotonic
-    # lane cursor (#426): the Nth declared tier of a role occupies the Nth
-    # lane of that role, sized from that tier's own bound typography. A View
-    # with exactly one band tier keeps its historical whole-axis-slot rect
-    # (Specification 39 §1.2), so band_lane_offset/band_ordinal are only
-    # consulted once a second band tier is declared.
-    label_lane_offset = 0.0
-    band_lane_offset = 0.0
-    band_ordinal = 0
-    label_ordinal = 0
-    band_tier_count = sum(item.role == "band" for item in request.surface_content.axis_tiers)
-    # Declared lanes (#426 rows 5-6): a labels tier whose typography role
-    # declares laneBlockSize has a fixed lane; lanes stack in labels-tier
-    # order, and a band tier of the same unit fills exactly that lane.
-    declared_lanes: dict[int, tuple[float, float]] = {}
-    lane_by_unit: dict[str, tuple[float, float]] = {}
-    lane_cursor = 0.0
-    for tier_index, tier in enumerate(request.surface_content.axis_tiers):
-        if tier.role != "labels" or tier.label is None:
-            continue
-        role = tier.typography_role or "axis"
-        declared = request.theme_tokens.optional_number(role, "laneBlockSize")
-        treatment = request.theme_tokens.text_treatment(role)
-        if declared is not None and float(declared) > 0 and tier.label.orientation == "horizontal":
-            declared_lanes[tier_index] = (lane_cursor, float(declared))
-            lane_by_unit.setdefault(tier.unit, (lane_cursor, float(declared)))
-            lane_cursor += float(declared)
-        else:
-            lane_cursor += float(treatment.font_size * treatment.line_height) + float(GEOMETRY_TOLERANCE)
-    separator_marks: list[tuple[float, float, float]] = []
-    for tier_index, tier in enumerate(request.surface_content.axis_tiers):
-        form = tier.label.form if tier.label else None
-        name_table = axis_name_table(tier.label.name_table_id) if tier.label else None
-        axis_treatment = request.theme_tokens.text_treatment(tier.typography_role or "axis")
-        axis_metrics = metric_for(tier.typography_role or "axis")
-        axis_size = float(axis_treatment.font_size)
-        requested_units = (tuple(candidate for candidate, _ in tier.label.candidate_forms)
-                           if tier.unit == "auto" and tier.label else (tier.unit,))
-        try:
-            if tier.unit == "auto":
-                selected = None
-                forms = dict(tier.label.candidate_forms) if tier.label else {}
-                for candidate in ("day", "week", "month", "quarter", "half", "year"):
-                    if candidate not in forms:
-                        continue
-                    trial = axis_intervals(start, end, candidate, tick_step=tier.every,
-                                           fiscal_start_month=request.surface_content.axis_fiscal_start_month)
-                    fits_trial = all(axis_label_fits(content=format_axis_tier_label(item, forms[candidate], name_table),
-                                                      available_inline=(item.end - item.start).days * scale.unit_ratio,
-                                                      font_size=axis_size, font_metrics=axis_metrics,
-                                                      letter_spacing=float(axis_treatment.letter_spacing),
-                                                      text_transform=axis_treatment.transform,
-                                                      numeric_spacing=axis_treatment.numeric_spacing,
-                                                      orientation=tier.label.orientation,
-                                                      line_height=float(axis_treatment.line_height)) for item in trial)
-                    if fits_trial or tier.label.overflow == "visible-overflow":
-                        selected, form = trial, forms[candidate]
-                        break
-                if selected is None:
-                    # An explicit thinning request is not a refusal mode.  If
-                    # no candidate can be thinned legally, retain the first
-                    # declared deterministic form as a visible overlap.
-                    candidate = next(item for item in ("day", "week", "month", "quarter", "half", "year")
-                                     if item in forms)
-                    selected, form = axis_intervals(start, end, candidate, tick_step=tier.every,
-                                                    fiscal_start_month=request.surface_content.axis_fiscal_start_month), forms[candidate]
-                intervals = selected
-            else:
-                intervals = axis_intervals(start, end, tier.unit, tick_step=tier.every,
-                                           fiscal_start_month=request.surface_content.axis_fiscal_start_month)
-        except ValueError as error:
-            raise LayoutError(str(error), "/view/body/axis/tiers") from error
-        interval_outcomes: tuple[AxisIntervalOutcome, ...]
-        if tier.role == "labels" and form is not None:
-            interval_outcomes = tuple(
-                AxisIntervalOutcome(f"axis-label:{tier_index}:{interval.index}", interval.start, interval.end,
-                                    interval.natural_start, interval.natural_end,
-                                    format_axis_tier_label(interval, form, name_table),
-                                    axis_label_fits(content=format_axis_tier_label(interval, form, name_table),
-                                                   available_inline=max(0.0, _coordinate(interval.end, scale) - _coordinate(interval.start, scale)
-                                                                        - _axis_label_inset(request.theme_tokens, tier, axis_size)),
-                                                   font_size=axis_size, font_metrics=axis_metrics,
-                                                   letter_spacing=float(axis_treatment.letter_spacing),
-                                                   text_transform=axis_treatment.transform,
-                                                   numeric_spacing=axis_treatment.numeric_spacing,
-                                                   orientation=tier.label.orientation,
-                                                   line_height=float(axis_treatment.line_height)))
-                for interval in intervals
-            )
-            fits = tuple(bool(item.label_fits) for item in interval_outcomes)
-            if not all(fits):
-                if tier.label.overflow == "thin-with-record":
-                    try:
-                        schedule = thinning_schedule(fits)
-                    except ValueError:
-                        # A declared thinning policy cannot remove every
-                        # interval. Keep the complete visible result and its
-                        # measured reason instead of constructing an invalid
-                        # placed outcome for a non-fitting label.
-                        interval_outcomes = tuple(replace(
-                            item, disposition="placed",
-                            reason=None if item.label_fits else "visible-overflow",
-                        ) for item in interval_outcomes)
-                    else:
-                        retained = set(schedule.retained_positions)
-                        resolved_outcomes: list[AxisIntervalOutcome] = []
-                        for position, outcome in enumerate(interval_outcomes):
-                            if position in retained:
-                                resolved_outcomes.append(replace(outcome, disposition="placed"))
-                            else:
-                                resolved_outcomes.append(replace(outcome, disposition="thinned", reason="label-does-not-fit"))
-                                diagnostics.append(f"W_LAYOUT_AXIS_LABEL_THINNED:{outcome.candidate_id}:label-does-not-fit")
-                                axis_decisions.append(PlacementDecision(outcome.candidate_id, f"/view/body/axis/tiers/{tier_index}",
-                                                                        ("thin-with-record", "suppress"), "suppress", "suppressed"))
-                        interval_outcomes = tuple(resolved_outcomes)
-                        diagnostics.append(f"W_LAYOUT_AXIS_DENSITY:axis-tier:{tier_index}:thinned={len(schedule.thinned_positions)}")
-                else:
-                    interval_outcomes = tuple(replace(
-                        item, disposition="placed",
-                        reason=None if item.label_fits else "visible-overflow")
-                        for item in interval_outcomes)
-            else:
-                interval_outcomes = tuple(replace(item, disposition="placed") for item in interval_outcomes)
-        else:
-            interval_outcomes = tuple(
-                AxisIntervalOutcome(f"axis-tier:{tier_index}:{interval.index}", interval.start, interval.end,
-                                    interval.natural_start, interval.natural_end)
-                for interval in intervals
-            )
-        if tier.role == "labels" and form is not None:
-            for interval, outcome in zip(intervals, interval_outcomes, strict=True):
-                if outcome.disposition != "placed":
-                    continue
-                for canonical in name_table.coincident_canonicals(form, interval.natural_start.month):
-                    diagnostics.append(
-                        f"W_LAYOUT_AXIS_FORM_EQUIVALENT:{outcome.candidate_id}:table={name_table.table_id}:"
-                        f"form={form}:canonical={canonical}:month={interval.natural_start.month}")
-        axis_tier_outcomes.append(AxisTierOutcome(
-            tier_index, f"/view/body/axis/tiers/{tier_index}", tier.role, requested_units,
-            intervals[0].level if intervals else (tier.unit if tier.unit != "auto" else ""), tier.every, form,
-            interval_outcomes, name_table.table_id if name_table else None,
-        ))
-        if tier.role == "band":
-            if band_ordinal >= len(axis_band_semantic_ids()):
-                raise LayoutError("E_PRESENTATION_AXIS_INVALID", f"/view/body/axis/tiers/{tier_index}",
-                                  detail=f"too many band tiers:{band_ordinal + 1}")
-            band_semantic_id = axis_band_semantic_ids()[band_ordinal]
-            if tier.unit in lane_by_unit:
-                lane_offset, lane_size = lane_by_unit[tier.unit]
-                band_block = axis.bounds.block + Decimal(str(lane_offset))
-                band_block_size = Decimal(str(lane_size))
-            elif band_tier_count == 1:
-                # The sole band tier keeps its historical whole-axis-slot
-                # rect (Specification 39 §1.2); this is the only branch that
-                # keeps every committed View's Scene output byte-identical.
-                band_block, band_block_size = axis.bounds.block, axis.bounds.block_size
-            else:
-                band_lane_size = axis_size * float(axis_treatment.line_height) + float(GEOMETRY_TOLERANCE)
-                if band_lane_offset + band_lane_size > float(axis.bounds.block_size) + float(GEOMETRY_TOLERANCE):
-                    raise LayoutError("E_PRESENTATION_AXIS_OVERFLOW", f"/view/body/axis/tiers/{tier_index}",
-                                      detail=f"band-lane:{band_ordinal}")
-                band_block = axis.bounds.block + Decimal(str(band_lane_offset))
-                band_block_size = Decimal(str(band_lane_size))
-            cell_gap = float(request.theme_tokens.optional_number(
-                semantic_binding(band_semantic_id).scene_role, "cellGap") or 0)
-            for interval in intervals:
-                x, x2 = _coordinate(interval.start, scale), _coordinate(interval.end, scale)
-                if cell_gap:
-                    x, x2 = x + cell_gap / 2, max(x + cell_gap / 2, x2 - cell_gap / 2)
-                placement_id = f"axis-band-rect:{tier_index}:{interval.index}"
-                treatment, paint_order = request.theme_tokens.background(
-                    semantic_binding(band_semantic_id).scene_role)
-                if treatment != "none":
-                    axis_band_targets[("axis-band", interval.level, str(interval.index))] = placement_id
-                    shapes.append(ShapePlacement(placement_id, "timeline-axis", "Rect",
-                                                  Rect(Decimal(str(x)), band_block, Decimal(str(max(0.0, x2 - x))), band_block_size),
-                                                  semantic_id=band_semantic_id,
-                                                  paint_order=paint_order))
-            if band_tier_count > 1 and tier.unit not in lane_by_unit:
-                band_lane_offset += band_lane_size
-            band_ordinal += 1
-        elif tier.role in {"grid-major", "grid-minor"}:
-            semantic_id = "axisGrid" if tier.role == "grid-major" else "axisGridMinor"
-            for interval in intervals:
-                x = _coordinate(interval.start, scale)
-                shapes.append(ShapePlacement(f"axis-grid:{tier_index}:{interval.index}", "timeline-axis", "Path",
-                                              Rect(Decimal(str(x)), timeline.bounds.block, Decimal(0), timeline.bounds.block_size),
-                                              ((x, float(timeline.bounds.block)), (x, float(timeline.bounds.block + timeline.bounds.block_size))),
-                                              semantic_id=semantic_id,
-                                              paint_order=BACKGROUND_PAINT_ORDER + 1))
-        elif tier.role == "labels" and form is not None:
-            # A tier that leaves typographyRole at its default keeps the
-            # single shared "axisLabel" id every committed View already
-            # uses (byte-identical), no matter how many such default tiers
-            # exist; only a tier that explicitly names a role claims one of
-            # the ordinal ids, in declaration order among such tiers.
-            if tier.typography_role is None:
-                label_semantic_id = axis_label_semantic_ids()[0]
-            else:
-                label_ordinal += 1
-                if label_ordinal >= len(axis_label_semantic_ids()):
-                    raise LayoutError("E_PRESENTATION_AXIS_INVALID", f"/view/body/axis/tiers/{tier_index}",
-                                      detail=f"too many typography-role labels tiers:{label_ordinal}")
-                label_semantic_id = axis_label_semantic_ids()[label_ordinal]
-            resolved_typography_role = tier.typography_role or "axis"
-            orientation = tier.label.orientation
-            label_widths = tuple(
-                measure_text_width(outcome.label or "", font_size=axis_size, font_metrics=axis_metrics,
-                                   letter_spacing=float(axis_treatment.letter_spacing),
-                                   text_transform=axis_treatment.transform,
-                                   numeric_spacing=axis_treatment.numeric_spacing)
-                for outcome in interval_outcomes if outcome.disposition == "placed"
-            )
-            lane_size = (axis_size * float(axis_treatment.line_height) + float(GEOMETRY_TOLERANCE)
-                         if orientation == "horizontal" else max(label_widths, default=0.0))
-            if tier_index in declared_lanes:
-                label_lane_offset, lane_size = declared_lanes[tier_index]
-            inset = _axis_label_inset(request.theme_tokens, tier, axis_size)
-            lane_overflow = label_lane_offset + lane_size > float(axis.bounds.block_size)
-            for interval, outcome in zip(intervals, interval_outcomes, strict=True):
-                if outcome.disposition == "thinned":
-                    continue
-                axis_label_targets[("axis-label", interval.level, str(interval.index))] = outcome.candidate_id
-                x, x2 = _coordinate(interval.start, scale), _coordinate(interval.end, scale)
-                if interval.index > 0 or x > _coordinate(start, scale) + float(GEOMETRY_TOLERANCE):
-                    separator_marks.append((x, *((float(axis.bounds.block) + label_lane_offset,
-                                                  float(axis.bounds.block) + label_lane_offset + lane_size)
-                                                 if tier_index in declared_lanes else
-                                                 (float(axis.bounds.block), float(axis.bounds.block + axis.bounds.block_size)))))
-                if tier.label.align == "start" and inset:
-                    x = x + inset
-                available = max(0.0, x2 - x)
-                label = outcome.label
-                if label is None or outcome.disposition != "placed":
-                    raise LayoutError("E_PRESENTATION_AXIS_OVERFLOW", f"/view/body/axis/tiers/{tier_index}",
-                                      detail=outcome.candidate_id)
-                width = measure_text_width(label, font_size=axis_size, font_metrics=axis_metrics,
-                                           letter_spacing=float(axis_treatment.letter_spacing),
-                                           text_transform=axis_treatment.transform,
-                                           numeric_spacing=axis_treatment.numeric_spacing)
-                occupied_inline = width if orientation == "horizontal" else axis_size * float(axis_treatment.line_height)
-                inline = x if tier.label.align == "start" else x + (available - occupied_inline) / 2
-                if tier_index in declared_lanes:
-                    line_block = axis_size * float(axis_treatment.line_height)
-                    baseline = float(axis.bounds.block) + label_lane_offset + (lane_size - line_block) / 2 + axis_size
-                else:
-                    baseline = float(axis.bounds.block) + label_lane_offset + (
-                        axis_size if orientation == "horizontal" else (0 if orientation == "rotate-cw" else width))
-                placed = place_text(placement_id=f"axis-label:{tier_index}:{interval.index}", source_ref="timeline-axis",
-                                    content=label, inline=inline, baseline_block=baseline,
-                                    typography_role=resolved_typography_role, theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                    collision_region="timeline-axis-label", collision_domain=CollisionDomain("timeline-axis", "labels"),
-                                    source_content=label, available_inline_start=x, available_inline_size=available,
-                                    orientation=orientation,
-                                    overflow="visible-overflow" if not outcome.label_fits or lane_overflow else "fit")
-                placed = replace(placed, semantic_id=label_semantic_id)
-                text.append(placed)
-                if not outcome.label_fits or lane_overflow:
-                    visible_label_overflows.append((placed, LabelRect(*_bounds(axis.bounds))))
-            label_lane_offset += lane_size
-        else:
-            raise LayoutError("E_PRESENTATION_AXIS_INVALID", "/view/body/axis/tiers")
-    if request.theme_tokens.has_role("axis-cell-separator"):
-        merged: dict[float, tuple[float, float]] = {}
-        for x, top, bottom in separator_marks:
-            key = round(x, 6)
-            low, high = merged.get(key, (top, bottom))
-            merged[key] = (min(low, top), max(high, bottom))
-        for index, (x, (top, bottom)) in enumerate(sorted(merged.items())):
-            shapes.append(ShapePlacement(f"axis-separator:{index}", "timeline-axis", "Path",
-                                         Rect(Decimal(str(x)), Decimal(str(top)), Decimal(0), Decimal(str(bottom - top))),
-                                         ((x, top), (x, bottom)), semantic_id="axisCellSeparator",
-                                         paint_order=BACKGROUND_PAINT_ORDER + 2))
-    if request.theme_tokens.has_role("axis-rule"):
-        rule_y = float(axis.bounds.block + axis.bounds.block_size)
-        left, right = float(timeline.bounds.inline), float(timeline.bounds.inline + timeline.bounds.inline_size)
-        shapes.append(ShapePlacement("axis-rule", "timeline-axis", "Path",
-                                     Rect(Decimal(str(left)), Decimal(str(rule_y)), Decimal(str(right - left)), Decimal(0)),
-                                     ((left, rule_y), (right, rule_y)), semantic_id="axisRule",
-                                     paint_order=BACKGROUND_PAINT_ORDER + 2))
-    axis_bands = tuple(item for item in shapes if item.semantic_id in axis_band_semantic_ids())
-
-    def axis_band_host(item: TextPlacement) -> str | None:
-        # A label's host is the band occupying its own lane, not merely a
-        # band whose columns happen to span the label's x-position (#426:
-        # multiple band lanes can differ in width and no longer all span the
-        # whole axis slot, so the inline test alone is no longer sufficient).
-        centre = item.bounds.inline + item.bounds.inline_size / 2
-        lane_centre = item.bounds.block + item.bounds.block_size / 2
-        candidates = tuple(band for band in axis_bands
-                           if band.bounds.inline <= centre <= band.bounds.inline + band.bounds.inline_size
-                           and band.bounds.block <= lane_centre <= band.bounds.block + band.bounds.block_size)
-        return min(candidates, key=lambda band: band.placement_id).placement_id if candidates else None
-
-    text = [replace(item, host_placement_id=axis_band_host(item), paint_order=HOSTED_TEXT_PAINT_ORDER)
-            if item.semantic_id in axis_label_semantic_ids() else item
-            for item in text]
+    shapes.extend(compose_row_group_backgrounds(
+        base=base, rows=rows, groups=groups, theme_tokens=request.theme_tokens,
+        row_decoration=request.surface_content.row_decoration,
+        group_decoration=request.surface_content.group_decoration))
+    axis_batch = compose_axis(request, base)
+    axis = by_source["timeline-axis"]
+    shapes.extend(axis_batch.shapes)
+    text.extend(axis_batch.text)
+    axis_tier_outcomes = list(axis_batch.tier_outcomes)
+    axis_decisions = list(axis_batch.decisions)
+    axis_label_targets = axis_batch.label_targets
+    axis_band_targets = axis_batch.band_targets
+    diagnostics = list(axis_batch.diagnostics)
+    visible_label_overflows = list(axis_batch.visible_label_overflows)
+    calendar_intervals = axis_batch.calendar_intervals
     contract = request.presentation_contract
-    minimum_closed_day_width = metric_values.get("timeline.calendarClosed.minimumDayWidth")
-    closed_days = contract.time.calendar_closed
-    if minimum_closed_day_width is not None and scale.unit_ratio < float(minimum_closed_day_width):
-        closed_days = contract.time.calendar_exceptions
-    for closed_day in closed_days:
-        if start <= closed_day < end:
-            x1, x2 = _coordinate(closed_day, scale), _coordinate(closed_day.fromordinal(closed_day.toordinal() + 1), scale)
-            shape = background_shape(
-                f"calendar-closed:{closed_day.isoformat()}", "project-calendar", "calendarClosed",
-                Rect(Decimal(str(x1)), timeline.bounds.block,
-                     Decimal(str(max(0.0, x2 - x1))), timeline.bounds.block_size),
-            )
-            if shape is not None:
-                shapes.append(shape)
+    shapes.extend(compose_calendar_backgrounds(
+        base=base, theme_tokens=request.theme_tokens, intervals=calendar_intervals))
     as_of_label: tuple[float, str] | None = None
     if contract.time.as_of is not None and start <= contract.time.as_of < end:
         x = _coordinate(contract.time.as_of, scale)
@@ -1536,11 +881,6 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                      ((x, float(timeline.bounds.block)), (x, float(timeline.bounds.block + timeline.bounds.block_size))),
                                      paint_order=MARK_PAINT_ORDER_BASE))
         as_of_label = (x, contract.time.as_of_label) if contract.time.as_of_label else None
-    tracks = (_place_lane_mark_tracks(review_rows=tuple(review_rows), row_placements=raw_rows,
-                                      plan=lane_subtracks, mark_block_size=mark_block_size)
-              if lane_subtracks is not None else
-              place_mark_tracks(review_rows=tuple(review_rows), row_placements=raw_rows,
-                                mark_block_size=mark_block_size, role_geometries=role_geometries))
     track_by_id = {item.instance_id: item for item in tracks}
     marks: list[MarkPlacement] = []
 
@@ -1589,12 +929,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             # suppressing excess milestones.
             expanded_header = Rect(group.header_bounds.inline, group.header_bounds.block,
                                    group.header_bounds.inline_size, Decimal(str(occupied)))
-            replacement = GroupPlacement(group.group_id, group.content_bounds, expanded_header)
-            groups[groups.index(group)] = replacement
+            update = GroupHeaderExtentUpdate(group, expanded_header)
+            groups = replace_group_header_extent(tuple(groups), update)
+            replacement = next(item for item in groups if item.group_id == group_id)
             group_by_id[group_id] = replacement
-            shapes = [replace(shape, bounds=expanded_header)
-                      if shape.placement_id == f"group-header-band:{group_id}" else shape
-                      for shape in shapes]
+            shapes = list(replace_group_header_band(tuple(shapes), update))
             visible_group_header_overflows.append((group_id, expanded_header,
                                                    float(group.header_bounds.block_size)))
             group = replacement
@@ -2960,13 +2299,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                         else by_source["legend"].slot_id
                                         if item.relation_id.startswith("legend-swatch:")
                                         else timeline.slot_id)) for item in relations]
-    column_placements = tuple(
-        ColumnPlacement(item.column_id, column.header,
-                        Rect(Decimal(str(item.inline)), Decimal(str(table_bounds[1])),
-                             Decimal(str(item.inline_size)), Decimal(str(table_bounds[3]))))
-        for item, column in zip(columns, table_columns, strict=True)
-    )
-    _validate_background_shapes(shapes, request.theme_tokens)
+    validate_background_shapes(shapes, request.theme_tokens)
 
     # Complete the observable fallback records at the same point as completed
     # geometry.  Neither Scene nor an adapter gets a policy question to answer.
@@ -3146,11 +2479,6 @@ def _complete_catalog_patterns(marks: tuple[MarkPlacement, ...],
                 complete_pattern_placement(pattern, mark.bounds, mark.corner_radius),
             ))
     return tuple(result)
-
-
-def _folded_instance_id(folded: Any, item: Any) -> str:
-    """Keep a header point's comparison members addressable without inventing rows."""
-    return f"group-header:{folded.group_id}:{item.item_id or item.object_id}"
 
 
 def _comparison_marks(projection: Any) -> tuple[ComparisonMark, ...]:
