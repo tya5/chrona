@@ -211,3 +211,15 @@ def test_pr_classifier_receives_unquoted_commit_ids(tmp_path: Path) -> None:
                                  "GITHUB_OUTPUT": str(output)})
     assert result.returncode == 0, result.stderr
     assert output.read_text().startswith("path=")
+
+
+def test_pr_snapshot_consumers_fetch_baseline_history() -> None:
+    import yaml
+
+    jobs = yaml.load(Path(".github/workflows/conformance.yml").read_text(),
+                     Loader=yaml.BaseLoader)["jobs"]
+    for name in ("derived-preview", "pr-conformance", "pr-pytest",
+                 "reproduction-newest-python"):
+        checkout = next(step for step in jobs[name]["steps"]
+                        if step.get("uses", "").startswith("actions/checkout@"))
+        assert checkout["with"]["fetch-depth"] == "0", name
