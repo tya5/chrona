@@ -223,6 +223,7 @@ jobs:
           ref: ${{ github.sha }}
       - name: Verify exact full-CI SHA when supplied
         if: ${{ github.event_name == 'workflow_dispatch' }}
+        shell: bash
         env:
           EXPECTED_SHA: ${{ inputs.expected_sha }}
         run: |
