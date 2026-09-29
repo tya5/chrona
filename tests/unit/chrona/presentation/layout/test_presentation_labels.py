@@ -1,8 +1,10 @@
 import pytest
 
 from chrona.presentation.layout.labels import (
-    LabelObstacle, LabelRect, nearest_rect_perimeters, place_label, place_member_name,
+    LabelObstacle, LabelPlacement, LabelRect, MemberNameAssociation, nearest_rect_perimeters, place_label, place_member_name,
 )
+from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.surface_composer import _member_association_outcome
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
 from chrona.presentation.layout.text import wrap_text
 
@@ -98,6 +100,65 @@ def test_member_name_returns_suppression_when_bounded_end_and_start_are_blocked(
         obstacles=(LabelRect(0, 0, 100, 100),), gap=2, maximum_end_gap=20,
     )
     assert result is None
+
+
+@pytest.mark.parametrize("side", ("start", "end"))
+def test_member_name_checks_completed_text_against_its_exact_mark_on_both_sides(side):
+    mark = LabelRect(50, 40, 10, 10)
+    association = MemberNameAssociation(mark, 2, 1, 20, 8, 4)
+    result = place_member_name(
+        mark, (24, 10), (side,), bounds=LabelRect(0, 0, 120, 100),
+        gap=2, maximum_end_gap=30, association=association)
+    assert result is not None and result.side == side
+    assert association.allows(result.bounds)
+    farther = MemberNameAssociation(mark, 2, 1, 20, 8, 1)
+    assert place_member_name(
+        mark, (24, 10), (side,), bounds=LabelRect(0, 0, 120, 100),
+        gap=2, maximum_end_gap=30, association=farther) is None
+
+
+def test_member_name_full_band_never_uses_a_second_stagger_step():
+    mark = LabelRect(50, 40, 10, 10)
+    association = MemberNameAssociation(mark, 0, 0, 20, 8, 20)
+    obstacle = LabelRect(62, 20, 20, 35)
+    result = place_member_name(
+        mark, (20, 8), ("end", "start"), bounds=LabelRect(0, 0, 120, 100),
+        obstacles=(obstacle,), gap=2, maximum_end_gap=30, full_band=True,
+        association=association, maximum_stagger=10)
+    assert result is not None and result.side == "start"
+    assert association.allows(result.bounds)
+
+
+def test_member_association_exhaustion_suppresses_optional_and_fails_required():
+    association = MemberNameAssociation(LabelRect(50, 40, 10, 10), 0, 0, 20, 8, 20)
+    far = LabelPlacement("end", LabelRect(80, 80, 20, 8))
+    assert _member_association_outcome(far, association, overflow="suppress",
+                                       placement_id="member-label:a") is None
+    assert _member_association_outcome(None, association, overflow="suppress",
+                                       placement_id="member-label:a") is None
+    with pytest.raises(LayoutError, match="E_LAYOUT_LABEL_ASSOCIATION_UNPLACEABLE"):
+        _member_association_outcome(far, association, overflow="visible-overflow",
+                                    placement_id="member-label:a")
+    with pytest.raises(LayoutError, match="E_LAYOUT_LABEL_ASSOCIATION_UNPLACEABLE"):
+        _member_association_outcome(None, association, overflow="diagnose",
+                                    placement_id="member-label:a")
+
+
+def test_declared_visible_overflow_keeps_colliding_near_name_but_not_detached_name():
+    mark = LabelRect(50, 40, 10, 10)
+    association = MemberNameAssociation(mark, 0, 0, 20, 8, 20)
+    blocked = (LabelRect(0, 0, 120, 100),)
+    near = place_member_name(mark, (20, 8), ("end", "start"),
+                             bounds=LabelRect(0, 0, 120, 100), obstacles=blocked,
+                             gap=2, maximum_end_gap=30, association=association,
+                             overflow="visible-overflow")
+    assert near is not None and near.side == "end" and near.visible_overflow
+    assert association.allows(near.bounds)
+    detached = MemberNameAssociation(mark, 0, 0, 20, 8, 1)
+    assert place_member_name(mark, (20, 8), ("end", "start"),
+                             bounds=LabelRect(0, 0, 120, 100), obstacles=blocked,
+                             gap=2, maximum_end_gap=30, association=detached,
+                             overflow="visible-overflow") is None
 
 
 def test_member_name_full_band_search_matches_axis_aligned_interval_oracle():

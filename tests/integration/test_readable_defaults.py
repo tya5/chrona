@@ -416,14 +416,17 @@ def test_public_wallboard_keeps_station_note_when_title_width_changes() -> None:
 
 
 @pytest.mark.parametrize("slide", ("02-programme-board", "11-overlay-briefing", "12-glyph-gates"))
-def test_wallboard_fill_keeps_all_packed_member_names(slide: str) -> None:
+def test_wallboard_fill_counts_names_that_cannot_stay_near_their_marks(slide: str) -> None:
     scene = json.loads((ROOT / f"examples/halcyon-1/generated/{slide}.scene.json").read_text(encoding="utf-8"))
     surface = scene["surfaces"][0]
     packed = len(surface["laneMembers"])
     names = [item for item in _primitives(scene) if item.get("purpose") == "member-label"]
     shown = len(names)
-    assert packed == shown == 26
-    assert not any(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:") for item in scene["diagnostics"])
+    suppressed = [item for item in scene["diagnostics"]
+                  if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")]
+    assert packed == shown + len(suppressed)
+    assert shown > 0 and len(suppressed) == len(set(suppressed))
+    assert not any(item.get("purpose") == "member-label-leader" for item in _primitives(scene))
     for box in (item for item in _primitives(scene) if item["id"].startswith("annotation-box:")):
         left, top = box["bounds"]["inline"], box["bounds"]["block"]
         right = left + box["bounds"]["inlineSize"]

@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from math import ceil, isfinite
 from math import hypot
-from typing import Iterable
+from typing import Callable, Iterable
 
 from chrona.presentation.layout.surface_quality import CollisionDomain
 from chrona.presentation.layout.obstacles import (
@@ -99,6 +99,25 @@ class LabelObstacle:
 
 
 @dataclass(frozen=True)
+class MemberNameAssociation:
+    """Measured Text footprint and its exact completed mark, in Layout space."""
+
+    mark: LabelRect
+    text_inline_inset: float
+    text_block_inset: float
+    text_width: float
+    text_height: float
+    maximum_distance: float
+
+    def allows(self, footprint: LabelRect) -> bool:
+        text = LabelRect(footprint.x + self.text_inline_inset,
+                         footprint.y + self.text_block_inset,
+                         self.text_width, self.text_height)
+        distance, _, _ = nearest_rect_perimeters(text, self.mark)
+        return distance <= self.maximum_distance + 1e-9
+
+
+@dataclass(frozen=True)
 class LabelRequest:
     """One semantic plot-text request awaiting deterministic Layout placement."""
 
@@ -164,7 +183,8 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
                 rule_host_obstacle_id: str | None = None,
                 classes: tuple[str, ...] | None = None,
                 search_side_neighborhood: bool = False,
-                maximum_side_gap: float | None = None) -> LabelPlacement | None:
+                maximum_side_gap: float | None = None,
+                candidate_filter: Callable[[LabelRect], bool] | None = None) -> LabelPlacement | None:
     """Choose the first legal candidate in declared order; never search indefinitely."""
     sides = tuple(candidates)
     if (not 1 <= len(sides) <= 16 or len(set(sides)) != len(sides)
@@ -182,6 +202,8 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
     def legal(candidate: LabelRect, side: str) -> bool:
         if (candidate.x < bounds.x or candidate.y < bounds.y
                 or candidate.right > bounds.right or candidate.bottom > bounds.bottom):
+            return False
+        if candidate_filter is not None and not candidate_filter(candidate):
             return False
         if index is not None:
             return not index.collisions(
@@ -266,19 +288,30 @@ def place_member_name(
     inside_host_obstacle_id: str | None = None,
     classes: tuple[str, ...] | None = None,
     full_band: bool = False,
+    association: MemberNameAssociation | None = None,
+    maximum_stagger: float | None = None,
+    overflow: str = "suppress",
+    visible_fallback_side: str | None = None,
 ) -> LabelPlacement | None:
     """Try declared member-name sides in order, bounding end gap to completed text.
 
-    ``text_inline_inset`` is the distance from the searched label box's left
-    edge to its completed Text bounds (for example chip padding and a leading
-    visual).  Only the end-side trial is capped; the declared next side remains
-    available before the caller records a typed suppression.
+    ``association`` checks the completed Text, not its decorative footprint,
+    against the exact host mark. Full-band lane contacts may move by at most
+    one measured stagger step; a failed contact proceeds to the declared side.
     """
     sides = tuple(candidates)
-    if (not sides or len(sides) > 16 or len(set(sides)) != len(sides)
+    if not sides:
+        return None
+    if (len(sides) > 16 or len(set(sides)) != len(sides)
             or any(side not in {"above", "below", "start", "end", "inside"} for side in sides)
             or any(isinstance(value, bool) or not isfinite(value) or value < 0
-                   for value in (gap, maximum_end_gap, text_inline_inset))):
+                   for value in (gap, maximum_end_gap, text_inline_inset))
+            or (maximum_stagger is not None and
+                (isinstance(maximum_stagger, bool) or not isfinite(maximum_stagger)
+                 or maximum_stagger < 0))
+            or overflow not in {"suppress", "visible-overflow", "diagnose"}
+            or (visible_fallback_side is not None and
+                (overflow != "visible-overflow" or visible_fallback_side not in sides))):
         raise ValueError("E_PRESENTATION_LABEL_INPUT")
     available_obstacles = (obstacles if isinstance(obstacles, SurfaceObstacleIndex)
                            else tuple(obstacles))
@@ -294,6 +327,7 @@ def place_member_name(
                 inside_host_obstacle_id=inside_host_obstacle_id,
                 required=False, overflow="suppress", classes=classes,
                 search_side_neighborhood=True, maximum_side_gap=maximum_side_gap,
+                candidate_filter=association.allows if association is not None else None,
             )
             if placed is not None:
                 return placed
@@ -332,11 +366,15 @@ def place_member_name(
 
         legal_positions = []
         for y in candidates:
+            if maximum_stagger is not None and abs(y - preferred.y) > maximum_stagger + 1e-9:
+                continue
             candidate = LabelRect(preferred.x, y, preferred.width, preferred.height)
             if (candidate.x < bounds.x or candidate.right > bounds.right
                     or candidate.y < bounds.y or candidate.bottom > bounds.bottom):
                 continue
             if side == "end" and candidate.x + text_inline_inset - anchor.right > maximum_end_gap:
+                continue
+            if association is not None and not association.allows(candidate):
                 continue
             if isinstance(available_obstacles, SurfaceObstacleIndex):
                 collides = bool(local_obstacles.collisions(
@@ -352,4 +390,12 @@ def place_member_name(
         if legal_positions:
             selected = min(legal_positions, key=lambda rect: (abs(rect.y - preferred.y), rect.y))
             return LabelPlacement(side, selected, search_count=len(candidates))
+    if overflow == "visible-overflow":
+        # Preserve the declared visible fallback without waiving the own-mark
+        # association. It may overlap an obstacle or leave its nominal bounds.
+        fallback_sides = (visible_fallback_side,) if visible_fallback_side is not None else sides
+        for side in fallback_sides:
+            candidate = _visible_candidate(anchor, size, side, gap)
+            if association is None or association.allows(candidate):
+                return LabelPlacement(side, candidate, True)
     return None

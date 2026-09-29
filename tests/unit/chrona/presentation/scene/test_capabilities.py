@@ -14,6 +14,7 @@ from chrona.presentation.scene.capabilities import (
 def test_capability_ceiling_records_every_disposition_and_runtime_id_is_admitted():
     ceiling = capability_ceiling()
     assert {item.disposition for item in ceiling} == set(CapabilityDisposition)
+    assert all(item.identifier != "member-label-leader" for item in ceiling)
     assert LINEAR_GRADIENT in admitted_capability_ids(LINEAR_GRADIENT)
     with pytest.raises(ValueError, match="E_VISUAL_CAPABILITY_CEILING"):
         admitted_capability_ids("decoration.row-band")

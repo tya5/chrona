@@ -41,7 +41,7 @@ from chrona.presentation.layout.annotation_topology import (
 )
 from chrona.presentation.layout.comparison_marks import ComparisonMark
 from chrona.presentation.layout.labels import (
-    LabelRect, LabelRequest, nearest_rect_perimeters, place_label, place_member_name,
+    LabelRect, LabelRequest, MemberNameAssociation, place_label, place_member_name,
 )
 from chrona.presentation.layout.obstacles import (
     ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex, obstacle_envelope,
@@ -82,6 +82,17 @@ class SurfaceLayoutComposition:
     review_rows: tuple[Any, ...]
     track_placements: tuple[TrackPlacement, ...]
     mark_absences: tuple[MarkFacetAbsence, ...] = ()
+
+
+def _member_association_outcome(candidate: LabelPlacement | None,
+                                association: MemberNameAssociation, *,
+                                overflow: str, placement_id: str) -> LabelPlacement | None:
+    """Close a mark-associated name only after its measured Text passes the bound."""
+    if candidate is not None and not association.allows(candidate.bounds):
+        candidate = None
+    if candidate is None and overflow != "suppress":
+        raise LayoutError("E_LAYOUT_LABEL_ASSOCIATION_UNPLACEABLE", f"/placement/{placement_id}")
+    return candidate
 
 
 @dataclass(frozen=True)
@@ -185,8 +196,7 @@ def _resolved_lane_visual_requests(projection: Any, visual_requests: tuple[Any, 
 
 def _lane_emissions(projection: Any, review_rows: tuple[Any, ...], marks: list[MarkPlacement],
                     text: list[Any], shapes: list[ShapePlacement], icons: tuple[IconPlacement, ...],
-                    theme_tokens: Any,
-                    relations: list[RelationPlacement] = ()) -> tuple[LaneEmissionPlacement, ...]:
+                    theme_tokens: Any) -> tuple[LaneEmissionPlacement, ...]:
     """Close the typed Layout-to-Scene member inventory after all geometry is final."""
     if projection.lane_membership is None:
         return ()
@@ -288,22 +298,6 @@ def _lane_emissions(projection: Any, review_rows: tuple[Any, ...], marks: list[M
                                        shape.placement_id,
                                        ObstacleRect(left, top, left + width, top + height),
                                        "required-label"))
-    text_by_id = {item.placement_id: item for item in text}
-    for relation in relations:
-        if relation.semantic_id != "memberLabelLeader":
-            continue
-        label = text_by_id.get(relation.source_port_id)
-        if label is None or label.lane_row_id is None or label.lane_member_id is None:
-            raise LayoutError("E_LAYOUT_LANE_EMISSION_INVALID", relation.relation_id)
-        for segment_index, (start, end) in enumerate(zip(relation.points, relation.points[1:])):
-            if start == end:
-                continue
-            add("relation", relation.relation_id, label.lane_row_id, label.lane_member_id,
-                semantic_binding(relation.semantic_id).purpose,
-                LaneEmissionFacet(
-                    f"leader:{relation.relation_id}:segment:{segment_index}", "relation",
-                    relation.relation_id, relation.relation_id,
-                    ObstacleSegment(start, end), "leader-route"))
     return tuple(LaneEmissionPlacement(kind, placement_id, row_id, member_id, purpose,
                                        tuple(facets))
                  for (kind, placement_id, row_id, member_id, purpose), facets in grouped.items())
@@ -1899,7 +1893,6 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     row_requirements_by_id = (dict(request.fixed_lane_preflight.row_requirements)
                               if request.fixed_lane_preflight is not None else {})
     lane_label_suppressions: list[LaneLabelSuppression] = []
-    member_label_relations: list[RelationPlacement] = []
     measured_lane_labels = ({item.placement_id: item for item in
                              request.fixed_lane_preflight.measured_labels}
                             if request.fixed_lane_preflight is not None else {})
@@ -2095,89 +2088,44 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             label_classes = (("mark", "text", "label-visual", "rule")
                              if label_request.rule_host_obstacle_id is not None
                              else ("mark", "text", "label-visual", "dependency-route"))
+            provisional = place_text(placement_id=label_request.placement_id, source_ref=label_request.source_ref,
+                                     content=label_request.content, inline=0, baseline_block=float(font_size),
+                                     typography_role=label_request.typography_role, theme_tokens=request.theme_tokens,
+                                     font_metrics=request.font_metrics, collision_region=label_request.collision_region,
+                                     collision_domain=label_request.collision_domain, semantic_id=label_request.semantic_id,
+                                     lane_row_id=label_request.lane_row_id,
+                                     lane_member_id=label_request.lane_member_id,
+                                     lane_source_kind=label_request.lane_source_kind, lines=lines)
+            host = mark_by_id.get(label_request.inside_host_obstacle_id or "")
+            associated_member = (label_request.semantic_id == "memberLabel"
+                                 and label_request.collision_region == "plot-label" and host is not None)
+            member_association = (MemberNameAssociation(
+                LabelRect(*_bounds(host.bounds)), leading + chip_pad[0], chip_pad[1],
+                float(provisional.bounds.inline_size), float(provisional.bounds.block_size),
+                2 * float(font_size)) if associated_member else None)
             if label_request.semantic_id == "asOfLabel":
                 candidate = find_asof_label_candidate(
                     timeline_rect, label_size, rule_x=label_request.anchor.x,
                     gap=label_gap, rule_host_id="as-of", obstacles=surface_obstacles,
                     obstacle_classes=("mark", "text", "label-visual", "rule"),
                 )
-            elif (label_request.semantic_id == "memberLabel"
-                  and label_request.overflow == "suppress"
-                  and label_request.lane_row_id is not None):
-                candidate = None
-                host = mark_by_id.get(label_request.inside_host_obstacle_id or "")
-                for side in label_request.candidates:
-                    if side in {"end", "start"}:
-                        trial = place_member_name(
-                            label_request.anchor, label_size, (side,),
-                            bounds=placement_bounds, obstacles=surface_obstacles, gap=label_gap,
-                            maximum_end_gap=2 * float(font_size),
-                            text_inline_inset=(measured_lane.text_inline_inset if measured_lane is not None
-                                               else leading + chip_pad[0]),
-                            inside_host_obstacle_id=label_request.inside_host_obstacle_id,
-                            classes=label_classes,
-                            full_band=(layout_manifest.row_distribution == "fill"),
-                        )
-                    else:
-                        trial = place_label(
-                            label_request.anchor, label_size, (side,), bounds=placement_bounds,
-                            obstacles=surface_obstacles, gap=label_gap,
-                            inside_host_obstacle_id=label_request.inside_host_obstacle_id,
-                            required=False, overflow="suppress", classes=label_classes,
-                            search_side_neighborhood=True)
-                    if trial is None or host is None:
-                        continue
-                    text_box = LabelRect(trial.bounds.x + leading, trial.bounds.y,
-                                         text_width, float(font_size) * float(line_height) * len(lines))
-                    mark_box = LabelRect(*_bounds(host.bounds))
-                    distance, source_port, target_port = nearest_rect_perimeters(text_box, mark_box)
-                    if distance <= 2 * float(font_size):
-                        candidate = trial
-                        break
-                    index = SurfaceObstacleIndex()
-                    index.extend(item for item in surface_obstacles.all()
-                                 if item.placement_id != host.placement_id)
-                    row = row_by_id[label_request.lane_row_id]
-                    row_box = _bounds(row.bounds)
-                    route_bounds = (row_box[0], row_box[1], row_box[0] + row_box[2], row_box[1] + row_box[3])
-                    try:
-                        route_points = place_relation_route(
-                            source_port=source_port, target_port=target_port, obstacles=index,
-                            bounds=route_bounds)
-                    except RouteSearchFailure:
-                        route_points = None
-                    if route_points is None:
-                        continue
-                    candidate = trial
-                    relation_id = f"member-label-leader:{label_request.placement_id}"
-                    relation = RelationPlacement(
-                        relation_id, label_request.placement_id, host.placement_id,
-                        route_points, semantic_id="memberLabelLeader",
-                        source_ref=label_request.source_ref,
-                        slot_id=by_source.get(label_request.collision_domain.slot, timeline).slot_id,
-                        paint_order=250)
-                    member_label_relations.append(relation)
-                    stroke = float(request.theme_tokens.number(
-                        semantic_binding("memberLabelLeader").theme_role, "strokeWidth"))
-                    for segment_index, (start, end) in enumerate(zip(route_points, route_points[1:])):
-                        if start != end:
-                            surface_obstacles.add(SurfaceObstacle(
-                                f"{relation_id}:segment:{segment_index}", "leader-route", "timeline",
-                                ObstacleSegment(start, end, stroke)))
-                    break
-            elif (label_request.semantic_id == "memberLabel"
-                  and label_request.overflow == "suppress"
-                  and label_request.lane_row_id is None
-                  and "end" in label_request.candidates):
-                # Non-lane placement retains its existing bounded end search.
-                # The lane-only leader policy must not broaden this ladder.
+            elif associated_member:
+                # A plot name is accepted only near its own completed mark.
+                # Project-specific Theme/View choices determine which of the
+                # declared candidates survive this general Layout predicate.
                 candidate = place_member_name(
                     label_request.anchor, label_size, label_request.candidates,
                     bounds=placement_bounds, obstacles=surface_obstacles, gap=label_gap,
                     maximum_end_gap=2 * float(font_size),
                     text_inline_inset=leading + chip_pad[0],
                     inside_host_obstacle_id=label_request.inside_host_obstacle_id,
-                    classes=label_classes, full_band=False)
+                    classes=label_classes,
+                    full_band=(label_request.lane_row_id is not None
+                               and layout_manifest.row_distribution == "fill"),
+                    association=member_association,
+                    maximum_stagger=(label_size[1] + label_gap if label_request.lane_row_id is not None else None),
+                    overflow=label_request.overflow,
+                    visible_fallback_side=label_request.visible_fallback_side)
             else:
                 candidate = (place_label(
                     label_request.anchor, label_size, label_request.candidates,
@@ -2189,14 +2137,12 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                     search_side_neighborhood=(label_request.rule_host_obstacle_id is None),
                     classes=label_classes,
                 ) if label_request.candidates else None)
-            provisional = place_text(placement_id=label_request.placement_id, source_ref=label_request.source_ref,
-                                     content=label_request.content, inline=0, baseline_block=float(font_size),
-                                     typography_role=label_request.typography_role, theme_tokens=request.theme_tokens,
-                                     font_metrics=request.font_metrics, collision_region=label_request.collision_region,
-                                     collision_domain=label_request.collision_domain, semantic_id=label_request.semantic_id,
-                                     lane_row_id=label_request.lane_row_id,
-                                     lane_member_id=label_request.lane_member_id,
-                                     lane_source_kind=label_request.lane_source_kind)
+            # Check the completed search result at the composition boundary as
+            # well: no alternative placement helper can emit detached text.
+            if member_association is not None:
+                candidate = _member_association_outcome(
+                    candidate, member_association, overflow=label_request.overflow,
+                    placement_id=label_request.placement_id)
             fallback_ladder = label_request.candidates + (
                 (label_request.visible_fallback_side,)
                 if label_request.visible_fallback_side is not None
@@ -2217,7 +2163,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                         row_requirements_by_id[label_request.lane_row_id])))
                     short_sources = tuple(item for item in request.capacity_short_sources
                                           if item.source_id == "timeline")
-                    capacity = remaining == 0 and bool(short_sources)
+                    capacity = not associated_member and remaining == 0 and bool(short_sources)
                     lane_label_suppressions.append(LaneLabelSuppression(
                         label_request.placement_id, label_request.lane_row_id,
                         label_request.lane_member_id, lane_row.bounds,
@@ -2231,7 +2177,6 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                     candidate = replace(candidate, bounds=LabelRect(
                         chip_box.x + chip_pad[0], chip_box.y + chip_pad[1],
                         chip_box.width - 2 * chip_pad[0], chip_box.height - 2 * chip_pad[1]))
-                host = mark_by_id.get(label_request.inside_host_obstacle_id or "")
                 slot = by_source.get(label_request.collision_domain.slot)
                 slot_bounds = LabelRect(*_bounds(slot.bounds)) if slot is not None else placement_bounds
                 crosses_slot = (candidate.bounds.x < slot_bounds.x or candidate.bounds.y < slot_bounds.y
@@ -2249,7 +2194,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                        lane_source_kind=provisional.lane_source_kind,
                                        overflow="visible-overflow" if visible_overflow else "fit",
                                        lines=lines), fallback_ladder=fallback_ladder, selected_rung=candidate.side,
-                                      host_placement_id=(host.placement_id if candidate.side == "inside" and host is not None else None),
+                                      host_placement_id=(host.placement_id if host is not None and
+                                                         (associated_member or candidate.side == "inside") else None),
                                       paint_order=max(HOSTED_TEXT_PAINT_ORDER, host.paint_order + 1)
                                       if candidate.side == "inside" and host is not None else FOREGROUND_TEXT_PAINT_ORDER)
                 text.append(placed_text)
@@ -2300,7 +2246,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
 
     place_requested_labels(tuple(item for item in label_requests if before_relations(item)))
 
-    relations: list[RelationPlacement] = list(member_label_relations)
+    relations: list[RelationPlacement] = []
     visible_route_fallbacks: list[RelationPlacement] = []
     instance_anchors: dict[str, list[tuple[str, tuple[float, float]]]] = {}
     instance_rows: dict[str, str] = {}
@@ -3345,7 +3291,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             raise LayoutError("E_LAYOUT_LANE_ROW_ANCHOR_INVALID", "/layout/rows",
                               "completed lane mark band falls outside its row bounds") from error
     lane_emissions = _lane_emissions(projection, tuple(review_rows), marks, text,
-                                     shapes, completed_icons, request.theme_tokens, relations)
+                                     shapes, completed_icons, request.theme_tokens)
     # Abstract mark IDs remain Layout anchors; hosted text needs the actual
     # Scene primitive ID completed by this typed lane-emission closure.
     completed_text = _complete_hosted_text_identity(tuple(text), tuple(marks), lane_emissions)

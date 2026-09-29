@@ -224,8 +224,6 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              "Layout relation and Scene Path", _PATH_PAINT, scene_kinds=frozenset(("Path",)))
     register("dependency", "Scene Path and Layout legend swatch marker", _PATH_PAINT | frozenset(("marker",)),
              scene_kinds=frozenset(("Path",)))
-    register("member-label-leader", "Layout member-label leader and Scene Path", _PATH_PAINT,
-             scene_kinds=frozenset(("Path",)))
     register("annotation-callout-leader annotation-note-leader", "Layout annotation leader and Scene Path", _PATH_PAINT,
              scene_kinds=frozenset(("Path",)))
     register("annotation-arrow-leader", "Layout explanatory arrow and Scene Path",

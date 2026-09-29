@@ -140,7 +140,6 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("memberLabelInsideActual", "label", "member-label", "member-label-inside-actual", "member-label-inside-actual"),
     _binding("memberLabelInsideSnapshot", "label", "member-label", "member-label-inside-snapshot", "member-label-inside-snapshot"),
     _binding("memberLabelInsideScenario", "label", "member-label", "member-label-inside-scenario", "member-label-inside-scenario"),
-    _binding("memberLabelLeader", "line", "member-label-leader", "member-label-leader", "dependency"),
     _binding("finishDelta", "label", "finish-delta", "variance-on-track", "variance-on-track"),
     _binding("varianceAhead", "label", "finish-delta", "variance-ahead", "variance-ahead"),
     _binding("varianceBehind", "label", "finish-delta", "variance-behind", "variance-behind"),
