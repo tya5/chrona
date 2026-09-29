@@ -474,7 +474,9 @@ mark's `hostPlacementId` in Scene and is associated to it, not to the nearest
 unrelated mark. Layout measures the two-dimensional
 nearest-perimeter distance from completed text bounds to the own mark on both
 start and end sides. If the distance exceeds two font sizes, Layout completes a
-source-keyed member-label leader Path within the owning row band or rejects that
+source-keyed member-label leader Path from the decorated label footprint
+(Text, chip, and label visuals) perimeter to the own mark within the owning
+row band or rejects that
 candidate before trying the next declared one. A suppressible request may use
 its declared suppression after all candidates fail; a required request may not
 emit a detached fallback and instead fails with

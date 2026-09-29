@@ -111,6 +111,15 @@ orthogonal path within the completed owning row band, exempting only the own lab
 endpoints. Its source-keyed path enters the shared obstacle inventory before
 later labels and semantic routes. A failed route rejects that candidate, not
 the entire label request; only suppressible exhaustion invokes suppression.
+The own mark remains a route obstacle. The candidate's aggregate footprint,
+including Text, chip and label visuals, is a temporary route obstacle; the
+distance threshold still uses Text bounds, but the path attaches to the outer
+footprint. Endpoint IDs and perimeter points must match these exact obstacles.
+Collision uses the declared leader stroke footprint. Only the stroke's terminal
+cap may overlap its own endpoint obstacle, within half the stroke width of the
+designated port; no body or boundary-length traversal or re-entry is allowed.
+This endpoint-scoped predicate governs both direct and visibility-grid search.
+Global port exemptions do not waive label or mark geometry.
 
 Each suppressed name has a typed `SurfacePlacement` fact with lane/member, final
 row extent, remaining capacity and reason `capacity` or `obstruction`, validated
