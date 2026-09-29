@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import ceil, isfinite
+from math import hypot
 from typing import Iterable
 
 from chrona.presentation.layout.surface_quality import CollisionDomain
@@ -27,6 +28,58 @@ class LabelRect:
     @property
     def bottom(self) -> float:
         return self.y + self.height
+
+
+def nearest_rect_perimeters(label: LabelRect, mark: LabelRect) -> tuple[float, tuple[float, float], tuple[float, float]]:
+    """Return nearest perimeter distance and points, with stable side tie order."""
+    overlap_left, overlap_right = max(label.x, mark.x), min(label.right, mark.right)
+    overlap_top, overlap_bottom = max(label.y, mark.y), min(label.bottom, mark.bottom)
+    if overlap_left < overlap_right and overlap_top < overlap_bottom:
+        label_contains = (label.x <= mark.x and label.y <= mark.y
+                          and label.right >= mark.right and label.bottom >= mark.bottom)
+        mark_contains = (mark.x <= label.x and mark.y <= label.y
+                         and mark.right >= label.right and mark.bottom >= label.bottom)
+        if not label_contains and not mark_contains:
+            point = (overlap_left, overlap_top)
+            return 0.0, point, point
+        if label_contains and mark_contains:
+            point = (label.x, label.y)
+            return 0.0, point, point
+        inner, outer = (mark, label) if label_contains else (label, mark)
+        options = (
+            (inner.x - outer.x, 0, (inner.x, min(max((inner.y + inner.bottom) / 2, outer.y), outer.bottom)),
+             (outer.x, min(max((inner.y + inner.bottom) / 2, outer.y), outer.bottom))),
+            (outer.right - inner.right, 1, (inner.right, min(max((inner.y + inner.bottom) / 2, outer.y), outer.bottom)),
+             (outer.right, min(max((inner.y + inner.bottom) / 2, outer.y), outer.bottom))),
+            (inner.y - outer.y, 2, (min(max((inner.x + inner.right) / 2, outer.x), outer.right), inner.y),
+             (min(max((inner.x + inner.right) / 2, outer.x), outer.right), outer.y)),
+            (outer.bottom - inner.bottom, 3, (min(max((inner.x + inner.right) / 2, outer.x), outer.right), inner.bottom),
+             (min(max((inner.x + inner.right) / 2, outer.x), outer.right), outer.bottom)),
+        )
+        distance, _side, first, second = min(options, key=lambda item: (item[0], item[1]))
+        source, target = (second, first) if label_contains else (first, second)
+        return distance, source, target
+    candidates: list[tuple[float, int, tuple[float, float], tuple[float, float]]] = []
+    # For each label perimeter side, clamp its orthogonal coordinate to the
+    # host perimeter; ties follow start, end, top, bottom as specified by #554.
+    middle_y = (label.y + label.bottom) / 2
+    middle_x = (label.x + label.right) / 2
+    mark_y = min(max(middle_y, mark.y), mark.bottom)
+    mark_x = min(max(middle_x, mark.x), mark.right)
+    label_y = min(max(mark_y, label.y), label.bottom)
+    label_x = min(max(mark_x, label.x), label.right)
+    candidates.extend((
+        (hypot(mark.x - label.right, mark_y - label_y), 0,
+         (label.right, label_y), (mark.x, mark_y)),
+        (hypot(label.x - mark.right, mark_y - label_y), 1,
+         (label.x, label_y), (mark.right, mark_y)),
+        (hypot(mark.y - label.bottom, mark_x - label_x), 2,
+         (label_x, label.bottom), (mark_x, mark.y)),
+        (hypot(label.y - mark.bottom, mark_x - label_x), 3,
+         (label_x, label.y), (mark_x, mark.bottom)),
+    ))
+    distance, _side, source, target = min(candidates, key=lambda item: (item[0], item[1]))
+    return distance, source, target
 
 
 @dataclass(frozen=True)
