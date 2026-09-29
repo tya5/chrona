@@ -652,6 +652,11 @@ class SurfacePlacement:
                 raise ValueError(f"E_LAYOUT_TEXT_HOST_INVALID:{item.placement_id}")
             if item.semantic_id in axis_label_semantic_ids():
                 allowed = isinstance(host, ShapePlacement) and host.semantic_id in axis_band_semantic_ids()
+            elif item.semantic_id == "memberLabel" and item.collision_region == "plot-label":
+                allowed = (isinstance(host, MarkPlacement)
+                           and host.source_ref == item.source_ref
+                           and (item.lane_member_id is None
+                                or host.lane_member_id == item.lane_member_id))
             elif item.semantic_id == "noteIndex" or item.selected_rung == "inside":
                 allowed = isinstance(host, MarkPlacement) and host.semantic_id in {
                     "planned", "actual", "snapshot", "scenario", "missing-actual",
