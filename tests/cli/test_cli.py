@@ -5,6 +5,7 @@ from pathlib import Path
 import sys
 import subprocess
 from types import SimpleNamespace
+import xml.etree.ElementTree as ET
 
 import yaml
 import pytest
@@ -338,16 +339,39 @@ def test_cli_halcyon_default_draft_has_coherent_slots_and_month_axis(tmp_path, m
 def test_cli_init_default_starter_renders_with_the_packaged_draft_preset(tmp_path, monkeypatch):
     destination = tmp_path / "first-plan"
     output = destination / "plan.svg"
+    scene_path = destination / "plan.scene.json"
 
     monkeypatch.setattr(sys, "argv", ["chrona", "init", str(destination)])
     main()
     monkeypatch.setattr(sys, "argv", [
         "chrona", "render", str(destination / "project.yaml"), "--actual", str(destination / "actual.yaml"),
-        "--viewport", "1600xauto", "--output", str(output),
+        "--viewport", "1600xauto", "--output", str(output), "--emit-scene", str(scene_path),
     ])
     main()
 
-    assert output.read_bytes().startswith(b"<svg")
+    svg_bytes = output.read_bytes()
+    assert svg_bytes.startswith(b"<svg")
+    surface = json.loads(scene_path.read_text(encoding="utf-8"))["surfaces"][0]
+    svg = ET.fromstring(svg_bytes)
+    canvas = surface["canvasBounds"]
+    assert float(svg.attrib["width"].removesuffix("px")) == pytest.approx(canvas["inlineSize"], abs=0.01)
+    assert float(svg.attrib["height"].removesuffix("px")) == pytest.approx(canvas["blockSize"], abs=0.01)
+
+    slots = {slot["id"]: slot["bounds"] for slot in surface["slots"]}
+    table, timeline = slots["table"], slots["timeline"]
+    table_end = table["block"] + table["blockSize"]
+    timeline_end = timeline["block"] + timeline["blockSize"]
+    assert timeline_end == pytest.approx(table_end, abs=0.01)
+    assert slots["notes"]["block"] >= table_end - 0.01
+    assert all(row["bounds"]["block"] + row["bounds"]["blockSize"] <= timeline_end + 0.01
+               for row in surface["rows"])
+    marks = [item for item in surface["primitives"]
+             if item.get("purpose") in {"planned", "actual", "missingActual"}]
+    assert marks
+    for mark in marks:
+        bounds = mark["bounds"]
+        assert bounds["inline"] >= timeline["inline"] - 0.01
+        assert bounds["inline"] + bounds["inlineSize"] <= timeline["inline"] + timeline["inlineSize"] + 0.01
 
 
 @pytest.mark.parametrize(
