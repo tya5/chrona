@@ -220,6 +220,11 @@ primitive or obstacle. Decorative non-member paint has no lane owner. A
 missing, duplicated or mismatched emitted lane primitive fails closed. This
 handoff is absent for automatic and explicit rows and changes no adapter
 schema. See the [B3 correction](../design/issue-467-b3-typed-lane-scene-handoff-correction-2026-09-27.md).
+The public Scene lane-obstacle class inventory includes `mark`,
+`required-label`, and `leader-route`. A `leader-route` facet represents the
+completed stroked-segment footprint of a member-label leader Path; it retains
+the same exact primitive and lane-member correspondence as other facets.
+Both Scene v0.6 and v0.7 schemas admit this class (#554).
 For lane mode, View-selected comparison facets also close the Layout mark
 inventory: an unselected `missingActual` facet creates neither a Layout mark
 nor a preflight obstacle, Scene primitive, or lane handoff entry. Scene does
