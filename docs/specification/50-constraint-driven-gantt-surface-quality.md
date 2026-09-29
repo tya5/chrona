@@ -87,11 +87,11 @@ cross-class obstructions. This requirement may grow the timeline host
 when profile constraints permit. A short seed row is not grounds for
 suppression.
 
-Lane-only full-band search tests finite preferred/contact candidates against
+For `fill` lanes, full-band search tests finite preferred/contact candidates against
 row edges and current axis-aligned obstacles expanded by label bounds and
 clearance. Search declared sides in order, then absolute block displacement,
 fixed direction and stable identity; end gap stays within 2em. It is exhaustive
-only within the final allocated row; non-lane placement is unchanged.
+only within the final allocated row; `pack` lanes and non-lane placement are unchanged.
 
 Each suppressed name has a typed `SurfacePlacement` fact with lane/member, final
 row extent, remaining capacity and reason `capacity` or `obstruction`, validated
