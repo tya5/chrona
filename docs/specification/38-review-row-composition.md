@@ -250,13 +250,14 @@ The natural requirement may grow the timeline host
 when profile constraints permit; a short seed row alone is not grounds for
 suppression.
 
-Lane-only full-band search tests finite measured-box contacts with row edges and
+For `fill` lanes, full-band search tests finite measured-box contacts with row edges and
 current axis-aligned obstacle bounds plus clearance, for each declared side.
 Expanded obstacles form finite blocked block intervals; preferred position and
 legal endpoints cover feasible components. The end-side gap is bounded by the
 existing two-font-size mark-to-text rule. Rank by side order, absolute block
 displacement, fixed direction and stable identity; no lattice cap. This search
-is exhaustive only within the final allocated row; non-lane search is unchanged.
+is exhaustive only within the final allocated row; `pack` lanes and non-lane
+labels retain their established bounded side-neighborhood search.
 
 Each suppressed name has a typed Layout fact with lane/member, final row extent,
 remaining row capacity and reason `capacity` or `obstruction`, checked against
