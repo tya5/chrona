@@ -177,7 +177,9 @@ outputs and reports, and retires only previously tracked generated SVG/Scene
 paths no longer declared by manifests. It prepares one bot commit or a no-op,
 pushes an immutable `derived-gate/<sha>` ref, dispatches the trusted gate on
 that exact SHA, and waits for successful `derived-main` and `derived-ready`
-checks before fast-forwarding `main`. A non-fast-forward or failed gate stops
+checks before fast-forwarding `main`. The gate also posts `derived-ready` as a
+commit status on that exact SHA: a protected branch's push hook does not count
+a check run created by a dispatched workflow, but it counts a status. A non-fast-forward or failed gate stops
 publication; never patch generated output manually. After publication the
 sync dispatches the full three-OS pytest/conformance/wheel-smoke run on the
 same immutable ref and SHA. Main pushes do not run that matrix on the stale
