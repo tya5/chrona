@@ -1367,7 +1367,8 @@ def test_cli_render_review_uses_only_an_immutable_v05_context(tmp_path, monkeypa
         "--theme", str(root / "examples/controller-z/themes/executive-light.yaml"),
         "--scheme", str(root / "examples/controller-z/schemes/executive-light.yaml"),
         "--layout", str(root / "conformance/layout-profile-intent-v0.2.yaml"),
-        "--actual", str(root / "examples/controller-z/actual.yaml"), "--output", str(draft_output),
+        "--actual", str(root / "examples/controller-z/actual.yaml"),
+        "--viewport", "1600x900", "--output", str(draft_output),
     ])
     main()
     assert draft_output.read_text(encoding="utf-8") == rendered
