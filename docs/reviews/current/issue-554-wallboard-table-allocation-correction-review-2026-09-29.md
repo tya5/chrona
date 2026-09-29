@@ -1,0 +1,5 @@
+# Issue #554 — Wallboard table allocation architecture review
+
+**Decision:** approve the [resource correction](../../design/issue-554-wallboard-table-allocation-correction-2026-09-29.md). The two colliding public slides share one Layout Profile whose fixed 300-unit table minimum no longer matches measured human titles. Switching that declaration to content minimum uses existing Spec 33 table/profile allocation and Spec 50 feasibility behavior; it does not change the Layout/Scene/adapter boundary.
+
+The Review layer keeps the full Project title. Layout owns table and axis slots and already supports content-derived table minima. Scene reports completed geometry; the SVG adapter must remain projection-only. The narrower timeline may alter tick and route placement, so both slides require batch Scene/SVG and perceptibility checks. Generated Scene provenance changes with the Layout Profile bytes; these Context references have no pinned Layout content identity to migrate. No global compatibility shim is warranted.
