@@ -4,7 +4,7 @@ from chrona.presentation.layout.labels import (
     LabelObstacle, LabelPlacement, LabelRect, MemberNameAssociation, nearest_rect_perimeters, place_label, place_member_name,
 )
 from chrona.presentation.layout.model import LayoutError
-from chrona.presentation.layout.surface_composer import _member_association_outcome
+from chrona.presentation.layout.surface_member_labels import _member_association_outcome
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
 from chrona.presentation.layout.text import wrap_text
 

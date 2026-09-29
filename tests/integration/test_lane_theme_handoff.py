@@ -4,7 +4,7 @@ from dataclasses import replace
 
 import yaml
 
-from chrona.presentation.layout import surface_composer
+from chrona.presentation.layout import surface_member_labels
 from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.model.closure import resolve_draft_render
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
@@ -172,7 +172,7 @@ def test_same_lane_view_under_two_themes_reaches_identical_scene_membership(tmp_
         asset_root=fill_draft.asset_root, scheduler=ReferenceScheduler(),
         renderer=V05SvgRenderer(), draft_auto_block=fill_draft.auto_block,
     )
-    original_member_placement = surface_composer.place_member_name
+    original_member_placement = surface_member_labels.place_member_name
     forced = False
 
     def displaced_member_placement(*args, **kwargs):
@@ -191,7 +191,7 @@ def test_same_lane_view_under_two_themes_reaches_identical_scene_membership(tmp_
                 forced = True
         return result
 
-    monkeypatch.setattr(surface_composer, "place_member_name", displaced_member_placement)
+    monkeypatch.setattr(surface_member_labels, "place_member_name", displaced_member_placement)
     fill_output = render_review(fill_request)
     assert forced
 

@@ -5,7 +5,6 @@ from dataclasses import dataclass, replace
 from datetime import date
 from decimal import Decimal
 from collections.abc import Mapping
-import re
 from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
@@ -21,6 +20,12 @@ from chrona.presentation.layout.surface_visuals import (
     measure_candidate_visuals, place_axis_band_visuals, place_mark_visuals,
     place_text_visuals, reserve_text_visuals,
 )
+from chrona.presentation.layout.surface_member_labels import (
+    SurfaceMemberLabelContext, build_member_label_requests, place_member_labels,
+)
+from chrona.presentation.layout.surface_routes import (
+    SurfaceRoutesContext, compose_surface_routes, place_relation_labels,
+)
 from chrona.presentation.layout.surface_base import prepare_surface_base
 from chrona.presentation.layout.surface_table import compose_table
 from chrona.presentation.layout.surface_groups import (
@@ -32,7 +37,6 @@ from chrona.presentation.layout.surface_backgrounds import (
     validate_background_shapes,
 )
 from chrona.presentation.layout.surface_axis import compose_axis
-from chrona.presentation.layout.asof_label import find_asof_label_candidate
 from chrona.presentation.model.semantic_registry import (
     axis_band_semantic_ids, label_chip_semantic, semantic_binding)
 from chrona.presentation.layout.presentation import (
@@ -53,21 +57,18 @@ from chrona.presentation.layout.annotation_topology import (
 )
 from chrona.presentation.layout.comparison_marks import ComparisonMark
 from chrona.presentation.layout.labels import (
-    LabelRect, LabelRequest, MemberNameAssociation, place_label, place_member_name,
+    LabelRect, LabelRequest, place_label,
 )
 from chrona.presentation.layout.obstacles import (
     ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex, obstacle_envelope,
-    obstacles_intersect,
 )
 from chrona.presentation.layout.ports import ConnectorEgress, coincident_endpoint_port_ids, connector_egress_candidates
 from chrona.presentation.model.placement_candidates import candidate_order
 from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
 from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.layout.routing import (
-    RouteSearchFailure, RouteSuppressionEvidence, place_relation_route,
-    relation_route_quality, select_lane_relation_route,
+    relation_route_quality,
 )
-from chrona.presentation.layout.path_geometry import rounded_orthogonal_path
 from chrona.presentation.layout.mark_geometry import MarkFacetAbsence, symbol_parts
 from chrona.presentation.layout.icon_geometry import complete_icon_paths
 from chrona.presentation.layout.lane_mark_facets import (
@@ -99,31 +100,6 @@ class SurfaceLayoutComposition:
     review_rows: tuple[Any, ...]
     track_placements: tuple[TrackPlacement, ...]
     mark_absences: tuple[MarkFacetAbsence, ...] = ()
-
-
-def _member_association_outcome(candidate: LabelPlacement | None,
-                                association: MemberNameAssociation, *,
-                                overflow: str, placement_id: str) -> LabelPlacement | None:
-    """Close a mark-associated name only after its measured Text passes the bound."""
-    if candidate is not None and not association.allows(candidate.bounds):
-        candidate = None
-    if candidate is None and overflow != "suppress":
-        raise LayoutError("E_LAYOUT_LABEL_ASSOCIATION_UNPLACEABLE", f"/placement/{placement_id}")
-    return candidate
-
-
-def _lane_fallback_clears_required_labels(
-    points: tuple[tuple[float, float], ...], placed_text: tuple[TextPlacement, ...],
-) -> bool:
-    """A lane-only direct route may overflow marks, never required member text."""
-    labels = tuple(ObstacleRect(*(
-        float(item.bounds.inline), float(item.bounds.block),
-        float(item.bounds.inline + item.bounds.inline_size),
-        float(item.bounds.block + item.bounds.block_size),
-    )) for item in placed_text if item.semantic_id in {"memberLabel", "finishDelta"}
-                    and item.required and item.overflow != "suppressed")
-    return all(not obstacles_intersect(ObstacleSegment(start, end), label)
-               for start, end in zip(points, points[1:]) for label in labels)
 
 
 def _lane_emissions(projection: Any, review_rows: tuple[Any, ...], marks: list[MarkPlacement],
@@ -264,23 +240,6 @@ def _complete_hosted_text_identity(
         completed.append(replace(placed, host_placement_id=emitted_id)
                          if emitted_id != host_id else placed)
     return tuple(completed)
-
-
-def _lane_label_candidates(side: str, fallback: tuple[str, ...], preferred: str | None) -> tuple[str, ...]:
-    """Preserve authored side/fallback; auto alone supplies end/start defaults."""
-    ordered = []
-    if preferred and preferred != "auto":
-        ordered.append(preferred)
-    if side != "auto":
-        ordered.append(side)
-    ordered.extend(fallback if fallback else (("end", "start") if side == "auto" else ()))
-    candidates = []
-    for candidate in ordered:
-        if candidate == "suppress":
-            break
-        if candidate not in candidates:
-            candidates.append(candidate)
-    return tuple(candidates)
 
 
 FOREGROUND_TEXT_PAINT_ORDER = 300
@@ -546,31 +505,6 @@ def timeline_content_block_requirement(*, projection: Any, group_presentation: s
     return Decimal(str(geometry_sum(requirements))) + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0)
 
 
-def relation_label_content(relation: Any) -> str:
-    """Format only selected, non-zero relation facts before measured placement."""
-    parts: list[str] = []
-    if "endpointPair" in relation.label_content:
-        parts.append(f"{relation.source_endpoint}->{relation.target_endpoint}")
-    if "lag" in relation.label_content:
-        raw = relation.lag.get("value") if isinstance(relation.lag, Mapping) else relation.lag
-        value = str(raw)
-        if all(int(component) == 0 for component in re.findall(r"-?\d+", value)):
-            value = ""
-        elif value and value[0] not in "+-":
-            value = "+" + value
-        if value:
-            parts.append(value + (f" [{relation.lag_calendar}]" if relation.lag_calendar else ""))
-    return " ".join(parts)
-
-
-def relation_label_anchor(points: tuple[tuple[float, float], ...]) -> LabelRect:
-    """Choose the first longest route segment; ties retain canonical route order."""
-    left, right = max(zip(points, points[1:]), key=lambda pair: abs(pair[1][0] - pair[0][0]) + abs(pair[1][1] - pair[0][1]))
-    x1, y1 = left
-    x2, y2 = right
-    return LabelRect(min(x1, x2), min(y1, y2), max(1.0, abs(x2 - x1)), max(1.0, abs(y2 - y1)))
-
-
 def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutComposition:
     """Resolve slots, rows, groups, temporal scale, and mark tracks in Layout."""
     base = prepare_surface_base(request)
@@ -647,147 +581,23 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     mark_batch = compose_surface_marks(base, lane_owner=_lane_owner)
     marks = list(mark_batch.marks)
     mark_by_id = {item.placement_id: item for item in marks}
-    track_by_id = {item.instance_id: item for item in tracks}
     mark_absences = list(mark_batch.absences)
     diagnostics.extend(mark_batch.diagnostics)
     visible_group_header_overflows = list(mark_batch.visible_group_header_overflows)
     groups = list(mark_batch.groups)
     for update in mark_batch.group_header_updates:
         shapes = list(replace_group_header_band(tuple(shapes), update))
-    group_by_id = {item.group_id: item for item in groups}
     shapes.extend(mark_batch.progress_shapes)
     shapes.extend(mark_batch.summary_shapes)
     placement_decisions: list[PlacementDecision] = list(axis_decisions)
-    label_requests: list[LabelRequest] = []
+    member_label_context = SurfaceMemberLabelContext(
+        request, projection, layout_manifest, by_source, text_slot, review_rows, tuple(rows), tuple(tracks),
+        tuple(groups), scale, tuple(marks), timeline_bounds, as_of_label,
+    )
+    member_label_requests = build_member_label_requests(member_label_context)
     candidate_icons: list[IconPlacement] = []
     handled_candidate_visuals: set[str] = set()
-    if as_of_label is not None:
-        x, content = as_of_label
-        label_requests.append(LabelRequest(
-            "as-of-label", "actual-set", content,
-            LabelRect(x, timeline_bounds[1], 0.0, 0.0),
-            ("plot-top-end", "plot-top-start", "rule-hosted"),
-            "text", "timeline-as-of", CollisionDomain("timeline", "overlay"), "suppress",
-            rule_host_obstacle_id="as-of",
-            semantic_id="asOfLabel",
-        ))
-    row_band_by_id = {row.row_id: LabelRect(float(timeline.bounds.inline), float(row.bounds.block),
-                                           float(timeline.bounds.inline_size), float(row.bounds.block_size))
-                      for row in rows}
-    row_by_id = {row.row_id: row for row in rows}
-    row_requirements_by_id = (dict(request.fixed_lane_preflight.row_requirements)
-                              if request.fixed_lane_preflight is not None else {})
     lane_label_suppressions: list[LaneLabelSuppression] = []
-    measured_lane_labels = ({item.placement_id: item for item in
-                             request.fixed_lane_preflight.measured_labels}
-                            if request.fixed_lane_preflight is not None else {})
-    attached_labels = dict(request.surface_content.attached_labels)
-    if contract.labels.enabled or attached_labels:
-        for review_row in review_rows:
-            for item in review_row.items:
-                layout_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
-                lane_owner = _lane_owner(review_row, item) if projection.lane_membership is not None else None
-                instance_id = layout_id if projection.rows else item.object_id
-                planned = item.planned
-                start_at, end_at = planned.get("start", planned.get("at")), planned.get("end", planned.get("at"))
-                if not isinstance(start_at, date) and not isinstance(end_at, date):
-                    continue
-                attached = attached_labels.get(item.object_id) if getattr(item, "attached_to", None) else None
-                parts = []
-                if attached is not None:
-                    parts.append(attached)  # required: an attached point's facts are never dropped (#486)
-                elif not contract.labels.enabled:
-                    continue
-                if attached is None and "title" in contract.labels.content:
-                    parts.append(item.title)
-                if attached is None and "finishDelta" in contract.labels.content and item.finish_delta is not None:
-                    parts.append(f"{item.finish_delta:+d}d")
-                if not parts:
-                    continue
-                host_kind = "actual" if item.source_kind == "actual" else "planned"
-                host_mark_id = f"{host_kind}:{instance_id}"
-                mark = mark_by_id.get(host_mark_id)
-                if item.source_kind == "actual" and mark is None:
-                    raise LayoutError("E_LAYOUT_LABEL_HOST_UNAVAILABLE", f"/placement/member-label:{instance_id}")
-                track = track_by_id[layout_id]
-                anchor = LabelRect(*_bounds(mark.bounds)) if mark is not None else LabelRect(
-                    _coordinate(end_at if isinstance(end_at, date) else start_at, scale), track.block,
-                    max(1.0, track.block_size), track.block_size)
-                lane_mode = projection.lane_membership is not None
-                default_ladder = (request.surface_content.label_fallback or
-                                  (("above", "below", "start", "end")
-                                   if contract.labels.side == "auto" else (contract.labels.side,)))
-                intent = getattr(item, "presentation", None) or {}
-                preferred_side = (intent.get("label") or {}).get("side") if isinstance(intent, dict) else None
-                wrap = ((intent.get("text") or {}).get("wrap", "forbid") if isinstance(intent, dict) else "forbid")
-                ladder = (_lane_label_candidates(contract.labels.side,
-                                                 request.surface_content.label_fallback, preferred_side)
-                          if lane_mode else
-                          ((preferred_side,) + tuple(side for side in default_ladder if side != preferred_side)
-                           if preferred_side else default_ladder))
-                if lane_mode:
-                    measured = measured_lane_labels.get(f"member-label:{instance_id}")
-                    if measured is None:
-                        raise LayoutError("E_LAYOUT_LANE_PREFLIGHT_INVALID",
-                                          f"/placement/member-label:{instance_id}")
-                    if (measured.content != " ".join(parts) or measured.wrap != wrap
-                            or measured.candidates != ladder):
-                        raise LayoutError("E_LAYOUT_LANE_PREFLIGHT_INVALID",
-                                          f"/placement/member-label:{instance_id}")
-                sides = tuple(side for side in ladder if side != "suppress")
-                # A member label's placement region is its own row band (#488):
-                # every candidate, including the side-neighbourhood search,
-                # stays inside it so a name never reads as the adjacent row's.
-                row_band = row_band_by_id.get(review_row.row_id)
-                label_requests.append(LabelRequest(f"member-label:{instance_id}", item.object_id, " ".join(parts),
-                                                   anchor, sides, "text", "plot-label", CollisionDomain("timeline", "overlay"),
-                                                   "visible-overflow" if attached is not None else
-                                                   "suppress" if lane_mode else
-                                                   "suppress" if "suppress" in ladder else contract.labels.overflow,
-                                                   wrap, bounds=row_band,
-                                                   inside_host_obstacle_id=host_mark_id if mark is not None else None,
-                                                   semantic_id="memberLabel",
-                                                   lane_row_id=lane_owner[0] if lane_owner else None,
-                                                   lane_member_id=lane_owner[1] if lane_owner else None,
-                                                   lane_source_kind=item.source_kind if lane_owner else None))
-        for folded in getattr(projection, "folded_points", ()):
-            instance_id = _folded_instance_id(folded, folded.item)
-            host_kind = "actual" if folded.item.source_kind == "actual" else "planned"
-            mark = mark_by_id.get(f"{host_kind}:{instance_id}")
-            group = group_by_id.get(folded.group_id)
-            if folded.item.source_kind == "actual" and mark is None:
-                raise LayoutError("E_LAYOUT_LABEL_HOST_UNAVAILABLE", f"/placement/member-label:group-header:{folded.group_id}:{folded.item.object_id}")
-            if mark is None or group is None or group.header_bounds is None:
-                continue
-            default_ladder = ("end", "start") if contract.labels.side == "auto" else (contract.labels.side,)
-            label_requests.append(LabelRequest(
-                f"member-label:group-header:{folded.group_id}:{folded.item.object_id}", folded.item.object_id,
-                folded.item.title, LabelRect(*_bounds(mark.bounds)), default_ladder, "groupHeader", "group-header-point",
-                CollisionDomain("group-header", folded.group_id), "visible-overflow", bounds=LabelRect(*_bounds(group.header_bounds)),
-                inside_host_obstacle_id=mark.placement_id, semantic_id="memberLabel"))
-    # The remaining text and routes are part of the same completed Layout closure.
-    # Scene may select their semantic roles, but it must never remeasure or route them.
-    for review_row in review_rows:
-        for item in review_row.items:
-            layout_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
-            instance_id = layout_id if projection.rows else item.object_id
-            if not projection.rows and item.source_kind != "combined":
-                continue
-            if (item.finish_delta is None or "finishDelta" in contract.labels.content
-                    or projection.lane_membership is not None):
-                continue
-            mark = mark_by_id.get(f"actual:{instance_id}") or mark_by_id.get(f"planned:{instance_id}")
-            track = track_by_id[layout_id]
-            actual = item.actual or {}
-            anchor = actual.get("finish", item.planned.get("end", item.planned.get("at")))
-            if isinstance(anchor, date):
-                anchor_bounds = LabelRect(*_bounds(mark.bounds)) if mark is not None else LabelRect(
-                    _coordinate(anchor, scale), track.block, max(1.0, track.block_size), track.block_size)
-                label_requests.append(LabelRequest(f"variance:{instance_id}", item.object_id, f"{item.finish_delta:+d}d",
-                                                   anchor_bounds, ("above", "below", "end", "start"), "summary",
-                                                   f"variance:{instance_id}", CollisionDomain("timeline", "overlay"),
-                                                   request.surface_content.label_overflow, semantic_id="finishDelta"))
-
     # One monotonically growing Layout inventory is shared by labels, semantic
     # routes and annotations. Background bands deliberately do not enter it.
     surface_obstacles = SurfaceObstacleIndex()
@@ -821,410 +631,35 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                   ObstacleSegment(shape.points[0], shape.points[1])))
 
     timeline_rect = LabelRect(*timeline_bounds)
-    def place_requested_labels(requests: tuple[LabelRequest, ...]) -> None:
-        for label_request in requests:
-            label_treatment = request.theme_tokens.text_treatment(label_request.typography_role)
-            label_metrics = metric_for(label_request.typography_role)
-            font_size, line_height = label_treatment.font_size, label_treatment.line_height
-            measured_lane = measured_lane_labels.get(label_request.placement_id)
-            visuals = (measured_lane.visuals if measured_lane is not None else
-                       measure_candidate_visuals(label_request.placement_id,
-                           label_request.typography_role, request).visuals)
-            handled_candidate_visuals.update(visual.source_ref for visual, _, _, _ in visuals)
-            leading = geometry_sum(width + gap for visual, icon, width, gap in visuals if visual.side == "leading")
-            trailing = geometry_sum(width + gap for visual, icon, width, gap in visuals if visual.side == "trailing")
-            available = max(1.0, timeline_rect.width * 0.4 - leading - trailing)
-            lines = (measured_lane.lines if measured_lane is not None else
-                     wrap_text(label_request.content, available_inline=available,
-                               font_size=float(font_size), font_metrics=label_metrics,
-                               letter_spacing=float(label_treatment.letter_spacing),
-                               text_transform=label_treatment.transform)
-                     if label_request.wrap == "allow" else (label_request.content,))
-            placement_bounds = label_request.bounds or timeline_rect
-            text_width = (measured_lane.text_width if measured_lane is not None else
-                          max(measure_text_width(line, font_size=float(font_size), font_metrics=label_metrics,
-                                                letter_spacing=float(label_treatment.letter_spacing),
-                                                text_transform=label_treatment.transform) for line in lines))
-            label_size = (leading + text_width + trailing,
-                          float(font_size) * float(line_height) * len(lines))
-            # A declared ``<purpose>-chip`` Theme role draws a background from
-            # this label's own measured box; its padding is part of the footprint
-            # every candidate negotiates (#428).  Nothing here names a purpose.
-            chip_semantic = label_chip_semantic(label_request.semantic_id) or ""
-            chip = (request.theme_tokens.label_chip(semantic_binding(chip_semantic).theme_role)
-                    if chip_semantic else None)
-            chip_pad = ((float(chip[0]) * float(font_size), float(chip[0]) * float(font_size) / 2)
-                        if chip is not None else (0.0, 0.0))
-            label_size = (label_size[0] + 2 * chip_pad[0], label_size[1] + 2 * chip_pad[1])
-            if measured_lane is not None:
-                label_size = (measured_lane.width, measured_lane.height)
-                chip_pad = measured_lane.chip_padding
-            if label_request.bounds is not None and chip is not None:
-                # A declared region contains the text; its chip is decoration
-                # drawn around it and may reach past the region by its padding.
-                placement_bounds = LabelRect(placement_bounds.x - chip_pad[0], placement_bounds.y - chip_pad[1],
-                                             placement_bounds.width + 2 * chip_pad[0],
-                                             placement_bounds.height + 2 * chip_pad[1])
-            # Mark labels remain subject to every completed mark.  ``place_label``
-            # alone exempts this request's declared host for an ``inside``
-            # candidate; a comparison sibling or another row is never an implicit
-            # host.
-            label_gap = (measured_lane.gap if measured_lane is not None else
-                         max(1.0, float(font_size) * 0.25))
-            label_classes = (("mark", "text", "label-visual", "rule")
-                             if label_request.rule_host_obstacle_id is not None
-                             else ("mark", "text", "label-visual", "dependency-route"))
-            provisional = place_text(placement_id=label_request.placement_id, source_ref=label_request.source_ref,
-                                     content=label_request.content, inline=0, baseline_block=float(font_size),
-                                     typography_role=label_request.typography_role, theme_tokens=request.theme_tokens,
-                                     font_metrics=request.font_metrics, collision_region=label_request.collision_region,
-                                     collision_domain=label_request.collision_domain, semantic_id=label_request.semantic_id,
-                                     lane_row_id=label_request.lane_row_id,
-                                     lane_member_id=label_request.lane_member_id,
-                                     lane_source_kind=label_request.lane_source_kind, lines=lines)
-            host = mark_by_id.get(label_request.inside_host_obstacle_id or "")
-            associated_member = (label_request.semantic_id == "memberLabel"
-                                 and label_request.collision_region == "plot-label" and host is not None)
-            member_association = (MemberNameAssociation(
-                LabelRect(*_bounds(host.bounds)), leading + chip_pad[0], chip_pad[1],
-                float(provisional.bounds.inline_size), float(provisional.bounds.block_size),
-                2 * float(font_size)) if associated_member else None)
-            if label_request.semantic_id == "asOfLabel":
-                candidate = find_asof_label_candidate(
-                    timeline_rect, label_size, rule_x=label_request.anchor.x,
-                    gap=label_gap, rule_host_id="as-of", obstacles=surface_obstacles,
-                    obstacle_classes=("mark", "text", "label-visual", "rule"),
-                )
-            elif associated_member:
-                # A plot name is accepted only near its own completed mark.
-                # Project-specific Theme/View choices determine which of the
-                # declared candidates survive this general Layout predicate.
-                candidate = place_member_name(
-                    label_request.anchor, label_size, label_request.candidates,
-                    bounds=placement_bounds, obstacles=surface_obstacles, gap=label_gap,
-                    maximum_end_gap=2 * float(font_size),
-                    text_inline_inset=leading + chip_pad[0],
-                    inside_host_obstacle_id=label_request.inside_host_obstacle_id,
-                    classes=label_classes,
-                    full_band=(label_request.lane_row_id is not None
-                               and layout_manifest.row_distribution == "fill"),
-                    association=member_association,
-                    maximum_stagger=(label_size[1] + label_gap if label_request.lane_row_id is not None else None),
-                    overflow=label_request.overflow,
-                    visible_fallback_side=label_request.visible_fallback_side)
-            else:
-                candidate = (place_label(
-                    label_request.anchor, label_size, label_request.candidates,
-                    bounds=placement_bounds, obstacles=surface_obstacles, gap=label_gap,
-                    inside_host_obstacle_id=label_request.inside_host_obstacle_id,
-                    required=label_request.overflow == "diagnose", overflow=label_request.overflow,
-                    visible_fallback_side=label_request.visible_fallback_side,
-                    rule_host_obstacle_id=label_request.rule_host_obstacle_id,
-                    search_side_neighborhood=(label_request.rule_host_obstacle_id is None),
-                    classes=label_classes,
-                ) if label_request.candidates else None)
-            # Check the completed search result at the composition boundary as
-            # well: no alternative placement helper can emit detached text.
-            if member_association is not None:
-                candidate = _member_association_outcome(
-                    candidate, member_association, overflow=label_request.overflow,
-                    placement_id=label_request.placement_id)
-            fallback_ladder = label_request.candidates + (
-                (label_request.visible_fallback_side,)
-                if label_request.visible_fallback_side is not None
-                and label_request.visible_fallback_side not in label_request.candidates else ())
-            if candidate is None:
-                ladder = fallback_ladder + (("suppress",) if label_request.overflow == "suppress" else ())
-                if not ladder:
-                    raise LayoutError("E_PRESENTATION_LABEL_UNPLACEABLE", f"/placement/{label_request.placement_id}")
-                text.append(replace(provisional, overflow="suppressed", required=False,
-                                    fallback_ladder=ladder,
-                                    selected_rung="suppress"))
-                placement_decisions.append(PlacementDecision(label_request.placement_id, label_request.source_ref,
-                                                             ladder, "suppress", "suppressed"))
-                diagnostics.append(f"W_LAYOUT_LABEL_SUPPRESSED:{label_request.placement_id}")
-                if label_request.lane_row_id is not None and label_request.lane_member_id is not None:
-                    lane_row = row_by_id[label_request.lane_row_id]
-                    remaining = max(Decimal(0), lane_row.bounds.block_size - Decimal(str(
-                        row_requirements_by_id[label_request.lane_row_id])))
-                    short_sources = tuple(item for item in request.capacity_short_sources
-                                          if item.source_id == "timeline")
-                    capacity = not associated_member and remaining == 0 and bool(short_sources)
-                    lane_label_suppressions.append(LaneLabelSuppression(
-                        label_request.placement_id, label_request.lane_row_id,
-                        label_request.lane_member_id, lane_row.bounds,
-                        Decimal(0) if capacity else remaining,
-                        "capacity" if capacity else "obstruction",
-                        short_sources if capacity else (),
-                    ))
-            else:
-                chip_box = candidate.bounds
-                if chip is not None:
-                    candidate = replace(candidate, bounds=LabelRect(
-                        chip_box.x + chip_pad[0], chip_box.y + chip_pad[1],
-                        chip_box.width - 2 * chip_pad[0], chip_box.height - 2 * chip_pad[1]))
-                slot = by_source.get(label_request.collision_domain.slot)
-                slot_bounds = LabelRect(*_bounds(slot.bounds)) if slot is not None else placement_bounds
-                crosses_slot = (candidate.bounds.x < slot_bounds.x or candidate.bounds.y < slot_bounds.y
-                                or candidate.bounds.right > slot_bounds.right
-                                or candidate.bounds.bottom > slot_bounds.bottom)
-                visible_overflow = candidate.visible_overflow or crosses_slot
-                placed_text = replace(place_text(placement_id=provisional.placement_id, source_ref=provisional.source_ref,
-                                       content=provisional.content, inline=candidate.bounds.x + leading,
-                                       baseline_block=candidate.bounds.y + float(font_size),
-                                       typography_role=provisional.typography_role, theme_tokens=request.theme_tokens,
-                                       font_metrics=request.font_metrics, collision_region=provisional.collision_region,
-                                       collision_domain=provisional.collision_domain, semantic_id=provisional.semantic_id,
-                                       lane_row_id=provisional.lane_row_id,
-                                       lane_member_id=provisional.lane_member_id,
-                                       lane_source_kind=provisional.lane_source_kind,
-                                       overflow="visible-overflow" if visible_overflow else "fit",
-                                       lines=lines), fallback_ladder=fallback_ladder, selected_rung=candidate.side,
-                                      host_placement_id=(host.placement_id if host is not None and
-                                                         (associated_member or candidate.side == "inside") else None),
-                                      paint_order=max(HOSTED_TEXT_PAINT_ORDER, host.paint_order + 1)
-                                      if candidate.side == "inside" and host is not None else FOREGROUND_TEXT_PAINT_ORDER)
-                text.append(placed_text)
-                register_rect(placed_text.placement_id, "text", placed_text.collision_domain.slot, placed_text.bounds)
-                surface_obstacles.add(SurfaceObstacle(f"label-footprint:{placed_text.placement_id}", "label-visual",
-                                                      placed_text.collision_domain.slot,
-                                                      ObstacleRect(chip_box.x, chip_box.y,
-                                                                   chip_box.right, chip_box.bottom)))
-                if chip is not None:
-                    shapes.append(ShapePlacement(
-                        f"chip:{placed_text.placement_id}", placed_text.source_ref, "Rect",
-                        Rect(Decimal(str(chip_box.x)), Decimal(str(chip_box.y)),
-                             Decimal(str(chip_box.width)), Decimal(str(chip_box.height))),
-                        required=False, slot_id=text_slot(placed_text),
-                        paint_order=placed_text.paint_order - 1,
-                        semantic_id=chip_semantic,
-                        corner_radius=float(chip[1]) * chip_box.height,
-                        lane_row_id=placed_text.lane_row_id,
-                        lane_member_id=placed_text.lane_member_id))
-                if visible_overflow:
-                    visible_label_overflows.append((placed_text, slot_bounds))
-                if visuals:
-                    if not hasattr(label_metrics, "cap_height_at"):
-                        raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(visual.source_ref for visual, _, _, _ in visuals))
-                    cap_height = float(label_metrics.cap_height_at(float(font_size)))
-                    for visual, icon, width, gap in visuals:
-                        inline = (candidate.bounds.x if visual.side == "leading"
-                                  else candidate.bounds.x + leading + text_width + trailing - gap - width)
-                        bounds = Rect(Decimal(str(inline)), Decimal(str(placed_text.baseline[1] - cap_height
-                                                                           + (cap_height - float(font_size)) / 2)),
-                                      Decimal(str(width)), Decimal(str(float(font_size))))
-                        candidate_icons.append(IconPlacement(f"visual:{placed_text.placement_id}:{visual.side}",
-                                                             placed_text.source_ref, visual.source_ref, icon.icon_id,
-                                                             icon.kind, icon.content_identity, icon.viewport, icon.payload,
-                                                             icon.alternative, visual.decorative, bounds, "labelVisual",
-                                                             width / icon.viewport[0], text_slot(placed_text),
-                                                             paint_order=placed_text.paint_order,
-                                                             lane_row_id=placed_text.lane_row_id,
-                                                             lane_member_id=placed_text.lane_member_id,
-                                                             host_placement_id=placed_text.placement_id))
-                placement_decisions.append(PlacementDecision(label_request.placement_id, label_request.source_ref,
-                                                             fallback_ladder, candidate.side, "placed",
-                                                             candidate.search_count))
 
-    def before_relations(item: LabelRequest) -> bool:
-        return (item.rule_host_obstacle_id is not None
-                or (projection.lane_membership is not None and item.semantic_id == "memberLabel"))
+    def place_label_phase(requests: tuple[LabelRequest, ...]) -> None:
+        batch = place_member_labels(member_label_context, requests, surface_obstacles)
+        text.extend(batch.text)
+        shapes.extend(batch.shapes)
+        candidate_icons.extend(batch.icons)
+        visible_label_overflows.extend(batch.visible_overflows)
+        placement_decisions.extend(batch.decisions)
+        diagnostics.extend(batch.diagnostics)
+        lane_label_suppressions.extend(batch.lane_label_suppressions)
+        handled_candidate_visuals.update(batch.handled_visual_sources)
 
-    place_requested_labels(tuple(item for item in label_requests if before_relations(item)))
+    place_label_phase(member_label_requests.pre_route)
 
-    relations: list[RelationPlacement] = []
-    visible_route_fallbacks: list[RelationPlacement] = []
-    instance_anchors: dict[str, list[tuple[str, tuple[float, float]]]] = {}
-    instance_rows: dict[str, str] = {}
-    for review_row, row in zip(review_rows, rows, strict=True):
-        fallback = (float(row.bounds.inline + row.bounds.inline_size),
-                    float(row.bounds.block + row.bounds.block_size / 2))
-        for item in review_row.items:
-            instance_id = f"{review_row.row_id}:{item.item_id or item.object_id}" if projection.rows else item.object_id
-            instance_anchors.setdefault(item.object_id, []).append((instance_id, fallback))
-            instance_rows[instance_id] = review_row.row_id
-    for folded in getattr(projection, "folded_points", ()):
-        instance_id = _folded_instance_id(folded, folded.item)
-        mark = next((item for item in marks if item.placement_id == f"planned:{instance_id}"), None)
-        if mark is not None:
-            instance_anchors.setdefault(folded.item.object_id, []).append((instance_id, mark.end_port))
-            instance_rows[instance_id] = f"group-header:{folded.group_id}"
-    relation_marks = {mark.placement_id.removeprefix("planned:"): mark
-                      for mark in marks if mark.placement_id.startswith("planned:")}
-    comparison_clusters: dict[tuple[str, str], tuple[MarkPlacement, ...]] = {}
-    for mark in marks:
-        instance_id = mark.placement_id.split(":", 1)[1]
-        row_id = instance_rows.get(instance_id)
-        if row_id is not None:
-            key = (mark.source_ref, row_id)
-            comparison_clusters[key] = (*comparison_clusters.get(key, ()), mark)
+    routes_context = SurfaceRoutesContext(request, projection, review_rows, tuple(rows), tuple(groups),
+        tuple(marks), timeline_bounds, layout_manifest, metric_values, tuple(text), surface_obstacles)
+    routes_batch = compose_surface_routes(routes_context)
+    relations = list(routes_batch.relations)
+    visible_route_fallbacks = list(routes_batch.visible_route_fallbacks)
+    instance_anchors = dict(routes_batch.instance_anchors)
+    instance_rows = dict(routes_batch.instance_rows)
+    comparison_clusters = dict(routes_batch.comparison_clusters)
+    diagnostics.extend(routes_batch.diagnostics)
 
-    def combined_connector_points(source: ConnectorEgress, middle: tuple[tuple[float, float], ...],
-                                  target: ConnectorEgress) -> tuple[tuple[float, float], ...]:
-        pieces = (*source.corridor, *middle, *reversed(target.corridor))
-        completed: list[tuple[float, float]] = []
-        for point in pieces:
-            if not completed or completed[-1] != point:
-                completed.append(point)
-        return tuple(completed)
-    route_top = min((float(group.header_bounds.block) for group in groups if group.header_bounds is not None),
-                    default=timeline_bounds[1])
-    route_bottom = max((timeline_bounds[1] + timeline_bounds[3],
-                        *(float(group.header_bounds.block + group.header_bounds.block_size)
-                          for group in groups if group.header_bounds is not None)))
-    for relation in request.surface_content.relations:
-        source, target, relation_id = relation.source_object_id, relation.target_object_id, relation.relation_id
-        for source_id, source_anchor in instance_anchors.get(str(source), ()):
-            for target_id, target_anchor in instance_anchors.get(str(target), ()):
-                source_mark, target_mark = relation_marks.get(source_id), relation_marks.get(target_id)
-                source_nominal = (source_mark.start_port if relation.source_endpoint in {"start", "at"}
-                                  else source_mark.end_port) if source_mark is not None else source_anchor
-                target_nominal = (target_mark.start_port if relation.target_endpoint in {"start", "at"}
-                                  else target_mark.end_port) if target_mark is not None else target_anchor
-                scene_id = f"relation:{relation_id}:{source_id}:{target_id}" if projection.rows else f"relation:{relation_id}"
-                source_candidates = (connector_egress_candidates(
-                    source_mark, relation.source_endpoint, target_nominal,
-                    comparison_clusters.get((source_mark.source_ref, instance_rows[source_id]), ()))
-                    if source_mark is not None else (ConnectorEgress(relation.source_endpoint, source_nominal,
-                                                                    source_nominal, ()),))
-                target_candidates = (connector_egress_candidates(
-                    target_mark, relation.target_endpoint, source_nominal,
-                    comparison_clusters.get((target_mark.source_ref, instance_rows[target_id]), ()))
-                    if target_mark is not None else (ConnectorEgress(relation.target_endpoint, target_nominal,
-                                                                    target_nominal, ()),))
-                port_pairs = tuple((source_candidate, target_candidate)
-                                   for source_candidate in source_candidates
-                                   for target_candidate in target_candidates)
-                selected_pair: tuple[ConnectorEgress, ConnectorEgress] | None = None
-                points: tuple[tuple[float, float], ...] = ()
-                # Semantic relation variants may share/cross a path; their
-                # routes remain obstacles for later annotations, not peers.
-                route_classes = ("mark", "text", "label-visual")
-                lane_selection = None
-                if projection.lane_membership is not None:
-                    lane_selection = select_lane_relation_route(
-                        port_pairs, obstacles=surface_obstacles,
-                        bounds=(timeline_bounds[0], route_top,
-                                timeline_bounds[0] + timeline_bounds[2], route_bottom),
-                        source_host_id=source_mark.placement_id if source_mark else None,
-                        target_host_id=target_mark.placement_id if target_mark else None,
-                        relation_scene_id=scene_id,
-                        max_bends=layout_manifest.relation_max_bends,
-                        max_detour_ratio=layout_manifest.relation_max_detour_ratio,
-                        classes=route_classes,
-                    )
-                    selected_pair, points = lane_selection.selected_pair, lane_selection.points
-                else:
-                    for source_egress, target_egress in port_pairs:
-                        if any(surface_obstacles.egress_collisions(
-                                ObstacleSegment(*egress.corridor), host_ids=egress.host_ids,
-                                classes=route_classes, regions=("timeline", "group-header"))
-                               for egress in (source_egress, target_egress) if egress.corridor):
-                            continue
-                        source_port, target_port = source_egress.exposed_port, target_egress.exposed_port
-                        source_obstacle_id = f"port:{source_mark.placement_id if source_mark else scene_id}:{source_egress.side}"
-                        target_obstacle_id = f"port:{target_mark.placement_id if target_mark else scene_id}:{target_egress.side}"
-                        existing_ports = tuple(port_id for port_id in (source_obstacle_id, target_obstacle_id)
-                                               if surface_obstacles.has(port_id))
-                        try:
-                            middle = ((source_port,) if source_port == target_port else place_relation_route(
-                                source_port=source_port, target_port=target_port, obstacles=surface_obstacles,
-                                regions=("timeline", "group-header"), classes=route_classes,
-                                port_ids=existing_ports,
-                                bounds=(timeline_bounds[0], route_top,
-                                        timeline_bounds[0] + timeline_bounds[2], route_bottom)))
-                        except RouteSearchFailure:
-                            continue
-                        candidate_points = combined_connector_points(source_egress, middle, target_egress)
-                        if len(candidate_points) < 2:
-                            continue
-                        if relation_route_quality(candidate_points, max_bends=layout_manifest.relation_max_bends,
-                                                  max_detour_ratio=layout_manifest.relation_max_detour_ratio):
-                            selected_pair, points = (source_egress, target_egress), candidate_points
-                            break
-                fallback = selected_pair is None
-                if fallback:
-                    if request.surface_content.relation_overflow == "suppress":
-                        relations.append(RelationPlacement(scene_id, f"{source_id}:{relation.source_endpoint}",
-                                                           f"{target_id}:{relation.target_endpoint}",
-                                                           suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))
-                        diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
-                        if lane_selection is not None:
-                            diagnostics.append(RouteSuppressionEvidence(scene_id, lane_selection.attempts).diagnostic)
-                        continue
-                    selected_pair = port_pairs[0]
-                    first_source, first_target = selected_pair
-                    points = ((first_source.semantic_port, first_target.semantic_port)
-                              if first_source.semantic_port != first_target.semantic_port
-                              else (first_source.semantic_port,
-                                    (first_source.semantic_port[0] + 1.0, first_source.semantic_port[1])))
-                    if (lane_selection is not None
-                            and not _lane_fallback_clears_required_labels(points, tuple(text))):
-                        relations.append(RelationPlacement(scene_id, f"{source_id}:{relation.source_endpoint}",
-                                                           f"{target_id}:{relation.target_endpoint}",
-                                                           suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))
-                        diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
-                        diagnostics.append(RouteSuppressionEvidence(scene_id, lane_selection.attempts).diagnostic)
-                        continue
-                source_egress, target_egress = selected_pair
-                source_port_id = f"{source_id}:{relation.source_endpoint}:{source_egress.side}"
-                target_port_id = f"{target_id}:{relation.target_endpoint}:{target_egress.side}"
-                for mark, side, port in ((source_mark, source_egress.side, source_egress.exposed_port),
-                                         (target_mark, target_egress.side, target_egress.exposed_port)):
-                    obstacle_id = f"port:{mark.placement_id if mark else scene_id}:{side}"
-                    if not surface_obstacles.has(obstacle_id):
-                        register_port(obstacle_id, port, "timeline")
-                relation_radius = float(metric_values.get("timeline.relation.cornerRadius", 0))
-                placed = RelationPlacement(scene_id, source_port_id, target_port_id, tuple(points),
-                                           semantic_id=relation.semantic_id,
-                                           corner_radius=relation_radius,
-                                           path_commands=(rounded_orthogonal_path(tuple(points), relation_radius)
-                                                          if relation_radius > 0 and not fallback else ()),
-                                           marker_start=marker_geometry(request.theme_tokens.marker("relationSourceTerminal")),
-                                           marker_end=marker_geometry(request.theme_tokens.marker("relationTargetTerminal")),
-                                           label_content=relation_label_content(relation), source_ref=relation_id)
-                relations.append(placed)
-                dependency_role = semantic_binding(placed.semantic_id).theme_role
-                register_path(scene_id, "dependency-route", "timeline", placed.points,
-                              stroke_width=float(request.theme_tokens.number(dependency_role, "strokeWidth")))
-                if fallback:
-                    visible_route_fallbacks.append(placed)
-
-    # Relation labels are routed facts, not a Scene or adapter policy.  They run
-    # after relation paths exist so their anchor is a stable completed segment.
-    place_requested_labels(tuple(item for item in label_requests if not before_relations(item)))
-
-    for placed_relation in relations:
-        if placed_relation.suppressed:
-            continue
-        content = placed_relation.label_content
-        if not content:
-            continue
-        relation_treatment = request.theme_tokens.text_treatment("annotation")
-        relation_metrics = metric_for("annotation")
-        font_size, line_height = relation_treatment.font_size, relation_treatment.line_height
-        size = (measure_text_width(content, font_size=float(font_size), font_metrics=relation_metrics,
-                                   letter_spacing=float(relation_treatment.letter_spacing),
-                                   text_transform=relation_treatment.transform),
-                float(font_size) * float(line_height))
-        relation_text_id = f"relation-label:{placed_relation.relation_id.removeprefix('relation:')}"
-        candidate = place_label(relation_label_anchor(placed_relation.points), size, ("above", "below", "start", "end"),
-                                bounds=timeline_rect, obstacles=surface_obstacles, gap=max(1.0, float(font_size) * 0.25),
-                                required=False, overflow=request.surface_content.relation_overflow,
-                                classes=("mark", "text", "label-visual", "dependency-route"))
-        if candidate is None:
-            diagnostics.append(f"W_LAYOUT_RELATION_LABEL_SUPPRESSED:{placed_relation.relation_id}")
-            continue
-        placed_text = replace(place_text(placement_id=relation_text_id, source_ref=placed_relation.source_ref,
-                                       content=content, inline=candidate.bounds.x,
-                                       baseline_block=candidate.bounds.y + float(font_size), typography_role="annotation",
-                                       theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                       collision_region="relation-label", collision_domain=CollisionDomain("timeline", "overlay")),
-                            fallback_ladder=("above", "below", "start", "end"), selected_rung=candidate.side)
-        text.append(placed_text)
-        register_rect(placed_text.placement_id, "text", "timeline", placed_text.bounds)
-        if candidate.visible_overflow:
-            visible_label_overflows.append((placed_text, timeline_rect))
+    place_label_phase(member_label_requests.post_route)
+    relation_labels = place_relation_labels(routes_context, routes_batch)
+    text.extend(relation_labels.text)
+    diagnostics.extend(relation_labels.diagnostics)
+    visible_label_overflows.extend(relation_labels.visible_label_overflows)
 
     side_content_warnings: list[FitWarning] = []
     legend = by_source.get("legend")
