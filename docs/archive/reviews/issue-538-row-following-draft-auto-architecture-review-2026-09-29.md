@@ -1,7 +1,7 @@
 # Architecture Review — Row-Following Draft Auto Sizing (#538)
 
-Predecessors: [published design plan](../../planning/active/issue-538-row-following-starter-work-record-2026-09-29.md) and [design](../../design/issue-538-row-following-draft-auto-design-2026-09-29.md).
-Successor: [implementation plan](../../planning/active/issue-538-row-following-draft-auto-implementation-plan-2026-09-29.md).
+Predecessors: [published design plan](../planning/issue-538-row-following-starter-work-record-2026-09-29.md) and [design](../../design/issue-538-row-following-draft-auto-design-2026-09-29.md).
+Successor: [implementation plan](../planning/issue-538-row-following-draft-auto-implementation-plan-2026-09-29.md).
 
 ## Review decision
 
