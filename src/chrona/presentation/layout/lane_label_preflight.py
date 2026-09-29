@@ -5,6 +5,7 @@ from math import isfinite
 from typing import Any
 
 from chrona.presentation.layout.lane_subtracks import LaneItemFootprints, LaneSubtrackPlan
+from chrona.presentation.layout.model import geometry_sum
 from chrona.presentation.layout.obstacles import obstacle_envelope
 
 
@@ -59,7 +60,7 @@ def lane_label_row_requirements(
         try:
             lane_id = label.lane_id
             member_id = label.member_id
-            item_id = label.source_ref
+            item_id = label.member_id
             width, height = float(label.width), float(label.height)
             gap = float(label.gap)
             candidates = tuple(label.candidates)
@@ -114,8 +115,17 @@ def lane_label_row_requirements(
             rows.append([])
         rows[row_index].append((interval[0], interval[1], height))
 
+    label_heights: dict[str, list[float]] = {lane_id: [] for lane_id in lanes}
+    for label in measured_labels:
+        label_heights[label.lane_id].append(float(label.height) + float(label.gap))
     result = {}
     for lane_id, lane in lanes.items():
-        extra = sum(max((item[2] for item in row), default=0.0) for row in label_rows[lane_id])
-        result[lane_id] = lane.block_extent + extra + row_padding
+        extra = geometry_sum(max((item[2] for item in row), default=0.0)
+                             for row in label_rows[lane_id])
+        # A mark-centred final placement may have cross-side mark and route
+        # obstacles that force more levels than inline label overlap alone.
+        # One measured level per label is the finite safe demand envelope;
+        # fill may then distribute any remaining host block normally.
+        result[lane_id] = geometry_sum((
+            lane.block_extent, max(extra, geometry_sum(label_heights[lane_id])), row_padding))
     return result

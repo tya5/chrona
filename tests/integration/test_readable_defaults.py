@@ -406,6 +406,27 @@ def test_wallboard_lane_table_keeps_the_bus_test_relation(slide: str) -> None:
     assert route_id in svg_ids
 
 
+@pytest.mark.parametrize("slide", ("02-programme-board", "11-overlay-briefing", "12-glyph-gates"))
+def test_wallboard_fill_keeps_all_packed_member_names(slide: str) -> None:
+    scene = json.loads((ROOT / f"examples/halcyon-1/generated/{slide}.scene.json").read_text(encoding="utf-8"))
+    surface = scene["surfaces"][0]
+    packed = len(surface["laneMembers"])
+    names = [item for item in _primitives(scene) if item.get("purpose") == "member-label"]
+    shown = len(names)
+    assert packed == shown == 26
+    assert not any(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:") for item in scene["diagnostics"])
+    for box in (item for item in _primitives(scene) if item["id"].startswith("annotation-box:")):
+        left, top = box["bounds"]["inline"], box["bounds"]["block"]
+        right = left + box["bounds"]["inlineSize"]
+        bottom = top + box["bounds"]["blockSize"]
+        for name in names:
+            bounds = name["bounds"]
+            assert not (left < bounds["inline"] + bounds["inlineSize"]
+                        and bounds["inline"] < right
+                        and top < bounds["block"] + bounds["blockSize"]
+                        and bounds["block"] < bottom), (slide, box["id"], name["id"])
+
+
 def test_programme_board_wallboard_profile_is_context_specific_and_complete() -> None:
     layouts = ROOT / "examples/halcyon-1/layouts"
     shared = yaml.safe_load((layouts / "wallboard.yaml").read_text(encoding="utf-8"))
@@ -425,6 +446,9 @@ def test_programme_board_wallboard_profile_is_context_specific_and_complete() ->
     shared_copy["root"]["children"][1]["inlineSize"] = {
         "minmax": {"min": "content", "max": {"fr": 2}}
     }
+    assert programme["reviewSurface"]["rowDistribution"] == "fill"
+    assert shared["reviewSurface"]["rowDistribution"] == "pack"
+    shared_copy["reviewSurface"]["rowDistribution"] = "pack"
     assert shared_copy == shared
 
     contexts = ROOT / "examples/halcyon-1/contexts"

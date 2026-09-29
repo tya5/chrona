@@ -34,9 +34,9 @@ def test_measured_overlapping_end_intervals_create_finite_stagger_rows():
         timeline_bounds=(0, 100), row_padding=2,
     )
 
-    # Both labels choose overlapping end intervals and therefore need two
-    # four-unit label rows after the ten-unit mark block.
-    assert requirements == {"lane": 20.0}
+    # The finite envelope reserves a measured level and clearance for each
+    # label, even when the interval lower bound happens to agree on two levels.
+    assert requirements == {"lane": 22.0}
 
 
 def test_disjoint_measured_intervals_share_one_stagger_row():
@@ -55,4 +55,6 @@ def test_disjoint_measured_intervals_share_one_stagger_row():
         timeline_bounds=(0, 100), row_padding=2,
     )
 
-    assert requirements == {"lane": 16.0}
+    # Disjoint inline intervals share the interval lower bound, but the
+    # conservative envelope accounts for later mark/label obstructions.
+    assert requirements == {"lane": 22.0}

@@ -113,6 +113,11 @@ body:
       search: {kind: nearest-free, maxPositions: 1024, maxInlineEm: 12}
       obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
       connector: {kind: tail}
+    - id: plot-no-tail
+      region: {kind: plot}
+      search: {kind: nearest-free, maxPositions: 1024, maxInlineEm: 12}
+      obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
+      connector: {kind: none}
   - id: tvac-note
     purpose: note
     anchor:
@@ -127,6 +132,11 @@ body:
       search: {kind: nearest-free, maxPositions: 1024, maxInlineEm: 12}
       obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
       connector: {kind: tail}
+    - id: plot-no-tail
+      region: {kind: plot}
+      search: {kind: nearest-free, maxPositions: 1024, maxInlineEm: 12}
+      obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
+      connector: {kind: none}
   - id: station-note
     purpose: note
     anchor:
@@ -141,6 +151,11 @@ body:
       search: {kind: nearest-free, maxPositions: 1024, maxInlineEm: 12}
       obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
       connector: {kind: tail}
+    - id: plot-no-tail
+      region: {kind: plot}
+      search: {kind: nearest-free, maxPositions: 1024, maxInlineEm: 12}
+      obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
+      connector: {kind: none}
   axis:
     tiers:
     - unit: quarter

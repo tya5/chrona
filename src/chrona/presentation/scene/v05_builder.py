@@ -13,7 +13,7 @@ from chrona.presentation.layout.model import LayoutError, LayoutManifest
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
 from chrona.presentation.layout.lane_subtracks import FixedLanePreflight
 from chrona.presentation.layout.surface_composer import compose_surface_layout
-from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
+from chrona.presentation.layout.surface_quality import CapacitySourceEvidence, SurfaceLayoutRequest
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.layout.pattern_placement import PatternedPlacement
 from chrona.presentation.model.surface_content import SurfaceContentInput
@@ -60,6 +60,7 @@ class SceneBuildInput:
     icon_assets: dict[str, Any] | None = None
     visual_requests: tuple[Any, ...] = ()
     fixed_lane_preflight: FixedLanePreflight | None = None
+    capacity_short_sources: tuple[CapacitySourceEvidence, ...] = ()
 
 
 _REQUIRED_SOURCES = {
@@ -213,7 +214,8 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
                       viewport: tuple[float, float] = (0.0, 0.0),
                       icon_assets: dict[str, Any] | None = None,
                       visual_requests: tuple[Any, ...] = (),
-                      fixed_lane_preflight: FixedLanePreflight | None = None) -> SceneBuildInput:
+                      fixed_lane_preflight: FixedLanePreflight | None = None,
+                      capacity_short_sources: tuple[CapacitySourceEvidence, ...] = ()) -> SceneBuildInput:
     """Bind validated v0.5 inputs without reopening authoring or legacy contracts."""
     if not isinstance(layout_manifest, LayoutManifest):
         raise SceneBuildError("E_PRESENTATION_LAYOUT_REQUIRED", "/layoutManifest")
@@ -238,7 +240,7 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
     return SceneBuildInput(projection, surface_content, layout_manifest,
                            ThemeTokenView(resolved_theme), font_metrics, measured_sources,
                            dict(capabilities), visual_profile, viewport, icon_assets, visual_requests,
-                           fixed_lane_preflight)
+                           fixed_lane_preflight, capacity_short_sources)
 
 
 def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
@@ -272,6 +274,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             capabilities=dict(value.capabilities), icon_assets=value.icon_assets or {},
             visual_requests=value.visual_requests,
             fixed_lane_preflight=value.fixed_lane_preflight,
+            capacity_short_sources=value.capacity_short_sources,
         ))
     except LayoutError as error:
         raise SceneBuildError(error.diagnostic_id, error.path, error.detail) from error

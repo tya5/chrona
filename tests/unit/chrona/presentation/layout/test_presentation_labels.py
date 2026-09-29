@@ -116,7 +116,7 @@ def test_member_name_full_band_search_matches_axis_aligned_interval_oracle():
                   and not any(low < y < high for low, high in merged)),
                  key=lambda y: (abs(y - preferred_y), y))
     result = place_member_name(anchor, size, ("end",), bounds=bounds, obstacles=obstacles,
-                               gap=gap, maximum_end_gap=30)
+                               gap=gap, maximum_end_gap=30, full_band=True)
     assert result is not None and result.bounds.y == oracle
     assert result.bounds.x == anchor.right + gap
     assert result.bounds.y >= bounds.y and result.bounds.bottom <= bounds.bottom
@@ -131,7 +131,7 @@ def test_member_name_full_band_search_has_no_512_contact_cutoff():
                                   ObstacleRect(32, 400 + number, 52, 402 + number)))
     anchor = LabelRect(20, 700, 10, 8)
     result = place_member_name(anchor, (18, 6), ("end",), bounds=LabelRect(0, 0, 100, 1200),
-                               obstacles=index, gap=2, maximum_end_gap=30)
+                               obstacles=index, gap=2, maximum_end_gap=30, full_band=True)
     assert result is not None
     assert result.bounds.y == 1001
     assert result.search_count > 512
@@ -142,8 +142,16 @@ def test_member_name_full_band_search_has_no_512_contact_cutoff():
 def test_member_name_full_band_search_respects_inline_row_bounds():
     result = place_member_name(LabelRect(40, 40, 10, 8), (20, 6), ("end",),
                                bounds=LabelRect(0, 0, 60, 100), obstacles=(),
-                               gap=2, maximum_end_gap=30)
+                               gap=2, maximum_end_gap=30, full_band=True)
     assert result is None
+
+
+def test_member_name_full_band_search_accepts_declared_start_only():
+    result = place_member_name(LabelRect(50, 40, 10, 8), (20, 6), ("start",),
+                               bounds=LabelRect(0, 0, 100, 100), obstacles=(),
+                               gap=2, maximum_end_gap=30, full_band=True)
+    assert result is not None and result.side == "start"
+    assert result.bounds.right == 48
 
 
 def test_member_name_contact_events_include_selected_segment_envelopes():
@@ -152,7 +160,7 @@ def test_member_name_contact_events_include_selected_segment_envelopes():
                               ObstacleSegment((32, 45), (52, 45))))
     result = place_member_name(LabelRect(20, 41, 10, 8), (18, 6), ("end",),
                                bounds=LabelRect(0, 0, 100, 100), obstacles=index,
-                               gap=2, maximum_end_gap=30, classes=("dependency-route",))
+                               gap=2, maximum_end_gap=30, classes=("dependency-route",), full_band=True)
     assert result is not None and result.bounds.y == 39
     assert not index.collisions(ObstacleRect(result.bounds.x, result.bounds.y,
                                              result.bounds.right, result.bounds.bottom),

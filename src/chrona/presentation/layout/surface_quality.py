@@ -422,6 +422,7 @@ class SurfaceLayoutRequest:
     icon_assets: dict[str, Any] = field(default_factory=dict)
     visual_requests: tuple[VisualRequest, ...] = ()
     fixed_lane_preflight: FixedLanePreflight | None = None
+    capacity_short_sources: tuple[CapacitySourceEvidence, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -555,6 +556,9 @@ class SurfacePlacement:
         """Reject invalid required geometry before a renderer receives it."""
         suppressed_members = {item.placement_id for item in self.text
                               if item.semantic_id == "memberLabel" and item.overflow == "suppressed"}
+        suppressed_lane_members = {item.placement_id for item in self.text
+                                   if item.semantic_id == "memberLabel" and item.overflow == "suppressed"
+                                   and item.lane_row_id is not None}
         reported_suppressions = {item.removeprefix("W_LAYOUT_LABEL_SUPPRESSED:") for item in self.diagnostics
                                  if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:")}
         counts = tuple(item for item in self.info_diagnostics if isinstance(item, SuppressedPlotLabels))
@@ -562,7 +566,7 @@ class SurfacePlacement:
         suppressed_text = {item.placement_id: item for item in self.text
                            if item.semantic_id == "memberLabel" and item.overflow == "suppressed"}
         if (not suppressed_members.issubset(reported_suppressions)
-                or set(suppression_facts) != suppressed_members
+                or set(suppression_facts) != suppressed_lane_members
                 or len(suppression_facts) != len(self.lane_label_suppressions)
                 or len(counts) != (1 if suppressed_members else 0)
                 or (counts and counts[0].count != len(suppressed_members))):

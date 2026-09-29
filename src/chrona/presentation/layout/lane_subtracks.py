@@ -23,6 +23,7 @@ from chrona.presentation.review.lane_membership import (
 )
 
 if TYPE_CHECKING:
+    from chrona.presentation.layout.lane_label_intent import MeasuredLaneMemberLabel
     from chrona.presentation.layout.surface_quality import ScalePlacement
 
 LaneFootprint: TypeAlias = ObstacleRect | ObstacleSegment
@@ -110,13 +111,20 @@ class FixedLanePreflight:
     natural_block_requirement: Decimal
     as_of: date | None
     scale: ScalePlacement
-    measured_labels: tuple[object, ...] = ()
+    measured_labels: tuple[MeasuredLaneMemberLabel, ...] = ()
     resolved_visual_requests: tuple[object, ...] = ()
     row_requirements: tuple[tuple[str, float], ...] = ()
 
     def __post_init__(self) -> None:
         if (not self.natural_block_requirement.is_finite()
                 or self.natural_block_requirement < 0):
+            raise ValueError("E_LAYOUT_LANE_PREFLIGHT_INVALID")
+        if (len({item.placement_id for item in self.measured_labels}) != len(self.measured_labels)
+                or len({lane_id for lane_id, _ in self.row_requirements}) != len(self.row_requirements)
+                or any(not isfinite(size) or size <= 0 for _, size in self.row_requirements)
+                or (self.row_requirements and
+                    {lane_id for lane_id, _ in self.row_requirements}
+                    != {lane.lane_id for lane in self.subtracks.lanes})):
             raise ValueError("E_LAYOUT_LANE_PREFLIGHT_INVALID")
 
 

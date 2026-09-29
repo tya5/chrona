@@ -212,6 +212,7 @@ def place_member_name(
     text_inline_inset: float = 0.0,
     inside_host_obstacle_id: str | None = None,
     classes: tuple[str, ...] | None = None,
+    full_band: bool = False,
 ) -> LabelPlacement | None:
     """Try declared member-name sides in order, bounding end gap to completed text.
 
@@ -232,9 +233,9 @@ def place_member_name(
         maximum_side_gap = (maximum_end_gap - text_inline_inset) if side == "end" else None
         if side == "end" and maximum_side_gap < gap:
             continue
-        if side not in {"end", "start"}:
-            # Member names use the lane's inline rungs. Keep the established
-            # finite behavior for any legacy caller that declares another side.
+        if not full_band or side not in {"end", "start"}:
+            # Full-band contacts apply only to lane names. Other labels retain
+            # their established side-neighborhood policy and public bytes.
             placed = place_label(
                 anchor, size, (side,), bounds=bounds, obstacles=available_obstacles, gap=gap,
                 inside_host_obstacle_id=inside_host_obstacle_id,
@@ -254,7 +255,17 @@ def place_member_name(
         preferred = _candidate(anchor, size, side, gap)
         candidates = {preferred.y, bounds.y, bounds.bottom - preferred.height}
         if isinstance(available_obstacles, SurfaceObstacleIndex):
-            obstacle_values = available_obstacles.select(classes=classes)
+            relevant = []
+            for obstacle in available_obstacles.select(classes=classes):
+                left, top, right, bottom = obstacle_envelope(obstacle.geometry)
+                clearance = obstacle.clearance
+                if (preferred.x <= right + clearance and left - clearance <= preferred.right
+                        and bounds.y - preferred.height - clearance <= bottom
+                        and top <= bounds.bottom + clearance):
+                    relevant.append(obstacle)
+            obstacle_values = tuple(relevant)
+            local_obstacles = SurfaceObstacleIndex()
+            local_obstacles.extend(obstacle_values)
             for obstacle in obstacle_values:
                 _, top, _, bottom = obstacle_envelope(obstacle.geometry)
                 clearance = obstacle.clearance
@@ -275,7 +286,7 @@ def place_member_name(
             if side == "end" and candidate.x + text_inline_inset - anchor.right > maximum_end_gap:
                 continue
             if isinstance(available_obstacles, SurfaceObstacleIndex):
-                collides = bool(available_obstacles.collisions(
+                collides = bool(local_obstacles.collisions(
                     ObstacleRect(candidate.x, candidate.y, candidate.right, candidate.bottom),
                     host_id=inside_host_obstacle_id if side == "inside" else None,
                     classes=classes,
