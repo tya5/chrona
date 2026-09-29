@@ -1,11 +1,51 @@
 # Chrona development workflow
 
 This file is the working procedure for repository contributors and coding
-agents. Follow it for issue work, including fixes and refactors. The current
-GitHub `main`, issue text, and published repository documents are the source
-of truth; handoff notes and unpushed local work are leads to verify.
+agents. It is tool-neutral, and Claude Code and Codex both read it directly.
+Follow it for issue work, including fixes and refactors.
+The current GitHub `main`, issue text, and published repository documents are
+the source of truth; handoff notes and unpushed local work are leads to verify.
+Do not rely on any tool's private memory for project state. Anything a
+successor needs must be in the repository or on the issue.
+
+## Setup and everyday commands
+
+```bash
+python -m venv .venv
+.venv/bin/python -m pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk
+.venv/bin/python -m pytest -q tests/unit/chrona/presentation/layout/test_presentation_labels.py
+.venv/bin/python conformance/run_conformance.py
+.venv/bin/python tools/regenerate_public_examples.py --check --jobs 4
+```
+
+On Windows, use `.venv\Scripts\python.exe` in place of `.venv/bin/python`.
+Create the venv inside the worktree being tested; an editable venv from another
+checkout may silently import that checkout instead. Always use that venv.
+`CONTRIBUTING.md` has the repository map.
+
+## Choosing and claiming work
+
+- **What to take next:** the pinned issue #454 is the reviewer-maintained
+  priority board. Read it; do not edit or close it.
+- **Coordinate writes:** before implementing an issue, comment with the tool,
+  first slice, and public base. One coordinating owner publishes it; delegated
+  read-only or non-overlapping work may use separate worktrees. Check a recent
+  claim before taking over. Read-only review needs no claim.
+- **Publish serially:** separate worktrees isolate agents, but only one
+  coordinated publication to `main` occurs at a time. Fetch and inspect before
+  each push or merge; do not rebase a shared/published branch or overwrite an
+  unexpected remote update.
+- **Reviewer PRs:** compare scope and current design with `main`, resolve
+  conflicts, then inspect current CI before merging. A green old-base run alone
+  is not acceptance.
 
 ## Required sequence
+
+The full sequence applies to semantic, schema, ownership, compatibility, or
+cross-module work. For a local defect confined to one owner with no such
+change, combine steps 1–4 in the one concise issue work record, then keep the
+literal acceptance review. Land an agreed independent slice when possible;
+an unresolved contract or layer gap still requires design correction first.
 
 1. **Establish the baseline.** Read the issue body and later comments, current
    `main`, active plans, relevant specifications/ADRs, code, tests, and public
@@ -55,6 +95,13 @@ breach, pause that slice. Update the current design, review it against the
 whole architecture, amend the implementation plan, and publish those changes
 before resuming code. Do not hide a design gap behind a local conditional.
 
+Pre-code publication is required when the discovery changes layer ownership,
+public behavior or diagnostics, schema/CLI contracts, migration promises, or
+literal acceptance. Internal choices within an approved contract may be made
+with code and tests, then recorded in the living issue work record in that
+commit. A user-visible candidate order, threshold, or validator failure is
+not automatically an internal detail.
+
 ## Documentation: when, where, and what
 
 Write design and review records in English. Prefer one concise, living issue
@@ -81,10 +128,29 @@ remain, but link one current authority instead of repeating their contents.
 | At issue release | `docs/reviews/current/` | One concise acceptance review with exact commit, CI/PR links, artifact diffs, architectural findings, and a row for **every literal issue acceptance criterion** (`met`, `deferred`, or `not met`) with direct evidence. A deferred criterion keeps the issue open unless an explicit successor disposition is approved. Slice evidence may be added to the living issue work record without a new review file. |
 
 Keep active plans under `docs/planning/active/` while they are the working
-record. Do not mistake a document's `Accepted` heading or an old green run for
-proof that the current public artifact meets an issue's criteria. Check actual
-rendered output when the criterion concerns what a user sees; a Scene-only
-report cannot prove adapter output is correct.
+record. Archive completed issue records as described below; legacy files may
+remain until separately reviewed. Do not mistake an `Accepted` heading or an
+old green run for proof that the current public artifact meets the criterion.
+Check rendered output when the criterion concerns what a user sees; Scene-only
+evidence cannot prove adapter output is correct.
+
+## Archiving plans and reviews
+
+After an issue's acceptance review, closing comment, and exact-main CI are
+complete, archive its issue work record and review in a separate publication:
+`docs/planning/active/` → `docs/archive/planning/`, and
+`docs/reviews/current/` → `docs/archive/reviews/`. Move legacy per-phase files
+for that issue too. Do not move current specifications, decisions, designs,
+templates, or ledgers referenced by tools; archive a multi-issue record only
+when every issue it covers is closed. Use `git mv`, repair relative links in
+the same commit, and run conformance. Link issue/PR evidence to a commit
+permalink, not a moving `main` path. Historical backlog migration is separate
+work, not a prerequisite for current issues.
+
+The root `.ignore` keeps `docs/archive/` out of default ripgrep results; git
+still tracks it. Search history explicitly with `rg PATTERN docs/archive/` or
+`rg --no-ignore PATTERN` for rationale, regressions, reopenings, or link fixes.
+Archived records are evidence, not current design authority.
 
 ## Publication and CI discipline
 
@@ -105,3 +171,25 @@ report cannot prove adapter output is correct.
   wait for CI on the exact `main` commit that publishes the issue's acceptance
   review, and cite that run when closing; an earlier implementation-PR run is
   not a substitute.
+- Use `Refs #n` rather than closing keywords in partial commits and PRs.
+  GitHub can close an issue when such a commit reaches `main`; close it
+  deliberately after the literal acceptance review and release gate.
+
+## Handing off and resuming
+
+Before transferring an unfinished issue or stopping mid-slice, publish
+completed units and push your own unfinished work to
+`wip/issue-<n>-<topic>`; leave other contributors' changes untouched. Post a
+short status block on the issue:
+
+   ```text
+   Status (<tool>, <UTC time>)
+   Public base: <main commit>; WIP: <branch/commit or none>
+   Done: <published units and commits>
+   Next: <plan link and first concrete step>
+   Risks: <unverified facts or blockers>
+   ```
+
+The resumer verifies the named commits/branch against `origin/main`, then
+reads the issue and current design. The status block is a lead, not proof;
+tool-private memory is not a state store.
