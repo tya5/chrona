@@ -173,7 +173,10 @@ evidence is `E_PRESENTATION_PRIMITIVE_MISSING`; an adapter MUST NOT reconstruct 
 from viewport, settings, slots, or primitive coordinates.
 Layout resolves any point-mark edge inset from the largest measured left/right
 extent of selected planned and Actual point facets, including symbol, icon,
-rotation and stroke geometry, before emitting this range. With no selected
+rotation and stroke geometry, relative to each facet's date anchor. A
+provisional full-slot scale may be used only to measure those pixel
+protrusions; final marks and all emitted scale evidence use the single inset
+scale. With no selected
 point facet there is no mark inset. This does not change the View's Date-only
 domain: its start and end map to the inset range endpoints, so interval axes
 and shading use exactly the same forward mapping as marks. A non-positive
