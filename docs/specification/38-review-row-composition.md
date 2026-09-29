@@ -298,8 +298,9 @@ the first lane in a group shows that group's title and later lanes have an
 empty label. For `laneTable.label: lane`, a singleton shows its selected
 member's title; a multi-member lane shows its group's title, with its first
 member's title appended when that group has multiple multi-member lanes.
-Generated lane IDs, founder IDs and explicit lane keys are identity, never
-display-title fallbacks. A View-requested `Items` column remains declared
+For an ungrouped multi-member lane, the founder member's authored Project
+title is its human heading. Generated lane IDs, founder IDs and explicit lane
+keys are identity, never display-title fallbacks. A View-requested `Items` column remains declared
 intent; public Views with an all-one count SHOULD omit it. This changes
 display text, not lane identity or membership (#554). A visible delta table
 promise removed during resource migration must be selected in lane-label

@@ -4,7 +4,7 @@
 
 | Slice | Owners and changes | Focused acceptance and publication |
 | --- | --- | --- |
-| 554-A table titles | `presentation/review/v05_content.py`, 03 View, table tests | Single-member title, group title, duplicate-group disambiguation, no generated ID; `Items` absent on 03, Scene/SVG agree. Publish commit. |
+| 554-A table titles | `presentation/review/v05_content.py`, 03 View, table tests; follow the [ungrouped title correction](../../design/issue-554-ungrouped-lane-title-correction-2026-09-29.md) | Single-member title, group title, ungrouped multi-member founder title, duplicate-group disambiguation, no generated ID; `Items` absent on 03, Scene/SVG agree. Public attached-milestones render succeeds. Publish correction commit. |
 | 554-B label association | `presentation/layout/labels.py`, `surface_composer.py`, semantic registry, placement model/Scene projection, tests; follow the [leader correction](../../design/issue-554-member-label-leader-correction-2026-09-29.md) | Paired mark/text on both sides; <=2em or completed source-keyed leader, no crossings of required text/other marks, 26/26 on 02/11/12, pack/non-lane unchanged. Publish commit. |
 | 554-C diagnostics | `usecases/render_review.py`, CLI warning emission, Scene serialization/model if needed, CLI/Scene tests | One stable warning identity ledger, including attached-milestones label overflow; compare multisets of emitted CLI and Scene warnings. Publish commit. |
 | 554-D closed-day paint | bundled and HALCYON Theme mirrors, starter perceptibility/paint tests | Chart/key >=1.15:1 against completed background, same Scene/SVG paint, no comb outlines; intentional Theme byte changes. Publish commit. |
