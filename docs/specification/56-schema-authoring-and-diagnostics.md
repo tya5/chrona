@@ -145,12 +145,16 @@ resource invalid or changes its behavior. When a bump is required, batch the
 pending incompatible changes into that version. Do not silently upgrade a
 stale resource; the unsupported-version behavior in §3.1 remains in force.
 
-Conformance compares the schema-inventory predecessor/successor pair for each
-versioned View, Layout Profile, and Project transition. It MUST fail a version
-bump when, after normalizing the corresponding version strings at `$id`,
-versioned `title`, and version `const` only, the entire schema change consists
+Conformance compares newly introduced schema-inventory predecessor/successor
+pairs for View, Layout Profile, and Project. Transitions already published when
+this rule was adopted (through View v0.28, Layout Profile v0.9, and Project
+v0.7) are historical and are not retroactively rejected; Project v0.6→v0.7,
+for example, contains optional additions. It MUST fail a new version bump
+when, after normalizing the corresponding version strings at `$id`,
+versioned `title`, version `const`, and only the root schema
+`examples[*].version` values equal to those version strings, the entire schema change consists
 of one or more insertions of optional property declarations under object
-`properties` maps, with no other schema change. No other title or identity
+`properties` maps, with no other example, title, or identity
 change is normalized. Each inserted property name MUST be absent from the
 containing object's `required` list; that list and all existing schema nodes
 must remain unchanged. Each new property subtree may define its own
