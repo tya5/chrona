@@ -2,7 +2,7 @@
 
 # Issue #591 — schema versioning acceptance review
 
-Source: [Issue #591](https://github.com/tya5/chrona/issues/591), observed 2026-09-30. Design/architecture and normative rule: [work record](../../planning/active/issue-591-schema-versioning-design-plan-2026-09-29.md), [Spec 56 §3.2](../../specification/56-schema-authoring-and-diagnostics.md#32-schema-version-evolution-591). Implementation plan: [#591 plan](../../planning/active/issue-591-schema-versioning-implementation-plan-2026-09-29.md). Product guard: [PR #607](https://github.com/tya5/chrona/pull/607), merged as [`dd393d11`](https://github.com/tya5/chrona/commit/dd393d119dfe59c516efda01f51b8bf7df3b1b9f), with [PR CI](https://github.com/tya5/chrona/actions/runs/36584657605) green.
+Source: [Issue #591](https://github.com/tya5/chrona/issues/591), observed 2026-09-30. Design/architecture and normative rule: [work record](../planning/issue-591-schema-versioning-design-plan-2026-09-29.md), [Spec 56 §3.2](../../specification/56-schema-authoring-and-diagnostics.md#32-schema-version-evolution-591). Implementation plan: [#591 plan](../planning/issue-591-schema-versioning-implementation-plan-2026-09-29.md). Product guard: [PR #607](https://github.com/tya5/chrona/pull/607), merged as [`dd393d11`](https://github.com/tya5/chrona/commit/dd393d119dfe59c516efda01f51b8bf7df3b1b9f), with [PR CI](https://github.com/tya5/chrona/actions/runs/36584657605) green.
 
 ## Literal issue acceptance
 
