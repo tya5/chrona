@@ -50,7 +50,7 @@ def test_retired_outputs_are_prior_tracked_generated_files_only(tmp_path: Path, 
 
 
 def test_prepare_candidate_preserves_noop_sha_and_stages_only_derived_paths(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capfd: pytest.CaptureFixture[str],
 ) -> None:
     _git(tmp_path, "init", "-q")
     output = tmp_path / "examples/deck/generated/slide.svg"
@@ -76,9 +76,14 @@ def test_prepare_candidate_preserves_noop_sha_and_stages_only_derived_paths(
     assert "AGENTS.md" in subprocess.run(["git", "status", "--short"], cwd=tmp_path, check=True, capture_output=True, text=True).stdout
 
     output.write_text("fresh output")
-    candidate, changed = derived_workflow.prepare_candidate(tmp_path, source)
-    assert changed is True
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(sys, "argv", ["derived_workflow", "prepare-candidate", source])
+    assert derived_workflow.main() == 0
+    candidate = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=tmp_path, check=True, capture_output=True, text=True,
+    ).stdout.strip()
     assert candidate != source
+    assert capfd.readouterr().out.splitlines() == [f"candidate_sha={candidate}", "changed=true"]
     assert subprocess.run(["git", "show", "--format=", "--name-only", candidate], cwd=tmp_path, check=True, capture_output=True, text=True).stdout.splitlines() == [
         "examples/deck/generated/slide.svg",
     ]
