@@ -40,12 +40,12 @@ body:
     revision:
       token: example-v1
   layout:
-    id: wallboard
+    id: wallboard-programme-board
     kind: layout-profile
     store:
       provider: local
       identity: halcyon-1-example
-    address: layouts/wallboard.yaml
+    address: layouts/wallboard-programme-board.yaml
     revision:
       token: example-v1
   inputs:
