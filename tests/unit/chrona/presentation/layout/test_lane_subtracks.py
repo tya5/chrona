@@ -13,8 +13,8 @@ from chrona.presentation.layout.lane_subtracks import (
 )
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
 from chrona.presentation.layout.presentation import RowPlacement
+from chrona.presentation.layout.surface_lanes import _LaneLayoutRow
 from chrona.presentation.layout.surface_composer import (
-    _LaneLayoutRow,
     _lane_label_candidates,
     _place_lane_mark_tracks,
 )
