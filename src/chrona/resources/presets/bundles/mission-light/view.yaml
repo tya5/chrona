@@ -96,7 +96,7 @@ body:
   rows:
     mode: lanes
     packing: [explicit, attached]
-    laneTable: {label: group, count: true}
+    laneTable: {label: lane, count: true}
   markers:
   - kind: asOf
     source: actual
