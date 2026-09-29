@@ -115,8 +115,13 @@ def compose_lane_item_footprints(
                 footprint = facet.visible_footprint
                 if not isinstance(footprint, (ObstacleRect, ObstacleSegment)):
                     raise LayoutError("E_LAYOUT_LANE_FOOTPRINT_INVALID", mark.placement_id)
+                point_anchor = None
+                if mark.mark_shape == "point":
+                    candidate = ((item.actual or {}).get("at") if mark.semantic_id == "actual"
+                                 else item.planned.get("at"))
+                    point_anchor = candidate if isinstance(candidate, date) else None
                 collected[instance].append(LaneFacetFootprint(
-                    facet.facet_id, footprint, facet.overlay_with,
+                    facet.facet_id, footprint, facet.overlay_with, point_anchor,
                 ))
                 facet_purposes[instance][facet.purpose].append(facet.facet_id)
                 if facet.purpose == "icon":

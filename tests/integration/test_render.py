@@ -65,6 +65,36 @@ def test_draft_render_is_deterministic():
     assert render_review(_draft_request()).artifact.content == render_review(_draft_request()).artifact.content
 
 
+def test_fixed_lane_preflight_and_final_composition_share_the_completed_scale(monkeypatch):
+    import chrona.presentation.scene.v05_builder as builder
+
+    root = _root()
+    example = root / "examples/halcyon-1"
+    request = _draft_request(
+        project_path=example / "project.yaml",
+        view_path=example / "views/02-programme-board.yaml",
+        theme_path=example / "themes/wallboard.yaml",
+        scheme_path=example / "schemes/control-room-dark.yaml",
+        layout_path=example / "layouts/wallboard.yaml",
+        actual_path=example / "actual.yaml",
+        viewport=(1920, 1080),
+    )
+    original = builder.compose_surface_layout
+    scales = []
+
+    def capture(layout_request):
+        preflight_scale = layout_request.fixed_lane_preflight.scale
+        composition = original(layout_request)
+        scales.append((preflight_scale, composition.placement.scale))
+        return composition
+
+    monkeypatch.setattr(builder, "compose_surface_layout", capture)
+    render_review(request)
+
+    assert len(scales) == 1
+    assert scales[0][0] is scales[0][1]
+
+
 def test_halcyon_02_routed_note_trial_is_bounded_clear_and_deterministic(monkeypatch, tmp_path):
     import chrona.presentation.scene.v05_builder as builder
 

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 from math import isfinite
-from typing import TypeAlias
+from typing import TYPE_CHECKING, TypeAlias
 
 from chrona.presentation.layout.lane_projection import LaneProjectionInstance
 from chrona.presentation.layout.lane_preflight import LaneInlineFrame
@@ -22,6 +22,9 @@ from chrona.presentation.review.lane_membership import (
     LaneMembership,
 )
 
+if TYPE_CHECKING:
+    from chrona.presentation.layout.surface_quality import ScalePlacement
+
 LaneFootprint: TypeAlias = ObstacleRect | ObstacleSegment
 
 
@@ -32,6 +35,7 @@ class LaneFacetFootprint:
     facet_id: str
     footprint: LaneFootprint
     overlay_with: tuple[str, ...] = ()
+    point_anchor_date: date | None = None
 
 
 @dataclass(frozen=True)
@@ -105,6 +109,7 @@ class FixedLanePreflight:
     seed_inline_frame: LaneInlineFrame
     natural_block_requirement: Decimal
     as_of: date | None
+    scale: ScalePlacement
 
     def __post_init__(self) -> None:
         if (not self.natural_block_requirement.is_finite()
