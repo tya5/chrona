@@ -39,3 +39,18 @@ jobs:
         run: |
           pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk
           python -m tools.derived_evidence --check --jobs 4
+  derived-ready:
+    name: derived-ready
+    needs: derived-main
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Require successful derived gate on exact commit
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          GATE_RESULT: ${{ needs.derived-main.result }}
+        run: |
+          test "$GATE_RESULT" = "success"
+          test "$GITHUB_SHA" = "$EXPECTED_SHA"

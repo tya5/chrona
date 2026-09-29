@@ -33,3 +33,13 @@ def test_derived_main_gate_checks_the_exact_temp_ref_commit() -> None:
     assert 'test "$GITHUB_SHA" = "$EXPECTED_SHA"' in verification["run"]
     assert 'git rev-parse HEAD' in verification["run"]
     assert "python -m tools.derived_evidence --check --jobs 4" in evidence["run"]
+
+
+def test_derived_ready_fails_closed_when_derived_main_fails() -> None:
+    workflow = yaml.load(WORKFLOW.read_text(encoding="utf-8"), Loader=yaml.BaseLoader)
+    ready = workflow["jobs"]["derived-ready"]
+    assert ready["needs"] == "derived-main"
+    assert ready["if"] == "${{ always() }}"
+    assert ready["steps"][0]["env"]["GATE_RESULT"] == "${{ needs.derived-main.result }}"
+    assert 'test "$GATE_RESULT" = "success"' in ready["steps"][0]["run"]
+    assert 'test "$GITHUB_SHA" = "$EXPECTED_SHA"' in ready["steps"][0]["run"]
