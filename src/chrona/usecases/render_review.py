@@ -25,8 +25,10 @@ from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.presentation import table_text_line_block
 from chrona.presentation.layout.profile import resolve_layout_profile
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources
-from chrona.presentation.layout.surface_composer import (preflight_fixed_lane_layout, resolve_label_visual_advances,
-                                                         resolve_mark_geometries, timeline_content_block_requirement)
+from chrona.presentation.layout.surface_composer import (resolve_label_visual_advances,
+                                                         timeline_content_block_requirement)
+from chrona.presentation.layout.surface_lanes import preflight_fixed_lane_layout
+from chrona.presentation.layout.surface_marks import resolve_mark_geometries
 from chrona.presentation.layout.surface_quality import CapacitySourceEvidence, VisualRequest
 from chrona.presentation.model.closure import ClosureError, RenderClosure
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, FontTabularWarning, resolve_font_metrics_catalog

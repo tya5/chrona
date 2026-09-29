@@ -8,20 +8,21 @@ from collections.abc import Mapping
 import re
 from typing import Any
 
-from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect, geometry_sum
+from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
 from chrona.presentation.layout.pattern_placement import PatternedPlacement, complete_pattern_placement
 from chrona.presentation.layout.label_visual_measurement import (
     resolve_label_visual_advances, visual_target_placement_id,
 )
-from chrona.presentation.layout.lane_preflight import (
-    lane_inline_frame_for_manifest,
-)
-from chrona.presentation.layout.lane_subtracks import FixedLanePreflight, LaneSubtrackPlan, assign_lane_subtracks
-from chrona.presentation.layout.lane_item_footprints import compose_lane_item_footprints
+from chrona.presentation.layout.lane_subtracks import LaneSubtrackPlan
 from chrona.presentation.layout.mark_aware_scale import PointMarkFootprint, inset_scale_for_point_facets
+from chrona.presentation.layout.surface_lanes import (
+    _LaneLayoutRow, lane_owner as _lane_owner, review_rows as _review_rows,
+)
+from chrona.presentation.layout.surface_marks import MARK_GEOMETRY_ROLES, resolve_mark_geometries
+from chrona.presentation.layout.surface_base import prepare_surface_base
 from chrona.presentation.layout.asof_label import find_asof_label_candidate
 from chrona.presentation.model.semantic_registry import (
-    axis_band_semantic_ids, axis_label_semantic_ids, REQUIRED_SLOTS, label_chip_semantic, semantic_binding)
+    axis_band_semantic_ids, axis_label_semantic_ids, label_chip_semantic, semantic_binding)
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.layout.presentation import MarkBandFrame, MarkGeometry, TrackPlacement, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents, table_cell_indent, table_text_line_block, table_text_measurer
 from chrona.presentation.layout.axis import axis_intervals, axis_label_fits, format_axis_tier_label, thinning_schedule
@@ -61,7 +62,7 @@ from chrona.presentation.layout.icon_geometry import complete_icon_paths
 from chrona.presentation.layout.lane_mark_facets import (
     _mark_facets, _overlay_compound_facets, _with_mark_visuals,
 )
-from chrona.presentation.layout.lane_projection import LaneProjectionClosure, LaneProjectionInstance, close_lane_projection, lane_missing_actual_visible
+from chrona.presentation.layout.lane_projection import LaneProjectionInstance, lane_missing_actual_visible
 from chrona.presentation.layout.lane_visual_binding import bind_lane_visual_requests
 from chrona.presentation.layout.lane_label_intent import measure_lane_member_labels
 from chrona.presentation.layout.lane_label_preflight import lane_label_row_requirements
@@ -72,6 +73,10 @@ from chrona.presentation.layout.surface_quality import (
     annotation_presentation, intersects,
 )
 from chrona.presentation.layout.image_slice_geometry import image_slice_tiles
+from chrona.presentation.layout.surface_geometry import (
+    bounds_from_rect as _bounds, coordinate_for_date as _coordinate,
+    rect_from_bounds as _rect,
+)
 
 
 @dataclass(frozen=True)
@@ -95,20 +100,6 @@ def _member_association_outcome(candidate: LabelPlacement | None,
     return candidate
 
 
-@dataclass(frozen=True)
-class _LaneLayoutRow:
-    """Layout adapter for one already-fixed View lane, never a member selector."""
-
-    row_id: str
-    group_id: str
-    items: tuple[Any, ...]
-    member_item_ids: tuple[str, ...]
-    label: str = ""
-    table_subject_id: str = ""
-    depth: int = 0
-    rollup_presentation: str = "none"
-
-
 def _lane_fallback_clears_required_labels(
     points: tuple[tuple[float, float], ...], placed_text: tuple[TextPlacement, ...],
 ) -> bool:
@@ -121,77 +112,6 @@ def _lane_fallback_clears_required_labels(
                     and item.required and item.overflow != "suppressed")
     return all(not obstacles_intersect(ObstacleSegment(start, end), label)
                for start, end in zip(points, points[1:]) for label in labels)
-
-
-def _review_rows(projection: Any) -> tuple[Any, ...]:
-    lane_membership = getattr(projection, "lane_membership", None)
-    if lane_membership is not None:
-        lane_rows = getattr(projection, "lane_rows", ())
-        if len(lane_rows) != len(lane_membership.lanes):
-            raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", "/projection/laneRows")
-        if any(len(row.items) != len(row.member_item_ids) for row in lane_rows):
-            raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", "/projection/laneRows")
-        return tuple(_LaneLayoutRow(row.lane_id, row.group_id, row.items, row.member_item_ids,
-                                    table_subject_id=row.lane_id) for row in lane_rows)
-    return projection.rows or ()
-
-
-def _lane_owner(review_row: Any, item: Any) -> tuple[str, str] | None:
-    """Join one row item to its immutable member ID by typed projection facts."""
-    member_ids = getattr(review_row, "member_item_ids", ())
-    if not member_ids:
-        return None
-    matches = [member_id for candidate, member_id in zip(review_row.items, member_ids, strict=True)
-               if ((candidate.item_id or candidate.object_id, candidate.object_id, candidate.source_kind)
-                   == (item.item_id or item.object_id, item.object_id, item.source_kind))]
-    if len(matches) != 1:
-        raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", f"/projection/laneRows/{review_row.row_id}")
-    return review_row.row_id, matches[0]
-
-
-def _lane_instance_owners(projection: Any, closure: LaneProjectionClosure) -> dict[LaneProjectionInstance, tuple[str, str]]:
-    """Join original Review occurrences to final lanes without decoding IDs."""
-    lane_rows = {row.lane_id: row for row in projection.lane_rows}
-    source_rows = {row.row_id: row for row in projection.rows}
-    owners: dict[LaneProjectionInstance, tuple[str, str]] = {}
-    for instance in closure.instances:
-        row = source_rows.get(instance.row_id)
-        if row is None or not row.items:
-            raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", "/projection/rows")
-        member_id = row.items[0].item_id or row.items[0].object_id
-        assignment = projection.lane_membership.assignment_for(member_id)
-        lane_row = lane_rows.get(assignment.lane_id)
-        if lane_row is None or not any(
-            candidate_member_id == member_id
-            and (item.item_id or item.object_id, item.object_id, item.source_kind)
-            == (instance.item_id, instance.object_id, instance.source_kind)
-            for item, candidate_member_id in zip(lane_row.items, lane_row.member_item_ids, strict=True)
-        ):
-            raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", "/projection/laneRows")
-        owners[instance] = (lane_row.lane_id, instance.item_id)
-    return owners
-
-
-def _resolved_lane_visual_requests(projection: Any, visual_requests: tuple[Any, ...],
-                                   *, as_of: date | None) -> tuple[Any, ...]:
-    """Bind View selectors once to the final lane occurrence identities."""
-    if not visual_requests:
-        return ()
-    closure = close_lane_projection(projection, as_of=as_of)
-    label_visuals, mark_visuals = bind_lane_visual_requests(projection, closure, visual_requests)
-    owners = _lane_instance_owners(projection, closure)
-    resolved = [visual for visual in visual_requests
-                if visual.target_kind not in {"plot-label", "mark"}]
-    for instance, visuals in label_visuals.items():
-        lane_id, item_id = owners[instance]
-        placement_id = f"member-label:{lane_id}:{item_id}"
-        resolved.extend(replace(visual, selector=(("placementId", placement_id),))
-                        for visual in visuals)
-    for (instance, purpose), visual in mark_visuals.items():
-        lane_id, item_id = owners[instance]
-        placement_id = f"{purpose}:{lane_id}:{item_id}"
-        resolved.append(replace(visual, selector=(("placementId", placement_id),)))
-    return tuple(resolved)
 
 
 def _lane_emissions(projection: Any, review_rows: tuple[Any, ...], marks: list[MarkPlacement],
@@ -382,7 +302,6 @@ def _place_lane_mark_tracks(*, review_rows: tuple[_LaneLayoutRow, ...],
     return tuple(tracks)
 
 
-MARK_GEOMETRY_ROLES = ("planned", "actual", "snapshot", "scenario", "missing-actual")
 BACKGROUND_SEMANTIC_IDS = frozenset({"rowBand", "groupBand", "groupHeaderBand", "calendarClosed", *axis_band_semantic_ids()})
 BACKGROUND_PAINT_ORDER = 10
 MARK_PAINT_ORDER_BASE = 100
@@ -716,15 +635,6 @@ def _validate_detail_panel_placement(text: list[Any], slots: tuple[SlotPlacement
                 raise LayoutError("E_LAYOUT_DETAIL_PANEL_OVERLAP", f"{group.placement_id}:{milestone.placement_id}")
 
 
-def resolve_mark_geometries(theme_tokens: Any) -> dict[str, MarkGeometry]:
-    """Close every comparison-mark role to lane-relative Layout geometry."""
-    result = {}
-    for role in MARK_GEOMETRY_ROLES:
-        height, offset, paint_order, corner_radius = theme_tokens.mark_geometry(role)
-        result[role] = MarkGeometry(float(height), float(offset), paint_order, float(corner_radius))
-    return result
-
-
 def _provisional_surface_point_facets(
     *, projection: Any, review_rows: tuple[Any, ...], scale: ScalePlacement,
     as_of: date | None, theme_tokens: Any, slot_id: str, mark_block_size: float,
@@ -809,74 +719,6 @@ def timeline_content_block_requirement(*, projection: Any, group_presentation: s
             headers += 1 if row.group_id and group_presentation == "header" else 0
             previous = row.group_id
     return Decimal(str(geometry_sum(requirements))) + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0)
-
-
-def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: LayoutManifest,
-                                surface_content: Any, theme_tokens: Any,
-                                metric_values: dict[str, Decimal], icon_assets: Mapping[str, Any],
-                                visual_requests: tuple[Any, ...], font_metrics: Any) -> FixedLanePreflight:
-    """Close fixed-lane mark tracks once, before final profile block allocation."""
-    membership = getattr(projection, "lane_membership", None)
-    if membership is None:
-        raise LayoutError("E_LAYOUT_LANE_PREFLIGHT_INVALID", "/projection/laneRows")
-    start, end = projection.window
-    frame = lane_inline_frame_for_manifest(layout_manifest, window=(start, end))
-    timeline = next(item for item in layout_manifest.decisions if item.source == "timeline")
-    provisional_scale = ScalePlacement("table-timeline", "primary", start, end,
-                                       float(frame.timeline_inline),
-                                       float(frame.timeline_inline + frame.timeline_inline_size),
-                                       float(frame.timeline_inline), float(frame.temporal_scale))
-    mark_band_size = float(metric_values["timeline.mark.blockSize"])
-    footprint_inputs = dict(
-        projection=projection, as_of=surface_content.as_of,
-        theme_tokens=theme_tokens, mark_band_size=mark_band_size,
-        role_geometries=resolve_mark_geometries(theme_tokens), slot_id=timeline.source,
-        icon_assets=icon_assets, visual_requests=visual_requests,
-        progress_fill_source=surface_content.progress_fill_source,
-    )
-    provisional_footprints = compose_lane_item_footprints(
-        scale=provisional_scale, **footprint_inputs,
-    )
-    point_facets = []
-    for item_footprints in provisional_footprints:
-        for facet in item_footprints.facets:
-            if facet.point_anchor_date is None:
-                continue
-            left, _, right, _ = obstacle_envelope(facet.footprint)
-            point_facets.append(PointMarkFootprint(facet.point_anchor_date, left, right))
-    scale = inset_scale_for_point_facets(provisional_scale, point_facets)
-    footprints = (provisional_footprints if scale is provisional_scale else
-                  compose_lane_item_footprints(scale=scale, **footprint_inputs))
-    subtracks = assign_lane_subtracks(membership, footprints, mark_band_size=mark_band_size)
-    resolved_visuals = _resolved_lane_visual_requests(
-        projection, visual_requests, as_of=surface_content.as_of)
-    measured_labels = measure_lane_member_labels(
-        projection, surface_content, timeline_inline_size=float(frame.timeline_inline_size),
-        theme_tokens=theme_tokens, font_metrics=font_metrics,
-        visual_requests=resolved_visuals, icon_assets=dict(icon_assets))
-    row_padding = float(metric_values["timeline.row.paddingBlock"])
-    lane_requirements = (lane_label_row_requirements(
-        measured_labels, scale, subtracks, footprints,
-        timeline_bounds=(float(frame.timeline_inline),
-                         float(frame.timeline_inline + frame.timeline_inline_size)),
-        row_padding=row_padding)
-        if layout_manifest.row_distribution == "fill" else
-        {lane.lane_id: lane.block_extent + row_padding for lane in subtracks.lanes})
-    line_block = table_text_line_block(
-        theme_tokens, (cell.typography_role for cell in surface_content.table_cells))
-    rows = _review_rows(projection)
-    requirements = tuple(max(float(metric_values["timeline.row.minBlockSize"]),
-                             line_block + row_padding if line_block else 0.0,
-                             lane_requirements[row.row_id])
-                         for row in rows)
-    headers = len(tuple(row for index, row in enumerate(rows)
-                        if row.group_id and surface_content.group_presentation == "header"
-                        and (index == 0 or rows[index - 1].group_id != row.group_id)))
-    required = (Decimal(str(geometry_sum(requirements)))
-                + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0))
-    return FixedLanePreflight(subtracks, frame, required, surface_content.as_of, scale,
-                              measured_labels, resolved_visuals,
-                              tuple(zip((row.row_id for row in rows), requirements, strict=True)))
 
 
 def progress_fill_bounds(host: Rect, fraction: float, inset_ratio: Decimal = Decimal(0)) -> Rect | None:
@@ -1123,67 +965,18 @@ def candidate_label_visuals(placement_id: str, typography_role: str,
 
 def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutComposition:
     """Resolve slots, rows, groups, temporal scale, and mark tracks in Layout."""
+    base = prepare_surface_base(request)
+    request = base.request
     projection = request.projection
-    layout_manifest = request.layout_manifest
-    measured_sources = request.measured_sources
-    metric_values = getattr(measured_sources, "metric_values", None)
-    if not isinstance(layout_manifest, LayoutManifest):
-        raise LayoutError("E_PRESENTATION_LAYOUT_REQUIRED", "/layoutManifest")
-    if not isinstance(metric_values, dict):
-        raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources")
-    decisions = {item.source: item for item in layout_manifest.decisions if item.source}
-    required = tuple(slot.value for slot in REQUIRED_SLOTS)
-    missing = next((name for name in required if name not in decisions), None)
-    if missing is not None:
-        raise LayoutError("E_PRESENTATION_PRIMITIVE_MISSING", f"/layoutManifest/sources/{missing}")
+    layout_manifest = base.layout_manifest
+    measured_sources = base.measured_sources
+    metric_values = base.metric_values
+    decisions = base.decisions
     start, end = projection.window
-    if not isinstance(start, date) or not isinstance(end, date) or start >= end:
-        raise LayoutError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection/window")
-    if projection.lane_membership is not None:
-        preflight = request.fixed_lane_preflight
-        if (preflight is None or preflight.as_of != request.surface_content.as_of
-                or preflight.seed_inline_frame != lane_inline_frame_for_manifest(
-                    layout_manifest, window=(start, end))):
-            raise LayoutError("E_LAYOUT_LANE_PREFLIGHT_INVALID", "/layoutManifest")
-        request = replace(request,
-                          visual_requests=preflight.resolved_visual_requests)
-    if ("timeline.row.minBlockSize" not in metric_values
-            or "timeline.row.paddingBlock" not in metric_values
-            or "timeline.mark.blockSize" not in metric_values):
-        raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/metricValues")
-    slots = tuple(
-        SlotPlacement(source, source, item.bounds, item.priority or "required",
-                      item.overflow or "visible-overflow", "primary" if source in {"timeline", "timeline-axis"} else None,
-                      item.direction or "block", item.gap, item.item_min_inline_size)
-        for source, item in sorted(decisions.items())
-    )
-    by_source = {slot.source_ref: slot for slot in slots}
-    table = by_source["table"]
-    timeline = by_source["timeline"]
-    review_surface = SlotPlacement(
-        "review-surface", "review-surface",
-        Rect(table.bounds.inline, min(table.bounds.block, timeline.bounds.block),
-             timeline.bounds.inline + timeline.bounds.inline_size - table.bounds.inline,
-             max(table.bounds.block + table.bounds.block_size, timeline.bounds.block + timeline.bounds.block_size)
-             - min(table.bounds.block, timeline.bounds.block)),
-    )
-    slots += (review_surface,)
-    slot_ids = {slot.slot_id for slot in slots}
-
-    def text_slot(item: Any) -> str:
-        """Resolve a text host's Layout-owned slot before any visual uses it."""
-        if item.slot_id in slot_ids:
-            return item.slot_id
-        if item.collision_domain.slot == "group-header":
-            return table.slot_id
-        raise LayoutError("E_LAYOUT_SLOT_OWNERSHIP_INVALID", item.placement_id)
-
-    review_rows = _review_rows(projection) or tuple(
-        type("_Row", (), {"row_id": item.object_id, "label": item.title, "group_id": item.group_id,
-                            "table_subject_id": item.object_id, "items": (item,)})()
-        for item in projection.items
-    )
-    timeline_bounds = _bounds(timeline.bounds)
+    slots, by_source, table, timeline = base.slots, base.by_source, base.table, base.timeline
+    review_rows, timeline_bounds = base.review_rows, base.timeline_bounds
+    slot_ids = base.slot_ids
+    text_slot = base.text_slot
     provisional_scale = ScalePlacement("table-timeline", "primary", start, end, timeline_bounds[0],
                                        timeline_bounds[0] + timeline_bounds[2], timeline_bounds[0],
                                        timeline_bounds[2] / max(1, (end - start).days))
@@ -3311,10 +3104,6 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks, tuple(mark_absences))
 
 
-def _rect(bounds: tuple[float, float, float, float]) -> Rect:
-    return Rect(*(Decimal(str(value)) for value in bounds))
-
-
 _RECT_PATTERN_THEME_ROLES = {
     "missing-actual": "missing-actual",
     "progressFill": "progress-fill",
@@ -3357,14 +3146,6 @@ def _complete_catalog_patterns(marks: tuple[MarkPlacement, ...],
                 complete_pattern_placement(pattern, mark.bounds, mark.corner_radius),
             ))
     return tuple(result)
-
-
-def _bounds(rect: Rect) -> tuple[float, float, float, float]:
-    return (float(rect.inline), float(rect.block), float(rect.inline_size), float(rect.block_size))
-
-
-def _coordinate(value: date, scale: ScalePlacement) -> float:
-    return scale.origin + (value - scale.domain_start).days * scale.unit_ratio
 
 
 def _folded_instance_id(folded: Any, item: Any) -> str:
