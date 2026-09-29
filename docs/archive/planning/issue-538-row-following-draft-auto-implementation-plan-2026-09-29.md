@@ -1,6 +1,6 @@
 # Implementation Plan — Row-Following Draft Auto Sizing (#538)
 
-Predecessors: [published design plan](issue-538-row-following-starter-work-record-2026-09-29.md), [design](../../design/issue-538-row-following-draft-auto-design-2026-09-29.md), and [architecture review](../../reviews/current/issue-538-row-following-draft-auto-architecture-review-2026-09-29.md).
+Predecessors: [published design plan](issue-538-row-following-starter-work-record-2026-09-29.md), [design](../../design/issue-538-row-following-draft-auto-design-2026-09-29.md), and [architecture review](../reviews/issue-538-row-following-draft-auto-architecture-review-2026-09-29.md).
 Successor: implementation/acceptance review after the slices below.
 
 ## Slice 1 — Publish normative sizing distinction

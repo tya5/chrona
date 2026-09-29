@@ -1,7 +1,7 @@
 # Design — Row-Following Draft Auto Sizing (#538)
 
-Predecessor: [published work record and design plan](../planning/active/issue-538-row-following-starter-work-record-2026-09-29.md), published in PR #561 at `c8bab542`.
-Successors: [architecture review](../reviews/current/issue-538-row-following-draft-auto-architecture-review-2026-09-29.md) and [implementation plan](../planning/active/issue-538-row-following-draft-auto-implementation-plan-2026-09-29.md).
+Predecessor: [published work record and design plan](../archive/planning/issue-538-row-following-starter-work-record-2026-09-29.md), published in PR #561 at `c8bab542`.
+Successors: [architecture review](../archive/reviews/issue-538-row-following-draft-auto-architecture-review-2026-09-29.md) and [implementation plan](../archive/planning/issue-538-row-following-draft-auto-implementation-plan-2026-09-29.md).
 
 ## Contract
 
