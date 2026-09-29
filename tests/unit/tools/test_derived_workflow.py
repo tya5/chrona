@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tarfile
@@ -15,6 +16,19 @@ from tools import derived_workflow
 
 def _git(root: Path, *args: str) -> None:
     subprocess.run(["git", *args], cwd=root, check=True, capture_output=True)
+
+
+def _workflow_bash() -> str:
+    """Use the Git Bash installed for Actions, not Windows' WSL launcher."""
+    if sys.platform != "win32":
+        return "bash"
+    git = shutil.which("git")
+    assert git is not None
+    for parent in Path(git).resolve().parents:
+        candidate = parent / "bin" / "bash.exe"
+        if candidate.is_file():
+            return str(candidate)
+    pytest.fail("Git Bash is required for workflow shell tests")
 
 
 def test_retired_outputs_are_prior_tracked_generated_files_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -195,7 +209,7 @@ def test_pr_readiness_accepts_only_main_or_proof_base() -> None:
     guard = script.split("ready=false", 1)[0] + "fi\n"
     for ref, expected in (("main", 0), ("derived-proof/smoke-1", 0),
                           ("feature/unsafe", 1), ("derived-proof/Bad", 1)):
-        result = subprocess.run(["bash", "-c", guard], capture_output=True, text=True,
+        result = subprocess.run([_workflow_bash(), "-c", guard], capture_output=True, text=True,
                                 env={**os.environ, "EVENT_NAME": "pull_request", "PR_BASE_REF": ref,
                                      "PREVIEW": "success", "CONFORMANCE": "success",
                                      "PR_KIND": "docs"})
@@ -211,7 +225,7 @@ def test_pr_classifier_receives_unquoted_commit_ids(tmp_path: Path) -> None:
     sha = subprocess.run(["git", "rev-parse", "HEAD"], check=True, capture_output=True,
                          text=True).stdout.strip()
     output = tmp_path / "github-output"
-    result = subprocess.run(["bash", "-c", command], capture_output=True, text=True,
+    result = subprocess.run([_workflow_bash(), "-c", command], capture_output=True, text=True,
                             env={**os.environ, "BASE_SHA": sha, "HEAD_SHA": sha,
                                  "GITHUB_OUTPUT": str(output)})
     assert result.returncode == 0, result.stderr
