@@ -313,10 +313,10 @@ These private modules divide Layout implementation only; they do not change auth
 
 | Module | Layout responsibility |
 |---|---|
-| `surface_base` | Validate closed inputs; compose slots, rows, groups, scale and tracks. |
+| `surface_base` | Validate closed inputs; compose slots, rows, base group extents, scale and tracks. |
 | `surface_table` | Place table columns, headers and cells. |
-| `surface_groups` | Place group headers, bands and group labels. |
-| `surface_axis` | Place axis bands/labels, calendar overlays and axis targets. |
+| `surface_groups` | Place group-header text and group presentation from completed base extents. |
+| `surface_axis` | Place axis bands/labels and targets; derive calendar overlay intervals from the completed scale. |
 | `surface_marks` | Place tracks/marks/folded points/progress; complete mark patterns. |
 | `surface_member_labels` | Build requests and place member/item labels. |
 | `surface_lanes` | Adapt/preflight fixed lanes; emit lane facets and close host identities. |
@@ -324,13 +324,15 @@ These private modules divide Layout implementation only; they do not change auth
 | `surface_annotations` | Place annotation boxes, text, visuals and connectors. |
 | `surface_legend` | Place legend entries and role-derived swatches. |
 | `surface_content` | Place title, detail, summary, notes and footer source content. |
-| `surface_backgrounds` | Complete source-bound row/group/axis/calendar background geometry. |
+| `surface_backgrounds` | Complete source-bound row/group/axis/calendar background geometry from completed extents and overlay intervals. |
 | `surface_visuals` | Reserve and place text/mark/axis label visuals. |
 | `surface_completion` | Complete slot ownership, overflow evidence and canvas bounds. |
 | `surface_geometry` | Pure rectangle/date conversions and shared precision/paint-order constants. |
 | `surface_composer` | Invoke typed phase batches in order and construct final Layout output. |
 
 Each module owns its named concern and reads closed inputs plus preceding typed Layout results; shared mutable surface state is limited to the obstacle index. `surface_legend` and `surface_content` complete named sources in allocated slots outside obstacle-candidate phases; fixed host backgrounds complete when their extents are known. The #466 phase order governs obstacle-sensitive candidates, not these placements. Ownership names guide internal issue coordination and are not public import contracts. Moves preserve current behavior and introduce no placement policy.
+
+The calendar join has one direction: `surface_axis` returns ordered closed-date intervals and axis facts; `surface_backgrounds` converts those intervals into Theme-treated shapes at the current calendar insertion phase. A folded mark may enlarge a completed group-header host. `surface_marks` returns the replacement group extent as a typed fact, and `surface_backgrounds` applies that fact to the already placed header band with a pure replacement operation; the coordinator retains the established emission order. No module duplicates the other's placement or mutates a shared group/shape collection across phases.
 
 ## 9. Diagnostics
 
