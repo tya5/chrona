@@ -169,9 +169,10 @@ def _generate(root: Path, *, write: bool, jobs: int) -> None:
         command = [sys.executable, "-m", *script]
         if script[0] == "tools.axis_name_tables" or not write:
             command.append(mode)
-        completed = subprocess.run(command, cwd=root, check=False)
+        completed = subprocess.run(command, cwd=root, check=False, capture_output=True, text=True)
         if completed.returncode:
-            raise RuntimeError(f"E_DERIVED_EVIDENCE_GENERATOR:{script[0]}:{completed.returncode}")
+            detail = (completed.stderr or completed.stdout)[-2000:]
+            raise RuntimeError(f"E_DERIVED_EVIDENCE_GENERATOR:{script[0]}:{completed.returncode}:{detail}")
 
 
 def _publish_staged_outputs(staged_root: Path, root: Path, paths: tuple[Path, ...]) -> None:
@@ -210,7 +211,9 @@ def main(argv: tuple[str, ...] = tuple(sys.argv[1:])) -> int:
         # Stage the complete generation before touching canonical paths. This
         # also makes generator failures leave the source tree unchanged.
         with TemporaryDirectory(prefix="chrona-derived-evidence-") as temporary:
-            staged_root = Path(temporary) / "repo"
+            # macOS may spell the same temporary directory as /var or
+            # /private/var; use one canonical root for inventory paths.
+            staged_root = Path(temporary).resolve() / "repo"
             shutil.copytree(root, staged_root, ignore=_COPY_IGNORE)
             _generate(staged_root, write=True, jobs=args.jobs)
             staged_inventory = derived_paths(staged_root)
