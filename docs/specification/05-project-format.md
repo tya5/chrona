@@ -185,8 +185,10 @@ objects:
     calendar: factory
 ```
 
-Calendar inheritance and external holiday feeds are deferred until reproducibility and
-versioning rules are specified.
+Project schema evolution follows the additive-in-place and incompatible-change
+rules in [Spec 56 §3.2](56-schema-authoring-and-diagnostics.md#32-schema-version-evolution-591).
+Calendar inheritance and external holiday feeds remain deferred until their
+reproducibility rules are specified.
 
 ## 7. Relations
 

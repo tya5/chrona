@@ -129,6 +129,39 @@ stale explicit override or standalone resource does not inherit it. The
 contract and closure layers preserve typed version evidence and the pointer,
 including in multi-resource ingress findings, without carrying command text.
 
+### 3.2 Schema version evolution (#591)
+
+For View, Layout Profile, and Project schemas, an additive optional property
+MUST be added to the current schema version in place, without a version bump,
+when omitting it preserves the resource's prior behavior. A schema-level
+`default` annotation does not set a runtime value; the owning consumer MUST
+provide and test the behavior that omission requires. Theme schema additions
+follow the same rule.
+
+A version bump is reserved for an incompatible contract change: removing,
+renaming, or retyping an existing field; changing an existing field's default
+behavior; adding a required field; or another change that makes an existing
+resource invalid or changes its behavior. When a bump is required, batch the
+pending incompatible changes into that version. Do not silently upgrade a
+stale resource; the unsupported-version behavior in §3.1 remains in force.
+
+Conformance compares the schema-inventory predecessor/successor pair for each
+versioned View, Layout Profile, and Project transition. It MUST fail a version
+bump when, after normalizing the corresponding version strings at `$id`,
+versioned `title`, and version `const` only, the entire schema change consists
+of one or more insertions of optional property declarations under object
+`properties` maps, with no other schema change. No other title or identity
+change is normalized. Each inserted property name MUST be absent from the
+containing object's `required` list; that list and all existing schema nodes
+must remain unchanged. Each new property subtree may define its own
+constraints, but no existing assertion may change. The comparison is structural,
+not a proof of runtime behavior; omission behavior remains the responsibility
+of focused consumer tests. If a composition or conditional requirement makes
+optional status ambiguous, conformance MUST report the comparison as
+unsupported or fail closed rather than classify the change as additive. A
+version bump containing an incompatible schema change is outside this
+additive-only failure rule.
+
 ## 4. Union policy and Project v0.6
 
 Use a discriminator only where a stable author-owned tag already expresses a
