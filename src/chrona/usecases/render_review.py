@@ -16,18 +16,16 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from chrona.core.diagnostics import Diagnostic
-from chrona.core.identity import content_identity
 from chrona.core.ports import RenderArtifact, Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
 from chrona.presentation.layout.engine import resolve_content_block_extent, solve_layout
 from chrona.presentation.layout.model import LayoutError
-from chrona.presentation.layout.lane_preflight import LaneMeasurementIdentity, lane_table_measurement_content
-from chrona.presentation.layout.presentation import MarkBandFrame
 from chrona.presentation.layout.presentation import table_text_line_block
 from chrona.presentation.layout.profile import resolve_layout_profile
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources
-from chrona.presentation.layout.surface_composer import resolve_label_visual_advances, resolve_mark_geometries, timeline_content_block_requirement
-from chrona.presentation.layout.surface_quality import VisualRequest
+from chrona.presentation.layout.surface_composer import (preflight_fixed_lane_layout, resolve_label_visual_advances,
+                                                         resolve_mark_geometries, timeline_content_block_requirement)
+from chrona.presentation.layout.surface_quality import CapacitySourceEvidence, VisualRequest
 from chrona.presentation.model.closure import ClosureError, RenderClosure
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, FontTabularWarning, resolve_font_metrics_catalog
 from chrona.presentation.model.font_resources import FontAssetResolver
@@ -263,11 +261,12 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             text_line_block=table_text_line_block(
                 ThemeTokenView(theme), (cell.typography_role for cell in table_content.cells)),
         )
-        required_block = resolve_content_block_extent(
+        initial_resolution = resolve_content_block_extent(
             resolved_layout, viewport_inline=viewport["inlineSize"],
             seed_block=viewport["blockSize"], measurements=measurements,
             required_blocks={"timeline": timeline_requirement},
         )
+        required_block = initial_resolution.extent
         viewport["blockSize"] = required_block
     if request.draft_auto_block:
         if required_block is None:
@@ -277,6 +276,37 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         resolved_layout, viewport_inline=viewport["inlineSize"],
         viewport_block=viewport["blockSize"], measurements=measurements,
     )
+
+    fixed_lane_preflight = None
+    capacity_short_sources = ()
+    if projection.lane_membership is not None:
+        seed_content = normalize_v05_surface_content(
+            projection, project, view, actual_set=actual_observations,
+            detail=render_closure.detail_profile.detail if render_closure.detail_profile else None,
+            summary=summary, layout_manifest=manifest, locale=environment.locale,
+            color_scale=color_scale, table=table_content,
+        )
+        fixed_lane_preflight = preflight_fixed_lane_layout(
+            projection=projection, layout_manifest=manifest, surface_content=seed_content,
+            theme_tokens=ThemeTokenView(theme), metric_values=measured.metric_values,
+            icon_assets=icon_assets, visual_requests=visual_requests,
+            font_metrics=font_metrics,
+        )
+        exact_resolution = resolve_content_block_extent(
+            resolved_layout, viewport_inline=viewport["inlineSize"],
+            seed_block=viewport["blockSize"], measurements=measurements,
+            required_blocks={"timeline": fixed_lane_preflight.natural_block_requirement},
+        )
+        exact_block = exact_resolution.extent
+        capacity_short_sources = tuple(CapacitySourceEvidence(
+            item.source_id, item.required_block, item.allocated_block)
+            for item in exact_resolution.short_sources)
+        if exact_block != viewport["blockSize"]:
+            viewport["blockSize"] = exact_block
+            manifest = solve_layout(
+                resolved_layout, viewport_inline=viewport["inlineSize"],
+                viewport_block=viewport["blockSize"], measurements=measurements,
+            )
 
     surface_content = normalize_v05_surface_content(
         projection, project, view,
@@ -298,6 +328,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         viewport=(float(viewport["inlineSize"]), float(viewport["blockSize"])),
         icon_assets=icon_assets,
         visual_requests=visual_requests,
+        fixed_lane_preflight=fixed_lane_preflight,
+        capacity_short_sources=capacity_short_sources,
     )
 
     unused = ledger.unused()
@@ -444,9 +476,6 @@ def _visual_request(visual: Any, projection: Any, index: int, closure: RenderClo
 def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClosure,
                     manifests: dict[str, dict[str, Any]], scheduler: Scheduler) -> Any:
     """Schedule the Project, and its Snapshot when one is bound, then project the review."""
-    if view.rows.mode is ViewRowMode.LANES:
-        raise RenderFailed("E_REVIEW_LANE_ENGINE_UNAVAILABLE",
-                           "lane row mode is accepted but requires the Layout lane engine", "layout", "/body/rows/mode")
     result = scheduler.schedule(project, extension_diagnostics=validate_profiles(project, manifests))
     if not result.ok:
         raise RenderRejected(result.diagnostics)
@@ -500,25 +529,14 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
                    annotation_input: SourceInput | None = None, *, color_scale: Any = None,
                    table: TableContent | None = None) -> dict[str, SourceInput]:
     """Declare what each slot will hold, for measurement before layout."""
-    rows = projection.rows or ()
+    lane_mode = view.rows.mode is ViewRowMode.LANES
+    rows = projection.lane_rows if lane_mode else projection.rows or ()
     row_count = len(rows) or len(projection.items)
-    if view.rows.mode is ViewRowMode.LANES:
-        lane_table = view.rows.lane_table
-        if lane_table is None:
-            raise LayoutError("E_LAYOUT_LANE_TABLE_ENVELOPE", "/body/rows/laneTable")
-        group_titles = {row.group_id: next((item.group_label for item in row.items
-                                            if item.group_label), row.group_id)
-                        for row in rows if row.group_id}
-        candidate_titles = {f"{row.row_id}:{index}": item.title
-                            for row in rows for index, item in enumerate(row.items)}
-        table = lane_table_measurement_content(
-            lane_label=lane_table.label.value, include_count=lane_table.count,
-            group_titles=group_titles, candidate_titles=candidate_titles,
-            selected_item_count=sum(len(row.items) for row in rows),
-        )
-        # Membership is unknown until the seed inline solve. The finite table
-        # envelope sizes columns; the immutable lane plan later owns block size.
-        row_count = 1
+    if lane_mode and (not rows or table is None):
+        raise LayoutError("E_LAYOUT_LANE_TABLE_ENVELOPE", "/body/rows/laneTable")
+    table_lines = (tuple(cell.content for cell in table.cells if cell.column_id == "Lane")
+                   if lane_mode and table is not None else
+                   tuple(row.label for row in rows) or tuple(item.title for item in projection.items))
     span_days = max(1, (projection.window[1] - projection.window[0]).days)
     network = getattr(projection, "network", None)
     notes = tuple(str(item.get("text", "")) for item in project.get("annotations", {}).values())
@@ -531,7 +549,7 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
     sources = {
         "title": SourceInput((project["project"].get("title", "Chrona"),), typography_role="heading"),
         "table": SourceInput(
-            tuple(row.label for row in rows) or tuple(item.title for item in projection.items),
+            table_lines,
             row_count, len(view.table_columns) or 1, table=table),
         "timeline": SourceInput(item_count=row_count, span_days=span_days),
         "timeline-axis": SourceInput(span_days=span_days, typography_role="axis"),
@@ -549,16 +567,6 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
     if annotation_input is not None:
         sources["annotations"] = annotation_input
     return sources
-
-
-def _lane_measurement_identity(theme: Mapping[str, Any], font_metrics: Any,
-                               frame: MarkBandFrame) -> LaneMeasurementIdentity:
-    """Bind preflight to the effective Theme, selected font asset and scale."""
-    font_id = getattr(font_metrics, "content_identity", None)
-    scale_id = getattr(frame.inline_scale, "scale_id", None)
-    if not isinstance(font_id, str) or not font_id or not isinstance(scale_id, str) or not scale_id:
-        raise LayoutError("E_LAYOUT_LANE_PLAN_INVALID", "/measuredSources")
-    return LaneMeasurementIdentity(content_identity(theme), font_id, scale_id)
 
 
 def _annotation_source_input(view: ViewInput, visual_requests: tuple[VisualRequest, ...],

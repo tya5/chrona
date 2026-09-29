@@ -11,10 +11,12 @@ from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
 from chrona.presentation.layout.surface_quality import (
     AxisIntervalOutcome,
     AxisTierOutcome,
+    CapacitySourceEvidence,
     CollisionDomain,
     FitWarning,
     GroupPlacement,
     IconPlacement,
+    LaneLabelSuppression,
     MarkPlacement,
     PlacementDecision,
     PrimitivePlacement,
@@ -66,18 +68,34 @@ def test_fit_warning_requires_completed_visible_fallback_facts():
 def test_suppressed_member_count_matches_completed_placements_and_individual_facts():
     suppressed = tuple(TextPlacement(f"member-label:{number}", f"source:{number}", "label",
                                      _rect(number, 0, 1, 1), "text", overflow="suppressed",
-                                     required=False, semantic_id="memberLabel")
+                                     required=False, semantic_id="memberLabel",
+                                     lane_row_id="lane:a", lane_member_id=f"member:{number}")
                        for number in (1, 2))
     warnings = tuple(f"W_LAYOUT_LABEL_SUPPRESSED:{item.placement_id}" for item in suppressed)
+    row = RowPlacement("lane:a", "lane:a", "", _rect(0, 0, 10, 10))
+    facts = tuple(LaneLabelSuppression(item.placement_id, "lane:a", item.lane_member_id,
+                                       row.bounds, Decimal(0), "obstruction") for item in suppressed)
     placement = SurfacePlacement(text=suppressed, diagnostics=warnings,
+                                 rows=(row,), lane_label_suppressions=facts,
                                  info_diagnostics=(SuppressedPlotLabels("table-timeline", 2),))
     placement.assert_valid()
     with pytest.raises(ValueError, match="E_LAYOUT_SUPPRESSION_COUNT_INVALID"):
-        SurfacePlacement(text=suppressed, diagnostics=warnings,
+        SurfacePlacement(text=suppressed, diagnostics=warnings, rows=(row,), lane_label_suppressions=facts,
                          info_diagnostics=(SuppressedPlotLabels("table-timeline", 1),)).assert_valid()
     with pytest.raises(ValueError, match="E_LAYOUT_SUPPRESSION_COUNT_INVALID"):
-        SurfacePlacement(text=suppressed, diagnostics=warnings[:1],
+        SurfacePlacement(text=suppressed, diagnostics=warnings[:1], rows=(row,), lane_label_suppressions=facts,
                          info_diagnostics=(SuppressedPlotLabels("table-timeline", 2),)).assert_valid()
+    with pytest.raises(ValueError, match="E_LAYOUT_SUPPRESSION_COUNT_INVALID"):
+        SurfacePlacement(text=suppressed, diagnostics=warnings, rows=(row,),
+                         lane_label_suppressions=(facts[0],),
+                         info_diagnostics=(SuppressedPlotLabels("table-timeline", 2),)).assert_valid()
+    capacity = LaneLabelSuppression("member-label:1", "lane:a", "member:1", row.bounds,
+                                    Decimal(0), "capacity",
+                                    (CapacitySourceEvidence("timeline", Decimal(20), Decimal(10)),))
+    assert capacity.short_sources[0].source_id == "timeline"
+    with pytest.raises(ValueError, match="E_LAYOUT_SUPPRESSION_EVIDENCE_INVALID"):
+        LaneLabelSuppression("member-label:1", "lane:a", "member:1", row.bounds,
+                             Decimal(0), "capacity")
     with pytest.raises(ValueError, match="E_PRESENTATION_INFO_INVALID"):
         SuppressedPlotLabels("table-timeline", 0)
 
@@ -242,6 +260,14 @@ def test_zero_progress_inset_is_the_published_full_height_fill():
     host = Rect(Decimal(3), Decimal(5), Decimal(80), Decimal(16))
     assert progress_fill_bounds(host, 0.25, Decimal(0)) == progress_fill_bounds(host, 0.25) == Rect(
         Decimal(3), Decimal(5), Decimal(20), Decimal(16))
+
+
+def test_layout_row_lane_anchor_is_completed_and_bounded():
+    row = RowPlacement("row", "object", "group", Rect(Decimal(0), Decimal(10), Decimal(80), Decimal(20)),
+                       lane_mark_band_block=Decimal(12))
+    assert row.lane_mark_band_block == Decimal(12)
+    with pytest.raises(ValueError, match="E_LAYOUT_LANE_ROW_ANCHOR_INVALID"):
+        RowPlacement("row", "object", "group", row.bounds, lane_mark_band_block=Decimal(31))
 
 
 def test_committed_progress_track_example_draws_inset_capsules_at_several_lengths():

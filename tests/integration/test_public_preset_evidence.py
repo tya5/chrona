@@ -97,7 +97,10 @@ def test_readable_default_resources_are_mirrored_and_selected_without_mutating_e
             f"{expected_directory}/editorial-readable-default.yaml"
         if name == "view.yaml":
             labels = declared["body"]["visibility"]["labels"]
-            assert (labels["placement"], labels["content"], labels["side"]) == ("both", ["title"], "end")
+            assert (labels["placement"], labels["content"], labels["side"]) == ("plot", ["title"], "end")
+            assert declared["version"] == "chrona/view/v0.28"
+            assert declared["body"]["rows"] == {"mode": "automatic"}
+            assert [column["id"] for column in declared["body"]["tableColumns"]] == ["Task", "Plan"]
             assert declared["body"]["visibility"]["fallback"]["labels"] == ["end", "start", "suppress"]
             assert declared["body"]["backgroundDecoration"]["rows"] == "alternate"
         else:
@@ -125,6 +128,13 @@ def test_readable_default_resources_are_mirrored_and_selected_without_mutating_e
     editorial = next(item for item in library["entries"] if item["id"] == "editorial")
     assert editorial["gallerySet"] == "generated-design-directions"
     assert editorial["members"]["view"]["sourceRoot"] == "presets/bundles/editorial"
-    assert editorial["members"]["view"]["sourcePath"] == "view.yaml"
+    assert editorial["members"]["view"]["id"] == "chrona-preset-editorial-lanes"
+    assert editorial["members"]["view"]["sourcePath"] == "view-lanes.yaml"
+    reference_package = ROOT / "src/chrona/resources/presets/bundles/editorial/view.yaml"
+    reference_corpus = corpus / "views/editorial.yaml"
+    assert reference_package.read_bytes() == reference_corpus.read_bytes()
+    assert yaml.safe_load(reference_package.read_bytes())["id"] == "chrona-preset-editorial"
+    lane_package = ROOT / "src/chrona/resources/presets/bundles/editorial/view-lanes.yaml"
+    assert lane_package.read_bytes() == (corpus / "views/editorial-lanes.yaml").read_bytes()
     assert editorial["members"]["theme"]["sourceRoot"] == "presets/bundles/editorial"
     assert editorial["members"]["theme"]["sourcePath"] == "theme.yaml"

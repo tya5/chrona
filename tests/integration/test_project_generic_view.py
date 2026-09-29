@@ -29,6 +29,17 @@ def _render(tmp_path: Path, monkeypatch, *, project: dict | None = None, view_ed
     main()
     view_path = next(preset.glob("**/view.yaml"))
     theme_path = next(preset.glob("**/theme.yaml"))
+    # These tests exercise generic grouping, ordering and color-encoding
+    # vocabulary, whose original contract is automatic row composition.
+    view = _load(view_path)
+    view["body"]["rows"]["mode"] = "automatic"
+    for key in ("packing", "laneTable", "laneKeys"):
+        view["body"]["rows"].pop(key, None)
+    view["body"].setdefault("tableColumns", [{
+        "id": "Title", "source": "title", "missing": "em-dash", "align": "start",
+        "width": "content", "headerOrientation": "horizontal",
+    }])
+    _dump(view_path, view)
     if view_edit:
         view = _load(view_path)
         view_edit(view["body"])
@@ -105,6 +116,11 @@ def test_labels_both_requires_a_table_title_column(tmp_path, monkeypatch, capsys
     def edit(body: dict) -> None:
         body["visibility"]["labels"]["placement"] = "both"
         body["tableColumns"] = [column for column in body["tableColumns"] if column["source"] != "title"]
+        if not body["tableColumns"]:
+            body["tableColumns"] = [{
+                "id": "#", "source": "rowIndex", "missing": "em-dash", "align": "start",
+                "width": "content", "headerOrientation": "horizontal",
+            }]
     with pytest.raises(SystemExit):
         _render(tmp_path, monkeypatch, view_edit=edit)
     assert "E_VIEW_LABELS_BOTH_TABLE_TITLE" in capsys.readouterr().out

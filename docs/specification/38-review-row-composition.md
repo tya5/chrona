@@ -201,22 +201,89 @@ The `combined` primary instance deliberately composes its planned facet
 with its recorded Actual facet (or the missing-Actual marker) in one mark
 band; those exact planned↔Actual/missing-Actual facet pairs are declared
 overlays. This does not exempt either facet from another instance's marks.
+When a `combined` instance selects Actual-sourced progress fill, that fill
+also paints over its own planned facet in the same band. Layout declares
+only the exact progress↔planned facet pairs for that instance as overlays;
+the fill gains no exemption against another instance, attached child, or
+unrelated mark. Planned-sourced progress keeps only its own host overlay.
 Scene projects completed primitives and serializes the same membership for
 a data-only oracle comparison; adapters do not choose lanes. A Scene
 footprint cannot approve, reject, merge or split a lane. The previous
 pairwise non-redundancy and footprint-concurrency gate is retired.
+Layout also completes a typed per-placement lane emission handoff: placement
+type and ID, immutable row/member owner, and final visible obstacle facets,
+including an explicit ordinal for each part of a multi-part mark. Scene
+projects this handoff to its primitive IDs and verifies exact inventory and
+obstacle correspondence; it never decodes membership from placement-ID text
+or reconstructs visible geometry from Scene bounds. Suppressed text emits no
+primitive or obstacle. Decorative non-member paint has no lane owner. A
+missing, duplicated or mismatched emitted lane primitive fails closed. This
+handoff is absent for automatic and explicit rows and changes no adapter
+schema. See the [B3 correction](../design/issue-467-b3-typed-lane-scene-handoff-correction-2026-09-27.md).
+For lane mode, View-selected comparison facets also close the Layout mark
+inventory: an unselected `missingActual` facet creates neither a Layout mark
+nor a preflight obstacle, Scene primitive, or lane handoff entry. Scene does
+not make a second visibility decision. Non-lane output remains unchanged.
 
-Every packed item has a candidate name and finish delta when one exists.
-Lane-mode Views MUST declare plot labels containing both `title` and
-`finishDelta`, with `side: auto` and `overflow: suppress`; a table-only, disabled, one-sided, or
-visible-overflow member-label policy is invalid for lanes. This is an
-intentional v0.28 migration constraint, not a silent override of View intent.
-Layout places labels after membership using the common #466/#488 obstacle
-model: end, start, stagger and a short offset leader are deterministic
-candidate phases. The leader is completed geometry owned by Layout, not an
-adapter decoration. If no candidate fits, Layout suppresses the name,
-records its source and increments the suppression count; it never opens a
-lane or silently drops the item. Non-lane label policies do not change.
+Every packed item has a plot-name request; the lane table has no item row to
+carry it. A lane-mode `visibility.labels` object MUST select plot placement
+and `title`; omitted `content` means `[title, finishDelta]`, while a declared
+list may omit `finishDelta`. Omitted `side` means `auto`, and an authored
+`side` and `visibility.fallback.labels` order (including `inside`) are honored.
+With no declared fallback, `auto` tries end, start and the bounded
+side-neighborhood stagger; an explicit side tries that side and its bounded
+neighborhood. A declared fallback supplies its finite candidate order after
+the preferred side. `inside` may exempt only its own host mark, not a
+comparison sibling or another item. Every lane ladder terminates in
+suppression: if no legal candidate fits, Layout records the source, increments
+the surface count and emits no name; it never changes lane membership. With
+`rowDistribution: fill`, preflight and final placement share one normalized
+member-label intent and Theme-measured box. Preflight uses the completed scale
+and selected lane mark/subtrack obstacles; inline-feasible end/start intervals
+determine concurrent finite stagger levels and each row's minimum before
+surplus distribution; relevant mark-obstacle intervals also contribute to
+those levels. Because interval concurrency alone can undercount cross-class
+obstructions, the row minimum is at least one measured block level plus
+placement clearance per selected lane name above the completed mark subtracks.
+This finite conservative envelope does not prescribe final label positions.
+The natural requirement may grow the timeline host
+when profile constraints permit; a short seed row alone is not grounds for
+suppression.
+
+For `fill` lanes, full-band search tests finite measured-box contacts with row edges and
+current axis-aligned obstacle bounds plus clearance, for each declared side.
+Expanded obstacles form finite blocked block intervals; preferred position and
+legal endpoints cover feasible components. The end-side gap is bounded by the
+existing two-font-size mark-to-text rule. Rank by side order, absolute block
+displacement, fixed direction and stable identity; no lattice cap. This search
+is exhaustive only within the final allocated row; `pack` lanes and non-lane
+labels retain their established bounded side-neighborhood search.
+
+Each suppressed name has a typed Layout fact with lane/member, final row extent,
+remaining row capacity and reason `capacity` or `obstruction`, checked against
+its suppressed `TextPlacement` and aggregate count. “Cannot grow” means `fill`
+has no unallocated timeline block after headers and other row minima. A
+capacity reason also requires profile-resolution evidence naming the required
+timeline source still short; an extent fallback alone is not evidence. A miss
+caused by inline bounds or blockers in the final row is `obstruction`, never capacity. Do not
+claim or implement an exhaustive search across hypothetical row heights in this
+slice. Per-name facts stay in `SurfacePlacement`; Scene schema and aggregate
+diagnostic do not change. If context 02 still suppresses after this full-band
+search, pause the slice and publish a design correction before claiming #504
+complete. An
+attached point's required plot label is a distinct exception: View content
+normalization reads the active composition (`rows` for automatic rows,
+`lane_rows` for generated lanes) and provides its title, planned date and
+available point `atDelta` (Spec 06 §8) as one request to Layout. Projection
+derives that delta only from matching planned and Actual point endpoints;
+Layout measures the completed content request.
+After its bounded fit ladder fails, Layout emits that whole label with a
+`visible-overflow` outcome and warning rather than silently suppressing facts.
+This changes neither lane membership nor Scene's projection-only role.
+Omitted
+`overflow` means `suppress`; explicit `visible-overflow` is invalid for a lane
+name because it contradicts this terminal outcome. These are v0.28 ingress
+rules, not silent overrides. Non-lane label policies do not change.
 Mark, comparison, icon and text footprints remain relevant to this later
 placement and to #494 route avoidance. Required visible labels are obstacles
 before routes; a route cannot cross a required lane/member label. The
@@ -229,12 +296,21 @@ ID. A displayed ordinal or a representative member title is not a lane
 identity. A visible delta table
 promise removed during resource migration must be selected in lane-label
 content or explicitly retired.
+Where a group header already names the group, or grouping is absent, a
+counted lane table selects `lane` rather than repeating a group title or
+showing an empty label beside its count. An unrelated singleton is not
+automatically a useful lane: a bundled default may use item-level automatic
+rows instead of inventing a representative lane title.
 
-`automatic` retains its per-object row behavior and exact output bytes.
+`automatic` retains its per-object row behavior and exact output bytes, except
+for the already declared attached-point fold; `rows.points: own-row` restores
+an independent automatic row. In lane mode, omitting `attached` from
+`rows.packing` makes the point an independent membership candidate, although
+other declared packing rules may still group it.
 Authored `explicit` rows and their track policy are separate from generated
 lane membership. `rows.laneTable` is required only in lane mode; item-level
-`tableColumns` are invalid there. New default Views declare lane mode
-explicitly, but default packing is only `[explicit, attached]`. A packaged
+`tableColumns` are invalid there. Generated-lane Views declare lane mode
+and packing explicitly. A packaged
 View seeking transit-map compression must declare `chain` and/or `dates`.
 Hierarchical lanes and a `points: key-row` policy are not implied by this
 contract. View v0.28 is an intentional schema migration; older View
@@ -248,6 +324,9 @@ unavailable Snapshot/Actual sources, invalid table subjects, `automatic` items,
 Projection diagnoses an empty resolved row and ambiguous annotation anchoring.
 Layout diagnoses insufficient measured row height. A lane label that cannot
 fit is suppressed with source-keyed count evidence, never a membership change.
+Committed lane-slide coverage reports visible packed names over all packed
+member names from the completed Scene and attributes every suppressed source;
+a group heading is not a substitute for a member name.
 
 ## 5. Boundary review
 

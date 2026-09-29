@@ -1,10 +1,12 @@
-version: chrona/view/v0.27
+version: chrona/view/v0.28
 kind: view
 id: halcyon-02-programme-board
 body:
   surface: table-timeline
   rows:
-    mode: automatic
+    mode: lanes
+    packing: [explicit, attached, chain, dates]
+    laneTable: {label: lane, count: true}
   selection:
     include:
       ids:
@@ -84,9 +86,10 @@ body:
     - unmatchedActual
   visibility:
     labels:
-      placement: table
+      placement: plot
       content:
       - title
+      - finishDelta
       side: auto
       overflow: suppress
     relations:
@@ -95,6 +98,64 @@ body:
     annotations:
       mode: presentation
       marker: numbered
+  annotations:
+  - id: window-note
+    purpose: note
+    anchor:
+      kind: object
+      id: launch
+      facet: planned
+      endpoint: at
+    projectAnnotation: window
+    candidates:
+    - id: plot-near
+      region: {kind: plot}
+      search: {kind: nearest-free, maxPositions: 1024, maxInlineEm: 12}
+      obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
+      connector: {kind: tail}
+    - id: plot-no-tail
+      region: {kind: plot}
+      search: {kind: nearest-free, maxPositions: 1024, maxInlineEm: 12}
+      obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
+      connector: {kind: none}
+  - id: tvac-note
+    purpose: note
+    anchor:
+      kind: object
+      id: payload-tvac
+      facet: actual
+      endpoint: body
+    projectAnnotation: tvac
+    candidates:
+    - id: plot-near
+      region: {kind: plot}
+      search: {kind: nearest-free, maxPositions: 1024, maxInlineEm: 12}
+      obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
+      connector: {kind: tail}
+    - id: plot-no-tail
+      region: {kind: plot}
+      search: {kind: nearest-free, maxPositions: 1024, maxInlineEm: 12}
+      obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
+      connector: {kind: none}
+  - id: station-note
+    purpose: note
+    anchor:
+      kind: object
+      id: station
+      facet: planned
+      endpoint: finish
+    projectAnnotation: station
+    candidates:
+    - id: plot-near
+      region: {kind: plot}
+      search: {kind: nearest-free, maxPositions: 1024, maxInlineEm: 12}
+      obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
+      connector: {kind: tail}
+    - id: plot-no-tail
+      region: {kind: plot}
+      search: {kind: nearest-free, maxPositions: 1024, maxInlineEm: 12}
+      obstacles: {classes: [mark, text, label-visual, dependency-route, leader-route, annotation-box, port, rule]}
+      connector: {kind: none}
   axis:
     tiers:
     - unit: quarter
@@ -135,25 +196,3 @@ body:
   backgroundDecoration:
     rows: none
     groups: all
-  tableColumns:
-  - id: Work package
-    source: title
-    missing: em-dash
-    align: start
-    width: {minmax: {min: content, max: {fr: 1}}}
-    headerOrientation: horizontal
-  - id: Phase
-    source:
-      field: phase
-    missing: em-dash
-    align: start
-    width: content
-    headerOrientation: horizontal
-  - id: Δ
-    source:
-      facet: finishDelta
-    format: signedDays
-    missing: em-dash
-    align: end
-    width: content
-    headerOrientation: horizontal

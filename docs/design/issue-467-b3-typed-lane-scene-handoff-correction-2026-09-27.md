@@ -1,0 +1,17 @@
+# Issue #467 B3: typed Layout-to-Scene lane handoff correction
+
+Predecessor: the [current work record](../planning/active/issue-467-b1b2-s2b-closure-reconciliation-implementation-plan-2026-09-27.md) and [Spec 38](../specification/38-review-row-composition.md). This correction resolves a B3 implementation gap found after the hidden B2 engine was published at `3a2dfbde`; it does not reopen data-only membership or label policy.
+
+## Gap and selected contract
+
+Scene v0.6 requires every lane-owned emitted primitive to carry a row/member pair, every member to enumerate its emitted and primary-mark primitive IDs, and every inventoried primitive to have completed obstacle evidence. Existing `SurfacePlacement` contains geometry but no typed owner. Parsing an opaque placement ID in Scene would move membership inference downstream and is prohibited.
+
+Layout shall complete a typed lane emission handoff on `SurfacePlacement`, only for lane mode. Each handoff entry identifies one source placement by its placement type and ID, its immutable Review `(lane row ID, member ID)`, and its completed visible obstacle facets. For a multi-part mark, each part has an explicit ordinal in the entry; one mark placement may project to several Scene primitives. Layout owns the row/member join using the typed `LaneProjectionInstance` and the exact B2 projection-instance/subtrack closure, not string decoding. It also owns the final, translated mark/icon/stroke/text obstacle geometry after label placement. Scene assigns the existing public primitive IDs from these entries while projecting the already-completed placements; it neither measures geometry nor infers membership. The emitted Scene ID inventory and obstacle IDs must match the handoff exactly. An unexplained, duplicate, missing or differently owned lane primitive fails closed before serialization.
+
+Suppressed text contributes no emitted primitive or obstacle, but retains Layout's source-keyed suppression count. Required visible member labels and selected deltas are obstacles. Decorative paint not owned by a selected lane member stays untagged and outside lane member inventory. The primary-mark subset is derived from typed mark purpose, never by ID prefix. Non-lane surfaces have no lane handoff and remain byte-identical. This internal handoff does not alter View, Project, Theme, Scene v0.6 schema, or adapter vocabulary.
+
+## Alternatives and review boundary
+
+Putting only `(row, member)` fields on marks and letting Scene reconstruct icon/text ownership was rejected: it misses attached icons, label chips and glyph parts. Building obstacle rectangles from Scene primitive bounds was rejected: it loses Layout-owned stroke/path visibility. Encoding ownership in placement ID syntax was rejected as unstable and layer-breaking. A single typed emission handoff keeps identities and completed facets together while allowing the existing Scene serializer and v0.6 validation to enforce closure.
+
+The implementation must test a plain span, an attached point, Actual/comparison facets, a multi-part glyph, icon, selected delta, suppressed name, and a repeated object in two projection instances. If a placement emits a different primitive count or ID than the typed handoff predicts, stop and amend this contract rather than inserting a Scene fallback. #494 routing consumes the same completed visible labels but does not choose membership or invent obstacle geometry. Optional leader/rotation/ranking aesthetics are independent local tuning and are not a B3 dependency.

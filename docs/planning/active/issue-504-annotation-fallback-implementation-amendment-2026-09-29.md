@@ -1,0 +1,5 @@
+# Implementation amendment — programme annotation fallback (#504)
+
+This adds one resource migration to the [R2 implementation plan](issue-504-fill-only-label-search-implementation-amendment-2026-09-29.md), following the [design correction](../../design/issue-504-annotation-fallback-correction-2026-09-29.md) and [architecture review](../../reviews/current/issue-504-annotation-fallback-architecture-review-2026-09-29.md).
+
+In `examples/halcyon-1/views/02-programme-board.yaml`, add an ordered `plot-no-tail` nearest-free candidate after each note's existing tail candidate, with the same width bound and complete obstacle classes. Regenerate 02/11/12 Scene/SVG as the same R2 code/public-evidence unit; assert all 26 names visible, no name suppression and no Scene perceptibility errors. Inspect the candidate-fallback diagnostics and rasterized SVGs. Batch-check the other 26 public slides byte-for-byte, run focused tests and conformance, then rely on PR CI for full pytest. No annotation engine or public schema change is approved.

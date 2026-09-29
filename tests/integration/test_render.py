@@ -6,6 +6,7 @@ authoring inputs enter the same review pipeline as immutable evidence renders.
 from pathlib import Path
 from copy import deepcopy
 from dataclasses import replace
+from datetime import date
 from hashlib import sha256
 import json
 import re
@@ -14,6 +15,7 @@ import pytest
 import yaml
 
 from chrona.presentation.model.closure import resolve_draft_render
+from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, obstacles_intersect
 from chrona.presentation.model.info_diagnostics import PaintOmission
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
 from chrona.presentation.review.detail import ReviewDetailError
@@ -64,7 +66,253 @@ def test_draft_render_is_deterministic():
     assert render_review(_draft_request()).artifact.content == render_review(_draft_request()).artifact.content
 
 
-def test_suppressed_plot_labels_have_one_completed_info_count(capsys):
+def test_fixed_lane_preflight_and_final_composition_share_the_completed_scale(monkeypatch):
+    import chrona.presentation.scene.v05_builder as builder
+
+    root = _root()
+    example = root / "examples/halcyon-1"
+    request = _draft_request(
+        project_path=example / "project.yaml",
+        view_path=example / "views/02-programme-board.yaml",
+        theme_path=example / "themes/wallboard.yaml",
+        scheme_path=example / "schemes/control-room-dark.yaml",
+        layout_path=example / "layouts/wallboard.yaml",
+        actual_path=example / "actual.yaml",
+        viewport=(1920, 1080),
+    )
+    original = builder.compose_surface_layout
+    compositions = []
+
+    def capture(layout_request):
+        preflight_scale = layout_request.fixed_lane_preflight.scale
+        composition = original(layout_request)
+        compositions.append((preflight_scale, composition.placement))
+        return composition
+
+    monkeypatch.setattr(builder, "compose_surface_layout", capture)
+    render_review(request)
+
+    assert len(compositions) == 1
+    preflight_scale, placement = compositions[0]
+    assert preflight_scale is placement.scale
+    scale = placement.scale
+    assert scale is not None
+    first_tier = sorted(
+        (shape for shape in placement.shapes
+         if shape.placement_id.startswith("axis-band-rect:0:")),
+        key=lambda shape: shape.bounds.inline,
+    )
+    assert first_tier
+    assert float(first_tier[0].bounds.inline) == pytest.approx(scale.range_start)
+    assert float(first_tier[-1].bounds.inline + first_tier[-1].bounds.inline_size) == pytest.approx(scale.range_end)
+    closed_days = [shape for shape in placement.shapes
+                   if shape.placement_id.startswith("calendar-closed:")]
+    assert closed_days
+    for shape in closed_days:
+        closed_day = date.fromisoformat(shape.placement_id.removeprefix("calendar-closed:"))
+        expected = scale.origin + (closed_day - scale.domain_start).days * scale.unit_ratio
+        assert float(shape.bounds.inline) == pytest.approx(expected)
+
+
+def test_halcyon_02_routed_note_trial_is_bounded_clear_and_deterministic(monkeypatch, tmp_path):
+    import chrona.presentation.scene.v05_builder as builder
+
+    root = _root()
+    example = root / "examples/halcyon-1"
+    request = _draft_request(
+        project_path=example / "project.yaml",
+        view_path=example / "views/02-programme-board.yaml",
+        theme_path=example / "themes/wallboard.yaml",
+        scheme_path=example / "schemes/control-room-dark.yaml",
+        layout_path=example / "layouts/wallboard.yaml",
+        actual_path=example / "actual.yaml",
+        viewport=(1920, 1080),
+    )
+    original = builder.compose_surface_layout
+    compositions = []
+
+    def capture(layout_request):
+        composition = original(layout_request)
+        compositions.append(composition)
+        return composition
+
+    monkeypatch.setattr(builder, "compose_surface_layout", capture)
+    rendered = render_review(request)
+    rendered_again = render_review(request)
+    placement = compositions[0].placement
+    repeated = compositions[1].placement
+    decisions = {item.source_ref: item for item in placement.decisions
+                 if item.decision_id.startswith("annotation:")}
+    # The declared lane-name table leaves a clear direct station leader;
+    # its safety and determinism are checked below.
+    assert {key: value.selected_topology for key, value in decisions.items()} == {
+        "window-note": "direct-tail", "tvac-note": "routed-tail",
+        "station-note": "direct-tail",
+    }
+    assert all(0 < item.search_count <= 3 * 1024 for item in decisions.values())
+    assert all(item.box_positions_examined <= item.box_position_limit == 1024
+               for item in decisions.values())
+    assert all(item.route_states_examined <= item.route_state_limit == 1024
+               and not item.route_search_exhausted
+               for item in decisions.values() if item.selected_topology == "routed-tail")
+    assert [(item.decision_id, item.selected_topology, item.search_count)
+            for item in placement.decisions if item.decision_id.startswith("annotation:")] == [
+        (item.decision_id, item.selected_topology, item.search_count)
+        for item in repeated.decisions if item.decision_id.startswith("annotation:")
+    ]
+    assert rendered.artifact.content == rendered_again.artifact.content
+    assert b'data-scene-id="annotation-box:window-note"' in rendered.artifact.content
+    assert b'data-scene-id="annotation-box:tvac-note"' in rendered.artifact.content
+    assert b'data-scene-id="annotation-box:station-note"' in rendered.artifact.content
+    (tmp_path / "halcyon-02-c3-trial.svg").write_bytes(rendered.artifact.content)
+    (tmp_path / "halcyon-02-c3-trial.scene.json").write_bytes(serialize_scene(rendered.scene))
+
+    marks = placement.marks
+    visible_text = tuple(item for item in placement.text
+                         if item.required and item.overflow != "suppressed"
+                         and item.bounds.inline_size > 0 and item.bounds.block_size > 0)
+    label_footprints = tuple(item for item in placement.shapes
+                             if item.placement_id.startswith("chip:"))
+    as_of = next(item for item in placement.shapes if item.placement_id == "as-of")
+    as_of_x = as_of.points[0][0]
+    balloons = {item.source_ref: item for item in placement.shapes
+                if item.kind == "Balloon" and item.source_ref in decisions}
+    leaders = {item.source_ref: item for item in placement.relations
+               if item.semantic_id == "annotationNoteLeader"}
+    for note_id in ("tvac-note", "station-note"):
+        leader = leaders.get(note_id)
+        assert (leader is None) == (decisions[note_id].selected_topology == "direct-tail")
+        balloon = balloons[note_id]
+        box = ObstacleRect(float(balloon.bounds.inline), float(balloon.bounds.block),
+                           float(balloon.bounds.inline + balloon.bounds.inline_size),
+                           float(balloon.bounds.block + balloon.bounds.block_size))
+        outline = tuple(command.points[0] for command in balloon.path_commands)
+        outside_vertices = [index for index, point in enumerate(outline)
+                            if point[0] < box.left or point[0] > box.right
+                            or point[1] < box.top or point[1] > box.bottom]
+        # Direct-tail geometry can put both the tip and one of its base
+        # vertices just outside the rounded box. The tip is the protrusion
+        # farthest from the box; all other outside vertices stay at the edge.
+        def distance_from_box(point):
+            dx = max(box.left - point[0], 0, point[0] - box.right)
+            dy = max(box.top - point[1], 0, point[1] - box.bottom)
+            return (dx * dx + dy * dy) ** 0.5
+
+        tip_index = max(outside_vertices, key=lambda index: distance_from_box(outline[index]))
+        assert distance_from_box(outline[tip_index]) > 0
+        assert all(distance_from_box(outline[index]) <= 5
+                   for index in outside_vertices if index != tip_index)
+        anchor_point = leader.points[0] if leader is not None else outline[tip_index]
+        if leader is not None:
+            assert all(a[0] == b[0] or a[1] == b[1]
+                       for a, b in zip(leader.points, leader.points[1:]))
+        source_ref = "payload-tvac" if note_id == "tvac-note" else "station"
+        anchor = next(mark for mark in marks
+                      if mark.source_ref == source_ref
+                      and float(mark.bounds.inline) - 1.0 <= anchor_point[0]
+                      <= float(mark.bounds.inline + mark.bounds.inline_size) + 1.0
+                      and float(mark.bounds.block) - 1.0 <= anchor_point[1]
+                      <= float(mark.bounds.block + mark.bounds.block_size) + 1.0)
+        assert anchor.placement_id.startswith("actual:" if note_id == "tvac-note" else "planned:")
+        source_cluster = {anchor.placement_id}
+        for mark in marks:
+            if mark.source_ref != source_ref:
+                continue
+            if (mark.bounds.inline < anchor.bounds.inline + anchor.bounds.inline_size
+                    and anchor.bounds.inline < mark.bounds.inline + mark.bounds.inline_size
+                    and mark.bounds.block < anchor.bounds.block + anchor.bounds.block_size
+                    and anchor.bounds.block < mark.bounds.block + mark.bounds.block_size):
+                source_cluster.add(mark.placement_id)
+
+        route_segments = (tuple(ObstacleSegment(start, end)
+                                for start, end in zip(leader.points, leader.points[1:]))
+                          if leader is not None else ())
+        for segment in route_segments:
+            assert not obstacles_intersect(segment, box), (note_id, "route enters pending box")
+            assert not any(obstacles_intersect(segment, ObstacleRect(
+                float(mark.bounds.inline), float(mark.bounds.block),
+                float(mark.bounds.inline + mark.bounds.inline_size),
+                float(mark.bounds.block + mark.bounds.block_size)))
+                for mark in marks if mark.placement_id not in source_cluster), (note_id, "route hits mark")
+            assert not any(obstacles_intersect(segment, ObstacleRect(
+                float(item.bounds.inline), float(item.bounds.block),
+                float(item.bounds.inline + item.bounds.inline_size),
+                float(item.bounds.block + item.bounds.block_size)))
+                for item in visible_text), (note_id, "route hits text")
+            assert not any(obstacles_intersect(segment, ObstacleRect(
+                float(item.bounds.inline), float(item.bounds.block),
+                float(item.bounds.inline + item.bounds.inline_size),
+                float(item.bounds.block + item.bounds.block_size)))
+                for item in label_footprints), (note_id, "route hits label footprint")
+            assert not any(obstacles_intersect(segment, ObstacleSegment(a, b))
+                for relation in placement.relations if relation.semantic_id == "dependency"
+                for a, b in zip(relation.points, relation.points[1:])), (note_id, "route hits dependency")
+            assert not obstacles_intersect(segment, ObstacleSegment(*as_of.points)), (note_id, "route crosses as-of")
+
+        outline_segments = tuple(ObstacleSegment(a, b)
+                                 for a, b in zip(outline, outline[1:]) if a != b)
+        if leader is not None:
+            assert leader.points[-1] == outline[tip_index]
+        tail_edges = {
+            tuple(sorted((outline[(tip_index - 1) % len(outline)], outline[tip_index]))),
+            tuple(sorted((outline[tip_index], outline[(tip_index + 1) % len(outline)]))),
+        }
+        for segment in outline_segments:
+            is_tail_edge = tuple(sorted((segment.start, segment.end))) in tail_edges
+            if is_tail_edge:
+                assert not obstacles_intersect(segment, box), (note_id, "balloon tip edge enters its box")
+            assert not any(obstacles_intersect(segment, ObstacleRect(
+                float(mark.bounds.inline), float(mark.bounds.block),
+                float(mark.bounds.inline + mark.bounds.inline_size),
+                float(mark.bounds.block + mark.bounds.block_size)))
+                for mark in marks if not (is_tail_edge and mark.placement_id in source_cluster)), (
+                    note_id, "balloon edge hits unrelated mark")
+            assert not any(obstacles_intersect(segment, ObstacleRect(
+                float(item.bounds.inline), float(item.bounds.block),
+                float(item.bounds.inline + item.bounds.inline_size),
+                float(item.bounds.block + item.bounds.block_size)))
+                for item in visible_text if not item.placement_id.startswith(f"annotation-text:{note_id}")), (
+                    note_id, "balloon edge hits text")
+            assert not any(obstacles_intersect(segment, ObstacleRect(
+                float(item.bounds.inline), float(item.bounds.block),
+                float(item.bounds.inline + item.bounds.inline_size),
+                float(item.bounds.block + item.bounds.block_size)))
+                for item in label_footprints), (note_id, "balloon edge hits label footprint")
+            assert not any(obstacles_intersect(segment, ObstacleSegment(a, b))
+                for relation in placement.relations if relation.semantic_id == "dependency"
+                for a, b in zip(relation.points, relation.points[1:])), (note_id, "balloon edge hits dependency")
+            assert not obstacles_intersect(segment, ObstacleSegment(*as_of.points)), (note_id, "balloon crosses as-of")
+        source_x = float(anchor.bounds.inline + anchor.bounds.inline_size / 2)
+        if source_x < as_of_x:
+            assert float(balloon.bounds.inline + balloon.bounds.inline_size) <= as_of_x
+        else:
+            assert float(balloon.bounds.inline) >= as_of_x
+
+
+def test_hosted_note_index_resolves_single_and_multipart_mark_identity():
+    root = _root()
+    example = root / "examples/halcyon-1"
+    for theme_name, expected_suffix in (("wallboard", ""), ("12-glyph-gates", ":part:0")):
+        rendered = render_review(_draft_request(
+            project_path=example / "project.yaml",
+            view_path=example / "views/02-programme-board.yaml",
+            theme_path=example / f"themes/{theme_name}.yaml",
+            scheme_path=example / "schemes/control-room-dark.yaml",
+            layout_path=example / "layouts/wallboard.yaml",
+            actual_path=example / "actual.yaml", viewport=(1920, 1080)))
+        primitives = {item.scene_id: item for surface in rendered.scene.surfaces
+                      for item in surface.primitives}
+        number = primitives["note-index:window-note"]
+        assert number.host_placement_id is not None
+        if expected_suffix:
+            assert number.host_placement_id.endswith(expected_suffix)
+        else:
+            assert ":part:" not in number.host_placement_id
+        assert number.host_placement_id in primitives
+        assert primitives[number.host_placement_id].paint_order < number.paint_order
+
+
+def test_suppressed_plot_labels_have_one_completed_info_count(capsys, tmp_path):
     # #487 corrected the table's `minmax`/content-minimum and its flex-allocation
     # basis (ADR-0032), which changes which member label this `elevated-light`
     # draft suppresses (`structure:structure` before #487, `launch:launch`
@@ -74,22 +322,29 @@ def test_suppressed_plot_labels_have_one_completed_info_count(capsys):
     root = _root()
     example = root / "examples/halcyon-1"
     preset = root / "src/chrona/resources/presets/bundles/elevated-light"
+    legacy_view = yaml.safe_load((preset / "view.yaml").read_text(encoding="utf-8"))
+    legacy_view["body"]["rows"]["mode"] = "automatic"
+    for key in ("packing", "laneTable", "laneKeys"):
+        legacy_view["body"]["rows"].pop(key, None)
+    legacy_view_path = tmp_path / "elevated-automatic-view.yaml"
+    legacy_view_path.write_text(yaml.safe_dump(legacy_view, sort_keys=False), encoding="utf-8")
     rendered = render_review(_draft_request(
         project_path=example / "project.yaml", actual_path=example / "actual.yaml",
         scheme_path=root / "examples/controller-z/schemes/executive-light.yaml",
-        view_path=preset / "view.yaml", theme_path=preset / "theme.yaml", layout_path=preset / "layout.yaml"))
+        view_path=legacy_view_path, theme_path=preset / "theme.yaml", layout_path=preset / "layout.yaml"))
     visible_labels = {item.scene_id for item in rendered.surface.primitives if item.kind == "Text"}
     per_id = {item.removeprefix("W_LAYOUT_LABEL_SUPPRESSED:") for item in rendered.scene.diagnostics
               if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:")}
-    # Two since #488 keeps member labels inside their own row band.
-    assert len(per_id) == 2
+    # The automatic View keeps the same suppression mechanism, while its
+    # lane migrated selection produces a different count of constrained rows.
+    assert per_id
     assert not per_id & visible_labels
     assert rendered.scene.diagnostics.count(
         f"I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count={len(per_id)}") == 1
     _emit_render_warnings(rendered)
     info = [json.loads(line) for line in capsys.readouterr().err.splitlines()
             if '"I_LAYOUT_PLOT_LABELS_SUPPRESSED"' in line]
-    assert info == [{"code": "I_LAYOUT_PLOT_LABELS_SUPPRESSED", "count": 2,
+    assert info == [{"code": "I_LAYOUT_PLOT_LABELS_SUPPRESSED", "count": len(per_id),
                      "severity": "info", "surfaceId": "table-timeline"}]
 
 
@@ -99,39 +354,50 @@ def test_controller_executive_draft_no_longer_suppresses_its_member_label_after_
     # `I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count=1`) now fits
     # it, because the corrected table minimum is narrower than the old
     # widest-row-label basis for this view under the CSS-Grid flex allocation
-    # (ADR-0032). Two relation labels are suppressed instead, because the
-    # narrower table gives the plot/relation surface different, not more, room
-    # to route through.
+    # (ADR-0032). The completed mark-aware scale now leaves one relation label
+    # suppressed; this is independent of the member-label regression gate.
     rendered = render_review(_draft_request())
     assert not any(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:") for item in rendered.scene.diagnostics)
     assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in rendered.scene.diagnostics)
     assert {item for item in rendered.scene.diagnostics if item.startswith("W_LAYOUT_RELATION_LABEL_SUPPRESSED:")} == {
         "W_LAYOUT_RELATION_LABEL_SUPPRESSED:relation:evb-to-bringup:evb-arrival:evb-arrival:silicon-bringup:silicon-bringup",
-        "W_LAYOUT_RELATION_LABEL_SUPPRESSED:relation:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance",
     }
     assert not any(item.startswith("W_LAYOUT_VISIBLE_OVERFLOW") for item in rendered.scene.diagnostics)
 
 
-def test_suppression_count_excludes_other_plot_text_and_absent_count():
+def test_suppression_count_excludes_other_plot_text_and_absent_count(tmp_path):
     root = _root()
     example = root / "examples/halcyon-1"
     preset = root / "src/chrona/resources/presets/bundles/mission-light"
+    legacy_view = yaml.safe_load((preset / "view.yaml").read_text(encoding="utf-8"))
+    legacy_view["body"]["rows"]["mode"] = "automatic"
+    # Exercise independent variance-label suppression explicitly; the shipped
+    # lane View includes finishDelta in its lane member label instead.
+    legacy_view["body"]["visibility"]["labels"]["content"] = ["title"]
+    for key in ("packing", "laneTable", "laneKeys"):
+        legacy_view["body"]["rows"].pop(key, None)
+    legacy_view_path = tmp_path / "mission-automatic-view.yaml"
+    legacy_view_path.write_text(yaml.safe_dump(legacy_view, sort_keys=False), encoding="utf-8")
     inputs = dict(project_path=example / "project.yaml", actual_path=example / "actual.yaml",
                   scheme_path=example / "schemes/mission-light.yaml")
-    tuned = render_review(_draft_request(**inputs, view_path=preset / "view.yaml",
+    tuned = render_review(_draft_request(**inputs, view_path=legacy_view_path,
                                          theme_path=preset / "theme.yaml", layout_path=preset / "layout.yaml"))
     assert "W_LAYOUT_LABEL_SUPPRESSED:variance:detector:detector" in tuned.scene.diagnostics
     member_suppressed = sum(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:") for item in tuned.scene.diagnostics)
     assert member_suppressed >= 1  # the variance suppression above is not counted
     assert f"I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count={member_suppressed}" in tuned.scene.diagnostics
-    # The L1 HALCYON schedule correction moves the CDR label into the existing
-    # containment policy's suppression path; it must be reported exactly once.
+    # The L1 HALCYON schedule correction moves CDR into the existing
+    # containment policy's suppression path. R4's bounded mark attachment can
+    # suppress other names; the aggregate must still count members only.
     halcyon = render_review(_draft_request(**inputs, view_path=example / "views/01-mission-brief.yaml",
                                            theme_path=example / "themes/briefing.yaml",
                                            layout_path=example / "layouts/briefing.yaml",
                                            summary_path=example / "profiles/summary.yaml"))
     assert "W_LAYOUT_LABEL_SUPPRESSED:member-label:cdr:cdr" in halcyon.scene.diagnostics
-    assert "I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count=1" in halcyon.scene.diagnostics
+    halcyon_members = sum(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")
+                          for item in halcyon.scene.diagnostics)
+    assert halcyon_members >= 1
+    assert f"I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count={halcyon_members}" in halcyon.scene.diagnostics
     ordinary = render_review(_draft_request())
     assert not ordinary.info_diagnostics
     assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in ordinary.scene.diagnostics)

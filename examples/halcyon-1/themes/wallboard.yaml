@@ -89,6 +89,9 @@ body:
     stroke-width:
       type: number
       value: 1
+    balloon-container:
+      type: annotationContainer
+      value: {outline: balloon, cornerRadius: 0.2, tailBaseEm: 0.6}
     hatch:
       type: pattern
       value:
@@ -237,6 +240,20 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+    annotation-note-box:
+      strokeWidth: stroke-width
+      annotationContainer: balloon-container
+    annotation-note-leader:
+      strokeWidth: stroke-width
+    annotation-note-text:
+      contrastTreatment: required
+      fontFamily: editorial
+      fontWeight: weight.regular
+      fontSize: size.note
+      lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
     numeric:
       fontFamily: editorial
       fontWeight: weight.regular
@@ -413,6 +430,10 @@ body:
     subtitle.fill: textMuted
     annotation.fill: surfaceRaised
     annotation-text.fill: text
+    annotation-note-box.fill: surfaceRaised
+    annotation-note-box.stroke: neutral
+    annotation-note-text.fill: text
+    annotation-note-leader.stroke: neutral
     note-index.fill: accent
     metric.fill: text
     table-header.fill: surfaceRaised

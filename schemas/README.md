@@ -6,22 +6,39 @@ are migration-only and record their successor and removal slice.
 
 | Kind | Live schema |
 | --- | --- |
+| builtin-preset-library | preset-library-v0.2.schema.yaml |
 | actual-intake-batch | actual-intake-batch-v0.2.schema.yaml |
 | actual-set | actual-set-v0.3.schema.yaml |
 | automation-result | automation-result-v0.1.schema.yaml |
 | color-scheme | color-scheme-v0.2.schema.yaml |
 | command-request | command-request-v0.2.schema.yaml |
 | layout-profile | layout-profile-v0.4.schema.yaml |
-| icon-catalog | icon-catalog-v0.3.schema.yaml |
+| icon-catalog | icon-catalog-v0.4.schema.yaml |
+| theme-asset-source | theme-asset-source-v0.1.schema.yaml |
 | profile-package | profile-v0.3.schema.yaml |
 | project | project-v0.7.schema.yaml |
 | render-context | render-context-v0.13.schema.yaml |
 | review-detail-profile | review-detail-profile-v0.1.schema.yaml |
+| inspection-scene | scene-v0.7.schema.yaml |
 | snapshot-ref | snapshot-ref-v0.2.schema.yaml |
 | store-config | store-config-v0.1.schema.yaml |
 | summary-profile | summary-profile-v0.2.schema.yaml |
-| theme | theme-v0.8.schema.yaml |
+| theme | theme-v0.13.schema.yaml |
+| derived-theme | theme-v0.14.schema.yaml |
 | view | view-v0.14.schema.yaml |
+
+The v0.3 icon catalog remains readable during migration to v0.4 and is not
+reinterpreted. New Theme asset imports emit v0.4 catalogs; the importer
+normalizes glyph paths and pattern tiles, verifies density, and preserves the
+source SPDX license and complete notice.
+
+Theme v0.11/v0.12 remain readable during the v0.13/v0.14 migration. The
+successor pair adds Theme glyph and pattern catalogue references while keeping
+the referenced geometry in the pinned catalogue closure.
+
+Scene v0.6 remains readable during the v0.7 migration. The successor records
+Layout-completed pattern tile geometry and paint without resolving Theme or
+catalogue references in Scene or adapters.
 
 # Project Schema v0.3 Notes
 

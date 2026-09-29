@@ -30,9 +30,13 @@ The package may contain only already-supported declarative resource kinds:
 - static, immutable assets only when an approved output-capability contract
   admits them.
 
-An approved `icon-catalog` and only the SVG/PNG assets declared by that catalog are such
-static assets under Specification 64. They remain ordinary verified package members;
-the package resolver never parses, selects, or transforms icon bytes.
+An approved Specification 64 `icon-catalog` contract and only the normalized
+entries and declared SVG/PNG bytes it admits are such static assets. The #496
+v0.4 catalogue successor may be an ordinary verified package member after its
+implementation is published; this does not authorize raw SVG, arbitrary
+assets, or a package resolver ahead of this specification. These assets remain ordinary verified package members;
+the package resolver never parses, selects, or transforms icon, glyph, or
+pattern bytes.
 
 It cannot introduce a Project/domain field, scheduling rule, semantic registry
 entry, Scene primitive, visual capability, arbitrary expression, raw SVG/XML,
@@ -63,17 +67,27 @@ separate accepted implementation design.
 
 This specification's predecessor already shipped and is not itself the
 package resolver above. `presentation-preset-v0.1` (one View/Theme/Color
-Scheme/Layout Profile bundle) and `preset-library-v0.1` (a finite,
-wheel-owned catalogue of such bundles, resolved by `chrona preset copy
-<id>`, `chrona preset list`, and `render --preset <name-or-path>`) are the
-declarative, wheel-only, no-registry, no-lock predecessor this
-specification's future resolver must migrate cleanly under §6's promise. As
-of #429/#383, `library.yaml` carries entries across two unrelated catalogues
+Scheme/Layout Profile bundle, with optional pinned catalogue and detail-profile
+references) and `preset-library-v0.1` (a finite, wheel-owned catalogue of such
+bundles, resolved by
+`chrona preset copy <id>`, `chrona preset list`, and `render --preset
+<name-or-path>`) are the declarative, wheel-only, no-registry, no-lock
+predecessor this specification's future resolver must migrate cleanly under
+§6's promise. #496 designs `preset-library-v0.2` as a strict successor with
+optional explicit catalogue members; that successor is planned, not shipped.
+As of #429/#383, `library.yaml` carries entries across two unrelated catalogues
 — a "preset tuning" set produced by tuning corpus-project resources, and a
 "generated design directions" set produced against #425's externally
 generated references — distinguished only by the entry's `gallerySet`
 field, which is catalog-internal bookkeeping and is not the Design Space
 discovery classification §2.1 describes for a future registry candidate.
+Under the #496 design, a v0.2 catalogue member is an exact wheel resource
+reference; copy includes its declared bytes and complete notice, and preset
+rendering uses that declared closure without an asset flag or directory scan.
+This remains wheel-owned preset behavior, not package acquisition, package
+locking, or a resolver for this proposed specification. Existing
+`presentation-preset/v0.1` already carries catalogue and detail-profile pins;
+no preset schema migration is implied.
 
 `profile-v0.2` is a Project semantic-profile package with fields and semantic
 constraints; it is not a generic package envelope. A future Presentation

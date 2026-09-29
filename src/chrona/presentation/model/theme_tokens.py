@@ -1,7 +1,7 @@
 """Typed access to the current resolved Theme v0.2 boundary."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
 from typing import Any, Mapping
 
@@ -62,6 +62,8 @@ class ThemeTokenView:
     """
 
     resolved_theme: Mapping[str, Any]
+    catalog_glyphs: Mapping[str, Mapping[str, Any]] = field(default_factory=dict)
+    catalog_patterns: Mapping[str, Mapping[str, Any]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         body = self.resolved_theme.get("body")
@@ -71,10 +73,30 @@ class ThemeTokenView:
                 or not isinstance(body.get("values"), Mapping)
                 or not isinstance(body.get("roles"), Mapping)):
             raise ThemeTokenError("E_THEME_RESOLVED_SCHEMA", "/")
+        assets = body.get("catalogAssets", {})
+        if isinstance(assets, Mapping):
+            if not self.catalog_glyphs and isinstance(assets.get("glyphs"), Mapping):
+                object.__setattr__(self, "catalog_glyphs", assets["glyphs"])
+            if not self.catalog_patterns and isinstance(assets.get("patterns"), Mapping):
+                object.__setattr__(self, "catalog_patterns", assets["patterns"])
 
     @property
     def _body(self) -> Mapping[str, Any]:
         return self.resolved_theme["body"]
+
+    @property
+    def _catalog_glyphs(self) -> Mapping[str, Mapping[str, Any]]:
+        if self.catalog_glyphs:
+            return self.catalog_glyphs
+        assets = self._body.get("catalogAssets", {})
+        return assets.get("glyphs", {}) if isinstance(assets, Mapping) else {}
+
+    @property
+    def _catalog_patterns(self) -> Mapping[str, Mapping[str, Any]]:
+        if self.catalog_patterns:
+            return self.catalog_patterns
+        assets = self._body.get("catalogAssets", {})
+        return assets.get("patterns", {}) if isinstance(assets, Mapping) else {}
 
     def has_role(self, role: str) -> bool:
         """Whether this resolved Theme declares the exact semantic role."""
@@ -113,7 +135,20 @@ class ThemeTokenView:
         value = self.token(role, "pattern", "pattern")
         if not isinstance(value, Mapping):
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/pattern")
+        if value.get("kind") == "catalog":
+            reference = value.get("ref")
+            entry = self._catalog_patterns.get(str(reference)) if isinstance(reference, str) else None
+            if not isinstance(entry, Mapping):
+                raise ThemeTokenError("E_THEME_ASSET_REFERENCE", f"/body/roles/{role}/pattern")
+            return {"kind": "catalog", "ref": reference, **dict(entry)}
         return value
+
+    def catalog_glyph(self, reference: str) -> Mapping[str, Any]:
+        """Return one closure-validated normalized glyph by authored reference."""
+        entry = self._catalog_glyphs.get(reference)
+        if not isinstance(entry, Mapping):
+            raise ThemeTokenError("E_THEME_ASSET_REFERENCE", "/body/values")
+        return entry
 
     def marker(self, role: str) -> Mapping[str, Any]:
         value = self.token(role, "marker", "marker")
@@ -124,8 +159,15 @@ class ThemeTokenView:
     def symbol(self, role: str = "milestoneSymbol") -> Mapping[str, Any]:
         """Resolve one role's full symbol value (a built-in shape or a glyph)."""
         value = self.token(role, "symbol", "symbol")
-        if not isinstance(value, Mapping) or not isinstance(value.get("shape"), str):
+        if not isinstance(value, Mapping):
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/symbol")
+        shape = value.get("shape")
+        if isinstance(shape, str):
+            return value
+        if (isinstance(shape, Mapping) and set(shape) == {"catalog"}
+                and isinstance(shape.get("catalog"), str)):
+            return value
+        raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/symbol")
         return value
 
     _VARIANT_SYMBOL_ROLES = {"planned": "milestoneSymbol", "actual": "milestoneSymbolActual",
@@ -141,7 +183,12 @@ class ThemeTokenView:
         role = self._VARIANT_SYMBOL_ROLES[variant]
         if role != "milestoneSymbol" and not self.has_role(role):
             role = "milestoneSymbol"
-        return self.symbol(role)
+        symbol = self.symbol(role)
+        shape = symbol.get("shape")
+        if isinstance(shape, Mapping) and isinstance(shape.get("catalog"), str):
+            reference = str(shape["catalog"])
+            return {"shape": "catalog-glyph", "ref": reference, **dict(self.catalog_glyph(reference))}
+        return symbol
 
     def optional_color(self, role: str, property_name: str) -> str | None:
         """Resolve an optional concrete colour without introducing a fallback."""
@@ -337,6 +384,15 @@ class ThemeTokenView:
         if treatment not in {"fill", "outline", "none"} or not isinstance(order, int) or not 0 <= order <= 1000:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", path)
         return treatment, order
+
+    def optional_background(self, role: str) -> tuple[str, int] | None:
+        """Return a declared background treatment, or none when not applicable."""
+        binding = self._body["roles"].get(role)
+        if not isinstance(binding, Mapping):
+            return None
+        if "backgroundTreatment" not in binding and "backgroundPaintOrder" not in binding:
+            return None
+        return self.background(role)
 
     def contrast_treatment(self, role: str) -> str:
         """Return the finite completed state-text treatment for one role."""

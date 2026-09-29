@@ -284,7 +284,15 @@ port other than a named endpoint, or rule barrier. Layout completes a visible
 gap in the later annotation connector at each crossing; the crossed stroke
 remains continuous. The connector remains a single source-linked placement,
 and Scene/adapters MUST NOT decide the crossing or gap. A tail connector MUST
-use strict topology. The local search corridor, route quality, crossing count,
+use strict topology. For a nearest-free balloon, Layout MUST try the integrated
+direct tail first. If blocked, it MAY complete a strict local orthogonal route
+to a short exterior balloon tip. The route, tip and pending balloon body MUST
+clear the same obstacles together, including the body's interior, and stay on
+the anchor's as-of side. Layout records `direct-tail` or `routed-tail` and
+commits box, outline and route atomically. Scene/adapters only project the
+completed geometry. See the
+[#466 C3 correction](../design/issue-466-c3-routed-tail-correction-2026-09-29.md).
+The local search corridor, route quality, crossing count,
 and exhaustion are bounded and recorded in the placement decision. If all
 declared candidates fail, an explicit suppress outcome or the visible
 fallback policy applies; fallback MUST NOT be reported as a collision-free
@@ -292,6 +300,12 @@ fit. The later candidate grammar will specify the public spelling of these
 policies. The local corridor is based on the source mark and selected box
 attachment point, not the full box extent; see the
 [#466 corridor amendment](../design/issue-466-connector-corridor-amendment-2026-09-26.md).
+
+When a hosted annotation number refers to a Theme glyph mark, Layout MUST
+resolve its abstract mark host to an actual emitted lane-facet primitive ID
+before Scene projection. The host identity and paint order are completed
+placement facts; Scene MUST reject a missing host rather than infer a glyph
+part. See the [#466 host correction](../design/issue-466-c3-hosted-note-index-correction-2026-09-29.md).
 
 ## 9. Diagnostics
 
@@ -370,6 +384,12 @@ constrain optional plot/item/delta labels, followed by relation labels and
 annotations. This finite monotone phase order prioritizes visible semantic
 connections without allowing label/route overlap or changing declared route
 quality and overflow limits. See the [#466 route-priority correction](../design/issue-466-general-placement-route-priority-correction-2026-09-26.md).
+
+Fixed-lane member names and selected deltas are the route-independent
+exception: their finite candidates resolve after lane geometry but before
+semantic relations, and only accepted labels enter the route obstacle set.
+Their terminal suppression is counted without altering membership (Specs 38
+and 50). Relation labels still follow their completed routes.
 
 After canonical side candidates fail, optional plot/item/delta labels may use
 a finite side-relative displacement bounded by their measured footprint and

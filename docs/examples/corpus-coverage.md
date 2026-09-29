@@ -132,3 +132,15 @@ View, Theme, Layout, Scheme and profile files under `examples/` that no Context 
 - `examples/aster-ssd/themes/onboarding-variation.yaml`: derived-Theme (v0.12 inheritance) example used by `docs/guides/first-project.md` and `tests/integration/test_render.py`
 - `examples/controller-z/profiles/summary.yaml`: Summary Profile input exercised by `tests/integration/test_render.py` and the contract-resource tests, not by a committed slide
 - `examples/halcyon-1/views/default-draft.yaml`: #383/#429 repointed the bundled default at the Editorial preset; this View is kept as the documented default-draft source (`examples/reachability.yaml`) and is still rendered explicitly by `tests/integration/test_readable_defaults.py`, not by a committed slide
+
+## Committed lane-name visibility
+
+Distinct members in `laneMembers` are packed; a member is shown only when its completed visible `member-label` Text names that same member. Group, synthetic, and duplicate labels do not count.
+
+| Project | Slide | Shown | Packed | Shown/packed |
+| --- | --- | ---: | ---: | ---: |
+| halcyon-1 | programme-board | 26 | 26 | 26/26 |
+| halcyon-1 | launch-campaign | 12 | 12 | 12/12 |
+| halcyon-1 | overlay-briefing | 26 | 26 | 26/26 |
+| halcyon-1 | glyph-gates | 26 | 26 | 26/26 |
+| halcyon-1 | gallery-editorial-lanes | 26 | 26 | 26/26 |

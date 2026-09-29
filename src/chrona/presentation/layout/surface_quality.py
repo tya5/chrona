@@ -7,7 +7,9 @@ from decimal import Decimal
 from typing import Any
 
 from chrona.presentation.layout.model import Rect
-from chrona.presentation.layout.lane_preflight import LaneMeasurementIdentity, SurfaceLanePlan
+from chrona.presentation.layout.pattern_placement import PatternedPlacement
+from chrona.presentation.layout.obstacles import ObstacleGeometry
+from chrona.presentation.layout.lane_subtracks import FixedLanePreflight
 from chrona.presentation.model.info_diagnostics import PresentationInfo, SuppressedPlotLabels
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, axis_label_semantic_ids
 
@@ -132,6 +134,9 @@ class TextPlacement:
     annotation: AnnotationPresentation | None = None
     paint_order: int = 300
     host_placement_id: str | None = None
+    lane_row_id: str | None = None
+    lane_member_id: str | None = None
+    lane_source_kind: str | None = None
 
 
 @dataclass(frozen=True)
@@ -170,6 +175,9 @@ class MarkPlacement:
     paint_order: int = 0
     end_treatment: str = "closed"
     symbol_parts: tuple[Any, ...] = ()
+    lane_row_id: str | None = None
+    lane_member_id: str | None = None
+    lane_source_kind: str | None = None
 
 
 @dataclass(frozen=True)
@@ -208,6 +216,8 @@ class ShapePlacement:
     corner_radius: float = 0.0
     path_commands: tuple[PathCommand, ...] = ()
     image_fill: LayoutImageFill | None = None
+    lane_row_id: str | None = None
+    lane_member_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -234,6 +244,14 @@ class RowPlacement:
     group_id: str
     bounds: Rect
     depth: int = 0
+    lane_mark_band_block: Decimal | None = None
+
+    def __post_init__(self) -> None:
+        anchor = self.lane_mark_band_block
+        if anchor is not None and (not anchor.is_finite()
+                                   or anchor < self.bounds.block
+                                   or anchor > self.bounds.block + self.bounds.block_size):
+            raise ValueError("E_LAYOUT_LANE_ROW_ANCHOR_INVALID")
 
 
 @dataclass(frozen=True)
@@ -315,10 +333,20 @@ class PlacementDecision:
     search_count: int = 0
     selected_topology: str | None = None
     crossing_ids: tuple[str, ...] = ()
+    box_position_limit: int = 0
+    box_positions_examined: int = 0
+    route_state_limit: int = 0
+    route_states_examined: int = 0
+    route_search_exhausted: bool = False
 
     def __post_init__(self) -> None:
-        if (self.search_count < 0 or self.selected_topology not in {None, "strict", "bridge"}
-                or (self.crossing_ids and self.selected_topology != "bridge")):
+        if (self.search_count < 0 or self.selected_topology not in {
+                None, "strict", "bridge", "direct-tail", "routed-tail"}
+                or (self.crossing_ids and self.selected_topology != "bridge")
+                or self.box_position_limit < 0
+                or not 0 <= self.box_positions_examined <= self.box_position_limit
+                or self.route_state_limit < 0
+                or not 0 <= self.route_states_examined <= self.route_state_limit):
             raise ValueError("E_LAYOUT_PLACEMENT_DECISION_INVALID")
 
 
@@ -393,8 +421,8 @@ class SurfaceLayoutRequest:
     capabilities: dict[str, bool] = field(default_factory=dict)
     icon_assets: dict[str, Any] = field(default_factory=dict)
     visual_requests: tuple[VisualRequest, ...] = ()
-    lane_plan: SurfaceLanePlan | None = None
-    lane_measurement_identity: LaneMeasurementIdentity | None = None
+    fixed_lane_preflight: FixedLanePreflight | None = None
+    capacity_short_sources: tuple[CapacitySourceEvidence, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -415,6 +443,88 @@ class IconPlacement:
     slot_id: str = ""
     paint_order: int = 300
     completed_paths: tuple[Any, ...] = ()
+    lane_row_id: str | None = None
+    lane_member_id: str | None = None
+    host_placement_id: str | None = None
+
+
+@dataclass(frozen=True)
+class LaneEmissionFacet:
+    """One completed Scene primitive's Layout-owned visible obstacle."""
+
+    facet_id: str
+    placement_type: str
+    placement_id: str
+    primitive_id: str
+    obstacle: ObstacleGeometry
+    obstacle_class: str
+    part_index: int | None = None
+
+    def __post_init__(self) -> None:
+        from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
+        if (not self.facet_id or not self.placement_id or not self.primitive_id
+                or self.placement_type not in {"mark", "shape", "icon", "text"}
+                or self.obstacle_class not in {"mark", "required-label"}
+                or not isinstance(self.obstacle, (ObstacleRect, ObstacleSegment))
+                or (self.part_index is not None and self.part_index < 0)):
+            raise ValueError("E_LAYOUT_LANE_EMISSION_INVALID")
+
+
+@dataclass(frozen=True)
+class LaneEmissionPlacement:
+    """Typed owner and exact primitive/facet projection for one Layout placement."""
+
+    placement_type: str
+    placement_id: str
+    row_id: str
+    member_id: str
+    purpose: str
+    facets: tuple[LaneEmissionFacet, ...]
+
+    def __post_init__(self) -> None:
+        if (self.placement_type not in {"mark", "text", "icon", "shape"}
+                or not all(isinstance(value, str) and value for value in
+                           (self.placement_id, self.row_id, self.member_id, self.purpose))
+                or not isinstance(self.facets, tuple) or not self.facets):
+            raise ValueError("E_LAYOUT_LANE_EMISSION_INVALID")
+
+
+@dataclass(frozen=True)
+class CapacitySourceEvidence:
+    """Exact required timeline source that the final profile still underserves."""
+
+    source_id: str
+    required_block: Decimal
+    allocated_block: Decimal
+
+    def __post_init__(self) -> None:
+        if (self.source_id != "timeline" or not self.required_block.is_finite()
+                or not self.allocated_block.is_finite()
+                or self.allocated_block >= self.required_block):
+            raise ValueError("E_LAYOUT_SUPPRESSION_EVIDENCE_INVALID")
+
+
+@dataclass(frozen=True)
+class LaneLabelSuppression:
+    """Typed attribution for one suppressed lane member name."""
+
+    placement_id: str
+    lane_id: str
+    member_id: str
+    row_bounds: Rect
+    remaining_capacity: Decimal
+    reason: str
+    short_sources: tuple[CapacitySourceEvidence, ...] = ()
+
+    def __post_init__(self) -> None:
+        if (not self.placement_id or not self.lane_id or not self.member_id
+                or not self.remaining_capacity.is_finite() or self.remaining_capacity < 0
+                or self.reason not in {"capacity", "obstruction"}
+                or (self.reason == "capacity" and not self.short_sources)
+                or (self.reason == "capacity" and self.remaining_capacity != 0)
+                or (self.reason == "obstruction" and self.short_sources)
+                or len({item.source_id for item in self.short_sources}) != len(self.short_sources)):
+            raise ValueError("E_LAYOUT_SUPPRESSION_EVIDENCE_INVALID")
 
 
 @dataclass(frozen=True)
@@ -438,18 +548,36 @@ class SurfacePlacement:
     canvas_bounds: Rect | None = None
     fit_warnings: tuple[FitWarning, ...] = ()
     info_diagnostics: tuple[PresentationInfo, ...] = ()
+    lane_emissions: tuple[LaneEmissionPlacement, ...] = ()
+    patterns: tuple[PatternedPlacement, ...] = ()
+    lane_label_suppressions: tuple[LaneLabelSuppression, ...] = ()
 
     def assert_valid(self) -> None:
         """Reject invalid required geometry before a renderer receives it."""
         suppressed_members = {item.placement_id for item in self.text
                               if item.semantic_id == "memberLabel" and item.overflow == "suppressed"}
+        suppressed_lane_members = {item.placement_id for item in self.text
+                                   if item.semantic_id == "memberLabel" and item.overflow == "suppressed"
+                                   and item.lane_row_id is not None}
         reported_suppressions = {item.removeprefix("W_LAYOUT_LABEL_SUPPRESSED:") for item in self.diagnostics
                                  if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:")}
         counts = tuple(item for item in self.info_diagnostics if isinstance(item, SuppressedPlotLabels))
+        suppression_facts = {item.placement_id: item for item in self.lane_label_suppressions}
+        suppressed_text = {item.placement_id: item for item in self.text
+                           if item.semantic_id == "memberLabel" and item.overflow == "suppressed"}
         if (not suppressed_members.issubset(reported_suppressions)
+                or set(suppression_facts) != suppressed_lane_members
+                or len(suppression_facts) != len(self.lane_label_suppressions)
                 or len(counts) != (1 if suppressed_members else 0)
                 or (counts and counts[0].count != len(suppressed_members))):
             raise ValueError("E_LAYOUT_SUPPRESSION_COUNT_INVALID")
+        rows_by_id = {item.row_id: item for item in self.rows}
+        for placement_id, fact in suppression_facts.items():
+            text = suppressed_text[placement_id]
+            row = rows_by_id.get(fact.lane_id)
+            if (text.lane_row_id != fact.lane_id or text.lane_member_id != fact.member_id
+                    or row is None or row.bounds != fact.row_bounds):
+                raise ValueError("E_LAYOUT_SUPPRESSION_EVIDENCE_INVALID")
         required = tuple(item for item in self.text if item.required and item.overflow != 'suppressed')
         if self.canvas_bounds is not None and (self.canvas_bounds.inline_size <= 0 or self.canvas_bounds.block_size <= 0):
             raise ValueError("E_LAYOUT_CANVAS_BOUNDS_INVALID")
@@ -494,14 +622,33 @@ class SurfacePlacement:
                 host = next((mark for mark in self.marks if mark.placement_id == shape.clip_host_id), None)
                 if host is None or host.slot_id != shape.slot_id:
                     raise ValueError(f"E_LAYOUT_CLIP_HOST_INVALID:{shape.placement_id}")
+        pattern_ids = [item.placement_id for item in self.patterns]
+        if len(pattern_ids) != len(set(pattern_ids)):
+            raise ValueError("E_LAYOUT_PATTERN_PLACEMENT_DUPLICATE")
+        marks_by_id = {item.placement_id: item for item in self.marks}
+        shapes_by_id = {item.placement_id: item for item in self.shapes}
+        for item in self.patterns:
+            mark = marks_by_id.get(item.placement_id)
+            shape = shapes_by_id.get(item.placement_id)
+            if not ((mark is not None and mark.mark_shape == "span")
+                    or (shape is not None and shape.kind == "Rect")):
+                raise ValueError(f"E_LAYOUT_PATTERN_REGION_INVALID:{item.placement_id}")
         hosts = {item.placement_id: item for item in self.marks}
         hosts.update({item.placement_id: item for item in self.shapes})
+        emitted_mark_hosts = {
+            facet.primitive_id: (hosts.get(emission.placement_id), facet.part_index or 0)
+            for emission in self.lane_emissions if emission.placement_type == "mark"
+            for facet in emission.facets
+        }
         for item in self.text:
             if item.host_placement_id is None:
                 continue
             host = hosts.get(item.host_placement_id)
+            part_index = 0
+            if host is None and item.host_placement_id in emitted_mark_hosts:
+                host, part_index = emitted_mark_hosts[item.host_placement_id]
             if (host is None or host.slot_id != item.slot_id
-                    or host.paint_order >= item.paint_order):
+                    or host.paint_order + part_index >= item.paint_order):
                 raise ValueError(f"E_LAYOUT_TEXT_HOST_INVALID:{item.placement_id}")
             if item.semantic_id in axis_label_semantic_ids():
                 allowed = isinstance(host, ShapePlacement) and host.semantic_id in axis_band_semantic_ids()

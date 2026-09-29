@@ -1,4 +1,4 @@
-version: chrona/view/v0.27
+version: chrona/view/v0.28
 kind: view
 id: chrona-preset-technical-print
 body:
@@ -28,7 +28,7 @@ body:
     - planned
   visibility:
     labels:
-      placement: table
+      placement: plot
       content:
       - title
       - finishDelta
@@ -80,27 +80,10 @@ body:
   backgroundDecoration:
     rows: none
     groups: all
-  tableColumns:
-  - id: "#"
-    source: rowIndex
-    missing: em-dash
-    align: end
-    width: content
-    headerOrientation: horizontal
-  - id: Task
-    source: title
-    missing: em-dash
-    align: start
-    width: {minmax: {min: content, max: {fr: 1}}}
-    headerOrientation: horizontal
-  - id: Owner
-    source: {field: owner}
-    missing: em-dash
-    align: start
-    width: content
-    headerOrientation: horizontal
   rows:
-    mode: automatic
+    mode: lanes
+    packing: [explicit, attached]
+    laneTable: {label: lane, count: true}
   markers:
   - kind: asOf
     source: actual

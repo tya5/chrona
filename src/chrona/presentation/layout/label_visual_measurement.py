@@ -68,8 +68,9 @@ def resolve_label_visual_advances(placement_id: str, typography_role: str, *,
     for visual in visual_requests:
         if visual.target_kind in {"mark", "axis-band", "axis-label"}:
             continue
-        target = visual_target_placement_id(visual.target_kind, dict(visual.selector))
-        if placement_id == target or placement_id.startswith(target + ":"):
+        selector = dict(visual.selector)
+        target = selector.get("placementId") or visual_target_placement_id(visual.target_kind, selector)
+        if placement_id == target or ("placementId" not in selector and placement_id.startswith(target + ":")):
             matching.append(visual)
     if not matching:
         return ()

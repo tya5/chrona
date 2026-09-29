@@ -10,10 +10,12 @@ from typing import Any, Mapping
 
 from chrona.presentation.layout.dependency_network import compose_dependency_network_layout
 from chrona.presentation.layout.model import LayoutError, LayoutManifest
-from chrona.presentation.layout.lane_preflight import LaneMeasurementIdentity, SurfaceLanePlan
+from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
+from chrona.presentation.layout.lane_subtracks import FixedLanePreflight
 from chrona.presentation.layout.surface_composer import compose_surface_layout
-from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
+from chrona.presentation.layout.surface_quality import CapacitySourceEvidence, SurfaceLayoutRequest
 from chrona.presentation.layout.sources import MeasuredSources
+from chrona.presentation.layout.pattern_placement import PatternedPlacement
 from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.semantic_registry import (
@@ -22,8 +24,12 @@ from chrona.presentation.model.semantic_registry import (
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.model.info_diagnostics import PaintOmission
 from chrona.presentation.model.theme_tokens import ThemeTokenView
-from chrona.presentation.scene.pattern_geometry import pattern_geometry, pattern_kind
+from chrona.presentation.scene.pattern_geometry import pattern_geometry, pattern_kind, project_pattern_placement
 from chrona.presentation.scene.model import DecorationDisposition, ImageFill, ImageTile, SceneColumn, SceneGroup, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, SymbolGeometry, TextLayout
+from chrona.presentation.scene.model import (
+    SceneLaneMember, SceneLaneObstacle, SceneLaneRectObstacle, SceneLaneSegmentObstacle,
+    requires_lane_member_provenance,
+)
 from chrona.presentation.scene.paint import PaintFamily, ScenePaintError, complete_icon_path_paints, resolve_scene_paint
 from chrona.presentation.scene.visual_capabilities import VisualProfile
 
@@ -53,8 +59,8 @@ class SceneBuildInput:
     viewport: tuple[float, float] = (0.0, 0.0)
     icon_assets: dict[str, Any] | None = None
     visual_requests: tuple[Any, ...] = ()
-    lane_plan: SurfaceLanePlan | None = None
-    lane_measurement_identity: LaneMeasurementIdentity | None = None
+    fixed_lane_preflight: FixedLanePreflight | None = None
+    capacity_short_sources: tuple[CapacitySourceEvidence, ...] = ()
 
 
 _REQUIRED_SOURCES = {
@@ -64,6 +70,8 @@ _REQUIRED_SOURCES = {
 
 
 def _paint_family(primitive: ScenePrimitive, tokens: ThemeTokenView) -> PaintFamily:
+    if primitive.pattern is not None and primitive.pattern.primitives:
+        return PaintFamily.SOLID
     if primitive.kind == PrimitiveKind.TEXT:
         return PaintFamily.TEXT
     if primitive.kind == PrimitiveKind.PATH:
@@ -82,7 +90,8 @@ def _paint_family(primitive: ScenePrimitive, tokens: ThemeTokenView) -> PaintFam
 
 
 def _symbol_primitives(scene_id: str, source_ref: str, source_kind: str, purpose: str, visual_role: str,
-                       bounds: tuple[float, float, float, float], completed_parts: tuple[Any, ...], **shared: Any) -> list[ScenePrimitive]:
+                       bounds: tuple[float, float, float, float], completed_parts: tuple[Any, ...],
+                       primitive_ids: tuple[str, ...] | None = None, **shared: Any) -> list[ScenePrimitive]:
     """Emit one milestone's Symbol primitive(s): one for a built-in shape, several sibling
 
     primitives (one per painted part, ascending paint order) for a Theme-bound glyph.
@@ -90,11 +99,37 @@ def _symbol_primitives(scene_id: str, source_ref: str, source_kind: str, purpose
     primitive identity and delegates each part's paint conversion.
     """
     base_paint_order = shared.pop("paint_order", 0)
-    return [ScenePrimitive(f"{scene_id}:part{index}" if part.paint_mode is not None else scene_id,
+    if primitive_ids is not None and len(primitive_ids) != len(completed_parts):
+        raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", scene_id,
+                              "typed lane handoff part count differs from Layout geometry")
+    return [ScenePrimitive((primitive_ids[index] if primitive_ids is not None else
+                            f"{scene_id}:part{index}" if part.paint_mode is not None else scene_id),
                            PrimitiveKind.SYMBOL, source_ref, source_kind, purpose, visual_role,
                            bounds, symbol=SymbolGeometry(part.commands), paint_order=base_paint_order + index,
-                           glyph_paint_mode=part.paint_mode, glyph_paint_color=part.paint_color, **shared)
+                           glyph_paint_mode=part.paint_mode, glyph_paint_color=part.paint_color,
+                           glyph_stroke_width=part.stroke_width,
+                           glyph_line_cap=part.line_cap, glyph_line_join=part.line_join, **shared)
             for index, part in enumerate(completed_parts)]
+
+
+def _attach_completed_patterns(primitives: tuple[ScenePrimitive, ...],
+                               placements: tuple[PatternedPlacement, ...]) -> tuple[ScenePrimitive, ...]:
+    """Project exact Layout-owned tile placements onto matching Rect IDs."""
+    by_id = {item.placement_id: item for item in placements}
+    if len(by_id) != len(placements):
+        raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", "/patterns", "duplicate placement ID")
+    projected = []
+    for primitive in primitives:
+        placed = by_id.pop(primitive.scene_id, None)
+        if placed is not None and primitive.kind != PrimitiveKind.RECT:
+            raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", primitive.scene_id,
+                                  "catalogue pattern requires completed Rect")
+        projected.append(replace(primitive, pattern=project_pattern_placement(placed.pattern))
+                         if placed is not None else primitive)
+    if by_id:
+        raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", next(iter(by_id)),
+                              "Layout pattern has no emitted Rect")
+    return tuple(projected)
 
 
 def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visual_profile: VisualProfile | None = None,
@@ -115,7 +150,8 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
     absent_decorations = tuple(
         DecorationDisposition(binding.scene_role, "absent")
         for binding in contrast_bindings(ContrastClass.DECORATION)
-        if tokens.has_role(binding.scene_role) and tokens.background(binding.scene_role)[0] == "none"
+        if (background := tokens.optional_background(binding.scene_role)) is not None
+        and background[0] == "none"
     )
     omissions = (*canvas.omissions, *(omission for _, facts in completed for omission in facts))
     unique_omissions: list[PaintOmission] = []
@@ -137,7 +173,11 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
     resolution = resolve_scene_paint(tokens, primitive.visual_role, family,
                                      visual_profile=visual_profile, gradient_bounds=primitive.bounds,
                                      part_mode=primitive.glyph_paint_mode,
-                                     part_color=primitive.glyph_paint_color)
+                                     part_color=primitive.glyph_paint_color,
+                                     catalog_pattern=bool(primitive.pattern and primitive.pattern.primitives),
+                                     catalog_glyph_stroke_width=primitive.glyph_stroke_width,
+                                     catalog_glyph_line_cap=primitive.glyph_line_cap,
+                                     catalog_glyph_line_join=primitive.glyph_line_join)
     paint = resolution.paint
     if primitive.glyph_paint_mode is None:
         override = (scale_paints.get(primitive.source_ref)
@@ -151,8 +191,11 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
         completed = replace(completed, image=primitive.image_fill_pending)
     treatment = tokens.optional_pattern(primitive.visual_role)
     result = replace(primitive, paint=completed,
-                     pattern=pattern_geometry(treatment) if treatment is not None else None,
-                     glyph_paint_mode=None, glyph_paint_color=None, image_fill_pending=None)
+                     pattern=(primitive.pattern if primitive.pattern is not None and primitive.pattern.primitives
+                              else pattern_geometry(treatment) if treatment is not None else None),
+                     glyph_paint_mode=None, glyph_paint_color=None,
+                     glyph_stroke_width=None, glyph_line_cap=None, glyph_line_join=None,
+                     image_fill_pending=None)
     if result.kind == "Icon" and result.icon_kind == "vector":
         try:
             icon_paths = complete_icon_path_paints(completed, primitive.icon_path_geometry, primitive.visual_role)
@@ -171,8 +214,8 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
                       viewport: tuple[float, float] = (0.0, 0.0),
                       icon_assets: dict[str, Any] | None = None,
                       visual_requests: tuple[Any, ...] = (),
-                      lane_plan: SurfaceLanePlan | None = None,
-                      lane_measurement_identity: LaneMeasurementIdentity | None = None) -> SceneBuildInput:
+                      fixed_lane_preflight: FixedLanePreflight | None = None,
+                      capacity_short_sources: tuple[CapacitySourceEvidence, ...] = ()) -> SceneBuildInput:
     """Bind validated v0.5 inputs without reopening authoring or legacy contracts."""
     if not isinstance(layout_manifest, LayoutManifest):
         raise SceneBuildError("E_PRESENTATION_LAYOUT_REQUIRED", "/layoutManifest")
@@ -192,15 +235,12 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
             raise SceneBuildError("E_PRESENTATION_SURFACE_SLOT_SET", "/layoutManifest/sources")
     if not all(isinstance(name, str) and isinstance(enabled, bool) for name, enabled in capabilities.items()):
         raise SceneBuildError("E_PRESENTATION_CAPABILITY_SCHEMA", "/capabilities")
-    if ((lane_plan is None) != (lane_measurement_identity is None)
-            or (lane_plan is not None and not isinstance(lane_plan, SurfaceLanePlan))
-            or (lane_measurement_identity is not None
-                and not isinstance(lane_measurement_identity, LaneMeasurementIdentity))):
-        raise SceneBuildError("E_LAYOUT_LANE_PLAN_INVALID", "/layoutManifest")
+    if fixed_lane_preflight is not None and not isinstance(fixed_lane_preflight, FixedLanePreflight):
+        raise SceneBuildError("E_LAYOUT_LANE_PREFLIGHT_INVALID", "/layoutManifest")
     return SceneBuildInput(projection, surface_content, layout_manifest,
                            ThemeTokenView(resolved_theme), font_metrics, measured_sources,
                            dict(capabilities), visual_profile, viewport, icon_assets, visual_requests,
-                           lane_plan, lane_measurement_identity)
+                           fixed_lane_preflight, capacity_short_sources)
 
 
 def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
@@ -233,8 +273,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             font_metrics=value.font_metrics,
             capabilities=dict(value.capabilities), icon_assets=value.icon_assets or {},
             visual_requests=value.visual_requests,
-            lane_plan=value.lane_plan,
-            lane_measurement_identity=value.lane_measurement_identity,
+            fixed_lane_preflight=value.fixed_lane_preflight,
+            capacity_short_sources=value.capacity_short_sources,
         ))
     except LayoutError as error:
         raise SceneBuildError(error.diagnostic_id, error.path, error.detail) from error
@@ -250,7 +290,9 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
     rows = tuple(
         SceneRow(placement.object_id, placement.group_id,
                  (float(placement.bounds.inline), float(placement.bounds.block),
-                  float(placement.bounds.inline_size), float(placement.bounds.block_size)), placement.row_id)
+                  float(placement.bounds.inline_size), float(placement.bounds.block_size)), placement.row_id,
+                 None if placement.lane_mark_band_block is None
+                 else float(placement.lane_mark_band_block))
         for placement in placed_surface.rows
     )
     columns = tuple(
@@ -275,6 +317,22 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                  placed_surface.scale.origin, placed_surface.scale.unit_ratio)
     primitives: list[ScenePrimitive] = []
     layout_text = {item.placement_id: item for item in placed_surface.text}
+    lane_emissions_by_placement = {
+        (item.placement_type, item.placement_id): item for item in placed_surface.lane_emissions
+    }
+
+    def lane_scene_ids(placement_type: str, placement_id: str) -> tuple[str, ...] | None:
+        emission = lane_emissions_by_placement.get((placement_type, placement_id))
+        if emission is None:
+            return None
+        # A primitive may own multiple visible obstacle facets (for example, a
+        # stroked path). Identity is emitted once; preserve the explicit Layout
+        # paint-part order for glyphs so _symbol_primitives can enforce the
+        # exact number of completed parts.
+        ordered_ids = (facet.primitive_id for facet in sorted(
+            emission.facets,
+            key=lambda facet: (-1 if facet.part_index is None else facet.part_index)))
+        return tuple(dict.fromkeys(ordered_ids))
     primary_links = {
         item.object_id: item.link for item in projection.items
         if item.link is not None
@@ -367,17 +425,20 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         planned_role = planned_binding.scene_role
         planned_mark = mark_placements.get(f"planned:{instance_id}")
         if planned_mark is not None:
+            planned_ids = lane_scene_ids("mark", planned_mark.placement_id)
+            planned_id = planned_ids[0] if planned_ids else planned_mark.placement_id
             bounds = (float(planned_mark.bounds.inline), float(planned_mark.bounds.block),
                       float(planned_mark.bounds.inline_size), float(planned_mark.bounds.block_size))
             if item.source_type == "point":
-                primitives.extend(_symbol_primitives(f"planned:{instance_id}", item.object_id, "object", planned_binding.purpose, planned_role,
+                primitives.extend(_symbol_primitives(planned_id, item.object_id, "object", planned_binding.purpose, planned_role,
                                                     bounds, planned_mark.symbol_parts,
+                                                    primitive_ids=planned_ids,
                                                     corner_radius=planned_mark.corner_radius,
                                                     path_commands=planned_mark.path_commands,
                                                     href=href, link_title=link_title, slot_id=planned_mark.slot_id,
                                                     paint_order=planned_mark.paint_order, end_treatment=planned_mark.end_treatment))
             else:
-                primitives.append(ScenePrimitive(f"planned:{instance_id}", PrimitiveKind.RECT, item.object_id, "object", planned_binding.purpose, planned_role,
+                primitives.append(ScenePrimitive(planned_id, PrimitiveKind.RECT, item.object_id, "object", planned_binding.purpose, planned_role,
                                                  bounds,
                                                  corner_radius=planned_mark.corner_radius,
                                                  href=href, link_title=link_title, slot_id=planned_mark.slot_id,
@@ -386,29 +447,36 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         actual_binding = semantic_binding("actual")
         actual_mark = mark_placements.get(f"actual:{instance_id}")
         if actual_mark is not None:
+            actual_ids = lane_scene_ids("mark", actual_mark.placement_id)
+            actual_id = actual_ids[0] if actual_ids else actual_mark.placement_id
             bounds = (float(actual_mark.bounds.inline), float(actual_mark.bounds.block),
                       float(actual_mark.bounds.inline_size), float(actual_mark.bounds.block_size))
             if item.source_type == "span":
                 if actual_mark.mark_shape == "open-span":
-                    primitives.extend(_symbol_primitives(f"actual:{instance_id}", item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
+                    primitives.extend(_symbol_primitives(actual_id, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
                                                         bounds, actual_mark.symbol_parts,
+                                                        primitive_ids=actual_ids,
                                                         corner_radius=actual_mark.corner_radius, slot_id=actual_mark.slot_id,
                                                         paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
                 else:
-                    primitives.append(ScenePrimitive(f"actual:{instance_id}", PrimitiveKind.RECT, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
+                    primitives.append(ScenePrimitive(actual_id, PrimitiveKind.RECT, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
                                                      bounds, corner_radius=actual_mark.corner_radius, slot_id=actual_mark.slot_id,
                                                      paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
             else:
-                primitives.extend(_symbol_primitives(f"actual:{instance_id}", item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
+                primitives.extend(_symbol_primitives(actual_id, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
                                                     bounds, actual_mark.symbol_parts, corner_radius=actual_mark.corner_radius,
+                                                    primitive_ids=actual_ids,
                                                     path_commands=actual_mark.path_commands, slot_id=actual_mark.slot_id,
                                                     paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
         missing_mark = mark_placements.get(f"missing-actual:{instance_id}")
-        if missing_mark is not None and "missingActual" in (getattr(projection, "comparison_facets", ()) or ("missingActual",)):
+        if missing_mark is not None and (projection.lane_membership is not None or
+                                         "missingActual" in (getattr(projection, "comparison_facets", ()) or ("missingActual",))):
+            missing_ids = lane_scene_ids("mark", missing_mark.placement_id)
+            missing_id = missing_ids[0] if missing_ids else missing_mark.placement_id
             bounds = (float(missing_mark.bounds.inline), float(missing_mark.bounds.block),
                       float(missing_mark.bounds.inline_size), float(missing_mark.bounds.block_size))
             missing_binding = semantic_binding("missingActual")
-            primitives.append(ScenePrimitive(f"missing-actual:{instance_id}", PrimitiveKind.RECT, item.object_id, "object", missing_binding.purpose, missing_binding.scene_role,
+            primitives.append(ScenePrimitive(missing_id, PrimitiveKind.RECT, item.object_id, "object", missing_binding.purpose, missing_binding.scene_role,
                                              bounds, corner_radius=missing_mark.corner_radius, slot_id=missing_mark.slot_id,
                                              paint_order=missing_mark.paint_order, end_treatment=missing_mark.end_treatment))
         label_id = f"member-label:{instance_id}"
@@ -603,6 +671,16 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
     ownership.update({item.placement_id: item.slot_id for item in placed_surface.shapes})
     ownership.update({item.relation_id: item.slot_id for item in placed_surface.relations})
     ownership.update({item.placement_id: item.slot_id for item in placed_surface.icons})
+    for emission in placed_surface.lane_emissions:
+        slot_id = ownership.get(emission.placement_id)
+        if slot_id is None:
+            raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", emission.placement_id,
+                                  "typed lane handoff names an unknown Layout placement")
+        for facet in emission.facets:
+            existing = ownership.setdefault(facet.primitive_id, slot_id)
+            if existing != slot_id:
+                raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", facet.primitive_id,
+                                      "typed lane handoff primitive slot differs from placement")
     def owning_slot(scene_id: str) -> str:
         if scene_id in ownership:
             return ownership[scene_id]
@@ -616,13 +694,86 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         completed_primitives = tuple(replace(item, slot_id=owning_slot(item.scene_id)) for item in primitives)
     except KeyError as error:
         raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", str(error)) from error
+    lane_members: tuple[SceneLaneMember, ...] = ()
+    lane_obstacles: tuple[SceneLaneObstacle, ...] = ()
+    lane_mode: str | None = None
+    lane_clearance: float | None = None
+    if projection.lane_membership is not None:
+        lane_mode = "lanes"
+        lane_clearance = 0.0
+        owner_by_primitive: dict[str, tuple[str, str]] = {}
+        placement_by_primitive: dict[str, tuple[str, str, str, str]] = {}
+        obstacle_values: list[SceneLaneObstacle] = []
+        for emission in placed_surface.lane_emissions:
+            owner = (emission.row_id, emission.member_id)
+            for facet in emission.facets:
+                placement_identity = (emission.placement_type, emission.placement_id,
+                                      emission.row_id, emission.member_id)
+                prior_placement = placement_by_primitive.setdefault(facet.primitive_id, placement_identity)
+                if prior_placement != placement_identity:
+                    raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", facet.primitive_id,
+                                          "typed lane handoff assigns one primitive to multiple placements")
+                prior = owner_by_primitive.setdefault(facet.primitive_id, owner)
+                if prior != owner:
+                    raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", facet.primitive_id,
+                                          "typed lane handoff assigns one primitive to different members")
+                if isinstance(facet.obstacle, ObstacleRect):
+                    geometry = SceneLaneRectObstacle(facet.obstacle.left, facet.obstacle.top,
+                                                     facet.obstacle.right, facet.obstacle.bottom)
+                elif isinstance(facet.obstacle, ObstacleSegment):
+                    geometry = SceneLaneSegmentObstacle(facet.obstacle.start, facet.obstacle.end,
+                                                        facet.obstacle.stroke_width)
+                else:
+                    raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", facet.primitive_id,
+                                          "typed lane handoff contains unsupported obstacle geometry")
+                obstacle_values.append(SceneLaneObstacle(
+                    facet.facet_id, facet.primitive_id, emission.row_id, emission.member_id,
+                    facet.obstacle_class, geometry,
+                ))
+        primitive_by_id = {item.scene_id: item for item in completed_primitives}
+        unexpected = next((identifier for identifier in owner_by_primitive
+                           if identifier not in primitive_by_id), None)
+        missing = next((item.scene_id for item in completed_primitives
+                        if requires_lane_member_provenance(item.kind, item.purpose)
+                        and item.scene_id not in owner_by_primitive), None)
+        if not owner_by_primitive or unexpected is not None or missing is not None:
+            mismatch = unexpected or missing or "lane-emission-inventory"
+            raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", mismatch,
+                                  f"Scene lane emission differs from typed Layout handoff: {mismatch}")
+        completed_primitives = tuple(
+            replace(item, lane_row_id=owner_by_primitive[item.scene_id][0],
+                    lane_member_id=owner_by_primitive[item.scene_id][1])
+            if item.scene_id in owner_by_primitive else item
+            for item in completed_primitives
+        )
+        emitted_by_member: dict[tuple[str, str], list[str]] = {}
+        for primitive_id, owner in owner_by_primitive.items():
+            emitted_by_member.setdefault(owner, []).append(primitive_id)
+        primary_purposes = {"planned", "snapshot"}
+        member_values = []
+        for row in projection.lane_rows:
+            for member_id in dict.fromkeys(row.member_item_ids):
+                identifiers = tuple(emitted_by_member.get((row.lane_id, member_id), ()))
+                primary_ids = tuple(identifier for identifier in identifiers
+                                     if primitive_by_id[identifier].purpose in primary_purposes)
+                try:
+                    member_values.append(SceneLaneMember(row.lane_id, member_id, identifiers, primary_ids))
+                except ValueError as error:
+                    raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", member_id,
+                                          f"invalid lane member inventory row={row.lane_id}; "
+                                          f"emitted={identifiers}; primary={primary_ids}") from error
+        lane_members = tuple(member_values)
+        lane_obstacles = tuple(obstacle_values)
     canvas = placed_surface.canvas_bounds
+    completed_primitives = _attach_completed_patterns(completed_primitives, placed_surface.patterns)
     return SceneSurface("table-timeline", slots, rows, groups, scale, completed_primitives, columns=columns,
                         diagnostics=placed_surface.diagnostics,
                         canvas_bounds=(float(canvas.inline), float(canvas.block), float(canvas.inline_size),
                                        float(canvas.block_size)) if canvas is not None else None,
                         fit_warnings=placed_surface.fit_warnings,
-                        info_diagnostics=placed_surface.info_diagnostics)
+                        info_diagnostics=placed_surface.info_diagnostics,
+                        lane_mode=lane_mode, lane_members=lane_members,
+                        lane_obstacles=lane_obstacles, lane_clearance=lane_clearance)
 
 
 def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
@@ -643,7 +794,8 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
             measured_sources=value.measured_sources, flow_direction=value.layout_manifest.dependency_network_flow_direction,
             max_bends=value.layout_manifest.relation_max_bends,
             max_detour_ratio=value.layout_manifest.relation_max_detour_ratio,
-            canvas_bounds=value.layout_manifest.viewport)
+            canvas_bounds=value.layout_manifest.viewport,
+            theme_tokens=value.theme_tokens)
     except LayoutError as error:
         raise SceneBuildError(error.diagnostic_id, error.path) from error
     slots = tuple(SceneSlot(item.node_id, item.source, None,
@@ -693,6 +845,7 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
         completed_primitives = tuple(replace(item, slot_id=ownership[item.scene_id]) for item in primitives)
     except KeyError as error:
         raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", str(error)) from error
+    completed_primitives = _attach_completed_patterns(completed_primitives, placed.patterns)
     return SceneSurface("dependency-network", slots, (), (), None, completed_primitives,
                         canvas_bounds=(float(placed.canvas_bounds.inline), float(placed.canvas_bounds.block),
                                        float(placed.canvas_bounds.inline_size), float(placed.canvas_bounds.block_size)),

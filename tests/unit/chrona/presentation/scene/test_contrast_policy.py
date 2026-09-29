@@ -3,8 +3,8 @@ from __future__ import annotations
 from chrona.presentation.scene.contrast_policy import evaluate_scene_contrast
 
 
-def _scene(*primitives, dispositions=()):
-    return {"version": "chrona/scene/v0.6", "kind": "scene", "surfaces": [{
+def _scene(*primitives, dispositions=(), version="chrona/scene/v0.6"):
+    return {"version": version, "kind": "scene", "surfaces": [{
         "id": "review", "canvasPaint": {"fill": "#FFFFFF", "opacity": 1},
         "primitives": list(primitives), "decorationDispositions": list(dispositions),
     }]}
@@ -40,6 +40,15 @@ def test_policy_rejects_missing_state_treatment_instead_of_inferring_a_floor():
     ))[0]
     assert finding.code == "E_SCENE_STATE_TEXT_CONTRAST_TREATMENT"
     assert finding.severity == "error"
+
+
+def test_note_text_requires_required_treatment_at_serialized_boundary():
+    finding = evaluate_scene_contrast(_scene(
+        _primitive("note-text", "annotation-note-text", "annotation-note-text", "#000000",
+                   treatment="deemphasized"),
+    ))[0]
+    assert finding.code == "E_SCENE_STATE_TEXT_CONTRAST_TREATMENT"
+    assert finding.scene_path == "/surfaces/0:review/primitives/0/contrastTreatment"
 
 
 def test_policy_reports_explicit_decoration_absence_separately_from_paint():
@@ -84,6 +93,8 @@ def test_an_image_backed_container_grounds_note_text_by_its_declared_fill_465():
     """
     ground = _primitive("annotation-box", "unclassified", "annotation", "#16213A", order=10,
                         bounds={"inline": 0, "block": 0, "inlineSize": 200, "blockSize": 60})
+    ground["visualRole"] = "annotation-note-box"
+    ground["sourceRef"] = "note:1"
     ground["paint"]["image"] = {
         "assetIdentity": "sha256:" + "0" * 64,
         "viewport": {"inlineSize": 40, "blockSize": 40},
@@ -92,11 +103,90 @@ def test_an_image_backed_container_grounds_note_text_by_its_declared_fill_465():
     }
     findings = evaluate_scene_contrast(_scene(
         ground,
-        _primitive("note-text", "variance-ahead", "table-cell", "#FFFFFF", treatment="required",
-                  order=100, bounds={"inline": 10, "block": 10, "inlineSize": 100, "blockSize": 20}),
+        {**_primitive("note-text", "annotation-note-text", "annotation-note-text", "#FFFFFF",
+                      treatment="required", order=100,
+                      bounds={"inline": 10, "block": 10, "inlineSize": 100, "blockSize": 20}),
+         "sourceRef": "note:1"},
     ))
     finding = next(item for item in findings if item.primitive_id == "note-text")
     assert (finding.ground_id, finding.ground_color, finding.ground_kind) == ("annotation-box", "#16213A", "flat")
+
+
+def test_note_text_cannot_fall_back_to_unpaired_or_wrong_source_ground():
+    text = {**_primitive("note-text", "annotation-note-text", "annotation-note-text", "#FFFFFF",
+                         treatment="required"), "sourceRef": "note:1"}
+    unrelated = {**_primitive("other-box", "annotation-note-box", "annotation-note-box", "#000000",
+                               order=10), "sourceRef": "note:2"}
+    finding = next(item for item in evaluate_scene_contrast(_scene(unrelated, text))
+                   if item.primitive_id == "note-text")
+    assert finding.code == "E_SCENE_CONTRAST_GROUND_UNSUPPORTED"
+    assert finding.ground_id is None
+
+
+def test_note_text_rejects_missing_later_and_non_containing_paired_boxes():
+    text = {**_primitive("note-text", "annotation-note-text", "annotation-note-text", "#FFFFFF",
+                         treatment="required", order=100), "sourceRef": "note:1"}
+    valid_box = {**_primitive("box", "annotation-note-box", "annotation-note-box", "#000000",
+                              order=10), "sourceRef": "note:1"}
+    later_box = {**valid_box, "paintOrder": 101}
+    outside_box = {**valid_box, "bounds": {"inline": 100, "block": 100,
+                                            "inlineSize": 20, "blockSize": 10}}
+    for primitives in ((text,), (later_box, text), (outside_box, text)):
+        finding = next(item for item in evaluate_scene_contrast(_scene(*primitives))
+                       if item.primitive_id == "note-text")
+        assert finding.code == "E_SCENE_CONTRAST_GROUND_UNSUPPORTED"
+
+
+def test_note_text_rejects_invalid_topmost_box_without_falling_back_to_lower_box():
+    lower = {**_primitive("lower", "annotation-note-box", "annotation-note-box", "#000000",
+                           order=10), "sourceRef": "note:1"}
+    top = {**_primitive("top", "annotation-note-box", "annotation-note-box", None,
+                        order=20), "sourceRef": "note:1"}
+    text = {**_primitive("note-text", "annotation-note-text", "annotation-note-text", "#FFFFFF",
+                         treatment="required", order=100), "sourceRef": "note:1"}
+    finding = next(item for item in evaluate_scene_contrast(_scene(lower, top, text))
+                   if item.primitive_id == "note-text")
+    assert finding.code == "E_SCENE_CONTRAST_GROUND_UNSUPPORTED"
+    assert finding.ground_id == "top"
+
+
+def test_note_text_rejects_absent_and_partial_opacity_box_fills():
+    for fill, opacity in ((None, 1), ("#000000", 0.5)):
+        box = {**_primitive("box", "annotation-note-box", "annotation-note-box", fill,
+                            opacity=opacity, order=10), "sourceRef": "note:1"}
+        text = {**_primitive("note-text", "annotation-note-text", "annotation-note-text", "#FFFFFF",
+                             treatment="required", order=100), "sourceRef": "note:1"}
+        finding = next(item for item in evaluate_scene_contrast(_scene(box, text))
+                       if item.primitive_id == "note-text")
+        assert finding.code == "E_SCENE_CONTRAST_GROUND_UNSUPPORTED"
+
+
+def test_note_text_rejects_gradient_or_pattern_note_box_ground():
+    for feature in ("gradient", "pattern"):
+        box = {**_primitive("box", "annotation-note-box", "annotation-note-box", "#000000",
+                            order=10), "sourceRef": "note:1"}
+        if feature == "gradient":
+            box["paint"]["gradient"] = {"start": [10, 10], "end": [30, 10],
+                                         "stops": [{"offset": 0, "color": "#000000"},
+                                                   {"offset": 1, "color": "#FFFFFF"}]}
+        else:
+            box["pattern"] = {"kind": "diagonal"}
+        text = {**_primitive("note-text", "annotation-note-text", "annotation-note-text", "#FFFFFF",
+                             treatment="required", order=100), "sourceRef": "note:1"}
+        finding = next(item for item in evaluate_scene_contrast(_scene(box, text))
+                       if item.primitive_id == "note-text")
+        assert finding.code == "E_SCENE_CONTRAST_GROUND_UNSUPPORTED"
+
+
+def test_note_text_can_use_paired_symbol_box_ground():
+    box = {**_primitive("box", "annotation-note-box", "annotation-note-box", "#16213A",
+                        kind="Symbol", order=10), "sourceRef": "note:1"}
+    text = {**_primitive("note-text", "annotation-note-text", "annotation-note-text", "#FFFFFF",
+                         treatment="required", order=100), "sourceRef": "note:1"}
+    finding = next(item for item in evaluate_scene_contrast(_scene(box, text))
+                   if item.primitive_id == "note-text")
+    assert finding.ground_id == "box"
+    assert finding.ground_color == "#16213A"
 
 
 def test_stroke_only_rect_samples_painted_edge_not_unpainted_centre():
@@ -148,3 +238,61 @@ def test_category_fill_can_be_carried_by_a_contrasting_explicit_outline():
     assert finding.paint_channel == "stroke"
     assert finding.ground_id == "panel"
     assert (finding.sample_inline, finding.sample_block) == (10, 15)
+
+
+def test_catalog_pattern_checks_substrate_and_ink_pairs_independently_with_density():
+    pattern = {"tileInlineSize": 8, "tileBlockSize": 4, "angleDegrees": 45,
+               "densityBasisPoints": 1250, "primitives": [{"kind": "rect", "x": 0, "y": 0,
+               "inlineSize": 1, "blockSize": 4}], "origin": [10, 10],
+               "regionBounds": {"inline": 10, "block": 10, "inlineSize": 20, "blockSize": 10},
+               "clipBounds": {"inline": 10, "block": 10, "inlineSize": 20, "blockSize": 10},
+               "cornerRadius": 0}
+    primitive = _primitive("pattern", "progress-fill", "progress-fill", "#FFFFFF", order=20,
+                           bounds={"inline": 10, "block": 10, "inlineSize": 20, "blockSize": 10})
+    primitive["paint"]["stroke"] = "#000000"
+    primitive["pattern"] = pattern
+    findings = evaluate_scene_contrast(_scene(primitive, version="chrona/scene/v0.7"))
+    assert len(findings) == 3
+    by_pair = {(item.paint_channel, item.ground_kind): item for item in findings}
+    substrate = by_pair[("fill", "canvas")]
+    assert substrate.severity == "error"
+    assert by_pair[("stroke", "pattern-substrate")].severity == "info"
+    assert by_pair[("stroke", "canvas")].severity == "info"
+    assert all(item.as_mapping()["densityBasisPoints"] == 1250 for item in findings)
+
+
+def test_catalog_pattern_checks_host_substrate_and_host_ink_with_effective_paints():
+    host = _primitive("host", "unclassified", "panel", "#333333", order=10,
+                      bounds={"inline": 10, "block": 10, "inlineSize": 20, "blockSize": 10})
+    primitive = _primitive("pattern", "progress-fill", "progress-fill", "#EEEEEE", order=20,
+                           bounds={"inline": 10, "block": 10, "inlineSize": 20, "blockSize": 10})
+    primitive["paint"]["stroke"] = "#111111"
+    primitive["pattern"] = {
+        "tileInlineSize": 8, "tileBlockSize": 4, "angleDegrees": 45,
+        "densityBasisPoints": 1250, "primitives": [{"kind": "rect", "x": 0, "y": 0,
+        "inlineSize": 1, "blockSize": 4}], "origin": [10, 10],
+        "regionBounds": {"inline": 10, "block": 10, "inlineSize": 20, "blockSize": 10},
+        "clipBounds": {"inline": 10, "block": 10, "inlineSize": 20, "blockSize": 10},
+        "cornerRadius": 0,
+    }
+
+    findings = evaluate_scene_contrast(_scene(host, primitive, version="chrona/scene/v0.7"))
+    by_pair = {(item.paint_channel, item.ground_id): item for item in findings}
+    assert set(by_pair) == {("fill", "host"), ("stroke", "pattern"), ("stroke", "host")}
+    assert (by_pair[("fill", "host")].ground_color,
+            by_pair[("fill", "host")].ground_kind) == ("#333333", "flat")
+    assert (by_pair[("stroke", "pattern")].ground_color,
+            by_pair[("stroke", "pattern")].ground_kind) == ("#EEEEEE", "pattern-substrate")
+    assert (by_pair[("stroke", "host")].ground_color,
+            by_pair[("stroke", "host")].ground_kind) == ("#333333", "flat")
+    assert all(item.density_basis_points == 1250 for item in findings)
+
+
+def test_v06_pattern_policy_result_remains_the_legacy_single_best_candidate():
+    primitive = _primitive("pattern", "progress-fill", "progress-fill", "#FFFFFF", order=20)
+    primitive["paint"]["stroke"] = "#000000"
+    primitive["paint"]["strokeWidth"] = 1
+    primitive["pattern"] = {"kind": "diagonal-hatch"}
+    findings = evaluate_scene_contrast(_scene(primitive))
+    assert len(findings) == 1
+    assert findings[0].paint_channel == "stroke"

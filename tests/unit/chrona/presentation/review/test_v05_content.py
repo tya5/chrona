@@ -7,7 +7,7 @@ from chrona.presentation.model.color_scale import ResolvedColorScale
 from chrona.presentation.model.projection import (
     ObservationState, ReviewItem, ReviewProjection, ReviewRowProjection, ReviewLaneRowProjection,
 )
-from chrona.presentation.model.surface_content import SummaryContent, TableCellContent
+from chrona.presentation.model.surface_content import SummaryContent, TableCellContent, TableContent
 from chrona.presentation.review.lane_membership import Lane, LaneAssignment, LaneMembership
 from chrona.presentation.table_presentation import BooleanPresencePresentation
 from chrona.presentation.review.v05_content import (
@@ -20,6 +20,27 @@ from chrona.presentation.contracts.resources import (
 
 
 EMPTY_SUMMARY = SummaryContent(())
+
+
+def test_lane_plot_label_defaults_preserve_authored_content_and_side():
+    projection = ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 2)), (), ())
+    table = TableContent((), (), (), None, ())
+    view = typed_view({"body": {"rows": {"mode": "lanes"}, "visibility": {
+        "labels": {"placement": "plot"}, "relations": "none", "annotations": "none",
+    }}})
+    default = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, view,
+                                            summary=EMPTY_SUMMARY, table=table)
+    assert (default.label_content, default.label_side, default.label_overflow) == (
+        ("title", "finishDelta"), "auto", "suppress")
+
+    authored = replace(view, visibility=replace(
+        view.visibility, labels=freeze({"placement": "plot", "content": ["title"], "side": "inside"}),
+        fallback=freeze({"labels": ["inside", "end", "suppress"]}),
+    ))
+    selected = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, authored,
+                                             summary=EMPTY_SUMMARY, table=table)
+    assert (selected.label_content, selected.label_side, selected.label_fallback) == (
+        ("title",), "inside", ("inside", "end", "suppress"))
 
 
 def test_lane_table_content_uses_exact_membership_and_no_member_table_subject():

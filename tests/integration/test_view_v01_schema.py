@@ -47,8 +47,75 @@ def _validator_v028() -> jsonschema.Draft202012Validator:
 @pytest.mark.parametrize("path", reachable_view_paths(ROOT))
 def test_declared_public_v03_view_validates(path: Path):
     value = yaml.safe_load(path.read_text(encoding="utf-8"))
-    assert value.get("version") == "chrona/view/v0.27", path
-    assert next(_validator().iter_errors(_json_value(value)), None) is None, path
+    version = value.get("version")
+    validators = {
+        "chrona/view/v0.27": _validator,
+        "chrona/view/v0.28": _validator_v028,
+    }
+    assert version in validators, (path, version)
+    assert next(validators[version]().iter_errors(_json_value(value)), None) is None, path
+
+
+def test_lane_resource_migration_inventory_and_editorial_mirror():
+    library = yaml.safe_load((ROOT / "src/chrona/resources/presets/library.yaml").read_text(encoding="utf-8"))
+    entries = {entry["id"]: entry for entry in library["entries"]}
+    assert len(entries) == 7
+    for preset_id, entry in entries.items():
+        member = entry["members"]["view"]
+        path = ROOT / "src/chrona/resources" / member["sourceRoot"] / member["sourcePath"]
+        view = yaml.safe_load(path.read_text(encoding="utf-8"))
+        assert view["version"] == "chrona/view/v0.28", preset_id
+        assert next(_validator_v028().iter_errors(_json_value(view)), None) is None, preset_id
+        assert view["body"]["rows"]["mode"] == "lanes", preset_id
+        assert "tableColumns" not in view["body"], preset_id
+    editorial = entries["editorial"]["members"]["view"]
+    assert editorial["id"] == "chrona-preset-editorial-lanes"
+    assert editorial["sourcePath"] == "view-lanes.yaml"
+
+    default = yaml.safe_load((ROOT / "src/chrona/resources/presets/bundles/editorial-readable-default/view.yaml").read_text(encoding="utf-8"))
+    assert default["body"]["rows"] == {"mode": "automatic"}
+    assert [column["id"] for column in default["body"]["tableColumns"]] == ["Task", "Plan"]
+    assert default["version"] == "chrona/view/v0.28"
+    assert (ROOT / "src/chrona/resources/presets/bundles/editorial-readable-default/view.yaml").read_bytes() == \
+        (ROOT / "examples/halcyon-1/views/editorial-readable-default.yaml").read_bytes()
+
+    package_view = ROOT / "src/chrona/resources/presets/bundles/editorial/view-lanes.yaml"
+    corpus_view = ROOT / "examples/halcyon-1/views/editorial-lanes.yaml"
+    assert package_view.read_bytes() == corpus_view.read_bytes()
+    reference = yaml.safe_load((ROOT / "examples/halcyon-1/views/editorial.yaml").read_text(encoding="utf-8"))
+    assert reference["id"] == "chrona-preset-editorial"
+    assert reference["body"]["rows"]["mode"] == "automatic"
+    assert (ROOT / "src/chrona/resources/presets/bundles/editorial/view.yaml").read_bytes() == \
+        (ROOT / "examples/halcyon-1/views/editorial.yaml").read_bytes()
+
+
+def test_halcyon_lane_slides_and_full_02_packing_policy():
+    for slide in ("02-programme-board", "03-launch-campaign", "editorial-lanes"):
+        view = yaml.safe_load((ROOT / f"examples/halcyon-1/views/{slide}.yaml").read_text(encoding="utf-8"))
+        assert view["version"] == "chrona/view/v0.28"
+        assert next(_validator_v028().iter_errors(_json_value(view)), None) is None, slide
+        assert view["body"]["rows"]["mode"] == "lanes"
+        assert view["body"]["visibility"]["labels"]["placement"] == "plot"
+        assert "title" in view["body"]["visibility"]["labels"]["content"]
+        assert "tableColumns" not in view["body"]
+
+    # Preserve one committed automatic/table witness and its original bytes.
+    mission = ROOT / "examples/halcyon-1/views/01-mission-brief.yaml"
+    assert yaml.safe_load(mission.read_text(encoding="utf-8"))["body"]["rows"]["mode"] == "automatic"
+
+    board = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
+    assert board["body"]["rows"]["packing"] == ["explicit", "attached", "chain", "dates"]
+    assert "finishDelta" in board["body"]["visibility"]["labels"]["content"]
+
+    reference_context = yaml.safe_load((ROOT / "examples/halcyon-1/contexts/13-gallery-editorial.yaml").read_text(encoding="utf-8"))
+    lane_context = yaml.safe_load((ROOT / "examples/halcyon-1/contexts/16-gallery-editorial-lanes.yaml").read_text(encoding="utf-8"))
+    assert reference_context["id"] == "halcyon-1-13-gallery-editorial"
+    assert reference_context["body"]["view"]["id"] == "chrona-preset-editorial"
+    assert lane_context["id"] == "halcyon-1-16-gallery-editorial-lanes"
+    assert lane_context["body"]["view"]["id"] == "chrona-preset-editorial-lanes"
+    assert lane_context["body"]["view"]["address"] == "views/editorial-lanes.yaml"
+    context_schema = yaml.safe_load(schema_resource("render-context-v0.16.schema.yaml").read_text(encoding="utf-8"))
+    assert next(jsonschema.Draft202012Validator(context_schema).iter_errors(_json_value(lane_context)), None) is None
 
 
 def test_v03_relation_visibility_object_rejects_unsupported_policy():
@@ -76,37 +143,38 @@ def test_view_admits_inside_at_each_member_label_side_ingress():
 
 def test_view_accepts_only_closed_progress_fill_sources():
     value = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
-    assert next(_validator().iter_errors(_json_value(value)), None) is None
+    assert next(_validator_v028().iter_errors(_json_value(value)), None) is None
     value["body"]["progressFill"] = {"source": "derived"}
-    assert next(_validator().iter_errors(_json_value(value)), None) is not None
+    assert next(_validator_v028().iter_errors(_json_value(value)), None) is not None
 
 
-def test_v027_lane_rows_require_closed_lane_intent_and_visible_names():
+def test_v028_lane_rows_require_closed_lane_intent_and_visible_names():
     value = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
     body = value["body"]
     body.pop("tableColumns", None)
     body["rows"] = {"mode": "lanes", "laneTable": {"label": "group", "count": True}}
     body["visibility"]["labels"] = {
         "placement": "plot", "content": ["title", "finishDelta"],
-        "side": "auto", "overflow": "visible-overflow",
+        "side": "auto", "overflow": "suppress",
     }
-    assert next(_validator().iter_errors(_json_value(value)), None) is None
+    assert next(_validator_v028().iter_errors(_json_value(value)), None) is None
 
     invalid = deepcopy(value)
-    invalid["body"]["visibility"]["labels"]["overflow"] = "suppress"
-    assert next(_validator().iter_errors(_json_value(invalid)), None) is not None
+    invalid["body"]["visibility"]["labels"]["overflow"] = "visible-overflow"
+    assert next(_validator_v028().iter_errors(_json_value(invalid)), None) is not None
 
     invalid = deepcopy(value)
     invalid["body"]["rows"].pop("laneTable")
-    assert next(_validator().iter_errors(_json_value(invalid)), None) is not None
+    assert next(_validator_v028().iter_errors(_json_value(invalid)), None) is not None
 
     automatic = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
+    automatic["body"]["rows"]["mode"] = "automatic"
     automatic["body"]["rows"]["laneTable"] = {"label": "group"}
-    assert next(_validator().iter_errors(_json_value(automatic)), None) is not None
+    assert next(_validator_v028().iter_errors(_json_value(automatic)), None) is not None
 
     invalid = deepcopy(value)
     invalid["body"]["grouping"]["by"] = "hierarchy"
-    assert next(_validator().iter_errors(_json_value(invalid)), None) is not None
+    assert next(_validator_v028().iter_errors(_json_value(invalid)), None) is not None
 
     invalid = deepcopy(value)
     invalid["body"]["rows"]["trackAllocation"] = "collision"
@@ -128,7 +196,7 @@ def test_v028_lane_packing_and_lane_keys_are_closed_and_lane_only():
     value["body"].pop("tableColumns", None)
     value["body"]["rows"] = {"mode": "lanes", "laneTable": {"label": "group"}}
     value["body"]["visibility"]["labels"] = {
-        "placement": "plot", "content": ["title"], "side": "auto", "overflow": "visible-overflow",
+        "placement": "plot", "content": ["title"], "side": "auto", "overflow": "suppress",
     }
     validator = _validator_v028()
     assert next(validator.iter_errors(_json_value(value)), None) is None
@@ -210,7 +278,7 @@ def test_view_visual_target_selectors_and_encoding_eligibility_are_closed():
 
 
 def test_v07_scenario_table_source_is_closed_to_id_or_title():
-    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/02-programme-board.yaml").read_text(encoding="utf-8"))
+    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/04-tvac-slip.yaml").read_text(encoding="utf-8"))
     value["body"]["tableColumns"][0]["source"] = {"scenario": "title"}
     assert next(_validator().iter_errors(_json_value(value)), None) is None
     value["body"]["tableColumns"][0]["source"] = {"scenario": "unknown"}

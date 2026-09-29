@@ -18,7 +18,7 @@ def _overlap(left: dict, right: dict) -> bool:
 
 
 def test_all_public_axis_labels_and_independent_notes_have_no_positive_area_intersection():
-    assert len(SCENES) == 28
+    assert len(SCENES) == 29
     axis_count = 0
     for path in SCENES:
         for surface in json.loads(path.read_bytes())["surfaces"]:
@@ -31,11 +31,11 @@ def test_all_public_axis_labels_and_independent_notes_have_no_positive_area_inte
             for index, left in enumerate(notes):
                 assert all(left["slotId"] != right["slotId"] or not _overlap(left["bounds"], right["bounds"])
                            for right in notes[index + 1:]), path
-    assert axis_count == 246
+    assert axis_count == 259
 
 
 def test_all_public_ellipsized_legends_stay_in_slot_and_boolean_cells_are_readable():
-    assert len(SCENES) == 28
+    assert len(SCENES) == 29
     for path in SCENES:
         for surface in json.loads(path.read_bytes())["surfaces"]:
             slots = {item["id"]: item for item in surface["slots"]}
@@ -54,7 +54,7 @@ def test_all_public_ellipsized_legends_stay_in_slot_and_boolean_cells_are_readab
 
 
 def test_every_public_svg_axis_label_is_after_its_band_and_hosted_dvt_label_is_after_its_bar():
-    assert len(SVGS) == 28
+    assert len(SVGS) == 29
     axis_count = 0
     hosted = 0
     for path in SVGS:
@@ -67,11 +67,11 @@ def test_every_public_svg_axis_label_is_after_its_band_and_hosted_dvt_label_is_a
         if path.parent.parent.name != "controller-z":
             continue
         host = next((index for index, item in enumerate(elements)
-                     if item.get("data-scene-id") == "planned:dvt:dvt"), None)
+                     if item.get("data-purpose") == "planned" and item.get("data-source-ref") == "dvt"), None)
         label = next((index for index, item in enumerate(elements)
-                      if item.get("data-scene-id") == "member-label:dvt:dvt"), None)
+                      if item.get("data-purpose") == "member-label" and item.get("data-source-ref") == "dvt"), None)
         if host is not None and label is not None:
             hosted += 1
             assert label > host, path
-    assert axis_count == 246
+    assert axis_count == 259
     assert hosted == 9

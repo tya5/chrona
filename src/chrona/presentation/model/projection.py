@@ -65,6 +65,14 @@ class ReviewItem:
     observation_state: ObservationState = ObservationState.UNAVAILABLE
     attached_to: str | None = None
 
+    @property
+    def at_delta(self) -> int | None:
+        """Point Actual minus planned point, in calendar days (Spec 06 §8)."""
+        planned_at = self.planned.get("at")
+        actual_at = self.actual.get("at") if self.actual is not None else None
+        return ((actual_at - planned_at).days
+                if isinstance(planned_at, date) and isinstance(actual_at, date) else None)
+
 
 @dataclass(frozen=True)
 class ReviewRowProjection:
@@ -86,6 +94,7 @@ class ReviewLaneRowProjection:
     lane_id: str
     group_id: str
     items: tuple[ReviewItem, ...]
+    member_item_ids: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -284,6 +293,7 @@ def _project_lane_rows(rows: tuple[ReviewRowProjection, ...], membership: LaneMe
     output = []
     for lane in membership.lanes:
         members = []
+        member_item_ids = []
         for member_id in lane.member_item_ids:
             row = source_rows.get(member_id)
             if row is None:
@@ -295,7 +305,9 @@ def _project_lane_rows(rows: tuple[ReviewRowProjection, ...], membership: LaneMe
                                else item.attached_to)
                 members.append(replace(item, group_id=assignment.group_id,
                                        attached_to=attached_to))
-        output.append(ReviewLaneRowProjection(lane.lane_id, lane.group_id, tuple(members)))
+                member_item_ids.append(member_id)
+        output.append(ReviewLaneRowProjection(lane.lane_id, lane.group_id,
+                                              tuple(members), tuple(member_item_ids)))
     return tuple(output)
 
 

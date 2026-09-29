@@ -465,6 +465,17 @@ def test_cli_content_sized_table_slot_holds_the_print_theme_delta_column(tmp_pat
     preset = tmp_path / "print-mono"
     monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", "print-mono", "--output", str(preset)])
     main()
+    view_path = preset / "view.yaml"
+    view = yaml.safe_load(view_path.read_text(encoding="utf-8"))
+    # Keep this a regression of content-sized conventional table columns;
+    # lane-table behavior is exercised by the lane-specific tests.
+    view["body"]["rows"]["mode"] = "automatic"
+    for key in ("packing", "laneTable", "laneKeys"):
+        view["body"]["rows"].pop(key, None)
+    view["body"]["tableColumns"] = yaml.safe_load(
+        Path("examples/halcyon-1/views/01-mission-brief.yaml").read_text(encoding="utf-8")
+    )["body"]["tableColumns"]
+    view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
     layout_path = preset / "layout.yaml"
     layout = yaml.safe_load(layout_path.read_text(encoding="utf-8"))
     review = next(child for child in layout["root"]["children"] if child["id"] == "review")
@@ -842,6 +853,43 @@ def test_cli_icon_import_diagnostic_identifies_the_rejected_icon_source(tmp_path
         "sourceRef": "/defs", "revisionRefs": [],
         "message": "E_ICON_IMPORT_ELEMENT icon=demo:bad source=/defs",
     }
+
+
+def test_cli_imports_a_declared_theme_asset_source_without_iconify_flags(tmp_path, monkeypatch, capsys):
+    root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+    source = root / "tests/fixtures/icons/theme-assets-valid.yaml"
+    output = tmp_path / "theme-assets.yaml"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "icon-catalog", "import", "--theme-assets", str(source), "--output", str(output),
+    ])
+
+    main()
+
+    result = json.loads(capsys.readouterr().out)
+    catalog = yaml.safe_load(output.read_bytes())
+    assert result["set"] == "fixture"
+    assert result["glyphs"] == 1
+    assert result["patterns"] == 4
+    assert catalog["version"] == "chrona/icon-catalog/v0.4"
+
+
+def test_cli_theme_asset_import_reports_density_pointer_and_keeps_existing_output(tmp_path, monkeypatch, capsys):
+    root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+    source = root / "tests/fixtures/icons/theme-assets-invalid-density.yaml"
+    output = tmp_path / "theme-assets.yaml"
+    output.write_text("preserve\n", encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "icon-catalog", "import", "--theme-assets", str(source), "--output", str(output),
+    ])
+
+    with pytest.raises(SystemExit) as exited:
+        main()
+
+    assert exited.value.code == 1
+    failure = json.loads(capsys.readouterr().out)["diagnostics"][0]
+    assert failure["code"] == "E_THEME_ASSET_SOURCE_DENSITY"
+    assert failure["sourceRef"] == "/body/patterns/dither-12-5"
+    assert output.read_text(encoding="utf-8") == "preserve\n"
 
 
 def test_cli_draft_schema_diagnostic_keeps_the_author_facing_explanation(tmp_path, monkeypatch, capsys):

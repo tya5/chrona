@@ -95,6 +95,8 @@ def builtin_preset_source_root(address: str) -> Traversable:
             or any(part in {"", ".", ".."} for part in path.parts)):
         raise ValueError("E_BUILTIN_PRESET_LIBRARY")
     packaged = files(__package__).joinpath(*path.parts)
+    if path.parts == ("icons",) and packaged.is_dir():
+        return packaged
     if packaged.is_dir() and (
         packaged.joinpath("project.yaml").is_file()
         or path.parts[:2] == ("presets", "bundles")

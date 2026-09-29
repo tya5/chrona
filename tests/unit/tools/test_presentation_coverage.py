@@ -11,7 +11,7 @@ def _root() -> Path:
 
 def test_presentation_coverage_is_deterministic_and_complete():
     root = _root()
-    assert len(discover(root)) == 28
+    assert len(discover(root)) == 29
     report = render(root)
     assert report == render(root)
     assert "## Layout slot evidence" in report
@@ -50,7 +50,7 @@ def test_presentation_coverage_accepts_transitioning_view_during_resource_migrat
     root = _root()
     slide = next(slide for slide in discover(root) if slide.identifier == "halcyon-1/programme-board")
     view = next(document for kind, _path, document in slide.resources if kind == "view")
-    assert view["version"] == "chrona/view/v0.27"
+    assert view["version"] == "chrona/view/v0.28"
     assert "chrona/view/v0.28" in render(root)
     _validate_resource_versions((slide,), live_schemas(root), root)
 

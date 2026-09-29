@@ -1,4 +1,4 @@
-version: chrona/view/v0.27
+version: chrona/view/v0.28
 kind: view
 id: chrona-preset-editorial-readable-default
 body:
@@ -30,7 +30,7 @@ body:
     source: actual
   visibility:
     labels:
-      placement: both
+      placement: plot
       content:
       - title
       side: end
@@ -88,8 +88,10 @@ body:
     align: start
     width: {minmax: {min: content, max: {fr: 1}}}
     headerOrientation: horizontal
-  - id: Owner
-    source: {field: owner}
+  - id: Plan
+    source:
+      facet: planned
+    format: dateRange
     missing: em-dash
     align: start
     width: content

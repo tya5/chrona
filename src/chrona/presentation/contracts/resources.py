@@ -1,7 +1,7 @@
 """Frozen contracts constructed only after exact resource-schema acceptance."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from enum import StrEnum
 from functools import cache
@@ -484,6 +484,8 @@ class IconCatalogContract(ResourceContract):
     entries: tuple[IconEntry, ...]
     entry_names: tuple[str, ...]
     raw_icons: FrozenDict
+    raw_glyphs: FrozenDict
+    raw_patterns: FrozenDict
 
 
 def _icon_catalog_contract(identity: ClosureIdentity, version: str, body: FrozenDict) -> IconCatalogContract:
@@ -493,8 +495,13 @@ def _icon_catalog_contract(identity: ClosureIdentity, version: str, body: Frozen
     aliases, provenance, entry_aliases = body["aliases"], body["provenance"], body["entryAliases"]
     if not isinstance(aliases, (FrozenList, tuple)) or not isinstance(provenance, FrozenDict) or not isinstance(entry_aliases, FrozenDict):
         raise _closure_kind_error(identity, "aliases list, provenance object, and entryAliases object", {"aliases": aliases, "provenance": provenance, "entryAliases": entry_aliases})
+    raw_glyphs = body.get("glyphs", FrozenDict())
+    raw_patterns = body.get("patterns", FrozenDict())
+    if not isinstance(raw_glyphs, FrozenDict) or not isinstance(raw_patterns, FrozenDict):
+        raise _closure_kind_error(identity, "glyphs and patterns objects", {"glyphs": raw_glyphs, "patterns": raw_patterns})
     return IconCatalogContract(identity, version, str(body["set"]), tuple(str(alias) for alias in aliases), provenance,
-                               entry_aliases, (), tuple(sorted(str(name) for name in raw_icons)), raw_icons)
+                               entry_aliases, (), tuple(sorted(str(name) for name in raw_icons)), raw_icons,
+                               raw_glyphs, raw_patterns)
 
 
 @dataclass(frozen=True)
@@ -600,6 +607,8 @@ class ResolvedThemeContract:
 
     source_theme_id: str
     resolved_input: FrozenDict
+    catalog_glyphs: FrozenDict = field(default_factory=FrozenDict)
+    catalog_patterns: FrozenDict = field(default_factory=FrozenDict)
 
 
 _SCHEMAS = {
@@ -609,9 +618,12 @@ _SCHEMAS = {
     ("view", "chrona/view/v0.27"): "view-v0.27.schema.yaml",
     ("view", "chrona/view/v0.28"): "view-v0.28.schema.yaml",
     ("theme", "chrona/theme/v0.11"): "theme-v0.11.schema.yaml",
+    ("theme", "chrona/theme/v0.13"): "theme-v0.13.schema.yaml",
+    ("theme", "chrona/theme/v0.14"): "theme-v0.14.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.2"): "color-scheme-v0.2.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.9"): "layout-profile-v0.9.schema.yaml",
     ("icon-catalog", "chrona/icon-catalog/v0.3"): "icon-catalog-v0.3.schema.yaml",
+    ("icon-catalog", "chrona/icon-catalog/v0.4"): "icon-catalog-v0.4.schema.yaml",
     ("actual-set", "chrona/actual-set/v0.3"): "actual-set-v0.3.schema.yaml",
     ("snapshot-ref", "chrona/snapshot-ref/v0.2"): "snapshot-ref-v0.2.schema.yaml",
     ("profile-package", "chrona/profile/v0.3"): "profile-v0.3.schema.yaml",
@@ -697,7 +709,7 @@ def _icon_catalog_envelope(value: Mapping[str, Any]) -> dict[str, Any]:
     """Validate catalog framing without paying to decode every unselected icon."""
     body = value.get("body")
     icons = body.get("icons") if isinstance(body, dict) else None
-    if not isinstance(icons, dict) or not icons:
+    if not isinstance(icons, dict):
         return _schema_value(value)
     entry_aliases = body.get("entryAliases")
     name = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
@@ -711,10 +723,18 @@ def _icon_catalog_envelope(value: Mapping[str, Any]) -> dict[str, Any]:
         return _schema_value(value)
     # The schema validates the map's entry shape through one representative;
     # every selected entry is validated independently before it reaches Scene.
-    name, entry = next(iter(icons.items()))
+    name, entry = next(iter(icons.items())) if icons else (None, None)
     envelope = dict(value)
     envelope_body = dict(body)
-    envelope_body["icons"] = {name: entry}
+    envelope_body["icons"] = {name: entry} if name is not None else {}
+    if value.get("version") == "chrona/icon-catalog/v0.4":
+        for collection in ("glyphs", "patterns"):
+            entries = body.get(collection)
+            if not isinstance(entries, dict):
+                return _schema_value(value)
+            if entries:
+                key, item = next(iter(entries.items()))
+                envelope_body[collection] = {key: item}
     envelope["body"] = envelope_body
     return _schema_value(envelope)
 
@@ -728,6 +748,8 @@ def validate_icon_catalog_entry(catalog: IconCatalogContract, name: str) -> None
         "version": catalog.version, "kind": "icon-catalog", "id": catalog.identity.id,
         "body": {"set": catalog.set_name, "aliases": list(catalog.aliases),
                  "provenance": dict(catalog.provenance), "entryAliases": dict(catalog.entry_aliases),
+                 **({"glyphs": dict(catalog.raw_glyphs), "patterns": dict(catalog.raw_patterns)}
+                    if catalog.version == "chrona/icon-catalog/v0.4" else {}),
                  "icons": {name: raw}},
     }
     schema = schema_document(_SCHEMAS[("icon-catalog", catalog.version)])
@@ -735,6 +757,29 @@ def validate_icon_catalog_entry(catalog: IconCatalogContract, name: str) -> None
     if errors:
         violation = explain_errors(errors, resource_kind="icon-catalog", resource_identity=catalog.identity.id)
         raise SchemaContractError("icon-catalog", violation.pointer, violation.message, violation)
+
+
+def validate_theme_asset_entry(catalog: IconCatalogContract, asset_kind: str, name: str) -> Any:
+    """Schema-check one selected normalized glyph or pattern entry."""
+    collection = {"glyph": catalog.raw_glyphs, "pattern": catalog.raw_patterns}.get(asset_kind)
+    if catalog.version != "chrona/icon-catalog/v0.4" or collection is None:
+        raise ContractError("E_THEME_ASSET_REFERENCE")
+    raw = collection.get(name)
+    if raw is None:
+        raise ContractError("E_THEME_ASSET_REFERENCE")
+    source = {
+        "version": catalog.version, "kind": "icon-catalog", "id": catalog.identity.id,
+        "body": {"set": catalog.set_name, "aliases": list(catalog.aliases),
+                 "provenance": dict(catalog.provenance), "entryAliases": dict(catalog.entry_aliases),
+                 "icons": {}, "glyphs": {name: raw} if asset_kind == "glyph" else {},
+                 "patterns": {name: raw} if asset_kind == "pattern" else {}},
+    }
+    schema = schema_document(_SCHEMAS[("icon-catalog", catalog.version)])
+    errors = tuple(jsonschema.Draft202012Validator(schema, registry=_registry()).iter_errors(_schema_value(source)))
+    if errors:
+        violation = explain_errors(errors, resource_kind="icon-catalog", resource_identity=catalog.identity.id)
+        raise SchemaContractError("icon-catalog", violation.pointer, violation.message, violation)
+    return raw
 
 
 def _schema_value(value: Any) -> Any:

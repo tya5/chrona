@@ -7,6 +7,11 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "src"
 ENTRY_POINTS = ("chrona.app.cli", "chrona.__main__")
 ENTRY_SCRIPTS = ("conformance/*.py", "tools/*.py")
+RETIRED_LANE_ENTRY_POINTS = {
+    "chrona.presentation.layout.lane_preflight": {"preflight_surface_lanes"},
+    "chrona.presentation.layout.lane_bundle_mapper": {"map_lane_candidates", "preflight_review_lanes"},
+    "chrona.presentation.layout.lane_allocation": {"allocate_lanes"},
+}
 
 def modules() -> dict[str, Path]:
     """Every chrona module. Package ``__init__`` files are structure, not code."""
@@ -39,6 +44,13 @@ def imports(path: Path, package: str, known: set[str]) -> set[str]:
 
 def main() -> int:
     found = modules()
+    retired = sorted(
+        f"{name}.{node.name}"
+        for name, names in RETIRED_LANE_ENTRY_POINTS.items()
+        if name in found
+        for node in ast.parse(found[name].read_text(encoding="utf-8")).body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in names
+    )
     known = set(found)
     graph = {
         name: imports(path, name if path.name == "__init__.py" else name.rsplit(".", 1)[0], known)
@@ -66,7 +78,9 @@ def main() -> int:
         print(f"unreachable: {name} ({len(found[name].read_text(encoding='utf-8').splitlines())} lines)")
     for name in revived:
         print(f"listed as staged but now reachable: {name}")
-    if orphans or revived:
+    for name in retired:
+        print(f"retired geometry-first lane entry point remains: {name}")
+    if orphans or revived or retired:
         print("\nEvery module is product code or is listed in tools/staged_modules.txt with a reason.")
         return 1
     print(f"{len(reached)} modules reachable, {len(staged)} staged, none orphaned")

@@ -207,6 +207,10 @@ def test_lane_projection_derives_chain_and_attachment_without_actual_or_geometry
     assert membership.assignment_for("gate").rule == "attached"
     assert membership.assignment_for("bus-test").rule == "chain"
     assert sum(len(row.items) for row in projection.lane_rows) == 4
+    assert all(len(row.member_item_ids) == len(row.items) for row in projection.lane_rows)
+    assert {member_id for row in projection.lane_rows for member_id in row.member_item_ids} == {
+        "structure", "avionics", "bus-test", "gate",
+    }
     assert {item.object_id for row in projection.lane_rows for item in row.items} == {
         "structure", "avionics", "bus-test", "gate",
     }

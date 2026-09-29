@@ -8,7 +8,7 @@ from typing import Any, Mapping
 import jsonschema
 
 from chrona.presentation.scene.model import (
-    LANE_MEMBER_PURPOSES, PRIMARY_LANE_MARK_PURPOSES, DecorationDisposition, InspectionScene, LinearGradient,
+    PRIMARY_LANE_MARK_PURPOSES, DecorationDisposition, InspectionScene, LinearGradient,
     PatternGeometry, SceneIconPath, SceneLaneObstacle, SceneLaneRectObstacle,
     SceneLaneSegmentObstacle, ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish,
     TextLayout, requires_lane_member_provenance,
@@ -33,8 +33,10 @@ def serialize_scene(scene: InspectionScene) -> bytes:
 
 def scene_document(scene: InspectionScene) -> dict[str, Any]:
     """Map each public Scene field explicitly; no dataclass reflection is used."""
+    has_catalog_pattern = any(primitive.pattern is not None and primitive.pattern.primitives
+                              for surface in scene.surfaces for primitive in surface.primitives)
     return {
-        "version": "chrona/scene/v0.6",
+        "version": "chrona/scene/v0.7" if has_catalog_pattern else "chrona/scene/v0.6",
         "kind": "scene",
         "provenance": {
             "mode": scene.provenance.mode,
@@ -79,9 +81,12 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
 def validate_scene_document(document: Mapping[str, Any]) -> None:
     """Validate schema shape plus cross-reference invariants JSON Schema cannot state."""
     try:
-        errors = tuple(jsonschema.Draft202012Validator(
-            schema_document("scene-v0.6.schema.yaml")
-        ).iter_errors(document))
+        version = document.get("version")
+        schema_name = {"chrona/scene/v0.6": "scene-v0.6.schema.yaml",
+                       "chrona/scene/v0.7": "scene-v0.7.schema.yaml"}.get(version)
+        if schema_name is None:
+            raise SceneSerializationError("E_SCENE_SERIALIZATION")
+        errors = tuple(jsonschema.Draft202012Validator(schema_document(schema_name)).iter_errors(document))
     except Exception as error:  # schema resource failures have no public partial document
         raise SceneSerializationError("E_SCENE_SERIALIZATION") from error
     if errors or not _finite(document) or not _references_are_closed(document):
@@ -167,9 +172,7 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
             if any(by_id[item][1].get("purpose") not in PRIMARY_LANE_MARK_PURPOSES
                    for item in primary_ids):
                 return False
-            if any((item.get("kind") == "Icon"
-                    or (item.get("purpose") in LANE_MEMBER_PURPOSES
-                        and requires_lane_member_provenance(item.get("kind"), item.get("purpose"))))
+            if any(requires_lane_member_provenance(item.get("kind"), item.get("purpose"))
                    and item.get("laneRowId") is None for item in primitives):
                 return False
             expected_obstacles = set(inventory)
@@ -444,6 +447,36 @@ def _marker(value: Any) -> dict[str, Any]:
 
 
 def _pattern(value: PatternGeometry) -> dict[str, Any]:
+    if value.primitives:
+        assert value.density_basis_points is not None and value.origin is not None
+        assert value.region_bounds is not None and value.clip_bounds is not None
+        assert value.corner_radius is not None
+        primitives = []
+        for item in value.primitives:
+            if item.kind == "circle":
+                primitives.append({"kind": "circle", "cx": item.cx, "cy": item.cy,
+                                   "radius": item.radius})
+            elif item.kind == "rect":
+                primitives.append({"kind": "rect", "x": item.x, "y": item.y,
+                                   "inlineSize": item.inline_size, "blockSize": item.block_size})
+            else:
+                primitive = {"kind": "path", "paint": item.paint,
+                             "commands": [{"kind": command.kind,
+                                           "points": [coordinate for point in command.points
+                                                      for coordinate in point]}
+                                          for command in item.commands]}
+                if item.paint == "stroke":
+                    primitive.update(strokeWidth=item.stroke_width,
+                                     lineCap=item.line_cap, lineJoin=item.line_join)
+                primitives.append(primitive)
+        return {"tileInlineSize": value.tile_inline_size,
+                "tileBlockSize": value.tile_block_size,
+                "angleDegrees": value.angle_degrees,
+                "densityBasisPoints": value.density_basis_points,
+                "primitives": primitives, "origin": _point(value.origin),
+                "regionBounds": _bounds(value.region_bounds),
+                "clipBounds": _bounds(value.clip_bounds),
+                "cornerRadius": value.corner_radius}
     return {"tileInlineSize": value.tile_inline_size, "tileBlockSize": value.tile_block_size,
             "angleDegrees": value.angle_degrees,
             "strokes": [{"start": _point(item.start), "end": _point(item.end), "width": item.width}

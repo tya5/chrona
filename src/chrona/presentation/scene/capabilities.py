@@ -190,8 +190,11 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT, scene_kinds=frozenset(("Text",)))
     register("metric subtitle", "Layout text and Scene Text", _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT,
              scene_kinds=frozenset(("Text",)))
-    register("annotation-callout-text annotation-highlight-text annotation-note-text annotation-arrow-text",
+    register("annotation-callout-text annotation-highlight-text annotation-arrow-text",
              "Layout annotation text and Scene Text", _TEXT_MEASUREMENT | _TEXT_PAINT,
+             scene_kinds=frozenset(("Text",)))
+    register("annotation-note-text", "Scene state Text and contrast policy",
+             _TEXT_MEASUREMENT | _TEXT_PAINT | frozenset(("contrastTreatment",)),
              scene_kinds=frozenset(("Text",)))
     register("variance-ahead variance-on-track variance-behind missing-actual-cell",
              "Scene state Text and contrast policy", _TEXT_PAINT | frozenset(("contrastTreatment",)),
@@ -229,8 +232,9 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
     register("relationSourceTerminal relationTargetTerminal", "Layout relation terminal geometry",
              frozenset(("marker",)))
     register("annotation-callout-box annotation-highlight-box annotation-note-box annotation-arrow-box",
-             "Layout annotation container and Scene Rect", _PATTERNED_RECT_PAINT | frozenset(("annotationContainer",)),
-             scene_kinds=frozenset(("Rect",)))
+             "Layout annotation container and Scene Rect/Symbol",
+             _PATTERNED_RECT_PAINT | frozenset(("annotationContainer",)),
+             scene_kinds=frozenset(("Rect", "Symbol")))
     register("group-band row-band group-header-band calendar-closed", "Layout background and Scene Rect",
              _RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder")),
              scene_kinds=frozenset(("Rect",)))
@@ -248,6 +252,11 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
 _ROLE_PROPERTY_CONTRACTS = _role_contracts()
 _OPEN_AXIS_PROPERTIES = _TEXT_MEASUREMENT | _AXIS_MEASUREMENT
 _OPEN_LEGEND_PROPERTIES = _RECT_PAINT
+_CATALOG_PATTERN_ROLES = frozenset((
+    "missing-actual", "network-node", "progress-fill", "summary-bar",
+    "annotation-highlight-box", "axis-band-decoration", "axis-band-decoration2",
+    "as-of-label-chip", "member-label-chip", "finish-delta-chip",
+))
 
 
 def theme_role_contract(role: str) -> RolePropertyContract | None:
@@ -274,4 +283,16 @@ def theme_role_property_consumer(role: str, property_name: str) -> str | None:
         return "View-named axis-tier measurement"
     if property_name in _OPEN_LEGEND_PROPERTIES:
         return "Detail Profile legend fixed-square Rect"
+    return None
+
+
+def theme_catalog_pattern_consumer(role: str, property_name: str) -> str | None:
+    """Return the completed-Rect owner allowed to consume a catalogue pattern.
+
+    Legacy inline patterns retain their existing role applicability. This
+    narrower check applies only to typed `{kind: catalog}` values because the
+    current completed pattern clip contract covers Rect primitives only.
+    """
+    if property_name == "pattern" and role in _CATALOG_PATTERN_ROLES:
+        return "Layout-completed Rect pattern geometry"
     return None

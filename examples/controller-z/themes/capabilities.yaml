@@ -330,6 +330,7 @@ body:
     annotation-note-box:
       strokeWidth: stroke-width
     annotation-note-text:
+      contrastTreatment: required
       fontFamily: editorial
       fontWeight: text-weight
       fontSize: annotation-size

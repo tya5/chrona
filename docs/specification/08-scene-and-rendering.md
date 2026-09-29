@@ -171,6 +171,18 @@ calendar day. A completed `SceneSurface` carries its own identical scale record 
 serializer that receives only that surface can preserve the evidence. Missing scale
 evidence is `E_PRESENTATION_PRIMITIVE_MISSING`; an adapter MUST NOT reconstruct it
 from viewport, settings, slots, or primitive coordinates.
+Layout resolves any point-mark edge inset from the largest measured left/right
+extent of selected planned and Actual point facets, including symbol, icon,
+rotation and stroke geometry, relative to each facet's date anchor. A
+provisional full-slot scale may be used only to measure those pixel
+protrusions; final marks and all emitted scale evidence use the single inset
+scale. With no selected
+point facet there is no mark inset. This does not change the View's Date-only
+domain: its start and end map to the inset range endpoints, so interval axes
+and shading use exactly the same forward mapping as marks. A non-positive
+usable range is a Layout error. Lane preflight and final surface composition
+use the same range; an adapter never clips or repositions an endpoint point
+mark to repair the scale.
 
 The normalized content-family counts are exactly `relations`, `annotations`, `notes`,
 `legendEntries`, and `summaryPanels`. They explain which optional inputs participated
@@ -179,6 +191,30 @@ collection separate from the manifest; the initial successful profile emits an e
 collection. Manifest fields and diagnostics are never cache or semantic authorities.
 
 ## 4. Coordinate system and temporal scale
+
+### 4.0.1 Theme catalogue patterns (#496)
+
+Catalogue-backed pattern bindings use Theme v0.13 and complete into Scene
+v0.7. Layout owns the patterned region bounds, clip bounds, and tile origin.
+For a patterned Rect, the repeated region is that Rect's completed bounds;
+the tile origin is its inline/block top-left, and the clip is the same bounds
+(including the Rect's completed corner shape when present). This fixes the
+repeat phase per primitive, independent of SVG document origin or paint order.
+Scene carries normalized tile primitives, angle, density, origin, clip bounds,
+and completed `ScenePaint`; `paint.fill` is the substrate and `paint.stroke`
+is the ink. PatternGeometry carries no color. No catalogue reference, Theme
+token, target syntax, or source document crosses into Scene. The adapter may
+encode repetition using SVG's user-space pattern syntax, but all tile values,
+angle, origin, and clip bounds come from Scene. PNG consumes that same SVG via
+the pinned resvg route. The adapter does not look up assets, alter geometry,
+choose clipping, recolor, or select a fallback.
+
+The contrast gate checks substrate against the actual host ground and ink
+against both substrate and host ground; the minimum pairwise ratio must meet
+the semantic floor (3.0:1 for marks, 1.10:1 for decorations). The existing
+opaque representative-ground rule applies to all three colors. Perceptibility
+inspection receives the same channels and geometry/density facts; it does not
+reconstruct effective paint from the catalogue.
 
 ### 4.0 v0.1 Scene profile
 
@@ -318,9 +354,17 @@ adapter must not repair it.
 
 ### Annotation note contrast ground
 
+Hosted note-number text carries a completed `hostPlacementId` naming an
+actually emitted mark primitive. For a Theme glyph, Layout resolves the
+abstract mark to its first painted lane-emission part before Scene projection;
+Scene does not choose or invent that part and rejects a dangling host.
+
 The semantic registry classifies `annotation-note-text` as state text and
 `annotation-note-box` as decoration. In the completed paired annotation,
 Layout/Scene paint order places the box before its text. Contrast evaluation
+does not infer a background-treatment absence from decoration classification:
+only an explicit Theme `backgroundTreatment: none` yields an absent-decoration
+disposition; a painted note box is an emitted witness. Contrast evaluation
 uses the topmost prior opaque Rect or Symbol containing the text's policy sample
 point as its ground; this is the note box when paired. The box fill is the
 Theme-declared representative content-area color, including when its
@@ -332,8 +376,11 @@ ground. Findings identify the selected ground primitive and color.
 
 For `annotation-note-text`, the generic ground search is not sufficient by
 itself: a prior Rect with no fill is skipped and generic search may then select
-a lower host or canvas. C4 therefore requires a prior `annotation-note-box`
-with the same `sourceRef`, containing the note text's sample point and carrying
+a lower host or canvas. C4 therefore requires `contrastTreatment: required`
+on typed and serialized note-text primitives; missing or weaker treatment is
+invalid even if a generic state-text evaluator would allow a 3.0:1
+`deemphasized` case. C4 also requires a prior `annotation-note-box` with the
+same `sourceRef`, containing the note text's sample point and carrying
 opaque flat fill. Missing pair/fill or non-opaque fill yields
 `E_SCENE_CONTRAST_GROUND_UNSUPPORTED`; it cannot fall through to another host
 or the canvas. This pairs the reported ground with the declared content area
@@ -461,7 +508,7 @@ The remaining I3 families are closed as follows.  `table-timeline` owns table fr
 header band, column-label Text, group surface/header, alternating row surface, row
 rule, and one measured table-cell Text per selected `(objectId,columnId)`.  A selected
 semantic relation owns exactly one `dependency-connector` Path with two Layout-completed
-ports. A visible View annotation owns a completed box Rect or balloon Path, measured Text, and its declared completed connector, if any. A Project annotation selected by stable View reference supplies text and object identity to that View annotation; it is not duplicated in the notes slot. Unselected Project notes still own measured Text in the notes slot. Layout, not Scene, owns all ports and geometry under the [#466 candidate contract](../design/issue-466-candidate-placement-design-2026-09-26.md). A present legend slot owns its swatches, measured labels, and
+ports. A visible View annotation owns a completed box `Rect` (including a rectangular image-backed container) or balloon `Symbol`, measured `Text`, and its declared completed connector `Path`, if any. A Project annotation selected by stable View reference supplies text and object identity to that View annotation; it is not duplicated in the notes slot. Unselected Project notes still own measured Text in the notes slot. Layout, not Scene, owns all ports and geometry under the [#466 candidate contract](../design/issue-466-candidate-placement-design-2026-09-26.md). A present legend slot owns its swatches, measured labels, and
 coverage Text.  A present summary slot owns a panel Rect, measured header Text, and
 one measured metric Text per declared metric. `review` receives its remaining
 connector, annotation, and summary families only in I3-F. `minimal` receives its

@@ -173,6 +173,50 @@ roles, `milestoneSymbolActual` and `milestoneSymbolBaseline`, each falling back 
 when a variant needs a different asset altogether (a ghost sprite for a baseline
 gate), not merely a different treatment of the same asset.
 
+The #496 asset-catalog successor permits `shape: {catalog: set:name}` on
+milestone/gate symbol roles. It resolves only a normalized glyph entry and
+then uses the same mark-fit and paint rules above; unknown or wrong-kind
+references fail before Layout with `E_THEME_ASSET_REFERENCE` at the Theme
+property pointer, including the authored reference. Inline glyphs remain a
+valid migration form.
+
+This authoring form is Theme v0.13; derived Theme inheritance advances from
+v0.12 to v0.14. These are successor contracts, so v0.11 authored Themes and
+v0.12 derived Themes retain their existing closed schemas. Theme v0.13 admits
+catalog glyph references only on `milestoneSymbol`,
+`milestoneSymbolActual`, and `milestoneSymbolBaseline`.
+
+A fill role may select a catalogue pattern through its existing `pattern`
+role property, which names a typed pattern token with value
+`{kind: catalog, ref: set:name}` when that exact role/property pair is
+registered by the Theme applicability contract. The flat fill remains the
+opaque representative substrate and the role's resolved stroke is the pattern
+ink; catalogue data supplies geometry and density only. Unknown, wrong-kind,
+or unregistered bindings fail before Scene construction.
+For a catalogue pattern, role `strokeWidth`, `dash`, stroke finish, and gradient
+properties are invalid: the catalogue tile supplies its own stroke geometry
+and the role fill is a flat substrate. If `backgroundTreatment` is present it
+must be `fill`. These conflicts fail at the exact Theme role-property pointer;
+they are never silently ignored by Scene or an adapter.
+The completed pattern preserves both effective paint channels for
+perceptibility and contrast checks; adapters cannot add a fallback color.
+Catalogue pattern tokens are admitted only on roles whose current completed
+primitive is always Rect: `missing-actual.pattern`, `network-node.pattern`,
+`progress-fill.pattern`, `summary-bar.pattern`,
+`annotation-highlight-box.pattern`, `axis-band-decoration.pattern`,
+`axis-band-decoration2.pattern`,
+`as-of-label-chip.pattern`, `member-label-chip.pattern`, and
+`finish-delta-chip.pattern`. Other pattern values and all other
+role/property pairs retain their current contracts.
+`planned`, `actual`, `snapshot`, and `scenario` can emit either Rect or Symbol;
+`milestone` emits Symbol; callout/arrow boxes can be balloon Symbols. Catalogue
+patterns on these roles require a separate completed Symbol clip/paint design
+and are not admitted by Theme v0.13.
+`annotation-note-box.pattern` is deliberately not admitted: required note text
+uses that box's opaque flat representative fill as its same-source ground under
+the #466 contract. A patterned note host requires a separate text-versus-ink
+ground policy before admission.
+
 Theme authoring is additionally closed by a role/property applicability
 contract. After base inheritance and Color Scheme bindings are resolved, but
 before Layout or Scene construction, every declared `roles` property and every
@@ -199,9 +243,18 @@ The note annotation roles have explicit contrast responsibilities. The
 `contrastTreatment: required`; its Theme/Scheme closure is checked against the
 4.5:1 state-text floor on the resolved Scheme surface, and its completed Scene
 paint is checked against its actual declared host ground. The
+effective note-text role MUST reject a missing or weaker treatment after
+inheritance and Scheme insertion; the generic state-text treatment set does
+not relax this note-specific contract. The
 `annotation-note-box` role is a decoration and participates in the 1.10:1
 decoration visibility policy and corpus witness. These classes are registered
 semantic facts, not inferred from the role spelling or paint.
+
+Decoration classification does not imply a `backgroundTreatment` binding.
+Only a role that explicitly declares that property has a background-treatment
+decision; `none` is an explicit no-draw disposition. A painted annotation
+box without the property remains a decoration with an emitted primitive,
+not an absent background.
 
 The `annotation-note-box.fill` binding is also the declared representative
 content-area color for the note text. For rectangle, balloon, and image-backed
@@ -291,6 +344,6 @@ The next specification resolves styled semantic objects into a renderer-neutral 
 
 The resulting Scene can be rendered to SVG or used by an interactive editor, but neither output becomes the source of Chrona semantics.
 
-For the versioned [#466 annotation container treatment](../design/issue-466-candidate-placement-design-2026-09-26.md), an authored Theme v0.11 MAY bind a finite `annotationContainer` token to an annotation box role; Theme v0.12 is the derived inheritance representation. The token declares rectangle or balloon outline and tail dimensions, not a position or search. Layout consumes that resolved treatment before placing an annotation, closes the box and tail geometry together, and passes a completed Path to Scene. Without the binding, a v0.22 resource retains its current rectangle/leader output. A View tail candidate requiring a balloon binding is invalid when the Theme cannot supply it; an adapter MUST NOT fabricate one.
+For the versioned [#466 annotation container treatment](../design/issue-466-candidate-placement-design-2026-09-26.md), an authored Theme v0.11 MAY bind a finite `annotationContainer` token to an annotation box role; Theme v0.12 is the derived inheritance representation. The token declares rectangle or balloon outline and tail dimensions, not a position or search. Layout consumes that resolved treatment before placing an annotation, closes the box and tail geometry together, and passes a completed `Rect` for the rectangle or `Symbol` for the balloon outline to Scene; a completed connector is a separate `Path`. Without the binding, a v0.22 resource retains its current rectangle/leader output. A View tail candidate requiring a balloon binding is invalid when the Theme cannot supply it; an adapter MUST NOT fabricate one.
 
 For the versioned [#465 image-backed container treatment](../design/issue-465-image-annotation-container-design-2026-09-27.md), the same `annotationContainer` token additionally MAY declare `outline: image`, naming an existing [Specification 64](64-portable-icon-catalogs.md) §7 icon-catalog raster PNG entry (`<set>:<name>`, the same reference form a View uses for an ordinary icon) plus nine-slice stretch insets and a content inset, both in em. Layout measures the annotation's text into the content inset's box and expands it by that inset to the paint box that candidate search and collision use; the nine-slice tile geometry stretched to that paint box is a Layout/Scene fact, never an adapter one. The role's existing fill/stroke colour bindings are unchanged; for an image outline, the fill binding is the Theme author's declared representative colour for the artwork's content area, consumed by contrast and perceptibility exactly as a rectangle's fill is today. A View cannot select or override this binding. Without it, a Theme renders exactly as before #465.

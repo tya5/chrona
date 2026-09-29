@@ -1,0 +1,39 @@
+version: chrona/theme-asset-source/v0.1
+kind: theme-asset-source
+id: test-assets
+body:
+  set: fixture
+  aliases: [fixture-shapes]
+  license:
+    spdx: MIT
+    notice: "Test fixture notice for normalization and import behavior."
+  glyphs:
+    pin:
+      viewport: {inlineSize: 24, blockSize: 24}
+      parts:
+        - {paint: fill, d: "M 12 1 Q 5 1 5 8 L 12 23 L 19 8 Q 19 1 12 1 Z"}
+  patterns:
+    dither-12-5:
+      tile: {inlineSize: 8, blockSize: 8}
+      angle: 0
+      densityBasisPoints: 1250
+      primitives:
+        - {kind: rect, x: 0, y: 0, inlineSize: 8, blockSize: 1}
+    dither-25:
+      tile: {inlineSize: 8, blockSize: 8}
+      angle: 0
+      densityBasisPoints: 2500
+      primitives:
+        - {kind: rect, x: 0, y: 0, inlineSize: 8, blockSize: 2}
+    dither-50:
+      tile: {inlineSize: 8, blockSize: 8}
+      angle: 0
+      densityBasisPoints: 5000
+      primitives:
+        - {kind: rect, x: 0, y: 0, inlineSize: 8, blockSize: 4}
+    quarter-arc:
+      tile: {inlineSize: 8, blockSize: 8}
+      angle: 15
+      densityBasisPoints: 189
+      primitives:
+        - {kind: arc, cx: 4, cy: 4, radius: 3, startAngle: 0, endAngle: 90, strokeWidth: 0.25}

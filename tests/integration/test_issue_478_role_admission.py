@@ -51,6 +51,17 @@ def test_draft_closure_reports_invalid_role_property_at_direct_pointer(tmp_path:
     assert error.value.source_ref == "/body/roles/variance-behind/strokeWidth"
 
 
+def test_draft_closure_admits_note_text_contrast_treatment(tmp_path: Path):
+    paths = _paths(ROOT)
+    theme = yaml.safe_load(paths["theme_path"].read_bytes())
+    theme["body"]["roles"]["annotation-note-text"] = {"contrastTreatment": "required"}
+    theme_path = tmp_path / "note-theme.yaml"
+    _write_yaml(theme_path, theme)
+
+    resolved = resolve_draft_render(**(paths | {"theme_path": theme_path}))
+    assert resolved is not None
+
+
 def test_immutable_closure_reports_invalid_scheme_target_at_exact_pointer(tmp_path: Path):
     example = tmp_path / "controller-z"
     shutil.copytree(ROOT / "examples/controller-z", example)

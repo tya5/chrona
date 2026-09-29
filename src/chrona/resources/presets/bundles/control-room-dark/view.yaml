@@ -1,4 +1,4 @@
-version: chrona/view/v0.27
+version: chrona/view/v0.28
 kind: view
 id: chrona-preset-control-room-dark
 body:
@@ -41,9 +41,10 @@ body:
     - finishDelta
   visibility:
     labels:
-      placement: both
+      placement: plot
       content:
       - title
+      - finishDelta
       side: end
       overflow: suppress
     fallback:
@@ -92,31 +93,10 @@ body:
   backgroundDecoration:
     rows: alternate
     groups: all
-  tableColumns:
-  - id: Work item
-    source: title
-    missing: em-dash
-    align: start
-    width: content
-    headerOrientation: horizontal
-  - id: Finish
-    source:
-      facet: planned
-    format: dateRange
-    missing: em-dash
-    align: start
-    width: content
-    headerOrientation: horizontal
-  - id: Δ
-    source:
-      facet: finishDelta
-    format: signedDays
-    missing: em-dash
-    align: end
-    width: content
-    headerOrientation: horizontal
   rows:
-    mode: automatic
+    mode: lanes
+    packing: [explicit, attached]
+    laneTable: {label: lane, count: true}
   markers:
   - kind: asOf
     source: actual

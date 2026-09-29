@@ -1,6 +1,9 @@
 version: chrona/example-reachability/v0.1
 supportingFiles:
   - {path: README.md, reason: corpus index documentation}
+  - {path: attached-milestones/README.md, reason: reusable attached milestone rendering instructions}
+  - {path: attached-milestones/project.yaml, reason: committed long-task and intermediate-gate example}
+  - {path: attached-milestones/actual.yaml, reason: observed point delta example}
   - {path: aster-ssd/README.md, reason: ASTER corpus documentation}
   - {path: aster-ssd/themes/onboarding-variation.yaml, reason: executable five-line derived Theme tutorial source}
   - {path: controller-z/README.md, reason: Controller Z corpus and curriculum documentation}
@@ -18,6 +21,8 @@ supportingFiles:
   - {path: controller-z/profiles/summary.yaml, reason: optional draft summary profile fixture}
   - {path: halcyon-1/views/default-draft.yaml, reason: executable documented default draft View source}
   - {path: halcyon-1/views/editorial-readable-default.yaml, reason: byte-identical corpus mirror of the bundled readable default View}
+  - {path: halcyon-1/views/editorial-lanes.yaml, reason: byte-identical corpus mirror of the packaged Editorial lane View}
+  - {path: halcyon-1/contexts/16-gallery-editorial-lanes.yaml, reason: distinct editorial lane gallery Context}
   - {path: halcyon-1/themes/editorial-readable-default.yaml, reason: byte-identical corpus mirror of the bundled readable default Theme}
   - {path: onboarding/01-spans/project.yaml, reason: executable Draft tutorial fixed-span source}
   - {path: onboarding/02-gate/project.yaml, reason: executable Draft tutorial gate source}

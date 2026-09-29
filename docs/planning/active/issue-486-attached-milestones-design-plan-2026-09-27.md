@@ -1,15 +1,12 @@
-# Design Plan — Attached Milestones (#486)
+# #486 attached milestones — current work record
 
-**Public base:** `e3560ad9` on `main`. **Source of truth:** [Issue #486](https://github.com/tya5/chrona/issues/486); Specification 05 §4.4 (`parent` is the sole containment edge) and §9 (`deadline` is not a scheduling bound); #440 (`points: predecessor` fold); #464 (gate glyphs); #467 (lane rows, in progress).
+**Public base:** `0d0dfef4` (`main`, 2026-09-28). **Authority:** [issue #486](https://github.com/tya5/chrona/issues/486), [Project spec §9.1](../../specification/05-project-format.md), [Review-row spec §3.1](../../specification/38-review-row-composition.md). Earlier [design](../../design/issue-486-attached-milestones-design-2026-09-27.md), [architecture review](../../reviews/current/issue-486-attached-milestones-architecture-review-2026-09-27.md), and [implementation plan](issue-486-attached-milestones-implementation-plan-2026-09-27.md) remain background; this record holds the current plan.
 
 ## Published baseline
 
-- A point object cannot say which task it belongs to. `parent` carries the WBS, and relations carry scheduling logic.
-- In automatic rows, every point takes its own row unless the View sets `rows.points: predecessor`. That fold infers a host from a single incoming relation from a span (`projection.py`, `_fold_automatic_points`), and moves the point onto the host row as a `shared`-track member.
-- A shared-track member is a normal row member: Layout places its mark on the host row, and member labels already exist for multi-member rows.
-- No committed example has a long task with points inside it.
+`attachesTo` validation, schedule independence, automatic-row placement and `points: own-row` are implemented. #467 is merged: View v0.28 lanes assign an attached point to its host lane and Layout tries the host subtrack first. There is no committed two-gate example or rendered lane-mode acceptance test. Lane labels may currently suppress an attached point's required facts; that conflicts with #486's visibility criterion. The issue comments predate #467's data-only lane contract and do not establish acceptance.
 
-## Literal acceptance ledger
+## Literal acceptance
 
 1. “The Project schema accepts `attachesTo` on point objects; the validation errors and the outside-span warning are covered by tests.”
 2. “Attachment changes no scheduled date. A test compares schedules with and without it.”
@@ -17,13 +14,16 @@
 4. “The milestone's name and date stay visible, and its delta if it has one.”
 5. “One committed example has a long task with at least two intermediate milestones attached. HALCYON-1's `campaign` or `mcs` would serve.”
 
-## Questions for the design
+## Selected design and whole-architecture review
 
-- Does `attachesTo` bump the Project version, or extend v0.7 in place?
-- How does a View opt out, given that `own-row` is already the default of `rows.points`?
-- How does the name and date stay visible without new label vocabulary?
-- Which example carries the evidence, and what does it do to the corpus?
+- An attached point's plot label is **required facts**, not a discretionary lane name: its title, planned date and available point `atDelta` (Spec 06 §8) form one measured text request. Projection derives `atDelta` only from matching planned/Actual point endpoints; View content normalization enumerates the active row composition (`rows` in automatic mode, `lane_rows` in lane mode) exactly once and formats those facts. Layout tries the declared lane placement ladder first; if none fits, it emits the complete label as `visible-overflow` with the existing layout warning, never a suppressed/partial label. Ordinary lane names retain #467's terminal suppression. The visible-overflow outcome is explicit evidence for later local tuning, not permission for Scene to choose text or for lane membership to change with Theme.
+- `rows.points: own-row` controls automatic rows, as View v0.28 already declares. In lane mode, excluding `attached` from `rows.packing` restores independent membership; other declared lane rules may still group that point. This is the lane analogue, not a hidden `points` compatibility mode. Explicit rows remain author-controlled. No schema or Project migration is needed.
+- Project `attachesTo` remains presentation metadata: no schedule edge, changed date, containment or relation semantics. View resolves host membership, item identity and complete attached text content; Layout owns measured label geometry and collision outcome; Scene projects completed primitives and lane handoff; SVG serializes them. Relations/annotations use the same placed item anchors. This matches Specs 05/06/08/38 and #467's data-only membership boundary. Risk: fallback may visibly overlap in dense lanes; a nonessential aesthetic adjustment is a successor issue, while silent loss is unacceptable for #486.
 
-## Sequencing
+## Implementation and publication gates
 
-Data validation (row 1–2) and automatic-row placement (rows 3–4 without lanes) do not depend on #467. Placement on a lane (row 3 with lanes) consumes #467's allocator and lands after #467 L3. The View change shares the next free View version with #479 when they land together.
+1. **Required label and rendering evidence:** derive point `atDelta` in `src/chrona/presentation/model/projection.py`; in `src/chrona/presentation/review/v05_content.py`, normalize attached facts from the active row composition; in `src/chrona/presentation/layout/surface_composer.py`, give those facts the designed visible fallback in lane mode. Extend `tests/integration/test_attached_milestones.py` to render automatic and lane surfaces, verify host row/lane, complete title/date/delta in Scene **and SVG**, automatic `own-row`, and lane `packing` opt-out. Reuse the existing Project/schedule validation tests. Run focused tests and affected lane-label tests; publish independently. No schema or resource migration.
+2. **Committed example and generated evidence:** add a small reusable `examples/attached-milestones/project.yaml` with one long fixed-span task and two strictly intermediate attached gates, an optional Actual Set demonstrating point delta, and a concise rendering README. Register these non-materializer files with reasons in `examples/reachability.yaml`. HALCYON was only a suggested host; batch output review showed that changing its shared Project either overlaps labels on slide 03 or suppresses an existing relation in Editorial slides 13/14. Keep HALCYON and its immutable contexts untouched. Add a focused test that renders the committed example and verifies the host lane and complete labels in Scene **and SVG**. Run example reachability and `tools/regenerate_public_examples.py --check` in one batch to prove all 29 existing public materializers remain byte-identical; no generated corpus migration is expected. Publish the example and evidence test together.
+3. **Acceptance and release:** let CI run three-OS full pytest/conformance and newest-Python reproduction after the material push. Review architecture, output diff and literal rows 1–5; publish one concise acceptance review in `docs/reviews/current/` with commit, PR/CI and direct evidence. Close #486 only when the release gate and visible-output checks pass. Nonessential aesthetic tuning moves to a successor issue.
+
+Local aesthetic tuning that is not needed for these criteria belongs in a successor issue, not this record.

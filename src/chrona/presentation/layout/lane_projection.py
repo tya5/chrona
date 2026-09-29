@@ -58,6 +58,12 @@ class LaneProjectionClosure:
     attached_hosts: tuple[tuple[LaneProjectionInstance, LaneProjectionInstance], ...]
 
 
+def lane_missing_actual_visible(projection: ReviewProjection) -> bool:
+    """Apply the View facet selection before lane geometry is composed."""
+    facets = projection.comparison_facets
+    return not facets or "missingActual" in facets
+
+
 def close_lane_projection(
     projection: ReviewProjection,
     *,
@@ -96,6 +102,7 @@ def close_lane_projection(
 
     expected_marks: list[ExpectedLaneMark] = []
     intentional_absences: list[LaneIntentionalAbsence] = []
+    missing_actual_visible = lane_missing_actual_visible(projection)
     for instance in instances:
         item = source_by_instance[instance]
         path = f"/projection/rows/{instance.row_id}/items/{instance.item_id}"
@@ -140,7 +147,11 @@ def close_lane_projection(
                 anchor = item.planned.get("end" if item.source_type == "span" else "at")
                 if not isinstance(anchor, date):
                     raise LayoutError("E_LAYOUT_LANE_EXPECTED_MARK_INVALID", f"{path}/planned")
-                _expect_mark(expected_marks, instance, "missing-actual", "missing-actual")
+                if missing_actual_visible:
+                    _expect_mark(expected_marks, instance, "missing-actual", "missing-actual")
+                else:
+                    intentional_absences.append(LaneIntentionalAbsence(
+                        instance, "missing-actual", "view-facet-omitted"))
             else:
                 if item.observation_state == ObservationState.RECORDED:
                     intentional_absences.append(LaneIntentionalAbsence(
@@ -172,7 +183,11 @@ def close_lane_projection(
             anchor = item.planned.get("end" if item.source_type == "span" else "at")
             if not isinstance(anchor, date):
                 raise LayoutError("E_LAYOUT_LANE_EXPECTED_MARK_INVALID", f"{path}/planned")
-            _expect_mark(expected_marks, instance, "missing-actual", "missing-actual")
+            if missing_actual_visible:
+                _expect_mark(expected_marks, instance, "missing-actual", "missing-actual")
+            else:
+                intentional_absences.append(LaneIntentionalAbsence(
+                    instance, "missing-actual", "view-facet-omitted"))
         elif item.observation_state == ObservationState.RECORDED:
             intentional_absences.append(LaneIntentionalAbsence(
                 instance, "actual", "incomplete-actual-payload"))

@@ -135,7 +135,7 @@ allOf:
                 oneOf:
                   - {type: boolean}
                   - type: object
-                    required: [placement, content, side]
+                    required: [placement]
                     additionalProperties: false
                     properties:
                       placement: {enum: [plot, table, both, none]}
@@ -617,9 +617,9 @@ allOf:
             examples: [{rows: {mode: explicit}, window: {}}]
             if: {properties: {rows: {properties: {mode: {const: explicit}}, required: [mode]}}}
             then: {not: {anyOf: [{required: [selection]}, {required: [grouping]}, {required: [ordering]}]}, required: [window]}
-          - description: "Lane rows are table-timeline-only, non-hierarchical, and require selection, grouping, ordering, window, visible plot names, and lane summary intent."
-            examples: [{surface: table-timeline, rows: {mode: lanes, laneTable: {label: group}}, selection: {}, grouping: {}, ordering: {}, window: {}, visibility: {labels: {placement: plot, content: [title], side: end, overflow: visible-overflow}}}]
-            if: {properties: {rows: {properties: {mode: {const: lanes}}, required: [mode]}}}
+          - description: "Lane rows require plot names; side, content and suppress overflow have lane defaults without weakening non-lane declarations."
+            examples: [{surface: table-timeline, rows: {mode: lanes, laneTable: {label: group}}, selection: {}, grouping: {}, ordering: {}, window: {}, visibility: {labels: {placement: plot, content: [title], side: inside}, fallback: {labels: [inside, end, suppress]}}}]
+            if: {properties: {rows: {properties: {mode: {const: lanes}}, required: [mode]}}, required: [rows]}
             then:
               required: [selection, grouping, ordering, window, visibility]
               properties:
@@ -631,12 +631,19 @@ allOf:
                   properties:
                     labels:
                       type: object
-                      required: [placement, content, side, overflow]
+                      required: [placement]
                       properties:
                         placement: {const: plot}
                         content: {contains: {const: title}}
-                        overflow: {const: visible-overflow}
+                        overflow: {const: suppress}
               not: {anyOf: [{required: [hierarchyColumn]}, {required: [tableColumns]}]}
+            else:
+              properties:
+                visibility:
+                  properties:
+                    labels:
+                      if: {type: object}
+                      then: {required: [content, side]}
           - description: "A dependency network omits table-timeline-only presentation fields."
             examples: [{surface: dependency-network}]
             if: {properties: {surface: {const: dependency-network}}, required: [surface]}

@@ -25,6 +25,7 @@ def test_report_aggregates_per_purpose_and_retains_all_policy_errors(tmp_path):
     assert report["rows"][0]["minimumContrast"] == 1
     assert report["corpusErrors"] == ["E_PRESENTATION_CONTRAST_DECORATION_WITNESS"]
     assert "`row-band`" in render_markdown(report)
+    assert "## Decoration corpus witness" in render_markdown(report)
 
 
 def test_report_names_measured_primitive_ground_and_channel(tmp_path):

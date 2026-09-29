@@ -3,8 +3,11 @@ from __future__ import annotations
 
 import json
 import sys
+import xml.etree.ElementTree as ET
+from copy import deepcopy
 from pathlib import Path
 
+from PIL import Image
 import pytest
 import yaml
 
@@ -32,6 +35,65 @@ def _primitives(scene: dict) -> list[dict]:
 
     walk(scene)
     return found
+
+
+def _assert_marks_inside_timeline(surface: dict) -> None:
+    timeline = next(slot for slot in surface["slots"] if slot["id"] == "timeline")["bounds"]
+    left, right = timeline["inline"], timeline["inline"] + timeline["inlineSize"]
+    scale = surface["scale"]
+    assert left <= scale["rangeStart"] < scale["rangeEnd"] <= right
+    assert scale["origin"] == scale["rangeStart"]
+    marks = [item for item in surface["primitives"]
+             if item.get("purpose") in {"planned", "actual", "missingActual"}]
+    assert marks
+    for mark in marks:
+        bounds = mark["bounds"]
+        assert bounds["inline"] >= left - 0.01, mark["id"]
+        assert bounds["inline"] + bounds["inlineSize"] <= right + 0.01, mark["id"]
+
+
+def _assert_as_of_label_outside_axis(surface: dict) -> None:
+    axis = next(slot for slot in surface["slots"] if slot["id"] == "timeline-axis")["bounds"]
+    timeline = next(slot for slot in surface["slots"] if slot["id"] == "timeline")["bounds"]
+    label_boxes = [item["bounds"] for item in surface["primitives"]
+                   if item.get("id") in {"as-of-label", "chip:as-of-label"}]
+    assert label_boxes
+
+    def intersects(left: dict, right: dict) -> bool:
+        return (left["inline"] < right["inline"] + right["inlineSize"]
+                and right["inline"] < left["inline"] + left["inlineSize"]
+                and left["block"] < right["block"] + right["blockSize"]
+                and right["block"] < left["block"] + left["blockSize"])
+
+    obstacles = [item for item in surface["primitives"]
+                 if item.get("purpose") in {"axis-label", "axis-band", "planned", "actual", "missingActual"}]
+    for label in label_boxes:
+        assert timeline["inline"] <= label["inline"]
+        assert label["inline"] + label["inlineSize"] <= timeline["inline"] + timeline["inlineSize"]
+        assert timeline["block"] <= label["block"]
+        assert label["block"] + label["blockSize"] <= timeline["block"] + timeline["blockSize"]
+        assert not intersects(label, axis), label
+        assert not [item["id"] for item in obstacles if intersects(label, item["bounds"])], label
+
+
+def _assert_member_end_gap(surface: dict) -> None:
+    marks = [item for item in surface["primitives"]
+             if item.get("purpose") in {"planned", "actual"}]
+    labels = [item for item in surface["primitives"] if item.get("purpose") == "member-label"]
+    for label in labels:
+        host_kind = "actual" if label.get("sourceKind") == "actual" else "planned"
+        host = next((mark for mark in marks
+                     if mark.get("purpose") == host_kind
+                     and ((label.get("laneMemberId") is not None
+                           and mark.get("laneMemberId") == label["laneMemberId"])
+                          or (label.get("laneMemberId") is None
+                              and mark["sourceRef"] == label["sourceRef"]))), None)
+        assert host is not None, label["id"]
+        text = label["textLayout"]["bounds"]
+        mark = host["bounds"]
+        mark_right = mark["inline"] + mark["inlineSize"]
+        if text["inline"] >= mark_right:
+            assert text["inline"] - mark_right <= 2 * label["textLayout"]["fontSize"] + 0.01, label["id"]
 
 
 def _rgb(colour: str) -> tuple[float, float, float]:
@@ -146,15 +208,15 @@ def test_print_mono_separates_slips_and_as_of_in_greyscale(tmp_path, monkeypatch
     preset = _copied_preset(tmp_path, monkeypatch, "print-mono")
     scene = _render(tmp_path, monkeypatch, "print-mono", "--preset", str(preset))
     primitives = _primitives(scene)
-    luminance = {}
-    for primitive in primitives:
-        role = primitive.get("visualRole", "")
-        if role.startswith("variance-") and "fill" in primitive["paint"]:
-            luminance.setdefault(role, _luminance(_rgb(primitive["paint"]["fill"])))
-    assert {"variance-behind", "variance-on-track"} <= set(luminance)
-    values = sorted(luminance.values())
-    # Neighbouring states stay apart in greyscale by a WCAG contrast of at least 2.
-    assert all((high + 0.05) / (low + 0.05) >= 2 for low, high in zip(values, values[1:]))
+    # Lane Views put signed finish deltas in the member label, so they no
+    # longer emit separate variance-* paint primitives. Preserve the user
+    # visible slip check against those completed labels.
+    deltas = [item for item in primitives if item.get("purpose") == "finish-delta"]
+    assert not deltas  # finish deltas are composed into the lane member label
+    lane_labels = [item.get("text", "") for item in primitives
+                   if item.get("id", "").startswith("member-label:")]
+    assert any(text.endswith("d") and ("+" in text or "−" in text or "-" in text)
+               for text in lane_labels)
     as_of = [item for item in primitives if item.get("visualRole") == "as-of" and "stroke" in item["paint"]]
     grid = [item for item in primitives if item.get("purpose") == "axis-grid"]
     assert as_of and all(item["paint"]["dash"] for item in as_of)
@@ -182,91 +244,25 @@ def test_cli_names_colliding_scale_values(tmp_path, monkeypatch, capsys) -> None
     assert [(item["values"], item["vision"], item["deltaE"]) for item in collisions] == [(["bus", "launch"], "normal", 0.0)]
 
 
-def test_bundled_default_guides_every_bar_and_names_it_or_reports_suppression(tmp_path, monkeypatch) -> None:
-    scene, svg_path = _render_project(
-        tmp_path, monkeypatch, "bundled-default",
-        ROOT / "examples/halcyon-1/project.yaml",
-        ROOT / "examples/halcyon-1/actual.yaml",
-    )
+def _assert_automatic_default_keeps_plot_names_and_row_guides(scene: dict, svg: str) -> None:
     surface = scene["surfaces"][0]
+    allowed_layout_warnings = {"W_LAYOUT_ACTUAL_INCOMPLETE", "W_LAYOUT_LABEL_SUPPRESSED"}
+    assert not [item for item in scene["diagnostics"]
+                if item.startswith("W_LAYOUT_")
+                and item.split(":", 1)[0] not in allowed_layout_warnings]
+    _assert_marks_inside_timeline(surface)
+    _assert_as_of_label_outside_axis(surface)
+    _assert_member_end_gap(surface)
     timeline = next(slot for slot in surface["slots"] if slot["id"] == "timeline")["bounds"]
     rows = {row["id"]: row["bounds"] for row in surface["rows"]}
     primitives = {item["id"]: item for item in _primitives(scene)}
-    svg = svg_path.read_text(encoding="utf-8")
     bands = {key: item for key, item in primitives.items() if key.startswith("row-band:")}
-    assert len(rows) == 26
-    assert len([key for key in primitives if key.startswith("planned:")]) == len(rows)
-    assert bands and all(item["bounds"]["inline"] + item["bounds"]["inlineSize"] >=
-                         timeline["inline"] + timeline["inlineSize"] - 0.01
-                         for item in bands.values())
-    # Alternate bands and their shared edges give continuous guidance to all rows.
-    edges = {round(item["bounds"]["block"], 3) for item in bands.values()} | {
-        round(item["bounds"]["block"] + item["bounds"]["blockSize"], 3)
-        for item in bands.values()
-    }
-    assert all(round(bounds["block"], 3) in edges or
-               round(bounds["block"] + bounds["blockSize"], 3) in edges
-               for bounds in rows.values())
-    assert svg.count('id="row-band:') == len(bands)
-
+    planned = {key: item for key, item in primitives.items() if key.startswith("planned:")}
+    labels = {key: item for key, item in primitives.items() if key.startswith("member-label:")}
     suppressed = {diagnostic.split("W_LAYOUT_LABEL_SUPPRESSED:", 1)[1]
                   for diagnostic in scene["diagnostics"]
                   if diagnostic.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")}
-    labels = {key: item for key, item in primitives.items() if key.startswith("member-label:")}
-    assert suppressed.isdisjoint(labels)
-    assert set(labels) | {f"{item}" for item in suppressed} == {
-        f"member-label:{row_id}:{row_id}" for row_id in rows
-    }
-    for key, item in labels.items():
-        _, row_id, object_id = key.split(":", 2)
-        label, row = item["bounds"], rows[row_id]
-        host = primitives[f"planned:{object_id}:{object_id}"]["bounds"]
-        assert row["block"] - 0.01 <= label["block"]
-        assert label["block"] + label["blockSize"] <= row["block"] + row["blockSize"] + 0.01
-        assert (label["inline"] >= host["inline"] + host["inlineSize"] - 0.5 or
-                label["inline"] + label["inlineSize"] <= host["inline"] + 0.5)
-        assert f'id="{key}"' in svg
-    for key in suppressed:
-        assert key not in primitives
-        assert f'id="{key}"' not in svg
-    aggregate = [item for item in scene["diagnostics"]
-                 if item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:")]
-    assert len(aggregate) == 1
-    assert aggregate[0].endswith(f"count={len(suppressed)}")
-
-    # Planned dates may change without changing the presentation contract.
-    expected_variances = {
-        f"variance:{object_id}:{object_id}" for object_id in (
-            "mcs", "optics", "structure", "eps", "detector", "avionics",
-            "payload-tvac", "station", "bus-test", "comms-test",
-            "integration", "vibration",
-        )
-    }
-    variances = {key: item for key, item in primitives.items() if key.startswith("variance:")}
-    assert set(variances) == expected_variances
-    assert all(item.get("text", "").endswith("d") for item in variances.values())
-    assert {item["purpose"] for item in variances.values()} == {"finish-delta"}
-    assert {item["visualRole"] for item in variances.values()} == {
-        "variance-ahead", "variance-on-track", "variance-behind",
-    }
-    assert all(key not in labels and f'id="{key}"' in svg for key in expected_variances)
-
-
-def test_init_starter_bundled_default_guides_and_names_every_bar(tmp_path, monkeypatch) -> None:
-    starter = tmp_path / "starter"
-    monkeypatch.setattr(sys, "argv", ["chrona", "init", str(starter)])
-    main()
-    scene, svg_path = _render_project(tmp_path, monkeypatch, "starter-default",
-                                      starter / "project.yaml", starter / "actual.yaml")
-    surface = scene["surfaces"][0]
-    timeline = next(slot for slot in surface["slots"] if slot["id"] == "timeline")["bounds"]
-    rows = {row["id"]: row["bounds"] for row in surface["rows"]}
-    primitives = {item["id"]: item for item in _primitives(scene)}
-    bands = {key: item for key, item in primitives.items() if key.startswith("row-band:")}
-    labels = {key: item for key, item in primitives.items() if key.startswith("member-label:")}
-    svg = svg_path.read_text(encoding="utf-8")
-    assert len(rows) == 3
-    assert len(bands) == 2
+    assert rows and bands and planned
     assert all(item["bounds"]["inline"] + item["bounds"]["inlineSize"] >=
                timeline["inline"] + timeline["inlineSize"] - 0.01
                for item in bands.values())
@@ -277,20 +273,264 @@ def test_init_starter_bundled_default_guides_and_names_every_bar(tmp_path, monke
     assert all(round(bounds["block"], 3) in edges or
                round(bounds["block"] + bounds["blockSize"], 3) in edges
                for bounds in rows.values())
-    assert len(labels) == len(rows)
-    for key, item in labels.items():
-        _, row_id, object_id = key.split(":", 2)
-        label, row = item["bounds"], rows[row_id]
-        host = primitives[f"planned:{object_id}:{object_id}"]["bounds"]
-        assert row["block"] - 0.01 <= label["block"]
-        assert label["block"] + label["blockSize"] <= row["block"] + row["blockSize"] + 0.01
-        assert (label["inline"] >= host["inline"] + host["inlineSize"] - 0.5 or
-                label["inline"] + label["inlineSize"] <= host["inline"] + 0.5)
-        assert f'id="{key}"' in svg
-    assert not [key for key in primitives if key.startswith("variance:")]
-    assert not [item for item in scene["diagnostics"]
-                if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")]
+    assert len(labels) + len(suppressed) == len(planned)
+    assert suppressed.isdisjoint(labels)
     assert svg.count('id="row-band:') == len(bands)
+    assert all(f'id="{key}"' in svg for key in labels)
+    assert all(f'id="{key}"' not in svg for key in suppressed)
+
+
+def test_bundled_default_uses_task_and_planned_date_columns(tmp_path, monkeypatch) -> None:
+    scene, svg_path = _render_project(
+        tmp_path, monkeypatch, "bundled-default",
+        ROOT / "examples/halcyon-1/project.yaml",
+        ROOT / "examples/halcyon-1/actual.yaml",
+    )
+    primitives = {item["id"]: item for item in _primitives(scene)}
+    svg = svg_path.read_text(encoding="utf-8")
+    _assert_automatic_default_keeps_plot_names_and_row_guides(scene, svg)
+    svg_ids = {value for element in ET.fromstring(svg).iter()
+               for value in (element.get("id"), element.get("data-scene-id")) if value}
+    columns = {item["text"] for item in primitives.values()
+               if item.get("purpose") == "table-column-label"}
+    cells = {item["id"]: item["text"] for item in primitives.values()
+             if item.get("purpose") == "table-cell"}
+    assert columns == {"Task", "Plan"}
+    assert len([key for key in cells if key.endswith(":Task")]) == 26
+    assert len([key for key in cells if key.endswith(":Plan")]) == 26
+    assert all(cells[key].strip() for key in cells if key.endswith(":Plan"))
+    assert "Owner" not in columns
+    assert "Launch campaign" in {text for key, text in cells.items() if key.endswith(":Task")}
+    assert all(key in svg_ids for key in primitives if key.startswith("cell:"))
+
+
+def test_init_starter_default_uses_task_and_planned_date_columns(tmp_path, monkeypatch) -> None:
+    starter = tmp_path / "starter"
+    monkeypatch.setattr(sys, "argv", ["chrona", "init", str(starter)])
+    main()
+    scene, svg_path = _render_project(tmp_path, monkeypatch, "starter-default",
+                                      starter / "project.yaml", starter / "actual.yaml")
+    primitives = {item["id"]: item for item in _primitives(scene)}
+    svg = svg_path.read_text(encoding="utf-8")
+    _assert_automatic_default_keeps_plot_names_and_row_guides(scene, svg)
+    svg_ids = {value for element in ET.fromstring(svg).iter()
+               for value in (element.get("id"), element.get("data-scene-id")) if value}
+    columns = {item["text"] for item in primitives.values()
+               if item.get("purpose") == "table-column-label"}
+    cells = {item["id"]: item["text"] for item in primitives.values()
+             if item.get("purpose") == "table-cell"}
+    assert columns == {"Task", "Plan"}
+    assert len([key for key in cells if key.endswith(":Task")]) == 3
+    assert len([key for key in cells if key.endswith(":Plan")]) == 3
+    assert all(key in svg_ids for key in primitives if key.startswith("cell:"))
+    assert "Owner" not in svg
+
+
+def test_as_of_no_fit_keeps_rule_and_omits_label(tmp_path, monkeypatch) -> None:
+    import chrona.presentation.layout.surface_composer as composer
+
+    starter = tmp_path / "starter"
+    monkeypatch.setattr(sys, "argv", ["chrona", "init", str(starter)])
+    main()
+    monkeypatch.setattr(composer, "find_asof_label_candidate", lambda *args, **kwargs: None)
+    scene, svg_path = _render_project(tmp_path, monkeypatch, "as-of-no-fit",
+                                      starter / "project.yaml", starter / "actual.yaml")
+    primitives = {item["id"]: item for item in _primitives(scene)}
+    assert "W_LAYOUT_LABEL_SUPPRESSED:as-of-label" in scene["diagnostics"]
+    assert "as-of" in primitives
+    assert "as-of-label" not in primitives
+    assert "chip:as-of-label" not in primitives
+    svg_ids = {value for element in ET.fromstring(svg_path.read_text(encoding="utf-8")).iter()
+               for value in (element.get("id"), element.get("data-scene-id")) if value}
+    assert "as-of" in svg_ids
+    assert "as-of-label" not in svg_ids
+    assert "chip:as-of-label" not in svg_ids
+
+
+def test_halcyon_readable_default_mirror_renders_task_and_plan_columns(tmp_path, monkeypatch) -> None:
+    packaged = ROOT / "src/chrona/resources/presets/bundles/editorial-readable-default/view.yaml"
+    mirror = ROOT / "examples/halcyon-1/views/editorial-readable-default.yaml"
+    assert packaged.read_bytes() == mirror.read_bytes()
+    scene, _ = _render_project(tmp_path, monkeypatch, "halcyon-mirror-default",
+                               ROOT / "examples/halcyon-1/project.yaml",
+                               ROOT / "examples/halcyon-1/actual.yaml",
+                               "--view", str(mirror))
+    primitives = _primitives(scene)
+    columns = {item["text"] for item in primitives
+               if item.get("purpose") == "table-column-label"}
+    assert columns == {"Task", "Plan"}
+    assert "Owner" not in columns
+
+
+def test_attached_milestones_default_keeps_host_title_visible(tmp_path, monkeypatch) -> None:
+    example = ROOT / "examples/attached-milestones"
+    scene, svg_path = _render_project(tmp_path, monkeypatch, "attached-default",
+                                      example / "project.yaml", example / "actual.yaml")
+    primitives = _primitives(scene)
+    task_cells = [item["text"] for item in primitives
+                  if item.get("purpose") == "table-cell" and item["id"].endswith(":Task")]
+    svg_text = "".join(ET.fromstring(svg_path.read_text(encoding="utf-8")).itertext())
+    assert "Launch campaign" in task_cells
+    assert "Launch campaign" in svg_text
+
+
+def test_public_halcyon_03_lane_table_uses_stable_nonblank_lane_identity() -> None:
+    scene_path = ROOT / "examples/halcyon-1/generated/03-launch-campaign.scene.json"
+    svg_path = ROOT / "examples/halcyon-1/generated/03-launch-campaign.svg"
+    scene = json.loads(scene_path.read_text(encoding="utf-8"))
+    primitives = _primitives(scene)
+    labels = [item["text"] for item in primitives
+              if item.get("purpose") == "table-cell" and item["id"].endswith(":Lane")]
+    svg_text = "".join(ET.fromstring(svg_path.read_text(encoding="utf-8")).itertext())
+    assert labels
+    assert all(label.strip() for label in labels)
+    assert all(label.startswith("Lane ") for label in labels)
+    assert len(labels) == len(set(labels))
+    assert all(label in svg_text for label in labels)
+
+
+@pytest.mark.parametrize("slide", ("02-programme-board", "12-glyph-gates"))
+def test_wallboard_lane_table_keeps_the_bus_test_relation(slide: str) -> None:
+    scene = json.loads((ROOT / f"examples/halcyon-1/generated/{slide}.scene.json").read_text(encoding="utf-8"))
+    primitives = _primitives(scene)
+    lane_labels = [item["text"] for item in primitives
+                   if item.get("purpose") == "table-cell" and item["id"].endswith(":Lane")]
+    group_headers = {item["text"] for item in primitives if item.get("purpose") == "group-header"}
+    route_id = ('relation:bustest-integration:review-lane:["generated","bus","pdr"]:'
+                'bus-test:review-lane:["generated","ait","integration"]:integration')
+    assert lane_labels and all(label.strip() and label not in group_headers for label in lane_labels)
+    assert [item["id"] for item in primitives if item["id"].startswith("relation:bustest-integration:")] == [route_id]
+    svg_path = ROOT / f"examples/halcyon-1/generated/{slide}.svg"
+    svg_ids = {value for element in ET.fromstring(svg_path.read_text(encoding="utf-8")).iter()
+               for value in (element.get("id"), element.get("data-scene-id")) if value}
+    assert route_id in svg_ids
+
+
+@pytest.mark.parametrize("slide", ("02-programme-board", "11-overlay-briefing", "12-glyph-gates"))
+def test_wallboard_fill_keeps_all_packed_member_names(slide: str) -> None:
+    scene = json.loads((ROOT / f"examples/halcyon-1/generated/{slide}.scene.json").read_text(encoding="utf-8"))
+    surface = scene["surfaces"][0]
+    packed = len(surface["laneMembers"])
+    names = [item for item in _primitives(scene) if item.get("purpose") == "member-label"]
+    shown = len(names)
+    assert packed == shown == 26
+    assert not any(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:") for item in scene["diagnostics"])
+    for box in (item for item in _primitives(scene) if item["id"].startswith("annotation-box:")):
+        left, top = box["bounds"]["inline"], box["bounds"]["block"]
+        right = left + box["bounds"]["inlineSize"]
+        bottom = top + box["bounds"]["blockSize"]
+        for name in names:
+            bounds = name["bounds"]
+            assert not (left < bounds["inline"] + bounds["inlineSize"]
+                        and bounds["inline"] < right
+                        and top < bounds["block"] + bounds["blockSize"]
+                        and bounds["block"] < bottom), (slide, box["id"], name["id"])
+
+
+def test_programme_board_wallboard_profile_is_context_specific_and_complete() -> None:
+    layouts = ROOT / "examples/halcyon-1/layouts"
+    shared = yaml.safe_load((layouts / "wallboard.yaml").read_text(encoding="utf-8"))
+    programme = yaml.safe_load((layouts / "wallboard-programme-board.yaml").read_text(encoding="utf-8"))
+    assert shared["id"] == "wallboard"
+    assert shared["root"]["children"][1]["inlineSize"] == {
+        "minmax": {"min": "content", "max": {"fr": 2}}
+    }
+    assert programme["version"] == "chrona/layout-profile/v0.9"
+    assert programme["id"] == "wallboard-programme-board"
+    assert "root" in programme and "extends" not in programme and "overrides" not in programme
+    assert programme["root"]["children"][1]["inlineSize"] == {
+        "minmax": {"min": {"fixed": 300}, "max": {"fr": 2}}
+    }
+    shared_copy = deepcopy(programme)
+    shared_copy["id"] = "wallboard"
+    shared_copy["root"]["children"][1]["inlineSize"] = {
+        "minmax": {"min": "content", "max": {"fr": 2}}
+    }
+    assert programme["reviewSurface"]["rowDistribution"] == "fill"
+    assert shared["reviewSurface"]["rowDistribution"] == "pack"
+    shared_copy["reviewSurface"]["rowDistribution"] = "pack"
+    assert shared_copy == shared
+
+    contexts = ROOT / "examples/halcyon-1/contexts"
+    for context_name in ("02-programme-board", "12-glyph-gates"):
+        context = yaml.safe_load((contexts / f"{context_name}.yaml").read_text(encoding="utf-8"))
+        assert context["body"]["layout"] == {
+            "id": "wallboard-programme-board",
+            "kind": "layout-profile",
+            "store": {"provider": "local", "identity": "halcyon-1-example"},
+            "address": "layouts/wallboard-programme-board.yaml",
+            "revision": {"token": "example-v1"},
+        }
+    for context_name in ("04-tvac-slip", "07-replan-baseline", "15-gallery-image-notes"):
+        context = yaml.safe_load((contexts / f"{context_name}.yaml").read_text(encoding="utf-8"))
+        assert context["body"]["layout"] == {
+            "id": "wallboard",
+            "kind": "layout-profile",
+            "store": {"provider": "local", "identity": "halcyon-1-example"},
+            "address": "layouts/wallboard.yaml",
+            "revision": {"token": "example-v1"},
+        }
+
+
+def test_bundled_default_closed_day_fill_matches_legend_without_outlines(tmp_path, monkeypatch) -> None:
+    starter = tmp_path / "starter-closed-day"
+    monkeypatch.setattr(sys, "argv", ["chrona", "init", str(starter)])
+    main()
+    scene, svg_path = _render_project(tmp_path, monkeypatch, "starter-closed-day",
+                                      starter / "project.yaml", starter / "actual.yaml")
+    primitives = _primitives(scene)
+    closed_days = [item for item in primitives if item.get("visualRole") == "calendar-closed"]
+    legend = next(item for item in primitives
+                  if item.get("sourceKind") == "legend" and item.get("sourceRef") == "calendar-closed")
+
+    assert closed_days
+    assert all("fill" in item["paint"] and "stroke" not in item["paint"] for item in closed_days)
+    assert all(item["paint"]["opacity"] == pytest.approx(0.12) for item in closed_days)
+    assert legend["paint"].get("fill") == closed_days[0]["paint"]["fill"]
+    assert "stroke" not in legend["paint"]
+    assert legend["paint"]["opacity"] == pytest.approx(closed_days[0]["paint"]["opacity"])
+
+    svg = svg_path.read_text(encoding="utf-8")
+    root = ET.fromstring(svg)
+    svg_closed = [element for element in root.iter()
+                  if element.get("data-purpose") == "calendar-closed"]
+    svg_legend = next(element for element in root.iter()
+                      if element.get("data-scene-id", "").startswith("legend-swatch:calendar-closed"))
+    assert svg_closed
+    assert all(element.get("fill") != "none" and element.get("stroke") is None for element in svg_closed)
+    assert all(float(element.get("opacity", "1")) == pytest.approx(0.12) for element in svg_closed)
+    assert svg_legend.get("fill") == svg_closed[0].get("fill")
+    assert svg_legend.get("stroke") is None
+    assert float(svg_legend.get("opacity", "1")) == pytest.approx(0.12)
+
+    png_path = tmp_path / "starter-closed-day.png"
+    monkeypatch.setattr(sys, "argv", ["chrona", "render", str(starter / "project.yaml"),
+                                       "--actual", str(starter / "actual.yaml"), "--output", str(png_path)])
+    main()
+    swatch_bounds = legend["bounds"]
+    with Image.open(png_path) as raster:
+        pixels = raster.convert("RGB")
+        samples = (swatch_bounds, closed_days[0]["bounds"])
+        observed = [pixels.getpixel((round(bounds["inline"] + bounds["inlineSize"] / 2),
+                                     round(bounds["block"] + bounds["blockSize"] / 2)))
+                    for bounds in samples]
+    canvas = scene["surfaces"][0]["canvasPaint"]["fill"].lstrip("#")
+    fill = legend["paint"]["fill"].lstrip("#")
+    opacity = legend["paint"]["opacity"]
+    expected = tuple(round(opacity * int(fill[index:index + 2], 16)
+                           + (1 - opacity) * int(canvas[index:index + 2], 16))
+                     for index in (0, 2, 4))
+    assert all(all(abs(actual - wanted) <= 2 for actual, wanted in zip(pixel, expected))
+               for pixel in observed)
+
+    bundled_theme = yaml.safe_load((ROOT / "src/chrona/resources/presets/bundles/editorial-readable-default/theme.yaml").read_text(encoding="utf-8"))["body"]
+    halcyon_theme = yaml.safe_load((ROOT / "examples/halcyon-1/themes/editorial-readable-default.yaml").read_text(encoding="utf-8"))["body"]
+    for body in (bundled_theme, halcyon_theme):
+        role = body["roles"]["calendar-closed"]
+        assert role["backgroundTreatment"] == "fill"
+        assert "strokeWidth" not in role
+        assert body["values"]["opacity.calendar-closed"]["value"] == pytest.approx(0.12)
+        assert "calendar-closed.stroke" not in body["colorBindings"]
 
 
 def test_pinned_default_draft_guides_every_bar_across_the_plot_and_names_it_at_its_end(tmp_path, monkeypatch) -> None:

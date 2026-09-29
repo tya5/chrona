@@ -75,3 +75,29 @@ def test_network_layout_grows_canvas_for_a_natural_title():
     assert layout.canvas_bounds.inline_size >= Decimal(400)
     assert layout.canvas_bounds.block_size >= Decimal(200)
     assert layout.fit_warnings[0].code == "W_LAYOUT_VISIBLE_OVERFLOW"
+
+
+def test_network_layout_completes_rect_pattern_on_each_exact_node_placement():
+    class Theme:
+        def optional_pattern(self, role):
+            assert role == "network-node"
+            return {
+                "kind": "catalog", "ref": "starter:hatch",
+                "tile": {"inlineSize": 8, "blockSize": 8}, "angle": 45,
+                "densityBasisPoints": 5000,
+                "primitives": [{"kind": "rect", "x": 0, "y": 0,
+                                "inlineSize": 8, "blockSize": 4}],
+            }
+
+    layout = compose_dependency_network_layout(
+        _network(("a", "b"), (("ab", "a", "b"),)),
+        title_bounds=Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(40)),
+        bounds=Rect(Decimal(0), Decimal(40), Decimal(400), Decimal(200)),
+        measured_sources=_measured("a", "b"), flow_direction="horizontal", theme_tokens=Theme(),
+    )
+
+    assert tuple(pattern.placement_id for pattern in layout.patterns) == tuple(
+        node.placement_id for node in layout.nodes
+    )
+    assert all(pattern.pattern.region == node.bounds
+               for pattern, node in zip(layout.patterns, layout.nodes, strict=True))

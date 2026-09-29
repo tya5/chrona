@@ -49,12 +49,12 @@ visibility:
 
 `plot` creates ordered candidates at the eligible mark sides and ranks them against required table text, axis text, marks, accepted labels, required annotations, and viewport bounds. `auto` tries start then end in deterministic order. If no candidate fits, `visible-overflow` completes the first ranked candidate with a warning; explicit suppression remains an author choice.
 
-Generated lanes are the stricter Spec 38 case: View v0.28 requires plot
-`title` and `finishDelta` content with `side: auto` and `overflow: suppress`. Layout tries
-end/start, then displaced/staggered candidates and a short leader, and
-counts any unplaceable name. This lane-specific policy never changes lane
-membership; the general visible-overflow policy remains available to
-automatic and explicit rows.
+Generated lanes use Spec 38's plot-name contract: `title` is always selected,
+`finishDelta` is selected by default but may be omitted, and an authored side
+and fallback take precedence over `auto`'s end/start/stagger default. The
+terminal outcome for a name that cannot fit is source-keyed suppression and
+counting, never a new lane or visible overflow. The general visible-overflow
+policy remains available to automatic and explicit rows.
 
 Before any row, mark, table cell or note placement, Layout applies the
 measured table-timeline content requirement to the complete Layout Profile
@@ -65,26 +65,83 @@ different placement collision; it is not permission to leave notes over a
 known growable table. The completed canvas still contains every emitted
 primitive.
 
-The timeline as-of label uses this visible-overflow fallback beside its marker
-line. A Layout text placement with `suppressed` disposition is non-drawable:
-Scene MUST NOT emit it. A serialized Scene with a primitive whose ID is named
-by a `W_LAYOUT_LABEL_SUPPRESSED` diagnostic is invalid public evidence.
+For data-owned lane rows, the requirement includes the full measured internal
+mark-subtrack extent of every fixed lane, not a one-band estimate. Layout may
+use a seed allocation to obtain the inline scale, close each lane's mark
+facets and subtracks once, then feed their block requirement to the final
+profile allocation. The same completed subtrack plan is reused for row and
+mark placement; the final inline frame MUST match the seed frame. This
+preflight neither reassigns lane membership nor searches for a block-height
+fixed point. A capped host may retain a measured overflow diagnostic, but a
+growable host MUST contain the final lane rows and marks.
+
+For a `fill` lane surface, preflight and final placement share one normalized
+member-label intent and Theme-measured box. Preflight uses the completed scale
+and selected mark/subtrack obstacles; inline-feasible end/start intervals
+determine concurrent finite stagger levels and each row's minimum before
+surplus distribution; relevant mark-obstacle intervals also contribute to
+those levels. The minimum also includes a finite conservative envelope of one
+measured block level plus placement clearance per selected lane name above
+completed mark subtracks, because interval concurrency can undercount
+cross-class obstructions. This requirement may grow the timeline host
+when profile constraints permit. A short seed row is not grounds for
+suppression.
+
+For `fill` lanes, full-band search tests finite preferred/contact candidates against
+row edges and current axis-aligned obstacles expanded by label bounds and
+clearance. Search declared sides in order, then absolute block displacement,
+fixed direction and stable identity; end gap stays within 2em. It is exhaustive
+only within the final allocated row; `pack` lanes and non-lane placement are unchanged.
+
+Each suppressed name has a typed `SurfacePlacement` fact with lane/member, final
+row extent, remaining capacity and reason `capacity` or `obstruction`, validated
+against its suppressed text placement and aggregate count. “Cannot grow” means
+`fill` leaves no unallocated timeline block after headers and other row minima.
+Capacity additionally requires allocator evidence naming the short required
+timeline source. A final-row inline-bound or obstacle miss is obstruction, not capacity. This
+slice does not search hypothetical row heights. If context 02 still suppresses
+after full-band search, pause R2 and correct the design before claiming #504
+complete. Scene schema and aggregate diagnostics do not change.
+
+The temporal scale's usable range reserves the maximum left and right extents
+of selected point facets relative to their date anchors, including resolved
+symbol, icon, rotation and stroke geometry. No selected point means no inset.
+Its Date-only domain remains the View window; axes, calendar shading, marks
+and routes use the same completed inset scale in lane preflight and final
+composition. Layout diagnoses a non-positive usable range as
+`E_LAYOUT_MARK_OVERFLOW` rather than letting an adapter clip the point.
+
+The timeline as-of label is a constrained exception to generic
+visible-overflow behavior. Layout measures its text and any declared chip
+footprint, then tries the plot top margin beside the as-of rule followed by
+finite rule-hosted chip positions within the plot. Every candidate must fit the timeline
+slot and avoid all axis bands and axis text, data marks, accepted required
+labels/annotations, and the as-of rule except for its explicitly identified
+host attachment. No axis-side seam rung or overflow candidate is permitted.
+Layout records the selected candidate and obstacle decision as completed
+placement evidence, and later annotation routing treats its footprint as an
+obstacle.
+
+If no candidate is legal, Layout retains the as-of rule and records a
+source-keyed `W_LAYOUT_LABEL_SUPPRESSED` disposition for the label. The
+suppressed text is non-drawable: Scene MUST NOT emit it, and a serialized
+Scene with a primitive named by that diagnostic is invalid public evidence.
+This no-fit outcome does not claim that the visible-label acceptance
+criterion was met; starter and HALCYON default cases must have a legal
+plot-side candidate. Ordinary label requests retain their declared
+visible-overflow fallback. Scene and adapters do not retry, move, clip, or
+repair the as-of label.
+
 For suppressed plot member labels, Layout MUST also count completed
 `memberLabel` text placements with `overflow: suppressed` once per surface.
+End-side member-name candidates cannot leave more than two times their
+completed Text `fontSize` between their own mark's inline edge and their
+Text bounds. When no end candidate fits within that bound, Layout tries
+the declared start rung, then records suppression and the aggregate count.
 When positive, the count is an `I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=<surface-id>;count=<positive-integer>`
 inspection diagnostic and an `info` CLI diagnostic. Its value MUST equal the
 number of corresponding per-placement `W_LAYOUT_LABEL_SUPPRESSED` facts.
 Scene projects the completed fact; adapters neither recount nor draw a marker.
-
-The as-of label's finite candidate ladder may use the adjacent axis/timeline
-seam as a mark-clear fallback. Layout declares that fallback explicitly and
-must not place the label over a data mark merely because earlier beside-line
-candidates are blocked. Ordinary label requests retain their first-ranked
-visible-overflow fallback.
-
-The seam side is a terminal fallback-only rung: it is not considered until
-all ordinary as-of candidates fail. Its identity is recorded in the completed
-placement decision so previously fitting labels remain stable.
 
 `finishDelta` has exactly one text representation per item. When selected in `labels.content`, no second standalone variance text is emitted. Its semantic role remains derived from the signed value.
 
@@ -103,6 +160,12 @@ Lane membership is already fixed from Project/View data (Spec 38) before this
 placement phase. A label that cannot fit is suppressed with a source-keyed
 count; its absence does not add, merge or split lanes. Only labels actually
 placed become route obstacles.
+For lane mode only, a declared `visible-overflow` direct fallback is permitted
+only if the completed path clears every required placed lane/member label.
+Otherwise Layout suppresses it with the same generic warning and typed
+per-port-pair cause evidence. This safety rule outranks visual overflow but
+never feeds back into lane membership or label placement; non-lane fallback
+behavior is unchanged.
 
 For a suppressed lane relation, Layout retains one typed result per candidate
 port pair in deterministic order: `egress-collision` with blocker identities,
@@ -122,6 +185,17 @@ Scene/SVG bytes remain unchanged. See the [L3b route-evidence correction](../des
 View grouping gains `presentation: band | header`; `header` requires a non-zero resolved `timeline.groupHeader.blockSize`. Layout reserves one header block before the group's first row and supplies measured header text bounds spanning the selected table/timeline surface. Missing capacity completes visible stacked geometry and `W_LAYOUT_GROUP_HEADER_OVERFLOW`.
 
 A group's background band and its header band share one selection decision under `backgroundDecoration.groups: all | alternate`: a group selected for a band is banded from its own header row through its own last content row; a group not selected carries neither band, so an unselected group's header is never painted as an extension of a neighboring group's band. `backgroundDecoration.groups: none` is the sole unconditional case: every group's header band still paints (the header-only decoration), independent of body selection. A row-decoration stripe (`backgroundDecoration.rows: alternate`) and a group band may cover the same extent; Layout paints row stripes after group bands so an opaque stripe is not hidden by an opaque band at the same declared Theme paint order.
+
+Translucent background intersections remain invalid except an intentional
+`calendarClosed` overlay over a `rowBand`, `groupBand`, or `groupHeaderBand`.
+That exception requires the calendar role's Theme paint order to be strictly
+later than the band's; ordinary source-over composition at those completed
+orders preserves both signals. Equal-order overlaps, closed-day/closed-day
+overlaps, and every other translucent pair still raise
+`E_LAYOUT_BACKGROUND_OVERLAP`. Layout validates the pair and order before
+Scene projection; adapters do not decide which background is visible. The
+legend's calendar key uses the same Theme role without inheriting the plot's
+underlying bands.
 
 A Layout `legend` slot is the sole authority for legend geometry. When it exists, every selected legend entry emits one swatch and one measured label. When absent, there are no legend primitives. It is a resource choice, not a renderer fallback. Header or row capacity shortfall completes visible stacked/natural geometry and a warning rather than rejecting the surface.
 

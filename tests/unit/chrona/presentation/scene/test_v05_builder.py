@@ -5,15 +5,16 @@ from types import SimpleNamespace
 
 import pytest
 
-from chrona.presentation.layout.model import LayoutDecision, LayoutManifest, Measurement, Rect
-from chrona.presentation.layout.surface_composer import compose_surface_layout
-from chrona.presentation.layout.surface_quality import PathCommand, SurfaceLayoutRequest
+from chrona.presentation.layout.model import LayoutDecision, LayoutError, LayoutManifest, Measurement, Rect
+from chrona.presentation.layout.surface_composer import _validate_background_shapes, compose_surface_layout
+from chrona.presentation.layout.surface_quality import PathCommand, ShapePlacement, SurfaceLayoutRequest
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun, SourceInput
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.surface_content import AnnotationIntent, AxisLabelIntent, AxisTier, SummaryContent, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth
 from chrona.presentation.model.surface_content import RelationPresentationFact
 from chrona.presentation.model.projection import FoldedPointProjection, ObservationState, ReviewItem, ReviewProjection, ReviewRowProjection
 from chrona.presentation.model.semantic_registry import semantic_binding, semantic_ids
+from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.scene.model import DecorationDisposition, ScenePrimitive, SceneSurface, SymbolGeometry, TextLayout
 from chrona.presentation.scene.v05_builder import SceneBuildError, build_scene_input, compose_review_surface
 
@@ -206,17 +207,6 @@ def test_scene_input_accepts_only_completed_current_runtime_boundaries():
     assert value.theme_tokens.color("text") == "#102030"
 
 
-def test_scene_input_rejects_a_lane_plan_without_independent_measurement_identity():
-    with pytest.raises(SceneBuildError, match="E_LAYOUT_LANE_PLAN_INVALID"):
-        build_scene_input(
-            projection={"window": (date(2026, 1, 1), date(2026, 1, 2))},
-            surface_content=surface_content(),
-            layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
-            resolved_theme=_theme(), font_metrics=object(), measured_sources=_measurements(),
-            capabilities={"svg": True}, lane_plan=object(),
-        )
-
-
 def test_scene_input_rejects_a_layout_without_a_required_source():
     with pytest.raises(SceneBuildError, match="E_PRESENTATION_PRIMITIVE_MISSING") as error:
         build_scene_input(projection={}, surface_content=surface_content(),
@@ -319,6 +309,19 @@ def test_scene_records_declared_background_absence_without_a_drawable_primitive(
     from chrona.presentation.scene.v05_builder import _complete_surface_paint
     completed = _complete_surface_paint(SceneSurface("s", (), (), (), None, ()), value.theme_tokens)
     assert completed.decoration_dispositions == (DecorationDisposition("row-band", "absent"),)
+
+
+def test_painted_note_box_is_not_an_absent_background_decoration():
+    themed = _theme()
+    value = build_scene_input(projection=ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 2)), (), ()),
+                              surface_content=surface_content(), layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
+                              resolved_theme=themed, font_metrics=_Font(), measured_sources=_measurements(), capabilities={"svg": True})
+    from chrona.presentation.scene.v05_builder import _complete_surface_paint
+    note_box = ScenePrimitive("annotation-box:note-1", "Rect", "note-1", "annotation", "annotation-box",
+                              "annotation-note-box", (0, 0, 20, 10))
+    completed = _complete_surface_paint(SceneSurface("s", (), (), (), None, (note_box,)), value.theme_tokens)
+    assert completed.primitives[0].paint.fill == "#102030"
+    assert DecorationDisposition("annotation-note-box", "absent") not in completed.decoration_dispositions
 
 
 def test_scene_projects_title_links_only_to_selected_current_title_cells():
@@ -969,7 +972,7 @@ def test_layout_suppresses_a_none_row_band_and_scene_records_its_absence():
     assert DecorationDisposition("row-band", "absent") in surface.decoration_dispositions
 
 
-def test_layout_rejects_intersecting_translucent_background_fills_before_scene():
+def test_layout_rejects_calendar_overlay_when_its_paint_order_is_not_later():
     item = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 4)}, None, None, ())
     projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 4)), (), ())
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))}, {
@@ -977,13 +980,53 @@ def test_layout_rejects_intersecting_translucent_background_fills_before_scene()
         "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8), "timeline.mark.blockSize": Decimal(8),
     })
     theme = _theme()
-    theme["body"]["roles"]["calendar-closed"] = {**theme["body"]["roles"]["calendar-closed"], "backgroundTreatment": "fill"}
+    theme["body"]["roles"]["calendar-closed"] = {
+        **theme["body"]["roles"]["calendar-closed"],
+        "backgroundTreatment": "fill", "backgroundPaintOrder": 10,
+    }
     with pytest.raises(SceneBuildError, match="E_LAYOUT_BACKGROUND_OVERLAP"):
         compose_review_surface(build_scene_input(
             projection=projection, surface_content=surface_content(calendar_closed=(date(2026, 1, 2),)),
             layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"), resolved_theme=theme,
             font_metrics=_Font(), measured_sources=measurement, capabilities={"svg": True},
         ))
+
+
+def test_layout_permits_only_a_later_calendar_fill_over_translucent_bands():
+    theme = _theme()
+    theme["body"]["roles"]["calendar-closed"] = {
+        **theme["body"]["roles"]["calendar-closed"],
+        "backgroundTreatment": "fill", "backgroundPaintOrder": 12,
+    }
+    tokens = ThemeTokenView(theme)
+    bounds = Rect(Decimal(0), Decimal(0), Decimal(20), Decimal(20))
+    for semantic_id, order in (("rowBand", 10), ("groupBand", 10), ("groupHeaderBand", 11)):
+        shapes = [
+            ShapePlacement("closed", "calendar", "Rect", bounds,
+                           paint_order=12, semantic_id="calendarClosed"),
+            ShapePlacement("band", "lane-a", "Rect", bounds,
+                           paint_order=order, semantic_id=semantic_id),
+        ]
+        _validate_background_shapes(shapes, tokens)
+
+
+@pytest.mark.parametrize("semantic_ids_to_overlap", [
+    ("calendarClosed", "calendarClosed"),
+    ("rowBand", "axisBandDecoration"),
+])
+def test_layout_rejects_same_role_and_unrelated_translucent_background_overlaps(semantic_ids_to_overlap):
+    theme = _theme()
+    theme["body"]["roles"]["calendar-closed"] = {
+        **theme["body"]["roles"]["calendar-closed"],
+        "backgroundTreatment": "fill", "backgroundPaintOrder": 12,
+    }
+    tokens = ThemeTokenView(theme)
+    bounds = Rect(Decimal(0), Decimal(0), Decimal(20), Decimal(20))
+    shapes = [ShapePlacement(f"background-{index}", f"source-{index}", "Rect", bounds,
+                             paint_order=10 + index, semantic_id=semantic_id)
+              for index, semantic_id in enumerate(semantic_ids_to_overlap)]
+    with pytest.raises(LayoutError, match="E_LAYOUT_BACKGROUND_OVERLAP"):
+        _validate_background_shapes(shapes, tokens)
 
 
 def test_narrow_calendar_density_retains_only_declared_exception_closures():

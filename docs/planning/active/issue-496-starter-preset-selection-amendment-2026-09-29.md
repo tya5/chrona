@@ -1,0 +1,5 @@
+# #496 Slice 3 starter preset selection
+
+**Amends:** [builtin closure implementation plan](issue-496-builtin-catalogue-copy-implementation-amendment-2026-09-29.md). The selected [design](../../design/issue-496-builtin-catalogue-copy-design-amendment-2026-09-29.md) requires a generic wheel-owned preset with glyph, Rect pattern, and existing legend; it does not require modifying an example-owned appearance.
+
+Use `technical-print`, whose View, Theme, scheme, Layout, and legend already live in its wheel bundle and whose scheme has only a generic `default` category. Keep `elevated-light` and the Controller-Z scheme unchanged: that scheme contains project-specific category names, so it is not a generic rehome candidate. Add the starter catalogue member only to `technical-print`; advance its Theme to v0.13 and its preferred SVG visual profile as needed. Acceptance still requires a copied preset, a no-asset-flag render, actual glyph/pattern/legend visibility, SVG/PNG evidence, and exact notice bytes. No issue criterion or layer boundary changes.

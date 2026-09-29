@@ -1,19 +1,2 @@
-# Modules that exist for work in flight: not reachable from a product entry point,
-# and deliberately kept. Every entry needs a reason and an owning issue; anything
-# not listed here and not reachable fails tools/check_module_reachability.py.
-#
-#467: Source-keyed lane projection closure is independently tested while B2
-# still keeps public lane rendering fail-closed. Remove when B2 imports it.
-chrona.presentation.layout.lane_projection
-#467: Typed Review-to-lane candidate mapper is verified independently; B2
-# will import it from the render use case before lane mode is enabled.
-chrona.presentation.layout.lane_bundle_mapper
-#467: Object-level visual selectors fan out to typed lane occurrences; the
-# mapper imports this staged binder until the render use case enables B2.
-chrona.presentation.layout.lane_visual_binding
-#467: Seed-scale adapter is tested independently until render_review invokes
-# preflight after its finite inline solve.
-chrona.presentation.layout.lane_seed
-#467: Read-only Scene lane audit is tested independently until lane-mode
-# artifacts are emitted and the acceptance/release gate invokes it.
-chrona.presentation.scene.lane_audit
+# Unreachable in-flight modules are listed here with their owner and reason.
+# Empty: the retired #467 geometry-first modules were removed under #505.
