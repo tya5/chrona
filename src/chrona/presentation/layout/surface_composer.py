@@ -19,6 +19,7 @@ from chrona.presentation.layout.lane_preflight import (
 from chrona.presentation.layout.lane_subtracks import FixedLanePreflight, LaneSubtrackPlan, assign_lane_subtracks
 from chrona.presentation.layout.lane_item_footprints import compose_lane_item_footprints
 from chrona.presentation.layout.mark_aware_scale import PointMarkFootprint, inset_scale_for_point_facets
+from chrona.presentation.layout.asof_label import find_asof_label_candidate
 from chrona.presentation.model.semantic_registry import (
     axis_band_semantic_ids, axis_label_semantic_ids, REQUIRED_SLOTS, label_chip_semantic, semantic_binding)
 from chrona.presentation.model.projection import shared_track_member_key
@@ -1846,16 +1847,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     handled_candidate_visuals: set[str] = set()
     if as_of_label is not None:
         x, content = as_of_label
-        # A chip's block padding extends the anchor too, so a side candidate
-        # keeps the chipped label's top where the bare label's top is (#428).
-        as_of_chip = request.theme_tokens.label_chip(semantic_binding("asOfLabelChip").theme_role)
-        as_of_anchor_block = (body_size if as_of_chip is None else
-                              body_size * float(body_treatment.line_height) + float(as_of_chip[0]) * body_size)
         label_requests.append(LabelRequest(
             "as-of-label", "actual-set", content,
-            LabelRect(x, timeline_bounds[1], 0.0, as_of_anchor_block), ("end", "start", "below"),
-            "text", "timeline-as-of", CollisionDomain("timeline", "overlay"), "visible-overflow",
-            visible_fallback_side="above",
+            LabelRect(x, timeline_bounds[1], 0.0, 0.0),
+            ("plot-top-end", "plot-top-start", "rule-hosted-end", "rule-hosted-start"),
+            "text", "timeline-as-of", CollisionDomain("timeline", "overlay"), "suppress",
             rule_host_obstacle_id="as-of",
             semantic_id="asOfLabel",
         ))
@@ -2037,7 +2033,13 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             label_classes = (("mark", "text", "label-visual", "rule")
                              if label_request.rule_host_obstacle_id is not None
                              else ("mark", "text", "label-visual", "dependency-route"))
-            if (label_request.semantic_id == "memberLabel"
+            if label_request.semantic_id == "asOfLabel":
+                candidate = find_asof_label_candidate(
+                    timeline_rect, label_size, rule_x=label_request.anchor.x,
+                    gap=label_gap, rule_host_id="as-of", obstacles=surface_obstacles,
+                    obstacle_classes=("mark", "text", "label-visual", "rule"),
+                )
+            elif (label_request.semantic_id == "memberLabel"
                     and label_request.overflow == "suppress"
                     and "end" in label_request.candidates):
                 candidate = place_member_name(
