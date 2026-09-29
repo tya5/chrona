@@ -288,19 +288,21 @@ Mark, comparison, icon and text footprints remain relevant to this later
 placement and to #494 route avoidance. Required visible labels are obstacles
 before routes; a route cannot cross a required lane/member label. The
 lane table shows one group/lane summary and optional member count per
-generated lane, never an arbitrary member's facts. For `laneTable.label: group`,
+generated lane. For `laneTable.label: group`,
 the first lane in a group shows that group's title and later lanes have an
-empty label. For `laneTable.label: lane`, an authored explicit key is
-the label; otherwise it is `Lane ` followed by the stable founding View-item
-ID. A displayed ordinal or a representative member title is not a lane
-identity. A visible delta table
+empty label. For `laneTable.label: lane`, a singleton shows its selected
+member's title; a multi-member lane shows its group's title, with its first
+member's title appended when that group has multiple multi-member lanes.
+Generated lane IDs, founder IDs and explicit lane keys are identity, never
+display-title fallbacks. A View-requested `Items` column remains declared
+intent; public Views with an all-one count SHOULD omit it. This changes
+display text, not lane identity or membership (#554). A visible delta table
 promise removed during resource migration must be selected in lane-label
 content or explicitly retired.
 Where a group header already names the group, or grouping is absent, a
-counted lane table selects `lane` rather than repeating a group title or
-showing an empty label beside its count. An unrelated singleton is not
-automatically a useful lane: a bundled default may use item-level automatic
-rows instead of inventing a representative lane title.
+counted lane table selects `lane` rather than showing an empty label beside
+its count. An unrelated singleton is not automatically a useful lane: a
+bundled default may use item-level automatic rows instead.
 
 `automatic` retains its per-object row behavior and exact output bytes, except
 for the already declared attached-point fold; `rows.points: own-row` restores

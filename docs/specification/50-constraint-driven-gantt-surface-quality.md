@@ -93,6 +93,15 @@ clearance. Search declared sides in order, then absolute block displacement,
 fixed direction and stable identity; end gap stays within 2em. It is exhaustive
 only within the final allocated row; `pack` lanes and non-lane placement are unchanged.
 
+The completed text bounds of every lane member name MUST remain within a
+two-em nearest-edge gap of its own completed mark on either side, or Layout
+MUST complete a source-keyed leader from that text to the mark (#554).
+Full-band stagger counts block displacement as well as inline distance.
+Leader geometry participates in Layout's obstacle/candidate decision; Scene
+only projects it. If no legal candidate/leader exists, the existing
+source-keyed suppression outcome applies. The Scene acceptance check pairs
+each member label and mark by lane/member identity, never by visual order.
+
 Each suppressed name has a typed `SurfacePlacement` fact with lane/member, final
 row extent, remaining capacity and reason `capacity` or `obstruction`, validated
 against its suppressed text placement and aggregate count. “Cannot grow” means
