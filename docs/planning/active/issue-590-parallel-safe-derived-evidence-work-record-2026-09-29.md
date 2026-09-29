@@ -109,3 +109,20 @@ The four acceptance rows: (1) two PRs merge in either order without derived conf
 | Artifact format, retention and fork read-only details | hardening; can follow | none |
 
 If the proof loop keeps failing, the smallest path to the four rows is: source-only PRs, the PR snapshot, the serialized sync with a visible failure, the status-context protection, and the `AGENTS.md` text. The trusted-gate machinery stays only as far as it is what lets the bot commit satisfy the protection.
+
+## I590-3 proof of the corrected route (2026-09-30)
+
+The correction landed as PR #633 (`1ab126c8`): the trusted gate posts `derived-ready` as a commit status on the verified SHA, with `statuses: write` on that job only. The owner accepted the trade-off (any writer can post a status; fork PRs cannot). Synchronized `main` (`1ab126c8`) then passed the exact-main three-OS run [36644063129](https://github.com/tya5/chrona/actions/runs/36644063129): Ubuntu, macOS, Windows and newest-Python green.
+
+**Disposable branch `derived-proof/i590-changed-2`**, cut from that main, protected with status-only rules: required context `derived-ready` with no app binding, strict, `enforce_admins` on, no PR requirement and no bypass. A source-only Orion Theme change was the only commit.
+
+| path | run | result |
+| --- | --- | --- |
+| changed source, bot commit and fast-forward under protection | [36644103705](https://github.com/tya5/chrona/actions/runs/36644103705) | success; the bot commit `b54e684b` touched only the Orion Scene, SVG and the contrast report |
+| no-op (already synchronized) | [36644466906](https://github.com/tya5/chrona/actions/runs/36644466906) | success; fast-forward skipped, tip unchanged, three-OS run dispatched on the existing SHA |
+| recovery: source-only commit `5fecb384` pushed while evidence was deliberately stale, then manual re-dispatch | [36644882789](https://github.com/tya5/chrona/actions/runs/36644882789) | success; bot commit `565e2124` fast-forwarded the protected branch |
+| a failing gate blocks the next merge: PR #634 hand-edited a tracked derived file | PR checks | `derived-preview`, `derived-ready` failed; the merge API returned **HTTP 405: Required status check "derived-ready" is failing.** PR closed unmerged |
+
+The manual source push in the recovery case needed `enforce_admins` off for that one push; it was restored before the re-dispatch. The disposable branches, PR #634, their protection rules and the proof `derived-gate/*` refs were removed. `main` protection is still **off**.
+
+Already met by the proofs: the source-only PR check, the changed/no-op/recovery main sync, the visible failure, and enforcement by a required context on a protected branch. Still open in #590: enabling the same rule on `main`, the `AGENTS.md` wording for the enforced state, two Theme-role test PRs merged in both orders, removal of the `derived-proof/*` dispatch target, and the acceptance review.
