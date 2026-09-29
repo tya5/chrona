@@ -51,6 +51,38 @@ def _assert_marks_inside_timeline(surface: dict) -> None:
         assert bounds["inline"] + bounds["inlineSize"] <= right + 0.01, mark["id"]
 
 
+def _assert_as_of_label_outside_axis(surface: dict) -> None:
+    axis = next(slot for slot in surface["slots"] if slot["id"] == "timeline-axis")["bounds"]
+    label_boxes = [item["bounds"] for item in surface["primitives"]
+                   if item.get("id") in {"as-of-label", "chip:as-of-label"}]
+    assert label_boxes
+    for label in label_boxes:
+        assert (label["inline"] + label["inlineSize"] <= axis["inline"]
+                or axis["inline"] + axis["inlineSize"] <= label["inline"]
+                or label["block"] + label["blockSize"] <= axis["block"]
+                or axis["block"] + axis["blockSize"] <= label["block"]), label
+
+
+def _assert_member_end_gap(surface: dict) -> None:
+    marks = [item for item in surface["primitives"]
+             if item.get("purpose") in {"planned", "actual"}]
+    labels = [item for item in surface["primitives"] if item.get("purpose") == "member-label"]
+    for label in labels:
+        host_kind = "actual" if label.get("sourceKind") == "actual" else "planned"
+        host = next((mark for mark in marks
+                     if mark.get("purpose") == host_kind
+                     and ((label.get("laneMemberId") is not None
+                           and mark.get("laneMemberId") == label["laneMemberId"])
+                          or (label.get("laneMemberId") is None
+                              and mark["sourceRef"] == label["sourceRef"]))), None)
+        assert host is not None, label["id"]
+        text = label["textLayout"]["bounds"]
+        mark = host["bounds"]
+        mark_right = mark["inline"] + mark["inlineSize"]
+        if text["inline"] >= mark_right:
+            assert text["inline"] - mark_right <= 2 * label["textLayout"]["fontSize"] + 0.01, label["id"]
+
+
 def _rgb(colour: str) -> tuple[float, float, float]:
     colour = colour.lstrip("#")
     red, green, blue = (int(colour[index:index + 2], 16) / 255 for index in (0, 2, 4))
@@ -207,6 +239,8 @@ def test_bundled_default_guides_every_bar_and_names_it_or_reports_suppression(tm
     )
     surface = scene["surfaces"][0]
     _assert_marks_inside_timeline(surface)
+    _assert_as_of_label_outside_axis(surface)
+    _assert_member_end_gap(surface)
     timeline = next(slot for slot in surface["slots"] if slot["id"] == "timeline")["bounds"]
     rows = {row["id"]: row["bounds"] for row in surface["rows"]}
     primitives = {item["id"]: item for item in _primitives(scene)}
@@ -275,7 +309,9 @@ def test_init_starter_bundled_default_guides_and_names_every_bar(tmp_path, monke
     scene, svg_path = _render_project(tmp_path, monkeypatch, "starter-default",
                                       starter / "project.yaml", starter / "actual.yaml")
     surface = scene["surfaces"][0]
+    _assert_member_end_gap(surface)
     _assert_marks_inside_timeline(surface)
+    _assert_as_of_label_outside_axis(surface)
     timeline = next(slot for slot in surface["slots"] if slot["id"] == "timeline")["bounds"]
     rows = {row["id"]: row["bounds"] for row in surface["rows"]}
     primitives = {item["id"]: item for item in _primitives(scene)}

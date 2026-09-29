@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import ceil
+from math import ceil, isfinite
 from typing import Iterable
 
 from chrona.presentation.layout.surface_quality import CollisionDomain
@@ -106,14 +106,18 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
                 visible_fallback_side: str | None = None,
                 rule_host_obstacle_id: str | None = None,
                 classes: tuple[str, ...] | None = None,
-                search_side_neighborhood: bool = False) -> LabelPlacement | None:
+                search_side_neighborhood: bool = False,
+                maximum_side_gap: float | None = None) -> LabelPlacement | None:
     """Choose the first legal candidate in declared order; never search indefinitely."""
     sides = tuple(candidates)
     if (not 1 <= len(sides) <= 16 or len(set(sides)) != len(sides)
             or overflow not in {"visible-overflow", "suppress", "clip-optional"}
             or (visible_fallback_side is not None
                 and (overflow != "visible-overflow"
-                     or visible_fallback_side not in {"above", "below", "start", "end", "inside"}))):
+                     or visible_fallback_side not in {"above", "below", "start", "end", "inside"}))
+            or (maximum_side_gap is not None
+                and (isinstance(maximum_side_gap, bool)
+                     or not isfinite(maximum_side_gap) or maximum_side_gap < 0))):
         raise ValueError("E_PRESENTATION_LABEL_INPUT")
     index = obstacles if isinstance(obstacles, SurfaceObstacleIndex) else None
     blocked = () if index is not None else tuple(obstacles)
@@ -134,6 +138,9 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
                        for obstacle in active_obstacles)
 
     for side in sides:
+        if (maximum_side_gap is not None and side in {"end", "start"}
+                and gap > maximum_side_gap):
+            continue
         try:
             candidate = _candidate(anchor, size, side, gap)
         except ValueError as exc:
@@ -154,6 +161,9 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
             for outward_step in range(ceil(outward_bound / lattice) + 1):
                 outward = outward_step * lattice
                 if outward > outward_bound:
+                    continue
+                if (maximum_side_gap is not None and side in {"end", "start"}
+                        and gap + outward > maximum_side_gap):
                     continue
                 for tangent_step in range(-ceil(tangent_bound / lattice), ceil(tangent_bound / lattice) + 1):
                     tangent = tangent_step * lattice
@@ -183,4 +193,47 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
         raise ValueError("E_PRESENTATION_LABEL_UNPLACEABLE")
     if required:
         raise ValueError("E_PRESENTATION_LABEL_UNPLACEABLE")
+    return None
+
+
+def place_member_name(
+    anchor: LabelRect,
+    size: tuple[float, float],
+    candidates: Iterable[str],
+    *,
+    bounds: LabelRect,
+    obstacles: Iterable[LabelObstacle | LabelRect] | SurfaceObstacleIndex = (),
+    gap: float,
+    maximum_end_gap: float,
+    text_inline_inset: float = 0.0,
+    inside_host_obstacle_id: str | None = None,
+    classes: tuple[str, ...] | None = None,
+) -> LabelPlacement | None:
+    """Try declared member-name sides in order, bounding end gap to completed text.
+
+    ``text_inline_inset`` is the distance from the searched label box's left
+    edge to its completed Text bounds (for example chip padding and a leading
+    visual).  Only the end-side trial is capped; the declared next side remains
+    available before the caller records a typed suppression.
+    """
+    sides = tuple(candidates)
+    if (not sides or len(sides) > 16 or len(set(sides)) != len(sides)
+            or any(side not in {"above", "below", "start", "end", "inside"} for side in sides)
+            or any(isinstance(value, bool) or not isfinite(value) or value < 0
+                   for value in (gap, maximum_end_gap, text_inline_inset))):
+        raise ValueError("E_PRESENTATION_LABEL_INPUT")
+    available_obstacles = (obstacles if isinstance(obstacles, SurfaceObstacleIndex)
+                           else tuple(obstacles))
+    for side in sides:
+        maximum_side_gap = (maximum_end_gap - text_inline_inset) if side == "end" else None
+        if side == "end" and maximum_side_gap < gap:
+            continue
+        placed = place_label(
+            anchor, size, (side,), bounds=bounds, obstacles=available_obstacles, gap=gap,
+            inside_host_obstacle_id=inside_host_obstacle_id,
+            required=False, overflow="suppress", classes=classes,
+            search_side_neighborhood=True, maximum_side_gap=maximum_side_gap,
+        )
+        if placed is not None:
+            return placed
     return None

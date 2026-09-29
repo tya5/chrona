@@ -39,7 +39,7 @@ from chrona.presentation.layout.annotation_topology import (
     AnnotationRouteTrial, local_route_bounds, route_annotation_candidate, visible_segments,
 )
 from chrona.presentation.layout.comparison_marks import ComparisonMark
-from chrona.presentation.layout.labels import LabelRect, LabelRequest, place_label
+from chrona.presentation.layout.labels import LabelRect, LabelRequest, place_label, place_member_name
 from chrona.presentation.layout.obstacles import (
     ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex, obstacle_envelope,
     obstacles_intersect,
@@ -2033,17 +2033,32 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             # alone exempts this request's declared host for an ``inside``
             # candidate; a comparison sibling or another row is never an implicit
             # host.
-            candidate = (place_label(label_request.anchor, label_size, label_request.candidates, bounds=placement_bounds,
-                                     obstacles=surface_obstacles, gap=max(1.0, float(font_size) * 0.25),
-                                     inside_host_obstacle_id=label_request.inside_host_obstacle_id,
-                                     required=label_request.overflow == "diagnose", overflow=label_request.overflow,
-                                     visible_fallback_side=label_request.visible_fallback_side,
-                                     rule_host_obstacle_id=label_request.rule_host_obstacle_id,
-                                     search_side_neighborhood=(label_request.rule_host_obstacle_id is None),
-                                     classes=(("mark", "text", "label-visual", "rule")
-                                              if label_request.rule_host_obstacle_id is not None
-                                              else ("mark", "text", "label-visual", "dependency-route")))
-                         if label_request.candidates else None)
+            label_gap = max(1.0, float(font_size) * 0.25)
+            label_classes = (("mark", "text", "label-visual", "rule")
+                             if label_request.rule_host_obstacle_id is not None
+                             else ("mark", "text", "label-visual", "dependency-route"))
+            if (label_request.semantic_id == "memberLabel"
+                    and label_request.overflow == "suppress"
+                    and "end" in label_request.candidates):
+                candidate = place_member_name(
+                    label_request.anchor, label_size, label_request.candidates,
+                    bounds=placement_bounds, obstacles=surface_obstacles, gap=label_gap,
+                    maximum_end_gap=2 * float(font_size),
+                    text_inline_inset=leading + chip_pad[0],
+                    inside_host_obstacle_id=label_request.inside_host_obstacle_id,
+                    classes=label_classes,
+                )
+            else:
+                candidate = (place_label(
+                    label_request.anchor, label_size, label_request.candidates,
+                    bounds=placement_bounds, obstacles=surface_obstacles, gap=label_gap,
+                    inside_host_obstacle_id=label_request.inside_host_obstacle_id,
+                    required=label_request.overflow == "diagnose", overflow=label_request.overflow,
+                    visible_fallback_side=label_request.visible_fallback_side,
+                    rule_host_obstacle_id=label_request.rule_host_obstacle_id,
+                    search_side_neighborhood=(label_request.rule_host_obstacle_id is None),
+                    classes=label_classes,
+                ) if label_request.candidates else None)
             provisional = place_text(placement_id=label_request.placement_id, source_ref=label_request.source_ref,
                                      content=label_request.content, inline=0, baseline_block=float(font_size),
                                      typography_role=label_request.typography_role, theme_tokens=request.theme_tokens,
