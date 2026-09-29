@@ -243,7 +243,12 @@ decided only after final allocation and bounded search; its decision identifies
 the lane, final extent and the exhausted host capacity or maximum useful
 extent of the finite candidate ladder. Blocking geometry may be reported only
 after that growth-limit proof. It cannot leave assignable block space unused
-while its own lane could grow. An
+while its own lane could grow. Layout measures end-side text intervals with
+the closed font metrics and shared temporal scale, and counts concurrent
+intervals to obtain finite vertical label levels. Lane-only side-neighborhood
+search may use the full row-local block interval, not the old one-label-height
+tangent limit; non-lane search remains unchanged. The finite useful extent is
+bounded by the measured levels and lane mark-subtrack extent. An
 attached point's required plot label is a distinct exception: View content
 normalization reads the active composition (`rows` for automatic rows,
 `lane_rows` for generated lanes) and provides its title, planned date and
