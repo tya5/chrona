@@ -354,15 +354,13 @@ def test_controller_executive_draft_no_longer_suppresses_its_member_label_after_
     # `I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count=1`) now fits
     # it, because the corrected table minimum is narrower than the old
     # widest-row-label basis for this view under the CSS-Grid flex allocation
-    # (ADR-0032). Two relation labels are suppressed instead, because the
-    # narrower table gives the plot/relation surface different, not more, room
-    # to route through.
+    # (ADR-0032). The completed mark-aware scale now leaves one relation label
+    # suppressed; this is independent of the member-label regression gate.
     rendered = render_review(_draft_request())
     assert not any(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:") for item in rendered.scene.diagnostics)
     assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in rendered.scene.diagnostics)
     assert {item for item in rendered.scene.diagnostics if item.startswith("W_LAYOUT_RELATION_LABEL_SUPPRESSED:")} == {
         "W_LAYOUT_RELATION_LABEL_SUPPRESSED:relation:evb-to-bringup:evb-arrival:evb-arrival:silicon-bringup:silicon-bringup",
-        "W_LAYOUT_RELATION_LABEL_SUPPRESSED:relation:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance",
     }
     assert not any(item.startswith("W_LAYOUT_VISIBLE_OVERFLOW") for item in rendered.scene.diagnostics)
 
@@ -388,14 +386,18 @@ def test_suppression_count_excludes_other_plot_text_and_absent_count(tmp_path):
     member_suppressed = sum(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:") for item in tuned.scene.diagnostics)
     assert member_suppressed >= 1  # the variance suppression above is not counted
     assert f"I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count={member_suppressed}" in tuned.scene.diagnostics
-    # The L1 HALCYON schedule correction moves the CDR label into the existing
-    # containment policy's suppression path; it must be reported exactly once.
+    # The L1 HALCYON schedule correction moves CDR into the existing
+    # containment policy's suppression path. R4's bounded mark attachment can
+    # suppress other names; the aggregate must still count members only.
     halcyon = render_review(_draft_request(**inputs, view_path=example / "views/01-mission-brief.yaml",
                                            theme_path=example / "themes/briefing.yaml",
                                            layout_path=example / "layouts/briefing.yaml",
                                            summary_path=example / "profiles/summary.yaml"))
     assert "W_LAYOUT_LABEL_SUPPRESSED:member-label:cdr:cdr" in halcyon.scene.diagnostics
-    assert "I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count=1" in halcyon.scene.diagnostics
+    halcyon_members = sum(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")
+                          for item in halcyon.scene.diagnostics)
+    assert halcyon_members >= 1
+    assert f"I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count={halcyon_members}" in halcyon.scene.diagnostics
     ordinary = render_review(_draft_request())
     assert not ordinary.info_diagnostics
     assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in ordinary.scene.diagnostics)

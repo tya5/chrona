@@ -19,7 +19,7 @@ from chrona.storage.revision_store import ProjectSnapshot
 from chrona.storage.snapshot_paths import snapshot_directory
 from chrona.storage.snapshots import LocalBaselineRegistry, capture_baseline_v02
 from chrona.usecases.materialize import _OverlayBuilder, _reference_key, copy_context_closure
-from chrona.usecases.render_review import RenderRequest, render_review
+from chrona.usecases.render_review import RenderFailed, RenderRequest, render_review
 from tools.materialize_example import _copy_context_closure, materialize
 
 
@@ -80,7 +80,7 @@ def test_public_svg_renders_axis_table_independently_of_context_locale(tmp_path,
     assert labels == [expected]
 
 
-def test_immutable_automatic_context_completes_narrow_board_with_visible_warning(tmp_path):
+def test_immutable_automatic_context_rejects_nonpositive_timeline_range(tmp_path):
     example = tmp_path / "halcyon-1"
     shutil.copytree(ROOT / "examples/halcyon-1", example)
     context_path = example / "contexts/01-mission-brief.yaml"
@@ -90,10 +90,13 @@ def test_immutable_automatic_context_completes_narrow_board_with_visible_warning
     snapshot = tmp_path / "snapshot"
     reference, _ = copy_context_closure(example, context_path, snapshot)
     closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, "halcyon-1-example"))
-    rendered = render_review(RenderRequest(closure, snapshot, ReferenceScheduler()))
-    assert rendered.artifact.content.startswith(b"<svg ")
-    assert rendered.surface.fit_warnings
-    assert any(warning.code == "W_LAYOUT_VISIBLE_OVERFLOW" for warning in rendered.surface.fit_warnings)
+    # R4's shared mark-aware scale cannot place point facets in a collapsed
+    # timeline. Diagnose the impossible range instead of serializing clipped
+    # marks behind a generic visible-overflow warning.
+    with pytest.raises(RenderFailed) as raised:
+        render_review(RenderRequest(closure, snapshot, ReferenceScheduler()))
+    assert raised.value.code == "E_LAYOUT_MARK_OVERFLOW"
+    assert raised.value.source_ref == "/layoutManifest/sources/timeline"
 
 
 def test_context_font_assets_resolve_from_context_revision_not_theme_revision(tmp_path):
