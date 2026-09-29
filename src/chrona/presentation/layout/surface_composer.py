@@ -84,6 +84,17 @@ class SurfaceLayoutComposition:
     mark_absences: tuple[MarkFacetAbsence, ...] = ()
 
 
+def _member_association_outcome(candidate: LabelPlacement | None,
+                                association: MemberNameAssociation, *,
+                                overflow: str, placement_id: str) -> LabelPlacement | None:
+    """Close a mark-associated name only after its measured Text passes the bound."""
+    if candidate is not None and not association.allows(candidate.bounds):
+        candidate = None
+    if candidate is None and overflow != "suppress":
+        raise LayoutError("E_LAYOUT_LABEL_ASSOCIATION_UNPLACEABLE", f"/placement/{placement_id}")
+    return candidate
+
+
 @dataclass(frozen=True)
 class _LaneLayoutRow:
     """Layout adapter for one already-fixed View lane, never a member selector."""
@@ -2088,6 +2099,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             host = mark_by_id.get(label_request.inside_host_obstacle_id or "")
             associated_member = (label_request.semantic_id == "memberLabel"
                                  and label_request.collision_region == "plot-label" and host is not None)
+            member_association = (MemberNameAssociation(
+                LabelRect(*_bounds(host.bounds)), leading + chip_pad[0], chip_pad[1],
+                float(provisional.bounds.inline_size), float(provisional.bounds.block_size),
+                2 * float(font_size)) if associated_member else None)
             if label_request.semantic_id == "asOfLabel":
                 candidate = find_asof_label_candidate(
                     timeline_rect, label_size, rule_x=label_request.anchor.x,
@@ -2107,14 +2122,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                     classes=label_classes,
                     full_band=(label_request.lane_row_id is not None
                                and layout_manifest.row_distribution == "fill"),
-                    association=MemberNameAssociation(
-                        LabelRect(*_bounds(host.bounds)), leading + chip_pad[0], chip_pad[1],
-                        float(provisional.bounds.inline_size), float(provisional.bounds.block_size),
-                        2 * float(font_size)),
-                    maximum_stagger=(label_size[1] + label_gap if label_request.lane_row_id is not None else None))
-                if candidate is None and label_request.overflow != "suppress":
-                    raise LayoutError("E_LAYOUT_LABEL_ASSOCIATION_UNPLACEABLE",
-                                      f"/placement/{label_request.placement_id}")
+                    association=member_association,
+                    maximum_stagger=(label_size[1] + label_gap if label_request.lane_row_id is not None else None),
+                    overflow=label_request.overflow,
+                    visible_fallback_side=label_request.visible_fallback_side)
             else:
                 candidate = (place_label(
                     label_request.anchor, label_size, label_request.candidates,
@@ -2126,6 +2137,12 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                     search_side_neighborhood=(label_request.rule_host_obstacle_id is None),
                     classes=label_classes,
                 ) if label_request.candidates else None)
+            # Check the completed search result at the composition boundary as
+            # well: no alternative placement helper can emit detached text.
+            if member_association is not None:
+                candidate = _member_association_outcome(
+                    candidate, member_association, overflow=label_request.overflow,
+                    placement_id=label_request.placement_id)
             fallback_ladder = label_request.candidates + (
                 (label_request.visible_fallback_side,)
                 if label_request.visible_fallback_side is not None

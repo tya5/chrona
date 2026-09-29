@@ -37,6 +37,7 @@ def test_lane_obstacles_reject_retired_member_leader_route_class():
 def test_scene_v06_and_v07_lane_obstacle_schemas_reject_leader_route():
     from pathlib import Path
 
+    import jsonschema
     import yaml
 
     root = Path(__file__).resolve().parents[5]
@@ -44,6 +45,13 @@ def test_scene_v06_and_v07_lane_obstacle_schemas_reject_leader_route():
         schema = yaml.safe_load((root / f"schemas/scene-v{version}.schema.yaml").read_text(encoding="utf-8"))
         obstacle_classes = schema["$defs"]["laneObstacle"]["properties"]["class"]["enum"]
         assert obstacle_classes == ["mark", "required-label"]
+        validator = jsonschema.Draft202012Validator({"$ref": "#/$defs/laneObstacle", "$defs": schema["$defs"]})
+        obstacle = {"facetId": "facet", "primitiveId": "mark", "rowId": "row",
+                    "memberId": "member", "class": "mark",
+                    "geometry": {"kind": "rect", "left": 0, "top": 0, "right": 1, "bottom": 1}}
+        validator.validate(obstacle)
+        with pytest.raises(jsonschema.ValidationError):
+            validator.validate(obstacle | {"class": "leader-route"})
 
 
 def test_ordinary_scene_text_can_keep_its_exact_completed_host():

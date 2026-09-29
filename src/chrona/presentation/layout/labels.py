@@ -290,6 +290,8 @@ def place_member_name(
     full_band: bool = False,
     association: MemberNameAssociation | None = None,
     maximum_stagger: float | None = None,
+    overflow: str = "suppress",
+    visible_fallback_side: str | None = None,
 ) -> LabelPlacement | None:
     """Try declared member-name sides in order, bounding end gap to completed text.
 
@@ -298,13 +300,18 @@ def place_member_name(
     one measured stagger step; a failed contact proceeds to the declared side.
     """
     sides = tuple(candidates)
-    if (not sides or len(sides) > 16 or len(set(sides)) != len(sides)
+    if not sides:
+        return None
+    if (len(sides) > 16 or len(set(sides)) != len(sides)
             or any(side not in {"above", "below", "start", "end", "inside"} for side in sides)
             or any(isinstance(value, bool) or not isfinite(value) or value < 0
                    for value in (gap, maximum_end_gap, text_inline_inset))
             or (maximum_stagger is not None and
                 (isinstance(maximum_stagger, bool) or not isfinite(maximum_stagger)
-                 or maximum_stagger < 0))):
+                 or maximum_stagger < 0))
+            or overflow not in {"suppress", "visible-overflow", "diagnose"}
+            or (visible_fallback_side is not None and
+                (overflow != "visible-overflow" or visible_fallback_side not in sides))):
         raise ValueError("E_PRESENTATION_LABEL_INPUT")
     available_obstacles = (obstacles if isinstance(obstacles, SurfaceObstacleIndex)
                            else tuple(obstacles))
@@ -383,4 +390,12 @@ def place_member_name(
         if legal_positions:
             selected = min(legal_positions, key=lambda rect: (abs(rect.y - preferred.y), rect.y))
             return LabelPlacement(side, selected, search_count=len(candidates))
+    if overflow == "visible-overflow":
+        # Preserve the declared visible fallback without waiving the own-mark
+        # association. It may overlap an obstacle or leave its nominal bounds.
+        fallback_sides = (visible_fallback_side,) if visible_fallback_side is not None else sides
+        for side in fallback_sides:
+            candidate = _visible_candidate(anchor, size, side, gap)
+            if association is None or association.allows(candidate):
+                return LabelPlacement(side, candidate, True)
     return None
