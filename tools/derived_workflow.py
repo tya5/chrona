@@ -1,0 +1,287 @@
+"""Helpers used by the source-only PR and serialized main evidence workflows."""
+from __future__ import annotations
+
+import argparse
+from difflib import unified_diff
+from io import BytesIO
+import json
+import posixpath
+from pathlib import Path
+from pathlib import PurePosixPath
+import subprocess
+import sys
+import tarfile
+from typing import Iterable
+
+from chrona.resources import safe_load
+from tools.derived_evidence import REPORTS, derived_paths, materializer_outputs
+
+
+def _is_derived_path(relative: str) -> bool:
+    if relative in REPORTS:
+        return True
+    parts = PurePosixPath(relative).parts
+    return (
+        len(parts) >= 4 and parts[0] == "examples" and parts[2] == "generated"
+        and relative.endswith((".svg", ".scene.json"))
+        and "\\" not in relative and not PurePosixPath(relative).is_absolute()
+        and ".." not in parts
+    )
+
+
+def _has_symlink_parent(root: Path, target: Path) -> bool:
+    root = root.resolve()
+    try:
+        relative = target.relative_to(root)
+    except ValueError:
+        return True
+    cursor = root
+    for part in relative.parts[:-1]:
+        cursor = cursor / part
+        if cursor.is_symlink():
+            return True
+    return False
+
+
+def _manifest_outputs_at_revision(root: Path, revision: str) -> set[str]:
+    files = subprocess.run(
+        ["git", "ls-tree", "-r", "--name-only", revision, "--", "examples"],
+        cwd=root, check=True, capture_output=True, text=True,
+    ).stdout.splitlines()
+    manifests = [path for path in files if len(PurePosixPath(path).parts) == 3 and path.endswith("/manifest.yaml")]
+    outputs: set[str] = set()
+    for relative in manifests:
+        raw = subprocess.run(
+            ["git", "show", f"{revision}:{relative}"], cwd=root,
+            check=True, capture_output=True,
+        ).stdout
+        manifest = safe_load(raw)
+        slides = manifest.get("slides") if isinstance(manifest, dict) else None
+        if not isinstance(slides, list):
+            raise ValueError(f"E_DERIVED_BASELINE_MANIFEST:{relative}")
+        deck = PurePosixPath(relative).parent.as_posix()
+        for slide in slides:
+            if not isinstance(slide, dict):
+                raise ValueError(f"E_DERIVED_BASELINE_MANIFEST:{relative}")
+            for key in ("expectedSvg", "expectedScene"):
+                value = slide.get(key)
+                if value is None and key == "expectedScene":
+                    continue
+                if not isinstance(value, str) or not value or "\\" in value:
+                    raise ValueError(f"E_DERIVED_BASELINE_MANIFEST:{relative}:{key}")
+                output = posixpath.normpath(posixpath.join(deck, value))
+                if not output.startswith(deck + "/") or not _is_derived_path(output):
+                    raise ValueError(f"E_DERIVED_BASELINE_PATH:{relative}:{key}")
+                outputs.add(output)
+    return outputs
+
+
+def tracked_materializers(root: Path, revision: str) -> set[str]:
+    result = subprocess.run(
+        ["git", "ls-tree", "-r", "--name-only", revision, "--", "examples"],
+        cwd=root, check=True, capture_output=True, text=True,
+    )
+    return {
+        path for path in result.stdout.splitlines()
+        if _is_derived_path(path) and path.startswith("examples/")
+    }
+
+
+def retired_outputs(root: Path, revision: str) -> tuple[str, ...]:
+    current = {path.relative_to(root).as_posix() for path in materializer_outputs(root)}
+    previous_declared = _manifest_outputs_at_revision(root, revision)
+    return tuple(sorted((tracked_materializers(root, revision) & previous_declared) - current))
+
+
+def retire_outputs(root: Path, paths: Iterable[str]) -> None:
+    """Remove only validated previously tracked generated SVG/Scene files."""
+    for relative in paths:
+        path = Path(relative)
+        if (path.is_absolute() or ".." in path.parts or not relative.startswith("examples/")
+                or "/generated/" not in relative or not relative.endswith((".svg", ".scene.json"))):
+            raise ValueError(f"E_DERIVED_RETIRE_PATH:{relative}")
+        target = root / path
+        if _has_symlink_parent(root, target):
+            raise ValueError(f"E_DERIVED_RETIRE_PATH:{relative}")
+        target.unlink(missing_ok=True)
+
+
+def changed_paths(root: Path, base: str, head: str) -> tuple[str, ...]:
+    result = subprocess.run(
+        ["git", "diff", "--name-only", "--diff-filter=ACDMRT", f"{base}...{head}"],
+        cwd=root, check=True, capture_output=True, text=True,
+    )
+    return tuple(sorted(set(result.stdout.splitlines())))
+
+
+def is_derived_path(path: str, root: Path) -> bool:
+    inventory = {item.relative_to(root).as_posix() for item in derived_paths(root)}
+    return path in inventory or _is_derived_path(path)
+
+
+def stage_derived_paths(root: Path, baseline: str) -> tuple[str, ...]:
+    """Stage only declared outputs/reports and previously tracked retirements."""
+    paths = {
+        path.relative_to(root).as_posix() for path in derived_paths(root)
+    } | set(retired_outputs(root, baseline))
+    ordered = tuple(sorted(paths))
+    if ordered:
+        subprocess.run(["git", "add", "-A", "--", *ordered], cwd=root, check=True)
+    return ordered
+
+
+def prepare_candidate(root: Path, source_sha: str) -> tuple[str, bool]:
+    """Stage the exact derived closure and return the source/no-op or commit SHA."""
+    current = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=root, check=True, capture_output=True, text=True,
+    ).stdout.strip()
+    if current != source_sha:
+        raise ValueError(f"E_DERIVED_SOURCE_MOVED:{source_sha}:{current}")
+    stage_derived_paths(root, source_sha)
+    changed = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=root, check=False)
+    if changed.returncode == 0:
+        return source_sha, False
+    if changed.returncode != 1:
+        raise RuntimeError(f"E_DERIVED_STAGED_DIFF:{changed.returncode}")
+    subprocess.run(["git", "config", "user.name", "github-actions[bot]"], cwd=root, check=True)
+    subprocess.run(
+        ["git", "config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"],
+        cwd=root, check=True,
+    )
+    subprocess.run(["git", "commit", "-m", "Regenerate public derived evidence"], cwd=root, check=True)
+    candidate = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=root, check=True, capture_output=True, text=True,
+    ).stdout.strip()
+    return candidate, True
+
+
+def make_snapshot(root: Path, baseline: str, destination: Path) -> None:
+    """Package regenerated paths and explicit retirements for identical CI inputs."""
+    retire = retired_outputs(root, baseline)
+    retire_outputs(root, retire)
+    subprocess.run([sys.executable, "-m", "tools.derived_evidence", "--write"], cwd=root, check=True)
+    paths = [path.relative_to(root).as_posix() for path in derived_paths(root)]
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    before = destination.with_name("derived-before.tar.gz")
+    changed: list[str] = []
+    diff_lines: list[str] = []
+    total_chars = 0
+    truncated = False
+    with tarfile.open(before, "w:gz") as archive:
+        for relative in sorted((*paths, *retire)):
+            prior = subprocess.run(
+                ["git", "show", f"{baseline}:{relative}"], cwd=root,
+                check=False, capture_output=True,
+            )
+            if prior.returncode:
+                prior_bytes = None
+            else:
+                prior_bytes = prior.stdout
+                info = tarfile.TarInfo(relative)
+                info.size = len(prior_bytes)
+                archive.addfile(info, fileobj=BytesIO(prior_bytes))
+            fresh_path = root / relative
+            fresh_bytes = fresh_path.read_bytes() if fresh_path.is_file() else None
+            if prior_bytes != fresh_bytes:
+                changed.append(relative)
+                old_text = (prior_bytes or b"").decode("utf-8", errors="replace").splitlines(keepends=True)
+                new_text = (fresh_bytes or b"").decode("utf-8", errors="replace").splitlines(keepends=True)
+                if not truncated:
+                    candidate = unified_diff(old_text, new_text,
+                                             fromfile=f"before/{relative}", tofile=f"after/{relative}")
+                    for line in candidate:
+                        if len(diff_lines) >= 120 or total_chars + len(line) > 12_000:
+                            diff_lines.append("... bounded diff truncated ...\n")
+                            truncated = True
+                            break
+                        diff_lines.append(line)
+                        total_chars += len(line)
+    with tarfile.open(destination, "w:gz") as archive:
+        for relative in paths:
+            archive.add(root / relative, arcname=relative)
+    destination.with_suffix(destination.suffix + ".json").write_text(
+        json.dumps({"paths": paths, "retired": list(retire), "changed": changed}, indent=2) + "\n", encoding="utf-8")
+    preview = ["# Derived evidence preview", "", f"Changed paths: {len(changed)}", ""]
+    preview.extend(f"- `{path}`" for path in changed)
+    preview.extend(["", "Text diff (bounded to 120 lines / 12,000 characters):", "", "```diff"])
+    preview.extend(line.rstrip("\n") for line in diff_lines)
+    preview.extend(["```", "", "The `derived-before.tar.gz` and `derived-snapshot.tar.gz` artifacts contain the exact before/after SVG, Scene, and report bytes."])
+    destination.with_name("derived-preview.md").write_text("\n".join(preview) + "\n", encoding="utf-8")
+
+
+def apply_snapshot(root: Path, archive_path: Path, manifest_path: Path, baseline: str) -> None:
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    expected = set(manifest["paths"])
+    current = {path.relative_to(root).as_posix() for path in derived_paths(root)}
+    if (expected != current or len(manifest["paths"]) != len(expected)
+            or any(not _is_derived_path(path) for path in expected)):
+        raise ValueError("E_DERIVED_SNAPSHOT_PATHS")
+    retired = manifest.get("retired")
+    if (not isinstance(retired, list) or any(not isinstance(path, str) for path in retired)
+            or set(retired) != set(retired_outputs(root, baseline)) or set(retired) & expected):
+        raise ValueError("E_DERIVED_SNAPSHOT_RETIREMENT")
+    if archive_path.stat().st_size > 256 * 1024 * 1024:
+        raise ValueError("E_DERIVED_SNAPSHOT_SIZE")
+    with tarfile.open(archive_path, "r:gz") as archive:
+        members = []
+        total_size = 0
+        for member in archive:
+            members.append(member)
+            if len(members) > len(expected):
+                raise ValueError("E_DERIVED_SNAPSHOT_INVENTORY")
+            total_size += member.size
+            if total_size > 128 * 1024 * 1024:
+                raise ValueError("E_DERIVED_SNAPSHOT_SIZE")
+        names = {member.name for member in members}
+        if (names != expected or len(members) != len(expected)
+                or any(member.issym() or member.islnk() or not member.isfile()
+                                     or Path(member.name).is_absolute() or ".." in Path(member.name).parts
+                                     or not _is_derived_path(member.name)
+                                     for member in members)):
+            raise ValueError("E_DERIVED_SNAPSHOT_INVENTORY")
+        for member in members:
+            target = root / member.name
+            if _has_symlink_parent(root, target) or target.is_symlink():
+                raise ValueError("E_DERIVED_SNAPSHOT_PATH")
+            target.parent.mkdir(parents=True, exist_ok=True)
+            source = archive.extractfile(member)
+            if source is None:
+                raise ValueError("E_DERIVED_SNAPSHOT_MEMBER")
+            target.write_bytes(source.read())
+    retire_outputs(root, manifest["retired"])
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    sub = parser.add_subparsers(dest="command", required=True)
+    check = sub.add_parser("source-only")
+    check.add_argument("base")
+    check.add_argument("head")
+    pack = sub.add_parser("snapshot")
+    pack.add_argument("baseline")
+    pack.add_argument("destination", type=Path)
+    apply = sub.add_parser("apply")
+    apply.add_argument("archive", type=Path)
+    apply.add_argument("manifest", type=Path)
+    apply.add_argument("--baseline", required=True)
+    stage = sub.add_parser("prepare-candidate")
+    stage.add_argument("source_sha")
+    args = parser.parse_args()
+    root = Path.cwd().resolve()
+    if args.command == "source-only":
+        paths = [path for path in changed_paths(root, args.base, args.head) if is_derived_path(path, root)]
+        if paths:
+            raise SystemExit("E_DERIVED_SOURCE_ONLY:" + ",".join(paths))
+    elif args.command == "snapshot":
+        make_snapshot(root, args.baseline, args.destination)
+    elif args.command == "prepare-candidate":
+        candidate, changed = prepare_candidate(root, args.source_sha)
+        print(f"candidate_sha={candidate}")
+        print(f"changed={str(changed).lower()}")
+    else:
+        apply_snapshot(root, args.archive, args.manifest, args.baseline)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

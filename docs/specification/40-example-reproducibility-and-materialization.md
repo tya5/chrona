@@ -3,7 +3,7 @@
 **Status:** Design complete — Issue 38
 **Depends on:** Render Context v0.5/v0.6 and Specification 38.
 
-The PR/main evidence publication rule below is the approved #590 migration target; it becomes operational with the corresponding CI rollout. Until then, the published CI still checks committed outputs in each PR.
+The PR/main evidence publication rule below is the approved #590 migration target. The I590-2 workflow transition implements the source-only PR snapshot and serialized main publication route; strict status-only branch protection is a separate I590-3 deployment gate and is not claimed until proven on a disposable protected branch.
 
 ## 1. Version policy
 

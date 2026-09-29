@@ -1,0 +1,124 @@
+name: derived-sync
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: write
+  checks: read
+concurrency:
+  group: derived-main-sync
+  cancel-in-progress: false
+jobs:
+  synchronize:
+    runs-on: ubuntu-latest
+    steps:
+      - id: target
+        name: Reject invalid event refs before checkout
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_REF: ${{ github.ref }}
+          EVENT_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          import sys
+
+          event = os.environ["EVENT_NAME"]
+          ref = os.environ["EVENT_REF"]
+          sha = os.environ["EVENT_SHA"]
+          if not re.fullmatch(r"[0-9a-f]{40}", sha):
+              sys.exit("E_DERIVED_SYNC_SHA")
+          if event == "push":
+              if ref != "refs/heads/main":
+                  sys.exit("E_DERIVED_SYNC_PUSH_REF")
+              target = "main"
+          elif event == "workflow_dispatch":
+              if ref == "refs/heads/main":
+                  target = "main"
+              elif re.fullmatch(r"refs/heads/derived-proof/(?:[a-z0-9]|[a-z0-9][a-z0-9-]{0,38}[a-z0-9])", ref):
+                  target = ref.removeprefix("refs/heads/")
+              else:
+                  sys.exit("E_DERIVED_SYNC_DISPATCH_REF")
+          else:
+              sys.exit("E_DERIVED_SYNC_EVENT")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"target_ref={target}\n")
+              output.write(f"event_sha={sha}\n")
+          PY
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.target.outputs.target_ref }}
+          fetch-depth: 0
+      - name: Regenerate from the latest main tip and prepare candidate
+        id: candidate
+        env:
+          TARGET_REF: ${{ steps.target.outputs.target_ref }}
+        run: |
+          git fetch origin "refs/heads/$TARGET_REF"
+          source_sha="$(git rev-parse "refs/remotes/origin/$TARGET_REF")"
+          git checkout --detach "$source_sha"
+          echo "source_sha=$source_sha" >> "$GITHUB_OUTPUT"
+          python -m pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk
+          python -m tools.derived_workflow snapshot "$source_sha" "$RUNNER_TEMP/derived-snapshot.tar.gz"
+          python -m tools.derived_workflow prepare-candidate "$source_sha" >> "$GITHUB_OUTPUT"
+      - name: Publish immutable candidate ref
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.candidate.outputs.candidate_sha }}
+        run: |
+          git push origin "$SHA:refs/heads/derived-gate/$SHA"
+      - name: Dispatch and await trusted exact-SHA derived gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.candidate.outputs.candidate_sha }}
+          REF: derived-gate/${{ steps.candidate.outputs.candidate_sha }}
+        run: |
+          workflow="repos/$GITHUB_REPOSITORY/actions/workflows/derived-main.yml"
+          prior_run="$(gh api --method GET "$workflow/runs" -f event=workflow_dispatch -f "branch=$REF" -f per_page=100 \
+            --jq "[.workflow_runs[] | select(.head_sha == \"$SHA\")] | map(.run_number) | max // 0")"
+          jq -n --arg ref "$REF" --arg sha "$SHA" \
+            '{ref:$ref,inputs:{expected_sha:$sha}}' |
+            gh api --method POST "$workflow/dispatches" --input -
+          run_id=""
+          for attempt in $(seq 1 60); do
+            run_id="$(gh api --method GET "$workflow/runs" -f event=workflow_dispatch -f "branch=$REF" -f per_page=100 \
+              --jq "[.workflow_runs[] | select(.head_sha == \"$SHA\" and .run_number > $prior_run)] | sort_by(.run_number) | last | .id // empty")"
+            [[ -n "$run_id" ]] && break
+            sleep 10
+          done
+          test -n "$run_id"
+          gate_state=""
+          for attempt in $(seq 1 120); do
+            gate_state="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/jobs" \
+              --jq '[.jobs[] | select(.name == "derived-main" or .name == "derived-ready") | .name + ":" + .status + ":" + (.conclusion // "")] | sort | join(",")')"
+            if [[ ("$gate_state" == *"derived-main:completed:"* && "$gate_state" != *"derived-main:completed:success"*) || ("$gate_state" == *"derived-ready:completed:"* && "$gate_state" != *"derived-ready:completed:success"*) ]]; then
+              echo "Trusted gate failed: $gate_state"; exit 1
+            fi
+            if [[ "$gate_state" == *"derived-main:completed:success"* && "$gate_state" == *"derived-ready:completed:success"* ]]; then
+              break
+            fi
+            sleep 15
+          done
+          [[ "$gate_state" == *"derived-main:completed:success"* && "$gate_state" == *"derived-ready:completed:success"* ]]
+      - name: Fast-forward main only if the source tip is unchanged
+        if: ${{ steps.candidate.outputs.changed == 'true' }}
+        env:
+          TARGET_REF: ${{ steps.target.outputs.target_ref }}
+          SOURCE_SHA: ${{ steps.candidate.outputs.source_sha }}
+          SHA: ${{ steps.candidate.outputs.candidate_sha }}
+        run: |
+          current="$(git ls-remote origin "refs/heads/$TARGET_REF" | cut -f1)"
+          test "$current" = "$SOURCE_SHA"
+          git push origin "$SHA:refs/heads/$TARGET_REF"
+      - name: Dispatch full three-OS CI on the exact final SHA
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.candidate.outputs.candidate_sha }}
+          REF: derived-gate/${{ steps.candidate.outputs.candidate_sha }}
+        run: |
+          jq -n --arg ref "$REF" --arg sha "$SHA" \
+            '{ref:$ref,inputs:{expected_sha:$sha}}' |
+            gh api --method POST "repos/$GITHUB_REPOSITORY/actions/workflows/conformance.yml/dispatches" --input -

@@ -164,14 +164,33 @@ Archived records are evidence, not current design authority.
 
 ## Publication and CI discipline
 
-CI has two PR paths: a PR changing only `docs/**`, root `AGENTS.md`, root
-`README*`, or root `.ignore` runs Ubuntu conformance without pytest or wheel
-smoke; all other PRs run Ubuntu conformance and three parallel pytest shards.
-Both code PRs and full runs retain newest-Python public-materializer
-reproduction. Pushes to `main`, nightly runs, and manual runs use the full
-three-OS conformance, pytest, and wheel-smoke matrix. PR speed is not release
-acceptance: close an issue only after citing the three-OS `main` CI run for
-the exact commit containing its acceptance review.
+CI treats derived evidence as a generated snapshot, not PR-authored output.
+Every PR first rejects edits to manifest-declared Scene/SVG and report paths,
+then generates one disposable snapshot and uploads bounded before/after
+evidence. Conformance, code-PR pytest shards, and newest-Python materializer
+reproduction consume that same snapshot. Docs-only PRs run conformance without
+pytest shards; code PRs run three Ubuntu shards. Fork PR jobs remain read-only.
+
+Each push to `main` enters one non-cancelling serialized sync. It checks out
+the latest `main` after acquiring the lock, regenerates the manifest-derived
+outputs and reports, and retires only previously tracked generated SVG/Scene
+paths no longer declared by manifests. It prepares one bot commit or a no-op,
+pushes an immutable `derived-gate/<sha>` ref, dispatches the trusted gate on
+that exact SHA, and waits for successful `derived-main` and `derived-ready`
+checks before fast-forwarding `main`. A non-fast-forward or failed gate stops
+publication; never patch generated output manually. After publication the
+sync dispatches the full three-OS pytest/conformance/wheel-smoke run on the
+same immutable ref and SHA. Main pushes do not run that matrix on the stale
+pre-sync source SHA. No-op syncs use the existing main SHA for both checks.
+
+The `derived-ready` PR check waits (boundedly) for `derived-main` on the
+current exact `main` tip and rechecks that tip before success. Production
+status-only strict branch protection is a separate deployment step: do not
+claim that failed syncs block merges until the Actions check source and bot
+fast-forward route have been proven on a disposable protected branch and the
+required check has actually been configured. PR speed is not release
+acceptance: close an issue only after citing the three-OS run on the exact
+published commit containing its acceptance review.
 
 - Before each push, fetch `origin/main`; inspect ahead/behind state, exact
   target commits, staged diff, generated output, and conflict risk. Publish
