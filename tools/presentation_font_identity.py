@@ -6,12 +6,12 @@ import argparse
 from dataclasses import dataclass
 import json
 from pathlib import Path
-import subprocess
 import sys
 from typing import Any, Iterable, Mapping
 
 from chrona.resources import safe_load
 from tools.check_scene_perceptibility import committed_scene_paths
+from tools.derived_evidence import scene_contexts
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -47,36 +47,11 @@ def _primary_family(stack: str) -> str:
 
 
 def _manifest_contexts(root: Path) -> dict[Path, Path]:
-    """Map each tracked generated Scene to the Context that materialized it."""
-    contexts: dict[Path, Path] = {}
-    completed = subprocess.run(("git", "-C", str(root), "ls-files", "-z", "examples"), check=False,
-                               capture_output=True, text=False)
-    if completed.returncode != 0:
-        raise ValueError("E_FONT_IDENTITY_MANIFEST")
-    manifests = tuple(sorted(root / Path(item.decode("utf-8"))
-                             for item in completed.stdout.split(b"\0") if item.endswith(b"/manifest.yaml")))
-    for manifest_path in manifests:
-        try:
-            manifest = safe_load(manifest_path.read_bytes())
-            slides = manifest.get("slides", ()) if isinstance(manifest, Mapping) else ()
-            default = manifest.get("context") if isinstance(manifest, Mapping) else None
-        except Exception as error:
-            raise ValueError("E_FONT_IDENTITY_MANIFEST") from error
-        if not isinstance(slides, list):
-            raise ValueError("E_FONT_IDENTITY_MANIFEST")
-        for slide in slides:
-            if not isinstance(slide, Mapping):
-                raise ValueError("E_FONT_IDENTITY_MANIFEST")
-            scene = slide.get("expectedScene")
-            context = slide.get("context", default)
-            if not isinstance(scene, str) or not isinstance(context, str):
-                raise ValueError("E_FONT_IDENTITY_MANIFEST")
-            scene_path = (manifest_path.parent / scene).resolve()
-            context_path = (manifest_path.parent / context).resolve()
-            previous = contexts.setdefault(scene_path, context_path)
-            if previous != context_path:
-                raise ValueError("E_FONT_IDENTITY_MANIFEST")
-    return contexts
+    """Map every manifest-declared Scene to its immutable Context path."""
+    try:
+        return scene_contexts(root)
+    except (OSError, ValueError) as error:
+        raise ValueError("E_FONT_IDENTITY_MANIFEST") from error
 
 
 def _context_catalog(context: Mapping[str, Any]) -> tuple[str, dict[tuple[str, int], str], set[str]]:
