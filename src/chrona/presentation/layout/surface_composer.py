@@ -397,9 +397,34 @@ def _validate_background_shapes(shapes: list[ShapePlacement], theme_tokens: Any)
             if (shape.source_ref == other.source_ref
                     and {shape.semantic_id, other.semantic_id} == {"groupBand", "groupHeaderBand"}):
                 continue
+            # Calendar closure is an intentional translucent overlay over
+            # row/group identity. Admit only that semantic pair when its
+            # declared Theme paint order is strictly later; calendar cells
+            # may never compound with one another, and unrelated fills keep
+            # the general no-overlap rule.
+            if _is_later_calendar_overlay(shape, other, theme_tokens):
+                continue
+            if _is_later_calendar_overlay(other, shape, theme_tokens):
+                continue
             if intersects(shape.bounds, other.bounds):
                 raise LayoutError("E_LAYOUT_BACKGROUND_OVERLAP", "/layoutManifest/reviewSurface/backgroundExtents",
                                   detail=f"{shape.placement_id}:{other.placement_id}")
+
+
+def _is_later_calendar_overlay(calendar: ShapePlacement, band: ShapePlacement, theme_tokens: Any) -> bool:
+    """Permit only a later-painted translucent calendar cell over a band."""
+    if calendar.semantic_id != "calendarClosed" or band.semantic_id not in {
+        "rowBand", "groupBand", "groupHeaderBand",
+    }:
+        return False
+    calendar_role = semantic_binding(calendar.semantic_id).scene_role
+    band_role = semantic_binding(band.semantic_id).scene_role
+    calendar_treatment, calendar_order = theme_tokens.background(calendar_role)
+    band_treatment, band_order = theme_tokens.background(band_role)
+    return (calendar_treatment == "fill" and band_treatment == "fill"
+            and calendar_order == calendar.paint_order
+            and band_order == band.paint_order
+            and calendar_order > band_order)
 
 
 def _contains_block_interval(*, container_start: Decimal, container_end: Decimal,

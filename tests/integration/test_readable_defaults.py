@@ -6,6 +6,7 @@ import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+from PIL import Image
 import pytest
 import yaml
 
@@ -317,6 +318,67 @@ def test_init_starter_bundled_default_guides_and_names_every_bar(tmp_path, monke
     assert not [item for item in scene["diagnostics"]
                 if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")]
     assert svg.count('id="row-band:') == len(bands)
+
+
+def test_bundled_default_closed_day_fill_matches_legend_without_outlines(tmp_path, monkeypatch) -> None:
+    starter = tmp_path / "starter-closed-day"
+    monkeypatch.setattr(sys, "argv", ["chrona", "init", str(starter)])
+    main()
+    scene, svg_path = _render_project(tmp_path, monkeypatch, "starter-closed-day",
+                                      starter / "project.yaml", starter / "actual.yaml")
+    primitives = _primitives(scene)
+    closed_days = [item for item in primitives if item.get("visualRole") == "calendar-closed"]
+    legend = next(item for item in primitives
+                  if item.get("sourceKind") == "legend" and item.get("sourceRef") == "calendar-closed")
+
+    assert closed_days
+    assert all("fill" in item["paint"] and "stroke" not in item["paint"] for item in closed_days)
+    assert all(item["paint"]["opacity"] == pytest.approx(0.12) for item in closed_days)
+    assert legend["paint"].get("fill") == closed_days[0]["paint"]["fill"]
+    assert "stroke" not in legend["paint"]
+    assert legend["paint"]["opacity"] == pytest.approx(closed_days[0]["paint"]["opacity"])
+
+    svg = svg_path.read_text(encoding="utf-8")
+    root = ET.fromstring(svg)
+    svg_closed = [element for element in root.iter()
+                  if element.get("data-purpose") == "calendar-closed"]
+    svg_legend = next(element for element in root.iter()
+                      if element.get("data-scene-id", "").startswith("legend-swatch:calendar-closed"))
+    assert svg_closed
+    assert all(element.get("fill") != "none" and element.get("stroke") is None for element in svg_closed)
+    assert all(float(element.get("opacity", "1")) == pytest.approx(0.12) for element in svg_closed)
+    assert svg_legend.get("fill") == svg_closed[0].get("fill")
+    assert svg_legend.get("stroke") is None
+    assert float(svg_legend.get("opacity", "1")) == pytest.approx(0.12)
+
+    png_path = tmp_path / "starter-closed-day.png"
+    monkeypatch.setattr(sys, "argv", ["chrona", "render", str(starter / "project.yaml"),
+                                       "--actual", str(starter / "actual.yaml"), "--output", str(png_path)])
+    main()
+    swatch_bounds = legend["bounds"]
+    with Image.open(png_path) as raster:
+        pixels = raster.convert("RGB")
+        samples = (swatch_bounds, closed_days[0]["bounds"])
+        observed = [pixels.getpixel((round(bounds["inline"] + bounds["inlineSize"] / 2),
+                                     round(bounds["block"] + bounds["blockSize"] / 2)))
+                    for bounds in samples]
+    canvas = scene["surfaces"][0]["canvasPaint"]["fill"].lstrip("#")
+    fill = legend["paint"]["fill"].lstrip("#")
+    opacity = legend["paint"]["opacity"]
+    expected = tuple(round(opacity * int(fill[index:index + 2], 16)
+                           + (1 - opacity) * int(canvas[index:index + 2], 16))
+                     for index in (0, 2, 4))
+    assert all(all(abs(actual - wanted) <= 2 for actual, wanted in zip(pixel, expected))
+               for pixel in observed)
+
+    bundled_theme = yaml.safe_load((ROOT / "src/chrona/resources/presets/bundles/editorial-readable-default/theme.yaml").read_text(encoding="utf-8"))["body"]
+    halcyon_theme = yaml.safe_load((ROOT / "examples/halcyon-1/themes/editorial-readable-default.yaml").read_text(encoding="utf-8"))["body"]
+    for body in (bundled_theme, halcyon_theme):
+        role = body["roles"]["calendar-closed"]
+        assert role["backgroundTreatment"] == "fill"
+        assert "strokeWidth" not in role
+        assert body["values"]["opacity.calendar-closed"]["value"] == pytest.approx(0.12)
+        assert "calendar-closed.stroke" not in body["colorBindings"]
 
 
 def test_pinned_default_draft_guides_every_bar_across_the_plot_and_names_it_at_its_end(tmp_path, monkeypatch) -> None:
