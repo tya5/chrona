@@ -184,6 +184,35 @@ def test_cli_names_colliding_scale_values(tmp_path, monkeypatch, capsys) -> None
     assert [(item["values"], item["vision"], item["deltaE"]) for item in collisions] == [(["bus", "launch"], "normal", 0.0)]
 
 
+def _assert_automatic_default_keeps_plot_names_and_row_guides(scene: dict, svg: str) -> None:
+    surface = scene["surfaces"][0]
+    timeline = next(slot for slot in surface["slots"] if slot["id"] == "timeline")["bounds"]
+    rows = {row["id"]: row["bounds"] for row in surface["rows"]}
+    primitives = {item["id"]: item for item in _primitives(scene)}
+    bands = {key: item for key, item in primitives.items() if key.startswith("row-band:")}
+    planned = {key: item for key, item in primitives.items() if key.startswith("planned:")}
+    labels = {key: item for key, item in primitives.items() if key.startswith("member-label:")}
+    suppressed = {diagnostic.split("W_LAYOUT_LABEL_SUPPRESSED:", 1)[1]
+                  for diagnostic in scene["diagnostics"]
+                  if diagnostic.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")}
+    assert rows and bands and planned
+    assert all(item["bounds"]["inline"] + item["bounds"]["inlineSize"] >=
+               timeline["inline"] + timeline["inlineSize"] - 0.01
+               for item in bands.values())
+    edges = {round(item["bounds"]["block"], 3) for item in bands.values()} | {
+        round(item["bounds"]["block"] + item["bounds"]["blockSize"], 3)
+        for item in bands.values()
+    }
+    assert all(round(bounds["block"], 3) in edges or
+               round(bounds["block"] + bounds["blockSize"], 3) in edges
+               for bounds in rows.values())
+    assert len(labels) + len(suppressed) == len(planned)
+    assert suppressed.isdisjoint(labels)
+    assert svg.count('id="row-band:') == len(bands)
+    assert all(f'id="{key}"' in svg for key in labels)
+    assert all(f'id="{key}"' not in svg for key in suppressed)
+
+
 def test_bundled_default_uses_task_and_planned_date_columns(tmp_path, monkeypatch) -> None:
     scene, svg_path = _render_project(
         tmp_path, monkeypatch, "bundled-default",
@@ -192,6 +221,7 @@ def test_bundled_default_uses_task_and_planned_date_columns(tmp_path, monkeypatc
     )
     primitives = {item["id"]: item for item in _primitives(scene)}
     svg = svg_path.read_text(encoding="utf-8")
+    _assert_automatic_default_keeps_plot_names_and_row_guides(scene, svg)
     svg_ids = {value for element in ET.fromstring(svg).iter()
                for value in (element.get("id"), element.get("data-scene-id")) if value}
     columns = {item["text"] for item in primitives.values()
@@ -215,6 +245,7 @@ def test_init_starter_default_uses_task_and_planned_date_columns(tmp_path, monke
                                       starter / "project.yaml", starter / "actual.yaml")
     primitives = {item["id"]: item for item in _primitives(scene)}
     svg = svg_path.read_text(encoding="utf-8")
+    _assert_automatic_default_keeps_plot_names_and_row_guides(scene, svg)
     svg_ids = {value for element in ET.fromstring(svg).iter()
                for value in (element.get("id"), element.get("data-scene-id")) if value}
     columns = {item["text"] for item in primitives.values()
