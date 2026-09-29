@@ -7,11 +7,18 @@ on:
     - cron: '0 4 * * *'
   workflow_dispatch:
     inputs:
+      expected_sha:
+        description: 'Optional exact SHA for a dispatched release CI run'
+        type: string
+        required: false
       os_failure_probe:
         description: 'Optional OS-specific failure probe (never for release acceptance)'
         type: choice
         options: [none, windows-latest]
         default: none
+permissions:
+  contents: read
+  checks: read
 concurrency:
   group: conformance-${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -31,18 +38,62 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: echo "path=$(python tools/classify_ci_change.py "$BASE_SHA" "$HEAD_SHA")" >> "$GITHUB_OUTPUT"
 
-  pr-conformance:
-    needs: classify-pr
+  derived-preview:
     if: ${{ github.event_name == 'pull_request' }}
+    needs: classify-pr
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: pip
           cache-dependency-path: pyproject.toml
       - run: pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk
+      - name: Reject derived edits and materialize one PR snapshot
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python -m tools.derived_workflow source-only "$BASE_SHA" "$HEAD_SHA"
+          python -m tools.derived_workflow snapshot "$BASE_SHA" derived-snapshot.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: derived-snapshot-${{ github.event.pull_request.head.sha }}
+          path: |
+            derived-snapshot.tar.gz
+            derived-snapshot.tar.gz.json
+            derived-before.tar.gz
+            derived-preview.md
+          if-no-files-found: error
+          retention-days: 14
+
+  pr-conformance:
+    needs: [classify-pr, derived-preview]
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk
+      - uses: actions/download-artifact@v4
+        if: ${{ github.event_name == 'pull_request' }}
+        with:
+          name: derived-snapshot-${{ github.event.pull_request.head.sha }}
+      - name: Apply the snapshot and verify its declared retirements
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python -m tools.derived_workflow apply derived-snapshot.tar.gz derived-snapshot.tar.gz.json --baseline "$BASE_SHA"
       - id: conformance
         continue-on-error: true
         run: python conformance/run_conformance.py
@@ -53,7 +104,7 @@ jobs:
           --required conformance=${{ steps.conformance.outcome }}
 
   pr-pytest:
-    needs: classify-pr
+    needs: [classify-pr, derived-preview]
     if: ${{ github.event_name == 'pull_request' && needs.classify-pr.outputs.path == 'code' }}
     strategy:
       fail-fast: false
@@ -62,12 +113,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: pip
           cache-dependency-path: pyproject.toml
       - run: pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk
+      - uses: actions/download-artifact@v4
+        with:
+          name: derived-snapshot-${{ github.event.pull_request.head.sha }}
+      - name: Apply the snapshot and verify its declared retirements
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python -m tools.derived_workflow apply derived-snapshot.tar.gz derived-snapshot.tar.gz.json --baseline "$BASE_SHA"
       - id: pytest
         continue-on-error: true
         run: pytest -n 4 --splits 3 --group ${{ matrix.shard }} --splitting-algorithm least_duration
@@ -77,8 +137,81 @@ jobs:
           python tools/check_ci_outcomes.py
           --required pytest-shard-${{ matrix.shard }}=${{ steps.pytest.outcome }}
 
+  reproduction-newest-python:
+    needs: [classify-pr, derived-preview]
+    if: ${{ always() && ((github.event_name == 'pull_request' && needs.classify-pr.outputs.path == 'code') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk
+      - uses: actions/download-artifact@v4
+        if: ${{ github.event_name == 'pull_request' }}
+        with:
+          name: derived-snapshot-${{ github.event.pull_request.head.sha }}
+      - name: Apply PR snapshot when this is a code PR
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python -m tools.derived_workflow apply derived-snapshot.tar.gz derived-snapshot.tar.gz.json --baseline "$BASE_SHA"
+      - name: Reproduce every public materializer context from the shared snapshot
+        run: pytest -q tests/integration/test_materialize_example.py::test_declared_examples_reproduce_by_public_cli
+
+  derived-ready:
+    needs: [classify-pr, derived-preview, pr-conformance, pr-pytest, reproduction-newest-python]
+    if: ${{ always() && github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Confirm expected validation and exact candidate gate
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          GH_TOKEN: ${{ github.token }}
+          PR_KIND: ${{ needs.classify-pr.outputs.path }}
+          PREVIEW: ${{ needs.derived-preview.result }}
+          CONFORMANCE: ${{ needs.pr-conformance.result }}
+          PYTEST: ${{ needs.pr-pytest.result }}
+          NEWEST: ${{ needs.reproduction-newest-python.result }}
+        run: |
+          if [[ "$EVENT_NAME" == pull_request ]]; then
+            if [[ "$PR_BASE_REF" != main && ! "$PR_BASE_REF" =~ ^derived-proof/([a-z0-9]|[a-z0-9][a-z0-9-]{0,38}[a-z0-9])$ ]]; then
+              echo "unsupported PR base ref: $PR_BASE_REF"; exit 1
+            fi
+            test "$PREVIEW" = success
+            test "$CONFORMANCE" = success
+            if [[ "$PR_KIND" == code ]]; then
+              test "$PYTEST" = success
+              test "$NEWEST" = success
+            fi
+            ready=false
+            for attempt in $(seq 1 60); do
+              current="$(gh api --method GET "repos/$GITHUB_REPOSITORY/commits/$PR_BASE_SHA/check-runs" \
+                -f check_name=derived-main -f filter=all -f per_page=100 \
+                --jq '[.check_runs[] | select(.app.slug == "github-actions")] | sort_by([.started_at // .created_at, .id]) | if length == 0 then "" else (last.status + ":" + (last.conclusion // "")) end')"
+              if [[ "$current" == "completed:success" ]]; then ready=true; break; fi
+              if [[ "$current" == completed:* && "$current" != completed:success ]]; then
+                echo "latest trusted derived-main failed on PR base $PR_BASE_SHA: $current"; exit 1
+              fi
+              sleep 30
+            done
+            test "$ready" = true
+            current_base="$(git ls-remote origin "refs/heads/$PR_BASE_REF" | cut -f1)"
+            test "$current_base" = "$PR_BASE_SHA"
+          fi
+
   full-matrix:
-    if: ${{ github.event_name != 'pull_request' }}
+    if: >-
+      ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     strategy:
       fail-fast: false
       matrix:
@@ -86,6 +219,17 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - name: Verify exact full-CI SHA when supplied
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: |
+          if [[ -n "$EXPECTED_SHA" ]]; then
+            test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+            test "$GITHUB_SHA" = "$EXPECTED_SHA"
+          fi
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -125,18 +269,3 @@ jobs:
           --required pytest=${{ steps.pytest.outcome }}
           --required os-probe=${{ steps.os_probe.outcome }}
           --dependent wheel-smoke=${{ steps.wheel_smoke.outcome }}
-
-  reproduction-newest-python:
-    needs: classify-pr
-    if: ${{ always() && (github.event_name != 'pull_request' || needs.classify-pr.outputs.path == 'code') }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - run: pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk
-      - name: Reproduce every committed public materializer context
-        run: pytest -q tests/integration/test_materialize_example.py::test_declared_examples_reproduce_by_public_cli

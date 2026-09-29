@@ -1,0 +1,225 @@
+from __future__ import annotations
+
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tarfile
+import textwrap
+
+import pytest
+
+from tools import derived_workflow
+
+
+def _git(root: Path, *args: str) -> None:
+    subprocess.run(["git", *args], cwd=root, check=True, capture_output=True)
+
+
+def test_retired_outputs_are_prior_tracked_generated_files_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _git(tmp_path, "init", "-q")
+    old = tmp_path / "examples/deck/generated/old.svg"
+    hand_authored = tmp_path / "examples/deck/generated/manual.svg"
+    authored = tmp_path / "examples/deck/manifest.yaml"
+    old.parent.mkdir(parents=True)
+    old.write_text("old evidence")
+    hand_authored.write_text("not materializer output")
+    authored.write_text("slides:\n  - id: old\n    expectedSvg: generated/old.svg\n")
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "-c", "user.name=test", "-c", "user.email=test@example.invalid", "commit", "-qm", "baseline")
+    baseline = subprocess.run(["git", "rev-parse", "HEAD"], cwd=tmp_path, check=True, capture_output=True, text=True).stdout.strip()
+    authored.write_text("slides:\n  - id: new\n    expectedSvg: generated/new.svg\n")
+    new = tmp_path / "examples/deck/generated/new.svg"
+    new.write_text("new evidence")
+    monkeypatch.setattr(derived_workflow, "materializer_outputs", lambda root: (root / "examples/deck/generated/new.svg",))
+    monkeypatch.setattr(derived_workflow, "derived_paths", lambda root: (root / "examples/deck/generated/new.svg",))
+
+    assert derived_workflow.retired_outputs(tmp_path, baseline) == ("examples/deck/generated/old.svg",)
+    derived_workflow.retire_outputs(tmp_path, ["examples/deck/generated/old.svg"])
+    derived_workflow.stage_derived_paths(tmp_path, baseline)
+    staged = subprocess.run(["git", "diff", "--cached", "--name-only"], cwd=tmp_path, check=True, capture_output=True, text=True).stdout.splitlines()
+    assert staged == [
+        "examples/deck/generated/new.svg",
+        "examples/deck/generated/old.svg",
+    ]
+    derived_workflow.retire_outputs(tmp_path, ["examples/deck/generated/old.svg"])
+    assert not old.exists()
+    assert hand_authored.read_text() == "not materializer output"
+    assert authored.read_text() == "slides:\n  - id: new\n    expectedSvg: generated/new.svg\n"
+
+
+def test_prepare_candidate_preserves_noop_sha_and_stages_only_derived_paths(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _git(tmp_path, "init", "-q")
+    output = tmp_path / "examples/deck/generated/slide.svg"
+    manifest = tmp_path / "examples/deck/manifest.yaml"
+    report = tmp_path / "docs/diagnostics/inventory.md"
+    output.parent.mkdir(parents=True)
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    report.parent.mkdir(parents=True)
+    manifest.write_text("slides:\n  - id: slide\n    expectedSvg: generated/slide.svg\n")
+    output.write_text("old output")
+    report.write_text("current report")
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "-c", "user.name=test", "-c", "user.email=test@example.invalid", "commit", "-qm", "baseline")
+    source = subprocess.run(["git", "rev-parse", "HEAD"], cwd=tmp_path, check=True, capture_output=True, text=True).stdout.strip()
+    monkeypatch.setattr(derived_workflow, "materializer_outputs", lambda root: (root / "examples/deck/generated/slide.svg",))
+    monkeypatch.setattr(derived_workflow, "derived_paths", lambda root: (output, report))
+
+    unrelated = tmp_path / "AGENTS.md"
+    unrelated.write_text("authored source change")
+    candidate, changed = derived_workflow.prepare_candidate(tmp_path, source)
+    assert (candidate, changed) == (source, False)
+    assert subprocess.run(["git", "diff", "--cached", "--name-only"], cwd=tmp_path, check=True, capture_output=True, text=True).stdout == ""
+    assert "AGENTS.md" in subprocess.run(["git", "status", "--short"], cwd=tmp_path, check=True, capture_output=True, text=True).stdout
+
+    output.write_text("fresh output")
+    candidate, changed = derived_workflow.prepare_candidate(tmp_path, source)
+    assert changed is True
+    assert candidate != source
+    assert subprocess.run(["git", "show", "--format=", "--name-only", candidate], cwd=tmp_path, check=True, capture_output=True, text=True).stdout.splitlines() == [
+        "examples/deck/generated/slide.svg",
+    ]
+    assert unrelated.read_text() == "authored source change"
+
+
+@pytest.mark.parametrize("path", [
+    "examples/deck/manifest.yaml",
+    "examples/deck/generated/input.yaml",
+    "../outside.svg",
+])
+def test_retirement_rejects_authored_or_unbounded_paths(tmp_path: Path, path: str) -> None:
+    with pytest.raises(ValueError, match="E_DERIVED_RETIRE_PATH"):
+        derived_workflow.retire_outputs(tmp_path, [path])
+
+
+def test_snapshot_apply_requires_exact_manifest_inventory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _git(tmp_path, "init", "-q")
+    output = tmp_path / "examples/deck/generated/slide.svg"
+    manifest = tmp_path / "examples/deck/manifest.yaml"
+    expected = tmp_path / "docs/diagnostics/inventory.md"
+    output.parent.mkdir(parents=True)
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    expected.parent.mkdir(parents=True)
+    output.write_text("old output")
+    manifest.write_text("slides:\n  - id: slide\n    expectedSvg: generated/slide.svg\n")
+    expected.write_text("old report")
+    _git(tmp_path, "add", ".")
+    _git(tmp_path, "-c", "user.name=test", "-c", "user.email=test@example.invalid", "commit", "-qm", "baseline")
+    baseline = subprocess.run(["git", "rev-parse", "HEAD"], cwd=tmp_path, check=True, capture_output=True, text=True).stdout.strip()
+    monkeypatch.setattr(derived_workflow, "materializer_outputs", lambda root: (root / "examples/deck/generated/slide.svg",))
+    monkeypatch.setattr(derived_workflow, "derived_paths", lambda root: (root / "docs/diagnostics/inventory.md",))
+    archive_path = tmp_path / "snapshot.tar.gz"
+    manifest_path = tmp_path / "snapshot.json"
+    payload = tmp_path / "fresh"
+    payload.write_text("fresh")
+    with tarfile.open(archive_path, "w:gz") as archive:
+        archive.add(payload, arcname="docs/diagnostics/inventory.md")
+    manifest_path.write_text(json.dumps({"paths": ["docs/diagnostics/inventory.md"], "retired": []}))
+
+    derived_workflow.apply_snapshot(tmp_path, archive_path, manifest_path, baseline)
+    assert expected.read_text() == "fresh"
+
+    manifest_path.write_text(json.dumps({"paths": ["docs/diagnostics/inventory.md", "AGENTS.md"], "retired": []}))
+    with pytest.raises(ValueError, match="E_DERIVED_SNAPSHOT_PATHS"):
+        derived_workflow.apply_snapshot(tmp_path, archive_path, manifest_path, baseline)
+
+
+def test_sync_target_gate_validation_runs_before_checkout(tmp_path: Path) -> None:
+    import yaml
+
+    workflow = yaml.load(Path(".github/workflows/derived-sync.yml").read_text(), Loader=yaml.BaseLoader)
+    steps = workflow["jobs"]["synchronize"]["steps"]
+    validate = steps[0]
+    checkout = next(i for i, step in enumerate(steps) if step.get("uses", "").startswith("actions/checkout@"))
+    assert validate["name"] == "Reject invalid event refs before checkout"
+    assert steps.index(validate) < checkout
+    assert steps[checkout]["with"]["ref"] == "${{ steps.target.outputs.target_ref }}"
+
+    script = textwrap.dedent(validate["run"].split("python - <<'PY'\n", 1)[1].split("\nPY", 1)[0])
+    assert "git " not in script
+    assert "derived_workflow" not in script
+    assert steps[2]["env"]["TARGET_REF"] == "${{ steps.target.outputs.target_ref }}"
+    assert 'git fetch origin "refs/heads/$TARGET_REF"' in steps[2]["run"]
+    assert 'git push origin "$SHA:refs/heads/$TARGET_REF"' in steps[-2]["run"]
+
+    def run_validation(event: str, ref: str, sha: str) -> tuple[int, str]:
+        output = tmp_path / "github-output"
+        output.write_text("")
+        env = {
+            **os.environ,
+            "EVENT_NAME": event,
+            "EVENT_REF": ref,
+            "EVENT_SHA": sha,
+            "GITHUB_OUTPUT": str(output),
+        }
+        completed = subprocess.run([sys.executable, "-c", script], env=env, text=True, capture_output=True)
+        return completed.returncode, output.read_text()
+
+    sha = "a" * 40
+    for event, ref, target in (
+        ("push", "refs/heads/main", "main"),
+        ("workflow_dispatch", "refs/heads/main", "main"),
+        ("workflow_dispatch", "refs/heads/derived-proof/smoke-1", "derived-proof/smoke-1"),
+    ):
+        code, output = run_validation(event, ref, sha)
+        assert code == 0
+        assert f"target_ref={target}\n" in output
+        assert f"event_sha={sha}\n" in output
+
+    for event, ref, invalid_sha in (
+        ("push", "refs/heads/develop", sha),
+        ("workflow_dispatch", "refs/heads/feature", sha),
+        ("workflow_dispatch", "refs/heads/derived-proof/Bad", sha),
+        ("workflow_dispatch", "refs/heads/derived-proof/name/extra", sha),
+        ("workflow_dispatch", "refs/heads/derived-proof/-bad", sha),
+        ("workflow_dispatch", "refs/heads/main", "not-a-sha"),
+    ):
+        code, output = run_validation(event, ref, invalid_sha)
+        assert code != 0
+        assert output == ""
+
+
+def test_pr_readiness_accepts_only_main_or_proof_base() -> None:
+    import yaml
+
+    workflow = yaml.load(Path(".github/workflows/conformance.yml").read_text(), Loader=yaml.BaseLoader)
+    script = workflow["jobs"]["derived-ready"]["steps"][-1]["run"]
+    guard = script.split("ready=false", 1)[0] + "fi\n"
+    for ref, expected in (("main", 0), ("derived-proof/smoke-1", 0),
+                          ("feature/unsafe", 1), ("derived-proof/Bad", 1)):
+        result = subprocess.run(["bash", "-c", guard], capture_output=True, text=True,
+                                env={**os.environ, "EVENT_NAME": "pull_request", "PR_BASE_REF": ref,
+                                     "PREVIEW": "success", "CONFORMANCE": "success",
+                                     "PR_KIND": "docs"})
+        assert (result.returncode == 0) == (expected == 0), (ref, result.stderr)
+    assert 'git ls-remote origin "refs/heads/$PR_BASE_REF"' in script
+
+
+def test_pr_classifier_receives_unquoted_commit_ids(tmp_path: Path) -> None:
+    import yaml
+
+    workflow = yaml.load(Path(".github/workflows/conformance.yml").read_text(), Loader=yaml.BaseLoader)
+    command = workflow["jobs"]["classify-pr"]["steps"][-1]["run"]
+    sha = subprocess.run(["git", "rev-parse", "HEAD"], check=True, capture_output=True,
+                         text=True).stdout.strip()
+    output = tmp_path / "github-output"
+    result = subprocess.run(["bash", "-c", command], capture_output=True, text=True,
+                            env={**os.environ, "BASE_SHA": sha, "HEAD_SHA": sha,
+                                 "GITHUB_OUTPUT": str(output)})
+    assert result.returncode == 0, result.stderr
+    assert output.read_text().startswith("path=")
+
+
+def test_pr_snapshot_consumers_fetch_baseline_history() -> None:
+    import yaml
+
+    jobs = yaml.load(Path(".github/workflows/conformance.yml").read_text(),
+                     Loader=yaml.BaseLoader)["jobs"]
+    for name in ("derived-preview", "pr-conformance", "pr-pytest",
+                 "reproduction-newest-python"):
+        checkout = next(step for step in jobs[name]["steps"]
+                        if step.get("uses", "").startswith("actions/checkout@"))
+        assert checkout["with"]["fetch-depth"] == "0", name
