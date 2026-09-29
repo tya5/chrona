@@ -494,5 +494,44 @@ capacity is not a valid reallocation.
 Draft ingress defaults to an inline extent of 1600 and a content-resolved
 block extent (`1600xauto` in the CLI). Draft closure still carries a finite
 seed before Layout resolves the final allocation; no `auto` value is stored
-in an immutable Render Context. Explicit finite Draft extents and immutable
-Context extents remain valid minimum requests.
+in an immutable Render Context. For a Draft `auto` request, that synthetic
+finite seed is required for closure validation but MUST NOT become the lower
+bound of the final content-sized result. Layout MUST select the least
+positive integral logical viewport block extent that satisfies the measured
+natural table-timeline content requirement and the complete resolved
+normal-flow profile, including intrinsic profile minima, measured title,
+axis, legend and note content, margins, and normal-flow spacing. Satisfying a
+content host alone is insufficient when another normal-flow placement or
+profile minimum requires more extent. The final LayoutManifest allocation
+MUST verify the selected extent; overflow added only to the completed canvas
+does not count as satisfying this allocation. The selected extent is rounded
+upward to a whole scene unit. When there are no table-timeline rows, the
+content-sizing floor is one scene unit; any larger intrinsic profile
+requirement controls the result.
+Natural normal-flow measurement MUST use the same track allocation rules as
+final arrangement: grid row-track bases are summed with gaps and padding;
+only single-span children contribute to those bases under the current grid
+allocation rule, while multi-span shortage retains its visible fallback.
+Flow uses lines at the resolved inline extent, and anchored overlay
+decoration does not enlarge the normal-flow minimum. A fixed or capped track
+contributes its declared capacity rather than a promise to absorb more
+content; its shortage follows the visible fallback above.
+
+Explicit finite Draft extents and immutable Context extents remain minimum
+requests and MUST NOT shrink below the requested block extent. If measured
+content requires more space, Layout re-solves the complete normal-flow
+profile at the least sufficient finite extent. If a valid profile fixes,
+caps, or anchors a content host so that it cannot gain the required capacity,
+Layout retains the requested finite allocation and its natural visible
+fallback and typed shortage evidence; it MUST NOT claim that the host grew,
+treat completed-canvas overflow as successful reallocation, manufacture
+extra blank allocation, or refuse an otherwise valid render. The completed
+canvas still includes emitted geometry as required by Section 13.
+
+For content-sized allocation, the measured natural per-row and table-timeline
+requirements MUST be established before `rowDistribution: fill` distributes
+remaining space. Fill MUST consume only the actual surplus in the selected
+final timeline host, and fill-expanded row placements MUST NOT become an
+input to a subsequent content-sizing pass. Explicit larger minimum requests
+may therefore create surplus for fill, while a compact auto result places
+rows at their natural requirements.
