@@ -171,10 +171,15 @@ calendar day. A completed `SceneSurface` carries its own identical scale record 
 serializer that receives only that surface can preserve the evidence. Missing scale
 evidence is `E_PRESENTATION_PRIMITIVE_MISSING`; an adapter MUST NOT reconstruct it
 from viewport, settings, slots, or primitive coordinates.
-Layout resolves any point-mark edge inset from measured mark geometry before
-emitting this range, without changing the View's Date-only domain. Lane
-preflight and final surface composition use the same range; an adapter never
-clips or repositions an endpoint point mark to repair the scale.
+Layout resolves any point-mark edge inset from the largest measured left/right
+extent of selected planned and Actual point facets, including symbol, icon,
+rotation and stroke geometry, before emitting this range. With no selected
+point facet there is no mark inset. This does not change the View's Date-only
+domain: its start and end map to the inset range endpoints, so interval axes
+and shading use exactly the same forward mapping as marks. A non-positive
+usable range is a Layout error. Lane preflight and final surface composition
+use the same range; an adapter never clips or repositions an endpoint point
+mark to repair the scale.
 
 The normalized content-family counts are exactly `relations`, `annotations`, `notes`,
 `legendEntries`, and `summaryPanels`. They explain which optional inputs participated

@@ -240,8 +240,10 @@ the surface count and emits no name; it never changes lane membership. With
 `rowDistribution: fill`, measured bounded stagger-label demand contributes to
 each lane's required block extent before surplus distribution. Suppression is
 decided only after final allocation and bounded search; its decision identifies
-the lane and exhausted capacity or blocking geometry. It cannot leave
-assignable block space unused while its own lane could grow. An
+the lane, final extent and the exhausted host capacity or maximum useful
+extent of the finite candidate ladder. Blocking geometry may be reported only
+after that growth-limit proof. It cannot leave assignable block space unused
+while its own lane could grow. An
 attached point's required plot label is a distinct exception: View content
 normalization reads the active composition (`rows` for automatic rows,
 `lane_rows` for generated lanes) and provides its title, planned date and
