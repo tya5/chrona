@@ -6,7 +6,7 @@ body:
   rows:
     mode: lanes
     packing: [explicit, attached]
-    laneTable: {label: lane, count: true}
+    laneTable: {label: lane, count: false}
   selection:
     include:
       ids:

@@ -374,7 +374,7 @@ def test_attached_milestones_default_keeps_host_title_visible(tmp_path, monkeypa
     assert "Launch campaign" in svg_text
 
 
-def test_public_halcyon_03_lane_table_uses_stable_nonblank_lane_identity() -> None:
+def test_public_halcyon_03_lane_table_uses_member_titles_without_item_count() -> None:
     scene_path = ROOT / "examples/halcyon-1/generated/03-launch-campaign.scene.json"
     svg_path = ROOT / "examples/halcyon-1/generated/03-launch-campaign.svg"
     scene = json.loads(scene_path.read_text(encoding="utf-8"))
@@ -384,9 +384,11 @@ def test_public_halcyon_03_lane_table_uses_stable_nonblank_lane_identity() -> No
     svg_text = "".join(ET.fromstring(svg_path.read_text(encoding="utf-8")).itertext())
     assert labels
     assert all(label.strip() for label in labels)
-    assert all(label.startswith("Lane ") for label in labels)
+    assert all(not label.startswith("Lane ") for label in labels)
     assert len(labels) == len(set(labels))
     assert all(label in svg_text for label in labels)
+    assert not any(item.get("purpose") == "table-column-label" and item.get("text") == "Items"
+                   for item in primitives)
 
 
 @pytest.mark.parametrize("slide", ("02-programme-board", "12-glyph-gates"))

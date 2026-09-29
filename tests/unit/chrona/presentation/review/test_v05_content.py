@@ -57,7 +57,7 @@ def test_lane_table_content_uses_exact_membership_and_no_member_table_subject():
     projection = ReviewProjection(
         (host, point), (date(2026, 1, 1), date(2026, 1, 3)), (), (),
         lane_membership=membership,
-        lane_rows=(ReviewLaneRowProjection(lane_id, "g", (host, point)),),
+        lane_rows=(ReviewLaneRowProjection(lane_id, "g", (host, point), ("host", "gate")),),
     )
     view = replace(typed_view({"body": {"tableColumns": (), "visibility": {}}}),
                    rows=ViewRows("lanes", (), lane_table=ViewLaneTable(ViewLaneLabel.LANE, True)))
@@ -66,13 +66,13 @@ def test_lane_table_content_uses_exact_membership_and_no_member_table_subject():
 
     assert [column.column_id for column in table.columns] == ["Lane", "Items"]
     assert [(cell.object_id, cell.column_id, cell.content) for cell in table.cells] == [
-        (lane_id, "Lane", "Lane host"), (lane_id, "Items", "2"),
+        (lane_id, "Lane", "Entity group"), (lane_id, "Items", "2"),
     ]
     assert table.cell_objects == ()
     assert table.row_levels[0].keys == (lane_id,)
 
 
-def test_lane_table_group_label_repeats_blank_and_authored_lane_key_is_the_lane_label():
+def test_lane_table_group_label_repeats_blank_and_lane_labels_use_project_titles():
     first = ReviewItem("a", "Private member title A", "span", {}, None, None, (), group_id="g", item_id="a")
     second = ReviewItem("b", "Private member title B", "span", {}, None, None, (), group_id="g", item_id="b")
     lanes = (Lane("lane-a", "g", ("a",), "key-a"), Lane("lane-b", "g", ("b",), "key-b"))
@@ -97,7 +97,46 @@ def test_lane_table_group_label_repeats_blank_and_authored_lane_key_is_the_lane_
 
     lane_view = replace(view, rows=replace(view.rows, lane_table=ViewLaneTable(ViewLaneLabel.LANE, False)))
     lane_table = normalize_v05_table_content(projection, {}, lane_view)
-    assert [cell.content for cell in lane_table.cells] == ["key-a", "key-b"]
+    assert [cell.content for cell in lane_table.cells] == [
+        "Private member title A", "Private member title B",
+    ]
+
+
+def test_lane_table_disambiguates_multiple_multi_member_lanes_in_one_group():
+    items = tuple(ReviewItem(identifier, title, "span", {}, None, None, (),
+                             group_id="g", item_id=identifier)
+                  for identifier, title in (("a", "Alpha"), ("b", "Beta"),
+                                            ("c", "Gamma"), ("d", "Delta")))
+    lanes = (Lane("lane-a", "g", ("a", "b"), "key-a"),
+             Lane("lane-b", "g", ("c", "d"), "key-b"))
+    membership = LaneMembership(lanes, tuple(
+        LaneAssignment(item_id, lane.lane_id, "g", "explicit", lane.explicit_key)
+        for lane in lanes for item_id in lane.member_item_ids))
+    projection = ReviewProjection(items, (date(2026, 1, 1), date(2026, 1, 2)), (), (),
+                                  lane_membership=membership,
+                                  lane_rows=(ReviewLaneRowProjection("lane-a", "g", items[:2], ("a", "b")),
+                                             ReviewLaneRowProjection("lane-b", "g", items[2:], ("c", "d"))))
+    view = replace(typed_view({"body": {"tableColumns": (), "visibility": {}}}),
+                   rows=ViewRows("lanes", (), lane_table=ViewLaneTable(ViewLaneLabel.LANE, False)))
+
+    table = normalize_v05_table_content(projection, {"entities": {"g": {"title": "Group"}}}, view)
+
+    assert [cell.content for cell in table.cells] == ["Group — Alpha", "Group — Gamma"]
+
+
+def test_lane_table_fails_when_project_titles_are_missing_instead_of_showing_ids():
+    item = ReviewItem("object-id", "object-id", "span", {}, None, None, (),
+                      group_id="g", item_id="object-id")
+    lane = Lane("generated-lane-id", "g", ("object-id",))
+    membership = LaneMembership((lane,), (LaneAssignment("object-id", lane.lane_id, "g", "single", "object-id"),))
+    projection = ReviewProjection((item,), (date(2026, 1, 1), date(2026, 1, 2)), (), (),
+                                  lane_membership=membership,
+                                  lane_rows=(ReviewLaneRowProjection(lane.lane_id, "g", (item,), ("object-id",)),))
+    view = replace(typed_view({"body": {"tableColumns": (), "visibility": {}}}),
+                   rows=ViewRows("lanes", (), lane_table=ViewLaneTable(ViewLaneLabel.LANE, False)))
+
+    with pytest.raises(ValueError, match="E_REVIEW_LANE_TITLE_MISSING:object-id"):
+        normalize_v05_table_content(projection, {}, view)
 
 
 def typed_view(value):
