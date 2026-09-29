@@ -242,7 +242,11 @@ member-label intent and Theme-measured box. Preflight uses the completed scale
 and selected lane mark/subtrack obstacles; inline-feasible end/start intervals
 determine concurrent finite stagger levels and each row's minimum before
 surplus distribution; relevant mark-obstacle intervals also contribute to
-those levels. This natural requirement may grow the timeline host
+those levels. Because interval concurrency alone can undercount cross-class
+obstructions, the row minimum is at least one measured block level plus
+placement clearance per selected lane name above the completed mark subtracks.
+This finite conservative envelope does not prescribe final label positions.
+The natural requirement may grow the timeline host
 when profile constraints permit; a short seed row alone is not grounds for
 suppression.
 
