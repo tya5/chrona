@@ -9,13 +9,14 @@ command-line arguments, writes files, or prints.
 from __future__ import annotations
 
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from decimal import Decimal
 from importlib.metadata import version
 from pathlib import Path
 from typing import Any, Mapping
 
 from chrona.core.diagnostics import Diagnostic
+from chrona.usecases.warning_ledger import RenderWarning, collect_render_warnings
 from chrona.core.ports import RenderArtifact, Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
 from chrona.presentation.layout.engine import resolve_content_block_extent, solve_layout
@@ -112,6 +113,7 @@ class RenderedReview:
     info_diagnostics: tuple[PresentationInfo, ...] = ()
     scale_collisions: tuple[ScaleCollision, ...] = ()
     attachment_warnings: tuple[AttachmentWarning, ...] = ()
+    warning_records: tuple[RenderWarning, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -351,7 +353,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     scene = _inspection_scene(render_closure, surface, projection, surface_content,
                               (surface.canvas_bounds[2], surface.canvas_bounds[3]),
                               resolution.tabular_warnings if resolution is not None else (),
-                              collisions)
+                              ())
     perceptibility_warnings = (_scene_perceptibility_warnings(scene)
                                if render_closure.context.identity.revision == "draft" else ())
     renderer = request.renderer or renderer_for(
@@ -369,9 +371,20 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         raise RenderFailed("E_PRESENTATION_TARGET", "renderer target does not match Context target", "renderer")
     if surface.canvas_bounds is None:
         raise RenderFailed("E_PRESENTATION_RENDER_INPUT", "completed Scene surface has no canvas bounds", "presentation")
+    glyph_warnings = _font_warnings(font_metrics.warnings, artifact.target_kind)
+    warning_records = collect_render_warnings(
+        surface_diagnostics=surface.diagnostics, tabular_warnings=scene.font_warnings,
+        glyph_warnings=glyph_warnings, fit_warnings=surface.fit_warnings,
+        perceptibility_warnings=perceptibility_warnings, scale_collisions=collisions,
+        attachment_warnings=attachments,
+    )
+    # Surface diagnostics are already in the preliminary Scene. Append only
+    # the post-composition families, preserving duplicates and their order.
+    appended = warning_records[sum(item.startswith("W_") for item in surface.diagnostics):]
+    scene = replace(scene, diagnostics=(*scene.diagnostics, *(item.identity for item in appended)))
     return RenderedReview(artifact, surface, scene, frozenset(ledger.read), scenario_provenance,
-                          _font_warnings(font_metrics.warnings, artifact.target_kind), perceptibility_warnings,
-                          surface.info_diagnostics, collisions, attachments)
+                          glyph_warnings, perceptibility_warnings,
+                          surface.info_diagnostics, collisions, attachments, warning_records)
 
 
 def _inspection_scene(closure: RenderClosure, surface: SceneSurface, projection: Any,
