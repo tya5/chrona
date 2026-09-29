@@ -3,7 +3,7 @@ id: wallboard-programme-board
 flowDirection: horizontal
 dependencyNetworkFlowDirection: horizontal
 requiredThemeTokens: [panel.side, spacing.l, spacing.m, spacing.none]
-reviewSurface: {rowDistribution: pack, backgroundExtents: {rowBand: table, groupBand: timeline, groupHeaderBand: both, calendarClosed: timeline}, annotationRouting: {maxBends: 4, maxDetourRatio: 2}}
+reviewSurface: {rowDistribution: fill, backgroundExtents: {rowBand: table, groupBand: timeline, groupHeaderBand: both, calendarClosed: timeline}, annotationRouting: {maxBends: 4, maxDetourRatio: 2}}
 relationRouting: {maxBends: 4, maxDetourRatio: 2}
 root:
   id: page

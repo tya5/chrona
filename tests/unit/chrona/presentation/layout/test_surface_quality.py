@@ -11,10 +11,12 @@ from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
 from chrona.presentation.layout.surface_quality import (
     AxisIntervalOutcome,
     AxisTierOutcome,
+    CapacitySourceEvidence,
     CollisionDomain,
     FitWarning,
     GroupPlacement,
     IconPlacement,
+    LaneLabelSuppression,
     MarkPlacement,
     PlacementDecision,
     PrimitivePlacement,
@@ -66,18 +68,34 @@ def test_fit_warning_requires_completed_visible_fallback_facts():
 def test_suppressed_member_count_matches_completed_placements_and_individual_facts():
     suppressed = tuple(TextPlacement(f"member-label:{number}", f"source:{number}", "label",
                                      _rect(number, 0, 1, 1), "text", overflow="suppressed",
-                                     required=False, semantic_id="memberLabel")
+                                     required=False, semantic_id="memberLabel",
+                                     lane_row_id="lane:a", lane_member_id=f"member:{number}")
                        for number in (1, 2))
     warnings = tuple(f"W_LAYOUT_LABEL_SUPPRESSED:{item.placement_id}" for item in suppressed)
+    row = RowPlacement("lane:a", "lane:a", "", _rect(0, 0, 10, 10))
+    facts = tuple(LaneLabelSuppression(item.placement_id, "lane:a", item.lane_member_id,
+                                       row.bounds, Decimal(0), "obstruction") for item in suppressed)
     placement = SurfacePlacement(text=suppressed, diagnostics=warnings,
+                                 rows=(row,), lane_label_suppressions=facts,
                                  info_diagnostics=(SuppressedPlotLabels("table-timeline", 2),))
     placement.assert_valid()
     with pytest.raises(ValueError, match="E_LAYOUT_SUPPRESSION_COUNT_INVALID"):
-        SurfacePlacement(text=suppressed, diagnostics=warnings,
+        SurfacePlacement(text=suppressed, diagnostics=warnings, rows=(row,), lane_label_suppressions=facts,
                          info_diagnostics=(SuppressedPlotLabels("table-timeline", 1),)).assert_valid()
     with pytest.raises(ValueError, match="E_LAYOUT_SUPPRESSION_COUNT_INVALID"):
-        SurfacePlacement(text=suppressed, diagnostics=warnings[:1],
+        SurfacePlacement(text=suppressed, diagnostics=warnings[:1], rows=(row,), lane_label_suppressions=facts,
                          info_diagnostics=(SuppressedPlotLabels("table-timeline", 2),)).assert_valid()
+    with pytest.raises(ValueError, match="E_LAYOUT_SUPPRESSION_COUNT_INVALID"):
+        SurfacePlacement(text=suppressed, diagnostics=warnings, rows=(row,),
+                         lane_label_suppressions=(facts[0],),
+                         info_diagnostics=(SuppressedPlotLabels("table-timeline", 2),)).assert_valid()
+    capacity = LaneLabelSuppression("member-label:1", "lane:a", "member:1", row.bounds,
+                                    Decimal(0), "capacity",
+                                    (CapacitySourceEvidence("timeline", Decimal(20), Decimal(10)),))
+    assert capacity.short_sources[0].source_id == "timeline"
+    with pytest.raises(ValueError, match="E_LAYOUT_SUPPRESSION_EVIDENCE_INVALID"):
+        LaneLabelSuppression("member-label:1", "lane:a", "member:1", row.bounds,
+                             Decimal(0), "capacity")
     with pytest.raises(ValueError, match="E_PRESENTATION_INFO_INVALID"):
         SuppressedPlotLabels("table-timeline", 0)
 

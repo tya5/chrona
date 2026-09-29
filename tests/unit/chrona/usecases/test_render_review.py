@@ -243,9 +243,29 @@ def test_public_lane_layout_projects_fixed_membership(context_name):
     assert progress_ids <= set(inventory_owners)
     assert progress_ids <= {item.primitive_id for item in rendered.surface.lane_obstacles}
     timeline_slot = next(slot for slot in rendered.surface.slots if slot.source == "timeline")
-    assert max(row.bounds[1] + row.bounds[3] for row in rendered.surface.rows) <= (
-        timeline_slot.bounds[1] + timeline_slot.bounds[3]
-    )
+    last_row = max(rendered.surface.rows, key=lambda row: row.bounds[1] + row.bounds[3])
+    row_bottom = last_row.bounds[1] + last_row.bounds[3]
+    slot_bottom = timeline_slot.bounds[1] + timeline_slot.bounds[3]
+    if context_name == "11-overlay-briefing":
+        # This profile fixes its review host. Spec 33 requires natural visible
+        # fallback with a typed shortage, not an invented host expansion.
+        shortage = next(warning for warning in rendered.surface.fit_warnings
+                        if warning.code == "W_LAYOUT_ROW_DENSITY"
+                        and warning.placement_id == f"row:{last_row.row_id}")
+        assert shortage.behaviour == "visible-overflow"
+        assert shortage.required_block > shortage.available_block
+        assert shortage.required_block - shortage.available_block == pytest.approx(row_bottom - slot_bottom)
+        canvas = rendered.surface.canvas_bounds
+        assert canvas is not None
+        for bounds in (row.bounds for row in rendered.surface.rows):
+            assert canvas[0] <= bounds[0] and bounds[0] + bounds[2] <= canvas[0] + canvas[2]
+            assert canvas[1] <= bounds[1] and bounds[1] + bounds[3] <= canvas[1] + canvas[3]
+        for primitive in rendered.surface.primitives:
+            bounds = primitive.bounds
+            assert canvas[0] <= bounds[0] and bounds[0] + bounds[2] <= canvas[0] + canvas[2]
+            assert canvas[1] <= bounds[1] and bounds[1] + bounds[3] <= canvas[1] + canvas[3]
+    else:
+        assert row_bottom <= slot_bottom
 
 
 @pytest.mark.parametrize("context_name", ["02-programme-board", "11-overlay-briefing", "12-glyph-gates"])

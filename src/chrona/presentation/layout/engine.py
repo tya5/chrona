@@ -1,6 +1,7 @@
 """Deterministic normal-flow engine for intent-oriented Layout Profile v0.2."""
 from __future__ import annotations
 
+from dataclasses import dataclass
 from decimal import ROUND_CEILING, Decimal, getcontext
 from typing import Any, Mapping
 
@@ -509,9 +510,38 @@ def solve_layout(profile: ResolvedLayoutProfile, *, viewport_inline: int | float
     )
 
 
+@dataclass(frozen=True)
+class ShortContentSource:
+    """A required content source that remains short in the final profile solve."""
+
+    source_id: str
+    required_block: Decimal
+    allocated_block: Decimal
+
+    def __post_init__(self) -> None:
+        if (not self.source_id or not self.required_block.is_finite()
+                or not self.allocated_block.is_finite()
+                or self.allocated_block >= self.required_block):
+            raise ValueError("E_LAYOUT_CONTENT_SHORTFALL_INVALID")
+
+
+@dataclass(frozen=True)
+class ContentBlockResolution:
+    """Chosen viewport extent plus exact required-source profile shortfalls."""
+
+    extent: int
+    short_sources: tuple[ShortContentSource, ...] = ()
+
+    def __post_init__(self) -> None:
+        if self.extent <= 0 or tuple(sorted(self.short_sources, key=lambda item: item.source_id)) != self.short_sources:
+            raise ValueError("E_LAYOUT_CONTENT_RESOLUTION_INVALID")
+        if len({item.source_id for item in self.short_sources}) != len(self.short_sources):
+            raise ValueError("E_LAYOUT_CONTENT_RESOLUTION_INVALID")
+
+
 def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inline: int,
                                  seed_block: int, measurements: Mapping[str, Measurement],
-                                 required_blocks: Mapping[str, Decimal]) -> int:
+                                 required_blocks: Mapping[str, Decimal]) -> ContentBlockResolution:
     """Resolve measured content hosts against one coherent finite profile.
 
     The probe is a normal finite arrangement.  Each declared content
@@ -527,7 +557,7 @@ def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inl
     if missing:
         raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/layoutManifest/sources/" + missing[0])
     if all(requested_allocated[source] >= required for source, required in required_blocks.items()):
-        return seed_block
+        return ContentBlockResolution(seed_block)
     # A source's ordinary slot minimum may itself exceed the default Draft
     # canvas (for example, a 100-row table).  Probe at a finite extent that is
     # safely at least one requested content requirement, then measure chrome
@@ -540,13 +570,18 @@ def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inl
                                     for source, required in required_blocks.items())))
     candidate = int(extent.to_integral_value(rounding=ROUND_CEILING))
     if candidate == seed_block:
-        return candidate
+        return ContentBlockResolution(candidate)
     # A fixed/max/anchored source may not gain capacity from a taller page.
     # Do not enlarge or translate the entire profile unless the final normal-
     # flow arrangement truly closes every declared content requirement.
     final = solve_layout(profile, viewport_inline=viewport_inline,
                          viewport_block=candidate, measurements=measurements)
     final_allocated = {item.source: item.bounds.block_size for item in final.decisions if item.source}
-    if any(final_allocated[source] < required for source, required in required_blocks.items()):
-        return seed_block
-    return candidate
+    short_sources = tuple(
+        ShortContentSource(source, required_blocks[source], final_allocated[source])
+        for source in sorted(required_blocks)
+        if final_allocated[source] < required_blocks[source]
+    )
+    if short_sources:
+        return ContentBlockResolution(seed_block, short_sources)
+    return ContentBlockResolution(candidate)

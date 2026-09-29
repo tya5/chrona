@@ -422,6 +422,7 @@ class SurfaceLayoutRequest:
     icon_assets: dict[str, Any] = field(default_factory=dict)
     visual_requests: tuple[VisualRequest, ...] = ()
     fixed_lane_preflight: FixedLanePreflight | None = None
+    capacity_short_sources: tuple[CapacitySourceEvidence, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -489,6 +490,44 @@ class LaneEmissionPlacement:
 
 
 @dataclass(frozen=True)
+class CapacitySourceEvidence:
+    """Exact required timeline source that the final profile still underserves."""
+
+    source_id: str
+    required_block: Decimal
+    allocated_block: Decimal
+
+    def __post_init__(self) -> None:
+        if (self.source_id != "timeline" or not self.required_block.is_finite()
+                or not self.allocated_block.is_finite()
+                or self.allocated_block >= self.required_block):
+            raise ValueError("E_LAYOUT_SUPPRESSION_EVIDENCE_INVALID")
+
+
+@dataclass(frozen=True)
+class LaneLabelSuppression:
+    """Typed attribution for one suppressed lane member name."""
+
+    placement_id: str
+    lane_id: str
+    member_id: str
+    row_bounds: Rect
+    remaining_capacity: Decimal
+    reason: str
+    short_sources: tuple[CapacitySourceEvidence, ...] = ()
+
+    def __post_init__(self) -> None:
+        if (not self.placement_id or not self.lane_id or not self.member_id
+                or not self.remaining_capacity.is_finite() or self.remaining_capacity < 0
+                or self.reason not in {"capacity", "obstruction"}
+                or (self.reason == "capacity" and not self.short_sources)
+                or (self.reason == "capacity" and self.remaining_capacity != 0)
+                or (self.reason == "obstruction" and self.short_sources)
+                or len({item.source_id for item in self.short_sources}) != len(self.short_sources)):
+            raise ValueError("E_LAYOUT_SUPPRESSION_EVIDENCE_INVALID")
+
+
+@dataclass(frozen=True)
 class SurfacePlacement:
     """The complete geometry handoff from Layout to Scene."""
 
@@ -511,18 +550,34 @@ class SurfacePlacement:
     info_diagnostics: tuple[PresentationInfo, ...] = ()
     lane_emissions: tuple[LaneEmissionPlacement, ...] = ()
     patterns: tuple[PatternedPlacement, ...] = ()
+    lane_label_suppressions: tuple[LaneLabelSuppression, ...] = ()
 
     def assert_valid(self) -> None:
         """Reject invalid required geometry before a renderer receives it."""
         suppressed_members = {item.placement_id for item in self.text
                               if item.semantic_id == "memberLabel" and item.overflow == "suppressed"}
+        suppressed_lane_members = {item.placement_id for item in self.text
+                                   if item.semantic_id == "memberLabel" and item.overflow == "suppressed"
+                                   and item.lane_row_id is not None}
         reported_suppressions = {item.removeprefix("W_LAYOUT_LABEL_SUPPRESSED:") for item in self.diagnostics
                                  if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:")}
         counts = tuple(item for item in self.info_diagnostics if isinstance(item, SuppressedPlotLabels))
+        suppression_facts = {item.placement_id: item for item in self.lane_label_suppressions}
+        suppressed_text = {item.placement_id: item for item in self.text
+                           if item.semantic_id == "memberLabel" and item.overflow == "suppressed"}
         if (not suppressed_members.issubset(reported_suppressions)
+                or set(suppression_facts) != suppressed_lane_members
+                or len(suppression_facts) != len(self.lane_label_suppressions)
                 or len(counts) != (1 if suppressed_members else 0)
                 or (counts and counts[0].count != len(suppressed_members))):
             raise ValueError("E_LAYOUT_SUPPRESSION_COUNT_INVALID")
+        rows_by_id = {item.row_id: item for item in self.rows}
+        for placement_id, fact in suppression_facts.items():
+            text = suppressed_text[placement_id]
+            row = rows_by_id.get(fact.lane_id)
+            if (text.lane_row_id != fact.lane_id or text.lane_member_id != fact.member_id
+                    or row is None or row.bounds != fact.row_bounds):
+                raise ValueError("E_LAYOUT_SUPPRESSION_EVIDENCE_INVALID")
         required = tuple(item for item in self.text if item.required and item.overflow != 'suppressed')
         if self.canvas_bounds is not None and (self.canvas_bounds.inline_size <= 0 or self.canvas_bounds.block_size <= 0):
             raise ValueError("E_LAYOUT_CANVAS_BOUNDS_INVALID")

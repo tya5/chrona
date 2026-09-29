@@ -25,7 +25,7 @@ from chrona.presentation.layout.profile import resolve_layout_profile
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources
 from chrona.presentation.layout.surface_composer import (preflight_fixed_lane_layout, resolve_label_visual_advances,
                                                          resolve_mark_geometries, timeline_content_block_requirement)
-from chrona.presentation.layout.surface_quality import VisualRequest
+from chrona.presentation.layout.surface_quality import CapacitySourceEvidence, VisualRequest
 from chrona.presentation.model.closure import ClosureError, RenderClosure
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, FontTabularWarning, resolve_font_metrics_catalog
 from chrona.presentation.model.font_resources import FontAssetResolver
@@ -261,11 +261,12 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             text_line_block=table_text_line_block(
                 ThemeTokenView(theme), (cell.typography_role for cell in table_content.cells)),
         )
-        required_block = resolve_content_block_extent(
+        initial_resolution = resolve_content_block_extent(
             resolved_layout, viewport_inline=viewport["inlineSize"],
             seed_block=viewport["blockSize"], measurements=measurements,
             required_blocks={"timeline": timeline_requirement},
         )
+        required_block = initial_resolution.extent
         viewport["blockSize"] = required_block
     if request.draft_auto_block:
         if required_block is None:
@@ -277,6 +278,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     )
 
     fixed_lane_preflight = None
+    capacity_short_sources = ()
     if projection.lane_membership is not None:
         seed_content = normalize_v05_surface_content(
             projection, project, view, actual_set=actual_observations,
@@ -288,12 +290,17 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             projection=projection, layout_manifest=manifest, surface_content=seed_content,
             theme_tokens=ThemeTokenView(theme), metric_values=measured.metric_values,
             icon_assets=icon_assets, visual_requests=visual_requests,
+            font_metrics=font_metrics,
         )
-        exact_block = resolve_content_block_extent(
+        exact_resolution = resolve_content_block_extent(
             resolved_layout, viewport_inline=viewport["inlineSize"],
             seed_block=viewport["blockSize"], measurements=measurements,
             required_blocks={"timeline": fixed_lane_preflight.natural_block_requirement},
         )
+        exact_block = exact_resolution.extent
+        capacity_short_sources = tuple(CapacitySourceEvidence(
+            item.source_id, item.required_block, item.allocated_block)
+            for item in exact_resolution.short_sources)
         if exact_block != viewport["blockSize"]:
             viewport["blockSize"] = exact_block
             manifest = solve_layout(
@@ -322,6 +329,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         icon_assets=icon_assets,
         visual_requests=visual_requests,
         fixed_lane_preflight=fixed_lane_preflight,
+        capacity_short_sources=capacity_short_sources,
     )
 
     unused = ledger.unused()

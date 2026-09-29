@@ -61,10 +61,13 @@ from chrona.presentation.layout.lane_mark_facets import (
 )
 from chrona.presentation.layout.lane_projection import LaneProjectionClosure, LaneProjectionInstance, close_lane_projection, lane_missing_actual_visible
 from chrona.presentation.layout.lane_visual_binding import bind_lane_visual_requests
+from chrona.presentation.layout.lane_label_intent import measure_lane_member_labels
+from chrona.presentation.layout.lane_label_preflight import lane_label_row_requirements
 from chrona.presentation.layout.surface_quality import (
     AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, ColumnPlacement, FitWarning, GroupPlacement, MarkPlacement, PathCommand, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
     IconPlacement, LayoutImageFill, ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest,
-    TextPlacement, LaneEmissionFacet, LaneEmissionPlacement, annotation_presentation, intersects,
+    TextPlacement, LaneEmissionFacet, LaneEmissionPlacement, LaneLabelSuppression,
+    annotation_presentation, intersects,
 )
 from chrona.presentation.layout.image_slice_geometry import image_slice_tiles
 
@@ -154,6 +157,28 @@ def _lane_instance_owners(projection: Any, closure: LaneProjectionClosure) -> di
             raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", "/projection/laneRows")
         owners[instance] = (lane_row.lane_id, instance.item_id)
     return owners
+
+
+def _resolved_lane_visual_requests(projection: Any, visual_requests: tuple[Any, ...],
+                                   *, as_of: date | None) -> tuple[Any, ...]:
+    """Bind View selectors once to the final lane occurrence identities."""
+    if not visual_requests:
+        return ()
+    closure = close_lane_projection(projection, as_of=as_of)
+    label_visuals, mark_visuals = bind_lane_visual_requests(projection, closure, visual_requests)
+    owners = _lane_instance_owners(projection, closure)
+    resolved = [visual for visual in visual_requests
+                if visual.target_kind not in {"plot-label", "mark"}]
+    for instance, visuals in label_visuals.items():
+        lane_id, item_id = owners[instance]
+        placement_id = f"member-label:{lane_id}:{item_id}"
+        resolved.extend(replace(visual, selector=(("placementId", placement_id),))
+                        for visual in visuals)
+    for (instance, purpose), visual in mark_visuals.items():
+        lane_id, item_id = owners[instance]
+        placement_id = f"{purpose}:{lane_id}:{item_id}"
+        resolved.append(replace(visual, selector=(("placementId", placement_id),)))
+    return tuple(resolved)
 
 
 def _lane_emissions(projection: Any, review_rows: tuple[Any, ...], marks: list[MarkPlacement],
@@ -776,7 +801,7 @@ def timeline_content_block_requirement(*, projection: Any, group_presentation: s
 def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: LayoutManifest,
                                 surface_content: Any, theme_tokens: Any,
                                 metric_values: dict[str, Decimal], icon_assets: Mapping[str, Any],
-                                visual_requests: tuple[Any, ...]) -> FixedLanePreflight:
+                                visual_requests: tuple[Any, ...], font_metrics: Any) -> FixedLanePreflight:
     """Close fixed-lane mark tracks once, before final profile block allocation."""
     membership = getattr(projection, "lane_membership", None)
     if membership is None:
@@ -810,21 +835,35 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: LayoutManif
     footprints = (provisional_footprints if scale is provisional_scale else
                   compose_lane_item_footprints(scale=scale, **footprint_inputs))
     subtracks = assign_lane_subtracks(membership, footprints, mark_band_size=mark_band_size)
-    lane_extent = {lane.lane_id: lane.block_extent for lane in subtracks.lanes}
+    resolved_visuals = _resolved_lane_visual_requests(
+        projection, visual_requests, as_of=surface_content.as_of)
+    measured_labels = measure_lane_member_labels(
+        projection, surface_content, timeline_inline_size=float(frame.timeline_inline_size),
+        theme_tokens=theme_tokens, font_metrics=font_metrics,
+        visual_requests=resolved_visuals, icon_assets=dict(icon_assets))
     row_padding = float(metric_values["timeline.row.paddingBlock"])
+    lane_requirements = (lane_label_row_requirements(
+        measured_labels, scale, subtracks, footprints,
+        timeline_bounds=(float(frame.timeline_inline),
+                         float(frame.timeline_inline + frame.timeline_inline_size)),
+        row_padding=row_padding)
+        if layout_manifest.row_distribution == "fill" else
+        {lane.lane_id: lane.block_extent + row_padding for lane in subtracks.lanes})
     line_block = table_text_line_block(
         theme_tokens, (cell.typography_role for cell in surface_content.table_cells))
     rows = _review_rows(projection)
     requirements = tuple(max(float(metric_values["timeline.row.minBlockSize"]),
                              line_block + row_padding if line_block else 0.0,
-                             lane_extent[row.row_id] + row_padding)
+                             lane_requirements[row.row_id])
                          for row in rows)
     headers = len(tuple(row for index, row in enumerate(rows)
                         if row.group_id and surface_content.group_presentation == "header"
                         and (index == 0 or rows[index - 1].group_id != row.group_id)))
     required = (Decimal(str(geometry_sum(requirements)))
                 + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0))
-    return FixedLanePreflight(subtracks, frame, required, surface_content.as_of, scale)
+    return FixedLanePreflight(subtracks, frame, required, surface_content.as_of, scale,
+                              measured_labels, resolved_visuals,
+                              tuple(zip((row.row_id for row in rows), requirements, strict=True)))
 
 
 def progress_fill_bounds(host: Rect, fraction: float, inset_ratio: Decimal = Decimal(0)) -> Rect | None:
@@ -1093,26 +1132,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 or preflight.seed_inline_frame != lane_inline_frame_for_manifest(
                     layout_manifest, window=(start, end))):
             raise LayoutError("E_LAYOUT_LANE_PREFLIGHT_INVALID", "/layoutManifest")
-        if request.visual_requests:
-            # Spec 64: one object selector fans out to every selected lane
-            # occurrence. Keep the View selector outside Layout placement IDs;
-            # the typed projection instance supplies each final identity.
-            closure = close_lane_projection(projection, as_of=request.surface_content.as_of)
-            label_visuals, mark_visuals = bind_lane_visual_requests(
-                projection, closure, request.visual_requests)
-            owners = _lane_instance_owners(projection, closure)
-            resolved_visuals = [visual for visual in request.visual_requests
-                                if visual.target_kind not in {"plot-label", "mark"}]
-            for instance, visuals in label_visuals.items():
-                lane_id, item_id = owners[instance]
-                placement_id = f"member-label:{lane_id}:{item_id}"
-                resolved_visuals.extend(replace(visual, selector=(("placementId", placement_id),))
-                                        for visual in visuals)
-            for (instance, purpose), visual in mark_visuals.items():
-                lane_id, item_id = owners[instance]
-                placement_id = f"{purpose}:{lane_id}:{item_id}"
-                resolved_visuals.append(replace(visual, selector=(("placementId", placement_id),)))
-            request = replace(request, visual_requests=tuple(resolved_visuals))
+        request = replace(request,
+                          visual_requests=preflight.resolved_visual_requests)
     if ("timeline.row.minBlockSize" not in metric_values
             or "timeline.row.paddingBlock" not in metric_values
             or "timeline.mark.blockSize" not in metric_values):
@@ -1175,11 +1196,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     if projection.lane_membership is not None:
         assert request.fixed_lane_preflight is not None
         lane_subtracks = request.fixed_lane_preflight.subtracks
-        lane_extent = {item.lane_id: item.block_extent for item in lane_subtracks.lanes}
-        requirements = tuple(max(float(metric_values["timeline.row.minBlockSize"]),
-                                 text_line_block + row_padding if text_line_block else 0.0,
-                                 lane_extent[row.row_id] + row_padding)
-                             for row in review_rows)
+        requirement_by_row = dict(request.fixed_lane_preflight.row_requirements)
+        requirements = tuple(requirement_by_row[row.row_id] for row in review_rows)
     else:
         requirements = required_row_block_extents(
             review_rows=tuple(review_rows), row_minimum=float(metric_values["timeline.row.minBlockSize"]),
@@ -1858,6 +1876,13 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     row_band_by_id = {row.row_id: LabelRect(float(timeline.bounds.inline), float(row.bounds.block),
                                            float(timeline.bounds.inline_size), float(row.bounds.block_size))
                       for row in rows}
+    row_by_id = {row.row_id: row for row in rows}
+    row_requirements_by_id = (dict(request.fixed_lane_preflight.row_requirements)
+                              if request.fixed_lane_preflight is not None else {})
+    lane_label_suppressions: list[LaneLabelSuppression] = []
+    measured_lane_labels = ({item.placement_id: item for item in
+                             request.fixed_lane_preflight.measured_labels}
+                            if request.fixed_lane_preflight is not None else {})
     attached_labels = dict(request.surface_content.attached_labels)
     if contract.labels.enabled or attached_labels:
         for review_row in review_rows:
@@ -1902,6 +1927,15 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                           if lane_mode else
                           ((preferred_side,) + tuple(side for side in default_ladder if side != preferred_side)
                            if preferred_side else default_ladder))
+                if lane_mode:
+                    measured = measured_lane_labels.get(f"member-label:{instance_id}")
+                    if measured is None:
+                        raise LayoutError("E_LAYOUT_LANE_PREFLIGHT_INVALID",
+                                          f"/placement/member-label:{instance_id}")
+                    if (measured.content != " ".join(parts) or measured.wrap != wrap
+                            or measured.candidates != ladder):
+                        raise LayoutError("E_LAYOUT_LANE_PREFLIGHT_INVALID",
+                                          f"/placement/member-label:{instance_id}")
                 sides = tuple(side for side in ladder if side != "suppress")
                 # A member label's placement region is its own row band (#488):
                 # every candidate, including the side-neighbourhood search,
@@ -1994,20 +2028,24 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             label_treatment = request.theme_tokens.text_treatment(label_request.typography_role)
             label_metrics = metric_for(label_request.typography_role)
             font_size, line_height = label_treatment.font_size, label_treatment.line_height
-            visuals = candidate_label_visuals(label_request.placement_id, label_request.typography_role, request)
+            measured_lane = measured_lane_labels.get(label_request.placement_id)
+            visuals = (measured_lane.visuals if measured_lane is not None else
+                       candidate_label_visuals(label_request.placement_id, label_request.typography_role, request))
             handled_candidate_visuals.update(visual.source_ref for visual, _, _, _ in visuals)
             leading = geometry_sum(width + gap for visual, icon, width, gap in visuals if visual.side == "leading")
             trailing = geometry_sum(width + gap for visual, icon, width, gap in visuals if visual.side == "trailing")
             available = max(1.0, timeline_rect.width * 0.4 - leading - trailing)
-            lines = (wrap_text(label_request.content, available_inline=available,
+            lines = (measured_lane.lines if measured_lane is not None else
+                     wrap_text(label_request.content, available_inline=available,
                                font_size=float(font_size), font_metrics=label_metrics,
                                letter_spacing=float(label_treatment.letter_spacing),
                                text_transform=label_treatment.transform)
                      if label_request.wrap == "allow" else (label_request.content,))
             placement_bounds = label_request.bounds or timeline_rect
-            text_width = max(measure_text_width(line, font_size=float(font_size), font_metrics=label_metrics,
+            text_width = (measured_lane.text_width if measured_lane is not None else
+                          max(measure_text_width(line, font_size=float(font_size), font_metrics=label_metrics,
                                                 letter_spacing=float(label_treatment.letter_spacing),
-                                                text_transform=label_treatment.transform) for line in lines)
+                                                text_transform=label_treatment.transform) for line in lines))
             label_size = (leading + text_width + trailing,
                           float(font_size) * float(line_height) * len(lines))
             # A declared ``<purpose>-chip`` Theme role draws a background from
@@ -2019,6 +2057,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             chip_pad = ((float(chip[0]) * float(font_size), float(chip[0]) * float(font_size) / 2)
                         if chip is not None else (0.0, 0.0))
             label_size = (label_size[0] + 2 * chip_pad[0], label_size[1] + 2 * chip_pad[1])
+            if measured_lane is not None:
+                label_size = (measured_lane.width, measured_lane.height)
+                chip_pad = measured_lane.chip_padding
             if label_request.bounds is not None and chip is not None:
                 # A declared region contains the text; its chip is decoration
                 # drawn around it and may reach past the region by its padding.
@@ -2029,7 +2070,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             # alone exempts this request's declared host for an ``inside``
             # candidate; a comparison sibling or another row is never an implicit
             # host.
-            label_gap = max(1.0, float(font_size) * 0.25)
+            label_gap = (measured_lane.gap if measured_lane is not None else
+                         max(1.0, float(font_size) * 0.25))
             label_classes = (("mark", "text", "label-visual", "rule")
                              if label_request.rule_host_obstacle_id is not None
                              else ("mark", "text", "label-visual", "dependency-route"))
@@ -2041,14 +2083,20 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 )
             elif (label_request.semantic_id == "memberLabel"
                     and label_request.overflow == "suppress"
-                    and "end" in label_request.candidates):
+                    and ("end" in label_request.candidates
+                         or (label_request.lane_row_id is not None
+                             and layout_manifest.row_distribution == "fill"
+                             and "start" in label_request.candidates))):
                 candidate = place_member_name(
                     label_request.anchor, label_size, label_request.candidates,
                     bounds=placement_bounds, obstacles=surface_obstacles, gap=label_gap,
                     maximum_end_gap=2 * float(font_size),
-                    text_inline_inset=leading + chip_pad[0],
+                    text_inline_inset=(measured_lane.text_inline_inset if measured_lane is not None
+                                       else leading + chip_pad[0]),
                     inside_host_obstacle_id=label_request.inside_host_obstacle_id,
                     classes=label_classes,
+                    full_band=(label_request.lane_row_id is not None
+                               and layout_manifest.row_distribution == "fill"),
                 )
             else:
                 candidate = (place_label(
@@ -2083,6 +2131,20 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 placement_decisions.append(PlacementDecision(label_request.placement_id, label_request.source_ref,
                                                              ladder, "suppress", "suppressed"))
                 diagnostics.append(f"W_LAYOUT_LABEL_SUPPRESSED:{label_request.placement_id}")
+                if label_request.lane_row_id is not None and label_request.lane_member_id is not None:
+                    lane_row = row_by_id[label_request.lane_row_id]
+                    remaining = max(Decimal(0), lane_row.bounds.block_size - Decimal(str(
+                        row_requirements_by_id[label_request.lane_row_id])))
+                    short_sources = tuple(item for item in request.capacity_short_sources
+                                          if item.source_id == "timeline")
+                    capacity = remaining == 0 and bool(short_sources)
+                    lane_label_suppressions.append(LaneLabelSuppression(
+                        label_request.placement_id, label_request.lane_row_id,
+                        label_request.lane_member_id, lane_row.bounds,
+                        Decimal(0) if capacity else remaining,
+                        "capacity" if capacity else "obstruction",
+                        short_sources if capacity else (),
+                    ))
             else:
                 chip_box = candidate.bounds
                 if chip is not None:
@@ -3217,7 +3279,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                  canvas_bounds=canvas, fit_warnings=tuple(fit_warnings),
                                  info_diagnostics=((SuppressedPlotLabels("table-timeline", suppressed_plot_labels),)
                                                    if suppressed_plot_labels else ()),
-                                 lane_emissions=lane_emissions, patterns=patterns)
+                                 lane_emissions=lane_emissions, patterns=patterns,
+                                 lane_label_suppressions=tuple(lane_label_suppressions))
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks, tuple(mark_absences))
 
