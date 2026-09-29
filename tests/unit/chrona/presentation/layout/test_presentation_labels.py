@@ -139,6 +139,26 @@ def test_member_name_full_band_search_has_no_512_contact_cutoff():
                                              result.bounds.right, result.bounds.bottom))
 
 
+def test_member_name_full_band_search_respects_inline_row_bounds():
+    result = place_member_name(LabelRect(40, 40, 10, 8), (20, 6), ("end",),
+                               bounds=LabelRect(0, 0, 60, 100), obstacles=(),
+                               gap=2, maximum_end_gap=30)
+    assert result is None
+
+
+def test_member_name_contact_events_include_selected_segment_envelopes():
+    index = SurfaceObstacleIndex()
+    index.add(SurfaceObstacle("route:1", "dependency-route", "timeline",
+                              ObstacleSegment((32, 45), (52, 45))))
+    result = place_member_name(LabelRect(20, 41, 10, 8), (18, 6), ("end",),
+                               bounds=LabelRect(0, 0, 100, 100), obstacles=index,
+                               gap=2, maximum_end_gap=30, classes=("dependency-route",))
+    assert result is not None and result.bounds.y == 39
+    assert not index.collisions(ObstacleRect(result.bounds.x, result.bounds.y,
+                                             result.bounds.right, result.bounds.bottom),
+                                classes=("dependency-route",))
+
+
 def test_label_candidates_are_bounded_and_unique():
     with pytest.raises(ValueError, match="E_PRESENTATION_LABEL_INPUT"):
         place_label(LabelRect(1, 1, 1, 1), (1, 1), ["above"] * 17, bounds=LabelRect(0, 0, 10, 10))

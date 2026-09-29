@@ -6,7 +6,11 @@ from math import ceil, isfinite
 from typing import Iterable
 
 from chrona.presentation.layout.surface_quality import CollisionDomain
-from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacleIndex
+from chrona.presentation.layout.obstacles import (
+    ObstacleRect,
+    SurfaceObstacleIndex,
+    obstacle_envelope,
+)
 
 
 @dataclass(frozen=True)
@@ -244,19 +248,18 @@ def place_member_name(
         # At a fixed inline position, the legal block positions form components
         # separated by obstacle-contact intervals. Their nearest points to the
         # preferred anchor position are the row edges and obstacle contacts.
-        # Querying those events through the canonical collision predicate makes
-        # the search complete for the axis-aligned lane obstacles without a
-        # sampling lattice or candidate cutoff.
+        # Rectangles (and the vertical envelope of selected route segments)
+        # provide finite contact events. Every event is then checked by the
+        # canonical collision predicate; no sampling lattice or cutoff is used.
         preferred = _candidate(anchor, size, side, gap)
         candidates = {preferred.y, bounds.y, bounds.bottom - preferred.height}
         if isinstance(available_obstacles, SurfaceObstacleIndex):
-            obstacle_values = available_obstacles.select()
+            obstacle_values = available_obstacles.select(classes=classes)
             for obstacle in obstacle_values:
-                if not isinstance(obstacle.geometry, ObstacleRect):
-                    continue
+                _, top, _, bottom = obstacle_envelope(obstacle.geometry)
                 clearance = obstacle.clearance
-                candidates.add(obstacle.geometry.top - preferred.height - clearance)
-                candidates.add(obstacle.geometry.bottom + clearance)
+                candidates.add(top - preferred.height - clearance)
+                candidates.add(bottom + clearance)
         else:
             for obstacle in available_obstacles:
                 rect = obstacle.bounds if isinstance(obstacle, LabelObstacle) else obstacle
@@ -266,7 +269,8 @@ def place_member_name(
         legal_positions = []
         for y in candidates:
             candidate = LabelRect(preferred.x, y, preferred.width, preferred.height)
-            if candidate.y < bounds.y or candidate.bottom > bounds.bottom:
+            if (candidate.x < bounds.x or candidate.right > bounds.right
+                    or candidate.y < bounds.y or candidate.bottom > bounds.bottom):
                 continue
             if side == "end" and candidate.x + text_inline_inset - anchor.right > maximum_end_gap:
                 continue
