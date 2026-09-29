@@ -6,6 +6,7 @@ authoring inputs enter the same review pipeline as immutable evidence renders.
 from pathlib import Path
 from copy import deepcopy
 from dataclasses import replace
+from datetime import date
 from hashlib import sha256
 import json
 import re
@@ -63,6 +64,54 @@ def test_draft_render_materializes_the_review_surface():
 
 def test_draft_render_is_deterministic():
     assert render_review(_draft_request()).artifact.content == render_review(_draft_request()).artifact.content
+
+
+def test_fixed_lane_preflight_and_final_composition_share_the_completed_scale(monkeypatch):
+    import chrona.presentation.scene.v05_builder as builder
+
+    root = _root()
+    example = root / "examples/halcyon-1"
+    request = _draft_request(
+        project_path=example / "project.yaml",
+        view_path=example / "views/02-programme-board.yaml",
+        theme_path=example / "themes/wallboard.yaml",
+        scheme_path=example / "schemes/control-room-dark.yaml",
+        layout_path=example / "layouts/wallboard.yaml",
+        actual_path=example / "actual.yaml",
+        viewport=(1920, 1080),
+    )
+    original = builder.compose_surface_layout
+    compositions = []
+
+    def capture(layout_request):
+        preflight_scale = layout_request.fixed_lane_preflight.scale
+        composition = original(layout_request)
+        compositions.append((preflight_scale, composition.placement))
+        return composition
+
+    monkeypatch.setattr(builder, "compose_surface_layout", capture)
+    render_review(request)
+
+    assert len(compositions) == 1
+    preflight_scale, placement = compositions[0]
+    assert preflight_scale is placement.scale
+    scale = placement.scale
+    assert scale is not None
+    first_tier = sorted(
+        (shape for shape in placement.shapes
+         if shape.placement_id.startswith("axis-band-rect:0:")),
+        key=lambda shape: shape.bounds.inline,
+    )
+    assert first_tier
+    assert float(first_tier[0].bounds.inline) == pytest.approx(scale.range_start)
+    assert float(first_tier[-1].bounds.inline + first_tier[-1].bounds.inline_size) == pytest.approx(scale.range_end)
+    closed_days = [shape for shape in placement.shapes
+                   if shape.placement_id.startswith("calendar-closed:")]
+    assert closed_days
+    for shape in closed_days:
+        closed_day = date.fromisoformat(shape.placement_id.removeprefix("calendar-closed:"))
+        expected = scale.origin + (closed_day - scale.domain_start).days * scale.unit_ratio
+        assert float(shape.bounds.inline) == pytest.approx(expected)
 
 
 def test_halcyon_02_routed_note_trial_is_bounded_clear_and_deterministic(monkeypatch, tmp_path):
@@ -305,15 +354,13 @@ def test_controller_executive_draft_no_longer_suppresses_its_member_label_after_
     # `I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count=1`) now fits
     # it, because the corrected table minimum is narrower than the old
     # widest-row-label basis for this view under the CSS-Grid flex allocation
-    # (ADR-0032). Two relation labels are suppressed instead, because the
-    # narrower table gives the plot/relation surface different, not more, room
-    # to route through.
+    # (ADR-0032). The completed mark-aware scale now leaves one relation label
+    # suppressed; this is independent of the member-label regression gate.
     rendered = render_review(_draft_request())
     assert not any(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:") for item in rendered.scene.diagnostics)
     assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in rendered.scene.diagnostics)
     assert {item for item in rendered.scene.diagnostics if item.startswith("W_LAYOUT_RELATION_LABEL_SUPPRESSED:")} == {
         "W_LAYOUT_RELATION_LABEL_SUPPRESSED:relation:evb-to-bringup:evb-arrival:evb-arrival:silicon-bringup:silicon-bringup",
-        "W_LAYOUT_RELATION_LABEL_SUPPRESSED:relation:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance",
     }
     assert not any(item.startswith("W_LAYOUT_VISIBLE_OVERFLOW") for item in rendered.scene.diagnostics)
 
@@ -339,14 +386,18 @@ def test_suppression_count_excludes_other_plot_text_and_absent_count(tmp_path):
     member_suppressed = sum(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:") for item in tuned.scene.diagnostics)
     assert member_suppressed >= 1  # the variance suppression above is not counted
     assert f"I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count={member_suppressed}" in tuned.scene.diagnostics
-    # The L1 HALCYON schedule correction moves the CDR label into the existing
-    # containment policy's suppression path; it must be reported exactly once.
+    # The L1 HALCYON schedule correction moves CDR into the existing
+    # containment policy's suppression path. R4's bounded mark attachment can
+    # suppress other names; the aggregate must still count members only.
     halcyon = render_review(_draft_request(**inputs, view_path=example / "views/01-mission-brief.yaml",
                                            theme_path=example / "themes/briefing.yaml",
                                            layout_path=example / "layouts/briefing.yaml",
                                            summary_path=example / "profiles/summary.yaml"))
     assert "W_LAYOUT_LABEL_SUPPRESSED:member-label:cdr:cdr" in halcyon.scene.diagnostics
-    assert "I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count=1" in halcyon.scene.diagnostics
+    halcyon_members = sum(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")
+                          for item in halcyon.scene.diagnostics)
+    assert halcyon_members >= 1
+    assert f"I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count={halcyon_members}" in halcyon.scene.diagnostics
     ordinary = render_review(_draft_request())
     assert not ordinary.info_diagnostics
     assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in ordinary.scene.diagnostics)

@@ -37,6 +37,65 @@ def _primitives(scene: dict) -> list[dict]:
     return found
 
 
+def _assert_marks_inside_timeline(surface: dict) -> None:
+    timeline = next(slot for slot in surface["slots"] if slot["id"] == "timeline")["bounds"]
+    left, right = timeline["inline"], timeline["inline"] + timeline["inlineSize"]
+    scale = surface["scale"]
+    assert left <= scale["rangeStart"] < scale["rangeEnd"] <= right
+    assert scale["origin"] == scale["rangeStart"]
+    marks = [item for item in surface["primitives"]
+             if item.get("purpose") in {"planned", "actual", "missingActual"}]
+    assert marks
+    for mark in marks:
+        bounds = mark["bounds"]
+        assert bounds["inline"] >= left - 0.01, mark["id"]
+        assert bounds["inline"] + bounds["inlineSize"] <= right + 0.01, mark["id"]
+
+
+def _assert_as_of_label_outside_axis(surface: dict) -> None:
+    axis = next(slot for slot in surface["slots"] if slot["id"] == "timeline-axis")["bounds"]
+    timeline = next(slot for slot in surface["slots"] if slot["id"] == "timeline")["bounds"]
+    label_boxes = [item["bounds"] for item in surface["primitives"]
+                   if item.get("id") in {"as-of-label", "chip:as-of-label"}]
+    assert label_boxes
+
+    def intersects(left: dict, right: dict) -> bool:
+        return (left["inline"] < right["inline"] + right["inlineSize"]
+                and right["inline"] < left["inline"] + left["inlineSize"]
+                and left["block"] < right["block"] + right["blockSize"]
+                and right["block"] < left["block"] + left["blockSize"])
+
+    obstacles = [item for item in surface["primitives"]
+                 if item.get("purpose") in {"axis-label", "axis-band", "planned", "actual", "missingActual"}]
+    for label in label_boxes:
+        assert timeline["inline"] <= label["inline"]
+        assert label["inline"] + label["inlineSize"] <= timeline["inline"] + timeline["inlineSize"]
+        assert timeline["block"] <= label["block"]
+        assert label["block"] + label["blockSize"] <= timeline["block"] + timeline["blockSize"]
+        assert not intersects(label, axis), label
+        assert not [item["id"] for item in obstacles if intersects(label, item["bounds"])], label
+
+
+def _assert_member_end_gap(surface: dict) -> None:
+    marks = [item for item in surface["primitives"]
+             if item.get("purpose") in {"planned", "actual"}]
+    labels = [item for item in surface["primitives"] if item.get("purpose") == "member-label"]
+    for label in labels:
+        host_kind = "actual" if label.get("sourceKind") == "actual" else "planned"
+        host = next((mark for mark in marks
+                     if mark.get("purpose") == host_kind
+                     and ((label.get("laneMemberId") is not None
+                           and mark.get("laneMemberId") == label["laneMemberId"])
+                          or (label.get("laneMemberId") is None
+                              and mark["sourceRef"] == label["sourceRef"]))), None)
+        assert host is not None, label["id"]
+        text = label["textLayout"]["bounds"]
+        mark = host["bounds"]
+        mark_right = mark["inline"] + mark["inlineSize"]
+        if text["inline"] >= mark_right:
+            assert text["inline"] - mark_right <= 2 * label["textLayout"]["fontSize"] + 0.01, label["id"]
+
+
 def _rgb(colour: str) -> tuple[float, float, float]:
     colour = colour.lstrip("#")
     red, green, blue = (int(colour[index:index + 2], 16) / 255 for index in (0, 2, 4))
@@ -187,6 +246,13 @@ def test_cli_names_colliding_scale_values(tmp_path, monkeypatch, capsys) -> None
 
 def _assert_automatic_default_keeps_plot_names_and_row_guides(scene: dict, svg: str) -> None:
     surface = scene["surfaces"][0]
+    allowed_layout_warnings = {"W_LAYOUT_ACTUAL_INCOMPLETE", "W_LAYOUT_LABEL_SUPPRESSED"}
+    assert not [item for item in scene["diagnostics"]
+                if item.startswith("W_LAYOUT_")
+                and item.split(":", 1)[0] not in allowed_layout_warnings]
+    _assert_marks_inside_timeline(surface)
+    _assert_as_of_label_outside_axis(surface)
+    _assert_member_end_gap(surface)
     timeline = next(slot for slot in surface["slots"] if slot["id"] == "timeline")["bounds"]
     rows = {row["id"]: row["bounds"] for row in surface["rows"]}
     primitives = {item["id"]: item for item in _primitives(scene)}
@@ -258,6 +324,27 @@ def test_init_starter_default_uses_task_and_planned_date_columns(tmp_path, monke
     assert len([key for key in cells if key.endswith(":Plan")]) == 3
     assert all(key in svg_ids for key in primitives if key.startswith("cell:"))
     assert "Owner" not in svg
+
+
+def test_as_of_no_fit_keeps_rule_and_omits_label(tmp_path, monkeypatch) -> None:
+    import chrona.presentation.layout.surface_composer as composer
+
+    starter = tmp_path / "starter"
+    monkeypatch.setattr(sys, "argv", ["chrona", "init", str(starter)])
+    main()
+    monkeypatch.setattr(composer, "find_asof_label_candidate", lambda *args, **kwargs: None)
+    scene, svg_path = _render_project(tmp_path, monkeypatch, "as-of-no-fit",
+                                      starter / "project.yaml", starter / "actual.yaml")
+    primitives = {item["id"]: item for item in _primitives(scene)}
+    assert "W_LAYOUT_LABEL_SUPPRESSED:as-of-label" in scene["diagnostics"]
+    assert "as-of" in primitives
+    assert "as-of-label" not in primitives
+    assert "chip:as-of-label" not in primitives
+    svg_ids = {value for element in ET.fromstring(svg_path.read_text(encoding="utf-8")).iter()
+               for value in (element.get("id"), element.get("data-scene-id")) if value}
+    assert "as-of" in svg_ids
+    assert "as-of-label" not in svg_ids
+    assert "chip:as-of-label" not in svg_ids
 
 
 def test_halcyon_readable_default_mirror_renders_task_and_plan_columns(tmp_path, monkeypatch) -> None:

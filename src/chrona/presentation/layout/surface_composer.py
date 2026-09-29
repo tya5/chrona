@@ -18,6 +18,8 @@ from chrona.presentation.layout.lane_preflight import (
 )
 from chrona.presentation.layout.lane_subtracks import FixedLanePreflight, LaneSubtrackPlan, assign_lane_subtracks
 from chrona.presentation.layout.lane_item_footprints import compose_lane_item_footprints
+from chrona.presentation.layout.mark_aware_scale import PointMarkFootprint, inset_scale_for_point_facets
+from chrona.presentation.layout.asof_label import find_asof_label_candidate
 from chrona.presentation.model.semantic_registry import (
     axis_band_semantic_ids, axis_label_semantic_ids, REQUIRED_SLOTS, label_chip_semantic, semantic_binding)
 from chrona.presentation.model.projection import shared_track_member_key
@@ -38,9 +40,10 @@ from chrona.presentation.layout.annotation_topology import (
     AnnotationRouteTrial, local_route_bounds, route_annotation_candidate, visible_segments,
 )
 from chrona.presentation.layout.comparison_marks import ComparisonMark
-from chrona.presentation.layout.labels import LabelRect, LabelRequest, place_label
+from chrona.presentation.layout.labels import LabelRect, LabelRequest, place_label, place_member_name
 from chrona.presentation.layout.obstacles import (
-    ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex, obstacles_intersect,
+    ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex, obstacle_envelope,
+    obstacles_intersect,
 )
 from chrona.presentation.layout.ports import ConnectorEgress, coincident_endpoint_port_ids, connector_egress_candidates
 from chrona.presentation.model.placement_candidates import candidate_order
@@ -684,6 +687,50 @@ def resolve_mark_geometries(theme_tokens: Any) -> dict[str, MarkGeometry]:
     return result
 
 
+def _provisional_surface_point_facets(
+    *, projection: Any, review_rows: tuple[Any, ...], scale: ScalePlacement,
+    as_of: date | None, theme_tokens: Any, slot_id: str, mark_block_size: float,
+    role_geometries: Mapping[str, MarkGeometry],
+) -> tuple[PointMarkFootprint, ...]:
+    """Resolve exact visible point facet bounds against one provisional scale."""
+    frame = MarkBandFrame.zero_origin(scale, mark_block_size, role_geometries)
+    result: list[PointMarkFootprint] = []
+
+    def include(item: Any, instance_id: str, source_kind: str, row_id: str,
+                *, emit_missing_actual: bool = True) -> None:
+        composition = compose_item_marks(
+            item=item, instance_id=instance_id, source_kind=source_kind, frame=frame,
+            as_of=as_of, theme_tokens=theme_tokens, slot_id=slot_id,
+            emit_missing_actual=emit_missing_actual, emit_diagnostics=False,
+        )
+        instance = LaneProjectionInstance(row_id, item.item_id or item.object_id,
+                                          item.object_id, item.source_kind)
+        for mark in composition.marks:
+            if mark.mark_shape != "point":
+                continue
+            anchor = ((item.actual or {}).get("at") if mark.semantic_id == "actual"
+                      else item.planned.get("at"))
+            if not isinstance(anchor, date):
+                continue
+            for facet in _mark_facets(item, instance, mark, theme_tokens):
+                left, _, right, _ = obstacle_envelope(facet.visible_footprint)
+                result.append(PointMarkFootprint(anchor, left, right))
+
+    for row in review_rows:
+        for item in row.items:
+            layout_id = f"{row.row_id}:{item.item_id or item.object_id}"
+            instance_id = layout_id if projection.rows else item.object_id
+            source_kind = item.source_kind if projection.rows else "combined"
+            include(item, instance_id, source_kind, row.row_id,
+                    emit_missing_actual=(lane_missing_actual_visible(projection)
+                                         if projection.lane_membership is not None else True))
+    for folded in getattr(projection, "folded_points", ()):
+        for item in folded.all_items:
+            include(item, _folded_instance_id(folded, item), item.source_kind,
+                    f"folded:{folded.group_id}", emit_missing_actual=False)
+    return tuple(result)
+
+
 def _centred_cell_baseline(row: Rect, treatment: Any) -> float:
     """Centre a table cell's line box in its row, in the cell's own role."""
     line_block = float(treatment.font_size * treatment.line_height)
@@ -737,18 +784,31 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: LayoutManif
     start, end = projection.window
     frame = lane_inline_frame_for_manifest(layout_manifest, window=(start, end))
     timeline = next(item for item in layout_manifest.decisions if item.source == "timeline")
-    scale = ScalePlacement("table-timeline", "primary", start, end,
-                           float(frame.timeline_inline),
-                           float(frame.timeline_inline + frame.timeline_inline_size),
-                           float(frame.timeline_inline), float(frame.temporal_scale))
+    provisional_scale = ScalePlacement("table-timeline", "primary", start, end,
+                                       float(frame.timeline_inline),
+                                       float(frame.timeline_inline + frame.timeline_inline_size),
+                                       float(frame.timeline_inline), float(frame.temporal_scale))
     mark_band_size = float(metric_values["timeline.mark.blockSize"])
-    footprints = compose_lane_item_footprints(
-        projection, scale=scale, as_of=surface_content.as_of,
+    footprint_inputs = dict(
+        projection=projection, as_of=surface_content.as_of,
         theme_tokens=theme_tokens, mark_band_size=mark_band_size,
         role_geometries=resolve_mark_geometries(theme_tokens), slot_id=timeline.source,
         icon_assets=icon_assets, visual_requests=visual_requests,
         progress_fill_source=surface_content.progress_fill_source,
     )
+    provisional_footprints = compose_lane_item_footprints(
+        scale=provisional_scale, **footprint_inputs,
+    )
+    point_facets = []
+    for item_footprints in provisional_footprints:
+        for facet in item_footprints.facets:
+            if facet.point_anchor_date is None:
+                continue
+            left, _, right, _ = obstacle_envelope(facet.footprint)
+            point_facets.append(PointMarkFootprint(facet.point_anchor_date, left, right))
+    scale = inset_scale_for_point_facets(provisional_scale, point_facets)
+    footprints = (provisional_footprints if scale is provisional_scale else
+                  compose_lane_item_footprints(scale=scale, **footprint_inputs))
     subtracks = assign_lane_subtracks(membership, footprints, mark_band_size=mark_band_size)
     lane_extent = {lane.lane_id: lane.block_extent for lane in subtracks.lanes}
     row_padding = float(metric_values["timeline.row.paddingBlock"])
@@ -764,7 +824,7 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: LayoutManif
                         and (index == 0 or rows[index - 1].group_id != row.group_id)))
     required = (Decimal(str(geometry_sum(requirements)))
                 + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0))
-    return FixedLanePreflight(subtracks, frame, required, surface_content.as_of)
+    return FixedLanePreflight(subtracks, frame, required, surface_content.as_of, scale)
 
 
 def progress_fill_bounds(host: Rect, fraction: float, inset_ratio: Decimal = Decimal(0)) -> Rect | None:
@@ -1090,13 +1150,24 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         for item in projection.items
     )
     timeline_bounds = _bounds(timeline.bounds)
-    scale = ScalePlacement("table-timeline", "primary", start, end, timeline_bounds[0],
-                           timeline_bounds[0] + timeline_bounds[2], timeline_bounds[0],
-                           timeline_bounds[2] / max(1, (end - start).days))
+    provisional_scale = ScalePlacement("table-timeline", "primary", start, end, timeline_bounds[0],
+                                       timeline_bounds[0] + timeline_bounds[2], timeline_bounds[0],
+                                       timeline_bounds[2] / max(1, (end - start).days))
     group_header_size = (float(metric_values["timeline.groupHeader.blockSize"])
                          if request.surface_content.group_presentation == "header" else 0.0)
     role_geometries = resolve_mark_geometries(request.theme_tokens)
     mark_block_size = float(metric_values["timeline.mark.blockSize"])
+    if projection.lane_membership is not None:
+        assert request.fixed_lane_preflight is not None
+        scale = request.fixed_lane_preflight.scale
+    else:
+        point_facets = _provisional_surface_point_facets(
+            projection=projection, review_rows=tuple(review_rows), scale=provisional_scale,
+            as_of=request.surface_content.as_of, theme_tokens=request.theme_tokens,
+            slot_id=timeline.slot_id, mark_block_size=mark_block_size,
+            role_geometries=role_geometries,
+        )
+        scale = inset_scale_for_point_facets(provisional_scale, point_facets)
     row_padding = float(metric_values["timeline.row.paddingBlock"])
     text_line_block = table_text_line_block(
         request.theme_tokens, (cell.typography_role for cell in request.surface_content.table_cells))
@@ -1776,16 +1847,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     handled_candidate_visuals: set[str] = set()
     if as_of_label is not None:
         x, content = as_of_label
-        # A chip's block padding extends the anchor too, so a side candidate
-        # keeps the chipped label's top where the bare label's top is (#428).
-        as_of_chip = request.theme_tokens.label_chip(semantic_binding("asOfLabelChip").theme_role)
-        as_of_anchor_block = (body_size if as_of_chip is None else
-                              body_size * float(body_treatment.line_height) + float(as_of_chip[0]) * body_size)
         label_requests.append(LabelRequest(
             "as-of-label", "actual-set", content,
-            LabelRect(x, timeline_bounds[1], 0.0, as_of_anchor_block), ("end", "start", "below"),
-            "text", "timeline-as-of", CollisionDomain("timeline", "overlay"), "visible-overflow",
-            visible_fallback_side="above",
+            LabelRect(x, timeline_bounds[1], 0.0, 0.0),
+            ("plot-top-end", "plot-top-start", "rule-hosted"),
+            "text", "timeline-as-of", CollisionDomain("timeline", "overlay"), "suppress",
             rule_host_obstacle_id="as-of",
             semantic_id="asOfLabel",
         ))
@@ -1963,17 +2029,38 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             # alone exempts this request's declared host for an ``inside``
             # candidate; a comparison sibling or another row is never an implicit
             # host.
-            candidate = (place_label(label_request.anchor, label_size, label_request.candidates, bounds=placement_bounds,
-                                     obstacles=surface_obstacles, gap=max(1.0, float(font_size) * 0.25),
-                                     inside_host_obstacle_id=label_request.inside_host_obstacle_id,
-                                     required=label_request.overflow == "diagnose", overflow=label_request.overflow,
-                                     visible_fallback_side=label_request.visible_fallback_side,
-                                     rule_host_obstacle_id=label_request.rule_host_obstacle_id,
-                                     search_side_neighborhood=(label_request.rule_host_obstacle_id is None),
-                                     classes=(("mark", "text", "label-visual", "rule")
-                                              if label_request.rule_host_obstacle_id is not None
-                                              else ("mark", "text", "label-visual", "dependency-route")))
-                         if label_request.candidates else None)
+            label_gap = max(1.0, float(font_size) * 0.25)
+            label_classes = (("mark", "text", "label-visual", "rule")
+                             if label_request.rule_host_obstacle_id is not None
+                             else ("mark", "text", "label-visual", "dependency-route"))
+            if label_request.semantic_id == "asOfLabel":
+                candidate = find_asof_label_candidate(
+                    timeline_rect, label_size, rule_x=label_request.anchor.x,
+                    gap=label_gap, rule_host_id="as-of", obstacles=surface_obstacles,
+                    obstacle_classes=("mark", "text", "label-visual", "rule"),
+                )
+            elif (label_request.semantic_id == "memberLabel"
+                    and label_request.overflow == "suppress"
+                    and "end" in label_request.candidates):
+                candidate = place_member_name(
+                    label_request.anchor, label_size, label_request.candidates,
+                    bounds=placement_bounds, obstacles=surface_obstacles, gap=label_gap,
+                    maximum_end_gap=2 * float(font_size),
+                    text_inline_inset=leading + chip_pad[0],
+                    inside_host_obstacle_id=label_request.inside_host_obstacle_id,
+                    classes=label_classes,
+                )
+            else:
+                candidate = (place_label(
+                    label_request.anchor, label_size, label_request.candidates,
+                    bounds=placement_bounds, obstacles=surface_obstacles, gap=label_gap,
+                    inside_host_obstacle_id=label_request.inside_host_obstacle_id,
+                    required=label_request.overflow == "diagnose", overflow=label_request.overflow,
+                    visible_fallback_side=label_request.visible_fallback_side,
+                    rule_host_obstacle_id=label_request.rule_host_obstacle_id,
+                    search_side_neighborhood=(label_request.rule_host_obstacle_id is None),
+                    classes=label_classes,
+                ) if label_request.candidates else None)
             provisional = place_text(placement_id=label_request.placement_id, source_ref=label_request.source_ref,
                                      content=label_request.content, inline=0, baseline_block=float(font_size),
                                      typography_role=label_request.typography_role, theme_tokens=request.theme_tokens,

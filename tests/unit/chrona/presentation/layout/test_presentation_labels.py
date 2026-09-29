@@ -1,6 +1,6 @@
 import pytest
 
-from chrona.presentation.layout.labels import LabelObstacle, LabelRect, place_label
+from chrona.presentation.layout.labels import LabelObstacle, LabelRect, place_label, place_member_name
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
 from chrona.presentation.layout.text import wrap_text
 
@@ -60,6 +60,34 @@ def test_declared_visible_fallback_side_is_used_only_after_legal_candidates_fail
     with pytest.raises(ValueError, match="E_PRESENTATION_LABEL_INPUT"):
         place_label(anchor, (20, 8), ("end",), bounds=bounds, overflow="suppress",
                     visible_fallback_side="above")
+
+
+def test_member_name_end_candidate_is_capped_and_uses_start_before_suppression():
+    anchor = LabelRect(40, 45, 10, 10)
+    bounds = LabelRect(0, 0, 100, 100)
+    end = place_member_name(anchor, (20, 8), ("end", "start"), bounds=bounds,
+                            obstacles=(), gap=2, maximum_end_gap=20,
+                            text_inline_inset=5)
+    assert end is not None and end.side == "end"
+    assert end.bounds.x + 5 - anchor.right <= 20
+
+    # Every end placement at an inline gap of at most 2em is blocked, but the
+    # declared start rung remains clear.
+    result = place_member_name(
+        anchor, (20, 8), ("end", "start"), bounds=bounds,
+        obstacles=(LabelRect(50, 0, 41, 100),), gap=2, maximum_end_gap=20,
+    )
+    assert result is not None and result.side == "start"
+    assert result.bounds.right <= anchor.x - 2
+
+
+def test_member_name_returns_suppression_when_bounded_end_and_start_are_blocked():
+    anchor = LabelRect(40, 45, 10, 10)
+    result = place_member_name(
+        anchor, (20, 8), ("end", "start"), bounds=LabelRect(0, 0, 100, 100),
+        obstacles=(LabelRect(0, 0, 100, 100),), gap=2, maximum_end_gap=20,
+    )
+    assert result is None
 
 
 def test_label_candidates_are_bounded_and_unique():
