@@ -223,3 +223,14 @@ def test_pr_snapshot_consumers_fetch_baseline_history() -> None:
         checkout = next(step for step in jobs[name]["steps"]
                         if step.get("uses", "").startswith("actions/checkout@"))
         assert checkout["with"]["fetch-depth"] == "0", name
+
+
+def test_dispatched_full_matrix_sha_guard_uses_cross_platform_bash() -> None:
+    import yaml
+
+    jobs = yaml.load(Path(".github/workflows/conformance.yml").read_text(),
+                     Loader=yaml.BaseLoader)["jobs"]
+    sha_guard = next(step for step in jobs["full-matrix"]["steps"]
+                     if step.get("name") == "Verify exact full-CI SHA when supplied")
+    assert sha_guard["shell"] == "bash"
+    assert 'test "$GITHUB_SHA" = "$EXPECTED_SHA"' in sha_guard["run"]
