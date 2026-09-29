@@ -30,7 +30,7 @@ body:
       value: '700'
     size.heading:
       type: number
-      value: 34
+      value: 35
     size.subtitle:
       type: number
       value: 17
