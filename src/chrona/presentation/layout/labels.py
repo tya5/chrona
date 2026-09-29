@@ -228,12 +228,60 @@ def place_member_name(
         maximum_side_gap = (maximum_end_gap - text_inline_inset) if side == "end" else None
         if side == "end" and maximum_side_gap < gap:
             continue
-        placed = place_label(
-            anchor, size, (side,), bounds=bounds, obstacles=available_obstacles, gap=gap,
-            inside_host_obstacle_id=inside_host_obstacle_id,
-            required=False, overflow="suppress", classes=classes,
-            search_side_neighborhood=True, maximum_side_gap=maximum_side_gap,
-        )
-        if placed is not None:
-            return placed
+        if side not in {"end", "start"}:
+            # Member names use the lane's inline rungs. Keep the established
+            # finite behavior for any legacy caller that declares another side.
+            placed = place_label(
+                anchor, size, (side,), bounds=bounds, obstacles=available_obstacles, gap=gap,
+                inside_host_obstacle_id=inside_host_obstacle_id,
+                required=False, overflow="suppress", classes=classes,
+                search_side_neighborhood=True, maximum_side_gap=maximum_side_gap,
+            )
+            if placed is not None:
+                return placed
+            continue
+
+        # At a fixed inline position, the legal block positions form components
+        # separated by obstacle-contact intervals. Their nearest points to the
+        # preferred anchor position are the row edges and obstacle contacts.
+        # Querying those events through the canonical collision predicate makes
+        # the search complete for the axis-aligned lane obstacles without a
+        # sampling lattice or candidate cutoff.
+        preferred = _candidate(anchor, size, side, gap)
+        candidates = {preferred.y, bounds.y, bounds.bottom - preferred.height}
+        if isinstance(available_obstacles, SurfaceObstacleIndex):
+            obstacle_values = available_obstacles.select()
+            for obstacle in obstacle_values:
+                if not isinstance(obstacle.geometry, ObstacleRect):
+                    continue
+                clearance = obstacle.clearance
+                candidates.add(obstacle.geometry.top - preferred.height - clearance)
+                candidates.add(obstacle.geometry.bottom + clearance)
+        else:
+            for obstacle in available_obstacles:
+                rect = obstacle.bounds if isinstance(obstacle, LabelObstacle) else obstacle
+                candidates.add(rect.y - preferred.height)
+                candidates.add(rect.bottom)
+
+        legal_positions = []
+        for y in candidates:
+            candidate = LabelRect(preferred.x, y, preferred.width, preferred.height)
+            if candidate.y < bounds.y or candidate.bottom > bounds.bottom:
+                continue
+            if side == "end" and candidate.x + text_inline_inset - anchor.right > maximum_end_gap:
+                continue
+            if isinstance(available_obstacles, SurfaceObstacleIndex):
+                collides = bool(available_obstacles.collisions(
+                    ObstacleRect(candidate.x, candidate.y, candidate.right, candidate.bottom),
+                    host_id=inside_host_obstacle_id if side == "inside" else None,
+                    classes=classes,
+                ))
+            else:
+                collides = any(_intersects(candidate, item.bounds if isinstance(item, LabelObstacle) else item)
+                               for item in available_obstacles)
+            if not collides:
+                legal_positions.append(candidate)
+        if legal_positions:
+            selected = min(legal_positions, key=lambda rect: (abs(rect.y - preferred.y), rect.y))
+            return LabelPlacement(side, selected, search_count=len(candidates))
     return None
