@@ -1,0 +1,41 @@
+name: derived-main
+on:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: 'Exact commit SHA on refs/heads/derived-gate/<sha>'
+        type: string
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: derived-main-${{ inputs.expected_sha }}
+  cancel-in-progress: false
+jobs:
+  derived-main:
+    name: derived-main
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+      - name: Verify immutable gate ref and exact dispatched commit
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: |
+          test -n "$EXPECTED_SHA"
+          test "$GITHUB_REF" = "refs/heads/derived-gate/$EXPECTED_SHA"
+          test "$GITHUB_SHA" = "$EXPECTED_SHA"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Check every committed derived output
+        run: |
+          pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk
+          python -m tools.derived_evidence --check --jobs 4
