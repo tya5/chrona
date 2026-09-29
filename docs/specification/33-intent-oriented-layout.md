@@ -317,7 +317,7 @@ These private modules divide Layout implementation only; they do not change auth
 | `surface_table` | Place table columns, headers and cells. |
 | `surface_groups` | Place group-header text and group presentation from completed base extents. |
 | `surface_axis` | Place axis bands/labels and targets; derive calendar overlay intervals from the completed scale. |
-| `surface_marks` | Place tracks/marks/folded points/progress; complete mark patterns. |
+| `surface_marks` | Place tracks/marks/folded points/progress. |
 | `surface_member_labels` | Build requests and place member/item labels. |
 | `surface_lanes` | Adapt/preflight fixed lanes; emit lane facets and close host identities. |
 | `surface_routes` | Place dependency paths/ports and relation labels. |
@@ -326,7 +326,7 @@ These private modules divide Layout implementation only; they do not change auth
 | `surface_content` | Place title, detail, summary, notes and footer source content. |
 | `surface_backgrounds` | Complete source-bound row/group/axis/calendar background geometry from completed extents and overlay intervals. |
 | `surface_visuals` | Reserve and place text/mark/axis label visuals. |
-| `surface_completion` | Complete slot ownership, overflow evidence and canvas bounds. |
+| `surface_completion` | Complete slot ownership, overflow evidence, canvas bounds and catalogue patterns for final Rect shapes and span marks. |
 | `surface_geometry` | Pure rectangle/date conversions and shared precision/paint-order constants. |
 | `surface_composer` | Invoke typed phase batches in order and construct final Layout output. |
 
