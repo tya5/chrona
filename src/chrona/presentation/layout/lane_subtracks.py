@@ -110,6 +110,9 @@ class FixedLanePreflight:
     natural_block_requirement: Decimal
     as_of: date | None
     scale: ScalePlacement
+    measured_labels: tuple[object, ...] = ()
+    resolved_visual_requests: tuple[object, ...] = ()
+    row_requirements: tuple[tuple[str, float], ...] = ()
 
     def __post_init__(self) -> None:
         if (not self.natural_block_requirement.is_finite()
