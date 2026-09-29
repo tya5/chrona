@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import sys
 import xml.etree.ElementTree as ET
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
@@ -267,6 +268,65 @@ def test_public_halcyon_03_lane_table_uses_stable_nonblank_lane_identity() -> No
     assert all(label.startswith("Lane ") for label in labels)
     assert len(labels) == len(set(labels))
     assert all(label in svg_text for label in labels)
+
+
+@pytest.mark.parametrize("slide", ("02-programme-board", "12-glyph-gates"))
+def test_wallboard_lane_table_keeps_the_bus_test_relation(slide: str) -> None:
+    scene = json.loads((ROOT / f"examples/halcyon-1/generated/{slide}.scene.json").read_text(encoding="utf-8"))
+    primitives = _primitives(scene)
+    lane_labels = [item["text"] for item in primitives
+                   if item.get("purpose") == "table-cell" and item["id"].endswith(":Lane")]
+    group_headers = {item["text"] for item in primitives if item.get("purpose") == "group-header"}
+    route_id = ('relation:bustest-integration:review-lane:["generated","bus","pdr"]:'
+                'bus-test:review-lane:["generated","ait","integration"]:integration')
+    assert lane_labels and all(label.strip() and label not in group_headers for label in lane_labels)
+    assert [item["id"] for item in primitives if item["id"].startswith("relation:bustest-integration:")] == [route_id]
+    svg_path = ROOT / f"examples/halcyon-1/generated/{slide}.svg"
+    svg_ids = {value for element in ET.fromstring(svg_path.read_text(encoding="utf-8")).iter()
+               for value in (element.get("id"), element.get("data-scene-id")) if value}
+    assert route_id in svg_ids
+
+
+def test_programme_board_wallboard_profile_is_context_specific_and_complete() -> None:
+    layouts = ROOT / "examples/halcyon-1/layouts"
+    shared = yaml.safe_load((layouts / "wallboard.yaml").read_text(encoding="utf-8"))
+    programme = yaml.safe_load((layouts / "wallboard-programme-board.yaml").read_text(encoding="utf-8"))
+    assert shared["id"] == "wallboard"
+    assert shared["root"]["children"][1]["inlineSize"] == {
+        "minmax": {"min": "content", "max": {"fr": 2}}
+    }
+    assert programme["version"] == "chrona/layout-profile/v0.9"
+    assert programme["id"] == "wallboard-programme-board"
+    assert "root" in programme and "extends" not in programme and "overrides" not in programme
+    assert programme["root"]["children"][1]["inlineSize"] == {
+        "minmax": {"min": {"fixed": 300}, "max": {"fr": 2}}
+    }
+    shared_copy = deepcopy(programme)
+    shared_copy["id"] = "wallboard"
+    shared_copy["root"]["children"][1]["inlineSize"] = {
+        "minmax": {"min": "content", "max": {"fr": 2}}
+    }
+    assert shared_copy == shared
+
+    contexts = ROOT / "examples/halcyon-1/contexts"
+    for context_name in ("02-programme-board", "12-glyph-gates"):
+        context = yaml.safe_load((contexts / f"{context_name}.yaml").read_text(encoding="utf-8"))
+        assert context["body"]["layout"] == {
+            "id": "wallboard-programme-board",
+            "kind": "layout-profile",
+            "store": {"provider": "local", "identity": "halcyon-1-example"},
+            "address": "layouts/wallboard-programme-board.yaml",
+            "revision": {"token": "example-v1"},
+        }
+    for context_name in ("04-tvac-slip", "07-replan-baseline", "15-gallery-image-notes"):
+        context = yaml.safe_load((contexts / f"{context_name}.yaml").read_text(encoding="utf-8"))
+        assert context["body"]["layout"] == {
+            "id": "wallboard",
+            "kind": "layout-profile",
+            "store": {"provider": "local", "identity": "halcyon-1-example"},
+            "address": "layouts/wallboard.yaml",
+            "revision": {"token": "example-v1"},
+        }
 
 
 def test_pinned_default_draft_guides_every_bar_across_the_plot_and_names_it_at_its_end(tmp_path, monkeypatch) -> None:
