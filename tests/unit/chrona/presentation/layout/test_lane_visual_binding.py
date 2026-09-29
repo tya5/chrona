@@ -9,7 +9,7 @@ from chrona.presentation.layout.lane_projection import (
 from chrona.presentation.layout.lane_visual_binding import bind_lane_visual_requests
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.surface_quality import VisualRequest
-from chrona.presentation.layout.surface_composer import _lane_instance_owners
+from chrona.presentation.layout.surface_lanes import _lane_instance_owners
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection, ReviewRowProjection, ReviewLaneRowProjection
 from chrona.presentation.review.lane_membership import Lane, LaneAssignment, LaneMembership
 
