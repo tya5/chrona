@@ -13,7 +13,7 @@ State that Draft auto is content-sized independently of its finite synthetic clo
 
 ## Slice 2 — Carry auto sizing intent into Layout
 
-**Owners/files:** `src/chrona/presentation/model/closure.py`, `src/chrona/usecases/render_review.py`, `src/chrona/presentation/layout/engine.py`, and focused tests in `tests/unit/chrona/presentation/layout/test_intent_engine.py`.
+**Owners/files:** `src/chrona/presentation/model/closure.py`, `src/chrona/usecases/render_review.py`, `src/chrona/presentation/layout/engine.py`, and focused tests in `tests/unit/chrona/presentation/layout/test_intent_engine.py`. First close the [normal-flow measurement correction](../../design/issue-538-normal-flow-measurement-correction-2026-09-29.md) with shared track rules for column, row, grid, flow and overlay; do not substitute root `preferred_block` or a bounded probe heuristic.
 
 Pass an explicit auto sizing floor/mode into Layout while retaining the 900-unit finite synthetic Context seed. Do not infer auto from a magic numeric block size. Make the resolver compute the least sufficient whole-profile extent from natural source requirements and profile chrome, round upward, and verify the complete final normal-flow LayoutManifest allocation. Do not treat overflow bounds in the completed canvas as satisfying the selected viewport allocation. Preserve exact short-source evidence for fixed/capped hosts and the existing completed-canvas fallback. Explicit finite requests continue to use their requested minimum. Add cases for: compact requirement below 900; content above 900; finite 900 minimum; profile intrinsic minimum; empty requirement floor; deterministic rounding; missing source; and fixed/capped shortfall.
 

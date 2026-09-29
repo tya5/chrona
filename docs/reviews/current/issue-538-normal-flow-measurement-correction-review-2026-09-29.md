@@ -1,0 +1,5 @@
+# Issue #538 — Measurement correction architecture review
+
+**Decision:** approve the [correction](../../design/issue-538-normal-flow-measurement-correction-2026-09-29.md) before resuming product code. The prior Draft-auto design remains valid except that `root.preferred_block` alone is not an admissible complete-profile proof.
+
+Spec 33 already requires complete normal-flow allocation; measuring grid tracks and flow wraps with the same Layout rules closes that contract rather than changing it. Spec 08's Scene remains projection-only and the SVG adapter still serializes completed geometry. Spec 50's fixed/capped visible fallback survives because a shortage is classified by the declared track constraint, not by a blanket warning count. #504 fill remains post-sizing; #468 finite requests remain byte-stable through a separate request-mode branch. Anchored overlays remain paint/canvas concerns, not a source of phantom plot height. No View/Theme/Context schema or resource migration is needed. The risk is divergence between natural measurement and arrangement; tests must compare both on grid, flow, span and fixed tracks before acceptance.

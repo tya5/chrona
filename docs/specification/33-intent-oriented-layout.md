@@ -508,6 +508,12 @@ does not count as satisfying this allocation. The selected extent is rounded
 upward to a whole scene unit. When there are no table-timeline rows, the
 content-sizing floor is one scene unit; any larger intrinsic profile
 requirement controls the result.
+Natural normal-flow measurement MUST use the same track allocation rules as
+final arrangement: grid row tracks are summed (including gaps, padding and
+spans), flow uses lines at the resolved inline extent, and anchored overlay
+decoration does not enlarge the normal-flow minimum. A fixed or capped track
+contributes its declared capacity rather than a promise to absorb more
+content; its shortage follows the visible fallback above.
 
 Explicit finite Draft extents and immutable Context extents remain minimum
 requests and MUST NOT shrink below the requested block extent. If measured
