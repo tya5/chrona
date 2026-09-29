@@ -1,0 +1,5 @@
+# Implementation amendment — `fill`-only full-band search (#504)
+
+This narrows the [R2 envelope plan](issue-504-lane-stagger-envelope-implementation-amendment-2026-09-29.md) under the [published design correction](../../design/issue-504-fill-only-label-search-correction-2026-09-29.md) and [architecture review](../../reviews/current/issue-504-fill-only-label-search-architecture-review-2026-09-29.md).
+
+In `layout/surface_composer.py`, apply the measured stagger-envelope row minimum and `labels.py` full-band search only for lane profiles declaring `rowDistribution: fill`. Keep `pack` lane row minima and side-neighborhood search byte-stable; non-lane remains unchanged. Add focused policy-boundary tests. The R2 code PR regenerates 02/11/12, reports their shown/packed counts, and batch-checks all 29 public materializers; every other Scene/SVG must match current main byte-for-byte, including Editorial lanes 16 and non-lane 04/07/15. A remaining 02 suppression or any unrelated diff stops the code release for review. CI and the literal #504 acceptance review remain separate publication units.
