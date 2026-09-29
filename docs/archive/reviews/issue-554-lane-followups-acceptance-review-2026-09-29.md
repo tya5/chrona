@@ -2,7 +2,7 @@
 
 # Issue #554 — lane follow-ups acceptance review
 
-Product base: [PR #589](https://github.com/tya5/chrona/pull/589), merged as `8f86014f793d49a2f87501ab6e8ef07c7aba0b03`. The selected design, architecture check, correction and slice plan are in the [living work record](../../planning/active/issue-554-lane-followups-work-record-2026-09-29.md); Specs 08/30/38/50 are the normative contracts. Rows 1, 3 and 4 were implemented earlier in PR #565 and rechecked on this base. #497 legend truncation is separate.
+Product base: [PR #589](https://github.com/tya5/chrona/pull/589), merged as `8f86014f793d49a2f87501ab6e8ef07c7aba0b03`. The selected design, architecture check, correction and slice plan are in the [work record](../planning/issue-554-lane-followups-work-record-2026-09-29.md); Specs 08/30/38/50 are the normative contracts. Rows 1, 3 and 4 were implemented earlier in PR #565 and rechecked on this base. #497 legend truncation is separate.
 
 ## Literal issue acceptance
 
