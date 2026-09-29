@@ -87,49 +87,44 @@ cross-class obstructions. This requirement may grow the timeline host
 when profile constraints permit. A short seed row is not grounds for
 suppression.
 
-For `fill` lanes, full-band search tests finite preferred/contact candidates against
-row edges and current axis-aligned obstacles expanded by label bounds and
-clearance. Search declared sides in order, then absolute block displacement,
-fixed direction and stable identity; end gap stays within 2em. It is exhaustive
-only within the final allocated row; `pack` lanes and non-lane candidate searches are unchanged.
+For `fill` lanes, the finite preferred/contact search tests row edges and
+current axis-aligned obstacles expanded by label bounds and clearance. For a
+mark-associated member name, candidate block displacement is limited to the
+preferred position and contact positions within one measured stagger step in
+either direction: at most its measured label height plus declared gap, never a
+second step. Select exactly one legal position. Search declared sides in order,
+then absolute block displacement, smaller block coordinate and stable identity.
+The final candidate must be in its own lane row and satisfy the mark-association
+bound below. `pack` lanes and non-lane candidate-search domains are unchanged.
 
-The completed text bounds of every plot member name with its own mark MUST remain within a
-two-em nearest-edge gap of its own completed mark on either side, or Layout
-MUST complete a source-keyed leader from that text to the mark (#554).
-Full-band stagger counts block displacement as well as inline distance.
-Leader geometry participates in Layout's obstacle/candidate decision; Scene
-only projects it. If no legal candidate/leader exists, the existing
-source-keyed suppression outcome applies to suppressible names. A required or
-visible-overflow name instead fails with `E_LAYOUT_LABEL_ASSOCIATION_UNPLACEABLE`;
-it never emits detached text. The Scene acceptance check pairs each member
-label to its exact own mark through `hostPlacementId`, additionally checking
-lane/member identity when present, never by visual order or nearest distance.
-The `memberLabelLeader` presentation semantic has its own Scene purpose and
-optional lane/member provenance, while deliberately reusing Theme's `dependency`
-stroke token. Layout chooses deterministic perimeter ports and a finite
-orthogonal path within the completed owning row band, exempting only the own label and mark at the
-endpoints. Its source-keyed path enters the shared obstacle inventory before
-later labels and semantic routes. A failed route rejects that candidate, not
-the entire label request; only suppressible exhaustion invokes suppression.
-The own mark remains a route obstacle. The candidate's aggregate footprint,
-including Text, chip and label visuals, is a temporary route obstacle; the
-distance threshold still uses Text bounds, but the path attaches to the outer
-footprint. Endpoint IDs and perimeter points must match these exact obstacles.
-Collision uses the declared leader stroke footprint. Only the stroke's terminal
-cap may overlap its own endpoint obstacle, within half the stroke width of the
-designated port; no body or boundary-length traversal or re-entry is allowed.
-This endpoint-scoped predicate governs both direct and visibility-grid search.
-Global port exemptions do not waive label or mark geometry.
+The completed Text bounds of every emitted plot member name with its own mark
+MUST stay within a two-em two-dimensional nearest-perimeter gap of that exact
+mark on either side. Layout rejects a farther candidate before trying the
+next declared side. Default `auto` tries end then start; authored side/fallback
+order remains authoritative. A suppressible request with no legal candidate
+records its source-keyed suppression and aggregate count. A required or
+visible-overflow request with an own mark instead fails with
+`E_LAYOUT_LABEL_ASSOCIATION_UNPLACEABLE`; it never emits detached text. The
+Scene acceptance check pairs each emitted member label to its own completed
+mark through `hostPlacementId`, additionally checking lane/member identity
+when present, never by visual order or nearest distance. No member-label
+leader, route, endpoint exemption, or lane leader facet is emitted (#554).
 
 Each suppressed name has a typed `SurfacePlacement` fact with lane/member, final
 row extent, remaining capacity and reason `capacity` or `obstruction`, validated
 against its suppressed text placement and aggregate count. “Cannot grow” means
 `fill` leaves no unallocated timeline block after headers and other row minima.
 Capacity additionally requires allocator evidence naming the short required
-timeline source. A final-row inline-bound or obstacle miss is obstruction, not capacity. This
-slice does not search hypothetical row heights. If context 02 still suppresses
-after full-band search, pause R2 and correct the design before claiming #504
-complete. Scene schema and aggregate diagnostics do not change.
+timeline source. A final-row inline-bound, obstacle, or association miss is
+obstruction, not capacity; Layout does not search hypothetical row heights.
+An earlier example's zero-suppression output is characterization, not a
+project-specific exception to the later #554 association rule. The
+owner-approved adjacent/start/count outcome supersedes #504's historical
+example stop gate for association failures. Report changed counts as evidence
+and tune presentation through declared project resources, never Project data
+edits made only to pass a render check.
+Scene schema and aggregate diagnostics do not change except the #554 member
+leader lane-facet retirement stated above.
 
 The temporal scale's usable range reserves the maximum left and right extents
 of selected point facets relative to their date anchors, including resolved
@@ -154,20 +149,18 @@ If no candidate is legal, Layout retains the as-of rule and records a
 source-keyed `W_LAYOUT_LABEL_SUPPRESSED` disposition for the label. The
 suppressed text is non-drawable: Scene MUST NOT emit it, and a serialized
 Scene with a primitive named by that diagnostic is invalid public evidence.
-This no-fit outcome does not claim that the visible-label acceptance
-criterion was met; starter and HALCYON default cases must have a legal
-plot-side candidate. Ordinary label requests retain their declared
+This no-fit outcome does not claim that a declared visible-label acceptance
+criterion was met; any profile promising a visible as-of label must have a
+legal plot-side candidate. Ordinary label requests retain their declared
 visible-overflow fallback. Scene and adapters do not retry, move, clip, or
 repair the as-of label.
 
 For suppressed plot member labels, Layout MUST also count completed
 `memberLabel` text placements with `overflow: suppressed` once per surface.
-End-side member-name candidates cannot leave more than two times their
-completed Text `fontSize` between their own mark's inline edge and their
-Text bounds. When no end candidate fits within that bound, Layout tries
-the declared start rung. An accepted start rung farther than two font sizes
-requires a completed leader; suppressible exhaustion records suppression and
-the aggregate count.
+No accepted start- or end-side member-name candidate may exceed the
+two-dimensional own-mark association bound above. When no end candidate fits,
+Layout tries the next declared rung; suppressible exhaustion records
+suppression and the aggregate count.
 When positive, the count is an `I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=<surface-id>;count=<positive-integer>`
 inspection diagnostic and an `info` CLI diagnostic. Its value MUST equal the
 number of corresponding per-placement `W_LAYOUT_LABEL_SUPPRESSED` facts.
@@ -233,7 +226,7 @@ A Layout `legend` slot is the sole authority for legend geometry. When it exists
 
 Update View schema/normalizer for the label overflow field, relation object form, and grouping presentation. Update Layout Profile schema/normalizer for relation routing. Preserve legacy `relations: semantic` by ingress-normalizing it to `{mode: semantic, overflow: visible-overflow}`. Preserve existing boolean or shorthand labels through the existing ingress adapter and normalize before Layout.
 
-No HALCYON identifier, canvas size, role name, or fixture chooses behavior.
+No corpus identifier, canvas size, role name, or fixture chooses behavior.
 
 ## 5. Verification
 
@@ -245,12 +238,18 @@ Before Scene construction, `assert_surface_placement` verifies:
 4. no semantic item has duplicate finish-delta text;
 5. every present slot family has its required placements.
 
-Tests cover each invariant with one neutral fixture and HALCYON regressions. Materializer byte checks remain required. PNG evidence at declared viewports is reviewed from generated output, never hand-edited.
+Tests cover each invariant with synthetic fixtures independent of corpus
+projects. Corpus output demonstrates whether declared YAML reaches approved
+design targets; it is not the oracle for the core rule. Byte identity proves
+only an intended no-behavior-change slice. For behavior changes, regenerate
+materializer evidence and review the Scene/SVG/PNG diff against the general
+rule and target; never hand-edit generated output.
 
 ## 6. Migration
 
 1. introduce internal request/placement records and migrate the current table/row/mark/axis geometry without behavioral change;
 2. move label, relation, group and legend geometry out of Scene;
 3. add feasibility diagnostics and schema normalization;
-4. adapt non-HALCYON fixtures and current examples; and
+4. adapt synthetic fixtures and example presentation YAML without changing
+   Project facts merely to satisfy a render criterion; and
 5. regenerate expected SVG only through the public materializer after all automated and visual acceptance checks pass.

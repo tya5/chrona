@@ -12,6 +12,10 @@ Specifications 06/07/08/27/28/29.
 
 Compose tables, labels near bars, gate-explanation bands, and team lanes from shared
 mechanisms over one plan. Pixel reproduction of image concepts is not completion.
+Core placement and failure rules are project-independent; a project's desired
+presentation is tuned through declared View, Layout Profile, Theme, and Detail
+resources, not project-ID conditionals, edits to Project facts solely to pass
+a render check, or a public example's exact output count.
 Arbitrary-shape editors, general constraint languages, free scripting, and proliferating
 dedicated panels are out of scope.
 

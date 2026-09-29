@@ -1,5 +1,0 @@
-# Issue #554 — Leader correction architecture review
-
-**Decision:** approve the [correction](../../design/issue-554-member-label-leader-correction-2026-09-29.md) before resuming 554-B. The original design and implementation plan remain authoritative except where explicitly narrowed here.
-
-Spec 38 identity is unchanged; lane/member/source provenance survives the new presentation-only line. Specs 08/50 still put all geometry and routing in Layout and projection/paint in Scene. Reusing a Theme `dependency` paint token does not create a dependency fact; the distinct semantic ID and Scene purpose prevent that conflation. The shared obstacle index and finite orthogonal router are already Layout-owned, so neither Scene nor adapter gains a branch. The row band bounds and endpoint-only exemptions preserve #488/#504 name association without letting a line cross unrelated required text. A failed route returns to the finite candidate ladder and ordinary suppression; it does not silently draw a bad line. Acceptance must inspect raw SVG as well as Scene. No public schema or resource migration is required.
