@@ -51,8 +51,10 @@ own job on a test failure. A skipped/cancelled shard is not success.
 
 `push` to `main`, nightly `schedule`, and `workflow_dispatch` retain the
 three-OS matrix, full pytest, and conditional wheel smoke. The newest-Python
-job remains. Main runs must not cancel each other; PR runs may cancel older
-runs of the same PR. A manual-only, explicit OS-failure probe will exercise
+job remains. Main runs must neither cancel nor replace each other in
+GitHub's one-pending-run concurrency group: group PR runs by PR number, but
+give each non-PR run a unique run-ID group. PR runs may cancel older runs of
+the same PR. A manual-only, explicit OS-failure probe will exercise
 the matrix without committing a broken product test. It is never enabled by
 ordinary push or PR events.
 
@@ -75,7 +77,8 @@ product specification or ADR change is needed.
    conformance for both PR paths; three Ubuntu pytest-split matrix shards for
    code PRs; retained newest-Python reproduction for code PRs and full events;
    unchanged three-OS full conformance/pytest/wheel jobs for `main`, nightly,
-   and manual. Add a manual-only Windows failure probe. Keep independent
+   and manual. Give non-PR runs unique concurrency groups and add a
+   manual-only Windows failure probe. Keep independent
    `check_ci_outcomes.py` finalizers and `fail-fast: false`.
 3. Add `pytest-split` to dev dependencies, workflow structural and routing
    tests, and `AGENTS.md` path/release guidance. There are no schema/resource
