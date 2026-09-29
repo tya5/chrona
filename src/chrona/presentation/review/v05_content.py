@@ -108,13 +108,15 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
         if lane is None:
             raise ValueError("E_REVIEW_LANE_TABLE_PROJECTION")
         if lane_table.label.value == "group":
-            label = group_title(row.group_id, row) if row.group_id not in seen_groups else ""
+            label = group_title(row.group_id, row) if row.group_id and row.group_id not in seen_groups else ""
             seen_groups.add(row.group_id)
         else:
             if not lane.member_item_ids:
                 raise ValueError("E_REVIEW_LANE_TABLE_PROJECTION")
             first_title = member_title(lane.member_item_ids[0], row)
             if len(lane.member_item_ids) == 1:
+                label = first_title
+            elif not row.group_id:
                 label = first_title
             else:
                 label = group_title(row.group_id, row)

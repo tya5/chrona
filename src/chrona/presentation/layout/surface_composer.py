@@ -2165,6 +2165,19 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                 f"{relation_id}:segment:{segment_index}", "leader-route", "timeline",
                                 ObstacleSegment(start, end, stroke)))
                     break
+            elif (label_request.semantic_id == "memberLabel"
+                  and label_request.overflow == "suppress"
+                  and label_request.lane_row_id is None
+                  and "end" in label_request.candidates):
+                # Non-lane placement retains its existing bounded end search.
+                # The lane-only leader policy must not broaden this ladder.
+                candidate = place_member_name(
+                    label_request.anchor, label_size, label_request.candidates,
+                    bounds=placement_bounds, obstacles=surface_obstacles, gap=label_gap,
+                    maximum_end_gap=2 * float(font_size),
+                    text_inline_inset=leading + chip_pad[0],
+                    inside_host_obstacle_id=label_request.inside_host_obstacle_id,
+                    classes=label_classes, full_band=False)
             else:
                 candidate = (place_label(
                     label_request.anchor, label_size, label_request.candidates,

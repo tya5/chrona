@@ -72,6 +72,30 @@ def test_lane_table_content_uses_exact_membership_and_no_member_table_subject():
     assert table.row_levels[0].keys == (lane_id,)
 
 
+def test_ungrouped_attached_lane_uses_host_title_not_generated_identity():
+    host = ReviewItem("host", "Campaign title", "span", {}, None, None, (), item_id="host")
+    gate = ReviewItem("gate", "Readiness title", "point", {}, None, None, (),
+                      item_id="gate", attached_to="host")
+    lane_id = 'review-lane:["generated","","host"]'
+    membership = LaneMembership(
+        (Lane(lane_id, "", ("host", "gate")),),
+        (LaneAssignment("host", lane_id, "", "single", "host"),
+         LaneAssignment("gate", lane_id, "", "attached", "host")),
+    )
+    projection = ReviewProjection(
+        (host, gate), (date(2026, 1, 1), date(2026, 1, 2)), (), (),
+        lane_membership=membership,
+        lane_rows=(ReviewLaneRowProjection(lane_id, "", (host, gate), ("host", "gate")),),
+    )
+    view = replace(typed_view({"body": {"tableColumns": (), "visibility": {}}}),
+                   rows=ViewRows("lanes", (), lane_table=ViewLaneTable(ViewLaneLabel.LANE, True)))
+
+    table = normalize_v05_table_content(projection, {}, view)
+    assert [cell.content for cell in table.cells] == ["Campaign title", "2"]
+    group_view = replace(view, rows=replace(view.rows, lane_table=ViewLaneTable(ViewLaneLabel.GROUP, True)))
+    assert normalize_v05_table_content(projection, {}, group_view).cells[0].content == ""
+
+
 def test_lane_table_group_label_repeats_blank_and_lane_labels_use_project_titles():
     first = ReviewItem("a", "Private member title A", "span", {}, None, None, (), group_id="g", item_id="a")
     second = ReviewItem("b", "Private member title B", "span", {}, None, None, (), group_id="g", item_id="b")

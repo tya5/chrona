@@ -126,7 +126,7 @@ def test_halcyon_02_routed_note_trial_is_bounded_clear_and_deterministic(monkeyp
         scheme_path=example / "schemes/control-room-dark.yaml",
         layout_path=example / "layouts/wallboard.yaml",
         actual_path=example / "actual.yaml",
-        viewport=(1920, 1080),
+        viewport=(2100, 1080),
     )
     original = builder.compose_surface_layout
     compositions = []

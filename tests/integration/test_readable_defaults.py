@@ -397,15 +397,22 @@ def test_wallboard_lane_table_keeps_the_bus_test_relation(slide: str) -> None:
     primitives = _primitives(scene)
     lane_labels = [item["text"] for item in primitives
                    if item.get("purpose") == "table-cell" and item["id"].endswith(":Lane")]
-    group_headers = {item["text"] for item in primitives if item.get("purpose") == "group-header"}
     route_id = ('relation:bustest-integration:review-lane:["generated","bus","pdr"]:'
                 'bus-test:review-lane:["generated","ait","integration"]:integration')
-    assert lane_labels and all(label.strip() and label not in group_headers for label in lane_labels)
+    assert lane_labels and all(label.strip() and not label.startswith("Lane ") for label in lane_labels)
     assert [item["id"] for item in primitives if item["id"].startswith("relation:bustest-integration:")] == [route_id]
     svg_path = ROOT / f"examples/halcyon-1/generated/{slide}.svg"
     svg_ids = {value for element in ET.fromstring(svg_path.read_text(encoding="utf-8")).iter()
                for value in (element.get("id"), element.get("data-scene-id")) if value}
     assert route_id in svg_ids
+
+
+def test_public_wallboard_keeps_station_note_when_title_width_changes() -> None:
+    scene = json.loads((ROOT / "examples/halcyon-1/generated/02-programme-board.scene.json").read_text(encoding="utf-8"))
+    primitives = _primitives(scene)
+    assert any(item.get("id") == "annotation-text:station-note" for item in primitives)
+    assert any(item.get("id") == "annotation-box:station-note" for item in primitives)
+    assert "W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK:station-note:plot-no-tail" in scene["diagnostics"]
 
 
 @pytest.mark.parametrize("slide", ("02-programme-board", "11-overlay-briefing", "12-glyph-gates"))

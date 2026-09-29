@@ -51,7 +51,7 @@ def test_crowded_halcyon_plot_selects_declared_rail_with_named_diagnostic(tmp_pa
         theme_path=theme_path,
         scheme_path=example / "schemes/control-room-dark.yaml",
         layout_path=layout_path, actual_path=example / "actual.yaml",
-        viewport=(1920, 1080),
+        viewport=(2100, 1080),
     )
     original = builder.compose_surface_layout
     compositions = []

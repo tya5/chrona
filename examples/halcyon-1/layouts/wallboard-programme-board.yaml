@@ -59,7 +59,7 @@ root:
     - id: table
       kind: slot
       source: table
-      inlineSize: {minmax: {min: {fixed: 300}, max: {fr: 2}}}
+      inlineSize: {minmax: {min: content, max: {fr: 2}}}
       blockSize: fill
       place: {inline: stretch, block: stretch, safety: strict}
       priority: required
