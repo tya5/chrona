@@ -237,19 +237,35 @@ the preferred side. `inside` may exempt only its own host mark, not a
 comparison sibling or another item. Every lane ladder terminates in
 suppression: if no legal candidate fits, Layout records the source, increments
 the surface count and emits no name; it never changes lane membership. With
-`rowDistribution: fill`, measured bounded stagger-label demand contributes to
-each lane's required block extent before surplus distribution. Suppression is
-decided only after final allocation and bounded search; its decision identifies
-the lane, final extent and the exhausted host capacity or maximum useful
-extent of the finite candidate ladder. Blocking geometry may be reported only
-after that growth-limit proof. It cannot leave assignable block space unused
-while its own lane could grow. Layout normalizes one label intent and content
-for both preflight and final placement, measures end-side text intervals with
-the closed font metrics and shared temporal scale, and counts concurrent
-intervals to obtain finite vertical label levels. Lane-only side-neighborhood
-search may use the full row-local block interval, not the old one-label-height
-tangent limit; non-lane search remains unchanged. The finite useful extent is
-bounded by the measured levels and lane mark-subtrack extent. An
+`rowDistribution: fill`, preflight and final placement share one normalized
+member-label intent and Theme-measured box. Preflight uses the completed scale
+and selected lane mark/subtrack obstacles; inline-feasible end/start intervals
+determine concurrent finite stagger levels and each row's minimum before
+surplus distribution; relevant mark-obstacle intervals also contribute to
+those levels. This natural requirement may grow the timeline host
+when profile constraints permit; a short seed row alone is not grounds for
+suppression.
+
+Lane-only full-band search tests finite measured-box contacts with row edges and
+current axis-aligned obstacle bounds plus clearance, for each declared side.
+Expanded obstacles form finite blocked block intervals; preferred position and
+legal endpoints cover feasible components. The end-side gap is bounded by the
+existing two-font-size mark-to-text rule. Rank by side order, absolute block
+displacement, fixed direction and stable identity; no lattice cap. This search
+is exhaustive only within the final allocated row; non-lane search is unchanged.
+
+Each suppressed name has a typed Layout fact with lane/member, final row extent,
+remaining row capacity and reason `capacity` or `obstruction`, checked against
+its suppressed `TextPlacement` and aggregate count. “Cannot grow” means `fill`
+has no unallocated timeline block after headers and other row minima. A
+capacity reason also requires profile-resolution evidence naming the required
+timeline source still short; an extent fallback alone is not evidence. A miss
+caused by inline bounds or blockers in the final row is `obstruction`, never capacity. Do not
+claim or implement an exhaustive search across hypothetical row heights in this
+slice. Per-name facts stay in `SurfacePlacement`; Scene schema and aggregate
+diagnostic do not change. If context 02 still suppresses after this full-band
+search, pause the slice and publish a design correction before claiming #504
+complete. An
 attached point's required plot label is a distinct exception: View content
 normalization reads the active composition (`rows` for automatic rows,
 `lane_rows` for generated lanes) and provides its title, planned date and

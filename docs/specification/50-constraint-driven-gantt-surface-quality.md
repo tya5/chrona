@@ -75,14 +75,30 @@ preflight neither reassigns lane membership nor searches for a block-height
 fixed point. A capped host may retain a measured overflow diagnostic, but a
 growable host MUST contain the final lane rows and marks.
 
-For a `fill` lane surface, the preflight also measures the finite stagger
-ladder's block demand for each lane name. Layout closes that demand into the
-row's minimum before it distributes remaining block space. A suppressed name
-must identify its lane, final block extent and either the exhausted host
-capacity or the maximum useful block extent of its finite candidate ladder.
-Only after that growth-limit proof may it report a geometric blocker as a
-secondary cause. No assignable block space may be abandoned while that lane
-can grow. This affects neither membership nor Scene projection.
+For a `fill` lane surface, preflight and final placement share one normalized
+member-label intent and Theme-measured box. Preflight uses the completed scale
+and selected mark/subtrack obstacles; inline-feasible end/start intervals
+determine concurrent finite stagger levels and each row's minimum before
+surplus distribution; relevant mark-obstacle intervals also contribute to
+those levels. This natural requirement may grow the timeline host
+when profile constraints permit. A short seed row is not grounds for
+suppression.
+
+Lane-only full-band search tests finite preferred/contact candidates against
+row edges and current axis-aligned obstacles expanded by label bounds and
+clearance. Search declared sides in order, then absolute block displacement,
+fixed direction and stable identity; end gap stays within 2em. It is exhaustive
+only within the final allocated row; non-lane placement is unchanged.
+
+Each suppressed name has a typed `SurfacePlacement` fact with lane/member, final
+row extent, remaining capacity and reason `capacity` or `obstruction`, validated
+against its suppressed text placement and aggregate count. “Cannot grow” means
+`fill` leaves no unallocated timeline block after headers and other row minima.
+Capacity additionally requires allocator evidence naming the short required
+timeline source. A final-row inline-bound or obstacle miss is obstruction, not capacity. This
+slice does not search hypothetical row heights. If context 02 still suppresses
+after full-band search, pause R2 and correct the design before claiming #504
+complete. Scene schema and aggregate diagnostics do not change.
 
 The temporal scale's usable range reserves the maximum left and right extents
 of selected point facets relative to their date anchors, including resolved
@@ -92,10 +108,27 @@ and routes use the same completed inset scale in lane preflight and final
 composition. Layout diagnoses a non-positive usable range as
 `E_LAYOUT_MARK_OVERFLOW` rather than letting an adapter clip the point.
 
-The timeline as-of label uses this visible-overflow fallback beside its marker
-line. A Layout text placement with `suppressed` disposition is non-drawable:
-Scene MUST NOT emit it. A serialized Scene with a primitive whose ID is named
-by a `W_LAYOUT_LABEL_SUPPRESSED` diagnostic is invalid public evidence.
+The timeline as-of label is a constrained exception to generic
+visible-overflow behavior. Layout measures its text and any declared chip
+footprint, then tries the plot top margin beside the as-of rule followed by
+finite rule-hosted chip positions within the plot. Every candidate must fit the timeline
+slot and avoid all axis bands and axis text, data marks, accepted required
+labels/annotations, and the as-of rule except for its explicitly identified
+host attachment. No axis-side seam rung or overflow candidate is permitted.
+Layout records the selected candidate and obstacle decision as completed
+placement evidence, and later annotation routing treats its footprint as an
+obstacle.
+
+If no candidate is legal, Layout retains the as-of rule and records a
+source-keyed `W_LAYOUT_LABEL_SUPPRESSED` disposition for the label. The
+suppressed text is non-drawable: Scene MUST NOT emit it, and a serialized
+Scene with a primitive named by that diagnostic is invalid public evidence.
+This no-fit outcome does not claim that the visible-label acceptance
+criterion was met; starter and HALCYON default cases must have a legal
+plot-side candidate. Ordinary label requests retain their declared
+visible-overflow fallback. Scene and adapters do not retry, move, clip, or
+repair the as-of label.
+
 For suppressed plot member labels, Layout MUST also count completed
 `memberLabel` text placements with `overflow: suppressed` once per surface.
 End-side member-name candidates cannot leave more than two times their
@@ -106,16 +139,6 @@ When positive, the count is an `I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=<surface
 inspection diagnostic and an `info` CLI diagnostic. Its value MUST equal the
 number of corresponding per-placement `W_LAYOUT_LABEL_SUPPRESSED` facts.
 Scene projects the completed fact; adapters neither recount nor draw a marker.
-
-The as-of label's finite candidate ladder may use the adjacent axis/timeline
-seam as a mark-clear fallback. Layout declares that fallback explicitly and
-must not place the label over a data mark merely because earlier beside-line
-candidates are blocked. Ordinary label requests retain their first-ranked
-visible-overflow fallback.
-
-The seam side is a terminal fallback-only rung: it is not considered until
-all ordinary as-of candidates fail. Its identity is recorded in the completed
-placement decision so previously fitting labels remain stable.
 
 `finishDelta` has exactly one text representation per item. When selected in `labels.content`, no second standalone variance text is emitted. Its semantic role remains derived from the signed value.
 
