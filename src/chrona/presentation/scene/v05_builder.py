@@ -170,7 +170,10 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
                               scale_target_role: str | None, scale_paints: Mapping[str, str],
                               scale_legend_paints: Mapping[str, str]) -> tuple[ScenePrimitive, tuple[PaintOmission, ...]]:
     family = _paint_family(primitive, tokens)
-    resolution = resolve_scene_paint(tokens, primitive.visual_role, family,
+    paint_role = (semantic_binding("memberLabelLeader").theme_role
+                  if primitive.purpose == semantic_binding("memberLabelLeader").purpose
+                  else primitive.visual_role)
+    resolution = resolve_scene_paint(tokens, paint_role, family,
                                      visual_profile=visual_profile, gradient_bounds=primitive.bounds,
                                      part_mode=primitive.glyph_paint_mode,
                                      part_color=primitive.glyph_paint_color,
@@ -565,6 +568,20 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                              corner_radius=mark.corner_radius, slot_id=mark.slot_id, paint_order=mark.paint_order))
     for relation in placed_surface.relations:
         if relation.suppressed or relation.relation_id.startswith("annotation-leader:"):
+            continue
+        if relation.semantic_id == "memberLabelLeader":
+            label = next((item for item in placed_surface.text
+                          if item.placement_id == relation.source_port_id), None)
+            if label is None:
+                raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", relation.relation_id,
+                                      "member-label leader has no completed source label")
+            leader = semantic_binding("memberLabelLeader")
+            primitives.append(ScenePrimitive(
+                relation.relation_id, PrimitiveKind.PATH, relation.source_ref, "object",
+                leader.purpose, leader.scene_role, (0, 0, 0, 0),
+                points=relation.points, path_commands=relation.path_commands,
+                paint_order=relation.paint_order,
+                lane_row_id=label.lane_row_id, lane_member_id=label.lane_member_id))
             continue
         if relation.relation_id.startswith("legend-swatch:"):
             source = relation.relation_id.removeprefix("legend-swatch:")

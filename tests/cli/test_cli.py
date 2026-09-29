@@ -1,4 +1,5 @@
 import json
+from collections import Counter
 from hashlib import sha256
 from pathlib import Path
 import sys
@@ -13,6 +14,7 @@ from chrona.app.cli import CliFailure, main
 from chrona.presentation.fonts.importer import import_font
 from chrona.presentation.model.font_metrics import FontTabularWarning
 from chrona.usecases.render_review import FontGlyphWarning, ScenePerceptibilityWarning
+from chrona.usecases.warning_ledger import collect_render_warnings
 from chrona.presentation.layout.surface_quality import FitWarning
 from chrona.presentation.scene.perceptibility import evaluate_scene_perceptibility
 from chrona.scheduling.scheduler import schedule
@@ -88,11 +90,27 @@ def test_cli_identity_document_rejects_a_scalar(tmp_path, monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == "E_IDENTITY_DOCUMENT"
 
 
+def _emit_warning_case(**families):
+    records = collect_render_warnings(**{
+        key: families.get(key, ()) for key in (
+            "surface_diagnostics", "tabular_warnings", "glyph_warnings", "fit_warnings",
+            "perceptibility_warnings", "scale_collisions", "attachment_warnings",
+        )
+    })
+    cli._emit_render_warnings(SimpleNamespace(warning_records=records, info_diagnostics=()))
+
+
+def _warning_payload(capsys):
+    payload = json.loads(capsys.readouterr().err)
+    assert payload.pop("diagnostic").startswith(payload["code"] + ":")
+    return payload
+
+
 def test_cli_emits_draft_font_substitution_warning_to_stderr(capsys):
-    cli._emit_font_warnings(SimpleNamespace(scene=SimpleNamespace(font_warnings=()), font_warnings=(FontGlyphWarning(
+    _emit_warning_case(glyph_warnings=(FontGlyphWarning(
         "Noto Sans", "Noto Color Emoji Check", 400, 0x2705, "General Availability ✅", False,
-    ),)))
-    assert json.loads(capsys.readouterr().err) == {
+    ),))
+    assert _warning_payload(capsys) == {
         "code": "W_FONT_GLYPH_SUBSTITUTED", "severity": "warning",
         "requestedFamily": "Noto Sans", "fallbackFamily": "Noto Color Emoji Check",
         "weight": 400, "codepoint": "U+2705", "text": "General Availability ✅", "drawn": False,
@@ -100,18 +118,15 @@ def test_cli_emits_draft_font_substitution_warning_to_stderr(capsys):
 
 
 def test_cli_omits_draw_result_for_svg_font_substitution_warning(capsys):
-    cli._emit_font_warnings(SimpleNamespace(scene=SimpleNamespace(font_warnings=()), font_warnings=(FontGlyphWarning(
+    _emit_warning_case(glyph_warnings=(FontGlyphWarning(
         "Noto Sans", "Noto Color Emoji Check", 400, 0x2705, "General Availability ✅",
-    ),)))
+    ),))
     assert "drawn" not in json.loads(capsys.readouterr().err)
 
 
 def test_cli_emits_exact_face_tabular_degradation_warning(capsys):
-    cli._emit_font_warnings(SimpleNamespace(
-        scene=SimpleNamespace(font_warnings=(FontTabularWarning("numeric", "Georgia", 400),)),
-        font_warnings=(),
-    ))
-    assert json.loads(capsys.readouterr().err) == {
+    _emit_warning_case(tabular_warnings=(FontTabularWarning("numeric", "Georgia", 400),))
+    assert _warning_payload(capsys) == {
         "code": "W_FONT_TABULAR_UNAVAILABLE", "severity": "warning",
         "role": "numeric", "family": "Georgia", "weight": 400,
         "requestedSpacing": "tabular", "effectiveSpacing": "proportional",
@@ -119,11 +134,11 @@ def test_cli_emits_exact_face_tabular_degradation_warning(capsys):
 
 
 def test_cli_emits_structured_scene_perceptibility_warning_to_stderr(capsys):
-    cli._emit_scene_perceptibility_warnings(SimpleNamespace(perceptibility_warnings=(ScenePerceptibilityWarning(
+    _emit_warning_case(perceptibility_warnings=(ScenePerceptibilityWarning(
         "W_SCENE_TEXT_OCCLUDED", "E_SCENE_TEXT_OCCLUDED", "/surfaces/0:review", ("text", "cover"),
         "timeline", (("coverageRatio", 1.0),), None,
-    ),)))
-    assert json.loads(capsys.readouterr().err) == {
+    ),))
+    assert _warning_payload(capsys) == {
         "code": "W_SCENE_TEXT_OCCLUDED", "severity": "warning", "findingCode": "E_SCENE_TEXT_OCCLUDED",
         "scenePath": "/surfaces/0:review", "primitiveIds": ["text", "cover"], "slotId": "timeline",
         "measuredFacts": {"coverageRatio": 1.0},
@@ -131,17 +146,33 @@ def test_cli_emits_structured_scene_perceptibility_warning_to_stderr(capsys):
 
 
 def test_cli_emits_completed_fit_warning_to_stderr(capsys):
-    cli._emit_fit_warnings(SimpleNamespace(surface=SimpleNamespace(fit_warnings=(FitWarning(
+    _emit_warning_case(fit_warnings=(FitWarning(
         "W_LAYOUT_ROW_DENSITY", "row:delivery", "delivery", "review-row-density",
         "visible-overflow", 120, 72, 120, 40,
-    ),))))
-    assert json.loads(capsys.readouterr().err) == {
+    ),))
+    assert _warning_payload(capsys) == {
         "code": "W_LAYOUT_ROW_DENSITY", "severity": "warning",
         "placementId": "row:delivery", "sourceRef": "delivery",
         "failureKind": "review-row-density", "behaviour": "visible-overflow",
         "requiredInline": 120, "requiredBlock": 72,
         "availableInline": 120, "availableBlock": 40,
     }
+
+
+def test_cli_warning_inventory_equals_scene_diagnostics_for_attached_milestones(tmp_path, monkeypatch, capsys):
+    example = Path("examples/attached-milestones")
+    scene_path = tmp_path / "attached.scene.json"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", str(example / "project.yaml"), "--actual", str(example / "actual.yaml"),
+        "--output", str(tmp_path / "attached.svg"), "--emit-scene", str(scene_path),
+    ])
+    main()
+    emitted = [json.loads(line) for line in capsys.readouterr().err.splitlines() if line.startswith("{")]
+    cli_warnings = [item["diagnostic"] for item in emitted if item.get("severity") == "warning"]
+    scene_warnings = [item for item in json.loads(scene_path.read_text(encoding="utf-8"))["diagnostics"]
+                      if item.startswith("W_")]
+    assert Counter(cli_warnings) == Counter(scene_warnings)
+    assert len([item for item in cli_warnings if item.startswith("W_LAYOUT_LABEL_OVERFLOW:")]) == 2
 
 
 def test_render_parsers_expose_scene_emission_only_on_explicit_and_immutable_routes():

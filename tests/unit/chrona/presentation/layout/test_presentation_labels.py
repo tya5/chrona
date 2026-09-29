@@ -1,6 +1,8 @@
 import pytest
 
-from chrona.presentation.layout.labels import LabelObstacle, LabelRect, place_label, place_member_name
+from chrona.presentation.layout.labels import (
+    LabelObstacle, LabelRect, nearest_rect_perimeters, place_label, place_member_name,
+)
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
 from chrona.presentation.layout.text import wrap_text
 
@@ -8,6 +10,14 @@ from chrona.presentation.layout.text import wrap_text
 class _Metrics:
     def width(self, value, size):
         return len(value) * size
+
+
+def test_nearest_member_label_perimeter_points_are_stable_on_both_inline_sides():
+    mark = LabelRect(50, 40, 10, 10)
+    start = LabelRect(20, 42, 20, 6)
+    end = LabelRect(70, 42, 20, 6)
+    assert nearest_rect_perimeters(start, mark) == (10, (40, 45), (50, 45))
+    assert nearest_rect_perimeters(end, mark) == (10, (70, 45), (60, 45))
 
 
 def test_labels_use_declared_finite_candidate_order_and_obstacles():

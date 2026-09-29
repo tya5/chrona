@@ -100,62 +100,9 @@ def _version_message(detail: str) -> str:
     return detail + "; see the current resource schema and migration notes before re-applying edits"
 
 
-def _emit_font_warnings(rendered: RenderedReview) -> None:
-    for warning in rendered.scene.font_warnings:
-        print(json.dumps({
-            "code": "W_FONT_TABULAR_UNAVAILABLE", "severity": "warning",
-            "role": warning.role, "family": warning.family, "weight": warning.weight,
-            "requestedSpacing": warning.requested_spacing,
-            "effectiveSpacing": warning.effective_spacing,
-        }, ensure_ascii=False, sort_keys=True), file=sys.stderr)
-    for warning in rendered.font_warnings:
-        print(json.dumps({
-            "code": "W_FONT_GLYPH_SUBSTITUTED", "severity": "warning",
-            "requestedFamily": warning.requested_family, "fallbackFamily": warning.fallback_family,
-            "weight": warning.weight, "codepoint": f"U+{warning.codepoint:04X}", "text": warning.text,
-            **({"drawn": warning.drawn} if warning.drawn is not None else {}),
-        }, ensure_ascii=False, sort_keys=True), file=sys.stderr)
-
-
-def _emit_fit_warnings(rendered: RenderedReview) -> None:
-    """Report Layout-owned visible fallbacks after a successful artifact write."""
-    for warning in rendered.surface.fit_warnings:
-        print(json.dumps({
-            "code": warning.code, "severity": "warning",
-            "placementId": warning.placement_id, "sourceRef": warning.source_ref,
-            "failureKind": warning.failure_kind, "behaviour": warning.behaviour,
-            "requiredInline": warning.required_inline, "requiredBlock": warning.required_block,
-            "availableInline": warning.available_inline, "availableBlock": warning.available_block,
-        }, ensure_ascii=False, sort_keys=True), file=sys.stderr)
-
-
-def _emit_scene_perceptibility_warnings(rendered: RenderedReview) -> None:
-    for warning in rendered.perceptibility_warnings:
-        print(json.dumps({
-            "code": warning.code, "severity": "warning", "findingCode": warning.finding_code,
-            "scenePath": warning.scene_path, "primitiveIds": list(warning.primitive_ids),
-            "measuredFacts": dict(warning.measured_facts),
-            **({"slotId": warning.slot_id} if warning.slot_id is not None else {}),
-            **({"disposition": warning.disposition} if warning.disposition is not None else {}),
-        }, ensure_ascii=False, sort_keys=True), file=sys.stderr)
-
-
 def _emit_render_warnings(rendered: RenderedReview) -> None:
-    _emit_font_warnings(rendered)
-    _emit_fit_warnings(rendered)
-    _emit_scene_perceptibility_warnings(rendered)
-    for collision in rendered.scale_collisions:
-        print(json.dumps({
-            "code": collision.code, "severity": "warning", "scaleId": collision.scale_id,
-            "values": [collision.first, collision.second], "vision": collision.vision,
-            "deltaE": collision.delta_e,
-            "message": f"{collision.first} and {collision.second} are not separable under {collision.vision} vision",
-        }, ensure_ascii=False, sort_keys=True), file=sys.stderr)
-    for attached in rendered.attachment_warnings:
-        print(json.dumps({"code": attached.code, "severity": "warning", "sourceRef": attached.object_id,
-                          "host": attached.host_id,
-                          "message": f"{attached.object_id} is dated outside the planned span of {attached.host_id}"},
-                         ensure_ascii=False, sort_keys=True), file=sys.stderr)
+    for warning in rendered.warning_records:
+        print(json.dumps(warning.payload, ensure_ascii=False, sort_keys=True), file=sys.stderr)
     for info in rendered.info_diagnostics:
         if isinstance(info, SuppressedPlotLabels):
             print(json.dumps({"code": info.code, "severity": "info", "surfaceId": info.surface_id,

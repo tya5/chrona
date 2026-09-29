@@ -463,8 +463,8 @@ class LaneEmissionFacet:
     def __post_init__(self) -> None:
         from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
         if (not self.facet_id or not self.placement_id or not self.primitive_id
-                or self.placement_type not in {"mark", "shape", "icon", "text"}
-                or self.obstacle_class not in {"mark", "required-label"}
+                or self.placement_type not in {"mark", "shape", "icon", "text", "relation"}
+                or self.obstacle_class not in {"mark", "required-label", "leader-route"}
                 or not isinstance(self.obstacle, (ObstacleRect, ObstacleSegment))
                 or (self.part_index is not None and self.part_index < 0)):
             raise ValueError("E_LAYOUT_LANE_EMISSION_INVALID")
@@ -482,7 +482,7 @@ class LaneEmissionPlacement:
     facets: tuple[LaneEmissionFacet, ...]
 
     def __post_init__(self) -> None:
-        if (self.placement_type not in {"mark", "text", "icon", "shape"}
+        if (self.placement_type not in {"mark", "text", "icon", "shape", "relation"}
                 or not all(isinstance(value, str) and value for value in
                            (self.placement_id, self.row_id, self.member_id, self.purpose))
                 or not isinstance(self.facets, tuple) or not self.facets):

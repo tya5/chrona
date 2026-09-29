@@ -78,29 +78,50 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
     cells = []
     levels = []
     lanes_by_id = {lane.lane_id: lane for lane in projection.lane_membership.lanes}
-    assignments_by_lane: dict[str, list[Any]] = {}
-    for assignment in projection.lane_membership.assignments:
-        assignments_by_lane.setdefault(assignment.lane_id, []).append(assignment)
+    rows_by_group: dict[str, list[Any]] = {}
+    for row in projection.lane_rows:
+        rows_by_group.setdefault(row.group_id, []).append(row)
+    disambiguate_groups = {
+        group_id for group_id, group_rows in rows_by_group.items()
+        if sum(len(row.member_item_ids) > 1 for row in group_rows) > 1
+    }
     seen_groups: set[str] = set()
+
+    def group_title(group_id: str, row: Any) -> str:
+        group = entities.get(group_id, {}) if isinstance(entities, Mapping) else {}
+        title = group.get("title") if isinstance(group, Mapping) else None
+        if not isinstance(title, str) or not title.strip() or title == group_id:
+            title = next((item.group_label for item in row.items
+                          if item.group_label and item.group_label != group_id), None)
+        if not isinstance(title, str) or not title.strip():
+            raise ValueError(f"E_REVIEW_LANE_TITLE_MISSING:{group_id}")
+        return title
+
+    def member_title(member_id: str, row: Any) -> str:
+        item = next((item for item in row.items if item.item_id == member_id), None)
+        if item is None or not item.title.strip() or item.title in {item.object_id, item.item_id}:
+            raise ValueError(f"E_REVIEW_LANE_TITLE_MISSING:{member_id}")
+        return item.title
+
     for row in projection.lane_rows:
         lane = lanes_by_id.get(row.lane_id)
         if lane is None:
             raise ValueError("E_REVIEW_LANE_TABLE_PROJECTION")
         if lane_table.label.value == "group":
-            group = entities.get(row.group_id, {}) if isinstance(entities, Mapping) else {}
-            group_label = (str(group.get("title", "")) if isinstance(group, Mapping) else "")
-            if not group_label:
-                group_label = next((item.group_label for item in row.items if item.group_label), row.group_id)
-            label = group_label if row.group_id not in seen_groups else ""
+            label = group_title(row.group_id, row) if row.group_id and row.group_id not in seen_groups else ""
             seen_groups.add(row.group_id)
         else:
-            founder = lane.explicit_key
-            if founder is None:
-                founder = next((assignment.item_id for assignment in assignments_by_lane.get(row.lane_id, ())
-                                if assignment.rule == "single"), None)
-            if not founder:
+            if not lane.member_item_ids:
                 raise ValueError("E_REVIEW_LANE_TABLE_PROJECTION")
-            label = lane.explicit_key or f"Lane {founder}"
+            first_title = member_title(lane.member_item_ids[0], row)
+            if len(lane.member_item_ids) == 1:
+                label = first_title
+            elif not row.group_id:
+                label = first_title
+            else:
+                label = group_title(row.group_id, row)
+                if row.group_id in disambiguate_groups:
+                    label = f"{label} — {first_title}"
         cells.append(TableCellContent(row.lane_id, "Lane", label, "tableCell"))
         if lane_table.count:
             member_count = len(lane.member_item_ids)

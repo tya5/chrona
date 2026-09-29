@@ -374,7 +374,7 @@ def test_attached_milestones_default_keeps_host_title_visible(tmp_path, monkeypa
     assert "Launch campaign" in svg_text
 
 
-def test_public_halcyon_03_lane_table_uses_stable_nonblank_lane_identity() -> None:
+def test_public_halcyon_03_lane_table_uses_member_titles_without_item_count() -> None:
     scene_path = ROOT / "examples/halcyon-1/generated/03-launch-campaign.scene.json"
     svg_path = ROOT / "examples/halcyon-1/generated/03-launch-campaign.svg"
     scene = json.loads(scene_path.read_text(encoding="utf-8"))
@@ -384,9 +384,11 @@ def test_public_halcyon_03_lane_table_uses_stable_nonblank_lane_identity() -> No
     svg_text = "".join(ET.fromstring(svg_path.read_text(encoding="utf-8")).itertext())
     assert labels
     assert all(label.strip() for label in labels)
-    assert all(label.startswith("Lane ") for label in labels)
+    assert all(not label.startswith("Lane ") for label in labels)
     assert len(labels) == len(set(labels))
     assert all(label in svg_text for label in labels)
+    assert not any(item.get("purpose") == "table-column-label" and item.get("text") == "Items"
+                   for item in primitives)
 
 
 @pytest.mark.parametrize("slide", ("02-programme-board", "12-glyph-gates"))
@@ -395,15 +397,22 @@ def test_wallboard_lane_table_keeps_the_bus_test_relation(slide: str) -> None:
     primitives = _primitives(scene)
     lane_labels = [item["text"] for item in primitives
                    if item.get("purpose") == "table-cell" and item["id"].endswith(":Lane")]
-    group_headers = {item["text"] for item in primitives if item.get("purpose") == "group-header"}
     route_id = ('relation:bustest-integration:review-lane:["generated","bus","pdr"]:'
                 'bus-test:review-lane:["generated","ait","integration"]:integration')
-    assert lane_labels and all(label.strip() and label not in group_headers for label in lane_labels)
+    assert lane_labels and all(label.strip() and not label.startswith("Lane ") for label in lane_labels)
     assert [item["id"] for item in primitives if item["id"].startswith("relation:bustest-integration:")] == [route_id]
     svg_path = ROOT / f"examples/halcyon-1/generated/{slide}.svg"
     svg_ids = {value for element in ET.fromstring(svg_path.read_text(encoding="utf-8")).iter()
                for value in (element.get("id"), element.get("data-scene-id")) if value}
     assert route_id in svg_ids
+
+
+def test_public_wallboard_keeps_station_note_when_title_width_changes() -> None:
+    scene = json.loads((ROOT / "examples/halcyon-1/generated/02-programme-board.scene.json").read_text(encoding="utf-8"))
+    primitives = _primitives(scene)
+    assert any(item.get("id") == "annotation-text:station-note" for item in primitives)
+    assert any(item.get("id") == "annotation-box:station-note" for item in primitives)
+    assert "W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK:station-note:plot-no-tail" in scene["diagnostics"]
 
 
 @pytest.mark.parametrize("slide", ("02-programme-board", "11-overlay-briefing", "12-glyph-gates"))
@@ -439,13 +448,10 @@ def test_programme_board_wallboard_profile_is_context_specific_and_complete() ->
     assert programme["id"] == "wallboard-programme-board"
     assert "root" in programme and "extends" not in programme and "overrides" not in programme
     assert programme["root"]["children"][1]["inlineSize"] == {
-        "minmax": {"min": {"fixed": 300}, "max": {"fr": 2}}
+        "minmax": {"min": "content", "max": {"fr": 2}}
     }
     shared_copy = deepcopy(programme)
     shared_copy["id"] = "wallboard"
-    shared_copy["root"]["children"][1]["inlineSize"] = {
-        "minmax": {"min": "content", "max": {"fr": 2}}
-    }
     assert programme["reviewSurface"]["rowDistribution"] == "fill"
     assert shared["reviewSurface"]["rowDistribution"] == "pack"
     shared_copy["reviewSurface"]["rowDistribution"] = "pack"

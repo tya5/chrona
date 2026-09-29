@@ -408,7 +408,7 @@ class SceneLaneObstacle:
     def __post_init__(self) -> None:
         if (not all(isinstance(value, str) and value for value in
                     (self.facet_id, self.primitive_id, self.row_id, self.member_id))
-                or self.obstacle_class not in {"mark", "required-label"}
+                or self.obstacle_class not in {"mark", "required-label", "leader-route"}
                 or not isinstance(self.geometry, (SceneLaneRectObstacle, SceneLaneSegmentObstacle))):
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
 

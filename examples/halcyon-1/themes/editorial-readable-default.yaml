@@ -446,7 +446,7 @@ body:
     row-band.fill: category:default
     group-header-band.fill: surfaceRaised
     metric.fill: text
-    calendar-closed.fill: surfaceRaised
+    calendar-closed.fill: text
     calendar-exception.fill: warning
     range.fill: warning
     as-of.stroke: accent
