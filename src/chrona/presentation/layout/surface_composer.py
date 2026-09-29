@@ -10,17 +10,21 @@ from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
 from chrona.presentation.layout.pattern_placement import PatternedPlacement, complete_pattern_placement
-from chrona.presentation.layout.label_visual_measurement import (
-    resolve_label_visual_advances, visual_target_placement_id,
-)
 from chrona.presentation.layout.lane_subtracks import LaneSubtrackPlan
 from chrona.presentation.layout.mark_aware_scale import PointMarkFootprint, inset_scale_for_point_facets
 from chrona.presentation.layout.surface_lanes import lane_owner as _lane_owner, review_rows as _review_rows
-from chrona.presentation.layout.surface_marks import MARK_GEOMETRY_ROLES, folded_instance_id as _folded_instance_id
+from chrona.presentation.layout.surface_marks import (
+    MARK_GEOMETRY_ROLES, MARK_PAINT_ORDER_BASE, folded_instance_id as _folded_instance_id,
+    compose_surface_marks,
+)
+from chrona.presentation.layout.surface_visuals import (
+    measure_candidate_visuals, place_axis_band_visuals, place_mark_visuals,
+    place_text_visuals, reserve_text_visuals,
+)
 from chrona.presentation.layout.surface_base import prepare_surface_base
 from chrona.presentation.layout.surface_table import compose_table
 from chrona.presentation.layout.surface_groups import (
-    GroupHeaderExtentUpdate, compose_group_presentation, replace_group_header_extent,
+    compose_group_presentation,
 )
 from chrona.presentation.layout.surface_backgrounds import (
     BACKGROUND_SEMANTIC_IDS, compose_calendar_backgrounds,
@@ -31,9 +35,8 @@ from chrona.presentation.layout.surface_axis import compose_axis
 from chrona.presentation.layout.asof_label import find_asof_label_candidate
 from chrona.presentation.model.semantic_registry import (
     axis_band_semantic_ids, label_chip_semantic, semantic_binding)
-from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.layout.presentation import (
-    MarkBandFrame, MarkGeometry, TrackPlacement, required_row_block_extents,
+    MarkGeometry, TrackPlacement, required_row_block_extents,
 )
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_family, metric_for_role, paint_text, place_text, wrap_text
 from chrona.presentation.layout.annotations import (
@@ -65,17 +68,17 @@ from chrona.presentation.layout.routing import (
     relation_route_quality, select_lane_relation_route,
 )
 from chrona.presentation.layout.path_geometry import rounded_orthogonal_path
-from chrona.presentation.layout.mark_geometry import MarkFacetAbsence, compose_item_marks, symbol_parts
+from chrona.presentation.layout.mark_geometry import MarkFacetAbsence, symbol_parts
 from chrona.presentation.layout.icon_geometry import complete_icon_paths
 from chrona.presentation.layout.lane_mark_facets import (
     _mark_facets, _overlay_compound_facets, _with_mark_visuals,
 )
-from chrona.presentation.layout.lane_projection import LaneProjectionInstance, lane_missing_actual_visible
+from chrona.presentation.layout.lane_projection import LaneProjectionInstance
 from chrona.presentation.layout.lane_visual_binding import bind_lane_visual_requests
 from chrona.presentation.layout.lane_label_intent import measure_lane_member_labels
 from chrona.presentation.layout.lane_label_preflight import lane_label_row_requirements
 from chrona.presentation.layout.surface_quality import (
-    AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, ColumnPlacement, FitWarning, GroupPlacement, MarkPlacement, PathCommand, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
+    AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, ColumnPlacement, FitWarning, MarkPlacement, PathCommand, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
     IconPlacement, LayoutImageFill, ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest,
     TextPlacement, LaneEmissionFacet, LaneEmissionPlacement, LaneLabelSuppression,
     annotation_presentation, intersects,
@@ -280,7 +283,6 @@ def _lane_label_candidates(side: str, fallback: tuple[str, ...], preferred: str 
     return tuple(candidates)
 
 
-MARK_PAINT_ORDER_BASE = 100
 FOREGROUND_TEXT_PAINT_ORDER = 300
 ANNOTATION_PAINT_ORDER = 400
 # Layout emits coordinates at micro-point precision.  Intermediate measurement
@@ -318,29 +320,6 @@ def _completed_canvas(*, requested: Rect, rectangles: tuple[Rect, ...],
             block_end = max(block_end, Decimal(str(block)))
     return Rect(inline_start, block_start,
                 inline_end - inline_start, block_end - block_start)
-
-
-def _visual_reservation(*, typography_role: str, font_size: float,
-                        visuals: Mapping[str, Any], request: SurfaceLayoutRequest) -> tuple[dict[str, tuple[Any, float, float]], float, float]:
-    """Resolve one text run's icon inline budget before its text is measured."""
-    resolved: dict[str, tuple[Any, float, float]] = {}
-    for side, visual in visuals.items():
-        icon = request.icon_assets.get(visual.ref)
-        if icon is None:
-            raise LayoutError("E_ICON_NAME_UNKNOWN", visual.source_ref)
-        try:
-            scale, gap_ratio = request.theme_tokens.icon_ratios(typography_role)
-        except Exception as error:
-            raise LayoutError("E_THEME_ICON_RATIO", visual.source_ref) from error
-        height = font_size * float(scale)
-        if height <= 0:
-            raise LayoutError("E_THEME_ICON_RATIO", visual.source_ref)
-        if icon.viewport[1] <= 0:
-            raise LayoutError("E_ICON_IMPORT_VIEWPORT", visual.source_ref)
-        resolved[side] = (icon, height * icon.viewport[0] / icon.viewport[1], font_size * float(gap_ratio))
-    leading = geometry_sum(width + gap for side, (_, width, gap) in resolved.items() if side == "leading")
-    trailing = geometry_sum(width + gap for side, (_, width, gap) in resolved.items() if side == "trailing")
-    return resolved, leading, trailing
 
 
 def _detail_visual_requests(request: SurfaceLayoutRequest) -> dict[str, dict[str, Any]]:
@@ -402,10 +381,11 @@ def _compose_detail_panel_blocks(*, slots: tuple[SlotPlacement, ...], request: S
         item_overflows: list[tuple[Any, float, float]] = []
         for source_ref, content in _detail_panel_entries(source, values):
             placement_id = f"{prefix}:{source_ref}"
-            _, leading, trailing = _visual_reservation(
+            reservation = reserve_text_visuals(
                 typography_role="text", font_size=font_size,
                 visuals=visual_requests.get(placement_id, {}), request=request,
             )
+            leading, trailing = reservation.leading, reservation.trailing
             text_available = max(0.0, available - leading - trailing)
             lines = ((content,) if text_available == 0 else
                      wrap_text(content, available_inline=text_available, font_size=font_size, font_metrics=metrics,
@@ -566,26 +546,6 @@ def timeline_content_block_requirement(*, projection: Any, group_presentation: s
     return Decimal(str(geometry_sum(requirements))) + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0)
 
 
-def progress_fill_bounds(host: Rect, fraction: float, inset_ratio: Decimal = Decimal(0)) -> Rect | None:
-    """Return the optional completed progress submark bounds for one host mark.
-
-    The host is the track.  A declared inset deflates it by ``inset_ratio`` of
-    its block size (inline inset capped at a quarter of the host's inline size)
-    and the fraction is measured against that inner track, so 0 is empty and 1
-    fills the inner track edge to edge at every bar length (#430).
-    """
-    if not 0 <= fraction <= 1:
-        raise LayoutError("E_PRESENTATION_PROGRESS_INVALID", "/progressFill")
-    if fraction == 0:
-        return None
-    if inset_ratio == 0:
-        return Rect(host.inline, host.block, host.inline_size * Decimal(str(fraction)), host.block_size)
-    block_inset = host.block_size * inset_ratio
-    inline_inset = min(block_inset, host.inline_size / 4)
-    return Rect(host.inline + inline_inset, host.block + block_inset,
-                (host.inline_size - 2 * inline_inset) * Decimal(str(fraction)), host.block_size - 2 * block_inset)
-
-
 def relation_label_content(relation: Any) -> str:
     """Format only selected, non-zero relation facts before measured placement."""
     parts: list[str] = []
@@ -609,203 +569,6 @@ def relation_label_anchor(points: tuple[tuple[float, float], ...]) -> LabelRect:
     x1, y1 = left
     x2, y2 = right
     return LabelRect(min(x1, x2), min(y1, y2), max(1.0, abs(x2 - x1)), max(1.0, abs(y2 - y1)))
-
-
-def resolve_text_visual_requests(text: list[Any], request: SurfaceLayoutRequest, *,
-                                 handled_sources: set[str] | None = None,
-                                 axis_label_targets: Mapping[tuple[str, str, str], str] | None = None,
-                                 pre_reserved_placements: frozenset[str] = frozenset()) -> tuple[list[Any], list[IconPlacement], list[FitWarning]]:
-    """Turn already-resolved View visual intents into completed Layout geometry.
-
-    The caller supplies only placement identities; target vocabulary translation
-    remains at the typed View boundary.  This helper deliberately has no Scene,
-    Theme lookup, or catalog lookup dependency.
-    """
-    handled_sources = handled_sources or set()
-    requested: dict[str, dict[str, Any]] = {}
-    occupied: set[tuple[str, str]] = set()
-    for visual in request.visual_requests:
-        if visual.target_kind == "mark" or visual.source_ref in handled_sources:
-            continue
-        selector = dict(visual.selector)
-        if visual.target_kind == "axis-band":
-            continue
-        axis_key = (visual.target_kind, selector.get("level", ""), selector.get("index", ""))
-        placement_id = (selector.get("placementId") or (axis_label_targets or {}).get(axis_key)
-                        or visual_target_placement_id(visual.target_kind, selector))
-        key = (placement_id, visual.side)
-        if key in occupied:
-            raise LayoutError("E_LAYOUT_VISUAL_DUPLICATE", visual.source_ref)
-        occupied.add(key)
-        if visual.ref is None:
-            raise LayoutError("E_LAYOUT_VISUAL_TARGET", visual.source_ref)
-        requested.setdefault(placement_id, {})[visual.side] = visual
-    icons: list[IconPlacement] = []
-    warnings: list[FitWarning] = []
-    for placement_id, by_side in requested.items():
-        matches = [item for item in text if item.placement_id == placement_id
-                   and item.overflow != "suppressed"]
-        if len(matches) != 1:
-            raise LayoutError("E_LAYOUT_VISUAL_TARGET", next(iter(by_side.values())).source_ref)
-    for index, item in enumerate(text):
-        by_side = requested.pop(item.placement_id, None)
-        if not by_side or item.overflow == "suppressed":
-            continue
-        item_metrics = metric_for_family(item.font_family, item.font_weight, request.font_metrics)
-        resolved, leading, trailing = _visual_reservation(
-            typography_role=item.typography_role, font_size=item.font_size,
-            visuals=by_side, request=request,
-        )
-        allocated = (item.available_inline_size if item.available_inline_size is not None
-                     else float(item.bounds.inline_size))
-        available = allocated - leading - trailing
-        source = item.source_content if item.source_content is not None else item.content
-        natural_lines = (item.lines if item.source_content is None and len(item.lines) > 1
-                         else (source,))
-        if item.placement_id in pre_reserved_placements:
-            lines, content, overflow = item.lines, item.content, item.overflow
-        elif available <= 0:
-            lines, content, overflow = natural_lines, "\n".join(natural_lines), "visible-overflow"
-        elif len(item.lines) > 1:
-            lines = wrap_text(source, available_inline=available, font_size=item.font_size, font_metrics=item_metrics,
-                              letter_spacing=item.letter_spacing, text_transform=item.text_transform,
-                              numeric_spacing=item.numeric_spacing)
-            content, overflow = "\n".join(lines), item.overflow
-        elif item.source_content is not None:
-            ellipsis_width = measure_text_width("…", font_size=item.font_size, font_metrics=item_metrics,
-                                                letter_spacing=item.letter_spacing,
-                                                text_transform=item.text_transform,
-                                                numeric_spacing=item.numeric_spacing)
-            if available < ellipsis_width:
-                lines, content, overflow = (source,), source, "visible-overflow"
-            else:
-                content = ellipsize_text(source, available_inline=available, font_size=item.font_size,
-                                         font_metrics=item_metrics, letter_spacing=item.letter_spacing,
-                                         text_transform=item.text_transform,
-                                         numeric_spacing=item.numeric_spacing)
-                lines, overflow = (content,), "ellipsized" if content != source else "fit"
-        elif measure_text_width(source, font_size=item.font_size, font_metrics=item_metrics,
-                                letter_spacing=item.letter_spacing, text_transform=item.text_transform,
-                                numeric_spacing=item.numeric_spacing) <= available:
-            content, lines, overflow = source, (source,), item.overflow
-        else:
-            lines, content, overflow = (source,), source, "visible-overflow"
-        width = max(measure_text_width(line, font_size=item.font_size, font_metrics=item_metrics,
-                                       letter_spacing=item.letter_spacing, text_transform=item.text_transform,
-                                       numeric_spacing=item.numeric_spacing) for line in lines)
-        if width > available:
-            overflow = "visible-overflow"
-            if item.placement_id not in pre_reserved_placements:
-                warnings.append(FitWarning("W_LAYOUT_VISIBLE_OVERFLOW", item.placement_id, item.source_ref,
-                                           "text-visual", "visible-overflow", leading + width + trailing,
-                                           float(item.bounds.block_size), max(0.0, allocated),
-                                           float(item.bounds.block_size)))
-        baseline = item.baseline
-        if baseline is None or not hasattr(item_metrics, "cap_height_at"):
-            raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(iter(by_side.values())).source_ref)
-        available_start = (item.available_inline_start if item.available_inline_start is not None
-                           else float(item.bounds.inline))
-        shifted_baseline = (available_start + leading, baseline[1])
-        painted_lines = tuple(paint_text(line, text_transform=item.text_transform) for line in lines)
-        text[index] = replace(item, content=paint_text(content, text_transform=item.text_transform),
-                              lines=painted_lines, overflow=overflow,
-                              bounds=Rect(Decimal(str(shifted_baseline[0])), item.bounds.block,
-                                          Decimal(str(width)), Decimal(str(item.font_size * item.line_height * len(lines)))),
-                              baseline=shifted_baseline)
-        cap_height = float(item_metrics.cap_height_at(item.font_size))
-        for side, visual in by_side.items():
-            icon, icon_width, gap = resolved[side]
-            inline = (available_start if side == "leading"
-                      else available_start + leading + max(available, width) + trailing - gap - icon_width)
-            bounds = Rect(Decimal(str(inline)), Decimal(str(baseline[1] - cap_height + (cap_height - item.font_size * float(request.theme_tokens.icon_ratios(item.typography_role)[0])) / 2)),
-                          Decimal(str(icon_width)), Decimal(str(item.font_size * float(request.theme_tokens.icon_ratios(item.typography_role)[0]))) )
-            icons.append(IconPlacement(f"visual:{item.placement_id}:{side}", item.source_ref, visual.source_ref,
-                                       icon.icon_id, icon.kind, icon.content_identity, icon.viewport, icon.payload, icon.alternative,
-                                       visual.decorative, bounds, "labelVisual", icon_width / icon.viewport[0], item.slot_id,
-                                       paint_order=item.paint_order, lane_row_id=item.lane_row_id,
-                                       lane_member_id=item.lane_member_id,
-                                       host_placement_id=item.placement_id))
-    if requested:
-        raise LayoutError("E_LAYOUT_VISUAL_TARGET", next(iter(next(iter(requested.values())).values())).source_ref)
-    return text, icons, warnings
-
-
-def resolve_mark_visual_requests(marks: list[MarkPlacement], request: SurfaceLayoutRequest) -> list[IconPlacement]:
-    """Project the closed View mark target onto one completed planned/actual mark."""
-    icons: list[IconPlacement] = []
-    occupied: set[str] = set()
-    for visual in request.visual_requests:
-        if visual.target_kind != "mark":
-            continue
-        selector = dict(visual.selector)
-        placement_id = selector.get("placementId") or visual_target_placement_id("mark", selector)
-        if placement_id in occupied:
-            raise LayoutError("E_LAYOUT_VISUAL_DUPLICATE", visual.source_ref)
-        occupied.add(placement_id)
-        # Row-instance identifiers extend the closed object/facet family after
-        # the stable View selector; the selector itself never guesses an
-        # instance suffix.
-        mark = [item for item in marks if item.placement_id == placement_id
-                or ("placementId" not in selector and item.placement_id.startswith(placement_id + ":"))]
-        icon = request.icon_assets.get(visual.ref or "")
-        if len(mark) != 1 or icon is None:
-            raise LayoutError("E_LAYOUT_VISUAL_TARGET" if len(mark) != 1 else "E_ICON_NAME_UNKNOWN", visual.source_ref)
-        host = mark[0]
-        try:
-            scale, _ = request.theme_tokens.icon_ratios("icon-mark")
-        except Exception as error:
-            raise LayoutError("E_THEME_ICON_RATIO", visual.source_ref) from error
-        height = float(host.bounds.block_size) * float(scale)
-        if height <= 0:
-            raise LayoutError("E_THEME_ICON_RATIO", visual.source_ref)
-        width = min(float(host.bounds.inline_size), height * icon.viewport[0] / icon.viewport[1])
-        bounds = Rect(host.bounds.inline + (host.bounds.inline_size - Decimal(str(width))) / 2,
-                      host.bounds.block + (host.bounds.block_size - Decimal(str(height))) / 2,
-                      Decimal(str(width)), Decimal(str(height)))
-        icons.append(IconPlacement(f"visual:{host.placement_id}", host.source_ref, visual.source_ref,
-                                   icon.icon_id, icon.kind, icon.content_identity, icon.viewport, icon.payload, icon.alternative,
-                                   visual.decorative, bounds, "iconMark", width / icon.viewport[0], host.slot_id,
-                                   paint_order=host.paint_order + 1, lane_row_id=host.lane_row_id,
-                                   lane_member_id=host.lane_member_id,
-                                   host_placement_id=host.placement_id))
-    return icons
-
-
-def resolve_axis_band_visual_requests(shapes: list[ShapePlacement], request: SurfaceLayoutRequest,
-                                      targets: Mapping[tuple[str, str, str], str]) -> list[IconPlacement]:
-    """Place a band-targeted icon from typed axis metadata, never an ID parser."""
-    icons: list[IconPlacement] = []
-    for visual in request.visual_requests:
-        if visual.target_kind != "axis-band":
-            continue
-        selector = dict(visual.selector)
-        placement_id = targets.get(("axis-band", selector.get("level", ""), selector.get("index", "")))
-        shape = next((item for item in shapes if item.placement_id == placement_id), None)
-        icon = request.icon_assets.get(visual.ref or "")
-        if shape is None or icon is None:
-            raise LayoutError("E_LAYOUT_VISUAL_TARGET" if shape is None else "E_ICON_NAME_UNKNOWN", visual.source_ref)
-        scale, _ = request.theme_tokens.icon_ratios("icon-mark")
-        height = min(float(shape.bounds.inline_size), float(shape.bounds.block_size)) * float(scale)
-        if height <= 0 or icon.viewport[1] <= 0:
-            raise LayoutError("E_THEME_ICON_RATIO" if height <= 0 else "E_ICON_IMPORT_VIEWPORT", visual.source_ref)
-        width = height * icon.viewport[0] / icon.viewport[1]
-        bounds = Rect(shape.bounds.inline + (shape.bounds.inline_size - Decimal(str(width))) / 2,
-                      shape.bounds.block + (shape.bounds.block_size - Decimal(str(height))) / 2,
-                      Decimal(str(width)), Decimal(str(height)))
-        icons.append(IconPlacement(f"visual:{shape.placement_id}", shape.source_ref, visual.source_ref,
-                                   icon.icon_id, icon.kind, icon.content_identity, icon.viewport, icon.payload,
-                                   icon.alternative, visual.decorative, bounds, "iconMark", width / icon.viewport[0], shape.slot_id,
-                                   paint_order=HOSTED_TEXT_PAINT_ORDER))
-    return icons
-
-
-def candidate_label_visuals(placement_id: str, typography_role: str,
-                            request: SurfaceLayoutRequest) -> tuple[tuple[Any, Any, float, float], ...]:
-    """Resolve visual advances before a candidate-label solver chooses bounds."""
-    return resolve_label_visual_advances(
-        placement_id, typography_role, visual_requests=request.visual_requests,
-        icon_assets=request.icon_assets, theme_tokens=request.theme_tokens,
-    )
 
 
 def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutComposition:
@@ -881,129 +644,19 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                      ((x, float(timeline.bounds.block)), (x, float(timeline.bounds.block + timeline.bounds.block_size))),
                                      paint_order=MARK_PAINT_ORDER_BASE))
         as_of_label = (x, contract.time.as_of_label) if contract.time.as_of_label else None
-    track_by_id = {item.instance_id: item for item in tracks}
-    marks: list[MarkPlacement] = []
-
-    mark_absences: list[MarkFacetAbsence] = []
-    for review_row in review_rows:
-        members = sorted(
-            enumerate(review_row.items),
-            key=lambda pair: shared_track_member_key(pair[1], pair[0]),
-        )
-        for _, item in members:
-            layout_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
-            lane_owner = _lane_owner(review_row, item) if projection.lane_membership is not None else None
-            instance_id = layout_id if projection.rows else item.object_id
-            track = track_by_id[layout_id]
-            frame = MarkBandFrame.from_track(track, scale, role_geometries)
-            source_kind = item.source_kind if projection.rows else "combined"
-            composition = compose_item_marks(
-                item=item, instance_id=instance_id, source_kind=source_kind, frame=frame,
-                as_of=contract.time.as_of, theme_tokens=request.theme_tokens,
-                slot_id=timeline.slot_id, paint_order_base=MARK_PAINT_ORDER_BASE,
-                emit_missing_actual=(lane_missing_actual_visible(projection)
-                                     if lane_owner is not None else True),
-            )
-            marks.extend(replace(mark, lane_row_id=lane_owner[0], lane_member_id=lane_owner[1],
-                                 lane_source_kind=source_kind)
-                         if lane_owner is not None else mark for mark in composition.marks)
-            diagnostics.extend(composition.diagnostics)
-            mark_absences.extend(composition.absences)
-    # A group-header target is a real GroupPlacement extent, not a synthetic table row.
-    group_by_id = {group.group_id: group for group in groups}
-    visible_group_header_overflows: list[tuple[str, Rect, float]] = []
-    folded_by_group: dict[str, list[Any]] = {}
-    for folded in getattr(projection, "folded_points", ()):
-        folded_by_group.setdefault(folded.group_id, []).append(folded)
-    for group_id, folded_points in folded_by_group.items():
-        group = group_by_id.get(group_id)
-        if group is None or group.header_bounds is None:
-            folded = folded_points[0]
-            raise LayoutError("E_REVIEW_POINT_GROUP_HEADER_UNAVAILABLE", f"/projection/foldedPoints/{folded.item.object_id}")
-        block_size = float(metric_values["timeline.mark.blockSize"])
-        capacity = int(float(group.header_bounds.block_size) // block_size)
-        occupied = len(folded_points) * block_size
-        if occupied > float(group.header_bounds.block_size):
-            # Folded marks retain their stable stack order.  Extend the real
-            # group-header host rather than inventing a synthetic row or
-            # suppressing excess milestones.
-            expanded_header = Rect(group.header_bounds.inline, group.header_bounds.block,
-                                   group.header_bounds.inline_size, Decimal(str(occupied)))
-            update = GroupHeaderExtentUpdate(group, expanded_header)
-            groups = replace_group_header_extent(tuple(groups), update)
-            replacement = next(item for item in groups if item.group_id == group_id)
-            group_by_id[group_id] = replacement
-            shapes = list(replace_group_header_band(tuple(shapes), update))
-            visible_group_header_overflows.append((group_id, expanded_header,
-                                                   float(group.header_bounds.block_size)))
-            group = replacement
-        first_block = float(group.header_bounds.block) + max(0.0, (float(group.header_bounds.block_size) - occupied) / 2)
-        for track_index, folded in enumerate(sorted(folded_points, key=lambda point: (point.item.planned.get("at"), point.item.object_id))):
-            block = first_block + track_index * block_size
-            members = sorted(enumerate(folded.all_items),
-                             key=lambda pair: shared_track_member_key(pair[1], pair[0]))
-            for _, item in members:
-                instance_id = _folded_instance_id(folded, item)
-                # Folded marks occupy a real group-header band, so make that
-                # band the frame origin while retaining its exact role offsets.
-                frame = MarkBandFrame(scale, block, block_size, role_geometries)
-                composition = compose_item_marks(
-                    item=item, instance_id=instance_id,
-                    source_kind=item.source_kind, frame=frame, as_of=contract.time.as_of,
-                    theme_tokens=request.theme_tokens, slot_id=timeline.slot_id,
-                    paint_order_base=MARK_PAINT_ORDER_BASE, emit_missing_actual=False,
-                    emit_diagnostics=False,
-                )
-                marks.extend(composition.marks)
-                diagnostics.extend(composition.diagnostics)
-                mark_absences.extend(composition.absences)
+    mark_batch = compose_surface_marks(base, lane_owner=_lane_owner)
+    marks = list(mark_batch.marks)
     mark_by_id = {item.placement_id: item for item in marks}
-    progress_source = request.surface_content.progress_fill_source
-    if progress_source is not None:
-        progress_inset, progress_radius = request.theme_tokens.progress_track("progress-fill")
-        for review_row in review_rows:
-            for item in review_row.items:
-                if progress_source == "actual":
-                    fraction = (item.actual or {}).get("progress")
-                    host_prefix = "actual"
-                else:
-                    fraction = getattr(item, "planned_progress", None)
-                    host_prefix = "planned"
-                if not isinstance(fraction, (int, float)) or isinstance(fraction, bool) or not 0 <= fraction <= 1:
-                    continue
-                layout_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
-                lane_owner = _lane_owner(review_row, item) if projection.lane_membership is not None else None
-                instance_id = layout_id if projection.rows else item.object_id
-                host = mark_by_id.get(f"{host_prefix}:{instance_id}")
-                if host is None or fraction == 0:
-                    continue
-                bounds = progress_fill_bounds(host.bounds, float(fraction), progress_inset)
-                if bounds is not None and bounds.inline_size > 0:
-                    fill_radius = float(progress_radius) * float(min(bounds.inline_size, bounds.block_size))
-                    shapes.append(ShapePlacement(f"progress-fill:{host.placement_id}", item.object_id,
-                                                 "Rect", bounds, required=False, slot_id=host.slot_id,
-                                                 clip_host_id=host.placement_id,
-                                                 paint_order=host.paint_order + 1,
-                                                 corner_radius=fill_radius,
-                                                 semantic_id="progressFill",
-                                                 lane_row_id=lane_owner[0] if lane_owner else None,
-                                                 lane_member_id=lane_owner[1] if lane_owner else None))
-    for review_row, row in zip(review_rows, rows, strict=True):
-        if getattr(review_row, "rollup_presentation", "none") != "bar":
-            continue
-        subject = next((item for item in review_row.items
-                        if item.item_id == review_row.table_subject_id and item.source_kind != "actual"), None)
-        if subject is None or subject.source_type != "span":
-            continue
-        start_at, end_at = subject.planned.get("start"), subject.planned.get("end")
-        if not isinstance(start_at, date) or not isinstance(end_at, date):
-            continue
-        x1, x2 = _coordinate(start_at, scale), _coordinate(end_at, scale)
-        height = float(request.theme_tokens.summary_bar_height("summary-bar")) * float(metric_values["timeline.mark.blockSize"])
-        shapes.append(ShapePlacement(f"summary-bar:{review_row.row_id}", subject.object_id, "Rect",
-                                     Rect(Decimal(str(x1)), row.bounds.block,
-                                          Decimal(str(max(1.0, x2 - x1))), Decimal(str(height))),
-                                     semantic_id="summaryBar"))
+    track_by_id = {item.instance_id: item for item in tracks}
+    mark_absences = list(mark_batch.absences)
+    diagnostics.extend(mark_batch.diagnostics)
+    visible_group_header_overflows = list(mark_batch.visible_group_header_overflows)
+    groups = list(mark_batch.groups)
+    for update in mark_batch.group_header_updates:
+        shapes = list(replace_group_header_band(tuple(shapes), update))
+    group_by_id = {item.group_id: item for item in groups}
+    shapes.extend(mark_batch.progress_shapes)
+    shapes.extend(mark_batch.summary_shapes)
     placement_decisions: list[PlacementDecision] = list(axis_decisions)
     label_requests: list[LabelRequest] = []
     candidate_icons: list[IconPlacement] = []
@@ -1175,7 +828,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             font_size, line_height = label_treatment.font_size, label_treatment.line_height
             measured_lane = measured_lane_labels.get(label_request.placement_id)
             visuals = (measured_lane.visuals if measured_lane is not None else
-                       candidate_label_visuals(label_request.placement_id, label_request.typography_role, request))
+                       measure_candidate_visuals(label_request.placement_id,
+                           label_request.typography_role, request).visuals)
             handled_candidate_visuals.update(visual.source_ref for visual, _, _, _ in visuals)
             leading = geometry_sum(width + gap for visual, icon, width, gap in visuals if visual.side == "leading")
             trailing = geometry_sum(width + gap for visual, icon, width, gap in visuals if visual.side == "trailing")
@@ -1749,7 +1403,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             presentation = annotation_presentation(annotation.purpose)
             annotation_id, content = annotation.annotation_id, annotation.content
             content = f"{annotation.number}. {content}" if annotation.number is not None else content
-            annotation_visuals = candidate_label_visuals(f"annotation-text:{annotation_id}", "annotation", request)
+            annotation_visuals = measure_candidate_visuals(
+                f"annotation-text:{annotation_id}", "annotation", request).visuals
             handled_candidate_visuals.update(visual.source_ref for visual, _, _, _ in annotation_visuals)
             annotation_leading = geometry_sum(width + gap for visual, icon, width, gap in annotation_visuals if visual.side == "leading")
             annotation_trailing = geometry_sum(width + gap for visual, icon, width, gap in annotation_visuals if visual.side == "trailing")
@@ -2170,7 +1825,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                                          icon_width / icon.viewport[0], annotation_slot_id,
                                                          paint_order=placed_annotation.paint_order))
             if annotation.number is not None:
-                note_index_visuals = candidate_label_visuals(f"note-index:{annotation_id}", "annotation", request)
+                note_index_visuals = measure_candidate_visuals(
+                    f"note-index:{annotation_id}", "annotation", request).visuals
                 handled_candidate_visuals.update(visual.source_ref for visual, _, _, _ in note_index_visuals)
                 note_index_leading = geometry_sum(width + gap for visual, _, width, gap in note_index_visuals
                                                   if visual.side == "leading")
@@ -2268,12 +1924,14 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                 if leader_fallback:
                     visible_route_fallbacks.append(placed_leader)
     text = [replace(item, slot_id=text_slot(item)) for item in text]
-    text, icons, text_visual_warnings = resolve_text_visual_requests(text, request, handled_sources=handled_candidate_visuals,
-                                                axis_label_targets=axis_label_targets,
-                                                pre_reserved_placements=detail_visual_reservations)
+    text_visuals = place_text_visuals(tuple(text), request,
+        handled_sources=handled_candidate_visuals, axis_label_targets=axis_label_targets,
+        pre_reserved_placements=detail_visual_reservations)
+    text, icons = list(text_visuals.text), list(text_visuals.icons)
+    text_visual_warnings = list(text_visuals.warnings)
     _validate_detail_panel_placement(text, slots)
     icons.extend(candidate_icons)
-    icons.extend(resolve_mark_visual_requests(marks, request))
+    icons.extend(place_mark_visuals(tuple(marks), request).icons)
 
     # Slot ownership is completed here with the rest of Layout geometry.  Scene
     # projection receives the relation verbatim and must never reconstruct it
@@ -2293,7 +1951,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
             return axis.slot_id
         return timeline.slot_id
     shapes = [replace(item, slot_id=shape_slot(item)) for item in shapes]
-    icons.extend(resolve_axis_band_visual_requests(shapes, request, axis_band_targets))
+    icons.extend(place_axis_band_visuals(tuple(shapes), request, targets=axis_band_targets).icons)
     relations = [replace(item, slot_id=(by_source.get("annotations", timeline).slot_id
                                         if item.relation_id.startswith("annotation-leader:")
                                         else by_source["legend"].slot_id
