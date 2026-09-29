@@ -15,3 +15,8 @@ def resolve_mark_geometries(theme_tokens: Any) -> dict[str, MarkGeometry]:
         height, offset, paint_order, corner_radius = theme_tokens.mark_geometry(role)
         result[role] = MarkGeometry(float(height), float(offset), paint_order, float(corner_radius))
     return result
+
+
+def folded_instance_id(folded: Any, item: Any) -> str:
+    """Keep a header point's comparison members addressable without inventing rows."""
+    return f"group-header:{folded.group_id}:{item.item_id or item.object_id}"

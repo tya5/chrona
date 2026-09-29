@@ -13,11 +13,8 @@ from chrona.presentation.layout.lane_subtracks import (
 )
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
 from chrona.presentation.layout.presentation import RowPlacement
-from chrona.presentation.layout.surface_lanes import _LaneLayoutRow
-from chrona.presentation.layout.surface_composer import (
-    _lane_label_candidates,
-    _place_lane_mark_tracks,
-)
+from chrona.presentation.layout.surface_lanes import _LaneLayoutRow, place_lane_mark_tracks
+from chrona.presentation.layout.surface_composer import _lane_label_candidates
 from chrona.presentation.review.lane_membership import (
     Lane,
     LaneAssignment,
@@ -226,7 +223,7 @@ def test_composer_translates_each_projection_instance_without_collapsing_member_
                                                           ("b", "b", "combined")))
     row = _LaneLayoutRow("lane", "g", items, ("a", "a", "b"))
 
-    tracks = _place_lane_mark_tracks(
+    tracks = place_lane_mark_tracks(
         review_rows=(row,), row_placements=(RowPlacement("lane", "g", (0, 20, 100, 30)),),
         plan=plan, mark_block_size=10,
     )

@@ -8,12 +8,12 @@ from dataclasses import dataclass, replace
 from typing import Any
 
 from chrona.presentation.layout.lane_preflight import lane_inline_frame_for_manifest
-from chrona.presentation.layout.lane_subtracks import FixedLanePreflight, assign_lane_subtracks
+from chrona.presentation.layout.lane_subtracks import FixedLanePreflight, LaneSubtrackPlan, assign_lane_subtracks
 from chrona.presentation.layout.lane_item_footprints import compose_lane_item_footprints
 from chrona.presentation.layout.mark_aware_scale import PointMarkFootprint, inset_scale_for_point_facets
 from chrona.presentation.layout.obstacles import obstacle_envelope
 from chrona.presentation.layout.model import geometry_sum
-from chrona.presentation.layout.presentation import table_text_line_block
+from chrona.presentation.layout.presentation import TrackPlacement, table_text_line_block
 from chrona.presentation.layout.surface_marks import resolve_mark_geometries
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.lane_projection import (
@@ -50,6 +50,36 @@ def review_rows(projection: Any) -> tuple[Any, ...]:
         return tuple(_LaneLayoutRow(row.lane_id, row.group_id, row.items, row.member_item_ids,
                                     table_subject_id=row.lane_id) for row in lane_rows)
     return projection.rows or ()
+
+
+def place_lane_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[Any, ...],
+                           plan: LaneSubtrackPlan, mark_block_size: float) -> tuple[TrackPlacement, ...]:
+    """Project typed source-instance subtracks without revisiting membership."""
+    lane_plan = {lane.lane_id: lane for lane in plan.lanes}
+    item_plan = {(item.item_id, item.projection_instance_id.item_id,
+                  item.projection_instance_id.object_id, item.projection_instance_id.source_kind): item
+                 for item in plan.items}
+    if len(review_rows) != len(row_placements) or len(review_rows) != len(lane_plan):
+        raise LayoutError("E_LAYOUT_LANE_SUBTRACK_INVALID", "/projection/laneRows")
+    tracks: list[TrackPlacement] = []
+    for review_row, row in zip(review_rows, row_placements, strict=True):
+        lane = lane_plan.get(review_row.row_id)
+        if lane is None or row.row_id != review_row.row_id or row.bounds[3] < lane.block_extent:
+            raise LayoutError("E_LAYOUT_LANE_SUBTRACK_INVALID", "/projection/laneRows")
+        origin = row.bounds[1] + (row.bounds[3] - lane.block_extent) / 2
+        for member_id, item in zip(review_row.member_item_ids, review_row.items, strict=True):
+            subtrack = item_plan.get((member_id, item.item_id or item.object_id,
+                                      item.object_id, item.source_kind))
+            if subtrack is None or subtrack.lane_id != lane.lane_id:
+                raise LayoutError("E_LAYOUT_LANE_SUBTRACK_INVALID", "/projection/laneRows")
+            block = origin + subtrack.block_offset
+            if block < row.bounds[1] or block + mark_block_size > row.bounds[1] + row.bounds[3]:
+                raise LayoutError("E_LAYOUT_MARK_OVERFLOW", "/projection/laneRows")
+            tracks.append(TrackPlacement(f"{review_row.row_id}:{item.item_id or item.object_id}",
+                                         block, block, mark_block_size))
+    if len(tracks) != len(plan.items) or len(item_plan) != len(plan.items):
+        raise LayoutError("E_LAYOUT_LANE_SUBTRACK_INVALID", "/projection/laneRows")
+    return tuple(tracks)
 
 
 def lane_owner(review_row: Any, item: Any) -> tuple[str, str] | None:

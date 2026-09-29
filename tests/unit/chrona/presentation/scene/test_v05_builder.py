@@ -6,7 +6,8 @@ from types import SimpleNamespace
 import pytest
 
 from chrona.presentation.layout.model import LayoutDecision, LayoutError, LayoutManifest, Measurement, Rect
-from chrona.presentation.layout.surface_composer import _validate_background_shapes, compose_surface_layout
+from chrona.presentation.layout.surface_backgrounds import validate_background_shapes
+from chrona.presentation.layout.surface_composer import compose_surface_layout
 from chrona.presentation.layout.surface_quality import PathCommand, ShapePlacement, SurfaceLayoutRequest
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun, SourceInput
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
@@ -1007,7 +1008,7 @@ def test_layout_permits_only_a_later_calendar_fill_over_translucent_bands():
             ShapePlacement("band", "lane-a", "Rect", bounds,
                            paint_order=order, semantic_id=semantic_id),
         ]
-        _validate_background_shapes(shapes, tokens)
+        validate_background_shapes(shapes, tokens)
 
 
 @pytest.mark.parametrize("semantic_ids_to_overlap", [
@@ -1026,7 +1027,7 @@ def test_layout_rejects_same_role_and_unrelated_translucent_background_overlaps(
                              paint_order=10 + index, semantic_id=semantic_id)
               for index, semantic_id in enumerate(semantic_ids_to_overlap)]
     with pytest.raises(LayoutError, match="E_LAYOUT_BACKGROUND_OVERLAP"):
-        _validate_background_shapes(shapes, tokens)
+        validate_background_shapes(shapes, tokens)
 
 
 def test_narrow_calendar_density_retains_only_declared_exception_closures():
