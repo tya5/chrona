@@ -35,6 +35,21 @@ def _primitives(scene: dict) -> list[dict]:
     return found
 
 
+def _assert_marks_inside_timeline(surface: dict) -> None:
+    timeline = next(slot for slot in surface["slots"] if slot["id"] == "timeline")["bounds"]
+    left, right = timeline["inline"], timeline["inline"] + timeline["inlineSize"]
+    scale = surface["scale"]
+    assert left <= scale["rangeStart"] < scale["rangeEnd"] <= right
+    assert scale["origin"] == scale["rangeStart"]
+    marks = [item for item in surface["primitives"]
+             if item.get("purpose") in {"planned", "actual", "missingActual"}]
+    assert marks
+    for mark in marks:
+        bounds = mark["bounds"]
+        assert bounds["inline"] >= left - 0.01, mark["id"]
+        assert bounds["inline"] + bounds["inlineSize"] <= right + 0.01, mark["id"]
+
+
 def _rgb(colour: str) -> tuple[float, float, float]:
     colour = colour.lstrip("#")
     red, green, blue = (int(colour[index:index + 2], 16) / 255 for index in (0, 2, 4))
@@ -190,6 +205,7 @@ def test_bundled_default_guides_every_bar_and_names_it_or_reports_suppression(tm
         ROOT / "examples/halcyon-1/actual.yaml",
     )
     surface = scene["surfaces"][0]
+    _assert_marks_inside_timeline(surface)
     timeline = next(slot for slot in surface["slots"] if slot["id"] == "timeline")["bounds"]
     rows = {row["id"]: row["bounds"] for row in surface["rows"]}
     primitives = {item["id"]: item for item in _primitives(scene)}
@@ -258,6 +274,7 @@ def test_init_starter_bundled_default_guides_and_names_every_bar(tmp_path, monke
     scene, svg_path = _render_project(tmp_path, monkeypatch, "starter-default",
                                       starter / "project.yaml", starter / "actual.yaml")
     surface = scene["surfaces"][0]
+    _assert_marks_inside_timeline(surface)
     timeline = next(slot for slot in surface["slots"] if slot["id"] == "timeline")["bounds"]
     rows = {row["id"]: row["bounds"] for row in surface["rows"]}
     primitives = {item["id"]: item for item in _primitives(scene)}
