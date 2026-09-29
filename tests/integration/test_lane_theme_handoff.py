@@ -1,17 +1,13 @@
 """Two-Theme lane membership and icon handoff regression for #467 B3."""
 from pathlib import Path
 from dataclasses import replace
-import re
-import xml.etree.ElementTree as ET
 
 import yaml
-import pytest
 
 from chrona.presentation.layout import surface_composer
 from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.model.closure import resolve_draft_render
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
-from chrona.presentation.scene.serialization import serialize_scene
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.usecases.render_review import RenderRequest, render_review
 
@@ -30,36 +26,22 @@ def _edge_gap(left, right):
     return (inline ** 2 + block ** 2) ** 0.5
 
 
-def _on_perimeter(point, bounds):
-    x, y = point
-    inline, block, width, height = bounds
-    inline_end, block_end = inline + width, block + height
-    return ((abs(x - inline) < 0.01 or abs(x - inline_end) < 0.01)
-            and block - 0.01 <= y <= block_end + 0.01
-            or (abs(y - block) < 0.01 or abs(y - block_end) < 0.01)
-            and inline - 0.01 <= x <= inline_end + 0.01)
-
-
 def _assert_member_label_associations(primitives):
     marks = [item for item in primitives if item.purpose in {"planned", "actual", "snapshot"}]
     labels = [item for item in primitives if item.purpose == "member-label"]
-    leaders = {item.scene_id.removeprefix("member-label-leader:"): item
-               for item in primitives if item.purpose == "member-label-leader"}
     sides = set()
     for label in labels:
         host_options = [mark for mark in marks if mark.lane_row_id == label.lane_row_id
                         and mark.lane_member_id == label.lane_member_id
                         and mark.source_ref == label.source_ref]
         assert host_options, label.scene_id
-        leader = leaders.get(label.scene_id)
-        host = (next((mark for mark in host_options if _on_perimeter(
-            leader.points[-1], mark.bounds)), None) if leader is not None else None)
-        if host is None:
-            host = min(host_options, key=lambda mark: _edge_gap(label.text_layout.bounds,
-                                                               (mark.bounds[0], mark.bounds[1],
-                                                                mark.bounds[2], mark.bounds[3])))
+        host_id = label.host_placement_id
+        assert host_id, f"member label lacks exact host identity: {label.scene_id}"
+        host = next((mark for mark in host_options if mark.scene_id == host_id), None)
+        assert host is not None, f"member label host is not its own mark: {label.scene_id} -> {host_id}"
         host_bounds = (host.bounds[0], host.bounds[1], host.bounds[2], host.bounds[3])
         distance = _edge_gap(label.text_layout.bounds, host_bounds)
+        assert distance <= 2 * label.text_layout.font_size + 0.01, label.scene_id
         label_inline, _label_block, label_width, _label_height = label.text_layout.bounds
         mark_inline, _mark_block, mark_width, _mark_height = host_bounds
         if label_inline >= mark_inline + mark_width:
@@ -68,16 +50,6 @@ def _assert_member_label_associations(primitives):
             sides.add("start")
         else:
             sides.add("stagger")
-        if distance > 2 * label.text_layout.font_size + 0.01:
-            assert leader is not None, label.scene_id
-        if leader is not None:
-            assert leader.scene_id == f"member-label-leader:{label.scene_id}"
-            assert leader.source_ref == label.source_ref
-            assert leader.lane_row_id == label.lane_row_id
-            assert leader.lane_member_id == label.lane_member_id
-            assert len(leader.points) >= 2
-            assert _on_perimeter(leader.points[0], label.text_layout.bounds)
-            assert _on_perimeter(leader.points[-1], host_bounds)
     return sides
 
 
@@ -159,8 +131,26 @@ def test_same_lane_view_under_two_themes_reaches_identical_scene_membership(tmp_
         )
         outputs.append((draft.closure, render_review(request)))
 
-    # Exercise the full-band contact search: crowded lane marks force at least
-    # one name away from its own mark by more than the direct-association bound.
+    # The same exact-host bound applies when the authored preferred side is
+    # start; side order does not weaken the association contract.
+    start_view = yaml.safe_load(view_path.read_text(encoding="utf-8"))
+    start_view["body"]["visibility"]["labels"]["side"] = "start"
+    start_view_path = tmp_path / "same-lane-start-view.yaml"
+    start_view_path.write_text(yaml.safe_dump(start_view, sort_keys=False), encoding="utf-8")
+    start_draft = resolve_draft_render(
+        project_path=example / "project.yaml", view_path=start_view_path,
+        theme_path=themes[0], scheme_path=example / "schemes/executive-light.yaml",
+        layout_path=example / "layouts/executive-review.yaml", actual_path=example / "actual.yaml",
+        viewport=(2800, 1200), visual_profile="chrona-output/visual/v0.7-svg",
+        icon_catalog_paths=(example / "icons.yaml",),
+    )
+    start_output = render_review(RenderRequest(
+        closure=start_draft.closure, snapshot_root=start_draft.asset_root,
+        asset_root=start_draft.asset_root, scheduler=ReferenceScheduler(),
+        renderer=V05SvgRenderer(), draft_auto_block=start_draft.auto_block,
+    ))
+
+    # Exercise a displaced lane name and its bounded own-mark association.
     fill_layout = yaml.safe_load((example / "layouts/executive-review.yaml").read_text(encoding="utf-8"))
     fill_layout["reviewSurface"]["rowDistribution"] = "fill"
     fill_layout_path = tmp_path / "fill-lane-layout.yaml"
@@ -221,21 +211,10 @@ def test_same_lane_view_under_two_themes_reaches_identical_scene_membership(tmp_
     second_sides = _assert_member_label_associations(second.surface.primitives)
     assert first_sides == second_sides
     assert "end" in first_sides
+    assert "start" in _assert_member_label_associations(start_output.surface.primitives)
     fill_primitives = fill_output.surface.primitives
     _assert_member_label_associations(fill_primitives)
-    leaders = [item for item in fill_primitives if item.purpose == "member-label-leader"]
-    assert leaders
-    assert b'"class":"leader-route"' in serialize_scene(fill_output.scene)
-    svg_root = ET.fromstring(fill_output.artifact.content)
-    svg_leaders = {node.attrib.get("data-scene-id"): node for node in svg_root.iter()
-                   if node.attrib.get("data-scene-id")}
-    for leader in leaders:
-        node = svg_leaders[leader.scene_id]
-        assert node.tag.endswith("path") and node.attrib.get("data-source-ref") == leader.source_ref
-        values = [float(value) for value in re.findall(
-            r"[-+]?(?:\d*\.\d+|\d+\.?\d*)(?:[eE][-+]?\d+)?", node.attrib["d"])]
-        assert values[:2] == pytest.approx(leader.points[0])
-        assert values[-2:] == pytest.approx(leader.points[-1])
+    assert not any(item.purpose == "member-label-leader" for item in fill_primitives)
     label_ids = {identifier for identifier in first_primitives if identifier.startswith("member-label:")}
     other_label_ids = {identifier for identifier in second_primitives if identifier.startswith("member-label:")}
     assert label_ids and label_ids == other_label_ids
