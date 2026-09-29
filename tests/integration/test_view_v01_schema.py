@@ -73,7 +73,8 @@ def test_lane_resource_migration_inventory_and_editorial_mirror():
     assert editorial["sourcePath"] == "view-lanes.yaml"
 
     default = yaml.safe_load((ROOT / "src/chrona/resources/presets/bundles/editorial-readable-default/view.yaml").read_text(encoding="utf-8"))
-    assert default["body"]["rows"]["mode"] == "lanes"
+    assert default["body"]["rows"] == {"mode": "automatic"}
+    assert [column["id"] for column in default["body"]["tableColumns"]] == ["Task", "Plan"]
     assert default["version"] == "chrona/view/v0.28"
     assert (ROOT / "src/chrona/resources/presets/bundles/editorial-readable-default/view.yaml").read_bytes() == \
         (ROOT / "examples/halcyon-1/views/editorial-readable-default.yaml").read_bytes()

@@ -81,10 +81,23 @@ body:
   backgroundDecoration:
     rows: alternate
     groups: all
+  tableColumns:
+  - id: Task
+    source: title
+    missing: em-dash
+    align: start
+    width: {minmax: {min: content, max: {fr: 1}}}
+    headerOrientation: horizontal
+  - id: Plan
+    source:
+      facet: planned
+    format: dateRange
+    missing: em-dash
+    align: start
+    width: content
+    headerOrientation: horizontal
   rows:
-    mode: lanes
-    packing: [explicit, attached]
-    laneTable: {label: group, count: true}
+    mode: automatic
   markers:
   - kind: asOf
     source: actual
