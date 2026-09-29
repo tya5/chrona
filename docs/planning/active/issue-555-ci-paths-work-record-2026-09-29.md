@@ -64,3 +64,29 @@ exact-main acceptance-review run remains mandatory before issue closure.
 Risk: shard imbalance or cross-shard fixture coupling may require tuning
 after live code-PR evidence; neither permits dropping tests. No normative
 product specification or ADR change is needed.
+
+## Implementation plan
+
+1. Add `tools/classify_ci_change.py` and focused tests. Compare exact PR
+   base/head with a NUL-delimited, no-rename git diff; include both endpoints
+   of renames, and default to `code` on empty/error. Publish with the workflow
+   only after the routing test and malformed-review probe are planned.
+2. Refactor `.github/workflows/conformance.yml`: PR classifier; Ubuntu-only
+   conformance for both PR paths; three Ubuntu pytest-split matrix shards for
+   code PRs; retained newest-Python reproduction for code PRs and full events;
+   unchanged three-OS full conformance/pytest/wheel jobs for `main`, nightly,
+   and manual. Add a manual-only Windows failure probe. Keep independent
+   `check_ci_outcomes.py` finalizers and `fail-fast: false`.
+3. Add `pytest-split` to dev dependencies, workflow structural and routing
+   tests, and `AGENTS.md` path/release guidance. There are no schema/resource
+   migrations or generated product artifacts. Local focused tests cover
+   classification, outcome reporting, workflow structure, and conformance.
+   CI provides full pytest and materializer evidence; compare generated files
+   for no product-byte changes.
+4. Publish the implementation PR and inspect its Ubuntu code-path runtime
+   and shard results. After merge, inspect the exact `main` three-OS run.
+   Publish a separate acceptance review, then inspect *that* commit's exact
+   `main` three-OS run. Use temporary PR/manual runs to verify a malformed
+   review heading, a failing shard, and the OS-specific failure probe; do not
+   merge deliberately broken tests or reviews. Close only when every literal
+   criterion has direct evidence, else leave open with a precise blocker.
