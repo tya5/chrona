@@ -101,6 +101,13 @@ Leader geometry participates in Layout's obstacle/candidate decision; Scene
 only projects it. If no legal candidate/leader exists, the existing
 source-keyed suppression outcome applies. The Scene acceptance check pairs
 each member label and mark by lane/member identity, never by visual order.
+The `memberLabelLeader` presentation semantic has its own Scene purpose and
+lane/member provenance, while deliberately reusing Theme's `dependency`
+stroke token. Layout chooses deterministic perimeter ports and a finite
+orthogonal path within the row, exempting only the own label and mark at the
+endpoints. Its source-keyed path enters the shared obstacle inventory before
+later labels and semantic routes. A failed route rejects that candidate, not
+the entire label request; only exhaustion invokes suppression.
 
 Each suppressed name has a typed `SurfacePlacement` fact with lane/member, final
 row extent, remaining capacity and reason `capacity` or `obstruction`, validated
