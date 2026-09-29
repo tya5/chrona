@@ -75,12 +75,33 @@ preflight neither reassigns lane membership nor searches for a block-height
 fixed point. A capped host may retain a measured overflow diagnostic, but a
 growable host MUST contain the final lane rows and marks.
 
+For a `fill` lane surface, the preflight also measures the finite stagger
+ladder's block demand for each lane name. Layout closes that demand into the
+row's minimum before it distributes remaining block space. A suppressed name
+must identify its lane, final block extent and either the exhausted host
+capacity or the maximum useful block extent of its finite candidate ladder.
+Only after that growth-limit proof may it report a geometric blocker as a
+secondary cause. No assignable block space may be abandoned while that lane
+can grow. This affects neither membership nor Scene projection.
+
+The temporal scale's usable range reserves the maximum left and right extents
+of selected point facets relative to their date anchors, including resolved
+symbol, icon, rotation and stroke geometry. No selected point means no inset.
+Its Date-only domain remains the View window; axes, calendar shading, marks
+and routes use the same completed inset scale in lane preflight and final
+composition. Layout diagnoses a non-positive usable range as
+`E_LAYOUT_MARK_OVERFLOW` rather than letting an adapter clip the point.
+
 The timeline as-of label uses this visible-overflow fallback beside its marker
 line. A Layout text placement with `suppressed` disposition is non-drawable:
 Scene MUST NOT emit it. A serialized Scene with a primitive whose ID is named
 by a `W_LAYOUT_LABEL_SUPPRESSED` diagnostic is invalid public evidence.
 For suppressed plot member labels, Layout MUST also count completed
 `memberLabel` text placements with `overflow: suppressed` once per surface.
+End-side member-name candidates cannot leave more than two times their
+completed Text `fontSize` between their own mark's inline edge and their
+Text bounds. When no end candidate fits within that bound, Layout tries
+the declared start rung, then records suppression and the aggregate count.
 When positive, the count is an `I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=<surface-id>;count=<positive-integer>`
 inspection diagnostic and an `info` CLI diagnostic. Its value MUST equal the
 number of corresponding per-placement `W_LAYOUT_LABEL_SUPPRESSED` facts.
