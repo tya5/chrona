@@ -11,6 +11,7 @@ from chrona.presentation.layout import surface_composer
 from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.model.closure import resolve_draft_render
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
+from chrona.presentation.scene.serialization import serialize_scene
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.usecases.render_review import RenderRequest, render_review
 
@@ -224,6 +225,7 @@ def test_same_lane_view_under_two_themes_reaches_identical_scene_membership(tmp_
     _assert_member_label_associations(fill_primitives)
     leaders = [item for item in fill_primitives if item.purpose == "member-label-leader"]
     assert leaders
+    assert b'"class":"leader-route"' in serialize_scene(fill_output.scene)
     svg_root = ET.fromstring(fill_output.artifact.content)
     svg_leaders = {node.attrib.get("data-scene-id"): node for node in svg_root.iter()
                    if node.attrib.get("data-scene-id")}
