@@ -500,6 +500,7 @@ allOf:
                       not: {required: [projectAnnotation]}
                     - required: [projectAnnotation]
                       not: {required: [text]}
+          proofOptionalB: {description: "Temporary #591 merge-proof field B; absence leaves current behavior unchanged.", type: string}
           rows:
             type: object
             required: [mode]
