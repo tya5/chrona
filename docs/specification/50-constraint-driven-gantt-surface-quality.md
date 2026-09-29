@@ -92,10 +92,27 @@ and routes use the same completed inset scale in lane preflight and final
 composition. Layout diagnoses a non-positive usable range as
 `E_LAYOUT_MARK_OVERFLOW` rather than letting an adapter clip the point.
 
-The timeline as-of label uses this visible-overflow fallback beside its marker
-line. A Layout text placement with `suppressed` disposition is non-drawable:
-Scene MUST NOT emit it. A serialized Scene with a primitive whose ID is named
-by a `W_LAYOUT_LABEL_SUPPRESSED` diagnostic is invalid public evidence.
+The timeline as-of label is a constrained exception to generic
+visible-overflow behavior. Layout measures its text and any declared chip
+footprint, then tries the plot top margin beside the as-of rule followed by
+finite rule-hosted chip positions within the plot. Every candidate must fit the timeline
+slot and avoid all axis bands and axis text, data marks, accepted required
+labels/annotations, and the as-of rule except for its explicitly identified
+host attachment. No axis-side seam rung or overflow candidate is permitted.
+Layout records the selected candidate and obstacle decision as completed
+placement evidence, and later annotation routing treats its footprint as an
+obstacle.
+
+If no candidate is legal, Layout retains the as-of rule and records a
+source-keyed `W_LAYOUT_LABEL_SUPPRESSED` disposition for the label. The
+suppressed text is non-drawable: Scene MUST NOT emit it, and a serialized
+Scene with a primitive named by that diagnostic is invalid public evidence.
+This no-fit outcome does not claim that the visible-label acceptance
+criterion was met; starter and HALCYON default cases must have a legal
+plot-side candidate. Ordinary label requests retain their declared
+visible-overflow fallback. Scene and adapters do not retry, move, clip, or
+repair the as-of label.
+
 For suppressed plot member labels, Layout MUST also count completed
 `memberLabel` text placements with `overflow: suppressed` once per surface.
 End-side member-name candidates cannot leave more than two times their
@@ -106,16 +123,6 @@ When positive, the count is an `I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=<surface
 inspection diagnostic and an `info` CLI diagnostic. Its value MUST equal the
 number of corresponding per-placement `W_LAYOUT_LABEL_SUPPRESSED` facts.
 Scene projects the completed fact; adapters neither recount nor draw a marker.
-
-The as-of label's finite candidate ladder may use the adjacent axis/timeline
-seam as a mark-clear fallback. Layout declares that fallback explicitly and
-must not place the label over a data mark merely because earlier beside-line
-candidates are blocked. Ordinary label requests retain their first-ranked
-visible-overflow fallback.
-
-The seam side is a terminal fallback-only rung: it is not considered until
-all ordinary as-of candidates fail. Its identity is recorded in the completed
-placement decision so previously fitting labels remain stable.
 
 `finishDelta` has exactly one text representation per item. When selected in `labels.content`, no second standalone variance text is emitted. Its semantic role remains derived from the signed value.
 
