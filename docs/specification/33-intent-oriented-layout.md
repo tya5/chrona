@@ -509,8 +509,10 @@ upward to a whole scene unit. When there are no table-timeline rows, the
 content-sizing floor is one scene unit; any larger intrinsic profile
 requirement controls the result.
 Natural normal-flow measurement MUST use the same track allocation rules as
-final arrangement: grid row tracks are summed (including gaps, padding and
-spans), flow uses lines at the resolved inline extent, and anchored overlay
+final arrangement: grid row-track bases are summed with gaps and padding;
+only single-span children contribute to those bases under the current grid
+allocation rule, while multi-span shortage retains its visible fallback.
+Flow uses lines at the resolved inline extent, and anchored overlay
 decoration does not enlarge the normal-flow minimum. A fixed or capped track
 contributes its declared capacity rather than a promise to absorb more
 content; its shortage follows the visible fallback above.
