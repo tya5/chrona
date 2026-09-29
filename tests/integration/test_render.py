@@ -540,6 +540,41 @@ def test_draft_auto_block_closes_the_public_multi_lane_milestone_fixture():
     assert not {"W_LAYOUT_ROW_DENSITY", "W_LAYOUT_MARK_OVERFLOW"} & {item.code for item in fixed.surface.fit_warnings}
 
 
+def test_pack_and_fill_row_distribution_preserve_surplus_policy_for_auto_and_finite(tmp_path):
+    root = _root()
+    fixture = root / "tests/fixtures/multi-lane-milestones"
+    source_layout = yaml.safe_load((root / "conformance/layout-profile-intent-v0.2.yaml").read_text(encoding="utf-8"))
+
+    def render(distribution: str, viewport: tuple[int, int | None]):
+        layout = deepcopy(source_layout)
+        layout["reviewSurface"]["rowDistribution"] = distribution
+        layout_path = tmp_path / f"{distribution}-{viewport[1]}.yaml"
+        layout_path.write_text(yaml.safe_dump(layout, sort_keys=False), encoding="utf-8")
+        rendered = render_review(_draft_request(
+            project_path=fixture / "project.yaml", view_path=fixture / "view.yaml",
+            actual_path=fixture / "actual.yaml", layout_path=layout_path, viewport=viewport,
+        ))
+        surface = json.loads(serialize_scene(rendered.scene))["surfaces"][0]
+        timeline = next(slot["bounds"] for slot in surface["slots"] if slot["source"] == "timeline")
+        rows = sorted((row["bounds"] for row in surface["rows"]), key=lambda bounds: bounds["block"])
+        return timeline, rows
+
+    for viewport in ((1600, None), (1600, 900)):
+        packed_timeline, packed_rows = render("pack", viewport)
+        filled_timeline, filled_rows = render("fill", viewport)
+        packed_end = packed_rows[-1]["block"] + packed_rows[-1]["blockSize"]
+        filled_end = filled_rows[-1]["block"] + filled_rows[-1]["blockSize"]
+        timeline_end = packed_timeline["block"] + packed_timeline["blockSize"]
+        assert packed_end <= timeline_end + 0.001
+        if viewport[1] is not None:
+            assert packed_end < timeline_end - 0.001
+            assert filled_rows[0]["blockSize"] > packed_rows[0]["blockSize"]
+        assert filled_end == pytest.approx(
+            filled_timeline["block"] + filled_timeline["blockSize"], abs=0.001
+        )
+        assert filled_rows[0]["blockSize"] >= packed_rows[0]["blockSize"]
+
+
 def test_immutable_context_uses_the_same_coherent_content_allocation(tmp_path):
     """Immutable viewport remains finite input; Layout grows its normal-flow hosts."""
     root = _root()
