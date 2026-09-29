@@ -160,6 +160,17 @@ View grouping gains `presentation: band | header`; `header` requires a non-zero 
 
 A group's background band and its header band share one selection decision under `backgroundDecoration.groups: all | alternate`: a group selected for a band is banded from its own header row through its own last content row; a group not selected carries neither band, so an unselected group's header is never painted as an extension of a neighboring group's band. `backgroundDecoration.groups: none` is the sole unconditional case: every group's header band still paints (the header-only decoration), independent of body selection. A row-decoration stripe (`backgroundDecoration.rows: alternate`) and a group band may cover the same extent; Layout paints row stripes after group bands so an opaque stripe is not hidden by an opaque band at the same declared Theme paint order.
 
+Translucent background intersections remain invalid except an intentional
+`calendarClosed` overlay over a `rowBand`, `groupBand`, or `groupHeaderBand`.
+That exception requires the calendar role's Theme paint order to be strictly
+later than the band's; ordinary source-over composition at those completed
+orders preserves both signals. Equal-order overlaps, closed-day/closed-day
+overlaps, and every other translucent pair still raise
+`E_LAYOUT_BACKGROUND_OVERLAP`. Layout validates the pair and order before
+Scene projection; adapters do not decide which background is visible. The
+legend's calendar key uses the same Theme role without inheriting the plot's
+underlying bands.
+
 A Layout `legend` slot is the sole authority for legend geometry. When it exists, every selected legend entry emits one swatch and one measured label. When absent, there are no legend primitives. It is a resource choice, not a renderer fallback. Header or row capacity shortfall completes visible stacked/natural geometry and a warning rather than rejecting the surface.
 
 ## 4. Schema and normalization
