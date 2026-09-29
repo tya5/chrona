@@ -582,6 +582,14 @@ At minimum, Scene construction diagnoses:
 - renderer capability gaps that would discard required semantic or accessibility metadata.
 
 Diagnostics identify the source reference, scene profile, and affected primitive purpose when available.
+For a successful render, each warning emitted by the CLI MUST also be present
+in that render's Scene `diagnostics` with the same stable warning identity
+(code and source/placement discriminator); the ordered warning facts are
+collected once at the render-result boundary (#554). Informational Scene
+diagnostics are distinct from warnings. Draft perceptibility checks inspect
+the completed preliminary Scene before their findings are added to the final
+diagnostic list, avoiding a diagnostic feedback loop. Typed `fitWarnings`
+remain additional detail, not a substitute for the Scene warning record.
 
 ## 8. Renderer interface and targets
 
