@@ -19,7 +19,8 @@ python -m venv .venv
 ```
 
 On Windows, use `.venv\Scripts\python.exe` in place of `.venv/bin/python`.
-Always use the project venv: another interpreter may test another checkout.
+Create the venv inside the worktree being tested; an editable venv from another
+checkout may silently import that checkout instead. Always use that venv.
 `CONTRIBUTING.md` has the repository map.
 
 ## Choosing and claiming work
