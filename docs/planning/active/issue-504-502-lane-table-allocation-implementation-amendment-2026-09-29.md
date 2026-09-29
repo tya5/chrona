@@ -1,0 +1,5 @@
+# Implementation amendment — R1 lane-table allocation (#504, #502)
+
+Amends the [R1 plan](issue-504-501-readable-default-implementation-plan-2026-09-29.md) after the [design correction](../../design/issue-504-502-lane-table-allocation-correction-2026-09-29.md) and [architecture review](../../reviews/current/issue-504-502-lane-table-allocation-architecture-review-2026-09-29.md). Before publishing R1, add the declared 300px table minimum to `examples/halcyon-1/layouts/wallboard.yaml`, then regenerate all public contexts affected by the lane Views/profile as one batch (02/03/11/12/16 expected).
+
+Focused gate: compare old/new `laneMembers`, relation IDs and completed `bustest-integration` routes on 02/12; assert meaningful lane cells on 02/03, attached-host table visibility, and unchanged unrelated automatic output. Run `tools/regenerate_public_examples.py --check --jobs 4`, inspect Scene/SVG byte and visible diffs, then rely on CI for full pytest/conformance/public materializers. Keep #504/#502 open until their own literal acceptance reviews and exact review-bearing main CI pass.
