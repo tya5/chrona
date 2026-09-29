@@ -1,6 +1,10 @@
+import json
 from pathlib import Path
 
-from tools.corpus_coverage import CorpusMagnitude, CorpusProject, PROBES, _values_at, magnitude, render, vocabulary
+from tools.corpus_coverage import (
+    CorpusMagnitude, CorpusProject, LaneNameCoverage, PROBES, _values_at,
+    lane_name_coverage, magnitude, render, vocabulary,
+)
 
 
 def _root() -> Path:
@@ -19,6 +23,7 @@ def test_repository_coverage_is_deterministic_and_lists_all_registers():
     assert "## Finite-schema vocabulary" in first
     assert "## Uncovered schema vocabulary" in first
     assert "## Semantic corpus magnitude" in first
+    assert "## Committed lane-name visibility" in first
     assert "| halcyon-1 | 29 | 29 | 24 | 29 |" in first
     assert '`objects.*.schedule.mode` | `"rollup"`' in first
 
@@ -54,3 +59,27 @@ def test_every_unreferenced_example_presentation_file_has_a_declared_reason():
     root = _Path(__file__).resolve().parents[3]
     validate_unreferenced(root)
     assert set(unreferenced_presentation_files(root)) == set(UNREFERENCED_REASONS)
+
+
+def test_lane_name_coverage_deduplicates_members_and_excludes_group_or_synthetic_labels(tmp_path):
+    project = tmp_path / "examples" / "sample"
+    generated = project / "generated"
+    generated.mkdir(parents=True)
+    (project / "manifest.yaml").write_text(
+        'id: sample\nslides:\n  - id: lanes\n    expectedScene: generated/lanes.scene.json\n', encoding="utf-8",
+    )
+    (generated / "lanes.scene.json").write_text(json.dumps({"surfaces": [{
+        "laneMembers": [{"memberId": "a"}, {"memberId": "a"}, {"memberId": "b"}],
+        "primitives": [
+            {"kind": "Text", "purpose": "member-label", "laneMemberId": "a", "sourceRef": "a",
+             "text": "A", "paint": {"opacity": 1}},
+            {"kind": "Text", "purpose": "member-label", "laneMemberId": "a", "sourceRef": "a",
+             "text": "A duplicate", "paint": {"opacity": 1}},
+            {"kind": "Text", "purpose": "group-header", "laneMemberId": "b", "sourceRef": "b",
+             "text": "B", "paint": {"opacity": 1}},
+            {"kind": "Text", "purpose": "member-label", "laneMemberId": "b", "sourceRef": "synthetic",
+             "text": "B", "paint": {"opacity": 1}},
+        ],
+    }]}), encoding="utf-8")
+
+    assert lane_name_coverage(tmp_path) == (LaneNameCoverage("sample", "lanes", 1, 2),)
