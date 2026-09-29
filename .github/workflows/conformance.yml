@@ -3,12 +3,82 @@ on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    - cron: '0 4 * * *'
   workflow_dispatch:
+    inputs:
+      os_failure_probe:
+        description: 'Optional OS-specific failure probe (never for release acceptance)'
+        type: choice
+        options: [none, windows-latest]
+        default: none
 concurrency:
-  group: conformance-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: conformance-${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
-  conformance:
+  classify-pr:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    outputs:
+      path: ${{ steps.classify.outputs.path }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: classify
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: echo "path=$(python tools/classify_ci_change.py "$BASE_SHA" "$HEAD_SHA")" >> "$GITHUB_OUTPUT"
+
+  pr-conformance:
+    needs: classify-pr
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk
+      - id: conformance
+        continue-on-error: true
+        run: python conformance/run_conformance.py
+      - name: Finalize independent CI outcomes
+        if: ${{ always() }}
+        run: >-
+          python tools/check_ci_outcomes.py
+          --required conformance=${{ steps.conformance.outcome }}
+
+  pr-pytest:
+    needs: classify-pr
+    if: ${{ github.event_name == 'pull_request' && needs.classify-pr.outputs.path == 'code' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk
+      - id: pytest
+        continue-on-error: true
+        run: pytest -n 4 --splits 3 --group ${{ matrix.shard }} --splitting-algorithm least_duration
+      - name: Finalize independent CI outcomes
+        if: ${{ always() }}
+        run: >-
+          python tools/check_ci_outcomes.py
+          --required pytest-shard-${{ matrix.shard }}=${{ steps.pytest.outcome }}
+
+  full-matrix:
+    if: ${{ github.event_name != 'pull_request' }}
     strategy:
       fail-fast: false
       matrix:
@@ -29,8 +99,16 @@ jobs:
         if: ${{ always() }}
         continue-on-error: true
         run: pytest -n 4
+      - id: os_probe
+        if: ${{ always() }}
+        continue-on-error: true
+        env:
+          TARGET_OS: ${{ inputs.os_failure_probe }}
+          MATRIX_OS: ${{ matrix.os }}
+        shell: bash
+        run: test "$TARGET_OS" != "$MATRIX_OS"
       - id: wheel_smoke
-        if: ${{ always() && steps.conformance.outcome == 'success' && steps.pytest.outcome == 'success' }}
+        if: ${{ always() && steps.conformance.outcome == 'success' && steps.pytest.outcome == 'success' && steps.os_probe.outcome == 'success' }}
         shell: bash
         run: |
           python -m pip wheel . --no-deps -w dist
@@ -45,9 +123,12 @@ jobs:
           python tools/check_ci_outcomes.py
           --required conformance=${{ steps.conformance.outcome }}
           --required pytest=${{ steps.pytest.outcome }}
+          --required os-probe=${{ steps.os_probe.outcome }}
           --dependent wheel-smoke=${{ steps.wheel_smoke.outcome }}
 
   reproduction-newest-python:
+    needs: classify-pr
+    if: ${{ always() && (github.event_name != 'pull_request' || needs.classify-pr.outputs.path == 'code') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
