@@ -3,6 +3,10 @@
 **Status:** Accepted and implemented.
 **Owns:** Versioned Color Scheme resources, Theme color-intent bindings, color resolution, and accessibility validation.
 
+For View, Layout Profile, and Project schema versioning, additive optional
+properties that preserve prior behavior are added in place without a version
+bump; see [Spec 56 §3.2](56-schema-authoring-and-diagnostics.md#32-schema-version-evolution-591).
+
 ## 1. Authority
 
 Color Scheme owns concrete colors only. Theme retains typography, spacing, stroke, marker, pattern, opacity, text alternatives, and the mapping from a visual role to a closed color intent. Style continues to select roles from facts; Layout continues to own geometry; Scene converts resolved policy to completed concrete paint and adapters consume only that completed value.

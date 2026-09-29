@@ -67,6 +67,9 @@ an unresolved contract or layer gap still requires design correction first.
    Update the living specification when semantics, ownership, public schemas,
    or compatibility promises change. Publish the design and review before
    implementation planning is treated as final.
+   For View, Layout Profile, and Project schemas, apply Spec 56 §3.2:
+   behavior-preserving optional properties are added in place without a
+   version bump; schema `default` annotations do not implement runtime defaults.
 4. **Write the implementation plan.** Split work into slices that can each be
    reviewed, tested, and published. For each slice name the affected files or
    owners, schema and resource migrations, generated evidence, focused tests,
