@@ -47,7 +47,7 @@ visibility:
     overflow: suppress | visible-overflow
 ```
 
-`plot` creates ordered candidates at the eligible mark sides and ranks them against required table text, axis text, marks, accepted labels, required annotations, and viewport bounds. `auto` tries start then end in deterministic order. If no candidate fits, `visible-overflow` completes the first ranked candidate with a warning; explicit suppression remains an author choice.
+`plot` creates ordered candidates at the eligible mark sides and ranks them against required table text, axis text, marks, accepted labels, required annotations, and viewport bounds. `auto` tries start then end in deterministic order. If no candidate fits, `visible-overflow` completes the first ranked candidate with a warning; explicit suppression remains an author choice. A plot member name with an own mark is a narrower exception: its visible fallback must also satisfy the completed mark-association rule below, or fail with `E_LAYOUT_LABEL_ASSOCIATION_UNPLACEABLE`; other label families retain the general fallback.
 
 Generated lanes use Spec 38's plot-name contract: `title` is always selected,
 `finishDelta` is selected by default but may be omitted, and an authored side
@@ -91,23 +91,26 @@ For `fill` lanes, full-band search tests finite preferred/contact candidates aga
 row edges and current axis-aligned obstacles expanded by label bounds and
 clearance. Search declared sides in order, then absolute block displacement,
 fixed direction and stable identity; end gap stays within 2em. It is exhaustive
-only within the final allocated row; `pack` lanes and non-lane placement are unchanged.
+only within the final allocated row; `pack` lanes and non-lane candidate searches are unchanged.
 
-The completed text bounds of every lane member name MUST remain within a
+The completed text bounds of every plot member name with its own mark MUST remain within a
 two-em nearest-edge gap of its own completed mark on either side, or Layout
 MUST complete a source-keyed leader from that text to the mark (#554).
 Full-band stagger counts block displacement as well as inline distance.
 Leader geometry participates in Layout's obstacle/candidate decision; Scene
 only projects it. If no legal candidate/leader exists, the existing
-source-keyed suppression outcome applies. The Scene acceptance check pairs
-each member label and mark by lane/member identity, never by visual order.
+source-keyed suppression outcome applies to suppressible names. A required or
+visible-overflow name instead fails with `E_LAYOUT_LABEL_ASSOCIATION_UNPLACEABLE`;
+it never emits detached text. The Scene acceptance check pairs each member
+label to its exact own mark through `hostPlacementId`, additionally checking
+lane/member identity when present, never by visual order or nearest distance.
 The `memberLabelLeader` presentation semantic has its own Scene purpose and
-lane/member provenance, while deliberately reusing Theme's `dependency`
+optional lane/member provenance, while deliberately reusing Theme's `dependency`
 stroke token. Layout chooses deterministic perimeter ports and a finite
-orthogonal path within the row, exempting only the own label and mark at the
+orthogonal path within the completed owning row band, exempting only the own label and mark at the
 endpoints. Its source-keyed path enters the shared obstacle inventory before
 later labels and semantic routes. A failed route rejects that candidate, not
-the entire label request; only exhaustion invokes suppression.
+the entire label request; only suppressible exhaustion invokes suppression.
 
 Each suppressed name has a typed `SurfacePlacement` fact with lane/member, final
 row extent, remaining capacity and reason `capacity` or `obstruction`, validated
@@ -153,7 +156,9 @@ For suppressed plot member labels, Layout MUST also count completed
 End-side member-name candidates cannot leave more than two times their
 completed Text `fontSize` between their own mark's inline edge and their
 Text bounds. When no end candidate fits within that bound, Layout tries
-the declared start rung, then records suppression and the aggregate count.
+the declared start rung. An accepted start rung farther than two font sizes
+requires a completed leader; suppressible exhaustion records suppression and
+the aggregate count.
 When positive, the count is an `I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=<surface-id>;count=<positive-integer>`
 inspection diagnostic and an `info` CLI diagnostic. Its value MUST equal the
 number of corresponding per-placement `W_LAYOUT_LABEL_SUPPRESSED` facts.

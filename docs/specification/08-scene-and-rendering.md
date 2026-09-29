@@ -469,6 +469,19 @@ uses the same required/optional decision. Absence of a rule does not delete auth
 title or annotation text: those families default to required. Planned/Actual date
 labels are emitted only by their explicit rules.
 
+An emitted plot member name with a completed own mark carries that exact
+mark's `hostPlacementId` in Scene and is associated to it, not to the nearest
+unrelated mark. Layout measures the two-dimensional
+nearest-perimeter distance from completed text bounds to the own mark on both
+start and end sides. If the distance exceeds two font sizes, Layout completes a
+source-keyed member-label leader Path within the owning row band or rejects that
+candidate before trying the next declared one. A suppressible request may use
+its declared suppression after all candidates fail; a required request may not
+emit a detached fallback and instead fails with
+`E_LAYOUT_LABEL_ASSOCIATION_UNPLACEABLE`. This applies to lane and non-lane names without
+changing their distinct placement searches. Scene carries the completed Path
+with optional lane provenance; an adapter does not infer or route it (#554).
+
 For the `table-timeline`, `review`, and `minimal` surface instances, Scene emits the
 following I3 core primitive set before any adapter is invoked: one resolved heading
 `Text` and, when Detail enables it, one resolved subtitle `Text`; one
