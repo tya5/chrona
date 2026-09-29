@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Any, Iterable
 import argparse
 import json
-import subprocess
 import sys
 
 from chrona.presentation.scene.perceptibility import (
@@ -28,13 +27,13 @@ def configure_stdout(stream: Any) -> None:
 
 
 def committed_scene_paths(root: Path = ROOT) -> tuple[Path, ...]:
-    """Return only Git-tracked public generated Scene evidence in stable order."""
-    completed = subprocess.run(("git", "-C", str(root), "ls-files", "-z", "examples"), check=False,
-                               capture_output=True, text=False)
-    if completed.returncode != 0:
-        raise RuntimeError("E_SCENE_PERCEPTIBILITY_DOCUMENT: cannot list committed Scene evidence")
-    paths = tuple(root / Path(item.decode("utf-8")) for item in completed.stdout.split(b"\0") if item)
-    return tuple(path for path in paths if path.match("*/generated/*.scene.json"))
+    """Return every manifest-declared public Scene path, tracked or not."""
+    from tools.derived_evidence import scene_paths
+
+    try:
+        return scene_paths(root)
+    except (OSError, ValueError) as error:
+        raise RuntimeError("E_SCENE_PERCEPTIBILITY_DOCUMENT: cannot discover manifest Scene evidence") from error
 
 
 def evaluate_committed_scenes(paths: Iterable[Path], *, root: Path = ROOT) -> tuple[dict[str, Any], ...]:
