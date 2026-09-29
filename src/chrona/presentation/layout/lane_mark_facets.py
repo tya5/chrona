@@ -360,7 +360,7 @@ def _compose_progress(closure: LaneProjectionClosure, items: Mapping[LaneProject
                       ) -> dict[str, tuple[Any, ...]]:
     if source is None:
         return {}
-    from chrona.presentation.layout.surface_composer import progress_fill_bounds
+    from chrona.presentation.layout.surface_marks import progress_fill_bounds
 
     try:
         inset, radius = theme.progress_track("progress-fill")

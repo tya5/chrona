@@ -5,7 +5,8 @@ import pytest
 
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.path_geometry import open_span_path
-from chrona.presentation.layout.surface_composer import progress_fill_bounds, relation_label_content
+from chrona.presentation.layout.surface_marks import progress_fill_bounds
+from chrona.presentation.layout.surface_composer import relation_label_content
 from chrona.presentation.model.surface_content import RelationPresentationFact
 from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
 from chrona.presentation.layout.surface_quality import (
