@@ -236,7 +236,12 @@ neighborhood. A declared fallback supplies its finite candidate order after
 the preferred side. `inside` may exempt only its own host mark, not a
 comparison sibling or another item. Every lane ladder terminates in
 suppression: if no legal candidate fits, Layout records the source, increments
-the surface count and emits no name; it never changes lane membership. An
+the surface count and emits no name; it never changes lane membership. With
+`rowDistribution: fill`, measured bounded stagger-label demand contributes to
+each lane's required block extent before surplus distribution. Suppression is
+decided only after final allocation and bounded search; its decision identifies
+the lane and exhausted capacity or blocking geometry. It cannot leave
+assignable block space unused while its own lane could grow. An
 attached point's required plot label is a distinct exception: View content
 normalization reads the active composition (`rows` for automatic rows,
 `lane_rows` for generated lanes) and provides its title, planned date and
@@ -262,6 +267,11 @@ ID. A displayed ordinal or a representative member title is not a lane
 identity. A visible delta table
 promise removed during resource migration must be selected in lane-label
 content or explicitly retired.
+Where a group header already names the group, or grouping is absent, a
+counted lane table selects `lane` rather than repeating a group title or
+showing an empty label beside its count. An unrelated singleton is not
+automatically a useful lane: a bundled default may use item-level automatic
+rows instead of inventing a representative lane title.
 
 `automatic` retains its per-object row behavior and exact output bytes, except
 for the already declared attached-point fold; `rows.points: own-row` restores
@@ -270,8 +280,8 @@ an independent automatic row. In lane mode, omitting `attached` from
 other declared packing rules may still group it.
 Authored `explicit` rows and their track policy are separate from generated
 lane membership. `rows.laneTable` is required only in lane mode; item-level
-`tableColumns` are invalid there. New default Views declare lane mode
-explicitly, but default packing is only `[explicit, attached]`. A packaged
+`tableColumns` are invalid there. Generated-lane Views declare lane mode
+and packing explicitly. A packaged
 View seeking transit-map compression must declare `chain` and/or `dates`.
 Hierarchical lanes and a `points: key-row` policy are not implied by this
 contract. View v0.28 is an intentional schema migration; older View
@@ -285,6 +295,9 @@ unavailable Snapshot/Actual sources, invalid table subjects, `automatic` items,
 Projection diagnoses an empty resolved row and ambiguous annotation anchoring.
 Layout diagnoses insufficient measured row height. A lane label that cannot
 fit is suppressed with source-keyed count evidence, never a membership change.
+Committed lane-slide coverage reports visible packed names over all packed
+member names from the completed Scene and attributes every suppressed source;
+a group heading is not a substitute for a member name.
 
 ## 5. Boundary review
 

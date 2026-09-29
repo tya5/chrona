@@ -171,6 +171,10 @@ calendar day. A completed `SceneSurface` carries its own identical scale record 
 serializer that receives only that surface can preserve the evidence. Missing scale
 evidence is `E_PRESENTATION_PRIMITIVE_MISSING`; an adapter MUST NOT reconstruct it
 from viewport, settings, slots, or primitive coordinates.
+Layout resolves any point-mark edge inset from measured mark geometry before
+emitting this range, without changing the View's Date-only domain. Lane
+preflight and final surface composition use the same range; an adapter never
+clips or repositions an endpoint point mark to repair the scale.
 
 The normalized content-family counts are exactly `relations`, `annotations`, `notes`,
 `legendEntries`, and `summaryPanels`. They explain which optional inputs participated
