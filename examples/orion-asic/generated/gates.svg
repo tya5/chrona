@@ -167,3 +167,5 @@
 <text data-scene-id="legend:scale:revision:B0" data-source-ref="scale:revision:B0" data-purpose="legend-label" x="820.893" y="912.138" font-family="Noto Sans, sans-serif" font-weight="400" font-size="12" font-variant-numeric="proportional-nums" opacity="1" fill="#172033">B0</text>
 <text data-scene-id="note:a1-decision" data-source-ref="a1-decision" data-purpose="project-note" x="1067.324" y="819" font-family="Noto Sans, sans-serif" font-weight="400" font-size="14" font-variant-numeric="proportional-nums" opacity="1" fill="#172033">A1 respin decision is taken from A0 characterization data, not from EVT alone.</text>
 </svg>
+
+<!-- hand edit of a derived file: must be rejected by the source-only check (#590 proof) -->
