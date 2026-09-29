@@ -55,4 +55,4 @@ These are review drafts only. No product code, schema resource, conformance chec
 | I2 — conformance and evidence | Additive-only transition rejected; required/removal/retype/default/composition cases classified correctly or fail closed; two independent View branches merge on v0.28; omission behavior remains unchanged |
 | A1 — acceptance | Review has a disposition and direct evidence for all three literal criteria; exact-main CI is green before issue closure |
 
-Predecessor: [Issue #591](https://github.com/tya5/chrona/issues/591) and the baseline plan published in this living record. Successor: implementation plan and acceptance review to be linked here when written; neither is part of this draft.
+Predecessor: [Issue #591](https://github.com/tya5/chrona/issues/591) and the baseline plan published in this record. Successors: [implementation plan](issue-591-schema-versioning-implementation-plan-2026-09-29.md) and [acceptance review](../reviews/issue-591-schema-versioning-acceptance-review-2026-09-30.md).
