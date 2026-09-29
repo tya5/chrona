@@ -220,11 +220,12 @@ primitive or obstacle. Decorative non-member paint has no lane owner. A
 missing, duplicated or mismatched emitted lane primitive fails closed. This
 handoff is absent for automatic and explicit rows and changes no adapter
 schema. See the [B3 correction](../design/issue-467-b3-typed-lane-scene-handoff-correction-2026-09-27.md).
-The public Scene lane-obstacle class inventory includes `mark`,
-`required-label`, and `leader-route`. A `leader-route` facet represents the
-completed stroked-segment footprint of a member-label leader Path; it retains
-the same exact primitive and lane-member correspondence as other facets.
-Both Scene v0.6 and v0.7 schemas admit this class (#554).
+The public Scene lane-obstacle class inventory includes `mark` and
+`required-label`. A member name is associated with its exact mark through
+`hostPlacementId`, not a lane leader facet. The shared Layout obstacle class
+`leader-route` remains available to unrelated annotation routing; it is not a
+Scene lane-obstacle class. The short-lived Scene v0.6/v0.7 lane enum value is
+retired atomically with the #554 member-leader code and public Scene migration.
 For lane mode, View-selected comparison facets also close the Layout mark
 inventory: an unselected `missingActual` facet creates neither a Layout mark
 nor a preflight obstacle, Scene primitive, or lane handoff entry. Scene does
@@ -255,14 +256,13 @@ The natural requirement may grow the timeline host
 when profile constraints permit; a short seed row alone is not grounds for
 suppression.
 
-For `fill` lanes, full-band search tests finite measured-box contacts with row edges and
-current axis-aligned obstacle bounds plus clearance, for each declared side.
-Expanded obstacles form finite blocked block intervals; preferred position and
-legal endpoints cover feasible components. The end-side gap is bounded by the
-existing two-font-size mark-to-text rule. Rank by side order, absolute block
-displacement, fixed direction and stable identity; no lattice cap. This search
-is exhaustive only within the final allocated row; `pack` lanes and non-lane
-labels retain their established bounded side-neighborhood search.
+For `fill` lanes, finite measured-box contact search tests the preferred
+position and obstacle contacts within one measured stagger step above or below
+it, for each declared side. A mark-associated member name must also meet
+Spec 50's two-dimensional own-mark distance bound. Rank by side order,
+absolute block displacement, smaller block coordinate, and stable identity;
+no lattice cap or remote full-row label position is permitted. `pack` lanes
+and non-lane labels retain their established bounded side-neighborhood search.
 
 Each suppressed name has a typed Layout fact with lane/member, final row extent,
 remaining row capacity and reason `capacity` or `obstruction`, checked against
@@ -271,11 +271,11 @@ has no unallocated timeline block after headers and other row minima. A
 capacity reason also requires profile-resolution evidence naming the required
 timeline source still short; an extent fallback alone is not evidence. A miss
 caused by inline bounds or blockers in the final row is `obstruction`, never capacity. Do not
-claim or implement an exhaustive search across hypothetical row heights in this
-slice. Per-name facts stay in `SurfacePlacement`; Scene schema and aggregate
-diagnostic do not change. If context 02 still suppresses after this full-band
-search, pause the slice and publish a design correction before claiming #504
-complete. An
+claim or implement an exhaustive search across hypothetical row heights.
+Per-name facts stay in `SurfacePlacement`; a final-row association miss is
+`obstruction`. The earlier context 02 zero-suppression output is
+characterization; #554's later owner-approved adjacent/start/count rule
+supersedes that historical example gate for association failures. An
 attached point's required plot label is a distinct exception: View content
 normalization reads the active composition (`rows` for automatic rows,
 `lane_rows` for generated lanes) and provides its title, planned date and

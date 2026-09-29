@@ -470,19 +470,16 @@ title or annotation text: those families default to required. Planned/Actual dat
 labels are emitted only by their explicit rules.
 
 An emitted plot member name with a completed own mark carries that exact
-mark's `hostPlacementId` in Scene and is associated to it, not to the nearest
-unrelated mark. Layout measures the two-dimensional
-nearest-perimeter distance from completed text bounds to the own mark on both
-start and end sides. If the distance exceeds two font sizes, Layout completes a
-source-keyed member-label leader Path from the decorated label footprint
-(Text, chip, and label visuals) perimeter to the own mark within the owning
-row band or rejects that
-candidate before trying the next declared one. A suppressible request may use
-its declared suppression after all candidates fail; a required request may not
-emit a detached fallback and instead fails with
-`E_LAYOUT_LABEL_ASSOCIATION_UNPLACEABLE`. This applies to lane and non-lane names without
-changing their distinct placement searches. Scene carries the completed Path
-with optional lane provenance; an adapter does not infer or route it (#554).
+mark's `hostPlacementId` in Scene, not the nearest unrelated mark. Layout
+measures the two-dimensional nearest-perimeter distance from completed Text
+bounds to that mark on both start and end sides. A candidate farther than two
+Text font sizes is rejected before the next declared candidate. Lane `fill`
+search may use only the preferred position and one adjacent measured stagger
+level within the owning lane; non-lane mode retains its finite side-neighborhood
+search. Suppressible exhaustion records its source-keyed suppression; a
+required or visible-overflow name with an own mark instead fails with
+`E_LAYOUT_LABEL_ASSOCIATION_UNPLACEABLE`. Scene and adapters never remeasure,
+move, or connect the name. No member-label leader Path is emitted (#554).
 
 For the `table-timeline`, `review`, and `minimal` surface instances, Scene emits the
 following I3 core primitive set before any adapter is invoked: one resolved heading

@@ -60,6 +60,10 @@ an unresolved contract or layer gap still requires design correction first.
    behavior, schema and identity rules, layer connections, failure behavior,
    extension points, and intended incompatibilities. Check the result against
    the whole architecture and adjacent designs, not only the target module.
+   Keep core rules project-independent; use existing declared project resources
+   for project-specific presentation tuning. Test core rules with synthetic
+   fixtures; treat corpus output as evidence against approved design targets,
+   not as an oracle or a reason to edit corpus data to pass a render criterion.
    Update the living specification when semantics, ownership, public schemas,
    or compatibility promises change. Publish the design and review before
    implementation planning is treated as final.
@@ -78,9 +82,12 @@ an unresolved contract or layer gap still requires design correction first.
    migration impact instead.
 6. **Verify and review.** Run focused tests during each slice. Before accepting
    a slice, check conformance and affected public materializers, inspect
-   generated SVG/Scene/other evidence as a batch, and compare intended byte
-   changes. Use the repository's CI matrix for the full pytest and release
-   gate where the plan specifies it; do not duplicate a costly full local run
+   generated SVG/Scene/other evidence as a batch, and compare intended changes
+   with the general rule and approved design targets. Byte identity proves only
+   that an intended no-behavior-change slice changed nothing; it is not a
+   quality bar for a behavior change. Use the repository's CI matrix for the
+   full pytest and release gate where the plan specifies it; do not duplicate
+   a costly full local run
    without a concrete risk. Review behavior, layer ownership, extension
    points, regressions, and every literal issue acceptance item. A passing test
    alone is not acceptance.
