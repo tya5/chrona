@@ -1,0 +1,5 @@
+# Architecture review — lane stagger envelope (#504)
+
+Reviewed the [correction](../../design/issue-504-lane-stagger-envelope-correction-2026-09-29.md) against Specifications 38 and 50, the [R2a architecture review](issue-504-501-lane-label-search-architecture-review-2026-09-29.md), and the R1/R4 Layout contracts. The earlier interval count is a lower bound, not a reliable capacity minimum when completed marks and earlier labels consume candidate contacts. The conservative measured-level envelope closes that allocation gap without asking View to guess geometry or Scene to retry it.
+
+Layout alone owns both the preflight minimum and final contact search. The same measured intent and completed scale feed each; row membership and public schemas stay unchanged. Oversizing is a deliberate allocation tradeoff, limited to lane rows and bounded by the finite label inventory. Profile shortfall remains separate from a final-row geometric obstruction. The design is approved for R2 implementation, subject to focused envelope/scale tests, zero suppressed names on 02, 11/12 attribution, unchanged 04/07/15 bytes, and CI.
