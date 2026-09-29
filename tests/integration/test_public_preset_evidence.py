@@ -99,8 +99,8 @@ def test_readable_default_resources_are_mirrored_and_selected_without_mutating_e
             labels = declared["body"]["visibility"]["labels"]
             assert (labels["placement"], labels["content"], labels["side"]) == ("plot", ["title"], "end")
             assert declared["version"] == "chrona/view/v0.28"
-            assert declared["body"]["rows"]["mode"] == "lanes"
-            assert "tableColumns" not in declared["body"]
+            assert declared["body"]["rows"] == {"mode": "automatic"}
+            assert [column["id"] for column in declared["body"]["tableColumns"]] == ["Task", "Plan"]
             assert declared["body"]["visibility"]["fallback"]["labels"] == ["end", "start", "suppress"]
             assert declared["body"]["backgroundDecoration"]["rows"] == "alternate"
         else:
