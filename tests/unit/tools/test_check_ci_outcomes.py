@@ -16,3 +16,16 @@ def test_ci_outcomes_rejects_dependent_execution_after_failed_prerequisite():
         "E_CI_REQUIRED_STEP:conformance:failure",
         "E_CI_DEPENDENT_STEP:wheel:success:expected=skipped",
     )
+
+
+def test_ci_outcomes_rejects_failed_or_skipped_pr_shard():
+    assert assess(required=(("pytest-shard-2", "failure"),), dependent=()) == (
+        "E_CI_REQUIRED_STEP:pytest-shard-2:failure",
+    )
+    assert assess(required=(("pytest-shard-3", "skipped"),), dependent=()) == (
+        "E_CI_REQUIRED_STEP:pytest-shard-3:skipped",
+    )
+
+
+def test_ci_outcomes_accepts_doc_only_conformance():
+    assert assess(required=(("conformance", "success"),), dependent=()) == ()

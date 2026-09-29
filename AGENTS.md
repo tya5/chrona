@@ -154,6 +154,15 @@ Archived records are evidence, not current design authority.
 
 ## Publication and CI discipline
 
+CI has two PR paths: a PR changing only `docs/**`, root `AGENTS.md`, root
+`README*`, or root `.ignore` runs Ubuntu conformance without pytest or wheel
+smoke; all other PRs run Ubuntu conformance and three parallel pytest shards.
+Both code PRs and full runs retain newest-Python public-materializer
+reproduction. Pushes to `main`, nightly runs, and manual runs use the full
+three-OS conformance, pytest, and wheel-smoke matrix. PR speed is not release
+acceptance: close an issue only after citing the three-OS `main` CI run for
+the exact commit containing its acceptance review.
+
 - Before each push, fetch `origin/main`; inspect ahead/behind state, exact
   target commits, staged diff, generated output, and conflict risk. Publish
   serially. Never force-push `main`, reset away others' work, or overwrite an
