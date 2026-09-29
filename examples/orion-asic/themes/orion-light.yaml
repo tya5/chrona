@@ -103,7 +103,7 @@ body:
       value: 12
     timeline-row-height:
       type: number
-      value: 66
+      value: 68
     timeline-row-padding:
       type: number
       value: 8
