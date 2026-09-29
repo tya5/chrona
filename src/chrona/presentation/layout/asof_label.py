@@ -63,7 +63,7 @@ def find_asof_label_candidate(
     # A hosted chip is centered on the rule. Derive a finite set of vertical
     # origins from plot edges and measured-footprint contacts with every
     # required obstacle. The nearest/topmost candidate wins ties.
-    hosted_x = (rule_x, rule_x - width)
+    hosted_x = rule_x - width / 2
     y_contacts = {plot_top, plot_bottom - height}
     for item in selected:
         geometry = item.geometry
@@ -77,9 +77,7 @@ def find_asof_label_candidate(
     positions = sorted((y for y in y_contacts if plot_top <= y <= plot_bottom - height),
                        key=lambda y: (abs(y - plot_top), y))
     for y in positions:
-        for side, x in (("rule-hosted-end", hosted_x[0]),
-                        ("rule-hosted-start", hosted_x[1])):
-            box = LabelRect(x, y, width, height)
-            if legal(box, hosted=True):
-                return LabelPlacement(side, box)
+        box = LabelRect(hosted_x, y, width, height)
+        if legal(box, hosted=True):
+            return LabelPlacement("rule-hosted", box)
     return None

@@ -6,6 +6,7 @@ authoring inputs enter the same review pipeline as immutable evidence renders.
 from pathlib import Path
 from copy import deepcopy
 from dataclasses import replace
+from datetime import date
 from hashlib import sha256
 import json
 import re
@@ -80,19 +81,37 @@ def test_fixed_lane_preflight_and_final_composition_share_the_completed_scale(mo
         viewport=(1920, 1080),
     )
     original = builder.compose_surface_layout
-    scales = []
+    compositions = []
 
     def capture(layout_request):
         preflight_scale = layout_request.fixed_lane_preflight.scale
         composition = original(layout_request)
-        scales.append((preflight_scale, composition.placement.scale))
+        compositions.append((preflight_scale, composition.placement))
         return composition
 
     monkeypatch.setattr(builder, "compose_surface_layout", capture)
     render_review(request)
 
-    assert len(scales) == 1
-    assert scales[0][0] is scales[0][1]
+    assert len(compositions) == 1
+    preflight_scale, placement = compositions[0]
+    assert preflight_scale is placement.scale
+    scale = placement.scale
+    assert scale is not None
+    first_tier = sorted(
+        (shape for shape in placement.shapes
+         if shape.placement_id.startswith("axis-band-rect:0:")),
+        key=lambda shape: shape.bounds.inline,
+    )
+    assert first_tier
+    assert float(first_tier[0].bounds.inline) == pytest.approx(scale.range_start)
+    assert float(first_tier[-1].bounds.inline + first_tier[-1].bounds.inline_size) == pytest.approx(scale.range_end)
+    closed_days = [shape for shape in placement.shapes
+                   if shape.placement_id.startswith("calendar-closed:")]
+    assert closed_days
+    for shape in closed_days:
+        closed_day = date.fromisoformat(shape.placement_id.removeprefix("calendar-closed:"))
+        expected = scale.origin + (closed_day - scale.domain_start).days * scale.unit_ratio
+        assert float(shape.bounds.inline) == pytest.approx(expected)
 
 
 def test_halcyon_02_routed_note_trial_is_bounded_clear_and_deterministic(monkeypatch, tmp_path):

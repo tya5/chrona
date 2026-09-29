@@ -1850,7 +1850,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         label_requests.append(LabelRequest(
             "as-of-label", "actual-set", content,
             LabelRect(x, timeline_bounds[1], 0.0, 0.0),
-            ("plot-top-end", "plot-top-start", "rule-hosted-end", "rule-hosted-start"),
+            ("plot-top-end", "plot-top-start", "rule-hosted"),
             "text", "timeline-as-of", CollisionDomain("timeline", "overlay"), "suppress",
             rule_host_obstacle_id="as-of",
             semantic_id="asOfLabel",

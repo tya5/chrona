@@ -42,7 +42,9 @@ def test_rule_hosted_candidate_exempts_only_named_rule():
     )
     result = _candidate(index)
     assert result is not None
-    assert result.side.startswith("rule-hosted-")
+    assert result.side == "rule-hosted"
+    assert result.bounds.x == 40
+    assert result.bounds.x + result.bounds.width / 2 == 50
     assert result.bounds.y >= 10
 
 
