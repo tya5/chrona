@@ -1,0 +1,3 @@
+# Architecture review — #504/#502 table allocation correction
+
+The [correction](../../design/issue-504-502-lane-table-allocation-correction-2026-09-29.md) is local to the wallboard Layout profile. View continues to own lane label intent, Layout owns the table/timeline space constraint and completed route geometry, Scene projects, and adapters serialize. It preserves Specs 08/24/38/50, #467's data-only lane identity, and #494's route quality gate; no schema, domain model or compatibility behavior changes. The 300px minimum is declared resource data, not a context-ID conditional in code. The direct 02 diagnostic restores the missing relation without hiding a warning. R1 remains unaccepted until the full public-context batch and focused route/table checks pass.
