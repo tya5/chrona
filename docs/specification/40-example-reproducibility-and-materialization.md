@@ -3,6 +3,8 @@
 **Status:** Design complete — Issue 38
 **Depends on:** Render Context v0.5/v0.6 and Specification 38.
 
+The PR/main evidence publication rule below is the approved #590 migration target; it becomes operational with the corresponding CI rollout. Until then, the published CI still checks committed outputs in each PR.
+
 ## 1. Version policy
 
 The public materializer accepts immutable Render Context v0.5 and v0.6. These are the only current Context versions. v0.5 remains supported for existing materialized examples; v0.6 is the current form for row-composition examples. No v0.4 test/schema compatibility is retained.
@@ -13,11 +15,11 @@ Materialization is a test/example adapter, not a new runtime authority. For loca
 
 ## 3. Context identities and expected SVG
 
-Example Context files are derived immutable closure manifests. Any change to a referenced byte sequence requires updating its content identity and regenerating the expected SVG through the public CLI. The acceptance test validates every top-level and input reference, including colorScheme. Hand editing an expected SVG is not a generation path.
+Example Context files are derived immutable closure manifests. Any change to a referenced byte sequence requires updating its content identity in the same source change. Expected SVG and Scene bytes are regenerated through the public CLI, never hand edited. Source PRs carry the immutable closure and a CI-generated output preview, but do not commit the expected bytes; one serialized post-merge operation publishes those bytes on `main`. The acceptance test validates every top-level and input reference, including colorScheme, against the PR's freshly materialized snapshot or the synchronized `main` artifact as appropriate.
 
 ## 4. Verification and CI
 
-The acceptance Context test selects the schema by Context version. Integration tests materialize every manifest slide through `render-review`, compare its expected SVG byte-for-byte, and prove mismatch detection. CI runs this integration suite. A materialization failure is a release failure.
+The acceptance Context test selects the schema by Context version. Integration tests materialize every manifest slide through `render-review`, compare its expected SVG and Scene byte-for-byte with the freshly generated PR snapshot or synchronized `main` artifacts, and prove mismatch detection. PR CI fails render/closure/quality errors and exposes source-caused output diffs without requiring stale committed evidence to match. A successful post-merge regeneration publishes the canonical derived bytes before exact-main release CI. A failed or pending regeneration blocks the next merge; a materialization failure remains a release failure.
 
 ## 5. Historical evidence
 
