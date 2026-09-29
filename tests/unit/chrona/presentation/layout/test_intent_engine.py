@@ -54,8 +54,9 @@ def test_content_requirement_reallocates_the_whole_normal_flow_profile():
     extent = resolve_content_block_extent(resolved, viewport_inline=1600, seed_block=900,
                                           measurements=MEASUREMENTS,
                                           required_blocks={"timeline": required})
-    assert extent > 900
-    placed = decisions(solve_layout(resolved, viewport_inline=1600, viewport_block=extent,
+    assert extent.extent > 900
+    assert not extent.short_sources
+    placed = decisions(solve_layout(resolved, viewport_inline=1600, viewport_block=extent.extent,
                                     measurements=MEASUREMENTS))
     assert placed["timeline"].block_size >= required
     assert placed["table"].block + placed["table"].block_size == (
@@ -71,9 +72,14 @@ def test_content_requirement_does_not_inflate_a_fixed_timeline_host():
         "panel.minimum": 180,
     }.items()}
     resolved = resolve_layout_profile(raw, available_sources=SOURCES, theme={"body": {"values": values}})
-    assert resolve_content_block_extent(resolved, viewport_inline=1600, seed_block=900,
-                                        measurements=MEASUREMENTS,
-                                        required_blocks={"timeline": Decimal(850)}) == 900
+    result = resolve_content_block_extent(resolved, viewport_inline=1600, seed_block=900,
+                                          measurements=MEASUREMENTS,
+                                          required_blocks={"timeline": Decimal(850)})
+    assert result.extent == 900
+    assert len(result.short_sources) == 1
+    assert result.short_sources[0].source_id == "timeline"
+    assert result.short_sources[0].required_block == Decimal(850)
+    assert result.short_sources[0].allocated_block < Decimal(850)
 
 
 def test_content_change_recenters_title():
