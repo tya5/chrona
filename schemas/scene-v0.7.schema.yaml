@@ -85,13 +85,13 @@ $defs:
   shadow: {description: "A completed shadow with fidelity policy.", type: object, required: [color, offsetInline, offsetBlock, blur, opacity, fidelity], additionalProperties: false, properties: {color: {$ref: "#/$defs/text"}, offsetInline: {$ref: "#/$defs/number"}, offsetBlock: {$ref: "#/$defs/number"}, blur: {$ref: "#/$defs/nonnegative"}, opacity: {$ref: "#/$defs/unitInterval"}, fidelity: {$ref: "#/$defs/fidelity"}}}
   strokeFinish: {description: "A completed stroke cap, join, and fidelity policy.", type: object, required: [lineCap, lineJoin, fidelity], additionalProperties: false, properties: {lineCap: {$ref: "#/$defs/lineCap"}, lineJoin: {$ref: "#/$defs/lineJoin"}, fidelity: {$ref: "#/$defs/fidelity"}}}
   fidelity: {description: "Whether a visual detail must be preserved by consumers.", enum: [required, decorative-optional]}
-  lineCap: {description: "A closed SVG-compatible stroke cap.", enum: [butt, round, square]}
-  lineJoin: {description: "A closed SVG-compatible stroke join.", enum: [miter, round, bevel]}
+  lineCap: {description: "A closed SVG-compatible stroke cap.", $ref: "urn:chrona:graphics-v0.1#/$defs/lineCap"}
+  lineJoin: {description: "A closed SVG-compatible stroke join.", $ref: "urn:chrona:graphics-v0.1#/$defs/lineJoin"}
   textLayout: {description: "Measured text geometry, resolved font identity, and Layout-selected orientation.", type: object, required: [bounds, baseline, lines, family, weight, fontSize, lineHeight, assetIdentity, orientation, rotationDegrees], additionalProperties: false, properties: {bounds: {$ref: "#/$defs/bounds"}, baseline: {$ref: "#/$defs/point"}, lines: {$ref: "#/$defs/nonemptyStrings"}, family: {$ref: "#/$defs/text"}, weight: {$ref: "#/$defs/positiveInteger"}, fontSize: {$ref: "#/$defs/positive"}, lineHeight: {$ref: "#/$defs/positive"}, letterSpacing: {description: "Non-default resolved letter spacing in surface units.", type: number}, textTransform: {description: "Non-default transform already reflected in lines and bounds.", enum: [uppercase, lowercase, capitalize]}, numericSpacing: {description: "Resolved numeric figure spacing selected before measurement.", enum: [proportional, tabular]}, orientation: {description: "Finite Layout-selected orientation of the completed text block.", enum: [horizontal, rotate-cw, rotate-ccw]}, rotationDegrees: {description: "Exact rotation selected by Layout for the supplied baseline pivot.", enum: [0, 90, -90]}, assetIdentity: {$ref: "#/$defs/identity"}}}
   nonemptyStrings: {description: "A non-empty ordered text line collection.", type: array, minItems: 1, items: {$ref: "#/$defs/text"}}
   marker: {description: "A completed relation marker geometry.", type: object, required: [outline, headLength, headWidth, attachmentOffset, paintMode], additionalProperties: false, properties: {outline: {$ref: "#/$defs/nonemptyPathCommands"}, headLength: {$ref: "#/$defs/positive"}, headWidth: {$ref: "#/$defs/positive"}, attachmentOffset: {$ref: "#/$defs/nonnegative"}, paintMode: {$ref: "#/$defs/markerPaintMode"}}}
   nonemptyPathCommands: {description: "A non-empty completed path command list.", type: array, minItems: 1, items: {$ref: "#/$defs/pathCommand"}}
-  markerPaintMode: {description: "The closed marker paint mode.", enum: [fill, stroke]}
+  markerPaintMode: {description: "The closed marker paint mode.", $ref: "urn:chrona:graphics-v0.1#/$defs/paintMode"}
   pattern: {description: "A completed legacy hatch or catalogue tile.", examples: [{tileInlineSize: 4, tileBlockSize: 4, angleDegrees: 0, strokes: [{start: [0, 0], end: [0, 4], width: 1}]}], oneOf: [{$ref: "#/$defs/legacyPattern"}, {$ref: "#/$defs/catalogPattern"}]}
   legacyPattern: {description: "The unchanged v0.6 repeated line geometry.", type: object, required: [tileInlineSize, tileBlockSize, angleDegrees, strokes], additionalProperties: false, properties: {tileInlineSize: {$ref: "#/$defs/positive"}, tileBlockSize: {$ref: "#/$defs/positive"}, angleDegrees: {$ref: "#/$defs/patternAngle"}, strokes: {$ref: "#/$defs/patternStrokes"}}}
   catalogPattern:
@@ -103,7 +103,7 @@ $defs:
       tileInlineSize: {$ref: "#/$defs/positive"}
       tileBlockSize: {$ref: "#/$defs/positive"}
       angleDegrees: {$ref: "#/$defs/patternAngle"}
-      densityBasisPoints: {description: "Verified intrinsic tile coverage in basis points.", type: integer, minimum: 1, maximum: 10000}
+      densityBasisPoints: {description: "Verified intrinsic tile coverage in basis points.", $ref: "urn:chrona:graphics-v0.1#/$defs/densityBasisPoints"}
       primitives: {description: "Ordered normalized tile-local ink geometry.", type: array, minItems: 1, maxItems: 64, items: {$ref: "#/$defs/catalogPatternPrimitive"}}
       origin: {$ref: "#/$defs/point"}
       regionBounds: {$ref: "#/$defs/bounds"}
@@ -129,20 +129,14 @@ $defs:
         additionalProperties: false
         properties:
           kind: {description: "Path primitive discriminator.", const: path}
-          paint: {description: "Whether the path fills or strokes ink.", enum: [fill, stroke]}
+          paint: {description: "Whether the path fills or strokes ink.", $ref: "urn:chrona:graphics-v0.1#/$defs/paintMode"}
           commands: {description: "Ordered normalized tile-local path commands.", type: array, minItems: 1, maxItems: 2048, items: {$ref: "#/$defs/catalogPatternCommand"}}
           strokeWidth: {$ref: "#/$defs/positive"}
           lineCap: {$ref: "#/$defs/lineCap"}
           lineJoin: {$ref: "#/$defs/lineJoin"}
         allOf:
-          - description: "Stroke paths require completed width and finish."
-            examples: [{kind: path, paint: stroke, commands: [{kind: move, points: [0, 0]}], strokeWidth: 1, lineCap: round, lineJoin: round}]
-            if: {properties: {paint: {const: stroke}}, required: [paint]}
-            then: {required: [strokeWidth, lineCap, lineJoin]}
-          - description: "Fill paths cannot carry stroke-only geometry."
-            examples: [{kind: path, paint: fill, commands: [{kind: move, points: [0, 0]}]}]
-            if: {properties: {paint: {const: fill}}, required: [paint]}
-            then: {not: {anyOf: [{required: [strokeWidth]}, {required: [lineCap]}, {required: [lineJoin]}]}}
+          - {description: "Stroke paths require completed width and finish.", $ref: "urn:chrona:graphics-v0.1#/$defs/strokePaintRequiresStrokeFields"}
+          - {description: "Fill paths cannot carry stroke-only geometry.", $ref: "urn:chrona:graphics-v0.1#/$defs/fillPaintForbidsStrokeFields"}
   catalogPatternCommand:
     description: "One completed M, L, Q, or Z tile-local command."
     type: object
@@ -164,7 +158,7 @@ $defs:
         examples: [{kind: quadratic, points: [0, 0, 1, 1]}]
         if: {properties: {kind: {const: quadratic}}, required: [kind]}
         then: {properties: {points: {minItems: 4, maxItems: 4}}}
-  patternAngle: {description: "A pattern angle in the half-open degree range.", type: number, minimum: 0, exclusiveMaximum: 360}
+  patternAngle: {description: "A pattern angle in the half-open degree range.", $ref: "urn:chrona:graphics-v0.1#/$defs/tileAngle"}
   patternStrokes: {description: "A non-empty ordered pattern stroke list.", type: array, minItems: 1, items: {$ref: "#/$defs/patternStroke"}}
   patternStroke: {description: "One completed pattern stroke.", type: object, required: [start, end, width], additionalProperties: false, properties: {start: {$ref: "#/$defs/point"}, end: {$ref: "#/$defs/point"}, width: {$ref: "#/$defs/positive"}}}
   symbol: {description: "A completed symbol outline.", type: object, required: [outline], additionalProperties: false, properties: {outline: {$ref: "#/$defs/nonemptyPathCommands"}}}

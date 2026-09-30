@@ -66,7 +66,7 @@ properties:
                   value:
                     oneOf:
                       - {type: object, additionalProperties: false, required: [kind], properties: {kind: {const: outline}}}
-                      - {type: object, additionalProperties: false, required: [kind, tileInlineSize, tileBlockSize, angle, strokeWidth], properties: {kind: {const: diagonal-hatch}, tileInlineSize: {type: number, exclusiveMinimum: 0}, tileBlockSize: {type: number, exclusiveMinimum: 0}, angle: {type: number, minimum: 0, exclusiveMaximum: 360}, strokeWidth: {type: number, exclusiveMinimum: 0}}}
+                      - {type: object, additionalProperties: false, required: [kind, tileInlineSize, tileBlockSize, angle, strokeWidth], properties: {kind: {const: diagonal-hatch}, tileInlineSize: {type: number, exclusiveMinimum: 0}, tileBlockSize: {type: number, exclusiveMinimum: 0}, angle: {$ref: "urn:chrona:graphics-v0.1#/$defs/tileAngle"}, strokeWidth: {type: number, exclusiveMinimum: 0}}}
                       - description: "A catalogue-resolved pattern reference; exact role/property applicability is enforced by the Theme capability registry."
                         type: object
                         additionalProperties: false

@@ -1,0 +1,88 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:graphics-v0.1"
+title: "Chrona Shared Graphics Definitions v0.1"
+description: >-
+  The bounded drawing vocabulary that the asset ingress and the asset catalog share, referenced as
+  `urn:chrona:graphics-v0.1#/$defs/<name>`: the glyph viewport, the pattern tile, filled circle and
+  rectangle primitives, and the stroke rules of a path. The part asserts nothing at its root. Each
+  definition is frozen once published: the inventory records a digest per definition and a change is a
+  new part version, never an edit. The bounds (coordinates 0..256, radius at most 128, viewport at most
+  4096) belong to authored and imported assets; Scene carries Layout-completed geometry without them and
+  is a sibling shape, not a reference to these definitions. A definition that is an `enum` has no `type`,
+  so a site keeps its dereferenced form.
+$defs:
+  viewport:
+    description: "Positive integer source-unit dimensions of a glyph or icon, used to preserve aspect ratio."
+    examples: [{inlineSize: 24, blockSize: 24}]
+    type: object
+    required: [inlineSize, blockSize]
+    additionalProperties: false
+    properties:
+      inlineSize: {description: "Positive source-unit width.", type: integer, minimum: 1, maximum: 4096}
+      blockSize: {description: "Positive source-unit height.", type: integer, minimum: 1, maximum: 4096}
+  tile:
+    description: "Positive finite repeat-tile dimensions in tile units."
+    examples: [{inlineSize: 8, blockSize: 8}]
+    type: object
+    required: [inlineSize, blockSize]
+    additionalProperties: false
+    properties:
+      inlineSize: {description: "Tile width in units.", type: number, minimum: 1, maximum: 256}
+      blockSize: {description: "Tile height in units.", type: number, minimum: 1, maximum: 256}
+  tileAngle:
+    description: "Clockwise rotation of a pattern about its tile center, in degrees."
+    examples: [45]
+    type: number
+    minimum: 0
+    exclusiveMaximum: 360
+  densityBasisPoints:
+    description: "Covered fraction of the fixed rotated 128x128 center grid, in basis points (100 basis points = 1%)."
+    examples: [2500]
+    type: integer
+    minimum: 1
+    maximum: 10000
+  circlePrimitive:
+    description: "One filled circle inside a pattern tile."
+    examples: [{kind: circle, cx: 4, cy: 4, radius: 1}]
+    type: object
+    required: [kind, cx, cy, radius]
+    additionalProperties: false
+    properties:
+      kind: {description: "Filled circle primitive kind.", const: circle}
+      cx: {description: "Center x coordinate within the tile.", type: number, minimum: 0, maximum: 256}
+      cy: {description: "Center y coordinate within the tile.", type: number, minimum: 0, maximum: 256}
+      radius: {description: "Positive circle radius.", type: number, exclusiveMinimum: 0, maximum: 128}
+  rectanglePrimitive:
+    description: "One filled rectangle inside a pattern tile."
+    examples: [{kind: rect, x: 0, y: 0, inlineSize: 4, blockSize: 4}]
+    type: object
+    required: [kind, x, y, inlineSize, blockSize]
+    additionalProperties: false
+    properties:
+      kind: {description: "Filled rectangle primitive kind.", const: rect}
+      x: {description: "Rectangle left coordinate within the tile.", type: number, minimum: 0, maximum: 256}
+      y: {description: "Rectangle top coordinate within the tile.", type: number, minimum: 0, maximum: 256}
+      inlineSize: {description: "Positive rectangle width.", type: number, exclusiveMinimum: 0, maximum: 256}
+      blockSize: {description: "Positive rectangle height.", type: number, exclusiveMinimum: 0, maximum: 256}
+  paintMode:
+    description: "Theme-owned paint mode of a path: filled or stroked."
+    examples: [fill]
+    enum: [fill, stroke]
+  lineCap:
+    description: "Stroke endpoint shape."
+    examples: [round]
+    enum: [butt, round, square]
+  lineJoin:
+    description: "Stroke corner shape."
+    examples: [round]
+    enum: [miter, round, bevel]
+  strokePaintRequiresStrokeFields:
+    description: "A stroked path names its width, cap, and join. Applies to an object that declares `paint`, `strokeWidth`, `lineCap`, and `lineJoin`."
+    examples: [{paint: stroke, strokeWidth: 1, lineCap: round, lineJoin: round}]
+    if: {properties: {paint: {const: stroke}}, required: [paint]}
+    then: {required: [strokeWidth, lineCap, lineJoin]}
+  fillPaintForbidsStrokeFields:
+    description: "A filled path carries none of the stroke-only fields. Applies to an object that declares `paint`, `strokeWidth`, `lineCap`, and `lineJoin`."
+    examples: [{paint: fill}]
+    if: {properties: {paint: {const: fill}}, required: [paint]}
+    then: {not: {anyOf: [{required: [strokeWidth]}, {required: [lineCap]}, {required: [lineJoin]}]}}

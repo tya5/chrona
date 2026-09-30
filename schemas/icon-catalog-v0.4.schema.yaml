@@ -32,13 +32,7 @@ allOf:
               sourceContentIdentity: {description: "SHA-256 of the exact supplied local source bytes.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
               sourceVersion: {description: "Optional upstream collection version supplied by the local source.", type: string, minLength: 1}
               lastModified: {description: "Optional upstream collection modification marker.", type: string, minLength: 1}
-              license:
-                type: object
-                required: [spdx, notice]
-                additionalProperties: false
-                properties:
-                  spdx: {description: "Declared SPDX identifier; policy remains the author's decision.", type: string, minLength: 1}
-                  notice: {description: "Complete notice that must travel with this catalog.", type: string, minLength: 1}
+              license: {description: "Declared license identifier and the complete notice that must travel with this catalog.", $ref: "urn:chrona:common-v0.1#/$defs/license"}
             allOf:
               - description: "Iconify provenance includes its source prefix."
                 examples: [{sourceKind: iconify-json, sourcePrefix: material-symbols}]
@@ -72,41 +66,27 @@ $defs:
     description: "Portable identifier component used in a catalog set, alias, or entry name."
     examples: [material-symbols]
     $ref: "urn:chrona:common-v0.1#/$defs/portableName"
-  viewport:
-    description: "Positive source-unit dimensions used to preserve aspect ratio."
-    type: object
-    required: [inlineSize, blockSize]
-    additionalProperties: false
-    properties:
-      inlineSize: {description: "Positive source-unit width.", type: integer, minimum: 1, maximum: 4096}
-      blockSize: {description: "Positive source-unit height.", type: integer, minimum: 1, maximum: 4096}
   path:
     description: "One normalized fill or stroke path part; geometry is renderer-neutral and has no fixed color."
     type: object
     required: [paint, data]
     additionalProperties: false
     properties:
-      paint: {description: "Theme-owned paint mode.", enum: [fill, stroke]}
+      paint: {description: "Theme-owned paint mode.", $ref: "urn:chrona:graphics-v0.1#/$defs/paintMode"}
       data: {description: "Canonical normalized primitive stream: uppercase M, L, Q, Z and finite decimal coordinates.", type: string, minLength: 1, maxLength: 65536}
       strokeWidth: {description: "Positive source-unit stroke width.", type: number, exclusiveMinimum: 0, maximum: 1024}
-      lineCap: {description: "Stroke endpoint shape.", enum: [butt, round, square]}
-      lineJoin: {description: "Stroke corner shape.", enum: [miter, round, bevel]}
+      lineCap: {description: "Stroke endpoint shape.", $ref: "urn:chrona:graphics-v0.1#/$defs/lineCap"}
+      lineJoin: {description: "Stroke corner shape.", $ref: "urn:chrona:graphics-v0.1#/$defs/lineJoin"}
     allOf:
-      - description: "Stroke paths require width, cap, and join."
-        examples: [{paint: stroke, data: "M 0 0 L 1 1", strokeWidth: 1, lineCap: round, lineJoin: round}]
-        if: {properties: {paint: {const: stroke}}, required: [paint]}
-        then: {required: [strokeWidth, lineCap, lineJoin]}
-      - description: "Fill paths do not carry stroke-only fields."
-        examples: [{paint: fill, data: "M 0 0 L 1 1 Z"}]
-        if: {properties: {paint: {const: fill}}, required: [paint]}
-        then: {not: {anyOf: [{required: [strokeWidth]}, {required: [lineCap]}, {required: [lineJoin]}]}}
+      - {description: "Stroke paths require width, cap, and join.", $ref: "urn:chrona:graphics-v0.1#/$defs/strokePaintRequiresStrokeFields"}
+      - {description: "Fill paths do not carry stroke-only fields.", $ref: "urn:chrona:graphics-v0.1#/$defs/fillPaintForbidsStrokeFields"}
   glyph:
     description: "A bounded normalized #464 glyph fitted by existing mark geometry."
     type: object
     required: [viewport, parts]
     additionalProperties: false
     properties:
-      viewport: {$ref: "#/$defs/viewport"}
+      viewport: {$ref: "urn:chrona:graphics-v0.1#/$defs/viewport"}
       parts: {description: "Ordered normalized paths, without fixed colors.", type: array, minItems: 1, maxItems: 32, items: {$ref: "#/$defs/path"}}
   pattern:
     description: "A finite repeat tile; coordinates and density are verified by the importer."
@@ -114,60 +94,30 @@ $defs:
     required: [tile, angle, densityBasisPoints, primitives]
     additionalProperties: false
     properties:
-      tile:
-        description: "Positive tile dimensions in normalized tile units."
-        type: object
-        required: [inlineSize, blockSize]
-        additionalProperties: false
-        properties:
-          inlineSize: {description: "Tile width in units.", type: number, minimum: 1, maximum: 256}
-          blockSize: {description: "Tile height in units.", type: number, minimum: 1, maximum: 256}
-      angle: {description: "Clockwise rotation about tile center in degrees.", type: number, minimum: 0, exclusiveMaximum: 360}
-      densityBasisPoints: {description: "Covered fraction of the fixed rotated 128x128 center grid, in basis points (100 basis points = 1%); importer verifies using periodic edge wrapping and half-up rounding.", type: integer, minimum: 1, maximum: 10000}
+      tile: {description: "Positive tile dimensions in normalized tile units.", $ref: "urn:chrona:graphics-v0.1#/$defs/tile"}
+      angle: {description: "Clockwise rotation about tile center in degrees.", $ref: "urn:chrona:graphics-v0.1#/$defs/tileAngle"}
+      densityBasisPoints: {description: "Covered fraction of the fixed rotated 128x128 center grid, in basis points (100 basis points = 1%); importer verifies using periodic edge wrapping and half-up rounding.", $ref: "urn:chrona:graphics-v0.1#/$defs/densityBasisPoints"}
       primitives: {description: "Ordered closed tile primitives; importer checks coordinates against tile and lowers arcs to quadratic segments within 0.001 tile units.", type: array, minItems: 1, maxItems: 64, items: {$ref: "#/$defs/patternPrimitive"}}
   patternPrimitive:
     description: "A bounded filled circle/rectangle or normalized path. Arc input is lowered to quadratic path commands and is never retained."
     examples: [{kind: circle, cx: 4, cy: 4, radius: 1}]
     oneOf:
-      - description: "One filled circle."
-        type: object
-        required: [kind, cx, cy, radius]
-        additionalProperties: false
-        properties:
-          kind: {description: "Filled circle primitive kind.", const: circle}
-          cx: {description: "Center x coordinate within the tile.", type: number, minimum: 0, maximum: 256}
-          cy: {description: "Center y coordinate within the tile.", type: number, minimum: 0, maximum: 256}
-          radius: {description: "Positive circle radius.", type: number, exclusiveMinimum: 0, maximum: 128}
-      - description: "One filled rectangle."
-        type: object
-        required: [kind, x, y, inlineSize, blockSize]
-        additionalProperties: false
-        properties:
-          kind: {description: "Filled rectangle primitive kind.", const: rect}
-          x: {description: "Rectangle left coordinate within the tile.", type: number, minimum: 0, maximum: 256}
-          y: {description: "Rectangle top coordinate within the tile.", type: number, minimum: 0, maximum: 256}
-          inlineSize: {description: "Positive rectangle width.", type: number, exclusiveMinimum: 0, maximum: 256}
-          blockSize: {description: "Positive rectangle height.", type: number, exclusiveMinimum: 0, maximum: 256}
+      - {description: "One filled circle.", $ref: "urn:chrona:graphics-v0.1#/$defs/circlePrimitive"}
+      - {description: "One filled rectangle.", $ref: "urn:chrona:graphics-v0.1#/$defs/rectanglePrimitive"}
       - description: "One normalized filled or stroked path."
         type: object
         required: [kind, paint, commands]
         additionalProperties: false
         properties:
           kind: {description: "Normalized path primitive kind.", const: path}
-          paint: {description: "Path paint mode supplied by Theme.", enum: [fill, stroke]}
+          paint: {description: "Path paint mode supplied by Theme.", $ref: "urn:chrona:graphics-v0.1#/$defs/paintMode"}
           commands: {description: "Normalized absolute M/L/Q/Z command sequence.", type: array, minItems: 1, maxItems: 2048, items: {$ref: "#/$defs/pathCommand"}}
           strokeWidth: {description: "Positive path width, at most 16 units.", type: number, exclusiveMinimum: 0, maximum: 16}
-          lineCap: {description: "Stroke endpoint shape.", enum: [butt, round, square]}
-          lineJoin: {description: "Stroke corner shape.", enum: [miter, round, bevel]}
+          lineCap: {description: "Stroke endpoint shape.", $ref: "urn:chrona:graphics-v0.1#/$defs/lineCap"}
+          lineJoin: {description: "Stroke corner shape.", $ref: "urn:chrona:graphics-v0.1#/$defs/lineJoin"}
         allOf:
-          - description: "Stroke pattern paths require width, cap, and join."
-            examples: [{paint: stroke, strokeWidth: 1, lineCap: round, lineJoin: round}]
-            if: {properties: {paint: {const: stroke}}, required: [paint]}
-            then: {required: [strokeWidth, lineCap, lineJoin]}
-          - description: "Fill pattern paths cannot carry stroke-only fields."
-            examples: [{paint: fill}]
-            if: {properties: {paint: {const: fill}}, required: [paint]}
-            then: {not: {anyOf: [{required: [strokeWidth]}, {required: [lineCap]}, {required: [lineJoin]}]}}
+          - {description: "Stroke pattern paths require width, cap, and join.", $ref: "urn:chrona:graphics-v0.1#/$defs/strokePaintRequiresStrokeFields"}
+          - {description: "Fill pattern paths cannot carry stroke-only fields.", $ref: "urn:chrona:graphics-v0.1#/$defs/fillPaintForbidsStrokeFields"}
   pathCommand:
     description: "One bounded renderer-neutral pattern path command."
     type: object
@@ -196,7 +146,7 @@ $defs:
     additionalProperties: false
     properties:
       kind: {description: "Payload family for this entry.", enum: [vector, raster]}
-      viewport: {$ref: "#/$defs/viewport"}
+      viewport: {$ref: "urn:chrona:graphics-v0.1#/$defs/viewport"}
       alternative: {description: "Textual equivalent required when this entry is used meaningfully.", type: string}
       paths: {description: "Normalized paths for a vector entry.", type: array, minItems: 1, maxItems: 1024, items: {$ref: "#/$defs/iconPath"}}
       source: {description: "Verified source descriptor for a raster entry.", $ref: "#/$defs/rasterSource"}
@@ -215,20 +165,14 @@ $defs:
     required: [paint, data]
     additionalProperties: false
     properties:
-      paint: {description: "Legacy icon path paint mode.", enum: [fill, stroke]}
+      paint: {description: "Legacy icon path paint mode.", $ref: "urn:chrona:graphics-v0.1#/$defs/paintMode"}
       data: {description: "Canonical normalized icon path data.", type: string, minLength: 1, maxLength: 65536}
       strokeWidth: {description: "Positive source-unit stroke width.", type: number, exclusiveMinimum: 0, maximum: 1024}
-      lineCap: {description: "Stroke endpoint shape.", enum: [butt, round, square]}
-      lineJoin: {description: "Stroke corner shape.", enum: [miter, round, bevel]}
+      lineCap: {description: "Stroke endpoint shape.", $ref: "urn:chrona:graphics-v0.1#/$defs/lineCap"}
+      lineJoin: {description: "Stroke corner shape.", $ref: "urn:chrona:graphics-v0.1#/$defs/lineJoin"}
     allOf:
-      - description: "Stroke icon paths require width, cap, and join."
-        examples: [{paint: stroke, data: "M 0 0 L 1 1", strokeWidth: 1, lineCap: round, lineJoin: round}]
-        if: {properties: {paint: {const: stroke}}, required: [paint]}
-        then: {required: [strokeWidth, lineCap, lineJoin]}
-      - description: "Fill icon paths cannot carry stroke-only fields."
-        examples: [{paint: fill, data: "M 0 0 Z"}]
-        if: {properties: {paint: {const: fill}}, required: [paint]}
-        then: {not: {anyOf: [{required: [strokeWidth]}, {required: [lineCap]}, {required: [lineJoin]}]}}
+      - {description: "Stroke icon paths require width, cap, and join.", $ref: "urn:chrona:graphics-v0.1#/$defs/strokePaintRequiresStrokeFields"}
+      - {description: "Fill icon paths cannot carry stroke-only fields.", $ref: "urn:chrona:graphics-v0.1#/$defs/fillPaintForbidsStrokeFields"}
   rasterSource:
     description: "Immutable local source for a purpose-built raster icon."
     examples: [{address: icons/sample.png, contentIdentity: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}]

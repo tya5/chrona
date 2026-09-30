@@ -1,13 +1,11 @@
 """Completed catalogue pattern facts never require Scene asset lookup."""
 from decimal import Decimal
 
-import jsonschema
-
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.pattern_placement import complete_pattern_placement
 from chrona.presentation.scene.pattern_geometry import project_pattern_placement
 from chrona.presentation.scene.serialization import _pattern
-from chrona.resources import schema_document
+from chrona.resources import schema_document, validator_for_schema
 
 
 def test_layout_pattern_projects_to_scene_v07_with_fixed_phase_and_clip() -> None:
@@ -23,5 +21,5 @@ def test_layout_pattern_projects_to_scene_v07_with_fixed_phase_and_clip() -> Non
     assert result["cornerRadius"] == 3
     assert result["densityBasisPoints"] == 1250
     schema = schema_document("scene-v0.7.schema.yaml")
-    jsonschema.Draft202012Validator({"$ref": "#/$defs/catalogPattern",
-                                      "$defs": schema["$defs"]}).validate(result)
+    # `$defs` alone references a shared part, so the validator needs the part registry.
+    validator_for_schema({"$id": "urn:test:scene-defs", "$ref": "#/$defs/catalogPattern", "$defs": schema["$defs"]}).validate(result)

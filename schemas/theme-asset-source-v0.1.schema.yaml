@@ -18,14 +18,7 @@ properties:
     properties:
       set: {description: "Canonical namespace used by `set:name` references in the output catalog.", $ref: "#/$defs/name"}
       aliases: {description: "Additional namespaces resolving to this catalog set.", type: array, uniqueItems: true, items: {$ref: "#/$defs/name"}}
-      license:
-        description: "Required explicit licensing details copied into catalog provenance."
-        type: object
-        required: [spdx, notice]
-        additionalProperties: false
-        properties:
-          spdx: {description: "Declared SPDX identifier; the importer does not infer policy.", type: string, minLength: 1}
-          notice: {description: "Complete notice text copied with the catalog.", type: string, minLength: 1}
+      license: {description: "Required explicit licensing details copied into catalog provenance; the importer does not infer policy.", $ref: "urn:chrona:common-v0.1#/$defs/license"}
       glyphs:
         description: "Named source glyphs, normalized into ordered renderer-neutral path parts."
         type: object
@@ -52,14 +45,7 @@ $defs:
     required: [viewport, parts]
     additionalProperties: false
     properties:
-      viewport:
-        description: "Positive integer glyph viewport."
-        type: object
-        required: [inlineSize, blockSize]
-        additionalProperties: false
-        properties:
-          inlineSize: {description: "Positive viewport width.", type: integer, minimum: 1, maximum: 4096}
-          blockSize: {description: "Positive viewport height.", type: integer, minimum: 1, maximum: 4096}
+      viewport: {description: "Positive integer glyph viewport.", $ref: "urn:chrona:graphics-v0.1#/$defs/viewport"}
       parts:
         description: "Ordered renderer-neutral glyph path parts."
         type: array
@@ -71,36 +57,23 @@ $defs:
           required: [paint, d]
           additionalProperties: false
           properties:
-            paint: {description: "Theme-owned paint mode.", enum: [fill, stroke]}
+            paint: {description: "Theme-owned paint mode.", $ref: "urn:chrona:graphics-v0.1#/$defs/paintMode"}
             d: {description: "Source SVG path-data accepted by the bounded glyph path normalizer; XML and style syntax are not accepted.", type: string, minLength: 1, maxLength: 65536}
             strokeWidth: {description: "Positive source-unit stroke width, required for stroke paths.", type: number, exclusiveMinimum: 0, maximum: 1024}
-            lineCap: {description: "Stroke endpoint shape.", enum: [butt, round, square]}
-            lineJoin: {description: "Stroke corner shape.", enum: [miter, round, bevel]}
+            lineCap: {description: "Stroke endpoint shape.", $ref: "urn:chrona:graphics-v0.1#/$defs/lineCap"}
+            lineJoin: {description: "Stroke corner shape.", $ref: "urn:chrona:graphics-v0.1#/$defs/lineJoin"}
           allOf:
-            - description: "Stroke glyph parts require width, cap, and join."
-              examples: [{paint: stroke, d: "M 0 0 L 1 1", strokeWidth: 1, lineCap: round, lineJoin: round}]
-              if: {properties: {paint: {const: stroke}}, required: [paint]}
-              then: {required: [strokeWidth, lineCap, lineJoin]}
-            - description: "Fill glyph parts cannot carry stroke-only fields."
-              examples: [{paint: fill, d: "M 0 0 L 1 1 Z"}]
-              if: {properties: {paint: {const: fill}}, required: [paint]}
-              then: {not: {anyOf: [{required: [strokeWidth]}, {required: [lineCap]}, {required: [lineJoin]}]}}
+            - {description: "Stroke glyph parts require width, cap, and join.", $ref: "urn:chrona:graphics-v0.1#/$defs/strokePaintRequiresStrokeFields"}
+            - {description: "Fill glyph parts cannot carry stroke-only fields.", $ref: "urn:chrona:graphics-v0.1#/$defs/fillPaintForbidsStrokeFields"}
   pattern:
     description: "A positive bounded tile, clockwise rotation, and ordered declarative shapes."
     type: object
     required: [tile, angle, densityBasisPoints, primitives]
     additionalProperties: false
     properties:
-      tile:
-        description: "Positive finite repeat tile size."
-        type: object
-        required: [inlineSize, blockSize]
-        additionalProperties: false
-        properties:
-          inlineSize: {description: "Positive tile width in units.", type: number, minimum: 1, maximum: 256}
-          blockSize: {description: "Positive tile height in units.", type: number, minimum: 1, maximum: 256}
-      angle: {description: "Clockwise rotation about tile center in degrees.", type: number, minimum: 0, exclusiveMaximum: 360}
-      densityBasisPoints: {description: "Declared covered fraction of the fixed rotated 128x128 center grid, in basis points (100 basis points = 1%); importer recomputes with periodic edge wrapping and half-up rounding and rejects a mismatch.", type: integer, minimum: 1, maximum: 10000}
+      tile: {description: "Positive finite repeat tile size.", $ref: "urn:chrona:graphics-v0.1#/$defs/tile"}
+      angle: {description: "Clockwise rotation about tile center in degrees.", $ref: "urn:chrona:graphics-v0.1#/$defs/tileAngle"}
+      densityBasisPoints: {description: "Declared covered fraction of the fixed rotated 128x128 center grid, in basis points (100 basis points = 1%); importer recomputes with periodic edge wrapping and half-up rounding and rejects a mismatch.", $ref: "urn:chrona:graphics-v0.1#/$defs/densityBasisPoints"}
       primitives:
         description: "Ordered circles, rectangles, stroked lines, or stroked arcs. Coordinates must lie within the declared tile; importer computes density and lowers arcs."
         type: array
@@ -111,25 +84,8 @@ $defs:
     description: "A closed filled circle/rectangle or stroked line/arc."
     examples: [{kind: circle, cx: 4, cy: 4, radius: 1}]
     oneOf:
-      - description: "One filled source circle."
-        type: object
-        required: [kind, cx, cy, radius]
-        additionalProperties: false
-        properties:
-          kind: {description: "Circle source kind.", const: circle}
-          cx: {description: "Circle center inline coordinate.", type: number, minimum: 0, maximum: 256}
-          cy: {description: "Circle center block coordinate.", type: number, minimum: 0, maximum: 256}
-          radius: {description: "Positive circle radius.", type: number, exclusiveMinimum: 0, maximum: 128}
-      - description: "One filled source rectangle."
-        type: object
-        required: [kind, x, y, inlineSize, blockSize]
-        additionalProperties: false
-        properties:
-          kind: {description: "Rectangle source kind.", const: rect}
-          x: {description: "Rectangle left coordinate.", type: number, minimum: 0, maximum: 256}
-          y: {description: "Rectangle top coordinate.", type: number, minimum: 0, maximum: 256}
-          inlineSize: {description: "Positive rectangle width.", type: number, exclusiveMinimum: 0, maximum: 256}
-          blockSize: {description: "Positive rectangle height.", type: number, exclusiveMinimum: 0, maximum: 256}
+      - {description: "One filled source circle.", $ref: "urn:chrona:graphics-v0.1#/$defs/circlePrimitive"}
+      - {description: "One filled source rectangle.", $ref: "urn:chrona:graphics-v0.1#/$defs/rectanglePrimitive"}
       - description: "One stroked source line."
         type: object
         required: [kind, x1, y1, x2, y2, strokeWidth]
