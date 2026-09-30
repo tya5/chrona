@@ -30,6 +30,16 @@ def test_the_refresh_measures_every_test_and_opens_a_pull_request_not_a_push_to_
     assert workflow["permissions"] == {"contents": "write", "pull-requests": "write"}
 
 
+def test_the_refresh_measures_a_synced_main_commit_not_the_raw_tip():
+    """A pre-sync main tip has stale derived evidence, so the corpus reproduction test fails on it (first run, 2026-09-30)."""
+    steps = _workflow()["jobs"]["refresh"]["steps"]
+    synced = next(step for step in steps if step.get("id") == "synced")
+    assert "check_name=derived-main" in synced["run"] and "completed:success" in synced["run"]
+    checkout = next(step for step in steps if str(step.get("uses", "")).startswith("actions/checkout"))
+    assert checkout["with"]["ref"] == "${{ steps.synced.outputs.sha }}"
+    assert steps.index(synced) < steps.index(checkout)
+
+
 def test_the_refresh_is_documented_in_agents_md():
     text = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     assert ".test_durations" in text and "test-durations.yml" in text
