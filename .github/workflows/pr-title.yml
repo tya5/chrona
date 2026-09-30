@@ -4,18 +4,25 @@ on:
     types: [opened, edited, synchronize, reopened, labeled, unlabeled]
 permissions:
   contents: read
+  pull-requests: read
 jobs:
   pr-title:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Reject closing keywords in the PR title
+      - name: Fetch the commit messages the PR carries
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/commits" --paginate | jq -s '[.[][] | .commit.message]' > "$RUNNER_TEMP/commit-messages.json"
+      - name: Reject closing keywords in the PR title and in its commit messages
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
           CLOSES_ISSUE: ${{ contains(github.event.pull_request.labels.*.name, 'closes-issue') }}
         run: |
           if [[ "$CLOSES_ISSUE" == "true" ]]; then
-            python tools/check_pr_title.py "$PR_TITLE" --allow-closing
+            python tools/check_pr_title.py "$PR_TITLE" --commits "$RUNNER_TEMP/commit-messages.json" --allow-closing
           else
-            python tools/check_pr_title.py "$PR_TITLE"
+            python tools/check_pr_title.py "$PR_TITLE" --commits "$RUNNER_TEMP/commit-messages.json"
           fi
