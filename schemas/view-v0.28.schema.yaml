@@ -144,7 +144,7 @@ allOf:
                       overflow: {enum: [suppress, visible-overflow]}
               relations:
                 oneOf:
-                  - {enum: [none, semantic, critical, all]}
+                  - {$ref: "urn:chrona:vocabulary-v0.1#/$defs/relationVisibilityMode"}
                   - type: object
                     required: [mode, overflow]
                     additionalProperties: false
@@ -154,12 +154,12 @@ allOf:
                       content: {description: "Ordered optional relation-label facts; absence selects no labels.", type: array, uniqueItems: true, items: {enum: [lag, endpointPair]}}
               annotations:
                 oneOf:
-                  - {enum: [none, semantic, presentation, all]}
+                  - {$ref: "urn:chrona:vocabulary-v0.1#/$defs/annotationVisibilityMode"}
                   - type: object
                     required: [mode, marker]
                     additionalProperties: false
                     properties:
-                      mode: {enum: [none, semantic, presentation, all]}
+                      mode: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/annotationVisibilityMode"}
                       marker: {enum: [none, numbered]}
               links: {enum: [none, title, row]}
               fallback:
@@ -370,7 +370,7 @@ allOf:
               additionalProperties: false
               properties:
                 id: {type: string, minLength: 1}
-                purpose: {enum: [callout, highlight, note, explanatory-arrow]}
+                purpose: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/annotationPurpose"}
                 anchor:
                   type: object
                   required: [kind, id, facet, endpoint]
@@ -389,8 +389,8 @@ allOf:
                   required: [side, alignment]
                   additionalProperties: false
                   properties:
-                    side: {enum: [above, below, start, end]}
-                    alignment: {enum: [start, center, end]}
+                    side: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/annotationSide"}
+                    alignment: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/annotationAlignment"}
                 candidates:
                   description: "The declared placement-candidate list: region, search, obstacles and connector (#466). An annotation uses exactly one spelling."
                   type: array
@@ -449,7 +449,7 @@ allOf:
                         additionalProperties: false
                         properties:
                           kind: {description: "Search strategy.", enum: [row-aligned, adjacent, nearest-free]}
-                          side: {description: "The one logical side an adjacent search projects from.", enum: [above, below, start, end]}
+                          side: {description: "The one logical side an adjacent search projects from.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/annotationSide"}
                           maxPositions: {description: "Bounded lattice size examined by a nearest-free search.", type: integer, minimum: 1, maximum: 1024}
                           maxInlineEm: {description: "Positive finite text-width bound for a plot/content search, in em.", type: number, exclusiveMinimum: 0}
                         allOf:

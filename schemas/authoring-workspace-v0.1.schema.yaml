@@ -137,8 +137,8 @@ $defs:
                 additionalProperties: false
                 properties:
                   labels: {description: "Whether labels are visible.", type: boolean}
-                  relations: {description: "Visible semantic relation mode.", enum: [none, semantic]}
-                  annotations: {description: "Visible annotation mode.", enum: [none, presentation, all]}
+                  relations: {description: "Visible semantic relation mode.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/guidedRelationVisibilityMode"}
+                  annotations: {description: "Visible annotation mode.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/guidedAnnotationVisibilityMode"}
               annotations:
                 type: array
                 description: "Presentation annotations allowed by the guided View override."
@@ -149,7 +149,7 @@ $defs:
                   additionalProperties: false
                   properties:
                     id: {description: "Stable annotation identifier.", type: string, minLength: 1}
-                    purpose: {description: "Author intent for the annotation.", enum: [callout, highlight, note, explanatory-arrow]}
+                    purpose: {description: "Author intent for the annotation.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/annotationPurpose"}
                     anchor:
                       type: object
                       description: "Object receiving the annotation anchor."
@@ -164,8 +164,8 @@ $defs:
                       required: [side, alignment]
                       additionalProperties: false
                       properties:
-                        side: {description: "Side of the anchor for the annotation.", enum: [above, below, start, end]}
-                        alignment: {description: "Alignment along the chosen side.", enum: [start, center, end]}
+                        side: {description: "Side of the anchor for the annotation.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/annotationSide"}
+                        alignment: {description: "Alignment along the chosen side.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/annotationAlignment"}
                     text: {description: "Text displayed by the annotation.", type: string}
           theme:
             type: object
