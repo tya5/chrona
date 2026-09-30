@@ -74,7 +74,21 @@ invalid". No resource that renders today becomes invalid (every value B rejects 
 recorded in Spec 56 §3.2 as "an error moved earlier without changing which working inputs are accepted is in place", with a test per kind. If the owner does not accept that reading, use A now and record B as a
 batched change for each kind's next incompatible bump; the issue permits "a stated decision not to check".
 
+**Stated decision (2026-10-01, delegated by the lead because the owner could not answer in time; revisitable): no calendar check in the schema.** `isoDate` stays pattern-only and byte-exact
+to today's `^\d{4}-\d{2}-\d{2}$` (the anchor and Unicode-digit behaviour are T3, below). The factory stays without a format checker, so `format: date` is asserted nowhere (scene v0.7's `format: date` stays inert).
+Project keeps its runtime `as_date` check (`E_SCHEMA "Expected ISO Date, ..."`), and the presentation `date.fromisoformat` sites stay as they are. This is the "stated decision not to check" that the issue's row
+allows. Reason: making the schema reject an impossible date (option B) tightens the accepted set of seven kinds and moves a code, a stage and a message, which is a #591 compatibility question the owner has not ruled
+on; option A is a smaller tightening of the same kind (Unicode digits, trailing newline) and waits on the same ruling. Consequence: the S1e slice is docs only (one Spec 56 §3.2 sentence recording this decision,
+no code); the `format` diagnostic rule (S1b) stays implemented and dormant. **Revisit on an owner ruling:** the work to adopt B later is the factory checker plus the `isoDate` pattern change plus the probes listed
+in T2; nothing built so far has to be undone.
+
 ## D3. Tightening and widening register (owner)
+
+**Status of the rows (2026-10-01, owner-delegated to the lead):** T1 is **adopted** (slice S1d: the acceptance row requires the traversal guard). T2 is **not adopted** (stated decision, D2). T3 is **not adopted**:
+the existing sites keep `$`, and the frozen parts keep whatever anchor they carry; the new defs `fileName` and `identifier` are already newline-proof. Both T2 and T3 are kept in the table as the revisit
+record, for the same reason (tightening accepted values is a #591 incompatibility question with no owner ruling yet). `ACCEPTED_TODAY` in `tests/unit/tools/test_schema_parts.py` pins the strings that a later adoption
+would flip. N1-N5 and W1 are unchanged.
+
 
 Classification uses Spec 56 §3.2: in place when no working resource changes; an incompatible bump otherwise. `T` rows tighten, `W` widens, `N` is unified with no value change.
 "Corpus" is the prototype run over the committed documents; the S0 gate makes it permanent.
@@ -160,6 +174,19 @@ The 44 non-live schema files keep their inline copies until archived or migrated
 as "no inline copy of the shared patterns in any `live` inventory entry other than the parts", enforced by a test that reads the inventory; historical entries are frozen, never re-pointed (re-pointing a
 transitioning schema would change what an accepted historical version accepts). The two existing parts (`presentation-resource`, `revision-store-resource-ref`) are frozen and keep their own copies of sha256 and the paths;
 a parity test proves they equal `common`'s definitions, except the T3 anchor. Making them reference `common` would need new part versions and a re-pointing of View v0.28, icon-catalog and summary-profile at the next bump. The gate also fails a `live` schema that copies a pattern a part already defines.
+
+## Learnings from S1c (recorded 2026-10-01)
+
+- **A `$ref` union branch changes the message.** `schema_diagnostics._union_forms` reads a branch's own `required` and `properties` to name the permitted forms. A branch that is only a `$ref` exposes none of
+  them, so the message for a bad View table-column `width` would change from `expected one permitted form: properties fr; properties minmax` to `... properties minmax`. The S0 L3 probes do not reach table widths, so
+  the gate alone would not have caught it; the author compared the reducer output base against head. Consequence: `fractionalTrack` stays **inline at the two View `width` branches** that spell `fr`, it is defined
+  but not used by View, and the D8 copy test records this as a deferral. Adopting it there needs `_union_forms` to follow `$ref` with a parity test on the message first (planned in S2, before any vocabulary def is
+  used as a union branch).
+- **A nullable site cannot sit beside a typed def.** `authoring-command-result`'s `resultRevision` is `type: [string, 'null']`; folding it into `$ref: sha256Identity` (typed `string`) would need an `anyOf`/`allOf`
+  and change L1, so it is left inline and recorded as a deferral. Likewise `authoring-command` itself was not edited in S1c (S1d owns it, and the S0 sensitivity tests use its `baseRevision` pattern as their edit target).
+- **Defs carry `type: string`.** An adopted site drops its own `type: string`; a site with a sibling of the same keyword would fold into an `allOf` and change L1.
+- **The digest lock makes T3 a deliberate act.** Changing an existing def of `common-v0.1` fails the frozen-digest gate by design, so a later T3 adoption needs a new part version (`common-v0.2`) or a
+  deliberate digest update stated in the same PR; this is one more reason it waits for the owner.
 
 ## Graphics part
 
