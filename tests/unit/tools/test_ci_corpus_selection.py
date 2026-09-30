@@ -29,6 +29,7 @@ def test_pr_shards_deselect_corpus_tests():
     assert len(commands) == 1
     assert '-m "not corpus"' in commands[0]
     assert "--splits 3 --group ${{ matrix.shard }}" in commands[0]
+    assert "--dist worksteal" in commands[0]
 
 
 def test_the_full_matrix_runs_every_test_including_corpus():
