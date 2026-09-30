@@ -18,9 +18,29 @@ jobs:
     if: ${{ github.repository == 'tya5/chrona' }}
     runs-on: ubuntu-latest
     steps:
+      # A main tip that has not been through derived-sync yet carries stale derived evidence, so the
+      # corpus reproduction tests fail on it. Measure the newest main commit whose derived-main
+      # check run succeeded (the condition the PR-side derived-ready check waits for).
+      - id: synced
+        name: Find the newest main commit whose derived evidence is synced
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for sha in $(gh api "repos/$GITHUB_REPOSITORY/commits?sha=main&per_page=30" --jq '.[].sha'); do
+            state="$(gh api --method GET "repos/$GITHUB_REPOSITORY/commits/$sha/check-runs" \
+              -f check_name=derived-main -f filter=all -f per_page=100 \
+              --jq '[.check_runs[] | select(.app.slug == "github-actions")] | sort_by([.started_at // .created_at, .id]) | if length == 0 then "" else (last.status + ":" + (last.conclusion // "")) end')"
+            if [[ "$state" == "completed:success" ]]; then
+              echo "sha=$sha" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          echo "no synced main commit among the newest 30"
+          exit 1
       - uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ steps.synced.outputs.sha }}
           fetch-depth: 0
           # A pull request opened with the default GITHUB_TOKEN does not start the pull_request
           # workflows, so the required checks would never run. A repository secret
