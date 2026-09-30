@@ -1,6 +1,6 @@
 # Design — Knobs for Hard-Coded Label Behaviour (#573)
 
-**Plan:** [design plan](../planning/active/issue-573-label-behaviour-knobs-design-plan-2026-09-30.md).
+**Plan:** [implementation plan](../planning/active/issue-573-label-behaviour-knobs-implementation-plan-2026-09-30.md); **review:** [architecture review](../reviews/current/issue-573-label-behaviour-knobs-architecture-review-2026-09-30.md), whose amendments A1-A3 are part of this design.
 
 ## Decisions
 
@@ -10,6 +10,7 @@
 2. **Derived profiles carry it with no new mechanism.** A derived Layout Profile declares its own complete `reviewSurface`, which `profile.py` copies whole; `overrides` reach only nodes under `root`. `memberNames` therefore travels with the profile that declares it, and a derived profile that omits it gets the defaults.
 3. **The bound is measured from the item's last own drawn mark.** For an item with a planned mark and a later actual mark the end gap runs from the right edge of the rightmost mark of that item, not from the planned host alone. Without an actual mark, or with one inside the planned extent, nothing changes. This is a behaviour change only for a label whose item has an actual mark past its planned end, which today can only be placed by overflowing; the affected slides are regenerated and reviewed against the rule and the approved targets. The `attached-milestones` example with its original data is the synthetic proof (the label clears its own actual mark within the default 2 em).
 4. **Spec 50 states the default and the knob** in §3.2: the bound is `maxEndGapEm` (default 2) times the font size, measured from the item's last drawn mark, and the search policy is `memberNames.search` with its default coupling described as the default, not as a rule.
+5. **One reach value bounds both two-em constants (review A1).** The nearest-perimeter association distance at the same call site uses the same `maxEndGapEm * font_size` (plus the slip of decision 3), otherwise values above 2 are inert.
 
 ## Tests
 
