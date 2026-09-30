@@ -10,7 +10,7 @@ from typing import Any, Mapping
 
 import yaml
 
-from chrona.resources import safe_load
+from chrona.resources import resolve_schema_reference, safe_load
 from tools.derived_artifact_report import report_stale_artifact
 
 
@@ -92,6 +92,14 @@ def declared_values(root: Path, entry: VocabularyEntry) -> tuple[str, ...]:
     except (OSError, yaml.YAMLError) as error:
         raise VocabularyInventoryError(f"E_VOCABULARY_SCHEMA_READ:{entry.schema}") from error
     node = _pointer(document, entry.pointer)
+    # A finite vocabulary may live in a shared schema part (I662): follow the reference the field declares.
+    seen: set[str] = set()
+    while isinstance(node.get("$ref"), str) and "const" not in node and "enum" not in node and node["$ref"] not in seen:
+        seen.add(node["$ref"])
+        resolved = resolve_schema_reference(document, node["$ref"])
+        if resolved is None:
+            raise VocabularyInventoryError(f"E_VOCABULARY_REFERENCE:{entry.schema}:{entry.pointer}:{node['$ref']}")
+        document, node = resolved
     if "const" in node:
         values = (node["const"],)
     else:

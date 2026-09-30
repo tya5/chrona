@@ -5,7 +5,7 @@ import ast
 import sys
 from pathlib import Path
 
-from chrona.resources import safe_load
+from chrona.resources import dereferenced_schema, safe_load
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -48,7 +48,8 @@ def literals(path: Path) -> set[str]:
 
 
 def main() -> int:
-    declared = enum_values(safe_load(live_view_schema().read_bytes()))
+    # The live View's vocabulary may sit in a shared part (I662): read the form with every part reference inlined.
+    declared = enum_values(dereferenced_schema(live_view_schema().name))
     failures = []
     for path, values in DISPATCHES.items():
         missing_engine = sorted(values - literals(path))

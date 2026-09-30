@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from copy import deepcopy
 
-from jsonschema import Draft202012Validator
 import pytest
 
-from chrona.resources import axis_name_tables_resource, safe_load, schema_document
+from chrona.resources import axis_name_tables_resource, safe_load, schema_validator
 from chrona.presentation.model.axis_names import axis_name_catalog, axis_name_table, validate_axis_name_catalog
 
 
@@ -15,7 +14,7 @@ def _document():
 
 def test_packaged_catalog_matches_schema_and_declares_every_coincidence():
     document = _document()
-    Draft202012Validator(schema_document("axis-name-tables-v0.1.schema.yaml")).validate(document)
+    schema_validator("axis-name-tables-v0.1.schema.yaml").validate(document)
     catalog = validate_axis_name_catalog(document)
     assert set(catalog) == {"en-US", "ja-JP"}
     assert [(item.alias, item.canonical, item.months) for item in catalog["en-US"].coincidences] == [

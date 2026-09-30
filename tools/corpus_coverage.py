@@ -13,7 +13,7 @@ from typing import Any, Callable, Iterable, Mapping
 
 import yaml
 
-from chrona.resources import safe_load
+from chrona.resources import resolve_schema_reference, safe_load
 
 
 class CorpusCoverageError(ValueError):
@@ -229,23 +229,32 @@ PROBES = (
 )
 
 
-def _pointer(schema: Mapping[str, Any], reference: str) -> Mapping[str, Any] | None:
-    if not reference.startswith("#/"):
+VOCABULARY_PART_PREFIX = "urn:chrona:vocabulary-"
+
+
+def _pointer(schema: Mapping[str, Any], reference: str) -> tuple[Mapping[str, Any], Mapping[str, Any]] | None:
+    """The document that owns a `$ref` target and the target: a local pointer or a shared vocabulary part (I662).
+
+    Only `urn:chrona:vocabulary-*` is followed. The revision-store part's `store.provider` enum (reached through the snapshot reference) was never part of this
+    report and following it would add uncovered rows to a committed derived document, so it stays out of scope here.
+    """
+    if not reference.startswith(("#", VOCABULARY_PART_PREFIX)):
         return None
-    value: Any = schema
-    for part in reference[2:].split("/"):
-        value = value.get(part.replace("~1", "/").replace("~0", "~")) if isinstance(value, Mapping) else None
-    return value if isinstance(value, Mapping) else None
+    return resolve_schema_reference(schema, reference)
+
+
+def _reference_key(schema: Mapping[str, Any], reference: str) -> str:
+    return f"{schema.get('$id', '')}{reference}"
 
 
 def _schema_values(schema: Mapping[str, Any], node: Mapping[str, Any] | None = None,
                    path: tuple[str, ...] = (), seen: frozenset[str] = frozenset()) -> Iterable[tuple[tuple[str, ...], Any]]:
     node = schema if node is None else node
     reference = node.get("$ref")
-    if isinstance(reference, str) and reference not in seen:
-        target = _pointer(schema, reference)
-        if target is not None:
-            yield from _schema_values(schema, target, path, seen | {reference})
+    if isinstance(reference, str) and (key := _reference_key(schema, reference)) not in seen:
+        resolved = _pointer(schema, reference)
+        if resolved is not None:
+            yield from _schema_values(resolved[0], resolved[1], path, seen | {key})
     if "const" in node:
         yield path, node["const"]
     if isinstance(node.get("enum"), list):

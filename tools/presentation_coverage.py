@@ -99,23 +99,64 @@ def discover(root: Path, loader: RunLocalYamlLoader | None = None) -> tuple[Slid
     return tuple(result)
 
 
-def _pointer(schema: Mapping[str, Any], reference: str) -> Mapping[str, Any] | None:
-    if not reference.startswith("#/"):
+class SchemaDocument(dict):
+    """A schema plus the shared schema parts its `$ref`s name, read from `schemas/` by the same loader.
+
+    The coverage walk needs no product code: a part is an ordinary schema file listed in the inventory, so the
+    walk follows an external reference by looking the `$id` up in `parts` (I662).
+    """
+
+    parts: Mapping[str, "SchemaDocument"]
+
+
+def schema_parts(root: Path, loader: RunLocalYamlLoader | None = None) -> dict[str, SchemaDocument]:
+    """The live inventory entries whose `$id` is a `urn:chrona:` reference target, keyed by `$id`."""
+    loader = loader or RunLocalYamlLoader()
+    inventory = loader.load(root / "schemas/schema-inventory-v0.1.yaml")
+    parts: dict[str, SchemaDocument] = {}
+    for entry in inventory.get("schemas", ()):
+        if isinstance(entry, Mapping) and entry.get("state") == "live" and isinstance(entry.get("file"), str):
+            document = SchemaDocument(loader.load(root / "schemas" / entry["file"]))
+            if str(document.get("$id", "")).startswith("urn:chrona:"):
+                document.parts = parts
+                parts[str(document["$id"])] = document
+    return parts
+
+
+def with_parts(schema: Mapping[str, Any], parts: Mapping[str, SchemaDocument]) -> SchemaDocument:
+    document = SchemaDocument(schema)
+    document.parts = parts
+    return document
+
+
+def _pointer(schema: Mapping[str, Any], reference: str) -> tuple[Mapping[str, Any], Mapping[str, Any]] | None:
+    """The document that owns a `$ref` target and the target: a local pointer or a shared schema part (I662)."""
+    target, _, fragment = reference.partition("#")
+    owner: Mapping[str, Any] | None
+    if not target:
+        owner = schema if fragment.startswith("/") else None
+    else:
+        owner = getattr(schema, "parts", {}).get(target)
+    if owner is None:
         return None
-    value: Any = schema
-    for part in reference[2:].split("/"):
+    value: Any = owner
+    for part in [item for item in fragment.split("/") if item]:
         value = value.get(part.replace("~1", "/").replace("~0", "~")) if isinstance(value, Mapping) else None
-    return value if isinstance(value, Mapping) else None
+    return (owner, value) if isinstance(value, Mapping) else None
+
+
+def _reference_key(schema: Mapping[str, Any], reference: str) -> str:
+    return f"{schema.get('$id', '')}{reference}"
 
 
 def _schema_values(schema: Mapping[str, Any], node: Mapping[str, Any] | None = None,
                    path: tuple[str, ...] = (), seen: frozenset[str] = frozenset()) -> Iterable[tuple[tuple[str, ...], Any]]:
     node = schema if node is None else node
     reference = node.get("$ref")
-    if isinstance(reference, str) and reference not in seen:
-        target = _pointer(schema, reference)
-        if target is not None:
-            yield from _schema_values(schema, target, path, seen | {reference})
+    if isinstance(reference, str) and (key := _reference_key(schema, reference)) not in seen:
+        resolved = _pointer(schema, reference)
+        if resolved is not None:
+            yield from _schema_values(resolved[0], resolved[1], path, seen | {key})
     if "const" in node:
         yield path, node["const"]
     if isinstance(node.get("enum"), list):
@@ -151,10 +192,10 @@ def _integer_minimums(schema: Mapping[str, Any], node: Mapping[str, Any] | None 
     """Yield instance paths whose schema is an integer with a declared minimum (#434)."""
     node = schema if node is None else node
     reference = node.get("$ref")
-    if isinstance(reference, str) and reference not in seen:
-        target = _pointer(schema, reference)
-        if target is not None:
-            yield from _integer_minimums(schema, target, path, seen | {reference})
+    if isinstance(reference, str) and (key := _reference_key(schema, reference)) not in seen:
+        resolved = _pointer(schema, reference)
+        if resolved is not None:
+            yield from _integer_minimums(resolved[0], resolved[1], path, seen | {key})
     if node.get("type") == "integer" and isinstance(node.get("minimum"), int):
         yield path, node["minimum"]
     for key, child in (node.get("properties") or {}).items():
@@ -188,13 +229,14 @@ def _values_at(value: Any, path: tuple[str, ...]) -> Iterable[Any]:
 def live_schemas(root: Path, loader: RunLocalYamlLoader | None = None) -> dict[str, Mapping[str, Any]]:
     loader = loader or RunLocalYamlLoader()
     inventory = loader.load(root / "schemas/schema-inventory-v0.1.yaml")
+    parts = schema_parts(root, loader)
     result: dict[str, Mapping[str, Any]] = {}
     for entry in inventory.get("schemas", ()):
         if isinstance(entry, Mapping) and entry.get("state") == "live" and entry.get("kind") in KINDS:
             kind, filename = entry["kind"], entry.get("file")
             if kind in result or not isinstance(filename, str):
                 raise PresentationCoverageError("E_PRESENTATION_COVERAGE_SCHEMA")
-            result[kind] = loader.load(root / "schemas" / filename)
+            result[kind] = with_parts(loader.load(root / "schemas" / filename), parts)
     if set(result) != set(KINDS):
         raise PresentationCoverageError("E_PRESENTATION_COVERAGE_SCHEMA")
     return result
