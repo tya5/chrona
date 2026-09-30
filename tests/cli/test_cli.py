@@ -1,5 +1,6 @@
 import json
 from collections import Counter
+from datetime import date, timedelta
 from hashlib import sha256
 from pathlib import Path
 import sys
@@ -24,6 +25,7 @@ from chrona.storage.snapshot_paths import snapshot_directory
 from chrona.usecases.materialize import MaterializationError
 from chrona.core.identity import content_identity
 from chrona.resources import builtin_preset_library_resource
+from tests.support import synthetic_review as sr
 
 
 def _snapshot_resource(root, token, address, value, kind, identifier, identity="cli-test", payload=None):
@@ -477,12 +479,26 @@ def test_cli_stale_explicit_override_with_current_preset_has_no_copy_remedy(tmp_
     assert not output.exists()
 
 
-@pytest.mark.parametrize(
-    "preset_id",
-    [entry["id"] for entry in yaml.safe_load(builtin_preset_library_resource().read_text(encoding="utf-8"))["entries"]],
-)
-def test_cli_margin_days_produces_no_axis_warning_on_every_catalogue_preset(tmp_path, monkeypatch, capsys, preset_id):
-    """#482: a window margin must not make thin-with-record collide or over-thin."""
+CATALOGUE_PRESET_IDS = [entry["id"] for entry in yaml.safe_load(builtin_preset_library_resource().read_text(encoding="utf-8"))["entries"]]
+
+
+def _synthetic_axis_project(directory: Path) -> Path:
+    """A ten-object project (no corpus data) whose window spans the same nine months as
+    the corpus board, so the month tier faces the same label crowding."""
+    objects = {}
+    for team, offset in (("a", 0), ("b", 20), ("c", 40)):
+        for index in range(3):
+            key = f"{team}{index}"
+            objects[key] = sr.span(key, date(2027, 3, 5) + timedelta(days=offset + index * 85), 55,
+                                   owner=team, title=f"Synthetic task {key}")
+    objects["launch"] = sr.point("launch", date(2027, 11, 19), owner="a", title="Launch")
+    path = directory / "synthetic-project.yaml"
+    path.write_text(yaml.safe_dump(sr.project(objects), sort_keys=False), encoding="utf-8")
+    return path
+
+
+def _margin_days_preset(tmp_path, monkeypatch, preset_id):
+    """The preset copy the #482 sweep renders: a 7-day margin with thin-with-record month labels."""
     preset = tmp_path / preset_id
     monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", preset_id, "--output", str(preset)])
     main()
@@ -493,31 +509,56 @@ def test_cli_margin_days_produces_no_axis_warning_on_every_catalogue_preset(tmp_
         if tier.get("unit") == "month" and tier.get("role") == "labels":
             tier["label"]["overflow"] = "thin-with-record"
     view_path.write_text(yaml.safe_dump(view, sort_keys=False), encoding="utf-8")
+    return preset
 
+
+def _axis_warnings(tmp_path, monkeypatch, capsys, preset_id, preset, label, project, actual=None, *extra):
+    output = tmp_path / f"{preset_id}-{label}.svg"
+    scene_path = tmp_path / f"{preset_id}-{label}.scene.json"
+    argv = ["chrona", "render", str(project)]
+    if actual is not None:
+        argv += ["--actual", str(actual)]
+    monkeypatch.setattr(sys, "argv", argv + [
+        "--preset", str(preset / "preset.yaml"), "--output", str(output), "--emit-scene", str(scene_path), *extra,
+    ])
+    capsys.readouterr()
+    main()
+    warnings = [json.loads(line) for line in capsys.readouterr().err.splitlines() if line.startswith("{")]
+    axis_overflow = [item for item in warnings if item.get("code") == "W_LAYOUT_LABEL_OVERFLOW"
+                      and (item.get("sourceRef") == "timeline-axis" or str(item.get("placementId", "")).startswith("axis-label:"))]
+    intersections = [item for item in warnings if item.get("code") == "W_SCENE_TEXT_INTERSECTION"
+                      and any(str(primitive_id).startswith("axis-label:") for primitive_id in item.get("primitiveIds", ()))]
+    return axis_overflow, intersections
+
+
+def _assert_no_axis_warning(tmp_path, monkeypatch, capsys, preset_id, preset, label, project, actual=None):
+    axis_overflow, intersections = _axis_warnings(tmp_path, monkeypatch, capsys, preset_id, preset, label, project, actual)
+    assert not axis_overflow, (preset_id, label, axis_overflow)
+    assert not intersections, (preset_id, label, intersections)
+
+
+@pytest.mark.parametrize("preset_id", CATALOGUE_PRESET_IDS)
+def test_cli_margin_days_produces_no_axis_warning_on_every_catalogue_preset(tmp_path, monkeypatch, capsys, preset_id):
+    """#482: a window margin must not make thin-with-record collide or over-thin.
+
+    PR-path rule test on the starter and a synthetic nine-month project (#657, #575);
+    the HALCYON board renders under the `corpus` marker below."""
+    preset = _margin_days_preset(tmp_path, monkeypatch, preset_id)
     starter = tmp_path / "starter"
     monkeypatch.setattr(sys, "argv", ["chrona", "init", str(starter)])
     main()
+    for label, project in (("starter", starter / "project.yaml"), ("synthetic", _synthetic_axis_project(tmp_path))):
+        _assert_no_axis_warning(tmp_path, monkeypatch, capsys, preset_id, preset, label, project)
 
-    for label, project, actual in (
-        ("halcyon-1", Path("examples/halcyon-1/project.yaml"), Path("examples/halcyon-1/actual.yaml")),
-        ("starter", starter / "project.yaml", starter / "actual.yaml"),
-    ):
-        output = tmp_path / f"{preset_id}-{label}.svg"
-        scene_path = tmp_path / f"{preset_id}-{label}.scene.json"
-        monkeypatch.setattr(sys, "argv", [
-            "chrona", "render", str(project), "--actual", str(actual),
-            "--preset", str(preset / "preset.yaml"), "--output", str(output), "--emit-scene", str(scene_path),
-        ])
-        capsys.readouterr()
-        main()
-        warnings = [json.loads(line) for line in capsys.readouterr().err.splitlines() if line.startswith("{")]
-        axis_overflow = [item for item in warnings if item.get("code") == "W_LAYOUT_LABEL_OVERFLOW"
-                          and (item.get("sourceRef") == "timeline-axis" or str(item.get("placementId", "")).startswith("axis-label:"))]
-        assert not axis_overflow, (preset_id, label, axis_overflow)
 
-        intersections = [item for item in warnings if item.get("code") == "W_SCENE_TEXT_INTERSECTION"
-                          and any(str(primitive_id).startswith("axis-label:") for primitive_id in item.get("primitiveIds", ()))]
-        assert not intersections, (preset_id, label, intersections)
+@pytest.mark.corpus
+@pytest.mark.parametrize("preset_id", CATALOGUE_PRESET_IDS)
+def test_cli_margin_days_produces_no_axis_warning_on_halcyon_for_every_catalogue_preset(
+        tmp_path, monkeypatch, capsys, preset_id):
+    """The #482 sweep on the corpus board: evidence on main, nightly and manual runs (#657)."""
+    preset = _margin_days_preset(tmp_path, monkeypatch, preset_id)
+    _assert_no_axis_warning(tmp_path, monkeypatch, capsys, preset_id, preset, "halcyon-1",
+                            Path("examples/halcyon-1/project.yaml"), Path("examples/halcyon-1/actual.yaml"))
 
 
 def test_cli_content_sized_table_slot_holds_the_print_theme_delta_column(tmp_path, monkeypatch, capsys):

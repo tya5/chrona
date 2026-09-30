@@ -34,6 +34,18 @@ Every slice PR: title ends with its slice id, body and commits say `Refs #657` (
 - **Acceptance:** row 3, first bullet.
 - **Publication:** own PR, merged by me. Depends on #575 only for builders if they exist; otherwise independent.
 
+**Rule table for I657-3a** (updated in place with the slice; measured CI worker-seconds are from run 36724348189):
+
+| Marked `corpus` | Worker s | Rule it stands for | Was HALCYON-only? | PR-path test that remains | Mutation check |
+| --- | --- | --- | --- | --- | --- |
+| `test_cli.py::test_cli_margin_days_produces_no_axis_warning_on_halcyon_for_every_catalogue_preset[*]` (7) | about 300 | #482: a window margin must not make `thin-with-record` axis labels collide or over-thin | yes for the HALCYON leg | `test_cli_margin_days_produces_no_axis_warning_on_every_catalogue_preset[*]` (7), same assertions on the starter **and** a synthetic nine-month project built with `tests/support/synthetic_review.py` | the same fixture at `--viewport 600xauto` reports `W_LAYOUT_LABEL_OVERFLOW` on the axis for the presets probed, so the assertion can fail |
+| `test_render.py::test_elevated_preset_reports_default_profile_omissions_and_rich_svg_paints_them` | 85 | a role may request a treatment the baseline profile does not paint: `I_VISUAL_TREATMENT_OMITTED` is reported (not a failure) and the rich profile paints it | yes | `test_visual_treatment_synthetic.py::test_elevated_preset_reports_default_profile_omissions_and_rich_svg_paints_them` (elevated bundle, synthetic project; group-band count equals the synthetic owners) | rendering the "baseline" leg with the rich profile makes it fail |
+| `test_render.py::test_planned_mark_shadow_is_supported_but_optional_under_baseline` | 56 | a shadow on the `planned` role is omitted under the baseline and painted by the rich profile | yes | `test_visual_treatment_synthetic.py::test_planned_mark_shadow_is_supported_but_optional_under_baseline` | same |
+| `test_materialize_example.py::test_declared_examples_reproduce_by_public_cli` | 53 | every declared corpus slide reproduces its committed evidence | corpus sweep by nature | the same test, on every code PR, in `reproduction-newest-python` (Python 3.12, node id, no marker filter); other `test_materialize_example.py` tests exercise `materialize` on copied examples | none needed: not a rule test |
+| `test_closure_inputs_are_read.py[halcyon-1/gallery-editorial-lanes]` | 52 | a render must read every declared closure input | no: one context of 29 | the other 28 contexts of the same test and `test_render_review_reads_a_bound_summary_profile` | none needed: one instance of a rule kept on 28 others |
+
+Not moved, and why: `test_attached_milestones.py` (two tests, 108 s) and `test_issue_466_c3_fallback.py` (28 s) test rules that #575 is giving synthetic fixtures (I575-2, I575-4); they stay on the PR path until those merge. `test_project_generic_presets.py` (110 s) and the `test_cli.py` row-height and Δ-column tests have no synthetic twin yet. They are reported as remaining cost, not marked.
+
 ### I657-3b PR shards deselect `corpus` (workflow, awaits the lead)
 
 - **Files:** `.github/workflows/conformance.yml` (add `-m "not corpus"` to the `pr-pytest` command), a guard test `tests/unit/tools/test_ci_corpus_selection.py` parsing the workflow.
