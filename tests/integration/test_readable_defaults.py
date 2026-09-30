@@ -168,16 +168,20 @@ def test_public_axis_band_is_distinct_from_group_and_row_bands(scene_path: Path)
     assert not weak
 
 
-def test_default_draft_and_presets_draw_a_distinct_axis_band(tmp_path, monkeypatch) -> None:
-    library = yaml.safe_load((ROOT / "src/chrona/resources/presets/library.yaml").read_text(encoding="utf-8"))
-    scenes = {"default": _render(tmp_path, monkeypatch, "default")}
-    for entry in library["entries"]:
-        preset = _copied_preset(tmp_path, monkeypatch, entry["id"])
-        scenes[entry["id"]] = _render(tmp_path, monkeypatch, entry["id"], "--preset", str(preset))
-    for name, scene in scenes.items():
-        contrasts = _band_contrasts(scene)
-        assert any(axis_id.startswith("axis-band") for axis_id, _, _ in contrasts) or not contrasts, name
-        assert all(ratio >= MINIMUM_BAND_CONTRAST for _, _, ratio in contrasts), name
+CATALOGUE_PRESETS = [entry["id"] for entry in yaml.safe_load(
+    (ROOT / "src/chrona/resources/presets/library.yaml").read_text(encoding="utf-8"))["entries"]]
+
+
+@pytest.mark.parametrize("name", ["default", *CATALOGUE_PRESETS])
+def test_default_draft_and_presets_draw_a_distinct_axis_band(tmp_path, monkeypatch, name) -> None:
+    if name == "default":
+        scene = _render(tmp_path, monkeypatch, "default")
+    else:
+        preset = _copied_preset(tmp_path, monkeypatch, name)
+        scene = _render(tmp_path, monkeypatch, name, "--preset", str(preset))
+    contrasts = _band_contrasts(scene)
+    assert any(axis_id.startswith("axis-band") for axis_id, _, _ in contrasts) or not contrasts, name
+    assert all(ratio >= MINIMUM_BAND_CONTRAST for _, _, ratio in contrasts), name
 
 
 def _source_terminal_shape(theme_path: Path) -> str | None:
