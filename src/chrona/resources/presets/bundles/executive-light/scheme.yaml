@@ -27,13 +27,4 @@ body:
     license: project-pending
   categories:
     default: "#EEF3F8"
-    bus: "#EEF3F8"
-    payload: "#E7F0FA"
-    ait: "#E8F6F0"
-    ground: "#FFF4E4"
-    launch: "#EEF3F8"
-    ops: "#E7F0FA"
-    factory-team: "#EEF3F8"
-    fw-team: "#E7F0FA"
-    validation-team: "#E8F6F0"
     capabilities-band: "#D8DDE6"

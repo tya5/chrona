@@ -29,18 +29,9 @@ body:
     license: MIT
   categories:
     default: "#F3F3F3"
-    bus: "#F3F3F3"
-    payload: "#DADADA"
-    ait: "#C4C4C4"
-    ground: "#AEAEAE"
-    launch: "#989898"
-    ops: "#848484"
     series-1: "#F3F3F3"
     series-2: "#DADADA"
     series-3: "#C4C4C4"
     series-4: "#AEAEAE"
     series-5: "#989898"
     series-6: "#848484"
-    factory-team: "#F3F3F3"
-    fw-team: "#DADADA"
-    validation-team: "#C4C4C4"

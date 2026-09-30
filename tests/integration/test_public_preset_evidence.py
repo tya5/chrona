@@ -44,10 +44,11 @@ def test_editorial_corpus_copy_is_byte_identical_to_the_packaged_bundle():
         assert bundle_path.read_bytes() == corpus_path.read_bytes(), (bundle_name, corpus_path)
 
 
-def test_packaged_library_schemes_are_byte_identical_to_the_example_copies():
+def test_packaged_library_schemes_match_the_example_copies_except_project_categories():
     """#574: the library's colour schemes resolve from the wheel-packaged bundles,
-    never from examples/. The example corpora keep copies for their own contexts;
-    this guards against the two drifting apart."""
+    never from examples/. A bundle may not name an example project's group values
+    (test_project_generic_presets), so each packaged scheme equals its example copy
+    minus the `categories` entries keyed by those values."""
     bundles = ROOT / "src/chrona/resources/presets/bundles"
     copies = {
         "mission-light": "examples/halcyon-1/schemes/mission-light.yaml",
@@ -56,12 +57,17 @@ def test_packaged_library_schemes_are_byte_identical_to_the_example_copies():
         "executive-light": "examples/controller-z/schemes/executive-light.yaml",
         "elevated-light": "examples/controller-z/schemes/executive-light.yaml",
     }
+    project_categories = {"bus", "payload", "ait", "ground", "launch", "ops", "factory-team", "fw-team", "validation-team"}
     library = yaml.safe_load((ROOT / "src/chrona/resources/presets/library.yaml").read_bytes())
     entries = {entry["id"]: entry for entry in library["entries"]}
     for preset_id, corpus_path in copies.items():
         member = entries[preset_id]["members"]["colorScheme"]
         assert (member["sourceRoot"], member["sourcePath"]) == (f"presets/bundles/{preset_id}", "scheme.yaml")
-        assert (bundles / preset_id / "scheme.yaml").read_bytes() == (ROOT / corpus_path).read_bytes(), preset_id
+        packaged = yaml.safe_load((bundles / preset_id / "scheme.yaml").read_bytes())
+        corpus = yaml.safe_load((ROOT / corpus_path).read_bytes())
+        categories = corpus["body"]["categories"]
+        corpus["body"]["categories"] = {key: value for key, value in categories.items() if key not in project_categories}
+        assert packaged == corpus, preset_id
     assert "examples/" not in (ROOT / "src/chrona/resources/presets/library.yaml").read_text(encoding="utf-8")
 
 
