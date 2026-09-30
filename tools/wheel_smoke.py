@@ -51,6 +51,9 @@ def run() -> None:
     vocabulary_profile = validator_for_schema({"$ref": "urn:chrona:vocabulary-v0.1#/$defs/visualProfile"})
     assert (vocabulary_profile.is_valid("chrona-output/visual/v0.5-baseline")
             and not vocabulary_profile.is_valid("chrona-output/visual/v9")), "vocabulary part not reachable"
+    graphics_tile = validator_for_schema({"$ref": "urn:chrona:graphics-v0.1#/$defs/tile"})
+    assert (graphics_tile.is_valid({"inlineSize": 8, "blockSize": 8})
+            and not graphics_tile.is_valid({"inlineSize": 0, "blockSize": 8})), "graphics part not reachable"
     icons = builtin_preset_source_root("icons")
     for name in ("chrona-theme-starter-v2026-09-29.source.yaml",
                  "chrona-theme-starter-v2026-09-29.yaml",

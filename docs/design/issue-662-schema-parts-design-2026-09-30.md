@@ -197,6 +197,16 @@ rect, line, arc; catalog: circle, rect, lowered path); a shared shell would need
 shapes are unbounded on purpose (Scene carries Layout-completed geometry, `number`/`positive`), so referencing the bounded catalog shapes would tighten Scene. A parity test asserts that every catalog primitive and command
 is valid Scene geometry and that the kind sets are equal.
 
+**Recorded at S3 (2026-10-01).** The part has eleven definitions: `viewport`, `tile`, `tileAngle`, `densityBasisPoints`, `circlePrimitive`, `rectanglePrimitive`, `paintMode`, `lineCap`, `lineJoin`, and the stroke
+rule split in two, `strokePaintRequiresStrokeFields` and `fillPaintForbidsStrokeFields` (a single `allOf` definition cannot replace a site's own `allOf` without nesting it, and a `$ref` beside `properties` folds into an
+`allOf` pair; both change the dereferenced form, so each of the two `if/then` rules is its own definition and a site lists both). The pattern shell stays local for the reason above. `viewport`, `tile`, the primitives and the
+enums are whole-object or whole-enum definitions, so a site is `{description, $ref}` and keeps its dereferenced form; the asset schemas' `license` is `common#license`. Scene's circle and rectangle are a **looser sibling and
+are not forced onto the strict definitions**: their coordinates and sizes are `number`/`positive`, with no 0..256 or radius 128 bound, because Scene carries Layout-completed geometry (a region beyond the authored tile); a
+reference would have newly rejected valid Scenes. For the same reason Scene's `iconViewport` and tile sizes stay local. Scene v0.7 **does** reference the definitions that hold no bound it leaves open: the angle, the
+density, the three enums and the two stroke rules (each was a byte-equal copy; L1 equal). `theme-v0.13`'s diagonal-hatch `angle` is the same pattern angle and references `tileAngle`. A test proves every valid catalog
+primitive is valid Scene geometry, that the kind sets are equal, and that Scene still accepts a circle the strict definition refuses. One coincidental match is recorded as a different concept: layout-profile's grid cell
+index and span (`integer`, 1..10000), which equals `densityBasisPoints` structurally.
+
 ## Living documents
 
 Spec 56 §3.2 gains: an in-place refactor that leaves every schema's dereferenced form unchanged is allowed; adding a value to an existing enum is an in-place widening when consumers handle it (D4); an error

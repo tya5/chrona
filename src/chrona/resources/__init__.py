@@ -145,6 +145,7 @@ def schema_document(name: str) -> Mapping[str, Any]:
 
 SCHEMA_PARTS: tuple[str, ...] = (
     "common-v0.1.schema.yaml",
+    "graphics-v0.1.schema.yaml",
     "presentation-resource-v0.1.schema.yaml",
     "revision-store-resource-ref-v0.1.schema.yaml",
     "vocabulary-v0.1.schema.yaml",

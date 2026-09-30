@@ -71,6 +71,22 @@ schemas:
   - {file: view-v0.26.schema.yaml, kind: view, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: view-v0.27.schema.yaml, removalSlice: I467-1}
   - {file: view-v0.27.schema.yaml, kind: view, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: view-v0.28.schema.yaml, removalSlice: I467-A}
   - {file: view-v0.28.schema.yaml, kind: view, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
+  - file: graphics-v0.1.schema.yaml
+    kind: schema-part-graphics
+    state: live
+    consumers: [src/chrona/resources/__init__.py]
+    frozenDefs:
+      viewport: "sha256:c613f2eeb495891e6e05627c39d2499218a422f1c73dd1f30092aebb94753983"
+      tile: "sha256:ca6ee62c62e3f2684cd9cd5afbd83124155a6ea05a8a66b0eefb0bd1076f4d75"
+      tileAngle: "sha256:ec291ed8238f95188034ffde5721f1ff1491a75804458e850b5130cc224b4149"
+      densityBasisPoints: "sha256:906b40adf99fd9b61dc5b5b1b5346ec9d68a2d5281ad37d8b4258f4ab3a172d9"
+      circlePrimitive: "sha256:3951ee6eedb963af2d49b4724dedfd927bd666274cde643c9f53f3d89642eef0"
+      rectanglePrimitive: "sha256:a2ac233755d3628e8ed4c1b1cddf62395d91e1f1d1b31a29e0af2f31ae5ea6ee"
+      paintMode: "sha256:476cd8a51a54d57c9f7766ecee7a9847e503af90694281af8a533d2f68817986"
+      lineCap: "sha256:820934abad2dd1b8b43fec9cf215695b9438f661c2f124c58942fda31655bf04"
+      lineJoin: "sha256:b31b1d3d192a31c0bbd6de0afb0134780a9da466d7ada1dd905a2c086d8f9df0"
+      strokePaintRequiresStrokeFields: "sha256:16b8ffb7f9ad7f4023d50f2fe4a4e2d7da84a5925aa8195947f43881dd39e1fe"
+      fillPaintForbidsStrokeFields: "sha256:de15b34e49218f7984e0f5e12af7876902b7942dcbff4478ad9b405d9f7a5c14"
   - file: vocabulary-v0.1.schema.yaml
     kind: schema-part-vocabulary
     state: live
