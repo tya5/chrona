@@ -9,6 +9,7 @@ import tomllib
 import yaml
 
 from chrona.resources import axis_name_tables_resource, example_ids, example_registry, minimal_template_resource, schema_resource, template_resource
+from chrona.resources import SCHEMA_PARTS, schema_registry
 from chrona.presentation.contracts import ClosureIdentity, IconCatalogContract, parse_contract
 
 
@@ -20,6 +21,7 @@ SCHEMAS = (
     "project-v0.7.schema.yaml",
     "profile-v0.3.schema.yaml",
     "revision-store-resource-ref-v0.1.schema.yaml",
+    "presentation-resource-v0.1.schema.yaml",
     "icon-catalog-v0.3.schema.yaml",
     "icon-catalog-v0.4.schema.yaml",
     "theme-asset-source-v0.1.schema.yaml",
@@ -62,6 +64,14 @@ SCHEMAS = (
 def test_schema_resources_resolve_to_the_source_authority():
     for name in SCHEMAS:
         assert schema_resource(name).read_bytes() == (ROOT / "schemas" / name).read_bytes()
+
+
+def test_every_schema_part_is_packaged_and_registered():
+    assert set(SCHEMA_PARTS) <= set(SCHEMAS)
+    for name in SCHEMA_PARTS:
+        assert schema_resource(name).read_bytes() == (ROOT / "schemas" / name).read_bytes()
+        part_id = yaml.safe_load(schema_resource(name).read_bytes())["$id"]
+        assert schema_registry().resolver().lookup(part_id).contents["$id"] == part_id
 
 
 def test_init_template_resolves_to_the_single_source_authority():

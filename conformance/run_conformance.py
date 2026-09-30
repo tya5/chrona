@@ -11,11 +11,12 @@ import subprocess
 import sys
 
 import yaml
-from jsonschema import Draft202012Validator
-
 
 ROOT = Path(__file__).resolve().parent
 REPOSITORY = ROOT.parent
+sys.path.insert(0, str(REPOSITORY))
+sys.path.insert(0, str(REPOSITORY / "src"))
+from chrona.resources import validator_for_schema
 OUTPUT_LIMIT = 12_000
 
 
@@ -159,7 +160,7 @@ def render_results(results: Iterable[CheckResult]) -> str:
 def _profile_conformance() -> int:
     profile_schema = yaml.safe_load((REPOSITORY / "schemas/profile-v0.3.schema.yaml").read_text(encoding="utf-8"))
     profile_fixture = yaml.safe_load((ROOT / "semiconductor-profile-v0.2.yaml").read_text(encoding="utf-8"))
-    errors = list(Draft202012Validator(profile_schema).iter_errors(profile_fixture))
+    errors = list(validator_for_schema(profile_schema).iter_errors(profile_fixture))
     if errors:
         print("Profile conformance: FAIL", file=sys.stderr)
         print("\n".join(error.message for error in errors), file=sys.stderr)

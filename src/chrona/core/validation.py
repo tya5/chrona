@@ -4,14 +4,13 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-import jsonschema
 import yaml
 
 from chrona.core.attachments import attachment_diagnostics
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.temporal import (Calendar, TemporalError, as_date, is_scheduled_amount,
                        parse_amount, requires_working_calendar)
-from chrona.resources import safe_load, schema_document, schema_resource
+from chrona.resources import safe_load, schema_resource, schema_validator, validator_for_schema
 from chrona.schema_diagnostics import explain_errors
 
 
@@ -38,15 +37,15 @@ def validate_project(
     diagnostics.extend(_rollup_syntax_diagnostics(project))
     if diagnostics:
         return diagnostics
-    schema = (
-        schema_document("project-v0.7.schema.yaml")
+    validator = (
+        schema_validator("project-v0.7.schema.yaml")
         if schema_path == SCHEMA_PATH
-        else safe_load(schema_path.read_text(encoding="utf-8"))
+        else validator_for_schema(safe_load(schema_path.read_text(encoding="utf-8")))
     )
     # PyYAML resolves unquoted ISO dates to ``date`` objects, while JSON Schema
     # describes the canonical JSON-compatible representation as strings. Keep
     # the semantic value intact for scheduling, but validate its serialization.
-    errors = tuple(jsonschema.Draft202012Validator(schema).iter_errors(_schema_value(project)))
+    errors = tuple(validator.iter_errors(_schema_value(project)))
     if errors:
         project_id = project.get("project", {}).get("id")
         violation = explain_errors(errors, resource_kind="project", resource_identity=project_id if isinstance(project_id, str) else None)

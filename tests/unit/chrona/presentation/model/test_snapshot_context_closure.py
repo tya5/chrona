@@ -7,6 +7,7 @@ import pytest
 
 import chrona.presentation.contracts.diagnostics as contract_diagnostics
 import chrona.presentation.model.closure as closure
+import chrona.resources as chrona_resources
 from chrona.presentation.contracts import RenderContextContract, RenderEnvironment, RenderTarget, ResourceReference, freeze
 from chrona.presentation.model.closure import ClosureError
 from chrona.storage.revision_store import LocalSnapshotReader
@@ -23,7 +24,7 @@ def _write(root, token, address, value):
             "revision": {"token": token}, "contentIdentity": "sha256:" + sha256(payload).hexdigest()}
 
 
-def test_v06_closure_allows_named_snapshot_project_at_its_own_revision(tmp_path, monkeypatch):
+def test_v06_closure_allows_named_snapshot_project_at_its_own_revision(tmp_path, monkeypatch, request):
     primary = {"version": "timeline/v0.7", "project": {"id": "p"}, "objects": {}}
     historic = {"version": "timeline/v0.7", "project": {"id": "p"}, "objects": {}}
     primary_ref = _write(tmp_path, "current", "project.yaml", primary)
@@ -43,7 +44,9 @@ def test_v06_closure_allows_named_snapshot_project_at_its_own_revision(tmp_path,
         "colorScheme": resources["scheme"], "layout": resources["layout"],
         "inputs": {"snapshot": snapshot_ref}, "environment": {"fontMetrics": {"missingFont": "diagnose"}}, "target": {"capabilities": []}}}
     context_ref = _write(tmp_path, "current", "context.yaml", context)
-    monkeypatch.setattr(closure.jsonschema, "Draft202012Validator", lambda _schema, **_kwargs: type("V", (), {"iter_errors": lambda self, _value: iter(())})())
+    monkeypatch.setattr(chrona_resources, "Draft202012Validator", lambda _schema, **_kwargs: type("V", (), {"iter_errors": lambda self, _value: iter(())})())
+    chrona_resources.schema_validator.cache_clear()
+    request.addfinalizer(chrona_resources.schema_validator.cache_clear)
     monkeypatch.setattr(closure, "resolve_theme", lambda *_args, **_kwargs: {})
     def fake_parse(identity, value):
         if identity.kind != "render-context":

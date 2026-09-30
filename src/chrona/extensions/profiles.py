@@ -3,9 +3,8 @@ from __future__ import annotations
 
 from typing import Any
 
-import jsonschema
 from chrona.core.diagnostics import Diagnostic
-from chrona.resources import safe_load, schema_document
+from chrona.resources import safe_load, schema_validator
 from chrona.schema_diagnostics import explain_errors
 from chrona.core.ports import SnapshotReadError, SnapshotReader
 
@@ -45,8 +44,7 @@ def validate_profiles(project: dict[str, Any], package_manifests: dict[str, dict
     manifest = package_manifests.get(PACKAGE_ID)
     if manifest is None:
         return [Diagnostic("IDP-PROFILE-006", "Implementation-delivery package is unresolved", "/extensions")]
-    schema = schema_document("profile-v0.3.schema.yaml")
-    errors = tuple(jsonschema.Draft202012Validator(schema).iter_errors(manifest))
+    errors = tuple(schema_validator("profile-v0.3.schema.yaml").iter_errors(manifest))
     if errors or manifest.get("packageId") != PACKAGE_ID:
         detail = "packageId must be 'implementation-delivery'" if not errors else explain_errors(
             errors, resource_kind="profile", resource_identity=manifest.get("packageId") if isinstance(manifest.get("packageId"), str) else None,
@@ -84,9 +82,9 @@ def _validate_value(project: dict[str, Any], name: str, value: Any, spec: dict[s
         if any(entity_id not in entities or entities[entity_id].get("type") not in ACTOR_PROFILES for entity_id in values):
             return [Diagnostic("IDP-PROFILE-003", "Invalid delivery assignee", path)]
     if spec.get("type") == "resourceReference":
-        schema = schema_document("revision-store-resource-ref-v0.1.schema.yaml")
+        validator = schema_validator("revision-store-resource-ref-v0.1.schema.yaml")
         for reference in values:
-            errors = tuple(jsonschema.Draft202012Validator(schema).iter_errors(reference))
+            errors = tuple(validator.iter_errors(reference))
             if errors:
                 violation = explain_errors(
                     errors, resource_kind="revision-store-resource-ref", resource_identity=reference.get("id") if isinstance(reference.get("id"), str) else None,

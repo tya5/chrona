@@ -2,12 +2,16 @@
 """Validate the M23 Review Detail Profile structure and semantic invariants."""
 from copy import deepcopy
 from pathlib import Path
+import sys
 
 import yaml
 from jsonschema import Draft202012Validator
 
 
 REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO))
+sys.path.insert(0, str(REPO / "src"))
+from chrona.resources import validator_for_schema
 
 
 def diagnostics(profile):
@@ -33,7 +37,7 @@ def main():
     schema = yaml.safe_load((REPO / "schemas/review-detail-profile-v0.1.schema.yaml").read_text(encoding="utf-8"))
     fixture = yaml.safe_load((REPO / "conformance/review-detail-profile-v0.1.yaml").read_text(encoding="utf-8"))
     Draft202012Validator.check_schema(schema)
-    validator = Draft202012Validator(schema)
+    validator = validator_for_schema(schema)
     validator.validate(fixture)
     assert diagnostics(fixture) == ()
 

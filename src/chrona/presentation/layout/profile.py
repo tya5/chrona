@@ -8,9 +8,8 @@ from hashlib import sha256
 import json
 from typing import Any, Mapping
 
-import jsonschema
 from chrona.presentation.layout.model import LayoutError, ResolvedLayoutProfile
-from chrona.resources import schema_document
+from chrona.resources import schema_validator
 from chrona.schema_diagnostics import explain_errors
 
 
@@ -24,14 +23,10 @@ class LayoutBase:
     content_identity: str
 
 
-def _schema() -> dict[str, Any]:
-    return dict(schema_document("layout-profile-v0.9.schema.yaml"))
-
-
 def _validate_schema(profile: Mapping[str, Any]) -> None:
     if profile.get("version") != LAYOUT_VERSION:
         raise LayoutError("E_LAYOUT_SCHEMA", "/version")
-    errors = tuple(jsonschema.Draft202012Validator(_schema()).iter_errors(profile))
+    errors = tuple(schema_validator("layout-profile-v0.9.schema.yaml").iter_errors(profile))
     if errors:
         identity = profile.get("id")
         violation = explain_errors(

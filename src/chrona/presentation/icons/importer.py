@@ -14,10 +14,9 @@ from importlib.resources import files
 
 from fontTools.pens.cu2quPen import Cu2QuPen
 from fontTools.svgLib.path import parse_path
-import jsonschema
 
 from chrona.presentation.icons.normalizer import IconNormalizationError, normalize_glyph_entry, normalize_pattern_entry
-from chrona.resources import safe_load, schema_document
+from chrona.resources import safe_load, schema_validator
 
 
 class IconImportError(ValueError):
@@ -66,8 +65,7 @@ def import_theme_assets(source: Path, destination: Path) -> dict[str, object]:
         raise IconImportError("E_THEME_ASSET_SOURCE_SCHEMA", source_ref="/version")
     if not isinstance(document["id"], str) or not _THEME_ASSET_NAME.fullmatch(document["id"]):
         raise IconImportError("E_THEME_ASSET_SOURCE_SCHEMA", source_ref="/id")
-    source_schema = schema_document("theme-asset-source-v0.1.schema.yaml")
-    validation = tuple(jsonschema.Draft202012Validator(source_schema).iter_errors(document))
+    validation = tuple(schema_validator("theme-asset-source-v0.1.schema.yaml").iter_errors(document))
     if validation:
         error = min(validation, key=lambda item: (tuple(str(part) for part in item.absolute_path), item.message))
         pointer = "/" + "/".join(str(part).replace("~", "~0").replace("/", "~1") for part in error.absolute_path)

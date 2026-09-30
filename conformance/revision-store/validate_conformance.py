@@ -4,10 +4,12 @@ from pathlib import Path
 import sys
 
 import yaml
-from jsonschema import Draft202012Validator
-
 
 HERE = Path(__file__).resolve().parent
+ROOT = HERE.parents[1]
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "src"))
+from chrona.resources import validator_for_schema
 
 
 def load(path: Path):
@@ -20,7 +22,7 @@ def main() -> int:
     for case in manifest["cases"]:
         schema = load((HERE / case["schema"]).resolve())
         value = load(HERE / case["resource"])
-        valid = not list(Draft202012Validator(schema).iter_errors(value))
+        valid = not list(validator_for_schema(schema).iter_errors(value))
         if valid != case["valid"]:
             failures.append(case["id"])
     if failures:

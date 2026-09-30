@@ -6,9 +6,8 @@ from pathlib import Path
 from typing import Any, Iterator
 
 import yaml
-from jsonschema import Draft202012Validator
 
-from chrona.resources import safe_load
+from chrona.resources import safe_load, validator_for_schema
 from tools.schema_inventory import validate_inventory
 
 
@@ -77,7 +76,7 @@ def validate_annotations(schema_root: Path, inventory_path: Path) -> None:
         if entry["state"] != "live":
             continue
         schema = safe_load((schema_root / entry["file"]).read_bytes())
-        validator = Draft202012Validator(schema)
+        validator = validator_for_schema(schema)
         for path, node in annotation_paths(schema):
             description = node.get("description")
             if not isinstance(description, str) or not description.strip():

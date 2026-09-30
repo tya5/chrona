@@ -5,9 +5,13 @@ import argparse
 from copy import deepcopy
 from pathlib import Path
 import re
-from typing import Any
+from typing import Any, Iterator
 
-from chrona.resources import safe_load
+from referencing import Registry, Resource
+from referencing.exceptions import Unresolvable
+from referencing.jsonschema import DRAFT202012
+
+from chrona.resources import safe_load, schema_registry
 
 
 SCHEMA_SUFFIXES = (".schema.yaml", ".schema.json")
@@ -130,6 +134,43 @@ def validate_version_evolution(schema_root: Path, entries: tuple[dict[str, Any],
             raise SchemaInventoryError(f"E_SCHEMA_ADDITIVE_BUMP:{entry['file']}:{successor}")
 
 
+def _references(node: Any) -> Iterator[str]:
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key == "$ref" and isinstance(value, str):
+                yield value
+            else:
+                yield from _references(value)
+    elif isinstance(node, list):
+        for item in node:
+            yield from _references(item)
+
+
+def validate_schema_references(
+    schema_root: Path, entries: tuple[dict[str, Any], ...], registry: Registry | None = None,
+) -> None:
+    """Resolve every `$ref` of every live schema against the part registry, without any input.
+
+    A URN reference is otherwise looked up lazily, so an unregistered part would fail
+    only for a document that reaches the reference.
+    """
+    registry = schema_registry() if registry is None else registry
+    for entry in entries:
+        if entry["state"] != "live":
+            continue
+        schema = safe_load((schema_root / entry["file"]).read_bytes())
+        if not isinstance(schema, dict):
+            continue
+        base = schema.get("$id", "")
+        base = base if isinstance(base, str) else ""
+        resolver = registry.with_resource(base, Resource.from_contents(schema, default_specification=DRAFT202012)).resolver(base)
+        for reference in _references(schema):
+            try:
+                resolver.lookup(reference)
+            except Unresolvable as error:
+                raise SchemaInventoryError(f"E_SCHEMA_REF_UNRESOLVED:{entry['file']}:{reference}") from error
+
+
 def schema_files(schema_root: Path) -> frozenset[str]:
     return frozenset(
         path.name for path in schema_root.iterdir()
@@ -183,6 +224,7 @@ def validate_inventory(schema_root: Path, inventory_path: Path) -> tuple[dict[st
     if duplicates:
         raise SchemaInventoryError(f"E_SCHEMA_INVENTORY_DUPLICATE_LIVE:{duplicates}")
     validate_version_evolution(schema_root, entries)
+    validate_schema_references(schema_root, entries)
     return entries
 
 

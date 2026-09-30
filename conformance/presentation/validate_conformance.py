@@ -10,10 +10,11 @@ from pathlib import PurePosixPath
 import subprocess
 
 import yaml
-from jsonschema import Draft202012Validator, RefResolver
-
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "src"))
+from chrona.resources import validator_for_schema
 SCHEMAS = ROOT / "schemas"
 REPOSITORY_ROOT = ROOT
 
@@ -31,14 +32,6 @@ def json_value(value):
     if isinstance(value, dict):
         return {key: json_value(item) for key, item in value.items()}
     return value
-
-
-def schema_store():
-    store = {}
-    for path in SCHEMAS.glob("*.schema.yaml"):
-        schema = load_yaml(path)
-        store[schema["$id"]] = schema
-    return store
 
 
 def resolve_revision_ref(ref: dict) -> tuple[dict | None, list[str]]:
@@ -199,15 +192,13 @@ def semantic_errors(path: Path, resource: dict) -> list[str]:
 def main() -> int:
     manifest_path = Path(__file__).with_name("conformance-v0.1.yaml")
     manifest = load_yaml(manifest_path)
-    store = schema_store()
     failures = []
     for case in manifest["cases"]:
         resource = json_value(load_yaml(manifest_path.parent / case["resource"]))
         if "schema" in case:
             schema_path = (manifest_path.parent / case["schema"]).resolve()
             schema = load_yaml(schema_path)
-            resolver = RefResolver.from_schema(schema, store=store)
-            errors = list(Draft202012Validator(schema, resolver=resolver).iter_errors(resource))
+            errors = list(validator_for_schema(schema).iter_errors(resource))
             if case.get("expectSchemaError"):
                 if not errors:
                     failures.append(f"{case['id']}: expected schema rejection")
