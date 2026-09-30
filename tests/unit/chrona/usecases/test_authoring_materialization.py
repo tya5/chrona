@@ -165,3 +165,62 @@ def test_public_cli_materializes_the_same_closed_bundle(tmp_path, monkeypatch):
 
     assert json.loads(result.read_text(encoding="utf-8"))["status"] == "accepted"
     assert (tmp_path / "presentation/receipt.yaml").is_file()
+
+
+# --------------------------------------------------------------------------------------------
+# S1d: the path guard (T1) on `payload.directory`
+#
+# (value, parse accepts it now, verdict of apply_authoring_command on a command that skips the parser).
+# Before the guard every non-empty value parsed.  `None` marks a row whose downstream verdict is not
+# re-run here: it is either accepted (a full render, covered by the materialization tests above) or
+# rejected only after two renders (the same code as the row it is listed beside).
+# --------------------------------------------------------------------------------------------
+
+DIRECTORY_MATRIX = [
+    ("presentation", True, "accepted"),
+    ("out/deeper", True, None),
+    ("Out_1", True, None),
+    ("../out", False, "E_AUTHORING_MATERIALIZE_PATH"),
+    ("/tmp/out", False, "E_AUTHORING_MATERIALIZE_PATH"),
+    ("a/../b", False, "E_AUTHORING_MATERIALIZE_PATH"),
+    ("", False, "E_AUTHORING_MATERIALIZE_PATH"),
+    ("a/./b", False, "E_RESOURCE_SCHEMA"),
+    ("out dir", False, "E_RESOURCE_SCHEMA"),
+    ("出力", False, "E_RESOURCE_SCHEMA"),
+    ("a\\b", False, None),
+    ("out\x00", False, None),
+    (".", False, None),
+    # `$` accepts one trailing newline in the strict path (T3 is not adopted), so the parser still
+    # accepts this value; the explicit workspace contract refuses it downstream, as before.
+    ("presentation\n", True, None),
+]
+
+
+@pytest.mark.parametrize(("value", "parses", "downstream"), DIRECTORY_MATRIX)
+def test_authoring_command_directory_guard_matrix(tmp_path, value, parses, downstream):
+    from chrona.usecases.authoring_commands import parse_authoring_command
+
+    workspace = _workspace(tmp_path)
+    command = {"version": "chrona/authoring-command/v0.1", "commandId": "eject", "type": "materializePresentationPreset",
+               "target": {"kind": "authoring-workspace", "path": workspace.name},
+               "baseRevision": content_identity(yaml.safe_load(workspace.read_text(encoding="utf-8"))),
+               "payload": {"directory": value}}
+    command_file = tmp_path / "command.json"
+    command_file.write_text(json.dumps(command, ensure_ascii=True), encoding="utf-8")
+
+    try:
+        parse_authoring_command(command_file)
+        parsed, detail = True, ""
+    except ValueError as error:
+        parsed, detail = False, str(error)
+    assert parsed is parses, detail
+    if not parses:
+        assert detail.startswith("E_AUTHORING_COMMAND_SCHEMA: /payload/directory"), detail
+    if downstream is None:
+        return
+    result = apply_authoring_command(workspace, command, read_workspace=read_authoring_workspace,
+                                     cas_write=cas_write_authoring_workspace, cas_write_aggregate=cas_write_authoring_aggregate)
+    verdict = "accepted" if result["status"] == "accepted" else result["diagnostics"][0]["code"].partition(":")[0]
+    assert verdict == downstream
+    # The guard only moves a rejection earlier: it never refuses a value that apply accepts.
+    assert parses or verdict != "accepted"

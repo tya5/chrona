@@ -158,7 +158,7 @@ def test_a_consumer_that_never_mentions_the_schema_fails_the_gate():
 # Live entries that keep a copy on purpose, each with the reason and the slice that removes it.
 DEFERRED_FILES = {
     "layout-profile-v0.9.schema.yaml": "adopted by S1f, after I573-1 (layout-profile is not edited by S1c)",
-    "authoring-command-v0.1.schema.yaml": "S1d edits this schema in place (T1); the S0 sensitivity tests also edit its `baseRevision` pattern",
+    "authoring-command-v0.1.schema.yaml": "S1d adopted `fileName` and `safeRelativePath` here (T1); `baseRevision` and the dates stay inline because the S0 sensitivity tests edit the `baseRevision` pattern, so they move in a later slice that retargets those tests",
 }
 # (file, pointer) copies inside adopting schemas, each with the reason.
 DEFERRED_COPIES = {
@@ -344,7 +344,7 @@ def test_definitions_that_name_an_existing_pattern_are_byte_exact_to_it():
 
 ADOPTERS = frozenset({
     "actual-intake-batch-v0.2.schema.yaml", "actual-set-v0.3.schema.yaml", "authoring-command-result-v0.1.schema.yaml",
-    "authoring-workspace-v0.1.schema.yaml", "automation-result-v0.1.schema.yaml",
+    "authoring-command-v0.1.schema.yaml", "authoring-workspace-v0.1.schema.yaml", "automation-result-v0.1.schema.yaml",
     "command-request-v0.2.schema.yaml", "example-registry-v0.1.schema.yaml", "icon-catalog-v0.4.schema.yaml",
     "presentation-materialization-receipt-v0.1.schema.yaml", "presentation-preset-v0.1.schema.yaml",
     "preset-library-v0.2.schema.yaml", "profile-v0.3.schema.yaml", "project-v0.7.schema.yaml",

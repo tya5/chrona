@@ -1,5 +1,6 @@
 from copy import deepcopy
 import errno
+import json
 from pathlib import Path
 from types import SimpleNamespace
 import sys
@@ -176,3 +177,131 @@ def test_aggregate_writer_recovers_an_unreferenced_complete_bundle_before_retry(
     assert cas_write_authoring_aggregate(path, content_identity(workspace), candidates) == content_identity(workspace)
     assert (tmp_path / "presentation/view.yaml").read_bytes() == b"replacement"
     assert not _transaction_marker(path).exists()
+
+
+# --------------------------------------------------------------------------------------------
+# S1d: the path guard (T1) on `target.path` and `payload.preset.path`
+#
+# Each row is one string, whether `parse_authoring_command` accepts it now, and today's verdict of the
+# stage after the parser.  Before the guard every non-empty row parsed (the fields were "any non-empty
+# string"), so the only check on `target.path` was name equality in `apply_authoring_command` and the
+# only check on the preset path was the authoring-workspace contract that apply builds.  The
+# `downstream` column is the verdict of `apply_authoring_command` on a command that skips the parser:
+# the stage the guard now precedes, unchanged by it.
+# --------------------------------------------------------------------------------------------
+
+_BASE = "E_AUTHORING_BASE_REVISION"
+_STORED = "sha256:" + "2" * 64
+
+# (value, parse accepts it now, verdict of apply for a workspace stored as `workspace.yaml`)
+TARGET_PATH_MATRIX = [
+    ("workspace.yaml", True, "accepted"),
+    ("my plan.yaml", True, _BASE),
+    ("計画.yaml", True, _BASE),
+    ("../workspace.yaml", False, _BASE),
+    ("/abs/workspace.yaml", False, _BASE),
+    ("sub/workspace.yaml", False, _BASE),
+    ("a\\b.yaml", False, _BASE),
+    ("work\x00space.yaml", False, _BASE),
+    ("workspace.yaml\n", False, _BASE),
+    ("a\tb.yaml", False, _BASE),
+    (".", False, _BASE),
+    ("..", False, _BASE),
+    ("", False, _BASE),
+]
+# Names that apply accepts when the workspace file really carries that name (name equality is its only
+# check) and that the guard now refuses: the one deliberate narrowing of T1 (design register T1).
+NARROWED_BY_THE_GUARD = ["a\\b.yaml", "work\x00space.yaml", "workspace.yaml\n", "a\tb.yaml", ".."]
+
+PRESET_PATH_MATRIX = [
+    ("preset.yaml", True, "accepted"),
+    ("presets/starter.yaml", True, "accepted"),
+    ("../preset.yaml", False, "E_RESOURCE_SCHEMA"),
+    ("/etc/preset.yaml", False, "E_RESOURCE_SCHEMA"),
+    ("a/./b.yaml", False, "E_RESOURCE_SCHEMA"),
+    ("a/../b.yaml", False, "E_RESOURCE_SCHEMA"),
+    ("a\\b.yaml", False, "E_RESOURCE_SCHEMA"),
+    ("my preset.yaml", False, "E_RESOURCE_SCHEMA"),
+    ("計画.yaml", False, "E_RESOURCE_SCHEMA"),
+    ("preset\x00.yaml", False, "E_RESOURCE_SCHEMA"),
+    (".hidden.yaml", False, "E_RESOURCE_SCHEMA"),
+    ("", False, "E_RESOURCE_SCHEMA"),
+    # `$` accepts one trailing newline in the strict path (T3 is not adopted): the parser and the
+    # workspace contract agree, so the value is accepted by both and stays accepted.
+    ("preset.yaml\n", True, "accepted"),
+]
+
+
+def _parse(tmp_path: Path, document: dict) -> str:
+    """`parsed`, or the error code and pointer of `parse_authoring_command`."""
+    from chrona.usecases.authoring_commands import parse_authoring_command
+
+    path = tmp_path / "command.json"
+    path.write_text(json.dumps(document, ensure_ascii=True), encoding="utf-8")
+    try:
+        parse_authoring_command(path)
+    except ValueError as error:
+        code, _, rest = str(error).partition(": ")
+        return f"{code} {rest.partition(': ')[0]}"
+    return "parsed"
+
+
+def _downstream(document: dict, workspace: dict, workspace_name: str = "workspace.yaml") -> str:
+    """The verdict of `apply_authoring_command` alone, on an in-memory workspace (no parser)."""
+    result = apply_authoring_command(
+        Path(workspace_name), document, read_workspace=lambda _path: deepcopy(workspace),
+        cas_write=lambda _path, _base, _candidate: _STORED,
+    )
+    return "accepted" if result["status"] == "accepted" else result["diagnostics"][0]["code"].partition(":")[0]
+
+
+def _task_command(workspace: dict, path: str) -> dict:
+    command = _command(workspace, "setWorkspaceTask", {"task": {"id": "one", "title": "T", "planned": {"start": "2026-01-03", "finish": "2026-01-04"}}})
+    command["target"] = {"kind": "authoring-workspace", "path": path}
+    return command
+
+
+@pytest.mark.parametrize(("value", "parses", "downstream"), TARGET_PATH_MATRIX)
+def test_authoring_command_target_path_guard_matrix(tmp_path, value, parses, downstream):
+    workspace = _workspace()
+    command = _task_command(workspace, value)
+
+    verdict = _parse(tmp_path, command)
+    assert (verdict == "parsed") is parses, verdict
+    if not parses:
+        assert verdict.startswith("E_AUTHORING_COMMAND_SCHEMA /target/path"), verdict
+    assert _downstream(command, workspace) == downstream
+    if value in NARROWED_BY_THE_GUARD and Path(value).name == value:
+        # apply alone would have accepted a workspace stored under exactly this name
+        assert _downstream(command, workspace, value) == "accepted"
+
+
+@pytest.mark.parametrize("name", ["workspace.yaml", "my plan.yaml", "計画.yaml"])
+def test_authoring_command_still_works_for_a_workspace_named_with_spaces_or_non_ascii(tmp_path, name):
+    workspace, path = _workspace(), tmp_path / name
+    _write(path, workspace)
+    command = _command(workspace, "setWorkspaceTask", {"task": {"id": "one", "title": "Renamed", "planned": {"start": "2026-01-03", "finish": "2026-01-04"}}})
+    command["target"]["path"] = name
+    command_file = tmp_path / "command.yaml"
+    command_file.write_text(yaml.safe_dump(command, allow_unicode=True), encoding="utf-8")
+
+    from chrona.usecases.authoring_commands import parse_authoring_command
+    result = apply_authoring_command(path, parse_authoring_command(command_file), read_workspace=read_authoring_workspace,
+                                     cas_write=cas_write_authoring_workspace)
+
+    assert result["status"] == "accepted"
+    assert yaml.safe_load(path.read_text(encoding="utf-8"))["body"]["project"]["tasks"][0]["title"] == "Renamed"
+
+
+@pytest.mark.parametrize(("value", "parses", "downstream"), PRESET_PATH_MATRIX)
+def test_authoring_command_preset_path_guard_matrix(tmp_path, value, parses, downstream):
+    workspace = _workspace()
+    command = _command(workspace, "selectPresentationPreset", {"preset": {"id": "starter", "version": "1", "path": value}})
+
+    verdict = _parse(tmp_path, command)
+    assert (verdict == "parsed") is parses, verdict
+    if not parses:
+        assert verdict.startswith("E_AUTHORING_COMMAND_SCHEMA /payload/preset/path"), verdict
+    assert _downstream(command, workspace) == downstream
+    # The guard only moves a rejection earlier: it never refuses a value that apply accepts.
+    assert parses or downstream != "accepted"
