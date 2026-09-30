@@ -395,3 +395,74 @@ def test_a_reference_in_the_visibility_union_changes_no_diagnostic(field):
     for value, adopted, twin in _union_explanations(VIEW, _view_pointer(field), VISIBILITY_PROBES):
         assert adopted == twin, value
     assert any(row[1] != ("valid",) for row in _union_explanations(VIEW, _view_pointer(field), VISIBILITY_PROBES))
+
+
+# --------------------------------------------------------------------------------------------
+# valueFormat and its two declared subsets (S2d)
+# --------------------------------------------------------------------------------------------
+
+SUMMARY = "summary-profile-v0.2.schema.yaml"
+TABLE_FORMATS = ["text", "dateRange", "date", "signedDays"]
+SUMMARY_FORMATS = ["text", "date", "count", "signedDays"]
+
+
+def test_value_format_vocabulary_is_the_union_of_its_two_declared_subsets():
+    defs = _defs()
+    assert defs["tableColumnScalarFormat"]["enum"] == TABLE_FORMATS
+    assert defs["summaryMetricFormat"]["enum"] == SUMMARY_FORMATS
+    full = set(defs["valueFormat"]["enum"])
+    assert set(TABLE_FORMATS) < full and set(SUMMARY_FORMATS) < full
+    assert set(TABLE_FORMATS) | set(SUMMARY_FORMATS) == full, "the superset declares exactly the formats some context accepts"
+    assert full - set(TABLE_FORMATS) == {"count"} and full - set(SUMMARY_FORMATS) == {"dateRange"}, \
+        "the only difference between the contexts: a table has dateRange, a summary metric has count"
+
+
+@pytest.mark.parametrize(("name", "definition"), [(VIEW, "tableColumnScalarFormat"), (SUMMARY, "summaryMetricFormat")])
+def test_each_value_format_site_references_its_subset_and_accepts_exactly_it(name, definition):
+    sites = _sites(name, definition)
+    assert len(sites) == 1, sites
+    validator = _site_validator(name, sites[0])
+    allowed = _defs()[definition]["enum"]
+    assert [value for value in allowed if not validator.is_valid(value)] == []
+    for value in ("count", "dateRange", "signedDay", "Text", "", None, 3, {"kind": "presence"}):
+        assert validator.is_valid(value) is (isinstance(value, str) and value in allowed), value
+    other = {"tableColumnScalarFormat": "count", "summaryMetricFormat": "dateRange"}[definition]
+    assert not validator.is_valid(other), f"{definition} must not accept the other context's format {other}"
+
+
+def test_no_site_references_the_full_value_format():
+    assert not any(_sites(name, "valueFormat") for name in LIVE if name not in PARTS)
+
+
+def _literals(path: str) -> set[str]:
+    import ast
+
+    return {node.value for node in ast.walk(ast.parse((ROOT / path).read_text(encoding="utf-8"))) if isinstance(node, ast.Constant) and isinstance(node.value, str)}
+
+
+def test_value_format_code_twins_equal_the_declared_subsets():
+    import ast
+
+    # The summary renderer rejects every formatter outside one set literal; it must be exactly the declared subset.
+    tree = ast.parse((ROOT / "src/chrona/presentation/review/v05_content.py").read_text(encoding="utf-8"))
+    sets = [{element.value for element in node.elts} for node in ast.walk(tree)
+            if isinstance(node, ast.Set) and node.elts and all(isinstance(element, ast.Constant) and isinstance(element.value, str) for element in node.elts)]
+    assert set(SUMMARY_FORMATS) in sets
+    # The table formatter handles each declared scalar format by name.
+    table = _literals("src/chrona/presentation/model/surface_content.py")
+    assert set(TABLE_FORMATS) <= table
+
+
+TABLE_FORMAT_PROBES = ["bogus", "", 5, None, [], {}, {"kind": "presence"}, {"kind": "presence", "whenTrue": "Yes"},
+                       {"kind": "presence", "whenTrue": "Yes", "whenFalse": 3}, {"kind": "other", "whenTrue": "a", "whenFalse": "b"},
+                       "count", "dateRange"]
+
+
+def test_a_reference_in_the_table_format_union_changes_no_diagnostic():
+    view = _schema(VIEW)
+    pointer = next(_pointer(path) for path, node in _walk(view)
+                   if path[-4:] == ("tableColumns", "items", "properties", "format") and isinstance(node, dict))
+    rows = _union_explanations(VIEW, pointer, TABLE_FORMAT_PROBES)
+    for value, adopted, twin in rows:
+        assert adopted == twin, value
+    assert any(row[1] != ("valid",) for row in rows) and any(row[1] == ("valid",) for row in _union_explanations(VIEW, pointer, ["text", "signedDays"]))

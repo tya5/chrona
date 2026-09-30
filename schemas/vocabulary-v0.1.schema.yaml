@@ -54,3 +54,15 @@ $defs:
     description: "The subset of `relationVisibilityMode` a guided authoring override may select."
     examples: [semantic]
     enum: [none, semantic]
+  valueFormat:
+    description: "Every public value formatter: the union of the subsets below. No site references it; each context accepts its own named subset."
+    examples: [text]
+    enum: [text, date, dateRange, count, signedDays]
+  tableColumnScalarFormat:
+    description: "The subset of `valueFormat` a View table column may apply to a scalar (a column may also declare a presence presentation)."
+    examples: [dateRange]
+    enum: [text, dateRange, date, signedDays]
+  summaryMetricFormat:
+    description: "The subset of `valueFormat` a summary-profile metric may apply to its value."
+    examples: [count]
+    enum: [text, date, count, signedDays]
