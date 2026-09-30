@@ -224,3 +224,19 @@ def test_authoring_command_directory_guard_matrix(tmp_path, value, parses, downs
     assert verdict == downstream
     # The guard only moves a rejection earlier: it never refuses a value that apply accepts.
     assert parses or verdict != "accepted"
+
+
+@pytest.mark.parametrize("value", ["/tmp/out", "C:/x", "C:x", "\\\\server\\share\\x", "\\x", "../out", "a/../b", ""])
+def test_materialize_relative_rejects_a_drive_anchor_or_root_on_every_host(value):
+    """The decision must not depend on the host OS: `/tmp/out` is not absolute to the Windows flavour."""
+    from chrona.usecases.authoring_materialization import _relative
+
+    with pytest.raises(ValueError, match="E_AUTHORING_MATERIALIZE_PATH"):
+        _relative(value)
+
+
+@pytest.mark.parametrize("value", ["presentation", "out/deeper", "Out_1"])
+def test_materialize_relative_still_accepts_plain_relative_directories(value):
+    from chrona.usecases.authoring_materialization import _relative
+
+    _relative(value)

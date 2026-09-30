@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from hashlib import sha256
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 import tempfile
 from typing import Any
 
@@ -88,7 +88,12 @@ def _render_bytes(draft: Any) -> bytes:
 
 
 def _relative(value: str) -> None:
-    if not value or Path(value).is_absolute() or any(part in {"", ".", ".."} for part in Path(value).parts):
+    # Decide on both path flavours so a rooted path without a drive (`/x`) and a drive path (`C:/x`)
+    # are rejected on every OS, not only where the host flavour calls them absolute.
+    windows = PureWindowsPath(value)
+    if (not value or Path(value).is_absolute() or PurePosixPath(value).is_absolute()
+            or windows.anchor or windows.drive or windows.root
+            or any(part in {"", ".", ".."} for part in Path(value).parts)):
         raise ValueError("E_AUTHORING_MATERIALIZE_PATH")
 
 
