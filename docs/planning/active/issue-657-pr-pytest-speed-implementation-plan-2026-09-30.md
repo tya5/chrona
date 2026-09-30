@@ -57,7 +57,7 @@ Not moved, and why: `test_attached_milestones.py` (two tests, 108 s) and `test_i
 ### I657-3b PR shards deselect `corpus` (workflow, awaits the lead)
 
 - **Files:** `.github/workflows/conformance.yml` (add `-m "not corpus"` to the `pr-pytest` command), a guard test `tests/unit/tools/test_ci_corpus_selection.py` parsing the workflow.
-- **Change:** one shard-command edit. `reproduction-newest-python` and `full-matrix` are unchanged, so corpus tests run on the schedule, on dispatch and after each push to `main`.
+- **Change:** one shard-command edit (`-m "not corpus"`). `reproduction-newest-python` and `full-matrix` are unchanged, so corpus tests run on the schedule, on dispatch and after each push to `main`. The same PR regenerates `.test_durations` in full from a CI measurement of the post-I657-2b tree (run 36746713071, 1990 ids, every test, corpus included). Predicted with the committed file and the marker: three groups of about 379 worker-seconds (590 before this slice).
 - **Validation:** checks green on the PR; `gh workflow run conformance.yml --ref <branch>` (full matrix) shows the corpus tests executing and passing on all three OSes, linked in the PR body; the PR's shard times show the deselection.
 - **Publication:** open, get checks green, **stop and report the PR number to the lead, do not merge.** The lead decides the Python 3.11 reproduction question in the review, "What may not move".
 

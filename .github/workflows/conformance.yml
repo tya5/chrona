@@ -130,7 +130,7 @@ jobs:
         run: python -m tools.derived_workflow apply derived-snapshot.tar.gz derived-snapshot.tar.gz.json --baseline "$BASE_SHA"
       - id: pytest
         continue-on-error: true
-        run: pytest -n 4 --splits 3 --group ${{ matrix.shard }} --splitting-algorithm least_duration
+        run: pytest -n 4 --splits 3 --group ${{ matrix.shard }} --splitting-algorithm least_duration -m "not corpus"
       - name: Finalize independent CI outcomes
         if: ${{ always() }}
         run: >-
