@@ -13,6 +13,7 @@ from typing import Any, Mapping
 
 import yaml
 
+from chrona.core.store_address import StoreAddressError, check_store_address, resolve_store_address
 from chrona.operational.resources import OperationalResourceError, content_identity
 from chrona.resources import safe_load
 
@@ -102,8 +103,11 @@ def _atomic_yaml_write(path: Path, candidate: dict[str, Any], expected_identity:
 
 
 def _relative(name: str) -> bool:
-    candidate = Path(name)
-    return bool(name) and not candidate.is_absolute() and all(part not in {"", ".", ".."} for part in candidate.parts)
+    try:
+        check_store_address(name)
+    except StoreAddressError:
+        return False
+    return True
 
 
 @contextmanager
@@ -177,7 +181,7 @@ def _recover_incomplete_aggregate(path: Path) -> None:
         resources = value["resources"]
         if not isinstance(expected, str) or not isinstance(directory, str) or not _relative(directory) or "/" in directory or not isinstance(resources, dict):
             raise ValueError
-        target = path.parent.resolve() / directory
+        target = resolve_store_address(path.parent, directory)
         if content_identity(_load_workspace(path)) == expected and target.is_dir() and all(
             isinstance(name, str) and isinstance(identity, str) and _relative(name)
             and (target.parent / name).is_file() and _bytes_identity((target.parent / name).read_bytes()) == identity

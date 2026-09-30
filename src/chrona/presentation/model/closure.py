@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 from importlib.metadata import version
 import math
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 import re
 from typing import Any, Mapping
 
@@ -35,6 +35,7 @@ from chrona.presentation.fonts.system import DraftFontResolution, SystemFontErro
 from chrona.presentation.model.font_metrics import FontMetricsCatalog, FontMetricsError, FontTabularWarning, resolve_font_files, resolve_font_metrics
 from chrona.presentation.contracts.resources import FrozenDict, FrozenList, _compact_commands
 from chrona.core.ports import SnapshotReadError, SnapshotReader
+from chrona.core.store_address import StoreAddressError, check_store_address, resolve_store_address
 from chrona.resources import safe_load
 from chrona.core.identity import content_identity
 
@@ -375,10 +376,10 @@ def resolve_guided_draft_render(
 
 
 def _declared_child(root: Path, relative: str) -> Path:
-    candidate = (root / relative).resolve()
-    if root.resolve() not in candidate.parents:
-        raise ClosureError("E_AUTHORING_PRESET_PATH")
-    return candidate
+    try:
+        return resolve_store_address(root, relative)
+    except StoreAddressError as error:
+        raise ClosureError("E_AUTHORING_PRESET_PATH") from error
 
 
 def _draft_view(resources: list[ClosureResource]) -> ViewContract:
@@ -859,9 +860,11 @@ def _resolve_theme_catalog_assets(theme: Mapping[str, Any],
 
 
 def _safe_icon_address(address: str) -> bool:
-    path = PurePosixPath(address)
-    return bool(address and address == path.as_posix() and not path.is_absolute()
-                and all(part not in {"", ".", ".."} for part in path.parts))
+    try:
+        check_store_address(address)
+    except StoreAddressError:
+        return False
+    return True
 
 
 def _selected_icon_references(view: ViewContract, extra: frozenset[str] = frozenset()) -> set[str]:
@@ -1013,9 +1016,10 @@ def _load_draft_icon_assets(catalog_resources: tuple[ClosureResource, ...],
                 raise ClosureError("E_ICON_CATALOG_SCHEMA", f"/body/icons/{entry.name}")
             if not _safe_icon_address(entry.source.address):
                 raise ClosureError("E_ICON_ASSET_PATH", f"/body/icons/{entry.name}/source/address")
-            path = (root / entry.source.address).resolve()
-            if root not in path.parents:
-                raise ClosureError("E_ICON_ASSET_PATH", f"/body/icons/{entry.name}/source/address")
+            try:
+                path = resolve_store_address(root, entry.source.address)
+            except StoreAddressError as error:
+                raise ClosureError("E_ICON_ASSET_PATH", f"/body/icons/{entry.name}/source/address") from error
             try:
                 payload = path.read_bytes()
             except OSError as error:

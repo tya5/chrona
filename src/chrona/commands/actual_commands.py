@@ -10,6 +10,7 @@ from typing import Any, Protocol
 import yaml
 
 from chrona.resources import safe_load
+from chrona.core.store_address import StoreAddressError, check_store_segment, resolve_store_address
 from chrona.storage.snapshot_paths import snapshot_directory
 
 
@@ -88,7 +89,13 @@ class LocalActualStore:
 
     def __init__(self, root: Path, actual_set: dict[str, Any]):
         self.root, self.actual_set_id = root, str(actual_set.get("id", ""))
-        self.tip = root / "actual-tips" / f"{self.actual_set_id}.json"
+        try:
+            # The id becomes a file name below the Store root, so it is a one-segment Store address.
+            tip = resolve_store_address(root, f"actual-tips/{self.actual_set_id}.json")
+            check_store_segment(self.actual_set_id)
+        except StoreAddressError as error:
+            raise ValueError("E_STORE_REFERENCE") from error
+        self.tip = tip
         self._commands: dict[str, tuple[dict[str, Any], dict[str, Any], bool]] = {}
         if self.tip.is_file():
             self._revision, self._actual_set = self._load_tip()

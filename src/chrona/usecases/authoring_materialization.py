@@ -3,12 +3,13 @@ from __future__ import annotations
 
 from copy import deepcopy
 from hashlib import sha256
-from pathlib import Path, PurePosixPath, PureWindowsPath
+from pathlib import Path
 import tempfile
 from typing import Any
 
 import yaml
 
+from chrona.core.store_address import StoreAddressError, check_store_address, resolve_store_address
 from chrona.presentation.contracts import ClosureIdentity, AuthoringWorkspaceContract, PresentationPresetContract, parse_contract
 from chrona.presentation.model.authoring import normalize_authoring_workspace
 from chrona.presentation.model.closure import _packaged_font_metrics, resolve_draft_render, resolve_guided_draft_render
@@ -88,21 +89,19 @@ def _render_bytes(draft: Any) -> bytes:
 
 
 def _relative(value: str) -> None:
-    # Decide on both path flavours so a rooted path without a drive (`/x`) and a drive path (`C:/x`)
-    # are rejected on every OS, not only where the host flavour calls them absolute.
-    windows = PureWindowsPath(value)
-    if (not value or Path(value).is_absolute() or PurePosixPath(value).is_absolute()
-            or windows.anchor or windows.drive or windows.root
-            or any(part in {"", ".", ".."} for part in Path(value).parts)):
-        raise ValueError("E_AUTHORING_MATERIALIZE_PATH")
+    # One shared decision for every address and path taken from a document (#710): it looks at both
+    # path flavours, so `/x`, `C:/x` and `\\x` are refused on every OS, not only where the host agrees.
+    try:
+        check_store_address(value)
+    except StoreAddressError as error:
+        raise ValueError("E_AUTHORING_MATERIALIZE_PATH") from error
 
 
 def _child(root: Path, relative: str) -> Path:
-    _relative(relative)
-    value = (root / relative).resolve()
-    if root not in value.parents:
-        raise ValueError("E_AUTHORING_MATERIALIZE_PATH")
-    return value
+    try:
+        return resolve_store_address(root, relative)
+    except StoreAddressError as error:
+        raise ValueError("E_AUTHORING_MATERIALIZE_PATH") from error
 
 
 def _plain(value: Any) -> Any:

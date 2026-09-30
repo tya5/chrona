@@ -10,6 +10,7 @@ from typing import Any
 from pathlib import Path
 
 from chrona.core.ports import SnapshotReadError
+from chrona.core.store_address import StoreAddressError, resolve_store_address
 from chrona.storage.snapshot_paths import snapshot_directory
 
 
@@ -197,21 +198,24 @@ class LocalSnapshotReader:
             raise SnapshotReadError("E_STORE_REFERENCE", f"expected local store identity={self.identity}; received store={store}")
         token = reference.get("revision", {}).get("token", "")
         address = reference.get("address", "")
-        if (
-            not token
-            or not address
-            or address.startswith("/")
-            or "\\" in address
-            or ".." in address.split("/")
-        ):
+        if not token:
             raise SnapshotReadError("E_IMMUTABLE_SNAPSHOT_REQUIRED")
         try:
-            path = snapshot_directory(self.root, token) / address
+            directory = snapshot_directory(self.root, token)
         except ValueError as error:
             raise SnapshotReadError(str(error)) from error
+        try:
+            path = resolve_store_address(directory, address, root=self.root)
+        except StoreAddressError as error:
+            if error.kind == "syntax":
+                raise SnapshotReadError("E_IMMUTABLE_SNAPSHOT_REQUIRED", f"reference address={address!r} is not a safe Store address") from error
+            raise SnapshotReadError("E_STORE_REFERENCE", f"reference address={address!r} resolves outside the Store root") from error
         if not path.is_file():
             raise SnapshotReadError("E_STORE_REFERENCE", f"reference address={address}; expected immutable file under revision={token}; found no file")
-        payload = path.read_bytes()
+        try:
+            payload = path.read_bytes()
+        except OSError as error:
+            raise SnapshotReadError("E_STORE_REFERENCE", f"reference address={address!r}; the file could not be read") from error
         actual_identity = f"sha256:{sha256(payload).hexdigest()}"
         expected_identity = reference.get("contentIdentity")
         if expected_identity is None and self.require_content_identity:

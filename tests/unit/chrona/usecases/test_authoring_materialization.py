@@ -184,7 +184,8 @@ DIRECTORY_MATRIX = [
     ("/tmp/out", False, "E_AUTHORING_MATERIALIZE_PATH"),
     ("a/../b", False, "E_AUTHORING_MATERIALIZE_PATH"),
     ("", False, "E_AUTHORING_MATERIALIZE_PATH"),
-    ("a/./b", False, "E_RESOURCE_SCHEMA"),
+    # A `.` segment is refused by the shared Store address guard (#710) instead of the workspace contract; same refusal, earlier.
+    ("a/./b", False, "E_AUTHORING_MATERIALIZE_PATH"),
     ("out dir", False, "E_RESOURCE_SCHEMA"),
     ("出力", False, "E_RESOURCE_SCHEMA"),
     ("a\\b", False, None),
