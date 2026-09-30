@@ -66,3 +66,11 @@ $defs:
     description: "The subset of `valueFormat` a summary-profile metric may apply to its value."
     examples: [count]
     enum: [text, date, count, signedDays]
+  dateEndpoint:
+    description: "Completed-date endpoint of a Project object: the point `at`, or the `start` or `end` of a span."
+    examples: [end]
+    enum: [at, start, end]
+  anchorEndpoint:
+    description: "Endpoint of an annotation anchor in a View: `start`, `finish`, `at` or `body`. Its span-end is spelled `finish` here and `end` in `dateEndpoint`; the alias between them is decided in design D4 (slice S4a)."
+    examples: [finish]
+    enum: [start, finish, at, body]

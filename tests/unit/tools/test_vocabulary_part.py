@@ -466,3 +466,59 @@ def test_a_reference_in_the_table_format_union_changes_no_diagnostic():
     for value, adopted, twin in rows:
         assert adopted == twin, value
     assert any(row[1] != ("valid",) for row in rows) and any(row[1] == ("valid",) for row in _union_explanations(VIEW, pointer, ["text", "signedDays"]))
+
+
+# --------------------------------------------------------------------------------------------
+# dateEndpoint and anchorEndpoint (S2e)
+# --------------------------------------------------------------------------------------------
+
+PROJECT = "project-v0.7.schema.yaml"
+DATE_ENDPOINTS = ["at", "start", "end"]
+ANCHOR_ENDPOINTS = ["start", "finish", "at", "body"]
+
+
+def test_endpoint_vocabularies_are_the_published_values_in_order():
+    assert _defs()["dateEndpoint"]["enum"] == DATE_ENDPOINTS
+    assert _defs()["anchorEndpoint"]["enum"] == ANCHOR_ENDPOINTS
+
+
+def test_the_two_endpoint_vocabularies_overlap_exactly_where_d4_says():
+    # Design D4 / slice S4a: the span-end is `end` in a Project and `finish` in a View, and `body` exists only on an
+    # anchor. This test records the relation TODAY; S4a adds `end` to the anchor vocabulary (a deliberate digest update
+    # or a new definition) and then `dateEndpoint` becomes a subset of `anchorEndpoint`: update this test with it.
+    date, anchor = set(DATE_ENDPOINTS), set(ANCHOR_ENDPOINTS)
+    assert date & anchor == {"at", "start"}
+    assert date - anchor == {"end"} and anchor - date == {"finish", "body"}
+    assert not date <= anchor, "S4a has not landed: `end` is not an accepted View anchor endpoint yet"
+
+
+@pytest.mark.parametrize(("name", "definition", "count"), [(PROJECT, "dateEndpoint", 1), (VIEW, "anchorEndpoint", 1)])
+def test_each_endpoint_site_references_its_definition_and_accepts_exactly_it(name, definition, count):
+    sites = _sites(name, definition)
+    assert len(sites) == count, sites
+    validator = _site_validator(name, sites[0])
+    allowed = _defs()[definition]["enum"]
+    assert [value for value in allowed if not validator.is_valid(value)] == []
+    for value in ("finish", "end", "body", "center", "At", "", None, 3):
+        assert validator.is_valid(value) is (isinstance(value, str) and value in allowed), (definition, value)
+
+
+def test_endpoint_code_twins_equal_the_schema_vocabulary():
+    import ast
+
+    from chrona.core.validation import _schedule_endpoints
+
+    assert _schedule_endpoints({"mode": "fixed-point"}) | _schedule_endpoints({"mode": "span"}) == set(DATE_ENDPOINTS)
+    tree = ast.parse((ROOT / "src/chrona/presentation/layout/annotations.py").read_text(encoding="utf-8"))
+    sets = [{element.value for element in node.elts} for node in ast.walk(tree)
+            if isinstance(node, ast.Set) and node.elts and all(isinstance(element, ast.Constant) and isinstance(element.value, str) for element in node.elts)]
+    assert set(ANCHOR_ENDPOINTS) in sets, "the annotation resolver accepts exactly the declared anchor endpoints"
+
+
+def test_the_declared_vocabulary_policy_still_reads_the_view_anchor_endpoint_through_the_reference():
+    from tools.vocabulary_inventory import declared_values, load_policy
+
+    entry = next(item for item in load_policy(ROOT / "conformance/declared-vocabulary-policy-v0.1.yaml")
+                 if item.schema.endswith("view-v0.28.schema.yaml") and item.pointer.endswith("/anchor/properties/endpoint"))
+    assert declared_values(ROOT, entry) == tuple(sorted(ANCHOR_ENDPOINTS))
+    assert set(declared_values(ROOT, entry)) <= set(entry.accepted)

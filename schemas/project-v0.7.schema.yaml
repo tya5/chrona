@@ -259,7 +259,7 @@ $defs:
     required: [object, endpoint]
     properties:
       object: {description: "Identifier of the referenced Project object.", type: string}
-      endpoint: {description: "Completed-date endpoint on the referenced object.", enum: [at, start, end]}
+      endpoint: {description: "Completed-date endpoint on the referenced object.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/dateEndpoint"}
   relation:
     type: object
     description: "Directed dependency relation between two object endpoints."

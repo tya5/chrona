@@ -379,7 +379,7 @@ allOf:
                     kind: {const: object}
                     id: {type: string, minLength: 1}
                     facet: {enum: [planned, actual]}
-                    endpoint: {enum: [start, finish, at, body]}
+                    endpoint: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/anchorEndpoint"}
                     rowId: {type: string, minLength: 1}
                     itemId: {type: string, minLength: 1}
                     date: {$ref: "urn:chrona:common-v0.1#/$defs/isoDate"}
