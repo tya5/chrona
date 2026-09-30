@@ -7,14 +7,14 @@ from decimal import Decimal
 from typing import Any, Callable, Mapping
 
 from chrona.presentation.layout.labels import (
-    LabelRect, LabelRequest, MemberNameAssociation, place_label, place_member_name,
+    LabelPlacement, LabelRect, LabelRequest, MemberNameAssociation, place_label, place_member_name,
 )
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
 from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacle, SurfaceObstacleIndex
 from chrona.presentation.layout.presentation import TrackPlacement
 from chrona.presentation.model.semantic_registry import label_chip_semantic, semantic_binding
 from chrona.presentation.layout.surface_quality import (
-    CollisionDomain, FitWarning, GroupPlacement, IconPlacement, LaneLabelSuppression,
+    CollisionDomain, GroupPlacement, IconPlacement, LaneLabelSuppression,
     MarkPlacement, PlacementDecision, RowPlacement, ScalePlacement, ShapePlacement,
     SlotPlacement, SurfaceLayoutRequest, TextPlacement,
 )
@@ -47,7 +47,6 @@ class SurfaceMemberLabelContext:
 class SurfaceMemberLabelRequests:
     pre_route: tuple[LabelRequest, ...]
     post_route: tuple[LabelRequest, ...]
-    measured_lane_labels: Mapping[str, Any]
 
 
 @dataclass(frozen=True)
@@ -55,7 +54,6 @@ class SurfaceMemberLabelsBatch:
     text: tuple[TextPlacement, ...]
     shapes: tuple[ShapePlacement, ...]
     icons: tuple[IconPlacement, ...]
-    warnings: tuple[FitWarning, ...]
     visible_overflows: tuple[tuple[TextPlacement, LabelRect], ...]
     decisions: tuple[PlacementDecision, ...]
     diagnostics: tuple[str, ...]
@@ -79,8 +77,8 @@ def _lane_label_candidates(side: str, fallback: tuple[str, ...], preferred: str 
     return tuple(result)
 
 
-def _member_association_outcome(candidate: Any, association: MemberNameAssociation, *,
-                                overflow: str, placement_id: str) -> Any:
+def _member_association_outcome(candidate: LabelPlacement | None, association: MemberNameAssociation, *,
+                                overflow: str, placement_id: str) -> LabelPlacement | None:
     if candidate is not None and not association.allows(candidate.bounds):
         candidate = None
     if candidate is None and overflow != "suppress":
@@ -211,7 +209,7 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
         (projection.lane_membership is not None and item.semantic_id == "memberLabel"))
     pre_ids = {id(item) for item in pre_route}
     post_route = tuple(item for item in requests if id(item) not in pre_ids)
-    return SurfaceMemberLabelRequests(pre_route, post_route, measured)
+    return SurfaceMemberLabelRequests(pre_route, post_route)
 
 
 def place_member_labels(context: SurfaceMemberLabelContext,
@@ -230,7 +228,6 @@ def place_member_labels(context: SurfaceMemberLabelContext,
     text: list[TextPlacement] = []
     shapes: list[ShapePlacement] = []
     icons: list[IconPlacement] = []
-    warnings: list[FitWarning] = []
     overflows: list[tuple[TextPlacement, LabelRect]] = []
     decisions: list[PlacementDecision] = []
     diagnostics: list[str] = []
@@ -393,5 +390,5 @@ def place_member_labels(context: SurfaceMemberLabelContext,
                     host_placement_id=placed_text.placement_id))
         decisions.append(PlacementDecision(label_request.placement_id, label_request.source_ref,
                                            ladder, candidate.side, "placed", candidate.search_count))
-    return SurfaceMemberLabelsBatch(tuple(text), tuple(shapes), tuple(icons), tuple(warnings),
+    return SurfaceMemberLabelsBatch(tuple(text), tuple(shapes), tuple(icons),
         tuple(overflows), tuple(decisions), tuple(diagnostics), tuple(suppressions), frozenset(handled))
