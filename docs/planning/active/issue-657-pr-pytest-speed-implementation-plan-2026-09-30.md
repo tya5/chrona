@@ -65,6 +65,7 @@ Not moved, and why: `test_attached_milestones.py` (two tests, 108 s) and `test_i
 
 - **Files:** new `.github/workflows/test-durations.yml`, `AGENTS.md` (one paragraph under "Publication and CI discipline").
 - **Change:** the design's section 4. The AGENTS.md paragraph gives: what the file is, that the shard command reads it, the weekly job and its manual dispatch, the local refresh command (`pytest -n 4 --store-durations --clean-durations`), and that a stale file costs only balance. AGENTS.md is a docs path in `classify_ci_change.py`, but the workflow file is not, so the PR is a code PR.
+- **Also:** `tests/unit/tools/test_test_durations_workflow.py` (weekly and dispatch triggers only, no push/pull_request trigger, opens a PR and never pushes to `main`, `--store-durations --clean-durations` on the unfiltered suite, AGENTS.md mentions the file and workflow, the committed file is pytest-split JSON). Smoke-tested locally: `pytest -n 4 --store-durations --clean-durations` stores one entry per test under xdist (207 of 207 on `tests/unit/tools`).
 - **Validation:** checks green; a manual `workflow_dispatch` of the refresh workflow on the branch produces a `.test_durations` diff in a bot PR (or a clear no-op), linked in the PR body.
 - **Publication:** open, checks green, **stop, report the number to the lead, do not merge.** The lead also decides the `DURATIONS_PR_TOKEN` question.
 
