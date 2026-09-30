@@ -1,0 +1,29 @@
+# Tracked documents whose `version` maps to a schema but which do NOT validate at the S0 base commit.
+# The equivalence gate (tools/schema_equivalence.py, layer L2) fails when a mapped document that is
+# absent from the baseline is invalid and not listed here, and when a listed document validates.
+# The mapping is derived independently of the loader: a schema's `version` constant selects the file.
+version: chrona/schema-equivalence-expected-invalid/v0.1
+documents:
+  - path: conformance/implementation-delivery-roadmap-v0.1.yaml
+    schema: project-v0.7.schema.yaml
+    reason: >-
+      Declares `timeline/v0.7` but is an implementation-delivery conformance fixture: it carries a top-level
+      `expectedPlacements` block that project-v0.7 (additionalProperties false) does not allow.
+      conformance/validate_implementation_delivery_profile.py pops that key before validating, so the file
+      is never validated as a Project as committed.
+  - path: conformance/layout-profile-invalid-offset-v0.2.yaml
+    schema: layout-profile-v0.9.schema.yaml
+    reason: >-
+      Deliberate negative fixture: a slot with `offsetX` matches no permitted layout node form
+      (/root: oneOf, production rule `union`).
+  - path: docs/examples/operational-workflows/accepted-capture-command.yaml
+    schema: command-request-v0.2.schema.yaml
+    reason: >-
+      Stale documentation example: `payload.registry` is written as a full resource reference, but
+      command-request-v0.2 requires `{provider, identity}` (additionalProperties false).
+  - path: examples/controller-z/profiles/summary.yaml
+    schema: summary-profile-v0.2.schema.yaml
+    reason: >-
+      Pre-envelope Summary Profile shape: `panels` sits at the document root and there is no `body`, which
+      the current summary-profile schema requires. It is passed to the renderer as a `summary_path` input
+      (tests/integration/test_render.py), not validated as a standalone resource document.

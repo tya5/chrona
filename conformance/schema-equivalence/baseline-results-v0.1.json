@@ -1,0 +1,2799 @@
+{
+ "baseRevision": "ee4b37590eb5bf419e796c91c2fc6c6d1855ac42",
+ "diagnostics": {
+  "invalidDocuments": {
+   "conformance/implementation-delivery-roadmap-v0.1.yaml": {
+    "code": "E_SCHEMA",
+    "message": "unexpected property 'expectedPlacements'",
+    "pointer": "/",
+    "rule": ""
+   },
+   "conformance/layout-profile-invalid-offset-v0.2.yaml": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: kind='grid'; kind='flow'",
+    "pointer": "/root",
+    "rule": "union"
+   },
+   "docs/examples/operational-workflows/accepted-capture-command.yaml": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "unexpected property 'address'",
+    "pointer": "/payload/registry",
+    "rule": ""
+   },
+   "examples/controller-z/profiles/summary.yaml": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "unexpected property 'panels'",
+    "pointer": "/",
+    "rule": "additionalProperties"
+   }
+  },
+  "probes": {
+   "actual-intake-batch|docs/examples/operational-workflows/accepted-intake-batch.yaml/body/records/0/actual/finish|date:impossible-day": null,
+   "actual-intake-batch|docs/examples/operational-workflows/accepted-intake-batch.yaml/body/records/0/actual/finish|date:impossible-month": null,
+   "actual-intake-batch|docs/examples/operational-workflows/accepted-intake-batch.yaml/body/records/0/actual/finish|date:non-leap-february-29": null,
+   "actual-intake-batch|docs/examples/operational-workflows/accepted-intake-batch.yaml/body/records/0/actual/finish|date:trailing-newline": null,
+   "actual-intake-batch|docs/examples/operational-workflows/accepted-intake-batch.yaml/body/records/0/actual/finish|date:unicode-digits": null,
+   "actual-intake-batch|docs/examples/operational-workflows/accepted-intake-batch.yaml/body/records/0/actual/finish|date:valid": null,
+   "actual-intake-batch|docs/examples/operational-workflows/accepted-intake-batch.yaml/body/records/0/actual/finish|date:year-zero": null,
+   "actual-intake-batch|docs/examples/operational-workflows/accepted-intake-batch.yaml/body/records/0/actual/finish|date:zero-date": null,
+   "actual-intake-batch|docs/examples/operational-workflows/accepted-intake-batch.yaml/body/source/contentIdentity|sha256:no-prefix": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/body/source/contentIdentity",
+    "rule": ""
+   },
+   "actual-intake-batch|docs/examples/operational-workflows/accepted-intake-batch.yaml/body/source/contentIdentity|sha256:short": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/body/source/contentIdentity",
+    "rule": ""
+   },
+   "actual-intake-batch|docs/examples/operational-workflows/accepted-intake-batch.yaml/body/source/contentIdentity|sha256:trailing-newline": null,
+   "actual-intake-batch|docs/examples/operational-workflows/accepted-intake-batch.yaml/body/source/contentIdentity|sha256:uppercase-hex": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/body/source/contentIdentity",
+    "rule": ""
+   },
+   "actual-intake-batch|docs/examples/operational-workflows/accepted-intake-batch.yaml/body/source/contentIdentity|sha256:valid": null,
+   "actual-intake-batch|docs/examples/operational-workflows/accepted-intake-batch.yaml/id|identifier:empty": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected minLength 1",
+    "pointer": "/id",
+    "rule": ""
+   },
+   "actual-intake-batch|docs/examples/operational-workflows/accepted-intake-batch.yaml/id|identifier:newline": null,
+   "actual-intake-batch|docs/examples/operational-workflows/accepted-intake-batch.yaml/id|identifier:non-ascii": null,
+   "actual-intake-batch|docs/examples/operational-workflows/accepted-intake-batch.yaml/id|identifier:nul": null,
+   "actual-intake-batch|docs/examples/operational-workflows/accepted-intake-batch.yaml/id|identifier:space": null,
+   "actual-intake-batch|docs/examples/operational-workflows/accepted-intake-batch.yaml/id|identifier:valid": null,
+   "actual-set|conformance/presentation/actuals/controller-observed-duplicate-sequence.yaml/body/observations/0/actual/start|date:impossible-day": null,
+   "actual-set|conformance/presentation/actuals/controller-observed-duplicate-sequence.yaml/body/observations/0/actual/start|date:impossible-month": null,
+   "actual-set|conformance/presentation/actuals/controller-observed-duplicate-sequence.yaml/body/observations/0/actual/start|date:non-leap-february-29": null,
+   "actual-set|conformance/presentation/actuals/controller-observed-duplicate-sequence.yaml/body/observations/0/actual/start|date:trailing-newline": null,
+   "actual-set|conformance/presentation/actuals/controller-observed-duplicate-sequence.yaml/body/observations/0/actual/start|date:unicode-digits": null,
+   "actual-set|conformance/presentation/actuals/controller-observed-duplicate-sequence.yaml/body/observations/0/actual/start|date:valid": null,
+   "actual-set|conformance/presentation/actuals/controller-observed-duplicate-sequence.yaml/body/observations/0/actual/start|date:year-zero": null,
+   "actual-set|conformance/presentation/actuals/controller-observed-duplicate-sequence.yaml/body/observations/0/actual/start|date:zero-date": null,
+   "actual-set|conformance/presentation/actuals/controller-observed-duplicate-sequence.yaml/body/observations/0/id|identifier:empty": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected minLength 1",
+    "pointer": "/body/observations/0/id",
+    "rule": "minLength"
+   },
+   "actual-set|conformance/presentation/actuals/controller-observed-duplicate-sequence.yaml/body/observations/0/id|identifier:newline": null,
+   "actual-set|conformance/presentation/actuals/controller-observed-duplicate-sequence.yaml/body/observations/0/id|identifier:non-ascii": null,
+   "actual-set|conformance/presentation/actuals/controller-observed-duplicate-sequence.yaml/body/observations/0/id|identifier:nul": null,
+   "actual-set|conformance/presentation/actuals/controller-observed-duplicate-sequence.yaml/body/observations/0/id|identifier:space": null,
+   "actual-set|conformance/presentation/actuals/controller-observed-duplicate-sequence.yaml/body/observations/0/id|identifier:valid": null,
+   "authoring-command-result|inline:authoring-command-result/commandBaseRevision|sha256:no-prefix": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/commandBaseRevision",
+    "rule": ""
+   },
+   "authoring-command-result|inline:authoring-command-result/commandBaseRevision|sha256:short": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/commandBaseRevision",
+    "rule": ""
+   },
+   "authoring-command-result|inline:authoring-command-result/commandBaseRevision|sha256:trailing-newline": null,
+   "authoring-command-result|inline:authoring-command-result/commandBaseRevision|sha256:uppercase-hex": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/commandBaseRevision",
+    "rule": ""
+   },
+   "authoring-command-result|inline:authoring-command-result/commandBaseRevision|sha256:valid": null,
+   "authoring-command-result|inline:authoring-command-result/commandId|identifier:empty": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected minLength 1",
+    "pointer": "/commandId",
+    "rule": ""
+   },
+   "authoring-command-result|inline:authoring-command-result/commandId|identifier:newline": null,
+   "authoring-command-result|inline:authoring-command-result/commandId|identifier:non-ascii": null,
+   "authoring-command-result|inline:authoring-command-result/commandId|identifier:nul": null,
+   "authoring-command-result|inline:authoring-command-result/commandId|identifier:space": null,
+   "authoring-command-result|inline:authoring-command-result/commandId|identifier:valid": null,
+   "authoring-command|inline:authoring-command-actual/payload/actual/actual/finish|date:impossible-day": null,
+   "authoring-command|inline:authoring-command-actual/payload/actual/actual/finish|date:impossible-month": null,
+   "authoring-command|inline:authoring-command-actual/payload/actual/actual/finish|date:non-leap-february-29": null,
+   "authoring-command|inline:authoring-command-actual/payload/actual/actual/finish|date:trailing-newline": null,
+   "authoring-command|inline:authoring-command-actual/payload/actual/actual/finish|date:unicode-digits": null,
+   "authoring-command|inline:authoring-command-actual/payload/actual/actual/finish|date:valid": null,
+   "authoring-command|inline:authoring-command-actual/payload/actual/actual/finish|date:year-zero": null,
+   "authoring-command|inline:authoring-command-actual/payload/actual/actual/finish|date:zero-date": null,
+   "authoring-command|inline:authoring-command-materialize/payload/directory|path:absolute": null,
+   "authoring-command|inline:authoring-command-materialize/payload/directory|path:backslash": null,
+   "authoring-command|inline:authoring-command-materialize/payload/directory|path:dot": null,
+   "authoring-command|inline:authoring-command-materialize/payload/directory|path:dot-dot": null,
+   "authoring-command|inline:authoring-command-materialize/payload/directory|path:double-slash": null,
+   "authoring-command|inline:authoring-command-materialize/payload/directory|path:embedded-newline": null,
+   "authoring-command|inline:authoring-command-materialize/payload/directory|path:nested": null,
+   "authoring-command|inline:authoring-command-materialize/payload/directory|path:non-ascii": null,
+   "authoring-command|inline:authoring-command-materialize/payload/directory|path:nul": null,
+   "authoring-command|inline:authoring-command-materialize/payload/directory|path:space": null,
+   "authoring-command|inline:authoring-command-materialize/payload/directory|path:trailing-newline": null,
+   "authoring-command|inline:authoring-command-materialize/payload/directory|path:traversal": null,
+   "authoring-command|inline:authoring-command-materialize/payload/directory|path:valid": null,
+   "authoring-command|inline:authoring-command-preset/payload/preset/path|path:absolute": null,
+   "authoring-command|inline:authoring-command-preset/payload/preset/path|path:backslash": null,
+   "authoring-command|inline:authoring-command-preset/payload/preset/path|path:dot": null,
+   "authoring-command|inline:authoring-command-preset/payload/preset/path|path:dot-dot": null,
+   "authoring-command|inline:authoring-command-preset/payload/preset/path|path:double-slash": null,
+   "authoring-command|inline:authoring-command-preset/payload/preset/path|path:embedded-newline": null,
+   "authoring-command|inline:authoring-command-preset/payload/preset/path|path:nested": null,
+   "authoring-command|inline:authoring-command-preset/payload/preset/path|path:non-ascii": null,
+   "authoring-command|inline:authoring-command-preset/payload/preset/path|path:nul": null,
+   "authoring-command|inline:authoring-command-preset/payload/preset/path|path:space": null,
+   "authoring-command|inline:authoring-command-preset/payload/preset/path|path:trailing-newline": null,
+   "authoring-command|inline:authoring-command-preset/payload/preset/path|path:traversal": null,
+   "authoring-command|inline:authoring-command-preset/payload/preset/path|path:valid": null,
+   "authoring-command|inline:authoring-command-task/baseRevision|sha256:no-prefix": {
+    "code": "E_AUTHORING_COMMAND_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/baseRevision",
+    "rule": ""
+   },
+   "authoring-command|inline:authoring-command-task/baseRevision|sha256:short": {
+    "code": "E_AUTHORING_COMMAND_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/baseRevision",
+    "rule": ""
+   },
+   "authoring-command|inline:authoring-command-task/baseRevision|sha256:trailing-newline": null,
+   "authoring-command|inline:authoring-command-task/baseRevision|sha256:uppercase-hex": {
+    "code": "E_AUTHORING_COMMAND_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/baseRevision",
+    "rule": ""
+   },
+   "authoring-command|inline:authoring-command-task/baseRevision|sha256:valid": null,
+   "authoring-command|inline:authoring-command-task/commandId|identifier:empty": {
+    "code": "E_AUTHORING_COMMAND_SCHEMA",
+    "message": "expected minLength 1",
+    "pointer": "/commandId",
+    "rule": ""
+   },
+   "authoring-command|inline:authoring-command-task/commandId|identifier:newline": null,
+   "authoring-command|inline:authoring-command-task/commandId|identifier:non-ascii": null,
+   "authoring-command|inline:authoring-command-task/commandId|identifier:nul": null,
+   "authoring-command|inline:authoring-command-task/commandId|identifier:space": null,
+   "authoring-command|inline:authoring-command-task/commandId|identifier:valid": null,
+   "authoring-command|inline:authoring-command-task/payload/task/id|identifier:empty": {
+    "code": "E_AUTHORING_COMMAND_SCHEMA",
+    "message": "expected minLength 1",
+    "pointer": "/payload/task/id",
+    "rule": ""
+   },
+   "authoring-command|inline:authoring-command-task/payload/task/id|identifier:newline": null,
+   "authoring-command|inline:authoring-command-task/payload/task/id|identifier:non-ascii": null,
+   "authoring-command|inline:authoring-command-task/payload/task/id|identifier:nul": null,
+   "authoring-command|inline:authoring-command-task/payload/task/id|identifier:space": null,
+   "authoring-command|inline:authoring-command-task/payload/task/id|identifier:valid": null,
+   "authoring-command|inline:authoring-command-task/payload/task/planned/finish|date:impossible-day": null,
+   "authoring-command|inline:authoring-command-task/payload/task/planned/finish|date:impossible-month": null,
+   "authoring-command|inline:authoring-command-task/payload/task/planned/finish|date:non-leap-february-29": null,
+   "authoring-command|inline:authoring-command-task/payload/task/planned/finish|date:trailing-newline": null,
+   "authoring-command|inline:authoring-command-task/payload/task/planned/finish|date:unicode-digits": null,
+   "authoring-command|inline:authoring-command-task/payload/task/planned/finish|date:valid": null,
+   "authoring-command|inline:authoring-command-task/payload/task/planned/finish|date:year-zero": null,
+   "authoring-command|inline:authoring-command-task/payload/task/planned/finish|date:zero-date": null,
+   "authoring-command|inline:authoring-command-task/payload/task/planned/start|date:impossible-day": null,
+   "authoring-command|inline:authoring-command-task/payload/task/planned/start|date:impossible-month": null,
+   "authoring-command|inline:authoring-command-task/payload/task/planned/start|date:non-leap-february-29": null,
+   "authoring-command|inline:authoring-command-task/payload/task/planned/start|date:trailing-newline": null,
+   "authoring-command|inline:authoring-command-task/payload/task/planned/start|date:unicode-digits": null,
+   "authoring-command|inline:authoring-command-task/payload/task/planned/start|date:valid": null,
+   "authoring-command|inline:authoring-command-task/payload/task/planned/start|date:year-zero": null,
+   "authoring-command|inline:authoring-command-task/payload/task/planned/start|date:zero-date": null,
+   "authoring-command|inline:authoring-command-task/target/path|path:absolute": null,
+   "authoring-command|inline:authoring-command-task/target/path|path:backslash": null,
+   "authoring-command|inline:authoring-command-task/target/path|path:dot": null,
+   "authoring-command|inline:authoring-command-task/target/path|path:dot-dot": null,
+   "authoring-command|inline:authoring-command-task/target/path|path:double-slash": null,
+   "authoring-command|inline:authoring-command-task/target/path|path:embedded-newline": null,
+   "authoring-command|inline:authoring-command-task/target/path|path:nested": null,
+   "authoring-command|inline:authoring-command-task/target/path|path:non-ascii": null,
+   "authoring-command|inline:authoring-command-task/target/path|path:nul": null,
+   "authoring-command|inline:authoring-command-task/target/path|path:space": null,
+   "authoring-command|inline:authoring-command-task/target/path|path:trailing-newline": null,
+   "authoring-command|inline:authoring-command-task/target/path|path:traversal": null,
+   "authoring-command|inline:authoring-command-task/target/path|path:valid": null,
+   "authoring-workspace|inline:authoring-workspace/body/presentation/binding/preset/path|path:absolute": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: mode='guided'; mode='explicit'",
+    "pointer": "/body/presentation",
+    "rule": "union"
+   },
+   "authoring-workspace|inline:authoring-workspace/body/presentation/binding/preset/path|path:backslash": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: mode='guided'; mode='explicit'",
+    "pointer": "/body/presentation",
+    "rule": "union"
+   },
+   "authoring-workspace|inline:authoring-workspace/body/presentation/binding/preset/path|path:dot": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: mode='guided'; mode='explicit'",
+    "pointer": "/body/presentation",
+    "rule": "union"
+   },
+   "authoring-workspace|inline:authoring-workspace/body/presentation/binding/preset/path|path:dot-dot": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: mode='guided'; mode='explicit'",
+    "pointer": "/body/presentation",
+    "rule": "union"
+   },
+   "authoring-workspace|inline:authoring-workspace/body/presentation/binding/preset/path|path:double-slash": null,
+   "authoring-workspace|inline:authoring-workspace/body/presentation/binding/preset/path|path:embedded-newline": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: mode='guided'; mode='explicit'",
+    "pointer": "/body/presentation",
+    "rule": "union"
+   },
+   "authoring-workspace|inline:authoring-workspace/body/presentation/binding/preset/path|path:nested": null,
+   "authoring-workspace|inline:authoring-workspace/body/presentation/binding/preset/path|path:non-ascii": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: mode='guided'; mode='explicit'",
+    "pointer": "/body/presentation",
+    "rule": "union"
+   },
+   "authoring-workspace|inline:authoring-workspace/body/presentation/binding/preset/path|path:nul": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: mode='guided'; mode='explicit'",
+    "pointer": "/body/presentation",
+    "rule": "union"
+   },
+   "authoring-workspace|inline:authoring-workspace/body/presentation/binding/preset/path|path:space": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: mode='guided'; mode='explicit'",
+    "pointer": "/body/presentation",
+    "rule": "union"
+   },
+   "authoring-workspace|inline:authoring-workspace/body/presentation/binding/preset/path|path:trailing-newline": null,
+   "authoring-workspace|inline:authoring-workspace/body/presentation/binding/preset/path|path:traversal": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: mode='guided'; mode='explicit'",
+    "pointer": "/body/presentation",
+    "rule": "union"
+   },
+   "authoring-workspace|inline:authoring-workspace/body/presentation/binding/preset/path|path:valid": null,
+   "authoring-workspace|inline:authoring-workspace/body/project/tasks/0/planned/start|date:impossible-day": null,
+   "authoring-workspace|inline:authoring-workspace/body/project/tasks/0/planned/start|date:impossible-month": null,
+   "authoring-workspace|inline:authoring-workspace/body/project/tasks/0/planned/start|date:non-leap-february-29": null,
+   "authoring-workspace|inline:authoring-workspace/body/project/tasks/0/planned/start|date:trailing-newline": null,
+   "authoring-workspace|inline:authoring-workspace/body/project/tasks/0/planned/start|date:unicode-digits": null,
+   "authoring-workspace|inline:authoring-workspace/body/project/tasks/0/planned/start|date:valid": null,
+   "authoring-workspace|inline:authoring-workspace/body/project/tasks/0/planned/start|date:year-zero": null,
+   "authoring-workspace|inline:authoring-workspace/body/project/tasks/0/planned/start|date:zero-date": null,
+   "authoring-workspace|inline:authoring-workspace/id|identifier:empty": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected minLength 1",
+    "pointer": "/id",
+    "rule": "minLength"
+   },
+   "authoring-workspace|inline:authoring-workspace/id|identifier:newline": null,
+   "authoring-workspace|inline:authoring-workspace/id|identifier:non-ascii": null,
+   "authoring-workspace|inline:authoring-workspace/id|identifier:nul": null,
+   "authoring-workspace|inline:authoring-workspace/id|identifier:space": null,
+   "authoring-workspace|inline:authoring-workspace/id|identifier:valid": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|path:absolute": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/inputs/0/address",
+    "rule": ""
+   },
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|path:backslash": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|path:dot": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/inputs/0/address",
+    "rule": ""
+   },
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|path:dot-dot": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/inputs/0/address",
+    "rule": ""
+   },
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|path:double-slash": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|path:embedded-newline": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|path:nested": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|path:non-ascii": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|path:nul": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|path:space": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|path:trailing-newline": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|path:traversal": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/inputs/0/address",
+    "rule": ""
+   },
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|path:valid": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/id|identifier:empty": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected minLength 1",
+    "pointer": "/inputs/0/id",
+    "rule": ""
+   },
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/id|identifier:newline": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/id|identifier:non-ascii": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/id|identifier:nul": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/id|identifier:space": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/id|identifier:valid": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/requestContentIdentity|sha256:no-prefix": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/requestContentIdentity",
+    "rule": ""
+   },
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/requestContentIdentity|sha256:short": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/requestContentIdentity",
+    "rule": ""
+   },
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/requestContentIdentity|sha256:trailing-newline": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/requestContentIdentity|sha256:uppercase-hex": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/requestContentIdentity",
+    "rule": ""
+   },
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/requestContentIdentity|sha256:valid": null,
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/0/id|identifier:empty": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^[a-z][a-z0-9-]*$'",
+    "pointer": "/entries/0/id",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/0/id|identifier:newline": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^[a-z][a-z0-9-]*$'",
+    "pointer": "/entries/0/id",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/0/id|identifier:non-ascii": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^[a-z][a-z0-9-]*$'",
+    "pointer": "/entries/0/id",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/0/id|identifier:nul": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^[a-z][a-z0-9-]*$'",
+    "pointer": "/entries/0/id",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/0/id|identifier:space": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^[a-z][a-z0-9-]*$'",
+    "pointer": "/entries/0/id",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/0/id|identifier:valid": null,
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/contentIdentity|sha256:no-prefix": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/contentIdentity",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/contentIdentity|sha256:short": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/contentIdentity",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/contentIdentity|sha256:trailing-newline": null,
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/contentIdentity|sha256:uppercase-hex": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/contentIdentity",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/contentIdentity|sha256:valid": null,
+   "color-scheme|examples/aster-ssd/schemes/executive-light.yaml/id|identifier:empty": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected minLength 1",
+    "pointer": "/id",
+    "rule": "minLength"
+   },
+   "color-scheme|examples/aster-ssd/schemes/executive-light.yaml/id|identifier:newline": null,
+   "color-scheme|examples/aster-ssd/schemes/executive-light.yaml/id|identifier:non-ascii": null,
+   "color-scheme|examples/aster-ssd/schemes/executive-light.yaml/id|identifier:nul": null,
+   "color-scheme|examples/aster-ssd/schemes/executive-light.yaml/id|identifier:space": null,
+   "color-scheme|examples/aster-ssd/schemes/executive-light.yaml/id|identifier:valid": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/commandId|identifier:empty": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected minLength 1",
+    "pointer": "/commandId",
+    "rule": ""
+   },
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/commandId|identifier:newline": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/commandId|identifier:non-ascii": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/commandId|identifier:nul": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/commandId|identifier:space": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/commandId|identifier:valid": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/expectedContentIdentity|sha256:no-prefix": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/expectedContentIdentity",
+    "rule": ""
+   },
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/expectedContentIdentity|sha256:short": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/expectedContentIdentity",
+    "rule": ""
+   },
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/expectedContentIdentity|sha256:trailing-newline": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/expectedContentIdentity|sha256:uppercase-hex": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/expectedContentIdentity",
+    "rule": ""
+   },
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/expectedContentIdentity|sha256:valid": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|path:absolute": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/target/address",
+    "rule": ""
+   },
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|path:backslash": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|path:dot": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/target/address",
+    "rule": ""
+   },
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|path:dot-dot": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/target/address",
+    "rule": ""
+   },
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|path:double-slash": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|path:embedded-newline": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|path:nested": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|path:non-ascii": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|path:nul": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|path:space": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|path:trailing-newline": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|path:traversal": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/target/address",
+    "rule": ""
+   },
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|path:valid": null,
+   "derived-theme|inline:derived-theme/body/extends/contentIdentity|sha256:no-prefix": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/body/extends/contentIdentity",
+    "rule": "pattern"
+   },
+   "derived-theme|inline:derived-theme/body/extends/contentIdentity|sha256:short": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/body/extends/contentIdentity",
+    "rule": "pattern"
+   },
+   "derived-theme|inline:derived-theme/body/extends/contentIdentity|sha256:trailing-newline": null,
+   "derived-theme|inline:derived-theme/body/extends/contentIdentity|sha256:uppercase-hex": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/body/extends/contentIdentity",
+    "rule": "pattern"
+   },
+   "derived-theme|inline:derived-theme/body/extends/contentIdentity|sha256:valid": null,
+   "derived-theme|inline:derived-theme/body/extends/path|path:absolute": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/extends/path",
+    "rule": "pattern"
+   },
+   "derived-theme|inline:derived-theme/body/extends/path|path:backslash": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/extends/path",
+    "rule": "pattern"
+   },
+   "derived-theme|inline:derived-theme/body/extends/path|path:dot": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/extends/path",
+    "rule": "pattern"
+   },
+   "derived-theme|inline:derived-theme/body/extends/path|path:dot-dot": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/extends/path",
+    "rule": "pattern"
+   },
+   "derived-theme|inline:derived-theme/body/extends/path|path:double-slash": null,
+   "derived-theme|inline:derived-theme/body/extends/path|path:embedded-newline": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/extends/path",
+    "rule": "pattern"
+   },
+   "derived-theme|inline:derived-theme/body/extends/path|path:nested": null,
+   "derived-theme|inline:derived-theme/body/extends/path|path:non-ascii": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/extends/path",
+    "rule": "pattern"
+   },
+   "derived-theme|inline:derived-theme/body/extends/path|path:nul": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/extends/path",
+    "rule": "pattern"
+   },
+   "derived-theme|inline:derived-theme/body/extends/path|path:space": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/extends/path",
+    "rule": "pattern"
+   },
+   "derived-theme|inline:derived-theme/body/extends/path|path:trailing-newline": null,
+   "derived-theme|inline:derived-theme/body/extends/path|path:traversal": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/extends/path",
+    "rule": "pattern"
+   },
+   "derived-theme|inline:derived-theme/body/extends/path|path:valid": null,
+   "example-registry|src/chrona/resources/example-registry.yaml/examples/0/id|identifier:empty": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^[a-z][a-z0-9-]*$'",
+    "pointer": "/examples/0/id",
+    "rule": "pattern"
+   },
+   "example-registry|src/chrona/resources/example-registry.yaml/examples/0/id|identifier:newline": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^[a-z][a-z0-9-]*$'",
+    "pointer": "/examples/0/id",
+    "rule": "pattern"
+   },
+   "example-registry|src/chrona/resources/example-registry.yaml/examples/0/id|identifier:non-ascii": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^[a-z][a-z0-9-]*$'",
+    "pointer": "/examples/0/id",
+    "rule": "pattern"
+   },
+   "example-registry|src/chrona/resources/example-registry.yaml/examples/0/id|identifier:nul": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^[a-z][a-z0-9-]*$'",
+    "pointer": "/examples/0/id",
+    "rule": "pattern"
+   },
+   "example-registry|src/chrona/resources/example-registry.yaml/examples/0/id|identifier:space": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^[a-z][a-z0-9-]*$'",
+    "pointer": "/examples/0/id",
+    "rule": "pattern"
+   },
+   "example-registry|src/chrona/resources/example-registry.yaml/examples/0/id|identifier:valid": null,
+   "example-registry|src/chrona/resources/example-registry.yaml/examples/0/path|path:absolute": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^examples/[a-z][a-z0-9-]*$'",
+    "pointer": "/examples/0/path",
+    "rule": "pattern"
+   },
+   "example-registry|src/chrona/resources/example-registry.yaml/examples/0/path|path:backslash": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^examples/[a-z][a-z0-9-]*$'",
+    "pointer": "/examples/0/path",
+    "rule": "pattern"
+   },
+   "example-registry|src/chrona/resources/example-registry.yaml/examples/0/path|path:dot": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^examples/[a-z][a-z0-9-]*$'",
+    "pointer": "/examples/0/path",
+    "rule": "pattern"
+   },
+   "example-registry|src/chrona/resources/example-registry.yaml/examples/0/path|path:dot-dot": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^examples/[a-z][a-z0-9-]*$'",
+    "pointer": "/examples/0/path",
+    "rule": "pattern"
+   },
+   "example-registry|src/chrona/resources/example-registry.yaml/examples/0/path|path:double-slash": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^examples/[a-z][a-z0-9-]*$'",
+    "pointer": "/examples/0/path",
+    "rule": "pattern"
+   },
+   "example-registry|src/chrona/resources/example-registry.yaml/examples/0/path|path:embedded-newline": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^examples/[a-z][a-z0-9-]*$'",
+    "pointer": "/examples/0/path",
+    "rule": "pattern"
+   },
+   "example-registry|src/chrona/resources/example-registry.yaml/examples/0/path|path:nested": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^examples/[a-z][a-z0-9-]*$'",
+    "pointer": "/examples/0/path",
+    "rule": "pattern"
+   },
+   "example-registry|src/chrona/resources/example-registry.yaml/examples/0/path|path:non-ascii": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^examples/[a-z][a-z0-9-]*$'",
+    "pointer": "/examples/0/path",
+    "rule": "pattern"
+   },
+   "example-registry|src/chrona/resources/example-registry.yaml/examples/0/path|path:nul": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^examples/[a-z][a-z0-9-]*$'",
+    "pointer": "/examples/0/path",
+    "rule": "pattern"
+   },
+   "example-registry|src/chrona/resources/example-registry.yaml/examples/0/path|path:space": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^examples/[a-z][a-z0-9-]*$'",
+    "pointer": "/examples/0/path",
+    "rule": "pattern"
+   },
+   "example-registry|src/chrona/resources/example-registry.yaml/examples/0/path|path:trailing-newline": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^examples/[a-z][a-z0-9-]*$'",
+    "pointer": "/examples/0/path",
+    "rule": "pattern"
+   },
+   "example-registry|src/chrona/resources/example-registry.yaml/examples/0/path|path:traversal": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^examples/[a-z][a-z0-9-]*$'",
+    "pointer": "/examples/0/path",
+    "rule": "pattern"
+   },
+   "example-registry|src/chrona/resources/example-registry.yaml/examples/0/path|path:valid": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^examples/[a-z][a-z0-9-]*$'",
+    "pointer": "/examples/0/path",
+    "rule": "pattern"
+   },
+   "icon-catalog|tests/fixtures/icons/theme-assets-valid.normalized-v0.4.yaml/body/provenance/sourceContentIdentity|sha256:no-prefix": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/body/provenance/sourceContentIdentity",
+    "rule": "pattern"
+   },
+   "icon-catalog|tests/fixtures/icons/theme-assets-valid.normalized-v0.4.yaml/body/provenance/sourceContentIdentity|sha256:short": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/body/provenance/sourceContentIdentity",
+    "rule": "pattern"
+   },
+   "icon-catalog|tests/fixtures/icons/theme-assets-valid.normalized-v0.4.yaml/body/provenance/sourceContentIdentity|sha256:trailing-newline": null,
+   "icon-catalog|tests/fixtures/icons/theme-assets-valid.normalized-v0.4.yaml/body/provenance/sourceContentIdentity|sha256:uppercase-hex": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/body/provenance/sourceContentIdentity",
+    "rule": "pattern"
+   },
+   "icon-catalog|tests/fixtures/icons/theme-assets-valid.normalized-v0.4.yaml/body/provenance/sourceContentIdentity|sha256:valid": null,
+   "icon-catalog|tests/fixtures/icons/theme-assets-valid.normalized-v0.4.yaml/id|identifier:empty": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected minLength 1",
+    "pointer": "/id",
+    "rule": "minLength"
+   },
+   "icon-catalog|tests/fixtures/icons/theme-assets-valid.normalized-v0.4.yaml/id|identifier:newline": null,
+   "icon-catalog|tests/fixtures/icons/theme-assets-valid.normalized-v0.4.yaml/id|identifier:non-ascii": null,
+   "icon-catalog|tests/fixtures/icons/theme-assets-valid.normalized-v0.4.yaml/id|identifier:nul": null,
+   "icon-catalog|tests/fixtures/icons/theme-assets-valid.normalized-v0.4.yaml/id|identifier:space": null,
+   "icon-catalog|tests/fixtures/icons/theme-assets-valid.normalized-v0.4.yaml/id|identifier:valid": null,
+   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/provenance/resources/0/contentIdentity|sha256:no-prefix": {
+    "code": "E_SCENE_SERIALIZATION",
+    "message": "",
+    "pointer": "",
+    "rule": ""
+   },
+   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/provenance/resources/0/contentIdentity|sha256:short": {
+    "code": "E_SCENE_SERIALIZATION",
+    "message": "",
+    "pointer": "",
+    "rule": ""
+   },
+   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/provenance/resources/0/contentIdentity|sha256:trailing-newline": null,
+   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/provenance/resources/0/contentIdentity|sha256:uppercase-hex": {
+    "code": "E_SCENE_SERIALIZATION",
+    "message": "",
+    "pointer": "",
+    "rule": ""
+   },
+   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/provenance/resources/0/contentIdentity|sha256:valid": null,
+   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/provenance/resources/0/id|identifier:empty": {
+    "code": "E_SCENE_SERIALIZATION",
+    "message": "",
+    "pointer": "",
+    "rule": ""
+   },
+   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/provenance/resources/0/id|identifier:newline": null,
+   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/provenance/resources/0/id|identifier:non-ascii": null,
+   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/provenance/resources/0/id|identifier:nul": null,
+   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/provenance/resources/0/id|identifier:space": null,
+   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/provenance/resources/0/id|identifier:valid": null,
+   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/surfaces/0/scale/domainStart|date:impossible-day": null,
+   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/surfaces/0/scale/domainStart|date:impossible-month": null,
+   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/surfaces/0/scale/domainStart|date:non-leap-february-29": null,
+   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/surfaces/0/scale/domainStart|date:trailing-newline": null,
+   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/surfaces/0/scale/domainStart|date:unicode-digits": null,
+   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/surfaces/0/scale/domainStart|date:valid": null,
+   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/surfaces/0/scale/domainStart|date:year-zero": null,
+   "inspection-scene|examples/controller-z/generated/plan-only.scene.json/surfaces/0/scale/domainStart|date:zero-date": null,
+   "layout-profile|conformance/layout-profile-intent-v0.2.yaml/root/children/0/source|path:absolute": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: kind='grid'; kind='flow'; kind='overlay'",
+    "pointer": "/root",
+    "rule": "union"
+   },
+   "layout-profile|conformance/layout-profile-intent-v0.2.yaml/root/children/0/source|path:backslash": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: kind='grid'; kind='flow'; kind='overlay'",
+    "pointer": "/root",
+    "rule": "union"
+   },
+   "layout-profile|conformance/layout-profile-intent-v0.2.yaml/root/children/0/source|path:dot": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: kind='grid'; kind='flow'; kind='overlay'",
+    "pointer": "/root",
+    "rule": "union"
+   },
+   "layout-profile|conformance/layout-profile-intent-v0.2.yaml/root/children/0/source|path:dot-dot": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: kind='grid'; kind='flow'; kind='overlay'",
+    "pointer": "/root",
+    "rule": "union"
+   },
+   "layout-profile|conformance/layout-profile-intent-v0.2.yaml/root/children/0/source|path:double-slash": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: kind='grid'; kind='flow'; kind='overlay'",
+    "pointer": "/root",
+    "rule": "union"
+   },
+   "layout-profile|conformance/layout-profile-intent-v0.2.yaml/root/children/0/source|path:embedded-newline": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: kind='grid'; kind='flow'; kind='overlay'",
+    "pointer": "/root",
+    "rule": "union"
+   },
+   "layout-profile|conformance/layout-profile-intent-v0.2.yaml/root/children/0/source|path:nested": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: kind='grid'; kind='flow'; kind='overlay'",
+    "pointer": "/root",
+    "rule": "union"
+   },
+   "layout-profile|conformance/layout-profile-intent-v0.2.yaml/root/children/0/source|path:non-ascii": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: kind='grid'; kind='flow'; kind='overlay'",
+    "pointer": "/root",
+    "rule": "union"
+   },
+   "layout-profile|conformance/layout-profile-intent-v0.2.yaml/root/children/0/source|path:nul": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: kind='grid'; kind='flow'; kind='overlay'",
+    "pointer": "/root",
+    "rule": "union"
+   },
+   "layout-profile|conformance/layout-profile-intent-v0.2.yaml/root/children/0/source|path:space": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: kind='grid'; kind='flow'; kind='overlay'",
+    "pointer": "/root",
+    "rule": "union"
+   },
+   "layout-profile|conformance/layout-profile-intent-v0.2.yaml/root/children/0/source|path:trailing-newline": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: kind='grid'; kind='flow'; kind='overlay'",
+    "pointer": "/root",
+    "rule": "union"
+   },
+   "layout-profile|conformance/layout-profile-intent-v0.2.yaml/root/children/0/source|path:traversal": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: kind='grid'; kind='flow'; kind='overlay'",
+    "pointer": "/root",
+    "rule": "union"
+   },
+   "layout-profile|conformance/layout-profile-intent-v0.2.yaml/root/children/0/source|path:valid": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: kind='grid'; kind='flow'; kind='overlay'",
+    "pointer": "/root",
+    "rule": "union"
+   },
+   "layout-profile|conformance/layout-profile-intent-v0.2.yaml/root/id|identifier:empty": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: kind='grid'; kind='flow'; kind='overlay'",
+    "pointer": "/root",
+    "rule": "union"
+   },
+   "layout-profile|conformance/layout-profile-intent-v0.2.yaml/root/id|identifier:newline": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: kind='grid'; kind='flow'; kind='overlay'",
+    "pointer": "/root",
+    "rule": "union"
+   },
+   "layout-profile|conformance/layout-profile-intent-v0.2.yaml/root/id|identifier:non-ascii": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: kind='grid'; kind='flow'; kind='overlay'",
+    "pointer": "/root",
+    "rule": "union"
+   },
+   "layout-profile|conformance/layout-profile-intent-v0.2.yaml/root/id|identifier:nul": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: kind='grid'; kind='flow'; kind='overlay'",
+    "pointer": "/root",
+    "rule": "union"
+   },
+   "layout-profile|conformance/layout-profile-intent-v0.2.yaml/root/id|identifier:space": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one permitted form: kind='grid'; kind='flow'; kind='overlay'",
+    "pointer": "/root",
+    "rule": "union"
+   },
+   "layout-profile|conformance/layout-profile-intent-v0.2.yaml/root/id|identifier:valid": null,
+   "presentation-materialization-receipt|inline:materialization-receipt/body/presetContentIdentity|sha256:no-prefix": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/body/presetContentIdentity",
+    "rule": "pattern"
+   },
+   "presentation-materialization-receipt|inline:materialization-receipt/body/presetContentIdentity|sha256:short": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/body/presetContentIdentity",
+    "rule": "pattern"
+   },
+   "presentation-materialization-receipt|inline:materialization-receipt/body/presetContentIdentity|sha256:trailing-newline": null,
+   "presentation-materialization-receipt|inline:materialization-receipt/body/presetContentIdentity|sha256:uppercase-hex": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/body/presetContentIdentity",
+    "rule": "pattern"
+   },
+   "presentation-materialization-receipt|inline:materialization-receipt/body/presetContentIdentity|sha256:valid": null,
+   "presentation-materialization-receipt|inline:materialization-receipt/id|identifier:empty": {
+    "code": "E_SCHEMA",
+    "message": "expected minLength 1",
+    "pointer": "/id",
+    "rule": "minLength"
+   },
+   "presentation-materialization-receipt|inline:materialization-receipt/id|identifier:newline": null,
+   "presentation-materialization-receipt|inline:materialization-receipt/id|identifier:non-ascii": null,
+   "presentation-materialization-receipt|inline:materialization-receipt/id|identifier:nul": null,
+   "presentation-materialization-receipt|inline:materialization-receipt/id|identifier:space": null,
+   "presentation-materialization-receipt|inline:materialization-receipt/id|identifier:valid": null,
+   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:absolute": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/resources/view/path",
+    "rule": "pattern"
+   },
+   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:backslash": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/resources/view/path",
+    "rule": "pattern"
+   },
+   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:dot": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/resources/view/path",
+    "rule": "pattern"
+   },
+   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:dot-dot": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/resources/view/path",
+    "rule": "pattern"
+   },
+   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:double-slash": null,
+   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:embedded-newline": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/resources/view/path",
+    "rule": "pattern"
+   },
+   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:nested": null,
+   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:non-ascii": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/resources/view/path",
+    "rule": "pattern"
+   },
+   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:nul": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/resources/view/path",
+    "rule": "pattern"
+   },
+   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:space": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/resources/view/path",
+    "rule": "pattern"
+   },
+   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:trailing-newline": null,
+   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:traversal": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/resources/view/path",
+    "rule": "pattern"
+   },
+   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/body/resources/view/path|path:valid": null,
+   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/id|identifier:empty": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected minLength 1",
+    "pointer": "/id",
+    "rule": "minLength"
+   },
+   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/id|identifier:newline": null,
+   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/id|identifier:non-ascii": null,
+   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/id|identifier:nul": null,
+   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/id|identifier:space": null,
+   "presentation-preset|examples/controller-z/elevated-light.preset.yaml/id|identifier:valid": null,
+   "profile-package|conformance/implementation-delivery-profile-invalid-field-v0.2.yaml/contentIdentity|sha256:no-prefix": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/contentIdentity",
+    "rule": "pattern"
+   },
+   "profile-package|conformance/implementation-delivery-profile-invalid-field-v0.2.yaml/contentIdentity|sha256:short": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/contentIdentity",
+    "rule": "pattern"
+   },
+   "profile-package|conformance/implementation-delivery-profile-invalid-field-v0.2.yaml/contentIdentity|sha256:trailing-newline": null,
+   "profile-package|conformance/implementation-delivery-profile-invalid-field-v0.2.yaml/contentIdentity|sha256:uppercase-hex": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/contentIdentity",
+    "rule": "pattern"
+   },
+   "profile-package|conformance/implementation-delivery-profile-invalid-field-v0.2.yaml/contentIdentity|sha256:valid": null,
+   "project|conformance/calendar.yaml/calendars/standard/exceptions/0/date|date:impossible-day": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '2026-02-30'",
+    "pointer": "/calendars/standard",
+    "rule": ""
+   },
+   "project|conformance/calendar.yaml/calendars/standard/exceptions/0/date|date:impossible-month": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '2026-13-45'",
+    "pointer": "/calendars/standard",
+    "rule": ""
+   },
+   "project|conformance/calendar.yaml/calendars/standard/exceptions/0/date|date:non-leap-february-29": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '2026-02-29'",
+    "pointer": "/calendars/standard",
+    "rule": ""
+   },
+   "project|conformance/calendar.yaml/calendars/standard/exceptions/0/date|date:trailing-newline": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '2026-09-30\\n'",
+    "pointer": "/calendars/standard",
+    "rule": ""
+   },
+   "project|conformance/calendar.yaml/calendars/standard/exceptions/0/date|date:unicode-digits": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '２０２６-09-30'",
+    "pointer": "/calendars/standard",
+    "rule": ""
+   },
+   "project|conformance/calendar.yaml/calendars/standard/exceptions/0/date|date:valid": null,
+   "project|conformance/calendar.yaml/calendars/standard/exceptions/0/date|date:year-zero": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '0000-01-01'",
+    "pointer": "/calendars/standard",
+    "rule": ""
+   },
+   "project|conformance/calendar.yaml/calendars/standard/exceptions/0/date|date:zero-date": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '2026-00-00'",
+    "pointer": "/calendars/standard",
+    "rule": ""
+   },
+   "project|conformance/calendar.yaml/objects/predecessor/schedule/start|date:impossible-day": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '2026-02-30'",
+    "pointer": "/objects/predecessor/schedule",
+    "rule": ""
+   },
+   "project|conformance/calendar.yaml/objects/predecessor/schedule/start|date:impossible-month": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '2026-13-45'",
+    "pointer": "/objects/predecessor/schedule",
+    "rule": ""
+   },
+   "project|conformance/calendar.yaml/objects/predecessor/schedule/start|date:non-leap-february-29": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '2026-02-29'",
+    "pointer": "/objects/predecessor/schedule",
+    "rule": ""
+   },
+   "project|conformance/calendar.yaml/objects/predecessor/schedule/start|date:trailing-newline": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '2026-09-30\\n'",
+    "pointer": "/objects/predecessor/schedule",
+    "rule": ""
+   },
+   "project|conformance/calendar.yaml/objects/predecessor/schedule/start|date:unicode-digits": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '２０２６-09-30'",
+    "pointer": "/objects/predecessor/schedule",
+    "rule": ""
+   },
+   "project|conformance/calendar.yaml/objects/predecessor/schedule/start|date:valid": null,
+   "project|conformance/calendar.yaml/objects/predecessor/schedule/start|date:year-zero": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '0000-01-01'",
+    "pointer": "/objects/predecessor/schedule",
+    "rule": ""
+   },
+   "project|conformance/calendar.yaml/objects/predecessor/schedule/start|date:zero-date": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '2026-00-00'",
+    "pointer": "/objects/predecessor/schedule",
+    "rule": ""
+   },
+   "project|conformance/calendar.yaml/project/id|identifier:empty": {
+    "code": "E_SCHEMA",
+    "message": "expected minLength 1",
+    "pointer": "/project/id",
+    "rule": ""
+   },
+   "project|conformance/calendar.yaml/project/id|identifier:newline": null,
+   "project|conformance/calendar.yaml/project/id|identifier:non-ascii": null,
+   "project|conformance/calendar.yaml/project/id|identifier:nul": null,
+   "project|conformance/calendar.yaml/project/id|identifier:space": null,
+   "project|conformance/calendar.yaml/project/id|identifier:valid": null,
+   "project|conformance/calendar.yaml/relations/0/from/endpoint|endpoint:at": {
+    "code": "E_ENDPOINT_MODE_MISMATCH",
+    "message": "Endpoint at is unavailable on the referenced schedule",
+    "pointer": "/relations/0/from/endpoint",
+    "rule": ""
+   },
+   "project|conformance/calendar.yaml/relations/0/from/endpoint|endpoint:body": {
+    "code": "E_SCHEMA",
+    "message": "expected one of 'at', 'start', 'end'",
+    "pointer": "/relations/0/from/endpoint",
+    "rule": ""
+   },
+   "project|conformance/calendar.yaml/relations/0/from/endpoint|endpoint:end": null,
+   "project|conformance/calendar.yaml/relations/0/from/endpoint|endpoint:finish": {
+    "code": "E_SCHEMA",
+    "message": "expected one of 'at', 'start', 'end'",
+    "pointer": "/relations/0/from/endpoint",
+    "rule": ""
+   },
+   "project|conformance/calendar.yaml/relations/0/from/endpoint|endpoint:start": null,
+   "project|conformance/calendar.yaml/relations/0/from/endpoint|endpoint:unknown": {
+    "code": "E_SCHEMA",
+    "message": "expected one of 'at', 'start', 'end'",
+    "pointer": "/relations/0/from/endpoint",
+    "rule": ""
+   },
+   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/contentIdentity|sha256:no-prefix": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/body/environment/fontMetrics/assets/0/metrics/contentIdentity",
+    "rule": "pattern"
+   },
+   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/contentIdentity|sha256:short": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/body/environment/fontMetrics/assets/0/metrics/contentIdentity",
+    "rule": "pattern"
+   },
+   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/contentIdentity|sha256:trailing-newline": null,
+   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/contentIdentity|sha256:uppercase-hex": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",
+    "pointer": "/body/environment/fontMetrics/assets/0/metrics/contentIdentity",
+    "rule": "pattern"
+   },
+   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/contentIdentity|sha256:valid": null,
+   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:absolute": null,
+   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:backslash": null,
+   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:dot": null,
+   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:dot-dot": null,
+   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:double-slash": null,
+   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:embedded-newline": null,
+   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:nested": null,
+   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:non-ascii": null,
+   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:nul": null,
+   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:space": null,
+   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:trailing-newline": null,
+   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:traversal": null,
+   "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/project/address|path:valid": null,
+   "render-context|examples/aster-ssd/contexts/01-overview.yaml/id|identifier:empty": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected minLength 1",
+    "pointer": "/id",
+    "rule": "minLength"
+   },
+   "render-context|examples/aster-ssd/contexts/01-overview.yaml/id|identifier:newline": null,
+   "render-context|examples/aster-ssd/contexts/01-overview.yaml/id|identifier:non-ascii": null,
+   "render-context|examples/aster-ssd/contexts/01-overview.yaml/id|identifier:nul": null,
+   "render-context|examples/aster-ssd/contexts/01-overview.yaml/id|identifier:space": null,
+   "render-context|examples/aster-ssd/contexts/01-overview.yaml/id|identifier:valid": null,
+   "review-detail-profile|conformance/review-detail-profile-v0.1.yaml/id|identifier:empty": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected minLength 1",
+    "pointer": "/id",
+    "rule": "minLength"
+   },
+   "review-detail-profile|conformance/review-detail-profile-v0.1.yaml/id|identifier:newline": null,
+   "review-detail-profile|conformance/review-detail-profile-v0.1.yaml/id|identifier:non-ascii": null,
+   "review-detail-profile|conformance/review-detail-profile-v0.1.yaml/id|identifier:nul": null,
+   "review-detail-profile|conformance/review-detail-profile-v0.1.yaml/id|identifier:space": null,
+   "review-detail-profile|conformance/review-detail-profile-v0.1.yaml/id|identifier:valid": null,
+   "snapshot-ref|examples/halcyon-1/snapshots/baseline-2027-06.yaml/body/project/address|path:absolute": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/body/project/address",
+    "rule": "pattern"
+   },
+   "snapshot-ref|examples/halcyon-1/snapshots/baseline-2027-06.yaml/body/project/address|path:backslash": null,
+   "snapshot-ref|examples/halcyon-1/snapshots/baseline-2027-06.yaml/body/project/address|path:dot": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/body/project/address",
+    "rule": "pattern"
+   },
+   "snapshot-ref|examples/halcyon-1/snapshots/baseline-2027-06.yaml/body/project/address|path:dot-dot": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/body/project/address",
+    "rule": "pattern"
+   },
+   "snapshot-ref|examples/halcyon-1/snapshots/baseline-2027-06.yaml/body/project/address|path:double-slash": null,
+   "snapshot-ref|examples/halcyon-1/snapshots/baseline-2027-06.yaml/body/project/address|path:embedded-newline": null,
+   "snapshot-ref|examples/halcyon-1/snapshots/baseline-2027-06.yaml/body/project/address|path:nested": null,
+   "snapshot-ref|examples/halcyon-1/snapshots/baseline-2027-06.yaml/body/project/address|path:non-ascii": null,
+   "snapshot-ref|examples/halcyon-1/snapshots/baseline-2027-06.yaml/body/project/address|path:nul": null,
+   "snapshot-ref|examples/halcyon-1/snapshots/baseline-2027-06.yaml/body/project/address|path:space": null,
+   "snapshot-ref|examples/halcyon-1/snapshots/baseline-2027-06.yaml/body/project/address|path:trailing-newline": null,
+   "snapshot-ref|examples/halcyon-1/snapshots/baseline-2027-06.yaml/body/project/address|path:traversal": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/body/project/address",
+    "rule": "pattern"
+   },
+   "snapshot-ref|examples/halcyon-1/snapshots/baseline-2027-06.yaml/body/project/address|path:valid": null,
+   "snapshot-ref|examples/halcyon-1/snapshots/baseline-2027-06.yaml/id|identifier:empty": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected minLength 1",
+    "pointer": "/id",
+    "rule": "minLength"
+   },
+   "snapshot-ref|examples/halcyon-1/snapshots/baseline-2027-06.yaml/id|identifier:newline": null,
+   "snapshot-ref|examples/halcyon-1/snapshots/baseline-2027-06.yaml/id|identifier:non-ascii": null,
+   "snapshot-ref|examples/halcyon-1/snapshots/baseline-2027-06.yaml/id|identifier:nul": null,
+   "snapshot-ref|examples/halcyon-1/snapshots/baseline-2027-06.yaml/id|identifier:space": null,
+   "snapshot-ref|examples/halcyon-1/snapshots/baseline-2027-06.yaml/id|identifier:valid": null,
+   "store-config|inline:store-config/stores/0/identity|identifier:empty": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected minLength 1",
+    "pointer": "/stores/0/identity",
+    "rule": ""
+   },
+   "store-config|inline:store-config/stores/0/identity|identifier:newline": null,
+   "store-config|inline:store-config/stores/0/identity|identifier:non-ascii": null,
+   "store-config|inline:store-config/stores/0/identity|identifier:nul": null,
+   "store-config|inline:store-config/stores/0/identity|identifier:space": null,
+   "store-config|inline:store-config/stores/0/identity|identifier:valid": null,
+   "store-config|inline:store-config/stores/0/root|path:absolute": null,
+   "store-config|inline:store-config/stores/0/root|path:backslash": null,
+   "store-config|inline:store-config/stores/0/root|path:dot": null,
+   "store-config|inline:store-config/stores/0/root|path:dot-dot": null,
+   "store-config|inline:store-config/stores/0/root|path:double-slash": null,
+   "store-config|inline:store-config/stores/0/root|path:embedded-newline": null,
+   "store-config|inline:store-config/stores/0/root|path:nested": null,
+   "store-config|inline:store-config/stores/0/root|path:non-ascii": null,
+   "store-config|inline:store-config/stores/0/root|path:nul": null,
+   "store-config|inline:store-config/stores/0/root|path:space": null,
+   "store-config|inline:store-config/stores/0/root|path:trailing-newline": null,
+   "store-config|inline:store-config/stores/0/root|path:traversal": null,
+   "store-config|inline:store-config/stores/0/root|path:valid": null,
+   "summary-profile|examples/halcyon-1/profiles/scenario-summary.yaml/id|identifier:empty": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected minLength 1",
+    "pointer": "/id",
+    "rule": "minLength"
+   },
+   "summary-profile|examples/halcyon-1/profiles/scenario-summary.yaml/id|identifier:newline": null,
+   "summary-profile|examples/halcyon-1/profiles/scenario-summary.yaml/id|identifier:non-ascii": null,
+   "summary-profile|examples/halcyon-1/profiles/scenario-summary.yaml/id|identifier:nul": null,
+   "summary-profile|examples/halcyon-1/profiles/scenario-summary.yaml/id|identifier:space": null,
+   "summary-profile|examples/halcyon-1/profiles/scenario-summary.yaml/id|identifier:valid": null,
+   "theme-asset-source|tests/fixtures/icons/theme-assets-valid.yaml/id|identifier:empty": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^[A-Za-z0-9][A-Za-z0-9_-]*$'",
+    "pointer": "/id",
+    "rule": "pattern"
+   },
+   "theme-asset-source|tests/fixtures/icons/theme-assets-valid.yaml/id|identifier:newline": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^[A-Za-z0-9][A-Za-z0-9_-]*$'",
+    "pointer": "/id",
+    "rule": "pattern"
+   },
+   "theme-asset-source|tests/fixtures/icons/theme-assets-valid.yaml/id|identifier:non-ascii": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^[A-Za-z0-9][A-Za-z0-9_-]*$'",
+    "pointer": "/id",
+    "rule": "pattern"
+   },
+   "theme-asset-source|tests/fixtures/icons/theme-assets-valid.yaml/id|identifier:nul": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^[A-Za-z0-9][A-Za-z0-9_-]*$'",
+    "pointer": "/id",
+    "rule": "pattern"
+   },
+   "theme-asset-source|tests/fixtures/icons/theme-assets-valid.yaml/id|identifier:space": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^[A-Za-z0-9][A-Za-z0-9_-]*$'",
+    "pointer": "/id",
+    "rule": "pattern"
+   },
+   "theme-asset-source|tests/fixtures/icons/theme-assets-valid.yaml/id|identifier:valid": null,
+   "theme|src/chrona/resources/presets/bundles/technical-print/theme.yaml/id|identifier:empty": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected minLength 1",
+    "pointer": "/id",
+    "rule": "minLength"
+   },
+   "theme|src/chrona/resources/presets/bundles/technical-print/theme.yaml/id|identifier:newline": null,
+   "theme|src/chrona/resources/presets/bundles/technical-print/theme.yaml/id|identifier:non-ascii": null,
+   "theme|src/chrona/resources/presets/bundles/technical-print/theme.yaml/id|identifier:nul": null,
+   "theme|src/chrona/resources/presets/bundles/technical-print/theme.yaml/id|identifier:space": null,
+   "theme|src/chrona/resources/presets/bundles/technical-print/theme.yaml/id|identifier:valid": null,
+   "view|examples/halcyon-1/views/02-programme-board.yaml/body/annotations/0/anchor/endpoint|endpoint:at": null,
+   "view|examples/halcyon-1/views/02-programme-board.yaml/body/annotations/0/anchor/endpoint|endpoint:body": null,
+   "view|examples/halcyon-1/views/02-programme-board.yaml/body/annotations/0/anchor/endpoint|endpoint:end": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one of 'start', 'finish', 'at', 'body'",
+    "pointer": "/body/annotations/0/anchor/endpoint",
+    "rule": "enum"
+   },
+   "view|examples/halcyon-1/views/02-programme-board.yaml/body/annotations/0/anchor/endpoint|endpoint:finish": null,
+   "view|examples/halcyon-1/views/02-programme-board.yaml/body/annotations/0/anchor/endpoint|endpoint:start": null,
+   "view|examples/halcyon-1/views/02-programme-board.yaml/body/annotations/0/anchor/endpoint|endpoint:unknown": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected one of 'start', 'finish', 'at', 'body'",
+    "pointer": "/body/annotations/0/anchor/endpoint",
+    "rule": "enum"
+   },
+   "view|examples/halcyon-1/views/02-programme-board.yaml/body/annotations/0/id|identifier:empty": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected minLength 1",
+    "pointer": "/body/annotations/0/id",
+    "rule": "minLength"
+   },
+   "view|examples/halcyon-1/views/02-programme-board.yaml/body/annotations/0/id|identifier:newline": null,
+   "view|examples/halcyon-1/views/02-programme-board.yaml/body/annotations/0/id|identifier:non-ascii": null,
+   "view|examples/halcyon-1/views/02-programme-board.yaml/body/annotations/0/id|identifier:nul": null,
+   "view|examples/halcyon-1/views/02-programme-board.yaml/body/annotations/0/id|identifier:space": null,
+   "view|examples/halcyon-1/views/02-programme-board.yaml/body/annotations/0/id|identifier:valid": null,
+   "view|examples/halcyon-1/views/02-programme-board.yaml/body/window/start|date:impossible-day": null,
+   "view|examples/halcyon-1/views/02-programme-board.yaml/body/window/start|date:impossible-month": null,
+   "view|examples/halcyon-1/views/02-programme-board.yaml/body/window/start|date:non-leap-february-29": null,
+   "view|examples/halcyon-1/views/02-programme-board.yaml/body/window/start|date:trailing-newline": null,
+   "view|examples/halcyon-1/views/02-programme-board.yaml/body/window/start|date:unicode-digits": null,
+   "view|examples/halcyon-1/views/02-programme-board.yaml/body/window/start|date:valid": null,
+   "view|examples/halcyon-1/views/02-programme-board.yaml/body/window/start|date:year-zero": null,
+   "view|examples/halcyon-1/views/02-programme-board.yaml/body/window/start|date:zero-date": null
+  }
+ },
+ "documents": [
+  {
+   "error": null,
+   "path": "conformance/calendar.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "conformance/controller-x.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "conformance/dependencies.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "conformance/implementation-delivery-profile-invalid-field-v0.2.yaml",
+   "schema": "profile-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "conformance/implementation-delivery-profile-invalid-state-v0.2.yaml",
+   "schema": "profile-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "conformance/implementation-delivery-profile-v0.2.yaml",
+   "schema": "profile-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": {
+    "pointer": "/",
+    "rule": "additionalProperties"
+   },
+   "path": "conformance/implementation-delivery-roadmap-v0.1.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": false
+  },
+  {
+   "error": null,
+   "path": "conformance/layout-profile-intent-v0.2.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": {
+    "pointer": "/root",
+    "rule": "oneOf"
+   },
+   "path": "conformance/layout-profile-invalid-offset-v0.2.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": false
+  },
+  {
+   "error": null,
+   "path": "conformance/layout-profile-override-v0.2.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "conformance/layout-profile-relative-v0.2.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "conformance/minimal.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "conformance/presentation/actuals/controller-observed-duplicate-sequence.yaml",
+   "schema": "actual-set-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "conformance/presentation/actuals/controller-observed-point.yaml",
+   "schema": "actual-set-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "conformance/presentation/actuals/controller-observed.yaml",
+   "schema": "actual-set-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "conformance/review-detail-profile-v0.1.yaml",
+   "schema": "review-detail-profile-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "conformance/semiconductor-profile-v0.2.yaml",
+   "schema": "profile-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "conformance/semiconductor.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "docs/examples/operational-workflows/accepted-baseline-result.yaml",
+   "schema": "automation-result-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": {
+    "pointer": "/payload/registry",
+    "rule": "additionalProperties"
+   },
+   "path": "docs/examples/operational-workflows/accepted-capture-command.yaml",
+   "schema": "command-request-v0.2.schema.yaml",
+   "valid": false
+  },
+  {
+   "error": null,
+   "path": "docs/examples/operational-workflows/accepted-intake-batch.yaml",
+   "schema": "actual-intake-batch-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "docs/examples/operational-workflows/actual-intake-batch-v0.2.yaml",
+   "schema": "actual-intake-batch-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "docs/examples/operational-workflows/actual-set-v0.2.yaml",
+   "schema": "actual-set-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "docs/examples/operational-workflows/rejected-duplicate-intake-batch.yaml",
+   "schema": "actual-intake-batch-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "docs/research/presentation/issue-498-bundled-default-readability-evidence-2026-09-27/13-gallery-editorial/reference.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "docs/research/presentation/issue-498-bundled-default-readability-evidence-2026-09-27/halcyon-1/default.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "docs/research/presentation/issue-498-bundled-default-readability-evidence-2026-09-27/starter-source/actual.yaml",
+   "schema": "actual-set-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "docs/research/presentation/issue-498-bundled-default-readability-evidence-2026-09-27/starter-source/project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "docs/research/presentation/issue-498-bundled-default-readability-evidence-2026-09-27/starter/default.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/aster-ssd/actual.yaml",
+   "schema": "actual-set-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/aster-ssd/contexts/01-overview.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/aster-ssd/generated/overview.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/aster-ssd/layouts/executive-review.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/aster-ssd/profiles/review-detail.yaml",
+   "schema": "review-detail-profile-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/aster-ssd/project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/aster-ssd/schemes/executive-light.yaml",
+   "schema": "color-scheme-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/aster-ssd/themes/executive-light.yaml",
+   "schema": "theme-v0.11.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/aster-ssd/themes/onboarding-variation.yaml",
+   "schema": "theme-v0.12.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/aster-ssd/views/01-overview.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/attached-milestones/actual.yaml",
+   "schema": "actual-set-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/attached-milestones/project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z-ja/actual.yaml",
+   "schema": "actual-set-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z-ja/contexts/executive.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z-ja/generated/executive.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z-ja/layouts/executive-review.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z-ja/profiles/review-detail.yaml",
+   "schema": "review-detail-profile-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z-ja/project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z-ja/schemes/executive-light.yaml",
+   "schema": "color-scheme-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z-ja/themes/executive-light.yaml",
+   "schema": "theme-v0.11.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z-ja/views/executive.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/actual.yaml",
+   "schema": "actual-set-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/contexts/annotations.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/contexts/axis-tiers.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/contexts/capabilities.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/contexts/composition-compact.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/contexts/elevated.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/contexts/executive.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/contexts/icons.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/contexts/material-icons.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/contexts/plan-only.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/contexts/progress-track.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/curriculum/scale-30.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/elevated-light.preset.yaml",
+   "schema": "presentation-preset-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/executive-light.preset.yaml",
+   "schema": "presentation-preset-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/generated/annotations.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/generated/axis-tiers.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/generated/capabilities.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/generated/composition-compact.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/generated/elevated.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/generated/executive.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/generated/icons.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/generated/material-icons.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/generated/plan-only.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/generated/progress-track.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/icons.yaml",
+   "schema": "icon-catalog-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/imported-icons.yaml",
+   "schema": "icon-catalog-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/layouts/annotations-review.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/layouts/capabilities.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/layouts/executive-review-compact.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/layouts/executive-review.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/profiles/review-detail.yaml",
+   "schema": "review-detail-profile-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": {
+    "pointer": "/",
+    "rule": "additionalProperties"
+   },
+   "path": "examples/controller-z/profiles/summary.yaml",
+   "schema": "summary-profile-v0.2.schema.yaml",
+   "valid": false
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/schemes/executive-light.yaml",
+   "schema": "color-scheme-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/themes/axis-tiers.yaml",
+   "schema": "theme-v0.11.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/themes/capabilities.yaml",
+   "schema": "theme-v0.11.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/themes/elevated-light.yaml",
+   "schema": "theme-v0.11.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/themes/executive-light.yaml",
+   "schema": "theme-v0.11.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/themes/material-icons-light.yaml",
+   "schema": "theme-v0.11.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/themes/progress-track.yaml",
+   "schema": "theme-v0.11.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/views/annotations.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/views/axis-tiers.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/views/capabilities.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/views/executive.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/views/icons.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/views/material-icons.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/controller-z/views/plan-only.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/actual.yaml",
+   "schema": "actual-set-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/contexts/01-mission-brief.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/contexts/02-programme-board.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/contexts/03-launch-campaign.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/contexts/04-tvac-slip.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/contexts/05-dependency-network.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/contexts/06-flight-readiness.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/contexts/07-replan-baseline.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/contexts/08-gallery-dark.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/contexts/09-gallery-mono.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/contexts/10-gallery-network-wallboard.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/contexts/11-overlay-briefing.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/contexts/12-glyph-gates.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/contexts/13-gallery-editorial.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/contexts/14-gallery-technical-print.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/contexts/15-gallery-image-notes.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/contexts/16-gallery-editorial-lanes.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/generated/01-mission-brief.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/generated/02-programme-board.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/generated/03-launch-campaign.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/generated/04-tvac-slip.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/generated/05-dependency-network.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/generated/06-flight-readiness.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/generated/07-replan-baseline.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/generated/08-gallery-dark.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/generated/09-gallery-mono.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/generated/10-gallery-network-wallboard.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/generated/11-overlay-briefing.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/generated/12-glyph-gates.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/generated/13-gallery-editorial.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/generated/14-gallery-technical-print.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/generated/15-gallery-image-notes.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/icons.yaml",
+   "schema": "icon-catalog-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/layouts/briefing.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/layouts/dependency-network.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/layouts/editorial.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/layouts/overlay-briefing.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/layouts/print-portrait.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/layouts/technical-print.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/layouts/wallboard-programme-board.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/layouts/wallboard.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/profiles/detail.yaml",
+   "schema": "review-detail-profile-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/profiles/editorial-detail.yaml",
+   "schema": "review-detail-profile-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/profiles/launch-legend.yaml",
+   "schema": "review-detail-profile-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/profiles/scenario-summary.yaml",
+   "schema": "summary-profile-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/profiles/summary.yaml",
+   "schema": "summary-profile-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/profiles/technical-print-detail.yaml",
+   "schema": "review-detail-profile-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/schemes/control-room-dark.yaml",
+   "schema": "color-scheme-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/schemes/editorial.yaml",
+   "schema": "color-scheme-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/schemes/mission-light.yaml",
+   "schema": "color-scheme-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/schemes/print-mono.yaml",
+   "schema": "color-scheme-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/schemes/technical-print.yaml",
+   "schema": "color-scheme-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/snapshots/baseline-2027-06.yaml",
+   "schema": "snapshot-ref-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/snapshots/baseline-2027-06/project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/themes/12-glyph-gates.yaml",
+   "schema": "theme-v0.12.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/themes/briefing.yaml",
+   "schema": "theme-v0.11.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/themes/editorial-readable-default.yaml",
+   "schema": "theme-v0.11.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/themes/editorial.yaml",
+   "schema": "theme-v0.11.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/themes/print.yaml",
+   "schema": "theme-v0.11.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/themes/technical-print.yaml",
+   "schema": "theme-v0.11.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/themes/wallboard-image-notes.yaml",
+   "schema": "theme-v0.11.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/themes/wallboard.yaml",
+   "schema": "theme-v0.11.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/views/01-mission-brief.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/views/02-programme-board.yaml",
+   "schema": "view-v0.28.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/views/03-launch-campaign.yaml",
+   "schema": "view-v0.28.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/views/04-tvac-slip.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/views/05-dependency-network.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/views/06-flight-readiness.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/views/07-replan-baseline.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/views/15-gallery-image-notes.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/views/default-draft.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/views/editorial-lanes.yaml",
+   "schema": "view-v0.28.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/views/editorial-readable-default.yaml",
+   "schema": "view-v0.28.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/views/editorial.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/halcyon-1/views/technical-print.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/onboarding/01-spans/project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/onboarding/02-gate/project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/onboarding/03-relations/project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/onboarding/04-calendar/project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/onboarding/05-constraints/project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/onboarding/06-rollup/project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/onboarding/07-actuals/actual.yaml",
+   "schema": "actual-set-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/onboarding/07-actuals/project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/onboarding/07-actuals/view.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/orion-asic/actual.yaml",
+   "schema": "actual-set-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/orion-asic/contexts/gates.yaml",
+   "schema": "render-context-v0.16.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/orion-asic/extensions/semiconductor-development.yaml",
+   "schema": "profile-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/orion-asic/generated/gates.scene.json",
+   "schema": "scene-v0.6.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/orion-asic/layouts/orion-review.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/orion-asic/profiles/review-detail.yaml",
+   "schema": "review-detail-profile-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/orion-asic/project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/orion-asic/schemes/orion-light.yaml",
+   "schema": "color-scheme-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/orion-asic/themes/orion-light.yaml",
+   "schema": "theme-v0.11.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "examples/orion-asic/views/gates.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/axis-name-tables-v0.1.yaml",
+   "schema": "axis-name-tables-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/example-registry.yaml",
+   "schema": "example-registry-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/icons/chrona-theme-starter-v2026-09-29.source.yaml",
+   "schema": "theme-asset-source-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/icons/chrona-theme-starter-v2026-09-29.yaml",
+   "schema": "icon-catalog-v0.4.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/icons/material-symbols-outline-rounded-v2026-09-22.yaml",
+   "schema": "icon-catalog-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/control-room-dark/layout.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/control-room-dark/scheme.yaml",
+   "schema": "color-scheme-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/control-room-dark/theme.yaml",
+   "schema": "theme-v0.11.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/control-room-dark/view.yaml",
+   "schema": "view-v0.28.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/editorial-readable-default/theme.yaml",
+   "schema": "theme-v0.11.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/editorial-readable-default/view.yaml",
+   "schema": "view-v0.28.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/editorial/detail.yaml",
+   "schema": "review-detail-profile-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/editorial/layout.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/editorial/scheme.yaml",
+   "schema": "color-scheme-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/editorial/theme.yaml",
+   "schema": "theme-v0.11.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/editorial/view-lanes.yaml",
+   "schema": "view-v0.28.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/editorial/view.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/elevated-light/detail.yaml",
+   "schema": "review-detail-profile-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/elevated-light/layout.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/elevated-light/scheme.yaml",
+   "schema": "color-scheme-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/elevated-light/theme.yaml",
+   "schema": "theme-v0.11.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/elevated-light/view.yaml",
+   "schema": "view-v0.28.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/executive-light/detail.yaml",
+   "schema": "review-detail-profile-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/executive-light/layout.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/executive-light/scheme.yaml",
+   "schema": "color-scheme-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/executive-light/theme.yaml",
+   "schema": "theme-v0.11.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/executive-light/view.yaml",
+   "schema": "view-v0.28.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/mission-light/layout.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/mission-light/scheme.yaml",
+   "schema": "color-scheme-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/mission-light/theme.yaml",
+   "schema": "theme-v0.11.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/mission-light/view.yaml",
+   "schema": "view-v0.28.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/print-mono/layout.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/print-mono/scheme.yaml",
+   "schema": "color-scheme-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/print-mono/theme.yaml",
+   "schema": "theme-v0.11.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/print-mono/view.yaml",
+   "schema": "view-v0.28.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/technical-print/detail.yaml",
+   "schema": "review-detail-profile-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/technical-print/layout.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/technical-print/scheme.yaml",
+   "schema": "color-scheme-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/technical-print/theme.yaml",
+   "schema": "theme-v0.13.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/bundles/technical-print/view.yaml",
+   "schema": "view-v0.28.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/default.yaml",
+   "schema": "presentation-preset-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/presets/library.yaml",
+   "schema": "preset-library-v0.2.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/templates/minimal/actual.yaml",
+   "schema": "actual-set-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "src/chrona/resources/templates/minimal/project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/candidate-placement/view-image-container.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/candidate-placement/view.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/icons/theme-assets-invalid-density.yaml",
+   "schema": "theme-asset-source-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/icons/theme-assets-valid.normalized-v0.4.yaml",
+   "schema": "icon-catalog-v0.4.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/icons/theme-assets-valid.yaml",
+   "schema": "theme-asset-source-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/multi-lane-milestones/actual.yaml",
+   "schema": "actual-set-v0.3.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/multi-lane-milestones/project.yaml",
+   "schema": "project-v0.7.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/multi-lane-milestones/view.yaml",
+   "schema": "view-v0.27.schema.yaml",
+   "valid": true
+  }
+ ],
+ "version": "chrona/schema-equivalence-baseline/v0.1"
+}

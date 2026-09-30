@@ -57,6 +57,7 @@ CHECKS = (
     CheckSpec("schema-inventory", _command("tools/schema_inventory.py")),
     CheckSpec("schema-annotations", _command("tools/schema_annotations.py")),
     CheckSpec("schema-references", _command("tools/validate_schema_references.py")),
+    CheckSpec("schema-equivalence", _command("tools/schema_equivalence.py", "--layers", "L2,L3")),
     CheckSpec("example-inventory", _command("tools/example_inventory.py")),
     CheckSpec("example-reachability", _command("tools/check_example_reachability.py")),
     CheckSpec("svg-explicit-fill", _command("tools/check_svg_explicit_fill.py")),
