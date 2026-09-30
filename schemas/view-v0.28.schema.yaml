@@ -211,11 +211,11 @@ allOf:
                     - description: "Month labels select one finite month form."
                       examples: [{unit: month, every: 1, role: labels, label: {form: short-month, align: start, overflow: visible-overflow, orientation: horizontal}}]
                       if: {properties: {unit: {const: month}, role: {const: labels}}, required: [unit, role]}
-                      then: {properties: {label: {type: object, required: [form, align, overflow, orientation], additionalProperties: false, properties: {form: {enum: [short-month, long-month, numeric-month, short-month-year, long-month-year, numeric-year-month]}, align: {enum: [start, center]}, overflow: {enum: [visible-overflow, thin-with-record]}, orientation: {description: "Finite orientation of the label text block; Layout selects its completed rotation.", enum: [horizontal, rotate-cw, rotate-ccw]}, nameTable: {description: "Exact built-in axis name-table ID; defaults to Render Context locale.", enum: [en-US, ja-JP]}}}}}
+                      then: {properties: {label: {type: object, required: [form, align, overflow, orientation], additionalProperties: false, properties: {form: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/monthLabelForm"}, align: {enum: [start, center]}, overflow: {enum: [visible-overflow, thin-with-record]}, orientation: {description: "Finite orientation of the label text block; Layout selects its completed rotation.", enum: [horizontal, rotate-cw, rotate-ccw]}, nameTable: {description: "Exact built-in axis name-table ID; defaults to Render Context locale.", enum: [en-US, ja-JP]}}}}}
                     - description: "Quarter labels select one finite quarter form."
                       examples: [{unit: quarter, every: 1, role: labels, label: {form: year-quarter, align: center, overflow: visible-overflow, orientation: horizontal}}]
                       if: {properties: {unit: {const: quarter}, role: {const: labels}}, required: [unit, role]}
-                      then: {properties: {label: {type: object, required: [form, align, overflow, orientation], additionalProperties: false, properties: {form: {enum: [quarter, year-quarter, quarter-year]}, align: {enum: [start, center]}, overflow: {enum: [visible-overflow, thin-with-record]}, orientation: {description: "Finite orientation of the label text block; Layout selects its completed rotation.", enum: [horizontal, rotate-cw, rotate-ccw]}, nameTable: {description: "Exact built-in axis name-table ID; defaults to Render Context locale.", enum: [en-US, ja-JP]}}}}}
+                      then: {properties: {label: {type: object, required: [form, align, overflow, orientation], additionalProperties: false, properties: {form: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/quarterLabelForm"}, align: {enum: [start, center]}, overflow: {enum: [visible-overflow, thin-with-record]}, orientation: {description: "Finite orientation of the label text block; Layout selects its completed rotation.", enum: [horizontal, rotate-cw, rotate-ccw]}, nameTable: {description: "Exact built-in axis name-table ID; defaults to Render Context locale.", enum: [en-US, ja-JP]}}}}}
                     - description: "Half-year labels use the fiscal half-year form."
                       examples: [{unit: half, every: 1, role: labels, label: {form: half-year, align: center, overflow: visible-overflow, orientation: horizontal}}]
                       if: {properties: {unit: {const: half}, role: {const: labels}}, required: [unit, role]}
@@ -241,8 +241,8 @@ allOf:
                                 properties:
                                   day: {const: localized-date}
                                   week: {const: iso-week}
-                                  month: {enum: [short-month, long-month, numeric-month, short-month-year, long-month-year, numeric-year-month]}
-                                  quarter: {enum: [quarter, year-quarter, quarter-year]}
+                                  month: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/monthLabelForm"}
+                                  quarter: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/quarterLabelForm"}
                                   half: {const: half-year}
                                   year: {const: year}
                               align: {enum: [start, center]}

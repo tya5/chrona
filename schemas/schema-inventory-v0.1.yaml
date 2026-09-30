@@ -77,3 +77,5 @@ schemas:
     consumers: [src/chrona/resources/__init__.py]
     frozenDefs:
       visualProfile: "sha256:b465db20484fd6124d3f7aa90329c8607c96f8a42ee316628785fc3823743b19"
+      monthLabelForm: "sha256:8e84803c4ff90e2e6163372510a03cecece9ceb714e7571723b9d638017af737"
+      quarterLabelForm: "sha256:51ca08f50380128f3b58bf55a2ef3b9954781e327cd16dc4652995a116d2ae65"

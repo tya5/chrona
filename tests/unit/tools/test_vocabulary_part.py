@@ -159,3 +159,109 @@ def test_every_declared_visual_profile_resolves_for_a_target():
             except visual_capabilities.VisualCapabilityError:
                 pass
         assert resolved, profile
+
+
+
+# --------------------------------------------------------------------------------------------
+# The readers that list a kind's finite vocabulary still see what moved into the part (review F2)
+# --------------------------------------------------------------------------------------------
+
+def _seen(reader: Any, schema: Any) -> set[tuple[tuple[str, ...], str]]:
+    return {(path, json.dumps(value)) for path, value in reader(schema)}
+
+
+@pytest.mark.parametrize("kind", ["view", "layout-profile", "theme", "color-scheme"])
+def test_presentation_coverage_sees_the_same_vocabulary_as_the_inlined_schema(kind):
+    # The walk follows `$ref` into a part, so a value that moved is still listed: its output equals the fully inlined twin.
+    from chrona.resources import dereferenced_schema
+    from tools.presentation_coverage import _integer_minimums, _schema_values, live_schemas
+
+    schemas = live_schemas(ROOT)
+    name = next(entry["file"] for entry in ENTRIES if entry["state"] == "live" and entry["kind"] == kind)
+    inlined = dereferenced_schema(name)
+    assert _seen(_schema_values, schemas[kind]) == _seen(_schema_values, inlined)
+    assert set(_integer_minimums(schemas[kind])) == set(_integer_minimums(inlined))
+
+
+def test_the_readers_follow_a_vocabulary_reference_but_corpus_coverage_leaves_other_parts_alone():
+    from tools import corpus_coverage, presentation_coverage
+
+    schema = {"$id": "urn:test", "type": "object", "properties": {
+        "profile": {"$ref": f"{VOCABULARY_ID}#/$defs/visualProfile"},
+        "provider": {"$ref": "urn:chrona:revision-store-resource-ref-v0.1#/properties/store/properties/provider"},
+        "local": {"$ref": "#/$defs/mode"}},
+        "$defs": {"mode": {"enum": ["a", "b"]}}}
+    wanted = {(("profile",), json.dumps(value)) for value in VISUAL_PROFILES} | {(("local",), '"a"'), (("local",), '"b"')}
+    everything = _seen(presentation_coverage._schema_values, presentation_coverage.with_parts(schema, presentation_coverage.schema_parts(ROOT)))
+    assert everything >= wanted
+    assert {item for item in everything if item[0] == ("provider",)}, "presentation coverage follows every part"
+    vocabulary_only = _seen(corpus_coverage._schema_values, schema)
+    assert vocabulary_only >= wanted
+    assert not {item for item in vocabulary_only if item[0] == ("provider",)}, "corpus coverage follows vocabulary parts only"
+
+
+def test_vocabulary_inventory_reads_a_declared_value_through_a_part_reference(tmp_path):
+    from tools.vocabulary_inventory import VocabularyEntry, VocabularyInventoryError, declared_values
+
+    (tmp_path / "schemas").mkdir()
+    (tmp_path / "schemas" / "site.schema.yaml").write_text(yaml.safe_dump({
+        "$id": "urn:test-site", "properties": {"profile": {"description": "x", "$ref": f"{VOCABULARY_ID}#/$defs/visualProfile"},
+                                                "broken": {"$ref": "urn:chrona:missing-v9#/$defs/nope"}}}), encoding="utf-8")
+    entry = VocabularyEntry("schemas/site.schema.yaml", "/properties/profile", "test", "finite", tuple(VISUAL_PROFILES))
+    assert declared_values(tmp_path, entry) == tuple(sorted(VISUAL_PROFILES))
+    with pytest.raises(VocabularyInventoryError, match="E_VOCABULARY_REFERENCE"):
+        declared_values(tmp_path, VocabularyEntry("schemas/site.schema.yaml", "/properties/broken", "test", "finite", ("x",)))
+
+
+def test_every_declared_vocabulary_policy_value_is_read_from_the_dereferenced_schema():
+    from chrona.resources import dereferenced_schema
+    from tools.vocabulary_inventory import declared_values, load_policy
+
+    for entry in load_policy(ROOT / "conformance/declared-vocabulary-policy-v0.1.yaml"):
+        node: Any = dereferenced_schema(Path(entry.schema).name)
+        for token in entry.pointer[1:].split("/"):
+            node = node[int(token)] if isinstance(node, list) else node[token.replace("~1", "/").replace("~0", "~")]
+        expected = (node["const"],) if "const" in node else tuple(node["enum"])
+        assert declared_values(ROOT, entry) == tuple(sorted(expected)), entry.identity
+
+
+# --------------------------------------------------------------------------------------------
+# monthLabelForm and quarterLabelForm (S2b)
+# --------------------------------------------------------------------------------------------
+
+MONTH_FORMS = ["short-month", "long-month", "numeric-month", "short-month-year", "long-month-year", "numeric-year-month"]
+QUARTER_FORMS = ["quarter", "year-quarter", "quarter-year"]
+
+
+def test_month_and_quarter_label_forms_are_the_published_forms_in_order():
+    assert _defs()["monthLabelForm"]["enum"] == MONTH_FORMS
+    assert _defs()["quarterLabelForm"]["enum"] == QUARTER_FORMS
+
+
+@pytest.mark.parametrize(("name", "definition", "count"), [
+    ("view-v0.28.schema.yaml", "monthLabelForm", 2),
+    ("view-v0.28.schema.yaml", "quarterLabelForm", 2),
+    ("axis-name-tables-v0.1.schema.yaml", "monthLabelForm", 2),
+])
+def test_each_axis_label_form_site_references_the_definition_and_accepts_exactly_it(name, definition, count):
+    sites = _sites(name, definition)
+    assert len(sites) == count, sites
+    allowed = _defs()[definition]["enum"]
+    for pointer in sites:
+        validator = _site_validator(name, pointer)
+        assert [value for value in allowed if not validator.is_valid(value)] == [], pointer
+        for value in ("year", "iso-week", "Short-Month", "short-month ", "", None, 3):
+            assert not validator.is_valid(value) or value in allowed, (pointer, value)
+
+
+def test_axis_label_form_code_twins_equal_the_schema_vocabulary():
+    from chrona.presentation.layout.axis import _FORMS_BY_LEVEL
+    from chrona.presentation.model.axis_names import FORMS, MONTH_FORMS as MODEL_MONTH_FORMS
+
+    assert list(MODEL_MONTH_FORMS) == _defs()["monthLabelForm"]["enum"]
+    assert _FORMS_BY_LEVEL["month"] == frozenset(_defs()["monthLabelForm"]["enum"])
+    assert _FORMS_BY_LEVEL["quarter"] == frozenset(_defs()["quarterLabelForm"]["enum"])
+    every = set().union(*_FORMS_BY_LEVEL.values())
+    assert every == set(FORMS), "the layout levels and the name-table form set cover the same 13 forms"
+    catalog = _schema("axis-name-tables-v0.1.schema.yaml")
+    assert set(catalog["$defs"]["table"]["properties"]["templates"]["required"]) == set(FORMS)

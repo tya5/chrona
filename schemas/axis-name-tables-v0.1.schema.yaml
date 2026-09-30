@@ -52,8 +52,8 @@ $defs:
           required: [alias, canonical, months]
           additionalProperties: false
           properties:
-            alias: {$ref: '#/$defs/monthForm'}
-            canonical: {$ref: '#/$defs/monthForm'}
+            alias: {description: Finite month label form., $ref: 'urn:chrona:vocabulary-v0.1#/$defs/monthLabelForm'}
+            canonical: {description: Finite month label form., $ref: 'urn:chrona:vocabulary-v0.1#/$defs/monthLabelForm'}
             months:
               description: Sorted unique month numbers where the forms produce identical output.
               type: array
@@ -67,4 +67,3 @@ $defs:
     maxItems: 12
     items: {description: Nonempty month name., type: string, minLength: 1}
   template: {description: Built-in closed-placeholder axis label template., type: string, minLength: 1}
-  monthForm: {description: Finite month label form., enum: [short-month, long-month, numeric-month, short-month-year, long-month-year, numeric-year-month]}

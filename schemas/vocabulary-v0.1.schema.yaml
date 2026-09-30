@@ -18,3 +18,11 @@ $defs:
       - chrona-output/visual/v0.6-png
       - chrona-output/visual/v0.7-svg
       - chrona-output/visual/v0.7-png
+  monthLabelForm:
+    description: "Finite month axis-label form."
+    examples: [short-month]
+    enum: [short-month, long-month, numeric-month, short-month-year, long-month-year, numeric-year-month]
+  quarterLabelForm:
+    description: "Finite quarter axis-label form."
+    examples: [year-quarter]
+    enum: [quarter, year-quarter, quarter-year]

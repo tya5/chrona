@@ -231,6 +231,30 @@ def bundled_schema(name: str) -> dict[str, Any]:
     return bundled
 
 
+def resolve_schema_reference(document: Mapping[str, Any], reference: str) -> tuple[Mapping[str, Any], Mapping[str, Any]] | None:
+    """Follow one `$ref` of `document` and return the document that owns the target and the target node.
+
+    A local `#/...` reference resolves inside `document`; an external reference resolves inside the registered
+    schema part that carries that `$id`. The owning document is returned because references inside the target
+    are local to it. `None` means the reference is not followable (an unknown target or a missing pointer).
+    For analysis readers that walk a schema without a validator.
+    """
+    target, _, fragment = reference.partition("#")
+    if not target:
+        if not fragment.startswith("/"):
+            return None
+        owner: Mapping[str, Any] | None = document
+    else:
+        name = _part_ids().get(target)
+        owner = schema_document(name) if name is not None else None
+    if owner is None:
+        return None
+    node: Any = owner
+    for token in [item for item in fragment.split("/") if item]:
+        node = node.get(token.replace("~1", "/").replace("~0", "~")) if isinstance(node, Mapping) else None
+    return (owner, node) if isinstance(node, Mapping) else None
+
+
 def dereferenced_schema(name: str) -> dict[str, Any]:
     """Return a schema with every external part `$ref` replaced by its target subtree.
 
