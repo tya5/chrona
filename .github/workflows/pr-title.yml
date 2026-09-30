@@ -1,0 +1,21 @@
+name: pr-title
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, labeled, unlabeled]
+permissions:
+  contents: read
+jobs:
+  pr-title:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject closing keywords in the PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          CLOSES_ISSUE: ${{ contains(github.event.pull_request.labels.*.name, 'closes-issue') }}
+        run: |
+          if [[ "$CLOSES_ISSUE" == "true" ]]; then
+            python tools/check_pr_title.py "$PR_TITLE" --allow-closing
+          else
+            python tools/check_pr_title.py "$PR_TITLE"
+          fi
