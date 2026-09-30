@@ -7,7 +7,7 @@ from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
 from chrona.presentation.layout.presentation import MarkBandFrame, MarkGeometry, RowPlacement, TrackPlacement, mark_bounds, measure_table_columns, minimum_track_block_extent, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents, table_cell_indent, table_text_line_block
 from chrona.presentation.layout.text import ellipsize_text
 from chrona.presentation.layout.surface_table import _centred_cell_baseline
-from chrona.presentation.layout.surface_composer import _contains_block_interval
+from chrona.presentation.layout.surface_completion import contains_block_interval
 from chrona.presentation.model.surface_content import TableCellContent, TableColumnContent, TableColumnWidth
 from chrona.presentation.model.projection import ObservationState
 
@@ -69,11 +69,11 @@ def test_table_placement_retains_natural_width_when_visible_overflow_is_selected
 
 
 def test_table_header_containment_ignores_only_sub_micro_point_float_residue() -> None:
-    assert _contains_block_interval(
+    assert contains_block_interval(
         container_start=Decimal("116.2"), container_end=Decimal("156.2"),
         item_start=Decimal("116.19999999999999"), item_end=Decimal("137.19999999999999"),
     )
-    assert not _contains_block_interval(
+    assert not contains_block_interval(
         container_start=Decimal("116.2"), container_end=Decimal("156.2"),
         item_start=Decimal("116.199"), item_end=Decimal("137.199"),
     )

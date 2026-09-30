@@ -7,7 +7,7 @@ from chrona.presentation.layout.pattern_placement import (
     PatternPathCommand,
     complete_pattern_placement,
 )
-from chrona.presentation.layout.surface_composer import _complete_catalog_patterns
+from chrona.presentation.layout.surface_completion import complete_catalog_patterns
 from chrona.presentation.layout.surface_quality import MarkPlacement, ShapePlacement
 
 
@@ -106,9 +106,34 @@ def test_surface_pattern_binding_targets_only_allowlisted_completed_rects():
                                      Rect(Decimal(3), Decimal(5), Decimal(40), Decimal(20)),
                                      semantic_id="planned")
 
-    placements = _complete_catalog_patterns((), (highlight, path, not_allowlisted), Theme())
+    placements = complete_catalog_patterns((), (highlight, path, not_allowlisted), Theme())
 
     assert len(placements) == 1
     assert placements[0].placement_id == "highlight:one"
     assert placements[0].pattern.origin == (3.0, 5.0)
     assert placements[0].pattern.corner_radius == 4
+
+
+def test_shape_patterns_precede_span_mark_patterns_and_point_marks_get_none():
+    """The final pattern pass reads completed shapes first, then span marks, in that order (#592 I592-6)."""
+    token = {
+        "kind": "catalog", "ref": "starter:hatch",
+        "tile": {"inlineSize": 8, "blockSize": 8}, "angle": 0,
+        "densityBasisPoints": 5000,
+        "primitives": [{"kind": "rect", "x": 0, "y": 0, "inlineSize": 8, "blockSize": 4}],
+    }
+
+    class Theme:
+        def optional_pattern(self, role):
+            return token if role in {"missing-actual", "annotation-highlight-box"} else None
+
+    bounds = Rect(Decimal(3), Decimal(5), Decimal(40), Decimal(20))
+    span = MarkPlacement("missing-actual:one", "one", bounds, (3.0, 15.0), (43.0, 15.0),
+                         mark_shape="span", semantic_id="missing-actual")
+    point = MarkPlacement("missing-actual:two", "two", bounds, (3.0, 15.0), (3.0, 15.0),
+                          mark_shape="point", semantic_id="missing-actual")
+    highlight = ShapePlacement("highlight:one", "one", "Rect", bounds, semantic_id="annotationHighlightBox")
+
+    placements = complete_catalog_patterns((span, point), (highlight,), Theme())
+
+    assert [item.placement_id for item in placements] == ["highlight:one", "missing-actual:one"]
