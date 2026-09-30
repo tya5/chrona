@@ -163,10 +163,6 @@ DEFERRED_FILES = {
 DEFERRED_COPIES = {
     ("authoring-command-result-v0.1.schema.yaml", "/properties/resultRevision"):
         "nullable (`type: [string, null]`): a `$ref` to the typed def would reject null, or need a oneOf that changes L1",
-    ("view-v0.28.schema.yaml", "/allOf/1/properties/body/properties/tableColumns/items/properties/width/oneOf/1"):
-        "a oneOf branch: the union explanation reads a branch's `required`, and a `$ref` branch loses `properties fr`",
-    ("view-v0.28.schema.yaml", "/allOf/1/properties/body/properties/tableColumns/items/properties/width/oneOf/2/properties/minmax/properties/max/oneOf/1"):
-        "a oneOf branch: as above",
 }
 PARTS_AND_DEFERRED = set(SCHEMA_PARTS) | set(DEFERRED_FILES)
 

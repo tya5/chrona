@@ -343,7 +343,7 @@ allOf:
                   description: "Table subset of the Layout logical size grammar for this measured column."
                   oneOf:
                     - {enum: [content, fill]}
-                    - {type: object, required: [fr], additionalProperties: false, properties: {fr: {type: number, exclusiveMinimum: 0, maximum: 1000000}}}
+                    - {$ref: "urn:chrona:common-v0.1#/$defs/fractionalTrack"}
                     - type: object
                       required: [minmax]
                       additionalProperties: false
@@ -357,11 +357,7 @@ allOf:
                             max:
                               oneOf:
                                 - {enum: [content, fill]}
-                                - type: object
-                                  type: object
-                                  required: [fr]
-                                  additionalProperties: false
-                                  properties: {fr: {type: number, exclusiveMinimum: 0, maximum: 1000000}}
+                                - {$ref: "urn:chrona:common-v0.1#/$defs/fractionalTrack"}
           annotations:
             type: array
             items:
