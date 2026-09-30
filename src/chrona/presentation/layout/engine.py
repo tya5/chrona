@@ -647,6 +647,7 @@ def solve_layout(profile: ResolvedLayoutProfile, *, viewport_inline: int | float
         annotation_max_detour_ratio=float(annotation_routing["maxDetourRatio"]),
         row_distribution=str(profile.profile["reviewSurface"]["rowDistribution"]),
         background_extents=dict(profile.profile["reviewSurface"]["backgroundExtents"]),
+        member_names=dict(profile.profile["reviewSurface"].get("memberNames", {})),
         fit_warnings=tuple(arranger.fit_warnings),
     )
 

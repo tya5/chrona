@@ -77,6 +77,21 @@ def _lane_label_candidates(side: str, fallback: tuple[str, ...], preferred: str 
     return tuple(result)
 
 
+DEFAULT_MEMBER_END_GAP_EM = 2.0
+
+
+def _member_reach(font_size: float, member_names: Mapping[str, Any]) -> float:
+    """Reach bound of a member name: declared em (default 2) times the label font size."""
+    return float(member_names.get("maxEndGapEm", DEFAULT_MEMBER_END_GAP_EM)) * font_size
+
+
+def _member_full_band(label_request: LabelRequest, layout_manifest: Any) -> bool:
+    declared = layout_manifest.member_names.get("search")
+    if declared is not None:
+        return declared == "full-band"
+    return label_request.lane_row_id is not None and layout_manifest.row_distribution == "fill"
+
+
 def _member_association_outcome(candidate: LabelPlacement | None, association: MemberNameAssociation, *,
                                 overflow: str, placement_id: str) -> LabelPlacement | None:
     if candidate is not None and not association.allows(candidate.bounds):
@@ -286,9 +301,11 @@ def place_member_labels(context: SurfaceMemberLabelContext,
         host = marks.get(label_request.inside_host_obstacle_id or "")
         associated_member = (label_request.semantic_id == "memberLabel" and
                              label_request.collision_region == "plot-label" and host is not None)
+        reach = _member_reach(float(font_size), layout_manifest.member_names)
+        full_band = _member_full_band(label_request, layout_manifest)
         association = (MemberNameAssociation(LabelRect(*bounds_from_rect(host.bounds)), leading + chip_pad[0],
             chip_pad[1], float(provisional.bounds.inline_size), float(provisional.bounds.block_size),
-            2 * float(font_size)) if associated_member else None)
+            reach) if associated_member else None)
         if label_request.semantic_id == "asOfLabel":
             from chrona.presentation.layout.asof_label import find_asof_label_candidate
             candidate = find_asof_label_candidate(timeline_rect, label_size, rule_x=label_request.anchor.x,
@@ -296,10 +313,10 @@ def place_member_labels(context: SurfaceMemberLabelContext,
                 obstacle_classes=("mark", "text", "label-visual", "rule"))
         elif associated_member:
             candidate = place_member_name(label_request.anchor, label_size, label_request.candidates,
-                bounds=placement_bounds, obstacles=obstacles, gap=label_gap, maximum_end_gap=2 * float(font_size),
+                bounds=placement_bounds, obstacles=obstacles, gap=label_gap, maximum_end_gap=reach,
                 text_inline_inset=leading + chip_pad[0], inside_host_obstacle_id=label_request.inside_host_obstacle_id,
                 classes=label_classes,
-                full_band=(label_request.lane_row_id is not None and layout_manifest.row_distribution == "fill"),
+                full_band=full_band,
                 association=association,
                 maximum_stagger=(label_size[1] + label_gap if label_request.lane_row_id is not None else None),
                 overflow=label_request.overflow, visible_fallback_side=label_request.visible_fallback_side)
