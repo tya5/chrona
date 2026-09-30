@@ -22,6 +22,7 @@ dev-mode-dirs = ["src", "."]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "--durations=0 --durations-min=0"
 markers = [
     "corpus: whole-corpus or HALCYON-board sweep; the PR shards deselect it (-m \"not corpus\") and the full matrix, nightly and manual runs execute it (#657)",
 ]
