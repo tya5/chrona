@@ -154,7 +154,11 @@ def test_committed_example_has_two_intermediate_gates_with_visible_lane_facts(tm
                            if item["sourceRef"] == "readiness" and item["id"].startswith("member-label:"))
     readiness_actual = next(item for item in surface["primitives"]
                             if item["sourceRef"] == "readiness" and item["id"].startswith("actual:"))
-    assert (readiness_label["bounds"]["inline"] + readiness_label["bounds"]["inlineSize"]
-            < readiness_actual["bounds"]["inline"])
+    label_span = (readiness_label["bounds"]["inline"],
+                  readiness_label["bounds"]["inline"] + readiness_label["bounds"]["inlineSize"])
+    actual_span = (readiness_actual["bounds"]["inline"],
+                   readiness_actual["bounds"]["inline"] + readiness_actual["bounds"]["inlineSize"])
+    # The name never covers its own actual mark (#679); it may sit before or after it.
+    assert label_span[1] <= actual_span[0] or actual_span[1] <= label_span[0]
     assert "Readiness review · 30 Sep · +8d" in visible_text
     assert "Range clearance · 12 Oct" in visible_text
