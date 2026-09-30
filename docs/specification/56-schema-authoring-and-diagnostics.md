@@ -68,7 +68,7 @@ SchemaViolation {
   resourceKind: string | absent
   resourceIdentity: ClosureIdentity | absent
   instancePointer: RFC6901 pointer
-  rule: enum | const | required | additionalProperties | type | range | pattern | union
+  rule: enum | const | required | additionalProperties | type | range | pattern | format | union
   expected: ordered, JSON-safe values or form descriptions
   actualKind: string | absent
   message: deterministic author-facing explanation
@@ -81,7 +81,9 @@ member.  For an unexpected member it identifies the containing object and
 names the member, including one deterministic near-name suggestion when the
 Levenshtein-free `difflib` similarity threshold is met.  Enum/const messages
 show the allowed literal values in schema order.  Numeric, length, and pattern
-messages name the declared bound or format.  No raw value is echoed when it may
+messages name the declared bound or format.  A `format` failure (for example
+`date`) reports `expected` as a description of the format, such as
+`YYYY-MM-DD calendar date`, and never the offending value.  No raw value is echoed when it may
 contain large or sensitive user content.
 
 The selection algorithm is deterministic:

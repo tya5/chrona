@@ -93,6 +93,9 @@ def _rule_rank(rule: str | None) -> int:
         "enum": 2,
         "const": 3,
         "type": 4,
+        # A value that fails both a shape ``pattern`` and its ``format`` is
+        # reported by the format rule: the tie breaks on the validator name.
+        "format": 5,
         "pattern": 5,
         "minimum": 6,
         "maximum": 6,
@@ -101,6 +104,13 @@ def _rule_rank(rule: str | None) -> int:
         "oneOf": 8,
         "anyOf": 8,
     }.get(rule or "", 99)
+
+
+_FORMAT_DESCRIPTIONS = {"date": "YYYY-MM-DD calendar date"}
+
+
+def _with_article(description: str) -> str:
+    return ("an " if description[:1] in "AEIOUaeiou" else "a ") + description
 
 
 def _explain(error: ValidationError) -> SchemaViolation:
@@ -134,6 +144,11 @@ def _explain(error: ValidationError) -> SchemaViolation:
     if rule == "pattern":
         pattern = str(error.validator_value)
         return SchemaViolation(pointer, rule, (pattern,), actual_kind, f"expected value matching pattern {pattern!r}")
+    if rule == "format":
+        # Never echo the value (Spec 56 section 3): name the declared format only.
+        name = str(error.validator_value)
+        expected = _FORMAT_DESCRIPTIONS.get(name, f"value in format '{name}'")
+        return SchemaViolation(pointer, rule, (expected,), actual_kind, f"expected {_with_article(expected)}")
     if rule in {"oneOf", "anyOf"}:
         forms = _union_forms(error)
         return SchemaViolation(pointer, "union", forms, actual_kind, "expected one permitted form" + (": " + "; ".join(forms) if forms else ""))
