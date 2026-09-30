@@ -74,7 +74,18 @@ jobs:
           git push --force origin "$BRANCH"
           open="$(gh pr list --head "$BRANCH" --state open --json number --jq 'length')"
           if [[ "$open" == "0" ]]; then
-            gh pr create --base main --head "$BRANCH" \
+            if ! gh pr create --base main --head "$BRANCH" \
               --title "Refresh .test_durations (I657-4)" \
-              --body "Automated refresh of .test_durations by .github/workflows/test-durations.yml (pytest -n 4 --store-durations --clean-durations on ubuntu-latest). A stale file only costs shard balance. Refs #657."
+              --body "Automated refresh of .test_durations by .github/workflows/test-durations.yml (pytest -n 4 --store-durations --clean-durations on ubuntu-latest). A stale file only costs shard balance. Refs #657."; then
+              # The branch is already pushed. Without the repository setting "Allow GitHub Actions to
+              # create and approve pull requests" (or DURATIONS_PR_TOKEN) the PR cannot be opened here;
+              # say so instead of failing the run, so the measured data is not lost.
+              url="https://github.com/$GITHUB_REPOSITORY/compare/main...$BRANCH?expand=1"
+              echo "::warning::Refreshed .test_durations is on $BRANCH but no pull request could be opened. Open one at $url, or allow Actions to create pull requests / set DURATIONS_PR_TOKEN."
+              {
+                echo "### .test_durations refresh pushed, pull request not opened"
+                echo
+                echo "Open it: $url"
+              } >> "$GITHUB_STEP_SUMMARY"
+            fi
           fi

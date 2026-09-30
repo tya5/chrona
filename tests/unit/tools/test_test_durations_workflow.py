@@ -40,6 +40,14 @@ def test_the_refresh_measures_a_synced_main_commit_not_the_raw_tip():
     assert steps.index(synced) < steps.index(checkout)
 
 
+def test_a_refused_pull_request_leaves_a_warning_and_the_pushed_branch_not_a_failed_run():
+    """The first run (2026-09-30) pushed the branch but `gh pr create` was refused by the repository setting."""
+    steps = _workflow()["jobs"]["refresh"]["steps"]
+    run = next(step["run"] for step in steps if step.get("name", "").startswith("Open or update"))
+    assert "if ! gh pr create" in run and "::warning::" in run and "compare/main...$BRANCH" in run
+    assert run.index("push --force origin") < run.index("gh pr create")
+
+
 def test_the_refresh_is_documented_in_agents_md():
     text = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     assert ".test_durations" in text and "test-durations.yml" in text
