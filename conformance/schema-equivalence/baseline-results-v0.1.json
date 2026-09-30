@@ -1,5 +1,5 @@
 {
- "baseRevision": "ee4b37590eb5bf419e796c91c2fc6c6d1855ac42",
+ "baseRevision": "9470fdf53ac9afc0a9050cd39e99965ae5a7ad9c",
  "diagnostics": {
   "invalidDocuments": {
    "conformance/implementation-delivery-roadmap-v0.1.yaml": {
@@ -2774,6 +2774,24 @@
    "error": null,
    "path": "tests/fixtures/icons/theme-assets-valid.yaml",
    "schema": "theme-asset-source-v0.1.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/layout-profiles/briefing.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/layout-profiles/overlay-briefing.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
+   "valid": true
+  },
+  {
+   "error": null,
+   "path": "tests/fixtures/layout-profiles/print-portrait.yaml",
+   "schema": "layout-profile-v0.9.schema.yaml",
    "valid": true
   },
   {

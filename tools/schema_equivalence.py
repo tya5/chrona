@@ -1159,7 +1159,10 @@ def record_baseline(root: Path, *, documents: Mapping[str, bytes] | None = None,
     sites = tuple(sites)
     paths = {site.source for site in sites if not site.source.startswith("inline:")} | set(invalid_paths)
     corpus = _load_corpus(documents, sorted(paths))
-    revision = _git(root, "rev-parse", "HEAD").decode().strip()
+    try:  # the S0 base commit is the published main the slice branched from
+        revision = _git(root, "rev-parse", "origin/main").decode().strip()
+    except GateError:
+        revision = _git(root, "rev-parse", "HEAD").decode().strip()
     return {
         "version": BASELINE_VERSION,
         "baseRevision": revision,
