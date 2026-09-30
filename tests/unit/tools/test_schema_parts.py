@@ -157,7 +157,6 @@ def test_a_consumer_that_never_mentions_the_schema_fails_the_gate():
 
 # Live entries that keep a copy on purpose, each with the reason and the slice that removes it.
 DEFERRED_FILES = {
-    "layout-profile-v0.9.schema.yaml": "adopted by S1f, after I573-1 (layout-profile is not edited by S1c)",
     "authoring-command-v0.1.schema.yaml": "S1d adopted `fileName` and `safeRelativePath` here (T1); `baseRevision` and the dates stay inline because the S0 sensitivity tests edit the `baseRevision` pattern, so they move in a later slice that retargets those tests",
 }
 # (file, pointer) copies inside adopting schemas, each with the reason.
@@ -346,7 +345,7 @@ ADOPTERS = frozenset({
     "actual-intake-batch-v0.2.schema.yaml", "actual-set-v0.3.schema.yaml", "authoring-command-result-v0.1.schema.yaml",
     "authoring-command-v0.1.schema.yaml", "authoring-workspace-v0.1.schema.yaml", "automation-result-v0.1.schema.yaml",
     "command-request-v0.2.schema.yaml", "example-registry-v0.1.schema.yaml", "icon-catalog-v0.4.schema.yaml",
-    "presentation-materialization-receipt-v0.1.schema.yaml", "presentation-preset-v0.1.schema.yaml",
+    "layout-profile-v0.9.schema.yaml", "presentation-materialization-receipt-v0.1.schema.yaml", "presentation-preset-v0.1.schema.yaml",
     "preset-library-v0.2.schema.yaml", "profile-v0.3.schema.yaml", "project-v0.7.schema.yaml",
     "render-context-v0.16.schema.yaml", "scene-v0.7.schema.yaml", "theme-asset-source-v0.1.schema.yaml",
     "theme-v0.14.schema.yaml", "view-v0.28.schema.yaml",
@@ -361,7 +360,6 @@ def _adopted_sites(name: str) -> list[tuple[str, str]]:
 def test_the_adopting_kinds_are_exactly_the_planned_ones():
     adopters = {name for name in LIVE if name not in SCHEMA_PARTS and _adopted_sites(name)}
     assert adopters == ADOPTERS
-    assert not _adopted_sites("layout-profile-v0.9.schema.yaml"), "layout-profile is adopted by S1f, not S1c"
     for name in SCHEMA_PARTS:
         assert not _adopted_sites(name), f"{name} is frozen and must not reference common"
 
@@ -387,3 +385,48 @@ def test_adopted_sites_keep_their_local_extras():
     assert schema["$defs"]["localReference"]["properties"]["path"]["minLength"] == 1
     result = _schema("authoring-command-result-v0.1.schema.yaml")
     assert result["properties"]["resultRevision"]["type"] == ["string", "null"]
+
+
+# --------------------------------------------------------------------------------------------
+# S1f: layout-profile adoption keeps every diagnostic of a bad track size
+# --------------------------------------------------------------------------------------------
+
+BAD_TRACK_SIZES = [{"fr": 0}, {"fr": "x"}, {"fr": -1}, {"fr": 2000000}, {"fr": 1, "extra": 1}, {"zz": 1}, {}, 5, "bad", None, [],
+                   {"fixed": -1}, {"fitContent": "a"}, {"fr": None}, True, {"fr": 1, "fixed": 2}]
+GOOD_TRACK_SIZES = [{"fr": 1}, {"fr": 0.5}, "content", {"fixed": 24}]
+
+
+def _layout_with_grid(track: Any, where: str) -> dict[str, Any]:
+    document = yaml.safe_load((ROOT / "conformance/layout-profile-intent-v0.2.yaml").read_text(encoding="utf-8"))
+    slot = document["root"]["children"][0]
+    grid = {"id": "g", "kind": "grid", "inlineSize": "fill", "blockSize": "fill", "columnTracks": [{"fr": 1}], "rowTracks": ["content"],
+            "gap": 0, "padding": 0, "alignItems": "start", "justifyContent": "start", "children": [slot]}
+    grid[where] = [track] if where.endswith("Tracks") else track
+    document["root"] = grid
+    return document
+
+
+def _explanations(schema: dict[str, Any], document: dict[str, Any]) -> tuple[Any, ...]:
+    from chrona.schema_diagnostics import explain_all_errors, explain_errors
+
+    errors = list(validator_for_schema(schema).iter_errors(document))
+    if not errors:
+        return ("valid",)
+    return (explain_errors(errors), explain_all_errors(errors))
+
+
+@pytest.mark.parametrize("where", ["columnTracks", "rowTracks", "inlineSize"])
+def test_layout_profile_fractional_track_reference_changes_no_diagnostic(where):
+    # `_union_forms` reads a branch's `required`, so a `$ref` union branch can change a union message (the View `width`
+    # branches stay inline for that reason). The size union of layout-profile is reached only beneath the `root` union, whose own
+    # message wins, and `explain_all_errors` flattens to leaves; this proves both reducers equal an inline twin.
+    adopted = _schema("layout-profile-v0.9.schema.yaml")
+    branch = adopted["$defs"]["simpleSize"]["oneOf"][1]
+    assert branch["$ref"] == f"{COMMON_ID}#/$defs/fractionalTrack"
+    twin = _schema("layout-profile-v0.9.schema.yaml")
+    twin["$defs"]["simpleSize"]["oneOf"][1] = {key: value for key, value in _defs()["fractionalTrack"].items() if key != "examples"}
+    for value in (*BAD_TRACK_SIZES, *GOOD_TRACK_SIZES):
+        document = _layout_with_grid(value, where)
+        assert _explanations(adopted, document) == _explanations(twin, document), value
+    assert _explanations(adopted, _layout_with_grid({"fr": 1}, where)) == ("valid",)
+    assert _explanations(adopted, _layout_with_grid({"fr": 0}, where)) != ("valid",)

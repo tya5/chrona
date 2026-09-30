@@ -103,14 +103,14 @@ $defs:
           provider: {description: "Store provider implementation.", enum: [git, local, content]}
           identity: {description: "Stable Store identity.", type: string, minLength: 1}
           locator: {description: "Optional provider-specific Store locator.", type: string, minLength: 1}
-      address: {description: "Safe Store-relative profile address.", examples: ["layouts/briefing.yaml"], type: string, minLength: 1, pattern: "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$)).+"}
+      address: {description: "Safe Store-relative profile address.", examples: ["layouts/briefing.yaml"], minLength: 1, $ref: "urn:chrona:common-v0.1#/$defs/relativeAddress"}
       revision:
         type: object
         description: "Opaque revision identity in the named Store."
         additionalProperties: false
         required: [token]
-        properties: {token: {description: "Nonempty opaque revision token.", examples: ["main"], type: string, minLength: 1, pattern: "^\\S+$"}}
-      contentIdentity: {description: "SHA-256 identity of the referenced profile bytes.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+        properties: {token: {description: "Nonempty opaque revision token.", examples: ["main"], minLength: 1, $ref: "urn:chrona:common-v0.1#/$defs/revisionToken"}}
+      contentIdentity: {description: "SHA-256 identity of the referenced profile bytes.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
   distance:
     description: "Nonnegative physical distance or named distance token."
     examples: [12, {token: gutter}]
@@ -126,11 +126,7 @@ $defs:
     examples: [content, {fr: 1}, {fixed: 24}, {fitContent: 320}]
     oneOf:
       - {description: "Keyword content-based or fill track size.", enum: [content, min-content, max-content, fill]}
-      - type: object
-        description: "Positive fractional track size."
-        additionalProperties: false
-        required: [fr]
-        properties: {fr: {description: "Positive fractional allocation weight.", type: number, exclusiveMinimum: 0, maximum: 1000000}}
+      - {description: "Positive fractional track size.", $ref: "urn:chrona:common-v0.1#/$defs/fractionalTrack"}
       - type: object
         description: "Explicit fixed track size."
         additionalProperties: false
