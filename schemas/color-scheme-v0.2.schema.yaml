@@ -62,6 +62,6 @@ properties:
         properties:
           kind: {description: "Whether Chrona authored or imported the scheme.", enum: [chrona-authored, external]}
           source: {description: "Human-readable source of the color scheme.", type: string, minLength: 1}
-          license: {description: "License or usage terms for the source.", type: string, minLength: 1}
+          license: {description: "License or usage terms for the source: free text by design, so a scheme whose license is not chosen yet may say `project-pending`; the asset schemas' `{spdx, notice}` object is not applied here (#662 B7).", type: string, minLength: 1}
 $defs:
   color: {description: "Six-digit hexadecimal RGB color.", examples: ["#336699"], type: string, pattern: "^#[0-9A-Fa-f]{6}$"}

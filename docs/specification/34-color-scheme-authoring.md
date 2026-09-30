@@ -17,7 +17,7 @@ A Color Scheme MUST NOT select facts, roles, geometry, output capabilities, or a
 
 The resource is `chrona/color-scheme/v0.2`, validated by `schemas/color-scheme-v0.2.schema.yaml`. It has no inheritance, aliases, expressions, or implicit base scheme. Its canonical identity is the SHA-256 of canonical JSON of the whole resource (sorted keys, UTF-8, no insignificant whitespace).
 
-`body.colors` is a closed map of concrete CSS `#RRGGBB` values: `surface`, `surfaceRaised`, `text`, `textMuted`, `accent`, `positive`, `negative`, `warning`, and `neutral`. `body.categories` is a non-empty map from explicit stable slot ID to concrete color. `body.suitability` declares intended `background`, `colorVision`, and `print` use. `body.provenance` records `kind`, `source`, and `license`; a built-in scheme lacking all three is invalid.
+`body.colors` is a closed map of concrete CSS `#RRGGBB` values: `surface`, `surfaceRaised`, `text`, `textMuted`, `accent`, `positive`, `negative`, `warning`, and `neutral`. `body.categories` is a non-empty map from explicit stable slot ID to concrete color. `body.suitability` declares intended `background`, `colorVision`, and `print` use. `body.provenance` records `kind`, `source`, and `license`; a built-in scheme lacking all three is invalid. `license` is non-empty free text by design: a scheme whose license is not chosen yet states `project-pending`, and the `{spdx, notice}` object that asset schemas share does not apply to it (#662, B7).
 
 The initial resource contains no external palette bytes. A future external built-in requires exact source and redistribution terms in `provenance`; a familiar palette name is insufficient evidence.
 
