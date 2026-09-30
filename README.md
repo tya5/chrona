@@ -8,6 +8,24 @@ chart is never drawn by hand.
 The plan stays the source of truth. A renderer consumes it and never owns it,
 so any slide can be regenerated from the data that produced it.
 
+### Where chrona fits
+
+A capable designer, human or language model, can draw one beautiful Gantt slide
+by hand. Chrona is for the plan that keeps changing after that slide is drawn.
+
+| Drawn by hand | Rendered by chrona |
+| --- | --- |
+| Redrawn for every slipped date or new task | Re-rendered from the updated plan |
+| Dates, deltas and dependency lines placed by eye | Computed from the schedule, the as-of date and the actuals |
+| Collisions and illegible text go unnoticed | Suppressed labels, overflows and contrast failures are reported as diagnostics |
+| A new picture on every run | The same input gives the same output, in SVG and PNG |
+| One slide's look | A Theme and preset shared across every plan and team |
+
+The two work together: **a designer or an agent designs the look once, and
+chrona applies it to every revision of the plan.** A hand-drawn target becomes
+a Theme, a preset and an asset catalogue. An agent can write the Project and
+View YAML, and chrona validates and renders it.
+
 This repository contains the living, versioned Chrona specification and reference
 implementations for the accepted delivery milestones. Core v0.1 remains the stable
 Date-only scheduling profile; successor DateTime, capacity, collaboration, and
