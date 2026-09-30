@@ -71,3 +71,48 @@ first line should point to the implementation plan instead (fixed in this docs P
 
 - Whether `maxEndGapEm` should be split into an end-gap knob and an association-reach knob (F1).
 - Scene-level acceptance of association after decision 3 is checked by the existing tests, not by a new Scene check.
+
+## Addendum (2026-10-01, #679): decision 3 is taken; A2 is superseded
+
+A2 deferred decision 3 because it contradicted the byte-identity acceptance row of #573. That was a scheduling call, not a
+verdict on the rule. #679 records the case A2 left open, and #575 changes how a behaviour change is judged: byte identity
+proves only that a change changed nothing; a behaviour change is reviewed against the general rule (synthetic tests) and the
+approved targets (PR #461, the HALCYON target mock). The current corpus output is not an oracle.
+
+**Why the last own mark is the right general rule.** A member name is associated with its item, and an item is drawn as up to
+two marks in one row (planned or baseline, and actual). The reach exists so that a name stays attached to what it names and does
+not become detached text. Measuring it from the planned mark alone gives a bound that depends on how far the actual slipped:
+past 2 em of slip no end position is legal, so the name falls to the visible-overflow fallback that the association bound cannot
+waive, and it is drawn on its own actual mark with `W_LAYOUT_LABEL_OVERFLOW` (measured for `attached-milestones` with the
+original data: label 688.4-905.4 px against actual mark 720.7-726.7 px in `mission-light`, a 3.7 px start after the plan; the same
+in all seven presets). The rule that a name is legal exactly when it is within reach of a mark of the item, and clear of them, is
+independent of slip, so it is the rule a reader can state; the planned-only bound is an accident of which mark was the host.
+No knob can substitute: `maxEndGapEm` 4 or 6 and `search: full-band` leave the label unmoved, because the failing candidate is
+the end gap from the planned mark.
+
+**What it means for `maxEndGapEm`'s name.** After the change the value is the reach from the item's last own mark on the end
+side, and the nearest-perimeter distance to the nearest own mark elsewhere (F1 already made it bound both). "End gap" remains
+accurate for what the name is most often used for (the gap between the end of the last mark and the name), and the schema, Spec
+50, the design and the corpus use it; a rename is a public-name change with a schema migration and is not required for
+correctness. I keep the name and record it as an open owner decision, not a settled one.
+
+**What the deferred prototype changed.** The prototype extended both the end gap and the association distance by the amount
+the item's rightmost own mark passes its host, and measured five changed public slides: `aster-ssd/overview` (a suppressed `ftl`
+name is emitted), `halcyon-1/gallery-dark`, `gallery-editorial-lanes`, `gallery-mono`, `mission-brief`. Its per-primitive
+explanation was not recorded, which is why deciding then was impossible. The extension also loosened above/below names, since
+the association distance grew for every side. This slice does not repeat that: it measures the end gap
+from the last own mark for the end side only, and the association from the nearest own mark, so a slip does not widen the reach
+of a name that is placed above or below its item.
+
+**What the evidence will be.** Regenerate corpus and public derived evidence locally on the code branch (nothing derived is
+committed). For every changed slide: list the changed primitive classes and diff Scene primitives by id (member-label
+bounds/rung/host, suppression, diagnostics), then explain each against the rule and against the PR #461 targets and the HALCYON
+target mock. Expected classes: a member name that was placed at the planned-only bound now sits at its last own mark, a name
+suppressed for lack of a legal position now emitted, and a `W_LAYOUT_LABEL_OVERFLOW` on a slipped item disappearing. Anything
+else (a name moving with no slip, a mark, table or route change) is unexplained and stops the slice. The current look is not
+kept for its own sake; a change that reads worse than the target is reported, not merged.
+
+**Residual risks accepted, stated.** (1) The host reported for a name may now be the actual mark, which changes
+`hostPlacementId` and the Scene acceptance pairing, both still exact. (2) `missing-actual` is not an own mark for reach. (3) The
+start side is not measured from the first own mark; the case is symmetric (an actual earlier than the plan) and is not observed;
+if the evidence shows a start-side overlap it is a separate slice.
