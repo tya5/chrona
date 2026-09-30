@@ -155,15 +155,10 @@ def test_a_consumer_that_never_mentions_the_schema_fails_the_gate():
 # No inline copy of a shared pattern in a live entry (design D8)
 # --------------------------------------------------------------------------------------------
 
-# Live entries that keep a copy on purpose, each with the reason and the slice that removes it.
-DEFERRED_FILES = {
-    "authoring-command-v0.1.schema.yaml": "S1d adopted `fileName` and `safeRelativePath` here (T1); `baseRevision` and the dates stay inline because the S0 sensitivity tests edit the `baseRevision` pattern, so they move in a later slice that retargets those tests",
-}
-# (file, pointer) copies inside adopting schemas, each with the reason.
-DEFERRED_COPIES = {
-    ("authoring-command-result-v0.1.schema.yaml", "/properties/resultRevision"):
-        "nullable (`type: [string, null]`): a `$ref` to the typed def would reject null, or need a oneOf that changes L1",
-}
+# Live entries that keep a copy on purpose, each with the reason and the slice that removes it. Empty since I662 row 1 closed.
+DEFERRED_FILES: dict[str, str] = {}
+# (file, pointer) copies inside adopting schemas, each with the reason. Empty: the nullable `resultRevision` adopted `sha256IdentityOrNull`.
+DEFERRED_COPIES: dict[tuple[str, str], str] = {}
 PARTS_AND_DEFERRED = set(SCHEMA_PARTS) | set(DEFERRED_FILES)
 
 
@@ -268,6 +263,7 @@ GIT = "git:" + "a" * 40
 # name -> (accepted, rejected)
 PROBES: dict[str, tuple[list[Any], list[Any]]] = {
     "sha256Identity": ([DIGEST, "sha256:" + "abcdef0123456789" * 4], ["", "sha256:abc", "SHA256:" + "0" * 64, "sha256:" + "A" * 64, "sha256:" + "0" * 65, 5, None]),
+    "sha256IdentityOrNull": ([DIGEST, "sha256:" + "abcdef0123456789" * 4, None], ["", "sha256:abc", "SHA256:" + "0" * 64, "sha256:" + "A" * 64, "sha256:" + "0" * 65, 5, [], {}]),
     "isoDate": (["2026-09-30", "0001-01-01"], ["", "2026-9-30", "20260930", "2026/09/30", "2026-09-30T00:00", " 2026-09-30", 20260930, None]),
     "safeRelativePath": (["a", "views/overview.yaml", "A0._-/b", "a..b"], ["", "/abs", "../x", "a/../b", "a/..", "a/./b", ".hidden", "a b", "a\\b", "a\x00b", "é", 5]),
     "relativeAddress": (["resources/project.yaml", "a b", "a\\b", "é", ".hidden", "a..b"], ["", "/abs", "../x", "a/../b", "a/..", "./a", "a/./b"]),
@@ -286,6 +282,7 @@ PROBES: dict[str, tuple[list[Any], list[Any]]] = {
 # (T2/T3, decided by the owner) flips each of these, and then moves the string to PROBES' rejected list.
 ACCEPTED_TODAY: dict[str, list[str]] = {
     "sha256Identity": [DIGEST + "\n"],
+    "sha256IdentityOrNull": [DIGEST + "\n"],
     "isoDate": ["2026-13-45", "2026-02-30", "0000-00-00", "２０２６-09-30", "2026-09-30\n"],
     "safeRelativePath": ["a.yaml\n"],
     "relativeAddress": ["a\nb", "a\x00b", "a\\b"],
@@ -375,12 +372,17 @@ def test_every_adopted_site_accepts_and_rejects_like_its_definition(name):
 
 
 def test_adopted_sites_keep_their_local_extras():
-    # A `$ref` site keeps its own siblings: the path fields stay non-empty, the nullable revision stays nullable.
+    # A `$ref` site keeps its own siblings: the path fields stay non-empty.
     schema = _schema("authoring-workspace-v0.1.schema.yaml")
     assert schema["$defs"]["preset"]["properties"]["path"]["minLength"] == 1
     assert schema["$defs"]["localReference"]["properties"]["path"]["minLength"] == 1
+
+
+def test_the_nullable_result_revision_keeps_its_shape_through_the_nullable_definition():
     result = _schema("authoring-command-result-v0.1.schema.yaml")
-    assert result["properties"]["resultRevision"]["type"] == ["string", "null"]
+    assert result["properties"]["resultRevision"]["$ref"] == f"{COMMON_ID}#/$defs/sha256IdentityOrNull"
+    nullable, strict = _defs()["sha256IdentityOrNull"], _defs()["sha256Identity"]
+    assert nullable["type"] == [strict["type"], "null"] and nullable["pattern"] == strict["pattern"]
 
 
 # --------------------------------------------------------------------------------------------
@@ -426,3 +428,65 @@ def test_layout_profile_fractional_track_reference_changes_no_diagnostic(where):
         assert _explanations(adopted, document) == _explanations(twin, document), value
     assert _explanations(adopted, _layout_with_grid({"fr": 1}, where)) == ("valid",)
     assert _explanations(adopted, _layout_with_grid({"fr": 0}, where)) != ("valid",)
+
+
+# --------------------------------------------------------------------------------------------
+# Row 1 closure: authoring-command and its result adopt the shared definitions and keep every diagnostic
+# --------------------------------------------------------------------------------------------
+
+def _command(**changes: Any) -> dict[str, Any]:
+    document = {"version": "chrona/authoring-command/v0.1", "commandId": "c", "type": "setWorkspaceTask",
+                "target": {"kind": "authoring-workspace", "path": "workspace.yaml"}, "baseRevision": DIGEST,
+                "payload": {"task": {"id": "t", "title": "T", "planned": {"start": "2026-01-01", "finish": "2026-01-02"}}}}
+    return {**document, **changes}
+
+
+def _result(**changes: Any) -> dict[str, Any]:
+    document = {"version": "chrona/authoring-command-result/v0.1", "status": "accepted", "commandId": "c",
+                "commandBaseRevision": DIGEST, "workspaceRevision": DIGEST, "resultRevision": DIGEST, "diagnostics": []}
+    return {**document, **changes}
+
+
+def _planned(start: Any, finish: Any) -> dict[str, Any]:
+    return {"task": {"id": "t", "title": "T", "planned": {"start": start, "finish": finish}}}
+
+
+def _observed(start: Any, finish: Any) -> dict[str, Any]:
+    return {"actual": {"taskId": "t", "actual": {"start": start, "finish": finish}}}
+
+
+def _command_documents() -> list[dict[str, Any]]:
+    documents = [_command()]
+    documents += [_command(baseRevision=value) for value in ("", "sha256:abc", DIGEST.upper(), DIGEST + "0", 5, None, DIGEST + "\n")]
+    for start, finish in (("2026-9-1", "2026-01-02"), ("2026-01-01", "tomorrow"), (5, "2026-01-02"), ("2026-02-30", "2026-13-45"), ("2026-01-01\n", "2026-01-02")):
+        documents.append(_command(payload=_planned(start, finish)))
+    for start, finish in (("2026-01-01", "2026-01-02"), ("x", "2026-01-02"), ("2026-01-01", None), ("２０２６-01-01", "2026-01-02")):
+        documents.append(_command(type="setWorkspaceActual", payload=_observed(start, finish)))
+    return documents
+
+
+def _result_documents() -> list[dict[str, Any]]:
+    rejected = {"status": "rejected", "diagnostics": [{"code": "E_X"}]}
+    documents = [_result(), _result(resultRevision=None, **rejected), _result(**rejected)]
+    documents += [_result(resultRevision=value) for value in ("", "sha256:abc", DIGEST.upper(), 5, None, [], DIGEST + "\n")]
+    documents += [_result(resultRevision=value, **rejected) for value in (DIGEST, "bad", None)]
+    return documents
+
+
+@pytest.mark.parametrize(("name", "documents"), [("authoring-command-v0.1.schema.yaml", _command_documents),
+                                                 ("authoring-command-result-v0.1.schema.yaml", _result_documents)])
+def test_adopting_the_shared_definitions_changes_no_diagnostic_of_an_authoring_document(name, documents):
+    from chrona.resources import dereferenced_schema
+
+    adopted, twin = _schema(name), dict(dereferenced_schema(name))
+    cases = documents()
+    assert {_explanations(adopted, case) == ("valid",) for case in cases} == {True, False}
+    for case in cases:
+        assert _explanations(adopted, case) == _explanations(twin, case), case
+
+
+def test_authoring_command_keeps_no_inline_copy_of_a_common_definition():
+    assert not _copies("authoring-command-v0.1.schema.yaml")
+    assert not _copies("authoring-command-result-v0.1.schema.yaml")
+    sites = {definition for _, definition in _adopted_sites("authoring-command-v0.1.schema.yaml")}
+    assert {"sha256Identity", "isoDate", "fileName", "safeRelativePath"} <= sites
