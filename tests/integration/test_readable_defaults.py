@@ -18,6 +18,8 @@ PUBLIC_SCENES = sorted(ROOT.glob("examples/*/generated/*.scene.json"))
 SHIPPED_THEMES = sorted(ROOT.glob("examples/*/themes/*.yaml")) + sorted(
     ROOT.glob("src/chrona/resources/presets/bundles/*/theme.yaml"))
 MINIMUM_BAND_CONTRAST = 1.15
+HALCYON = "examples/halcyon-1/project.yaml"
+HALCYON_ACTUAL = "examples/halcyon-1/actual.yaml"
 
 
 def _primitives(scene: dict) -> list[dict]:
@@ -154,13 +156,6 @@ def _render(tmp_path: Path, monkeypatch, name: str, *extra: str) -> dict:
     return scene
 
 
-def _copied_preset(tmp_path: Path, monkeypatch, preset_id: str) -> Path:
-    destination = tmp_path / preset_id
-    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", preset_id, "--output", str(destination)])
-    main()
-    return destination / "preset.yaml"
-
-
 @pytest.mark.parametrize("scene_path", PUBLIC_SCENES, ids=lambda path: f"{path.parent.parent.name}/{path.stem}")
 def test_public_axis_band_is_distinct_from_group_and_row_bands(scene_path: Path) -> None:
     scene = json.loads(scene_path.read_text(encoding="utf-8"))
@@ -173,12 +168,8 @@ CATALOGUE_PRESETS = [entry["id"] for entry in yaml.safe_load(
 
 
 @pytest.mark.parametrize("name", ["default", *CATALOGUE_PRESETS])
-def test_default_draft_and_presets_draw_a_distinct_axis_band(tmp_path, monkeypatch, name) -> None:
-    if name == "default":
-        scene = _render(tmp_path, monkeypatch, "default")
-    else:
-        preset = _copied_preset(tmp_path, monkeypatch, name)
-        scene = _render(tmp_path, monkeypatch, name, "--preset", str(preset))
+def test_default_draft_and_presets_draw_a_distinct_axis_band(render_cache, name) -> None:
+    scene = render_cache.render(HALCYON, HALCYON_ACTUAL, None if name == "default" else name).scene
     contrasts = _band_contrasts(scene)
     assert any(axis_id.startswith("axis-band") for axis_id, _, _ in contrasts) or not contrasts, name
     assert all(ratio >= MINIMUM_BAND_CONTRAST for _, _, ratio in contrasts), name
@@ -208,9 +199,8 @@ def test_public_relations_do_not_start_with_their_target_arrowhead() -> None:
                 assert start["outline"] != end["outline"], (scene_path.name, primitive["id"])
 
 
-def test_print_mono_separates_slips_and_as_of_in_greyscale(tmp_path, monkeypatch) -> None:
-    preset = _copied_preset(tmp_path, monkeypatch, "print-mono")
-    scene = _render(tmp_path, monkeypatch, "print-mono", "--preset", str(preset))
+def test_print_mono_separates_slips_and_as_of_in_greyscale(render_cache) -> None:
+    scene = render_cache.render(HALCYON, HALCYON_ACTUAL, "print-mono").scene
     primitives = _primitives(scene)
     # Lane Views put signed finish deltas in the member label, so they no
     # longer emit separate variance-* paint primitives. Preserve the user

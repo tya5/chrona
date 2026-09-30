@@ -2,36 +2,25 @@
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 
 import pytest
 import yaml
 
-from chrona.app.cli import main
-
 ROOT = Path(__file__).resolve().parents[2]
 PRESETS = [entry["id"] for entry in yaml.safe_load(
     (ROOT / "src/chrona/resources/presets/library.yaml").read_text(encoding="utf-8"))["entries"]]
+HALCYON = "examples/halcyon-1/project.yaml"
+HALCYON_ACTUAL = "examples/halcyon-1/actual.yaml"
 
 
-def _render_preset(tmp_path: Path, monkeypatch, preset_id: str) -> dict:
-    preset = tmp_path / preset_id
-    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", preset_id, "--output", str(preset)])
-    main()
-    scene_path = tmp_path / f"{preset_id}.json"
-    monkeypatch.setattr(sys, "argv", [
-        "chrona", "render", str(ROOT / "examples/halcyon-1/project.yaml"),
-        "--actual", str(ROOT / "examples/halcyon-1/actual.yaml"), "--preset", str(preset / "preset.yaml"),
-        "--output", str(tmp_path / f"{preset_id}.svg"), "--emit-scene", str(scene_path),
-    ])
-    main()
-    return json.loads(scene_path.read_text(encoding="utf-8"))["surfaces"][0]
+def _render_preset(render_cache, preset_id: str) -> dict:
+    return render_cache.render(HALCYON, HALCYON_ACTUAL, preset_id).scene["surfaces"][0]
 
 
 @pytest.mark.parametrize("preset_id", PRESETS)
-def test_catalogue_presets_draw_bounded_axis_cells_with_centred_labels(tmp_path, monkeypatch, preset_id):
-    surface = _render_preset(tmp_path, monkeypatch, preset_id)
+def test_catalogue_presets_draw_bounded_axis_cells_with_centred_labels(render_cache, preset_id):
+    surface = _render_preset(render_cache, preset_id)
     primitives = {item["id"]: item for item in surface["primitives"]}
     axis = next(slot for slot in surface["slots"] if slot["id"] == "timeline-axis")["bounds"]
     bands = [item for key, item in primitives.items() if key.startswith("axis-band-rect:")]
@@ -55,8 +44,8 @@ def test_catalogue_presets_draw_bounded_axis_cells_with_centred_labels(tmp_path,
     assert rule["visualRole"] == "axis-rule" and rule["bounds"]["block"] == pytest.approx(axis["block"] + axis["blockSize"])
 
 
-def test_start_aligned_month_labels_are_inset_from_their_cell(tmp_path, monkeypatch):
-    surface = _render_preset(tmp_path, monkeypatch, "mission-light")
+def test_start_aligned_month_labels_are_inset_from_their_cell(render_cache):
+    surface = _render_preset(render_cache, "mission-light")
     primitives = {item["id"]: item for item in surface["primitives"]}
     month_labels = [item for key, item in primitives.items()
                     if key.startswith("axis-label:") and item["text"] in {"Apr", "May", "Jun"}]
