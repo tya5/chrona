@@ -4,9 +4,11 @@ import gzip
 from hashlib import sha256
 from time import perf_counter
 
+import pytest
+import tomllib
 import yaml
 
-from chrona.resources import axis_name_tables_resource, minimal_template_resource, schema_resource, template_resource
+from chrona.resources import axis_name_tables_resource, example_ids, example_registry, minimal_template_resource, schema_resource, template_resource
 from chrona.presentation.contracts import ClosureIdentity, IconCatalogContract, parse_contract
 
 
@@ -53,6 +55,7 @@ SCHEMAS = (
     "theme-v0.14.schema.yaml",
     "preset-library-v0.1.schema.yaml",
     "preset-library-v0.2.schema.yaml",
+    "example-registry-v0.1.schema.yaml",
 )
 
 
@@ -65,6 +68,22 @@ def test_init_template_resolves_to_the_single_source_authority():
     template = template_resource("halcyon-1")
 
     assert template.joinpath("manifest.yaml").read_bytes() == (ROOT / "examples" / "halcyon-1" / "manifest.yaml").read_bytes()
+
+
+def test_example_registry_names_exactly_the_examples_the_wheel_ships():
+    """#574: `init --example` choices come from the registry, and the wheel ships
+    exactly the registered examples (no unregistered corpus rides along)."""
+    assert example_ids() == ("halcyon-1",)
+    for entry in example_registry().values():
+        assert template_resource(entry["id"]).joinpath("manifest.yaml").is_file()
+    forced = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["hatch"]["build"]["targets"]["wheel"]["force-include"]
+    shipped = {source for source in forced if source.startswith("examples/")}
+    assert shipped == {entry["path"] for entry in example_registry().values()}
+
+
+def test_unregistered_example_is_rejected_naming_the_available_ids():
+    with pytest.raises(ValueError, match=r"E_INIT_EXAMPLE.*'controller-z'.*halcyon-1"):
+        template_resource("controller-z")
 
 
 def test_axis_name_table_catalog_is_packaged_from_one_source_authority():

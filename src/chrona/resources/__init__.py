@@ -44,12 +44,32 @@ def schema_resource(name: str) -> Traversable:
     return files("schemas").joinpath(name)
 
 
+@cache
+def example_registry() -> Mapping[str, Mapping[str, str]]:
+    """Return the initialisable examples by id, validated against the registry schema."""
+    from jsonschema import Draft202012Validator
+
+    value = safe_load(files(__package__).joinpath("example-registry.yaml").read_bytes())
+    if not isinstance(value, Mapping) or tuple(Draft202012Validator(schema_document("example-registry-v0.1.schema.yaml")).iter_errors(value)):
+        raise ValueError("E_EXAMPLE_REGISTRY")
+    return {entry["id"]: entry for entry in value["examples"]}
+
+
+def example_ids() -> tuple[str, ...]:
+    """Return the ids `chrona init --example` accepts."""
+    return tuple(example_registry())
+
+
 def template_resource(name: str) -> Traversable:
-    """Return one supported init template from the wheel or development authority."""
-    packaged = files(__package__).joinpath("examples", name)
+    """Return one registered init example from the wheel or development authority."""
+    entry = example_registry().get(name)
+    if entry is None:
+        raise ValueError(f"E_INIT_EXAMPLE: {name!r} is not registered; available: {', '.join(example_ids())}")
+    parts = PurePosixPath(entry["path"]).parts
+    packaged = files(__package__).joinpath(*parts)
     if packaged.is_dir() and packaged.joinpath("manifest.yaml").is_file():
         return packaged
-    source = files("examples").joinpath(name)
+    source = files(parts[0]).joinpath(*parts[1:])
     if source.is_dir() and source.joinpath("manifest.yaml").is_file():
         return source
     raise ValueError("E_INIT_EXAMPLE")

@@ -7,6 +7,7 @@ are migration-only and record their successor and removal slice.
 | Kind | Live schema |
 | --- | --- |
 | builtin-preset-library | preset-library-v0.2.schema.yaml |
+| example-registry | example-registry-v0.1.schema.yaml |
 | actual-intake-batch | actual-intake-batch-v0.2.schema.yaml |
 | actual-set | actual-set-v0.3.schema.yaml |
 | automation-result | automation-result-v0.1.schema.yaml |

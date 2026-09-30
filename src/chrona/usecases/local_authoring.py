@@ -33,8 +33,6 @@ def discover_store_configuration(*, explicit: Path | None = None, start: Path | 
 
 def initialize_project(destination: Path, *, example: str | None = None) -> Path:
     """Create an editable starter or an explicitly selected corpus without replacement."""
-    if example not in (None, "halcyon-1"):
-        raise ValueError("E_INIT_EXAMPLE")
     if destination.exists() and any(destination.iterdir()):
         raise ValueError("E_INIT_OUTPUT_EXISTS")
     source = minimal_template_resource() if example is None else template_resource(example)
