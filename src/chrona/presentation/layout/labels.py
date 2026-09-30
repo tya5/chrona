@@ -100,7 +100,12 @@ class LabelObstacle:
 
 @dataclass(frozen=True)
 class MemberNameAssociation:
-    """Measured Text footprint and its exact completed mark, in Layout space."""
+    """Measured Text footprint and its exact completed marks, in Layout space.
+
+    ``mark`` is the requested host; ``also_marks`` are the item's other own drawn
+    marks (an actual or baseline mark). The Text is associated when it is within
+    ``maximum_distance`` of at least one of them.
+    """
 
     mark: LabelRect
     text_inline_inset: float
@@ -108,13 +113,22 @@ class MemberNameAssociation:
     text_width: float
     text_height: float
     maximum_distance: float
+    also_marks: tuple[LabelRect, ...] = ()
 
-    def allows(self, footprint: LabelRect) -> bool:
+    def distances(self, footprint: LabelRect) -> tuple[float, ...]:
+        """Nearest-perimeter gap from the completed Text to ``mark``, then each of ``also_marks``."""
         text = LabelRect(footprint.x + self.text_inline_inset,
                          footprint.y + self.text_block_inset,
                          self.text_width, self.text_height)
-        distance, _, _ = nearest_rect_perimeters(text, self.mark)
-        return distance <= self.maximum_distance + 1e-9
+        return tuple(nearest_rect_perimeters(text, mark)[0] for mark in (self.mark, *self.also_marks))
+
+    def nearest_mark_index(self, footprint: LabelRect) -> int:
+        """Index in ``(mark, *also_marks)`` of the nearest own mark; a tie keeps the earlier one."""
+        values = self.distances(footprint)
+        return values.index(min(values))
+
+    def allows(self, footprint: LabelRect) -> bool:
+        return min(self.distances(footprint)) <= self.maximum_distance + 1e-9
 
 
 @dataclass(frozen=True)
@@ -292,8 +306,13 @@ def place_member_name(
     maximum_stagger: float | None = None,
     overflow: str = "suppress",
     visible_fallback_side: str | None = None,
+    own_mark_right: float | None = None,
 ) -> LabelPlacement | None:
     """Try declared member-name sides in order, bounding end gap to completed text.
+
+    ``own_mark_right`` is the right edge of the item's last own drawn mark. The
+    ``end`` side starts and is bounded from it when it passes the anchor's right
+    edge; every other side keeps the anchor.
 
     ``association`` checks the completed Text, not its decorative footprint,
     against the exact host mark. Full-band lane contacts may move by at most
@@ -309,13 +328,18 @@ def place_member_name(
             or (maximum_stagger is not None and
                 (isinstance(maximum_stagger, bool) or not isfinite(maximum_stagger)
                  or maximum_stagger < 0))
+            or (own_mark_right is not None and
+                (isinstance(own_mark_right, bool) or not isfinite(own_mark_right)))
             or overflow not in {"suppress", "visible-overflow", "diagnose"}
             or (visible_fallback_side is not None and
                 (overflow != "visible-overflow" or visible_fallback_side not in sides))):
         raise ValueError("E_PRESENTATION_LABEL_INPUT")
     available_obstacles = (obstacles if isinstance(obstacles, SurfaceObstacleIndex)
                            else tuple(obstacles))
+    end_anchor = (anchor if own_mark_right is None or own_mark_right <= anchor.right
+                  else LabelRect(anchor.x, anchor.y, own_mark_right - anchor.x, anchor.height))
     for side in sides:
+        side_anchor = end_anchor if side == "end" else anchor
         maximum_side_gap = (maximum_end_gap - text_inline_inset) if side == "end" else None
         if side == "end" and maximum_side_gap < gap:
             continue
@@ -323,7 +347,7 @@ def place_member_name(
             # Full-band contacts apply only to lane names. Other labels retain
             # their established side-neighborhood policy and public bytes.
             placed = place_label(
-                anchor, size, (side,), bounds=bounds, obstacles=available_obstacles, gap=gap,
+                side_anchor, size, (side,), bounds=bounds, obstacles=available_obstacles, gap=gap,
                 inside_host_obstacle_id=inside_host_obstacle_id,
                 required=False, overflow="suppress", classes=classes,
                 search_side_neighborhood=True, maximum_side_gap=maximum_side_gap,
@@ -339,7 +363,7 @@ def place_member_name(
         # Rectangles (and the vertical envelope of selected route segments)
         # provide finite contact events. Every event is then checked by the
         # canonical collision predicate; no sampling lattice or cutoff is used.
-        preferred = _candidate(anchor, size, side, gap)
+        preferred = _candidate(side_anchor, size, side, gap)
         candidates = {preferred.y, bounds.y, bounds.bottom - preferred.height}
         if isinstance(available_obstacles, SurfaceObstacleIndex):
             relevant = []
@@ -372,7 +396,7 @@ def place_member_name(
             if (candidate.x < bounds.x or candidate.right > bounds.right
                     or candidate.y < bounds.y or candidate.bottom > bounds.bottom):
                 continue
-            if side == "end" and candidate.x + text_inline_inset - anchor.right > maximum_end_gap:
+            if side == "end" and candidate.x + text_inline_inset - side_anchor.right > maximum_end_gap:
                 continue
             if association is not None and not association.allows(candidate):
                 continue
@@ -395,7 +419,7 @@ def place_member_name(
         # association. It may overlap an obstacle or leave its nominal bounds.
         fallback_sides = (visible_fallback_side,) if visible_fallback_side is not None else sides
         for side in fallback_sides:
-            candidate = _visible_candidate(anchor, size, side, gap)
+            candidate = _visible_candidate(end_anchor if side == "end" else anchor, size, side, gap)
             if association is None or association.allows(candidate):
                 return LabelPlacement(side, candidate, True)
     return None

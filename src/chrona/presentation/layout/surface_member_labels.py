@@ -85,6 +85,15 @@ def _member_reach(font_size: float, member_names: Mapping[str, Any]) -> float:
     return float(member_names.get("maxEndGapEm", DEFAULT_MEMBER_END_GAP_EM)) * font_size
 
 
+def _own_marks(host: MarkPlacement, marks: Mapping[str, MarkPlacement]) -> tuple[MarkPlacement, ...]:
+    """The item's own drawn marks, the requested host first: its planned/baseline and actual marks."""
+    instance_id = host.placement_id.split(":", 1)[1]
+    others = tuple(mark for kind in ("planned", "actual")
+                   if (mark := marks.get(f"{kind}:{instance_id}")) is not None
+                   and mark.placement_id != host.placement_id)
+    return (host, *others)
+
+
 def _member_full_band(label_request: LabelRequest, layout_manifest: Any) -> bool:
     declared = layout_manifest.member_names.get("search")
     if declared is not None:
@@ -303,9 +312,13 @@ def place_member_labels(context: SurfaceMemberLabelContext,
                              label_request.collision_region == "plot-label" and host is not None)
         reach = _member_reach(float(font_size), layout_manifest.member_names)
         full_band = _member_full_band(label_request, layout_manifest)
+        own_marks = _own_marks(host, marks) if associated_member else ()
+        own_mark_right = (max(bounds_from_rect(mark.bounds)[0] + bounds_from_rect(mark.bounds)[2]
+                              for mark in own_marks) if own_marks else None)
         association = (MemberNameAssociation(LabelRect(*bounds_from_rect(host.bounds)), leading + chip_pad[0],
             chip_pad[1], float(provisional.bounds.inline_size), float(provisional.bounds.block_size),
-            reach) if associated_member else None)
+            reach, tuple(LabelRect(*bounds_from_rect(mark.bounds)) for mark in own_marks[1:]))
+            if associated_member else None)
         if label_request.semantic_id == "asOfLabel":
             from chrona.presentation.layout.asof_label import find_asof_label_candidate
             candidate = find_asof_label_candidate(timeline_rect, label_size, rule_x=label_request.anchor.x,
@@ -319,7 +332,8 @@ def place_member_labels(context: SurfaceMemberLabelContext,
                 full_band=full_band,
                 association=association,
                 maximum_stagger=(label_size[1] + label_gap if label_request.lane_row_id is not None else None),
-                overflow=label_request.overflow, visible_fallback_side=label_request.visible_fallback_side)
+                overflow=label_request.overflow, visible_fallback_side=label_request.visible_fallback_side,
+                own_mark_right=own_mark_right)
         else:
             candidate = (place_label(label_request.anchor, label_size, label_request.candidates,
                 bounds=placement_bounds, obstacles=obstacles, gap=label_gap,
@@ -364,6 +378,10 @@ def place_member_labels(context: SurfaceMemberLabelContext,
         crosses_slot = (candidate.bounds.x < slot_bounds.x or candidate.bounds.y < slot_bounds.y or
                         candidate.bounds.right > slot_bounds.right or candidate.bounds.bottom > slot_bounds.bottom)
         visible_overflow = candidate.visible_overflow or crosses_slot
+        hosting_mark = host
+        if association is not None and len(own_marks) > 1 and candidate.side != "inside":
+            # The name is hosted by the own mark it is nearest to (a tie keeps the requested host).
+            hosting_mark = own_marks[association.nearest_mark_index(chip_box)]
         placed_text = replace(place_text(placement_id=provisional.placement_id, source_ref=provisional.source_ref,
             content=provisional.content, inline=candidate.bounds.x + leading,
             baseline_block=candidate.bounds.y + float(font_size), typography_role=provisional.typography_role,
@@ -373,7 +391,7 @@ def place_member_labels(context: SurfaceMemberLabelContext,
             lane_member_id=provisional.lane_member_id, lane_source_kind=provisional.lane_source_kind,
             overflow="visible-overflow" if visible_overflow else "fit", lines=lines),
             fallback_ladder=ladder, selected_rung=candidate.side,
-            host_placement_id=(host.placement_id if host is not None and
+            host_placement_id=(hosting_mark.placement_id if hosting_mark is not None and
                 (associated_member or candidate.side == "inside") else None),
             paint_order=max(HOSTED_TEXT_PAINT_ORDER, host.paint_order + 1)
                 if candidate.side == "inside" and host is not None else 300)

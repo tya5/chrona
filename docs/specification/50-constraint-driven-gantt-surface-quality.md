@@ -100,7 +100,15 @@ bound below. `pack` lanes and non-lane candidate-search domains are unchanged.
 The completed Text bounds of every emitted plot member name with its own mark
 MUST stay within the member-name reach (default two em, below) as a
 two-dimensional nearest-perimeter gap of that exact
-mark on either side. Layout rejects a farther candidate before trying the
+mark on either side. An item's own marks are its planned (or baseline/snapshot)
+mark and its actual mark, when each is drawn; the reach is measured from the
+item's last own drawn mark: an `end` candidate starts at the right edge of the
+rightmost own mark (never inside it) and is bounded from that edge, and a
+candidate on any side is within reach when it is within the reach of at least
+one own mark. The name's `hostPlacementId` is the own mark nearest its Text (the
+requested host on a tie). A name therefore never covers its own actual mark
+when a legal position exists. An absence indicator (`missing-actual`) is not an
+own mark. Layout rejects a farther candidate before trying the
 next declared side. Default `auto` tries end then start; authored side/fallback
 order remains authoritative. A suppressible request with no legal candidate
 records its source-keyed suppression and aggregate count. After legal
@@ -118,9 +126,9 @@ A Layout Profile may declare the member-name policy in
 `reviewSurface.memberNames`, an optional object with two optional members:
 
 - `maxEndGapEm` (a number from 0 to 100, default `2`) sets the member-name
-  reach to `maxEndGapEm` times the label font size. That one value bounds both
-  the end-side gap and the nearest-perimeter association gap above; `0` leaves
-  no end placement.
+  reach to `maxEndGapEm` times the label font size, measured from the item's
+  last own drawn mark as above. That one value bounds both the end-side gap and
+  the nearest-perimeter association gap above; `0` leaves no end placement.
 - `search` (`side-band` or `full-band`) selects the block-position search.
   `full-band` runs the finite preferred/contact search across the row band,
   limited to one measured stagger step only for lane rows; `side-band` keeps

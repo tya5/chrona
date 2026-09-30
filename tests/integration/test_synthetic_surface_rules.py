@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import pytest
 
+import chrona.presentation.layout.surface_member_labels as member_labelling
 import chrona.presentation.scene.v05_builder as builder
 from tests.support import synthetic_review as sr
 
@@ -186,3 +187,94 @@ def test_a_plot_with_room_never_selects_the_rail(tmp_path, monkeypatch):
     assert not [item for item in rendered.scene.diagnostics if item.endswith(":rail-after-crowding")]
     assert all(f"W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK:{note}:plot-no-tail" in rendered.scene.diagnostics
                for note in decisions)
+
+
+# --- (e) a member name is reached from the item's last own drawn mark (#679) --------------------------------
+
+
+def _slipped(tmp_path, *, member_names=None, monkeypatch=None, own_marks=None):
+    """Two spans and a point whose actual mark passes the plan by a day, named at the end (a synthetic #679)."""
+    from datetime import date, timedelta
+    objects = {"build": sr.span("build", date(2026, 2, 2), 18, title="Build"),
+               "signoff": sr.point("signoff", date(2026, 2, 24), title="Signoff review"),
+               "ship": sr.span("ship", date(2026, 2, 9), 20, title="Ship")}
+    observed = {"build": {"start": "2026-02-02", "finish": (date(2026, 2, 20) + timedelta(days=1)).isoformat()},
+                "signoff": {"at": (date(2026, 2, 24) + timedelta(days=1)).isoformat()},
+                "ship": {"start": "2026-02-09", "finish": (date(2026, 3, 1) + timedelta(days=1)).isoformat()}}
+    actual = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "synthetic-actual",
+              "body": {"asOf": "2026-03-20", "observations": [
+                  {"id": f"o-{key}", "sequence": index, "projectObjectId": key, "actual": value}
+                  for index, (key, value) in enumerate(observed.items(), start=1)]}}
+    parts = sr.bundle()
+    labels = parts["view"]["body"]["visibility"]["labels"]
+    labels.update(side="end", overflow="suppress")
+    if member_names is not None:
+        parts["layout"]["reviewSurface"]["memberNames"] = member_names
+    if own_marks is not None:
+        monkeypatch.setattr(member_labelling, "_own_marks", own_marks)
+    return sr.render(tmp_path, sr.project(objects), presentation=parts, actual=actual), tuple(observed)
+
+
+def _gap(a, b) -> float:
+    inline = max(0.0, a[0] - (b[0] + b[2]), b[0] - (a[0] + a[2]))
+    block = max(0.0, a[1] - (b[1] + b[3]), b[1] - (a[1] + a[3]))
+    return (inline * inline + block * block) ** 0.5
+
+
+def _text_box(name) -> tuple[float, float, float, float]:
+    return tuple(name.text_layout.bounds)
+
+
+def _own(rendered, item, purpose):
+    return [p for p in rendered.surface.primitives if p.source_ref == item and p.purpose == purpose]
+
+
+def _own_mark_rule_violations(rendered, items, *, em: float = 2.0) -> list[str]:
+    """Every item shows one name; it clears its own marks, is within reach of one and is hosted by one."""
+    problems: list[str] = []
+    for item in items:
+        marks = _own(rendered, item, "planned") + _own(rendered, item, "actual")
+        names = _own(rendered, item, "member-label")
+        if len(names) != 1:
+            problems.append(f"{item}: {len(names)} names")
+            continue
+        name = names[0]
+        text = _text_box(name)
+        problems.extend(f"{item}: name overlaps its {mark.purpose} mark" for mark in marks
+                        if _overlaps(text, mark.bounds))
+        if min(_gap(text, mark.bounds) for mark in marks) > em * name.text_layout.font_size + 0.01:
+            problems.append(f"{item}: name detached beyond the reach")
+        if name.host_placement_id not in {mark.scene_id for mark in marks}:
+            problems.append(f"{item}: hosted by a foreign mark")
+    return problems
+
+
+def test_a_member_name_never_overlaps_its_own_actual_mark_and_stays_within_reach(tmp_path):
+    rendered, items = _slipped(tmp_path)
+    assert _own_mark_rule_violations(rendered, items) == []
+    assert _suppressed_names(rendered.scene) == []
+    # The names of the slipped items sit after their own last mark (the actual), not before the plan.
+    for item in ("build", "signoff"):
+        name, actual = _own(rendered, item, "member-label")[0], _own(rendered, item, "actual")[0]
+        assert name.bounds[0] >= actual.bounds[0] + actual.bounds[2] - 0.01, item
+
+
+@pytest.mark.parametrize("em", [0.5, 2, 4])
+def test_the_reach_still_bounds_detached_text_for_every_declared_value(tmp_path, em):
+    rendered, items = _slipped(tmp_path, member_names={"maxEndGapEm": em})
+    names = [p for p in rendered.surface.primitives if p.purpose == "member-label"]
+    assert names
+    assert _own_mark_rule_violations(rendered, [n.source_ref for n in names], em=em) == []
+
+
+def test_a_zero_reach_leaves_no_name_detached(tmp_path):
+    rendered, _ = _slipped(tmp_path, member_names={"maxEndGapEm": 0})
+    assert [p for p in rendered.surface.primitives if p.purpose == "member-label"] == []
+
+
+def test_the_old_rule_measured_from_the_planned_mark_fails_this_rule(tmp_path, monkeypatch):
+    # Mutation check: restore the old behaviour (the planned host is the only own mark). The same render
+    # then suppresses `build` although a legal position after its actual exists (and moves `signoff` to the
+    # start side), so the rule above is violated.
+    rendered, items = _slipped(tmp_path, monkeypatch=monkeypatch, own_marks=lambda host, marks: (host,))
+    assert _own_mark_rule_violations(rendered, items)
