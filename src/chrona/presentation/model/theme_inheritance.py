@@ -10,6 +10,7 @@ import yaml
 
 from chrona.core.identity import content_identity
 from chrona.core.ports import SnapshotReadError, SnapshotReader
+from chrona.core.store_address import StoreAddressError, check_store_address, resolve_store_address
 from chrona.resources import safe_load, schema_validator
 
 
@@ -28,11 +29,11 @@ def is_derived_theme(value: object) -> bool:
 def _safe_relative(address: object) -> PurePosixPath:
     if not isinstance(address, str):
         raise ThemeInheritanceError("E_THEME_INHERITANCE_PATH")
-    path = PurePosixPath(address)
-    if (not address or path.is_absolute() or address != path.as_posix()
-            or any(part in {"", ".", ".."} for part in path.parts)):
-        raise ThemeInheritanceError("E_THEME_INHERITANCE_PATH")
-    return path
+    try:
+        check_store_address(address)
+    except StoreAddressError as error:
+        raise ThemeInheritanceError("E_THEME_INHERITANCE_PATH") from error
+    return PurePosixPath(address)
 
 
 def _validated_derived(value: dict[str, Any]) -> Mapping[str, Any]:
@@ -130,9 +131,10 @@ def resolve_draft_theme(path: Path, *, payload: bytes | None = None) -> dict[str
 
     def load_base(parent_key: str, declaration: Mapping[str, Any]) -> tuple[dict[str, Any], str, str]:
         parent = Path(parent_key)
-        child = parent.parent.joinpath(_safe_relative(declaration["path"])).resolve()
-        if parent.parent != child and parent.parent not in child.parents:
-            raise ThemeInheritanceError("E_THEME_INHERITANCE_PATH")
+        try:
+            child = resolve_store_address(parent.parent, declaration["path"])
+        except StoreAddressError as error:
+            raise ThemeInheritanceError("E_THEME_INHERITANCE_PATH") from error
         try:
             raw = child.read_bytes()
         except OSError as error:

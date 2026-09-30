@@ -7,6 +7,7 @@ from typing import Any
 import yaml
 
 from chrona.commands.actual_commands import LocalActualStore, apply_actual_intake_batch, resolve_actual_observation
+from chrona.core.store_address import StoreAddressError, check_store_segment, resolve_store_address
 from chrona.operational.references import ImmutableReader, verify_reference
 from chrona.operational.references import ReplayLedger
 from chrona.operational.resources import content_identity
@@ -70,7 +71,13 @@ def apply_actual_command(reader: Any, command: dict[str, Any]) -> dict[str, Any]
         return accepted
     store_info = target["store"]
     root = reader.roots.get((store_info["provider"], store_info["identity"]))
-    tip = root / "actual-tips" / f"{target['id']}.json" if root else None
+    tip = None
+    if root:
+        try:
+            tip = resolve_store_address(root, f"actual-tips/{target['id']}.json")
+            check_store_segment(target["id"])
+        except StoreAddressError:
+            tip = None
     if tip is None or not tip.is_file():
         return _rejected(command, "E_AUTOMATION_TARGET_CLOSURE")
     ledger = ReplayLedger(root / "command-replays.json")

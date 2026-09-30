@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Protocol
 import yaml
 
+from chrona.core.store_address import StoreAddressError, check_store_segment, resolve_store_address
 from chrona.storage.revision_store import ProjectSnapshot
 from chrona.storage.publication import publish_exclusive
 
@@ -57,12 +58,14 @@ class LocalBaselineRegistry:
         self.require_content_identity = require_content_identity
 
     def publish(self, snapshot_id: str, project_ref: dict[str, Any]) -> dict[str, Any] | None:
-        if not snapshot_id or "/" in snapshot_id or snapshot_id in {".", ".."}:
+        try:
+            check_store_segment(snapshot_id)
+            target = resolve_store_address(self.root, f"snapshots/{snapshot_id}.yaml")
+        except StoreAddressError:
             return None
         resource = {"version": "chrona/snapshot-ref/v0.2", "kind": "snapshot-ref", "id": snapshot_id, "body": {"project": deepcopy(project_ref)}}
         payload = yaml.safe_dump(resource, sort_keys=True).encode("utf-8")
         digest = sha256(payload).hexdigest()
-        target = self.root / "snapshots" / f"{snapshot_id}.yaml"
         try:
             publish_exclusive(target, payload)
         except FileExistsError:
@@ -72,12 +75,18 @@ class LocalBaselineRegistry:
     def read(self, reference: dict[str, Any]) -> bytes:
         store = reference.get("store", {})
         address = reference.get("address", "")
-        if store != {"provider": "local", "identity": self.identity} or not address.startswith("snapshots/") or ".." in address.split("/"):
+        if store != {"provider": "local", "identity": self.identity} or not isinstance(address, str) or not address.startswith("snapshots/"):
             raise ValueError("E_BASELINE_REFERENCE")
-        path = self.root / address
+        try:
+            path = resolve_store_address(self.root, address)
+        except StoreAddressError as error:
+            raise ValueError("E_BASELINE_REFERENCE") from error
         if not path.is_file():
             raise ValueError("E_BASELINE_REFERENCE")
-        payload = path.read_bytes()
+        try:
+            payload = path.read_bytes()
+        except OSError as error:
+            raise ValueError("E_BASELINE_REFERENCE") from error
         digest = sha256(payload).hexdigest()
         expected_identity = reference.get("contentIdentity")
         if expected_identity is None and self.require_content_identity:

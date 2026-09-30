@@ -3,8 +3,10 @@ from __future__ import annotations
 
 from importlib.metadata import entry_points
 from importlib.resources import files
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 from typing import Any, Protocol
+
+from chrona.core.store_address import StoreAddressError, check_store_address, resolve_store_address
 
 
 class FontResourceError(ValueError):
@@ -24,10 +26,10 @@ def resolve_font_resource(locator: Any, *, asset_root: Path | None,
     provider, address = locator.get("provider"), locator.get("address")
     if not isinstance(provider, str) or not isinstance(address, str):
         raise FontResourceError("E_FONT_METRICS_UNAVAILABLE")
-    relative = PurePosixPath(address)
-    if (not address or relative.is_absolute() or address != relative.as_posix()
-            or any(part in {"", ".", ".."} for part in relative.parts)):
-        raise FontResourceError("E_FONT_METRICS_UNAVAILABLE")
+    try:
+        segments = check_store_address(address)
+    except StoreAddressError as error:
+        raise FontResourceError("E_FONT_METRICS_UNAVAILABLE") from error
     if asset_resolver is not None:
         try:
             return asset_resolver.resolve_asset(locator, expected_identity)
@@ -36,16 +38,17 @@ def resolve_font_resource(locator: Any, *, asset_root: Path | None,
     if provider == "context":
         if asset_root is None:
             raise FontResourceError("E_FONT_METRICS_UNAVAILABLE")
-        candidate = (asset_root.resolve() / Path(*relative.parts)).resolve()
-        if candidate != asset_root.resolve() and asset_root.resolve() not in candidate.parents:
-            raise FontResourceError("E_FONT_METRICS_UNAVAILABLE")
+        try:
+            candidate = resolve_store_address(asset_root, address)
+        except StoreAddressError as error:
+            raise FontResourceError("E_FONT_METRICS_UNAVAILABLE") from error
         if not candidate.is_file():
             raise FontResourceError("E_FONT_METRICS_UNAVAILABLE")
         return candidate
     if provider != "package" or not isinstance(locator.get("identity"), str):
         raise FontResourceError("E_FONT_METRICS_UNAVAILABLE")
     root = _package_root(locator["identity"])
-    resource = root.joinpath(*relative.parts)
+    resource = root.joinpath(*segments)
     if not resource.is_file():
         raise FontResourceError("E_FONT_METRICS_UNAVAILABLE")
     return Path(str(resource))

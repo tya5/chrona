@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from hashlib import sha256
 from importlib.resources import files
 from pathlib import Path
-from pathlib import PurePosixPath
 import json
 import shutil
 import tempfile
@@ -20,6 +19,7 @@ from chrona.presentation.model.theme_inheritance import ThemeInheritanceError, i
 from chrona.resources import safe_load
 from chrona.presentation.renderers.registry import renderer_for
 from chrona.core.ports import SnapshotReadError
+from chrona.core.store_address import StoreAddressError, check_store_address, resolve_store_address
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.snapshot_paths import snapshot_directory
 from chrona.usecases.render_review import RenderRequest, RenderedReview, render_review
@@ -46,10 +46,10 @@ def _context_error(scope: str, expected: str, actual: object) -> Materialization
 
 
 def _inside(root: Path, relative: str) -> Path:
-    path = (root / relative).resolve()
-    if path != root.resolve() and root.resolve() not in path.parents:
-        raise ValueError("E_MATERIALIZER_PATH")
-    return path
+    try:
+        return resolve_store_address(root, relative)
+    except StoreAddressError as error:
+        raise ValueError("E_MATERIALIZER_PATH") from error
 
 
 def _identity(payload: bytes) -> str:
@@ -147,11 +147,11 @@ class _OverlayBuilder:
 
 
 def _package_resource(address: str):
-    path = PurePosixPath(address)
-    if (not address or path.is_absolute() or address != path.as_posix()
-            or any(part in {"", ".", ".."} for part in path.parts)):
-        raise ValueError("E_MATERIALIZER_PATH")
-    resource = files("chrona.resources").joinpath(address)
+    try:
+        segments = check_store_address(address)
+    except StoreAddressError as error:
+        raise ValueError("E_MATERIALIZER_PATH") from error
+    resource = files("chrona.resources").joinpath(*segments)
     if not resource.is_file():
         raise ValueError("E_MATERIALIZER_PACKAGE_RESOURCE")
     return resource
@@ -229,11 +229,10 @@ def _copy_icon_assets(example: Path, catalog_reference: dict[str, Any], snapshot
         source = entry.get("source") if isinstance(entry, dict) else None
         asset_address = source.get("address") if isinstance(source, dict) else None
         expected = source.get("contentIdentity") if isinstance(source, dict) else None
-        path = PurePosixPath(asset_address) if isinstance(asset_address, str) else None
-        if (not isinstance(asset_address, str) or not asset_address or path is None
-                or path.is_absolute() or asset_address != path.as_posix()
-                or any(part in {"", ".", ".."} for part in path.parts)):
-            raise ValueError("E_ICON_ASSET_PATH")
+        try:
+            check_store_address(asset_address)
+        except StoreAddressError as error:
+            raise ValueError("E_ICON_ASSET_PATH") from error
         if catalog_reference.get("store", {}).get("provider") == "package":
             payload = _package_resource(asset_address).read_bytes()
         else:
