@@ -70,6 +70,11 @@ an unresolved contract or layer gap still requires design correction first.
    For View, Layout Profile, and Project schemas, apply Spec 56 §3.2:
    behavior-preserving optional properties are added in place without a
    version bump; schema `default` annotations do not implement runtime defaults.
+   A live schema references the shared parts in `schemas/` (`common`,
+   `vocabulary`, `graphics`; Spec 56 §7) instead of repeating a pattern, enum,
+   or drawing shape. A schema change runs
+   `python -m tools.schema_equivalence --base-rev origin/main` and records the
+   result in its PR.
 4. **Write the implementation plan.** Split work into slices that can each be
    reviewed, tested, and published. For each slice name the affected files or
    owners, schema and resource migrations, generated evidence, focused tests,

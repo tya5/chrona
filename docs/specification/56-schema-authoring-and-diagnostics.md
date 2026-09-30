@@ -1,12 +1,12 @@
 # Schema Authoring and Diagnostics
 
-**Status:** Accepted (amended 2026-09-23; annotation-applicator correction)
+**Status:** Accepted (amended 2026-09-23; annotation-applicator correction; shared schema parts 2026-10-01)
 **Depends on:** [05 Project Format](05-project-format.md), [09 Application
 Architecture](09-application-architecture.md), [13 Presentation Format](13-presentation-format.md),
 and [32 Repository Layout](32-repository-layout-and-packaging.md).
 **Owns:** author-facing schema annotations, structural-validation explanations,
-the live-schema documentation-reference gate, and the Project schedule union's
-discriminated successor.  It does not own semantic scheduling rules or a
+the live-schema documentation-reference gate, the shared schema parts (§7), and
+the Project schedule union's discriminated successor.  It does not own semantic scheduling rules or a
 renderer diagnostic surface.
 
 ## 1. Decision
@@ -181,6 +181,12 @@ impossible dates, or narrowing the pattern (ASCII digits, no trailing newline), 
 which inputs a schema accepts and moves a code, a stage and a message, so it follows the version bump
 rule above. The decision and its revisit condition are recorded in the #662 design (D2, D3).
 
+A refactor that leaves every schema's dereferenced form unchanged (a literal replaced by a `$ref` to an identical shared
+definition, §7) needs no bump and is proven by the equivalence gate's structural layer. A change that refuses earlier an
+input the consumer already refused later, such as a path guard in a command schema, may be made in place when every
+working input stays accepted; the moved diagnostics are listed in the gate's `expected-deltas` with a test each, and
+any input that worked and is now refused is named in the change as a narrowing.
+
 Adding a value to an existing `enum` is an in-place widening when every existing resource
 stays valid and behaves the same and the consuming code handles the new value. It is not an
 optional-property insertion, so the mechanical predecessor/successor check above does not apply; the equivalence gate
@@ -249,3 +255,48 @@ Implementation requires:
 The schema and prose changes are accepted only together.  Passing a schema
 lint while an author receives a generic error, or adding a helpful error while
 leaving a live unannotated schema, is incomplete.
+
+## 7. Shared schema parts (#662)
+
+A schema part is a schema file whose `$defs` other live schemas reference by URN, for
+example `urn:chrona:common-v0.1#/$defs/isoDate`. There are five: `common` (scalars and
+small objects: content identity, date, paths, names, revision, license), `vocabulary`
+(finite enums that more than one schema declares, with named subsets), `graphics` (the
+bounded drawing vocabulary of the asset schemas), and the two older parts
+`presentation-resource` and `revision-store-resource-ref`. A part asserts nothing at its
+root, and only a file listed in `chrona.resources.SCHEMA_PARTS` can be a reference
+target, so a stray or archived schema file can never become one.
+
+* **Loading.** `chrona.resources.schema_registry()` builds one `referencing` registry from
+  `SCHEMA_PARTS`; `schema_validator` (a packaged schema, cached by name) and
+  `validator_for_schema` (a caller-supplied schema) are the only places a validator is
+  constructed, and a guard test enforces that. An unresolvable `$ref` is a gate failure
+  (`E_SCHEMA_REF_UNRESOLVED`), never a runtime fallback.
+* **Frozen definitions.** The inventory records a digest per definition (`frozenDefs`,
+  annotation-insensitive). Adding a definition to a part is allowed. Changing or removing
+  one fails `E_SCHEMA_PART_FROZEN`; it is a new part version, or, for a definition with one
+  consumer that is itself being changed in the same PR, a digest update the PR states
+  (precedent: `anchorEndpoint`, which gained `end`).
+* **A reference keeps the dereferenced form.** A site is its own description plus the
+  `$ref`, and the structure it accepts is unchanged: an enum definition has no `type`, a
+  nullable form is its own definition, and a context that accepts part of a vocabulary
+  names a subset beside the full enum with a test that the subset is contained in it (an
+  `allOf` intersection would produce two enum errors). A union branch that is only a `$ref`
+  to a part is described through the part's definition (§3, step 4), and each adoption at
+  a union is proven by a message-parity test against the inlined twin.
+* **Siblings stay separate.** A shape that differs on purpose is not forced onto a
+  definition: Scene's circle, rectangle, viewport and tile carry Layout-completed geometry
+  without the asset bounds, the loose Store address family keeps today's accepted
+  characters, and existing ids keep `minLength: 1`. Each is recorded, with its reason, in
+  the copy tests and the #662 design.
+* **No inline copy in a live schema.** Each part has a test that no live schema outside
+  the parts repeats a pattern, shape or enum the part defines, with an explicit allowlist
+  of documented exceptions. Historical (`transitioning`) schemas keep their own copies and
+  are never re-pointed, because that would change what an accepted historical version
+  accepts. Live inventory entries list `consumers` that name the schema
+  (`E_SCHEMA_INVENTORY_CONSUMER_STALE`).
+* **Validation equivalence.** `python -m tools.schema_equivalence --base-rev <rev>` compares
+  the dereferenced form of every schema (L1), the verdict of every committed document (L2)
+  and the diagnostic of every probe (L3) with a base revision; a deliberate change is a
+  line in `conformance/schema-equivalence/expected-deltas-v0.1.yaml` with its reason and
+  test. A schema change that touches a part or a site pastes this output into its PR.

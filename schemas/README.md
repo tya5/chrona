@@ -26,6 +26,7 @@ record.
 | theme-asset-source | theme-asset-source-v0.1.schema.yaml |
 | presentation-resource-foundation | presentation-resource-v0.1.schema.yaml |
 | schema-part-common | common-v0.1.schema.yaml |
+| schema-part-graphics | graphics-v0.1.schema.yaml |
 | presentation-preset | presentation-preset-v0.1.schema.yaml |
 | builtin-preset-library | preset-library-v0.2.schema.yaml |
 | example-registry | example-registry-v0.1.schema.yaml |
@@ -42,6 +43,16 @@ record.
 | theme | theme-v0.13.schema.yaml |
 | derived-theme | theme-v0.14.schema.yaml |
 | view | view-v0.28.schema.yaml |
+| schema-part-vocabulary | vocabulary-v0.1.schema.yaml |
+
+The three `schema-part-*` entries, `presentation-resource-foundation` and
+`revision-store-resource-reference` are shared parts:
+other live schemas reference their definitions by URN (`urn:chrona:common-v0.1`,
+`urn:chrona:vocabulary-v0.1`, `urn:chrona:graphics-v0.1`, and the two older parts), so
+a pattern, enum or drawing shape is written once. A part's definitions are frozen by
+digest in the inventory. Spec 56 section 7 gives the rules, and
+`python -m tools.schema_equivalence --base-rev origin/main` is the gate that proves a
+change keeps every schema's accepted set.
 
 The v0.3 icon catalog remains readable during migration to v0.4 and is not
 reinterpreted. New Theme asset imports emit v0.4 catalogs; the importer
