@@ -11,7 +11,7 @@ properties:
   commandId: {description: "The command identity supplied by the caller.", type: string, minLength: 1}
   commandBaseRevision: {description: "The workspace revision declared by the command.", examples: ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
   workspaceRevision: {description: "The validated workspace revision observed before writing.", examples: ["sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
-  resultRevision: {description: "The revision after an accepted write, or null after rejection.", examples: ["sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"], type: [string, 'null'], pattern: "^sha256:[0-9a-f]{64}$"}
+  resultRevision: {description: "The revision after an accepted write, or null after rejection.", examples: ["sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"], $ref: "urn:chrona:common-v0.1#/$defs/sha256IdentityOrNull"}
   reversible: {description: "Whether the accepted operation is reversible.", type: boolean}
   diagnostics:
     description: "Diagnostics emitted by the authoring command boundary."

@@ -82,3 +82,8 @@ $defs:
     properties:
       spdx: {description: "Declared SPDX identifier; policy remains the author's decision.", type: string, minLength: 1}
       notice: {description: "Complete notice text that must travel with the asset.", type: string, minLength: 1}
+  sha256IdentityOrNull:
+    description: "A SHA-256 identity that may be absent: the nullable form of `sha256Identity`, with the same pattern for a string."
+    examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", null]
+    type: [string, "null"]
+    pattern: "^sha256:[0-9a-f]{64}$"

@@ -15,7 +15,10 @@ from tools.schema_inventory import validate_inventory
 
 REPOSITORY = Path(__file__).resolve().parents[3]
 SCHEMAS = REPOSITORY / "schemas"
-AUTHORING_COMMAND = "authoring-command-v0.1.schema.yaml"
+# The pattern-edit sensitivity tests need a live schema that keeps one inline pattern and is referenced by no other schema.
+PATTERN_SCHEMA = "example-registry-v0.1.schema.yaml"
+PATTERN_POINTER = "/properties/examples/items/properties/path/pattern"
+PATTERN_TEXT = "^examples/[a-z][a-z0-9-]*$"
 STORE_CONFIG = "store-config-v0.1.schema.yaml"
 
 
@@ -36,7 +39,7 @@ def _l1(base: dict, head: dict, deltas: list | None = None) -> dict[str, gate.L1
     return {row.schema: row for row in rows}
 
 
-def _delta(pointer: str, before, after, schema: str = AUTHORING_COMMAND) -> gate.Delta:
+def _delta(pointer: str, before, after, schema: str = PATTERN_SCHEMA) -> gate.Delta:
     return gate.Delta("L1", schema, pointer, before, after, "test", "test_schema_equivalence")
 
 
@@ -141,13 +144,13 @@ def test_registry_holds_every_schema_id_and_resolves_urn_references(base_schemas
 
 def test_editing_one_pattern_in_a_copied_schema_fails_l1_with_the_pointer(tmp_path, base_schemas):
     copied = _copy_schemas(tmp_path)
-    _edit(copied / AUTHORING_COMMAND, '"^sha256:[0-9a-f]{64}$"', '"^sha256:[0-9a-f]{63}$"')
+    _edit(copied / PATTERN_SCHEMA, f'"{PATTERN_TEXT}"', '"^examples/[a-z][a-z0-9-]{1}$"')
 
     report = gate.run_gate(REPOSITORY, layers=("L1",), base_schemas=base_schemas, schemas_dir=copied,
                            inventory_path=copied / "schema-inventory-v0.1.yaml")
 
     assert not report.passed
-    assert any(AUTHORING_COMMAND in failure and "/properties/baseRevision/pattern" in failure
+    assert any(PATTERN_SCHEMA in failure and PATTERN_POINTER in failure
                for failure in report.failures)
 
 
@@ -244,25 +247,25 @@ def test_an_added_required_property_fails_l1(base_schemas):
 
 def test_a_listed_delta_applied_exactly_passes_and_a_wrong_after_fails(base_schemas):
     head = deepcopy(base_schemas)
-    head[AUTHORING_COMMAND]["properties"]["baseRevision"]["pattern"] = "^sha256:[0-9a-f]{63}(?![\\s\\S])"
-    pointer = "/properties/baseRevision/pattern"
-    before, after = "^sha256:[0-9a-f]{64}$", "^sha256:[0-9a-f]{63}(?![\\s\\S])"
+    after = "^examples/[a-z][a-z0-9-]*(?![\\s\\S])"
+    head[PATTERN_SCHEMA]["properties"]["examples"]["items"]["properties"]["path"]["pattern"] = after
+    pointer, before = PATTERN_POINTER, PATTERN_TEXT
 
     exact = _delta(pointer, before, after)
     rows = _l1(base_schemas, head, [exact])
-    assert rows[AUTHORING_COMMAND].status == "delta" and exact.used
+    assert rows[PATTERN_SCHEMA].status == "delta" and exact.used
 
-    assert _l1(base_schemas, head)[AUTHORING_COMMAND].status == "changed"
-    wrong = _delta(pointer, before, "^sha256:[0-9a-f]{62}$")
-    assert _l1(base_schemas, head, [wrong])[AUTHORING_COMMAND].status == "changed"
+    assert _l1(base_schemas, head)[PATTERN_SCHEMA].status == "changed"
+    wrong = _delta(pointer, before, "^examples/[a-z][a-z0-9-]{2}$")
+    assert _l1(base_schemas, head, [wrong])[PATTERN_SCHEMA].status == "changed"
     wrong_before = _delta(pointer, "^something-else$", after)
-    assert _l1(base_schemas, head, [wrong_before])[AUTHORING_COMMAND].status == "changed"
+    assert _l1(base_schemas, head, [wrong_before])[PATTERN_SCHEMA].status == "changed"
 
 
 def test_a_delta_that_already_landed_in_the_base_is_reported_unused_not_failed(base_schemas):
-    landed = _delta("/properties/baseRevision/pattern", "^old$", "^sha256:[0-9a-f]{64}$")
+    landed = _delta(PATTERN_POINTER, "^old$", PATTERN_TEXT)
 
-    assert _l1(base_schemas, deepcopy(base_schemas), [landed])[AUTHORING_COMMAND].status == "equal"
+    assert _l1(base_schemas, deepcopy(base_schemas), [landed])[PATTERN_SCHEMA].status == "equal"
 
 
 def test_a_pure_local_ref_replacement_of_an_identical_inline_definition_keeps_l1_equal(base_schemas):

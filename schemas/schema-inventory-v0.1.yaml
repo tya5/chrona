@@ -44,6 +44,7 @@ schemas:
       revisionToken: "sha256:385bcc4ef9ce4e5d5f92063448ee05a1eefe7d7d6a7ab75574d4d9c494e0bbc8"
       fractionalTrack: "sha256:eb154b39286928cddd4836c1d4432db753b63260fb70308503610ad74f9dc8ca"
       license: "sha256:7ba5b38ac1e5af638171c8c0894d0f6952927200073f859b7a87c7fb33f55f44"
+      sha256IdentityOrNull: "sha256:ec41ec601f4e71f5e428fcb79f1bdc02746284c05c7672e49832563b918e7095"
   - {file: presentation-preset-v0.1.schema.yaml, kind: presentation-preset, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: preset-library-v0.2.schema.yaml, kind: builtin-preset-library, state: live, consumers: [src/chrona/usecases/preset_library.py]}
   - {file: example-registry-v0.1.schema.yaml, kind: example-registry, state: live, consumers: [src/chrona/resources/__init__.py]}
