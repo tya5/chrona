@@ -1,4 +1,4 @@
-"""Complete shared surface geometry before Scene primitive projection."""
+"""Coordinates the surface phases in order and assembles the final Layout; reads the request and each phase's typed batch."""
 from __future__ import annotations
 
 from dataclasses import replace
