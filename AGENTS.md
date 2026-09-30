@@ -213,7 +213,10 @@ published commit containing its acceptance review.
   not a substitute.
 - Use `Refs #n` rather than closing keywords in partial commits and PRs.
   GitHub can close an issue when such a commit reaches `main`; close it
-  deliberately after the literal acceptance review and release gate.
+  deliberately after the literal acceptance review and release gate. This
+  covers PR **titles** too: a merged PR's title is read like its body. The
+  `pr-title` check rejects `close|fix|resolve` (any tense) followed by `#n`
+  unless the PR carries the `closes-issue` label.
 
 ## Handing off and resuming
 
