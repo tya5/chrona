@@ -102,19 +102,15 @@ def builtin_preset_source_root(address: str) -> Traversable:
         or path.parts[:2] == ("presets", "bundles")
     ):
         return packaged
-    if path.parts[0] == "examples":
-        source = files("examples").joinpath(*path.parts[1:])
-        if source.is_dir():
-            return source
     raise ValueError("E_BUILTIN_PRESET_RESOURCE")
 
 
 def default_preset_root() -> Traversable:
-    """Return the one explicit resource root declared by the bundled default."""
-    packaged = files(__package__).joinpath("examples", "halcyon-1")
-    if packaged.joinpath("project.yaml").is_file():
-        return packaged
-    return files("examples").joinpath("halcyon-1")
+    """Return the packaged presets root that every path of the bundled default is relative to."""
+    root = files(__package__).joinpath("presets")
+    if not root.joinpath("default.yaml").is_file():
+        raise ValueError("E_DRAFT_DEFAULT_PRESET")
+    return root
 
 
 @cache

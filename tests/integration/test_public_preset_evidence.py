@@ -44,6 +44,27 @@ def test_editorial_corpus_copy_is_byte_identical_to_the_packaged_bundle():
         assert bundle_path.read_bytes() == corpus_path.read_bytes(), (bundle_name, corpus_path)
 
 
+def test_packaged_library_schemes_are_byte_identical_to_the_example_copies():
+    """#574: the library's colour schemes resolve from the wheel-packaged bundles,
+    never from examples/. The example corpora keep copies for their own contexts;
+    this guards against the two drifting apart."""
+    bundles = ROOT / "src/chrona/resources/presets/bundles"
+    copies = {
+        "mission-light": "examples/halcyon-1/schemes/mission-light.yaml",
+        "control-room-dark": "examples/halcyon-1/schemes/control-room-dark.yaml",
+        "print-mono": "examples/halcyon-1/schemes/print-mono.yaml",
+        "executive-light": "examples/controller-z/schemes/executive-light.yaml",
+        "elevated-light": "examples/controller-z/schemes/executive-light.yaml",
+    }
+    library = yaml.safe_load((ROOT / "src/chrona/resources/presets/library.yaml").read_bytes())
+    entries = {entry["id"]: entry for entry in library["entries"]}
+    for preset_id, corpus_path in copies.items():
+        member = entries[preset_id]["members"]["colorScheme"]
+        assert (member["sourceRoot"], member["sourcePath"]) == (f"presets/bundles/{preset_id}", "scheme.yaml")
+        assert (bundles / preset_id / "scheme.yaml").read_bytes() == (ROOT / corpus_path).read_bytes(), preset_id
+    assert "examples/" not in (ROOT / "src/chrona/resources/presets/library.yaml").read_text(encoding="utf-8")
+
+
 def test_legend_swatch_marks_are_never_checked_against_the_timeline_bottom(tmp_path, monkeypatch, capsys):
     """A legend swatch drawn as a point-shaped mark (#427, e.g. a milestone diamond)
     lives in the legend slot below the plot by construction. It must never be
@@ -92,9 +113,8 @@ def test_readable_default_resources_are_mirrored_and_selected_without_mutating_e
         assert package_bytes == corpus_path.read_bytes(), name
         declared = yaml.safe_load(package_bytes)
         assert declared["id"] == resources["view" if name == "view.yaml" else "theme"]["id"]
-        expected_directory = "views" if name == "view.yaml" else "themes"
         assert resources["view" if name == "view.yaml" else "theme"]["path"] == \
-            f"{expected_directory}/editorial-readable-default.yaml"
+            f"bundles/editorial-readable-default/{name}"
         if name == "view.yaml":
             labels = declared["body"]["visibility"]["labels"]
             assert (labels["placement"], labels["content"], labels["side"]) == ("plot", ["title"], "end")
@@ -110,19 +130,19 @@ def test_readable_default_resources_are_mirrored_and_selected_without_mutating_e
             assert body["colorBindings"]["row-band.fill"] == "category:default"
     assert resources["view"] == {
         "id": "chrona-preset-editorial-readable-default", "kind": "view",
-        "path": "views/editorial-readable-default.yaml",
+        "path": "bundles/editorial-readable-default/view.yaml",
     }
     assert resources["theme"] == {
         "id": "chrona-builtin-editorial-readable-default", "kind": "theme",
-        "path": "themes/editorial-readable-default.yaml",
+        "path": "bundles/editorial-readable-default/theme.yaml",
     }
     assert resources["colorScheme"] == {
-        "id": "chrona-builtin-editorial", "kind": "color-scheme", "path": "schemes/editorial.yaml",
+        "id": "chrona-builtin-editorial", "kind": "color-scheme", "path": "bundles/editorial/scheme.yaml",
     }
-    assert resources["layout"]["path"] == "layouts/editorial.yaml"
-    assert resources["detailProfile"]["path"] == "profiles/editorial-detail.yaml"
+    assert resources["layout"]["path"] == "bundles/editorial/layout.yaml"
+    assert resources["detailProfile"]["path"] == "bundles/editorial/detail.yaml"
     assert default["body"]["compatibleColorSchemes"] == [
-        {"id": "chrona-builtin-editorial", "kind": "color-scheme", "path": "schemes/editorial.yaml"}
+        {"id": "chrona-builtin-editorial", "kind": "color-scheme", "path": "bundles/editorial/scheme.yaml"}
     ]
     library = yaml.safe_load((ROOT / "src/chrona/resources/presets/library.yaml").read_bytes())
     editorial = next(item for item in library["entries"] if item["id"] == "editorial")
