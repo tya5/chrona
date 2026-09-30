@@ -326,7 +326,7 @@ These private modules divide Layout implementation only; they do not change auth
 | `surface_content` | Place title, detail, summary, notes and footer source content. |
 | `surface_backgrounds` | Complete source-bound row/group/axis/calendar background geometry from completed extents and overlay intervals. |
 | `surface_visuals` | Reserve and place text/mark/axis label visuals. |
-| `surface_completion` | Complete slot ownership, overflow evidence, canvas bounds and catalogue patterns for final Rect shapes and span marks. |
+| `surface_completion` | Complete slot ownership, overflow evidence, canvas bounds, lane row anchors and catalogue patterns for final Rect shapes and span marks, and assemble the final placement. |
 | `surface_geometry` | Pure rectangle/date conversions and shared precision/paint-order constants. |
 | `surface_composer` | Invoke typed phase batches in order and construct final Layout output. |
 
