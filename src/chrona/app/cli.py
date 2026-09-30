@@ -35,7 +35,7 @@ from chrona.usecases.preset_library import copy_builtin_preset, is_builtin_prese
 from chrona.presentation.icons.importer import IconImportError, copy_material_symbols_outline_rounded_catalog, import_iconify, import_theme_assets
 from chrona.presentation.fonts.importer import FontImportError, import_font
 from chrona.presentation.scene.serialization import SceneSerializationError, serialize_scene
-from chrona.resources import default_preset_resource, default_preset_root, safe_load
+from chrona.resources import default_preset_resource, default_preset_root, example_ids, safe_load
 
 
 @dataclass(frozen=True)
@@ -323,7 +323,7 @@ def _parser() -> JsonArgumentParser:
 
     command = sub.add_parser("init", help="create a non-overwriting local Chrona project")
     command.add_argument("directory", nargs="?", default=".")
-    command.add_argument("--example", choices=("halcyon-1",),
+    command.add_argument("--example", choices=example_ids(),
                          help="create a full named corpus example instead of the editable minimal starter")
 
     preset = sub.add_parser("preset", help="copy or list a builtin presentation preset")

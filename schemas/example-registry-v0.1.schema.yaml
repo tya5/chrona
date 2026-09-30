@@ -1,0 +1,30 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "chrona/example-registry-v0.1"
+title: "Chrona example registry v0.1"
+description: "Finite wheel-owned list of the corpus examples that `chrona init --example` may copy."
+type: object
+required: [version, examples]
+additionalProperties: false
+properties:
+  version: {const: chrona/example-registry/v0.1, description: Schema version identifying this example-registry document.}
+  examples:
+    type: array
+    description: Initialisable examples, each shipped in the wheel under its declared path.
+    minItems: 1
+    items:
+      type: object
+      description: One initialisable example.
+      required: [id, path, purpose]
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          pattern: "^[a-z][a-z0-9-]*$"
+          description: Identifier accepted by `chrona init --example`.
+          examples: [halcyon-1]
+        path:
+          type: string
+          pattern: "^examples/[a-z][a-z0-9-]*$"
+          description: Packaged directory of the example, relative to the resources root; it holds a manifest.yaml.
+          examples: [examples/halcyon-1]
+        purpose: {type: string, minLength: 1, description: One line saying what the example demonstrates.}

@@ -23,6 +23,7 @@ schemas:
   - {file: presentation-preset-v0.1.schema.yaml, kind: presentation-preset, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: preset-library-v0.1.schema.yaml, kind: builtin-preset-library, state: transitioning, consumers: [src/chrona/usecases/preset_library.py], successor: preset-library-v0.2.schema.yaml, removalSlice: issue-496-preset-library-v02}
   - {file: preset-library-v0.2.schema.yaml, kind: builtin-preset-library, state: live, consumers: [src/chrona/usecases/preset_library.py]}
+  - {file: example-registry-v0.1.schema.yaml, kind: example-registry, state: live, consumers: [src/chrona/resources/__init__.py]}
   - {file: presentation-materialization-receipt-v0.1.schema.yaml, kind: presentation-materialization-receipt, state: live, consumers: [src/chrona/usecases/authoring_materialization.py]}
   - {file: profile-v0.2.schema.yaml, kind: profile-package, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: profile-v0.3.schema.yaml, removalSlice: I1}
   - {file: profile-v0.3.schema.yaml, kind: profile-package, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
