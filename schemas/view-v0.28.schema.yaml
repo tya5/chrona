@@ -328,7 +328,7 @@ allOf:
                 format:
                   description: "Closed scalar formatter or an explicit boolean presence presentation."
                   oneOf:
-                    - {enum: [text, dateRange, date, signedDays]}
+                    - {$ref: "urn:chrona:vocabulary-v0.1#/$defs/tableColumnScalarFormat"}
                     - type: object
                       required: [kind, whenTrue, whenFalse]
                       additionalProperties: false

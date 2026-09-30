@@ -87,7 +87,7 @@ $defs:
             properties:
               object: {description: "Selected Project object identifier.", type: string, minLength: 1}
               facet: {description: "The only supported object metric facet.", const: planned}
-      format: {description: "Public formatting applied to the metric value.", enum: [text, date, count, signedDays]}
+      format: {description: "Public formatting applied to the metric value.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/summaryMetricFormat"}
     allOf:
       - description: "Subtree scope is available only for a planned facet of one object."
         examples: [{}]
