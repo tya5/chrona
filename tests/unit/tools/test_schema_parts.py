@@ -490,3 +490,21 @@ def test_authoring_command_keeps_no_inline_copy_of_a_common_definition():
     assert not _copies("authoring-command-result-v0.1.schema.yaml")
     sites = {definition for _, definition in _adopted_sites("authoring-command-v0.1.schema.yaml")}
     assert {"sha256Identity", "isoDate", "fileName", "safeRelativePath"} <= sites
+
+
+# --------------------------------------------------------------------------------------------
+# schemas/README.md mirrors the live inventory entries (I662-S6)
+# --------------------------------------------------------------------------------------------
+
+def test_the_readme_table_mirrors_the_live_inventory_entries():
+    lines = (SCHEMAS / "README.md").read_text(encoding="utf-8").splitlines()
+    start = lines.index("| Kind | Live schema |") + 2
+    rows = []
+    for line in lines[start:]:
+        if not line.startswith("|"):
+            break
+        kind, file = (cell.strip() for cell in line.strip("|").split("|"))
+        rows.append((kind, file))
+    live = [(entry["kind"], entry["file"]) for entry in ENTRIES if entry["state"] == "live"]
+    assert sorted(rows) == sorted(live)
+    assert len(rows) == len(set(rows)), "a live schema is listed once"
