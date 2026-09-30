@@ -4,7 +4,7 @@ Reviews [the design](../../design/issue-573-label-behaviour-knobs-design-2026-09
 boundaries and Spec 56 §3.2, on main `22ea2c1c`. Mechanics: [implementation plan](../../planning/active/issue-573-label-behaviour-knobs-implementation-plan-2026-09-30.md).
 
 Verdict: the design is sound in layer and schema terms, with three amendments (A1-A3) the design text lacks and one
-claim (byte identity) that holds only conditionally. Not a rubber stamp; the amendments change behavior of the design as written.
+claim (decision 3 alongside byte identity) that cannot both hold. Not a rubber stamp; the amendments change behavior of the design as written.
 
 ## Checks that pass
 
@@ -31,17 +31,15 @@ the association bound on the other sides. The name `maxEndGapEm` is then narrowe
 design and issue name it, and Spec 50 must say what it bounds. The lead may prefer a separate knob or a renamed one; that is a
 public-name decision and is flagged, not settled here.
 
-**F2 / A2. Byte identity is conditional, and decision 3 is a behavior change.** "Absent means byte-identical" holds for every
-label whose item has no actual mark past its host. Decision 3 (measure from the item's last own drawn mark) deliberately
-changes labels of slipped actuals, and the issue row says defaults keep today's output byte-identical. These two statements
-conflict for those slides. The design accepts it, reviewed slide by slide; this review records that the acceptance row is
-therefore met only for slides without slip, and that byte identity over the whole public corpus is not expected to be total.
-Verification: `derived_evidence --check` and `regenerate_public_examples --check` are run on the slice; the set of changed
-slides must be exactly the slipped-actual, end-placed labels and each is inspected. Any other diff means the implementation is
-wrong or the design is, and the slice stops. Byte identity is evidence of no change only, never of label quality.
-Mechanics: the host stays the anchor (planned mark for combined items); the bound is extended by `slip`, the amount the item's
-rightmost own mark extends past the host's right edge. The association host is unchanged, so Scene-side `hostPlacementId`
-pairing is unaffected.
+**F2 / A2. Decision 3 (measure from the last own drawn mark) contradicts byte identity and is deferred.** The issue row and the
+slice instruction require the default to keep today's output byte-identical. Decision 3 deliberately changes labels of slipped
+actuals. Measured on main `e7c09a14` with a prototype (bound and association distance extended by the amount the item's rightmost own
+mark passes its host): five public slides change (`aster-ssd/overview`, `halcyon-1/gallery-dark`,
+`halcyon-1/gallery-editorial-lanes`, `halcyon-1/gallery-mono`, `halcyon-1/mission-brief`); in `aster-ssd/overview` a previously
+suppressed `ftl` name is now emitted. Without the extension the same knob code changes zero slides. Decision: I573-1 ships the knobs
+without the slip extension, so the default is byte-identical; decision 3 is separable (it needs `own_mark_right` on `LabelRequest` and an
+extension term in `_member_reach`) and requires an explicit owner call, because it changes public output and the acceptance wording.
+Byte identity is evidence of no change only, never of label quality.
 
 **F3 / A3. Non-lane `full-band` and lane `side-band` under `fill` have no production evidence.** Today `full_band` is true only
 for lane rows under `fill`; the block search assumes a lane row's stagger limit (`maximum_stagger`, set only for lane rows).

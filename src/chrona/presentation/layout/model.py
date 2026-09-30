@@ -95,6 +95,7 @@ class LayoutManifest:
     annotation_max_detour_ratio: float = 2.0
     row_distribution: str = "pack"
     background_extents: Mapping[str, str] = field(default_factory=dict)
+    member_names: Mapping[str, Any] = field(default_factory=dict)
     fit_warnings: tuple[FitWarning, ...] = ()
 
     def canonical_bytes(self, precision: int = 3) -> bytes:
@@ -144,6 +145,8 @@ class LayoutManifest:
             "flowDirection": self.flow_direction,
             "dependencyNetworkFlowDirection": self.dependency_network_flow_direction,
         }
+        if self.member_names:
+            payload["reviewSurface"]["memberNames"] = dict(sorted(self.member_names.items()))
         if self.fit_warnings:
             payload["fitWarnings"] = [
                 {"code": item.code, "placementId": item.placement_id,
