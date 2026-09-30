@@ -3,30 +3,45 @@
 `schema-inventory-v0.1.yaml` is the exact machine-checked lifecycle index.
 Only `live` entries are authorable current contracts. `transitioning` entries
 are migration-only and record their successor and removal slice.
+The table below mirrors the `live` entries; the inventory is the authority.
+
+Historical schema files that nothing reads any more are not kept here. They
+live in [`docs/archive/schemas/`](../docs/archive/schemas/README.md), outside
+this directory, so the wheel does not ship them; version control history is the
+record.
 
 | Kind | Live schema |
 | --- | --- |
-| builtin-preset-library | preset-library-v0.2.schema.yaml |
-| example-registry | example-registry-v0.1.schema.yaml |
+| builtin-axis-name-tables | axis-name-tables-v0.1.schema.yaml |
 | actual-intake-batch | actual-intake-batch-v0.2.schema.yaml |
 | actual-set | actual-set-v0.3.schema.yaml |
+| authoring-workspace | authoring-workspace-v0.1.schema.yaml |
+| authoring-command | authoring-command-v0.1.schema.yaml |
+| authoring-command-result | authoring-command-result-v0.1.schema.yaml |
 | automation-result | automation-result-v0.1.schema.yaml |
 | color-scheme | color-scheme-v0.2.schema.yaml |
 | command-request | command-request-v0.2.schema.yaml |
-| layout-profile | layout-profile-v0.4.schema.yaml |
+| layout-profile | layout-profile-v0.9.schema.yaml |
 | icon-catalog | icon-catalog-v0.4.schema.yaml |
 | theme-asset-source | theme-asset-source-v0.1.schema.yaml |
+| presentation-resource-foundation | presentation-resource-v0.1.schema.yaml |
+| schema-part-common | common-v0.1.schema.yaml |
+| presentation-preset | presentation-preset-v0.1.schema.yaml |
+| builtin-preset-library | preset-library-v0.2.schema.yaml |
+| example-registry | example-registry-v0.1.schema.yaml |
+| presentation-materialization-receipt | presentation-materialization-receipt-v0.1.schema.yaml |
 | profile-package | profile-v0.3.schema.yaml |
 | project | project-v0.7.schema.yaml |
-| render-context | render-context-v0.13.schema.yaml |
+| render-context | render-context-v0.16.schema.yaml |
 | review-detail-profile | review-detail-profile-v0.1.schema.yaml |
 | inspection-scene | scene-v0.7.schema.yaml |
+| revision-store-resource-reference | revision-store-resource-ref-v0.1.schema.yaml |
 | snapshot-ref | snapshot-ref-v0.2.schema.yaml |
 | store-config | store-config-v0.1.schema.yaml |
 | summary-profile | summary-profile-v0.2.schema.yaml |
 | theme | theme-v0.13.schema.yaml |
 | derived-theme | theme-v0.14.schema.yaml |
-| view | view-v0.14.schema.yaml |
+| view | view-v0.28.schema.yaml |
 
 The v0.3 icon catalog remains readable during migration to v0.4 and is not
 reinterpreted. New Theme asset imports emit v0.4 catalogs; the importer
@@ -64,8 +79,8 @@ Schema validation is therefore stage 1, not full Core conformance.
 
 `presentation-resource-v0.1.schema.yaml` supplies shared envelope and reference
 definitions for the listed Presentation resources. The current
-`render-context-v0.9.schema.yaml` and its v0.10 successor bind immutable Project and presentation
+`render-context-v0.16.schema.yaml` binds immutable Project and presentation
 references, viewport, locale, measured font assets, and one declared target.
-`layout-profile-v0.4.schema.yaml` defines the current intent-oriented composition
+`layout-profile-v0.9.schema.yaml` defines the current intent-oriented composition
 grammar. `review-detail-profile-v0.1.schema.yaml` owns selected group descriptions,
 milestone IDs, and source-labelled review detail.
