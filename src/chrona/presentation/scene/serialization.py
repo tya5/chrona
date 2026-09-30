@@ -5,7 +5,6 @@ import json
 import math
 from typing import Any, Mapping
 
-import jsonschema
 
 from chrona.presentation.scene.model import (
     PRIMARY_LANE_MARK_PURPOSES, DecorationDisposition, InspectionScene, LinearGradient,
@@ -13,7 +12,7 @@ from chrona.presentation.scene.model import (
     SceneLaneSegmentObstacle, ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish,
     TextLayout, requires_lane_member_provenance,
 )
-from chrona.resources import schema_document
+from chrona.resources import schema_validator
 
 
 class SceneSerializationError(ValueError):
@@ -86,7 +85,7 @@ def validate_scene_document(document: Mapping[str, Any]) -> None:
                        "chrona/scene/v0.7": "scene-v0.7.schema.yaml"}.get(version)
         if schema_name is None:
             raise SceneSerializationError("E_SCENE_SERIALIZATION")
-        errors = tuple(jsonschema.Draft202012Validator(schema_document(schema_name)).iter_errors(document))
+        errors = tuple(schema_validator(schema_name).iter_errors(document))
     except Exception as error:  # schema resource failures have no public partial document
         raise SceneSerializationError("E_SCENE_SERIALIZATION") from error
     if errors or not _finite(document) or not _references_are_closed(document):

@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import yaml
 
-from chrona.resources import safe_load, schema_document
-from chrona.presentation.contracts.resources import _registry
+from chrona.resources import safe_load, schema_document, schema_registry
 
 
 def test_safe_load_preserves_safe_loader_values() -> None:
@@ -31,14 +30,14 @@ def test_packaged_schema_document_is_decoded_once_per_name() -> None:
     schema_document.cache_clear()
 
 
-def test_contract_registry_is_constructed_once_per_process() -> None:
-    _registry.cache_clear()
+def test_schema_registry_is_constructed_once_per_process() -> None:
+    schema_registry.cache_clear()
 
-    first = _registry()
-    second = _registry()
+    first = schema_registry()
+    second = schema_registry()
 
     assert first is second
-    assert _registry.cache_info().misses == 1
-    assert _registry.cache_info().hits == 1
+    assert schema_registry.cache_info().misses == 1
+    assert schema_registry.cache_info().hits == 1
 
-    _registry.cache_clear()
+    schema_registry.cache_clear()

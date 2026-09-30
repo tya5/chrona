@@ -57,6 +57,53 @@ schemas:
         validate_inventory(schemas, inventory)
 
 
+def _live_root(root: Path, schema: dict) -> tuple[Path, Path]:
+    schemas, inventory = _write(root, """version: chrona/schema-inventory/v0.1
+schemas:
+  - file: project-v0.1.schema.yaml
+    kind: project
+    state: live
+    consumers: [src/chrona/core/validation.py]
+""")
+    (schemas / "project-v0.1.schema.yaml").write_text(yaml.safe_dump(schema))
+    return schemas, inventory
+
+
+@pytest.mark.parametrize("reference", [
+    "urn:chrona:not-registered-v0.1#/$defs/x",   # a part missing from the registry
+    "urn:chrona:presentation-resource-v0.1#/$defs/noSuchDefinition",  # registered, pointer nowhere
+    "#/$defs/missing",                            # local pointer nowhere
+])
+def test_static_gate_rejects_an_unresolved_reference_without_any_document(tmp_path, reference):
+    schemas, inventory = _live_root(tmp_path, {
+        "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "timeline/project-v0.1",
+        "properties": {"a": {"$ref": reference}},
+    })
+    with pytest.raises(SchemaInventoryError, match="E_SCHEMA_REF_UNRESOLVED"):
+        validate_inventory(schemas, inventory)
+
+
+def test_static_gate_accepts_resolvable_local_and_part_references(tmp_path):
+    schemas, inventory = _live_root(tmp_path, {
+        "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "timeline/project-v0.1",
+        "$defs": {"x": {"type": "string"}},
+        "properties": {"a": {"$ref": "#/$defs/x"}, "b": {"$ref": "urn:chrona:revision-store-resource-ref-v0.1"},
+                       "c": {"$ref": "timeline/project-v0.1#/$defs/x"}},
+    })
+    validate_inventory(schemas, inventory)
+
+
+def test_static_gate_ignores_transitioning_schemas(tmp_path):
+    schemas, inventory = _live_root(tmp_path, {"properties": {"a": {"$ref": "urn:chrona:absent"}}})
+    (schemas / "project-v0.2.schema.yaml").write_text("{}")
+    inventory.write_text("""version: chrona/schema-inventory/v0.1
+schemas:
+  - {file: project-v0.1.schema.yaml, kind: project, state: transitioning, consumers: [x], successor: project-v0.2.schema.yaml, removalSlice: I1}
+  - {file: project-v0.2.schema.yaml, kind: project, state: live, consumers: [x]}
+""")
+    validate_inventory(schemas, inventory)
+
+
 def _evolution_pair(root: Path, *, old_version: str = "v0.28", new_version: str = "v0.29",
                     mutate=None, with_examples: bool = False):
     schemas = root / "schemas"

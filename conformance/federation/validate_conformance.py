@@ -7,11 +7,11 @@ import sys
 from datetime import date
 
 import yaml
-from jsonschema import Draft202012Validator
-from referencing import Registry, Resource
-
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "src"))
+from chrona.resources import validator_for_schema
 SCHEMAS = ROOT / "schemas"
 TRUSTED_REPOSITORIES = {"git+https://example.invalid/firmware.git"}
 
@@ -70,10 +70,6 @@ def closure_diagnostics(here: Path, fixture: dict) -> set[str]:
 def main() -> int:
     here = Path(__file__).resolve().parent
     manifest = load(here / "conformance-v0.1.yaml")
-    schemas = list(map(load, SCHEMAS.glob("*.schema.yaml")))
-    registry = Registry().with_resources(
-        (schema["$id"], Resource.from_contents(schema)) for schema in schemas
-    )
     failures = []
     for case in manifest["cases"]:
         if "closure" in case:
@@ -83,7 +79,7 @@ def main() -> int:
             continue
         value = json_value(load(here / case["resource"]))
         schema = load((here / case["schema"]).resolve())
-        for error in Draft202012Validator(schema, registry=registry).iter_errors(value):
+        for error in validator_for_schema(schema).iter_errors(value):
             failures.append(f"{case['id']}: {error.message}")
         actual = diagnostics(value)
         expected = set(case.get("expectDiagnostics", []))

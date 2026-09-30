@@ -4,11 +4,11 @@ from copy import deepcopy
 from pathlib import Path
 import sys
 import yaml
-from jsonschema import Draft202012Validator
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "src"))
+from chrona.resources import validator_for_schema
 from chrona.scheduling.scheduler import schedule
 
 ROOT = Path(__file__).resolve().parent
@@ -62,7 +62,7 @@ def diagnose(data):
 
 def fixture_diagnostics(name):
     data = yaml.safe_load((ROOT / name).read_text(encoding="utf-8"))
-    schema_errors = list(Draft202012Validator(SCHEMA).iter_errors(data))
+    schema_errors = list(validator_for_schema(SCHEMA).iter_errors(data))
     if schema_errors:
         raise AssertionError("schema failure: " + "; ".join(error.message for error in schema_errors))
     return diagnose(data)
@@ -89,7 +89,7 @@ def check_evidence_references():
     for case in cases:
         diagnostics = []
         ref = case["reference"]
-        if list(Draft202012Validator(RESOURCE_SCHEMA).iter_errors(ref)):
+        if list(validator_for_schema(RESOURCE_SCHEMA).iter_errors(ref)):
             diagnostics.append("IDP-EVIDENCE-001")
         verification = case["verification"]
         if not all(verification.values()):
@@ -111,7 +111,7 @@ def check_self_hosted_roadmap():
         if set(item["fields"]) != DELIVERY_FIELDS:
             raise AssertionError(f"roadmap object {object_id} has wrong delivery fields")
     evidence = project["objects"]["idp-4"]["fields"]["acceptanceEvidence"][0]
-    if list(Draft202012Validator(RESOURCE_SCHEMA).iter_errors(evidence)) or evidence["kind"] != "delivery-acceptance-evidence":
+    if list(validator_for_schema(RESOURCE_SCHEMA).iter_errors(evidence)) or evidence["kind"] != "delivery-acceptance-evidence":
         raise AssertionError("roadmap acceptance evidence is not immutable delivery evidence")
     result = schedule(project)
     if not result.ok or any(result.placements[key] != value for key, value in expected.items()):

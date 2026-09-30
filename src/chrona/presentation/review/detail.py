@@ -5,10 +5,9 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any, Iterable, Mapping
 
-from chrona.resources import schema_document
+from chrona.resources import schema_validator
 from chrona.schema_diagnostics import explain_errors
 from chrona.presentation.layout.model import LayoutManifest
-from jsonschema import Draft202012Validator
 
 
 PROFILE_VERSION = "chrona/review-detail-profile/v0.1"
@@ -32,8 +31,7 @@ class ResolvedReviewDetail:
 
 
 def _validate_shape(profile: Mapping[str, Any]) -> None:
-    schema = schema_document("review-detail-profile-v0.1.schema.yaml")
-    errors = tuple(Draft202012Validator(schema).iter_errors(dict(profile)))
+    errors = tuple(schema_validator("review-detail-profile-v0.1.schema.yaml").iter_errors(dict(profile)))
     if errors:
         identity = profile.get("id")
         violation = explain_errors(

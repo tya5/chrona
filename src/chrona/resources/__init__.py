@@ -1,6 +1,7 @@
 """Locations for source-tree and wheel-installed runtime resources."""
 from __future__ import annotations
 
+from copy import deepcopy
 from functools import cache
 from importlib.resources import files
 from importlib.resources.abc import Traversable
@@ -8,6 +9,8 @@ import json
 from pathlib import PurePosixPath
 from typing import Any, Mapping
 
+from jsonschema import Draft202012Validator
+from referencing import Registry, Resource
 import yaml
 
 
@@ -47,10 +50,8 @@ def schema_resource(name: str) -> Traversable:
 @cache
 def example_registry() -> Mapping[str, Mapping[str, str]]:
     """Return the initialisable examples by id, validated against the registry schema."""
-    from jsonschema import Draft202012Validator
-
     value = safe_load(files(__package__).joinpath("example-registry.yaml").read_bytes())
-    if not isinstance(value, Mapping) or tuple(Draft202012Validator(schema_document("example-registry-v0.1.schema.yaml")).iter_errors(value)):
+    if not isinstance(value, Mapping) or tuple(schema_validator("example-registry-v0.1.schema.yaml").iter_errors(value)):
         raise ValueError("E_EXAMPLE_REGISTRY")
     return {entry["id"]: entry for entry in value["examples"]}
 
@@ -140,3 +141,132 @@ def schema_document(name: str) -> Mapping[str, Any]:
     if not isinstance(value, Mapping):
         raise ValueError(f"E_SCHEMA_RESOURCE: {name}")
     return value
+
+
+SCHEMA_PARTS: tuple[str, ...] = (
+    "presentation-resource-v0.1.schema.yaml",
+    "revision-store-resource-ref-v0.1.schema.yaml",
+)
+"""Schema files that other schemas may reference by their `urn:chrona:` `$id`.
+
+A part is available to `$ref` only by being listed here, so a stray or archived
+schema file can never become a reference target.
+"""
+
+
+@cache
+def schema_registry() -> Registry:
+    """Return the registry of every schema part, loaded eagerly.
+
+    A missing or malformed part raises here, when the registry is first built,
+    rather than lazily when some document reaches a `$ref` to it.
+    """
+    registry: Registry = Registry()
+    for name in SCHEMA_PARTS:
+        part = schema_document(name)
+        registry = registry.with_resource(part["$id"], Resource.from_contents(part))
+    # Crawl once: a registry that is not crawled re-crawls on every lookup.
+    return registry.crawl()
+
+
+def validator_for_schema(schema: Mapping[str, Any]) -> Draft202012Validator:
+    """Build a validator over an arbitrary schema document with the part registry.
+
+    Use this for a caller-supplied schema (an override path, a schema read from
+    a foreign root); `schema_validator` is the cached form for a packaged name.
+    """
+    return Draft202012Validator(schema, registry=schema_registry())
+
+
+@cache
+def schema_validator(name: str) -> Draft202012Validator:
+    """Return the shared validator of one packaged schema, cached by name.
+
+    This is the only place in `src/`, `tools/` and `conformance/` that
+    constructs a validator; a guard test enforces that.
+    """
+    return validator_for_schema(schema_document(name))
+
+
+def _part_ids() -> dict[str, str]:
+    return {schema_document(name)["$id"]: name for name in SCHEMA_PARTS}
+
+
+def _external_ref_targets(node: Any, part_ids: Mapping[str, str]) -> set[str]:
+    found: set[str] = set()
+    if isinstance(node, Mapping):
+        for key, value in node.items():
+            if key == "$ref" and isinstance(value, str) and value.partition("#")[0] in part_ids:
+                found.add(value.partition("#")[0])
+            else:
+                found |= _external_ref_targets(value, part_ids)
+    elif isinstance(node, list):
+        for item in node:
+            found |= _external_ref_targets(item, part_ids)
+    return found
+
+
+def bundled_schema(name: str) -> dict[str, Any]:
+    """Return a schema with each referenced part embedded under `$defs` by its `$id`.
+
+    This is the JSON Schema 2020-12 compound-document form: a bare validator with
+    no registry validates it.
+    """
+    part_ids = _part_ids()
+    bundled = deepcopy(dict(schema_document(name)))
+    pending = sorted(_external_ref_targets(bundled, part_ids))
+    embedded: dict[str, Any] = {}
+    while pending:
+        part_id = pending.pop()
+        if part_id in embedded:
+            continue
+        embedded[part_id] = deepcopy(dict(schema_document(part_ids[part_id])))
+        pending.extend(sorted(_external_ref_targets(embedded[part_id], part_ids) - set(embedded)))
+    if embedded:
+        defs = dict(bundled.get("$defs", {}))
+        defs.update(embedded)
+        bundled["$defs"] = defs
+    return bundled
+
+
+def dereferenced_schema(name: str) -> dict[str, Any]:
+    """Return a schema with every external part `$ref` replaced by its target subtree.
+
+    Local references inside a replaced subtree are resolved as well. The schema's
+    own local references are left alone. For analysis only, never for validation.
+    """
+    part_ids = _part_ids()
+
+    def resolve_pointer(document: Any, fragment: str) -> Any:
+        node = document
+        for token in [item for item in fragment.split("/") if item]:
+            node = node[token.replace("~1", "/").replace("~0", "~")]
+        return node
+
+    def inline(node: Any, part: Mapping[str, Any] | None, stack: tuple[str, ...]) -> Any:
+        if isinstance(node, list):
+            return [inline(item, part, stack) for item in node]
+        if not isinstance(node, Mapping):
+            return node
+        ref = node.get("$ref")
+        if isinstance(ref, str):
+            target, _, fragment = ref.partition("#")
+            document: Mapping[str, Any] | None
+            if target in part_ids:
+                document = schema_document(part_ids[target])
+            elif part is not None and not target:
+                document = part
+            else:
+                document = None
+            if document is not None:
+                key = f"{document['$id']}#{fragment}"
+                if key in stack:
+                    raise ValueError(f"E_SCHEMA_REF_CYCLE: {name}: {ref}")
+                resolved = inline(resolve_pointer(document, fragment), document, (*stack, key))
+                if not fragment and isinstance(resolved, Mapping):
+                    resolved = {k: v for k, v in resolved.items() if k not in {"$id", "$schema"}}
+                siblings = {k: inline(v, part, stack) for k, v in node.items() if k != "$ref"}
+                return {**resolved, **siblings} if siblings and isinstance(resolved, Mapping) else resolved
+        return {key: inline(value, part, stack) for key, value in node.items()}
+
+    return inline(schema_document(name), None, ())

@@ -6,12 +6,11 @@ from hashlib import sha256
 from pathlib import Path, PurePosixPath
 from typing import Any, Callable, Mapping
 
-import jsonschema
 import yaml
 
 from chrona.core.identity import content_identity
 from chrona.core.ports import SnapshotReadError, SnapshotReader
-from chrona.resources import safe_load, schema_document
+from chrona.resources import safe_load, schema_validator
 
 
 class ThemeInheritanceError(ValueError):
@@ -42,8 +41,7 @@ def _validated_derived(value: dict[str, Any]) -> Mapping[str, Any]:
                    "chrona/theme/v0.14": "theme-v0.14.schema.yaml"}.get(version)
     if schema_name is None:
         raise ThemeInheritanceError("E_THEME_INHERITANCE_SCHEMA")
-    schema = schema_document(schema_name)
-    if tuple(jsonschema.Draft202012Validator(schema).iter_errors(value)):
+    if tuple(schema_validator(schema_name).iter_errors(value)):
         raise ThemeInheritanceError("E_THEME_INHERITANCE_SCHEMA")
     return value["body"]["extends"]
 
@@ -118,8 +116,7 @@ def _resolve(value: dict[str, Any], key: str, load_base: BaseLoader,
         target.update(deepcopy(replacement))
     effective_schema = {"chrona/theme/v0.12": "theme-v0.11.schema.yaml",
                         "chrona/theme/v0.14": "theme-v0.13.schema.yaml"}[derived_version]
-    schema = schema_document(effective_schema)
-    if tuple(jsonschema.Draft202012Validator(schema).iter_errors(effective)):
+    if tuple(schema_validator(effective_schema).iter_errors(effective)):
         raise ThemeInheritanceError("E_THEME_INHERITANCE_EFFECTIVE_SCHEMA")
     return effective
 

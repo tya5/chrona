@@ -6,9 +6,8 @@ from hashlib import sha256
 from typing import Any
 
 import yaml
-from jsonschema import Draft202012Validator
 
-from chrona.resources import builtin_preset_library_resource, builtin_preset_source_root, safe_load, schema_document
+from chrona.resources import builtin_preset_library_resource, builtin_preset_source_root, safe_load, schema_validator
 from chrona.presentation.contracts import ClosureIdentity, IconCatalogContract, parse_contract
 
 
@@ -27,8 +26,7 @@ def _library() -> list[dict[str, Any]]:
         value = safe_load(builtin_preset_library_resource().read_bytes())
     except (OSError, yaml.YAMLError) as error:
         raise ValueError("E_BUILTIN_PRESET_LIBRARY") from error
-    schema = schema_document("preset-library-v0.2.schema.yaml")
-    if not isinstance(value, dict) or tuple(Draft202012Validator(schema).iter_errors(value)):
+    if not isinstance(value, dict) or tuple(schema_validator("preset-library-v0.2.schema.yaml").iter_errors(value)):
         raise ValueError("E_BUILTIN_PRESET_LIBRARY")
     entries = value["entries"]
     if not isinstance(entries, list) or len({item.get("id") for item in entries if isinstance(item, dict)}) != len(entries):

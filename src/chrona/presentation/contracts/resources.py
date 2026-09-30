@@ -4,15 +4,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 from enum import StrEnum
-from functools import cache
 import math
 import re
 from typing import Any, Mapping
 
-import jsonschema
-from referencing import Registry, Resource
 
-from chrona.resources import schema_document
+from chrona.resources import schema_validator
 from chrona.schema_diagnostics import SchemaViolation, explain_all_errors, explain_errors
 from chrona.presentation.table_presentation import BooleanPresencePresentation
 
@@ -645,16 +642,6 @@ def _schema_for_version(identity: ClosureIdentity, version: object) -> str:
     return schema_name
 
 
-@cache
-def _registry() -> Registry:
-    names = ("presentation-resource-v0.1.schema.yaml", "revision-store-resource-ref-v0.1.schema.yaml")
-    registry = Registry()
-    for name in names:
-        schema = schema_document(name)
-        registry = registry.with_resource(schema["$id"], Resource.from_contents(schema))
-    return registry
-
-
 def _validate(kind: str, value: Mapping[str, Any], identity: ClosureIdentity) -> str:
     version = value.get("version")
     schema_name = _schema_for_version(identity, version)
@@ -666,9 +653,8 @@ def _validate(kind: str, value: Mapping[str, Any], identity: ClosureIdentity) ->
             missing = next((name for name, target in aliases.items() if target not in icons), None)
             if missing is not None:
                 raise SchemaContractError(kind, f"/body/entryAliases/{missing}", "alias target must name a canonical icon")
-    schema = schema_document(schema_name)
     candidate = _icon_catalog_envelope(value) if kind == "icon-catalog" else _schema_value(value)
-    errors = tuple(jsonschema.Draft202012Validator(schema, registry=_registry()).iter_errors(candidate))
+    errors = tuple(schema_validator(schema_name).iter_errors(candidate))
     if errors:
         violation = explain_errors(errors, resource_kind=kind, resource_identity=identity.id)
         raise SchemaContractError(kind, violation.pointer, violation.message, violation)
@@ -700,9 +686,8 @@ def _resource_schema_errors(identity: ClosureIdentity, value: Mapping[str, Any])
     """Evaluate one resource schema without constructing a runtime contract."""
     version = value.get("version")
     schema_name = _schema_for_version(identity, version)
-    schema = schema_document(schema_name)
     candidate = _icon_catalog_envelope(value) if identity.kind == "icon-catalog" else _schema_value(value)
-    return tuple(jsonschema.Draft202012Validator(schema, registry=_registry()).iter_errors(candidate))
+    return tuple(schema_validator(schema_name).iter_errors(candidate))
 
 
 def _icon_catalog_envelope(value: Mapping[str, Any]) -> dict[str, Any]:
@@ -752,8 +737,7 @@ def validate_icon_catalog_entry(catalog: IconCatalogContract, name: str) -> None
                     if catalog.version == "chrona/icon-catalog/v0.4" else {}),
                  "icons": {name: raw}},
     }
-    schema = schema_document(_SCHEMAS[("icon-catalog", catalog.version)])
-    errors = tuple(jsonschema.Draft202012Validator(schema, registry=_registry()).iter_errors(_schema_value(source)))
+    errors = tuple(schema_validator(_SCHEMAS[("icon-catalog", catalog.version)]).iter_errors(_schema_value(source)))
     if errors:
         violation = explain_errors(errors, resource_kind="icon-catalog", resource_identity=catalog.identity.id)
         raise SchemaContractError("icon-catalog", violation.pointer, violation.message, violation)
@@ -774,8 +758,7 @@ def validate_theme_asset_entry(catalog: IconCatalogContract, asset_kind: str, na
                  "icons": {}, "glyphs": {name: raw} if asset_kind == "glyph" else {},
                  "patterns": {name: raw} if asset_kind == "pattern" else {}},
     }
-    schema = schema_document(_SCHEMAS[("icon-catalog", catalog.version)])
-    errors = tuple(jsonschema.Draft202012Validator(schema, registry=_registry()).iter_errors(_schema_value(source)))
+    errors = tuple(schema_validator(_SCHEMAS[("icon-catalog", catalog.version)]).iter_errors(_schema_value(source)))
     if errors:
         violation = explain_errors(errors, resource_kind="icon-catalog", resource_identity=catalog.identity.id)
         raise SchemaContractError("icon-catalog", violation.pointer, violation.message, violation)

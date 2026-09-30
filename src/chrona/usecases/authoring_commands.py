@@ -10,14 +10,12 @@ from chrona.core.identity import content_identity
 
 
 def parse_authoring_command(path: Path) -> dict[str, Any]:
-    from chrona.resources import safe_load, schema_document
+    from chrona.resources import safe_load, schema_validator
     from chrona.schema_diagnostics import explain_errors
-    import jsonschema
     value = safe_load(path.read_text(encoding="utf-8"))
-    schema = schema_document("authoring-command-v0.1.schema.yaml")
     if not isinstance(value, dict):
         raise ValueError("E_AUTHORING_COMMAND_SCHEMA: expected object")
-    errors = tuple(jsonschema.Draft202012Validator(schema).iter_errors(value))
+    errors = tuple(schema_validator("authoring-command-v0.1.schema.yaml").iter_errors(value))
     if errors:
         violation = explain_errors(
             errors, resource_kind="authoring-command", resource_identity=value.get("commandId") if isinstance(value.get("commandId"), str) else None,
