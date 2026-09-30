@@ -57,10 +57,61 @@ Spec 50 §3.2 (and the association paragraph that says "two-em") state the defau
 `rowDistribution: fill` on lane rows), the knob names, and that the association bound follows the same value. The last-own-mark wording is added only if the slip decision is taken. Byte-identity evidence from I573-1 is cited as evidence of no default
 change only. No derived output is hand edited; derived outputs are regenerated on main by CI.
 
+## Slice I679-1: measure the member-name reach from the item's last own drawn mark (code PR; issue #679)
+
+Background. #573 decision 3 (measure from the last own drawn mark) was deferred by review A2 because the prototype changed five
+public slides. #679 (found by #575 I575-4) shows why it cannot stay deferred: with the original `attached-milestones` data (readiness
+planned `2027-09-30`, actual `2027-10-01`, `asOf 2027-10-15`) the `readiness` name starts 3.7 px after the planned mark and covers
+its own actual mark in every packaged preset, with `W_LAYOUT_LABEL_OVERFLOW` and `W_LAYOUT_LABEL_SUPPRESSED`; `maxEndGapEm` 4 or 6
+and `search: full-band` do not move it. Owner rule (#575): byte identity proves only that nothing changed; a behaviour change is
+judged against the general rule (synthetic tests) and the approved targets (PR #461, HALCYON target mock), and the current corpus
+output is not an oracle.
+
+Rule. A mark-associated member name has a set of own drawn marks: the item's `planned:` mark (which also carries a baseline facet
+in `baseline-and-actual` comparison mode) and its `actual:` mark, when each exists. `missing-actual:` is an absence indicator, not
+an observation, and is not an own mark for reach (the Scene acceptance check accepts only `planned`, `actual`, `snapshot` hosts).
+1. End side: the end gap `maxEndGapEm * font_size` runs from the right edge of the rightmost own mark, not from the host. The
+   end candidate starts at that edge plus the declared gap. When no own mark ends past the host, nothing changes.
+2. Association: a completed name must be within the same reach (nearest-perimeter gap, two-dimensional) of at least one own mark.
+3. `hostPlacementId` names the own mark nearest the placed text (ties keep the requested host; `inside` keeps the requested
+   host), so the existing Scene acceptance check (`tests/acceptance/output/test_member_label_association.py`, host gap within two
+   em of the host it names) stays true without weakening.
+4. The default stays `maxEndGapEm = 2`; `search` is untouched. Start, above and below candidates keep the host anchor.
+
+Owned files: `src/chrona/presentation/layout/labels.py` (`place_member_name` gains `own_mark_right`; `MemberNameAssociation`
+gains `also_marks`), `src/chrona/presentation/layout/surface_member_labels.py` (the one call site collects own marks and picks
+the host), Spec 50 §3.2, and tests. No schema, Theme, View, Scene or adapter change.
+
+Tests (synthetic, no `examples/` input, `tests/support/synthetic_review.py`):
+- `tests/unit/chrona/presentation/layout/test_member_names_profile_knobs.py`-style unit tests on `place_member_name` /
+  `MemberNameAssociation` for the geometry (end gap from `own_mark_right`; association through `also_marks`).
+- `tests/integration/test_synthetic_surface_rules.py`: a project with a gate whose actual sits past its plan and a span whose
+  actual and baseline extend past the plan, rendered through a packaged bundle, asserts for every member name: no overlap with
+  any own mark, the name sits within `maxEndGapEm` of its last own mark, and with a smaller declared `maxEndGapEm` the name
+  is not placed detached beyond the reach (the reach still bounds detached text). A negative test pins the old rule by
+  running the same render with the reach measured from the host (monkeypatched `own_mark_right`) and asserting the old
+  behaviour violates the new assertion. Quick mutation check, stated in the PR: reverting the call site to pass no
+  `own_mark_right` makes the rule test fail.
+
+Evidence procedure (local, nothing derived is committed): regenerate with `python -m tools.regenerate_public_examples` and
+`python -m tools.derived_evidence` on the branch, list every changed scene JSON and SVG (`git status`, `git diff --stat`),
+then per changed slide diff the Scene primitives by id (bounds, text, selected rung, diagnostics) against main, classify each
+changed primitive (member label moved, suppressed label emitted, diagnostic gone or added, anything else), and explain each
+against the rule and against the PR #461 targets / HALCYON target mock. Then restore the derived files (`git checkout -- .`)
+before committing, since PRs carry source only and `derived-sync` regenerates on main. The PR body carries the table.
+
+Stop conditions: any changed primitive that is not a member-name position/suppression/diagnostic consequence of the rule; any
+name that ends up detached from every own mark by more than the reach; a new `W_LAYOUT_LABEL_OVERFLOW` or new suppression on a
+public slide; any slide that reads worse than its target. Then do not merge: report.
+
+Not in this slice: restoring `examples/attached-milestones` (the lead, after the PR, as I575-4), start-side measurement from the
+first own mark (symmetric, not needed by the observed case; the association through `also_marks` already lets a start name clear an
+early actual), closing #679, the acceptance review.
+
 ## Status
 
-I573-1 merged as #663 (`8c590276`): knobs, schema, tests; zero public slides changed. I573-2 (Spec 50 §3.2) is this change. Open for the
-owner: decision 3 (last-own-mark slip) and whether `maxEndGapEm` should be split from the association reach (review F1, A2).
+I573-1 merged as #663 (`8c590276`): knobs, schema, tests; zero public slides changed. I573-2 (Spec 50 §3.2) is this change. Decision 3 is taken by I679-1 (below, issue #679). Still open for the
+owner: whether `maxEndGapEm` should be split from the association reach (review F1, A2).
 
 ## Publication
 
