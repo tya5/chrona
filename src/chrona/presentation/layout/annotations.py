@@ -94,7 +94,7 @@ def resolve_annotation_anchor(annotation: AnnotationIntent, marks: Iterable[Comp
     if anchor.get("kind") != "object":
         raise ValueError("E_PRESENTATION_ANCHOR_UNSUPPORTED")
     object_id, facet, endpoint = anchor.get("id"), anchor.get("facet"), anchor.get("endpoint")
-    if not isinstance(object_id, str) or facet not in {"planned", "actual"} or endpoint not in {"start", "finish", "at", "body"}:
+    if not isinstance(object_id, str) or facet not in {"planned", "actual"} or endpoint not in {"start", "end", "finish", "at", "body"}:
         raise ValueError("E_PRESENTATION_ANCHOR_MISSING")
     candidates = [mark for mark in marks if mark.source_id == object_id and mark.facet == facet]
     if not candidates:
@@ -102,11 +102,11 @@ def resolve_annotation_anchor(annotation: AnnotationIntent, marks: Iterable[Comp
     mark = candidates[0]
     if endpoint == "start" and mark.start is None:
         raise ValueError("E_PRESENTATION_ANCHOR_MISSING")
-    if endpoint == "finish" and mark.end is None:
+    if endpoint in {"finish", "end"} and mark.end is None:
         raise ValueError("E_PRESENTATION_ANCHOR_MISSING")
     if endpoint == "at" and mark.at is None:
         raise ValueError("E_PRESENTATION_ANCHOR_MISSING")
-    return AnnotationAnchor(annotation.annotation_id, object_id, facet, endpoint, mark)
+    return AnnotationAnchor(annotation.annotation_id, object_id, facet, "finish" if endpoint == "end" else endpoint, mark)  # `end` aliases `finish`: the text is in Scene ids
 
 
 def project_annotation_box(annotation: AnnotationIntent, resolved: AnnotationAnchor, *, anchor_bounds: LabelRect,

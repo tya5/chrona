@@ -71,6 +71,6 @@ $defs:
     examples: [end]
     enum: [at, start, end]
   anchorEndpoint:
-    description: "Endpoint of an annotation anchor in a View: `start`, `finish`, `at` or `body`. Its span-end is spelled `finish` here and `end` in `dateEndpoint`; the alias between them is decided in design D4 (slice S4a)."
-    examples: [finish]
-    enum: [start, finish, at, body]
+    description: "Endpoint of an annotation anchor in a View: `start`, the span-end `end` (canonical, as in `dateEndpoint`) or its alias `finish` (what Views have always said; normalised to `finish` before layout because the text appears in Scene ids), `at`, or `body`."
+    examples: [end]
+    enum: [start, end, finish, at, body]

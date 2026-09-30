@@ -39,4 +39,4 @@ vocabularies:
     pointer: /allOf/1/properties/body/properties/annotations/items/properties/anchor/properties/endpoint
     owner: chrona.presentation.layout.annotations.resolve_annotation_anchor
     disposition: finite
-    accepted: [start, finish, at, body]
+    accepted: [start, end, finish, at, body]
