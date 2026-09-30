@@ -50,11 +50,11 @@ class CandidateVisualAdvances:
 
     @property
     def leading(self) -> float:
-        return geometry_sum(width + gap for side, _, width, gap in self.visuals if side == "leading")
+        return geometry_sum(width + gap for visual, _, width, gap in self.visuals if visual.side == "leading")
 
     @property
     def trailing(self) -> float:
-        return geometry_sum(width + gap for side, _, width, gap in self.visuals if side == "trailing")
+        return geometry_sum(width + gap for visual, _, width, gap in self.visuals if visual.side == "trailing")
 
 
 def reserve_text_visuals(*, typography_role: str, font_size: float,

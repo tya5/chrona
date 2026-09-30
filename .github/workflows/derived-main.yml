@@ -46,6 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      statuses: write
     steps:
       - name: Require successful derived gate on exact commit
         env:
@@ -54,3 +55,16 @@ jobs:
         run: |
           test "$GATE_RESULT" = "success"
           test "$GITHUB_SHA" = "$EXPECTED_SHA"
+      # A check run created by a dispatched workflow on this ref is not counted
+      # by a protected branch's push hook (proved on a disposable branch,
+      # #590 I590-3); a commit status of the same name is. Only the verified
+      # exact SHA is marked, and only after the step above succeeded.
+      - name: Publish the derived-ready commit status for the verified SHA
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: |
+          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$EXPECTED_SHA" \
+            -f state=success -f context=derived-ready \
+            -f description="derived-main passed on this exact commit" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"

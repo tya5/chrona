@@ -148,7 +148,10 @@ def prepare_candidate(root: Path, source_sha: str) -> tuple[str, bool]:
         ["git", "config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"],
         cwd=root, check=True,
     )
-    subprocess.run(["git", "commit", "-m", "Regenerate public derived evidence"], cwd=root, check=True)
+    subprocess.run(
+        ["git", "commit", "-m", "Regenerate public derived evidence"],
+        cwd=root, check=True, stdout=sys.stderr,
+    )
     candidate = subprocess.run(
         ["git", "rev-parse", "HEAD"], cwd=root, check=True, capture_output=True, text=True,
     ).stdout.strip()
