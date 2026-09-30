@@ -29,7 +29,7 @@ properties:
           required: [preferred]
           additionalProperties: false
           properties:
-            preferred: {enum: [chrona-output/visual/v0.5-baseline, chrona-output/visual/v0.6-svg, chrona-output/visual/v0.6-png, chrona-output/visual/v0.7-svg, chrona-output/visual/v0.7-png], description: Visual output profile preferred for this preset.}
+            preferred: {description: Visual output profile preferred for this preset., $ref: "urn:chrona:vocabulary-v0.1#/$defs/visualProfile"}
         members:
           type: object
           description: Resource references that make up this preset.

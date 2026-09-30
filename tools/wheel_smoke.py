@@ -48,6 +48,9 @@ def run() -> None:
     assert tuple(schema_validator("view-v0.28.schema.yaml").iter_errors({})), "view schema did not reach its part"
     common_date = validator_for_schema({"$ref": "urn:chrona:common-v0.1#/$defs/isoDate"})
     assert common_date.is_valid("2026-09-30") and not common_date.is_valid("not-a-date"), "common part not reachable"
+    vocabulary_profile = validator_for_schema({"$ref": "urn:chrona:vocabulary-v0.1#/$defs/visualProfile"})
+    assert (vocabulary_profile.is_valid("chrona-output/visual/v0.5-baseline")
+            and not vocabulary_profile.is_valid("chrona-output/visual/v9")), "vocabulary part not reachable"
     icons = builtin_preset_source_root("icons")
     for name in ("chrona-theme-starter-v2026-09-29.source.yaml",
                  "chrona-theme-starter-v2026-09-29.yaml",

@@ -927,6 +927,7 @@ KIND_COVERED_THROUGH = {
     "presentation-resource-foundation": "view",
     "revision-store-resource-reference": "automation-result",
     "schema-part-common": "project",
+    "schema-part-vocabulary": "render-context",
 }
 
 

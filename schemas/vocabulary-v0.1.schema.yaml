@@ -1,0 +1,20 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:vocabulary-v0.1"
+title: "Chrona Shared Vocabulary v0.1"
+description: >-
+  Finite vocabularies that more than one live schema declares, referenced as
+  `urn:chrona:vocabulary-v0.1#/$defs/<name>`. The part asserts nothing at its root. A definition is an
+  `enum` with no `type`, so a site that references it has the same dereferenced form as the inline enum
+  it replaced. Each definition is frozen once published: the inventory records a digest per definition
+  and a change is a new part version, never an edit. A context that accepts only part of a vocabulary
+  declares a named subset definition beside the full one, and a test proves the subset is contained in it.
+$defs:
+  visualProfile:
+    description: "Exact renderer-neutral visual capability profile."
+    examples: ["chrona-output/visual/v0.5-baseline"]
+    enum:
+      - chrona-output/visual/v0.5-baseline
+      - chrona-output/visual/v0.6-svg
+      - chrona-output/visual/v0.6-png
+      - chrona-output/visual/v0.7-svg
+      - chrona-output/visual/v0.7-png
