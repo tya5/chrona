@@ -97,7 +97,7 @@ properties:
             uniqueItems: true
           visualProfile:
             description: "Exact renderer-neutral visual capability profile."
-            enum: [chrona-output/visual/v0.5-baseline, chrona-output/visual/v0.6-svg, chrona-output/visual/v0.6-png, chrona-output/visual/v0.7-svg, chrona-output/visual/v0.7-png]
+            $ref: "urn:chrona:vocabulary-v0.1#/$defs/visualProfile"
           textMode: {description: "Text placement mode required for typeset targets.", const: positioned}
     allOf:
       - description: "SVG targets do not select a rasterizer or typesetter."
