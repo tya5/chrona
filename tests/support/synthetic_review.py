@@ -111,3 +111,79 @@ def render(directory: Path, source: Mapping[str, Any], *, presentation: Mapping[
         closure=draft.closure, snapshot_root=draft.asset_root, asset_root=draft.asset_root,
         scheduler=ReferenceScheduler(), renderer=V05SvgRenderer(), draft_auto_block=draft.auto_block))
 
+
+def find_node(layout: Mapping[str, Any], node_id: str) -> dict[str, Any]:
+    """The Layout Profile node with `node_id`, searched depth first."""
+    def visit(node: Mapping[str, Any]) -> Mapping[str, Any] | None:
+        if node.get("id") == node_id:
+            return node
+        return next((found for child in node.get("children", ()) if (found := visit(child))), None)
+    node = visit(layout["root"])
+    if node is None:
+        raise KeyError(node_id)
+    return node  # type: ignore[return-value]
+
+
+def _fix_size(parts: dict[str, dict[str, Any]], node_id: str, axis: str, size: int, token: str) -> None:
+    layout = parts["layout"]
+    layout["requiredThemeTokens"] = sorted({*layout["requiredThemeTokens"], token})
+    find_node(layout, node_id)[axis] = {"fixed": {"token": token}}
+    parts["theme"]["body"]["values"][token] = {"type": "number", "value": size}
+
+
+def fix_block(parts: dict[str, dict[str, Any]], node_id: str, block: int, *, token: str = "fixed-block") -> None:
+    """Give one Layout node a fixed block size from a new Theme token: a fixed host."""
+    _fix_size(parts, node_id, "blockSize", block, token)
+
+
+def fix_inline(parts: dict[str, dict[str, Any]], node_id: str, inline: int, *, token: str = "fixed-inline") -> None:
+    """Give one Layout node a fixed inline size from a new Theme token."""
+    _fix_size(parts, node_id, "inlineSize", inline, token)
+
+
+def with_balloon_notes(parts: dict[str, dict[str, Any]]) -> None:
+    """Let note boxes use the `tail` connector by giving their role a balloon container."""
+    theme = parts["theme"]["body"]
+    theme["values"]["balloon-container"] = {
+        "type": "annotationContainer", "value": {"outline": "balloon", "cornerRadius": 0.2, "tailBaseEm": 0.6}}
+    theme["roles"]["annotation-note-box"]["annotationContainer"] = "balloon-container"
+
+
+def with_note_rail(parts: dict[str, dict[str, Any]], width: int = 300) -> None:
+    """Make the Layout's `annotations` slot a rail of `width` that fills the block axis."""
+    fix_inline(parts, "annotations", width, token="note-rail-width")
+    find_node(parts["layout"], "annotations")["blockSize"] = "fill"
+
+
+_OBSTACLES = ["mark", "text", "label-visual", "dependency-route", "leader-route",
+              "annotation-box", "port", "rule"]
+
+
+def candidate(candidate_id: str, *, region: Mapping[str, Any] | None = None, connector: str = "tail",
+              max_positions: int = 1024, search_kind: str = "nearest-free") -> dict[str, Any]:
+    """One declared annotation candidate; the default region is the plot."""
+    search: dict[str, Any] = {"kind": search_kind}
+    if search_kind == "nearest-free":
+        search.update(maxPositions=max_positions, maxInlineEm=12)
+    return {"id": candidate_id, "region": dict(region or {"kind": "plot"}), "search": search,
+            "obstacles": {"classes": list(_OBSTACLES)}, "connector": {"kind": connector}}
+
+
+def add_notes(source: dict[str, Any], view: dict[str, Any], targets: Iterable[str],
+              candidates: Iterable[Mapping[str, Any]], *, words: int = 3, endpoint: str = "body") -> list[str]:
+    """Annotate each target object with a note offering the same declared candidates; return the note ids."""
+    source["annotations"] = {}
+    body = view["body"]
+    body["annotations"] = []
+    body["visibility"]["annotations"] = {"mode": "presentation", "marker": "numbered"}
+    ids = []
+    for index, target in enumerate(targets):
+        note_id = f"note-{index}"
+        ids.append(note_id)
+        source["annotations"][note_id] = {"kind": "note", "text": " ".join([f"Synthetic note {index} on {target}."] + ["and more words"] * words),
+                                          "anchor": {"object": target}}
+        body["annotations"].append({
+            "id": note_id, "purpose": "note", "projectAnnotation": note_id,
+            "anchor": {"kind": "object", "id": target, "facet": "planned", "endpoint": endpoint},
+            "candidates": [deepcopy(dict(item)) for item in candidates]})
+    return ids
