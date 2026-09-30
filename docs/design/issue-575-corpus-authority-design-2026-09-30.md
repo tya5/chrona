@@ -4,7 +4,7 @@
 
 ## Decisions
 
-1. **Restore `avionics-bustest` to `2wd`.** Its stated purpose is gone, and the README never claims the data was wrong. The fifteen HALCYON Contexts re-pin the Project, and the corpus evidence is regenerated and reviewed against the general rule and the approved design targets, not against yesterday's bytes. HALCYON tests that assert a position or count are re-derived from the rule they stand for; if a rule has no synthetic test yet, the synthetic test lands first.
+1. **Restore `avionics-bustest` to `2wd`.** Its stated purpose is gone, and the README never claims the data was wrong. The sixteen HALCYON Contexts re-pin the Project, and the corpus evidence is regenerated and reviewed against the general rule and the approved design targets, not against yesterday's bytes. HALCYON tests that assert a position or count are re-derived from the rule they stand for; if a rule has no synthetic test yet, the synthetic test lands first.
 2. **Restore the `attached-milestones` data after #573.** The knob decided there (the end-gap bound, possibly measured from the item's last own mark) is what lets the original data read correctly. If it does not, the README records why the example needs a declared value, and that value is set in YAML, never in data.
 3. **Synthetic fixtures for each core rule, with no `examples/` project.** A test support module builds a small project (tasks, milestones, dependencies, groups, an as-of date, actuals) as plain dictionaries in `tmp_path`, and renders it through a packaged preset copied by `chrona preset copy`. The mapping:
 

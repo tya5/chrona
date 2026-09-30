@@ -1,6 +1,6 @@
 # Implementation Plan — Corpus Used as Authority for the Core (#575)
 
-**Status:** In progress (I575-1 to I575-3 planned here; I575-4 and I575-5 wait for #573)  
+**Status:** In progress. Published: I575-1 (#665), I575-2 (#668); I575-3 in review; I575-4 and I575-5 wait for #573.  
 **Design:** [design](../../design/issue-575-corpus-authority-design-2026-09-30.md)  
 **Review:** [architecture review](../../reviews/current/issue-575-corpus-authority-architecture-review-2026-09-30.md)  
 **Depends on:** #573 (label behaviour knobs) for I575-4 only.
@@ -12,7 +12,7 @@ published `main`, and there is no separate design-plan file.
 ## Baseline (published `main`, verified 2026-09-30)
 
 - `examples/halcyon-1/project.yaml` `avionics-bustest` lag is `4wd` (`63f86e6a`,
-  made to satisfy the #467 chain row). All 15 contexts pin the Project as
+  made to satisfy the #467 chain row). All 16 contexts pin the Project as
   `example-v2` with `contentIdentity` `sha256:e196a21b...`.
 - `examples/attached-milestones/actual.yaml` was edited by `a3bd7c57` (#518).
 - Item 2 tests: the fixed-host shortage is asserted only under
@@ -72,19 +72,28 @@ The HALCYON tests stay as evidence and are not edited in this slice.
 
 ### I575-3 Restore `avionics-bustest` to `2wd`
 
-- Source change: `project.yaml` lag `4wd` to `2wd`; re-pin the 15 contexts to the
-  restored bytes (new token and `contentIdentity`); update the HALCYON tests that
-  hard-code the 4wd data (review findings 2 and 3), each re-derived from a
-  synthetic test that already exists or reduced to evidence.
-- Evidence: regenerate locally (`tools/regenerate_public_examples.py`) and read
-  the Scene/SVG diff against the general rules and the approved targets (PR #461,
-  HALCYON target mock). Expected: the `structure -> avionics -> bus-test` chain
-  no longer shares one lane on `02` (avionics' actual finish 2027-04-30 overlaps
-  the 2wd bus-test start 2027-04-29). This is a rule consequence, not a defect,
-  unless the diff shows a side effect. Generated files are not committed:
-  `derived-sync` regenerates them on `main`; locally `--check` shows exactly what
-  CI will regenerate.
-- A real core defect found here stops the slice and is reported.
+- Source change: `project.yaml` lag `4wd` to `2wd` (bytes identical to before
+  `63f86e6a`); re-pin the 16 contexts to the restored bytes (new token
+  `example-v3`, new `contentIdentity`); rewrite the three HALCYON tests that
+  hard-code the 4wd data (review finding 3) as evidence.
+- Evidence: regenerate locally (`tools/regenerate_public_examples.py --write`;
+  `--check` fails before that, which is what CI will regenerate) and read the
+  Scene/SVG diff against the general rules and the approved targets (PR #461,
+  HALCYON target mock). Generated files are not committed: `derived-sync`
+  regenerates them on `main`. Recorded result on `main` `224381e4`: only
+  `bus-test` moves, 13 to 16 px left on the ten slides that show it; lane
+  membership and row geometry are unchanged on every lane slide, and the
+  `structure -> avionics -> bus-test` chain still shares one lane on `02`, `11`
+  and `12` with no cross-item mark overlap. The 4wd premise (one lane impossible
+  at 2wd) no longer holds, so no knob is needed. Mission-brief slides (01, 08,
+  09) also shift about 0.4 px throughout (the content-sized Plan column text for
+  `bus-test` changes width), show the `bus-test` and `cdr` names that were
+  suppressed (4 suppressed, now 2), and move the `payload-delivery` name from the
+  bar end to its start; the shown names sit beside their bars inside their
+  rows. The end-to-start flip of `payload-delivery` follows a 0.2 px shift of
+  its bar (its old end-side name ended 2 px past the as-of rule); the exact
+  threshold was not isolated. It is recorded, not tuned.
+- A real core defect found here stops the slice and is reported. None was found.
 
 ### I575-4 Restore `attached-milestones` data (after #573)
 
