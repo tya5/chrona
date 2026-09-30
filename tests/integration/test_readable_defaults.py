@@ -12,31 +12,12 @@ import pytest
 import yaml
 
 from chrona.app.cli import main
+from tests.support.preset_checks import MINIMUM_BAND_CONTRAST, band_contrasts as _band_contrasts, primitives as _primitives
 
 ROOT = Path(__file__).resolve().parents[2]
 PUBLIC_SCENES = sorted(ROOT.glob("examples/*/generated/*.scene.json"))
 SHIPPED_THEMES = sorted(ROOT.glob("examples/*/themes/*.yaml")) + sorted(
     ROOT.glob("src/chrona/resources/presets/bundles/*/theme.yaml"))
-MINIMUM_BAND_CONTRAST = 1.15
-HALCYON = "examples/halcyon-1/project.yaml"
-HALCYON_ACTUAL = "examples/halcyon-1/actual.yaml"
-
-
-def _primitives(scene: dict) -> list[dict]:
-    found: list[dict] = []
-
-    def walk(value):
-        if isinstance(value, dict):
-            if isinstance(value.get("id"), str) and "paint" in value:
-                found.append(value)
-            for child in value.values():
-                walk(child)
-        elif isinstance(value, list):
-            for child in value:
-                walk(child)
-
-    walk(scene)
-    return found
 
 
 def _assert_marks_inside_timeline(surface: dict) -> None:
@@ -98,43 +79,6 @@ def _assert_member_end_gap(surface: dict) -> None:
             assert text["inline"] - mark_right <= 2 * label["textLayout"]["fontSize"] + 0.01, label["id"]
 
 
-def _rgb(colour: str) -> tuple[float, float, float]:
-    colour = colour.lstrip("#")
-    red, green, blue = (int(colour[index:index + 2], 16) / 255 for index in (0, 2, 4))
-    return red, green, blue
-
-
-def _composite(paint: dict, canvas: tuple[float, float, float]) -> tuple[float, float, float]:
-    opacity = float(paint.get("opacity", 1.0))
-    red, green, blue = (opacity * part + (1 - opacity) * ground for part, ground in zip(_rgb(paint["fill"]), canvas))
-    return red, green, blue
-
-
-def _luminance(rgb: tuple[float, float, float]) -> float:
-    linear = [part / 12.92 if part <= 0.04045 else ((part + 0.055) / 1.055) ** 2.4 for part in rgb]
-    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
-
-
-def _contrast(first: tuple[float, float, float], second: tuple[float, float, float]) -> float:
-    high, low = sorted((_luminance(first), _luminance(second)), reverse=True)
-    return (high + 0.05) / (low + 0.05)
-
-
-def _band_contrasts(scene: dict) -> list[tuple[str, str, float]]:
-    results = []
-    for surface in scene.get("surfaces", ()):
-        canvas = _rgb(surface.get("canvasPaint", {}).get("fill", "#FFFFFF"))
-        primitives = _primitives(surface)
-        axis = [item for item in primitives if item.get("visualRole") == "axis-band-decoration" and "fill" in item["paint"]]
-        bands = [item for item in primitives
-                 if item.get("visualRole") in {"group-band", "row-band"} and "fill" in item["paint"]]
-        for axis_band in axis:
-            for band in bands:
-                results.append((axis_band["id"], band["id"], _contrast(_composite(axis_band["paint"], canvas),
-                                                                    _composite(band["paint"], canvas))))
-    return results
-
-
 def _render_project(tmp_path: Path, monkeypatch, name: str, project: Path,
                     actual: Path | None = None, *extra: str) -> tuple[dict, Path]:
     scene_path = tmp_path / f"{name}.scene.json"
@@ -167,14 +111,6 @@ CATALOGUE_PRESETS = [entry["id"] for entry in yaml.safe_load(
     (ROOT / "src/chrona/resources/presets/library.yaml").read_text(encoding="utf-8"))["entries"]]
 
 
-@pytest.mark.parametrize("name", ["default", *CATALOGUE_PRESETS])
-def test_default_draft_and_presets_draw_a_distinct_axis_band(render_cache, name) -> None:
-    scene = render_cache.render(HALCYON, HALCYON_ACTUAL, None if name == "default" else name).scene
-    contrasts = _band_contrasts(scene)
-    assert any(axis_id.startswith("axis-band") for axis_id, _, _ in contrasts) or not contrasts, name
-    assert all(ratio >= MINIMUM_BAND_CONTRAST for _, _, ratio in contrasts), name
-
-
 def _source_terminal_shape(theme_path: Path) -> str | None:
     body = yaml.safe_load(theme_path.read_text(encoding="utf-8"))["body"]
     role = body.get("roles", {}).get("relationSourceTerminal")
@@ -197,24 +133,6 @@ def test_public_relations_do_not_start_with_their_target_arrowhead() -> None:
             start, end = primitive.get("markerStart"), primitive.get("markerEnd")
             if start and end:
                 assert start["outline"] != end["outline"], (scene_path.name, primitive["id"])
-
-
-def test_print_mono_separates_slips_and_as_of_in_greyscale(render_cache) -> None:
-    scene = render_cache.render(HALCYON, HALCYON_ACTUAL, "print-mono").scene
-    primitives = _primitives(scene)
-    # Lane Views put signed finish deltas in the member label, so they no
-    # longer emit separate variance-* paint primitives. Preserve the user
-    # visible slip check against those completed labels.
-    deltas = [item for item in primitives if item.get("purpose") == "finish-delta"]
-    assert not deltas  # finish deltas are composed into the lane member label
-    lane_labels = [item.get("text", "") for item in primitives
-                   if item.get("id", "").startswith("member-label:")]
-    assert any(text.endswith("d") and ("+" in text or "−" in text or "-" in text)
-               for text in lane_labels)
-    as_of = [item for item in primitives if item.get("visualRole") == "as-of" and "stroke" in item["paint"]]
-    grid = [item for item in primitives if item.get("purpose") == "axis-grid"]
-    assert as_of and all(item["paint"]["dash"] for item in as_of)
-    assert grid and not any(item["paint"].get("dash") for item in grid)
 
 
 def test_no_committed_scene_ships_an_inseparable_colour_scale() -> None:

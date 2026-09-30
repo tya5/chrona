@@ -21,9 +21,17 @@ Every slice PR: title ends with its slice id, body and commits say `Refs #657` (
 ### I657-2 Shared render cache and migration
 
 - **Files:** new `tests/support/render_cache.py`, new `tests/conftest.py` (fixture only), new `tests/integration/test_render_cache.py`, edits to `tests/integration/test_readable_defaults.py` (the split test), `tests/integration/test_axis_cells.py`.
-- **Change:** the design's section 2. Migrated tests are exactly those rendering HALCYON with actuals through a copied catalogue preset with unmodified input: the split monolith, `test_print_mono_separates_slips_and_as_of_in_greyscale`, and `test_axis_cells.py` (`test_catalogue_presets_draw_bounded_axis_cells…[*]` and `test_start_aligned_month_labels…`): 17 tests on 8 keys. `test_cli.py`, `test_project_generic_presets.py` and `test_render.py` are inspected and, per the design, are **not** migrated: their renders are modified input, no actuals, or in-process with other resources. The PR body states why for each file. `.test_durations` entries for the migrated tests are left as they are (relative weights only).
+- **Change:** the design's section 2. Migrated tests are exactly those rendering HALCYON with actuals through a copied catalogue preset with unmodified input: the split monolith, `test_print_mono_separates_slips_and_as_of_in_greyscale`, and `test_axis_cells.py` (`test_catalogue_presets_draw_bounded_axis_cells…[*]` and `test_start_aligned_month_labels…`): 17 tests on 8 keys (regrouped into 8 items by I657-2b). `test_cli.py`, `test_project_generic_presets.py` and `test_render.py` are inspected and, per the design, are **not** migrated: their renders are modified input, no actuals, or in-process with other resources. The PR body states why for each file. `.test_durations` entries for the migrated tests are left as they are (relative weights only).
 - **Tests:** the counter test (`max(render_counts().values()) <= 1`, three call sites of one key give count 1), an isolation test (mutating a returned `scene` and `warnings` does not change the next reader's), a key test (changing an input byte changes the key), a path-rejection test, an explicit determinism test (one combination rendered twice into separate directories, byte-equal). Focused run of the migrated tests with `-n 4` to prove cross-worker sharing.
 - **Acceptance:** row 2 through the counter test; before/after shard times in the PR body, and the render log of a local `-n 4` run of the migrated tests (each key once).
+- **Publication:** own PR, merged by me.
+
+### I657-2b One test item per preset render (test-only; added after measuring I657-2)
+
+- **Why:** the cache alone left consumers of one key on different shards (design section 2, review finding 2).
+- **Files:** new `tests/support/preset_checks.py` (the four rule checks and their colour helpers, moved verbatim), new `tests/integration/test_halcyon_preset_renders.py` (8 ids), `tests/integration/test_readable_defaults.py` and `tests/integration/test_axis_cells.py` (the moved tests removed, helpers imported).
+- **Coverage:** every removed test's assertions run in the grouped item for the same (default or preset) input; the rule-to-check map is in the module docstring and `_applicable`.
+- **Acceptance:** the shard times of the PR's CI run against I657-2's.
 - **Publication:** own PR, merged by me.
 
 ### I657-3a `corpus` marker and synthetic PR-path tests (no workflow change)
