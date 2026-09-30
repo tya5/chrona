@@ -118,3 +118,69 @@ def test_project_v06_rejects_removed_fixed_mode_without_a_compatibility_path():
     assert diagnostics[0].path == "/objects/task/schedule"
     assert "fixed-point" in diagnostics[0].message
     assert "fixed-span" in diagnostics[0].message
+
+
+_DATE_SCHEMA = {"type": "object", "properties": {"on": {"type": "string", "format": "date"}}}
+
+
+def _format_violation(value, schema=_DATE_SCHEMA):
+    validator = jsonschema.Draft202012Validator(schema, format_checker=jsonschema.FormatChecker(["date"]))
+    return explain_errors(validator.iter_errors(value))
+
+
+def test_format_violation_names_the_format_and_never_echoes_the_value():
+    secret = "2026-02-30-SECRET-VALUE"
+    violation = _format_violation({"on": secret})
+
+    assert violation.pointer == "/on"
+    assert violation.rule == "format"
+    assert violation.expected == ("YYYY-MM-DD calendar date",)
+    assert violation.actual_kind == "string"
+    assert violation.message == "expected a YYYY-MM-DD calendar date"
+    assert secret not in violation.message
+    assert "SECRET" not in repr(violation)
+
+
+def test_format_violation_on_an_impossible_calendar_date():
+    violation = _format_violation({"on": "2026-02-30"})
+
+    assert (violation.rule, violation.pointer) == ("format", "/on")
+    assert "2026-02-30" not in violation.message
+
+
+def test_unknown_format_falls_back_to_the_declared_name_without_the_value():
+    checker = jsonschema.FormatChecker()
+    checker.checks("shouty")(lambda value: not isinstance(value, str) or value.isupper())
+    schema = {"type": "string", "format": "shouty"}
+    validator = jsonschema.Draft202012Validator(schema, format_checker=checker)
+
+    violation = explain_errors(validator.iter_errors("quiet-value"))
+
+    assert violation.rule == "format"
+    assert violation.expected == ("value in format 'shouty'",)
+    assert violation.message == "expected a value in format 'shouty'"
+    assert "quiet-value" not in violation.message
+
+
+def test_format_is_reported_before_a_pattern_failure_at_the_same_pointer():
+    schema = {"type": "string", "pattern": r"^\d{4}-\d{2}-\d{2}$", "format": "date"}
+
+    assert _format_violation("2026-13-45", schema).rule == "format"
+    assert _format_violation("not a date", schema).rule == "format"
+
+
+def test_format_violation_is_kept_by_explain_all_errors_in_pointer_order():
+    validator = jsonschema.Draft202012Validator(
+        {"type": "object", "properties": {"a": {"type": "integer"}, "on": {"format": "date"}}},
+        format_checker=jsonschema.FormatChecker(["date"]),
+    )
+
+    violations = explain_all_errors(validator.iter_errors({"a": "x", "on": "2026-02-30"}))
+
+    assert [(item.pointer, item.rule) for item in violations] == [("/a", "type"), ("/on", "format")]
+
+
+def test_no_format_checker_means_no_format_violation():
+    # The schema factory installs no format checker yet, so a format annotation asserts nothing.
+    validator = jsonschema.Draft202012Validator(_DATE_SCHEMA)
+    assert list(validator.iter_errors({"on": "2026-02-30"})) == []
