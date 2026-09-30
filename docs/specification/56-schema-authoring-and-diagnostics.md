@@ -168,6 +168,17 @@ unsupported or fail closed rather than classify the change as additive. A
 version bump containing an incompatible schema change is outside this
 additive-only failure rule.
 
+Schemas check the shape of a date, not the calendar. Every ISO date field is
+declared with a pattern (`^\d{4}-\d{2}-\d{2}$`, the `isoDate` definition of the
+common schema part) and no schema asserts `format: date`; the validator factory
+installs no format checker. A string of the right shape that is not a calendar
+date (for example `2026-02-30`) is refused later by the consumer that reads it (Project
+reports `E_SCHEMA` "Expected ISO Date"), not by the schema. The `format` rule in
+§3 stays implemented for a schema that asserts a format. Making a schema refuse
+impossible dates, or narrowing the pattern (ASCII digits, no trailing newline), changes
+which inputs a schema accepts and moves a code, a stage and a message, so it follows the version bump
+rule above. The decision and its revisit condition are recorded in the #662 design (D2, D3).
+
 ## 4. Union policy and Project v0.6
 
 Use a discriminator only where a stable author-owned tag already expresses a
