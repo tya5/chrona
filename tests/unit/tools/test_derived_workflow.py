@@ -181,7 +181,6 @@ def test_sync_target_gate_validation_runs_before_checkout(tmp_path: Path) -> Non
     for event, ref, target in (
         ("push", "refs/heads/main", "main"),
         ("workflow_dispatch", "refs/heads/main", "main"),
-        ("workflow_dispatch", "refs/heads/derived-proof/smoke-1", "derived-proof/smoke-1"),
     ):
         code, output = run_validation(event, ref, sha)
         assert code == 0
@@ -191,9 +190,9 @@ def test_sync_target_gate_validation_runs_before_checkout(tmp_path: Path) -> Non
     for event, ref, invalid_sha in (
         ("push", "refs/heads/develop", sha),
         ("workflow_dispatch", "refs/heads/feature", sha),
+        # The disposable proof target was removed after the #590 proof: nothing but main is writable.
+        ("workflow_dispatch", "refs/heads/derived-proof/smoke-1", sha),
         ("workflow_dispatch", "refs/heads/derived-proof/Bad", sha),
-        ("workflow_dispatch", "refs/heads/derived-proof/name/extra", sha),
-        ("workflow_dispatch", "refs/heads/derived-proof/-bad", sha),
         ("workflow_dispatch", "refs/heads/main", "not-a-sha"),
     ):
         code, output = run_validation(event, ref, invalid_sha)
@@ -201,13 +200,13 @@ def test_sync_target_gate_validation_runs_before_checkout(tmp_path: Path) -> Non
         assert output == ""
 
 
-def test_pr_readiness_accepts_only_main_or_proof_base() -> None:
+def test_pr_readiness_accepts_only_a_main_base() -> None:
     import yaml
 
     workflow = yaml.load(Path(".github/workflows/conformance.yml").read_text(), Loader=yaml.BaseLoader)
     script = workflow["jobs"]["derived-ready"]["steps"][-1]["run"]
     guard = script.split("ready=false", 1)[0] + "fi\n"
-    for ref, expected in (("main", 0), ("derived-proof/smoke-1", 0),
+    for ref, expected in (("main", 0), ("derived-proof/smoke-1", 1),
                           ("feature/unsafe", 1), ("derived-proof/Bad", 1)):
         result = subprocess.run([_workflow_bash(), "-c", guard], capture_output=True, text=True,
                                 env={**os.environ, "EVENT_NAME": "pull_request", "PR_BASE_REF": ref,
