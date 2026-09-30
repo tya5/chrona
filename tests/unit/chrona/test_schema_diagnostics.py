@@ -184,3 +184,81 @@ def test_no_format_checker_means_no_format_violation():
     # The schema factory installs no format checker yet, so a format annotation asserts nothing.
     validator = jsonschema.Draft202012Validator(_DATE_SCHEMA)
     assert list(validator.iter_errors({"on": "2026-02-30"})) == []
+
+
+# --------------------------------------------------------------------------------------------
+# A union branch that only references a shared schema part explains like the inline branch (I662-S2f)
+# --------------------------------------------------------------------------------------------
+
+_INLINE_FR = {"type": "object", "required": ["fr"], "additionalProperties": False,
+              "properties": {"fr": {"type": "number", "exclusiveMinimum": 0, "maximum": 1000000}}}
+_PART_FR = {"description": "Positive fractional track size.", "$ref": "urn:chrona:common-v0.1#/$defs/fractionalTrack"}
+
+
+def _union_schema(branch):
+    return {"type": "object", "properties": {"width": {"oneOf": [
+        {"enum": ["content", "fill"]}, branch,
+        {"type": "object", "required": ["minmax"], "additionalProperties": False, "properties": {"minmax": {"type": "object"}}}]}}}
+
+
+def _violation_with_parts(schema, value):
+    from chrona.resources import validator_for_schema
+
+    return explain_errors(validator_for_schema(schema).iter_errors(value))
+
+
+def test_union_forms_follow_a_shared_part_reference_to_its_required_members():
+    inline = _violation_with_parts(_union_schema(_INLINE_FR), {"width": {"zz": 1}})
+    referenced = _violation_with_parts(_union_schema(_PART_FR), {"width": {"zz": 1}})
+
+    assert inline.message == "expected one permitted form: properties fr; properties minmax"
+    assert referenced == inline
+
+
+def test_a_referenced_branch_without_the_part_lookup_would_lose_its_form(monkeypatch):
+    # The mutation that proves the parity above is not vacuous: without the lookup the `$ref` branch has no `required`.
+    import chrona.schema_diagnostics as diagnostics
+
+    monkeypatch.setattr(diagnostics, "_shared_part_branch", lambda branch: branch)
+    message = _violation_with_parts(_union_schema(_PART_FR), {"width": {"zz": 1}}).message
+
+    assert message == "expected one permitted form: properties minmax"
+
+
+def test_a_local_reference_branch_is_left_as_written():
+    # Only a `urn:` part reference can be followed: the error carries no root document to resolve `#/...` against.
+    schema = _union_schema({"$ref": "#/$defs/fr"})
+    schema["$defs"] = {"fr": _INLINE_FR}
+
+    assert _violation_with_parts(schema, {"width": {"zz": 1}}).message == "expected one permitted form: properties minmax"
+
+
+def test_the_view_table_width_unions_explain_as_their_inlined_twin_did():
+    # Both `fr` branches of View's table-column width now reference `fractionalTrack`; the union messages must not move.
+    from jsonschema import Draft202012Validator
+    from referencing import Resource
+
+    from chrona.resources import dereferenced_schema, schema_document, schema_registry
+
+    def site(schema, pointer):
+        registry = schema_registry().with_resource(schema["$id"], Resource.from_contents(schema))
+        return Draft202012Validator({"$ref": f"{schema['$id']}#{pointer}"}, registry=registry)
+
+    adopted, twin = schema_document("view-v0.28.schema.yaml"), dereferenced_schema("view-v0.28.schema.yaml")
+    base = "/allOf/1/properties/body/properties/tableColumns/items/properties/width"
+    cases = (
+        (base, [{"zz": 1}, {}, 5, "bad", None, [], {"fr": 0}, {"fr": "x"}, {"fr": 2000000}, {"minmax": 1}, {"minmax": {"min": "content"}},
+                {"fr": 1, "extra": 1}, "content", {"fr": 2}]),
+        (base + "/oneOf/2/properties/minmax/properties/max", [{"zz": 1}, {}, 5, "bad", None, {"fr": 0}, {"fr": "x"}, {"fr": 1, "extra": 1}, "fill", {"fr": 3}]),
+    )
+    messages = set()
+    for pointer, values in cases:
+        for value in values:
+            results = []
+            for schema in (adopted, twin):
+                errors = list(site(schema, pointer).iter_errors(value))
+                results.append(("valid",) if not errors else (explain_errors(errors), explain_all_errors(errors)))
+            assert results[0] == results[1], (pointer, value)
+            if results[0] != ("valid",):
+                messages.add(results[0][0].message)
+    assert "expected one permitted form: properties fr; properties minmax" in messages

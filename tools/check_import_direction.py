@@ -34,6 +34,8 @@ ALLOWED: dict[str, set[str]] = {
     # The shared kernel depends on nothing but its own packaged schemas.
     "core": {"resources", "schema_diagnostics"},
     "resources": set(),
+    # The structural explainer reads a shared schema part to describe a union branch that only references it (I662).
+    "schema_diagnostics": {"resources"},
 }
 
 

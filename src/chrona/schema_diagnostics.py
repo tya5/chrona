@@ -160,6 +160,7 @@ def _union_forms(error: ValidationError) -> tuple[str, ...]:
     for branch in error.validator_value if isinstance(error.validator_value, Sequence) else ():
         if not isinstance(branch, Mapping):
             continue
+        branch = _shared_part_branch(branch)
         properties = branch.get("properties")
         required = branch.get("required")
         if isinstance(properties, Mapping):
@@ -179,6 +180,24 @@ def _union_forms(error: ValidationError) -> tuple[str, ...]:
         member = str(tuple(child.absolute_path)[-1])
         forms.append(f"{member}={_literal(child.validator_value)}")
     return tuple(dict.fromkeys(forms))
+
+
+def _shared_part_branch(branch: Mapping[str, Any]) -> Mapping[str, Any]:
+    """Describe a union branch that only references a shared schema part as the part's own definition.
+
+    A branch written `{$ref: urn:chrona:...}` exposes no `required` or `properties`, so the union message would lose the
+    form the definition declares; reading the target keeps the message the same as when the branch was written inline.
+    The branch's own sibling keywords win. A local reference or an unknown target is left as written.
+    """
+    reference = branch.get("$ref")
+    if not isinstance(reference, str) or not reference.startswith("urn:"):
+        return branch
+    from chrona.resources import resolve_schema_reference
+
+    resolved = resolve_schema_reference({}, reference)
+    if resolved is None:
+        return branch
+    return {**resolved[1], **{key: value for key, value in branch.items() if key != "$ref"}}
 
 
 def _quoted_member(message: str) -> str | None:

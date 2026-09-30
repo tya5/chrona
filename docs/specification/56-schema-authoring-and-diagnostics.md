@@ -94,7 +94,9 @@ The selection algorithm is deterministic:
    report that branch's most specific violation; an unknown tag reports the
    allowed tags once;
 4. for key-shape unions, report the most-specific matching form or a compact
-   ordered list of valid forms; do not invent a tag;
+   ordered list of valid forms; do not invent a tag. A union branch that only
+   references a shared schema part (`urn:chrona:` `$ref`) is described by the
+   part's definition, so moving a form into a part does not change the message;
 5. rank remaining errors by deepest instance pointer, keyword specificity,
    schema order, then message; and
 6. construct `SchemaViolation` from the selected error.
