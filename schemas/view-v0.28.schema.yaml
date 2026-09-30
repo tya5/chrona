@@ -110,8 +110,8 @@ allOf:
             additionalProperties: false
             properties:
               mode: {description: "Window derivation mode.", enum: [explicit, selected-planned, selected-comparison]}
-              start: {description: "Inclusive explicit ISO calendar start.", examples: ["2026-01-01"], type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
-              end: {description: "Exclusive explicit ISO calendar end.", examples: ["2026-02-01"], type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
+              start: {description: "Inclusive explicit ISO calendar start.", examples: ["2026-01-01"], $ref: "urn:chrona:common-v0.1#/$defs/isoDate"}
+              end: {description: "Exclusive explicit ISO calendar end.", examples: ["2026-02-01"], $ref: "urn:chrona:common-v0.1#/$defs/isoDate"}
               marginDays: {description: "Non-negative expansion around a derived window.", type: integer, minimum: 0}
           comparison:
             description: "Baseline, actual, and comparison-facet policy."
@@ -382,7 +382,7 @@ allOf:
                     endpoint: {enum: [start, finish, at, body]}
                     rowId: {type: string, minLength: 1}
                     itemId: {type: string, minLength: 1}
-                    date: {type: string, pattern: "^\\d{4}-\\d{2}-\\d{2}$"}
+                    date: {$ref: "urn:chrona:common-v0.1#/$defs/isoDate"}
                 placement:
                   description: "The old rung spelling: one flush side of the anchor. Kept valid alongside candidates (#466); an annotation uses exactly one spelling."
                   type: object

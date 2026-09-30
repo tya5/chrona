@@ -7,7 +7,7 @@ import pytest
 from chrona.presentation.contracts import ClosureIdentity, SchemaContractError, parse_contract, validate_icon_catalog_entry
 from chrona.presentation.contracts.resources import _compact_commands
 from chrona.presentation.model.closure import ClosureError, _selected_catalog_entries
-from chrona.resources import schema_document
+from chrona.resources import schema_document, validator_for_schema
 
 
 def _catalog(source: str = "assets/risk.png"):
@@ -79,10 +79,10 @@ def test_theme_asset_source_schema_accepts_one_kind_and_requires_declared_densit
                      "primitives": [{"kind": "rect", "x": 0, "y": 0, "inlineSize": 8, "blockSize": 1}],
                  }}},
     }
-    jsonschema.Draft202012Validator(schema).validate(source)
+    validator_for_schema(schema).validate(source)
     del source["body"]["patterns"]["hatch"]["densityBasisPoints"]
     with pytest.raises(jsonschema.ValidationError):
-        jsonschema.Draft202012Validator(schema).validate(source)
+        validator_for_schema(schema).validate(source)
 
 
 def test_icon_catalog_decodes_only_canonical_compact_geometry():

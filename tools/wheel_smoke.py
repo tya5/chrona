@@ -10,7 +10,10 @@ from unittest.mock import patch
 
 from chrona.app.cli import main
 from chrona.core.validation import validate_project
-from chrona.resources import SCHEMA_PARTS, builtin_preset_source_root, schema_document, schema_registry, schema_resource, schema_validator
+from chrona.resources import (
+    SCHEMA_PARTS, builtin_preset_source_root, schema_document, schema_registry, schema_resource, schema_validator,
+    validator_for_schema,
+)
 from chrona.resources import safe_load
 from chrona.scheduling.scheduler import schedule
 
@@ -43,6 +46,8 @@ def run() -> None:
         assert schema_resource(part).is_file(), part
         assert resolver.lookup(schema_document(part)["$id"]).contents["$id"] == schema_document(part)["$id"], part
     assert tuple(schema_validator("view-v0.28.schema.yaml").iter_errors({})), "view schema did not reach its part"
+    common_date = validator_for_schema({"$ref": "urn:chrona:common-v0.1#/$defs/isoDate"})
+    assert common_date.is_valid("2026-09-30") and not common_date.is_valid("not-a-date"), "common part not reachable"
     icons = builtin_preset_source_root("icons")
     for name in ("chrona-theme-starter-v2026-09-29.source.yaml",
                  "chrona-theme-starter-v2026-09-29.yaml",

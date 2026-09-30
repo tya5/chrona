@@ -1,15 +1,15 @@
 version: chrona/schema-inventory/v0.1
 schemas:
   - {file: axis-name-tables-v0.1.schema.yaml, kind: builtin-axis-name-tables, state: live, consumers: [src/chrona/presentation/model/axis_names.py]}
-  - {file: actual-intake-batch-v0.2.schema.yaml, kind: actual-intake-batch, state: live, consumers: [src/chrona/operational/resources.py]}
+  - {file: actual-intake-batch-v0.2.schema.yaml, kind: actual-intake-batch, state: live, consumers: [src/chrona/operational/command_engine.py]}
   - {file: actual-set-v0.2.schema.yaml, kind: actual-set, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: actual-set-v0.3.schema.yaml, removalSlice: I398-1}
   - {file: actual-set-v0.3.schema.yaml, kind: actual-set, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: authoring-workspace-v0.1.schema.yaml, kind: authoring-workspace, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
-  - {file: authoring-command-v0.1.schema.yaml, kind: authoring-command, state: live, consumers: [src/chrona/operational/authoring_commands.py]}
+  - {file: authoring-command-v0.1.schema.yaml, kind: authoring-command, state: live, consumers: [src/chrona/usecases/authoring_commands.py]}
   - {file: authoring-command-result-v0.1.schema.yaml, kind: authoring-command-result, state: live, consumers: [src/chrona/usecases/authoring_commands.py]}
-  - {file: automation-result-v0.1.schema.yaml, kind: automation-result, state: live, consumers: [src/chrona/operational/resources.py]}
+  - {file: automation-result-v0.1.schema.yaml, kind: automation-result, state: live, consumers: [src/chrona/operational/command_engine.py]}
   - {file: color-scheme-v0.2.schema.yaml, kind: color-scheme, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
-  - {file: command-request-v0.2.schema.yaml, kind: command-request, state: live, consumers: [src/chrona/operational/resources.py]}
+  - {file: command-request-v0.2.schema.yaml, kind: command-request, state: live, consumers: [src/chrona/app/cli.py]}
   - {file: layout-profile-v0.3.schema.yaml, kind: layout-profile, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: layout-profile-v0.4.schema.yaml, removalSlice: P358-1}
   - {file: layout-profile-v0.4.schema.yaml, kind: layout-profile, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: layout-profile-v0.5.schema.yaml, removalSlice: I2}
   - {file: layout-profile-v0.5.schema.yaml, kind: layout-profile, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: layout-profile-v0.7.schema.yaml, removalSlice: I3}
@@ -19,7 +19,37 @@ schemas:
   - {file: icon-catalog-v0.3.schema.yaml, kind: icon-catalog, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: icon-catalog-v0.4.schema.yaml, removalSlice: issue-496-v03-retirement-after-resource-migration}
   - {file: icon-catalog-v0.4.schema.yaml, kind: icon-catalog, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: theme-asset-source-v0.1.schema.yaml, kind: theme-asset-source, state: live, consumers: [src/chrona/presentation/icons/importer.py]}
-  - {file: presentation-resource-v0.1.schema.yaml, kind: presentation-resource-foundation, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
+  - file: presentation-resource-v0.1.schema.yaml
+    kind: presentation-resource-foundation
+    state: live
+    consumers: [src/chrona/resources/__init__.py]
+    frozenDefs:
+      resourceRef: "sha256:3d47eab8affaaecd9650c93ac4900c0ccac733c9f91eaace732d0567e1795855"
+      projectRef: "sha256:4e3fa0c82a7d795758fc7f4e8eefcfbbf8f6c697b9c45bb56d934e54db0424ea"
+      viewRef: "sha256:ff3bc14f7ef7c2be3430047f9f103e6bb0638eca4cc9eaa58aea9063cdcc5b5e"
+      styleRef: "sha256:fcd1dae6bcc694afa8be4cce085b5af4016baed97022c908ee4cee150510eada"
+      themeRef: "sha256:fd2ece00ba6cee3325c466b86d9d8b65ec4bfaf1518eea4dedc1a4a9b4f1d484"
+      sceneProfileRef: "sha256:e011a7e4334b71e684d4296cc5adb50e88d281035fa735d4fa140350a8a36609"
+      snapshotRef: "sha256:bfaba880acfd952f7506c248c78e7341daf4b4163a603fb76c9eed7b879886a5"
+      actualSetRef: "sha256:b51a9c956dc161b32639563fc403a8009ee8fa9d6e36d338e451b85285e6513a"
+  - file: common-v0.1.schema.yaml
+    kind: schema-part-common
+    state: live
+    consumers: [src/chrona/resources/__init__.py]
+    frozenDefs:
+      sha256Identity: "sha256:6ed99335d07cf1464ffaf44ded7d8b62f9bcae658d1d25910cfe1bc583cd48ff"
+      isoDate: "sha256:69643485a57361c8d27000bb89e1b89497713741d5ad3a3f9bf6e58e857610a6"
+      safeRelativePath: "sha256:962cf0b0e245529672544f160dbd569d7ea38ba536d84a3027d3f56cb54be89e"
+      relativeAddress: "sha256:acc924f42828661da2d10445f6f63ec26b642b15ac033c599aa924db878ae1b0"
+      relativeAddressDotTolerant: "sha256:874acd8c6a7fffbf77b4ead2a7a6c21f69b655d02254bff282a421d42df2be69"
+      fileName: "sha256:a1b5cf3d1c7596c7b621b616d9942b783385118fd96180b64efd1b9f619bf6db"
+      identifier: "sha256:a761979330983af432a5ddaf06a9803d107f6c88af53f97eb86b366d28160fff"
+      slug: "sha256:5314ca02047eed6347ea7005dc95f791f288ba225755003c7d5999937350b274"
+      portableName: "sha256:6e7313e2f5ae36c9164b08b23306a48ee00a196719e82a5854fef838c9f03e40"
+      gitRevision: "sha256:c7274772e5248a137c670dcd947fa158d4fed3238e0236e867fd414ec8271ff1"
+      revisionToken: "sha256:385bcc4ef9ce4e5d5f92063448ee05a1eefe7d7d6a7ab75574d4d9c494e0bbc8"
+      fractionalTrack: "sha256:eb154b39286928cddd4836c1d4432db753b63260fb70308503610ad74f9dc8ca"
+      license: "sha256:7ba5b38ac1e5af638171c8c0894d0f6952927200073f859b7a87c7fb33f55f44"
   - {file: presentation-preset-v0.1.schema.yaml, kind: presentation-preset, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: preset-library-v0.1.schema.yaml, kind: builtin-preset-library, state: transitioning, consumers: [src/chrona/usecases/preset_library.py], successor: preset-library-v0.2.schema.yaml, removalSlice: issue-496-preset-library-v02}
   - {file: preset-library-v0.2.schema.yaml, kind: builtin-preset-library, state: live, consumers: [src/chrona/usecases/preset_library.py]}
@@ -42,9 +72,14 @@ schemas:
   - {file: scene-v0.5.schema.yaml, kind: inspection-scene, state: transitioning, consumers: [src/chrona/presentation/scene/serialization.py], successor: scene-v0.6.schema.yaml, removalSlice: I449-1}
   - {file: scene-v0.6.schema.yaml, kind: inspection-scene, state: transitioning, consumers: [src/chrona/presentation/scene/serialization.py], successor: scene-v0.7.schema.yaml, removalSlice: issue-496-scene-v06-retirement}
   - {file: scene-v0.7.schema.yaml, kind: inspection-scene, state: live, consumers: [src/chrona/presentation/scene/serialization.py]}
-  - {file: revision-store-resource-ref-v0.1.schema.yaml, kind: revision-store-resource-reference, state: live, consumers: [src/chrona/operational/resources.py]}
+  - file: revision-store-resource-ref-v0.1.schema.yaml
+    kind: revision-store-resource-reference
+    state: live
+    consumers: [src/chrona/resources/__init__.py, src/chrona/extensions/profiles.py]
+    frozenDefs:
+      "#": "sha256:649e7dd88ccbb8fa9077aef30bde3979f38a1988b648d6b07d5dd53bb0fb69be"
   - {file: snapshot-ref-v0.2.schema.yaml, kind: snapshot-ref, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
-  - {file: store-config-v0.1.schema.yaml, kind: store-config, state: live, consumers: [src/chrona/operational/resources.py]}
+  - {file: store-config-v0.1.schema.yaml, kind: store-config, state: live, consumers: [src/chrona/operational/store_config.py]}
   - {file: summary-profile-v0.2.schema.yaml, kind: summary-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: theme-v0.5.schema.yaml, kind: theme, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: theme-v0.6.schema.yaml, removalSlice: I387-2}
   - {file: theme-v0.6.schema.yaml, kind: theme, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: theme-v0.8.schema.yaml, removalSlice: I384-1}

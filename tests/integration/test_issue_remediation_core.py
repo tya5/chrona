@@ -8,11 +8,11 @@ import os
 import subprocess
 import sys
 
-import jsonschema
 import yaml
 
 from chrona.scheduling.scheduler import schedule
 from chrona.core.validation import SCHEMA_PATH, validate_project
+from chrona.resources import validator_for_schema
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
@@ -129,5 +129,5 @@ def test_legacy_v01_extension_string_remains_schema_readable_but_not_evaluable()
     value = project({"a": fixed()}, calendar=False)
     value["extensions"] = ["legacy-package"]
     schema = yaml.safe_load(SCHEMA_PATH.read_text(encoding="utf-8"))
-    jsonschema.Draft202012Validator(schema).validate(value)
+    validator_for_schema(schema).validate(value)
     assert [item.id for item in validate_project(value)] == ["E_PACKAGE_RESOLUTION_REQUIRED"]

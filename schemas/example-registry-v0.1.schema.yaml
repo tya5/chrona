@@ -18,8 +18,7 @@ properties:
       additionalProperties: false
       properties:
         id:
-          type: string
-          pattern: "^[a-z][a-z0-9-]*$"
+          $ref: "urn:chrona:common-v0.1#/$defs/slug"
           description: Identifier accepted by `chrona init --example`.
           examples: [halcyon-1]
         path:

@@ -45,8 +45,7 @@ $defs:
   name:
     description: "Portable identifier component used in a set, alias, or entry name."
     examples: [fixture]
-    type: string
-    pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*$"
+    $ref: "urn:chrona:common-v0.1#/$defs/portableName"
   glyph:
     description: "A positive viewport and ordered source path parts in the supported SVG path subset."
     type: object

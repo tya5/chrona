@@ -18,6 +18,7 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents
 RESOURCES = files("chrona.resources")
 SCHEMAS = (
     "axis-name-tables-v0.1.schema.yaml",
+    "common-v0.1.schema.yaml",
     "project-v0.7.schema.yaml",
     "profile-v0.3.schema.yaml",
     "revision-store-resource-ref-v0.1.schema.yaml",

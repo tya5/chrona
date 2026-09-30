@@ -19,8 +19,7 @@ properties:
       additionalProperties: false
       properties:
         id:
-          type: string
-          pattern: "^[a-z][a-z0-9-]*$"
+          $ref: "urn:chrona:common-v0.1#/$defs/slug"
           description: Stable lowercase identifier for this preset.
           examples: [technical-print]
         gallerySet: {type: string, minLength: 1, description: Label that groups this preset's evidence in gallery pages; it selects no resource and has no runtime effect.}
@@ -49,13 +48,11 @@ properties:
               items: {$ref: "#/$defs/iconCatalog"}
 $defs:
   address:
-    type: string
-    pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"
+    $ref: "urn:chrona:common-v0.1#/$defs/safeRelativePath"
     description: Relative resource address that excludes dot and dot-dot path segments.
     examples: [bundles/technical-print/theme.yaml]
   identity:
-    type: string
-    pattern: "^sha256:[0-9a-f]{64}$"
+    $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"
     description: SHA-256 content identity written as a lowercase hexadecimal digest.
     examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
   view:
@@ -115,8 +112,7 @@ $defs:
     additionalProperties: false
     properties:
       id:
-        type: string
-        pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*$"
+        $ref: "urn:chrona:common-v0.1#/$defs/portableName"
         description: Stable icon catalog identifier.
         examples: [chrona-theme-starter]
       kind: {const: icon-catalog, description: Resource kind discriminator.}

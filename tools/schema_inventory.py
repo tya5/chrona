@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import argparse
 from copy import deepcopy
+import hashlib
+import json
 from pathlib import Path
 import re
 from typing import Any, Iterator
@@ -11,13 +13,22 @@ from referencing import Registry, Resource
 from referencing.exceptions import Unresolvable
 from referencing.jsonschema import DRAFT202012
 
-from chrona.resources import safe_load, schema_registry
+from chrona.resources import SCHEMA_PARTS, safe_load, schema_registry
 
 
 SCHEMA_SUFFIXES = (".schema.yaml", ".schema.json")
 STATES = frozenset({"live", "transitioning"})
 EVOLUTION_BASELINE = {"view": (0, 28), "layout-profile": (0, 9), "project": (0, 7)}
 _VERSION = re.compile(r"v(\d+)\.(\d+)")
+_ANNOTATIONS = frozenset({"title", "description", "examples", "default", "deprecated", "readOnly", "writeOnly", "$comment"})
+_SCHEMA_VALUED = frozenset({
+    "items", "additionalProperties", "contains", "not", "if", "then", "else", "propertyNames",
+    "unevaluatedItems", "unevaluatedProperties", "contentSchema",
+})
+_SCHEMA_LISTS = frozenset({"allOf", "anyOf", "oneOf", "prefixItems"})
+_SCHEMA_MAPS = frozenset({"properties", "patternProperties", "dependentSchemas", "$defs"})
+_DIGEST = re.compile(r"sha256:[0-9a-f]{64}")
+ROOT_DEFINITION = "#"
 
 
 class SchemaInventoryError(ValueError):
@@ -134,6 +145,100 @@ def validate_version_evolution(schema_root: Path, entries: tuple[dict[str, Any],
             raise SchemaInventoryError(f"E_SCHEMA_ADDITIVE_BUMP:{entry['file']}:{successor}")
 
 
+def _without_annotations(schema: Any) -> Any:
+    """Drop annotation keywords from a schema, leaving property names and data values alone."""
+    if not isinstance(schema, dict):
+        return schema
+    out: dict[str, Any] = {}
+    for key, value in schema.items():
+        if key in _ANNOTATIONS:
+            continue
+        if key in _SCHEMA_VALUED:
+            out[key] = (
+                [_without_annotations(item) for item in value] if isinstance(value, list) else _without_annotations(value)
+            )
+        elif key in _SCHEMA_LISTS and isinstance(value, list):
+            out[key] = [_without_annotations(item) for item in value]
+        elif key in _SCHEMA_MAPS and isinstance(value, dict):
+            out[key] = {name: _without_annotations(item) for name, item in value.items()}
+        else:
+            out[key] = value
+    return out
+
+
+def definition_digest(definition: Any) -> str:
+    """Canonical digest of one definition's meaning; annotations (wording) do not count."""
+    text = json.dumps(_without_annotations(definition), sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def validate_frozen_definitions(schema_root: Path, entries: tuple[dict[str, Any], ...]) -> None:
+    """Fail when a published part definition changed or vanished, or a part has no frozen digests.
+
+    A part is frozen once published: changing or removing a definition is a new part version.
+    Adding a definition is allowed, so only the digests the entry records are checked.
+    """
+    part_entries = {entry["file"]: entry for entry in entries if entry["file"] in SCHEMA_PARTS}
+    for name in SCHEMA_PARTS:
+        entry = part_entries.get(name)
+        if entry is None or entry["state"] != "live" or not entry.get("frozenDefs"):
+            raise SchemaInventoryError(f"E_SCHEMA_PART_UNFROZEN:{name}")
+    for entry in entries:
+        frozen = entry.get("frozenDefs")
+        if frozen is None:
+            continue
+        if entry["file"] not in SCHEMA_PARTS:
+            raise SchemaInventoryError(f"E_SCHEMA_INVENTORY_FROZEN_SCOPE:{entry['file']}")
+        schema = safe_load((schema_root / entry["file"]).read_bytes())
+        definitions = schema.get("$defs") if isinstance(schema, dict) else None
+        for def_name, digest in frozen.items():
+            # "#" freezes the whole document, for a part that is one schema with no `$defs`.
+            target = schema if def_name == ROOT_DEFINITION else (definitions or {}).get(def_name)
+            if not isinstance(target, dict):
+                raise SchemaInventoryError(f"E_SCHEMA_PART_FROZEN:{entry['file']}:{def_name}:removed")
+            if definition_digest(target) != digest:
+                raise SchemaInventoryError(f"E_SCHEMA_PART_FROZEN:{entry['file']}:{def_name}:changed")
+
+
+def _version_constants(schema: Any) -> Iterator[str]:
+    """The document `version` strings a schema pins; a loader may select the schema by one of them."""
+    if isinstance(schema, dict):
+        version = (schema.get("properties") or {}).get("version") if isinstance(schema.get("properties"), dict) else None
+        if isinstance(version, dict) and isinstance(version.get("const"), str):
+            yield version["const"]
+        for key, value in schema.items():
+            if key != "properties":
+                yield from _version_constants(value)
+    elif isinstance(schema, list):
+        for item in schema:
+            yield from _version_constants(item)
+
+
+def validate_consumers(repo_root: Path, schema_root: Path, entries: tuple[dict[str, Any], ...]) -> None:
+    """Every consumer of a live entry exists and names the schema file, its kind, a version it pins, or a part it resolves."""
+    part_ids: dict[str, str] = {}
+    for name in SCHEMA_PARTS:
+        part = safe_load((schema_root / name).read_bytes())
+        if isinstance(part, dict) and isinstance(part.get("$id"), str):
+            part_ids[part["$id"]] = name
+    for entry in entries:
+        if entry["state"] != "live":
+            continue
+        schema = safe_load((schema_root / entry["file"]).read_bytes())
+        names = {entry["file"], entry["kind"], *_version_constants(schema)}
+        for reference in _references(schema):
+            part = part_ids.get(reference.partition("#")[0])
+            if part is not None:
+                names.add(part)
+        for consumer in entry["consumers"]:
+            path = repo_root / consumer
+            if not path.is_file():
+                raise SchemaInventoryError(f"E_SCHEMA_INVENTORY_CONSUMER_MISSING:{entry['file']}:{consumer}")
+            text = path.read_text(encoding="utf-8")
+            if not any(name in text for name in names):
+                raise SchemaInventoryError(f"E_SCHEMA_INVENTORY_CONSUMER_STALE:{entry['file']}:{consumer}")
+
+
 def _references(node: Any) -> Iterator[str]:
     if isinstance(node, dict):
         for key, value in node.items():
@@ -201,12 +306,20 @@ def load_inventory(path: Path) -> tuple[dict[str, Any], ...]:
                 raise SchemaInventoryError("E_SCHEMA_INVENTORY_TRANSITION")
         elif "successor" in entry or "removalSlice" in entry:
             raise SchemaInventoryError("E_SCHEMA_INVENTORY_LIVE")
+        frozen = entry.get("frozenDefs")
+        if frozen is not None and (
+            state != "live" or not isinstance(frozen, dict) or not frozen
+            or not all(isinstance(key, str) and isinstance(value, str) and _DIGEST.fullmatch(value) for key, value in frozen.items())
+        ):
+            raise SchemaInventoryError("E_SCHEMA_INVENTORY_FROZEN")
         seen.add(name)
         normalized.append(entry)
     return tuple(normalized)
 
 
-def validate_inventory(schema_root: Path, inventory_path: Path) -> tuple[dict[str, Any], ...]:
+def validate_inventory(
+    schema_root: Path, inventory_path: Path, repo_root: Path | None = None,
+) -> tuple[dict[str, Any], ...]:
     entries = load_inventory(inventory_path)
     registered = {entry["file"] for entry in entries}
     actual = schema_files(schema_root)
@@ -225,6 +338,10 @@ def validate_inventory(schema_root: Path, inventory_path: Path) -> tuple[dict[st
         raise SchemaInventoryError(f"E_SCHEMA_INVENTORY_DUPLICATE_LIVE:{duplicates}")
     validate_version_evolution(schema_root, entries)
     validate_schema_references(schema_root, entries)
+    if all((schema_root / name).is_file() for name in SCHEMA_PARTS):
+        validate_frozen_definitions(schema_root, entries)
+    if repo_root is not None:
+        validate_consumers(repo_root, schema_root, entries)
     return entries
 
 
@@ -233,7 +350,7 @@ def main() -> None:
     parser.add_argument("--schemas", type=Path, default=Path("schemas"))
     parser.add_argument("--inventory", type=Path, default=Path("schemas/schema-inventory-v0.1.yaml"))
     args = parser.parse_args()
-    validate_inventory(args.schemas, args.inventory)
+    validate_inventory(args.schemas, args.inventory, repo_root=args.schemas.resolve().parent)
 
 
 if __name__ == "__main__":

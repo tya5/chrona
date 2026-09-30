@@ -29,7 +29,7 @@ allOf:
             properties:
               sourceKind: {description: "Authoring ingress that created this normalized catalog.", enum: [iconify-json, theme-asset-source]}
               sourcePrefix: {description: "Original Iconify collection prefix; present only for Iconify JSON ingress.", $ref: "#/$defs/name"}
-              sourceContentIdentity: {description: "SHA-256 of the exact supplied local source bytes.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+              sourceContentIdentity: {description: "SHA-256 of the exact supplied local source bytes.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
               sourceVersion: {description: "Optional upstream collection version supplied by the local source.", type: string, minLength: 1}
               lastModified: {description: "Optional upstream collection modification marker.", type: string, minLength: 1}
               license:
@@ -71,8 +71,7 @@ $defs:
   name:
     description: "Portable identifier component used in a catalog set, alias, or entry name."
     examples: [material-symbols]
-    type: string
-    pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*$"
+    $ref: "urn:chrona:common-v0.1#/$defs/portableName"
   viewport:
     description: "Positive source-unit dimensions used to preserve aspect ratio."
     type: object
@@ -238,4 +237,4 @@ $defs:
     additionalProperties: false
     properties:
       address: {description: "Relative traversal-free catalog asset address.", examples: [icons/sample.png], type: string, minLength: 1, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$"}
-      contentIdentity: {description: "SHA-256 of the exact raster bytes.", examples: ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+      contentIdentity: {description: "SHA-256 of the exact raster bytes.", examples: ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}

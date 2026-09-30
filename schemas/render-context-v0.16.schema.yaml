@@ -126,8 +126,7 @@ $defs:
   sha256:
     description: "SHA-256 identity of one immutable declared byte payload."
     examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
-    type: string
-    pattern: "^sha256:[0-9a-f]{64}$"
+    $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"
   fontLocator:
     description: "A safe Context-relative or registered package resource location."
     type: object
@@ -136,7 +135,7 @@ $defs:
     properties:
       provider: {description: "Local materialized Context assets or a registered package provider.", examples: [context, package], enum: [context, package]}
       identity: {description: "Required immutable package-provider identity.", examples: [chrona.resources], type: string, minLength: 1}
-      address: {description: "Safe relative resource address.", examples: [font_metrics/acme-regular.json], type: string, minLength: 1, pattern: "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"}
+      address: {description: "Safe relative resource address.", examples: [font_metrics/acme-regular.json], minLength: 1, $ref: "urn:chrona:common-v0.1#/$defs/relativeAddressDotTolerant"}
     allOf:
       - description: "Package locators identify the registered provider."
         examples: [{provider: package, identity: chrona.resources, address: font_metrics/acme-regular.json}]
@@ -194,7 +193,7 @@ $defs:
       store: {description: "Provider-specific Store identity.", type: object}
       address: {description: "Store-relative resource address.", type: string, minLength: 1}
       revision: {description: "Provider-specific immutable revision.", type: object}
-      contentIdentity: {description: "Optional SHA-256 identity of the resource bytes.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+      contentIdentity: {description: "Optional SHA-256 identity of the resource bytes.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
   projectRef: {description: "Pinned reference constrained to a Project resource.", examples: [{id: project, kind: project, store: {}, address: projects/main.yaml, revision: {}}], allOf: [{$ref: "#/$defs/reference"}, {description: "Requires the referenced resource kind to be Project.", properties: {kind: {const: project}}}]}
   viewRef: {description: "Pinned reference constrained to a View resource.", examples: [{id: view, kind: view, store: {}, address: views/main.yaml, revision: {}}], allOf: [{$ref: "#/$defs/reference"}, {description: "Requires the referenced resource kind to be View.", properties: {kind: {const: view}}}]}
   themeRef: {description: "Pinned reference constrained to a Theme resource.", examples: [{id: theme, kind: theme, store: {}, address: themes/main.yaml, revision: {}}], allOf: [{$ref: "#/$defs/reference"}, {description: "Requires the referenced resource kind to be Theme.", properties: {kind: {const: theme}}}]}
