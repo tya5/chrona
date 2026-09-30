@@ -26,6 +26,24 @@ def test_annotation_resolves_declared_actual_finish_without_plan_substitution():
     assert resolved.mark.end == date(2027, 1, 10)
 
 
+def test_end_is_an_alias_of_finish_on_a_span_and_resolves_to_the_same_anchor():
+    # I662 S4a: the endpoint text reaches Scene ids, so `end` must resolve to exactly what `finish` resolves to.
+    marks = [ComparisonMark("ship", "planned", "span", start=date(2027, 1, 1), end=date(2027, 1, 8)),
+             ComparisonMark("ship", "actual", "span", start=date(2027, 1, 2), end=date(2027, 1, 10))]
+    for facet in ("planned", "actual"):
+        finish = resolve_annotation_anchor(annotation(anchor={"kind": "object", "id": "ship", "facet": facet, "endpoint": "finish"}), marks)
+        end = resolve_annotation_anchor(annotation(anchor={"kind": "object", "id": "ship", "facet": facet, "endpoint": "end"}), marks)
+        assert end == finish and end.endpoint == "finish"
+
+
+def test_end_on_a_point_mark_fails_like_finish_does():
+    marks = [ComparisonMark("ship", "planned", "point", at=date(2027, 1, 8))]
+    for endpoint in ("finish", "end"):
+        with pytest.raises(ValueError, match="E_PRESENTATION_ANCHOR_MISSING"):
+            resolve_annotation_anchor(annotation(anchor={"kind": "object", "id": "ship", "facet": "planned", "endpoint": endpoint}), marks)
+    assert resolve_annotation_anchor(annotation(anchor={"kind": "object", "id": "ship", "facet": "planned", "endpoint": "at"}), marks).endpoint == "at"
+
+
 def test_annotation_rejects_missing_actual_and_non_object_anchors():
     marks = [ComparisonMark("ship", "planned", "span", start=date(2027, 1, 1), end=date(2027, 1, 8))]
     with pytest.raises(ValueError, match="E_PRESENTATION_ANCHOR_MISSING"):

@@ -431,6 +431,25 @@ def test_structured_temporal_and_annotation_presentation_is_normalized():
     assert value.annotations[0].number == 1
 
 
+def test_annotation_anchor_end_is_normalized_to_finish_at_ingress():
+    # I662 S4a: `end` aliases `finish` in a View anchor and is normalised once, because the endpoint text appears in Scene ids.
+    projection = ReviewProjection((ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 5)}, None, None, ()),),
+                                  (date(2026, 1, 1), date(2026, 1, 5)), (), ())
+
+    def annotation(endpoint):
+        return {"id": endpoint, "purpose": "note", "anchor": {"kind": "object", "id": "a", "facet": "planned", "endpoint": endpoint},
+                "placement": {"side": "end", "alignment": "center"}, "text": "Watch this"}
+
+    view = {"body": {"tableColumns": (), "visibility": {"labels": {"members": True}, "relations": "none", "annotations": "presentation"},
+                     "axis": {"tiers": [{"unit": "week", "every": 1, "role": "labels", "label": {"form": "iso-week", "align": "start", "overflow": "visible-overflow", "orientation": "horizontal"}}]},
+                     "timePresentation": {"asOf": "hidden", "calendarClosed": False}, "annotationPresentation": "numbered",
+                     "annotations": [annotation(endpoint) for endpoint in ("end", "finish", "start", "at", "body")]}}
+    value = normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view),
+                                          actual_set={"body": {"asOf": "2026-01-03"}}, summary=EMPTY_SUMMARY)
+    assert [item.anchor["endpoint"] for item in value.annotations] == ["finish", "finish", "start", "at", "body"]
+    assert [item.anchor["endpoint"] for item in value.annotations if item.annotation_id == "end"] == ["finish"]
+
+
 def test_typed_summary_figures_resolve_projection_and_actual_facts():
     projection = ReviewProjection((
         ReviewItem("a", "A", "point", {"at": date(2026, 2, 4)}, {"at": date(2026, 2, 5)}, None, ()),

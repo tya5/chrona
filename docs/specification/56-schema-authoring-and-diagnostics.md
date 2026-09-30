@@ -181,6 +181,13 @@ impossible dates, or narrowing the pattern (ASCII digits, no trailing newline), 
 which inputs a schema accepts and moves a code, a stage and a message, so it follows the version bump
 rule above. The decision and its revisit condition are recorded in the #662 design (D2, D3).
 
+Adding a value to an existing `enum` is an in-place widening when every existing resource
+stays valid and behaves the same and the consuming code handles the new value. It is not an
+optional-property insertion, so the mechanical predecessor/successor check above does not apply; the equivalence gate
+lists it as a deliberate delta. View v0.28's annotation anchor `endpoint` gained `end` this way: `end` is the
+canonical spelling of a span's end (as in a Project `endpointRef`) and `finish` its alias, and Layout normalises `end`
+to `finish` before any identifier is built, so the two spellings produce the same Scene.
+
 ## 4. Union policy and Project v0.6
 
 Use a discriminator only where a stable author-owned tag already expresses a

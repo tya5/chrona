@@ -474,7 +474,7 @@ def test_a_reference_in_the_table_format_union_changes_no_diagnostic():
 
 PROJECT = "project-v0.7.schema.yaml"
 DATE_ENDPOINTS = ["at", "start", "end"]
-ANCHOR_ENDPOINTS = ["start", "finish", "at", "body"]
+ANCHOR_ENDPOINTS = ["start", "end", "finish", "at", "body"]
 
 
 def test_endpoint_vocabularies_are_the_published_values_in_order():
@@ -483,13 +483,18 @@ def test_endpoint_vocabularies_are_the_published_values_in_order():
 
 
 def test_the_two_endpoint_vocabularies_overlap_exactly_where_d4_says():
-    # Design D4 / slice S4a: the span-end is `end` in a Project and `finish` in a View, and `body` exists only on an
-    # anchor. This test records the relation TODAY; S4a adds `end` to the anchor vocabulary (a deliberate digest update
-    # or a new definition) and then `dateEndpoint` becomes a subset of `anchorEndpoint`: update this test with it.
+    # Design D4 / slice S4a: the span-end is `end` (canonical) and `finish` (alias) in a View anchor, `end` in a Project,
+    # and `body` exists only on an anchor. S4a added `end` to the anchor vocabulary, so the Project vocabulary is a subset.
     date, anchor = set(DATE_ENDPOINTS), set(ANCHOR_ENDPOINTS)
-    assert date & anchor == {"at", "start"}
-    assert date - anchor == {"end"} and anchor - date == {"finish", "body"}
-    assert not date <= anchor, "S4a has not landed: `end` is not an accepted View anchor endpoint yet"
+    assert date <= anchor
+    assert anchor - date == {"finish", "body"}
+
+
+def test_end_widens_the_anchor_endpoint_to_a_superset_of_the_project_endpoints():
+    assert [value for value in _defs()["dateEndpoint"]["enum"] if value not in _defs()["anchorEndpoint"]["enum"]] == []
+    validator = _site_validator(VIEW, _sites(VIEW, "anchorEndpoint")[0])
+    assert validator.is_valid("end") and validator.is_valid("finish")
+    assert not validator.is_valid("End") and not validator.is_valid("finish ")
 
 
 @pytest.mark.parametrize(("name", "definition", "count"), [(PROJECT, "dateEndpoint", 1), (VIEW, "anchorEndpoint", 1)])

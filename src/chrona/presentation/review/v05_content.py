@@ -223,7 +223,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         return text
 
     def _annotation(index: int, annotation: Mapping[str, Any]) -> AnnotationIntent:
-        anchor = {str(key): str(value) for key, value in annotation["anchor"].items()}
+        anchor = {str(key): ("finish" if key == "endpoint" and value == "end" else str(value)) for key, value in annotation["anchor"].items()}  # `end` aliases `finish` (I662 S4a)
         purpose = str(annotation["purpose"])
         number = index + 1 if annotation_numbered else None
         content = _annotation_text(annotation)

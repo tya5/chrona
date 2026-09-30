@@ -660,7 +660,7 @@ def annotation_anchor_bounds(mark: ComparisonMark, endpoint: str, row: RowPlacem
                               scale: ScalePlacement) -> LabelRect:
     if endpoint == "start":
         at = mark.start
-    elif endpoint == "finish":
+    elif endpoint in {"finish", "end"}:
         at = mark.end
     elif endpoint == "at":
         at = mark.at

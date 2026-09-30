@@ -107,4 +107,4 @@ schemas:
       tableColumnScalarFormat: "sha256:032cc0a5d0ec7003e96fdcee9612a8386ad7b210a2384bfec4c9784d73d1332b"
       summaryMetricFormat: "sha256:8175fade1931dc061668e081a3e315d65b1f57ea349abaff0d239cd9b8307e9f"
       dateEndpoint: "sha256:810a101b6fa57c83ae9456e6351bbf4111a4d52930701187df91cdf1011be451"
-      anchorEndpoint: "sha256:6eb5f5a2aa02769123efb8fbaf6ae18aaf6e894621fafe6666c477f23b03eb29"
+      anchorEndpoint: "sha256:363fdf1525d49d68653a6782cb42322dc5053687b671c5e541ff9a125fd3c34f"

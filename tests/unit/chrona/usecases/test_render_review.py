@@ -127,6 +127,38 @@ def test_render_review_renders_a_closure_without_the_cli():
     assert {"project", "view", "layout-profile"} <= rendered.read_inputs
 
 
+def test_end_and_finish_anchor_endpoints_render_byte_identical_scenes():
+    # I662 S4a: `end` is the span-end's canonical anchor spelling and `finish` its alias; the endpoint text reaches Layout ids
+    # and port choice, so the two spellings must give the same Scene bytes and the same SVG. The controller-z annotations
+    # context anchors four realized annotations to a span finish (two planned, one actual, one explanatory arrow) and one to a point.
+    example = ROOT / "examples/controller-z"
+    with tempfile.TemporaryDirectory() as temporary:
+        snapshot = Path(temporary) / "snapshot"
+        snapshot.mkdir()
+        reference, _ = _copy_context_closure(example.resolve(), example / "contexts/annotations.yaml", snapshot)
+        closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, reference["store"]["identity"]))
+
+        def render(endpoint_spelling: str):
+            # The committed example is a v0.27 View; the widening is in v0.28, so render the same document as v0.28.
+            value = yaml.safe_load((example / "views/annotations.yaml").read_text(encoding="utf-8"))
+            value["version"] = "chrona/view/v0.28"
+            finishes = [annotation for annotation in value["body"]["annotations"] if annotation["anchor"]["endpoint"] == "finish"]
+            assert len(finishes) == 4
+            for annotation in finishes:
+                annotation["anchor"]["endpoint"] = endpoint_spelling
+            contract = parse_contract(closure.view.identity, value)
+            resources = tuple(replace(resource, contract=contract) if resource.kind == "view" else resource
+                              for resource in closure.resources)
+            return render_review(_request(replace(closure, resources=resources), snapshot))
+
+        finish, end = render("finish"), render("end")
+    scene = serialize_scene(finish.scene)
+    assert b"annotation-leader:firmware-slip" in scene, "the respelled annotations are realized, not suppressed"
+    assert serialize_scene(end.scene) == scene
+    assert end.artifact.content == finish.artifact.content
+    assert end.artifact.content == (example / "generated/annotations.svg").read_bytes(), "v0.28 renders the committed example unchanged"
+
+
 def test_catalogue_pattern_crosses_layout_scene_and_svg_without_adapter_lookup():
     with tempfile.TemporaryDirectory() as temporary:
         closure, snapshot = _closure(Path(temporary))
