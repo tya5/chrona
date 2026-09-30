@@ -16,7 +16,7 @@ properties:
     additionalProperties: false
     properties:
       kind: {description: "The only command target resource kind.", const: authoring-workspace}
-      path: {description: "Workspace path relative to the configured store.", type: string, minLength: 1}
+      path: {description: "Workspace file name in the configured store: one name, no path separator or control character.", $ref: "urn:chrona:common-v0.1#/$defs/fileName"}
   baseRevision: {description: "SHA-256 identity required for optimistic concurrency.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
   payload: {description: "Operation-specific command content.", type: object}
 allOf:
@@ -85,7 +85,7 @@ allOf:
               properties:
                 id: {type: string, minLength: 1}
                 version: {type: string, minLength: 1}
-                path: {type: string, minLength: 1}
+                path: {description: "Safe relative path to the pinned preset document.", minLength: 1, $ref: "urn:chrona:common-v0.1#/$defs/safeRelativePath"}
   - description: "Override commands require an override payload."
     examples: [{}]
     if: {properties: {type: {const: setPresentationOverride}}}
@@ -105,4 +105,4 @@ allOf:
           type: object
           additionalProperties: false
           properties:
-            directory: {type: string, minLength: 1}
+            directory: {description: "Safe relative output directory.", minLength: 1, $ref: "urn:chrona:common-v0.1#/$defs/safeRelativePath"}
