@@ -1,0 +1,60 @@
+name: test-durations
+# Refreshes .test_durations, the per-test timing file the pr-pytest shards read through
+# pytest-split (--splitting-algorithm least_duration). It opens or updates one pull request;
+# it never pushes to main and is independent of the conformance workflow, so a failure here
+# cannot redden a release run. See AGENTS.md, "Publication and CI discipline".
+on:
+  schedule:
+    - cron: '0 5 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: test-durations
+  cancel-in-progress: false
+jobs:
+  refresh:
+    if: ${{ github.repository == 'tya5/chrona' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          # A pull request opened with the default GITHUB_TOKEN does not start the pull_request
+          # workflows, so the required checks would never run. A repository secret
+          # DURATIONS_PR_TOKEN (fine-grained token: contents and pull requests write, this
+          # repository only) makes the PR behave like any other; without it the PR is still
+          # opened and a maintainer closes and reopens it to start the checks.
+          token: ${{ secrets.DURATIONS_PR_TOKEN || github.token }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk
+      - name: Measure every test on one runner
+        run: pytest -n 4 --store-durations --clean-durations
+      - name: Open or update the refresh pull request
+        env:
+          GH_TOKEN: ${{ secrets.DURATIONS_PR_TOKEN || github.token }}
+          BRANCH: bot/test-durations
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- .test_durations; then
+            echo "No change to .test_durations."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add .test_durations
+          git commit -m "Refresh .test_durations (I657-4)" -m "Refs #657"
+          git push --force origin "$BRANCH"
+          open="$(gh pr list --head "$BRANCH" --state open --json number --jq 'length')"
+          if [[ "$open" == "0" ]]; then
+            gh pr create --base main --head "$BRANCH" \
+              --title "Refresh .test_durations (I657-4)" \
+              --body "Automated refresh of .test_durations by .github/workflows/test-durations.yml (pytest -n 4 --store-durations --clean-durations on ubuntu-latest). A stale file only costs shard balance. Refs #657."
+          fi

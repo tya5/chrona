@@ -204,6 +204,22 @@ published commit containing its acceptance review.
   locally and let CI supply the planned three-OS full pytest/conformance,
   wheel/smoke, and newest-Python public-materializer evidence. Inspect a CI
   run after a material push or expected completion; avoid frequent polling.
+- **Test timing data.** `.test_durations` (repository root) records per-test
+  durations. The `pr-pytest` shards read it through pytest-split
+  (`--splitting-algorithm least_duration`) so the three shards finish together;
+  a stale or missing entry costs only balance, never correctness (an unknown
+  test gets the average). `.github/workflows/test-durations.yml` refreshes it
+  every Monday (05:00 UTC) and on `workflow_dispatch`: it runs
+  `pytest -n 4 --store-durations --clean-durations` on an Ubuntu runner and
+  opens or updates the pull request `Refresh .test_durations (I657-4)`, which
+  is reviewed and merged like any other. To refresh by hand, run the same
+  command from a clean checkout and commit only `.test_durations`; do not
+  generate it on a loaded machine, because its numbers must describe the CI
+  runner. A test marked `corpus` (a whole-corpus or HALCYON-board sweep that has
+  a synthetic PR-path twin for its rule) is deselected from the PR shards with
+  `-m "not corpus"` and runs in the three-OS full matrix, the nightly run and
+  manual dispatch; mark a test `corpus` only together with that twin, never as
+  the only PR-path test of a rule.
 - If CI is red, identify every failing check from the run, distinguish changes
   introduced by the slice from independent failures, and record the disposition
   before declaring release acceptance. Do not close a ticket while its required
