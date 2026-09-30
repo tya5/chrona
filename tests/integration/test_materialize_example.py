@@ -478,7 +478,7 @@ def test_halcyon_current_project_pin_rejects_changed_source_bytes(tmp_path):
     context_path = copied_example / "contexts/02-programme-board.yaml"
     project_reference = yaml.safe_load(context_path.read_bytes())["body"]["project"]
     project_path = copied_example / "project.yaml"
-    assert project_reference["revision"]["token"] == "example-v2"
+    assert project_reference["revision"]["token"] == HALCYON_PROJECT_REVISION
     assert project_reference["contentIdentity"] == "sha256:" + sha256(project_path.read_bytes()).hexdigest()
 
     project_path.write_bytes(project_path.read_bytes() + b"\n# stale Project bytes\n")
@@ -486,28 +486,37 @@ def test_halcyon_current_project_pin_rejects_changed_source_bytes(tmp_path):
         copy_context_closure(copied_example, context_path, tmp_path / "snapshot")
 
 
+HALCYON_PROJECT_REVISION = "example-v3"
+
+
 def test_every_halcyon_context_pins_current_project_without_repinning_theme():
     example = ROOT / "examples/halcyon-1"
-    expected_identity = "sha256:e196a21b0162e28d318f7e6512ada534cc1b6cdc35edb8fad6d84926bc4ca840"
-    assert "sha256:" + sha256((example / "project.yaml").read_bytes()).hexdigest() == expected_identity
+    expected_identity = "sha256:" + sha256((example / "project.yaml").read_bytes()).hexdigest()
     contexts = sorted((example / "contexts").glob("*.yaml"))
-    assert len(contexts) == 16
+    manifest = yaml.safe_load((example / "manifest.yaml").read_text(encoding="utf-8"))
+    assert {path.name for path in contexts} == {Path(slide["context"]).name for slide in manifest["slides"]}
     for path in contexts:
         body = yaml.safe_load(path.read_bytes())["body"]
-        assert body["project"]["revision"]["token"] == "example-v2", path.name
+        assert body["project"]["revision"]["token"] == HALCYON_PROJECT_REVISION, path.name
         assert body["project"]["contentIdentity"] == expected_identity, path.name
         assert body["theme"]["revision"]["token"] == "example-v1", path.name
 
 
-def test_halcyon_four_workday_lag_places_bus_test_on_may_third():
+def test_halcyon_avionics_bustest_lag_is_the_authored_two_workdays():
+    """Evidence about the corpus data (#575), not a rule: the lag arithmetic is covered in test_scheduler.
+
+    The lag was widened to 4wd only to satisfy a lane-packing criterion and is restored here; the
+    lane rule is proven on synthetic projects in test_projection_rows and test_lane_membership.
+    """
     example = ROOT / "examples/halcyon-1"
     project = yaml.safe_load((example / "project.yaml").read_bytes())
     relation = next(item for item in project["relations"] if item["id"] == "avionics-bustest")
-    assert relation["lag"] == "4wd"
+    assert relation["lag"] == "2wd"
     result = schedule(project)
-    assert result.placements["bus-test"]["start"].isoformat() == "2027-05-03"
-    assert result.placements["bus-test"]["end"].isoformat() == "2027-05-17"
-    assert result.analysis.total_float["bus-test"] == 39
+    assert result.placements["avionics"]["end"].isoformat() == "2027-04-27"
+    assert result.placements["bus-test"]["start"].isoformat() == "2027-04-29"
+    assert result.placements["bus-test"]["end"].isoformat() == "2027-05-13"
+    assert result.analysis.total_float["bus-test"] == 41
 
 def test_materializer_uses_each_declared_halcyon_slide_context(tmp_path):
     example = ROOT / "examples/halcyon-1"
