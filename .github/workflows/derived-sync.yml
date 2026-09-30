@@ -36,12 +36,9 @@ jobs:
                   sys.exit("E_DERIVED_SYNC_PUSH_REF")
               target = "main"
           elif event == "workflow_dispatch":
-              if ref == "refs/heads/main":
-                  target = "main"
-              elif re.fullmatch(r"refs/heads/derived-proof/(?:[a-z0-9]|[a-z0-9][a-z0-9-]{0,38}[a-z0-9])", ref):
-                  target = ref.removeprefix("refs/heads/")
-              else:
+              if ref != "refs/heads/main":
                   sys.exit("E_DERIVED_SYNC_DISPATCH_REF")
+              target = "main"
           else:
               sys.exit("E_DERIVED_SYNC_EVENT")
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:

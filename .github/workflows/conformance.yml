@@ -184,7 +184,7 @@ jobs:
           NEWEST: ${{ needs.reproduction-newest-python.result }}
         run: |
           if [[ "$EVENT_NAME" == pull_request ]]; then
-            if [[ "$PR_BASE_REF" != main && ! "$PR_BASE_REF" =~ ^derived-proof/([a-z0-9]|[a-z0-9][a-z0-9-]{0,38}[a-z0-9])$ ]]; then
+            if [[ "$PR_BASE_REF" != main ]]; then
               echo "unsupported PR base ref: $PR_BASE_REF"; exit 1
             fi
             test "$PREVIEW" = success
