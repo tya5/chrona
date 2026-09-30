@@ -22,6 +22,10 @@ from chrona.usecases.materialize import _OverlayBuilder
 from chrona.usecases.render_review import RenderFailed, RenderRequest, render_review
 
 ROOT = Path(__file__).resolve().parents[3]
+# The one context whose render costs about 50 s (routed lanes over the whole HALCYON board).
+# The other declared contexts keep the rule on the PR path; this instance runs on the
+# main, nightly and manual runs (#657).
+CORPUS_ONLY = frozenset({"halcyon-1/gallery-editorial-lanes"})
 KNOWN = yaml.safe_load((Path(__file__).parent / "known_unused.yaml").read_text(encoding="utf-8")) or {}
 
 
@@ -33,6 +37,8 @@ def _slides():
             identity = f"{example.name}/{slide['id']}"
             marks = (pytest.mark.skip(reason="requires the optional local CJK font provider")
                      if example.name == "controller-z-ja" and find_spec("chrona_fonts_noto_cjk") is None else ())
+            if identity in CORPUS_ONLY:
+                marks += (pytest.mark.corpus,)
             yield pytest.param(identity, example, example / str(slide.get("context", manifest["context"])),
                                id=identity, marks=marks)
 

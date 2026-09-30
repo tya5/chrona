@@ -403,6 +403,7 @@ def test_suppression_count_excludes_other_plot_text_and_absent_count(tmp_path):
     assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in ordinary.scene.diagnostics)
 
 
+@pytest.mark.corpus  # PR-path twin: tests/integration/test_visual_treatment_synthetic.py (#657)
 def test_elevated_preset_reports_default_profile_omissions_and_rich_svg_paints_them(capsys):
     root = _root()
     example = root / "examples/halcyon-1"
@@ -434,6 +435,7 @@ def test_elevated_preset_reports_default_profile_omissions_and_rich_svg_paints_t
     assert b"<linearGradient" in rich.artifact.content and b"<filter" in rich.artifact.content
 
 
+@pytest.mark.corpus  # PR-path twin: tests/integration/test_visual_treatment_synthetic.py (#657)
 def test_planned_mark_shadow_is_supported_but_optional_under_baseline(tmp_path):
     root = _root()
     example = root / "examples/halcyon-1"

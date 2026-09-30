@@ -38,6 +38,7 @@ class _FixedProjectStore:
         return self.snapshot
 
 
+@pytest.mark.corpus  # PR path: the reproduction-newest-python job runs this by node id (#657)
 def test_declared_examples_reproduce_by_public_cli(tmp_path):
     """Every slide of every declared corpus manifest reproduces its committed evidence."""
     manifests = [manifest for manifest in sorted(ROOT.glob("examples/*/manifest.yaml"))
