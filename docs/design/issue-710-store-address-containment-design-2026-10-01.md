@@ -69,8 +69,8 @@ class StoreAddressError(ValueError):
 def check_store_address(address: object) -> tuple[str, ...]:
     """Pure: return the address's segments or raise StoreAddressError('syntax'). Same answer on every OS."""
 
-def resolve_store_address(base: Path, address: object) -> Path:
-    """check_store_address, then resolve base/address and require the result strictly inside base.resolve()."""
+def resolve_store_address(base: Path, address: object, *, root: Path | None = None) -> Path:
+    """check_store_address, then resolve base/address and require the result strictly inside root.resolve() (default: base)."""
 ```
 
 ### C2. Syntax rules (decision is host-independent)
@@ -80,13 +80,13 @@ def resolve_store_address(base: Path, address: object) -> Path:
 1. is not a `str` or is empty;
 2. contains NUL or any character whose Unicode category is `Cc` (C0, DEL, C1), a backslash, or `:`;
 3. has a non-empty `drive`, `root` or `anchor` under **either** `PurePosixPath` or `PureWindowsPath` (covers `/x`, `//srv/share/x`, `C:/x`, `C:x`, `\x`);
-4. has an empty segment (`a//b`, trailing `/`) or a segment made only of dots (`.`, `..`, `...`, and any longer run). The all-dots rule is stricter than the owner's "no `.`/`..`": Win32 normalisation strips trailing dots, and whether `...` can alias a parent was not verified on a Windows host, so the conservative rule is adopted (and the schema half, part D, carries the same rule).
+4. has an empty segment (`a//b`, trailing `/`) or a segment made only of dots and spaces (`.`, `..`, `...`, any longer run, and `. `/`.. `, which Win32 strips to `.`/`..`). The all-dots rule is stricter than the owner's "no `.`/`..`": Win32 normalisation strips trailing dots, and whether `...` can alias a parent was not verified on a Windows host, so the conservative rule is adopted (and the schema half, part D, carries the same rule).
 
 It deliberately does **not** restrict letters, digits or `._-` further: the syntax guard is a safety check, the closed character set of owner row 1 belongs to the schema. A legitimate address the survey found (part E) passes both.
 
 ### C3. Containment
 
-`resolve_store_address` computes `resolved = (base / address).resolve()` and `root = base.resolve()`, then requires `resolved != root and resolved.is_relative_to(root)`. `resolve()` follows symlinks, so a link pointing outside fails. `OSError`, `RuntimeError` (symlink loop) and `ValueError` from `resolve()` are converted into `StoreAddressError("containment")`. It returns the **resolved** path so the caller opens exactly what was checked.
+`resolve_store_address` computes `resolved = (base / address).resolve()` and `root = (root or base).resolve()`. The local revision reader passes `base` = the revision directory and `root` = the Store root, so the address is joined under its revision but may only land inside the Store. It then requires `resolved != root and resolved.is_relative_to(root)`. `resolve()` follows symlinks, so a link pointing outside fails. `OSError`, `RuntimeError` (symlink loop) and `ValueError` from `resolve()` are converted into `StoreAddressError("containment")`. It returns the **resolved** path so the caller opens exactly what was checked.
 
 ### C4. Typed errors (existing vocabulary, unchanged)
 
