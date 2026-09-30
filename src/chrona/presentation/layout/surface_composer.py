@@ -9,16 +9,14 @@ from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
 from chrona.presentation.layout.pattern_placement import PatternedPlacement, complete_pattern_placement
-from chrona.presentation.layout.lane_subtracks import LaneSubtrackPlan
-from chrona.presentation.layout.mark_aware_scale import PointMarkFootprint, inset_scale_for_point_facets
 from chrona.presentation.layout.surface_lanes import lane_owner as _lane_owner, review_rows as _review_rows
 from chrona.presentation.layout.surface_marks import (
-    MARK_GEOMETRY_ROLES, MARK_PAINT_ORDER_BASE, folded_instance_id as _folded_instance_id,
+    MARK_PAINT_ORDER_BASE, folded_instance_id as _folded_instance_id,
     compose_surface_marks,
 )
 from chrona.presentation.layout.surface_visuals import (
     measure_candidate_visuals, place_axis_band_visuals, place_mark_visuals,
-    place_text_visuals, reserve_text_visuals,
+    place_text_visuals,
 )
 from chrona.presentation.layout.surface_member_labels import (
     SurfaceMemberLabelContext, build_member_label_requests, place_member_labels,
@@ -27,6 +25,11 @@ from chrona.presentation.layout.surface_routes import (
     SurfaceRoutesContext, compose_surface_routes, place_relation_labels,
 )
 from chrona.presentation.layout.surface_base import prepare_surface_base
+from chrona.presentation.layout.surface_content import (
+    complete_footer_band, compose_detail_panel_blocks, place_notes, place_summary,
+    validate_detail_panel_placement,
+)
+from chrona.presentation.layout.surface_legend import SurfaceLegendContext, place_legend
 from chrona.presentation.layout.surface_table import compose_table
 from chrona.presentation.layout.surface_groups import (
     compose_group_presentation,
@@ -38,17 +41,17 @@ from chrona.presentation.layout.surface_backgrounds import (
 )
 from chrona.presentation.layout.surface_axis import compose_axis
 from chrona.presentation.model.semantic_registry import (
-    axis_band_semantic_ids, label_chip_semantic, semantic_binding)
+    axis_band_semantic_ids, semantic_binding)
 from chrona.presentation.layout.presentation import (
     MarkGeometry, TrackPlacement, required_row_block_extents,
 )
-from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_family, metric_for_role, paint_text, place_text, wrap_text
+from chrona.presentation.layout.text import measure_text_width, metric_for_role, place_text, wrap_text
 from chrona.presentation.layout.annotations import (
     AnnotationBox, annotation_rail_candidates, nearest_box_port, place_annotation_rail, project_annotation_box,
-    resolve_annotation_anchor, route_annotation_leader,
+    resolve_annotation_anchor,
 )
 from chrona.presentation.layout.annotation_search import (
-    lattice_positions, nearest_free_box, nearest_free_tail_box, nearest_free_routed_tail_box,
+    nearest_free_box, nearest_free_tail_box, nearest_free_routed_tail_box,
 )
 from chrona.presentation.layout.balloon_geometry import balloon_outline
 from chrona.presentation.layout.labels import LabelPlacement
@@ -60,7 +63,7 @@ from chrona.presentation.layout.labels import (
     LabelRect, LabelRequest, place_label,
 )
 from chrona.presentation.layout.obstacles import (
-    ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex, obstacle_envelope,
+    ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex,
 )
 from chrona.presentation.layout.ports import ConnectorEgress, coincident_endpoint_port_ids, connector_egress_candidates
 from chrona.presentation.model.placement_candidates import candidate_order
@@ -69,26 +72,22 @@ from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.layout.routing import (
     relation_route_quality,
 )
-from chrona.presentation.layout.mark_geometry import MarkFacetAbsence, symbol_parts
+from chrona.presentation.layout.mark_geometry import MarkFacetAbsence
 from chrona.presentation.layout.icon_geometry import complete_icon_paths
 from chrona.presentation.layout.lane_mark_facets import (
     _mark_facets, _overlay_compound_facets, _with_mark_visuals,
 )
 from chrona.presentation.layout.lane_projection import LaneProjectionInstance
-from chrona.presentation.layout.lane_visual_binding import bind_lane_visual_requests
-from chrona.presentation.layout.lane_label_intent import measure_lane_member_labels
-from chrona.presentation.layout.lane_label_preflight import lane_label_row_requirements
 from chrona.presentation.layout.surface_quality import (
-    AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, ColumnPlacement, FitWarning, MarkPlacement, PathCommand, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
-    IconPlacement, LayoutImageFill, ShapePlacement, SlotPlacement, SurfacePlacement, SurfaceLayoutRequest,
+    CollisionDomain, FitWarning, MarkPlacement, PathCommand, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement,
+    IconPlacement, LayoutImageFill, ShapePlacement, SurfacePlacement, SurfaceLayoutRequest,
     TextPlacement, LaneEmissionFacet, LaneEmissionPlacement, LaneLabelSuppression,
-    annotation_presentation, intersects,
+    annotation_presentation,
 )
 from chrona.presentation.layout.image_slice_geometry import image_slice_tiles
 from chrona.presentation.layout.surface_geometry import (
-    BACKGROUND_PAINT_ORDER, GEOMETRY_TOLERANCE, HOSTED_TEXT_PAINT_ORDER,
+    GEOMETRY_TOLERANCE, HOSTED_TEXT_PAINT_ORDER,
     bounds_from_rect as _bounds, coordinate_for_date as _coordinate,
-    rect_from_bounds as _rect,
 )
 
 
@@ -281,202 +280,6 @@ def _completed_canvas(*, requested: Rect, rectangles: tuple[Rect, ...],
                 inline_end - inline_start, block_end - block_start)
 
 
-def _detail_visual_requests(request: SurfaceLayoutRequest) -> dict[str, dict[str, Any]]:
-    """Select detail-panel visual intents without assigning any Scene geometry."""
-    result: dict[str, dict[str, Any]] = {}
-    prefixes = {"group-detail": "group-detail", "milestone": "milestone"}
-    for visual in request.visual_requests:
-        prefix = prefixes.get(visual.target_kind)
-        if prefix is None:
-            continue
-        selector = dict(visual.selector)
-        identifier = selector.get("id")
-        if not identifier:
-            continue
-        placement_id = f"{prefix}:{identifier}"
-        if visual.side in result.setdefault(placement_id, {}):
-            raise LayoutError("E_LAYOUT_VISUAL_DUPLICATE", visual.source_ref)
-        result[placement_id][visual.side] = visual
-    return result
-
-
-def _detail_panel_entries(source: str, values: tuple[Any, ...]) -> tuple[tuple[str, str], ...]:
-    """Keep Review Detail formatting semantic while delegating geometry to Layout."""
-    if source == "group-details":
-        return tuple((value[0], f"{value[1]}: {value[2]}") for value in values)
-    return tuple((value[0], f"{value[1]} — {value[2].isoformat()}") for value in values)
-
-
-def _compose_detail_panel_blocks(*, slots: tuple[SlotPlacement, ...], request: SurfaceLayoutRequest,
-                                 requested_canvas: Rect) -> tuple[tuple[SlotPlacement, ...], list[Any], list[FitWarning], frozenset[str]]:
-    """Complete Review Detail panel lines, rectangles, and visible-fit records."""
-    slot_by_source = {slot.source_ref: slot for slot in slots}
-    sources = (("group-details", request.surface_content.group_details, "group-detail"),
-               ("milestones", request.surface_content.milestones, "milestone"))
-    visual_requests = _detail_visual_requests(request)
-    completed: list[Any] = []
-    warnings: list[FitWarning] = []
-    replacements: dict[str, SlotPlacement] = {}
-    allocated: list[SlotPlacement] = []
-    pre_reserved: set[str] = set()
-    treatment = request.theme_tokens.text_treatment("text")
-    font_size = float(treatment.font_size)
-    metrics = metric_for_role(request.theme_tokens, "text", request.font_metrics)
-    requested_end = requested_canvas.block + requested_canvas.block_size
-
-    for source, values, prefix in sources:
-        slot = slot_by_source.get(source)
-        if slot is None or not values:
-            continue
-        available = float(slot.bounds.inline_size)
-        block = slot.bounds.block
-        for previous in allocated:
-            left, right = slot.bounds.inline, slot.bounds.inline + slot.bounds.inline_size
-            previous_left = previous.bounds.inline
-            previous_right = previous.bounds.inline + previous.bounds.inline_size
-            if left < previous_right and previous_left < right:
-                block = max(block, previous.bounds.block + previous.bounds.block_size)
-        cursor = block
-        item_overflows: list[tuple[Any, float, float]] = []
-        for source_ref, content in _detail_panel_entries(source, values):
-            placement_id = f"{prefix}:{source_ref}"
-            reservation = reserve_text_visuals(
-                typography_role="text", font_size=font_size,
-                visuals=visual_requests.get(placement_id, {}), request=request,
-            )
-            leading, trailing = reservation.leading, reservation.trailing
-            text_available = max(0.0, available - leading - trailing)
-            lines = ((content,) if text_available == 0 else
-                     wrap_text(content, available_inline=text_available, font_size=font_size, font_metrics=metrics,
-                               letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
-                               numeric_spacing=treatment.numeric_spacing))
-            natural_width = max(measure_text_width(line, font_size=font_size, font_metrics=metrics,
-                                                   letter_spacing=float(treatment.letter_spacing),
-                                                   text_transform=treatment.transform,
-                                                   numeric_spacing=treatment.numeric_spacing) for line in lines)
-            disposition = "fit"
-            if natural_width > text_available:
-                ellipsis_width = measure_text_width("…", font_size=font_size, font_metrics=metrics,
-                                                     letter_spacing=float(treatment.letter_spacing),
-                                                     text_transform=treatment.transform,
-                                                     numeric_spacing=treatment.numeric_spacing)
-                if slot.overflow == "ellipsize-with-source" and text_available >= ellipsis_width:
-                    lines = tuple(ellipsize_text(line, available_inline=text_available, font_size=font_size,
-                                                  font_metrics=metrics, letter_spacing=float(treatment.letter_spacing),
-                                                  text_transform=treatment.transform,
-                                                  numeric_spacing=treatment.numeric_spacing) for line in lines)
-                    disposition = "ellipsized"
-                elif slot.overflow == "clip-optional":
-                    suppressed = place_text(placement_id=placement_id, source_ref=source_ref, content=content,
-                                            inline=float(slot.bounds.inline), baseline_block=float(cursor + Decimal(str(font_size))),
-                                            typography_role="text", theme_tokens=request.theme_tokens,
-                                            font_metrics=request.font_metrics, overflow="suppressed", required=False,
-                                            collision_region=f"{source}:{source_ref}",
-                                            collision_domain=CollisionDomain(source, "content"), source_content=content,
-                                            lines=lines, available_inline_start=float(slot.bounds.inline),
-                                            available_inline_size=text_available, slot_id=slot.slot_id)
-                    completed.append(suppressed)
-                    warnings.append(FitWarning("W_LAYOUT_DETAIL_PANEL_CLIPPED", placement_id, source_ref,
-                                               "detail-panel", "clip-optional", natural_width,
-                                               float(suppressed.bounds.block_size), text_available,
-                                               float(slot.bounds.block_size)))
-                    continue
-                else:
-                    disposition = "visible-overflow"
-            placed = place_text(placement_id=placement_id, source_ref=source_ref, content="\n".join(lines),
-                                inline=float(slot.bounds.inline), baseline_block=float(cursor + Decimal(str(font_size))),
-                                typography_role="text", theme_tokens=request.theme_tokens,
-                                font_metrics=request.font_metrics, overflow=disposition,
-                                collision_region=f"{source}:{source_ref}",
-                                collision_domain=CollisionDomain(source, "content"), source_content=content,
-                                lines=lines, available_inline_start=float(slot.bounds.inline),
-                                available_inline_size=available, slot_id=slot.slot_id)
-            completed.append(placed)
-            pre_reserved.add(placement_id)
-            cursor += placed.bounds.block_size
-            if disposition == "visible-overflow":
-                item_overflows.append((placed, leading + natural_width + trailing, max(0.0, available)))
-        final_size = max(slot.bounds.block_size, cursor - block)
-        final_slot = replace(slot, bounds=Rect(slot.bounds.inline, block, slot.bounds.inline_size,
-                                                final_size))
-        replacements[source] = final_slot
-        allocated.append(final_slot)
-        for placed, required_inline, available_inline in item_overflows:
-            warnings.append(FitWarning("W_LAYOUT_VISIBLE_OVERFLOW", placed.placement_id, placed.source_ref,
-                                       "detail-panel", "visible-overflow", required_inline,
-                                       float(placed.bounds.block_size), available_inline, float(final_size)))
-        if final_slot.bounds.block + final_slot.bounds.block_size > requested_end + GEOMETRY_TOLERANCE:
-            warnings.append(FitWarning("W_LAYOUT_VISIBLE_OVERFLOW", f"detail-panel:{source}", source,
-                                       "detail-panel", "visible-overflow", float(final_slot.bounds.inline_size),
-                                       float(final_slot.bounds.block_size), float(final_slot.bounds.inline_size),
-                                       max(0.0, float(requested_end - final_slot.bounds.block))))
-    final_slots = tuple(replacements.get(slot.source_ref, slot) for slot in slots)
-    return final_slots, completed, warnings, frozenset(pre_reserved)
-
-
-_FOOTER_SOURCES = frozenset({"group-details", "milestones", "observations", "legend", "notes"})
-
-
-def _complete_footer_band(*, provisional_slots: tuple[SlotPlacement, ...],
-                          completed_slots: tuple[SlotPlacement, ...]) -> tuple[SlotPlacement, ...]:
-    """Translate the physical annotations successor from the final footer union."""
-    provisional_by_source = {slot.source_ref: slot for slot in provisional_slots}
-    completed_by_source = {slot.source_ref: slot for slot in completed_slots}
-    panel_start = min((slot.bounds.block for source, slot in provisional_by_source.items()
-                       if source in {"group-details", "milestones"}), default=None)
-    if panel_start is None:
-        return completed_slots
-    panel_line = max((slot.bounds.block_size for source, slot in provisional_by_source.items()
-                      if source in {"group-details", "milestones"}), default=Decimal(0))
-    provisional_footer = tuple(slot for source, slot in provisional_by_source.items()
-                               if source in _FOOTER_SOURCES
-                               and panel_start <= slot.bounds.block <= panel_start + panel_line + GEOMETRY_TOLERANCE)
-    if not provisional_footer:
-        return completed_slots
-    provisional_end = max(slot.bounds.block + slot.bounds.block_size for slot in provisional_footer)
-    completed_footer = tuple(completed_by_source[slot.source_ref] for slot in provisional_footer)
-    completed_end = max(slot.bounds.block + slot.bounds.block_size for slot in completed_footer)
-    annotation = completed_by_source.get("annotations")
-    panels = tuple(completed_by_source[source] for source in ("group-details", "milestones")
-                   if source in completed_by_source)
-    overlaps_panel_inline = annotation is not None and any(
-        annotation.bounds.inline < panel.bounds.inline + panel.bounds.inline_size
-        and panel.bounds.inline < annotation.bounds.inline + annotation.bounds.inline_size
-        for panel in panels
-    )
-    growth = completed_end - provisional_end
-    if (growth <= GEOMETRY_TOLERANCE or annotation is None
-            or annotation.bounds.block < provisional_end or not overlaps_panel_inline):
-        return completed_slots
-    translated = replace(annotation, bounds=Rect(annotation.bounds.inline, annotation.bounds.block + growth,
-                                                 annotation.bounds.inline_size, annotation.bounds.block_size))
-    return tuple(translated if slot.source_ref == "annotations" else slot for slot in completed_slots)
-
-
-def _validate_detail_panel_placement(text: list[Any], slots: tuple[SlotPlacement, ...]) -> None:
-    """Keep final detail text and final panel rectangles consistent after visual projection."""
-    slot_by_id = {slot.slot_id: slot for slot in slots}
-    panels = [item for item in text if item.placement_id.startswith(("group-detail:", "milestone:"))]
-    for item in panels:
-        if item.overflow in {"suppressed", "visible-overflow"}:
-            continue
-        slot = slot_by_id.get(item.slot_id)
-        if slot is None:
-            raise LayoutError("E_LAYOUT_SLOT_OWNERSHIP_INVALID", item.placement_id)
-        if (item.bounds.inline < slot.bounds.inline - GEOMETRY_TOLERANCE
-                or item.bounds.inline + item.bounds.inline_size > slot.bounds.inline + slot.bounds.inline_size + GEOMETRY_TOLERANCE
-                or item.bounds.block < slot.bounds.block - GEOMETRY_TOLERANCE
-                or item.bounds.block + item.bounds.block_size > slot.bounds.block + slot.bounds.block_size + GEOMETRY_TOLERANCE):
-            raise LayoutError("E_LAYOUT_DETAIL_PANEL_CONTAINMENT", item.placement_id)
-    groups = [item for item in panels if item.placement_id.startswith("group-detail:") and item.overflow != "suppressed"]
-    milestones = [item for item in panels if item.placement_id.startswith("milestone:") and item.overflow != "suppressed"]
-    for group in groups:
-        for milestone in milestones:
-            if (group.overflow != "visible-overflow" and milestone.overflow != "visible-overflow"
-                    and intersects(group.bounds, milestone.bounds)):
-                raise LayoutError("E_LAYOUT_DETAIL_PANEL_OVERLAP", f"{group.placement_id}:{milestone.placement_id}")
-
-
 def timeline_content_block_requirement(*, projection: Any, group_presentation: str,
                                        metric_values: dict[str, Decimal], role_geometries: dict[str, MarkGeometry] | None = None,
                                        text_line_block: float = 0.0) -> Decimal:
@@ -540,7 +343,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                        source_content=title, available_inline_start=float(by_source["title"].bounds.inline),
                        available_inline_size=float(by_source["title"].bounds.inline_size))]
     footer_provisional_slots = slots
-    slots, detail_panel_text, detail_panel_warnings, detail_visual_reservations = _compose_detail_panel_blocks(
+    slots, detail_panel_text, detail_panel_warnings, detail_visual_reservations = compose_detail_panel_blocks(
         slots=slots, request=request, requested_canvas=request.layout_manifest.viewport,
     )
     by_source = {slot.source_ref: slot for slot in slots}
@@ -664,171 +467,23 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     side_content_warnings: list[FitWarning] = []
     legend = by_source.get("legend")
     if legend:
-        legend_treatment = request.theme_tokens.text_treatment("legend")
-        legend_size = float(legend_treatment.font_size)
-        legend_step = legend_size * float(legend_treatment.line_height)
-        text_line_block = legend_size * float(legend_treatment.line_height)
-        mark_block_size = float(metric_values["timeline.mark.blockSize"])
-        legacy_swatch_size = max(2.0, legend_size * 0.8)
-        declared_inline = request.theme_tokens.optional_number("legend-swatch", "swatchInlineSize")
-        fallback_inline = float(declared_inline) if declared_inline is not None else legacy_swatch_size
-        # Today's fixed swatch->label offset was `swatch_size * 1.5`, i.e. one
-        # swatch width plus a "gap" of exactly half a swatch; reproduce that
-        # split so an unmigrated (no declared `gap`) legend slot lays out
-        # byte-identically to before this change (#427).
-        gap = float(legend.gap) if legend.gap is not None else legacy_swatch_size * 0.5
-        direction = legend.direction
-        item_min_inline = float(legend.item_min_inline_size) if legend.item_min_inline_size is not None else None
-
-        def swatch_geometry(role: str) -> tuple[float, float, str]:
-            """Return one legend entry's (inline size, block size, dispatch bucket) (#427).
-
-            The size is the role's own mark geometry against the document's own
-            `timeline.mark.blockSize` for a `mark`/`point` role -- literally the
-            size the chart draws it -- or `legend-swatch.swatchInlineSize` (or its
-            documented fallback) for a role with no single on-chart length. A
-            role this table does not recognize keeps today's fixed square.
-            """
-            if role == "milestone":
-                height_ratio, *_ = request.theme_tokens.mark_geometry("planned")
-                side = float(height_ratio) * mark_block_size
-                return side, side, "point"
-            if role in MARK_GEOMETRY_ROLES:
-                return fallback_inline, float(request.theme_tokens.mark_geometry(role)[0]) * mark_block_size, "mark"
-            if role in ("asOf", "dependency", "dependency-critical"):
-                return fallback_inline, text_line_block, "line"
-            return legacy_swatch_size, legacy_swatch_size, "legacy"
-
-        def emit_swatch(role: str, x: float, y: float, width: float, height: float, bucket: str) -> None:
-            if bucket == "point":
-                bounds = Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height)))
-                parts = symbol_parts(
-                    request.theme_tokens.variant_symbol("planned"), (x, y, width, height),
-                    catalog_glyphs=getattr(request.theme_tokens, "catalog_glyphs", None),
-                )
-                marks.append(MarkPlacement(f"legend-swatch:{role}", role,
-                                           bounds,
-                                           (x + width / 2, y + height / 2), (x + width / 2, y + height / 2),
-                                           mark_shape="point", slot_id=legend.slot_id, semantic_id="planned",
-                                           symbol_parts=parts))
-            elif bucket == "mark":
-                height_ratio, offset_ratio, paint_order, corner_ratio = request.theme_tokens.mark_geometry(role)
-                corner_radius = min(float(corner_ratio) * min(width, height), min(width, height) / 2)
-                shapes.append(ShapePlacement(f"legend-swatch:{role}", role, "Rect",
-                                             Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height))),
-                                             slot_id=legend.slot_id, corner_radius=corner_radius, paint_order=paint_order))
-            elif bucket == "line":
-                marker_token = request.theme_tokens.optional_token(role, "marker", "marker")
-                relations.append(RelationPlacement(f"legend-swatch:{role}", f"legend-swatch:{role}:start",
-                                                   f"legend-swatch:{role}:end",
-                                                   points=((x, y + height / 2), (x + width, y + height / 2)),
-                                                   semantic_id=role, slot_id=legend.slot_id, source_ref=role,
-                                                   marker_end=marker_geometry(marker_token) if marker_token else None))
-            else:
-                shapes.append(ShapePlacement(f"legend-swatch:{role}", role, "Rect",
-                                             Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height))),
-                                             slot_id=legend.slot_id))
-
-        def emit_label(role: str, label: str, x: float, baseline: float, available: float) -> float:
-            natural_width = measure_text_width(label, font_size=legend_size, font_metrics=metric_for("legend"),
-                                               letter_spacing=float(legend_treatment.letter_spacing),
-                                               text_transform=legend_treatment.transform,
-                                               numeric_spacing=legend_treatment.numeric_spacing)
-            content = label
-            disposition = "fit"
-            if natural_width > available and legend.overflow == "ellipsize-with-source":
-                content = ellipsize_text(label, available_inline=available, font_size=legend_size,
-                                         font_metrics=metric_for("legend"),
-                                         letter_spacing=float(legend_treatment.letter_spacing),
-                                         text_transform=legend_treatment.transform,
-                                         numeric_spacing=legend_treatment.numeric_spacing)
-                disposition = "ellipsized"
-            elif natural_width > available and legend.overflow == "visible-overflow":
-                disposition = "visible-overflow"
-            placed = place_text(placement_id=f"legend:{role}", source_ref=role, content=content,
-                                inline=x, baseline_block=baseline, typography_role="legend",
-                                theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                                overflow=disposition, collision_region="legend",
-                                collision_domain=CollisionDomain("legend", "content"), source_content=label,
-                                available_inline_start=x, available_inline_size=available)
-            text.append(placed)
-            if disposition == "visible-overflow":
-                side_content_warnings.append(FitWarning(
-                    "W_LAYOUT_VISIBLE_OVERFLOW", placed.placement_id, role, "legend-text", "visible-overflow",
-                    natural_width, float(placed.bounds.block_size), available, float(legend.bounds.block_size),
-                ))
-            return placed.bounds.block + placed.bounds.block_size
-
-        final_legend_end = legend.bounds.block
-        if direction == "inline":
-            x = float(legend.bounds.inline)
-            y = float(legend.bounds.block)
-            row_height = 0.0
-            slot_end = float(legend.bounds.inline) + float(legend.bounds.inline_size)
-            for role, label in request.surface_content.legend_entries:
-                width, height, bucket = swatch_geometry(role)
-                if item_min_inline is not None and x > float(legend.bounds.inline) and slot_end - x < item_min_inline:
-                    y += row_height + gap
-                    x = float(legend.bounds.inline)
-                    row_height = 0.0
-                emit_swatch(role, x, y, width, height, bucket)
-                label_end = emit_label(role, label, x + width + gap, y + legend_size, max(0.0, slot_end - (x + width + gap)))
-                row_height = max(row_height, height, text_line_block)
-                final_legend_end = max(final_legend_end, Decimal(str(label_end)), Decimal(str(y + row_height)))
-                x += width + gap + measure_text_width(label, font_size=legend_size, font_metrics=metric_for("legend"),
-                                                       letter_spacing=float(legend_treatment.letter_spacing),
-                                                       text_transform=legend_treatment.transform,
-                                                       numeric_spacing=legend_treatment.numeric_spacing) + gap
-        else:
-            cursor = float(legend.bounds.block)
-            for role, label in request.surface_content.legend_entries:
-                width, height, bucket = swatch_geometry(role)
-                row_height = max(height, text_line_block)
-                swatch_top = cursor + (row_height - height) / 2.0
-                baseline = cursor + (row_height - text_line_block) / 2.0 + legend_size
-                text_inline = float(legend.bounds.inline) + width + gap
-                text_available = max(0.0, float(legend.bounds.inline_size) - width - gap)
-                emit_swatch(role, float(legend.bounds.inline), swatch_top, width, height, bucket)
-                label_end = emit_label(role, label, text_inline, baseline, text_available)
-                final_legend_end = max(final_legend_end, Decimal(str(label_end)))
-                cursor += row_height + gap
-        final_size = max(legend.bounds.block_size, final_legend_end - legend.bounds.block)
-        replacement = replace(legend, bounds=Rect(legend.bounds.inline, legend.bounds.block,
-                                                   legend.bounds.inline_size, final_size))
-        slots = tuple(replacement if slot.source_ref == "legend" else slot for slot in slots)
+        legend_batch = place_legend(SurfaceLegendContext(request, legend, metric_values, metric_for))
+        marks.extend(legend_batch.marks)
+        shapes.extend(legend_batch.shapes)
+        relations.extend(legend_batch.relations)
+        text.extend(legend_batch.text)
+        side_content_warnings.extend(legend_batch.warnings)
+        slots = tuple(legend_batch.slot if slot.source_ref == "legend" else slot for slot in slots)
     notes = by_source.get("notes")
     if notes:
-        cursor = notes.bounds.block
-        for index, (source, content) in enumerate(request.surface_content.notes):
-            placed = place_text(placement_id=f"note:{source}", source_ref=source, content=content,
-                                inline=float(notes.bounds.inline), baseline_block=float(cursor) + body_size,
-                                typography_role="text", theme_tokens=request.theme_tokens,
-                                font_metrics=request.font_metrics, collision_region=f"notes:{source}",
-                                collision_domain=CollisionDomain("notes", f"line:{index}"), source_content=content,
-                                available_inline_start=float(notes.bounds.inline),
-                                available_inline_size=float(notes.bounds.inline_size))
-            text.append(placed)
-            cursor = placed.bounds.block + placed.bounds.block_size
-        final_size = max(notes.bounds.block_size, cursor - notes.bounds.block)
-        replacement = replace(notes, bounds=Rect(notes.bounds.inline, notes.bounds.block,
-                                                  notes.bounds.inline_size, final_size))
-        slots = tuple(replacement if slot.source_ref == "notes" else slot for slot in slots)
-    slots = _complete_footer_band(provisional_slots=footer_provisional_slots, completed_slots=slots)
+        notes_slot, notes_text = place_notes(request, notes, body_size)
+        text.extend(notes_text)
+        slots = tuple(notes_slot if slot.source_ref == "notes" else slot for slot in slots)
+    slots = complete_footer_band(provisional_slots=footer_provisional_slots, completed_slots=slots)
     by_source = {slot.source_ref: slot for slot in slots}
     summary_slot = by_source.get("summary")
     if summary_slot:
-        cursor = float(summary_slot.bounds.block)
-        for run in request.surface_content.summary.runs:
-            summary_treatment = request.theme_tokens.text_treatment(run.typography_role)
-            font_size, line_height = summary_treatment.font_size, summary_treatment.line_height
-            text.append(place_text(placement_id=run.placement_id, source_ref=run.source_ref, content=run.content,
-                                   inline=float(summary_slot.bounds.inline), baseline_block=cursor + float(font_size),
-                                   typography_role=run.typography_role, theme_tokens=request.theme_tokens,
-                                   font_metrics=request.font_metrics, collision_region="summary",
-                                   collision_domain=CollisionDomain("summary", "content"), source_content=run.content,
-                                   available_inline_start=float(summary_slot.bounds.inline),
-                                   available_inline_size=float(summary_slot.bounds.inline_size)))
-            cursor += float(font_size) * float(line_height)
+        text.extend(place_summary(request, summary_slot))
 
     annotation_slot = by_source.get("annotations")
     annotation_slot_id = annotation_slot.slot_id if annotation_slot is not None else ""
@@ -1364,7 +1019,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         pre_reserved_placements=detail_visual_reservations)
     text, icons = list(text_visuals.text), list(text_visuals.icons)
     text_visual_warnings = list(text_visuals.warnings)
-    _validate_detail_panel_placement(text, slots)
+    validate_detail_panel_placement(text, slots)
     icons.extend(candidate_icons)
     icons.extend(place_mark_visuals(tuple(marks), request).icons)
 
