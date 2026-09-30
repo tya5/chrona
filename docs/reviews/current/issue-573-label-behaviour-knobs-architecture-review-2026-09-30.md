@@ -116,3 +116,10 @@ kept for its own sake; a change that reads worse than the target is reported, no
 `hostPlacementId` and the Scene acceptance pairing, both still exact. (2) `missing-actual` is not an own mark for reach. (3) The
 start side is not measured from the first own mark; the case is symmetric (an actual earlier than the plan) and is not observed;
 if the evidence shows a start-side overlap it is a separate slice.
+
+**Amendment (2026-10-01): final rung only.** The first variant (end measured from the last own mark in the ordinary ladder, association
+through the nearest own mark for every name) moved names that already had a legal position and, through the obstacle inventory, made
+three dependency routes disappear on public slides (see the plan, I679-1). The rule is narrowed: the ladder and host-measured
+candidates are unchanged, and the last-own-mark end position is a final rung used only where a name is suppressed or visible-overflow
+today. Why measuring from the last mark is the right rule is unchanged; why it must not reorder legal placements is that names are
+placed before routes in lane mode, which is a separate router question.
