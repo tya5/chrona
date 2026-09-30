@@ -1,5 +1,6 @@
 """Layout Profile ``reviewSurface.memberNames`` knobs (#573, I573-1): schema, carriage, wiring."""
 from copy import deepcopy
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -9,7 +10,7 @@ from chrona.presentation.layout.engine import solve_layout
 from chrona.presentation.layout.labels import LabelRequest, LabelRect, CollisionDomain
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.profile import LayoutBase, resolve_layout_profile
-from tests.unit.chrona.presentation.layout.test_intent_engine import MEASUREMENTS
+from chrona.presentation.layout.model import Measurement
 from chrona.presentation.layout.surface_member_labels import _member_full_band, _member_reach
 
 
@@ -18,6 +19,16 @@ SOURCES = {"title", "table", "timeline", "timeline-axis", "legend", "notes"}
 THEME = {"body": {"values": {name: {"type": "number", "value": value} for name, value in {
     "spacing.none": 0, "spacing.s": 8, "spacing.m": 16, "spacing.l": 24, "panel.minimum": 180,
 }.items()}}}
+
+
+def _m(inline, block, *, baseline=None):
+    value = None if baseline is None else Decimal(baseline)
+    return Measurement(Decimal(inline) / 2, Decimal(inline), Decimal(inline) * 2, Decimal(block) / 2, Decimal(block),
+                       Decimal(block) * 2, value, value)
+
+
+MEASUREMENTS = {"title": _m(300, 40), "table": _m(300, 600), "timeline-axis": _m(500, 50),
+                "timeline": _m(500, 600), "legend": _m(240, 32, baseline=24), "notes": _m(300, 32, baseline=20)}
 
 
 def fixture(name):
