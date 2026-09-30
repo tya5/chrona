@@ -1,7 +1,7 @@
 """Finite, deterministic label placement shared by presentation adapters."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from math import ceil, isfinite
 from math import hypot
 from typing import Callable, Iterable
@@ -88,6 +88,7 @@ class LabelPlacement:
     bounds: LabelRect
     visible_overflow: bool = False
     search_count: int = 0
+    final_rung: bool = False
 
 
 @dataclass(frozen=True)
@@ -100,7 +101,12 @@ class LabelObstacle:
 
 @dataclass(frozen=True)
 class MemberNameAssociation:
-    """Measured Text footprint and its exact completed mark, in Layout space."""
+    """Measured Text footprint and its exact completed marks, in Layout space.
+
+    ``mark`` is the requested host; ``also_marks`` are the item's other own drawn
+    marks (an actual mark). The Text is associated when it is within
+    ``maximum_distance`` of at least one of them.
+    """
 
     mark: LabelRect
     text_inline_inset: float
@@ -108,13 +114,22 @@ class MemberNameAssociation:
     text_width: float
     text_height: float
     maximum_distance: float
+    also_marks: tuple[LabelRect, ...] = ()
 
-    def allows(self, footprint: LabelRect) -> bool:
+    def distances(self, footprint: LabelRect) -> tuple[float, ...]:
+        """Nearest-perimeter gap from the completed Text to ``mark``, then each of ``also_marks``."""
         text = LabelRect(footprint.x + self.text_inline_inset,
                          footprint.y + self.text_block_inset,
                          self.text_width, self.text_height)
-        distance, _, _ = nearest_rect_perimeters(text, self.mark)
-        return distance <= self.maximum_distance + 1e-9
+        return tuple(nearest_rect_perimeters(text, mark)[0] for mark in (self.mark, *self.also_marks))
+
+    def nearest_mark_index(self, footprint: LabelRect) -> int:
+        """Index in ``(mark, *also_marks)`` of the nearest own mark; a tie keeps the earlier one."""
+        values = self.distances(footprint)
+        return values.index(min(values))
+
+    def allows(self, footprint: LabelRect) -> bool:
+        return min(self.distances(footprint)) <= self.maximum_distance + 1e-9
 
 
 @dataclass(frozen=True)
@@ -275,7 +290,7 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
     return None
 
 
-def place_member_name(
+def _place_member_name_ladder(
     anchor: LabelRect,
     size: tuple[float, float],
     candidates: Iterable[str],
@@ -399,3 +414,57 @@ def place_member_name(
             if association is None or association.allows(candidate):
                 return LabelPlacement(side, candidate, True)
     return None
+
+
+def place_member_name(
+    anchor: LabelRect,
+    size: tuple[float, float],
+    candidates: Iterable[str],
+    *,
+    own_mark_right: float | None = None,
+    final_association: MemberNameAssociation | None = None,
+    overflow: str = "suppress",
+    visible_fallback_side: str | None = None,
+    **options,
+) -> LabelPlacement | None:
+    """Place a member name on its declared ladder, then on a final own-mark rung.
+
+    The declared ladder is tried exactly as ``_place_member_name_ladder`` does, so a
+    name with a legal candidate keeps its position and host. Only when none is
+    legal, and ``end`` is declared, an own mark ends past the anchor
+    (``own_mark_right``, the right edge of the item's last own drawn mark) and
+    ``final_association`` is given, the ``end`` side is tried from that mark, bounded
+    from its right edge and associated with any own mark; the placement carries
+    ``final_rung``. Then the visible-overflow fallback applies, measured from the same
+    mark when its side is ``end``.
+    """
+    sides = tuple(candidates)
+    if ((own_mark_right is not None and (isinstance(own_mark_right, bool) or not isfinite(own_mark_right)))
+            or overflow not in {"suppress", "visible-overflow", "diagnose"}
+            or (visible_fallback_side is not None and
+                (overflow != "visible-overflow" or visible_fallback_side not in sides))):
+        raise ValueError("E_PRESENTATION_LABEL_INPUT")
+    placed = _place_member_name_ladder(anchor, size, sides, overflow="suppress", **options)
+    if placed is not None or not sides:
+        return placed
+    if ("end" in sides and own_mark_right is not None and own_mark_right > anchor.right
+            and final_association is not None):
+        extended = LabelRect(anchor.x, anchor.y, own_mark_right - anchor.x, anchor.height)
+        options_final = {**options, "association": final_association}
+        final = _place_member_name_ladder(extended, size, ("end",), overflow="suppress", **options_final)
+        if final is not None:
+            return replace(final, final_rung=True)
+    if overflow == "suppress":
+        return None
+    if ((visible_fallback_side or sides[0]) == "end" and own_mark_right is not None
+            and own_mark_right > anchor.right and final_association is not None):
+        # The visible fallback is an end candidate: measure it from the last own mark too, so the
+        # overflowing name does not cover the item's own actual mark.
+        extended = LabelRect(anchor.x, anchor.y, own_mark_right - anchor.x, anchor.height)
+        options_final = {**options, "association": final_association}
+        final = _place_member_name_ladder(extended, size, ("end",), overflow=overflow,
+                                          visible_fallback_side="end", **options_final)
+        if final is not None:
+            return replace(final, final_rung=True)
+    return _place_member_name_ladder(anchor, size, sides, overflow=overflow,
+                                     visible_fallback_side=visible_fallback_side, **options)

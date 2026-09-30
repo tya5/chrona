@@ -100,7 +100,16 @@ bound below. `pack` lanes and non-lane candidate-search domains are unchanged.
 The completed Text bounds of every emitted plot member name with its own mark
 MUST stay within the member-name reach (default two em, below) as a
 two-dimensional nearest-perimeter gap of that exact
-mark on either side. Layout rejects a farther candidate before trying the
+mark on either side, measured from the requested host. An item's own marks are
+its planned (or baseline/snapshot) mark and its actual mark, when each is
+drawn; an absence indicator (`missing-actual`) is not an own mark. When no
+candidate on the declared ladder is legal and `end` is declared, a final rung
+places the name after the right edge of the item's rightmost own mark, never
+inside it, bounded by the reach from that edge and within reach of at least
+one own mark; a visible-overflow fallback on `end` is measured from the same
+edge. Only a name placed by the final rung or this fallback names the own mark
+nearest its Text as `hostPlacementId` (the requested host on a tie). A name that
+has a legal candidate on the ladder keeps its position and host. Layout rejects a farther candidate before trying the
 next declared side. Default `auto` tries end then start; authored side/fallback
 order remains authoritative. A suppressible request with no legal candidate
 records its source-keyed suppression and aggregate count. After legal
@@ -119,8 +128,8 @@ A Layout Profile may declare the member-name policy in
 
 - `maxEndGapEm` (a number from 0 to 100, default `2`) sets the member-name
   reach to `maxEndGapEm` times the label font size. That one value bounds both
-  the end-side gap and the nearest-perimeter association gap above; `0` leaves
-  no end placement.
+  the end-side gap and the nearest-perimeter association gap above, and the
+  final-rung gap from the last own mark; `0` leaves no end placement.
 - `search` (`side-band` or `full-band`) selects the block-position search.
   `full-band` runs the finite preferred/contact search across the row band,
   limited to one measured stagger step only for lane rows; `side-band` keeps
