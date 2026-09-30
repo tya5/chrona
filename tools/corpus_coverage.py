@@ -312,6 +312,12 @@ UNREFERENCED_REASONS: dict[str, str] = {
         "#383/#429 repointed the bundled default at the Editorial preset; this View is kept as the documented "
         "default-draft source (`examples/reachability.yaml`) and is still rendered explicitly by "
         "`tests/integration/test_readable_defaults.py`, not by a committed slide",
+    "examples/halcyon-1/themes/editorial-readable-default.yaml":
+        "#574 resolves the bundled default from `presets/bundles/editorial-readable-default`; this copy is kept "
+        "byte-identical to it (drift guard in `tests/integration/test_public_preset_evidence.py`), not rendered by a committed slide",
+    "examples/halcyon-1/views/editorial-readable-default.yaml":
+        "#574 resolves the bundled default from `presets/bundles/editorial-readable-default`; this copy is kept "
+        "byte-identical to it (drift guard in `tests/integration/test_public_preset_evidence.py`), not rendered by a committed slide",
 }
 
 
