@@ -86,7 +86,12 @@ def test_a_vocabulary_definition_is_an_untyped_enum_so_a_site_keeps_its_derefere
 # --------------------------------------------------------------------------------------------
 
 # (file, pointer) of an `enum` that equals a definition of the part and is NOT the same concept, each with the reason.
-DIFFERENT_CONCEPT: dict[tuple[str, str], str] = {}
+DIFFERENT_CONCEPT: dict[tuple[str, str], str] = {
+    ("view-v0.28.schema.yaml", "/allOf/1/properties/body/properties/tableColumns/items/properties/align"):
+        "inline alignment of a table column's content inside its measured allocation, not an annotation's alignment along a side",
+    ("layout-profile-v0.9.schema.yaml", "/$defs/guide/properties/at/oneOf/0"):
+        "a named layout guide position along an axis, not an annotation's alignment along a side",
+}
 
 
 def _enum_copies(name: str) -> set[tuple[str, str]]:
@@ -265,3 +270,128 @@ def test_axis_label_form_code_twins_equal_the_schema_vocabulary():
     assert every == set(FORMS), "the layout levels and the name-table form set cover the same 13 forms"
     catalog = _schema("axis-name-tables-v0.1.schema.yaml")
     assert set(catalog["$defs"]["table"]["properties"]["templates"]["required"]) == set(FORMS)
+
+
+# --------------------------------------------------------------------------------------------
+# annotationPurpose / Side / Alignment and the visibility-mode subsets (S2c)
+# --------------------------------------------------------------------------------------------
+
+PURPOSES = ["callout", "highlight", "note", "explanatory-arrow"]
+SIDES = ["above", "below", "start", "end"]
+ALIGNMENTS = ["start", "center", "end"]
+VIEW = "view-v0.28.schema.yaml"
+WORKSPACE = "authoring-workspace-v0.1.schema.yaml"
+
+
+def test_annotation_vocabulary_is_the_published_values_in_order():
+    defs = _defs()
+    assert defs["annotationPurpose"]["enum"] == PURPOSES
+    assert defs["annotationSide"]["enum"] == SIDES
+    assert defs["annotationAlignment"]["enum"] == ALIGNMENTS
+    assert defs["annotationVisibilityMode"]["enum"] == ["none", "semantic", "presentation", "all"]
+    assert defs["relationVisibilityMode"]["enum"] == ["none", "semantic", "critical", "all"]
+    assert defs["guidedAnnotationVisibilityMode"]["enum"] == ["none", "presentation", "all"]
+    assert defs["guidedRelationVisibilityMode"]["enum"] == ["none", "semantic"]
+
+
+@pytest.mark.parametrize(("name", "definition", "count"), [
+    (VIEW, "annotationPurpose", 1), (WORKSPACE, "annotationPurpose", 1),
+    (VIEW, "annotationSide", 2), (WORKSPACE, "annotationSide", 1),
+    (VIEW, "annotationAlignment", 1), (WORKSPACE, "annotationAlignment", 1),
+    (VIEW, "annotationVisibilityMode", 2), (VIEW, "relationVisibilityMode", 1),
+    (WORKSPACE, "guidedAnnotationVisibilityMode", 1), (WORKSPACE, "guidedRelationVisibilityMode", 1),
+])
+def test_each_annotation_vocabulary_site_references_the_definition_and_accepts_exactly_it(name, definition, count):
+    sites = _sites(name, definition)
+    assert len(sites) == count, sites
+    allowed = _defs()[definition]["enum"]
+    for pointer in sites:
+        validator = _site_validator(name, pointer)
+        assert [value for value in allowed if not validator.is_valid(value)] == [], pointer
+        for value in ("inside", "rail", "auto", "Callout", "above ", "", None, 3, ["above"]):
+            assert validator.is_valid(value) is (value in allowed if isinstance(value, str) else False), (pointer, value)
+
+
+@pytest.mark.parametrize(("subset", "superset"), [
+    ("guidedAnnotationVisibilityMode", "annotationVisibilityMode"),
+    ("guidedRelationVisibilityMode", "relationVisibilityMode"),
+])
+def test_a_guided_override_subset_is_strictly_contained_in_the_view_vocabulary(subset, superset):
+    small, large = _defs()[subset]["enum"], _defs()[superset]["enum"]
+    assert set(small) < set(large), "a named subset is a proper subset: equal sets would need no second definition"
+    assert [value for value in large if value in small] == small, "the subset keeps the superset's order"
+
+
+def test_a_guided_override_cannot_select_the_semantic_annotation_mode():
+    assert "semantic" in _defs()["annotationVisibilityMode"]["enum"]
+    assert "semantic" not in _defs()["guidedAnnotationVisibilityMode"]["enum"]
+    assert "critical" not in _defs()["guidedRelationVisibilityMode"]["enum"]
+
+
+def test_the_guided_workspace_accepts_no_visibility_value_the_view_rejects():
+    view = _site_validator(VIEW, _sites(VIEW, "annotationVisibilityMode")[0])
+    relations = _site_validator(VIEW, _sites(VIEW, "relationVisibilityMode")[0])
+    for value in _defs()["guidedAnnotationVisibilityMode"]["enum"]:
+        assert view.is_valid(value), value
+    for value in _defs()["guidedRelationVisibilityMode"]["enum"]:
+        assert relations.is_valid(value), value
+
+
+def test_view_and_workspace_annotation_enums_are_one_definition():
+    # B2: the two schemas share the exact purpose, side and alignment vocabulary through one definition each.
+    for definition in ("annotationPurpose", "annotationSide", "annotationAlignment"):
+        assert _sites(VIEW, definition) and _sites(WORKSPACE, definition), definition
+
+
+def test_annotation_side_is_one_concept_for_a_rung_and_an_adjacent_search():
+    # `legacy_candidate` expands a rung side into an adjacent search on the same side, so both sites share the definition.
+    from chrona.presentation.model.placement_candidates import _parse_search, legacy_candidate
+
+    for side in SIDES:
+        assert legacy_candidate(side, "note").search.side == side
+        assert _parse_search({"kind": "adjacent", "side": side}).side == side
+    for side in ("inside", "rail", "auto", ""):
+        with pytest.raises(ValueError, match="E_PRESENTATION_CANDIDATE_INVALID"):
+            _parse_search({"kind": "adjacent", "side": side})
+
+
+def _union_explanations(name: str, pointer: str, values: list[Any]) -> list[Any]:
+    from chrona.resources import dereferenced_schema
+    from chrona.schema_diagnostics import explain_all_errors, explain_errors
+
+    schema = _schema(name)
+    registry = schema_registry().with_resource(schema["$id"], Resource.from_contents(schema))
+    adopted = Draft202012Validator({"$ref": f"{schema['$id']}#{pointer}"}, registry=registry)
+    twin_schema = dereferenced_schema(name)
+    twin = Draft202012Validator({"$ref": f"{twin_schema['$id']}#{pointer}"},
+                                registry=schema_registry().with_resource(twin_schema["$id"], Resource.from_contents(twin_schema)))
+    rows = []
+    for value in values:
+        outcomes = []
+        for validator in (adopted, twin):
+            errors = list(validator.iter_errors(value))
+            outcomes.append(("valid",) if not errors else (explain_errors(errors), explain_all_errors(errors)))
+        rows.append((value, outcomes[0], outcomes[1]))
+    return rows
+
+
+def _view_pointer(*tail: str) -> str:
+    view = _schema(VIEW)
+    found = [pointer for pointer in (_pointer(path) for path, node in _walk(view)
+                                      if isinstance(node, dict) and "visibility" in node.get("properties", {}))]
+    assert found
+    return found[0] + "/properties/visibility/properties/" + "/properties/".join(tail)
+
+
+VISIBILITY_PROBES = ["bogus", "", 5, None, [], {}, {"mode": "all"}, {"mode": "bogus", "marker": "none"}, {"mode": "all", "marker": "x"},
+                     {"mode": "all", "marker": "numbered", "extra": 1}, "critical", "semantic", "presentation",
+                     {"mode": "critical", "overflow": "suppress"}, {"mode": "all", "overflow": "suppress"}]
+
+
+@pytest.mark.parametrize("field", ["annotations", "relations"])
+def test_a_reference_in_the_visibility_union_changes_no_diagnostic(field):
+    # `_union_forms` reads a branch's `required`; an enum branch has none, so a `$ref` enum branch must explain exactly as the
+    # inline enum did. The fully inlined twin is the inline form.
+    for value, adopted, twin in _union_explanations(VIEW, _view_pointer(field), VISIBILITY_PROBES):
+        assert adopted == twin, value
+    assert any(row[1] != ("valid",) for row in _union_explanations(VIEW, _view_pointer(field), VISIBILITY_PROBES))

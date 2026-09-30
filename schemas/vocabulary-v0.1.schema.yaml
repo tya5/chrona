@@ -26,3 +26,31 @@ $defs:
     description: "Finite quarter axis-label form."
     examples: [year-quarter]
     enum: [quarter, year-quarter, quarter-year]
+  annotationPurpose:
+    description: "Author intent for an annotation."
+    examples: [callout]
+    enum: [callout, highlight, note, explanatory-arrow]
+  annotationSide:
+    description: "Logical side of the anchor on which an annotation is placed."
+    examples: [above]
+    enum: [above, below, start, end]
+  annotationAlignment:
+    description: "Alignment of an annotation along its chosen side."
+    examples: [center]
+    enum: [start, center, end]
+  annotationVisibilityMode:
+    description: "Which annotations a View shows: none, the semantic ones, the presentation ones, or all."
+    examples: [presentation]
+    enum: [none, semantic, presentation, all]
+  guidedAnnotationVisibilityMode:
+    description: "The subset of `annotationVisibilityMode` a guided authoring override may select; it cannot alter semantic annotations."
+    examples: [presentation]
+    enum: [none, presentation, all]
+  relationVisibilityMode:
+    description: "Which relations a View shows: none, the semantic ones, the critical ones, or all."
+    examples: [semantic]
+    enum: [none, semantic, critical, all]
+  guidedRelationVisibilityMode:
+    description: "The subset of `relationVisibilityMode` a guided authoring override may select."
+    examples: [semantic]
+    enum: [none, semantic]
