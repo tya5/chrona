@@ -57,6 +57,11 @@ Spec 50 §3.2 (and the association paragraph that says "two-em") state the defau
 `rowDistribution: fill` on lane rows), the knob names, and that the association bound follows the same value. The last-own-mark wording is added only if the slip decision is taken. Byte-identity evidence from I573-1 is cited as evidence of no default
 change only. No derived output is hand edited; derived outputs are regenerated on main by CI.
 
+## Status
+
+I573-1 merged as #663 (`8c590276`): knobs, schema, tests; zero public slides changed. I573-2 (Spec 50 §3.2) is this change. Open for the
+owner: decision 3 (last-own-mark slip) and whether `maxEndGapEm` should be split from the association reach (review F1, A2).
+
 ## Publication
 
 Docs PR (this plan and the review) first; I573-1 code PR; I573-2 spec PR. Every commit and PR: `Refs #573`, no closing

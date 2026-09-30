@@ -98,7 +98,8 @@ The final candidate must be in its own lane row and satisfy the mark-association
 bound below. `pack` lanes and non-lane candidate-search domains are unchanged.
 
 The completed Text bounds of every emitted plot member name with its own mark
-MUST stay within a two-em two-dimensional nearest-perimeter gap of that exact
+MUST stay within the member-name reach (default two em, below) as a
+two-dimensional nearest-perimeter gap of that exact
 mark on either side. Layout rejects a farther candidate before trying the
 next declared side. Default `auto` tries end then start; authored side/fallback
 order remains authoritative. A suppressible request with no legal candidate
@@ -112,6 +113,27 @@ Scene acceptance check pairs each emitted member label to its own completed
 mark through `hostPlacementId`, additionally checking lane/member identity
 when present, never by visual order or nearest distance. No member-label
 leader, route, endpoint exemption, or lane leader facet is emitted (#554).
+
+A Layout Profile may declare the member-name policy in
+`reviewSurface.memberNames`, an optional object with two optional members:
+
+- `maxEndGapEm` (a number from 0 to 100, default `2`) sets the member-name
+  reach to `maxEndGapEm` times the label font size. That one value bounds both
+  the end-side gap and the nearest-perimeter association gap above; `0` leaves
+  no end placement.
+- `search` (`side-band` or `full-band`) selects the block-position search.
+  `full-band` runs the finite preferred/contact search across the row band,
+  limited to one measured stagger step only for lane rows; `side-band` keeps
+  the side-neighbourhood search. When `search` is omitted the default applies:
+  `full-band` for a lane row under `rowDistribution: fill`, otherwise
+  `side-band`. A declared value applies to every mark-associated member name,
+  independently of row distribution.
+
+Omitting `memberNames` (or a member) gives exactly the defaults stated here, so
+existing profiles are unchanged. The object is added to the current Layout
+Profile version in place (Spec 56 §3.2). A derived Layout Profile declares its
+own `reviewSurface` and therefore its own `memberNames`; it does not inherit
+the base profile's.
 
 Each suppressed name has a typed `SurfacePlacement` fact with lane/member, final
 row extent, remaining capacity and reason `capacity` or `obstruction`, validated
