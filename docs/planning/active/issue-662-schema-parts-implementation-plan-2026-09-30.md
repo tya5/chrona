@@ -90,22 +90,22 @@ Files: `schemas/common-v0.1.schema.yaml` (`sha256Identity`, `isoDate`, `safeRela
 (frozen-digest check, `consumers` check for live entries); adoption edits in actual-intake-batch, actual-set, authoring-command-result, authoring-workspace, automation-result, command-request,
 presentation-materialization-receipt, presentation-preset, preset-library, profile, project, render-context, scene, theme-v0.14, view-v0.28 (dates, `fr`), icon-catalog-v0.4 and theme-asset-source (`portableName`).
 `presentation-resource`, `revision-store-resource-ref` and `layout-profile` are not edited here.
-Two commits in one PR: (1) defs byte-exact to today's regexes (`$` kept), pure refactor; (2) defs take the decided anchors (T3) if the owner accepts it. Tests: `tests/unit/tools/test_schema_parts.py`
+One commit, the pure refactor: defs byte-exact to today's regexes (`$` kept). **Commit 2 (T3 anchors) is not adopted; revisit on an owner ruling** (design D3 status, 2026-10-01): it would need `common-v0.2` or a deliberate digest update, because the frozen-digest gate fails a changed def. Tests: `tests/unit/tools/test_schema_parts.py`
 (frozen digests, the live-entry copy test of design D8, parity of `common` with `presentation-resource` and `revision-store-resource-ref` except the anchor), Python-twin parity for the three `portableName` copies, and
 one probe per def and per adopting kind.
-Proof: commit 1 must show L1 equal, L2 equal, L3 equal on every file; commit 2 shows only the T3 deltas, each listed with its test. #573: none (layout-profile excluded).
+Proof: L1 equal, L2 equal, L3 equal on every file. Leftovers kept inline on purpose (design, S1c learnings): `fractionalTrack` at the two View `width` branches (`_union_forms` reads a branch's `required`), the nullable `resultRevision`, and `authoring-command` (S1d). #573: none (layout-profile excluded).
 
 **S1d. authoring-command guard (T1).** Files: `schemas/authoring-command-v0.1.schema.yaml` (in place, three fields), `tests/unit/chrona/operational/test_authoring_commands.py` and
 `tests/unit/chrona/usecases/test_authoring_materialization.py` (probe matrix through `parse_authoring_command` and `apply_authoring_command`: today's verdict recorded first, then the guarded verdict; the matrix
 includes a workspace named `my plan.yaml` and `計画.yaml`, which must still work). Proof: L1 deltas exactly `/properties/target/properties/path`, `.../preset/properties/path`, `.../directory`; L2 no document; L3 lists the moved errors.
-Requires the T1 owner decision. #573: none.
+T1 is **adopted** (owner-delegated decision, 2026-10-01): `fileName` for `target.path`, `safeRelativePath` for the other two. #573: none.
 
-**S1e. Calendar check (T2), if D2 = B.** Files: factory enables `FormatChecker(["date"])`; `isoDate` adopted at every date site of the six kinds (some were adopted in S1c under A); Spec 56 §3.2 sentence (design F7 c);
-tests: impossible-date, Unicode-digit and newline probe per kind; scene `format: date` now asserted, with a test over the committed scenes. If D2 = A, this slice is only the ASCII/newline pattern already in S1c and
-the decision is recorded in Spec 56. Proof: L1 deltas exactly the `format` insertions and pattern anchors; L2 equal; L3 lists the changed messages. #573: none.
+**S1e. Calendar check (T2): stated decision, docs only.** Decided 2026-10-01 (owner-delegated, revisitable): the schema does not validate the calendar; `isoDate` stays pattern-only and byte-exact, no `FormatChecker`,
+Project keeps its runtime `as_date` check (design D2). Files: the one Spec 56 §3.2 sentence recording the decision (design F7 c), nothing else; no schema, factory or test change, and the S1b `format` rule stays implemented and
+dormant. Proof: docs-only PR. If the owner later rules for option B, the work is the factory checker, the `isoDate` pattern and anchors, the probes listed in design T2, and the L1/L3 deltas for exactly those changes.
 
 **S1f. layout-profile adoption.** Files: `schemas/layout-profile-v0.9.schema.yaml` (`sha256Identity`, `relativeAddress`, `revisionToken`, `fractionalTrack`; its `id` def stays). Scheduled after I573-1 merges: rebase on the merged
-schema, re-run the gate against `origin/main` so `memberNames` appears as a permitted addition. Proof: L1 equal apart from the T3 anchor deltas and the additive `memberNames` that main already carries. **Depends on #573.**
+schema, re-run the gate against `origin/main` so `memberNames` appears as a permitted addition. Proof: L1 equal (T3 is not adopted, so there are no anchor deltas; `memberNames` is already on main and is not a delta against it), L2/L3 unchanged. #573 is merged.
 
 ## S2. `vocabulary-v0.1` (after S1c)
 
@@ -168,4 +168,7 @@ separate act after that; the design pack and this plan are archived afterwards p
 | S1a | implemented: `SCHEMA_PARTS`, `schema_registry`, `schema_validator` (cached by name), `validator_for_schema` (caller-supplied schema: the `schema_path` override and tools), `bundled_schema`, `dereferenced_schema` in `chrona.resources`; all 17 `src/` construction sites, `RefResolver` and `_schema_store` migrated or removed; `tools/schema_annotations.py` and the six conformance scripts use the factory; `E_SCHEMA_REF_UNRESOLVED` static gate in `tools/schema_inventory.py`; `tools/wheel_smoke.py` builds the registry from the installed wheel. The AST guard exempts `tools/schema_equivalence.py` (independent of the loader by design, S0). Gate output (L1 equal x73, L2/L3 unchanged) is in the PR |
 | S1b | implemented: `rule="format"` in `schema_diagnostics._explain` (rank 5, tied with `pattern` and winning the tie by validator name; `expected` describes the format, the message never echoes the value; `date` reads `YYYY-MM-DD calendar date`, an unknown format falls back to its declared name), Spec 56 §3 rule list and message paragraph. No schema asserts a format yet, so the S0 gate is equal on all three layers. Gate output is in the PR |
 | S1c commit 1 | implemented as its own PR (commit 2, the T3 anchors, awaits the owner decision and is a later PR): `schemas/common-v0.1.schema.yaml` (13 defs, byte-exact to today's regexes with `$` kept; `fileName` and `identifier` are new and newline-proof from the start), registered in `SCHEMA_PARTS`; inventory entry for `common` and `frozenDefs` digests on `common`, `presentation-resource` and `revision-store-resource-ref` (annotation-insensitive; `"#"` freezes a part that has no `$defs`), the frozen-digest gate (`E_SCHEMA_PART_FROZEN`, `E_SCHEMA_PART_UNFROZEN`) and the live-entry `consumers` gate (`E_SCHEMA_INVENTORY_CONSUMER_STALE`; ten inaccurate consumer entries corrected); 50 sites adopted in 18 live schemas (the plan's list plus example-registry `slug` and the `sha256` sites of icon-catalog-v0.4, which the D8 test needs). Deliberate leftovers, recorded in `tests/unit/tools/test_schema_parts.py`: the nullable `resultRevision` and the two View `width` union branches that spell `fr` (a `$ref` branch loses `properties fr` from the union explanation), authoring-command until S1d (the plan does not list it and the S0 sensitivity tests edit its `baseRevision`), and layout-profile until S1f. Gate output (L1 equal x73 plus `common` added, L2/L3 unchanged) is in the PR |
-| S1c commit 2, S1d-S7 | not started |
+| S1c commit 2 (T3) | **not adopted**, revisit on owner ruling (design D3 status) |
+| S1d | T1 adopted by the lead; slice not started |
+| S1e | stated decision recorded in the design (2026-10-01); Spec 56 sentence is docs-only |
+| S1f, S2-S7 | not started |
