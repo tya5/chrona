@@ -131,7 +131,7 @@ def test_committed_example_has_two_intermediate_gates_with_visible_lane_facts(tm
         assert host["start"] < point["schedule"]["at"] < host["end"]
 
     preset = tmp_path / "preset"
-    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", "editorial", "--output", str(preset)])
+    monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", "mission-light", "--output", str(preset)])
     main()
     scene = tmp_path / "scene.json"
     svg = tmp_path / "attached.svg"
@@ -160,5 +160,5 @@ def test_committed_example_has_two_intermediate_gates_with_visible_lane_facts(tm
                    readiness_actual["bounds"]["inline"] + readiness_actual["bounds"]["inlineSize"])
     # The name never covers its own actual mark (#679); it may sit before or after it.
     assert label_span[1] <= actual_span[0] or actual_span[1] <= label_span[0]
-    assert "Readiness review · 30 Sep · +8d" in visible_text
+    assert "Readiness review · 30 Sep · +1d" in visible_text
     assert "Range clearance · 12 Oct" in visible_text
