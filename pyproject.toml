@@ -22,6 +22,7 @@ dev-mode-dirs = ["src", "."]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "--durations=0 --durations-min=0"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/chrona"]
