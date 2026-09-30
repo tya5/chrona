@@ -1,0 +1,77 @@
+# Frozen copy of the HALCYON-1 layout profile, so an example edit cannot move an engine test (#575).
+# test_layout_profile_fixtures.py keeps it valid against the live layout-profile schema.
+version: chrona/layout-profile/v0.9
+id: briefing
+flowDirection: horizontal
+dependencyNetworkFlowDirection: horizontal
+requiredThemeTokens: [spacing.l, spacing.m, spacing.none]
+reviewSurface: {rowDistribution: pack, backgroundExtents: {rowBand: both, groupBand: timeline, groupHeaderBand: both, calendarClosed: timeline}, annotationRouting: {maxBends: 4, maxDetourRatio: 2}}
+relationRouting: {maxBends: 4, maxDetourRatio: 2}
+root:
+  id: page
+  kind: column
+  inlineSize: fill
+  blockSize: fill
+  gap: {token: spacing.m}
+  padding: {token: spacing.l}
+  alignItems: stretch
+  justifyContent: start
+  children:
+    - id: title
+      kind: slot
+      source: title
+      inlineSize: content
+      blockSize: content
+      place: {inline: start, block: start, safety: safe}
+      priority: required
+      overflow: visible-overflow
+    - id: review
+      kind: row
+      inlineSize: fill
+      blockSize: fill
+      gap: {token: spacing.l}
+      padding: {token: spacing.none}
+      alignItems: stretch
+      justifyContent: start
+      children:
+        - id: table
+          kind: slot
+          source: table
+          inlineSize: {minmax: {min: content, max: {fr: 5}}}
+          blockSize: fill
+          place: {inline: stretch, block: stretch, safety: strict}
+          priority: required
+          overflow: visible-overflow
+        - id: timeline-stack
+          kind: column
+          inlineSize: {fr: 6}
+          blockSize: fill
+          gap: {token: spacing.none}
+          padding: {token: spacing.none}
+          alignItems: stretch
+          justifyContent: start
+          children:
+            - id: timeline-axis
+              kind: slot
+              source: timeline-axis
+              inlineSize: fill
+              blockSize: content
+              place: {inline: stretch, block: start, safety: strict}
+              priority: required
+              overflow: visible-overflow
+            - id: timeline
+              kind: slot
+              source: timeline
+              inlineSize: fill
+              blockSize: fill
+              place: {inline: stretch, block: stretch, safety: strict}
+              priority: required
+              overflow: visible-overflow
+    - id: notes
+      kind: slot
+      source: notes
+      inlineSize: fill
+      blockSize: content
+      place: {inline: start, block: end, safety: safe}
+      priority: preferred
+      overflow: ellipsize-with-source

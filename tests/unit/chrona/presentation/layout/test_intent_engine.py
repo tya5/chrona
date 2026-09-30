@@ -13,6 +13,7 @@ from chrona.presentation.layout.profile import resolve_layout_profile
 
 
 ROOT = Path(__file__).parents[5]
+PROFILES = ROOT / "tests/fixtures/layout-profiles"
 SOURCES = {"title", "table", "timeline", "timeline-axis", "legend", "notes"}
 
 
@@ -164,7 +165,7 @@ def test_auto_empty_requirement_uses_one_unit_floor_and_unknown_source_fails():
 
 
 def test_natural_grid_requirement_sums_single_span_track_bases_and_keeps_span_overflow():
-    raw = yaml.safe_load((ROOT / "examples/halcyon-1/layouts/print-portrait.yaml").read_text(encoding="utf-8"))
+    raw = yaml.safe_load((PROFILES / "print-portrait.yaml").read_text(encoding="utf-8"))
     tokens = {name: {"type": "number", "value": value} for name, value in {
         "panel.timeline": 200, "spacing.m": 16, "spacing.none": 0, "spacing.xl": 32,
     }.items()}
@@ -298,7 +299,7 @@ def test_natural_flow_requirement_wraps_at_resolved_inline_width():
 
 
 def test_anchored_overlay_decoration_does_not_increase_natural_flow_floor():
-    raw = yaml.safe_load((ROOT / "examples/halcyon-1/layouts/overlay-briefing.yaml").read_text(encoding="utf-8"))
+    raw = yaml.safe_load((PROFILES / "overlay-briefing.yaml").read_text(encoding="utf-8"))
     tokens = {name: {"type": "number", "value": value} for name, value in {
         "panel.review.block": 200, "panel.side": 240, "spacing.l": 24,
         "spacing.m": 16, "spacing.none": 0,
@@ -467,7 +468,7 @@ def test_v08_rejects_misleading_writing_mode_and_invalid_network_direction():
 
 
 def test_annotation_routing_is_manifested_independently_of_relation_routing():
-    raw = yaml.safe_load((ROOT / "examples/halcyon-1/layouts/briefing.yaml").read_text(encoding="utf-8"))
+    raw = yaml.safe_load((PROFILES / "briefing.yaml").read_text(encoding="utf-8"))
     raw["reviewSurface"]["annotationRouting"] = {"maxBends": 1, "maxDetourRatio": 1}
     values = {name: {"type": "number", "value": value} for name, value in {
         "spacing.none": 0, "spacing.s": 8, "spacing.m": 16, "spacing.l": 24, "panel.minimum": 180,
