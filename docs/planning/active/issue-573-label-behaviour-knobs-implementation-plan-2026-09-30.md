@@ -77,6 +77,8 @@ only `planned`, `actual`, `snapshot` hosts).
 2. "End after the rightmost own mark" is added only as a FINAL rung, tried after every existing candidate has failed and before the
    visible-overflow fallback, and only when `end` is on the declared ladder and an own mark ends past the host. It starts at the
    right edge of the rightmost own mark plus the declared gap and is bounded by `maxEndGapEm * font_size` from that edge.
+   When no rung is legal and the visible-overflow fallback side is `end`, that fallback is measured from the same edge, so an
+   overflowing name (an attached milestone over its parent bar) does not cover the item's own actual mark.
 3. Only a name placed by the final rung is associated through "within reach of at least one own mark", and only its
    `hostPlacementId` names the own mark nearest its Text, so the existing Scene acceptance check (host gap within two em) stays true.
 4. The default stays `maxEndGapEm = 2`; `search` is untouched.
