@@ -386,14 +386,13 @@ def test_suppression_count_excludes_other_plot_text_and_absent_count(tmp_path):
     member_suppressed = sum(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:") for item in tuned.scene.diagnostics)
     assert member_suppressed >= 1  # the variance suppression above is not counted
     assert f"I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count={member_suppressed}" in tuned.scene.diagnostics
-    # The L1 HALCYON schedule correction moves CDR into the existing
-    # containment policy's suppression path. R4's bounded mark attachment can
-    # suppress other names; the aggregate must still count members only.
+    # HALCYON is evidence here, not the rule: which names the placement policy suppresses depends
+    # on the corpus data (#575), so no name is pinned. The aggregate must still count members
+    # only; the synthetic proof is test_fill_lanes_count_every_packed_name_as_shown_or_suppressed.
     halcyon = render_review(_draft_request(**inputs, view_path=example / "views/01-mission-brief.yaml",
                                            theme_path=example / "themes/briefing.yaml",
                                            layout_path=example / "layouts/briefing.yaml",
                                            summary_path=example / "profiles/summary.yaml"))
-    assert "W_LAYOUT_LABEL_SUPPRESSED:member-label:cdr:cdr" in halcyon.scene.diagnostics
     halcyon_members = sum(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")
                           for item in halcyon.scene.diagnostics)
     assert halcyon_members >= 1

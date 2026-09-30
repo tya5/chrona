@@ -23,20 +23,18 @@ tests and data on `main` `22ea2c1c`.
    `issue-575-corpus-authority-design-plan-2026-09-30.md`, which does not exist.
    AGENTS.md asks for one work record; the design now links the implementation
    plan, which carries the baseline.
-2. **Restoring `2wd` re-breaks the #467 chain row, and the design does not say
-   so.** The 4wd edit existed because avionics' actual finish (2027-04-30)
-   overlaps a 2wd bus-test start (2027-04-29), so the lane rule cannot keep
-   `structure -> avionics -> bus-test` on one lane. After the restore that chain
-   splits on HALCYON `02`. Acceptance row 1 allows the restore only if the look
-   is reached "through YAML or a general knob", and no such knob is proposed.
-   This review does not invent one: #467 is closed, the rule (a chain continues
-   when date intervals do not overlap) is already covered by synthetic tests
-   (`test_lane_membership.py`, `test_projection_rows.py` with fixed dates), and
-   the design accepts an output change judged against the rule and targets. The
-   consequence must be reported in I575-3, not discovered by a red test. If the
-   owner wants the chain on one lane at 2wd, that is a new general rule (for
-   example, tolerating touching or actual-overlapping intervals on a chain)
-   needing its own design, not a data edit.
+2. **The restore might re-break the #467 chain row; the design did not check.**
+   The 4wd edit existed because avionics' actual finish (2027-04-30) overlaps a
+   2wd bus-test start (2027-04-29), which was thought to make one-lane placement
+   of `structure -> avionics -> bus-test` impossible. This review first predicted
+   that the chain would split. **Corrected by I575-3 evidence:** on current
+   `main` the chain still shares one lane on `02`, `11` and `12` at 2wd, lane
+   membership and row geometry are unchanged, and no marks of different items
+   overlap, so the premise no longer holds and no knob is needed. The rule (a
+   chain continues when date intervals do not overlap) stays covered by
+   synthetic tests (`test_lane_membership.py`, `test_projection_rows.py` with
+   fixed dates). The lesson for the record: state a predicted consequence as a
+   hypothesis and test it before the review is published.
 3. **Corpus-position tests the design omits.** Three tests hard-code the 4wd
    data: `test_halcyon_four_workday_lag_places_bus_test_on_may_third` and
    `test_every_halcyon_context_pins_current_project_without_repinning_theme`
@@ -67,8 +65,9 @@ tests and data on `main` `22ea2c1c`.
 
 ## Residual risks
 
-- The restored HALCYON slides may look worse than today's (chain split, extra
-  lane). That is admissible under the issue: today's output is not an oracle. The
-  I575-3 review states whether each changed primitive follows from the rule.
+- A restored HALCYON slide may read differently from today's. That is admissible
+  under the issue: today's output is not an oracle. The I575-3 PR states whether
+  each changed primitive follows from the rule; sub-pixel threshold flips (a
+  name moving from a bar's end to its start) are recorded, not tuned.
 - Byte identity is reported only where a slice intends no behaviour change
   (I575-1, I575-2). It is not offered as a quality claim for I575-3.

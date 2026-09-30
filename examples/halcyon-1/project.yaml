@@ -210,7 +210,7 @@ relations:
   - {id: pdr-structure, type: dependency, from: {object: pdr, endpoint: at}, to: {object: structure, endpoint: start}, lag: 1wd}
   - {id: structure-avionics, type: dependency, from: {object: structure, endpoint: end}, to: {object: avionics, endpoint: start}, lag: 0d}
   - {id: eps-bustest, type: dependency, from: {object: eps, endpoint: end}, to: {object: bus-test, endpoint: start}, lag: 0d}
-  - {id: avionics-bustest, type: dependency, from: {object: avionics, endpoint: end}, to: {object: bus-test, endpoint: start}, lag: 4wd}
+  - {id: avionics-bustest, type: dependency, from: {object: avionics, endpoint: end}, to: {object: bus-test, endpoint: start}, lag: 2wd}
   - {id: avionics-cdr, type: dependency, from: {object: avionics, endpoint: start}, to: {object: cdr, endpoint: at}, lag: 0d}
   - {id: optics-detector, type: dependency, from: {object: optics, endpoint: end}, to: {object: detector, endpoint: start}, lag: 1wd}
   - {id: detector-tvac, type: dependency, from: {object: detector, endpoint: end}, to: {object: payload-tvac, endpoint: start}, lag: 0d}
