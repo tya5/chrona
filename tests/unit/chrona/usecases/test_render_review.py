@@ -16,7 +16,7 @@ import yaml
 import chrona.usecases.render_review as render_usecase
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, obstacles_intersect
-from chrona.presentation.layout.surface_composer import _lane_fallback_clears_required_labels
+from chrona.presentation.layout.surface_routes import _lane_fallback_clears_required_labels
 from chrona.presentation.layout.surface_quality import TextPlacement
 from chrona.presentation.contracts.resources import ViewLaneLabel, ViewLaneTable, ViewRowMode
 from chrona.presentation.contracts import parse_contract

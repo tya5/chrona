@@ -327,12 +327,13 @@ def test_init_starter_default_uses_task_and_planned_date_columns(tmp_path, monke
 
 
 def test_as_of_no_fit_keeps_rule_and_omits_label(tmp_path, monkeypatch) -> None:
-    import chrona.presentation.layout.surface_composer as composer
+    import chrona.presentation.layout.asof_label as asof_label
 
     starter = tmp_path / "starter"
     monkeypatch.setattr(sys, "argv", ["chrona", "init", str(starter)])
     main()
-    monkeypatch.setattr(composer, "find_asof_label_candidate", lambda *args, **kwargs: None)
+    # The member-label module imports the candidate search at call time, so the patch target is its owner.
+    monkeypatch.setattr(asof_label, "find_asof_label_candidate", lambda *args, **kwargs: None)
     scene, svg_path = _render_project(tmp_path, monkeypatch, "as-of-no-fit",
                                       starter / "project.yaml", starter / "actual.yaml")
     primitives = {item["id"]: item for item in _primitives(scene)}
