@@ -1,6 +1,6 @@
 # Design — Corpus Used as Authority for the Core (#575)
 
-**Plan:** [design plan](../planning/active/issue-575-corpus-authority-design-plan-2026-09-30.md).
+**Plan:** [implementation plan](../planning/active/issue-575-corpus-authority-implementation-plan-2026-09-30.md) (carries the baseline). **Review:** [architecture review](../reviews/current/issue-575-corpus-authority-architecture-review-2026-09-30.md).
 
 ## Decisions
 
