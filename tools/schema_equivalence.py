@@ -926,6 +926,7 @@ INLINE_DOCUMENTS: dict[str, Callable[[], dict[str, Any]]] = {
 KIND_COVERED_THROUGH = {
     "presentation-resource-foundation": "view",
     "revision-store-resource-reference": "automation-result",
+    "schema-part-common": "project",
 }
 
 

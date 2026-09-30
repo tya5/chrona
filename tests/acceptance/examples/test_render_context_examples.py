@@ -2,10 +2,9 @@
 from hashlib import sha256
 from pathlib import Path
 
-import jsonschema
 import yaml
 
-from chrona.resources import schema_resource
+from chrona.resources import schema_resource, validator_for_schema
 from chrona.presentation.model.font_resources import resolve_font_resource
 
 
@@ -25,7 +24,7 @@ def test_current_example_contexts_bind_exact_source_bytes():
         context = yaml.safe_load(path.read_text(encoding="utf-8"))
         version = context["version"].rsplit("/", 1)[-1]
         schema = yaml.safe_load(schema_resource(f"render-context-{version}.schema.yaml").read_text(encoding="utf-8"))
-        jsonschema.Draft202012Validator(schema).validate(context)
+        validator_for_schema(schema).validate(context)
         body = context["body"]
         references = [body[name] for name in ("project", "view", "theme", "colorScheme", "layout")]
         references.extend(body["inputs"].values())

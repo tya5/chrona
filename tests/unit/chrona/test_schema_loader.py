@@ -83,8 +83,8 @@ def test_dereferenced_form_has_no_part_reference(name):
 
 
 def test_schema_without_a_part_reference_is_unchanged_by_either_form():
-    assert dereferenced_schema("project-v0.7.schema.yaml") == schema_document("project-v0.7.schema.yaml")
-    assert bundled_schema("project-v0.7.schema.yaml") == schema_document("project-v0.7.schema.yaml")
+    assert dereferenced_schema("store-config-v0.1.schema.yaml") == schema_document("store-config-v0.1.schema.yaml")
+    assert bundled_schema("store-config-v0.1.schema.yaml") == schema_document("store-config-v0.1.schema.yaml")
 
 
 def _validator_constructions(path: Path) -> list[int]:

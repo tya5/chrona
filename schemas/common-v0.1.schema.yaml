@@ -1,0 +1,84 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:common-v0.1"
+title: "Chrona Common Definitions v0.1"
+description: >-
+  Shared value definitions referenced by live schemas as `urn:chrona:common-v0.1#/$defs/<name>`.
+  The part asserts nothing at its root. Each definition is frozen once published: the inventory
+  records a digest per definition and a change is a new part version, never an edit. Definitions
+  that name an existing inline pattern are byte-exact to it, including the `$` anchor.
+$defs:
+  sha256Identity:
+    description: "SHA-256 identity of one immutable byte payload: the `sha256:` prefix and 64 lowercase hexadecimal digits."
+    examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
+    type: string
+    pattern: "^sha256:[0-9a-f]{64}$"
+  isoDate:
+    description: "A calendar date written YYYY-MM-DD. The shape is checked here; calendar validity is a later phase."
+    examples: ["2026-09-30"]
+    type: string
+    pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+  safeRelativePath:
+    description: "Strict relative path: starts with a letter or digit, uses only letters, digits, `.`, `_`, `-` and `/`, and has no `.` or `..` segment."
+    examples: ["views/overview.yaml"]
+    type: string
+    pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"
+  relativeAddress:
+    description: "Loose Store-relative address: not absolute and no `.` or `..` segment; any other character is accepted, and the check sees only the first line."
+    examples: ["resources/project.yaml"]
+    type: string
+    pattern: "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$)).+"
+  relativeAddressDotTolerant:
+    description: "Loose Context-relative address: not absolute and no `..` segment; a single `.` segment is accepted."
+    examples: ["font_metrics/acme-regular.json"]
+    type: string
+    pattern: "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+  fileName:
+    description: "One file name inside a directory: non-empty, not `.` or `..`, and no `/`, `\\` or control character. Spaces and non-ASCII characters are accepted."
+    examples: ["plan.yaml", "計画.yaml"]
+    type: string
+    minLength: 1
+    pattern: "^[^/\\\\\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+    not: {enum: [".", ".."]}
+  identifier:
+    description: "A stable identifier: non-empty and free of control characters. Spaces and non-ASCII characters are accepted."
+    examples: ["Work package / gate", "作業ストリーム"]
+    type: string
+    minLength: 1
+    pattern: "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+  slug:
+    description: "Lowercase identifier: a letter, then lowercase letters, digits and hyphens."
+    examples: ["controller-z"]
+    type: string
+    pattern: "^[a-z][a-z0-9-]*$"
+  portableName:
+    description: "Portable name: a letter or digit, then letters, digits, underscores and hyphens."
+    examples: ["material_symbols"]
+    type: string
+    pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*$"
+  gitRevision:
+    description: "Pinned Git revision: the `git:` prefix and 40 to 64 hexadecimal digits."
+    examples: ["git:0123456789abcdef0123456789abcdef01234567"]
+    type: string
+    pattern: "^git:[0-9A-Fa-f]{40,64}$"
+  revisionToken:
+    description: "Opaque revision token: one or more non-whitespace characters."
+    examples: ["main"]
+    type: string
+    pattern: "^\\S+$"
+  fractionalTrack:
+    description: "Positive fractional track size."
+    examples: [{fr: 1}]
+    type: object
+    required: [fr]
+    additionalProperties: false
+    properties:
+      fr: {description: "Positive fractional allocation weight.", type: number, exclusiveMinimum: 0, maximum: 1000000}
+  license:
+    description: "Explicit licensing details that travel with an asset."
+    examples: [{spdx: MIT, notice: "Copyright the authors"}]
+    type: object
+    required: [spdx, notice]
+    additionalProperties: false
+    properties:
+      spdx: {description: "Declared SPDX identifier; policy remains the author's decision.", type: string, minLength: 1}
+      notice: {description: "Complete notice text that must travel with the asset.", type: string, minLength: 1}

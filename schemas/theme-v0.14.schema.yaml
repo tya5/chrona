@@ -22,8 +22,8 @@ properties:
         additionalProperties: false
         properties:
           id: {description: "Declared base Theme id.", type: string, minLength: 1}
-          path: {description: "Safe relative path from this source to its base source.", type: string, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$", examples: [base.yaml]}
-          sourceContentIdentity: {description: "SHA-256 of exact base source bytes for the snapshot reader.", type: string, pattern: "^sha256:[0-9a-f]{64}$", examples: ["sha256:0000000000000000000000000000000000000000000000000000000000000000"]}
-          contentIdentity: {description: "Canonical identity of the resolved complete base Theme.", type: string, pattern: "^sha256:[0-9a-f]{64}$", examples: ["sha256:0000000000000000000000000000000000000000000000000000000000000000"]}
+          path: {description: "Safe relative path from this source to its base source.", $ref: "urn:chrona:common-v0.1#/$defs/safeRelativePath", examples: [base.yaml]}
+          sourceContentIdentity: {description: "SHA-256 of exact base source bytes for the snapshot reader.", $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity", examples: ["sha256:0000000000000000000000000000000000000000000000000000000000000000"]}
+          contentIdentity: {description: "Canonical identity of the resolved complete base Theme.", $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity", examples: ["sha256:0000000000000000000000000000000000000000000000000000000000000000"]}
       values: {description: "Whole replacements for existing base value entries.", type: object}
       roles: {description: "Whole replacements for existing base role entries.", type: object}

@@ -27,7 +27,7 @@ $defs:
   unitInterval: {description: "A normalized opacity or stop offset.", type: number, minimum: 0, maximum: 1}
   integer: {description: "An integer count.", type: integer}
   positiveInteger: {description: "A strictly positive integer extent or weight.", type: integer, minimum: 1}
-  identity: {description: "An immutable SHA-256 content identity.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+  identity: {description: "An immutable SHA-256 content identity.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
   boolean: {description: "A Boolean presentation value.", type: boolean}
   point: {description: "A completed inline/block coordinate.", type: array, minItems: 2, maxItems: 2, items: {$ref: "#/$defs/number"}}
   viewport: {description: "A positive final render viewport.", type: object, required: [inlineSize, blockSize], additionalProperties: false, properties: {inlineSize: {$ref: "#/$defs/positive"}, blockSize: {$ref: "#/$defs/positive"}}}

@@ -7,7 +7,7 @@ import jsonschema
 import pytest
 import yaml
 
-from chrona.resources import schema_resource
+from chrona.resources import schema_resource, validator_for_schema
 from tools.check_example_reachability import reachable_view_paths
 
 
@@ -36,12 +36,7 @@ def _validator() -> jsonschema.Draft202012Validator:
 
 def _validator_v028() -> jsonschema.Draft202012Validator:
     schema = yaml.safe_load(schema_resource("view-v0.28.schema.yaml").read_text(encoding="utf-8"))
-    foundation = yaml.safe_load(schema_resource("presentation-resource-v0.1.schema.yaml").read_text(encoding="utf-8"))
-    return jsonschema.Draft202012Validator(
-        schema, resolver=jsonschema.RefResolver.from_schema(
-            schema, store={foundation["$id"]: foundation, schema["$id"]: schema}
-        )
-    )
+    return validator_for_schema(schema)
 
 
 @pytest.mark.parametrize("path", reachable_view_paths(ROOT))
@@ -115,7 +110,7 @@ def test_halcyon_lane_slides_and_full_02_packing_policy():
     assert lane_context["body"]["view"]["id"] == "chrona-preset-editorial-lanes"
     assert lane_context["body"]["view"]["address"] == "views/editorial-lanes.yaml"
     context_schema = yaml.safe_load(schema_resource("render-context-v0.16.schema.yaml").read_text(encoding="utf-8"))
-    assert next(jsonschema.Draft202012Validator(context_schema).iter_errors(_json_value(lane_context)), None) is None
+    assert next(validator_for_schema(context_schema).iter_errors(_json_value(lane_context)), None) is None
 
 
 def test_v03_relation_visibility_object_rejects_unsupported_policy():

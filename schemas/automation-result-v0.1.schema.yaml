@@ -10,7 +10,7 @@ properties:
   operation: {description: "Automation operation that produced this result.", enum: [command-check, command-apply, actual-intake, actual-resolve, baseline-capture, baseline-compare]}
   status: {description: "Whether the operation was accepted or rejected.", enum: [accepted, rejected]}
   replayed: {description: "Whether this result was reproduced from a prior request.", type: boolean}
-  requestContentIdentity: {description: "SHA-256 identity of the originating request.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+  requestContentIdentity: {description: "SHA-256 identity of the originating request.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
   inputs: {description: "Immutable resources consumed by the operation.", type: array, minItems: 1, items: {$ref: "urn:chrona:revision-store-resource-ref-v0.1"}}
   resultTarget: {$ref: "urn:chrona:revision-store-resource-ref-v0.1"}
   diagnostics: {description: "Diagnostics emitted while processing the request.", type: array, items: {description: "One diagnostic record with a stable code.", type: object, required: [code], additionalProperties: true, properties: {code: {description: "Stable diagnostic code.", type: string, minLength: 1}}}}

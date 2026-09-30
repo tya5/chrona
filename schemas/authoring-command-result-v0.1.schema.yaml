@@ -9,8 +9,8 @@ properties:
   version: {description: "This authoring result format version.", const: chrona/authoring-command-result/v0.1}
   status: {description: "Whether the command was accepted or rejected.", enum: [accepted, rejected]}
   commandId: {description: "The command identity supplied by the caller.", type: string, minLength: 1}
-  commandBaseRevision: {description: "The workspace revision declared by the command.", examples: ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
-  workspaceRevision: {description: "The validated workspace revision observed before writing.", examples: ["sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+  commandBaseRevision: {description: "The workspace revision declared by the command.", examples: ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
+  workspaceRevision: {description: "The validated workspace revision observed before writing.", examples: ["sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
   resultRevision: {description: "The revision after an accepted write, or null after rejection.", examples: ["sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"], type: [string, 'null'], pattern: "^sha256:[0-9a-f]{64}$"}
   reversible: {description: "Whether the accepted operation is reversible.", type: boolean}
   diagnostics:
@@ -24,8 +24,8 @@ properties:
       properties:
         code: {description: "Stable diagnostic identifier.", type: string, minLength: 1}
         detail: {description: "Actionable diagnostic explanation.", type: string, minLength: 1}
-        expectedRevision: {description: "Workspace revision required by the command writer.", examples: ["sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
-        receivedRevision: {description: "Revision supplied by the rejected command.", examples: ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"], type: string, pattern: "^sha256:[0-9a-f]{64}$"}
+        expectedRevision: {description: "Workspace revision required by the command writer.", examples: ["sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
+        receivedRevision: {description: "Revision supplied by the rejected command.", examples: ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
 allOf:
   - description: "Accepted results carry a result revision and no diagnostics."
     examples: [{}]
