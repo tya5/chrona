@@ -2,7 +2,7 @@ import pytest
 
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.obstacles import ObstacleRect
-from chrona.presentation.layout.surface_composer import _complete_hosted_text_identity
+from chrona.presentation.layout.surface_lanes import complete_hosted_text_identity
 from chrona.presentation.layout.surface_quality import (
     LaneEmissionFacet, LaneEmissionPlacement, MarkPlacement, TextPlacement,
 )
@@ -27,13 +27,13 @@ def _emission(*ids):
 
 def test_single_part_host_identity_remains_byte_stable():
     mark, number = _mark_and_number()
-    completed = _complete_hosted_text_identity((number,), (mark,), (_emission("planned:gate"),))
+    completed = complete_hosted_text_identity((number,), (mark,), (_emission("planned:gate"),))
     assert completed == (number,)
 
 
 def test_glyph_host_resolves_to_first_painted_emitted_part():
     mark, number = _mark_and_number()
-    completed = _complete_hosted_text_identity(
+    completed = complete_hosted_text_identity(
         (number,), (mark,), (_emission("planned:gate:part:0", "planned:gate:part:1"),))
     assert completed[0].host_placement_id == "planned:gate:part:0"
     assert completed[0].paint_order > mark.paint_order
@@ -42,4 +42,4 @@ def test_glyph_host_resolves_to_first_painted_emitted_part():
 def test_missing_emitted_mark_host_is_a_layout_error():
     mark, number = _mark_and_number()
     with pytest.raises(LayoutError, match="E_LAYOUT_HOST_EMISSION_INVALID"):
-        _complete_hosted_text_identity((number,), (mark,), ())
+        complete_hosted_text_identity((number,), (mark,), ())

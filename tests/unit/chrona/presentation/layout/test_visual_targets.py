@@ -5,7 +5,7 @@ import pytest
 
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.label_visual_measurement import visual_target_placement_id
-from chrona.presentation.layout.surface_composer import _completed_canvas
+from chrona.presentation.layout.surface_completion import completed_canvas
 from chrona.presentation.layout.surface_visuals import (
     place_axis_band_visuals, place_mark_visuals, place_text_visuals,
 )
@@ -61,13 +61,13 @@ def test_text_and_two_visuals_keep_natural_width_when_slot_is_smaller_than_icons
     assert len(icons) == 2 and icons[0].bounds.inline == 0
     assert icons[1].bounds.inline >= placed[0].bounds.inline + placed[0].bounds.inline_size
     assert len(warnings) == 1 and warnings[0].required_inline > warnings[0].available_inline
-    canvas = _completed_canvas(requested=Rect(Decimal(0), Decimal(0), Decimal(5), Decimal(12)),
+    canvas = completed_canvas(requested=Rect(Decimal(0), Decimal(0), Decimal(5), Decimal(12)),
                                rectangles=tuple([placed[0].bounds, *(icon.bounds for icon in icons)]), paths=())
     assert canvas.inline_size > 5
 
 
 def test_completed_canvas_includes_negative_origin_geometry():
-    canvas = _completed_canvas(requested=Rect(Decimal(0), Decimal(0), Decimal(100), Decimal(50)),
+    canvas = completed_canvas(requested=Rect(Decimal(0), Decimal(0), Decimal(100), Decimal(50)),
                                rectangles=(Rect(Decimal(-12), Decimal(-4), Decimal(8), Decimal(8)),), paths=())
     assert canvas == Rect(Decimal(-12), Decimal(-4), Decimal(112), Decimal(54))
 

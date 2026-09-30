@@ -23,6 +23,15 @@ from chrona.presentation.layout.lane_visual_binding import bind_lane_visual_requ
 from chrona.presentation.layout.lane_label_intent import measure_lane_member_labels
 from chrona.presentation.layout.lane_label_preflight import lane_label_row_requirements
 from chrona.presentation.layout.surface_quality import ScalePlacement
+from chrona.presentation.layout.lane_mark_facets import (
+    _mark_facets, _overlay_compound_facets, _with_mark_visuals,
+)
+from chrona.presentation.layout.obstacles import ObstacleRect
+from chrona.presentation.layout.surface_geometry import bounds_from_rect as _bounds
+from chrona.presentation.layout.surface_quality import (
+    IconPlacement, LaneEmissionFacet, LaneEmissionPlacement, MarkPlacement, ShapePlacement, TextPlacement,
+)
+from chrona.presentation.model.semantic_registry import semantic_binding
 
 
 @dataclass(frozen=True)
@@ -199,3 +208,149 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
     return FixedLanePreflight(subtracks, frame, required, surface_content.as_of, scale,
                               measured_labels, resolved_visuals,
                               tuple(zip((row.row_id for row in rows), requirements, strict=True)))
+
+
+def build_lane_emissions(projection: Any, review_rows: tuple[Any, ...], marks: list[MarkPlacement],
+                    text: list[Any], shapes: list[ShapePlacement], icons: tuple[IconPlacement, ...],
+                    theme_tokens: Any) -> tuple[LaneEmissionPlacement, ...]:
+    """Close the typed Layout-to-Scene member inventory after all geometry is final."""
+    if projection.lane_membership is None:
+        return ()
+    items: dict[tuple[str, str, str, str], Any] = {}
+    for row in review_rows:
+        for item, member_id in zip(row.items, row.member_item_ids, strict=True):
+            key = (row.row_id, member_id, item.source_kind, item.object_id)
+            if key in items:
+                raise LayoutError("E_LAYOUT_LANE_EMISSION_INVALID", f"/projection/laneRows/{row.row_id}")
+            items[key] = item
+    icons_by_host: dict[str, list[IconPlacement]] = {}
+    for icon in icons:
+        if icon.host_placement_id is not None:
+            icons_by_host.setdefault(icon.host_placement_id, []).append(icon)
+    progress_by_host: dict[str, list[ShapePlacement]] = {}
+    for shape in shapes:
+        if shape.clip_host_id is not None and shape.semantic_id == "progressFill":
+            progress_by_host.setdefault(shape.clip_host_id, []).append(shape)
+
+    grouped: dict[tuple[str, str, str, str, str], list[LaneEmissionFacet]] = {}
+
+    def add(placement_type: str, placement_id: str, row_id: str, member_id: str,
+            purpose: str, facet: LaneEmissionFacet) -> None:
+        grouped.setdefault((placement_type, placement_id, row_id, member_id, purpose), []).append(facet)
+
+    for mark in marks:
+        if mark.lane_row_id is None:
+            continue
+        if mark.lane_member_id is None or mark.lane_source_kind is None:
+            raise LayoutError("E_LAYOUT_LANE_EMISSION_INVALID", mark.placement_id)
+        item = items.get((mark.lane_row_id, mark.lane_member_id,
+                          mark.lane_source_kind, mark.source_ref))
+        if item is None:
+            raise LayoutError("E_LAYOUT_LANE_EMISSION_INVALID", mark.placement_id)
+        instance = LaneProjectionInstance(mark.lane_row_id, item.item_id or item.object_id,
+                                          item.object_id, item.source_kind)
+        facets = _overlay_compound_facets(_mark_facets(item, instance, mark, theme_tokens))
+        facets = _with_mark_visuals(item, instance, mark, facets,
+                                    icons_by_host.get(mark.placement_id, ()),
+                                    progress_by_host.get(mark.placement_id, ()), theme_tokens)
+        for facet in facets:
+            if facet.icon_projection is not None:
+                placement_type = "icon"
+                placement_id = facet.icon_projection.placement_id
+            elif facet.progress_projection is not None:
+                placement_type = "shape"
+                placement_id = facet.primitive_id
+            else:
+                placement_type = "mark"
+                placement_id = mark.placement_id
+            add(placement_type, placement_id, mark.lane_row_id, mark.lane_member_id,
+                facet.purpose,
+                LaneEmissionFacet(facet.facet_id, placement_type, placement_id,
+                                  facet.primitive_id, facet.visible_footprint, "mark",
+                                  (facet.glyph_part_projection.part_index
+                                   if facet.glyph_part_projection is not None else
+                                   facet.icon_projection.path_index
+                                   if facet.icon_projection is not None else None)))
+
+    for placed in text:
+        if (placed.lane_row_id is None or placed.overflow == "suppressed"
+                or placed.semantic_id not in {"memberLabel", "finishDelta"}):
+            continue
+        if placed.lane_member_id is None:
+            raise LayoutError("E_LAYOUT_LANE_EMISSION_INVALID", placed.placement_id)
+        left, top, width, height = _bounds(placed.bounds)
+        if width <= 0 or height <= 0:
+            raise LayoutError("E_LAYOUT_LANE_EMISSION_INVALID", placed.placement_id)
+        obstacle = ObstacleRect(left, top, left + width, top + height)
+        purpose = semantic_binding(placed.semantic_id).purpose
+        add("text", placed.placement_id, placed.lane_row_id, placed.lane_member_id,
+            purpose, LaneEmissionFacet(f"label:{placed.placement_id}", "text", placed.placement_id,
+                                       placed.placement_id, obstacle, "required-label"))
+
+    # Text-associated icons and chips are independent Scene primitives but
+    # retain the same typed owner and Layout-completed viewport/box footprint.
+    for icon in icons:
+        if icon.lane_row_id is None or icon.semantic_id == "iconMark":
+            continue
+        if icon.lane_member_id is None:
+            raise LayoutError("E_LAYOUT_LANE_EMISSION_INVALID", icon.placement_id)
+        left, top, width, height = _bounds(icon.bounds)
+        obstacle = ObstacleRect(left, top, left + width, top + height)
+        purpose = semantic_binding(icon.semantic_id).purpose
+        add("icon", icon.placement_id, icon.lane_row_id, icon.lane_member_id,
+            purpose, LaneEmissionFacet(f"icon:{icon.placement_id}", "icon", icon.placement_id,
+                                       icon.placement_id, obstacle, "required-label"))
+    for shape in shapes:
+        if shape.lane_row_id is None or shape.clip_host_id is not None:
+            continue
+        if shape.lane_member_id is None:
+            raise LayoutError("E_LAYOUT_LANE_EMISSION_INVALID", shape.placement_id)
+        left, top, width, height = _bounds(shape.bounds)
+        if width <= 0 or height <= 0:
+            continue
+        purpose = semantic_binding(shape.semantic_id).purpose
+        add("shape", shape.placement_id, shape.lane_row_id, shape.lane_member_id,
+            purpose, LaneEmissionFacet(f"shape:{shape.placement_id}", "shape", shape.placement_id,
+                                       shape.placement_id,
+                                       ObstacleRect(left, top, left + width, top + height),
+                                       "required-label"))
+    return tuple(LaneEmissionPlacement(kind, placement_id, row_id, member_id, purpose,
+                                       tuple(facets))
+                 for (kind, placement_id, row_id, member_id, purpose), facets in grouped.items())
+
+
+def complete_hosted_text_identity(
+        text: tuple[TextPlacement, ...], marks: tuple[MarkPlacement, ...],
+        lane_emissions: tuple[LaneEmissionPlacement, ...]) -> tuple[TextPlacement, ...]:
+    """Resolve abstract lane-mark hosts to their first emitted glyph part."""
+    emitted_mark_hosts: dict[str, str] = {}
+    for emission in lane_emissions:
+        if emission.placement_type != "mark":
+            continue
+        ordered = sorted(emission.facets, key=lambda facet: (
+            -1 if facet.part_index is None else facet.part_index, facet.primitive_id))
+        host_id = ordered[0].primitive_id
+        previous = emitted_mark_hosts.setdefault(emission.placement_id, host_id)
+        if previous != host_id:
+            raise LayoutError("E_LAYOUT_HOST_EMISSION_INVALID", emission.placement_id)
+    lane_marks_by_id = {mark.placement_id: mark for mark in marks if mark.lane_row_id is not None}
+    completed = []
+    for placed in text:
+        host_id = placed.host_placement_id
+        if host_id not in lane_marks_by_id:
+            completed.append(placed)
+            continue
+        mark = lane_marks_by_id[host_id]
+        emitted_id = emitted_mark_hosts.get(host_id)
+        if (emitted_id is None or placed.slot_id != mark.slot_id
+                or placed.paint_order <= mark.paint_order):
+            raise LayoutError("E_LAYOUT_HOST_EMISSION_INVALID", placed.placement_id)
+        completed.append(replace(placed, host_placement_id=emitted_id)
+                         if emitted_id != host_id else placed)
+    return tuple(completed)
+
+
+FOREGROUND_TEXT_PAINT_ORDER = 300
+# Layout emits coordinates at micro-point precision.  Intermediate measurement
+# APIs are float-based, so containment must not turn a sub-micro-point binary
+# conversion residue into a user-visible overflow diagnostic.
