@@ -9,7 +9,17 @@ from chrona.resources import safe_load
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCHEMA = ROOT / "schemas" / "view-v0.20.schema.yaml"
+INVENTORY = ROOT / "schemas" / "schema-inventory-v0.1.yaml"
+
+
+def live_view_schema() -> Path:
+    """The View schema the inventory marks live, so a View bump cannot leave this check on a stale pin."""
+    entries = [entry for entry in safe_load(INVENTORY.read_bytes())["schemas"]
+               if entry["kind"] == "view" and entry["state"] == "live"]
+    if len(entries) != 1:
+        raise SystemExit(f"expected exactly one live View schema in the inventory, found {len(entries)}")
+    return ROOT / "schemas" / entries[0]["file"]
+
 
 # Each entry is a closed author-facing dispatch family.  The checker proves
 # both doors of the pipeline: the engine compares the value, and View admits it.
@@ -24,7 +34,8 @@ DISPATCHES = {
 
 def enum_values(value: object) -> set[str]:
     if isinstance(value, dict):
-        found = set(value.get("enum", ())) if isinstance(value.get("enum"), list) else set()
+        # Dispatch values are strings; an enum may also list arrays (View v0.28 `rows.packing`), which do not hash.
+        found = {item for item in value["enum"] if isinstance(item, str)} if isinstance(value.get("enum"), list) else set()
         return found | set().union(*(enum_values(item) for item in value.values()))
     if isinstance(value, list):
         return set().union(*(enum_values(item) for item in value))
@@ -37,7 +48,7 @@ def literals(path: Path) -> set[str]:
 
 
 def main() -> int:
-    declared = enum_values(safe_load(SCHEMA.read_bytes()))
+    declared = enum_values(safe_load(live_view_schema().read_bytes()))
     failures = []
     for path, values in DISPATCHES.items():
         missing_engine = sorted(values - literals(path))

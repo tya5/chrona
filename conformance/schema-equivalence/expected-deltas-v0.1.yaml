@@ -69,3 +69,8 @@ deltas:
   - {schema: view-v0.22.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5b); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
   - {schema: view-v0.23.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5b); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
   - {schema: view-v0.24.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5b); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: layout-profile-v0.3.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5c); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: view-v0.20.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5c); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: render-context-v0.15.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5c); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: view-v0.14.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5c); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: project-v0.6.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5c); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
