@@ -1,8 +1,29 @@
 # Deliberate, reviewed changes to accepted values or diagnostics that the equivalence gate must not fail on.
-# Each entry names its layer, a reason and the test that covers it. Empty at S0: no schema changed.
+# Each entry names its layer, a reason and the test that covers it. Empty at S0; the I662-S5 slices add one `after: removed` line per archived schema file.
 #   L1: {schema, pointer, before, after, reason, test}      pointer is into the dereferenced schema;
 #       a whole file is `pointer: ""` with `after: added` or `after: removed`. A missing `before`/`after` means absent.
 #   L2: {layer: L2, document, before, after, reason, test}   before/after are baseline-format verdict records.
 #   L3: {layer: L3, probe, before, after, reason, test}      before/after are baseline-format diagnostic records.
 version: chrona/schema-equivalence-expected-deltas/v0.1
-deltas: []
+deltas:
+  - {schema: actual-set-v0.2.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5a); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: layout-profile-v0.7.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5a); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: layout-profile-v0.8.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5a); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: profile-v0.2.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5a); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: render-context-v0.13.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5a); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: render-context-v0.14.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5a); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: scene-v0.1.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5a); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: scene-v0.2.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5a); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: scene-v0.3.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5a); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: scene-v0.4.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5a); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: scene-v0.5.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5a); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: theme-v0.5.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5a); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: theme-v0.6.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5a); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: theme-v0.7.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5a); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: view-v0.12.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5a); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: view-v0.13.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5a); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: view-v0.16.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5a); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: view-v0.17.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5a); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: view-v0.18.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5a); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: view-v0.21.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5a); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
+  - {schema: view-v0.25.schema.yaml, pointer: "", after: removed, reason: "Archived to docs/archive/schemas/ (#662 S5a); no registry, document or source reads it.", test: tests/unit/tools/test_schema_archive.py}
