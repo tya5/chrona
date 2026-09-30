@@ -1,0 +1,37 @@
+version: chrona/color-scheme/v0.2
+kind: color-scheme
+id: print-mono
+body:
+  colors:
+    surface: "#FFFFFF"
+    surfaceRaised: "#F1F1F1"
+    text: "#111111"
+    textMuted: "#555555"
+    accent: "#1F1F1F"
+    positive: "#8C8C8C"
+    negative: "#000000"
+    warning: "#444444"
+    neutral: "#BDBDBD"
+    insideLabelPlanned: "#FFFFFF"
+    insideLabelActual: "#111111"
+    insideLabelSnapshot: "#111111"
+    insideLabelScenario: "#111111"
+  suitability:
+    background: light
+    colorVision:
+    - deuteranopia
+    - protanopia
+    - tritanopia
+    print: photocopy-friendly
+  provenance:
+    kind: chrona-authored
+    source: Chrona HALCYON-1 example, print-mono
+    license: MIT
+  categories:
+    default: "#F3F3F3"
+    series-1: "#F3F3F3"
+    series-2: "#DADADA"
+    series-3: "#C4C4C4"
+    series-4: "#AEAEAE"
+    series-5: "#989898"
+    series-6: "#848484"

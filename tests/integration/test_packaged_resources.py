@@ -115,6 +115,12 @@ def test_package_owned_runtime_resources_exist():
         "presets/bundles/editorial/view.yaml",
         "presets/bundles/editorial/view-lanes.yaml",
         "presets/bundles/editorial-readable-default/theme.yaml",
+        "presets/bundles/editorial/scheme.yaml",
+        "presets/bundles/mission-light/scheme.yaml",
+        "presets/bundles/control-room-dark/scheme.yaml",
+        "presets/bundles/print-mono/scheme.yaml",
+        "presets/bundles/executive-light/scheme.yaml",
+        "presets/bundles/elevated-light/scheme.yaml",
     ):
         assert RESOURCES.joinpath(*resource_path.split("/")).is_file(), resource_path
 
