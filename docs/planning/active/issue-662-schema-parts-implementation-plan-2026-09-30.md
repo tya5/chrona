@@ -164,4 +164,5 @@ separate act after that; the design pack and this plan are archived afterwards p
 | Slice | State |
 | --- | --- |
 | Design pack (this PR) | published; owner decisions pending |
-| S0-S7 | not started |
+| S0 | implemented: `tools/schema_equivalence.py` (`--base-rev`, `--layers`, `--record-baseline`), `schema-equivalence` conformance check (L2+L3), temporary baseline recorded at `9470fdf5`. Measured there: 248 mapped documents (scene v0.6 x32 included; the prototype's 211 excluded scene), 4 invalid (listed with reasons in `expected-invalid-v0.1.yaml`), 96 unmapped, 471 probes (162 rejected), L2+L3 about 27 s. `expected-deltas-v0.1.yaml` (empty) holds the listed deltas. Gate output is in the PR |
+| S1-S7 | not started |

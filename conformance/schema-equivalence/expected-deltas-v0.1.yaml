@@ -1,0 +1,8 @@
+# Deliberate, reviewed changes to accepted values or diagnostics that the equivalence gate must not fail on.
+# Each entry names its layer, a reason and the test that covers it. Empty at S0: no schema changed.
+#   L1: {schema, pointer, before, after, reason, test}      pointer is into the dereferenced schema;
+#       a whole file is `pointer: ""` with `after: added` or `after: removed`. A missing `before`/`after` means absent.
+#   L2: {layer: L2, document, before, after, reason, test}   before/after are baseline-format verdict records.
+#   L3: {layer: L3, probe, before, after, reason, test}      before/after are baseline-format diagnostic records.
+version: chrona/schema-equivalence-expected-deltas/v0.1
+deltas: []
