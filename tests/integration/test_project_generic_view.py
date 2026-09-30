@@ -98,7 +98,7 @@ def test_first_appearance_domain_takes_palette_slots_in_projection_order(tmp_pat
         body["colorEncoding"] = {"scale": "owner", "target": "planned", "source": {"field": "owner"},
                                  "domain": "firstAppearance"}
     def theme_edit(body: dict) -> None:
-        body["colorScales"]["owner"] = {"palette": ["bus", "payload", "ait"]}
+        body["colorScales"]["owner"] = {"palette": ["series-1", "series-2", "series-3"]}
     surface = _render(tmp_path, monkeypatch, view_edit=view_edit, theme_edit=theme_edit)
     project = _load(HALCYON / "project.yaml")
     fills: dict[str, set[str]] = {}
@@ -142,7 +142,7 @@ def test_first_appearance_leaves_an_item_without_the_field_in_its_role_paint(tmp
         body["colorEncoding"] = {"scale": "owner", "target": "planned", "source": {"field": "owner"},
                                  "domain": "firstAppearance"}
     def theme_edit(body: dict) -> None:
-        body["colorScales"]["owner"] = {"palette": ["bus", "payload", "ait"]}
+        body["colorScales"]["owner"] = {"palette": ["series-1", "series-2", "series-3"]}
     surface = _render(tmp_path, monkeypatch, project=project, view_edit=view_edit, theme_edit=theme_edit)
     fills = {item["id"].split(":")[1]: item["paint"].get("fill") for item in surface["primitives"]
              if item["id"].startswith("planned:")}
