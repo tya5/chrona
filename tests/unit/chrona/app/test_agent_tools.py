@@ -103,7 +103,7 @@ def cli(monkeypatch, capsys, cwd: Path, *arguments: str) -> tuple[int, str, str]
 def test_the_tool_set_is_the_four_read_only_tools_in_order():
     assert [spec.name for spec in tool_specs()] == ["validate_project", "schedule_project", "render_draft", "list_presets"]
     document = registry_document()
-    assert document["toolSet"] == "chrona/agent-tools/v0.1"
+    assert document["toolSet"] == "chrona/agent-tools/v0.2"
     assert [tool["name"] for tool in document["tools"]] == list(SPECS)
     for tool in document["tools"]:
         assert tool["annotations"] == {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True,
@@ -482,7 +482,7 @@ FAMILIES = [
     ("validate_project", {"project": "../x.yaml"}, "failed", "E_MCP_PATH_SYNTAX"),
     ("validate_project", {"project": "/etc/passwd"}, "failed", "E_MCP_PATH_SYNTAX"),
     ("validate_project", {"project": "con.yaml"}, "failed", "E_MCP_PATH_SYNTAX"),
-    ("validate_project", {"project": "not-a-mapping.yaml"}, "failed", "E_TOOL_FAILURE"),
+    ("validate_project", {"project": "not-a-mapping.yaml"}, "rejected", "E_SCHEMA"),
     ("schedule_project", {"project": "missing.yaml"}, "failed", "E_INPUT_IO"),
     ("schedule_project", {"project": "broken.yaml"}, "failed", "E_INPUT_YAML"),
     ("schedule_project", {"project": "cycle.yaml"}, "rejected", "E_UNSUPPORTED_CYCLE"),
@@ -534,13 +534,33 @@ def test_an_internal_error_message_never_carries_a_host_path_from_a_value_error(
     assert str(Path.home()) not in result.text() and "<path>" in result.text()
 
 
-def test_duplicates_are_dropped_and_the_list_is_capped_with_a_count(scope, monkeypatch):
+def test_duplicates_are_merged_with_a_count_and_the_list_is_capped(scope, monkeypatch):
     items = [Diagnostic(f"E_NUM_{index % 60:02d}", f"finding {index % 60}", f"/objects/o{index % 60}") for index in range(120)]
     monkeypatch.setattr(agent_tools, "validate_project_file", lambda path: ProjectValidation(tuple(items)))
     result = run(scope, "validate_project", project="small.yaml")
     assert result.structured["status"] == "rejected"
     assert len(result.structured["diagnostics"]) == 50 and result.structured["omittedDiagnostics"] == 10
     assert len({item["code"] for item in result.structured["diagnostics"]}) == 50
+    assert {item["count"] for item in result.structured["diagnostics"]} == {2}
+
+
+def test_rows_that_scrubbing_makes_equal_merge_and_their_counts_add(scope, workspace, monkeypatch):
+    items = [Diagnostic("E_IO", f"cannot read {Path.home()}/a/{name}.yaml", "/") for name in ("one", "two")]
+    items += [Diagnostic("E_IO", f"cannot read {Path.home()}/a/three.yaml", "/")] * 2
+    monkeypatch.setattr(agent_tools, "validate_project_file", lambda path: ProjectValidation(tuple(items)))
+    result = run(scope, "validate_project", project="small.yaml")
+    (row,) = result.structured["diagnostics"]
+    assert row["message"] == "cannot read <path>" and row["count"] == 4
+    assert str(Path.home()) not in result.text()
+
+
+def test_the_tool_rows_equal_the_cli_rows_for_a_malformed_plan(scope, workspace, monkeypatch, capsys):
+    status, out, _err = cli(monkeypatch, capsys, workspace, "validate", "not-a-mapping.yaml")
+    assert status == 1
+    cli_rows = [{key: value for key, value in row.items() if key != "revisionRefs"}  # the tool omits an empty list
+                for row in json.loads(out)["diagnostics"]]
+    tool = run(scope, "validate_project", project="not-a-mapping.yaml").structured["diagnostics"]
+    assert tool == cli_rows and tool[0]["message"].startswith("a Project must be a YAML mapping")
 
 
 def test_no_cap_note_appears_when_nothing_is_omitted(scope, monkeypatch):
@@ -548,6 +568,7 @@ def test_no_cap_note_appears_when_nothing_is_omitted(scope, monkeypatch):
     monkeypatch.setattr(agent_tools, "validate_project_file", lambda path: ProjectValidation(tuple(items)))
     result = run(scope, "validate_project", project="small.yaml")
     assert len(result.structured["diagnostics"]) == 1 and "omittedDiagnostics" not in result.structured
+    assert result.structured["diagnostics"][0]["count"] == 5
 
 
 # --- path scoping through every path argument ----------------------------------------------------------------

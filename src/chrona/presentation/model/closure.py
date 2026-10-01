@@ -581,10 +581,10 @@ def _load_draft_resource(kind: str, path: Path) -> ClosureResource:
     """Read one explicit draft input and freeze it through its resource contract."""
     value = safe_load(path.read_bytes())
     if not isinstance(value, dict):
-        raise ClosureError("E_" + kind.upper().replace("-", "_") + "_SCHEMA")
+        raise _draft_shape_error(kind, value)
     identifier = _resource_id(kind, value)
     if not isinstance(identifier, str) or not identifier:
-        raise ClosureError("E_" + kind.upper().replace("-", "_") + "_SCHEMA")
+        raise _draft_shape_error(kind, value)
     payload = path.read_bytes()
     identity = ClosureIdentity(kind, identifier, "draft", "sha256:" + sha256(payload).hexdigest())
     try:
@@ -606,10 +606,10 @@ def _load_draft_source(kind: str, path: Path) -> PresentationResourceSource:
     except ThemeInheritanceError as error:
         raise ClosureError(error.code) from error
     if not isinstance(value, dict):
-        raise ClosureError("E_" + kind.upper().replace("-", "_") + "_SCHEMA")
+        raise _draft_shape_error(kind, value)
     identifier = _resource_id(kind, value)
     if not isinstance(identifier, str) or not identifier:
-        raise ClosureError("E_" + kind.upper().replace("-", "_") + "_SCHEMA")
+        raise _draft_shape_error(kind, value)
     identity = ClosureIdentity(kind, identifier, "draft", content_identity(value) if derived else "sha256:" + sha256(payload).hexdigest())
     return PresentationResourceSource(identity, value)
 
@@ -627,6 +627,16 @@ def _collect_presentation_resources(sources: list[PresentationResourceSource]) -
     return [ClosureResource(contract.identity.kind, contract.identity.id, contract.identity.revision,
                             contract.identity.content_identity, contract)
             for contract in collection.contracts]
+
+
+def _draft_shape_error(kind: str, value: object) -> ClosureError:
+    """A declared Draft file that is not a mapping with an id: say which, instead of only the code (#782)."""
+    code = "E_" + kind.upper().replace("-", "_") + "_SCHEMA"
+    if not isinstance(value, dict):
+        found = "an empty document" if value is None else f"a {type(value).__name__}"
+        return ClosureError(code, detail=f"a {kind} file must be a YAML mapping; found {found}")
+    name = "project.id" if kind == "project" else "id"
+    return ClosureError(code, detail=f"a {kind} file must declare a non-empty string {name}")
 
 
 def _resource_id(kind: str, value: dict[str, Any]) -> object:

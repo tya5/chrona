@@ -8,6 +8,9 @@ edited (`/objects/design/schedule` is `objects: design: schedule:`) or a relatio
 {"status": "rejected", "diagnostics": [{"code": "E_REFERENCE", "severity": "error", "component": "core", "sourceRef": "/relations/0/to/object", "revisionRefs": [], "message": "Unknown to object"}]}
 ```
 
+Every row has a `message` that says what is wrong. A row may also carry `count` (2 or
+more): equal findings were merged into it; no `count` means it happened once.
+
 Exit status: 1 for `rejected` (the plan or a preset is wrong), 2 for `failed` (the file,
 the flag or the output suffix is wrong), 0 for success. Warnings and notes are JSON lines
 on standard error and the exit status stays 0.
@@ -21,7 +24,7 @@ in the repository); if you meet one, quote it to the user and do not guess a fix
 
 | Code | Command that emits it | What it means | What to change |
 | --- | --- | --- | --- |
-| `E_SCHEMA` | `validate`, `schedule` | The plan's structure is wrong at `sourceRef`. For `/objects/<id>/schedule` the message lists the permitted forms by `mode`; if it omits `scheduled` while your object has an `amount`, the `amount` is invalid. | Fix the first `sourceRef`: a `mode` that is not `fixed-point` (`at`), `scheduled-point` (no date), `fixed-span` (`start`, `end`), `scheduled` (`amount`) or `rollup`, or an `amount` that is not `Nwd` with a positive whole `N`. |
+| `E_SCHEMA` | `validate`, `schedule` | The plan's structure is wrong at `sourceRef`. For `/objects/<id>/schedule` the message lists the permitted forms by `mode`; if it omits `scheduled` while your object has an `amount`, the `amount` is invalid. | Fix the first `sourceRef`: a `mode` that is not `fixed-point` (`at`), `scheduled-point` (no date), `fixed-span` (`start`, `end`), `scheduled` (`amount`) or `rollup`, or an `amount` that is not `Nwd` with a positive whole `N`. A file that is empty or a YAML list is also `E_SCHEMA` at `/`: a plan is a mapping with `version`, `project` and `objects`. |
 | `E_PROJECT_SCHEMA` | `render` | The same structural error as `E_SCHEMA`, reported by `render`. | Same as `E_SCHEMA`; `component` is `closure`. |
 | `E_REFERENCE` | all three | An id names nothing: a relation endpoint object, an object `calendar`. | Correct the id at `sourceRef` or add the missing object or calendar. |
 | `E_ENDPOINT_MODE_MISMATCH` | all three | A relation uses an endpoint the object's schedule does not have: a gate has `at`, not `start`. | Use `at` for a `fixed-point` or `scheduled-point` object and `start` or `end` for a span. |
@@ -42,7 +45,7 @@ in the repository); if you meet one, quote it to the user and do not guess a fix
 | `E_RENDER_OUTPUT_EXTENSION` | The `--output` suffix is not one of `.svg`, `.png`, `.pdf`, `.typ`, `.tex` or none. | Use `.svg` or `.png`. |
 | `E_RENDER_OUTPUT_FORMAT_MISMATCH` | `--format` disagrees with the `--output` suffix. | Drop `--format`, or make the suffix match. |
 | `E_RENDER_RASTERIZER_UNAVAILABLE` | A `.png` or `.pdf` render needs the `render` extra, which is not installed. | `pip install 'chrona[render]'`, or write `.svg`. |
-| `E_BUILTIN_PRESET_UNKNOWN` | `--preset` is neither a path nor a builtin id. The message is only the code. | Run `chrona preset list` and use one of its ids, or pass a path to a `preset.yaml`. |
+| `E_BUILTIN_PRESET_UNKNOWN` | `--preset` is neither a path nor a builtin id. The message names the value you passed and lists every valid id. | Run `chrona preset list` and use one of its ids, or pass a path to a `preset.yaml`. |
 | `E_BUILTIN_PRESET_OUTPUT_EXISTS` | `chrona preset copy --output DIR` found `DIR` already in use. | Copy to a new directory; do not overwrite. |
 | `E_INIT_OUTPUT_EXISTS` | `chrona init DIR` found `DIR` already in use. | Pick a new directory name. |
 | `E_SKILL_OUTPUT_EXISTS` | `chrona skill copy --output DIR` found `DIR` already in use. | Copy to a new directory; do not overwrite. |

@@ -440,6 +440,24 @@ def test_render_review_transports_typed_presentation_failure_pointer(monkeypatch
     assert failed.value.component == "presentation"
 
 
+@pytest.mark.parametrize(("error", "expected"), [
+    (LayoutError("E_LAYOUT_METRIC_REQUIRED", "/body/metrics/example", detail="missing metric"), "missing metric"),
+    (LayoutError("E_LAYOUT_TOKEN_REQUIREMENT_UNAVAILABLE", "/root/padding", "space.2"),
+     "a Layout profile refers to a Theme token that the Theme does not declare; "
+     "add the token to the Theme or use a Theme that declares it (space.2)"),
+    (ThemeTokenError("E_THEME_ROLE_REQUIRED", "/body/roles/example/fontFamily"),
+     "theme role required: no further detail is recorded for this code (E_THEME_ROLE_REQUIRED)"),
+])
+def test_a_presentation_failure_never_reaches_a_report_as_only_its_code(monkeypatch, error, expected):
+    def fail(_request):
+        raise error
+
+    monkeypatch.setattr(render_usecase, "_render_review", fail)
+    with pytest.raises(RenderFailed) as failed:
+        render_review(None)
+    assert failed.value.message == expected
+
+
 def test_completed_scene_serializes_deterministically_with_typed_table_links():
     with tempfile.TemporaryDirectory() as temporary:
         closure, snapshot = _closure(Path(temporary))

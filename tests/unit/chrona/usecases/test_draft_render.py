@@ -80,7 +80,7 @@ def test_an_unknown_builtin_preset_leaves_no_temporary_directory(monkeypatch):
         return directory
 
     monkeypatch.setattr(tempfile, "TemporaryDirectory", tracking)
-    with pytest.raises(ValueError):
+    with pytest.raises(StableFailure):
         resolve_preset_argument("no-such-preset")
     assert created and not any(pathlib.Path(name).exists() for name in created)
 
@@ -110,6 +110,6 @@ def test_render_draft_failures_are_typed_for_the_failure_report(project, tmp_pat
     assert raised.value.code == "E_COMMAND_VIEWPORT"
     with pytest.raises(OSError):
         render_draft(DraftRenderRequest(project=tmp_path / "missing.yaml", target_kind="svg"))
-    with pytest.raises(ValueError) as unknown:
+    with pytest.raises(StableFailure) as unknown:
         render_draft(DraftRenderRequest(project=project, target_kind="svg", preset="no-such-preset"))
     assert report_failure(unknown.value).diagnostics[0]["code"] == "E_BUILTIN_PRESET_UNKNOWN"

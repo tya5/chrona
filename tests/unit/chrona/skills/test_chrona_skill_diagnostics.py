@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from chrona.usecases.diagnostic_messages import is_bare
 from tests.support.skill_files import EXAMPLE, ROOT, run_cli, skill_documents
 
 TOKEN = re.compile(r"(?<![A-Z0-9_])[EWI]_[A-Z][A-Z0-9_]*")
@@ -143,6 +144,7 @@ def test_plan_codes_are_emitted_by_the_command_the_skill_names(tmp_path, monkeyp
     payload = json.loads(out)
     assert (result, payload["status"]) == (status, word)
     assert codes <= {item["code"] for item in payload["diagnostics"]}
+    assert all(not is_bare(item["code"], item["message"]) for item in payload["diagnostics"])
 
 
 def _command_cases(tmp_path: Path):
@@ -162,7 +164,9 @@ def test_command_and_input_codes_are_emitted_with_the_exit_status_the_skill_stat
         result, out, _err = run_cli(monkeypatch, capsys, *argv)
 
         assert result == status, code
-        assert code in {item["code"] for item in json.loads(out)["diagnostics"]}, code
+        rows = json.loads(out)["diagnostics"]
+        assert code in {item["code"] for item in rows}, code
+        assert all(not is_bare(item["code"], item["message"]) for item in rows), code
 
 
 def test_existing_output_directories_are_refused_by_init_preset_copy_and_skill_copy(tmp_path, monkeypatch, capsys):
@@ -173,7 +177,9 @@ def test_existing_output_directories_are_refused_by_init_preset_copy_and_skill_c
         result, out, _err = run_cli(monkeypatch, capsys, *argv)
 
         assert result == 1
-        assert code in {item["code"] for item in json.loads(out)["diagnostics"]}
+        rows = json.loads(out)["diagnostics"]
+        assert code in {item["code"] for item in rows}
+        assert all(not is_bare(item["code"], item["message"]) for item in rows)
 
 
 def test_a_cramped_viewport_prints_the_warnings_and_note_the_skill_lists_on_standard_error(tmp_path, monkeypatch, capsys):

@@ -113,3 +113,13 @@ def test_an_unreadable_file_raises_the_library_error_for_the_failure_report(tmp_
         check(tmp_path / "missing.yaml")
     with pytest.raises(yaml.YAMLError):
         check(_write(tmp_path, "broken.yaml", "a: [unclosed\n"))
+
+
+@pytest.mark.parametrize(("text", "found"), [("", "an empty document"), ("- a\n- b\n", "a list"), ("just text\n", "a str")])
+@pytest.mark.parametrize("check", [validate_project_file, schedule_project_file])
+def test_a_file_that_is_not_a_mapping_is_a_rejected_project_not_a_tool_failure(tmp_path, check, text, found):
+    outcome = check(_write(tmp_path, "shape.yaml", text))
+    assert not outcome.ok
+    (finding,) = outcome.diagnostics
+    assert (finding.id, finding.path) == ("E_SCHEMA", "/")
+    assert finding.message == f"a Project must be a YAML mapping with version, project and objects; found {found}"

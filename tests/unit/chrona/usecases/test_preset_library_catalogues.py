@@ -5,6 +5,7 @@ import yaml
 
 from chrona import resources
 from chrona.usecases import preset_library
+from chrona.usecases.failure_report import StableFailure
 
 
 def test_icons_is_an_explicit_packaged_preset_source_root():
@@ -65,8 +66,9 @@ def test_nonempty_destination_is_never_modified(tmp_path):
     destination.mkdir()
     marker = destination / "owned.txt"
     marker.write_bytes(b"keep")
-    with pytest.raises(ValueError, match="E_BUILTIN_PRESET_OUTPUT_EXISTS"):
+    with pytest.raises(StableFailure) as refused:
         preset_library.copy_builtin_preset("technical-print", destination)
+    assert refused.value.code == "E_BUILTIN_PRESET_OUTPUT_EXISTS" and str(destination) in refused.value.message
     assert tuple(destination.iterdir()) == (marker,)
     assert marker.read_bytes() == b"keep"
 
@@ -76,3 +78,15 @@ def test_legacy_preset_copy_without_catalogues_still_works(tmp_path):
     assert preset_path.is_file()
     copied = yaml.safe_load(preset_path.read_text(encoding="utf-8"))
     assert "iconCatalogs" not in copied["body"]["resources"]
+
+
+def test_an_unknown_preset_names_the_value_and_lists_exactly_the_valid_ids(tmp_path):
+    with pytest.raises(StableFailure) as refused:
+        preset_library.copy_builtin_preset("editorail", tmp_path / "out")
+    failure = refused.value
+    assert (failure.code, failure.component, failure.source_ref, failure.exit_code) == (
+        "E_BUILTIN_PRESET_UNKNOWN", "presentation", "/", 1)
+    assert "'editorail'" in failure.message
+    listed = failure.message.split("valid ids: ", 1)[1].split(" (chrona preset list)", 1)[0].split(", ")
+    assert listed == [item["id"] for item in preset_library.list_builtin_presets()]
+    assert not (tmp_path / "out").exists()

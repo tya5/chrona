@@ -10,7 +10,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_OPERATIONAL_SCHEMA: while parsing a flow node\\ndid not find expected node content\\n  in \\\"<unicode string>\\\", line 2, column 1\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"E_OPERATIONAL_SCHEMA: while parsing a flow node\\ndid not find expected node content\\n  in \\\"<unicode string>\\\", line 2, column 1\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_OPERATIONAL_SCHEMA\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"E_OPERATIONAL_SCHEMA: while parsing a flow node\\ndid not find expected node content\\n  in \\\"<unicode string>\\\", line 2, column 1\"}]}\n"
  },
  "command-check-missing": {
   "argv": [
@@ -40,7 +40,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_FONT_IMPORT_INPUT\", \"severity\": \"error\", \"component\": \"font-import\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"E_FONT_IMPORT_INPUT source=/\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_FONT_IMPORT_INPUT\", \"severity\": \"error\", \"component\": \"font-import\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"font import input: no further detail is recorded for this code (E_FONT_IMPORT_INPUT)\"}]}\n"
  },
  "font-import-not-a-font": {
   "argv": [
@@ -57,7 +57,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_FONT_IMPORT_FORMAT\", \"severity\": \"error\", \"component\": \"font-import\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"E_FONT_IMPORT_FORMAT source=/\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_FONT_IMPORT_FORMAT\", \"severity\": \"error\", \"component\": \"font-import\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"font import format: no further detail is recorded for this code (E_FONT_IMPORT_FORMAT)\"}]}\n"
  },
  "icon-catalog-import-missing-licence": {
   "argv": [
@@ -87,7 +87,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_ICON_IMPORT_IO\", \"severity\": \"error\", \"component\": \"icon-import\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"E_ICON_IMPORT_IO source=/\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_ICON_IMPORT_IO\", \"severity\": \"error\", \"component\": \"icon-import\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"icon import io: no further detail is recorded for this code (E_ICON_IMPORT_IO)\"}]}\n"
  },
  "identity-bytes-missing": {
   "argv": [
@@ -173,7 +173,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_BUILTIN_PRESET_OUTPUT_EXISTS\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"E_BUILTIN_PRESET_OUTPUT_EXISTS\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_BUILTIN_PRESET_OUTPUT_EXISTS\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"output directory halcyon-1 already exists and is not empty; copy to a new directory\"}]}\n"
  },
  "preset-copy-unknown": {
   "argv": [
@@ -186,7 +186,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_BUILTIN_PRESET_UNKNOWN\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"E_BUILTIN_PRESET_UNKNOWN\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_BUILTIN_PRESET_UNKNOWN\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"unknown builtin preset 'no-such-preset'; valid ids: mission-light, control-room-dark, print-mono, executive-light, elevated-light, editorial, technical-print (chrona preset list); a value containing '/' or ending in .yaml is read as a file path\"}]}\n"
  },
  "preset-list": {
   "argv": [
@@ -258,7 +258,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_BUILTIN_PRESET_UNKNOWN\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"E_BUILTIN_PRESET_UNKNOWN\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_BUILTIN_PRESET_UNKNOWN\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"unknown builtin preset 'no-such-preset'; valid ids: mission-light, control-room-dark, print-mono, executive-light, elevated-light, editorial, technical-print (chrona preset list); a value containing '/' or ending in .yaml is read as a file path\"}]}\n"
  },
  "render-bad-viewport-number": {
   "argv": [
@@ -839,7 +839,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_LAYOUT_TOKEN_REQUIREMENT_UNAVAILABLE\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/root/padding\", \"revisionRefs\": [], \"message\": \"E_LAYOUT_TOKEN_REQUIREMENT_UNAVAILABLE\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_LAYOUT_TOKEN_REQUIREMENT_UNAVAILABLE\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/root/padding\", \"revisionRefs\": [], \"message\": \"a Layout profile refers to a Theme token that the Theme does not declare; add the token to the Theme or use a Theme that declares it (spacing.l)\"}]}\n"
  },
  "render-missing-output-argument": {
   "argv": [
@@ -884,7 +884,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_PROJECT_SCHEMA\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"E_PROJECT_SCHEMA\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_PROJECT_SCHEMA\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"a project file must be a YAML mapping; found a list\"}]}\n"
  },
  "render-output-directory-missing": {
   "argv": [
@@ -1053,7 +1053,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_BUILTIN_PRESET_UNKNOWN\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"E_BUILTIN_PRESET_UNKNOWN\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_BUILTIN_PRESET_UNKNOWN\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"unknown builtin preset 'no-such-preset'; valid ids: mission-light, control-room-dark, print-mono, executive-light, elevated-light, editorial, technical-print (chrona preset list); a value containing '/' or ending in .yaml is read as a file path\"}]}\n"
  },
  "render-preset-with-scheme-override": {
   "argv": [
@@ -1234,7 +1234,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_SCHEME_INTENT_UNKNOWN\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"E_SCHEME_INTENT_UNKNOWN\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_SCHEME_INTENT_UNKNOWN\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"a Color Scheme colorBindings entry is not ROLE.PROPERTY bound to a known intent or a declared color; check every target name and value in colorBindings\"}]}\n"
  },
  "render-theme-schema-error": {
   "argv": [
@@ -1350,7 +1350,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_ACTUAL_REQUIRED\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"E_ACTUAL_REQUIRED\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_ACTUAL_REQUIRED\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"the View compares against actuals (comparison.actual is required) but no actual file was given; pass --actual FILE, or change the View so actuals are not required\"}]}\n"
  },
  "render-viewport": {
   "argv": [
@@ -1633,10 +1633,10 @@
    "validate",
    "empty.yaml"
   ],
-  "exit": 2,
+  "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_TOOL_FAILURE\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"'NoneType' object has no attribute 'get'\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_SCHEMA\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"a Project must be a YAML mapping with version, project and objects; found an empty document\"}]}\n"
  },
  "validate-halcyon-ok": {
   "argv": [
@@ -1672,10 +1672,10 @@
    "validate",
    "not-a-mapping.yaml"
   ],
-  "exit": 2,
+  "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_TOOL_FAILURE\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"'list' object has no attribute 'get'\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_SCHEMA\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"a Project must be a YAML mapping with version, project and objects; found a list\"}]}\n"
  },
  "validate-path-is-directory": {
   "argv": [

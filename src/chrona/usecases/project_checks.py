@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from chrona.core.deadlines import deadline_warnings
 from chrona.core.diagnostics import Diagnostic
@@ -64,7 +64,18 @@ class ProjectSchedule:
         return payload
 
 
+def _not_a_mapping(project: object) -> Diagnostic | None:
+    """A file that parses to a list, a scalar or nothing is a rejected Project, not a tool failure (#782, D8)."""
+    if isinstance(project, Mapping):
+        return None
+    found = "an empty document" if project is None else f"a {type(project).__name__}"
+    return Diagnostic("E_SCHEMA", f"a Project must be a YAML mapping with version, project and objects; found {found}", "/")
+
+
 def validate_project_mapping(project: dict[str, Any]) -> ProjectValidation:
+    refused = _not_a_mapping(project)
+    if refused is not None:
+        return ProjectValidation((refused,))
     diagnostics = tuple(validate_project(project))
     if not diagnostics:  # a cycle is only meaningful in a Project whose relations and objects Core accepted
         diagnostics = dependency_cycle_diagnostics(project)
@@ -77,7 +88,7 @@ def validate_project_file(path: str | Path) -> ProjectValidation:
 
 def schedule_project_mapping(project: dict[str, Any]) -> ProjectSchedule:
     """Schedule a Project, serializing the completed result without deriving analysis again."""
-    checked = validate_project_mapping(project)
+    checked = validate_project_mapping(project)  # also refuses a file that is not a mapping (#782, D8)
     if not checked.ok:
         return ProjectSchedule(checked.diagnostics, {}, None)
     result = schedule(project)

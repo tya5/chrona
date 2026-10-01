@@ -10,6 +10,7 @@ import yaml
 from chrona.core.store_address import StoreAddressError, check_store_address
 from chrona.resources import builtin_preset_library_resource, builtin_preset_source_root, safe_load, schema_validator
 from chrona.presentation.contracts import ClosureIdentity, IconCatalogContract, parse_contract
+from chrona.usecases.failure_report import StableFailure
 
 
 def _safe(address: object) -> str:
@@ -91,9 +92,19 @@ def copy_builtin_preset(identifier: str, destination: Path) -> Path:
     """Materialize one project-generic builtin preset as editable local files."""
     entry = next((item for item in _library() if item.get("id") == identifier), None)
     if entry is None:
-        raise ValueError("E_BUILTIN_PRESET_UNKNOWN")
+        raise StableFailure(
+            "E_BUILTIN_PRESET_UNKNOWN",
+            f"unknown builtin preset {identifier!r}; valid ids: "
+            + ", ".join(str(item["id"]) for item in _library())
+            + " (chrona preset list); a value containing '/' or ending in .yaml is read as a file path",
+            "presentation",
+        )
     if destination.exists() and any(destination.iterdir()):
-        raise ValueError("E_BUILTIN_PRESET_OUTPUT_EXISTS")
+        raise StableFailure(
+            "E_BUILTIN_PRESET_OUTPUT_EXISTS",
+            f"output directory {destination} already exists and is not empty; copy to a new directory",
+            "presentation",
+        )
     # Fully preflight every declared byte before creating the destination or
     # writing the first member. This keeps failures atomic at the copy boundary.
     payloads: dict[str, bytes] = {}
