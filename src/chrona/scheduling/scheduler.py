@@ -213,7 +213,15 @@ def _place_scheduled(object_id: str, item: dict, raw: dict, bounds: dict[str, da
 
 
 def _validate_fixed_targets(project: dict, placements: dict, calendars: dict[str, Calendar], diagnostics: list[Diagnostic]) -> None:
-    for relation in project.get("relations", []):
+    """Reject a fixed endpoint that a dependency pushes later, and say which date it could take.
+
+    Fixed coordinates are never moved: the diagnostic reports, per violating relation, the
+    maximum ``required`` date over every relation into the same endpoint (``earliest``) and
+    the relation that gives it (``forcedBy``; the first in declaration order on a tie).
+    """
+    candidates: list[tuple[int, dict, date, date, str, str]] = []
+    earliest: dict[tuple[str, str], tuple[date, str]] = {}
+    for index, relation in enumerate(project.get("relations", [])):
         target_id = relation["to"]["object"]
         source_id = relation["from"]["object"]
         if target_id not in placements or source_id not in placements:
@@ -224,10 +232,38 @@ def _validate_fixed_targets(project: dict, placements: dict, calendars: dict[str
         lag = relation.get("lag", "0d")
         amount = lag if isinstance(lag, str) else lag["value"]
         calendar_id = (lag.get("calendar") if isinstance(lag, dict) else None) or project["objects"][target_id].get("calendar") or project.get("project", {}).get("calendar")
-        required = advance(placements[source_id][relation["from"]["endpoint"]], amount, calendars.get(calendar_id) if requires_working_calendar(amount) else None)
+        source_value = placements[source_id][relation["from"]["endpoint"]]
+        required = advance(source_value, amount, calendars.get(calendar_id) if requires_working_calendar(amount) else None)
+        key = relation.get("id") or f"/relations/{index}"
+        endpoint_key = (target_id, relation["to"]["endpoint"])
+        if endpoint_key not in earliest or required > earliest[endpoint_key][0]:
+            earliest[endpoint_key] = (required, key)
         actual = placements[target_id][relation["to"]["endpoint"]]
         if actual < required:
-            diagnostics.append(Diagnostic("E_FIXED_TARGET_VIOLATION", "Fixed target violates dependency lower bound", f"/relations/{relation.get('id', target_id)}"))
+            candidates.append((index, relation, source_value, required, key, str(relation.get("id") or index)))
+    for index, relation, source_value, required, key, pointer in candidates:
+        target_id, endpoint = relation["to"]["object"], relation["to"]["endpoint"]
+        source = relation["from"]
+        placed = placements[target_id][endpoint]
+        best, forced_by = earliest[(target_id, endpoint)]
+        lag = relation.get("lag", "0d")
+        amount = lag if isinstance(lag, str) else lag["value"]
+        qualifier = f" in {lag['calendar']}" if isinstance(lag, dict) and lag.get("calendar") else ""
+        signed = f"- {amount[1:]}" if amount.startswith("-") else f"+ {amount}"
+        message = (
+            f"{target_id}.{endpoint} is fixed at {placed.isoformat()}, but relation {key} "
+            f"({source['object']}.{source['endpoint']} {source_value.isoformat()} {signed}{qualifier}) "
+            f"requires {required.isoformat()} or later. "
+            f"The earliest feasible date for {target_id}.{endpoint} is {best.isoformat()} (forced by {forced_by})."
+        )
+        details = {
+            "object": target_id, "endpoint": endpoint, "placed": placed.isoformat(),
+            "relation": key,
+            "from": {"object": source["object"], "endpoint": source["endpoint"], "value": source_value.isoformat()},
+            "lag": dict(lag) if isinstance(lag, dict) else lag, "required": required.isoformat(),
+            "earliest": best.isoformat(), "forcedBy": forced_by,
+        }
+        diagnostics.append(Diagnostic("E_FIXED_TARGET_VIOLATION", message, f"/relations/{pointer}", details=details))
 
 
 def _analyze_criticality(project: dict[str, Any], placements: dict[str, dict[str, date]],

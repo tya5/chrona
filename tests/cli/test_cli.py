@@ -1200,6 +1200,39 @@ def test_cli_schedule_rejection_has_no_analysis_payload(tmp_path, monkeypatch, c
     assert "analysis" not in payload
 
 
+def test_cli_schedule_fixed_target_rejection_carries_details_and_other_records_do_not(tmp_path, monkeypatch, capsys):
+    def project(extra_objects, relations):
+        return {
+            "version": "timeline/v0.7", "project": {"id": "gate"}, "extensions": [],
+            "objects": {
+                "build": {"type": "task", "schedule": {"mode": "fixed-span", "start": "2027-04-26", "end": "2027-05-07"}},
+                "launch": {"type": "gate", "schedule": {"mode": "fixed-point", "at": "2027-05-07"}},
+                **extra_objects,
+            },
+            "relations": relations,
+        }
+
+    def run(data):
+        path = tmp_path / "plan.yaml"
+        path.write_text(yaml.safe_dump(data), encoding="utf-8")
+        monkeypatch.setattr(sys, "argv", ["chrona", "schedule", str(path)])
+        with pytest.raises(SystemExit) as exited:
+            main()
+        assert exited.value.code == 1
+        return json.loads(capsys.readouterr().out)
+
+    late = run(project({}, [{"id": "b-l", "type": "dependency", "from": {"object": "build", "endpoint": "end"},
+                             "to": {"object": "launch", "endpoint": "at"}, "lag": "3d"}]))
+    record, = late["diagnostics"]
+    assert list(record) == ["code", "severity", "component", "sourceRef", "revisionRefs", "message", "details"]
+    assert record["code"] == "E_FIXED_TARGET_VIOLATION" and record["sourceRef"] == "/relations/b-l"
+    assert record["details"]["earliest"] == "2027-05-10" and record["details"]["forcedBy"] == "b-l"
+
+    other = run(project({"x": {"type": "task", "schedule": {"mode": "scheduled", "amount": "0d"}}}, []))
+    assert other["diagnostics"] and all(list(item) == ["code", "severity", "component", "sourceRef", "revisionRefs", "message"]
+                                        for item in other["diagnostics"])
+
+
 def test_cli_schedule_reads_an_immutable_snapshot_without_path_fallback(tmp_path, monkeypatch, capsys):
     project = {
         "version": "timeline/v0.7", "project": {"id": "snapshot"}, "extensions": [],

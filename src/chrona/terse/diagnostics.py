@@ -77,7 +77,8 @@ class TerseDiagnostic(Diagnostic):
         return self.id
 
     def with_source(self, source: str | None) -> "TerseDiagnostic":
-        return TerseDiagnostic(self.id, self.message, self.path, self.range, self.hint, source, self.component)
+        return TerseDiagnostic(self.id, self.message, self.path, self.range, self.hint, source, self.component,
+                               details=self.details)
 
     def as_dict(self) -> dict[str, Any]:
         """The CLI diagnostic shape of design 7.1."""
@@ -85,6 +86,8 @@ class TerseDiagnostic(Diagnostic):
             "code": self.id, "severity": "error", "component": self.component,
             "sourceRef": self.path or "/", "revisionRefs": [], "message": self.message,
         }
+        if self.details is not None:
+            payload["details"] = self.details
         if self.source is not None:
             payload["source"] = self.source
         if self.range is not None:

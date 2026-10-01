@@ -382,7 +382,19 @@ Core v0.1 distinguishes **authority** from **constraints**.
 Fixed coordinates are authoritative. Bounds and dependencies do not move a fixed
 object. They validate it.
 
-A violated bound on a fixed object produces `E_FIXED_TARGET_VIOLATION`.
+A violated bound on a fixed object produces `E_FIXED_TARGET_VIOLATION`, one diagnostic per violating
+relation. The diagnostic names the earliest feasible date of the fixed endpoint, which is the maximum of the
+`source endpoint + lag` dates (Section 15.1; a lag with a `wd` part uses the lag's own calendar, else the target object's, else the Project's) of every relation into that
+endpoint, and the relation that gives it (the first in declaration order on a tie). For a fixed span the answer is
+per endpoint: it does not claim a full re-placement of the span. Substituting the reported date for the fixed
+date makes that relation satisfied; the scheduler never proposes or applies the correction itself.
+
+The diagnostic carries an optional `details` object with these stable keys (keys may be added, never renamed):
+`object`, `endpoint`, `placed` (the fixed date), `relation` (the relation `id`, or `/relations/N` with `N` the
+zero-based index when it has none), `from` (`{object, endpoint, value}` of the source), `lag` (the Project value
+verbatim), `required` (this relation's date), `earliest` and `forcedBy` (a relation key as in `relation`). Dates are
+ISO strings. The pointer of the diagnostic is `/relations/<id>` or, for a relation without an `id`,
+`/relations/N`. The message text is not normative.
 
 ### 20.2 Scheduled placement with explicit anchor
 
