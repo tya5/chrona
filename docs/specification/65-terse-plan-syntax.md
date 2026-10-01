@@ -1,11 +1,11 @@
 # Terse Plan Syntax
 
-**Status:** Proposed; implemented by `chrona compile` (#148, slice 1).
+**Status:** Proposed; implemented by `chrona compile` (#148, slice 1) and the draft dispatch of section 7.1 (slice 3).
 **Owns:** the grammar of the terse plan (`terse 0.1`), its mapping to a `timeline/v0.7` Project, the id rules for
 compiled objects and relations, the compiler diagnostic fields and codes, the stream and exit-code rules of
 `chrona compile`, and the determinism contract of the compiler's YAML.
 **Does not own:** Project meaning (Spec 05 and Core validation own every semantic rule), scheduling (Spec 04),
-presentation, the guided authoring workspace (Spec 51), the draft-render ingress (a later slice of #148), or
+presentation (the draft render consumes the compiled Project unchanged), the guided authoring workspace (Spec 51), or
 any agent skill that teaches the syntax.
 **One-page summary for authors and agents:** [`docs/guides/terse-plan.md`](../guides/terse-plan.md).
 Design rationale, measurements and alternatives:
@@ -288,8 +288,33 @@ is on the terminal.
 input (`E_TERSE_INPUT_IO`), an existing output (`E_TERSE_OUTPUT_EXISTS`), or a compiler defect.
 
 `compile` validates through Core only; it does not schedule. Run `chrona validate` and `chrona schedule` on the
-result. Only `compile` accepts a terse plan; no other command reads one, and nothing in `storage`, `operational`
-or `presentation` can import the compiler.
+result, or on the plan itself (section 7.1).
+
+### 7.1 Draft dispatch: `render`, `validate`, `schedule`
+
+These three commands accept a plan where they accept a raw Draft Project path. The CLI adapter decides by the
+suffix of that one path argument: it ends in `.chrona` (case-insensitive) and has a stem, so the Store directory
+`.chrona/` and a file named `.chrona` are not plans. Nothing else is inspected, and `--snapshot-reference` is never
+dispatched (it is read as YAML). The adapter compiles through the use case, then:
+
+- `validate` and `schedule` load the compiler's YAML bytes exactly as they would load that file, so their output equals
+  `compile` followed by the same command.
+- `render` writes the compiler's bytes as `project.yaml` into a temporary directory (the pattern `--preset <builtin id>`
+  uses), renders that file with every other flag unchanged and removes the directory on every exit path. The draft
+  closure's Project is therefore the compile output, and rendering `plan.chrona` is byte-identical to compiling and
+  then rendering the YAML. No temporary path appears in any output.
+- A plan that does not compile is reported with the compiler's diagnostics (the shape of section 6.1, with `source`,
+  `sourceRange` and `hint`) on standard output and exit code 1 (2 for an unreadable file or a compiler defect); nothing
+  is scheduled or rendered and no output file is written.
+- A finding of the scheduler or of the presentation stage's scheduling on a compiled plan (for example
+  `E_FIXED_TARGET_VIOLATION`, `E_UNSUPPORTED_CYCLE`, `E_CONTRADICTORY_BOUNDS`) is positioned through the source map and
+  gets the compiler's `source`, `sourceRange` and a hint, with its own code and component. A YAML Project keeps
+  the legacy diagnostic shape exactly.
+
+Every other command (`render-review`, `render-review-gallery`, `materialize`, `review`, `baseline-*`, `command-*`,
+`actual-*`, `workspace`, `render-workspace`, `authoring-command-apply`) reads YAML only. A `.chrona` path cannot become
+a closure member, a snapshot or a baseline: nothing in `storage`, `operational` or `presentation` can import the
+compiler, and a Render Context references YAML.
 
 ## 8. Determinism and the emitter
 

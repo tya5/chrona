@@ -17,6 +17,11 @@ CORE_HINTS: dict[str, str] = {
     "E_INVALID_SPAN": "the end date is exclusive: a span must end after it starts",
     "E_ROLLUP_EMPTY": "a group needs at least one child: indent tasks under it",
     "E_ENDPOINT_MODE_MISMATCH": "a fixed date has only `.at`; a span or group has `.start` and `.end`",
+    "E_FIXED_TARGET_VIOLATION": "this fixed date is earlier than its dependencies allow: move the date later, "
+                                "or drop or shorten the `after` dependency that pushes past it",
+    "E_UNSUPPORTED_CYCLE": "these objects wait on each other: break the loop by removing one `after` dependency",
+    "E_UNSATISFIABLE_DEPENDENCIES": "these objects wait on each other with a positive lag: break the loop by removing one `after` dependency",
+    "E_CONTRADICTORY_BOUNDS": "a `from`, `until` or end bound contradicts the dates or dependencies around it: relax the bound or move the dates",
 }
 
 
@@ -55,7 +60,7 @@ def compile_plan(data: bytes, source: str | None = None) -> PlanCompilation:
     return PlanCompilation(compiled.project, emit_project(compiled.project).encode("utf-8"), (), compiled.source_map)
 
 
-def _position(finding, source_map: SourceMap, source: str | None) -> TerseDiagnostic:
+def _position(finding, source_map: SourceMap, source: str | None, component: str = "core") -> TerseDiagnostic:
     if finding.id == "E_SCHEMA":
         return TerseDiagnostic("E_TERSE_COMPILER_DEFECT", f"the compiled Project failed structural validation: {finding.message}",
                                finding.path, locate(source_map, finding.path), "report this plan as a chrona bug", source)
@@ -64,7 +69,15 @@ def _position(finding, source_map: SourceMap, source: str | None) -> TerseDiagno
     if finding.id == "E_CALENDAR_REQUIRED" and pointer and pointer.count("/") == 2:
         where = pointer + "/schedule/amount"  # Core reports the object; the amount word is what to fix
     return TerseDiagnostic(finding.id, finding.message, pointer, locate(source_map, where),
-                           CORE_HINTS.get(finding.id), source, "core")
+                           CORE_HINTS.get(finding.id), source, component)
+
+
+def position_findings(compilation: PlanCompilation, findings, source: str | None, component: str = "core") -> tuple[TerseDiagnostic, ...]:
+    """Position Core or scheduler findings on the plan a compiled Project came from (design 9.2).
+
+    A finding's pointer names the compiled Project; the source map turns it into the line the author edits.
+    """
+    return tuple(_position(item, compilation.source_map, source, component) for item in findings)
 
 
 def input_unreadable(source: str, reason: str) -> TerseDiagnostic:

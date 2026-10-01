@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import argparse
+import copy
 from hashlib import sha256
 import json
 import sys
+import tempfile
 from datetime import date
 from pathlib import Path
 from typing import Any, NoReturn
@@ -17,7 +19,7 @@ from chrona.presentation.contracts import TypesetterIdentity
 from chrona.usecases.draft_render import DraftRenderRequest, parse_viewport, render_draft, typesetter_identity, warning_payloads
 from chrona.usecases.failure_report import FailureReport, StableFailure, diagnostic_record, rejection_report, report_failure
 from chrona.usecases.project_checks import schedule_project_mapping, validate_project_mapping
-from chrona.usecases.render_review import RenderRequest, RenderedReview, render_review
+from chrona.usecases.render_review import RenderRejected, RenderRequest, RenderedReview, render_review
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.loader import load_project
 from chrona.storage.revision_store import LocalSnapshotReader
@@ -29,7 +31,7 @@ from chrona.operational.authoring_commands import cas_write_authoring_aggregate,
 from chrona.operational.resources import parse_command, parse_document, stamp_automation_result
 from chrona.usecases.materialize import MaterializationError, materialize
 from chrona.usecases.local_authoring import discover_store_configuration, initialize_project
-from chrona.usecases.terse_compile import compile_plan, input_unreadable, output_exists
+from chrona.usecases.terse_compile import PlanCompilation, compile_plan, input_unreadable, output_exists, position_findings
 from chrona.usecases.preset_library import copy_builtin_preset, list_builtin_presets
 from chrona.usecases.skill_library import copy_skill
 from chrona.presentation.icons.importer import copy_material_symbols_outline_rounded_catalog, import_iconify, import_theme_assets
@@ -70,6 +72,10 @@ def _emit_render_warnings(rendered: RenderedReview) -> None:
 
 
 def _reject(diagnostics: list[Diagnostic], component: str = "core") -> NoReturn:
+    if _PLAN_SOURCE is not None:
+        # a plan (.chrona) compiled to the Project these findings name: report the line the author edits
+        plan, source = _PLAN_SOURCE
+        _compile_failure(position_findings(plan, diagnostics, source, component), to_stderr=False)
     _emit_report(rejection_report(diagnostics, component))
 
 
@@ -85,7 +91,7 @@ def _reject_codes(codes: list[str] | tuple[str, ...], component: str) -> NoRetur
 
 
 def _add_snapshot_arguments(command: argparse.ArgumentParser) -> None:
-    command.add_argument("project", nargs="?", help="raw Draft Project path")
+    command.add_argument("project", nargs="?", help="raw Draft Project path (YAML, or a terse .chrona plan)")
     command.add_argument("--snapshot-reference", help="immutable Project resource-reference YAML")
     command.add_argument("--snapshot-root", help="local snapshot adapter root")
     command.add_argument("--store-identity", help="expected local snapshot store identity")
@@ -144,6 +150,10 @@ def _load_primary_project(args: argparse.Namespace) -> dict[str, Any]:
         return load_project(reference, LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=not args.allow_missing_content_identity))
     if not args.project:
         raise CliFailure("E_COMMAND_SYNTAX", "a raw project or complete snapshot mode is required", exit_code=2)
+    if _is_plan_path(args.project):
+        plan = _compile_plan_argument(args.project)
+        _set_plan_source(plan, args.project)
+        return safe_load(plan.yaml)
     return load_yaml(args.project)
 
 
@@ -159,7 +169,7 @@ def _parser() -> JsonArgumentParser:
         _add_snapshot_arguments(command)
     command = sub.add_parser("render", help="render a draft review surface (not reproducible evidence)",
                               description="render a draft review surface (not reproducible evidence)")
-    command.add_argument("project", help="Draft Project YAML path")
+    command.add_argument("project", help="Draft Project YAML path, or a terse .chrona plan")
     command.add_argument("--preset", help="Presentation preset YAML path, or a builtin catalogue id (see `chrona preset list`); omit it to use bundled chrona-default-draft; explicit resource flags override its members")
     command.add_argument("--view", help="View YAML path")
     command.add_argument("--theme", help="Theme YAML path")
@@ -395,6 +405,55 @@ def _run_compile(args: argparse.Namespace) -> None:
         _compile_failure((output_exists(args.output),), to_stderr=False, status="failed", exit_code=2)
 
 
+# The plan (.chrona) behind the Project being checked or rendered, so that scheduler and Core findings are positioned on
+# its lines. One command runs per process; `main()` clears it on entry so in-process callers see no leak.
+_PLAN_SOURCE: tuple[PlanCompilation, str] | None = None
+
+
+def _set_plan_source(plan: PlanCompilation, source: str) -> None:
+    global _PLAN_SOURCE
+    _PLAN_SOURCE = (plan, source)
+
+
+def _is_plan_path(path: str | None) -> bool:
+    """A terse plan is recognised by the suffix of the file argument alone (design 9.5)."""
+    return bool(path) and path.lower().endswith(".chrona") and Path(path).suffix != ""
+
+
+def _compile_plan_argument(path: str) -> PlanCompilation:
+    """Compile the plan a `validate`, `schedule` or `render` argument names; a rejected plan never reaches the command."""
+    try:
+        data = Path(path).read_bytes()
+    except OSError as error:
+        _compile_failure((input_unreadable(path, error.strerror or str(error)),), to_stderr=False, status="failed", exit_code=2)
+    plan = compile_plan(data, path)
+    if plan.yaml is None:
+        _compile_failure(plan.diagnostics, to_stderr=False, status="failed" if plan.defect else "rejected",
+                         exit_code=2 if plan.defect else 1)
+    return plan
+
+
+def _run_draft_render_of_plan(args: argparse.Namespace) -> None:
+    """Render a `.chrona` plan through a temporary Project file, as `--preset <id>` does for a builtin preset.
+
+    The closure then holds the compiler's bytes as the Project, so the render equals compile-then-render by
+    construction; the temporary directory is removed on every exit path.
+    """
+    plan = _compile_plan_argument(args.project)
+    _set_plan_source(plan, args.project)
+    tmp = tempfile.TemporaryDirectory(prefix="chrona-plan-")
+    try:
+        project_path = Path(tmp.name) / "project.yaml"
+        project_path.write_bytes(plan.yaml)
+        rendered_args = copy.copy(args)
+        rendered_args.project = str(project_path)
+        _run_draft_render(rendered_args)
+    except RenderRejected as error:  # the scheduler's findings name the compiled Project: report them on the plan's lines
+        _reject(error.diagnostics, error.component)
+    finally:
+        tmp.cleanup()
+
+
 def _run_init(args: argparse.Namespace) -> None:
     initialize_project(Path(args.directory), example=args.example)
 
@@ -601,7 +660,10 @@ def _run(args: argparse.Namespace) -> None:
             _run_preset_copy(args)
         return
     if args.command == "render":
-        _run_draft_render(args)
+        if _is_plan_path(args.project):
+            _run_draft_render_of_plan(args)
+        else:
+            _run_draft_render(args)
         return
     if args.command == "render-workspace":
         _run_guided_draft_render(args)
@@ -665,6 +727,8 @@ def _write_result(destination: Path, result: dict[str, Any]) -> None:
 
 
 def main() -> None:
+    global _PLAN_SOURCE
+    _PLAN_SOURCE = None
     try:
         args = _parser().parse_args()
         _run(args)
