@@ -402,8 +402,11 @@ relation, or be read by the scheduler. Scenario overrides do not change it.
 Validation, in `validate`, with the period's pointer under `/periods/<id>`: a side that is not a calendar date is
 `E_SCHEMA`; when both sides are dates, `start` MUST be before `end` (`E_PROJECT_PERIOD_ORDER`); a reference MUST
 name a Project object (`E_PROJECT_PERIOD_OBJECT_UNKNOWN`) and an endpoint its schedule offers, `at` for a point and
-`start` or `end` for a span (`E_PROJECT_PERIOD_ENDPOINT_UNAVAILABLE`). The member is optional and additive in
-`timeline/v0.7` (§16). The terse syntax (Spec 65) does not spell periods; they stay in YAML.
+`start` or `end` for a span (`E_PROJECT_PERIOD_ENDPOINT_UNAVAILABLE`). A range with a reference on either side can
+be ordered only once dates exist: when the resolved `start` is not before the resolved `end`, `schedule` and render
+reject the plan with `E_PROJECT_PERIOD_ORDER` (same code and pointer, naming both resolved dates), whether or not a
+View selects the period. `validate` computes no dates and cannot report it, the split that already holds for
+`E_FIXED_TARGET_VIOLATION`. The member is optional and additive in `timeline/v0.7` (§16). The terse syntax (Spec 65) does not spell periods; they stay in YAML.
 
 ## 13. Precision and uncertainty
 

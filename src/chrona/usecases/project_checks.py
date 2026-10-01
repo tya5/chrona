@@ -20,6 +20,7 @@ from typing import Any, Mapping
 
 from chrona.core.deadlines import deadline_warnings
 from chrona.core.diagnostics import Diagnostic
+from chrona.core.periods import period_range_diagnostics
 from chrona.core.validation import load_yaml, validate_project
 from chrona.scheduling.dependency_cycles import dependency_cycle_diagnostics
 from chrona.scheduling.scheduler import schedule
@@ -94,6 +95,9 @@ def schedule_project_mapping(project: dict[str, Any]) -> ProjectSchedule:
     result = schedule(project)
     if not result.ok:
         return ProjectSchedule(tuple(result.diagnostics), {}, None)
+    ordering = period_range_diagnostics(project, result.placements)  # only placements can order a referenced period (#582)
+    if ordering:
+        return ProjectSchedule(ordering, {}, None)
     analysis = result.analysis
     derived = None
     if analysis is not None:

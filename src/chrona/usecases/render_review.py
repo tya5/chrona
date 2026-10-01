@@ -41,6 +41,7 @@ from chrona.presentation.fonts.system import DraftFontResolution
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView, effective_draft_numeric_theme
 from chrona.core.attachments import AttachmentWarning, attachment_warnings
 from chrona.core.deadlines import deadline_warnings
+from chrona.core.periods import period_range_diagnostics
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
 from chrona.presentation.model.projection import build_review_projection
 from chrona.presentation.model.surface_content import SummaryContent, TableContent
@@ -527,6 +528,9 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
     result = scheduler.schedule(project, extension_diagnostics=validate_profiles(project, manifests))
     if not result.ok:
         raise RenderRejected(result.diagnostics)
+    ordering = period_range_diagnostics(project, result.placements)  # only placements can order a referenced period (#582)
+    if ordering:
+        raise RenderRejected(list(ordering))
     actual = closure.actual_set.observations_input if closure.actual_set is not None else None
     snapshot_project = closure.snapshot_project.scheduler_input if closure.snapshot_project is not None else None
     snapshot_result = scheduler.schedule(snapshot_project) if snapshot_project is not None else None

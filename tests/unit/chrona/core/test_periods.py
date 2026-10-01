@@ -9,6 +9,7 @@ from typing import Any
 
 import pytest
 
+from chrona.core.periods import period_range_diagnostics, resolve_periods
 from chrona.core.validation import validate_project
 from chrona.scheduling.scheduler import schedule
 
@@ -129,3 +130,75 @@ def test_validation_does_not_mutate_the_project():
     before = copy.deepcopy(project)
     validate_project(project)
     assert project == before
+
+
+# --- resolution against placements ------------------------------------------------------------------------
+
+
+def _placements(project: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    result = schedule(project)
+    assert result.ok, result.diagnostics
+    return result.placements
+
+
+def test_resolution_turns_literals_and_references_into_dates_in_project_order():
+    periods = {
+        "freeze": {"title": "Freeze", "start": {"object": "kickoff", "endpoint": "at"}, "end": "2027-03-01"},
+        "build-window": {"start": {"object": "build", "endpoint": "start"}, "end": {"object": "build", "endpoint": "end"}},
+        "rolled": {"start": {"object": "phase", "endpoint": "start"}, "end": {"object": "phase", "endpoint": "end"}},
+        "derived-day": {"start": {"object": "derived", "endpoint": "at"}, "end": "2027-12-31"},
+        "literal": {"start": "2027-10-22", "end": "2027-11-06"},
+    }
+    project = _project(periods)
+    resolved = resolve_periods(project, _placements(project))
+    assert [(item.period_id, item.title, item.start.isoformat(), item.end.isoformat()) for item in resolved] == [
+        ("freeze", "Freeze", "2027-01-04", "2027-03-01"),
+        ("build-window", "build-window", "2027-01-05", "2027-02-01"),
+        ("rolled", "rolled", "2027-02-01", "2027-02-08"),
+        ("derived-day", "derived-day", "2027-03-01", "2027-12-31"),
+        ("literal", "literal", "2027-10-22", "2027-11-06"),
+    ]
+
+
+def test_a_reference_follows_the_plan_when_the_plan_moves():
+    periods = {"window": {"start": {"object": "build", "endpoint": "end"}, "end": "2027-06-01"}}
+    project = _project(periods)
+    before = resolve_periods(project, _placements(project))[0]
+    project["objects"]["build"]["schedule"]["end"] = "2027-02-15"
+    after = resolve_periods(project, _placements(project))[0]
+    assert (before.start.isoformat(), after.start.isoformat()) == ("2027-02-01", "2027-02-15")
+    assert before.end == after.end
+
+
+def test_resolution_of_a_project_without_periods_is_empty():
+    project = _project()
+    assert resolve_periods(project, _placements(project)) == ()
+    assert period_range_diagnostics(project, _placements(project)) == ()
+
+
+@pytest.mark.parametrize(("period", "resolved"), [
+    ({"start": {"object": "build", "endpoint": "end"}, "end": "2027-02-01"}, ("2027-02-01", "2027-02-01")),
+    ({"start": {"object": "build", "endpoint": "end"}, "end": "2027-01-10"}, ("2027-02-01", "2027-01-10")),
+    ({"start": "2027-03-01", "end": {"object": "kickoff", "endpoint": "at"}}, ("2027-03-01", "2027-01-04")),
+    ({"start": {"object": "build", "endpoint": "end"}, "end": {"object": "build", "endpoint": "start"}},
+     ("2027-02-01", "2027-01-05")),
+])
+def test_a_reference_that_resolves_to_an_empty_or_inverted_range_is_rejected(period, resolved):
+    project = _project({"p": period})
+    assert validate_project(project) == []  # no dates are computed there
+    (item,) = period_range_diagnostics(project, _placements(project))
+    assert (item.id, item.path) == ("E_PROJECT_PERIOD_ORDER", "/periods/p")
+    assert (item.details["start"], item.details["end"]) == resolved
+    assert resolved[0] in item.message and resolved[1] in item.message
+
+
+def test_a_reference_that_resolves_in_order_is_kept():
+    project = _project({"p": {"start": {"object": "kickoff", "endpoint": "at"}, "end": {"object": "build", "endpoint": "end"}}})
+    assert period_range_diagnostics(project, _placements(project)) == ()
+
+
+def test_the_post_placement_check_leaves_literal_pairs_to_validation():
+    # A literal pair that is out of order is reported once, by validate; the placement check adds nothing.
+    project = _project({"p": {"start": "2027-11-06", "end": "2027-10-22"}})
+    assert [item.id for item in validate_project(project)] == ["E_PROJECT_PERIOD_ORDER"]
+    assert period_range_diagnostics(project, _placements(_project())) == ()

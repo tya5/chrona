@@ -45,6 +45,23 @@ def test_validate_accepts_a_valid_project_and_reports_a_broken_one(tmp_path):
     assert [item.id for item in outcome.diagnostics] == ["E_REFERENCE"]
 
 
+def test_a_referenced_period_that_resolves_empty_is_rejected_by_schedule_but_not_by_validate(tmp_path):
+    project = yaml.safe_load(STARTER)
+    project["periods"] = {"p": {"start": {"object": "design", "endpoint": "end"}, "end": "2026-10-31"}}
+    assert validate_project_mapping(project).ok  # validate computes no dates
+    outcome = schedule_project_mapping(project)
+    assert not outcome.ok
+    assert [(item.id, item.path) for item in outcome.diagnostics] == [("E_PROJECT_PERIOD_ORDER", "/periods/p")]
+    assert outcome.placements == {} and outcome.analysis is None and outcome.warnings == ()
+
+
+def test_a_period_that_resolves_in_order_leaves_the_schedule_document_unchanged():
+    plain = yaml.safe_load(STARTER)
+    with_period = yaml.safe_load(STARTER)
+    with_period["periods"] = {"p": {"start": {"object": "design", "endpoint": "end"}, "end": "2026-11-30"}}
+    assert schedule_project_mapping(with_period).payload() == schedule_project_mapping(plain).payload()
+
+
 def test_validate_reports_a_cycle_without_scheduling_and_schedule_reports_it_identically(tmp_path):
     path = _write(tmp_path, "cycle.yaml", CYCLE)
     validated = validate_project_file(path)
