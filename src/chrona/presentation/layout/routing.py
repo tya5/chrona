@@ -11,6 +11,9 @@ from chrona.presentation.layout.obstacles import ObstacleSegment, SurfaceObstacl
 from chrona.presentation.layout.ports import ConnectorEgress
 
 
+ROUTE_GRID_OFFSET = 2.0  # how far a route runs from the edge of an obstacle
+
+
 class RouteSearchFailure(ValueError):
     """A bounded orthogonal search found no route; unrelated ValueErrors propagate."""
 
@@ -218,7 +221,7 @@ def select_lane_relation_route(
 
 def route_orthogonal(start: tuple[float, float], end: tuple[float, float],
                      obstacles: tuple[tuple[float, float, float, float], ...] | SurfaceObstacleIndex, *,
-                     grid_offset: float = 2.0, bend_penalty: float = 12.0,
+                     grid_offset: float = ROUTE_GRID_OFFSET, bend_penalty: float = 12.0,
                      limit: int = 4096,
                      bounds: tuple[float, float, float, float] | None = None,
                      port_ids: tuple[str, ...] = (),
