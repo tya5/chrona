@@ -95,6 +95,25 @@ def retreat(value: date, amount: str, calendar: Calendar | None = None) -> date:
     return advance(value, inverse, calendar)
 
 
+def latest_start_for(target: date, amount: str, calendar: Calendar | None = None) -> date:
+    """The greatest date ``s`` with ``advance(s, amount, calendar) <= target``.
+
+    ``retreat`` is the exact inverse of ``advance`` only when ``s`` can be reached from ``target``: a working-day
+    ``advance`` counts days strictly after its start, so every date of a non-working run advances to the same result
+    and ``retreat`` returns the earliest of them (the working day before the run), not the latest. ``advance`` is
+    non-decreasing in its start, so the greatest preimage exists; the search starts at ``retreat`` and is bounded by the
+    longest non-working run (or one month clamp).
+    """
+    target = as_date(target)
+    day = timedelta(days=1)
+    candidate = retreat(target, amount, calendar)
+    while advance(candidate, amount, calendar) > target:
+        candidate -= day
+    while advance(candidate + day, amount, calendar) <= target:
+        candidate += day
+    return candidate
+
+
 def _advance_work(value: date, count: int, calendar: Calendar) -> date:
     if count == 0:
         return value

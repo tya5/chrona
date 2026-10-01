@@ -491,7 +491,8 @@ than `max` is the same diagnostic. A point with no relation into `at` and no `mi
 cycle through scheduled points is reported by the scheduler like any other cycle (Section 16).
 
 Analysis treats a scheduled point like any other non-fixed object: it joins the critical path and has float,
-and its latest date honours `constraints.at.max`.
+and its latest date honours `constraints.at.max`. The backward rule that turns a latest target into a latest
+source through a lag is stated in [Spec 57](57-public-schedule-analysis.md).
 
 A scheduled point is a derived **plan**, not a forecast. Actual values never move a planned date
 (Section 17): a late predecessor actual does not move the gate; editing the plan does. A scheduled point is not

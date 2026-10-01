@@ -11,16 +11,7 @@ import copy
 import random
 from datetime import date, timedelta
 
-from unittest import mock
-
-import chrona.scheduling.scheduler as scheduler
-
-
-def schedule(project):
-    """Placements and diagnostics only: the backward pass raises `TemporalError` on some plans that mix calendar-day
-    and working-day lags (reproducible without any derived point), which is not what these properties examine."""
-    with mock.patch.object(scheduler, "_analyze_criticality", lambda *args: None):
-        return scheduler.schedule(project)
+from chrona.scheduling.scheduler import schedule
 
 CASES = 250
 _ROOT = date(2027, 4, 26)
@@ -87,6 +78,14 @@ def test_the_generator_reaches_derived_points_floors_and_calendar_lags():
     assert sum(bool(_points(plan)) for plan in plans) > CASES * 0.8
     assert any("constraints" in item["schedule"] for plan in plans for item in plan["objects"].values())
     assert any(isinstance(relation["lag"], dict) for plan in plans for relation in plan["relations"])
+
+
+def test_the_properties_run_on_the_real_analysis_pass():
+    """No stub: every generated plan is analysed by the scheduler's own backward pass (#810)."""
+    for project, _ in _plans():
+        result = schedule(project)
+        assert result.ok and result.analysis is not None, project
+        assert all(value >= 0 for value in result.analysis.total_float.values()), project
 
 
 def test_i1_a_derived_plan_is_accepted_and_its_fixed_twin_places_identically():
