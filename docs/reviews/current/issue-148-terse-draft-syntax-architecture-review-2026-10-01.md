@@ -194,7 +194,7 @@ and the specification directory before choosing; the number is not part of any c
 ## 5. Conditions carried into the implementation plan
 
 - **C1** Slice 1 contains `compile`, the minimal guide text and the import-direction edit; no staged module.
-- **C2** Diagnostics carry `line`/`column`/`endColumn`/`hint`/`source`, no bare codes, and the source map is
+- **C2** Diagnostics carry `sourceRange`/`hint`/`source`, no bare codes, and the source map is
   keyed by index and id (F2).
 - **C3** The emitter is hand-written and round-trip tested, with `on`/`no`/`null` fixtures (F3).
 - **C4** The compiler duplicates no Core rule; the fuzz property "compiler-accepted implies Core-valid" runs in

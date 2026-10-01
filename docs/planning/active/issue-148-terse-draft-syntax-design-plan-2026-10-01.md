@@ -92,7 +92,7 @@ with the place the design answers it. The release review will carry one row per 
 | D5 | Dependency: hand-written parser and emitter, or a parser library | 9.1 |
 | D6 | Id policy: explicit names only, or title-derived ids | 6 |
 | D7 | Kinds: closed set (`task`, `gate`, `group`) or any type word | 3.5 |
-| D8 | Diagnostic stream and additive JSON fields (`line`, `column`, `endColumn`, `hint`, `source`) | 7.2, 9.6 |
+| D8 | Diagnostic stream and additive JSON fields (`sourceRange`, `hint`, `source`) | 7.2, 9.6 |
 | D9 | Overwrite behaviour of `-o` | 9.6 |
 | D10 | Normative home: new Spec 65, and a cross-reference to Spec 51 | 10 |
 | D11 | Go/no-go checkpoint after slice 1 | 13.11, 14 and implementation plan |

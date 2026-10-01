@@ -91,7 +91,7 @@ are strings, so it would work, but it moves the escape hatch rather than removin
 - **L1 Encoding.** UTF-8, optional BOM (ignored). Invalid bytes: `E_TERSE_ENCODING`.
 - **L2 Lines.** LF or CRLF separate lines; a final newline is optional; a lone CR is
   `E_TERSE_CONTROL_CHARACTER`. Line and column are 1-based; a column counts Unicode code points of the line
-  (BOM excluded); `endColumn` is exclusive.
+  (BOM excluded); `endColumn` is exclusive (they are reported inside `sourceRange`, 7.1).
 - **L3 Characters.** Control characters (U+0000-U+001F, U+007F) are rejected everywhere, including inside
   strings and comments: tab is `E_TERSE_TAB`, any other is `E_TERSE_CONTROL_CHARACTER`. The only token
   separator is U+0020; any other whitespace (for example U+00A0) is an ordinary word character, and a
@@ -412,15 +412,19 @@ The same JSON shape as every other command, extended additively:
   "code": "E_TERSE_AMOUNT_INVALID", "severity": "error", "component": "terse",
   "sourceRef": "/", "revisionRefs": [],
   "message": "'20' has no unit; write 20d (calendar days), 20w (weeks) or 20wd (working days)",
-  "source": "plan.chrona", "line": 6, "column": 33, "endColumn": 35,
+  "source": "plan.chrona",
+  "sourceRange": {"line": 6, "column": 33, "endLine": 6, "endColumn": 35},
   "hint": "write 20d for calendar days; 20wd needs a `calendar` statement"}]}
 ```
 
 `code`, `severity`, `component` (`terse`), `sourceRef`, `revisionRefs`, `message` are today's fields.
 `sourceRef` is the JSON pointer into the *compiled* Project when the finding has one (for example
 `/objects/avionics/schedule`) and `/` otherwise. New, only on terse diagnostics: `source` (the path as the
-author gave it, `-` for stdin), `line`, `column`, `endColumn` (1-based code points, end exclusive), and an
-optional `hint` (one actionable sentence). Codes are stable identifiers; messages and hints may be
+author gave it, `-` for stdin), `sourceRange` (an object `{line, column, endLine, endColumn}`, 1-based code
+points, end exclusive; `endLine` equals `line` for every token the compiler reports), and an
+optional `hint` (one actionable sentence). `sourceRange` is the additive field the parallel agent-interface design
+([#142, PR 778](https://github.com/tya5/chrona/pull/778)) reserves under that name; using one object keeps the CLI,
+the skill and an MCP result on one shape. Codes are stable identifiers; messages and hints may be
 improved without a version change. No terse diagnostic is a bare code (#371): each has a message.
 
 In code, `chrona.terse.diagnostics.TerseDiagnostic` subclasses `core.diagnostics.Diagnostic`, so Core's own
@@ -625,10 +629,11 @@ confusion between two compact sources; the guide says in one sentence which is w
 that downstream components never read terse text (the same promise Spec 51 makes for its own syntax).
 
 **#142 (agent skill and MCP, designed in parallel).** What it may rely on, all frozen by Spec 65: the grammar
-and its one-page summary; the code catalogue; the diagnostic fields (`line`, `column`, `endColumn`, `hint`,
+and its one-page summary; the code catalogue; the diagnostic fields (`sourceRange`, `hint`,
 `source`); `chrona compile -` for stdin; exit codes; the all-errors-in-one-pass behaviour; the stream rule
 (7.2); that `compile` never partially emits; the hand-off rule (the skill should tell an agent to compile and
-then edit YAML when it needs fields, scenarios or annotations). What this design does not decide: the skill's
+then edit YAML when it needs fields, scenarios or annotations). That design (PR 778) takes `project` as an opaque path and promises not to describe `chrona compile` before it exists; the
+hand-over is slice 4, after which one added paragraph and one reference file in the skill are enough. What this design does not decide: the skill's
 text, any MCP tool, or whether an MCP `compile_plan` returns positions as structured data (it can reuse the
 use case result directly, which is why the position data lives in the use case and not only in the CLI).
 
@@ -664,10 +669,10 @@ use case result directly, which is why the position data lives in the use case a
    (`random.Random(148)`), deterministic mutation fuzz over the fixtures (delete, insert, swap, truncate
    characters and tokens, thousands of cases) asserting: (a) the compiler never raises; (b) if any
    diagnostic exists, `project is None`; (c) every diagnostic has `1 <= line <= number_of_lines + 1` and
-   `1 <= column <= len(line) + 1` and `endColumn > column`; (d) a successful compile always passes
+   `1 <= column <= len(line) + 1` and `endColumn > column` (all inside `sourceRange`); (d) a successful compile always passes
    `validate_project` (this makes `E_TERSE_COMPILER_DEFECT` unreachable); (e) a second compile is byte-equal.
 6. **Catalogue completeness.** One negative fixture per `E_TERSE_*` code, with an expected-diagnostics JSON
-   (code, line, column, endColumn, hint present); a test fails if a code in the catalogue has no fixture or a
+   (code, sourceRange, hint present); a test fails if a code in the catalogue has no fixture or a
    fixture names an unknown code. The ten mistakes of 7.4 are literal fixtures.
 7. **Ledger test** (5.3).
 8. **Layering.** `tools/check_import_direction.py` passes with the new rows; a test asserts `terse` imports
@@ -696,7 +701,7 @@ use case result directly, which is why the position data lives in the use case a
 | D5 | Dependency | None; hand-written lexer, parser, emitter | About 600 lines to own; best error messages; no wheel change |
 | D6 | Ids | Explicit slug names only, no derived ids | Agents must name every object; a title edit never renames an object |
 | D7 | Kinds | Closed: `task`, `gate`, `group` | `milestone`/`phase` need YAML or a one-line widening |
-| D8 | Diagnostics | Additive fields `source`,`line`,`column`,`endColumn`,`hint`; JSON to the stream not carrying the artefact | Redirect-safe `compile > project.yaml`; a rule agents must learn (one sentence) |
+| D8 | Diagnostics | Additive fields `source`, `sourceRange`, `hint`; JSON to the stream not carrying the artefact | Redirect-safe `compile > project.yaml`; a rule agents must learn (one sentence) |
 | D9 | Overwrite | `-o` refuses an existing file | No silent loss of hand edits; user deletes first |
 | D10 | Spec home | New Spec 65 plus one-line cross-references in Spec 05 and 51 | One normative home; design section 3 becomes a pointer |
 | D11 | Checkpoint | Go/no-go after slice 1 on the agent check (13.11) and a written bytes-and-retries record | Slices 2-4 are not started on momentum |

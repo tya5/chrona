@@ -65,7 +65,7 @@ call the use case, atomic write, stream rule), `tools/check_import_direction.py`
   Japanese text). Output bytes equal expected; expected validates; placements and critical set of compiled and
   expected equal.
 - `test_errors.py`: one negative fixture per `E_TERSE_*` code in the S1 catalogue with expected
-  `(code, line, column, endColumn)` and a hint check; completeness test both ways (every catalogue code has a
+  `(code, sourceRange)` and a hint check; completeness test both ways (every catalogue code has a
   fixture, every fixture names a catalogue code); the ten mistakes of design 7.4 verbatim.
 - `test_properties.py`: seeded (`random.Random(148)`) mutation fuzz, thousands of cases, asserting design 13.5
   (a)-(e): never raises; diagnostics imply `project is None`; positions in range; accepted implies
@@ -124,7 +124,7 @@ test); ledger test red when a property is added to a copy of the schema.
 **Scope:** the adapter dispatches on the `.chrona` suffix in `render`, `validate` and `schedule`:
 `validate`/`schedule` in `_load_primary_project`; `render` through a `TemporaryDirectory` holding the compiled
 `project.yaml` (the `_resolve_preset_argument` pattern), cleaned in `finally`. The use case returns the source
-map; `_reject` and the closure-failure path accept an optional map and add `line`/`column`/`endColumn`/`hint`
+map; `_reject` and the closure-failure path accept an optional map and add `sourceRange`/`hint`
 to Core and scheduler diagnostics (pointers keyed by index and by relation id, with nearest-ancestor fallback);
 the hint table for Core codes (`E_CALENDAR_REQUIRED`, `E_INVALID_SPAN`, `E_FIXED_TARGET_VIOLATION`,
 `E_UNSUPPORTED_CYCLE`, `E_CONTRADICTORY_BOUNDS`, `E_ROLLUP_EMPTY`, `E_ENDPOINT_MODE_MISMATCH`) lives in the use
