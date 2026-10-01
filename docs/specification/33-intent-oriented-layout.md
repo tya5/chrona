@@ -71,6 +71,12 @@ inline`, wrapping exactly as a `flow` container wraps its children (#427). Each
 entry's swatch is constructed by the same geometry its role's `primitive_kind`
 already uses for an object mark, relation, or decoration; Layout never derives a
 swatch's shape or size from the legend label's typography role.
+The `legend` source measures the entries it will draw: each entry's natural inline size
+is its swatch, the item gap and the drawn label (a colour-scale entry with the entity
+title, not the raw value), a `block` legend is as wide as its widest entry, and an
+`inline` legend as wide as the line of entries, or as the widest entry when
+`itemMinInlineSize` lets it wrap. Measurement and drawing use the same entries and the
+same swatch geometry (#497).
 The [#427 dispatch amendment](../design/issue-427-legend-swatches-design-amendment-2026-09-26.md)
 qualifies this rule: known mark/line/decoration roles use the closed
 chart-matching dispatch, while an otherwise unregistered legend role retains
@@ -162,7 +168,17 @@ placement and warn under Section 13; neither turns a fit shortage into an error.
 
 Required content may use only `diagnose` or `ellipsize-with-source` overflow. Optional
 content may additionally use `clip-optional`. Ellipsized or omitted output retains full
-source text and the decision in Scene metadata.
+source text and the decision in Scene metadata. A text that Layout shortens with an
+ellipsis always carries a typed `W_LAYOUT_TEXT_ELLIPSIZED` fit warning naming the
+primitive, its natural inline size and the inline size it had (#497); `ellipsize-with-source`
+declares that an ellipsis is allowed, never that it may be silent.
+
+A slot whose inline or block size is `content` resolves to the measured natural size of
+its source. When its `overflow` is `ellipsize-with-source` and its composer shrinks and
+reports that shrink (the `legend` source), the used cross-axis size is bounded by the
+container, so a content-sized slot is as large as its widest entry up to the space its
+container offers. Any other slot keeps growing past its container and warns
+`W_LAYOUT_VISIBLE_OVERFLOW` under Section 13.
 The legacy `diagnose` slot spelling does not override Section 13 for a valid
 fit shortage. Exact text-plus-icon compositions keep both components and
 grow visibly if even a declared compact representation cannot fit.
