@@ -82,3 +82,37 @@ chrona init my-halcyon-corpus --example halcyon-1
 That example's immutable closure lives in `.chrona/store`; it is runtime state,
 not source to edit.  See the [root README](../../README.md) for its public
 materializer command.
+
+### Render an example Context from its Store
+
+`chrona init --example` copies the example's Contexts into `.chrona/store`.
+`render-review` renders one from an immutable resource reference to it.  Write
+that reference by hand: `id`, `store` and `revision` come from the Context's
+`body.project`, `kind` is `render-context`, and `address` is the Context's path
+in the Store.  `--store-config` points the command at the Store `init` wrote, so
+no `--snapshot-root` or `--store-identity` is needed:
+
+<!-- chrona:doc-check skip: the reference file is written by the heredoc in the same block -->
+```bash
+cat > my-halcyon-corpus/context-reference.yaml <<'YAML'
+id: halcyon-1-01-mission-brief
+kind: render-context
+store:
+  provider: local
+  identity: halcyon-1-example
+address: contexts/01-mission-brief.yaml
+revision:
+  token: example-v3
+YAML
+chrona render-review \
+  --context-reference my-halcyon-corpus/context-reference.yaml \
+  --store-config my-halcyon-corpus/.chrona/store.yaml \
+  --output my-halcyon-corpus/mission-brief.svg
+```
+
+Content identity is required by default for every Store (Spec 42), and the
+example Contexts leave their inner references unpinned by design (ADR-0030).
+So `init --example` writes `integrity: optional` into `.chrona/store.yaml`, with
+a comment saying why.  That exception covers the example corpus only: a Store
+you create yourself, and an `integrity` you omit, stay `required`; for one call
+on such a Store, `--allow-missing-content-identity` is the explicit opt-out.

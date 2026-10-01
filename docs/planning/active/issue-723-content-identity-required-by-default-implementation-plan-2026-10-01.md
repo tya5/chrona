@@ -13,7 +13,7 @@ Unverified: Windows behaviour (the new tests are OS-independent; the three-OS ru
 ## Literal acceptance (issue #723)
 
 - [ ] The default is required in the reader (`LocalSnapshotReader`, `LocalBaselineRegistry`) and in Store config (omitted `integrity` means `required`); `optional` remains an explicit opt-out in code, config and CLI.
-- [ ] `chrona init --example` writes `integrity: required`, and the Store it creates is readable by its own commands.
+- [ ] `chrona init --example` writes `integrity: required` (superseded by #727: `optional`, example corpus only), and the Store it creates is readable by its own commands.
 - [ ] Tests prove that, by default, an identity mismatch and a missing identity are refused, and that `optional` remains an explicit opt-out; every committed fixture or test that relied on `optional` is migrated deliberately.
 
 ## Slices

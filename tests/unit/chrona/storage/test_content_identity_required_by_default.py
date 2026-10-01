@@ -99,10 +99,12 @@ def test_store_config_optional_is_an_explicit_opt_out_for_both_readers(tmp_path)
         reader.read(reference | {"contentIdentity": WRONG})
 
 
-def test_init_example_writes_required_integrity(tmp_path):
+def test_init_example_writes_optional_integrity_explicitly(tmp_path):
+    """The example corpus opts out explicitly (ADR-0030, #727); plain `init` writes no Store config (it stays required)."""
     destination = initialize_project(tmp_path / "project", example="halcyon-1")
     stores = yaml.safe_load((destination / ".chrona" / "store.yaml").read_text(encoding="utf-8"))["stores"]
-    assert [store["integrity"] for store in stores] == ["required"]
+    assert [store["integrity"] for store in stores] == ["optional"]
+    assert not (initialize_project(tmp_path / "minimal") / ".chrona" / "store.yaml").exists()
 
 
 def test_cli_opt_out_flag_replaces_the_strict_flag():

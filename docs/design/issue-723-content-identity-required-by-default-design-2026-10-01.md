@@ -41,7 +41,7 @@ Spec and docs: Spec 42 (policy text), Spec 54 and ADR-0030 (the materializer doe
 
 1. `LocalSnapshotReader` and `LocalBaselineRegistry` default to `require_content_identity=True`.
 2. A Store config that omits `integrity` means `required`. `ConfiguredStoreReader` passes the flag to the readers explicitly from the entry's value (`optional` becomes an explicit `require_content_identity=False`).
-3. `chrona init --example` writes `integrity: required`.
+3. `chrona init --example` writes `integrity: required`. **Superseded by [#727](issue-727-init-example-integrity-design-2026-10-01.md):** it writes `integrity: optional` with a comment (example corpus only); plain `chrona init` writes no Store config; every other Store keeps `required`.
 4. The CLI inverts: `--require-content-identity` is replaced by `--allow-missing-content-identity` (explicit opt-out; there is no outside caller to keep a deprecated alias for).
 5. Spec 42 is amended: the schema still permits omission; the Store read path rejects it unless the Store or the caller opts out.
 
@@ -75,7 +75,7 @@ No migration weakens a test: each either gains the identity or names the opt-out
 
 ## Risks, stated honestly
 
-1. **The init'd example Store cannot resolve its own unpinned Contexts through its own config.** `chrona init --example` copies unpinned canonical Contexts into `.chrona/store`, and now writes `integrity: required`. No CLI path resolves a Context through `ConfiguredStoreReader` (`_store_reader` serves `command apply` and `undo`, which read the project reference a command names), so no shipped command breaks. Only `test_explicit_halcyon_init_is_store_resolvable_without_root_revision_closures` did, and it builds a reader from the config's root with the opt-out stated. The alternative, pinning the 191 example references, was rejected here: it reverses ADR-0030 and rewrites every canonical Context. If the owner wants that, it is a separate issue.
+1. **(Resolved by #727: `init --example` now writes `integrity: optional`, and `render-review --store-config` reads through it.)** **The init'd example Store cannot resolve its own unpinned Contexts through its own config.** `chrona init --example` copies unpinned canonical Contexts into `.chrona/store`, and now writes `integrity: required`. No CLI path resolves a Context through `ConfiguredStoreReader` (`_store_reader` serves `command apply` and `undo`, which read the project reference a command names), so no shipped command breaks. Only `test_explicit_halcyon_init_is_store_resolvable_without_root_revision_closures` did, and it builds a reader from the config's root with the opt-out stated. The alternative, pinning the 191 example references, was rejected here: it reverses ADR-0030 and rewrites every canonical Context. If the owner wants that, it is a separate issue.
 2. **Authors with unpinned Contexts must opt out or pin.** `chrona render-review --context-reference X --snapshot-root S` on an unpinned Context now fails with `E_CONTENT_IDENTITY_REQUIRED`. The owner is the only user; the code names the cause and `--allow-missing-content-identity` is the documented escape.
 3. **ADR-0030 and Spec 42/54 wording** calls optional pins the ordinary contract. Spec 42 is amended; ADR-0030's decision (the materializer does not require pins) still holds and is recorded as unaffected, not reversed.
 4. **Windows.** All new tests decide from reference data and reader flags, not the host OS. The three-OS run on `main` follows merge.

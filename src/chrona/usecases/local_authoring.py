@@ -10,6 +10,12 @@ from chrona.resources import minimal_template_resource, template_resource
 from chrona.usecases.materialize import copy_context_closure
 
 
+EXAMPLE_INTEGRITY_COMMENT = (
+    "  # This example Store opts out of required content identity: the example Contexts leave inner\n"
+    "  # references unpinned by design (ADR-0030). Example corpus only; Stores you create keep `required`.\n"
+)
+
+
 @dataclass(frozen=True)
 class StoreConfiguration:
     path: Path
@@ -47,9 +53,13 @@ def initialize_project(destination: Path, *, example: str | None = None) -> Path
         copy_context_closure(destination, context, store_root)
     config = destination / ".chrona" / "store.yaml"
     config.parent.mkdir(parents=True, exist_ok=True)
-    config.write_text(yaml.safe_dump({"version": "chrona/store-config/v0.1", "stores": [{
-        "provider": "local", "identity": f"{example}-example", "root": str(store_root.resolve()), "integrity": "required",
-    }]}, sort_keys=False), encoding="utf-8")
+    document = yaml.safe_dump({"version": "chrona/store-config/v0.1", "stores": [{
+        "provider": "local", "identity": f"{example}-example", "root": str(store_root.resolve()), "integrity": "optional",
+    }]}, sort_keys=False)
+    # The example corpus is not a trust boundary and its Contexts leave inner references unpinned by design
+    # (ADR-0030), so the example Store opts out explicitly (#727); every other Store keeps the `required` default (#723).
+    document = document.replace("  integrity: optional\n", EXAMPLE_INTEGRITY_COMMENT + "  integrity: optional\n")
+    config.write_text(document, encoding="utf-8")
     return destination
 
 
