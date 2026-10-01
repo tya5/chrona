@@ -19,5 +19,5 @@ properties:
       properties:
         provider: {description: "The only provider supported by this configuration.", const: local}
         identity: {description: "Stable Store identity.", type: string, minLength: 1}
-        root: {description: "Filesystem root of the local Store.", type: string, minLength: 1}
+        root: {description: "Filesystem root of the local Store. A relative root is resolved against the directory that contains this config file; an absolute root is used as written.", type: string, minLength: 1}
         integrity: {description: "Whether content-identity checking is mandatory.", enum: [optional, required]}

@@ -183,7 +183,10 @@ only when both explicit references independently verify.
 declared `(provider, identity)` to a local adapter root. Duplicate pairs reject before
 any operation. The initial product profile permits only `provider: local`; `root` is a
 client transport location and has no authority to alter the reference's provider,
-identity, address, revision, or digest. Credentials are not representable in this file.
+identity, address, revision, or digest. A relative `root` is resolved against the directory
+that contains the config file (not the working directory), so a Store kept beside its config
+survives a move, a copy or a commit; an absolute `root` is used as written. `chrona init
+--example` writes `root: store` for the Store at `.chrona/store` (#781). Credentials are not representable in this file.
 Future credential-bearing providers require a new versioned config format and ADR.
 
 For a local writable Actual Store, an immutable Actual-set reference resolves as

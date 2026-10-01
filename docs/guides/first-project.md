@@ -118,6 +118,11 @@ chrona render-review \
   --output my-halcyon-corpus/mission-brief.svg
 ```
 
+The Store config names its Store relative to itself (`root: store` in `.chrona/store.yaml`),
+so the whole directory can be moved, copied or committed and `--store-config` keeps
+working. A config written by an older `chrona` holds an absolute `root`: it still works
+where it was made, and replacing the value with `store` makes it relocatable.
+
 Content identity is required by default for every Store (Spec 42), and the
 example Contexts leave their inner references unpinned by design (ADR-0030).
 So `init --example` writes `integrity: optional` into `.chrona/store.yaml`, with
