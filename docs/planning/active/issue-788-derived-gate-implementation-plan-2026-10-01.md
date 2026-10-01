@@ -41,8 +41,9 @@ step. Meets the second branch of the issue's acceptance; changes no verdict.
   over all relations into it and the relation giving it (first in relation order on a tie), then emits the existing code
   with the exact message and `details` of design 4.2 and 4.3. The relation key is the declared `id`, else `/relations/N`;
   the id-less pointer fallback becomes `/relations/N`.
-- `src/chrona/app/cli.py`: `_diagnostic` and `_reject` emit `details` only when present, after `message`. One helper;
-  no second serializer.
+- `src/chrona/usecases/failure_report.py`: `diagnostic_record` takes `details` and emits it only when present, after
+  `message`; `rejection_report` passes `item.details`. `src/chrona/app/cli.py`: the `review` command's mapping of
+  `Diagnostic.as_dict()` forwards it. One record builder; no second serializer.
 - `src/chrona/terse/diagnostics.py`: `TerseDiagnostic.as_dict` and `with_source` carry `details`.
 - `docs/specification/04-scheduling-model.md` section 20.1 (the diagnostic names the endpoint's earliest feasible date and
   the forcing relation; `details` keys), `docs/specification/supplemental/core-v0.1-diagnostics.md` (the row and the
@@ -57,8 +58,8 @@ step. Meets the second branch of the issue's acceptance; changes no verdict.
   (`+ 2wd in six`); a `fixed-span` target; an unchanged count of diagnostics.
 - `tests/unit/chrona/terse/test_diagnostics.py`: construct `TerseDiagnostic` positionally, round-trip `details` through
   `with_source` and `as_dict`.
-- `tests/cli/test_cli.py`: `chrona schedule` JSON for the case, with and without `details`; every other diagnostic
-  unchanged.
+- `tests/cli/test_cli.py` and the `failure_report` unit tests: `chrona schedule` JSON for the case, with and without
+  `details`; every other diagnostic record unchanged (the six keys, same order).
 - Existing `test_chrona_skill_diagnostics` case `fixed-target` and `tests/integration/test_conformance.py` stay green.
 
 **Proof.**

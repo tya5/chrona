@@ -173,9 +173,10 @@ launch.at is fixed at 2027-05-17, but relation qa-launch (qa.end 2027-05-14 + 2w
   with `source`, `sourceRange`, `hint`). Only diagnostics that have details carry the key. Keys listed above are the
   stable contract for this code; keys may be added, never renamed.
 - Dates are ISO strings. `lag` is the Project value verbatim (string, or `{value, calendar}`).
-- `details` is a field of the Core `Diagnostic` (single owner), serialized by one helper that every surface uses
-  (`chrona schedule`, `chrona render`, the terse draft ingress, and the #142 agent interface). It must not be added to
-  one serializer only.
+- `details` is a field of the Core `Diagnostic` (single owner), serialized by the one helper every surface uses since
+  #786: `diagnostic_record` and `rejection_report` in `usecases/failure_report.py` (`chrona schedule`, `chrona render`,
+  the terse draft ingress and the #142 agent interface all report through it). The `review` command's mapping of
+  `Diagnostic.as_dict()` in `app/cli.py` must forward the key too. It must not be added to one serializer only.
 - For a fixed span the answer is per endpoint (`build.start`); moving a span's start alone changes its length, so the
   message does not claim a full re-placement. For a `fixed-point` it is the whole answer, which is the case of the issue.
 - The pointer for a relation **without an id** is today `/relations/<target object id>`, a pointer that does not exist
@@ -431,8 +432,8 @@ any existing row. After that the gate prints `delta` for the schema and passes.
 | `core/validation.py` | `_schedule_endpoints`: `fixed-point` -> `{at}`, else `{start,end}`; per-mode checks | `scheduled-point` -> `{at}`; static `E_DERIVATION` check | 1 |
 | `core/attachments.py` | source must be `fixed-point`; host must not be `fixed-point` | source may be either point mode; host rejects either point mode | 1 |
 | `scheduling/scheduler.py` | fixed first, then `scheduled` and `rollup`; unknown mode -> `E_ROLLUP_SCHEDULE` | a `scheduled-point` branch; `_latest_at_target` honours `at.max`; slice 0 details | 0, 1 |
-| `core/diagnostics.py`, `app/cli.py` (`_diagnostic`, `_reject`), `terse/diagnostics.py` | `Diagnostic(id, message, path)`; `TerseDiagnostic` builds its own dict and is constructed positionally | optional keyword-only `details`; one shared serializer; terse passes it through | 0 |
-| `usecases/project_checks.py`, `usecases/draft_render.py`, #142 interface | carry `Diagnostic` objects | no logic; they inherit `details` (check the #142 result shape) | 0 |
+| `core/diagnostics.py`, `usecases/failure_report.py` (`diagnostic_record`, `rejection_report`), `app/cli.py` (`review` mapping), `terse/diagnostics.py` | `Diagnostic(id, message, path)`; the record has six fixed keys; `TerseDiagnostic` builds its own dict and is constructed positionally | optional keyword-only `details`; the record adds it only when present; terse passes it through | 0 |
+| `usecases/project_checks.py`, `usecases/draft_render.py`, #142 interface | carry `Diagnostic` objects and report through `failure_report` | no logic; they inherit `details` (check the #142 result shape) | 0 |
 | `presentation/*` (View, Layout, Scene, renderer) | placements only; `is_rollup` reads the mode | none | - |
 | `presentation/model/authoring.py` (guided workspace) | emits only `fixed-span` | none (guided source has no gate form) | - |
 | `terse/parser.py`, `compiler.py`, `ledger.py`, Spec 65, `docs/guides/terse-plan.md` | gate needs a date | section 8 | 2 |

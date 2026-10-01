@@ -32,7 +32,7 @@ Three things the issue does not say, and the lead should decide knowingly:
 - The issue (#788), the #148 go/no-go comment that found it, AGENTS.md (the sequence, the layer rules, Spec 56 section
   3.2), Specs 04, 05, 06, 12, 56, 65, and `core-v0.1-diagnostics.md`.
 - Code: `scheduling/scheduler.py` (every function), `core/validation.py`, `core/attachments.py`, `core/diagnostics.py`,
-  `core/relation_identity.py`, `app/cli.py` (diagnostic serialization), `usecases/project_checks.py`,
+  `core/relation_identity.py`, `app/cli.py`, `usecases/failure_report.py` (diagnostic serialization), `usecases/project_checks.py`,
   `usecases/warning_ledger.py`, `presentation/model/projection.py` (mode and placement-shape reads), `terse/parser.py`,
   `compiler.py`, `ledger.py`, `diagnostics.py`, `tools/schema_equivalence.py`, `tools/corpus_coverage.py`.
 - A scan of the 37 committed `timeline/v0.7` Projects (examples, conformance, skill example, test fixtures) for fixed
@@ -72,10 +72,13 @@ fixed point in disguise (design 3.1).
 
 `Diagnostic` is `(id, message, path)`. Adding a defaulted base field shifts the positional constructor of
 `TerseDiagnostic`, which `with_source` builds as `TerseDiagnostic(self.id, self.message, self.path, self.range, ...)`: the
-range would land in the new field. `TerseDiagnostic.as_dict` also builds its own dict and would drop `details`. The CLI
-serializes in `_diagnostic` and `_reject`, and `Diagnostic.as_dict` is a third serializer used by the guided path.
-**Resolution:** `details` is a keyword-only, non-hashed field of the Core `Diagnostic`; one shared serializer; the terse
-class passes it through; a unit test constructs a `TerseDiagnostic` positionally and round-trips `details`. The #142
+range would land in the new field. `TerseDiagnostic.as_dict` also builds its own dict and would drop `details`. Since
+#786 the CLI-visible record is built in one place, `usecases/failure_report.py` (`diagnostic_record`, `rejection_report`),
+which writes six fixed keys; `Diagnostic.as_dict` is a second serializer (used by the `review` command's mapping in
+`app/cli.py`) and the terse dict a third.
+**Resolution:** `details` is a keyword-only, non-hashed field of the Core `Diagnostic`; `diagnostic_record` adds it only
+when present (so `rejection_report`, and everything that reports through it, inherits it); the `review` mapping and the terse
+class forward it; a unit test constructs a `TerseDiagnostic` positionally and round-trips `details`. The #142
 interface and the #148 S3 draft ingress both carry `Diagnostic` objects and must inherit `details` without code
 (implementation plan slice 0).
 
