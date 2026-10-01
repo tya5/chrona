@@ -1,0 +1,16 @@
+project special "Plan #1, with: punctuation"
+hash "Design # review" task 3d from 2026-10-05
+comma "Plan, build, test" task 3d after hash
+quote "Say \"hello\" \\ back" task 3d after comma
+japanese "仕様策定" task 2026-10-01..2026-10-09
+apostrophe "It's a plan" gate 2026-10-12 after japanese
+digit "2nd phase" task 2d after apostrophe
+word-yes "yes" task 2d after digit
+spaces "two  spaces" task 2d after word-yes
+nbsp "non breaking" task 2d after spaces
+astral "rocket 🚀" task 2d after nbsp
+c1 "c1  control" task 2d after astral
+nel "nextline" task 2d after c1
+separator "line separator" task 2d after nel
+nonchar "nonchar ￿" task 2d after separator
+bom "bom ﻿ inside" task 2d after nonchar

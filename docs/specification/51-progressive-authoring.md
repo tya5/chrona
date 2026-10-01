@@ -25,6 +25,10 @@ No downstream component may read compact syntax, infer a preset, or retain works
 coordinates.  Scene, routes, font metrics, resolved dates, and View geometry remain
 derived output.
 
+The terse plan syntax of Spec 65 is a different compact source with a different owner: a text syntax for
+the Project only, compiled by `chrona compile` at the adapter edge, with no presentation binding and no Actuals.
+It does not read, produce or extend an authoring workspace, and neither normaliser calls the other.
+
 ## 2. Source and resource contracts
 
 `authoring-workspace/v0.1` is a closed document with compact `project`, optional

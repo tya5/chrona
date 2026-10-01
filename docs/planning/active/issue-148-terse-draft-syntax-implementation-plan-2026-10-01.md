@@ -29,6 +29,17 @@ section. The draft dispatch (render, validate, schedule) is still later and sepa
 
 Each slice is one PR, independently reviewable and revertable, merged with `derived-ready` green.
 
+**Progress.** S1 landed with the S2 scope folded in (the lead required the whole HALCYON-1 schedule core, which needs
+calendars, `wd` amounts, `from`/`until`, bounds, lag calendars and the ledger test, as S1 proof): the compiler,
+`chrona compile`, Spec 65, the card (`docs/guides/terse-plan.md`), the ledger and the HALCYON golden are in S1. S2 is
+therefore empty; the checkpoint follows S1. Implementation choices recorded here, none changing a design contract:
+a group also takes no `after` (F13) and no `calendar`; `E_TERSE_UNSUPPORTED` is used for a date range inside `except`
+or `work`; amounts, lags and the Project version are emitted as plain scalars and a string with a character PyYAML
+cannot read or would fold (C1 controls, U+0085, U+2028, U+2029, non-characters) is emitted double quoted, so that the
+round-trip contract holds; the name-distance used for hints counts an adjacent transposition as one edit; the
+doc-check tool gained `discover_plans`/`check_plans` and the `expect-error` marker in S1 (the `expect-yaml` marker
+stays in S4).
+
 ## 2. Slice 1 - `chrona compile` (core grammar, no calendars)
 
 **Scope of the grammar in S1:** `terse 0.1`; `project ID ["Title"]`; objects `NAME ["Title"] KIND` with kind

@@ -1,0 +1,74 @@
+"""The ledger: every authorable Project property, classified as mapped to a terse construct or YAML-only.
+
+A property added to `schemas/project-v0.7.schema.yaml` fails `tests/unit/chrona/terse/test_ledger.py` until someone
+decides here, which keeps the grammar from quietly growing (design 5.3). Reasons follow the scope rule of
+Spec 65 section 2: a construct belongs in the grammar only when it determines identity, hierarchy, dates or
+dependencies, has a scalar or short-list value, and has one unambiguous one-line spelling.
+"""
+from __future__ import annotations
+
+MAPPED = "mapped"
+YAML_ONLY = "yaml-only"
+
+# path -> (classification, the terse construct, or the reason it stays in YAML)
+LEDGER: dict[str, tuple[str, str]] = {
+    "top.version": (MAPPED, "emitted as timeline/v0.7"),
+    "top.project": (MAPPED, "`project` statement"),
+    "top.calendars": (MAPPED, "`calendar` statements"),
+    "top.entities": (YAML_ONLY, "another top-level section, not a scalar"),
+    "top.objects": (MAPPED, "object statements"),
+    "top.relations": (MAPPED, "`after` clauses"),
+    "top.annotations": (YAML_ONLY, "prose in another top-level section"),
+    "top.extensions": (YAML_ONLY, "package references, not a one-line spelling"),
+    "top.scenarios": (YAML_ONLY, "overlays that reference other sections"),
+    "project.id": (MAPPED, "`project ID`"),
+    "project.title": (MAPPED, "`project ID \"Title\"`"),
+    "project.calendar": (MAPPED, "`project ... calendar CAL` (or the single declared calendar)"),
+    "calendar.working_days": (MAPPED, "`calendar CAL mon-fri`"),
+    "calendar.exceptions": (MAPPED, "`except D ...` and `work D ...`"),
+    "calendar.exceptions.date": (MAPPED, "a date after `except` or `work`"),
+    "calendar.exceptions.working": (MAPPED, "`except` is false, `work` is true"),
+    "calendar.fiscalStartMonth": (YAML_ONLY, "reporting metadata; does not affect the dates a plan is drafted with"),
+    "object.type": (MAPPED, "task | gate | group"),
+    "object.title": (MAPPED, "the quoted title after the name"),
+    "object.calendar": (MAPPED, "`calendar CAL` clause"),
+    "object.fields": (YAML_ONLY, "a free-form map"),
+    "object.parent": (MAPPED, "indentation under a group"),
+    "object.attachesTo": (YAML_ONLY, "presentation-adjacent metadata; never a scheduling edge"),
+    "object.wbsCode": (YAML_ONLY, "the derived document order is the default"),
+    "object.plannedProgress": (YAML_ONLY, "does not affect dates"),
+    "object.deadline": (YAML_ONLY, "does not affect dates"),
+    "object.link": (YAML_ONLY, "two shapes; not schedule"),
+    "object.link.href": (YAML_ONLY, "two shapes; not schedule"),
+    "object.link.title": (YAML_ONLY, "two shapes; not schedule"),
+    "object.schedule": (MAPPED, "the schedule words after the kind"),
+    "schedule.fixed-point.mode": (MAPPED, "a bare DATE"),
+    "schedule.fixed-point.at": (MAPPED, "a bare DATE"),
+    "schedule.fixed-span.mode": (MAPPED, "D1..D2"),
+    "schedule.fixed-span.start": (MAPPED, "D1 of D1..D2"),
+    "schedule.fixed-span.end": (MAPPED, "D2 of D1..D2 (exclusive)"),
+    "schedule.scheduled.mode": (MAPPED, "an AMOUNT"),
+    "schedule.scheduled.amount": (MAPPED, "an AMOUNT such as 20wd"),
+    "schedule.scheduled.anchor": (MAPPED, "`from D` / `until D`"),
+    "schedule.scheduled.anchor.start": (MAPPED, "`from D`"),
+    "schedule.scheduled.anchor.end": (MAPPED, "`until D`"),
+    "schedule.scheduled.constraints": (MAPPED, "`start`/`end` bounds"),
+    "constraints.start": (MAPPED, "`start >= D` / `start <= D`"),
+    "constraints.start.min": (MAPPED, "`start >= D`"),
+    "constraints.start.max": (MAPPED, "`start <= D`"),
+    "constraints.end": (MAPPED, "`end >= D` / `end <= D`"),
+    "constraints.end.min": (MAPPED, "`end >= D`"),
+    "constraints.end.max": (MAPPED, "`end <= D`"),
+    "schedule.rollup.mode": (MAPPED, "a group"),
+    "relation.id": (MAPPED, "derived: FROM-TO, then -2, -3 (never authored)"),
+    "relation.type": (MAPPED, "always dependency"),
+    "relation.from": (MAPPED, "the dep after `after`"),
+    "relation.from.object": (MAPPED, "the dep's name"),
+    "relation.from.endpoint": (MAPPED, "`.start` / `.end` / `.at`, or the default"),
+    "relation.to": (MAPPED, "the statement's own object"),
+    "relation.to.object": (MAPPED, "the statement's own object"),
+    "relation.to.endpoint": (MAPPED, "start for a span, at for a fixed point (successor endpoints are not selectable)"),
+    "relation.lag": (MAPPED, "a signed AMOUNT after the dep"),
+    "relation.lag.value": (MAPPED, "a signed d, w or wd amount"),
+    "relation.lag.calendar": (MAPPED, "`in CAL`"),
+}

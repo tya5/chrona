@@ -1,0 +1,7 @@
+project anchors "Anchors and bounds" calendar standard
+calendar standard mon-fri
+
+kickoff "Kickoff" gate 2026-10-01
+survey "Survey" task 10wd from 2026-10-05
+design "Design" task 15wd until 2026-12-18
+review "Review" task 5wd start >= 2026-11-02 start <= 2026-11-09 end >= 2026-11-09 end <= 2026-11-20 after survey

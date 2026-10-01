@@ -1,0 +1,11 @@
+terse 0.1
+project groups "Groups and nesting"
+
+# a group takes no schedule: its dates come from its children
+build "Build" group
+  frame "Frame" task 2026-10-05..2026-10-16
+  fit-out "Fit-out" group
+    wiring "Wiring" task 5d after frame
+    panels "Panels" task 1w after frame +2d
+  inspect "Inspection" gate 2026-11-02 after fit-out
+handover "Handover" gate 2026-11-20 after build.end +3d, inspect

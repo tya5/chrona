@@ -1,0 +1,33 @@
+project halcyon-1 "HALCYON-1" calendar engineering
+calendar engineering mon-fri except 2027-04-02 2027-05-31 2027-07-05 2027-09-06
+calendar range mon-sat except 2027-10-09 2027-10-16
+
+pdr "Preliminary design review" gate 2027-03-05
+structure "Primary structure fabrication" task 20wd after pdr +1wd
+avionics "Avionics integration" task 15wd after structure
+eps "Power system qualification" task 12wd from 2027-03-22
+bus-test "Bus functional test" task 10wd after eps, avionics +2wd
+cdr "Critical design review" gate 2027-05-07 after avionics.start
+optics "Imager optics alignment" task 18wd from 2027-03-08
+detector "Detector calibration" task 10wd after optics +1wd
+payload-tvac "Payload thermal-vacuum" task 8d after detector
+payload-delivery "Payload delivered" gate 2027-07-02 after payload-tvac +2wd
+launch-contract "Launch services confirmed" gate 2027-04-16
+shipment "Ship to range" task 4wd after psr +2wd        # forward reference
+campaign "Launch campaign" task 15wd calendar range after shipment +1wd in range
+spacecraft-ait "Spacecraft AIT" group
+  integration "Spacecraft integration" task 15wd after bus-test +1wd, payload-delivery +1wd
+  vibration "Vibration and shock" task 5wd after integration +1wd
+  tvac "System thermal-vacuum" task 14d after vibration +2wd
+  emc "EMC and RF compatibility" task 5wd end <= 2027-09-08 after tvac +1wd
+  psr "Pre-ship review" gate 2027-09-10 after emc
+ground-segment "Ground segment readiness" group
+  mcs "Mission control software" task 45wd from 2027-03-08
+  station "Ground station upgrade" task 30wd from 2027-04-19
+  comms-test "End-to-end link test" task 5wd after mcs, station
+  rehearsals "Operations rehearsals" task 10wd from 2027-08-30 after comms-test
+mission-closeout "Mission closeout" group
+  frr "Flight readiness review" gate 2027-10-15 after campaign
+  launch "Launch window opens" gate 2027-10-22 after frr +5d, rehearsals
+  leop "LEOP and commissioning" task 21d after launch
+  first-light "First light" gate 2027-11-19 after leop +5d

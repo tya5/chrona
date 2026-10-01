@@ -1,0 +1,982 @@
+{
+ "calendar-unknown": [
+  {
+   "code": "E_TERSE_CALENDAR_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 20,
+    "endColumn": 24,
+    "endLine": 1,
+    "line": 1
+   }
+  }
+ ],
+ "children-not-allowed": [
+  {
+   "code": "E_TERSE_CHILDREN_NOT_ALLOWED",
+   "hint": true,
+   "sourceRange": {
+    "column": 1,
+    "endColumn": 3,
+    "endLine": 3,
+    "line": 3
+   }
+  }
+ ],
+ "clause-duplicate": [
+  {
+   "code": "E_TERSE_CLAUSE_DUPLICATE",
+   "hint": true,
+   "sourceRange": {
+    "column": 38,
+    "endColumn": 44,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "control-character": [
+  {
+   "code": "E_TERSE_CONTROL_CHARACTER",
+   "hint": true,
+   "sourceRange": {
+    "column": 11,
+    "endColumn": 12,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "days-invalid": [
+  {
+   "code": "E_TERSE_DAYS_INVALID",
+   "hint": true,
+   "sourceRange": {
+    "column": 12,
+    "endColumn": 19,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "directive-order": [
+  {
+   "code": "E_TERSE_DIRECTIVE_ORDER",
+   "hint": true,
+   "sourceRange": {
+    "column": 1,
+    "endColumn": 2,
+    "endLine": 1,
+    "line": 1
+   }
+  }
+ ],
+ "e-endpoint-mode-mismatch": [
+  {
+   "code": "E_ENDPOINT_MODE_MISMATCH",
+   "hint": true,
+   "sourceRange": {
+    "column": 19,
+    "endColumn": 24,
+    "endLine": 3,
+    "line": 3
+   }
+  }
+ ],
+ "e-invalid-span": [
+  {
+   "code": "E_INVALID_SPAN",
+   "hint": true,
+   "sourceRange": {
+    "column": 8,
+    "endColumn": 30,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "e-rollup-empty": [
+  {
+   "code": "E_ROLLUP_EMPTY",
+   "hint": true,
+   "sourceRange": {
+    "column": 3,
+    "endColumn": 8,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "indent-odd": [
+  {
+   "code": "E_TERSE_INDENT",
+   "hint": true,
+   "sourceRange": {
+    "column": 1,
+    "endColumn": 4,
+    "endLine": 3,
+    "line": 3
+   }
+  }
+ ],
+ "indent-parentless": [
+  {
+   "code": "E_TERSE_INDENT",
+   "hint": true,
+   "sourceRange": {
+    "column": 1,
+    "endColumn": 3,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "lag-invalid": [
+  {
+   "code": "E_TERSE_LAG_INVALID",
+   "hint": true,
+   "sourceRange": {
+    "column": 19,
+    "endColumn": 20,
+    "endLine": 3,
+    "line": 3
+   }
+  }
+ ],
+ "line-incomplete": [
+  {
+   "code": "E_TERSE_LINE_INCOMPLETE",
+   "hint": true,
+   "sourceRange": {
+    "column": 16,
+    "endColumn": 17,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "m01-title-unquoted": [
+  {
+   "code": "E_TERSE_TITLE_UNQUOTED",
+   "hint": true,
+   "sourceRange": {
+    "column": 8,
+    "endColumn": 13,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "m02-kind-misspelt": [
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 8,
+    "endColumn": 12,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "m03-kind-first": [
+  {
+   "code": "E_TERSE_NAME_RESERVED",
+   "hint": true,
+   "sourceRange": {
+    "column": 1,
+    "endColumn": 5,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "m04-name-not-slug": [
+  {
+   "code": "E_TERSE_NAME_INVALID",
+   "hint": true,
+   "sourceRange": {
+    "column": 1,
+    "endColumn": 12,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "m05-duplicate-name": [
+  {
+   "code": "E_TERSE_NAME_DUPLICATE",
+   "hint": true,
+   "sourceRange": {
+    "column": 1,
+    "endColumn": 7,
+    "endLine": 3,
+    "line": 3
+   }
+  }
+ ],
+ "m06-unknown-reference": [
+  {
+   "code": "E_TERSE_REFERENCE_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 24,
+    "endColumn": 32,
+    "endLine": 3,
+    "line": 3
+   }
+  }
+ ],
+ "m07-amount-fraction": [
+  {
+   "code": "E_TERSE_AMOUNT_INVALID",
+   "hint": true,
+   "sourceRange": {
+    "column": 13,
+    "endColumn": 17,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "m07-amount-month": [
+  {
+   "code": "E_TERSE_AMOUNT_INVALID",
+   "hint": true,
+   "sourceRange": {
+    "column": 13,
+    "endColumn": 16,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "m07-amount-no-unit": [
+  {
+   "code": "E_TERSE_AMOUNT_INVALID",
+   "hint": true,
+   "sourceRange": {
+    "column": 13,
+    "endColumn": 15,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "m07-amount-spelled-unit": [
+  {
+   "code": "E_TERSE_AMOUNT_INVALID",
+   "hint": true,
+   "sourceRange": {
+    "column": 13,
+    "endColumn": 19,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "m08-date-not-padded": [
+  {
+   "code": "E_TERSE_DATE_INVALID",
+   "hint": true,
+   "sourceRange": {
+    "column": 10,
+    "endColumn": 18,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "m08-date-not-real": [
+  {
+   "code": "E_TERSE_DATE_INVALID",
+   "hint": true,
+   "sourceRange": {
+    "column": 10,
+    "endColumn": 20,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "m08-date-slashes": [
+  {
+   "code": "E_TERSE_DATE_INVALID",
+   "hint": true,
+   "sourceRange": {
+    "column": 10,
+    "endColumn": 20,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "m09-schedule-required": [
+  {
+   "code": "E_TERSE_SCHEDULE_REQUIRED",
+   "hint": true,
+   "sourceRange": {
+    "column": 9,
+    "endColumn": 10,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "m10-calendar-required": [
+  {
+   "code": "E_CALENDAR_REQUIRED",
+   "hint": true,
+   "sourceRange": {
+    "column": 8,
+    "endColumn": 11,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "name-duplicate": [
+  {
+   "code": "E_TERSE_NAME_DUPLICATE",
+   "hint": true,
+   "sourceRange": {
+    "column": 1,
+    "endColumn": 7,
+    "endLine": 3,
+    "line": 3
+   }
+  }
+ ],
+ "name-reserved-after": [
+  {
+   "code": "E_TERSE_NAME_RESERVED",
+   "hint": true,
+   "sourceRange": {
+    "column": 1,
+    "endColumn": 6,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "project-required": [
+  {
+   "code": "E_TERSE_PROJECT_REQUIRED",
+   "hint": true,
+   "sourceRange": {
+    "column": 1,
+    "endColumn": 2,
+    "endLine": 1,
+    "line": 1
+   }
+  }
+ ],
+ "string-escape": [
+  {
+   "code": "E_TERSE_STRING_ESCAPE",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 7,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "string-unterminated": [
+  {
+   "code": "E_TERSE_STRING_UNTERMINATED",
+   "hint": true,
+   "sourceRange": {
+    "column": 3,
+    "endColumn": 4,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "tab": [
+  {
+   "code": "E_TERSE_TAB",
+   "hint": true,
+   "sourceRange": {
+    "column": 2,
+    "endColumn": 3,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "title-empty": [
+  {
+   "code": "E_TERSE_TITLE_EMPTY",
+   "hint": true,
+   "sourceRange": {
+    "column": 3,
+    "endColumn": 5,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "token-unexpected-group-schedule": [
+  {
+   "code": "E_TERSE_TOKEN_UNEXPECTED",
+   "hint": true,
+   "sourceRange": {
+    "column": 9,
+    "endColumn": 11,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "token-unexpected-span-spaces": [
+  {
+   "code": "E_TERSE_TOKEN_UNEXPECTED",
+   "hint": true,
+   "sourceRange": {
+    "column": 19,
+    "endColumn": 31,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "too-many-errors": [
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 4,
+    "endColumn": 8,
+    "endLine": 2,
+    "line": 2
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 4,
+    "endColumn": 8,
+    "endLine": 3,
+    "line": 3
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 4,
+    "endColumn": 8,
+    "endLine": 4,
+    "line": 4
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 4,
+    "endColumn": 8,
+    "endLine": 5,
+    "line": 5
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 4,
+    "endColumn": 8,
+    "endLine": 6,
+    "line": 6
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 4,
+    "endColumn": 8,
+    "endLine": 7,
+    "line": 7
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 4,
+    "endColumn": 8,
+    "endLine": 8,
+    "line": 8
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 4,
+    "endColumn": 8,
+    "endLine": 9,
+    "line": 9
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 4,
+    "endColumn": 8,
+    "endLine": 10,
+    "line": 10
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 4,
+    "endColumn": 8,
+    "endLine": 11,
+    "line": 11
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 12,
+    "line": 12
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 13,
+    "line": 13
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 14,
+    "line": 14
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 15,
+    "line": 15
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 16,
+    "line": 16
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 17,
+    "line": 17
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 18,
+    "line": 18
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 19,
+    "line": 19
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 20,
+    "line": 20
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 21,
+    "line": 21
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 22,
+    "line": 22
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 23,
+    "line": 23
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 24,
+    "line": 24
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 25,
+    "line": 25
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 26,
+    "line": 26
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 27,
+    "line": 27
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 28,
+    "line": 28
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 29,
+    "line": 29
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 30,
+    "line": 30
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 31,
+    "line": 31
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 32,
+    "line": 32
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 33,
+    "line": 33
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 34,
+    "line": 34
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 35,
+    "line": 35
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 36,
+    "line": 36
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 37,
+    "line": 37
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 38,
+    "line": 38
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 39,
+    "line": 39
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 40,
+    "line": 40
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 41,
+    "line": 41
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 42,
+    "line": 42
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 43,
+    "line": 43
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 44,
+    "line": 44
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 45,
+    "line": 45
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 46,
+    "line": 46
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 47,
+    "line": 47
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 48,
+    "line": 48
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 49,
+    "line": 49
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 50,
+    "line": 50
+   }
+  },
+  {
+   "code": "E_TERSE_KIND_UNKNOWN",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 51,
+    "line": 51
+   }
+  },
+  {
+   "code": "E_TERSE_TOO_MANY_ERRORS",
+   "hint": true,
+   "sourceRange": {
+    "column": 5,
+    "endColumn": 9,
+    "endLine": 52,
+    "line": 52
+   }
+  }
+ ],
+ "unsupported-date-range": [
+  {
+   "code": "E_TERSE_UNSUPPORTED",
+   "hint": true,
+   "sourceRange": {
+    "column": 27,
+    "endColumn": 49,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "version-unsupported": [
+  {
+   "code": "E_TERSE_VERSION_UNSUPPORTED",
+   "hint": true,
+   "sourceRange": {
+    "column": 7,
+    "endColumn": 10,
+    "endLine": 1,
+    "line": 1
+   }
+  }
+ ]
+}

@@ -31,6 +31,7 @@ from chrona.operational.authoring_commands import cas_write_authoring_aggregate,
 from chrona.operational.resources import parse_command, parse_document, stamp_automation_result
 from chrona.usecases.materialize import MaterializationError, materialize
 from chrona.usecases.local_authoring import discover_store_configuration, initialize_project
+from chrona.usecases.terse_compile import compile_plan, input_unreadable, output_exists
 from chrona.usecases.preset_library import copy_builtin_preset, is_builtin_preset_id, list_builtin_presets
 from chrona.presentation.icons.importer import IconImportError, copy_material_symbols_outline_rounded_catalog, import_iconify, import_theme_assets
 from chrona.presentation.fonts.importer import FontImportError, import_font
@@ -322,6 +323,11 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--output", "-o", required=True, help="empty output directory")
     command.add_argument("--write", action="store_true", help="replace the manifest-declared generated artifact")
 
+    command = sub.add_parser("compile", help="compile a terse plan to Project YAML",
+                             description="compile a terse plan (.chrona) to Project YAML; the YAML is the authority afterwards")
+    command.add_argument("plan", help="terse plan path, or - for standard input")
+    command.add_argument("--output", "-o", help="write the Project YAML here and refuse to replace an existing file (default: standard output)")
+
     command = sub.add_parser("init", help="create a non-overwriting local Chrona project")
     command.add_argument("directory", nargs="?", default=".")
     command.add_argument("--example", choices=example_ids(),
@@ -430,6 +436,34 @@ def _run_materialize(args: argparse.Namespace) -> None:
             raise
         command = f"chrona materialize {args.manifest} --slide {args.slide} --output {args.output} --write"
         raise CliFailure(error.code, f"{error.detail}; review the generated diff, then run `{command}` to refresh intended evidence", "materializer") from error
+
+
+def _compile_failure(diagnostics: tuple, *, to_stderr: bool, status: str = "rejected", exit_code: int = 1) -> NoReturn:
+    """Diagnostics go to the stream that does not carry the YAML, so `compile > project.yaml` is redirect-safe."""
+    payload = {"status": status, "diagnostics": [item.as_dict() for item in diagnostics]}
+    print(json.dumps(payload, ensure_ascii=False), file=sys.stderr if to_stderr else sys.stdout)
+    raise SystemExit(exit_code)
+
+
+def _run_compile(args: argparse.Namespace) -> None:
+    to_stderr = args.output is None
+    try:
+        data = sys.stdin.buffer.read() if args.plan == "-" else Path(args.plan).read_bytes()
+    except OSError as error:
+        _compile_failure((input_unreadable(args.plan, error.strerror or str(error)),), to_stderr=to_stderr, status="failed", exit_code=2)
+    result = compile_plan(data, args.plan)
+    if result.yaml is None:
+        _compile_failure(result.diagnostics, to_stderr=to_stderr, status="failed" if result.defect else "rejected",
+                         exit_code=2 if result.defect else 1)
+    if args.output is None:
+        sys.stdout.buffer.write(result.yaml)
+        sys.stdout.buffer.flush()
+        return
+    from chrona.storage.publication import publish_exclusive
+    try:
+        publish_exclusive(Path(args.output), result.yaml)
+    except FileExistsError:
+        _compile_failure((output_exists(args.output),), to_stderr=False, status="failed", exit_code=2)
 
 
 def _run_init(args: argparse.Namespace) -> None:
@@ -695,6 +729,9 @@ def _run(args: argparse.Namespace) -> None:
         return
     if args.command == "materialize":
         _run_materialize(args)
+        return
+    if args.command == "compile":
+        _run_compile(args)
         return
     if args.command == "init":
         _run_init(args)

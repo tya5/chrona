@@ -1,0 +1,4 @@
+project forward
+ship "Ship" task 4d after later +1d
+later "Later" task 2d after earliest
+earliest "Earliest" gate 2026-10-01

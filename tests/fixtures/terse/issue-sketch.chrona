@@ -1,0 +1,8 @@
+terse 0.1
+project halcyon-1 "HALCYON-1"
+calendar engineering mon-fri except 2027-04-02
+
+pdr "Preliminary design review" gate 2027-03-05
+structure "Primary structure fabrication" task 20wd after pdr +1wd
+avionics "Avionics integration" task 15wd after structure
+cdr "Critical design review" gate 2027-05-07 after avionics.start

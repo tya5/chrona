@@ -1,0 +1,10 @@
+project no "No"
+calendar on mon-fri
+on "On" task 2wd from 2026-10-05 calendar on
+off "Off" task 2wd calendar on after on
+yes "Yes" task 3d after off
+true "True" task 3d after yes
+false "False" task 3d after true
+null "Null" gate 2026-12-01 after false
+y task 1d after null
+n task 1d after y

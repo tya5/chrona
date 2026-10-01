@@ -19,7 +19,7 @@ ALLOWED: dict[str, set[str]] = {
     # Adapters: may reach any use case, and the ports they wire up.
     "app": {"usecases", "core", "operational", "presentation", "scheduling", "storage", "resources"},
     # Use cases: own one pipeline each, across the layers below them.
-    "usecases": {"core", "extensions", "presentation", "scheduling", "storage", "resources", "schema_diagnostics"},
+    "usecases": {"core", "extensions", "presentation", "scheduling", "storage", "resources", "schema_diagnostics", "terse"},
     "operational": {"core", "commands", "usecases", "storage", "resources", "schema_diagnostics"},
     "release": {"core", "presentation", "resources"},
     "collaboration": {"core", "storage", "resources"},
@@ -31,6 +31,8 @@ ALLOWED: dict[str, set[str]] = {
     "scheduling": {"core", "resources"},
     "storage": {"core", "scheduling", "resources"},
     "extensions": {"core", "resources", "schema_diagnostics"},
+    # The terse plan syntax (#148) is a leaf front end: text in, a Project mapping out, Core is the only owner of meaning.
+    "terse": {"core"},
     # The shared kernel depends on nothing but its own packaged schemas.
     "core": {"resources", "schema_diagnostics"},
     "resources": set(),

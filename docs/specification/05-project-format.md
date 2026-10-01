@@ -47,6 +47,9 @@ annotations: {}
 
 Empty sections MAY be omitted.
 
+A Project may be compiled from the terse plan syntax of Spec 65 (`chrona compile`); the compiled Project
+remains the authority and Spec 65 repeats no rule of this document.
+
 ## 4. Objects
 
 Objects are keyed by stable identifier.
