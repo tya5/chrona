@@ -40,6 +40,18 @@ round-trip contract holds; the name-distance used for hints counts an adjacent t
 doc-check tool gained `discover_plans`/`check_plans` and the `expect-error` marker in S1 (the `expect-yaml` marker
 stays in S4).
 
+**S3 landed** (suffix dispatch, Spec 65 section 7.1). Implementation choices, none changing a design contract: the
+dispatch lives in the CLI adapter only (`_is_plan_path`, `_compile_plan_argument`, `_run_draft_render_of_plan`);
+`validate` and `schedule` load the compiler's bytes through `_load_primary_project`, `render` goes through a temporary
+`project.yaml`. The plan behind the running command is held in one module-level slot that `_reject` consults and
+`main()` clears, because the scheduler findings surface at three call sites (`schedule`, and the render use case's
+rejection) that do not share a parameter list; `_reject` then reports the finding through
+`usecases.terse_compile.position_findings`, so the line, column and hint come from one place. The closure-failure path
+needs no map: a `ClosureError` never names a Project pointer. Scheduler codes got hints (`E_FIXED_TARGET_VIOLATION`,
+`E_UNSUPPORTED_CYCLE`, `E_UNSATISFIABLE_DEPENDENCIES`, `E_CONTRADICTORY_BOUNDS`). The S1 test that pinned "render,
+validate and schedule do not accept a plan" was removed: it asserted the behavior S3 replaces. `chrona validate`
+still passes a dependency cycle (#780); the cycle is reported by `schedule` and `render`.
+
 ## 2. Slice 1 - `chrona compile` (core grammar, no calendars)
 
 **Scope of the grammar in S1:** `terse 0.1`; `project ID ["Title"]`; objects `NAME ["Title"] KIND` with kind

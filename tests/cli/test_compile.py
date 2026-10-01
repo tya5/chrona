@@ -6,8 +6,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
 from chrona.app.cli import main
 from tests.support.terse_plans import FIXTURES
 
@@ -134,10 +132,3 @@ def test_two_runs_are_byte_identical_whatever_the_working_directory(tmp_path):
     first = _run("compile", str(FIXTURES / "special-characters.chrona")).stdout
     second = _run("compile", str(FIXTURES / "special-characters.chrona")).stdout
     assert first == second == (FIXTURES / "special-characters.project.yaml").read_bytes()
-
-
-@pytest.mark.parametrize("command", ["render", "validate", "schedule"])
-def test_compile_does_not_make_other_commands_accept_a_terse_plan(command, tmp_path):
-    arguments = [command, str(GOOD)] + (["-o", str(tmp_path / "x.svg")] if command == "render" else [])
-    completed = _run(*arguments)
-    assert completed.returncode != 0  # dispatch on .chrona arrives in a later slice; today the file is read as YAML
