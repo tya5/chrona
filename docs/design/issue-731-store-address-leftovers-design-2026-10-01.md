@@ -117,7 +117,7 @@ The issue and `tests/unit/tools/test_store_address_retirement.py` describe this 
   `a/.../b` is therefore **accepted today and never refused later**. Moving the check to `-v0.2` would newly refuse a document that is
   valid now. The premise is false. **Stop for this site** (below).
 
-### B4. Disposition
+### B4. Disposition (the options below are decided in B5)
 
 None of the three sites meets the verified premise, so slice B changes no schema, no pattern and no expected delta. What it does:
 
@@ -131,6 +131,31 @@ None of the three sites meets the verified premise, so slice B changes no schema
      worked and is now refused" when no working input is lost, or bump `icon-catalog` and Project.
 * Open question for the owner, not decided here: whether evidence references (`artifacts`, `acceptanceEvidence`) should be opened and
   verified at all (`IDP-EVIDENCE-001` in Spec 17 reads as if they were).
+
+### B5. Lead decisions for the three sites (2026-10-01, slice I731-D)
+
+B4's options are decided as follows. The premise of Spec 56 §3.2's in-place clause is made true by a consumer change, then the schema moves.
+
+1. **`preset-library-v0.2` `address` moves in place.** `usecases/preset_library.py` `_safe` calls the shared guard (`check_store_address`, default `address`
+   charset) and keeps `E_BUILTIN_PRESET_RESOURCE`, so the consumer refuses every value `storeAddress` refuses (including `a\n`, `a/...`, `a/.../b`,
+   `a\x00b`, `a\\b`, `a:b`). The library is packaged data: every `sourceRoot`, `sourcePath` and `noticeSourcePath` of the committed
+   `library.yaml` (67 values) was *measured* to pass the guard. The schema `address` then references `storeAddress` in place.
+2. **`icon-catalog-v0.4` `source.address` moves in place, with a parse-time check.** `_icon_catalog_contract` (the single parse step of
+   every catalog, selected entries or not) passes every declared raster `source.address` of a v0.4 catalog through the shared guard
+   and refuses the catalog with `E_ICON_ASSET_PATH` at `/body/icons/<name>/source/address`. An entry that nothing selects can therefore no longer
+   carry an unsafe address, which was the only population for which B1's premise failed. The schema is not consulted for unselected entries
+   (the envelope validates one representative), which is why the schema alone could never have closed this. Every committed v0.4 catalog
+   (the packaged Theme Asset Catalog and the test fixture; neither has a raster entry) was *measured* to pass. The Material Symbols catalog is
+   v0.3 and is not touched (v0.3 keeps its own pattern). The check is O(entries) dictionary reads; the measured load-time effect is in the PR.
+3. **Project evidence references are not changed.** `profiles.py` validates `resourceReference` fields (`artifacts`, `acceptanceEvidence`)
+   against the loose `revision-store-resource-ref-v0.1`; nothing opens such a reference. A loose address there is accepted and never used.
+   Tightening it would newly refuse a document that is valid now, so it needs a Project version bump (batched with the next incompatible
+   Project change). Open question for the owner: should evidence references be opened and verified at all?
+4. **Widening, recorded.** `storeAddress` accepts a leading `.`, `_` or `-`; the old patterns (`safeRelativePath`, the icon-catalog pattern)
+   required a letter or digit first. These inputs (`.hidden/x`, `_x`, `-x`) become accepted by the schema. No consumer is harmed: the shared guard
+   (already equal to `storeAddress`) accepts them, they name an ordinary file inside the root, and the Windows alias rule applies only to
+   all-dot or dots-and-spaces segments, which both refuse. The widening is listed in the S0 expected deltas (L1 pointers and L3 probes), each
+   with a test.
 
 ## C. Retiring the loose predecessors
 

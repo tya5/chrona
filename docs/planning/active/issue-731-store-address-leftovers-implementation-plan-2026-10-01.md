@@ -23,8 +23,8 @@ Unverified: whether a Windows path segment of three or more dots can alias a par
 
 | # | Row | Slice | Status |
 | --- | --- | --- | --- |
-| 1a | Project `extensions[].resource` (loose `revision-store-resource-ref-v0.1` via `extensions/profiles.py`): decide whether it moves | B (decision recorded) | verified premise false: stopped for the lead (design B3) |
-| 1b | `icon-catalog-v0.4` `source.address` and `preset-library-v0.2` `address` end in `$`: reference `storeAddress` (bump) or stay | B | verified premise false for both: stopped for the lead (design B1, B2) |
+| 1a | Project `extensions[].resource` (loose `revision-store-resource-ref-v0.1` via `extensions/profiles.py`): decide whether it moves | B, D | decided: unchanged (never opened; tightening needs a Project bump); owner question open (design B3, B5.3) |
+| 1b | `icon-catalog-v0.4` `source.address` and `preset-library-v0.2` `address` end in `$`: reference `storeAddress` (bump) or stay | B, D | decided: consumers made strict, then in-place schema reference (design B5.1, B5.2); I731-D |
 | 2 | Retire the five loose predecessors (`layout-profile` v0.9, `render-context` v0.16, `command-request` v0.2, `automation-result` v0.1, the authoring side of `snapshot-ref` v0.2); `snapshot-ref` v0.2 stays readable; decide when | C1 to C5 | pending |
 | 3 | Record whether future address tightenings should use the in-place clause | B (Spec 56 §3.2 sentence) | in this slice |
 | 4 | (reviewer) Align the runtime guard in `core/store_address.py` with the schema's `storeAddress` character rule | A | merged ([#754](https://github.com/tya5/chrona/pull/754), `aeed86fb`) |
@@ -56,6 +56,20 @@ The design and this plan. Gate: conformance.
   gets one sentence recording the reading and its condition. Gate: conformance, `python -m tools.schema_equivalence --base-rev origin/main`
   (must report no delta).
 * The three sites stay open for the lead's decision (options in design B4).
+
+### I731-D — make the consumers strict, then move the two schema sites in place
+
+Design B5. Branch from a derived-ready `main`.
+
+* Docs PR (this addendum), then one code PR (two if clearer).
+* Consumers: `preset_library._safe` uses `check_store_address`; `_icon_catalog_contract` checks every v0.4 raster `source.address` at parse time
+  (`E_ICON_ASSET_PATH`). Tests decide from data (the `storeAddress` validator, narrowed vectors, no host OS); each new check gets a mutation check.
+* Schemas: `preset-library-v0.2` `address` and `icon-catalog-v0.4` `rasterSource.address` reference `storeAddress` in place. S0 gate against
+  `origin/main` lists every moved verdict (L1 pointers; L3 probes; the leading `.`, `_`, `-` widening) with a test each.
+* Gate: focused tests, `tests/unit`, schema tools, conformance, import direction, `derived_evidence --check`,
+  `regenerate_public_examples --check`, wheel build plus `tools/wheel_smoke.py`. A source edit shifts diagnostic line numbers; CI's derived-sync
+  regenerates `docs/diagnostics/inventory.md`.
+* Stop conditions: a committed, packaged or test address newly refused; a load-time regression of the catalog parse.
 
 ### I731-C1 … C5 — retire the predecessors, one PR each
 
