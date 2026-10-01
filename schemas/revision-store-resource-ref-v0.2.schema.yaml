@@ -1,0 +1,62 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:revision-store-resource-ref-v0.2"
+title: "Chrona Revision Store Resource Reference v0.2"
+description: >-
+  Provider-neutral reference shape for successor formats. The revision token is opaque
+  outside the named Store; semantic adapter validation verifies the source and snapshot.
+  v0.2 constrains `address` to the strict `storeAddress` (#710); v0.1 stays published for the
+  frozen parts and pinned documents that reference it.
+type: object
+required: [id, kind, store, address, revision]
+additionalProperties: false
+properties:
+  id:
+    description: "Stable identifier of the referenced resource."
+    type: string
+    minLength: 1
+  kind:
+    description: "Kind of the referenced resource."
+    type: string
+    minLength: 1
+  projectId:
+    description: "Project identifier that owns the referenced resource when applicable."
+    type: string
+    minLength: 1
+  store:
+    type: object
+    description: "Named Store that resolves the resource revision."
+    required: [provider, identity]
+    additionalProperties: false
+    properties:
+      provider:
+        description: "Store provider implementation."
+        enum: [git, local, content, package]
+      identity:
+        description: "Stable identity of the named Store."
+        type: string
+        minLength: 1
+      locator:
+        description: "Optional provider-specific Store locator."
+        type: string
+        minLength: 1
+  address:
+    description: "Strict Store-relative address of the resource: the `storeAddress` definition of the common part."
+    examples: ["resources/project.yaml"]
+    $ref: "urn:chrona:common-v0.1#/$defs/storeAddress"
+  revision:
+    type: object
+    description: "Opaque revision identity within the named Store."
+    required: [token]
+    additionalProperties: false
+    properties:
+      token:
+        description: "Nonempty opaque revision token."
+        examples: ["main"]
+        type: string
+        minLength: 1
+        pattern: "^\\S+$"
+  contentIdentity:
+    description: "Optional SHA-256 identity of the exact resource content."
+    examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
+    type: string
+    pattern: "^sha256:[0-9a-f]{64}$"

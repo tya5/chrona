@@ -32,6 +32,11 @@ $defs:
     examples: ["font_metrics/acme-regular.json"]
     type: string
     pattern: "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+  storeAddress:
+    description: "Strict Store-relative address (#710): segments of letters, digits, `.`, `_` and `-` joined by single `/`; no empty segment and no segment made only of dots (so no `.`, `..` or `...`); no leading `/`, `:`, backslash, NUL or control character, and no trailing newline."
+    examples: ["resources/project.yaml", "snapshots/baseline-2027-06.yaml"]
+    type: string
+    pattern: "^(?!(?:.*/)?\\.+(?:/|(?![\\s\\S])))[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*(?![\\s\\S])"
   fileName:
     description: "One file name inside a directory: non-empty, not `.` or `..`, and no `/`, `\\` or control character. Spaces and non-ASCII characters are accepted."
     examples: ["plan.yaml", "計画.yaml"]

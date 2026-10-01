@@ -54,6 +54,14 @@ def run() -> None:
     graphics_tile = validator_for_schema({"$ref": "urn:chrona:graphics-v0.1#/$defs/tile"})
     assert (graphics_tile.is_valid({"inlineSize": 8, "blockSize": 8})
             and not graphics_tile.is_valid({"inlineSize": 0, "blockSize": 8})), "graphics part not reachable"
+    store_address = validator_for_schema({"$ref": "urn:chrona:common-v0.1#/$defs/storeAddress"})
+    assert (store_address.is_valid("resources/project.yaml")
+            and not store_address.is_valid("C:/x") and not store_address.is_valid("a/../b")), "storeAddress not reachable"
+    store_reference = validator_for_schema({"$ref": "urn:chrona:revision-store-resource-ref-v0.2"})
+    reference = {"id": "p", "kind": "project", "store": {"provider": "local", "identity": "s"},
+                 "address": "projects/main.yaml", "revision": {"token": "main"}}
+    assert (store_reference.is_valid(reference)
+            and not store_reference.is_valid({**reference, "address": "../x"})), "revision-store-resource-ref v0.2 not reachable"
     icons = builtin_preset_source_root("icons")
     for name in ("chrona-theme-starter-v2026-09-29.source.yaml",
                  "chrona-theme-starter-v2026-09-29.yaml",

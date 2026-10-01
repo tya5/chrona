@@ -268,6 +268,9 @@ PROBES: dict[str, tuple[list[Any], list[Any]]] = {
     "safeRelativePath": (["a", "views/overview.yaml", "A0._-/b", "a..b"], ["", "/abs", "../x", "a/../b", "a/..", "a/./b", ".hidden", "a b", "a\\b", "a\x00b", "é", 5]),
     "relativeAddress": (["resources/project.yaml", "a b", "a\\b", "é", ".hidden", "a..b"], ["", "/abs", "../x", "a/../b", "a/..", "./a", "a/./b"]),
     "relativeAddressDotTolerant": (["a", "a/./b", "./a", "a b", "é"], ["", "/abs", "../x", "a/../b", "a/.."]),
+    "storeAddress": (["a", "a/b/c.yaml", "resources/project.yaml", ".hidden", "a..b", "a./b", "A_b-c.0/d"],
+                     ["", ".", "..", "...", "./a", "a/./b", "a/../b", "../x", "a/...", "a//b", "a/", "/x", "C:/x", "C:x", "\\\\server\\share\\x",
+                      "a\\b", "a\x00b", "a\nb", "a\n", "\na", "a:b", "a b", "\u00e9", "a\x7fb", "a\tb", 5, None]),
     "fileName": (["a", "plan.yaml", "計画.yaml", "my plan.yaml", "a..b", ".hidden"], ["", ".", "..", "a/b", "a\\b", "a\nb", "a\n", "a\x00b", "\t", "a\x7f", 5]),
     "identifier": (["x", "Work package / gate", "作業ストリーム", "Δ", "#", "supplier:FW-42", " padded "], ["", "a\nb", "a\n", "\x00", "a\tb", "\x7f", 5]),
     "slug": (["a", "controller-z", "a1-b2"], ["", "A", "1a", "a_b", "a b", "-a", "a.b", 5]),
@@ -313,7 +316,7 @@ def test_definition_keeps_todays_laxness_until_the_decided_tightening(name):
 
 
 def test_new_definitions_are_newline_proof_from_the_start():
-    for name in ("fileName", "identifier"):
+    for name in ("fileName", "identifier", "storeAddress"):
         assert not _def_validator(name).is_valid("a\n")
 
 
@@ -345,6 +348,11 @@ ADOPTERS = frozenset({
 })
 
 
+# Parts published after `common` that reference it: a part may name another part's definition, and each is
+# frozen with that reference in its digest. The parts published before it must still reference nothing.
+PARTS_REFERENCING_COMMON: dict[str, set[str]] = {"revision-store-resource-ref-v0.2.schema.yaml": {"storeAddress"}}
+
+
 def _adopted_sites(name: str) -> list[tuple[str, str]]:
     return [(_pointer(path), node["$ref"].partition("#/$defs/")[2]) for path, node in _walk(_schema(name))
             if isinstance(node, dict) and isinstance(node.get("$ref"), str) and node["$ref"].startswith(COMMON_ID + "#/$defs/")]
@@ -354,7 +362,10 @@ def test_the_adopting_kinds_are_exactly_the_planned_ones():
     adopters = {name for name in LIVE if name not in SCHEMA_PARTS and _adopted_sites(name)}
     assert adopters == ADOPTERS
     for name in SCHEMA_PARTS:
-        assert not _adopted_sites(name), f"{name} is frozen and must not reference common"
+        if name in PARTS_REFERENCING_COMMON:
+            assert {definition for _, definition in _adopted_sites(name)} == PARTS_REFERENCING_COMMON[name]
+        else:
+            assert not _adopted_sites(name), f"{name} is frozen and must not reference common"
 
 
 @pytest.mark.parametrize("name", sorted(ADOPTERS))
