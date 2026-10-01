@@ -38,7 +38,8 @@ PROJECT = {
 def run() -> None:
     assert validate_project(PROJECT) == []
     assert schedule(PROJECT).ok
-    assert schema_resource("layout-profile-v0.9.schema.yaml").is_file()
+    assert schema_resource("layout-profile-v0.10.schema.yaml").is_file()
+    assert schema_resource("render-context-v0.17.schema.yaml").is_file()
     # The registry is built from the installed wheel's own schema parts, and a
     # schema that references a part reaches it without any repository file.
     resolver = schema_registry().resolver()

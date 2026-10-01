@@ -187,6 +187,18 @@ input the consumer already refused later, such as a path guard in a command sche
 working input stays accepted; the moved diagnostics are listed in the gate's `expected-deltas` with a test each, and
 any input that worked and is now refused is named in the change as a narrowing.
 
+**Store addresses (#710, owner decision 2026-10-01).** Every live Store address site references the strict
+`storeAddress` definition of the common part: segments of `[A-Za-z0-9._-]` joined by single `/`, no
+empty or all-dot segment (`.`, `..`, `...`), no leading `/`, `:`, backslash, NUL, control character, space or
+non-ASCII character, and no trailing newline. The definition refuses inputs the loose `relativeAddress` family
+accepted, so it is a bump, not an in-place change, for each kind that adopts it, even though the code guard
+(`chrona.core.store_address`) already refuses the unsafe ones at every reader: the schema also closes the
+character set and moves the refusal to the earliest stage. Layout Profile v0.9 becomes v0.10 (`extends.address`) and
+Render Context v0.16 becomes v0.17 (every pinned `reference.address`, which had no guard at all, and the font
+locators); the predecessors are `transitioning` and stay readable, new Contexts and every Draft closure are
+v0.17, and each committed or packaged document was re-pointed by a version-string edit that the gate's L2
+layer proves changes no verdict. The inputs each site now refuses are listed as L3 `expected-deltas`.
+
 Adding a value to an existing `enum` is an in-place widening when every existing resource
 stays valid and behaves the same and the consuming code handles the new value. It is not an
 optional-property insertion, so the mechanical predecessor/successor check above does not apply; the equivalence gate

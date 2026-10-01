@@ -90,7 +90,11 @@ def test_expected_invalid_list_equals_the_baseline_invalid_documents():
     baseline = gate.load_baseline(REPOSITORY / gate.BASELINE)
     listed = gate.load_expected_invalid(REPOSITORY / gate.EXPECTED_INVALID)
 
-    invalid = {record["path"]: record["schema"] for record in baseline["documents"] if not record["valid"]}
+    # The baseline names the schema a document mapped to at S0; a document re-pointed to a successor (I710-S-B)
+    # is listed under the successor, which the inventory names.
+    successor = {entry["file"]: entry.get("successor", entry["file"])
+                 for entry in validate_inventory(SCHEMAS, SCHEMAS / "schema-inventory-v0.1.yaml")}
+    invalid = {record["path"]: successor.get(record["schema"], record["schema"]) for record in baseline["documents"] if not record["valid"]}
 
     assert invalid == {path: entry["schema"] for path, entry in listed.items()}
     assert set(baseline["diagnostics"]["invalidDocuments"]) == set(listed)

@@ -33,7 +33,9 @@ from chrona.presentation.model.theme_inheritance import (
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
 from chrona.presentation.fonts.system import DraftFontResolution, SystemFontError, SystemFontResolver, resolve_draft_fonts, resolve_system_font
 from chrona.presentation.model.font_metrics import FontMetricsCatalog, FontMetricsError, FontTabularWarning, resolve_font_files, resolve_font_metrics
-from chrona.presentation.contracts.resources import FrozenDict, FrozenList, _compact_commands
+from chrona.presentation.contracts.resources import (
+    RENDER_CONTEXT_VERSION, RENDER_CONTEXT_VERSIONS, FrozenDict, FrozenList, _compact_commands,
+)
 from chrona.core.ports import SnapshotReadError, SnapshotReader
 from chrona.core.store_address import StoreAddressError, check_store_address, resolve_store_address
 from chrona.resources import safe_load
@@ -468,7 +470,7 @@ def _draft_render_from_resources(
     if resolution is not None and target_kind not in {"svg", "png"}:
         raise ClosureError("E_FONT_SYSTEM_IMMUTABLE", detail=f"draft system fonts do not support {target_kind}")
     context_value = {
-            "version": "chrona/render-context/v0.16", "kind": "render-context", "id": "draft-render",
+            "version": RENDER_CONTEXT_VERSION, "kind": "render-context", "id": "draft-render",
         "body": {
             "project": _draft_reference(by_kind["project"]),
             "view": _draft_reference(by_kind["view"]),
@@ -679,7 +681,7 @@ def _draft_typesetter(target_kind: str, typesetter: TypesetterIdentity | None) -
 def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader,
                            *, decoded_resources: Mapping[str, Any] | None = None) -> RenderClosure:
     context = _load_presentation(reference, reader, decoded_resources)
-    if context.version != "chrona/render-context/v0.16":
+    if context.version not in RENDER_CONTEXT_VERSIONS:
         raise ClosureError("E_RENDER_CONTEXT_SCHEMA")
     return _resolve_layout_context(context, reader, decoded_resources)
 

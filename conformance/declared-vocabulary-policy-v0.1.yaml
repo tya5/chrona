@@ -20,7 +20,7 @@ vocabularies:
     owner: chrona.presentation.model.theme_tokens.ThemeTokenView
     disposition: finite
     accepted: [diamond, circle, square, chevron]
-  - schema: schemas/render-context-v0.16.schema.yaml
+  - schema: schemas/render-context-v0.17.schema.yaml
     pointer: /properties/body/properties/environment/properties/locale
     owner: chrona.presentation.model.surface_content.display_value
     disposition: finite

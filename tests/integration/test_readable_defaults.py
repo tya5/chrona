@@ -360,7 +360,7 @@ def test_programme_board_wallboard_profile_is_context_specific_and_complete() ->
     assert shared["root"]["children"][1]["inlineSize"] == {
         "minmax": {"min": "content", "max": {"fr": 2}}
     }
-    assert programme["version"] == "chrona/layout-profile/v0.9"
+    assert programme["version"] == "chrona/layout-profile/v0.10"
     assert programme["id"] == "wallboard-programme-board"
     assert "root" in programme and "extends" not in programme and "overrides" not in programme
     assert programme["root"]["children"][1]["inlineSize"] == {

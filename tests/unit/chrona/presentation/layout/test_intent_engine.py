@@ -388,7 +388,7 @@ def test_layout_token_requirement_contract_is_exact_and_theme_checked():
 
 def test_unavailable_optional_source_does_not_participate_in_layout():
     raw = {
-        "version": "chrona/layout-profile/v0.9", "id": "optional-source", "flowDirection": "horizontal", "dependencyNetworkFlowDirection": "horizontal", "requiredThemeTokens": ["spacing.m", "spacing.none"], "reviewSurface": {"rowDistribution": "pack", "backgroundExtents": {"rowBand": "table", "groupBand": "timeline", "groupHeaderBand": "both", "calendarClosed": "timeline"}, "annotationRouting": {"maxBends": 4, "maxDetourRatio": 2}},
+        "version": "chrona/layout-profile/v0.10", "id": "optional-source", "flowDirection": "horizontal", "dependencyNetworkFlowDirection": "horizontal", "requiredThemeTokens": ["spacing.m", "spacing.none"], "reviewSurface": {"rowDistribution": "pack", "backgroundExtents": {"rowBand": "table", "groupBand": "timeline", "groupHeaderBand": "both", "calendarClosed": "timeline"}, "annotationRouting": {"maxBends": 4, "maxDetourRatio": 2}},
         "root": {"id": "root", "kind": "column", "inlineSize": "fill", "blockSize": "fill",
                  "gap": {"token": "spacing.m"}, "padding": {"token": "spacing.none"},
                  "alignItems": "stretch", "justifyContent": "start", "children": [
@@ -409,7 +409,7 @@ def test_unavailable_optional_source_does_not_participate_in_layout():
 
 def test_grid_and_distribution_are_deterministic():
     raw={
-      "version":"chrona/layout-profile/v0.9","id":"grid","flowDirection":"horizontal","dependencyNetworkFlowDirection":"horizontal","requiredThemeTokens":["spacing.m","spacing.none"],"reviewSurface":{"rowDistribution":"pack","backgroundExtents":{"rowBand":"table","groupBand":"timeline","groupHeaderBand":"both","calendarClosed":"timeline"},"annotationRouting":{"maxBends":4,"maxDetourRatio":2}},
+      "version":"chrona/layout-profile/v0.10","id":"grid","flowDirection":"horizontal","dependencyNetworkFlowDirection":"horizontal","requiredThemeTokens":["spacing.m","spacing.none"],"reviewSurface":{"rowDistribution":"pack","backgroundExtents":{"rowBand":"table","groupBand":"timeline","groupHeaderBand":"both","calendarClosed":"timeline"},"annotationRouting":{"maxBends":4,"maxDetourRatio":2}},
       "root":{"id":"root","kind":"grid","inlineSize":"fill","blockSize":"fill","columnTracks":[{"fr":1},{"fr":1}],"rowTracks":["content"],"gap":{"token":"spacing.m"},"padding":{"token":"spacing.none"},"alignItems":"stretch","justifyContent":"start","children":[
         {"id":"legend","kind":"slot","source":"legend","inlineSize":"fill","blockSize":"content","place":{"inline":"stretch","block":"start","safety":"strict"},"priority":"required","overflow":"visible-overflow","cell":{"column":1,"row":1}},
         {"id":"notes","kind":"slot","source":"notes","inlineSize":"fill","blockSize":"content","place":{"inline":"stretch","block":"start","safety":"strict"},"priority":"required","overflow":"visible-overflow","cell":{"column":2,"row":1}}

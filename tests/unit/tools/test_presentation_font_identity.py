@@ -9,7 +9,7 @@ from tools.presentation_font_identity import evaluate_committed_scenes, render_m
 def _context(path: Path) -> Path:
     path.write_text(
         """
-version: chrona/render-context/v0.16
+version: chrona/render-context/v0.17
 kind: render-context
 id: demo-context
 body:

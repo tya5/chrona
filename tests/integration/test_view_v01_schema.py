@@ -109,7 +109,7 @@ def test_halcyon_lane_slides_and_full_02_packing_policy():
     assert lane_context["id"] == "halcyon-1-16-gallery-editorial-lanes"
     assert lane_context["body"]["view"]["id"] == "chrona-preset-editorial-lanes"
     assert lane_context["body"]["view"]["address"] == "views/editorial-lanes.yaml"
-    context_schema = yaml.safe_load(schema_resource("render-context-v0.16.schema.yaml").read_text(encoding="utf-8"))
+    context_schema = yaml.safe_load(schema_resource("render-context-v0.17.schema.yaml").read_text(encoding="utf-8"))
     assert next(validator_for_schema(context_schema).iter_errors(_json_value(lane_context)), None) is None
 
 

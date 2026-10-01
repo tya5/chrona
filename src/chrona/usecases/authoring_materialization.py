@@ -10,6 +10,7 @@ from typing import Any
 import yaml
 
 from chrona.core.store_address import StoreAddressError, check_store_address, resolve_store_address
+from chrona.presentation.contracts.resources import RENDER_CONTEXT_VERSION
 from chrona.presentation.contracts import ClosureIdentity, AuthoringWorkspaceContract, PresentationPresetContract, parse_contract
 from chrona.presentation.model.authoring import normalize_authoring_workspace
 from chrona.presentation.model.closure import _packaged_font_metrics, resolve_draft_render, resolve_guided_draft_render
@@ -79,7 +80,7 @@ def _context(written: dict[str, dict[str, Any]]) -> dict[str, Any]:
     asset_root = Path(__file__).resolve().parents[1] / "resources"
     def ref(key: str) -> dict[str, Any]:
         return {**written[key], "store": {"provider": "draft", "identity": "draft"}, "address": written[key]["path"], "revision": {"token": "draft"}}
-    return {"version": "chrona/render-context/v0.16", "kind": "render-context", "id": "materialized-context", "body": {"project": ref("project"), "view": ref("view"), "theme": ref("theme"), "colorScheme": ref("color-scheme"), "layout": ref("layout-profile"), "inputs": ({"actual": ref("actual-set")} if "actual-set" in written else {}), "environment": {"viewport": {"inlineSize": 1600, "blockSize": 900}, "locale": "en-US", "fontMetrics": _packaged_font_metrics(asset_root), "scenePrecision": 3}, "target": {"kind": "svg", "capabilities": ["accessibleText", "hierarchicalAxis", "marker", "semanticRoles", "sourceMetadata", "tableSemantics"], "visualProfile": "chrona-output/visual/v0.5-baseline"}}}
+    return {"version": RENDER_CONTEXT_VERSION, "kind": "render-context", "id": "materialized-context", "body": {"project": ref("project"), "view": ref("view"), "theme": ref("theme"), "colorScheme": ref("color-scheme"), "layout": ref("layout-profile"), "inputs": ({"actual": ref("actual-set")} if "actual-set" in written else {}), "environment": {"viewport": {"inlineSize": 1600, "blockSize": 900}, "locale": "en-US", "fontMetrics": _packaged_font_metrics(asset_root), "scenePrecision": 3}, "target": {"kind": "svg", "capabilities": ["accessibleText", "hierarchicalAxis", "marker", "semanticRoles", "sourceMetadata", "tableSemantics"], "visualProfile": "chrona-output/visual/v0.5-baseline"}}}
 
 
 def _render_bytes(draft: Any) -> bytes:

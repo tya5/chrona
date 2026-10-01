@@ -70,7 +70,7 @@ def test_minima_exceeding_available_space_keep_every_track_at_its_minimum():
 
 def _minmax_profile(min_a: int, min_b: int):
     raw = {
-        "version": "chrona/layout-profile/v0.9", "id": "flex", "flowDirection": "horizontal",
+        "version": "chrona/layout-profile/v0.10", "id": "flex", "flowDirection": "horizontal",
         "dependencyNetworkFlowDirection": "horizontal", "requiredThemeTokens": ["spacing.none"],
         "reviewSurface": {"rowDistribution": "pack",
                           "backgroundExtents": {"rowBand": "table", "groupBand": "timeline",

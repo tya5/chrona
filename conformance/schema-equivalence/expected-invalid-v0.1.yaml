@@ -12,7 +12,7 @@ documents:
       conformance/validate_implementation_delivery_profile.py pops that key before validating, so the file
       is never validated as a Project as committed.
   - path: conformance/layout-profile-invalid-offset-v0.2.yaml
-    schema: layout-profile-v0.9.schema.yaml
+    schema: layout-profile-v0.10.schema.yaml
     reason: >-
       Deliberate negative fixture: a slot with `offsetX` matches no permitted layout node form
       (/root: oneOf, production rule `union`).

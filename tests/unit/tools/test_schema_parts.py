@@ -341,9 +341,9 @@ ADOPTERS = frozenset({
     "actual-intake-batch-v0.2.schema.yaml", "actual-set-v0.3.schema.yaml", "authoring-command-result-v0.1.schema.yaml",
     "authoring-command-v0.1.schema.yaml", "authoring-workspace-v0.1.schema.yaml", "automation-result-v0.1.schema.yaml",
     "command-request-v0.2.schema.yaml", "example-registry-v0.1.schema.yaml", "icon-catalog-v0.4.schema.yaml",
-    "layout-profile-v0.9.schema.yaml", "presentation-materialization-receipt-v0.1.schema.yaml", "presentation-preset-v0.1.schema.yaml",
+    "layout-profile-v0.10.schema.yaml", "presentation-materialization-receipt-v0.1.schema.yaml", "presentation-preset-v0.1.schema.yaml",
     "preset-library-v0.2.schema.yaml", "profile-v0.3.schema.yaml", "project-v0.7.schema.yaml",
-    "render-context-v0.16.schema.yaml", "scene-v0.7.schema.yaml", "theme-asset-source-v0.1.schema.yaml",
+    "render-context-v0.17.schema.yaml", "scene-v0.7.schema.yaml", "theme-asset-source-v0.1.schema.yaml",
     "theme-v0.14.schema.yaml", "view-v0.28.schema.yaml",
 })
 
@@ -429,10 +429,10 @@ def test_layout_profile_fractional_track_reference_changes_no_diagnostic(where):
     # `_union_forms` reads a branch's `required`, so a `$ref` union branch can change a union message (the View `width`
     # branches stay inline for that reason). The size union of layout-profile is reached only beneath the `root` union, whose own
     # message wins, and `explain_all_errors` flattens to leaves; this proves both reducers equal an inline twin.
-    adopted = _schema("layout-profile-v0.9.schema.yaml")
+    adopted = _schema("layout-profile-v0.10.schema.yaml")
     branch = adopted["$defs"]["simpleSize"]["oneOf"][1]
     assert branch["$ref"] == f"{COMMON_ID}#/$defs/fractionalTrack"
-    twin = _schema("layout-profile-v0.9.schema.yaml")
+    twin = _schema("layout-profile-v0.10.schema.yaml")
     twin["$defs"]["simpleSize"]["oneOf"][1] = {key: value for key, value in _defs()["fractionalTrack"].items() if key != "examples"}
     for value in (*BAD_TRACK_SIZES, *GOOD_TRACK_SIZES):
         document = _layout_with_grid(value, where)

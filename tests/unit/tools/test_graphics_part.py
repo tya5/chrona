@@ -204,7 +204,7 @@ def test_the_license_sites_use_the_common_definition_and_keep_the_probe_matrix()
 
 # (file, pointer) of a node that equals a graphics definition structurally and is deliberately not a reference, each with the reason.
 DIFFERENT_CONCEPT: dict[tuple[str, str], str] = {
-    **{("layout-profile-v0.9.schema.yaml", f"/$defs/cell/properties/{field}"):
+    **{("layout-profile-v0.10.schema.yaml", f"/$defs/cell/properties/{field}"):
        "a 1..10000 grid cell index or span, not a pattern coverage in basis points"
        for field in ("column", "columnSpan", "row", "rowSpan")},
 }

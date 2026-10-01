@@ -608,8 +608,14 @@ class ResolvedThemeContract:
     catalog_patterns: FrozenDict = field(default_factory=FrozenDict)
 
 
+# The Render Context versions the closure and the materializer accept. v0.16 stays readable while its
+# successor (strict `storeAddress`, #710) is adopted; new Contexts and every Draft closure are v0.17.
+RENDER_CONTEXT_VERSION = "chrona/render-context/v0.17"
+RENDER_CONTEXT_VERSIONS = ("chrona/render-context/v0.16", RENDER_CONTEXT_VERSION)
+
 _SCHEMAS = {
     ("render-context", "chrona/render-context/v0.16"): "render-context-v0.16.schema.yaml",
+    ("render-context", "chrona/render-context/v0.17"): "render-context-v0.17.schema.yaml",
     ("project", "timeline/v0.7"): "project-v0.7.schema.yaml",
     ("view", "chrona/view/v0.26"): "view-v0.26.schema.yaml",
     ("view", "chrona/view/v0.27"): "view-v0.27.schema.yaml",
@@ -619,6 +625,7 @@ _SCHEMAS = {
     ("theme", "chrona/theme/v0.14"): "theme-v0.14.schema.yaml",
     ("color-scheme", "chrona/color-scheme/v0.2"): "color-scheme-v0.2.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.9"): "layout-profile-v0.9.schema.yaml",
+    ("layout-profile", "chrona/layout-profile/v0.10"): "layout-profile-v0.10.schema.yaml",
     ("icon-catalog", "chrona/icon-catalog/v0.3"): "icon-catalog-v0.3.schema.yaml",
     ("icon-catalog", "chrona/icon-catalog/v0.4"): "icon-catalog-v0.4.schema.yaml",
     ("actual-set", "chrona/actual-set/v0.3"): "actual-set-v0.3.schema.yaml",

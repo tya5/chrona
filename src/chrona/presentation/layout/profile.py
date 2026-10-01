@@ -13,7 +13,12 @@ from chrona.resources import schema_validator
 from chrona.schema_diagnostics import explain_errors
 
 
-LAYOUT_VERSION = "chrona/layout-profile/v0.9"
+LAYOUT_VERSION = "chrona/layout-profile/v0.10"
+# v0.9 stays readable while its successor (strict `storeAddress`, #710) is adopted.
+LAYOUT_SCHEMAS = {
+    "chrona/layout-profile/v0.9": "layout-profile-v0.9.schema.yaml",
+    LAYOUT_VERSION: "layout-profile-v0.10.schema.yaml",
+}
 
 
 @dataclass(frozen=True)
@@ -24,9 +29,10 @@ class LayoutBase:
 
 
 def _validate_schema(profile: Mapping[str, Any]) -> None:
-    if profile.get("version") != LAYOUT_VERSION:
+    schema = LAYOUT_SCHEMAS.get(profile.get("version"))
+    if schema is None:
         raise LayoutError("E_LAYOUT_SCHEMA", "/version")
-    errors = tuple(schema_validator("layout-profile-v0.9.schema.yaml").iter_errors(profile))
+    errors = tuple(schema_validator(schema).iter_errors(profile))
     if errors:
         identity = profile.get("id")
         violation = explain_errors(
