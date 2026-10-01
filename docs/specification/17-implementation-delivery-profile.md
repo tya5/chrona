@@ -13,7 +13,7 @@ adding a Core primitive, scheduling rule, Actual input, authority model, or work
 engine.
 
 This document fixes package vocabulary and its bounded state declarations. Immutable
-artifact/evidence reference semantics are owned by the IDP-3 work package. An
+artifact/evidence references are shape-only records (section 8). An
 implementation MUST validate the vocabulary and field shapes here but MUST NOT infer
 scheduling, Actual, or resource-resolution behavior from their values.
 
@@ -58,7 +58,7 @@ their names match. It MUST resolve the package/profile identity first.
    not derive or modify temporal placement, dependencies, calendar choice, Actual, or
    Command authorization.
 3. `artifacts` and `acceptanceEvidence` are plural because a delivery item can retain
-   more than one immutable input or evidence record. They grant no write authority.
+   more than one input or evidence record. They grant no write authority.
 4. The package contains no Relation profile. Existing Core dependencies remain the only
    delivery ordering mechanism.
 5. The package contains no derived field, code plugin, transition declaration, default
@@ -78,8 +78,8 @@ its typed fields violate this specification:
 | `IDP-PROFILE-005` | An artifact/evidence field does not declare `resourceReference` with `many` cardinality. |
 | `IDP-PROFILE-006` | A standard profile has the wrong parent or an undeclared standard field. |
 
-Value-level diagnostics for immutable reference identity/content checks and typed-field
-Command execution are introduced by IDP-3 and IDP-5 respectively.
+Typed-field Command execution is introduced by IDP-5. Evidence references are validated
+for shape only (section 8).
 
 ## 6. State and reuse declarations
 
@@ -116,18 +116,27 @@ treated as Actual completion or as a scheduling constraint. A Project whose deli
 metadata differs only in `workflowState` or `reuseClassification` therefore has the
 same scheduling inputs, schedule, and Core diagnostics.
 
-## 8. Immutable artifact and acceptance evidence
+## 8. Artifact and acceptance evidence references
 
-Each `artifacts` entry MUST be a verified Revision Store resource reference with kind
+Each `artifacts` entry MUST be a Revision Store resource reference with kind
 `delivery-artifact`; each `acceptanceEvidence` entry MUST be one with kind
 `delivery-acceptance-evidence`. The reference carries its Store identity, address,
-opaque revision token, and SHA-256 content identity. The owning Store verifies that the
-token resolves to an immutable Snapshot and that the stored bytes, stable ID, and kind
-match the reference. A mutable Draft, moving selector, identity/content mismatch, or
-unverified reference is rejected by that Store; profile logic MUST NOT parse a provider
-token to guess mutability.
+opaque revision token, and SHA-256 content identity. These references are shape-only
+records: chrona validates the reference's shape against the Revision Store resource
+reference schema and its kind against the field, and does not open, resolve, or verify
+the target. In particular it does not check that the revision token names an immutable
+Snapshot, nor that the stored bytes, stable ID, or kind match the reference. Profile
+logic MUST NOT parse a provider token to guess mutability.
 
 `timeline-export` is a Federation-only kind and MUST NOT appear in either field. A
 delivery artifact/evidence reference grants no read-through child Project semantics and
-no mutation authority. `IDP-EVIDENCE-001` diagnoses failed immutable verification;
-`IDP-EVIDENCE-002` diagnoses a field/kind mismatch.
+no mutation authority. `IDP-EVIDENCE-001` diagnoses a reference that violates the
+Revision Store resource reference shape; `IDP-EVIDENCE-002` diagnoses a field/kind
+mismatch. The `verification` flags in the conformance fixture
+`conformance/implementation-delivery-evidence-v0.1.yaml` are declared inputs to the
+conformance harness, not results computed by chrona.
+
+Revisit condition: open and verify an evidence reference only when a feature consumes
+evidence (for example automated acceptance); that feature opens it through the shared
+Store address guard and verifies `contentIdentity`, and updates this section together
+with `tests/unit/tools/test_evidence_reference_spec.py`.
