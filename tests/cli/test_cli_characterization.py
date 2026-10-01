@@ -373,7 +373,7 @@ def _normalise(text: str, root: pathlib.Path) -> str:
     text = _OS_ERROR.sub("<os error>: ", text)
     # On Windows a relative path in a message carries a backslash, which the JSON text escapes as two
     # characters; the record uses the POSIX spelling so one golden file serves every OS.
-    return text.replace("\\\\", "/")
+    return re.sub(r"\\{2,}", "/", text)
 
 
 def _canonical_schedule(text: str) -> str:
@@ -502,8 +502,11 @@ if __name__ == "__main__":  # pragma: no cover
 
 
 def test_normalise_uses_the_posix_spelling_of_a_windows_relative_path(tmp_path):
-    """Windows prints `nowhere\\view.yaml` (escaped twice in JSON text); the golden file records `nowhere/view.yaml`."""
-    windows = '{"message": "[WinError 2] The system cannot find the file specified: \'nowhere\\\\view.yaml\'"}'
+    """Windows stdout carries `nowhere\\\\view.yaml` (repr escape, then JSON escape: four backslashes); the golden file records `nowhere/view.yaml`."""
     posix = '{"message": "[Errno 2] No such file or directory: \'nowhere/view.yaml\'"}'
-    assert _normalise(windows, tmp_path) == _normalise(posix, tmp_path)
-    assert _normalise(windows, tmp_path) == '{"message": "<os error>: \'nowhere/view.yaml\'"}'
+    expected = '{"message": "<os error>: \'nowhere/view.yaml\'"}'
+    for backslashes in ("\\" * 4, "\\" * 2):
+        windows = ('{"message": "[WinError 2] The system cannot find the file specified: '
+                   f"\'nowhere{backslashes}view.yaml\'\"}}")
+        assert _normalise(windows, tmp_path) == expected
+    assert _normalise(posix, tmp_path) == expected
