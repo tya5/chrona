@@ -1,22 +1,22 @@
 version: chrona/declared-vocabulary-policy/v0.1
 vocabularies:
-  - schema: schemas/theme-v0.8.schema.yaml
+  - schema: schemas/theme-v0.13.schema.yaml
     pointer: /properties/body/properties/values/additionalProperties/allOf/1/then/properties/value/properties/shape
-    owner: chrona.presentation.model.theme_tokens.ThemeTokenView
+    owner: chrona.presentation.layout.relation_terminals.marker_geometry
     disposition: finite
-    accepted: [triangle, open-triangle, chevron]
-  - schema: schemas/theme-v0.8.schema.yaml
+    accepted: [triangle, open-triangle, chevron, circle, open-circle]
+  - schema: schemas/theme-v0.13.schema.yaml
     pointer: /properties/body/properties/values/additionalProperties/allOf/2/then/properties/value/oneOf/0/properties/kind
     owner: chrona.presentation.model.theme_tokens.ThemeTokenView
     disposition: finite
     accepted: [outline]
-  - schema: schemas/theme-v0.8.schema.yaml
+  - schema: schemas/theme-v0.13.schema.yaml
     pointer: /properties/body/properties/values/additionalProperties/allOf/2/then/properties/value/oneOf/1/properties/kind
     owner: chrona.presentation.model.theme_tokens.ThemeTokenView
     disposition: finite
     accepted: [diagonal-hatch]
-  - schema: schemas/theme-v0.8.schema.yaml
-    pointer: /properties/body/properties/values/additionalProperties/allOf/3/then/properties/value/properties/shape
+  - schema: schemas/theme-v0.13.schema.yaml
+    pointer: /properties/body/properties/values/additionalProperties/allOf/3/then/properties/value/oneOf/0/properties/shape
     owner: chrona.presentation.model.theme_tokens.ThemeTokenView
     disposition: finite
     accepted: [diamond, circle, square, chevron]
