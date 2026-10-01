@@ -97,6 +97,14 @@ def _cycle(data):
                               "to": {"object": "design", "endpoint": "start"}, "lag": "0d"})
 
 
+def _positive_cycle(data):
+    data["relations"] += [
+        {"id": "late", "type": "dependency", "from": {"object": "design", "endpoint": "start"},
+         "to": {"object": "build", "endpoint": "start"}, "lag": "1d"},
+        {"id": "back", "type": "dependency", "from": {"object": "build", "endpoint": "start"},
+         "to": {"object": "design", "endpoint": "start"}, "lag": "0d"}]
+
+
 def _early_gate(data):
     data["objects"]["launch"]["schedule"]["at"] = "2026-11-03"
 
@@ -114,6 +122,8 @@ PLAN_CASES = [
     ("calendar-required", _no_calendar, "validate", 1, "rejected", {"E_CALENDAR_REQUIRED"}),
     ("schema", _bad_amount, "validate", 1, "rejected", {"E_SCHEMA"}),
     ("schema-schedule", _bad_amount, "schedule", 1, "rejected", {"E_SCHEMA"}),
+    ("cycle-validate", _cycle, "validate", 1, "rejected", {"E_UNSUPPORTED_CYCLE"}),
+    ("cycle-unsatisfiable", _positive_cycle, "validate", 1, "rejected", {"E_UNSATISFIABLE_DEPENDENCIES"}),
     ("cycle", _cycle, "schedule", 1, "rejected", {"E_UNSUPPORTED_CYCLE"}),
     ("cycle-render", _cycle, "render", 1, "rejected", {"E_UNSUPPORTED_CYCLE"}),
     ("fixed-target", _early_gate, "schedule", 1, "rejected", {"E_FIXED_TARGET_VIOLATION"}),
@@ -133,14 +143,6 @@ def test_plan_codes_are_emitted_by_the_command_the_skill_names(tmp_path, monkeyp
     payload = json.loads(out)
     assert (result, payload["status"]) == (status, word)
     assert codes <= {item["code"] for item in payload["diagnostics"]}
-
-
-def test_validate_prints_an_empty_list_for_the_cycle_the_skill_says_it_misses(tmp_path, monkeypatch, capsys):
-    path = _write(tmp_path, "plan.yaml", _project(_cycle))
-
-    result, out, _err = run_cli(monkeypatch, capsys, "validate", path)
-
-    assert (result, json.loads(out)) == (0, [])
 
 
 def _command_cases(tmp_path: Path):

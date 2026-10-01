@@ -6,9 +6,11 @@ receives a typed outcome; nothing here reads arguments, prints or exits. A file 
 cannot be read or parsed raises the library's own ``OSError`` or ``yaml.YAMLError``,
 which ``usecases.failure_report.report_failure`` turns into a diagnostic.
 
-``validate`` reports what structural validation and the Core rules find; it does not
-schedule, so a cyclic Project validates. ``schedule`` is the stricter check: it also
-rejects what the reference scheduler cannot place (for example an unsupported cycle).
+``validate`` reports what structural validation and the Core rules find, then the dependency
+cycles the reference scheduler cannot place (``scheduling.dependency_cycles``; #780), without
+computing a date. ``schedule`` runs that same check first, so the two commands, and the MCP tools
+over these functions, report a cycle identically; it then also rejects what only placement can
+find (a fixed date that contradicts its dependencies, a bound that cannot be met).
 """
 from __future__ import annotations
 
@@ -19,6 +21,7 @@ from typing import Any
 from chrona.core.deadlines import deadline_warnings
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.validation import load_yaml, validate_project
+from chrona.scheduling.dependency_cycles import dependency_cycle_diagnostics
 from chrona.scheduling.scheduler import schedule
 from chrona.usecases.failure_report import diagnostic_record
 
@@ -62,7 +65,10 @@ class ProjectSchedule:
 
 
 def validate_project_mapping(project: dict[str, Any]) -> ProjectValidation:
-    return ProjectValidation(tuple(validate_project(project)))
+    diagnostics = tuple(validate_project(project))
+    if not diagnostics:  # a cycle is only meaningful in a Project whose relations and objects Core accepted
+        diagnostics = dependency_cycle_diagnostics(project)
+    return ProjectValidation(diagnostics)
 
 
 def validate_project_file(path: str | Path) -> ProjectValidation:
@@ -71,6 +77,9 @@ def validate_project_file(path: str | Path) -> ProjectValidation:
 
 def schedule_project_mapping(project: dict[str, Any]) -> ProjectSchedule:
     """Schedule a Project, serializing the completed result without deriving analysis again."""
+    checked = validate_project_mapping(project)
+    if not checked.ok:
+        return ProjectSchedule(checked.diagnostics, {}, None)
     result = schedule(project)
     if not result.ok:
         return ProjectSchedule(tuple(result.diagnostics), {}, None)

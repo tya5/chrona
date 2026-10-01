@@ -27,7 +27,8 @@ in the repository); if you meet one, quote it to the user and do not guess a fix
 | `E_ENDPOINT_MODE_MISMATCH` | all three | A relation uses an endpoint the object's schedule does not have: a gate has `at`, not `start`. | Use `at` for a `fixed-point` or `scheduled-point` object and `start` or `end` for a span. |
 | `E_INVALID_SPAN` | all three | A `fixed-span` has `start` not before `end`. | Make `start` earlier than `end` (`end` is exclusive). |
 | `E_CALENDAR_REQUIRED` | all three | A `wd` amount has no calendar. | Add `calendar:` to the object or `project.calendar`, and define it under `calendars`. |
-| `E_UNSUPPORTED_CYCLE` | `schedule`, `render` (not `validate`) | The relations form a cycle, so no schedule exists. `validate` prints `[]` for a cycle. | Remove or redirect one relation in the cycle named at `sourceRef`, then run `schedule`. |
+| `E_UNSUPPORTED_CYCLE` | all three | The relations form a cycle, so no schedule exists. The message lists the objects on it and `sourceRef` is the relation that closes it. | Remove or redirect one relation in the cycle, then run `validate` again. |
+| `E_UNSATISFIABLE_DEPENDENCIES` | all three | A cycle whose positive lags can never be met: the same finding as `E_UNSUPPORTED_CYCLE`, with a stronger cause. | Remove or redirect one relation in the cycle at `sourceRef`. |
 | `E_FIXED_TARGET_VIOLATION` | `schedule`, `render` (not `validate`) | A `fixed-point` or `fixed-span` object sits earlier than its predecessors allow; `sourceRef` is the relation. | Write the date the message names, or for a gate drop the date and use `scheduled-point`; or shorten the work before it, or loosen the relation. |
 | `E_CONTRADICTORY_BOUNDS` | `schedule`, `render` (not `validate`) | A `constraints` bound on `sourceRef` cannot be met by the dependencies (for a `scheduled-point`, `constraints.at.max`). It often comes with `E_FIXED_TARGET_VIOLATION`. | Relax the bound or move the work that pushes it. |
 

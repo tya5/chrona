@@ -354,6 +354,14 @@ initially support only an acyclic subset, but it MUST diagnose an unsupported cy
 system as a capability limitation rather than claim that every cycle is semantically
 invalid.
 
+The reference implementation (`chrona validate` and `chrona schedule`, one use case, #780) reports an unsupported
+cyclic system with the same diagnostic from both commands, before any date is computed: a set of objects that wait
+for each other (a non-fixed object waits for the source of every relation into it, a rollup for its children), and
+a loop of non-negative-lag relations through a fixed object. One diagnostic names the objects on the cycle in Project
+order and points at `/relations/<index>` of the relation declared last inside it; the code is `E_UNSATISFIABLE_DEPENDENCIES`
+when the calendar-day relations of the cycle contain a positive loop, otherwise `E_UNSUPPORTED_CYCLE`. A loop with a
+negative lag is left to the date check, because it can be satisfiable.
+
 Core v0.1 does not require a general constraint-programming solver.
 
 A DAG-based propagation implementation is conforming for the acyclic subset if it

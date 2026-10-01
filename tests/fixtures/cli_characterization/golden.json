@@ -1478,7 +1478,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_UNSUPPORTED_CYCLE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/objects/a\", \"revisionRefs\": [], \"message\": \"Unresolved dependency system; reference scheduler supports an acyclic subset\"}, {\"code\": \"E_UNSUPPORTED_CYCLE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/objects/b\", \"revisionRefs\": [], \"message\": \"Unresolved dependency system; reference scheduler supports an acyclic subset\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_UNSUPPORTED_CYCLE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/relations/1\", \"revisionRefs\": [], \"message\": \"Dependency cycle among a, b; the relation at this path closes it. Objects that wait on each other cannot be scheduled: remove or redirect one relation in the cycle\"}]}\n"
  },
  "schedule-deadline-not-a-date": {
   "argv": [
@@ -1608,15 +1608,15 @@
   "stderr": "",
   "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_INPUT_YAML\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"while parsing a flow sequence\\n  in \\\"broken-yaml.yaml\\\", line 1, column 10\\ndid not find expected ',' or ']'\\n  in \\\"broken-yaml.yaml\\\", line 2, column 8\"}]}\n"
  },
- "validate-cycle-passes-validation": {
+ "validate-cycle-rejected": {
   "argv": [
    "validate",
    "cycle.yaml"
   ],
-  "exit": 0,
+  "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "[]\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_UNSUPPORTED_CYCLE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/relations/1\", \"revisionRefs\": [], \"message\": \"Dependency cycle among a, b; the relation at this path closes it. Objects that wait on each other cannot be scheduled: remove or redirect one relation in the cycle\"}]}\n"
  },
  "validate-deadline-late-unchanged": {
   "argv": [

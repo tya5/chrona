@@ -77,7 +77,7 @@ def test_initialize_carries_the_name_the_instructions_and_no_prompt_capability(w
     assert info.name == "chrona"
     assert len(mcp_server.INSTRUCTIONS.encode("utf-8")) < 1024
     assert instructions == mcp_server.INSTRUCTIONS
-    for needle in ("schedule_project", "NOT detect dependency cycles", "rejected", "chrona://guide/authoring"):
+    for needle in ("schedule_project", "dependency cycles, no dates", "rejected", "chrona://guide/authoring"):
         assert needle in instructions
     assert capabilities.tools is not None and capabilities.resources is not None
     assert capabilities.prompts is None

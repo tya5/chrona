@@ -16,8 +16,8 @@ chrona render plan.chrona --output plan.svg
 chrona compile plan.chrona --output project.yaml
 ```
 
-1. Write `plan.chrona`. 2. `validate` checks the structure; `schedule` places the dates (a cycle, or a gate earlier
-than what it follows, is reported there with the plan's line); `render` draws it, byte-identical to compiling and
+1. Write `plan.chrona`. 2. `validate` checks the structure and dependency cycles; `schedule` places the dates (a gate earlier
+than what it follows is reported there; a finding of either carries the plan's line); `render` draws it, byte-identical to compiling and
 then rendering the YAML (`--preset`, `--actual` and the other flags work as for YAML). 3. A plan that does not
 compile prints JSON with `code`, `message`, `hint` and `sourceRange` (line, column) for every problem at once: fix
 them all, run again. 4. When the plan is final, `compile` writes `project.yaml` (it never overwrites an existing

@@ -194,10 +194,19 @@ def test_validate_rejection_is_a_result_not_an_error(scope):
     assert result.structured["projectIdentity"].startswith("sha256:")
 
 
-def test_validate_mirrors_the_cli_including_its_cycle_blind_spot(scope, monkeypatch, capsys, workspace):
-    assert run(scope, "validate_project", project="cycle.yaml").structured["status"] == "ok"
-    assert cli(monkeypatch, capsys, workspace, "validate", "cycle.yaml") == (0, "[]\n", "")
-    assert set(codes(run(scope, "schedule_project", project="cycle.yaml"))) == {"E_UNSUPPORTED_CYCLE"}
+def test_validate_reports_a_cycle_exactly_as_the_cli_and_schedule_do(scope, monkeypatch, capsys, workspace):
+    """#780: the tool, the command and `schedule_project` return one finding for a cycle."""
+    validated = run(scope, "validate_project", project="cycle.yaml")
+    rc, out, err = cli(monkeypatch, capsys, workspace, "validate", "cycle.yaml")
+    expected = json.loads(out)["diagnostics"]
+    assert (rc, err) == (1, "") and validated.structured["status"] == "rejected" and not validated.is_error
+    assert set(codes(validated)) == {"E_UNSUPPORTED_CYCLE"} and len(expected) == 1
+    keys = ("code", "severity", "component", "sourceRef", "message")
+    assert [{key: item[key] for key in keys} for item in validated.structured["diagnostics"]] == [
+        {key: item[key] for key in keys} for item in expected]
+    assert validated.structured["diagnostics"][0]["sourceRef"] == "/relations/1"
+    scheduled = run(scope, "schedule_project", project="cycle.yaml")
+    assert scheduled.structured["diagnostics"] == validated.structured["diagnostics"]
 
 
 def test_validate_and_the_cli_agree_on_a_rejection(scope, monkeypatch, capsys, workspace):

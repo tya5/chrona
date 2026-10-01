@@ -41,7 +41,9 @@ JSON Schema 2020-12 input and output schema of each tool, and the read-only anno
 (`readOnlyHint`, `idempotentHint`, `destructiveHint: false`, `openWorldHint: false`).
 
 - `validate_project {project}`: result `projectIdentity` (the SHA-256 of the file bytes) when the file was read.
-  Mirrors `chrona validate`: a dependency cycle validates. Run `schedule_project` before calling a plan valid.
+  Mirrors `chrona validate`: it reports the dependency cycles the reference scheduler cannot place (`E_UNSUPPORTED_CYCLE`,
+  or `E_UNSATISFIABLE_DEPENDENCIES`; Spec 04 section 16) and computes no dates, so a fixed date that contradicts its
+  dependencies is found only by `schedule_project`.
 - `schedule_project {project}`: result `placements` (object id to `{start, end}` or `{at}`, ISO dates, `end`
   exclusive), `analysis` (`criticalObjectIds` in Project object order, `totalFloat` in calendar days) and `warnings`
   (a `W_DEADLINE` per object planned after its `deadline`, Spec 04 Section 10; empty when none; the plan is still
@@ -133,7 +135,7 @@ only transport. The binding is the one module that imports the SDK (`chrona.app.
 - Calls are handled one at a time (a render cannot be cancelled) in a worker thread; the server holds no state between
   calls and writes nothing to standard output but protocol frames. Logging goes to standard error.
 - `initialize` carries `instructions` (under 1 KB: the model in three sentences, that a rejection is a result, and that
-  `schedule_project` is the cycle check). Two read-only resources serve the packaged skill, `chrona://guide/authoring`
+  `schedule_project` is the tool that computes dates). Two read-only resources serve the packaged skill, `chrona://guide/authoring`
   (the body of `SKILL.md`) and `chrona://guide/diagnostics` (`references/diagnostics.md`); without a packaged skill they
   are omitted. No prompts, subscriptions, sampling or other capability is offered.
 - There is no HTTP transport, listener, authentication or background task.

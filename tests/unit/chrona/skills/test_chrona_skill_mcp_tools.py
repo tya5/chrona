@@ -47,12 +47,13 @@ def test_the_skill_prefers_the_tools_only_when_connected_and_states_the_status_r
     assert "## If the chrona MCP server is connected" in text
     assert "Otherwise use the commands" in text
     assert "`status`" in text and "rejected" in text
-    assert "Does not detect a cycle" in text
+    assert "Structure and dependency cycles, no dates" in text
 
 
 def test_the_table_notes_agree_with_the_tool_descriptions():
     descriptions = {spec.name: spec.description for spec in tool_specs()}
 
-    assert "NOT detect dependency cycles" in descriptions["validate_project"]
-    assert "rejected here" in descriptions["schedule_project"]
+    assert "A dependency cycle is rejected here" in descriptions["validate_project"]
+    assert "computes no dates" in descriptions["validate_project"]
+    assert "not by validate_project (a dependency cycle is rejected by both)" in descriptions["schedule_project"]
     assert "writes no file" in descriptions["render_draft"] and "inline 'svg'" in descriptions["render_draft"]

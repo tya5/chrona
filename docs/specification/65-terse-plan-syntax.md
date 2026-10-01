@@ -148,7 +148,7 @@ DAY         : mon | tue | wed | thu | fri | sat | sun
   statement order, then dependency order.
 - **S9 References.** Names resolve over the whole file after it is read, so forward references are legal
   (`E_TERSE_REFERENCE_UNKNOWN` for a name defined nowhere). The compiler never computes a date, a cycle or a float.
-  A cycle is the scheduler's `E_UNSUPPORTED_CYCLE`.
+  A cycle is `E_UNSUPPORTED_CYCLE`, reported by `validate` and `schedule`.
 
 ### 3.3 Default endpoints
 
