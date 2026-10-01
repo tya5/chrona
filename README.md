@@ -127,6 +127,25 @@ that path additionally requires node with `sharp`.
 
 ## Local authoring
 
+### Terse plans
+
+A terse plan (`plan.chrona`) is the quickest way to draft a schedule: one line per task, gate or group, with
+dependencies as a clause on the line. `chrona validate`, `schedule` and `render` accept it directly, and
+`chrona compile` writes the Project YAML once the plan is final (the YAML is the source from then on). The
+[one-page card](docs/guides/terse-plan.md) has the whole syntax.
+
+```chrona
+project my-plan "My plan"
+design "Design" task 2026-10-01..2026-10-15
+build "Build" task 3w after design
+release "Release" gate 2026-11-20 after build
+```
+
+<!-- chrona:doc-check skip: requires an author-provided plan file -->
+```bash
+chrona render plan.chrona --output plan.svg
+```
+
 ### Portable icons
 
 Create a catalog from an explicit local Iconify collection, then pass that

@@ -1,6 +1,6 @@
 # Terse Plan Syntax
 
-**Status:** Proposed; implemented by `chrona compile` (#148, slice 1) and the draft dispatch of section 7.1 (slice 3).
+**Status:** Proposed; implemented by `chrona compile` (#148, slice 1), the draft dispatch of section 7.1 (slice 3) and the documentation check of section 10 (slice 4).
 **Owns:** the grammar of the terse plan (`terse 0.1`), its mapping to a `timeline/v0.7` Project, the id rules for
 compiled objects and relations, the compiler diagnostic fields and codes, the stream and exit-code rules of
 `chrona compile`, and the determinism contract of the compiler's YAML.
@@ -345,3 +345,20 @@ modulo relation ids, critical set), compared through the scheduler; a seeded mut
 diagnostic positioned inside the text, no partial Project, accepted implies Core-valid, byte-stable); one negative
 fixture per compiler code, with the ten likeliest mistakes as literal fixtures; the ledger test; the layering
 check; the determinism check under other hash seeds and locales.
+
+## 10. Documentation check and hand-over
+
+`tools/check_documented_commands.py` compiles every fenced block whose info string is `chrona` in `README.md`, the
+guides and the agent skill; such a fence is a plan and is never scanned for CLI commands, so an object named `chrona`
+is not read as an invocation. Markers on the line before a fence refine the check: `<!-- chrona:doc-check skip:
+REASON -->` leaves the plan unchecked; `<!-- chrona:doc-check expect-error: CODE -->` requires the plan to be rejected
+with `CODE`; `<!-- chrona:doc-check expect-yaml: next -->` requires the next fence of the document to be a `yaml` fence
+equal to the emitted Project without its header comment line. A plan on the card ([`terse-plan.md`](../guides/terse-plan.md))
+must also validate and schedule, and the card stays within 120 lines; [`terse-plan-mapping.md`](../guides/terse-plan-mapping.md)
+holds the executable plan and YAML pairs.
+
+The agent interface (#142) relies on exactly what this specification freezes: the grammar and the card, the code
+catalogue (section 6.2), the diagnostic fields (`sourceRange`, `hint`, `source`), `chrona compile -` for standard input,
+the exit codes and stream rule (section 7), the all-errors-in-one-pass behaviour, that a rejected plan never emits a
+Project, the draft dispatch (section 7.1) and the hand-off rule (compile first, then edit the YAML for anything the
+syntax cannot say). The skill and any MCP tool are specified by their own documents.

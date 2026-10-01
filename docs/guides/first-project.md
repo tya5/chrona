@@ -40,6 +40,10 @@ with the default SVG profile. `elevated-light` uses a visible flat fallback
 there; select `--visual-profile chrona-output/visual/v0.7-svg` explicitly
 when you want its gradient and shadow treatment.
 
+To draft a schedule faster than editing YAML, write a [terse plan](terse-plan.md): a `plan.chrona` file with one
+line per task, gate or group. `chrona render`, `validate` and `schedule` accept it where they accept `project.yaml`,
+and `chrona compile` turns it into the Project once it is final.
+
 To learn Project capabilities in small independent steps, follow the
 [progressive Project tutorial](progressive-project-tutorial.md).
 

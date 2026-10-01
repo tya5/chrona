@@ -1,29 +1,29 @@
 # Terse plan syntax: the one-page card
 
-A terse plan is a short text file (`plan.chrona`) that `chrona compile` turns into a Chrona Project (`project.yaml`).
-Use it to draft a schedule fast: one line per task, gate or group, dependencies as a clause on the line. The
-compiler checks the plan, reports every error with a line and column, and hands the Project to the normal
-validator. Normative rules: [Spec 65](../specification/65-terse-plan-syntax.md).
+A terse plan is a short text file (`plan.chrona`): one line per task, gate or group, dependencies as a clause on
+the line. `chrona validate`, `schedule` and `render` take it directly; `chrona compile` writes the Chrona Project
+(`project.yaml`). The compiler checks the plan, reports every error with a line and column, and hands the Project to
+the normal validator. Normative rules: [Spec 65](../specification/65-terse-plan-syntax.md); what a plan becomes in
+YAML: [terse-plan-mapping.md](terse-plan-mapping.md).
 
 ## The loop
 
 <!-- chrona:doc-check skip: needs the plan file written by the author -->
 ```sh
-chrona compile plan.chrona -o project.yaml
-chrona validate project.yaml
-chrona schedule project.yaml
-```
-
-1. Write `plan.chrona`. 2. Compile. Success prints nothing and writes `project.yaml` (it never overwrites an existing
-file: delete it first). 3. On failure you get JSON with `code`, `message`, `hint` and `sourceRange` (line, column)
-for every problem at once: fix them all, compile again. With no `-o` the YAML goes to stdout and the error JSON to
-stderr, so `chrona compile plan.chrona > project.yaml` never puts an error into the file.
-<!-- chrona:doc-check skip: needs the plan file written by the author -->
-```sh
+chrona validate plan.chrona
+chrona schedule plan.chrona
+chrona render plan.chrona --output plan.svg
 chrona compile plan.chrona --output project.yaml
 ```
-4. `chrona validate` and `chrona schedule` check the dates (a cycle or a gate earlier than what it follows shows up
-there). After that, `project.yaml` is the only source of truth; the plan is retired.
+
+1. Write `plan.chrona`. 2. `validate` checks the structure; `schedule` places the dates (a cycle, or a gate earlier
+than what it follows, is reported there with the plan's line); `render` draws it, byte-identical to compiling and
+then rendering the YAML (`--preset`, `--actual` and the other flags work as for YAML). 3. A plan that does not
+compile prints JSON with `code`, `message`, `hint` and `sourceRange` (line, column) for every problem at once: fix
+them all, run again. 4. When the plan is final, `compile` writes `project.yaml` (it never overwrites an existing
+file: delete it first); from then on the YAML is the only source and the plan is retired. Only these four commands
+read a plan; every other command reads YAML. Without `-o`, `compile` sends the YAML to stdout and the error JSON to
+stderr, so `chrona compile plan.chrona > project.yaml` never puts an error into the file.
 
 ## Shape of a plan
 
@@ -52,7 +52,7 @@ lines, then objects (objects may refer to objects defined later).
   non-working dates, `work` extra working dates. With exactly one calendar it is the project default; with two or
   more, say which on the project line (`project p "P" calendar standard`) or on each object.
 - `NAME ["Title"] KIND SCHEDULE [calendar CAL] [after DEP, ...]` for an object; the parts come in that order
-  (`calendar CAL` before `after`).
+  (`calendar CAL` before `after`). An object's `calendar CAL` overrides the project default for its own `wd` amounts.
 
 **NAME** (and calendar names): lower-case letters, digits, hyphens, starting with a letter (`bus-test`). It is the
 id forever; you must invent one for every object. Not allowed as a name: `terse project calendar task gate group
@@ -76,17 +76,33 @@ Dates are `YYYY-MM-DD`, zero padded, real dates. Durations are whole numbers wit
 
 ## Dependencies: `after`
 
-`after a, b +2d, c.start` means "this object comes after a, after b with 2 days of lag, after the start of c".
-A lag is a signed amount with the sign attached: `+1wd`, `-2d` (never `+ 1wd`); add `in CAL` to count it in another
-calendar (`+1wd in range`). A lag in `wd` needs a calendar. Plain `after x` uses the end of a duration or group and
-the date of a fixed date; add `.start`, `.end` or `.at` to pick (a fixed date has only `.at`).
+`after a, b +2d, c.start +1w` means "this object comes after a, after b with 2 days of lag, after the start of c
+with a week of lag". A lag is a signed amount with the sign attached and the unit `d`, `w` or `wd`: `+1wd`, `-2d`,
+`+1w` (never `+ 1wd`). A `wd` lag without `in CAL` is counted on the calendar of the object that carries the `after`
+(its own `calendar CAL`, else the project default), not the predecessor's; add `in CAL` to count it elsewhere
+(`+1wd in range`). A `wd` lag needs a calendar. Plain `after x` uses the end of a duration or group and the date of
+a fixed date; add `.start`, `.end` or `.at` to pick (a fixed date has only `.at`).
 Groups: indent children by exactly two spaces under the group line; groups nest. A group takes no schedule, no
 `calendar` and no `after`, but it can be named in someone else's `after`.
+
+## Gates always need a date
+
+A gate cannot take its date from its dependencies (a Project-model limit, tracked in #788): write the date yourself.
+With both a date and `after`, the date is a not-earlier-than floor: the gate sits on its date, and `chrona schedule`
+rejects it (`E_FIXED_TARGET_VIOLATION`, on the `after` clause) when its dependencies end later. To compute the date:
+schedule the plan without the gate, read the predecessor's `end` (`at` for a gate) in `placements`, add the lag.
+
+```chrona
+project p "P"
+design "Design" task 2027-03-01..2027-03-08
+review "Review" gate 2027-03-10 after design +2d   # design ends 2027-03-08, plus the 2d lag
+```
 
 ## What the syntax cannot say
 
 Owners, teams, phases (`fields`), planned progress, deadlines, links, WBS codes, annotations, scenarios, other
-object types than `task`/`gate`/`group`. When you need them: compile first, then edit `project.yaml` by hand.
+object types, presentation. When you need them: compile first, then edit `project.yaml` by hand. (The guided
+authoring workspace of Spec 51 is a different source: YAML with presentation binding and Actuals.)
 
 ## Frequent errors
 
@@ -95,19 +111,10 @@ object types than `task`/`gate`/`group`. When you need them: compile first, then
 | `design Build the thing task 5d` | `E_TERSE_TITLE_UNQUOTED`: quote the title |
 | `design tsak 5d` | `E_TERSE_KIND_UNKNOWN`: use `task`, `gate` or `group` |
 | `task design 5d` | `E_TERSE_NAME_RESERVED`: the name comes first |
-| `Build_Phase task 5d` | `E_TERSE_NAME_INVALID`: use `build-phase` |
 | `pdr gate` | `E_TERSE_SCHEDULE_REQUIRED`: a gate needs a date |
-| `a task 20` or `3 days` | `E_TERSE_AMOUNT_INVALID`: write `20d` |
+| `a task 20` | `E_TERSE_AMOUNT_INVALID`: write `20d` |
 | `pdr gate 2027-3-5` | `E_TERSE_DATE_INVALID`: write `2027-03-05` |
 | `after structur` | `E_TERSE_REFERENCE_UNKNOWN`: the hint names the closest object |
 | `a task 5wd` and no calendar | `E_CALENDAR_REQUIRED`: add `calendar standard mon-fri` |
 
 Anything else Core finds (an empty group, an empty span) keeps its Core code and gets a position too.
-
-```chrona
-terse 0.1
-project three-lines "Three lines"
-a "Draft" task 2027-03-01..2027-03-08
-b "Review" task 3d after a
-c "Ship" gate 2027-03-20 after b
-```

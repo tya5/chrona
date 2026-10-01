@@ -74,6 +74,63 @@ def test_a_marker_applies_only_to_the_next_fence(tmp_path):
     check_plans((first, second))
 
 
+EXPECT_YAML = "<!-- chrona:doc-check expect-yaml: next -->\n"
+SMALL = 'project p "P"\na "A" task 2026-10-01..2026-10-05\n'
+SMALL_YAML = (
+    "version: timeline/v0.7\nproject:\n  id: p\n  title: P\nobjects:\n  a:\n    type: task\n    title: A\n"
+    "    schedule: {mode: fixed-span, start: '2026-10-01', end: '2026-10-05'}\n"
+)
+
+
+def test_expect_yaml_accepts_the_emitted_project_without_its_header_comment(tmp_path):
+    root = _root(tmp_path, EXPECT_YAML + _fence(SMALL) + "\nwhich becomes\n\n" + _fence(SMALL_YAML, "yaml"))
+    assert discover(root) == ()
+    (plan,) = discover_plans(root)
+    assert plan.expect_yaml and plan.yaml_text == SMALL_YAML
+    check_plans((plan,))
+
+
+def test_expect_yaml_fails_when_the_yaml_differs(tmp_path):
+    wrong = SMALL_YAML.replace("2026-10-05", "2026-10-06")
+    root = _root(tmp_path, EXPECT_YAML + _fence(SMALL) + _fence(wrong, "yaml"))
+    with pytest.raises(DocumentedCommandError, match=r"E_DOCUMENTED_PLAN_YAML_MISMATCH:README.md:3:"):
+        check_plans(discover_plans(root))
+
+
+def test_expect_yaml_keeps_the_header_comment_out_of_the_comparison(tmp_path):
+    root = _root(tmp_path, EXPECT_YAML + _fence(SMALL) + _fence("# a header the emitter wrote\n" + SMALL_YAML, "yaml"))
+    with pytest.raises(DocumentedCommandError, match="E_DOCUMENTED_PLAN_YAML_MISMATCH"):
+        check_plans(discover_plans(root))
+
+
+@pytest.mark.parametrize("tail", ["", _fence("echo hi\n", "sh") + _fence(SMALL_YAML, "yaml"), "text only\n"])
+def test_expect_yaml_fails_when_the_next_fence_is_not_a_yaml_fence(tail, tmp_path):
+    root = _root(tmp_path, EXPECT_YAML + _fence(SMALL) + tail)
+    (plan,) = discover_plans(root)
+    assert plan.expect_yaml and plan.yaml_text is None
+    with pytest.raises(DocumentedCommandError, match="E_DOCUMENTED_PLAN_YAML_MISSING:README.md:3"):
+        check_plans((plan,))
+
+
+def test_expect_yaml_fails_when_the_plan_does_not_compile(tmp_path):
+    root = _root(tmp_path, EXPECT_YAML + _fence("project p\na tsak 1d\n") + _fence(SMALL_YAML, "yaml"))
+    with pytest.raises(DocumentedCommandError, match="E_DOCUMENTED_PLAN_REJECTED"):
+        check_plans(discover_plans(root))
+
+
+def test_the_expect_yaml_marker_applies_only_to_the_next_plan(tmp_path):
+    root = _root(tmp_path, EXPECT_YAML + _fence(SMALL) + _fence(SMALL_YAML, "yaml") + _fence(GOOD))
+    first, second = discover_plans(root)
+    assert first.expect_yaml and not second.expect_yaml and second.yaml_text is None
+    check_plans((first, second))
+
+
+def test_two_markers_before_one_fence_are_still_rejected(tmp_path):
+    root = _root(tmp_path, EXPECT_YAML + "<!-- chrona:doc-check expect-error: E_TERSE_KIND_UNKNOWN -->\n" + _fence(SMALL))
+    with pytest.raises(DocumentedCommandError, match="E_DOCUMENTED_COMMAND_SKIP"):
+        discover(root)
+
+
 def test_the_live_documents_compile_and_the_card_is_among_them():
     plans = discover_plans(ROOT)
     assert any(plan.path == Path("docs/guides/terse-plan.md") for plan in plans)
