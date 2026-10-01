@@ -26,8 +26,8 @@ Unverified: whether a Windows path segment of three or more dots can alias a par
 | 1a | Project `extensions[].resource` (loose `revision-store-resource-ref-v0.1` via `extensions/profiles.py`): decide whether it moves | B (decision recorded) | verified premise false: stopped for the lead (design B3) |
 | 1b | `icon-catalog-v0.4` `source.address` and `preset-library-v0.2` `address` end in `$`: reference `storeAddress` (bump) or stay | B | verified premise false for both: stopped for the lead (design B1, B2) |
 | 2 | Retire the five loose predecessors (`layout-profile` v0.9, `render-context` v0.16, `command-request` v0.2, `automation-result` v0.1, the authoring side of `snapshot-ref` v0.2); `snapshot-ref` v0.2 stays readable; decide when | C1 to C5 | pending |
-| 3 | Record whether future address tightenings should use the in-place clause | B (Spec 56 §3.2 sentence) | pending |
-| 4 | (reviewer) Align the runtime guard in `core/store_address.py` with the schema's `storeAddress` character rule | A | pending |
+| 3 | Record whether future address tightenings should use the in-place clause | B (Spec 56 §3.2 sentence) | in this slice |
+| 4 | (reviewer) Align the runtime guard in `core/store_address.py` with the schema's `storeAddress` character rule | A | merged ([#754](https://github.com/tya5/chrona/pull/754), `aeed86fb`) |
 
 ## Slices
 

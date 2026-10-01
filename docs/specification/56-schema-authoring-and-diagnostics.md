@@ -203,6 +203,14 @@ immutable, content-pinned and already in operators' Stores, so the predecessor s
 baseline can exist, and the bump only changes what new writes emit (a writer emits v0.2 only for a Project reference that
 still carries a legacy loose address, never a v0.3 document that breaks its own contract). The inputs each site now refuses are listed as L3 `expected-deltas`.
 
+*Tightening a further site (#731).* A later address site may move to `storeAddress` in place, without a bump, under the
+clause above for a refusal the consumer already makes, only when the consumer refuses every value the stricter definition
+refuses at every use of the field, including a document that carries such a value and never has it opened (an icon no view
+selects, a reference that is only validated, a packaged entry): the guard that protects the file-opening adapters
+does not, by itself, show that. The check is made per site and per refused input against the consumer's own code, and each moved verdict is
+an `expected-deltas` line with a test; where it fails, the change narrows what a valid document may contain and takes the
+version bump (or is named as a narrowing in the change). The verification for the sites left by #710 is in the #731 design.
+
 *Retirement of the #710 predecessors.* A predecessor (`layout-profile-v0.9`, `render-context-v0.16`,
 `command-request-v0.2`, `automation-result-v0.1`, `snapshot-ref-v0.2`) is `transitioning` with a named
 `removalSlice`, and its schema file, its reader registration and its version string are deleted only in that slice,
@@ -211,8 +219,9 @@ once one release has shipped both versions and no committed or packaged document
 `common` part version; they are frozen until then and no live schema references them. Two things are deliberately not
 retired by that rule: `snapshot-ref-v0.2` for reads (immutable baselines already in Stores), and
 `revision-store-resource-ref-v0.1`, which the three transitioning predecessors reference and which `extensions/profiles.py`
-still uses to check a Project's `extensions[].resource` (a schema constraint on that field is Project's next bump,
-an owner decision). A guard test (`tests/unit/tools/test_store_address_retirement.py`) fails when the set of
+still uses to check the `resourceReference` fields (evidence and artifact references) of a Project's profile objects; nothing
+opens such a reference afterwards, so moving the check to v0.2 would refuse a document accepted today, which is an owner decision
+(the `extensions[].resource` object of Project v0.7 is unconstrained and has no address pattern to tighten). A guard test (`tests/unit/tools/test_store_address_retirement.py`) fails when the set of
 predecessors, their removal slices, their reader registrations or the remaining users of the loose forms change
 without this record changing.
 

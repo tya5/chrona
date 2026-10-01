@@ -42,8 +42,9 @@ RETIREMENTS: dict[str, tuple[str, str, str]] = {
 # Loose forms that remain on purpose, each with its owner and what ends it.
 OPEN_LOOSE_USERS: dict[str, str] = {
     "src/chrona/extensions/profiles.py":
-        "checks a Project's `extensions[].resource` against `revision-store-resource-ref-v0.1`: the field is an unconstrained object in "
-        "project-v0.7, so a schema constraint is Project's next bump (design D2/D6.1, owner decision); the code guard already covers the read",
+        "checks the `resourceReference` fields (evidence and artifacts) of a Project's profile objects against `revision-store-resource-ref-v0.1`; "
+        "nothing opens such a reference afterwards, so v0.2 would refuse a document accepted today: an owner decision (#731 design B3). "
+        "`extensions[].resource` of project-v0.7 is an unconstrained object with no address pattern, and the reader guard covers its read",
 }
 
 
