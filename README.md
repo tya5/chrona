@@ -25,7 +25,8 @@ Edit the project, re-run the materializer, and this SVG follows.</sup>
 - deterministic Plan/Actual review SVGs with YAML-controlled legend, group detail,
   source-labelled observations, and milestone digests;
 - a tested agent skill, installed with `chrona skill copy`, that teaches an AI coding
-  agent this workflow (see [Using chrona from an AI coding agent](docs/guides/agent-interface.md)).
+  agent this workflow, and a read-only MCP server (`chrona mcp`, optional `chrona[mcp]` extra) for
+  hosts that have no shell (see [Using chrona from an AI coding agent](docs/guides/agent-interface.md)).
 
 ## Quick start
 
