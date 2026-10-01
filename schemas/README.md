@@ -55,8 +55,9 @@ digest in the inventory. Spec 56 section 7 gives the rules, and
 `python -m tools.schema_equivalence --base-rev origin/main` is the gate that proves a
 change keeps every schema's accepted set.
 
-`revision-store-resource-reference` has two live files: v0.1 stays published because the frozen
-`vocabulary` part and pinned documents reference its URN, and v0.2 constrains `address` to the strict
+`revision-store-resource-reference` has two live files: v0.1 stays published because the transitioning
+Command Request v0.2, Automation Result v0.1 and Snapshot Reference v0.2 reference its URN and `extensions/profiles.py` and the
+revision-store conformance fixtures validate against it directly, and v0.2 constrains `address` to the strict
 `storeAddress` definition of `common` (#710). A kind adopts v0.2 only through its own version bump.
 
 The v0.3 icon catalog remains readable during migration to v0.4 and is not
