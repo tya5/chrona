@@ -640,5 +640,5 @@ in the [implementation plan](../planning/active/issue-142-agent-interface-implem
 
 No existing command, flag, schema, diagnostic code or byte of output changes. New
 public surface: `chrona skill copy`, `chrona mcp`, the `mcp` extra, the `E_MCP_*`
-codes, and Spec 65 (written in S3). The CLI keeps importing without the SDK. S0 is
+codes, and Spec 66 (written in S3). The CLI keeps importing without the SDK. S0 is
 proven byte-identical on the CLI before anything is built on it.

@@ -41,6 +41,43 @@ ALLOWED: dict[str, set[str]] = {
 }
 
 
+# module prefix -> what a module under it may import, stricter than its package's row (#142). The agent tool
+# core reaches the product through use cases only, plus the core modules that are contract types and the
+# packaged-resource loader (the one validator factory a guard test requires), so a tool can never import
+# presentation, scheduling, storage or operational code directly.
+MODULE_RULES: dict[str, dict[str, set[str]]] = {
+    "chrona.app.agent_": {"packages": {"usecases", "resources"}, "core_modules": {"chrona.core.store_address"}},
+    "chrona.app.mcp_server": {"packages": {"usecases", "resources"}, "core_modules": {"chrona.core.store_address"}},
+}
+
+# The one module that may import the MCP SDK (the optional `mcp` extra); every other module stays SDK-free.
+SDK_PACKAGE = "mcp"
+SDK_MODULE = "chrona.app.mcp_server"
+
+
+def module_rule(module: str) -> dict[str, set[str]] | None:
+    return next((rule for prefix, rule in MODULE_RULES.items() if module.startswith(prefix)), None)
+
+
+def breaks_module_rule(rule: dict[str, set[str]], target: str, package: str) -> bool:
+    other = package_of(target)
+    if other == package:  # a sibling in the same package: only another module under a module rule
+        return module_rule(target) is None
+    if other == "core":
+        return not any(target == name or target.startswith(name + ".") for name in rule["core_modules"])
+    return other not in rule["packages"]
+
+
+def imports_sdk(path: Path) -> bool:
+    for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+        if isinstance(node, ast.ImportFrom):
+            if node.level == 0 and node.module and node.module.split(".")[0] == SDK_PACKAGE:
+                return True
+        elif isinstance(node, ast.Import) and any(name.name.split(".")[0] == SDK_PACKAGE for name in node.names):
+            return True
+    return False
+
+
 def package_of(module: str) -> str:
     parts = module.split(".")
     if len(parts) == 2 and parts[1] == "__main__":
@@ -70,8 +107,13 @@ def main() -> int:
         package = package_of(module)
         if package == "chrona":
             continue
+        if module != SDK_MODULE and imports_sdk(path):
+            violations.append(f"{path.relative_to(ROOT)}: only {SDK_MODULE} may import the {SDK_PACKAGE} SDK")
+        rule = module_rule(module)
         for target in imports(path, module if path.name == "__init__.py" else module.rsplit(".", 1)[0]):
             other = package_of(target)
+            if rule is not None and other != "chrona" and breaks_module_rule(rule, target, package):
+                violations.append(f"{path.relative_to(ROOT)}: {module} must not import {target} (module rule)")
             if other in {package, "chrona"}:
                 continue
             edges.setdefault(package, set()).add(other)

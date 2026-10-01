@@ -43,6 +43,8 @@ Read `64` when admitting reusable SVG/PNG icons, icon asset closure, normalized
 icon geometry, or icon target capability.
 Read `65` Terse Plan Syntax when the one-line text plan syntax, `chrona compile`, or its
 positioned diagnostics are in scope.
+Read `66` Agent Tool Interface when the read-only agent tool set, its result envelope, or its workspace path
+rules are in scope.
 Read `56` Schema Authoring and Diagnostics when changing an authorable schema, a
 structural-validation diagnostic, or a normative schema reference.
 

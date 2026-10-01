@@ -1,2 +1,4 @@
 # Unreachable in-flight modules are listed here with their owner and reason.
 # Empty: the retired #467 geometry-first modules were removed under #505.
+chrona.app.agent_workspace  # I142-S3: the SDK-free tool core; the `chrona mcp` entry point (I142-S4) reaches it
+chrona.app.agent_tools  # I142-S3: same; remove both lines when the entry point imports them

@@ -204,7 +204,7 @@ documented-surface gate until a guide documents each command and option;
 `check_module_reachability.py` is satisfied only through the CLI import; the `E_MCP_*`
 codes enter the diagnostic inventory (a derived document the sync regenerates, which a PR
 must not edit); a tool/result contract of this kind is public and belongs in a numbered
-specification (Spec 65, written in S3) rather than only in a design file. The design
+specification (Spec 66, written in S3) rather than only in a design file. The design
 chooses a specification plus a registry-derived JSON Schema checked by test over adding
 files under `schemas/` in the first release, to avoid the schema-inventory and
 annotation gates for a contract that will still change; promotion to `schemas/` is a
