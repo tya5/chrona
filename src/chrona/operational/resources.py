@@ -19,10 +19,9 @@ class OperationalResourceError(ValueError):
         self.detail = detail
 
 
-# Command Request versions the CLI accepts. v0.2 stays readable while its successor (strict `storeAddress`,
-# #710) is adopted; an unknown or missing version is reported against the current schema.
+# Command Request versions the CLI accepts. v0.2 (loose Store addresses) was retired once no committed or
+# test command used it (#731); an unknown, retired or missing version is reported against the current schema.
 COMMAND_SCHEMAS = {
-    "chrona/command/v0.2": "command-request-v0.2.schema.yaml",
     "chrona/command/v0.3": "command-request-v0.3.schema.yaml",
 }
 COMMAND_SCHEMA = COMMAND_SCHEMAS["chrona/command/v0.3"]

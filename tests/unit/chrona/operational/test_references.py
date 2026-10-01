@@ -28,7 +28,7 @@ def test_reference_verification_requires_exact_bytes_kind_and_id():
 
 
 def test_replay_ledger_survives_reopen_and_rejects_changed_command_id(tmp_path: Path):
-    request = {"version": "chrona/command/v0.2", "commandId": "c1"}
+    request = {"version": "chrona/command/v0.3", "commandId": "c1"}
     target = {"id": "actual", "revision": {"token": "r1"}}
     ledger = ReplayLedger(tmp_path / "replays.json")
     first = ledger.record("c1", request, target, {"status": "accepted"})

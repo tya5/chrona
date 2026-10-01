@@ -193,7 +193,7 @@ def test_the_command_engine_applies_to_an_actual_set_whose_id_is_not_address_sha
                       "records": [{"externalKey": "42", "projectObjectId": "firmware", "actual": {"finish": "2026-01-02"}}]}}
     batch_ref = _write(tmp_path, "batch-r1", "batch.yaml", batch, "actual-intake-batch", "batch")
     reader = ConfiguredStoreReader({"stores": [{"provider": "local", "identity": "test", "root": str(tmp_path)}]})
-    command = {"version": "chrona/command/v0.2", "commandId": "c1", "type": "applyActualIntakeBatch", "target": target,
+    command = {"version": "chrona/command/v0.3", "commandId": "c1", "type": "applyActualIntakeBatch", "target": target,
                "baseRevision": revision, "expectedContentIdentity": target["contentIdentity"],
                "payload": {"batch": batch_ref, "project": project_ref}}
     result = apply_actual_command(reader, command)

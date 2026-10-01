@@ -23,9 +23,6 @@ ENTRIES = {entry["file"]: entry for entry in load_inventory(SCHEMAS / "schema-in
 
 # predecessor file -> (successor file, removal slice, what the removal slice must delete)
 RETIREMENTS: dict[str, tuple[str, str, str]] = {
-    "command-request-v0.2.schema.yaml": (
-        "command-request-v0.3.schema.yaml", "issue-710-command-request-v0.2-retirement",
-        "the schema file and `COMMAND_SCHEMAS`"),
     "automation-result-v0.1.schema.yaml": (
         "automation-result-v0.2.schema.yaml", "issue-710-automation-result-v0.1-retirement",
         "the schema file and `AUTOMATION_RESULT_SCHEMAS` (and the writers' fallback to it)"),
@@ -84,6 +81,9 @@ def test_a_retired_predecessor_is_unregistered_and_an_unsupported_version_to_eve
     assert RENDER_CONTEXT_VERSIONS == ("chrona/render-context/v0.17",) and RENDER_CONTEXT_VERSION == RENDER_CONTEXT_VERSIONS[0]
     assert ("render-context", "chrona/render-context/v0.16") not in _SCHEMAS
     assert [name for name, entry in ENTRIES.items() if entry["kind"] == "render-context"] == ["render-context-v0.17.schema.yaml"]
+    # Command Request v0.2 (C3): the CLI registers v0.3 only.
+    assert set(COMMAND_SCHEMAS) == {"chrona/command/v0.3"}
+    assert [name for name, entry in ENTRIES.items() if entry["kind"] == "command-request"] == ["command-request-v0.3.schema.yaml"]
 
 
 def test_the_snapshot_ref_predecessor_is_the_one_that_is_never_retired_for_reads():
@@ -115,7 +115,7 @@ def test_no_live_kind_references_revision_store_v0_1_and_the_part_has_only_the_r
     assert in_source == {"src/chrona/resources/__init__.py", *OPEN_LOOSE_USERS}, in_source
     transitioning_users = {name for name, entry in ENTRIES.items() if entry["state"] == "transitioning"
                            and any(ref.partition("#")[0] == v1 for ref in _references(name))}
-    assert transitioning_users == {"command-request-v0.2.schema.yaml", "automation-result-v0.1.schema.yaml", "snapshot-ref-v0.2.schema.yaml"}
+    assert transitioning_users == {"automation-result-v0.1.schema.yaml", "snapshot-ref-v0.2.schema.yaml"}
 
 
 def test_the_frozen_loose_definitions_say_they_are_frozen():

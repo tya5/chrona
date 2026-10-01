@@ -103,11 +103,11 @@ diagnostics but never a partial candidate. Accepted reports have `rejected: 0`.
 
 ## 4. Revision-bound automation (UC-11)
 
-### 4.1 Command v0.3 (and v0.2)
+### 4.1 Command v0.3
 
-`chrona/command/v0.3` replaces v0.2 (strict Store addresses, #710); the CLI still reads v0.2, whose Store
-addresses use the loose pre-#710 family, and the code guard of every Store reader refuses an unsafe address in either
-version. `chrona/command/v0.2` replaced v0.1 for this operational profile. It contains
+`chrona/command/v0.3` replaced v0.2 (strict Store addresses, #710); the CLI no longer reads v0.2 (retired by #731: a
+v0.2 command is refused as a schema error on `/version`), and the code guard of every Store reader refuses an unsafe
+address as well. `chrona/command/v0.2` had replaced v0.1 for this operational profile. It contains
 `commandId`, `type`, immutable `target`, `baseRevision`, optional `expectedContentIdentity`,
 typed `payload`, optional `actor`, and optional `reason`. `baseRevision` MUST equal
 the verified target revision token. When supplied, `expectedContentIdentity` MUST equal

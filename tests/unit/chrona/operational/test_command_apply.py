@@ -24,7 +24,7 @@ def test_apply_intake_uses_v02_batch_cas_and_replays(tmp_path: Path):
     batch = {"version": "chrona/actual-intake-batch/v0.2", "kind": "actual-intake-batch", "id": "batch", "body": {"source": {"system": "supplier", "contentIdentity": "sha256:" + "a" * 64}, "records": [{"externalKey": "42", "projectObjectId": "firmware", "actual": {"finish": "2026-01-02"}}]}}
     batch_ref = _write(tmp_path, "batch-r1", "batch.yaml", batch, "actual-intake-batch", "batch")
     reader = ConfiguredStoreReader({"stores": [{"provider": "local", "identity": "test", "root": str(tmp_path)}]})
-    command = {"version": "chrona/command/v0.2", "commandId": "c1", "type": "applyActualIntakeBatch", "target": target, "baseRevision": revision, "expectedContentIdentity": target["contentIdentity"], "payload": {"batch": batch_ref, "project": project_ref}}
+    command = {"version": "chrona/command/v0.3", "commandId": "c1", "type": "applyActualIntakeBatch", "target": target, "baseRevision": revision, "expectedContentIdentity": target["contentIdentity"], "payload": {"batch": batch_ref, "project": project_ref}}
     accepted = apply_actual_command(reader, command)
     assert accepted["status"] == "accepted" and accepted["actualIntake"]["dispositions"] == ["inserted"]
     replay = apply_actual_command(reader, command)
@@ -35,7 +35,7 @@ def test_apply_capture_publishes_named_baseline(tmp_path: Path):
     project = {"version": "timeline/v0.7", "project": {"id": "p"}, "extensions": [], "objects": {}, "relations": []}
     target = _write(tmp_path, "project-r1", "project.yaml", project, "project", "p")
     reader = ConfiguredStoreReader({"stores": [{"provider": "local", "identity": "test", "root": str(tmp_path)}]})
-    command = {"version": "chrona/command/v0.2", "commandId": "capture-1", "type": "captureSnapshot", "target": target, "baseRevision": "project-r1", "expectedContentIdentity": target["contentIdentity"], "payload": {"snapshotId": "q2", "registry": {"provider": "local", "identity": "test"}}}
+    command = {"version": "chrona/command/v0.3", "commandId": "capture-1", "type": "captureSnapshot", "target": target, "baseRevision": "project-r1", "expectedContentIdentity": target["contentIdentity"], "payload": {"snapshotId": "q2", "registry": {"provider": "local", "identity": "test"}}}
     accepted = apply_actual_command(reader, command)
     assert accepted["status"] == "accepted"
     assert reader.read(accepted["resultTarget"])
@@ -47,7 +47,7 @@ def test_apply_capture_rejects_different_command_for_existing_baseline(tmp_path:
     project = {"version": "timeline/v0.7", "project": {"id": "p"}, "extensions": [], "objects": {}, "relations": []}
     target = _write(tmp_path, "project-r1", "project.yaml", project, "project", "p")
     reader = ConfiguredStoreReader({"stores": [{"provider": "local", "identity": "test", "root": str(tmp_path)}]})
-    command = {"version": "chrona/command/v0.2", "commandId": "capture-1", "type": "captureSnapshot", "target": target, "baseRevision": "project-r1", "expectedContentIdentity": target["contentIdentity"], "payload": {"snapshotId": "q2", "registry": {"provider": "local", "identity": "test"}}}
+    command = {"version": "chrona/command/v0.3", "commandId": "capture-1", "type": "captureSnapshot", "target": target, "baseRevision": "project-r1", "expectedContentIdentity": target["contentIdentity"], "payload": {"snapshotId": "q2", "registry": {"provider": "local", "identity": "test"}}}
     assert apply_actual_command(reader, command)["status"] == "accepted"
     rejected = apply_actual_command(reader, command | {"commandId": "capture-2"})
     assert rejected["status"] == "rejected"
