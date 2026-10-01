@@ -306,6 +306,9 @@ def load_inventory(path: Path) -> tuple[dict[str, Any], ...]:
                 raise SchemaInventoryError("E_SCHEMA_INVENTORY_TRANSITION")
         elif "successor" in entry or "removalSlice" in entry:
             raise SchemaInventoryError("E_SCHEMA_INVENTORY_LIVE")
+        reason = entry.get("reason")
+        if reason is not None and (not isinstance(reason, str) or not reason.strip()):
+            raise SchemaInventoryError("E_SCHEMA_INVENTORY_REASON")
         frozen = entry.get("frozenDefs")
         if frozen is not None and (
             state != "live" or not isinstance(frozen, dict) or not frozen

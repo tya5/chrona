@@ -21,6 +21,27 @@ def test_inventory_requires_exact_schema_coverage(tmp_path):
         validate_inventory(schemas, inventory)
 
 
+@pytest.mark.parametrize("reason", ['""', '"   "', "7", "[x]"])
+def test_a_reason_must_be_a_non_empty_string(tmp_path, reason):
+    schemas, inventory = _write(tmp_path, f"""version: chrona/schema-inventory/v0.1
+schemas:
+  - {{file: project-v0.1.schema.yaml, kind: project, state: live, consumers: [x], reason: {reason}}}
+""")
+    with pytest.raises(SchemaInventoryError, match="E_SCHEMA_INVENTORY_REASON"):
+        validate_inventory(schemas, inventory)
+
+
+def test_a_reason_is_accepted_and_icon_catalog_v03_states_why_it_is_kept():
+    from tools.schema_inventory import load_inventory
+
+    root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
+    entries = {entry["file"]: entry for entry in load_inventory(root / "schemas" / "schema-inventory-v0.1.yaml")}
+    entry = entries["icon-catalog-v0.3.schema.yaml"]
+    assert entry["state"] == "transitioning"
+    for fact in ("vector-only", "trusted packaged data", "storeAddress", "#715"):
+        assert fact in entry["reason"], fact
+
+
 def test_transition_requires_successor_and_removal_slice(tmp_path):
     schemas, inventory = _write(tmp_path, """version: chrona/schema-inventory/v0.1
 schemas:

@@ -234,6 +234,10 @@ opens such a reference afterwards, so moving the check to v0.2 would refuse a do
 predecessors, their removal slices, their reader registrations or the remaining users of the loose forms change
 without this record changing.
 
+*A `transitioning` entry kept on purpose (#715).* `icon-catalog-v0.3` stays `transitioning` for the bundled Material catalog, which is vector-only (no raster `address` exists for its loose
+pattern to check), trusted packaged data, and covered for v0.4 catalogs by the parse-time `storeAddress` check; the owner decided on 2026-10-01 not to migrate that catalog. An inventory entry
+may carry an optional non-empty `reason` string, and this entry does: the reason a predecessor is kept is stated where the next reader of the inventory looks, not only in an issue.
+
 Adding a value to an existing `enum` is an in-place widening when every existing resource
 stays valid and behaves the same and the consuming code handles the new value. It is not an
 optional-property insertion, so the mechanical predecessor/successor check above does not apply; the equivalence gate
