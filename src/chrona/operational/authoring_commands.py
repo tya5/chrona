@@ -13,7 +13,7 @@ from typing import Any, Mapping
 
 import yaml
 
-from chrona.core.store_address import StoreAddressError, check_store_address, resolve_store_address
+from chrona.core.store_address import Charset, StoreAddressError, check_store_address, resolve_store_address
 from chrona.operational.resources import OperationalResourceError, content_identity
 from chrona.resources import safe_load
 
@@ -43,7 +43,9 @@ def cas_write_authoring_aggregate(path: Path, expected_identity: str, candidates
     if workspace_name not in candidates or not all(isinstance(value, bytes) for value in candidates.values()):
         raise OperationalResourceError("E_AUTHORING_AGGREGATE_CANDIDATE")
     resources = [name for name in candidates if name != workspace_name]
-    if not resources or any(not _relative(name) for name in candidates):
+    # The workspace is one operator file name (`my plan.yaml`, `計画.yaml`: the schema's `fileName`, #693); every
+    # resource is `<directory>/<fixed name>` under a `safeRelativePath` directory and follows the address rule (#731).
+    if not resources or any(not _relative(name, charset="file-name" if name == workspace_name else "address") for name in candidates):
         raise OperationalResourceError("E_AUTHORING_AGGREGATE_PATH")
     top_levels = {Path(name).parts[0] for name in resources}
     if len(top_levels) != 1 or any(len(Path(name).parts) < 2 for name in resources):
@@ -102,9 +104,9 @@ def _atomic_yaml_write(path: Path, candidate: dict[str, Any], expected_identity:
         temporary.unlink(missing_ok=True)
 
 
-def _relative(name: str) -> bool:
+def _relative(name: str, *, charset: Charset = "address") -> bool:
     try:
-        check_store_address(name)
+        check_store_address(name, charset=charset)
     except StoreAddressError:
         return False
     return True

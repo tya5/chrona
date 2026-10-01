@@ -90,9 +90,10 @@ class LocalActualStore:
     def __init__(self, root: Path, actual_set: dict[str, Any]):
         self.root, self.actual_set_id = root, str(actual_set.get("id", ""))
         try:
-            # The id becomes a file name below the Store root, so it is a one-segment Store address.
-            tip = resolve_store_address(root, f"actual-tips/{self.actual_set_id}.json")
-            check_store_segment(self.actual_set_id)
+            # The id becomes an adapter-private file name below the Store root, so it is one safe segment. It is an
+            # identifier (the schema accepts spaces and non-ASCII), not an address, hence the file-name charset (#731).
+            tip = resolve_store_address(root, f"actual-tips/{self.actual_set_id}.json", charset="file-name")
+            check_store_segment(self.actual_set_id, charset="file-name")
         except StoreAddressError as error:
             raise ValueError("E_STORE_REFERENCE") from error
         self.tip = tip
