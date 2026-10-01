@@ -172,7 +172,7 @@ CASES: tuple[Case, ...] = (
     _case("validate-empty-file", "validate", "empty.yaml"),
     _case("validate-schema-error", "validate", "schema-error.yaml"),
     _case("validate-reference-error", "validate", "reference-error.yaml"),
-    _case("validate-cycle-passes-validation", "validate", "cycle.yaml"),
+    _case("validate-cycle-rejected", "validate", "cycle.yaml"),
     _case("validate-no-project", "validate"),
     _case("validate-unknown-flag", "validate", "starter.yaml", "--nope"),
     _case("validate-snapshot-partial", "validate", "--snapshot-reference", "snapshot-reference.yaml"),

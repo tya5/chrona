@@ -45,12 +45,14 @@ def test_validate_accepts_a_valid_project_and_reports_a_broken_one(tmp_path):
     assert [item.id for item in outcome.diagnostics] == ["E_REFERENCE"]
 
 
-def test_validate_does_not_schedule_so_a_cycle_validates(tmp_path):
+def test_validate_reports_a_cycle_without_scheduling_and_schedule_reports_it_identically(tmp_path):
     path = _write(tmp_path, "cycle.yaml", CYCLE)
-    assert validate_project_file(path).ok
+    validated = validate_project_file(path)
+    assert not validated.ok
+    assert {item.id for item in validated.diagnostics} == {"E_UNSUPPORTED_CYCLE"}
     outcome = schedule_project_file(path)
     assert not outcome.ok
-    assert {item.id for item in outcome.diagnostics} == {"E_UNSUPPORTED_CYCLE"}
+    assert outcome.diagnostics == validated.diagnostics
     assert outcome.placements == {} and outcome.analysis is None
 
 

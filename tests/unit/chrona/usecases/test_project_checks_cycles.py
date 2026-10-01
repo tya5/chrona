@@ -7,6 +7,7 @@ import copy
 
 import pytest
 
+from chrona.scheduling.scheduler import schedule
 from chrona.usecases.project_checks import schedule_project_mapping, validate_project_mapping
 
 CYCLE_CODES = {"E_UNSUPPORTED_CYCLE", "E_UNSATISFIABLE_DEPENDENCIES"}
@@ -88,8 +89,7 @@ def test_validate_names_the_cycle_and_schedule_agrees(build, path, objects, code
     assert not validated.ok
     [finding] = validated.diagnostics
     assert (finding.id, finding.path) == (code, path)
-    assert all(name in finding.message for name in objects)
-    assert [name for name in objects if name in finding.message] == objects  # Project order, each named once
+    assert f"among {', '.join(objects)};" in finding.message  # Project order, each named once
     assert scheduled.diagnostics == validated.diagnostics
     assert scheduled.placements == {} and scheduled.analysis is None
 
@@ -100,14 +100,17 @@ def test_the_fixed_span_cycle_is_no_longer_only_a_date_symptom():
     assert codes == {"E_UNSUPPORTED_CYCLE"}  # was E_FIXED_TARGET_VIOLATION on main, and validate was clean
 
 
-def test_a_positive_lag_cycle_is_unsatisfiable_not_merely_unsupported():
-    plan = duration_cycle()
-    plan["relations"][0]["lag"] = "1d"
+@pytest.mark.parametrize("lag,code", [("0d", "E_UNSUPPORTED_CYCLE"), ("1d", "E_UNSATISFIABLE_DEPENDENCIES")])
+def test_a_positive_lag_cycle_is_unsatisfiable_not_merely_unsupported_as_the_scheduler_says(lag, code):
+    """The conformance fixture of Spec 04 section 16: `validate` and the scheduler itself choose the same code."""
+    plan = project({"a": duration("1d"), "b": duration("1d")},
+                   [rel("a", "start", "b", "start", lag), rel("b", "start", "a", "start")])
 
     [finding] = validate_project_mapping(plan).diagnostics
 
-    assert finding.id == "E_UNSATISFIABLE_DEPENDENCIES"
+    assert finding.id == code
     assert schedule_project_mapping(plan).diagnostics == (finding,)
+    assert {item.id for item in schedule(plan).diagnostics} == {code}
 
 
 def test_only_the_objects_on_the_cycle_are_named_not_those_waiting_downstream():
