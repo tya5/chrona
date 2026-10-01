@@ -48,8 +48,8 @@ properties:
               items: {$ref: "#/$defs/iconCatalog"}
 $defs:
   address:
-    $ref: "urn:chrona:common-v0.1#/$defs/safeRelativePath"
-    description: Relative resource address that excludes dot and dot-dot path segments.
+    $ref: "urn:chrona:common-v0.1#/$defs/storeAddress"
+    description: Relative resource address in the strict Store-address grammar (#731); the shared guard refuses the same values.
     examples: [bundles/technical-print/theme.yaml]
   identity:
     $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"

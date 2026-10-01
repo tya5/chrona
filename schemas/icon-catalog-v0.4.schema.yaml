@@ -180,5 +180,5 @@ $defs:
     required: [address, contentIdentity]
     additionalProperties: false
     properties:
-      address: {description: "Relative traversal-free catalog asset address.", examples: [icons/sample.png], type: string, minLength: 1, pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$"}
+      address: {description: "Relative catalog asset address in the strict Store-address grammar (#731); the parse step refuses an unsafe one even in an entry nothing selects.", examples: [icons/sample.png], $ref: "urn:chrona:common-v0.1#/$defs/storeAddress"}
       contentIdentity: {description: "SHA-256 of the exact raster bytes.", examples: ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}

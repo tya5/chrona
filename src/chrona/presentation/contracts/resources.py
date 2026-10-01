@@ -9,6 +9,7 @@ import re
 from typing import Any, Mapping
 
 
+from chrona.core.store_address import StoreAddressError, check_store_address
 from chrona.resources import schema_validator
 from chrona.schema_diagnostics import SchemaViolation, explain_all_errors, explain_errors
 from chrona.presentation.table_presentation import BooleanPresencePresentation
@@ -485,6 +486,23 @@ class IconCatalogContract(ResourceContract):
     raw_patterns: FrozenDict
 
 
+def _check_raster_addresses(raw_icons: Mapping[str, Any]) -> None:
+    """Refuse a v0.4 catalog that declares a raster ``source.address`` the shared guard refuses (#731).
+
+    Entries are decoded lazily and schema-checked only when selected, so the schema's ``storeAddress`` alone never
+    sees an entry nothing selects. Checking every declared address here keeps "the consumer refuses everything the
+    schema refuses" true for the whole catalog, selected or not.
+    """
+    for name, entry in raw_icons.items():
+        source = entry.get("source") if isinstance(entry, Mapping) else None
+        if not isinstance(source, Mapping) or "address" not in source:
+            continue
+        try:
+            check_store_address(source["address"])
+        except StoreAddressError as error:
+            raise ContractError("E_ICON_ASSET_PATH", f"icon {name}", f"/body/icons/{name}/source/address") from error
+
+
 def _icon_catalog_contract(identity: ClosureIdentity, version: str, body: FrozenDict) -> IconCatalogContract:
     raw_icons = body["icons"]
     if not isinstance(raw_icons, FrozenDict):
@@ -496,6 +514,8 @@ def _icon_catalog_contract(identity: ClosureIdentity, version: str, body: Frozen
     raw_patterns = body.get("patterns", FrozenDict())
     if not isinstance(raw_glyphs, FrozenDict) or not isinstance(raw_patterns, FrozenDict):
         raise _closure_kind_error(identity, "glyphs and patterns objects", {"glyphs": raw_glyphs, "patterns": raw_patterns})
+    if version == "chrona/icon-catalog/v0.4":
+        _check_raster_addresses(raw_icons)
     return IconCatalogContract(identity, version, str(body["set"]), tuple(str(alias) for alias in aliases), provenance,
                                entry_aliases, (), tuple(sorted(str(name) for name in raw_icons)), raw_icons,
                                raw_glyphs, raw_patterns)
