@@ -1,6 +1,6 @@
 """The kinds that adopt the strict `storeAddress` through a version bump (#710, row 1, slice S-B).
 
-layout-profile v0.9 -> v0.10 (the v0.9 predecessor was retired in #731 C1) and render-context v0.16 -> v0.17.
+layout-profile v0.9 -> v0.10 and render-context v0.16 -> v0.17 (both predecessors were retired in #731, C1 and C2).
 Every verdict is decided from data, the validators and the production readers; none consults the host path flavour.
 """
 from __future__ import annotations
@@ -14,6 +14,7 @@ import pytest
 import yaml
 
 from chrona.presentation.contracts import ClosureIdentity, ContractError, parse_contract
+from chrona.presentation.contracts.resources import UnsupportedResourceVersionError
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.profile import LAYOUT_SCHEMAS, LAYOUT_VERSION, _validate_schema
 from chrona.presentation.contracts.resources import RENDER_CONTEXT_VERSION, RENDER_CONTEXT_VERSIONS
@@ -28,7 +29,6 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "
 SCHEMAS = load_schema_dir(ROOT / "schemas")
 VALIDATORS = SchemaValidators(SCHEMAS)
 PAIRS = {  # predecessor document version -> (successor document version, predecessor schema, successor schema)
-    "chrona/render-context/v0.16": ("chrona/render-context/v0.17", "render-context-v0.16.schema.yaml", "render-context-v0.17.schema.yaml"),
     "chrona/command/v0.2": ("chrona/command/v0.3", "command-request-v0.2.schema.yaml", "command-request-v0.3.schema.yaml"),
     "chrona/automation-result/v0.1": ("chrona/automation-result/v0.2", "automation-result-v0.1.schema.yaml", "automation-result-v0.2.schema.yaml"),
     "chrona/snapshot-ref/v0.2": ("chrona/snapshot-ref/v0.3", "snapshot-ref-v0.2.schema.yaml", "snapshot-ref-v0.3.schema.yaml"),
@@ -40,7 +40,7 @@ PINNED = {
         "it is the committed stand-in for the v0.2 baselines already in operators' Stores",
 }
 # Predecessors already retired (#731): the document version string must appear in no committed or packaged document.
-RETIRED = ("chrona/layout-profile/v0.9",)
+RETIRED = ("chrona/layout-profile/v0.9", "chrona/render-context/v0.16")
 SUCCESSOR_OF = {old: new for old, (new, _, _) in PAIRS.items()}
 PREDECESSOR_OF = {new: old for old, new in SUCCESSOR_OF.items()}
 ADDRESS_SITES = tuple(site for site in PROBE_SITES if site.family in ("address", "segment"))
@@ -66,7 +66,7 @@ def test_the_inventory_marks_the_predecessors_transitioning_with_their_successor
 
 def test_the_readers_accept_both_versions_and_emit_the_successor():
     assert set(LAYOUT_SCHEMAS) == {"chrona/layout-profile/v0.10"} and LAYOUT_VERSION == "chrona/layout-profile/v0.10"
-    assert RENDER_CONTEXT_VERSIONS == ("chrona/render-context/v0.16", "chrona/render-context/v0.17") and RENDER_CONTEXT_VERSION == RENDER_CONTEXT_VERSIONS[-1]
+    assert RENDER_CONTEXT_VERSIONS == ("chrona/render-context/v0.17",) and RENDER_CONTEXT_VERSION == RENDER_CONTEXT_VERSIONS[-1]
 
 
 def _document(path: str, version: str) -> dict[str, Any]:
@@ -87,12 +87,16 @@ def test_the_retired_layout_version_is_unsupported_and_the_current_one_refuses_a
         _validate_schema(layout)
 
 
-def test_a_predecessor_context_is_still_read_and_keeps_its_loose_address():
+def test_the_retired_context_version_is_unsupported_and_the_current_one_refuses_a_loose_address():
     context = _document("examples/aster-ssd/contexts/01-overview.yaml", "chrona/render-context/v0.16")
-    context["body"]["project"]["address"] = "my projects/main.yaml"
     identity = ClosureIdentity("render-context", context["id"], "draft", "sha256:" + "0" * 64)
-    assert parse_contract(identity, deepcopy(context)).version == "chrona/render-context/v0.16"
+    with pytest.raises(UnsupportedResourceVersionError) as unsupported:
+        parse_contract(identity, deepcopy(context))
+    assert unsupported.value.found_version == "chrona/render-context/v0.16"
+    assert unsupported.value.supported_versions == (RENDER_CONTEXT_VERSION,)
     context["version"] = RENDER_CONTEXT_VERSION
+    assert parse_contract(identity, deepcopy(context)).version == RENDER_CONTEXT_VERSION
+    context["body"]["project"]["address"] = "my projects/main.yaml"
     with pytest.raises(ContractError):
         parse_contract(identity, context)
 
@@ -106,10 +110,6 @@ def test_successors_differ_from_their_predecessors_only_at_the_address_sites():
         assert all(pointer.endswith(("/address/pattern", "/address/minLength", "/snapshotId/allOf", "/snapshotId/minLength", "/snapshotId/type"))
                    or pointer == "/properties/version/const" for pointer in changed), changed  # `minLength: 1` is implied by the pattern
         assert "/properties/version/const" in changed
-    context = {pointer for pointer, *_ in _difference(prints.trees["render-context-v0.16.schema.yaml"], prints.trees["render-context-v0.17.schema.yaml"], prints.hasher, limit=500)}
-    for pinned in ("project", "view", "theme", "colorScheme", "layout"):
-        assert f"/properties/body/properties/{pinned}/allOf/0/properties/address/pattern" in context
-    assert sum(pointer.endswith("/locator/properties/address/pattern") for pointer in context) == 2
 
 
 def test_each_address_site_refuses_every_listed_input():
@@ -171,7 +171,7 @@ def test_every_migrated_document_keeps_its_verdict_under_the_successor():
         predecessor = VALIDATORS.first_error(old_schema, {**document, "version": old_version})
         assert successor == predecessor, path
         checked += 1
-    assert checked > 25, "the migration covers the committed Contexts"
+    assert checked >= 2, "the migration still covers the committed documents of the remaining successor kinds"
 
 
 def test_no_committed_or_packaged_document_is_left_on_a_predecessor_version():

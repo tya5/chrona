@@ -211,8 +211,8 @@ does not, by itself, show that. The check is made per site and per refused input
 an `expected-deltas` line with a test; where it fails, the change narrows what a valid document may contain and takes the
 version bump (or is named as a narrowing in the change). The verification for the sites left by #710 is in the #731 design.
 
-*Retirement of the #710 predecessors.* A predecessor (`render-context-v0.16`,
-`command-request-v0.2`, `automation-result-v0.1`, `snapshot-ref-v0.2`; `layout-profile-v0.9` was retired by #731) is
+*Retirement of the #710 predecessors.* A predecessor (`command-request-v0.2`, `automation-result-v0.1`,
+`snapshot-ref-v0.2`; `layout-profile-v0.9` and `render-context-v0.16` were retired by #731) is
 `transitioning` with a named `removalSlice`, and its schema file (archived with `git mv`), its reader registration and its
 version string are deleted only in that slice, once no committed, packaged or test document names it; the project has one
 user and no external Store, so no release of dual support is required beyond that, and a document that still declares the

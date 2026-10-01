@@ -28,7 +28,6 @@ SCHEMAS = (
     "icon-catalog-v0.3.schema.yaml",
     "icon-catalog-v0.4.schema.yaml",
     "theme-asset-source-v0.1.schema.yaml",
-    "render-context-v0.16.schema.yaml",
     "render-context-v0.17.schema.yaml",
     "view-v0.28.schema.yaml",
     "vocabulary-v0.1.schema.yaml",

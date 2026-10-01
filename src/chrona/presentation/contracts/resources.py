@@ -608,13 +608,12 @@ class ResolvedThemeContract:
     catalog_patterns: FrozenDict = field(default_factory=FrozenDict)
 
 
-# The Render Context versions the closure and the materializer accept. v0.16 stays readable while its
-# successor (strict `storeAddress`, #710) is adopted; new Contexts and every Draft closure are v0.17.
+# The Render Context versions the closure and the materializer accept. v0.16 (loose Store addresses) was
+# retired once every committed and packaged Context was on v0.17 (#731); it is an unsupported version now.
 RENDER_CONTEXT_VERSION = "chrona/render-context/v0.17"
-RENDER_CONTEXT_VERSIONS = ("chrona/render-context/v0.16", RENDER_CONTEXT_VERSION)
+RENDER_CONTEXT_VERSIONS = (RENDER_CONTEXT_VERSION,)
 
 _SCHEMAS = {
-    ("render-context", "chrona/render-context/v0.16"): "render-context-v0.16.schema.yaml",
     ("render-context", "chrona/render-context/v0.17"): "render-context-v0.17.schema.yaml",
     ("project", "timeline/v0.7"): "project-v0.7.schema.yaml",
     ("view", "chrona/view/v0.26"): "view-v0.26.schema.yaml",
