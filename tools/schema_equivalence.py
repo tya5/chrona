@@ -795,6 +795,10 @@ PROBE_STRINGS: dict[str, tuple[tuple[str, str], ...]] = {
         ("inner-traversal", "a/../b"), ("absolute", "/x"), ("colon", "a:b"), ("space", "a b"), ("non-ascii", "\u00e9"),
         ("tab", "a\tb"),
     ),
+    # The widening of moving a site from a letter-or-digit-first pattern to `storeAddress` (#731): accepted only after the move.
+    "address-widened": (
+        ("leading-dot", ".hidden/x"), ("leading-underscore", "_x"), ("leading-hyphen", "-x"),
+    ),
     # One Store address segment used as a file name (`snapshotId`; the registry stores `snapshots/<id>.yaml`).
     "segment": (
         ("valid", "baseline-2027-06"), ("nul", "a\x00b"), ("backslash", "a\\b"), ("windows-traversal", "..\\..\\x"),
@@ -906,6 +910,17 @@ PROBE_SITES: tuple[ProbeSite, ...] = (
               repair=_REGISTRY_REPAIR),
     ProbeSite("automation-result", _OPERATIONAL + "accepted-baseline-result.yaml", "/inputs/0/address", "address"),
     ProbeSite("snapshot-ref", "inline:snapshot-ref", "/body/project/address", "address"),
+    # The two sites #731 moved in place (their consumers were made to refuse the same values first).
+    ProbeSite("builtin-preset-library", "src/chrona/resources/presets/library.yaml",
+              "/entries/6/members/iconCatalogs/0/sourcePath", "address"),
+    ProbeSite("builtin-preset-library", "src/chrona/resources/presets/library.yaml",
+              "/entries/6/members/iconCatalogs/0/noticeSourcePath", "address"),
+    ProbeSite("builtin-preset-library", "src/chrona/resources/presets/library.yaml",
+              "/entries/6/members/view/sourceRoot", "address"),
+    ProbeSite("builtin-preset-library", "src/chrona/resources/presets/library.yaml",
+              "/entries/6/members/iconCatalogs/0/sourcePath", "address-widened"),
+    ProbeSite("icon-catalog", "inline:icon-catalog-raster", "/body/icons/ok/source/address", "address"),
+    ProbeSite("icon-catalog", "inline:icon-catalog-raster", "/body/icons/ok/source/address", "address-widened"),
 )
 
 _REVISION = "sha256:" + "0123456789abcdef" * 4
@@ -947,6 +962,14 @@ INLINE_DOCUMENTS: dict[str, Callable[[], dict[str, Any]]] = {
         "version": "chrona/snapshot-ref/v0.3", "kind": "snapshot-ref", "id": "baseline", "body": {"project": {
             "id": "project", "kind": "project", "store": {"provider": "local", "identity": "store"},
             "address": "projects/main.yaml", "revision": {"token": "main"}}}},
+    "icon-catalog-raster": lambda: {
+        "version": "chrona/icon-catalog/v0.4", "kind": "icon-catalog", "id": "raster-assets", "body": {
+            "set": "starter", "aliases": [],
+            "provenance": {"sourceKind": "theme-asset-source", "sourceContentIdentity": _REVISION,
+                           "license": {"spdx": "CC0-1.0", "notice": "CC0 notice"}},
+            "icons": {"ok": {"kind": "raster", "source": {"address": "icons/ok.png", "contentIdentity": _REVISION},
+                             "viewport": {"inlineSize": 24, "blockSize": 24}, "alternative": "ok"}},
+            "entryAliases": {}, "glyphs": {}, "patterns": {}}},
     "derived-theme": lambda: {
         "version": "chrona/theme/v0.14", "kind": "theme", "id": "variation", "body": {
             "extends": {"id": "base", "path": "base.yaml", "sourceContentIdentity": _REVISION,

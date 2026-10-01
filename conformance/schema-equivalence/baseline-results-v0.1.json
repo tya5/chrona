@@ -465,6 +465,327 @@
     "rule": "pattern"
    },
    "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/contentIdentity|sha256:valid": null,
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/noticeSourcePath|address:absolute": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/noticeSourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/noticeSourcePath|address:all-dot-segment": null,
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/noticeSourcePath|address:backslash": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/noticeSourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/noticeSourcePath|address:colon": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/noticeSourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/noticeSourcePath|address:dot-dot": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/noticeSourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/noticeSourcePath|address:dot-segment-inner": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/noticeSourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/noticeSourcePath|address:dot-segment-leading": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/noticeSourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/noticeSourcePath|address:drive-absolute": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/noticeSourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/noticeSourcePath|address:drive-relative": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/noticeSourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/noticeSourcePath|address:embedded-newline": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/noticeSourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/noticeSourcePath|address:empty-segment": null,
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/noticeSourcePath|address:inner-traversal": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/noticeSourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/noticeSourcePath|address:non-ascii": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/noticeSourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/noticeSourcePath|address:nul": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/noticeSourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/noticeSourcePath|address:space": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/noticeSourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/noticeSourcePath|address:tab": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/noticeSourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/noticeSourcePath|address:trailing-newline": null,
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/noticeSourcePath|address:trailing-slash": null,
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/noticeSourcePath|address:traversal": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/noticeSourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/noticeSourcePath|address:unc": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/noticeSourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/noticeSourcePath|address:valid": null,
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/sourcePath|address-widened:leading-dot": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/sourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/sourcePath|address-widened:leading-hyphen": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/sourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/sourcePath|address-widened:leading-underscore": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/sourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/sourcePath|address:absolute": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/sourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/sourcePath|address:all-dot-segment": null,
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/sourcePath|address:backslash": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/sourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/sourcePath|address:colon": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/sourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/sourcePath|address:dot-dot": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/sourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/sourcePath|address:dot-segment-inner": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/sourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/sourcePath|address:dot-segment-leading": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/sourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/sourcePath|address:drive-absolute": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/sourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/sourcePath|address:drive-relative": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/sourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/sourcePath|address:embedded-newline": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/sourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/sourcePath|address:empty-segment": null,
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/sourcePath|address:inner-traversal": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/sourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/sourcePath|address:non-ascii": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/sourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/sourcePath|address:nul": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/sourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/sourcePath|address:space": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/sourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/sourcePath|address:tab": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/sourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/sourcePath|address:trailing-newline": null,
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/sourcePath|address:trailing-slash": null,
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/sourcePath|address:traversal": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/sourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/sourcePath|address:unc": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/iconCatalogs/0/sourcePath",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/iconCatalogs/0/sourcePath|address:valid": null,
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/view/sourceRoot|address:absolute": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/view/sourceRoot",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/view/sourceRoot|address:all-dot-segment": null,
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/view/sourceRoot|address:backslash": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/view/sourceRoot",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/view/sourceRoot|address:colon": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/view/sourceRoot",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/view/sourceRoot|address:dot-dot": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/view/sourceRoot",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/view/sourceRoot|address:dot-segment-inner": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/view/sourceRoot",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/view/sourceRoot|address:dot-segment-leading": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/view/sourceRoot",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/view/sourceRoot|address:drive-absolute": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/view/sourceRoot",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/view/sourceRoot|address:drive-relative": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/view/sourceRoot",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/view/sourceRoot|address:embedded-newline": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/view/sourceRoot",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/view/sourceRoot|address:empty-segment": null,
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/view/sourceRoot|address:inner-traversal": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/view/sourceRoot",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/view/sourceRoot|address:non-ascii": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/view/sourceRoot",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/view/sourceRoot|address:nul": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/view/sourceRoot",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/view/sourceRoot|address:space": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/view/sourceRoot",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/view/sourceRoot|address:tab": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/view/sourceRoot",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/view/sourceRoot|address:trailing-newline": null,
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/view/sourceRoot|address:trailing-slash": null,
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/view/sourceRoot|address:traversal": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/view/sourceRoot",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/view/sourceRoot|address:unc": {
+    "code": "E_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/entries/6/members/view/sourceRoot",
+    "rule": "pattern"
+   },
+   "builtin-preset-library|src/chrona/resources/presets/library.yaml/entries/6/members/view/sourceRoot|address:valid": null,
    "color-scheme|examples/aster-ssd/schemes/executive-light.yaml/id|identifier:empty": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected minLength 1",
@@ -793,6 +1114,125 @@
     "pointer": "/examples/0/path",
     "rule": "pattern"
    },
+   "icon-catalog|inline:icon-catalog-raster/body/icons/ok/source/address|address-widened:leading-dot": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/icons/ok/source/address",
+    "rule": "pattern"
+   },
+   "icon-catalog|inline:icon-catalog-raster/body/icons/ok/source/address|address-widened:leading-hyphen": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/icons/ok/source/address",
+    "rule": "pattern"
+   },
+   "icon-catalog|inline:icon-catalog-raster/body/icons/ok/source/address|address-widened:leading-underscore": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/icons/ok/source/address",
+    "rule": "pattern"
+   },
+   "icon-catalog|inline:icon-catalog-raster/body/icons/ok/source/address|address:absolute": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/icons/ok/source/address",
+    "rule": "pattern"
+   },
+   "icon-catalog|inline:icon-catalog-raster/body/icons/ok/source/address|address:all-dot-segment": null,
+   "icon-catalog|inline:icon-catalog-raster/body/icons/ok/source/address|address:backslash": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/icons/ok/source/address",
+    "rule": "pattern"
+   },
+   "icon-catalog|inline:icon-catalog-raster/body/icons/ok/source/address|address:colon": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/icons/ok/source/address",
+    "rule": "pattern"
+   },
+   "icon-catalog|inline:icon-catalog-raster/body/icons/ok/source/address|address:dot-dot": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/icons/ok/source/address",
+    "rule": "pattern"
+   },
+   "icon-catalog|inline:icon-catalog-raster/body/icons/ok/source/address|address:dot-segment-inner": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/icons/ok/source/address",
+    "rule": "pattern"
+   },
+   "icon-catalog|inline:icon-catalog-raster/body/icons/ok/source/address|address:dot-segment-leading": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/icons/ok/source/address",
+    "rule": "pattern"
+   },
+   "icon-catalog|inline:icon-catalog-raster/body/icons/ok/source/address|address:drive-absolute": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/icons/ok/source/address",
+    "rule": "pattern"
+   },
+   "icon-catalog|inline:icon-catalog-raster/body/icons/ok/source/address|address:drive-relative": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/icons/ok/source/address",
+    "rule": "pattern"
+   },
+   "icon-catalog|inline:icon-catalog-raster/body/icons/ok/source/address|address:embedded-newline": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/icons/ok/source/address",
+    "rule": "pattern"
+   },
+   "icon-catalog|inline:icon-catalog-raster/body/icons/ok/source/address|address:empty-segment": null,
+   "icon-catalog|inline:icon-catalog-raster/body/icons/ok/source/address|address:inner-traversal": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/icons/ok/source/address",
+    "rule": "pattern"
+   },
+   "icon-catalog|inline:icon-catalog-raster/body/icons/ok/source/address|address:non-ascii": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/icons/ok/source/address",
+    "rule": "pattern"
+   },
+   "icon-catalog|inline:icon-catalog-raster/body/icons/ok/source/address|address:nul": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/icons/ok/source/address",
+    "rule": "pattern"
+   },
+   "icon-catalog|inline:icon-catalog-raster/body/icons/ok/source/address|address:space": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/icons/ok/source/address",
+    "rule": "pattern"
+   },
+   "icon-catalog|inline:icon-catalog-raster/body/icons/ok/source/address|address:tab": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/icons/ok/source/address",
+    "rule": "pattern"
+   },
+   "icon-catalog|inline:icon-catalog-raster/body/icons/ok/source/address|address:trailing-newline": null,
+   "icon-catalog|inline:icon-catalog-raster/body/icons/ok/source/address|address:trailing-slash": null,
+   "icon-catalog|inline:icon-catalog-raster/body/icons/ok/source/address|address:traversal": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/icons/ok/source/address",
+    "rule": "pattern"
+   },
+   "icon-catalog|inline:icon-catalog-raster/body/icons/ok/source/address|address:unc": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!.*(?:^|/)\\\\.{1,2}(?:/|$))(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)[A-Za-z0-9][A-Za-z0-9._/-]*$'",
+    "pointer": "/body/icons/ok/source/address",
+    "rule": "pattern"
+   },
+   "icon-catalog|inline:icon-catalog-raster/body/icons/ok/source/address|address:valid": null,
    "icon-catalog|tests/fixtures/icons/theme-assets-valid.normalized-v0.4.yaml/body/provenance/sourceContentIdentity|sha256:no-prefix": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",

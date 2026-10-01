@@ -209,7 +209,10 @@ refuses at every use of the field, including a document that carries such a valu
 selects, a reference that is only validated, a packaged entry): the guard that protects the file-opening adapters
 does not, by itself, show that. The check is made per site and per refused input against the consumer's own code, and each moved verdict is
 an `expected-deltas` line with a test; where it fails, the change narrows what a valid document may contain and takes the
-version bump (or is named as a narrowing in the change). The verification for the sites left by #710 is in the #731 design.
+version bump (or is named as a narrowing in the change). The verification for the sites left by #710 is in the #731 design. Two of them moved under this clause once their consumers were made to
+refuse the same values: `preset-library` v0.2 `address` and `icon-catalog` v0.4 `source.address` (every declared raster address is checked when the catalog is parsed). Moving a
+site from a letter-or-digit-first pattern to `storeAddress` also newly accepts a leading `.`, `_` or `-`, which the shared guard already accepts. Project evidence references stay on the loose
+`revision-store-resource-ref-v0.1`: nothing opens them, so tightening them takes a Project version bump.
 
 *Retirement of the #710 predecessors.* A predecessor was `transitioning` with a named `removalSlice`, and its schema
 file (archived with `git mv`), its reader registration and its version string are deleted only in that slice, once no

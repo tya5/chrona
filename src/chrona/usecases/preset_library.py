@@ -7,18 +7,18 @@ from typing import Any
 
 import yaml
 
+from chrona.core.store_address import StoreAddressError, check_store_address
 from chrona.resources import builtin_preset_library_resource, builtin_preset_source_root, safe_load, schema_validator
 from chrona.presentation.contracts import ClosureIdentity, IconCatalogContract, parse_contract
 
 
 def _safe(address: object) -> str:
-    if not isinstance(address, str):
-        raise ValueError("E_BUILTIN_PRESET_RESOURCE")
-    path = PurePosixPath(address)
-    if (not address or path.is_absolute() or address != path.as_posix()
-            or any(part in {"", ".", ".."} for part in path.parts)):
-        raise ValueError("E_BUILTIN_PRESET_RESOURCE")
-    return address
+    """Return a catalogue address the shared Store-address guard accepts (the schema's `storeAddress`), else refuse (#731)."""
+    try:
+        check_store_address(address)
+    except StoreAddressError as error:
+        raise ValueError("E_BUILTIN_PRESET_RESOURCE") from error
+    return address  # type: ignore[return-value]
 
 
 def _library() -> list[dict[str, Any]]:
