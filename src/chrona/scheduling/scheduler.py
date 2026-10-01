@@ -348,8 +348,10 @@ def _analyze_criticality(project: dict[str, Any], placements: dict[str, dict[str
         if not changed:
             break
 
+    # Every mapping the analysis carries is keyed in the canonical Project object order (Spec 57), never in the
+    # iteration order of a set, which follows the hash seed (#789).
     total_float: dict[str, int] = {}
-    for object_id in eligible:
+    for object_id in (object_id for object_id in objects if object_id in eligible):
         early, late = _placement_start(placements[object_id]), _placement_start(latest[object_id])
         total_float[object_id] = _calendar_distance(early, late, _object_calendar(objects[object_id], project, calendars))
     driving_relations = frozenset(
@@ -357,6 +359,7 @@ def _analyze_criticality(project: dict[str, Any], placements: dict[str, dict[str
         for index, relation in enumerate(project.get("relations", ()))
         if _is_driving_relation(relation, placements, project, calendars)
     )
+    latest = {object_id: latest[object_id] for object_id in objects if object_id in latest}
     return ScheduleAnalysis(latest, total_float,
                             frozenset(object_id for object_id, value in total_float.items() if value == 0),
                             component_targets, driving_relations)
