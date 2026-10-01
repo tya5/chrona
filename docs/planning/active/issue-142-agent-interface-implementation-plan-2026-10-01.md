@@ -290,3 +290,35 @@ S0a, S0b, S1, S3 and S4 each publish separately; S2 publishes after S1; S5 after
 S4. Each slice's PR carries its focused-test output and, for code slices, the
 conformance result. Archive this record and the review only after the acceptance review
 and exact-main CI, per AGENTS.md.
+
+## Progress
+
+| Slice | State | Note |
+| --- | --- | --- |
+| S0 (S0a and S0b together) | Implemented in two PRs: the characterization suite (#783), then the extraction | See the deviations below. |
+
+S0 deviations from the plan text (no change of behavior; the CLI bytes are frozen by
+`tests/cli/test_cli_characterization.py`, 110 invocations against
+`tests/fixtures/cli_characterization/golden.json`):
+
+- S0a and S0b landed as one slice, because the draft-render use case needs the failure
+  report (`StableFailure`) and both must keep the order of failures the CLI had.
+- `project_checks` exposes `validate_project_mapping` and `schedule_project_mapping` next to
+  the `*_file` functions: the CLI also validates and schedules an immutable snapshot, which
+  yields a mapping, not a path. The outcome types are `ProjectValidation` and `ProjectSchedule`
+  (`payload()` keeps `_schedule_payload`'s key order).
+- `report_failure(exception)` returns a frozen `FailureReport(status, diagnostics, exit_code)`
+  with `payload()`; `rejection_report(diagnostics, component)` shapes Core diagnostics. It also
+  maps `RenderRejected` and `RenderFailed`, which the CLI translated at each call site. The
+  CLI's `CliFailure` is now `usecases.failure_report.StableFailure` (`CliFailure` stays an alias).
+- `DraftRenderRequest` carries the viewport as the `WIDTHxHEIGHT` string and the typesetter as
+  three strings, and `parse_viewport` and `typesetter_identity` run inside `render_draft` after
+  the preset is resolved: this keeps the order in which several simultaneous input errors were
+  reported. Output-suffix negotiation (`--format` against `-o`) and file writing stay in the CLI.
+  `DraftRenderResult` wraps the `RenderedReview` (artifact bytes, media type, scene, warnings);
+  `warning_payloads` returns the warning and info records the CLI prints to stderr. No separate
+  content identity is added in S0.
+- Not changed, tracked in #780 and #782: near-duplicate render rows, `E_BUILTIN_PRESET_UNKNOWN`
+  without a message of its own, `validate` returning `[]` for a cycle. Observed and not yet
+  tracked: the key order of `analysis.totalFloat` in `chrona schedule` output follows set
+  iteration (hash-seed dependent), so two runs can differ; an MCP adapter must not pin it.

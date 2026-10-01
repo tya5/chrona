@@ -1,0 +1,86 @@
+import pytest
+import yaml
+
+from chrona.core.validation import load_yaml
+from chrona.usecases.project_checks import (
+    schedule_project_file, schedule_project_mapping, validate_project_file, validate_project_mapping,
+)
+
+STARTER = """\
+version: timeline/v0.7
+project: {id: starter, title: Starter}
+objects:
+  design: {type: task, title: Design, schedule: {mode: fixed-span, start: '2026-10-01', end: '2026-10-31'}}
+  build: {type: task, title: Build, schedule: {mode: scheduled, amount: 5d}}
+  release: {type: gate, title: Release, schedule: {mode: fixed-point, at: '2026-12-18'}}
+relations:
+  - {id: d-b, type: dependency, from: {object: design, endpoint: end}, to: {object: build, endpoint: start}, lag: 0d}
+  - {id: b-r, type: dependency, from: {object: build, endpoint: end}, to: {object: release, endpoint: at}, lag: 0d}
+"""
+
+CYCLE = """\
+version: timeline/v0.7
+project: {id: cyc, title: Cycle}
+objects:
+  a: {type: task, title: A, schedule: {mode: scheduled, amount: 2d}}
+  b: {type: task, title: B, schedule: {mode: scheduled, amount: 2d}}
+relations:
+  - {id: a-b, type: dependency, from: {object: a, endpoint: end}, to: {object: b, endpoint: start}, lag: 0d}
+  - {id: b-a, type: dependency, from: {object: b, endpoint: end}, to: {object: a, endpoint: start}, lag: 0d}
+"""
+
+
+def _write(tmp_path, name, text):
+    path = tmp_path / name
+    path.write_text(text, encoding="utf-8")
+    return path
+
+
+def test_validate_accepts_a_valid_project_and_reports_a_broken_one(tmp_path):
+    assert validate_project_file(_write(tmp_path, "ok.yaml", STARTER)).ok
+    broken = yaml.safe_load(STARTER)
+    broken["relations"][0]["to"]["object"] = "ghost"
+    outcome = validate_project_mapping(broken)
+    assert not outcome.ok
+    assert [item.id for item in outcome.diagnostics] == ["E_REFERENCE"]
+
+
+def test_validate_does_not_schedule_so_a_cycle_validates(tmp_path):
+    path = _write(tmp_path, "cycle.yaml", CYCLE)
+    assert validate_project_file(path).ok
+    outcome = schedule_project_file(path)
+    assert not outcome.ok
+    assert {item.id for item in outcome.diagnostics} == {"E_UNSUPPORTED_CYCLE"}
+    assert outcome.placements == {} and outcome.analysis is None
+
+
+def test_schedule_document_keeps_the_published_key_order_and_object_order(tmp_path):
+    outcome = schedule_project_file(_write(tmp_path, "ok.yaml", STARTER))
+    assert outcome.ok
+    document = outcome.payload()
+    assert list(document) == ["placements", "diagnostics", "analysis"]
+    assert document["diagnostics"] == []
+    assert list(document["analysis"]) == ["criticalObjectIds", "totalFloat"]
+    assert document["analysis"]["criticalObjectIds"] == ["design", "release"]
+    assert document["placements"] is outcome.placements
+
+
+def test_schedule_mapping_matches_the_file_form(tmp_path):
+    path = _write(tmp_path, "ok.yaml", STARTER)
+    assert schedule_project_mapping(load_yaml(path)).payload() == schedule_project_file(path).payload()
+
+
+def test_the_checks_read_only_the_named_path_and_print_nothing(tmp_path, capsys):
+    validate_project_file(_write(tmp_path, "ok.yaml", STARTER))
+    schedule_project_file(tmp_path / "ok.yaml")
+    captured = capsys.readouterr()
+    assert captured.out == "" and captured.err == ""
+    assert sorted(path.name for path in tmp_path.iterdir()) == ["ok.yaml"]
+
+
+@pytest.mark.parametrize("check", [validate_project_file, schedule_project_file])
+def test_an_unreadable_file_raises_the_library_error_for_the_failure_report(tmp_path, check):
+    with pytest.raises(OSError):
+        check(tmp_path / "missing.yaml")
+    with pytest.raises(yaml.YAMLError):
+        check(_write(tmp_path, "broken.yaml", "a: [unclosed\n"))

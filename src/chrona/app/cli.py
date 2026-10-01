@@ -4,25 +4,23 @@ import argparse
 from hashlib import sha256
 import json
 import sys
-import tempfile
-from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 from typing import Any, NoReturn
 
-import yaml
-
 from chrona.usecases.review_projects import review_projects
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.identity import content_identity, json_value
-from chrona.core.validation import load_yaml, validate_project
-from chrona.presentation.model.closure import DEFAULT_DRAFT_VIEWPORT, ClosureError, RenderClosure, resolve_draft_render, resolve_guided_draft_render, resolve_render_context
-from chrona.presentation.model.info_diagnostics import PaintOmission, SuppressedPlotLabels
-from chrona.presentation.contracts import PresentationIngressRejected, TypesetterIdentity
-from chrona.usecases.render_review import RenderFailed, RenderRejected, RenderRequest, RenderedReview, render_review
-from chrona.scheduling.scheduler import ReferenceScheduler, schedule
+from chrona.core.validation import load_yaml
+from chrona.presentation.model.closure import DEFAULT_DRAFT_VIEWPORT, RenderClosure, resolve_guided_draft_render, resolve_render_context
+from chrona.presentation.contracts import TypesetterIdentity
+from chrona.usecases.draft_render import DraftRenderRequest, parse_viewport, render_draft, typesetter_identity, warning_payloads
+from chrona.usecases.failure_report import FailureReport, StableFailure, diagnostic_record, rejection_report, report_failure
+from chrona.usecases.project_checks import schedule_project_mapping, validate_project_mapping
+from chrona.usecases.render_review import RenderRequest, RenderedReview, render_review
+from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.loader import load_project
-from chrona.storage.revision_store import LocalSnapshotReader, SnapshotReadError
+from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.operational.baselines import compare_baseline
 from chrona.operational.store_config import load_store_config
 from chrona.operational.command_engine import apply_actual_command, check_command
@@ -32,20 +30,14 @@ from chrona.operational.resources import parse_command, parse_document, stamp_au
 from chrona.usecases.materialize import MaterializationError, materialize
 from chrona.usecases.local_authoring import discover_store_configuration, initialize_project
 from chrona.usecases.terse_compile import compile_plan, input_unreadable, output_exists
-from chrona.usecases.preset_library import copy_builtin_preset, is_builtin_preset_id, list_builtin_presets
-from chrona.presentation.icons.importer import IconImportError, copy_material_symbols_outline_rounded_catalog, import_iconify, import_theme_assets
-from chrona.presentation.fonts.importer import FontImportError, import_font
+from chrona.usecases.preset_library import copy_builtin_preset, list_builtin_presets
+from chrona.presentation.icons.importer import copy_material_symbols_outline_rounded_catalog, import_iconify, import_theme_assets
+from chrona.presentation.fonts.importer import import_font
 from chrona.presentation.scene.serialization import SceneSerializationError, serialize_scene
-from chrona.resources import default_preset_resource, default_preset_root, example_ids, safe_load
+from chrona.resources import example_ids, safe_load
 
 
-@dataclass(frozen=True)
-class CliFailure(Exception):
-    code: str
-    message: str
-    component: str = "cli"
-    source_ref: str = "/"
-    exit_code: int = 1
+CliFailure = StableFailure
 
 
 class JsonArgumentParser(argparse.ArgumentParser):
@@ -59,75 +51,25 @@ def _json_default(value: object) -> str:
     raise TypeError(f"Not JSON serializable: {type(value)!r}")
 
 
-def _diagnostic(
-    code: str, message: str, component: str, source_ref: str = "/",
-    revision_refs: list[str] | None = None,
-) -> dict[str, Any]:
-    return {
-        "code": code, "severity": "error", "component": component,
-        "sourceRef": source_ref, "revisionRefs": revision_refs or [], "message": message,
-    }
+_diagnostic = diagnostic_record
+
+
+def _emit_report(report: FailureReport) -> NoReturn:
+    print(json.dumps(report.payload(), ensure_ascii=False))
+    raise SystemExit(report.exit_code)
 
 
 def _emit_failure(failure: CliFailure) -> NoReturn:
-    payload = {
-        "status": "rejected" if failure.exit_code == 1 else "failed",
-        "diagnostics": [_diagnostic(
-            failure.code, failure.message, failure.component, failure.source_ref
-        )],
-    }
-    print(json.dumps(payload, ensure_ascii=False))
-    raise SystemExit(failure.exit_code)
-
-
-def _emit_presentation_rejection(error: PresentationIngressRejected) -> NoReturn:
-    """Transport aggregate ingress findings without changing legacy one-error JSON."""
-    multiple = len(error.diagnostics) > 1
-    diagnostics = []
-    for item in error.diagnostics:
-        code = f"E_{item.resource_kind.upper().replace('-', '_')}_SCHEMA" if item.code == "E_RESOURCE_SCHEMA" else item.code
-        message = _version_message(item.message) if code == "E_RESOURCE_VERSION_UNSUPPORTED" else item.message
-        diagnostic = _diagnostic(code, message, "closure", item.pointer)
-        if multiple:
-            diagnostic |= {"resourceKind": item.resource_kind, "resourceIdentity": item.resource_identity,
-                           "phase": item.phase, **({"rule": item.rule} if item.rule is not None else {})}
-        diagnostics.append(diagnostic)
-    print(json.dumps({"status": "rejected", "diagnostics": diagnostics}, ensure_ascii=False))
-    raise SystemExit(1)
-
-
-def _version_message(detail: str) -> str:
-    """Give an unprovenanced stale resource a safe, non-automatic next action."""
-    return detail + "; see the current resource schema and migration notes before re-applying edits"
+    _emit_report(report_failure(failure))
 
 
 def _emit_render_warnings(rendered: RenderedReview) -> None:
-    for warning in rendered.warning_records:
-        print(json.dumps(warning.payload, ensure_ascii=False, sort_keys=True), file=sys.stderr)
-    for info in rendered.info_diagnostics:
-        if isinstance(info, SuppressedPlotLabels):
-            print(json.dumps({"code": info.code, "severity": "info", "surfaceId": info.surface_id,
-                              "count": info.count}, ensure_ascii=False, sort_keys=True), file=sys.stderr)
-        elif isinstance(info, PaintOmission):
-            message = (f"{info.treatment} on {info.role} was omitted by {info.visual_profile}; "
-                       + (f"use {info.paintable_profile} to paint it"
-                          if info.paintable_profile else f"no {info.target_kind} profile can paint it"))
-            print(json.dumps({"code": info.code, "severity": "info", "role": info.role,
-                              "treatment": info.treatment, "sourceRef": info.source_ref,
-                              "visualProfile": info.visual_profile,
-                              "paintableProfile": info.paintable_profile, "message": message},
-                             ensure_ascii=False, sort_keys=True), file=sys.stderr)
+    for payload in warning_payloads(rendered):
+        print(json.dumps(payload, ensure_ascii=False, sort_keys=True), file=sys.stderr)
 
 
 def _reject(diagnostics: list[Diagnostic], component: str = "core") -> NoReturn:
-    payload = {
-        "status": "rejected",
-        "diagnostics": [
-            _diagnostic(item.id, item.message, component, item.path) for item in diagnostics
-        ],
-    }
-    print(json.dumps(payload, ensure_ascii=False))
-    raise SystemExit(1)
+    _emit_report(rejection_report(diagnostics, component))
 
 
 def _reject_codes(codes: list[str] | tuple[str, ...], component: str) -> NoReturn:
@@ -185,21 +127,7 @@ def _resolve_output_target(output: str, requested: str | None) -> str:
 
 
 def _draft_typesetter_identity(args: argparse.Namespace, target_kind: str) -> TypesetterIdentity | None:
-    values = (args.typesetter_engine, args.typesetter_version, args.typesetter_adapter_grammar)
-    is_typeset = target_kind in {"typst", "tikz"}
-    if is_typeset and not all(values):
-        raise CliFailure(
-            "E_RENDER_TYPESETTER_DESCRIPTOR",
-            "typeset Draft targets require --typesetter-engine, --typesetter-version, and --typesetter-adapter-grammar",
-            "cli", "/typesetter", 2,
-        )
-    if not is_typeset and any(values):
-        raise CliFailure(
-            "E_RENDER_TYPESETTER_DESCRIPTOR",
-            "typesetter descriptor is valid only with --format typst or tikz",
-            "cli", "/typesetter", 2,
-        )
-    return TypesetterIdentity(*values) if is_typeset else None
+    return typesetter_identity(args.typesetter_engine, args.typesetter_version, args.typesetter_adapter_grammar, target_kind)
 
 
 def _load_primary_project(args: argparse.Namespace) -> dict[str, Any]:
@@ -373,7 +301,7 @@ def _parser() -> JsonArgumentParser:
 
 def _render_review(closure: RenderClosure, args: argparse.Namespace, *, asset_root: Path | None = None,
                    draft_font_resolution=None) -> RenderedReview:
-    """Adapt one resolved closure to the render use case and its diagnostics."""
+    """Adapt one resolved closure to the render use case; its failures are reported by `main`."""
     request = RenderRequest(
         closure=closure, snapshot_root=Path(getattr(args, "snapshot_root", ".")),
         scheduler=ReferenceScheduler(),
@@ -382,12 +310,7 @@ def _render_review(closure: RenderClosure, args: argparse.Namespace, *, asset_ro
         draft_auto_block=getattr(args, "draft_auto_block", False),
         draft_font_resolution=draft_font_resolution,
     )
-    try:
-        return render_review(request)
-    except RenderRejected as error:
-        _reject(error.diagnostics, error.component)
-    except RenderFailed as error:
-        raise CliFailure(error.code, error.message, error.component, error.source_ref) from error
+    return render_review(request)
 
 
 def _render_review_reader(args: argparse.Namespace, reference: dict[str, Any]) -> tuple[LocalSnapshotReader, Path]:
@@ -478,38 +401,6 @@ def _run_preset_list(_args: argparse.Namespace) -> None:
     print(json.dumps({"status": "ok", "presets": list_builtin_presets()}, ensure_ascii=False))
 
 
-def _looks_like_preset_path(value: str) -> bool:
-    """A `--preset` value naming a file always contains a separator or a YAML suffix (#429).
-
-    `library.yaml` ids match `^[a-z][a-z0-9-]*$`, which can never collide with either.
-    """
-    return "/" in value or value.endswith((".yaml", ".yml"))
-
-
-def _resolve_preset_argument(value: str | None) -> tuple[Path | None, tempfile.TemporaryDirectory | None]:
-    """Return `(preset_path, owned_tempdir)` for `--preset`, resolving a builtin id by name (#429).
-
-    A name is resolved through the exact same `copy_builtin_preset` a user's own
-    `chrona preset copy <id>` would run, into a process-local temporary directory,
-    so `render --preset <name>` is byte-identical to `preset copy <name>` followed
-    by `render --preset <path>` by construction rather than by a second code path.
-    The caller owns `owned_tempdir` and must `.cleanup()` it once rendering is done
-    (a plain try/finally, not `@contextmanager`: `CliFailure` is a frozen dataclass,
-    and contextlib's generator-based `__exit__` cannot re-raise a frozen exception
-    through `gen.throw` -- it tries to stamp `__traceback__` on it and fails).
-    """
-    if not value:
-        return None, None
-    if _looks_like_preset_path(value):
-        return Path(value), None
-    tmp = tempfile.TemporaryDirectory(prefix="chrona-preset-")
-    try:
-        return copy_builtin_preset(value, Path(tmp.name) / "preset"), tmp
-    except BaseException:
-        tmp.cleanup()
-        raise
-
-
 def _assert_context_format(closure: RenderClosure, format_name: str | None) -> None:
     if format_name and format_name != closure.context.target.kind:
         raise CliFailure("E_RENDER_FORMAT_CONTEXT", "--format must match the Context target", "cli", "/format", 2)
@@ -517,45 +408,16 @@ def _assert_context_format(closure: RenderClosure, format_name: str | None) -> N
 
 def _run_draft_render(args: argparse.Namespace) -> None:
     target_kind = _resolve_output_target(args.output, args.format)
-    preset_path, owned_tempdir = _resolve_preset_argument(args.preset)
-    try:
-        default = default_preset_resource() if preset_path is None else None
-        try:
-            closure = resolve_draft_render(
-                project_path=Path(args.project),
-                preset_path=preset_path if preset_path is not None else Path(str(default)),
-                preset_root=None if preset_path is not None else Path(str(default_preset_root())),
-                view_path=Path(args.view) if args.view else None, theme_path=Path(args.theme) if args.theme else None,
-                scheme_path=Path(args.scheme) if args.scheme else None, layout_path=Path(args.layout) if args.layout else None,
-                actual_path=Path(args.actual) if args.actual else None,
-                summary_path=Path(args.summary) if args.summary else None,
-                detail_path=Path(args.detail) if args.detail else None,
-                icon_catalog_paths=tuple(Path(path) for path in args.icon_catalog),
-                font_metrics_path=Path(args.font_metrics) if args.font_metrics else None,
-                system_fonts=args.system_fonts,
-                viewport=_parse_viewport(args.viewport), locale=args.locale, target_kind=target_kind,
-                visual_profile=args.visual_profile,
-                typesetter=_draft_typesetter_identity(args, target_kind),
-            )
-        except ClosureError as error:
-            preset_id = error.declaring_preset_id
-            if (error.diagnostic_id == "E_RESOURCE_VERSION_UNSUPPORTED" and owned_tempdir is None
-                    and preset_path is not None and preset_id is not None
-                    and preset_id.startswith("chrona-builtin-")
-                    and is_builtin_preset_id(preset_id.removeprefix("chrona-builtin-"))):
-                catalogue_id = preset_id.removeprefix("chrona-builtin-")
-                message = (f"{error.detail}; run chrona preset copy {catalogue_id} --output <new-dir> "
-                           "and re-apply your edits")
-                raise CliFailure(error.diagnostic_id, message, "closure", error.source_ref) from error
-            raise
-        args.draft_auto_block = closure.auto_block
-        rendered = _render_review(closure.closure, args, asset_root=closure.asset_root,
-                                  draft_font_resolution=closure.font_resolution)
-        _write_render_outputs(rendered, args)
-    finally:
-        if owned_tempdir is not None:
-            owned_tempdir.cleanup()
-    _emit_render_warnings(rendered)
+    result = render_draft(DraftRenderRequest(
+        project=args.project, target_kind=target_kind, preset=args.preset, view=args.view, theme=args.theme,
+        scheme=args.scheme, layout=args.layout, actual=args.actual, summary=args.summary, detail=args.detail,
+        icon_catalogs=tuple(args.icon_catalog), font_metrics=args.font_metrics, system_fonts=args.system_fonts,
+        viewport=args.viewport, locale=args.locale, visual_profile=args.visual_profile,
+        typesetter_engine=args.typesetter_engine, typesetter_version=args.typesetter_version,
+        typesetter_adapter_grammar=args.typesetter_adapter_grammar,
+    ))
+    _write_render_outputs(result.rendered, args)
+    _emit_render_warnings(result.rendered)
 
 
 def _write_render_outputs(rendered: RenderedReview, args: argparse.Namespace) -> None:
@@ -629,20 +491,7 @@ def _run_identity(args: argparse.Namespace) -> None:
     print(content_identity(value))
 
 
-def _parse_viewport(value: str) -> tuple[int, int | None]:
-    parts = value.lower().split("x")
-    if len(parts) != 2:
-        raise CliFailure("E_COMMAND_VIEWPORT", "viewport must be WIDTHxHEIGHT", "cli", "/viewport", 2)
-    try:
-        width = int(parts[0])
-        height = None if parts[1] == "auto" else int(parts[1])
-    except IconImportError as error:
-        _emit_failure(CliFailure(error.code, error.code, "icon-import"))
-    except ValueError as error:
-        raise CliFailure("E_COMMAND_VIEWPORT", "viewport must be WIDTHxHEIGHT", "cli", "/viewport", 2) from error
-    if width <= 0 or (height is not None and height <= 0):
-        raise CliFailure("E_COMMAND_VIEWPORT", "viewport dimensions must be positive or block size may be auto", "cli", "/viewport", 2)
-    return width, height
+_parse_viewport = parse_viewport
 
 
 def _run_render_review_gallery(args: argparse.Namespace) -> None:
@@ -782,28 +631,15 @@ def _run(args: argparse.Namespace) -> None:
         return
     project = _load_primary_project(args)
     if args.command == "validate":
-        diagnostics = validate_project(project)
-        if diagnostics:
-            _reject(diagnostics)
+        validation = validate_project_mapping(project)
+        if not validation.ok:
+            _reject(validation.diagnostics)
         print("[]")
         return
-    result = schedule(project)
-    if not result.ok:
-        _reject(result.diagnostics)
-    print(json.dumps(_schedule_payload(project, result), indent=2, default=_json_default))
-
-
-def _schedule_payload(project: dict[str, Any], result: Any) -> dict[str, Any]:
-    """Serialize a completed Scheduler result without deriving analysis again."""
-    analysis = result.analysis
-    payload = {"placements": result.placements, "diagnostics": []}
-    if analysis is not None:
-        object_order = tuple(project.get("objects", {}))
-        payload["analysis"] = {
-            "criticalObjectIds": [object_id for object_id in object_order if object_id in analysis.critical],
-            "totalFloat": analysis.total_float,
-        }
-    return payload
+    outcome = schedule_project_mapping(project)
+    if not outcome.ok:
+        _reject(outcome.diagnostics)
+    print(json.dumps(outcome.payload(), indent=2, default=_json_default))
 
 
 def _write_result(destination: Path, result: dict[str, Any]) -> None:
@@ -823,30 +659,5 @@ def main() -> None:
     try:
         args = _parser().parse_args()
         _run(args)
-    except CliFailure as error:
-        _emit_failure(error)
-    except PresentationIngressRejected as error:
-        _emit_presentation_rejection(error)
-    except (SnapshotReadError, ClosureError) as error:
-        message = error.detail if error.detail else str(error)
-        if isinstance(error, ClosureError) and error.diagnostic_id == "E_RESOURCE_VERSION_UNSUPPORTED":
-            message = _version_message(message)
-        source_ref = error.source_ref if isinstance(error, ClosureError) else "/"
-        _emit_failure(CliFailure(error.diagnostic_id, message, "closure", source_ref))
-    except IconImportError as error:
-        _emit_failure(CliFailure(error.code, error.detail, "icon-import", error.source_ref))
-    except FontImportError as error:
-        _emit_failure(CliFailure(error.code, error.detail, "font-import", error.source_ref))
-    except json.JSONDecodeError as error:
-        _emit_failure(CliFailure("E_INPUT_JSON", str(error), exit_code=2))
-    except yaml.YAMLError as error:
-        _emit_failure(CliFailure("E_INPUT_YAML", str(error), exit_code=2))
-    except OSError as error:
-        _emit_failure(CliFailure("E_INPUT_IO", str(error), exit_code=2))
-    except ValueError as error:
-        code = str(error) if str(error).startswith("E_") else "E_PRESENTATION_REJECTED"
-        _emit_failure(CliFailure(code, str(error), "presentation"))
-    except SystemExit:
-        raise
-    except Exception as error:  # pragma: no cover - last-resort CLI boundary
-        _emit_failure(CliFailure("E_TOOL_FAILURE", str(error), exit_code=2))
+    except Exception as error:
+        _emit_report(report_failure(error))
