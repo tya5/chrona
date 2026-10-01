@@ -120,7 +120,7 @@ jobs:
           python-version: '3.11'
           cache: pip
           cache-dependency-path: pyproject.toml
-      - run: pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk
+      - run: pip install -e '.[dev,render,mcp]' -e packages/chrona-fonts-noto-cjk
       - uses: actions/download-artifact@v4
         with:
           name: derived-snapshot-${{ github.event.pull_request.head.sha }}
@@ -162,6 +162,22 @@ jobs:
         run: python -m tools.derived_workflow apply derived-snapshot.tar.gz derived-snapshot.tar.gz.json --baseline "$BASE_SHA"
       - name: Reproduce every public materializer context from the shared snapshot
         run: pytest -q tests/integration/test_materialize_example.py::test_declared_examples_reproduce_by_public_cli
+
+  mcp-floor:
+    needs: [classify-pr]
+    if: ${{ always() && ((github.event_name == 'pull_request' && needs.classify-pr.outputs.path == 'code') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install chrona with the oldest MCP SDK the extra allows
+        run: pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk 'mcp==2.0.0'
+      - name: Run the MCP binding and the real stdio end-to-end tests against that floor
+        run: pytest -q -p no:cacheprovider tests/mcp tests/cli/test_mcp_command.py
 
   derived-ready:
     needs: [classify-pr, derived-preview, pr-conformance, pr-pytest, reproduction-newest-python]
@@ -236,7 +252,7 @@ jobs:
           python-version: '3.11'
           cache: pip
           cache-dependency-path: pyproject.toml
-      - run: pip install -e '.[dev,render]' -e packages/chrona-fonts-noto-cjk
+      - run: pip install -e '.[dev,render,mcp]' -e packages/chrona-fonts-noto-cjk
       - id: conformance
         continue-on-error: true
         run: python conformance/run_conformance.py
