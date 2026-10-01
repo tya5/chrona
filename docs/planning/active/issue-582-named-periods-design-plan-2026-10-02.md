@@ -1,6 +1,7 @@
 # Design Plan: Named Periods, Labelled and Patternable Bands (#582)
 
 **Status:** Proposed. Design: [issue-582-named-periods-design-2026-10-02.md](../../design/issue-582-named-periods-design-2026-10-02.md). Product code, schemas, examples and derived documents are not changed by this pack.
+Review: [architecture review](../../reviews/current/issue-582-named-periods-architecture-review-2026-10-02.md).
 **Base:** `main` at `4981db0a` (observed 2026-10-02, `derived-main` green).
 **Board:** #454 P4-A, first overall; #586 (derived header figures) depends on it; the targets that need it are
 listed in #453 and under `docs/research/presentation/*-target-2026-09-26/`.
