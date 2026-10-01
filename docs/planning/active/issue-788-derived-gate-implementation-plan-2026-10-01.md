@@ -253,7 +253,8 @@ L4 (`W_DEADLINE`) stays lead-gated.
   property into the shared `bounds` definition. (4) Found, not fixed (outside the slice): `schedule()` raises
   `TemporalError("Latest placement precedes earliest placement")` from the backward pass on some plans that mix calendar-day
   and working-day lags, with no derived point involved (example: two scheduled spans, lags `{1wd in six}`, `4d`, `4wd`); the
-  property tests schedule with the analysis pass stubbed out for that reason. (5) Baseline: the schema-equivalence baseline
+  property tests schedule with the analysis pass stubbed out for that reason (fixed by #810: the stub is gone and the properties run on
+  the real analysis pass; see the [#810 work record](issue-810-789-scheduler-analysis-work-record-2026-10-02.md)) (5) Baseline: the schema-equivalence baseline
   gained the 16 probe rows of the new inline Project; the other rows are untouched (a full `--record-baseline` also rewrites
   unrelated rows, so the rows were merged by hand).
 - Slice 2 (`I788-S2`): implemented as specified (rules T1 to T6, narrowed `E_TERSE_SCHEDULE_REQUIRED`, N7 in Spec 65, the

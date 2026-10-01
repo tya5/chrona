@@ -114,4 +114,24 @@ every Project scenario, and dumps placements, diagnostics and the whole analysis
 
 ## 6. Progress
 
-- Unit A: this record.
+- Unit A merged as #835.
+- Unit B (`I810-S1`): implemented as specified (D1 to D4, D7). `core/temporal.py::latest_start_for`; the three call sites; Spec 57
+  backward-pass section and a pointer in Spec 04; the stub and its `mock` import removed from `test_scheduled_point_properties.py`
+  (a test now asserts the properties run on the real analysis); `test_backward_pass_lag_calendars.py` (the two reproductions,
+  failing first in their own commit; two properties of the helper; a 400-plan property over the real pass: no raise, float >= 0,
+  `advance(latest source, lag) <= latest target` for every relation). **Sweep** (52 runs: every tracked Project, every Project
+  scenario and every compilable terse fixture, placements, diagnostics and the whole analysis, before and after): no placement,
+  diagnostic or verdict changes and no run raised before or after. `analysis` differs in 8 Projects, each an instance of the two
+  symptoms and each verified by hand: `shipment` in HALCYON-1 (and its baseline snapshot, the cli-characterization copy and the
+  terse twins) is a `4wd` span on the engineering calendar whose latest end follows from a `1wd` lag in `range`: the latest end is
+  Sunday 2027-09-26 (was Saturday), and the latest start is Monday 2027-09-20; the old Tuesday start would end Monday 09-27 and push
+  `campaign` past its own latest start, so its float falls from 5 to 4 (the overstated float); the other baseline-snapshot rows
+  (`vibration`, `bus-test`, `integration`) are the same effect one hop upstream. `respin-a1` (Orion, an `8w` calendar-day span with a
+  `2wd` lag), `floor` (derived gate) are the true latest end on a non-working date (latest dates move later, float unchanged), and
+  `off` in the YAML-hazard fixture is a `2wd` span before a calendar-day span that starts on a Sunday (float 31 to 30). The
+  `schedule-halcyon-ok` characterization golden changes in exactly the `shipment` value (5 to 4).
+  **Mutation check** (eight mutants, all killed by a named test): relation hop back to `retreat`, span start back to `retreat`, span
+  start left on a non-working date (this one first survived; `test_the_latest_start_of_a_working_day_span_is_a_working_date` was
+  added), no forward search, no backward search, `<` for `<=` in the search, the calendar-day guard dropped, and the analysis pass
+  skipped (the old stub). Verification run: scheduling, CLI, app, use case, Core, terse, presentation and integration tests
+  (2532 passed, the one failure was the expected golden), `regenerate_public_examples --check` (no derived byte changes), conformance.

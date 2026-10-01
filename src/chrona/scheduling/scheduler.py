@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
 
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.hierarchy import children_by_parent, normalize_hierarchy
 from chrona.core.ports import ScheduleOutcome
 from chrona.core.relation_identity import relation_identity
-from chrona.core.temporal import (Calendar, TemporalError, advance, as_date, parse_amount,
+from chrona.core.temporal import (Calendar, TemporalError, advance, as_date, latest_start_for, parse_amount,
                        requires_working_calendar, retreat)
 from chrona.core.validation import validate_project
 from chrona.core.scenarios import ResolvedScenario, resolve_scenario
@@ -342,7 +342,7 @@ def _analyze_criticality(project: dict[str, Any], placements: dict[str, dict[str
             amount = relation.get("lag", "0d")
             amount_value = amount if isinstance(amount, str) else amount["value"]
             calendar = _relation_calendar(relation, project, calendars)
-            bound = retreat(target_value, amount_value, calendar)
+            bound = latest_start_for(target_value, amount_value, calendar)
             changed |= _cap_latest_endpoint(source_id, relation["from"]["endpoint"], bound,
                                             latest, objects, project, calendars)
         if not changed:
@@ -432,7 +432,7 @@ def _latest_at_target(object_id: str, item: dict[str, Any], early: dict[str, dat
     amount = raw["amount"]
     calendar = _object_calendar(item, project, calendars) if requires_working_calendar(amount) else None
     end = min(target, as_date(raw.get("constraints", {}).get("end", {}).get("max", target)))
-    return {"start": retreat(end, amount, calendar), "end": end}
+    return {"start": _latest_span_start(end, amount, calendar), "end": end}
 
 
 def _cap_latest_endpoint(object_id: str, endpoint: str, bound: date,
@@ -453,8 +453,23 @@ def _cap_latest_endpoint(object_id: str, endpoint: str, bound: date,
     if candidate_end >= value["end"]:
         return False
     value["end"] = candidate_end
-    value["start"] = retreat(candidate_end, amount, calendar)
+    value["start"] = _latest_span_start(candidate_end, amount, calendar)
     return True
+
+
+def _latest_span_start(end: date, amount: str, calendar: Calendar | None) -> date:
+    """The latest start whose forward end does not pass ``end``; a working-day span starts on a working date.
+
+    A calendar-day span (no calendar) is placed without snapping, and ``retreat`` is exact for it. A working-day span
+    starts on a working date and ends on one, but a latest end can be any date (a fixed gate on a Sunday): the start is
+    the greatest working date whose ``advance`` stays within it (#810).
+    """
+    if calendar is None:
+        return retreat(end, amount, None)
+    start = latest_start_for(end, amount, calendar)
+    while not calendar.is_working(start):
+        start -= timedelta(days=1)
+    return start
 
 
 def _calendar_distance(early: date, late: date, calendar: Calendar | None) -> int:
