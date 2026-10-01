@@ -58,7 +58,7 @@ def test_the_inventory_marks_the_predecessors_transitioning_with_their_successor
     entries = {entry["file"]: entry for entry in load_inventory(ROOT / "schemas/schema-inventory-v0.1.yaml")}
     for _, (_, old, new) in PAIRS.items():
         assert entries[old]["state"] == "transitioning" and entries[old]["successor"] == new
-        assert entries[old]["removalSlice"].startswith("issue-710-")
+        assert entries[old]["removalSlice"].startswith(("issue-710-", "issue-731-"))
         assert entries[new]["state"] == "live" and "successor" not in entries[new]
 
 

@@ -68,7 +68,7 @@ schemas:
     consumers: [src/chrona/resources/__init__.py]
     frozenDefs:
       "#": "sha256:786939b7c5b16e49b7134250766f1dffa2422336177e47db747617b447908df4"
-  - {file: snapshot-ref-v0.2.schema.yaml, kind: snapshot-ref, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: snapshot-ref-v0.3.schema.yaml, removalSlice: issue-710-snapshot-ref-v0.2-authoring-retirement}
+  - {file: snapshot-ref-v0.2.schema.yaml, kind: snapshot-ref, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: snapshot-ref-v0.3.schema.yaml, removalSlice: issue-731-snapshot-ref-v0.2-retained-for-reads}
   - {file: snapshot-ref-v0.3.schema.yaml, kind: snapshot-ref, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: store-config-v0.1.schema.yaml, kind: store-config, state: live, consumers: [src/chrona/operational/store_config.py]}
   - {file: summary-profile-v0.2.schema.yaml, kind: summary-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}

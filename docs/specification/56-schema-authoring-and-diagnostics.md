@@ -197,11 +197,11 @@ character set and moves the refusal to the earliest stage. Layout Profile v0.9 b
 Render Context v0.16 becomes v0.17 (every pinned `reference.address`, which had no guard at all, and the font
 locators), Command Request v0.2 becomes v0.3 (its Store references, and `snapshotId` as one segment), Automation
 Result v0.1 becomes v0.2 and Snapshot Reference v0.2 becomes v0.3 (both through `revision-store-resource-ref-v0.2`);
-the predecessors are `transitioning` and stay readable, new Contexts and every Draft closure are v0.17, and each committed or packaged Context and Layout Profile was re-pointed by a version-string edit that the gate's L2
+the predecessors were `transitioning` (all but Snapshot Reference v0.2 are retired, below), new Contexts and every Draft closure are v0.17, and each committed or packaged Context and Layout Profile was re-pointed by a version-string edit that the gate's L2
 layer proves changes no verdict. Snapshot Reference v0.2 cannot be retired the way the others can: its instances are
 immutable, content-pinned and already in operators' Stores, so the predecessor stays readable for as long as such a
-baseline can exist, and the bump only changes what new writes emit (a writer emits v0.2 only for a Project reference that
-still carries a legacy loose address, never a v0.3 document that breaks its own contract). The inputs each site now refuses are listed as L3 `expected-deltas`.
+baseline can exist, and the bump only changes what new writes emit (the writer emits v0.3 only; its fallback to v0.2 for
+a loose legacy address was removed by #731). The inputs each site now refuses are listed as L3 `expected-deltas`.
 
 *Tightening a further site (#731).* A later address site may move to `storeAddress` in place, without a bump, under the
 clause above for a refusal the consumer already makes, only when the consumer refuses every value the stricter definition
@@ -211,17 +211,17 @@ does not, by itself, show that. The check is made per site and per refused input
 an `expected-deltas` line with a test; where it fails, the change narrows what a valid document may contain and takes the
 version bump (or is named as a narrowing in the change). The verification for the sites left by #710 is in the #731 design.
 
-*Retirement of the #710 predecessors.* A predecessor (`snapshot-ref-v0.2`; `layout-profile-v0.9`,
-`render-context-v0.16`, `command-request-v0.2` and `automation-result-v0.1` were retired by #731) is
-`transitioning` with a named `removalSlice`, and its schema file (archived with `git mv`), its reader registration and its
-version string are deleted only in that slice, once no committed, packaged or test document names it; the project has one
-user and no external Store, so no release of dual support is required beyond that, and a document that still declares the
-retired version is an unsupported version (§3.1). The loose
-`relativeAddress` and `relativeAddressDotTolerant` definitions are then unreferenced and may be dropped with a new
-`common` part version; they are frozen until then and no live schema references them. Two things are deliberately not
-retired by that rule: `snapshot-ref-v0.2` for reads (immutable baselines already in Stores), and
-`revision-store-resource-ref-v0.1`, which the three transitioning predecessors reference and which `extensions/profiles.py`
-still uses to check the `resourceReference` fields (evidence and artifact references) of a Project's profile objects; nothing
+*Retirement of the #710 predecessors.* A predecessor was `transitioning` with a named `removalSlice`, and its schema
+file (archived with `git mv`), its reader registration and its version string are deleted only in that slice, once no
+committed, packaged or test document names it; the project has one user and no external Store, so no release of dual
+support is required beyond that, and a document that still declares the retired version is an unsupported version (§3.1).
+#731 retired `layout-profile-v0.9`, `render-context-v0.16`, `command-request-v0.2` and `automation-result-v0.1` this way.
+`snapshot-ref-v0.2` is the exception and stays `transitioning` as a retained read format (its recorded slice is
+`issue-731-snapshot-ref-v0.2-retained-for-reads`): only its authoring side was removed, because immutable baselines
+already in Stores can never be rewritten. The loose `relativeAddress` and `relativeAddressDotTolerant` definitions are
+now unreferenced and may be dropped with a new `common` part version; they are frozen until then and no schema
+references them. `revision-store-resource-ref-v0.1` is not retired either: `snapshot-ref-v0.2` still references it, and
+`extensions/profiles.py` still uses it to check the `resourceReference` fields (evidence and artifact references) of a Project's profile objects; nothing
 opens such a reference afterwards, so moving the check to v0.2 would refuse a document accepted today, which is an owner decision
 (the `extensions[].resource` object of Project v0.7 is unconstrained and has no address pattern to tighten). A guard test (`tests/unit/tools/test_store_address_retirement.py`) fails when the set of
 predecessors, their removal slices, their reader registrations or the remaining users of the loose forms change

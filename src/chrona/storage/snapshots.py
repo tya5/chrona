@@ -4,13 +4,11 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import dataclass
 from hashlib import sha256
-import json
 from pathlib import Path
 from typing import Any, Protocol
 import yaml
 
 from chrona.core.store_address import StoreAddressError, check_store_segment, resolve_store_address
-from chrona.resources import schema_validator
 from chrona.storage.revision_store import ProjectSnapshot
 from chrona.storage.publication import publish_exclusive
 
@@ -50,24 +48,19 @@ class MemorySnapshotStore:
         return deepcopy(value) if value else None
 
 
-# A published baseline is v0.3 (strict `storeAddress`, #710) when its Project reference satisfies it, and v0.2 when the
-# reference still carries a legacy loose address (a v0.2 command's target): it must not claim a contract it breaks. Both
-# stay readable, because an immutable v0.2 baseline already in a Store can never be rewritten.
-SNAPSHOT_REF_VERSIONS = (("chrona/snapshot-ref/v0.3", "snapshot-ref-v0.3.schema.yaml"),
-                         ("chrona/snapshot-ref/v0.2", "snapshot-ref-v0.2.schema.yaml"))
+# A published baseline is always v0.3 (strict `storeAddress`, #710). v0.2 is never written any more (#731), but it
+# stays readable and parseable for good: an immutable v0.2 baseline already in a Store (the committed
+# `examples/halcyon-1/snapshots/baseline-2027-06.yaml`, whose bytes a Context pins) can never be rewritten.
+SNAPSHOT_REF_VERSION = "chrona/snapshot-ref/v0.3"
 
 
 def snapshot_ref_resource(snapshot_id: str, project_ref: dict[str, Any]) -> dict[str, Any]:
-    """The named baseline resource, at the newest snapshot-ref version its content satisfies."""
-    for version, schema_name in SNAPSHOT_REF_VERSIONS:
-        resource = {"version": version, "kind": "snapshot-ref", "id": snapshot_id, "body": {"project": deepcopy(project_ref)}}
-        if not any(schema_validator(schema_name).iter_errors(json.loads(json.dumps(resource)))):
-            return resource
-    return resource
+    """The named baseline resource, at the current snapshot-ref version."""
+    return {"version": SNAPSHOT_REF_VERSION, "kind": "snapshot-ref", "id": snapshot_id, "body": {"project": deepcopy(project_ref)}}
 
 
 class LocalBaselineRegistry:
-    """Append-only local registry for immutable v0.2 and v0.3 baseline resources."""
+    """Append-only local registry: publishes v0.3 baseline resources and reads stored v0.2 and v0.3 ones."""
 
     def __init__(self, root: Path, identity: str, *, require_content_identity: bool = True):
         self.root = root
