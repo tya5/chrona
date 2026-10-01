@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import hypot, isfinite
+from math import ceil, floor, hypot, isfinite, sqrt
 from typing import Iterable
 
 
@@ -153,18 +153,94 @@ def _segment_distance(a: tuple[float, float], b: tuple[float, float],
                _point_segment_distance(c, a, b), _point_segment_distance(d, a, b))
 
 
+# A selection is scanned linearly for its first queries and gets a grid only when it is
+# queried again and again (a route search), so a short-lived index pays no build cost.
+_GRID_AFTER_QUERIES = 2
+_GRID_MIN_ITEMS = 16
+_GRID_WIDE_CELLS = 64
+
+
+class _PreparedSelection:
+    """One `select()` result with its envelopes, and a conservative grid over them.
+
+    The grid only narrows which positions the unchanged collision predicates are
+    asked about: every pair the exact envelope test accepts shares a grid cell,
+    and candidates are always visited in ascending (sorted `placement_id`) position.
+    """
+
+    __slots__ = ("items", "envelopes", "clearances", "max_clearance", "queries", "_grid")
+
+    def __init__(self, items: tuple[SurfaceObstacle, ...]) -> None:
+        self.items = items
+        self.envelopes = tuple(obstacle_envelope(item.geometry) for item in items)
+        self.clearances = tuple(item.clearance for item in items)
+        self.max_clearance = max(self.clearances, default=0.0)
+        self.queries = 0
+        self._grid: tuple | None = None
+
+    def candidates(self, box: tuple[float, float, float, float], clearance: float) -> Iterable[int]:
+        """Ascending positions that may overlap `box` widened by `clearance`; a superset."""
+        self.queries += 1
+        count = len(self.items)
+        if count < _GRID_MIN_ITEMS or self.queries <= _GRID_AFTER_QUERIES:
+            return range(count)
+        if self._grid is None:
+            self._grid = self._build_grid()
+        origin_x, origin_y, size, cells, slack, table, wide = self._grid
+        reach = clearance + self.max_clearance + slack
+        low_x = max(0, floor((box[0] - reach - origin_x) / size))
+        high_x = min(cells - 1, floor((box[2] + reach - origin_x) / size))
+        low_y = max(0, floor((box[1] - reach - origin_y) / size))
+        high_y = min(cells - 1, floor((box[3] + reach - origin_y) / size))
+        if low_x > high_x or low_y > high_y:
+            return wide
+        found = set(wide)
+        for cell_x in range(low_x, high_x + 1):
+            for cell_y in range(low_y, high_y + 1):
+                found.update(table.get((cell_x, cell_y), ()))
+        return sorted(found)
+
+    def _build_grid(self) -> tuple:
+        envelopes = self.envelopes
+        origin_x = min(box[0] for box in envelopes)
+        origin_y = min(box[1] for box in envelopes)
+        extent_x = max(box[2] for box in envelopes) - origin_x
+        extent_y = max(box[3] for box in envelopes) - origin_y
+        magnitude = max(max(abs(value) for box in envelopes for value in box), 1.0)
+        slack = 1e-6 + 1e-9 * magnitude
+        per_axis = max(1, ceil(sqrt(len(envelopes))))
+        size = max(extent_x, extent_y) / per_axis or 1.0
+        cells = per_axis + 1
+        table: dict[tuple[int, int], list[int]] = {}
+        wide: list[int] = []
+        for position, (left, top, right, bottom) in enumerate(envelopes):
+            low_x = max(0, floor((left - slack - origin_x) / size))
+            high_x = min(cells - 1, floor((right + slack - origin_x) / size))
+            low_y = max(0, floor((top - slack - origin_y) / size))
+            high_y = min(cells - 1, floor((bottom + slack - origin_y) / size))
+            if (high_x - low_x + 1) * (high_y - low_y + 1) > _GRID_WIDE_CELLS:
+                wide.append(position)
+                continue
+            for cell_x in range(low_x, high_x + 1):
+                for cell_y in range(low_y, high_y + 1):
+                    table.setdefault((cell_x, cell_y), []).append(position)
+        return origin_x, origin_y, size, cells, slack, table, tuple(wide)
+
+
 class SurfaceObstacleIndex:
     """A monotone surface-local closure; queries never mutate accepted geometry."""
 
     def __init__(self) -> None:
         self._by_id: dict[str, SurfaceObstacle] = {}
         self._ordered: tuple[SurfaceObstacle, ...] | None = None
+        self._prepared: dict[tuple[frozenset[str] | None, frozenset[str] | None], _PreparedSelection] = {}
 
     def add(self, obstacle: SurfaceObstacle) -> None:
         if obstacle.placement_id in self._by_id:
             raise ValueError("E_LAYOUT_OBSTACLE_ID_DUPLICATE")
         self._by_id[obstacle.placement_id] = obstacle
         self._ordered = None
+        self._prepared = {}
 
     def extend(self, obstacles: Iterable[SurfaceObstacle]) -> None:
         for obstacle in obstacles:
@@ -180,11 +256,20 @@ class SurfaceObstacleIndex:
 
     def select(self, *, classes: Iterable[str] | None = None,
                regions: Iterable[str] | None = None) -> tuple[SurfaceObstacle, ...]:
+        return self._selection(classes, regions).items
+
+    def _selection(self, classes: Iterable[str] | None,
+                   regions: Iterable[str] | None) -> _PreparedSelection:
         selected_classes = None if classes is None else frozenset(classes)
         selected_regions = None if regions is None else frozenset(regions)
-        return tuple(item for item in self.all()
-                     if (selected_classes is None or item.obstacle_class in selected_classes)
-                     and (selected_regions is None or item.region_id in selected_regions))
+        key = (selected_classes, selected_regions)
+        prepared = self._prepared.get(key)
+        if prepared is None:
+            prepared = self._prepared[key] = _PreparedSelection(tuple(
+                item for item in self.all()
+                if (selected_classes is None or item.obstacle_class in selected_classes)
+                and (selected_regions is None or item.region_id in selected_regions)))
+        return prepared
 
     def collisions(self, geometry: ObstacleGeometry, *, classes: Iterable[str] | None = None,
                    regions: Iterable[str] | None = None, host_id: str | None = None,
@@ -208,11 +293,19 @@ class SurfaceObstacleIndex:
                for port_id in exemptions.difference({item for item in (host_id, rule_host_id) if item is not None})):
             raise ValueError("E_LAYOUT_OBSTACLE_EXEMPTION_INVALID")
         candidate_box = obstacle_envelope(geometry)
-        return tuple(item for item in self.select(classes=classes, regions=regions)
-                     if item.placement_id not in exemptions
-                     and _envelopes_overlap(candidate_box, obstacle_envelope(item.geometry),
-                                            clearance + item.clearance)
-                     and _intersects(geometry, item.geometry, clearance + item.clearance))
+        prepared = self._selection(classes, regions)
+        items, envelopes, clearances = prepared.items, prepared.envelopes, prepared.clearances
+        found = []
+        # Candidates arrive in ascending position, i.e. the sorted `placement_id`
+        # order `select()` always returned; the tests below are the original ones.
+        for position in prepared.candidates(candidate_box, clearance):
+            item = items[position]
+            reach = clearance + clearances[position]
+            if (item.placement_id not in exemptions
+                    and _envelopes_overlap(candidate_box, envelopes[position], reach)
+                    and _intersects(geometry, item.geometry, reach)):
+                found.append(item)
+        return tuple(found)
 
     def egress_collisions(self, segment: ObstacleSegment, *, host_ids: Iterable[str],
                           classes: Iterable[str] | None = None,
