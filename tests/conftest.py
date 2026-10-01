@@ -30,7 +30,7 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
     import json
     from pathlib import Path
 
-    path = Path(str(config.rootpath)) / ".test_durations"
+    path = Path(str(config.rootpath)) / str(config.getoption("durations_path", ".test_durations"))
     try:
         recorded = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
