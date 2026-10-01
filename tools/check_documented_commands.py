@@ -36,6 +36,9 @@ class TersePlan:
     text: str
     skip_reason: str | None = None
     expect_error: str | None = None
+    expect_yaml: bool = False
+    yaml_text: str | None = None  # the next fence when it is a `yaml` fence; `None` with `expect_yaml` means it is missing
+    yaml_line: int | None = None
 
 
 def _is_terse_fence(info: str) -> bool:
@@ -45,6 +48,7 @@ def _is_terse_fence(info: str) -> bool:
 FENCE = re.compile(r"^\s*(?P<fence>`{3,}|~{3,})(?P<info>[^`~]*)$")
 SKIP = re.compile(r"^<!-- chrona:doc-check skip: (?P<reason>.+) -->$")
 EXPECT_ERROR = re.compile(r"^<!-- chrona:doc-check expect-error: (?P<code>E_[A-Z0-9_]+) -->$")
+EXPECT_YAML = re.compile(r"^<!-- chrona:doc-check expect-yaml: next -->$")
 SKIP_PREFIX = "<!-- chrona:doc-check"
 COMMAND = re.compile(r"^\s*(?:\$\s*)?(chrona(?:\s+.*)?)$")
 DEFAULT_TIMEOUT_SECONDS = 30
@@ -97,8 +101,10 @@ def discover(root: Path) -> tuple[DocumentedCommand, ...]:
             line = lines[index]
             marker = SKIP.fullmatch(line)
             expected = EXPECT_ERROR.fullmatch(line)
-            if marker is not None or expected is not None:
-                reason = marker["reason"].strip() if marker is not None else "expect-error " + expected["code"]
+            emitted = EXPECT_YAML.fullmatch(line)
+            if marker is not None or expected is not None or emitted is not None:
+                reason = (marker["reason"].strip() if marker is not None
+                          else "expect-error " + expected["code"] if expected is not None else "expect-yaml next")
                 if pending_skip is not None or not reason:
                     raise _error("E_DOCUMENTED_COMMAND_SKIP", relative, index + 1)
                 pending_skip = (reason, index + 1)
@@ -135,13 +141,18 @@ def discover(root: Path) -> tuple[DocumentedCommand, ...]:
 
 
 def discover_plans(root: Path) -> tuple[TersePlan, ...]:
-    """Every ```chrona fence, with the skip or expect-error marker that precedes it."""
+    """Every ```chrona fence, with the marker that precedes it (`skip`, `expect-error`, `expect-yaml: next`).
+
+    `expect-yaml: next` binds the next fence of the document, which must be a ```yaml fence holding the
+    Project the plan compiles to (checked by `check_plans`).
+    """
     plans: list[TersePlan] = []
     for path in documents(root):
         relative = path.relative_to(root)
         lines = path.read_text(encoding="utf-8").splitlines()
         skip: str | None = None
         expect: str | None = None
+        expect_yaml = False
         index = 0
         while index < len(lines):
             line = lines[index]
@@ -150,6 +161,8 @@ def discover_plans(root: Path) -> tuple[TersePlan, ...]:
                 skip = marker["reason"].strip()
             elif expected is not None:
                 expect = expected["code"]
+            elif EXPECT_YAML.fullmatch(line) is not None:
+                expect_yaml = True
             opening = FENCE.fullmatch(line)
             if opening is None:
                 index += 1
@@ -159,14 +172,34 @@ def discover_plans(root: Path) -> tuple[TersePlan, ...]:
             while end < len(lines) and closing.fullmatch(lines[end]) is None:
                 end += 1
             if _is_terse_fence(opening["info"]):
-                plans.append(TersePlan(relative, index + 2, "\n".join(lines[index + 1:end]) + "\n", skip, expect))
+                yaml_text, yaml_line = _next_yaml_fence(lines, end + 1) if expect_yaml else (None, None)
+                plans.append(TersePlan(relative, index + 2, "\n".join(lines[index + 1:end]) + "\n", skip, expect,
+                                       expect_yaml, yaml_text, yaml_line))
             skip = expect = None
+            expect_yaml = False
             index = end + 1
     return tuple(plans)
 
 
+def _next_yaml_fence(lines: list[str], start: int) -> tuple[str | None, int | None]:
+    """The body of the first fence at or after `start` when it is a `yaml` fence, else `(None, None)`."""
+    for index in range(start, len(lines)):
+        opening = FENCE.fullmatch(lines[index])
+        if opening is None:
+            continue
+        if opening["info"].split()[:1] != ["yaml"]:
+            return None, None
+        end = index + 1
+        closing = re.compile(rf"^\s*{re.escape(opening['fence'])}\s*$")
+        while end < len(lines) and closing.fullmatch(lines[end]) is None:
+            end += 1
+        return "\n".join(lines[index + 1:end]) + "\n", index + 2
+    return None, None
+
+
 def check_plans(plans: tuple[TersePlan, ...]) -> None:
     """Compile each documented plan: it must compile, or (with `expect-error: CODE`) be rejected with that code."""
+    from chrona.terse import HEADER
     from chrona.usecases.terse_compile import compile_plan
 
     for plan in plans:
@@ -178,6 +211,11 @@ def check_plans(plans: tuple[TersePlan, ...]) -> None:
             raise DocumentedCommandError(f"E_DOCUMENTED_PLAN_REJECTED:{plan.path}:{plan.line}:{','.join(codes)}")
         if plan.expect_error is not None and plan.expect_error not in codes:
             raise DocumentedCommandError(f"E_DOCUMENTED_PLAN_EXPECTED_ERROR:{plan.path}:{plan.line}:{plan.expect_error}")
+        if plan.expect_yaml:
+            if plan.yaml_text is None:
+                raise DocumentedCommandError(f"E_DOCUMENTED_PLAN_YAML_MISSING:{plan.path}:{plan.line}")
+            if result.yaml is None or result.yaml.decode("utf-8").removeprefix(HEADER + "\n") != plan.yaml_text:
+                raise DocumentedCommandError(f"E_DOCUMENTED_PLAN_YAML_MISMATCH:{plan.path}:{plan.line}:{plan.yaml_line}")
 
 
 def _subparsers(parser: argparse.ArgumentParser) -> dict[str, argparse.ArgumentParser]:

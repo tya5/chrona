@@ -52,6 +52,14 @@ needs no map: a `ClosureError` never names a Project pointer. Scheduler codes go
 validate and schedule do not accept a plan" was removed: it asserted the behavior S3 replaces. `chrona validate`
 still passes a dependency cycle (#780); the cycle is reported by `schedule` and `render`.
 
+**S4 landed** (guides and doc-check). The `expect-yaml: next` marker binds the next fence of the document; the mapping
+pairs live in a second guide (`docs/guides/terse-plan-mapping.md`) so that the card stays one page (`test_card`
+caps it at 120 lines); the README gained a "Terse plans" section and `first-project.md` a pointer. The card now says
+that a gate cannot be derived from its dependencies and how to compute its date (#788), that an object's `calendar`
+overrides the default, that a `wd` lag without `in CAL` is counted on the calendar of the object carrying the `after`,
+and shows the `w` lag unit and `c.start +1w`; each statement was checked against the compiler and scheduler. The agent
+skill hand-over is Spec 65 section 10; the skill itself is not edited here (#142).
+
 ## 2. Slice 1 - `chrona compile` (core grammar, no calendars)
 
 **Scope of the grammar in S1:** `terse 0.1`; `project ID ["Title"]`; objects `NAME ["Title"] KIND` with kind
