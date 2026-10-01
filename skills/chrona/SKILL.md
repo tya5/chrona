@@ -60,6 +60,23 @@ The result of `validate` and `schedule` is JSON on standard output. A command th
 rejects the plan prints `{"status": "rejected", "diagnostics": [...]}` and exits 1; a bad
 file, flag or output suffix exits 2; success exits 0.
 
+## If the chrona MCP server is connected
+
+When the host lists chrona tools (an MCP server the user started), prefer them: they run
+the same code as the commands above, take paths relative to the workspace root, and return
+the same diagnostics as JSON. Otherwise use the commands. Read a result's `status` (`ok`,
+`rejected` or `failed`), not only the tool's error flag: a rejected plan is a normal result.
+
+| Tool | Same as | Note |
+| --- | --- | --- |
+| `validate_project` | `chrona validate` | Does not detect a cycle: also run `schedule_project`. |
+| `schedule_project` | `chrona schedule` | Placements and critical path; rejects a cycle. |
+| `render_draft` | `chrona render` | A PNG preview, or the SVG with `inline: svg`; writes no file. |
+| `list_presets` | `chrona preset list` | The ids `render_draft` takes as `preset`. |
+
+The tools never write the plan. Edit `project.yaml` with your own file tools, then call
+them again.
+
 ## The model in five lines
 
 - **Project** is the semantic truth: objects, schedule modes, relations, calendars.

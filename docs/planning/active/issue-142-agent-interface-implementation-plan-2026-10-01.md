@@ -298,6 +298,7 @@ and exact-main CI, per AGENTS.md.
 | S0 (S0a and S0b together) | Implemented in two PRs: the characterization suite (#783), then the extraction | See the deviations below. |
 | S3 (tool core) | Implemented as the MCP slice 1 of 3: `agent_workspace.py`, `agent_tools.py`, the module rules in `check_import_direction.py`, Spec 66 | See the S3 deviations below. |
 | S4 (binding) | Implemented as the MCP slice 2 of 3: `mcp_server.py`, `chrona mcp`, the `mcp` extra, the guide section, binding tests in `tests/mcp/`; then the real-stdio end-to-end test `tests/mcp/test_mcp_stdio_e2e.py` | See the S4 verification below. Both test modules skip with a reason without the extra, so they run only where it is installed: the CI install is a workflow-only PR (`conformance.yml`), published separately. |
+| S5 (skill and server agree) | Implemented: a skill section and table for the four tools, one README pointer, `tests/unit/chrona/skills/test_chrona_skill_mcp_tools.py` pinning the table to the registry and to the CLI surface | The resources were served from the packaged skill already in S4, so S5 adds only the table and the test. |
 
 S0 deviations from the plan text (no change of behavior; the CLI bytes are frozen by
 `tests/cli/test_cli_characterization.py`, 110 invocations against
