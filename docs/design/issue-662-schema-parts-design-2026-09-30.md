@@ -166,14 +166,14 @@ inventory entries removed in the same commit (`E_SCHEMA_INVENTORY_COVERAGE` dema
 Eleven live schemas inline `{version, kind, id, body}`; the shared envelope `presentation-resource` is already referenced by View, icon-catalog and summary-profile. Its only real constraints are `id` and
 `kind` non-empty, and moving eleven schemas to `allOf: [{$ref: envelope}, {...}]` changes each one's diagnostic shape (Spec 56 §3 reduces `allOf` branches) for a four-line saving. Recommendation: **descope**
 the envelope from #662 and record it in the acceptance review as deferred with a successor, unless the owner wants it; if kept, it is the last optional slice, gated by diagnostics equivalence on the
-committed invalid documents. `presentation-resource` itself is **not touched** in #662 (seventeen View schemas, two icon-catalog schemas and summary-profile resolve it; a change would retro-change them).
+committed invalid documents. **Decided 2026-10-01 (owner, #715): no shared envelope**; the eleven inline envelopes stay ([#715 record](../planning/active/issue-715-schema-parts-leftovers-plan-2026-10-01.md), D3). `presentation-resource` itself is **not touched** in #662 (seventeen View schemas, two icon-catalog schemas and summary-profile resolve it; a change would retro-change them).
 
 ## D8. What "no inline copy outside the common schema" means (owner)
 
 The 44 non-live schema files keep their inline copies until archived or migrated, and the Keep tier stays. The literal grep therefore cannot pass repository-wide. Recommendation: the acceptance row is defined
 as "no inline copy of the shared patterns in any `live` inventory entry other than the parts", enforced by a test that reads the inventory; historical entries are frozen, never re-pointed (re-pointing a
 transitioning schema would change what an accepted historical version accepts). The two existing parts (`presentation-resource`, `revision-store-resource-ref`) are frozen and keep their own copies of sha256 and the paths;
-a parity test proves they equal `common`'s definitions, except the T3 anchor. Making them reference `common` would need new part versions and a re-pointing of View v0.28, icon-catalog and summary-profile at the next bump. The gate also fails a `live` schema that copies a pattern a part already defines.
+a parity test proves they equal `common`'s definitions, except the T3 anchor. **Decided 2026-10-01 (owner, #715): this scope stands, with no `-v0.2` part for the frozen parts; the remaining inline copies leave with their `transitioning` removal slices** ([#715 record](../planning/active/issue-715-schema-parts-leftovers-plan-2026-10-01.md), D1). Making them reference `common` would need new part versions and a re-pointing of View v0.28, icon-catalog and summary-profile at the next bump. The gate also fails a `live` schema that copies a pattern a part already defines.
 
 ## Learnings from S1c (recorded 2026-10-01)
 
