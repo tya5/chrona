@@ -138,12 +138,12 @@ jobs:
       - id: pytest
         continue-on-error: true
         run: |
-          if [ "${{ matrix.order }}" = fwd ]; then VARIANTS="base lf-worksteal lf-load"; else VARIANTS="lf-load lf-worksteal base"; fi
+          if [ "${{ matrix.order }}" = fwd ]; then VARIANTS="base lf-load1 load1"; else VARIANTS="load1 lf-load1 base"; fi
           for V in $VARIANTS; do
             case "$V" in
               base) EXTRA="--dist worksteal" ;;
-              lf-worksteal) EXTRA="--dist worksteal --longest-first" ;;
-              lf-load) EXTRA="--dist load --longest-first" ;;
+              lf-load1) EXTRA="--dist load --maxschedchunk 1 --longest-first" ;;
+              load1) EXTRA="--dist load --maxschedchunk 1" ;;
             esac
             echo "=== VARIANT $V ==="
             python -c "import time;t=time.perf_counter();s=0
