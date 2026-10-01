@@ -1,9 +1,10 @@
 # Agent Tool Interface
 
-**Status:** Proposed; the tool core is implemented in `chrona.app.agent_tools` (#142, slice I142-S3). The MCP
-binding and the `chrona mcp` command follow (I142-S4).
+**Status:** Proposed; the tool core is implemented in `chrona.app.agent_tools` (#142, slice I142-S3) and served over
+MCP by `chrona mcp` (`chrona.app.mcp_server`, slice I142-S4).
 **Owns:** the read-only agent tool set `chrona/agent-tools/v0.1`, the shape of a tool result, the workspace path
-rules, the determinism contract of a tool call, and the `E_MCP_*` diagnostic codes.
+rules, the determinism contract of a tool call, the MCP binding rules of section 7, and the `E_MCP_*` diagnostic
+codes.
 **Does not own:** the meaning of a Project or a schedule (Spec 05, Spec 04), the render pipeline (Specs 06, 07,
 33), the Store and any mutating command (Spec 09, Spec 10), the wire protocol of any transport, or the text of
 the agent skill (`skills/chrona/`).
@@ -113,5 +114,23 @@ rasterizer of the `render` extra.
 | `E_MCP_INPUT_TOO_LARGE` | An input file exceeds 2 MiB. |
 | `E_MCP_RESULT_TOO_LARGE` | An inline payload exceeds its cap; lower the viewport, use `inline: none`, or use the command line. |
 | `E_MCP_WORKSPACE_TOO_BROAD` | The workspace is a filesystem root. |
+| `E_MCP_UNAVAILABLE` | `chrona mcp` is run without the optional SDK; the message says `pip install 'chrona[mcp]'` (exit 2). |
 
-`E_MCP_UNAVAILABLE` (the optional transport SDK is not installed) belongs to the `chrona mcp` command (I142-S4).
+## 7. The MCP binding
+
+`chrona mcp [--workspace DIR] [--list-tools]` serves the tool set over MCP on standard input and output; it is the
+only transport. The binding is the one module that imports the SDK (`chrona.app.mcp_server`, optional extra
+`chrona[mcp]`, `mcp>=2.0,<3`); `chrona mcp --list-tools` prints the registry and needs no SDK.
+
+- `tools/list` is the registry: names, titles, descriptions, input and output schemas and the read-only annotations.
+  `tools/call` is `call_tool` with its result in content blocks: block 0 is the structured result as JSON text; an
+  `image` block carries the PNG preview; an embedded resource carries the SVG. The structured content equals block 0.
+- The error flag is set only when `status` is `failed`. Unknown tool names and malformed arguments are protocol errors
+  (`INVALID_PARAMS`), never an envelope.
+- Calls are handled one at a time (a render cannot be cancelled) in a worker thread; the server holds no state between
+  calls and writes nothing to standard output but protocol frames. Logging goes to standard error.
+- `initialize` carries `instructions` (under 1 KB: the model in three sentences, that a rejection is a result, and that
+  `schedule_project` is the cycle check). Two read-only resources serve the packaged skill, `chrona://guide/authoring`
+  (the body of `SKILL.md`) and `chrona://guide/diagnostics` (`references/diagnostics.md`); without a packaged skill they
+  are omitted. No prompts, subscriptions, sampling or other capability is offered.
+- There is no HTTP transport, listener, authentication or background task.

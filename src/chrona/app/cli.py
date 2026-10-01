@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import copy
 from hashlib import sha256
+import importlib.util
 import json
 import sys
 import tempfile
@@ -11,6 +12,8 @@ from pathlib import Path
 from typing import Any, NoReturn
 
 from chrona.usecases.review_projects import review_projects
+from chrona.app.agent_tools import registry_document
+from chrona.app.agent_workspace import WorkspaceScope
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.identity import content_identity, json_value
 from chrona.core.validation import load_yaml
@@ -277,6 +280,11 @@ def _parser() -> JsonArgumentParser:
     command = skill_sub.add_parser("copy", help="copy the agent skill into an empty directory")
     command.add_argument("--output", "-o", required=True, help="empty or absent output directory")
 
+    command = sub.add_parser("mcp", help="serve the read-only agent tools over MCP on standard input and output",
+                             description="serve validate_project, schedule_project, render_draft and list_presets to an MCP client; needs the optional chrona[mcp] extra")
+    command.add_argument("--workspace", help="the only directory the tools may read (default: the current directory)")
+    command.add_argument("--list-tools", action="store_true", help="print the tool registry as JSON and exit (needs no MCP SDK)")
+
     preset = sub.add_parser("preset", help="copy or list a builtin presentation preset")
     preset_sub = preset.add_subparsers(dest="preset_command", required=True, parser_class=JsonArgumentParser)
     command = preset_sub.add_parser("copy", help="copy one named builtin preset")
@@ -456,6 +464,28 @@ def _run_draft_render_of_plan(args: argparse.Namespace) -> None:
 
 def _run_init(args: argparse.Namespace) -> None:
     initialize_project(Path(args.directory), example=args.example)
+
+
+def _mcp_sdk_installed() -> bool:
+    """Whether the SDK is importable: `mcp.server` is the check, because a plain directory named `mcp` is a namespace package."""
+    try:
+        return importlib.util.find_spec("mcp.server") is not None
+    except (ImportError, ValueError):
+        return False
+
+
+def _run_mcp(args: argparse.Namespace) -> None:
+    """`--list-tools` prints the registry without the SDK; otherwise serve it, or say how to install the extra."""
+    if args.list_tools:
+        if args.workspace is not None:
+            WorkspaceScope(args.workspace)
+        print(json.dumps(registry_document(), indent=2, ensure_ascii=False))
+        return
+    if not _mcp_sdk_installed():
+        raise CliFailure("E_MCP_UNAVAILABLE", "the MCP server needs the optional MCP SDK: pip install 'chrona[mcp]'",
+                         "mcp", exit_code=2)
+    from chrona.app.mcp_server import serve
+    serve(args.workspace if args.workspace is not None else ".")
 
 
 def _run_preset_copy(args: argparse.Namespace) -> None:
@@ -652,6 +682,9 @@ def _run(args: argparse.Namespace) -> None:
         return
     if args.command == "skill":
         copy_skill(Path(args.output))
+        return
+    if args.command == "mcp":
+        _run_mcp(args)
         return
     if args.command == "preset":
         if args.preset_command == "list":
