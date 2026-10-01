@@ -30,10 +30,19 @@ VALIDATORS = SchemaValidators(SCHEMAS)
 PAIRS = {  # predecessor document version -> (successor document version, predecessor schema, successor schema)
     "chrona/layout-profile/v0.9": ("chrona/layout-profile/v0.10", "layout-profile-v0.9.schema.yaml", "layout-profile-v0.10.schema.yaml"),
     "chrona/render-context/v0.16": ("chrona/render-context/v0.17", "render-context-v0.16.schema.yaml", "render-context-v0.17.schema.yaml"),
+    "chrona/command/v0.2": ("chrona/command/v0.3", "command-request-v0.2.schema.yaml", "command-request-v0.3.schema.yaml"),
+    "chrona/automation-result/v0.1": ("chrona/automation-result/v0.2", "automation-result-v0.1.schema.yaml", "automation-result-v0.2.schema.yaml"),
+    "chrona/snapshot-ref/v0.2": ("chrona/snapshot-ref/v0.3", "snapshot-ref-v0.2.schema.yaml", "snapshot-ref-v0.3.schema.yaml"),
+}
+# Committed documents that stay on a predecessor on purpose, each with its reason.
+PINNED = {
+    "examples/halcyon-1/snapshots/baseline-2027-06.yaml":
+        "an immutable, content-pinned baseline: the Halcyon replan Context pins its sha256, so its bytes (and version) cannot change; "
+        "it is the committed stand-in for the v0.2 baselines already in operators' Stores",
 }
 SUCCESSOR_OF = {old: new for old, (new, _, _) in PAIRS.items()}
 PREDECESSOR_OF = {new: old for old, new in SUCCESSOR_OF.items()}
-ADDRESS_SITES = tuple(site for site in PROBE_SITES if site.family == "address")
+ADDRESS_SITES = tuple(site for site in PROBE_SITES if site.family in ("address", "segment"))
 THIS_TEST = "tests/unit/tools/test_store_address_kinds.py::test_each_address_site_refuses_every_listed_input"
 
 
@@ -42,7 +51,7 @@ def _documents() -> dict[str, bytes]:
 
 
 def _run_sites() -> dict[str, Any]:
-    corpus = _load_corpus(_documents(), sorted({site.source for site in ADDRESS_SITES}))
+    corpus = _load_corpus(_documents(), sorted({site.source for site in ADDRESS_SITES if not site.source.startswith("inline:")}))
     return run_probes(corpus, VALIDATORS, ADDRESS_SITES)
 
 
@@ -87,7 +96,8 @@ def test_successors_differ_from_their_predecessors_only_at_the_address_sites():
         changed = [pointer for pointer, _before, _after in _difference(prints.trees[old], prints.trees[new], prints.hasher, limit=500)
                    if "$recursive" not in pointer]  # a recursive reference names its own file; that is the identity change
         assert changed, old
-        assert all(pointer.endswith("/address/pattern") or pointer == "/properties/version/const" for pointer in changed), changed
+        assert all(pointer.endswith(("/address/pattern", "/address/minLength", "/snapshotId/allOf", "/snapshotId/minLength", "/snapshotId/type"))
+                   or pointer == "/properties/version/const" for pointer in changed), changed  # `minLength: 1` is implied by the pattern
         assert "/properties/version/const" in changed
     layout = [pointer for pointer, *_ in _difference(prints.trees["layout-profile-v0.9.schema.yaml"], prints.trees["layout-profile-v0.10.schema.yaml"], prints.hasher)]
     assert "/properties/extends/properties/address/pattern" in layout
@@ -102,7 +112,7 @@ def test_each_address_site_refuses_every_listed_input():
     baseline = load_baseline(ROOT / BASELINE)["diagnostics"]["probes"]
     deltas = {item.subject: item for item in load_deltas(ROOT / EXPECTED_DELTAS) if item.layer == "L3" and item.test == THIS_TEST}
     current = _run_sites()
-    assert len(current) == len(ADDRESS_SITES) * len(PROBE_STRINGS["address"])
+    assert len(current) == sum(len(PROBE_STRINGS[site.family]) for site in ADDRESS_SITES)
     changed: set[str] = set()
     for key, after in current.items():
         label = key.rsplit(":", 1)[1]
@@ -161,7 +171,7 @@ def test_every_migrated_document_keeps_its_verdict_under_the_successor():
 
 def test_no_committed_or_packaged_document_is_left_on_a_predecessor_version():
     """Anything pinned on purpose must be named here with its reason; the migration leaves none."""
-    pinned: dict[str, str] = {}
+    pinned = PINNED
     left = [path for path, content in _documents().items() if any(old.encode() in content for old in PAIRS)
             and not path.startswith(("schemas/", "docs/", "conformance/schema-equivalence/"))]
     assert sorted(left) == sorted(pinned), left
@@ -181,9 +191,9 @@ def test_the_baseline_records_of_the_address_probes_are_what_the_predecessors_sa
     from tools.schema_equivalence import _set_at, probe_documents, probe_id, run_ingress
 
     baseline = load_baseline(ROOT / BASELINE)["diagnostics"]["probes"]
-    corpus = _load_corpus(_documents(), sorted({site.source for site in ADDRESS_SITES}))
+    corpus = _load_corpus(_documents(), sorted({site.source for site in ADDRESS_SITES if not site.source.startswith("inline:")}))
     for site in ADDRESS_SITES:
-        for label, value in PROBE_STRINGS["address"]:
+        for label, value in PROBE_STRINGS[site.family]:
             document = probe_documents(site, corpus)
             document["version"] = PREDECESSOR_OF[document["version"]]
             _set_at(document, site.pointer, value)

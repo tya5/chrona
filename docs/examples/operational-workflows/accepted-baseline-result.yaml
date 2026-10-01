@@ -1,4 +1,4 @@
-version: chrona/automation-result/v0.1
+version: chrona/automation-result/v0.2
 operation: baseline-capture
 status: accepted
 requestContentIdentity: sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd

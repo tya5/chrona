@@ -28,7 +28,7 @@ from chrona.operational.store_config import load_store_config
 from chrona.operational.command_engine import apply_actual_command, check_command
 from chrona.usecases.authoring_commands import apply_authoring_command, parse_authoring_command, workspace_revision
 from chrona.operational.authoring_commands import cas_write_authoring_aggregate, cas_write_authoring_workspace, read_authoring_workspace
-from chrona.operational.resources import parse_document
+from chrona.operational.resources import parse_command, parse_document, stamp_automation_result
 from chrona.usecases.materialize import MaterializationError, materialize
 from chrona.usecases.local_authoring import discover_store_configuration, initialize_project
 from chrona.usecases.preset_library import copy_builtin_preset, is_builtin_preset_id, list_builtin_presets
@@ -640,13 +640,13 @@ def _run(args: argparse.Namespace) -> None:
         return
     if args.command in {"command-check", "command-apply", "actual-intake", "actual-resolve", "baseline-capture"}:
         try:
-            command = parse_document(Path(args.command_path).read_text(encoding="utf-8"), "command-request-v0.2.schema.yaml")
+            command = parse_command(Path(args.command_path).read_text(encoding="utf-8"))
             reader = _store_reader(args)
         except OSError as error:
             raise CliFailure("E_AUTOMATION_RESULT_IO", str(error), "automation", exit_code=3) from error
         required_type = {"actual-intake": "applyActualIntakeBatch", "actual-resolve": "resolveActualObservation", "baseline-capture": "captureSnapshot"}.get(args.command)
         if required_type and command["type"] != required_type:
-            result = {"version": "chrona/automation-result/v0.1", "operation": args.command, "status": "rejected", "requestContentIdentity": "sha256:" + "0" * 64, "inputs": [command["target"]], "diagnostics": [{"code": "E_AUTOMATION_OPERATION_UNSUPPORTED"}], "artifacts": []}
+            result = stamp_automation_result({"version": "chrona/automation-result/v0.1", "operation": args.command, "status": "rejected", "requestContentIdentity": "sha256:" + "0" * 64, "inputs": [command["target"]], "diagnostics": [{"code": "E_AUTOMATION_OPERATION_UNSUPPORTED"}], "artifacts": []})
         else:
             result = check_command(reader, command) if args.command == "command-check" else apply_actual_command(reader, command)
             result["operation"] = args.command

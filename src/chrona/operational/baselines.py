@@ -5,7 +5,7 @@ from typing import Any
 
 from chrona.usecases.review_projects import review_projects
 from chrona.operational.references import ImmutableReader, verify_reference
-from chrona.operational.resources import content_identity
+from chrona.operational.resources import content_identity, stamp_automation_result
 
 
 def compare_baseline(
@@ -27,20 +27,20 @@ def compare_baseline(
         code = str(error)
         if code == "E_AUTOMATION_TARGET_CLOSURE":
             code = "E_BASELINE_REFERENCE"
-        return {
+        return stamp_automation_result({
             "version": "chrona/automation-result/v0.1", "operation": "baseline-compare", "status": "rejected",
             "requestContentIdentity": content_identity(request), "inputs": [baseline_reference, candidate_reference],
             "diagnostics": [{"code": code}], "artifacts": [],
-        }
+        })
     comparison = review_projects(before.value, candidate.value)
     if comparison["status"] != "accepted":
-        return {
+        return stamp_automation_result({
             "version": "chrona/automation-result/v0.1", "operation": "baseline-compare", "status": "rejected",
             "requestContentIdentity": content_identity(request), "inputs": [baseline_reference, project_reference, candidate_reference],
             "diagnostics": comparison["diagnostics"], "artifacts": [],
-        }
-    return {
+        })
+    return stamp_automation_result({
         "version": "chrona/automation-result/v0.1", "operation": "baseline-compare", "status": "accepted",
         "requestContentIdentity": content_identity(request), "inputs": [baseline_reference, project_reference, candidate_reference],
         "diagnostics": [], "artifacts": [], "comparison": comparison,
-    }
+    })

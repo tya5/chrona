@@ -10,7 +10,7 @@ from chrona.commands.actual_commands import LocalActualStore, apply_actual_intak
 from chrona.core.store_address import StoreAddressError, check_store_segment, resolve_store_address
 from chrona.operational.references import ImmutableReader, verify_reference
 from chrona.operational.references import ReplayLedger
-from chrona.operational.resources import content_identity
+from chrona.operational.resources import content_identity, stamp_automation_result
 from chrona.storage.revision_store import ProjectSnapshot
 from chrona.storage.snapshots import LocalBaselineRegistry, capture_baseline_v02
 
@@ -36,8 +36,8 @@ def check_command(reader: ImmutableReader, command: dict[str, Any]) -> dict[str,
                 verify_reference(reader, reference)
     except ValueError as error:
         code = str(error)
-        return {"version": "chrona/automation-result/v0.1", "operation": "command-check", "status": "rejected", "requestContentIdentity": request_identity, "inputs": [target] if target else [], "diagnostics": [{"code": code}], "artifacts": []}
-    return {"version": "chrona/automation-result/v0.1", "operation": "command-check", "status": "accepted", "requestContentIdentity": request_identity, "inputs": [verified.reference], "diagnostics": [], "artifacts": []}
+        return stamp_automation_result({"version": "chrona/automation-result/v0.1", "operation": "command-check", "status": "rejected", "requestContentIdentity": request_identity, "inputs": [target] if target else [], "diagnostics": [{"code": code}], "artifacts": []})
+    return stamp_automation_result({"version": "chrona/automation-result/v0.1", "operation": "command-check", "status": "accepted", "requestContentIdentity": request_identity, "inputs": [verified.reference], "diagnostics": [], "artifacts": []})
 
 
 def apply_actual_command(reader: Any, command: dict[str, Any]) -> dict[str, Any]:
@@ -66,7 +66,7 @@ def apply_actual_command(reader: Any, command: dict[str, Any]) -> dict[str, Any]
         result = capture_baseline_v02(ProjectStore(), command["baseRevision"], target, command["payload"]["snapshotId"], LocalBaselineRegistry(root, registry_selector["identity"]))
         if result.status != "accepted":
             return _rejected(command, result.diagnostics)
-        accepted = {"version": "chrona/automation-result/v0.1", "operation": "command-apply", "status": "accepted", "requestContentIdentity": content_identity(command), "inputs": [target], "resultTarget": result.snapshot_ref, "diagnostics": [], "artifacts": []}
+        accepted = stamp_automation_result({"version": "chrona/automation-result/v0.1", "operation": "command-apply", "status": "accepted", "requestContentIdentity": content_identity(command), "inputs": [target], "resultTarget": result.snapshot_ref, "diagnostics": [], "artifacts": []})
         ledger.record(command["commandId"], command, target, accepted)
         return accepted
     store_info = target["store"]
@@ -106,7 +106,7 @@ def apply_actual_command(reader: Any, command: dict[str, Any]) -> dict[str, Any]
     if operation.status != "accepted":
         return _rejected(command, operation.diagnostics, extra)
     result_target = _actual_reference(target, operation.result_revision, operation.actual_set)
-    result = {"version": "chrona/automation-result/v0.1", "operation": "command-apply", "status": "accepted", "requestContentIdentity": content_identity(command), "inputs": [target], "resultTarget": result_target, "diagnostics": [], "artifacts": [], **extra}
+    result = stamp_automation_result({"version": "chrona/automation-result/v0.1", "operation": "command-apply", "status": "accepted", "requestContentIdentity": content_identity(command), "inputs": [target], "resultTarget": result_target, "diagnostics": [], "artifacts": [], **extra})
     ledger.record(command["commandId"], command, target, result)
     return result
 
@@ -118,4 +118,4 @@ def _actual_reference(target: dict[str, Any], revision: str, actual: dict[str, A
 
 def _rejected(command: dict[str, Any], code: str | tuple[str, ...], extra: dict[str, Any] | None = None) -> dict[str, Any]:
     codes = (code,) if isinstance(code, str) else code
-    return {"version": "chrona/automation-result/v0.1", "operation": "command-apply", "status": "rejected", "requestContentIdentity": content_identity(command), "inputs": [command.get("target", {})], "diagnostics": [{"code": value} for value in codes], "artifacts": [], **(extra or {})}
+    return stamp_automation_result({"version": "chrona/automation-result/v0.1", "operation": "command-apply", "status": "rejected", "requestContentIdentity": content_identity(command), "inputs": [command.get("target", {})], "diagnostics": [{"code": value} for value in codes], "artifacts": [], **(extra or {})})
