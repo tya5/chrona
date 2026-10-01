@@ -74,8 +74,9 @@ def apply_actual_command(reader: Any, command: dict[str, Any]) -> dict[str, Any]
     tip = None
     if root:
         try:
-            tip = resolve_store_address(root, f"actual-tips/{target['id']}.json")
-            check_store_segment(target["id"])
+            # Same adapter-private tip file name as `LocalActualStore`: an identifier, not an address (#731).
+            tip = resolve_store_address(root, f"actual-tips/{target['id']}.json", charset="file-name")
+            check_store_segment(target["id"], charset="file-name")
         except StoreAddressError:
             tip = None
     if tip is None or not tip.is_file():

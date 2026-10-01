@@ -186,8 +186,10 @@ DIRECTORY_MATRIX = [
     ("", False, "E_AUTHORING_MATERIALIZE_PATH"),
     # A `.` segment is refused by the shared Store address guard (#710) instead of the workspace contract; same refusal, earlier.
     ("a/./b", False, "E_AUTHORING_MATERIALIZE_PATH"),
-    ("out dir", False, "E_RESOURCE_SCHEMA"),
-    ("出力", False, "E_RESOURCE_SCHEMA"),
+    # A space or a non-ASCII letter is refused by the shared guard's `storeAddress` character rule (#731) instead of the
+    # workspace contract (`E_RESOURCE_SCHEMA` before): the same refusal, earlier.
+    ("out dir", False, "E_AUTHORING_MATERIALIZE_PATH"),
+    ("出力", False, "E_AUTHORING_MATERIALIZE_PATH"),
     ("a\\b", False, None),
     ("out\x00", False, None),
     (".", False, None),

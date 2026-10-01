@@ -43,11 +43,13 @@ OWNER_VECTORS = [
 OTHER_VECTORS = [
     "", ".", "..", "...", "a/.../b", ". ", "/x", "//srv/share/x", "\\x", "C:\\x", "a:b", "a/C:/x",
     "a//b", "a/", "a/./b", "a/..", "../a", "a\tb", "a\x7fb", "a\x85b", "a\rb", "a\n", "\na", "snapshots/..\\..\\x.yaml",
+    # The schema's `storeAddress` character rule (#731): a space, a trailing-space segment, a non-ASCII letter, `+`.
+    "a b", "a /b", "a/b ", "é", "計画.yaml", "a+b",
 ]
 REJECTED = OWNER_VECTORS + OTHER_VECTORS
 ACCEPTED = [
     "a", "project.yaml", "resources/project.yaml", "layouts/base.yaml", "font_metrics/acme-regular.json",
-    "icons/sample.png", "snapshots/baseline-q2.yaml", "a.b/c-d_e", "a/.hidden", "x/y.z.w", "v1..2/a", "a b/c",
+    "icons/sample.png", "snapshots/baseline-q2.yaml", "a.b/c-d_e", "a/.hidden", "x/y.z.w", "v1..2/a", "a-b/c",
 ]
 
 
@@ -223,8 +225,8 @@ def _store(tmp_path) -> tuple[Path, LocalSnapshotReader, dict]:
     (directory / "resources").mkdir(parents=True)
     payload = b"id: project\n"
     (directory / "resources" / "project.yaml").write_bytes(payload)
-    (directory / "a b").mkdir()
-    (directory / "a b" / "c.yaml").write_bytes(payload)
+    (directory / "a-b").mkdir()
+    (directory / "a-b" / "c.yaml").write_bytes(payload)
     reference = {"id": "project", "kind": "project", "store": {"provider": "local", "identity": "s"},
                  "address": "resources/project.yaml", "revision": {"token": "rev-1"},
                  "contentIdentity": "sha256:" + sha256(payload).hexdigest()}
@@ -239,7 +241,7 @@ def test_snapshot_reader_refuses_with_the_existing_typed_error(tmp_path, address
     assert error.value.diagnostic_id == "E_IMMUTABLE_SNAPSHOT_REQUIRED"
 
 
-@pytest.mark.parametrize("address", ["resources/project.yaml", "a b/c.yaml"])
+@pytest.mark.parametrize("address", ["resources/project.yaml", "a-b/c.yaml"])
 def test_snapshot_reader_still_reads_a_legitimate_address(tmp_path, address):
     _, reader, reference = _store(tmp_path)
     assert reader.read(reference | {"address": address}) == b"id: project\n"
@@ -297,7 +299,7 @@ def test_baseline_read_maps_an_os_error_on_open_to_the_typed_error(tmp_path, mon
 
 def test_snapshot_reader_never_leaks_an_os_error(tmp_path):
     _, reader, reference = _store(tmp_path)
-    for address in ("resources", "a b"):  # directories
+    for address in ("resources", "a-b"):  # directories
         with pytest.raises(SnapshotReadError):
             reader.read(reference | {"address": address})
     for token in ("", None, "Draft"):
