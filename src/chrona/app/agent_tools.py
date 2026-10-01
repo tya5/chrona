@@ -267,7 +267,8 @@ def _schedule_project(call: _Call, arguments: dict[str, Any]) -> ToolResult:
     if outcome.analysis is not None:
         fields["analysis"] = {
             "criticalObjectIds": list(outcome.analysis["criticalObjectIds"]),
-            # Hash-seed-dependent in the use case (#789): sorted here, never trusted.
+            # Spec 66 section 3: every mapping is sorted by key, whatever order the use case gives (it follows the
+            # Project object order since #789), so this tool's bytes do not depend on a scheduler detail.
             "totalFloat": {key: outcome.analysis["totalFloat"][key] for key in sorted(outcome.analysis["totalFloat"])},
         }
     return ToolResult(call.ok(**fields))

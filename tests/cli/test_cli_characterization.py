@@ -17,9 +17,8 @@ Rules the matrix keeps:
   does not rewrite the golden file; ``CHRONA_CHARACTERIZATION_RAW=<file>`` records
   the unnormalised output and the SHA-256 of every written file for a before/after
   comparison of the exact bytes;
-* the one run-to-run difference of the CLI itself, the key order of ``analysis.totalFloat``
-  in ``schedule`` output (set iteration, hash-seed dependent; tracked separately), is
-  sorted before comparison; a raw before/after comparison fixes ``PYTHONHASHSEED``;
+* the CLI is deterministic: `test_hash_seed_determinism.py` runs it under eight hash seeds, so the
+  key order of ``analysis.totalFloat`` (Project object order, Spec 57) is recorded as printed;
 * nothing here reads the clock or the host environment.
 
 Re-record the golden file only for an intended CLI change:
@@ -392,26 +391,6 @@ def _normalise(text: str, root: pathlib.Path) -> str:
     return re.sub(r"\\{2,}", "/", text)
 
 
-def _canonical_schedule(text: str) -> str:
-    """Sort ``analysis.totalFloat``, whose key order follows set iteration (hash-seed dependent).
-
-    The CLI prints that mapping in an order that varies between processes, so a golden file
-    cannot pin it. Everything else is kept as printed: the text must equal a plain re-dump of
-    the parsed document (indent 2, a trailing newline), or it is returned untouched.
-    """
-    try:
-        document = json.loads(text)
-    except ValueError:
-        return text
-    if not (isinstance(document, dict) and isinstance(document.get("analysis"), dict)):
-        return text
-    if json.dumps(document, indent=2) + "\n" != text:
-        return text
-    analysis = document["analysis"]
-    analysis["totalFloat"] = dict(sorted(analysis["totalFloat"].items()))
-    return json.dumps(document, indent=2) + "\n"
-
-
 def _stream(text: str) -> object:
     if len(text) <= 3000:
         return text
@@ -468,7 +447,7 @@ def run_case(case: Case) -> tuple[dict[str, object], dict[str, object]]:
         }
         golden = {
             "argv": list(case.argv), "exit": code,
-            "stdout": _stream(_canonical_schedule(_normalise(stdout, root))), "stderr": _warning_stream(stderr) if code == 0 and stderr else _stream(_normalise(stderr, root)),
+            "stdout": _stream(_normalise(stdout, root)), "stderr": _warning_stream(stderr) if code == 0 and stderr else _stream(_normalise(stderr, root)),
             "files": files,
         }
         raw = {"argv": list(case.argv), "exit": code, "stdout": stdout.replace(str(root), "<tmp>"),

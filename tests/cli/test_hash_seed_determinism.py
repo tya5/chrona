@@ -52,3 +52,29 @@ def test_schedule_prints_total_float_in_project_object_order(project):
                if item["schedule"]["mode"] != "rollup"]
     assert list(analysis["totalFloat"]) == objects
     assert analysis["criticalObjectIds"] == [name for name in objects if analysis["totalFloat"][name] == 0]
+
+
+_PROBE = """
+import json, sys, yaml
+from chrona.scheduling.scheduler import schedule
+project = yaml.safe_load(open(sys.argv[1], encoding="utf-8"))
+analysis = schedule(project).analysis
+print(json.dumps({"float": list(analysis.total_float), "latest": list(analysis.latest_placements),
+                  "targets": list(analysis.component_targets)}))
+"""
+
+
+def test_every_mapping_of_the_analysis_follows_the_project_object_order_under_every_seed():
+    """The scheduler orders `totalFloat` and `latest_placements` itself; no adapter has to sort them."""
+    import yaml
+    path = CLI / "halcyon-1" / "project.yaml"
+    objects = [name for name, item in yaml.safe_load(path.read_text(encoding="utf-8"))["objects"].items()
+               if item["schedule"]["mode"] != "rollup"]
+    seen = set()
+    for seed in SEEDS:
+        done = subprocess.run([sys.executable, "-c", _PROBE, str(path)], capture_output=True, text=True, check=True,
+                              env={**os.environ, "PYTHONHASHSEED": str(seed)})
+        record = json.loads(done.stdout)
+        assert record["float"] == objects and record["latest"] == objects, seed
+        seen.add(tuple(record["targets"]))
+    assert len(seen) == 1
