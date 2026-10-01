@@ -39,8 +39,8 @@ diagnostics:
     assert "baseRevision" not in value
 
 
-def test_command_v02_requires_a_complete_immutable_target_reference():
-    payload = """version: chrona/command/v0.2
+def test_command_v03_requires_a_complete_immutable_target_reference():
+    payload = """version: chrona/command/v0.3
 commandId: bad
 type: captureSnapshot
 target: {id: p, kind: project}
@@ -49,7 +49,7 @@ expectedContentIdentity: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 payload: {snapshotId: baseline, registry: {id: r}}
 """
     try:
-        parse_document(payload, "command-request-v0.2.schema.yaml")
+        parse_document(payload, "command-request-v0.3.schema.yaml")
     except OperationalResourceError as error:
         assert error.code == "E_OPERATIONAL_SCHEMA"
     else:
@@ -58,7 +58,7 @@ payload: {snapshotId: baseline, registry: {id: r}}
 
 def test_operational_schema_error_uses_a_stable_pointer_and_explanation():
     try:
-        parse_document("version: chrona/command/v0.2\ncommandId: bad\ntype: unknown\ntarget: {}\nbaseRevision: r\npayload: {}\n", "command-request-v0.2.schema.yaml")
+        parse_document("version: chrona/command/v0.3\ncommandId: bad\ntype: unknown\ntarget: {}\nbaseRevision: r\npayload: {}\n", "command-request-v0.3.schema.yaml")
     except OperationalResourceError as error:
         assert error.code == "E_OPERATIONAL_SCHEMA"
         assert "expected minProperties 1" in str(error)

@@ -38,7 +38,6 @@ SCHEMAS = (
     "actual-intake-batch-v0.2.schema.yaml",
     "actual-set-v0.3.schema.yaml",
     "authoring-command-result-v0.1.schema.yaml",
-    "command-request-v0.2.schema.yaml",
     "command-request-v0.3.schema.yaml",
     "automation-result-v0.1.schema.yaml",
     "automation-result-v0.2.schema.yaml",

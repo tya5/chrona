@@ -459,7 +459,7 @@ def test_actual_command_target_id_cannot_walk_out_of_the_tip_directory(tmp_path)
                 return b"project: {id: p}\nobjects: {}\n"
             return b"version: chrona/actual-set/v0.3\nkind: actual-set\nid: ../../x\nbody: {observations: []}\n"
 
-    command = {"version": "chrona/command/v0.2", "commandId": "c1", "type": "resolveActualObservation",
+    command = {"version": "chrona/command/v0.3", "commandId": "c1", "type": "resolveActualObservation",
                "target": {"id": "../../x", "kind": "actual-set", "store": {"provider": "local", "identity": "s"},
                           "address": "actuals/x.yaml", "revision": {"token": "actual:1"}},
                "baseRevision": "actual:1", "payload": {"observationId": "o", "projectObjectId": "p", "project": _project_ref()}}

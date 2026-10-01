@@ -1313,7 +1313,7 @@ def test_cli_result_write_does_not_require_hard_link_support(tmp_path, monkeypat
 def test_cli_command_check_writes_non_mutating_result(tmp_path, monkeypatch):
     project = {"version": "timeline/v0.7", "project": {"id": "p"}, "extensions": [], "objects": {}, "relations": []}
     target = _snapshot_resource(tmp_path, "p-r1", "project.yaml", project, "project", "p")
-    command = {"version": "chrona/command/v0.2", "commandId": "check-1", "type": "captureSnapshot", "target": target, "baseRevision": target["revision"]["token"], "expectedContentIdentity": target["contentIdentity"], "payload": {"snapshotId": "q2", "registry": {"provider": "local", "identity": "cli-test"}}}
+    command = {"version": "chrona/command/v0.3", "commandId": "check-1", "type": "captureSnapshot", "target": target, "baseRevision": target["revision"]["token"], "expectedContentIdentity": target["contentIdentity"], "payload": {"snapshotId": "q2", "registry": {"provider": "local", "identity": "cli-test"}}}
     command_path, config_path, result = tmp_path / "command.yaml", tmp_path / "stores.yaml", tmp_path / "result.json"
     command_path.write_text(yaml.safe_dump(command)); config_path.write_text(yaml.safe_dump({"version": "chrona/store-config/v0.1", "stores": [{"provider": "local", "identity": "cli-test", "root": str(tmp_path)}]}))
     monkeypatch.setattr(sys, "argv", ["chrona", "command-check", "--command", str(command_path), "--store-config", str(config_path), "--result", str(result)])

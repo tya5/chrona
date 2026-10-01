@@ -58,7 +58,7 @@ condition, not a Revision Store command: its `baseRevision` is the canonical
 content identity of the validated local authoring workspace. Specification 51
 owns that file-local rule and its public revision-read operation. It does not
 alter the opaque Store-token rule for this Command Model or the
-`command/v0.2` operational profile in Specification 35.
+`command/v0.3` operational profile in Specification 35.
 
 ### 3.1 v0.1 serialized request document
 
