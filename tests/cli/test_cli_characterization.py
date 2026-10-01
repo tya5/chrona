@@ -370,7 +370,10 @@ def _normalise(text: str, root: pathlib.Path) -> str:
     for spelling in {str(root), root.as_posix(), str(root.resolve()), root.resolve().as_posix()}:
         text = text.replace(spelling, "<tmp>")
         text = text.replace(spelling.replace("\\", "\\\\"), "<tmp>")
-    return _OS_ERROR.sub("<os error>: ", text)
+    text = _OS_ERROR.sub("<os error>: ", text)
+    # On Windows a relative path in a message carries a backslash, which the JSON text escapes as two
+    # characters; the record uses the POSIX spelling so one golden file serves every OS.
+    return text.replace("\\\\", "/")
 
 
 def _canonical_schedule(text: str) -> str:
@@ -496,3 +499,11 @@ if __name__ == "__main__":  # pragma: no cover
     if "--record" not in sys.argv:
         raise SystemExit("usage: python -m tests.cli.test_cli_characterization --record")
     _record()
+
+
+def test_normalise_uses_the_posix_spelling_of_a_windows_relative_path(tmp_path):
+    """Windows prints `nowhere\\view.yaml` (escaped twice in JSON text); the golden file records `nowhere/view.yaml`."""
+    windows = '{"message": "[WinError 2] The system cannot find the file specified: \'nowhere\\\\view.yaml\'"}'
+    posix = '{"message": "[Errno 2] No such file or directory: \'nowhere/view.yaml\'"}'
+    assert _normalise(windows, tmp_path) == _normalise(posix, tmp_path)
+    assert _normalise(windows, tmp_path) == '{"message": "<os error>: \'nowhere/view.yaml\'"}'
