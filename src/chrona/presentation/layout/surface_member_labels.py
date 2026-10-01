@@ -10,7 +10,9 @@ from chrona.presentation.layout.labels import (
     LabelPlacement, LabelRect, LabelRequest, MemberNameAssociation, place_label, place_member_name,
 )
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
-from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacle, SurfaceObstacleIndex
+from chrona.presentation.layout.obstacles import (
+    ROUTE_RESERVE_CLASS, ObstacleRect, SurfaceObstacle, SurfaceObstacleIndex,
+)
 from chrona.presentation.layout.presentation import TrackPlacement
 from chrona.presentation.model.semantic_registry import label_chip_semantic, semantic_binding
 from chrona.presentation.layout.surface_quality import (
@@ -299,7 +301,7 @@ def place_member_labels(context: SurfaceMemberLabelContext,
                 placement_bounds.width + 2 * chip_pad[0], placement_bounds.height + 2 * chip_pad[1])
         label_gap = lane_measure.gap if lane_measure is not None else max(1.0, float(font_size) * 0.25)
         label_classes = (("mark", "text", "label-visual", "rule") if label_request.rule_host_obstacle_id
-                         else ("mark", "text", "label-visual", "dependency-route"))
+                         else ("mark", "text", "label-visual", "dependency-route", ROUTE_RESERVE_CLASS))
         provisional = place_text(placement_id=label_request.placement_id, source_ref=label_request.source_ref,
             content=label_request.content, inline=0, baseline_block=float(font_size),
             typography_role=label_request.typography_role, theme_tokens=request.theme_tokens,

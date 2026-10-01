@@ -15,6 +15,7 @@ from chrona.presentation.layout.surface_member_labels import (
 from chrona.presentation.layout.surface_routes import (
     SurfaceRoutesContext, compose_surface_routes, place_relation_labels,
 )
+from chrona.presentation.layout.surface_lane_route_plan import LaneRoutePlanContext, plan_lane_route_reservations
 from chrona.presentation.layout.surface_base import prepare_surface_base
 from chrona.presentation.layout.surface_content import (
     complete_footer_band, compose_detail_panel_blocks, place_notes, place_summary,
@@ -212,6 +213,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         lane_label_suppressions.extend(batch.lane_label_suppressions)
         handled_candidate_visuals.update(batch.handled_visual_sources)
 
+    lane_route_plan = plan_lane_route_reservations(LaneRoutePlanContext(
+        member_label_context, member_label_requests.pre_route, tuple(text), surface_obstacles,
+        lambda index, texts: SurfaceRoutesContext(request, projection, review_rows, tuple(rows), tuple(groups),
+            tuple(marks), timeline_bounds, layout_manifest, metric_values, texts, index)))
+    surface_obstacles.extend(lane_route_plan.reservations)
     place_label_phase(member_label_requests.pre_route)
 
     routes_context = SurfaceRoutesContext(request, projection, review_rows, tuple(rows), tuple(groups),

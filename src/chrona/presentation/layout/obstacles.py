@@ -35,6 +35,8 @@ class ObstacleSegment:
 
 
 ObstacleGeometry = ObstacleRect | ObstacleSegment
+# A corridor that a lane route needs but has not been placed in yet: member names avoid it, routes ignore it.
+ROUTE_RESERVE_CLASS = "route-reserve"
 BOUNDARY_CONTACT_TOLERANCE = 1e-9
 
 
@@ -241,6 +243,12 @@ class SurfaceObstacleIndex:
         self._by_id[obstacle.placement_id] = obstacle
         self._ordered = None
         self._prepared = {}
+
+    def copy(self) -> "SurfaceObstacleIndex":
+        """An independent index holding the same (immutable) obstacles, for a planning dry run."""
+        clone = SurfaceObstacleIndex()
+        clone._by_id = dict(self._by_id)
+        return clone
 
     def extend(self, obstacles: Iterable[SurfaceObstacle]) -> None:
         for obstacle in obstacles:

@@ -217,6 +217,24 @@ Lane membership is already fixed from Project/View data (Spec 38) before this
 placement phase. A label that cannot fit is suppressed with a source-keyed
 count; its absence does not add, merge or split lanes. Only labels actually
 placed become route obstacles.
+The order is names, then routes, then post-route labels and relation labels
+(#687). A name can leave a dependency no corridor (names in stacked lane rows
+form a wall across the channel; this is the usual cause, not a name at a port),
+so before the names are placed Layout rehearses the name and route phases on
+private copies of the obstacle index. For each relation that rehearsal
+suppresses or completes only as the visible direct fallback, and that has a
+route when no member name is present, that route's segments are reserved as a
+corridor (obstacle class `route-reserve`, one stroke width plus the router's
+grid offset on each side) which member names avoid and routes, relation labels
+and annotations ignore. The corridors are kept only if a second rehearsal
+leaves a strict subset of those relations lost and suppresses no name that is
+shown without them; otherwise nothing is reserved and the order is exactly as
+before. A name that yields takes the next legal candidate of its declared
+ladder under the unchanged association, host and reach rules, or is suppressed
+with its typed fact; the declared ladder is never extended. A route still never
+crosses a required label and a name never crosses a corridor. Reserving every
+relation port, ranking `above`/`below` over `end`, and placing routes first were
+measured and rejected (see the #687 design).
 For lane mode only, a declared `visible-overflow` direct fallback is permitted
 only if the completed path clears every required placed lane/member label.
 Otherwise Layout suppresses it with the same generic warning and typed
