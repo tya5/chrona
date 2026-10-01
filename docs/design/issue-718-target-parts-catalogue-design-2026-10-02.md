@@ -84,8 +84,8 @@ with two Theme token sets. This follows `halcyon-1-target-design-2026-09-21/rend
 
 A unit test pins the manifest, hashes, inventory and densities and regenerates the catalogue byte for byte from the
 source, as the starter's test does. An integration test renders a Theme that binds a catalogue glyph and a catalogue
-pattern through `chrona render` and checks the completed symbol and pattern in the Scene. The packaged-resource list
-test and the wheel smoke list gain the four file names. These are test and check lists, not product behaviour.
+pattern through `chrona render` and checks the completed symbol and pattern in the Scene. The unit test also reads the four files through
+the package resource API, and the implementation evidence lists the built wheel; no existing test or tool list is edited.
 
 ## 2. The catalogue
 
