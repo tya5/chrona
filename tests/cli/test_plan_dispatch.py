@@ -204,17 +204,21 @@ def test_a_plan_with_invalid_utf8_is_a_compile_rejection_not_a_crash(scratch, mo
 
 # --- positioned scheduler errors ---------------------------------------------------------------------------------
 
+# (file, code, line for `schedule`, line for `render`). A cycle is named by the use case `schedule` shares with `validate`
+# (#780): at the relation that closes it (line 3, `b ... after a`). `render` still reports the scheduler's own finding,
+# at the first object that waits (line 2); making `render` name the cycle too is not part of #780.
 POSITIONED = [
-    ("gate.chrona", "E_FIXED_TARGET_VIOLATION", 3),
-    ("cycle.chrona", "E_UNSUPPORTED_CYCLE", 2),
-    ("bound.chrona", "E_CONTRADICTORY_BOUNDS", 4),
+    ("gate.chrona", "E_FIXED_TARGET_VIOLATION", 3, 3),
+    ("cycle.chrona", "E_UNSUPPORTED_CYCLE", 3, 2),
+    ("bound.chrona", "E_CONTRADICTORY_BOUNDS", 4, 4),
 ]
 
 
 @pytest.mark.parametrize("command", [("schedule",), ("render", "-o", "out.svg")])
-@pytest.mark.parametrize("name, code, line", POSITIONED)
-def test_scheduler_findings_on_a_plan_carry_the_line_and_a_hint(name, code, line, command, scratch, monkeypatch, capsys):
+@pytest.mark.parametrize("name, code, schedule_line, render_line", POSITIONED)
+def test_scheduler_findings_on_a_plan_carry_the_line_and_a_hint(name, code, schedule_line, render_line, command, scratch, monkeypatch, capsys):
     verb, *rest = command
+    line = schedule_line if verb == "schedule" else render_line
     exit_code, out, _err = _run(monkeypatch, capsys, verb, name, *rest)
     payload = json.loads(out)
     assert exit_code == 1 and payload["status"] == "rejected"

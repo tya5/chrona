@@ -32,9 +32,10 @@ the wrong tool there, and the file says so honestly.
    date, and `chrona schedule` derives it. Write a `fixed-point` date only for a date that
    is promised, not one that is computed.
 3. **Edit `project.yaml`, then render again.** Never edit the generated picture.
-4. **Run `chrona schedule`, not only `chrona validate`.** A dependency cycle, a fixed
-   date that contradicts its dependencies and contradictory bounds all pass `validate`
-   with `[]` and are rejected by `schedule` and `render`.
+4. **Run `chrona schedule`, not only `chrona validate`.** `validate` finds structure
+   errors and dependency cycles, but it computes no dates: a fixed date that contradicts
+   its dependencies and contradictory bounds pass `validate` with `[]` and are rejected
+   by `schedule` and `render`.
 5. **Copy a preset once, then edit the copy.** Do not edit a copied preset in place to
    change one token each time; do not edit the files inside the installed package.
 6. **A rejected command is information.** Read `code` and `sourceRef` first.
@@ -72,8 +73,8 @@ the same diagnostics as JSON. Otherwise use the commands. Read a result's `statu
 
 | Tool | Same as | Note |
 | --- | --- | --- |
-| `validate_project` | `chrona validate` | Does not detect a cycle: also run `schedule_project`. |
-| `schedule_project` | `chrona schedule` | Placements, critical path and `W_DEADLINE` warnings; rejects a cycle. |
+| `validate_project` | `chrona validate` | Structure and dependency cycles, no dates: run `schedule_project` for those. |
+| `schedule_project` | `chrona schedule` | Placements, critical path and `W_DEADLINE` warnings; also rejects a date or bound the dependencies contradict. |
 | `render_draft` | `chrona render` | A PNG preview, or the SVG with `inline: svg`; writes no file. |
 | `list_presets` | `chrona preset list` | The ids `render_draft` takes as `preset`. |
 

@@ -175,11 +175,14 @@ def test_status_and_error_flag_over_stdio(workspace):
                 await client.call_tool("validate_project", {"project": "../launch.yaml"}),
                 await client.call_tool("validate_project", {"project": "/etc/passwd"}),
                 await client.call_tool("validate_project", {"project": "missing.yaml"}),
-                await client.call_tool("render_draft", {"project": "launch.yaml", "preset": "nope"})]
+                await client.call_tool("render_draft", {"project": "launch.yaml", "preset": "nope"}),
+                await client.call_tool("validate_project", {"project": "cycle.yaml"})]
 
-    cycle, escape, absolute, missing, preset = session(workspace, scenario)
+    cycle, escape, absolute, missing, preset, validated = session(workspace, scenario)
     assert (cycle.structured_content["status"], cycle.is_error) == ("rejected", False)
     assert {item["code"] for item in cycle.structured_content["diagnostics"]} == {"E_UNSUPPORTED_CYCLE"}
+    assert validated.structured_content["status"] == "rejected" and not validated.is_error  # #780: validate names the cycle too
+    assert validated.structured_content["diagnostics"] == cycle.structured_content["diagnostics"]
     for result, code in ((escape, "E_MCP_PATH_SYNTAX"), (absolute, "E_MCP_PATH_SYNTAX"), (missing, "E_INPUT_IO")):
         assert (result.structured_content["status"], result.is_error) == ("failed", True)
         assert result.structured_content["diagnostics"][0]["code"] == code

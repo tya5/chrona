@@ -364,8 +364,9 @@ _TOOLS: tuple[ToolSpec, ...] = (
         "validate_project", "Validate a Project",
         "Validate a Project YAML file in the workspace against the Project schema and the Core rules. Returns "
         "status 'ok' with no diagnostics, or status 'rejected' with typed diagnostics (code, sourceRef, message). "
-        "A rejected plan is a normal result, not a tool error. This tool does NOT detect dependency cycles or "
-        "contradictory fixed dates (a cyclic plan validates): run schedule_project before calling a plan valid.",
+        "A rejected plan is a normal result, not a tool error. A dependency cycle is rejected here, naming the "
+        "objects on it. This tool computes no dates, so a fixed date that contradicts its dependencies is found "
+        "only by schedule_project: run it to read dates.",
         _input_schema({"project": _WORKSPACE_PATH_PROPERTY}, ["project"]),
         _output_schema({"projectIdentity": {"$ref": "#/$defs/sha256"}}),
         _validate_project,
@@ -374,8 +375,8 @@ _TOOLS: tuple[ToolSpec, ...] = (
         "schedule_project", "Compute a Project's schedule",
         "Compute the schedule of a Project YAML file in the workspace. On 'ok' returns placements per object id "
         "({start, end} or {at}, ISO dates, end exclusive) and the analysis (critical object ids, total float in "
-        "calendar days). A dependency cycle or a fixed date that contradicts its dependencies is rejected here, "
-        "not by validate_project. 'warnings' lists W_DEADLINE for each object planned to finish after its deadline "
+        "calendar days). A fixed date that contradicts its dependencies, or a bound that cannot be met, is rejected "
+        "here and not by validate_project (a dependency cycle is rejected by both). 'warnings' lists W_DEADLINE for each object planned to finish after its deadline "
         "(the plan is still scheduled; the deadline is a promise, not a bound). Read dates from this result; never compute a date by hand.",
         _input_schema({"project": _WORKSPACE_PATH_PROPERTY}, ["project"]),
         _output_schema({
