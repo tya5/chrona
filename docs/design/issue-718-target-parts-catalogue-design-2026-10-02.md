@@ -3,6 +3,8 @@
 **Status:** Proposed. Depth C: resources, YAML, tests and documentation only.
 **Base:** `main` at `4981db0a`. Design plan:
 [issue-718-target-parts-catalogue-design-plan-2026-10-02.md](../planning/active/issue-718-target-parts-catalogue-design-plan-2026-10-02.md).
+Architecture review (accepted with three conditions, C1 to C3):
+[issue-718-target-parts-catalogue-architecture-review-2026-10-02.md](../reviews/current/issue-718-target-parts-catalogue-architecture-review-2026-10-02.md).
 **Normative contracts used, not changed:** [Spec 64](../specification/64-portable-icon-catalogs.md) section 8
 (Theme glyph and pattern assets), [Spec 07](../specification/07-style-and-theme.md) section 5.2 (symbol and pattern
 tokens), `schemas/theme-asset-source-v0.1.schema.yaml`, `schemas/icon-catalog-v0.4.schema.yaml`.
@@ -82,8 +84,8 @@ with two Theme token sets. This follows `halcyon-1-target-design-2026-09-21/rend
 
 A unit test pins the manifest, hashes, inventory and densities and regenerates the catalogue byte for byte from the
 source, as the starter's test does. An integration test renders a Theme that binds a catalogue glyph and a catalogue
-pattern through `chrona render` and checks the completed symbol and pattern in the Scene. The packaged-resource list
-test and the wheel smoke list gain the four file names. These are test and check lists, not product behaviour.
+pattern through `chrona render` and checks the completed symbol and pattern in the Scene. The unit test also reads the four files through
+the package resource API, and the implementation evidence lists the built wheel; no existing test or tool list is edited.
 
 ## 2. The catalogue
 
