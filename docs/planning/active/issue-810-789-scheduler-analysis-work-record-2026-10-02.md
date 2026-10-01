@@ -130,3 +130,8 @@ every Project scenario, and dumps placements, diagnostics and the whole analysis
   `2wd` lag), `floor` (derived gate) are the true latest end on a non-working date (latest dates move later, float unchanged), and
   `off` in the YAML-hazard fixture is a `2wd` span before a calendar-day span that starts on a Sunday (float 31 to 30). The
   `schedule-halcyon-ok` characterization golden changes in exactly the `shipment` value (5 to 4).
+  **Mutation check** (eight mutants, all killed by a named test): relation hop back to `retreat`, span start back to `retreat`, span
+  start left on a non-working date (this one first survived; `test_the_latest_start_of_a_working_day_span_is_a_working_date` was
+  added), no forward search, no backward search, `<` for `<=` in the search, the calendar-day guard dropped, and the analysis pass
+  skipped (the old stub). Verification run: scheduling, CLI, app, use case, Core, terse, presentation and integration tests
+  (2532 passed, the one failure was the expected golden), `regenerate_public_examples --check` (no derived byte changes), conformance.
