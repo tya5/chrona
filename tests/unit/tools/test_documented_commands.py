@@ -95,3 +95,31 @@ def test_default_executor_uses_the_current_interpreter_scripts_directory(tmp_pat
     monkeypatch.setattr(check_documented_commands.sysconfig, "get_path", lambda _name: str(scripts))
 
     assert check_documented_commands._installed_chrona() == (str(executable),)
+
+
+def test_skill_documents_are_discovered_and_the_skills_tree_reaches_the_fixture(tmp_path):
+    root = _document_root(tmp_path, "text\n")
+    skill = root / "skills" / "chrona"
+    (skill / "references").mkdir(parents=True)
+    (skill / "SKILL.md").write_text("```sh\nchrona validate skills/chrona/examples/p.yaml\n```\n", encoding="utf-8")
+    (skill / "references" / "more.md").write_text("```sh\nchrona schedule skills/chrona/examples/p.yaml\n```\n", encoding="utf-8")
+    (skill / "notes.md").write_text("```sh\nchrona render ignored.yaml\n```\n", encoding="utf-8")
+    (skill / "examples").mkdir()
+    (skill / "examples" / "p.yaml").write_text("id: p\n", encoding="utf-8")
+
+    commands = discover(root)
+
+    assert [(command.path.as_posix(), command.tokens[1]) for command in commands] == [
+        ("skills/chrona/SKILL.md", "validate"), ("skills/chrona/references/more.md", "schedule")]
+    program = "import sys; from pathlib import Path; sys.exit(0 if Path(sys.argv[2]).is_file() else 9)"
+    execute(commands, root, executable=(sys.executable, "-c", program))
+
+
+def test_a_broken_skill_command_fails_the_execute_gate(tmp_path):
+    root = _document_root(tmp_path, "text\n")
+    (root / "skills" / "chrona").mkdir(parents=True)
+    (root / "skills" / "chrona" / "SKILL.md").write_text("```sh\nchrona validate skills/chrona/missing.yaml\n```\n", encoding="utf-8")
+    program = "import sys; from pathlib import Path; sys.exit(0 if Path(sys.argv[2]).is_file() else 9)"
+
+    with pytest.raises(DocumentedCommandError, match="E_DOCUMENTED_COMMAND_EXECUTION:" + __import__("re").escape(str(Path("skills/chrona/SKILL.md"))) + ":2:exit=9"):
+        execute(discover(root), root, executable=(sys.executable, "-c", program))

@@ -43,6 +43,10 @@ when you want its gradient and shadow treatment.
 To learn Project capabilities in small independent steps, follow the
 [progressive Project tutorial](progressive-project-tutorial.md).
 
+An AI coding agent can follow the same path from the [chrona agent skill](../../skills/chrona/SKILL.md),
+which carries the authoring model, a worked plan, the diagnostic codes an agent meets and
+when to use Mermaid instead.
+
 ## Change two Theme tokens without copying the whole Theme
 
 [This five-line derived Theme](../../examples/aster-ssd/themes/onboarding-variation.yaml)

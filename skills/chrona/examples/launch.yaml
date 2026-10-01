@@ -1,0 +1,46 @@
+version: timeline/v0.7
+project:
+  id: launch-plan
+  title: Product launch
+  calendar: office
+calendars:
+  office:
+    working_days: [mon, tue, wed, thu, fri]
+    exceptions:
+      - {date: 2026-11-23, working: false}
+objects:
+  kickoff:
+    type: gate
+    title: Kickoff
+    schedule: {mode: fixed-point, at: 2026-11-02}
+  design:
+    type: task
+    title: Design
+    calendar: office
+    schedule: {mode: scheduled, amount: 5wd}
+  build:
+    type: task
+    title: Build
+    calendar: office
+    schedule: {mode: scheduled, amount: 15wd}
+  launch:
+    type: gate
+    title: Launch
+    deadline: 2026-12-18
+    schedule: {mode: fixed-point, at: 2026-12-14}
+relations:
+  - id: kickoff-to-design
+    type: dependency
+    from: {object: kickoff, endpoint: at}
+    to: {object: design, endpoint: start}
+    lag: 0d
+  - id: design-to-build
+    type: dependency
+    from: {object: design, endpoint: end}
+    to: {object: build, endpoint: start}
+    lag: 0d
+  - id: build-to-launch
+    type: dependency
+    from: {object: build, endpoint: end}
+    to: {object: launch, endpoint: at}
+    lag: 0d

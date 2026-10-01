@@ -37,6 +37,10 @@ DEFAULT_TIMEOUT_SECONDS = 30
 def documents(root: Path) -> Iterable[Path]:
     yield root / "README.md"
     yield from sorted((root / "docs" / "guides").glob("*.md"))
+    skill = root / "skills" / "chrona"
+    if skill.is_dir():
+        yield from sorted(skill.glob("SKILL.md"))
+        yield from sorted((skill / "references").glob("*.md"))
 
 
 def _error(code: str, path: Path, line: int) -> DocumentedCommandError:
@@ -192,6 +196,9 @@ def execute(commands: tuple[DocumentedCommand, ...], root: Path, *, timeout_seco
         examples = root / "examples"
         if examples.is_dir():
             shutil.copytree(examples, workspace / "examples")
+        skills = root / "skills"
+        if skills.is_dir():
+            shutil.copytree(skills, workspace / "skills")
         environment = {**os.environ, "PYTHONUTF8": "1"}
         for command in commands:
             if command.skip_reason is not None:
