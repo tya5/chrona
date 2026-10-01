@@ -54,7 +54,6 @@ schemas:
   - {file: presentation-materialization-receipt-v0.1.schema.yaml, kind: presentation-materialization-receipt, state: live, consumers: [src/chrona/usecases/authoring_materialization.py]}
   - {file: profile-v0.3.schema.yaml, kind: profile-package, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: project-v0.7.schema.yaml, kind: project, state: live, consumers: [src/chrona/core/validation.py]}
-  - {file: render-context-v0.16.schema.yaml, kind: render-context, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: render-context-v0.17.schema.yaml, removalSlice: issue-710-render-context-v0.16-retirement}
   - {file: render-context-v0.17.schema.yaml, kind: render-context, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: review-detail-profile-v0.1.schema.yaml, kind: review-detail-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: scene-v0.6.schema.yaml, kind: inspection-scene, state: transitioning, consumers: [src/chrona/presentation/scene/serialization.py], successor: scene-v0.7.schema.yaml, removalSlice: issue-496-scene-v06-retirement}

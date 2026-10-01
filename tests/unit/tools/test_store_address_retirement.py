@@ -11,7 +11,7 @@ from typing import Any, Iterator
 import yaml
 
 from chrona.operational.resources import AUTOMATION_RESULT_SCHEMAS, COMMAND_SCHEMAS
-from chrona.presentation.contracts.resources import RENDER_CONTEXT_VERSIONS, _SCHEMAS
+from chrona.presentation.contracts.resources import RENDER_CONTEXT_VERSION, RENDER_CONTEXT_VERSIONS, _SCHEMAS
 from chrona.presentation.layout.profile import LAYOUT_SCHEMAS, LAYOUT_VERSION
 from chrona.storage.snapshots import SNAPSHOT_REF_VERSIONS
 from tools.schema_inventory import load_inventory
@@ -23,9 +23,6 @@ ENTRIES = {entry["file"]: entry for entry in load_inventory(SCHEMAS / "schema-in
 
 # predecessor file -> (successor file, removal slice, what the removal slice must delete)
 RETIREMENTS: dict[str, tuple[str, str, str]] = {
-    "render-context-v0.16.schema.yaml": (
-        "render-context-v0.17.schema.yaml", "issue-710-render-context-v0.16-retirement",
-        "the schema file, `RENDER_CONTEXT_VERSIONS` and the `_SCHEMAS` entry"),
     "command-request-v0.2.schema.yaml": (
         "command-request-v0.3.schema.yaml", "issue-710-command-request-v0.2-retirement",
         "the schema file and `COMMAND_SCHEMAS`"),
@@ -76,14 +73,17 @@ def test_every_predecessor_is_still_registered_in_the_reader_that_selects_it():
         | set(AUTOMATION_RESULT_SCHEMAS.values()) | {schema for _, schema in SNAPSHOT_REF_VERSIONS}
     for name, (successor, _, _) in RETIREMENTS.items():
         assert name in registered and successor in registered, name
-    assert RENDER_CONTEXT_VERSIONS[0].endswith("/v0.16") and RENDER_CONTEXT_VERSIONS[-1].endswith("/v0.17")
 
 
 def test_a_retired_predecessor_is_unregistered_and_an_unsupported_version_to_every_reader():
-    """Layout Profile v0.9 (C1). The archive test already proves the file is out of `schemas/` and the inventory and unnamed."""
+    """Layout Profile v0.9 (C1) and Render Context v0.16 (C2). The archive test already proves each file is out of
+    `schemas/` and the inventory and unnamed; here the readers refuse the version and the kind has one live schema."""
     assert set(LAYOUT_SCHEMAS) == {LAYOUT_VERSION} == {"chrona/layout-profile/v0.10"}
     assert ("layout-profile", "chrona/layout-profile/v0.9") not in _SCHEMAS
     assert [name for name, entry in ENTRIES.items() if entry["kind"] == "layout-profile"] == ["layout-profile-v0.10.schema.yaml"]
+    assert RENDER_CONTEXT_VERSIONS == ("chrona/render-context/v0.17",) and RENDER_CONTEXT_VERSION == RENDER_CONTEXT_VERSIONS[0]
+    assert ("render-context", "chrona/render-context/v0.16") not in _SCHEMAS
+    assert [name for name, entry in ENTRIES.items() if entry["kind"] == "render-context"] == ["render-context-v0.17.schema.yaml"]
 
 
 def test_the_snapshot_ref_predecessor_is_the_one_that_is_never_retired_for_reads():
@@ -97,11 +97,12 @@ def test_no_live_schema_references_the_loose_address_definitions():
     for name in live:
         for reference in _references(name):
             assert not reference.endswith(("#/$defs/relativeAddress", "#/$defs/relativeAddressDotTolerant")), (name, reference)
-    # They are still referenced by something that is transitioning, so they cannot be dropped yet (frozen, never edited).
+    # Nothing references them any more (the last users, Layout Profile v0.9 and Render Context v0.16, are retired), so they
+    # could be dropped with a new `common` part version; until then they stay frozen and unedited.
     transitioning = [name for name, entry in ENTRIES.items() if entry["state"] == "transitioning"]
     users = {name for name in transitioning if any(ref.endswith(("#/$defs/relativeAddress", "#/$defs/relativeAddressDotTolerant"))
                                                     for ref in _references(name))}
-    assert users == {"render-context-v0.16.schema.yaml"}
+    assert users == set()
 
 
 def test_no_live_kind_references_revision_store_v0_1_and_the_part_has_only_the_recorded_users():
