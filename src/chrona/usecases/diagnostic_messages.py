@@ -13,7 +13,7 @@ it reads strings.
 from __future__ import annotations
 
 import re
-from typing import Mapping
+from typing import Iterable, Mapping
 
 # Codes whose producers cannot know the value, so the sentence names the cause and the
 # next action instead. Add one entry per code an agent reaches by an ordinary mistake;
@@ -68,3 +68,124 @@ def error_message(code: str, message: str | None) -> str:
     if not is_bare(code, message):
         return str(message)
     return CURATED_MESSAGES.get(code) or derived_message(code)
+
+
+# --- render warnings -----------------------------------------------------------------------------------------
+#
+# A warning's *cause* is the sentence for its code (and, for a fit warning, its failure kind): what happened and
+# why. Its *subject* is the per-instance part: which label, placement, object. Two warnings with the same code,
+# severity and cause are one finding that happened more than once, and collapse into one row (design D1).
+
+_SURFACE_CAUSES: Mapping[str, str] = {
+    "W_LAYOUT_LABEL_SUPPRESSED": "a label was left out of the picture because it does not fit",
+    "W_LAYOUT_RELATION_SUPPRESSED": "a relation line was left out of the picture because no route fits",
+    "W_LAYOUT_RELATION_LABEL_SUPPRESSED": "a relation label was left out of the picture because it does not fit",
+    "W_LAYOUT_ACTUAL_INCOMPLETE": "an actual observation is incomplete, so its actual bar is not drawn",
+    "W_LAYOUT_OPEN_ACTUAL_INVALID": "an open actual does not start before the as-of date, so its bar is not drawn",
+    "W_LAYOUT_OPEN_ACTUAL_AS_OF_REQUIRED": (
+        "an actual is open until the as-of date but no as-of date is given, so its bar is not drawn"),
+    "W_LAYOUT_AXIS_LABEL_THINNED": "an axis label was dropped because the labels of its tier do not all fit",
+    "W_LAYOUT_AXIS_DENSITY": "an axis tier was thinned because its labels do not all fit",
+    "W_LAYOUT_AXIS_FORM_EQUIVALENT": "an axis label form coincides with another canonical form of the same month",
+    "W_LAYOUT_ANNOTATION_ROUTE_SEARCH_EXHAUSTED": "the search for a route for an annotation tail ran out of candidates",
+    "W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK": "an annotation was placed at a later candidate than the first one declared",
+    "W_LAYOUT_ANNOTATION_SUPPRESSED": "an annotation was left out because it does not fit",
+    "W_LAYOUT_NOTE_INDEX_SUPPRESSED": "a note index mark was left out because it does not fit",
+}
+_FIT_CAUSES: Mapping[str, str] = {
+    "W_LAYOUT_VISIBLE_OVERFLOW": "text or content is drawn past its box",
+    "W_LAYOUT_DETAIL_PANEL_CLIPPED": "detail panel content was cut off at the panel edge",
+    "W_LAYOUT_NETWORK_OVERFLOW": "the dependency network is larger than its area",
+    "W_LAYOUT_ROUTE_FALLBACK": "a relation route fell back to a simpler path",
+    "W_LAYOUT_ROW_DENSITY": "a row is too dense for its height",
+    "W_LAYOUT_MARK_OVERFLOW": "a mark does not fit its space",
+    "W_LAYOUT_LABEL_OVERFLOW": "a label does not fit its space",
+    "W_LAYOUT_GROUP_HEADER_OVERFLOW": "a group header does not fit its space",
+}
+_SCENE_CAUSES: Mapping[str, str] = {
+    "W_SCENE_SUPPRESSED_PRIMITIVE_EMITTED": "a drawing element that layout left out was emitted anyway",
+    "W_SCENE_TEXT_SLOT_ESCAPE": "text is drawn outside the slot it belongs to",
+    "W_SCENE_TEXT_OCCLUDED": "text is covered by another shape",
+    "W_SCENE_TEXT_INTERSECTION": "two pieces of text overlap",
+}
+MAX_OCCURRENCES = 20
+
+
+class WarningText:
+    """The cause and the per-instance subject of one render warning."""
+
+    __slots__ = ("cause", "subject")
+
+    def __init__(self, cause: str, subject: str = "") -> None:
+        self.cause, self.subject = cause, subject
+
+
+def _items(value: object) -> list[object]:
+    return list(value) if isinstance(value, (list, tuple)) else []
+
+
+def _number(value: object) -> str:
+    return f"{value:g}" if isinstance(value, (int, float)) else str(value)
+
+
+def describe_warning(payload: Mapping[str, object]) -> WarningText:
+    """Name the cause and the subject of one warning record of ``usecases.warning_ledger``."""
+    code = str(payload.get("code", ""))
+    identity = str(payload.get("diagnostic", ""))
+    if code in _SURFACE_CAUSES:
+        return WarningText(_SURFACE_CAUSES[code], identity.removeprefix(code).removeprefix(":"))
+    if code in _FIT_CAUSES:
+        cause = f"{_FIT_CAUSES[code]} ({payload.get('failureKind')}, {payload.get('behaviour')})"
+        needs = f"needs {_number(payload.get('requiredInline'))}x{_number(payload.get('requiredBlock'))}"
+        has = f"has {_number(payload.get('availableInline'))}x{_number(payload.get('availableBlock'))}"
+        return WarningText(cause, f"{payload.get('placementId')} ({needs}, {has})")
+    if code in _SCENE_CAUSES:
+        return WarningText(_SCENE_CAUSES[code], ", ".join(str(item) for item in _items(payload.get("primitiveIds"))))
+    if code == "W_FONT_TABULAR_UNAVAILABLE":
+        return WarningText(f"font {payload.get('family')} {payload.get('weight')} has no tabular digits, "
+                           "so numbers use proportional spacing", str(payload.get("role")))
+    if code == "W_FONT_GLYPH_SUBSTITUTED":
+        return WarningText(f"a glyph missing from {payload.get('requestedFamily')} is drawn with "
+                           f"{payload.get('fallbackFamily')}", f"{payload.get('codepoint')} in {payload.get('text')!r}")
+    if code == "W_PRESENTATION_SCALE_NOT_SEPARABLE":
+        first, second = (_items(payload.get("values")) + ["?", "?"])[:2]
+        return WarningText(f"two colors of scale {payload.get('scaleId')} are not separable under "
+                           f"{payload.get('vision')} vision", f"{first} and {second}")
+    if code == "W_PROJECT_ATTACHED_OUTSIDE_HOST":
+        return WarningText(f"an attached object is dated outside the planned span of its host {payload.get('host')}",
+                           str(payload.get("sourceRef")))
+    own = payload.get("message")
+    if isinstance(own, str) and own != derived_message(code) and not is_bare(code, own):
+        return WarningText(own)  # a family that says what is wrong keeps its sentence; only equal sentences merge
+    tail = identity.removeprefix(code).removeprefix(":") if identity.startswith(code) else ""
+    return WarningText(derived_message(code), tail)
+
+
+def warning_message(text: WarningText, count: int = 1) -> str:
+    """``cause: subject``; for several, ``cause: first subject and N more``."""
+    if not text.subject:
+        return text.cause if count == 1 else f"{text.cause} ({count} times)"
+    return f"{text.cause}: {text.subject}" + ("" if count == 1 else f" and {count - 1} more")
+
+
+def collapse_warnings(payloads: Iterable[Mapping[str, object]]) -> list[dict[str, object]]:
+    """Merge warnings with the same code, severity and cause into the first, in order of first occurrence.
+
+    A single warning is returned with its ``message``. A merged row keeps every key of the first occurrence,
+    gains ``count`` (2 or more) and ``occurrences`` (the distinct identities in order, at most 20), and its
+    message names the first subject and how many more there were.
+    """
+    groups: dict[tuple[str, str, str], list[Mapping[str, object]]] = {}
+    for payload in payloads:
+        key = (str(payload.get("code")), str(payload.get("severity")), describe_warning(payload).cause)
+        groups.setdefault(key, []).append(payload)
+    rows: list[dict[str, object]] = []
+    for members in groups.values():
+        row = dict(members[0])
+        if len(members) > 1:
+            identities = list(dict.fromkeys(str(item["diagnostic"]) for item in members if "diagnostic" in item))
+            row["count"] = len(members)
+            row["occurrences"] = identities[:MAX_OCCURRENCES]
+        row["message"] = warning_message(describe_warning(members[0]), len(members))
+        rows.append(row)
+    return rows

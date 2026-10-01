@@ -22,6 +22,7 @@ from chrona.presentation.model.closure import DEFAULT_DRAFT_VIEWPORT, ClosureErr
 from chrona.presentation.model.info_diagnostics import PaintOmission, SuppressedPlotLabels
 from chrona.resources import default_preset_resource, default_preset_root
 from chrona.scheduling.scheduler import ReferenceScheduler
+from chrona.usecases.diagnostic_messages import collapse_warnings
 from chrona.usecases.failure_report import StableFailure
 from chrona.usecases.preset_library import copy_builtin_preset, is_builtin_preset_id
 from chrona.usecases.render_review import RenderRequest, RenderedReview, render_review
@@ -180,12 +181,18 @@ def render_draft(request: DraftRenderRequest) -> DraftRenderResult:
 
 
 def warning_payloads(rendered: RenderedReview) -> list[dict[str, Any]]:
-    """The render's warning and info records, in the order an adapter reports them."""
-    payloads: list[dict[str, Any]] = [warning.payload for warning in rendered.warning_records]
+    """The render's warning and info records, in the order an adapter reports them.
+
+    Warnings with the same code and cause are one row (``count``, ``occurrences``); every record has a
+    ``message`` (#782). The Scene keeps every per-placement fact.
+    """
+    payloads: list[dict[str, Any]] = collapse_warnings([warning.payload for warning in rendered.warning_records])
     for info in rendered.info_diagnostics:
         if isinstance(info, SuppressedPlotLabels):
             payloads.append({"code": info.code, "severity": "info", "surfaceId": info.surface_id,
-                             "count": info.count})
+                             "count": info.count,
+                             "message": f"{info.count} plot labels on {info.surface_id} were left out because "
+                                        "they do not fit"})
         elif isinstance(info, PaintOmission):
             message = (f"{info.treatment} on {info.role} was omitted by {info.visual_profile}; "
                        + (f"use {info.paintable_profile} to paint it"

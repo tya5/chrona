@@ -345,7 +345,8 @@ def test_suppressed_plot_labels_have_one_completed_info_count(capsys, tmp_path):
     info = [json.loads(line) for line in capsys.readouterr().err.splitlines()
             if '"I_LAYOUT_PLOT_LABELS_SUPPRESSED"' in line]
     assert info == [{"code": "I_LAYOUT_PLOT_LABELS_SUPPRESSED", "count": len(per_id),
-                     "severity": "info", "surfaceId": "table-timeline"}]
+                     "severity": "info", "surfaceId": "table-timeline",
+                     "message": f"{len(per_id)} plot labels on table-timeline were left out because they do not fit"}]
 
 
 def test_controller_executive_draft_no_longer_suppresses_its_member_label_after_487():

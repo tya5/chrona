@@ -169,8 +169,13 @@ than member labels, as the per-placement rows always did).
 `describe_warning` is a table of every `W_` code a render can emit
 (`W_LAYOUT_*`, `W_FONT_*`, `W_SCENE_*`, `W_PRESENTATION_SCALE_NOT_SEPARABLE`,
 `W_PROJECT_ATTACHED_OUTSIDE_HOST`), read from the identity string or the family
-fields. An unknown code falls back to the derived sentence, but a test fails for
-an emitted code with no entry, so the fallback is a safety net, not a design.
+fields. A family whose records already carry a non-empty `message` (`W_DEADLINE`,
+#792) keeps it: the message is its cause, so only equal messages merge. Any other
+unknown code falls back to the derived sentence, but a test fails for a code the
+render-warning producers (Layout, Scene, model, the attachment rule, the ledger)
+can emit with no entry, so the fallback is a safety net, not a design. The scan
+does not read the scheduler, whose own warnings reach an agent through another
+record and carry their message.
 
 ### Compatibility
 

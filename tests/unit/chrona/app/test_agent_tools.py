@@ -430,15 +430,20 @@ def test_warning_records_keep_their_fields_sorted_and_scrubbed(scope, monkeypatc
     payloads = [
         {"code": "W_X", "severity": "warning", "diagnostic": "W_X:1", "sourceRef": "/root/children/1",
          "zeta": 1, "alpha": {"b": 2, "a": [{"d": 1, "c": 2}]}, "message": f"see {home}/x"},
-        {"code": "I_Y", "severity": "info", "surfaceId": "s", "count": 2},
+        {"code": "I_Y", "severity": "info", "surfaceId": "s", "count": 2, "message": "two labels were left out"},
+        {"code": "W_X", "severity": "warning", "diagnostic": "W_X:2", "message": "merged", "count": 3,
+         "occurrences": [f"W_X:{home}/a", "W_X:2"]},
     ]
     monkeypatch.setattr(agent_tools, "warning_payloads", lambda rendered: payloads)
     warnings = run(scope, "render_draft", project="small.yaml", inline="none").structured["warnings"]
-    first, second = warnings
+    first, second, third = warnings
     assert list(first["detail"]) == ["alpha", "diagnostic", "zeta"] and list(first["detail"]["alpha"]["a"][0]) == ["c", "d"]
     assert home not in first["message"] and first["sourceRef"] == "/root/children/1"
-    assert (second["severity"], second["component"], second["sourceRef"], second["message"]) == ("info", "render", "/", "")
-    assert second["detail"] == {"count": 2, "surfaceId": "s"}
+    assert (second["severity"], second["component"], second["sourceRef"], second["message"]) == (
+        "info", "render", "/", "two labels were left out")
+    assert second["detail"] == {"count": 2, "surfaceId": "s"} and "count" not in second  # an info record's own count
+    assert (third["count"], third["occurrences"]) == (3, ["W_X:<path>", "W_X:2"]) and "count" not in third["detail"]
+    assert "count" not in first and "occurrences" not in first
 
 
 def test_warnings_equal_what_the_cli_prints_to_stderr(scope, monkeypatch, capsys, workspace):
@@ -446,10 +451,13 @@ def test_warnings_equal_what_the_cli_prints_to_stderr(scope, monkeypatch, capsys
     rc, _, err = cli(monkeypatch, capsys, workspace, "render", "launch.yaml", "--viewport", "300x300", "--output", "o.svg")
     printed = [json.loads(line) for line in err.splitlines()]
     assert rc == 0 and len(printed) == len(result.structured["warnings"]) > 0
-    top = {"code", "severity", "component", "sourceRef", "message"}
     for line, item in zip(printed, result.structured["warnings"], strict=True):
-        assert (item["code"], item["severity"], item["sourceRef"], item["message"]) == (
-            line["code"], line["severity"], line.get("sourceRef", "/"), line.get("message", ""))
+        warning = line["severity"] == "warning"  # an info record's own `count` is a number of labels, not a merge count
+        top = {"code", "severity", "component", "sourceRef", "message"} | ({"count", "occurrences"} if warning else set())
+        assert item["message"] and (item["code"], item["severity"], item["sourceRef"], item["message"]) == (
+            line["code"], line["severity"], line.get("sourceRef", "/"), line["message"])
+        assert item.get("count") == (line.get("count") if warning else None)
+        assert item.get("occurrences") == (line.get("occurrences") if warning else None)
         assert item["detail"] == {key: value for key, value in line.items() if key not in top}
 
 
