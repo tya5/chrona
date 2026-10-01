@@ -32,7 +32,7 @@ Layout returns only completed placements. Scene accepts `SurfacePlacement` and i
 
 For every table column, Layout measures the header and all selected normalized cell strings. A `visible-overflow` table slot retains measured unbroken bounds and completes visible natural geometry even when it escapes the allocated slot; Layout expands the completed canvas where needed. Layout MUST NOT uniformly shrink columns below those bounds.
 
-For `ellipsize-with-source`, Layout allocates deterministic widths, produces ellipsized `TextPlacement` values, and retains full source text/provenance. `visible-overflow` produces `W_LAYOUT_VISIBLE_OVERFLOW` with required/available facts. Non-intersection is required only for an author-selected policy that requests it; a visible fallback may deliberately overlap rather than remove content.
+For `ellipsize-with-source`, Layout allocates deterministic widths, produces ellipsized `TextPlacement` values, and retains full source text/provenance. Every text a composer ellipsizes also produces a `W_LAYOUT_TEXT_ELLIPSIZED` fit warning with the natural and available inline sizes (the legend, #497); a committed Scene with an ellipsized `legend:*` text and no such diagnostic fails `tools/check_legend_truncation.py`. `visible-overflow` produces `W_LAYOUT_VISIBLE_OVERFLOW` with required/available facts. Non-intersection is required only for an author-selected policy that requests it; a visible fallback may deliberately overlap rather than remove content.
 
 ### 3.2 Labels and delta
 
