@@ -37,7 +37,7 @@ _RESERVED_DEVICE_NAMES = frozenset(
 _HOST_PATH = re.compile(
     r"[A-Za-z]:[\\/][^\s'\"<>|*?]*"
     r"|\\\\[^\s'\"\\]+\\[^\s'\"<>|*?]*"
-    r"|(?<![\w.~-])/(?:Users|home|private|var|tmp|opt|usr|etc|mnt|Volumes)"
+    r"|(?<![\w.~-])/(?:Users|home|private|var|tmp|opt|usr|etc|mnt|Volumes)(?![\w.~-])"
     r"(?:/[^\s'\"<>:,;()\[\]{}]*)?"
 )
 
@@ -70,12 +70,17 @@ class WorkspaceScope:
                 "/workspace",
             )
         self._root = resolved
-        self._scrub_exact = self._host_strings(given, resolved)
+        self._scrubbers = self._scrubbers_for(given, resolved)
 
-    def _host_strings(self, given: Path, resolved: Path) -> tuple[tuple[str, str], ...]:
-        """``(text, replacement)`` pairs, longest text first: the workspace becomes empty, other host roots ``<path>``."""
-        workspace = {str(resolved), resolved.as_posix(), str(given), given.as_posix(), str(given.absolute()),
-                     given.absolute().as_posix()}
+    @staticmethod
+    def _scrubbers_for(given: Path, resolved: Path) -> tuple[tuple[re.Pattern[str], Any], ...]:
+        """Compiled ``(pattern, replacement)`` pairs, the longest path first.
+
+        A host path matches only as a whole path (not inside a word, a JSON pointer such as ``/objects/tmp/title``, or a
+        longer name such as ``/tmp2``). The workspace root is removed with its separator, so ``<root>/plans/p.yaml``
+        becomes ``plans/p.yaml``; any other known host directory and everything below it becomes ``<path>``.
+        """
+        workspace = {str(resolved), resolved.as_posix(), str(given.absolute()), given.absolute().as_posix()}
         others: set[str] = set()
         for candidate in (Path.cwd, Path.home, lambda: Path(tempfile.gettempdir())):
             try:
@@ -84,11 +89,18 @@ class WorkspaceScope:
             except (OSError, RuntimeError):
                 continue
         others.update({sys.prefix, sys.base_prefix, sys.exec_prefix, str(Path(__file__).resolve().parents[1])})
-        pairs = {text: "" for text in workspace}
-        pairs.update({text: "<path>" for text in others if text not in workspace})
         # A text shorter than three characters (a filesystem root, ".") would mangle every message.
-        usable = {text: value for text, value in pairs.items() if len(text) >= 3 and text.strip("/\\.") != ""}
-        return tuple(sorted(usable.items(), key=lambda item: (-len(item[0]), item[0])))
+        usable = {text: text in workspace for text in workspace | others
+                  if len(text) >= 3 and text.strip("/\\.") != ""}
+        rest = r"(?:[/\\][^\s'\"<>:,;()\[\]{}]*)?"
+        scrubbers = []
+        for text, is_workspace in sorted(usable.items(), key=lambda item: (-len(item[0]), item[0])):
+            start = r"(?<![\w.~-])" + re.escape(text) + r"(?![\w.~-])"
+            if is_workspace:
+                scrubbers.append((re.compile(start + r"([/\\])?"), lambda match: "" if match.group(1) else "."))
+            else:
+                scrubbers.append((re.compile(start + rest), "<path>"))
+        return tuple(scrubbers)
 
     def resolve_path(self, value: object, pointer: str) -> Path:
         """Return the resolved regular file ``value`` names below the workspace, or raise ``StableFailure``.
@@ -130,12 +142,8 @@ class WorkspaceScope:
 
     def scrub(self, text: str) -> str:
         """Remove host paths from ``text``: the workspace prefix goes, every other absolute host path becomes ``<path>``."""
-        for needle, replacement in self._scrub_exact:
-            if replacement == "":
-                # Drop the root and its separator so ``<root>/plans/p.yaml`` becomes ``plans/p.yaml``.
-                text = text.replace(needle + "/", "").replace(needle + "\\", "").replace(needle, ".")
-            else:
-                text = text.replace(needle, replacement)
+        for pattern, replacement in self._scrubbers:
+            text = pattern.sub(replacement, text)
         return _HOST_PATH.sub("<path>", text)
 
     def scrub_value(self, value: Any) -> Any:

@@ -187,10 +187,26 @@ def test_the_scrubber_replaces_any_absolute_host_path_shape(workspace, text):
 
 @pytest.mark.parametrize("text", [
     "/objects/design/schedule", "/", "/root/children/1", "plans/project.yaml", "end must follow start", "expected 5/7 items",
-    "/objects/tmp/title",
+    "/objects/tmp/title", "/objects/home/title", "see /tmp2/x and /usrx/y", "a/Users/b", "/objects/var",
 ])
 def test_the_scrubber_leaves_pointers_and_relative_paths_alone(workspace, text):
     assert WorkspaceScope(workspace).scrub(text) == text
+
+
+def test_a_host_directory_matches_only_as_a_whole_path_even_inside_a_pointer(workspace, monkeypatch):
+    # On Linux the temporary directory is /tmp, which is also an object id in a pointer.
+    monkeypatch.setattr(tempfile, "gettempdir", lambda: "/tmp")
+    scope = WorkspaceScope(workspace)
+    assert scope.scrub("bad value at /objects/tmp/title") == "bad value at /objects/tmp/title"
+    assert scope.scrub("cannot open /tmp/p.yaml now") == "cannot open <path> now"
+    assert scope.scrub("cannot open /tmp2/p.yaml now") == "cannot open /tmp2/p.yaml now"
+
+
+def test_a_relative_workspace_argument_does_not_erase_ordinary_words(workspace, monkeypatch):
+    monkeypatch.chdir(workspace.parent)
+    scope = WorkspaceScope(workspace.name)
+    assert scope.scrub(f"the {workspace.name} plans in {workspace.name}") == f"the {workspace.name} plans in {workspace.name}"
+    assert scope.scrub(workspace.resolve().as_posix() + "/plans/p.yaml") == "plans/p.yaml"
 
 
 def test_a_filesystem_root_as_the_start_directory_does_not_mangle_messages(workspace, monkeypatch):
