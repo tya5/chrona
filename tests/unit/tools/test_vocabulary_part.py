@@ -292,6 +292,8 @@ def test_annotation_vocabulary_is_the_published_values_in_order():
     assert defs["relationVisibilityMode"]["enum"] == ["none", "semantic", "critical", "all"]
     assert defs["guidedAnnotationVisibilityMode"]["enum"] == ["none", "presentation", "all"]
     assert defs["guidedRelationVisibilityMode"]["enum"] == ["none", "semantic"]
+    assert defs["viewGroupingBy"]["enum"] == ["objectType", "field", "hierarchy", "none"]
+    assert defs["guidedViewGroupingBy"]["enum"] == ["objectType", "none"]
 
 
 @pytest.mark.parametrize(("name", "definition", "count"), [
@@ -300,6 +302,7 @@ def test_annotation_vocabulary_is_the_published_values_in_order():
     (VIEW, "annotationAlignment", 1), (WORKSPACE, "annotationAlignment", 1),
     (VIEW, "annotationVisibilityMode", 2), (VIEW, "relationVisibilityMode", 1),
     (WORKSPACE, "guidedAnnotationVisibilityMode", 1), (WORKSPACE, "guidedRelationVisibilityMode", 1),
+    (VIEW, "viewGroupingBy", 1), (WORKSPACE, "guidedViewGroupingBy", 1),
 ])
 def test_each_annotation_vocabulary_site_references_the_definition_and_accepts_exactly_it(name, definition, count):
     sites = _sites(name, definition)
@@ -315,6 +318,7 @@ def test_each_annotation_vocabulary_site_references_the_definition_and_accepts_e
 @pytest.mark.parametrize(("subset", "superset"), [
     ("guidedAnnotationVisibilityMode", "annotationVisibilityMode"),
     ("guidedRelationVisibilityMode", "relationVisibilityMode"),
+    ("guidedViewGroupingBy", "viewGroupingBy"),
 ])
 def test_a_guided_override_subset_is_strictly_contained_in_the_view_vocabulary(subset, superset):
     small, large = _defs()[subset]["enum"], _defs()[superset]["enum"]
@@ -328,6 +332,13 @@ def test_a_guided_override_cannot_select_the_semantic_annotation_mode():
     assert "critical" not in _defs()["guidedRelationVisibilityMode"]["enum"]
 
 
+def test_a_guided_override_cannot_select_a_grouping_that_needs_a_field_or_a_depth():
+    # View requires `field` and `missing` for `by: field` and `depth` and `rollup` for `by: hierarchy`; the guided
+    # override carries only the dimension, so it offers only the two that need nothing more.
+    assert {"field", "hierarchy"} <= set(_defs()["viewGroupingBy"]["enum"])
+    assert not {"field", "hierarchy"} & set(_defs()["guidedViewGroupingBy"]["enum"])
+
+
 def test_the_guided_workspace_accepts_no_visibility_value_the_view_rejects():
     view = _site_validator(VIEW, _sites(VIEW, "annotationVisibilityMode")[0])
     relations = _site_validator(VIEW, _sites(VIEW, "relationVisibilityMode")[0])
@@ -335,6 +346,9 @@ def test_the_guided_workspace_accepts_no_visibility_value_the_view_rejects():
         assert view.is_valid(value), value
     for value in _defs()["guidedRelationVisibilityMode"]["enum"]:
         assert relations.is_valid(value), value
+    grouping = _site_validator(VIEW, _sites(VIEW, "viewGroupingBy")[0])
+    for value in _defs()["guidedViewGroupingBy"]["enum"]:
+        assert grouping.is_valid(value), value
 
 
 def test_view_and_workspace_annotation_enums_are_one_definition():

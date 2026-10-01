@@ -2,7 +2,7 @@
 
 Design: [design](../../design/issue-709-guided-annotations-design-2026-10-01.md). This plan is the authority for mechanics.
 
-**Status:** I709-D (this note) in review; I709-A and I709-B follow, each merged before the next.
+**Status:** I709-D (#749) and I709-A (#752) merged; I709-B in review. The acceptance review is the lead's.
 
 ## Literal acceptance mapped to slices
 

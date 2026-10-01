@@ -59,7 +59,7 @@ The vocabulary part is frozen once published, so the two definitions are added w
 
 The sites adopt the definitions only if the S0 gate (`--base-rev origin/main`) reports L1 equal for `view-v0.28` and `authoring-workspace-v0.1`. The View site carries a `description` beside the
 `enum`; the existing adopted sites show a site description does not change the fingerprint, and the gate decides. If L1 is not equal, the definitions and tests are added without adoption and the
-reason is recorded in the PR.
+reason is recorded in the PR. Result (I709-B): the gate reported `L1 structural (base origin/main): equal=45`, so both sites adopt the definitions; L2 and L3 are unchanged.
 
 ## Out of scope
 
