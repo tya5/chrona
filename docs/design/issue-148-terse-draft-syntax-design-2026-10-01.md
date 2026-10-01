@@ -4,9 +4,9 @@
 ([review](../reviews/current/issue-148-terse-draft-syntax-architecture-review-2026-10-01.md)).
 **Plans:** [design plan](../planning/active/issue-148-terse-draft-syntax-design-plan-2026-10-01.md),
 [implementation plan](../planning/active/issue-148-terse-draft-syntax-implementation-plan-2026-10-01.md).
-**Normative home once slice 1 lands:** a new `docs/specification/65-terse-plan-syntax.md`. Until then this
-document is the only statement of the grammar; when Spec 65 exists, section 3 and the table in section 4 are
-replaced here by a pointer (AGENTS.md: normative behaviour lives in one living specification).
+**Normative home:** [`docs/specification/65-terse-plan-syntax.md`](../specification/65-terse-plan-syntax.md)
+(landed with slice 1). Section 3 and the mapping table of section 4 are a pointer here (AGENTS.md: normative
+behaviour lives in one living specification); this document keeps the rationale, measurements and alternatives.
 
 ## 1. Decision summary
 
@@ -86,131 +86,11 @@ are strings, so it would work, but it moves the escape hatch rather than removin
 
 ## 3. The grammar (terse 0.1)
 
-### 3.1 Lexical rules
+The grammar (lexical rules, statements, semantics, default endpoints, kinds and name resolution) is normative in
+[Spec 65](../specification/65-terse-plan-syntax.md) sections 2 and 3 as of slice 1 and is not repeated here. Only the
+worked examples remain, as the source of the committed golden fixtures (`tests/fixtures/terse/`).
 
-- **L1 Encoding.** UTF-8, optional BOM (ignored). Invalid bytes: `E_TERSE_ENCODING`.
-- **L2 Lines.** LF or CRLF separate lines; a final newline is optional; a lone CR is
-  `E_TERSE_CONTROL_CHARACTER`. Line and column are 1-based; a column counts Unicode code points of the line
-  (BOM excluded); `endColumn` is exclusive (they are reported inside `sourceRange`, 7.1).
-- **L3 Characters.** Control characters (U+0000-U+001F, U+007F) are rejected everywhere, including inside
-  strings and comments: tab is `E_TERSE_TAB`, any other is `E_TERSE_CONTROL_CHARACTER`. The only token
-  separator is U+0020; any other whitespace (for example U+00A0) is an ordinary word character, and a
-  diagnostic that quotes such a word names its code point.
-- **L4 Indentation.** Leading spaces only. The count must be even (`E_TERSE_INDENT`); meaning in 3.3.
-- **L5 Comments.** `#` starts a comment when it is the first character of a token (line start or after a
-  space) and outside a string; it runs to end of line. `a#b` is one word. A comment-only or blank line has no
-  meaning and is ignored.
-- **L6 Strings.** `"` ... `"`, escapes `\"` and `\\` only (`E_TERSE_STRING_ESCAPE` otherwise), no raw
-  newline (`E_TERSE_STRING_UNTERMINATED` at the opening quote), any other non-control Unicode allowed. An empty
-  title is `E_TERSE_TITLE_EMPTY`. This is the only way to write a space, a `#`, a comma or non-ASCII text.
-- **L7 Words and commas.** A word is a maximal run of characters other than space, `"` and `,`. `,` is its
-  own token, so `after a,b` and `after a, b` are the same.
-- **L8 Case.** Keywords are lower case and case-sensitive (`Task` is `E_TERSE_KIND_UNKNOWN` with a
-  lower-case hint).
-- **L9 Reserved words.** `terse project calendar task gate group after from until in except work start end
-  at` are never names (`E_TERSE_NAME_RESERVED`). The set is deliberately larger than what v0.1 needs so
-  later versions can add forms without renaming anyone.
-
-### 3.2 Statements
-
-```text
-file        = { line } ;                     (blank and comment lines ignored)
-line        = indent statement ;
-
-statement   = terse | project | calendar | object ;
-
-terse       = "terse" VERSION ;              (optional; if present it is the first statement; VERSION = 0.1)
-project     = "project" ID [ STRING ] [ "calendar" CAL ] ;
-calendar    = "calendar" CAL days [ off ] [ on ] | "calendar" CAL days [ on ] [ off ] ;
-days        = dayitem { "," dayitem } ;      (dayitem = DAY | DAY "-" DAY, e.g. mon-fri, mon-wed,fri)
-off         = "except" date { [ "," ] date } ;
-on          = "work"   date { [ "," ] date } ;
-
-object      = NAME [ STRING ] KIND [ schedule ] [ "calendar" CAL ] [ after ] ;
-schedule    = DATE                           (fixed point)
-            | DATE ".." DATE                 (fixed span, no spaces around "..", end exclusive)
-            | AMOUNT [ anchor ] { bound } ;  (scheduled span)
-anchor      = "from" DATE | "until" DATE ;
-bound       = ( "start" | "end" ) ( ">=" | "<=" ) DATE ;   (each of the four at most once)
-after       = "after" dep { "," dep } ;
-dep         = REF [ LAG [ "in" CAL ] ] ;
-REF         = NAME [ "." ENDPOINT ] ;        (ENDPOINT = start | end | at)
-
-NAME, CAL, ID : slug  = [a-z][a-z0-9-]*      (ID: project id, see 6.1)
-KIND        : task | gate | group
-DATE        : \d{4}-\d{2}-\d{2}, and a real calendar date
-AMOUNT      : [1-9][0-9]*(d|w|wd)
-LAG         : [+-]?(0|[1-9][0-9]*)(d|w|wd)   (the sign is attached: "+1wd", never "+ 1wd")
-DAY         : mon | tue | wed | thu | fri | sat | sun
-```
-
-`NAME` and `CAL` are exactly the `slug` pattern of `schemas/common-v0.1.schema.yaml`; a test asserts that
-the compiler's pattern equals the schema's (a changed schema part fails the test instead of drifting).
-
-### 3.3 Semantics
-
-- **S1 Project statement.** Exactly one, and no `calendar` or object statement may precede it
-  (`E_TERSE_PROJECT_REQUIRED`, `E_TERSE_DIRECTIVE_ORDER`). `terse` is optional; absent means 0.1 forever:
-  an incompatible grammar will be a new explicit `terse 0.2` that old compilers refuse
-  (`E_TERSE_VERSION_UNSUPPORTED`), so a file in git compiles to the same Project next quarter.
-- **S2 Hierarchy.** Only a `group` has children. A line indented two spaces deeper than the nearest
-  preceding `group` is its child; indent may increase by at most two per line, may drop to any open level,
-  and a child of a non-group is `E_TERSE_CHILDREN_NOT_ALLOWED`. A group takes no schedule and no `calendar`
-  and compiles to a rollup; an indented line that follows no group is `E_TERSE_INDENT`. An empty group is
-  accepted by the compiler and rejected by Core (`E_ROLLUP_EMPTY`, positioned at the group line).
-- **S3 Schedule requirement.** `task` and `gate` require a schedule (`E_TERSE_SCHEDULE_REQUIRED`); the
-  kind does not constrain the form (the Project's `type` is a free label, so `gate 2027-05-07` is the
-  common case, not a rule). A schedule on a group is `E_TERSE_TOKEN_UNEXPECTED`.
-- **S4 Spans.** `D1..D2` is half-open like the Project's own `fixed-span` and like Rust and Python ranges:
-  `2026-10-01..2026-10-31` ends before the 31st. Core owns the rule `start < end`
-  (`E_INVALID_SPAN`, positioned at the schedule).
-- **S5 Calendars.** A calendar name is unique in its own namespace (`E_TERSE_NAME_DUPLICATE`). A day range is
-  increasing within mon..sun (`fri-mon` is `E_TERSE_DAYS_INVALID`) and a day may appear once after expansion.
-  The emitted `working_days` order is always mon..sun. A statement may carry each of `except` and `work` at
-  most once, in either order, each with one or more dates; one date is one exception record.
-- **S6 Default calendar.** `project ... calendar CAL` sets `project.calendar`. If it is omitted and exactly
-  one calendar is declared, that calendar is the project default (normalisation N1, the only implicit
-  mapping in the grammar, taken from the sketch in the issue). With two or more calendars and no clause the
-  compiler adds nothing; a working-day amount or lag that then has no calendar is Core's
-  `E_CALENDAR_REQUIRED`, reported at the object with a hint to add `calendar CAL` to the project line.
-  An unknown calendar name anywhere is `E_TERSE_CALENDAR_UNKNOWN` (nearest-name hint).
-- **S7 Bounds and anchors.** `from D` is `anchor.start`, `until D` is `anchor.end`; they are only legal
-  after a duration (a fixed point or span with an anchor is `E_TERSE_TOKEN_UNEXPECTED`). Bounds are inclusive
-  minimum/maximum dates of the Project's `constraints`; whether anchor and bounds conflict is the scheduler's
-  (`E_CONTRADICTORY_BOUNDS`), not the compiler's.
-- **S8 Order.** Objects are emitted in document order (parent before its children, depth first); that is the
-  Project's canonical root and sibling order. Relations are emitted in statement order, then dep order.
-
-### 3.4 References and endpoints
-
-A `dep` names a **predecessor**; the dependent is the statement's own object. Default endpoints are decided
-by the predecessor's *schedule form*, known from its own line:
-
-| Predecessor | Written `after X` | Written `after X.start` / `.end` / `.at` |
-| --- | --- | --- |
-| span (duration, `D..D`) or group | `X.end` | that endpoint |
-| fixed point (`DATE`) | `X.at` | that endpoint (`.start`/`.end` is Core's `E_ENDPOINT_MODE_MISMATCH`, positioned at the reference) |
-
-The successor endpoint is always `start` for a span or `at` for a fixed point. Finish-to-finish and other
-successor endpoints are not expressible (YAML). `.start` and `.end` modifiers are taken from markwhen
-(comment 3); document-order resolution is not.
-
-### 3.5 Kinds (D7)
-
-`KIND` is the Project `type` verbatim, restricted to the three types the shipped corpus uses: `task`,
-`gate`, `group`. A typo such as `tsak` would otherwise become a silent new type that no View selects, so an
-unknown kind is `E_TERSE_KIND_UNKNOWN` with the nearest kind in the hint, and "other types are written in
-YAML" is in the message. Recommendation: closed. Consequence: a plan with `milestone` or `phase` leaves
-the syntax; widening is a one-line table change plus a Spec 65 edit, no grammar change.
-
-### 3.6 Resolution is by name over the whole file
-
-References resolve after the whole file is read, so forward references are legal (`shipment ... after psr`
-may precede `psr`). This is name resolution, not scheduling: the compiler needs only each object's schedule
-*form* and never computes a date, a cycle or a float. A cycle is `E_UNSUPPORTED_CYCLE` from the scheduler,
-positioned (7.6). Markwhen's single-pass document-order resolution is deliberately not copied.
-
-### 3.7 Examples
+### 3.1 Examples
 
 The issue's sketch, in grammar form (this exact text is a golden fixture; a title with spaces is quoted):
 
@@ -275,38 +155,9 @@ release "Release" gate 2026-12-18
 
 ## 4. Mapping: every construct to exactly one Project construct
 
-| Terse | Compiles to (Project `timeline/v0.7`) |
-| --- | --- |
-| `terse 0.1` | nothing emitted (a grammar pin) |
-| `project ID` | `version: timeline/v0.7`; `project.id: ID` |
-| `... "Title"` on `project` | `project.title` |
-| `project ... calendar C` | `project.calendar: C` |
-| `calendar C days` | `calendars.C.working_days` (mon..sun order) |
-| `except D ...` | one `calendars.C.exceptions[]` `{date: D, working: false}` per date |
-| `work D ...` | one `calendars.C.exceptions[]` `{date: D, working: true}` per date |
-| `NAME ... KIND` | key `objects.NAME`, `type: KIND` |
-| `"Title"` after the name | `objects.NAME.title` |
-| indentation under a `group` | `objects.NAME.parent: <group>` |
-| `group` (no schedule) | `type: group`, `schedule: {mode: rollup}` |
-| `DATE` | `schedule: {mode: fixed-point, at: DATE}` |
-| `D1..D2` | `schedule: {mode: fixed-span, start: D1, end: D2}` (end exclusive) |
-| `AMOUNT` | `schedule: {mode: scheduled, amount: AMOUNT}` |
-| `AMOUNT from D` | `schedule.anchor: {start: D}` |
-| `AMOUNT until D` | `schedule.anchor: {end: D}` |
-| `start >= D` / `start <= D` | `schedule.constraints.start.min` / `.max` |
-| `end >= D` / `end <= D` | `schedule.constraints.end.min` / `.max` |
-| `calendar C` clause on an object | `objects.NAME.calendar: C` |
-| `after X` (each comma item) | one `relations[]` entry `{id, type: dependency, from, to, lag}` |
-| `X`, `X.start`, `X.end`, `X.at` | `from: {object: X, endpoint: ...}` (defaults in 3.4) |
-| the dependent object | `to: {object: NAME, endpoint: start or at}` |
-| `+1wd` / `-2d` | `lag: 1wd` / `lag: -2d` (a `+` is dropped; no lag emits `lag: 0d`) |
-| `+1wd in C` | `lag: {value: 1wd, calendar: C}` |
-| `# comment` | nothing |
-
-Normalisations, all deterministic and listed here so nothing is implicit elsewhere: **N1** single-calendar
-project default (S6); **N2** default endpoints (3.4); **N3** an omitted lag is written `0d` (the corpus and
-Spec 05 section 14 prefer explicit); **N4** relation ids (6.2); **N5** document order for objects, calendars
-and relations; **N6** a leading `+` on a lag is dropped.
+The mapping table and the six normalisations (N1-N6: single-calendar default, default endpoints, omitted lag as `0d`,
+relation ids, document order, dropped `+`) are normative in [Spec 65](../specification/65-terse-plan-syntax.md)
+section 4.
 
 The compiler emits no `entities`, `annotations`, `scenarios`, `extensions`, `fields`, `wbsCode`, `deadline`,
 `plannedProgress`, `attachesTo` or `link`, and never emits an empty section.

@@ -27,8 +27,24 @@ class DocumentedCommandError(ValueError):
     """A documented command cannot be represented by the live CLI."""
 
 
-FENCE = re.compile(r"^\s*(?P<fence>`{3,}|~{3,})[^`~]*$")
+@dataclass(frozen=True)
+class TersePlan:
+    """A fenced block with the info string `chrona`: a terse plan (Spec 65), compiled rather than run as a command."""
+
+    path: Path
+    line: int
+    text: str
+    skip_reason: str | None = None
+    expect_error: str | None = None
+
+
+def _is_terse_fence(info: str) -> bool:
+    return info.split()[:1] == ["chrona"]
+
+
+FENCE = re.compile(r"^\s*(?P<fence>`{3,}|~{3,})(?P<info>[^`~]*)$")
 SKIP = re.compile(r"^<!-- chrona:doc-check skip: (?P<reason>.+) -->$")
+EXPECT_ERROR = re.compile(r"^<!-- chrona:doc-check expect-error: (?P<code>E_[A-Z0-9_]+) -->$")
 SKIP_PREFIX = "<!-- chrona:doc-check"
 COMMAND = re.compile(r"^\s*(?:\$\s*)?(chrona(?:\s+.*)?)$")
 DEFAULT_TIMEOUT_SECONDS = 30
@@ -80,10 +96,12 @@ def discover(root: Path) -> tuple[DocumentedCommand, ...]:
         while index < len(lines):
             line = lines[index]
             marker = SKIP.fullmatch(line)
-            if marker is not None:
-                if pending_skip is not None or not marker["reason"].strip():
+            expected = EXPECT_ERROR.fullmatch(line)
+            if marker is not None or expected is not None:
+                reason = marker["reason"].strip() if marker is not None else "expect-error " + expected["code"]
+                if pending_skip is not None or not reason:
                     raise _error("E_DOCUMENTED_COMMAND_SKIP", relative, index + 1)
-                pending_skip = (marker["reason"].strip(), index + 1)
+                pending_skip = (reason, index + 1)
                 index += 1
                 continue
             if line.startswith(SKIP_PREFIX):
@@ -101,6 +119,10 @@ def discover(root: Path) -> tuple[DocumentedCommand, ...]:
                 end += 1
             if end >= len(lines):
                 raise _error("E_DOCUMENTED_COMMAND_SHELL", relative, index + 1)
+            if _is_terse_fence(opening["info"]):  # a terse plan is compiled by discover_plans, never scanned for commands
+                pending_skip = None
+                index = end + 1
+                continue
             commands = _block_commands(relative, index + 2, lines[index + 1:end], pending_skip[0] if pending_skip else None)
             if pending_skip is not None and not commands:
                 raise _error("E_DOCUMENTED_COMMAND_SKIP", relative, pending_skip[1])
@@ -110,6 +132,52 @@ def discover(root: Path) -> tuple[DocumentedCommand, ...]:
         if pending_skip is not None:
             raise _error("E_DOCUMENTED_COMMAND_SKIP", relative, pending_skip[1])
     return tuple(result)
+
+
+def discover_plans(root: Path) -> tuple[TersePlan, ...]:
+    """Every ```chrona fence, with the skip or expect-error marker that precedes it."""
+    plans: list[TersePlan] = []
+    for path in documents(root):
+        relative = path.relative_to(root)
+        lines = path.read_text(encoding="utf-8").splitlines()
+        skip: str | None = None
+        expect: str | None = None
+        index = 0
+        while index < len(lines):
+            line = lines[index]
+            marker, expected = SKIP.fullmatch(line), EXPECT_ERROR.fullmatch(line)
+            if marker is not None:
+                skip = marker["reason"].strip()
+            elif expected is not None:
+                expect = expected["code"]
+            opening = FENCE.fullmatch(line)
+            if opening is None:
+                index += 1
+                continue
+            end = index + 1
+            closing = re.compile(rf"^\s*{re.escape(opening['fence'])}\s*$")
+            while end < len(lines) and closing.fullmatch(lines[end]) is None:
+                end += 1
+            if _is_terse_fence(opening["info"]):
+                plans.append(TersePlan(relative, index + 2, "\n".join(lines[index + 1:end]) + "\n", skip, expect))
+            skip = expect = None
+            index = end + 1
+    return tuple(plans)
+
+
+def check_plans(plans: tuple[TersePlan, ...]) -> None:
+    """Compile each documented plan: it must compile, or (with `expect-error: CODE`) be rejected with that code."""
+    from chrona.usecases.terse_compile import compile_plan
+
+    for plan in plans:
+        if plan.skip_reason is not None:
+            continue
+        result = compile_plan(plan.text.encode("utf-8"), f"{plan.path}:{plan.line}")
+        codes = [item.id for item in result.diagnostics]
+        if plan.expect_error is None and codes:
+            raise DocumentedCommandError(f"E_DOCUMENTED_PLAN_REJECTED:{plan.path}:{plan.line}:{','.join(codes)}")
+        if plan.expect_error is not None and plan.expect_error not in codes:
+            raise DocumentedCommandError(f"E_DOCUMENTED_PLAN_EXPECTED_ERROR:{plan.path}:{plan.line}:{plan.expect_error}")
 
 
 def _subparsers(parser: argparse.ArgumentParser) -> dict[str, argparse.ArgumentParser]:
@@ -260,6 +328,7 @@ def main() -> None:
     live = _parser(); commands = discover(root)
     for command in commands:
         validate(command, live)
+    check_plans(discover_plans(root))
     output = args.output if args.output.is_absolute() else root / args.output
     content = render_reference(live)
     if args.check:

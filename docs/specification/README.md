@@ -41,6 +41,8 @@ Read `63` when admitting renderer-neutral visual capabilities, target fidelity,
 or richer portable presentation appearance.
 Read `64` when admitting reusable SVG/PNG icons, icon asset closure, normalized
 icon geometry, or icon target capability.
+Read `65` Terse Plan Syntax when the one-line text plan syntax, `chrona compile`, or its
+positioned diagnostics are in scope.
 Read `56` Schema Authoring and Diagnostics when changing an authorable schema, a
 structural-validation diagnostic, or a normative schema reference.
 

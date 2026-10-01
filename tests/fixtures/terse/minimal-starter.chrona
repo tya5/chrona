@@ -1,0 +1,4 @@
+project my-first-plan "My first plan"
+design "Design" task 2026-10-01..2026-10-31
+build "Build" task 2026-11-03..2026-12-15
+release "Release" gate 2026-12-18

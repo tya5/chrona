@@ -4,6 +4,9 @@
 *.yml text eol=lf
 *.json text eol=lf
 *.md text eol=lf
+# Terse plans and their compiled goldens are compared byte for byte (#148).
+*.chrona text eol=lf
+tests/fixtures/terse/** text eol=lf
 *.py text eol=lf
 *.svg text eol=lf
 *.png binary
