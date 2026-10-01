@@ -174,7 +174,7 @@ needs verification against the host's current rules).
 - Edit `tools/check_import_direction.py`: a module-prefix override table so
   `chrona.app.agent_*` and `chrona.app.mcp_server` may import only `usecases` and the
   named `core` modules; with its own unit test in `tests/unit/tools/`.
-- New `docs/specification/65-agent-interface.md`: the normative tool and result
+- New `docs/specification/66-agent-interface.md`: the normative tool and result
   contract, the workspace rules, determinism, and the versioned tool set
   `chrona/agent-tools/v0.1`. Linked from `docs/specification/README.md`.
 - Tests under `tests/unit/chrona/app/`: path scoping (traversal, absolute, backslash,
@@ -195,7 +195,7 @@ doc-check; `conformance` green.
 **Must not.** Import the `mcp` package; write a file; read the Store or any path not
 named by an input; add `--system-fonts`, `--font-metrics`, `--icon-catalog`, a Typst or
 TikZ target, or any integrity opt-out; change a CLI result byte; add anything under
-`schemas/` (the contract lives in Spec 65 plus the registry in this slice).
+`schemas/` (the contract lives in Spec 66 plus the registry in this slice).
 
 ## S4: the SDK binding and the stdio server (**needs lead: L1**)
 
@@ -296,6 +296,7 @@ and exact-main CI, per AGENTS.md.
 | Slice | State | Note |
 | --- | --- | --- |
 | S0 (S0a and S0b together) | Implemented in two PRs: the characterization suite (#783), then the extraction | See the deviations below. |
+| S3 (tool core) | Implemented as the MCP slice 1 of 3: `agent_workspace.py`, `agent_tools.py`, the module rules in `check_import_direction.py`, Spec 66 | See the S3 deviations below. |
 
 S0 deviations from the plan text (no change of behavior; the CLI bytes are frozen by
 `tests/cli/test_cli_characterization.py`, 110 invocations against
@@ -322,3 +323,23 @@ S0 deviations from the plan text (no change of behavior; the CLI bytes are froze
   without a message of its own, `validate` returning `[]` for a cycle. Observed and not yet
   tracked: the key order of `analysis.totalFloat` in `chrona schedule` output follows set
   iteration (hash-seed dependent), so two runs can differ; an MCP adapter must not pin it.
+
+S3 deviations from the plan text (lead decisions L1 to L5 apply: read-only, stdio, four tools, SDK optional):
+
+- The normative document is Spec 66 (`docs/specification/66-agent-interface.md`): number 65 went to the terse plan
+  syntax (#148). The `chrona mcp --list-tools` flag, its guide text and its documented-command line move from S3 to S4
+  with `chrona mcp` itself, so S3 touches neither `cli.py` nor the guides. Until S4 imports them, the two new modules are
+  listed in `tools/staged_modules.txt`.
+- `tools/check_import_direction.py` gets a module-prefix table (`MODULE_RULES`): `chrona.app.agent_*` and
+  `chrona.app.mcp_server` may import `usecases`, `core.store_address`, `resources` (for `validator_for_schema`, the one
+  validator factory a guard test requires) and one another only. It also enforces the SDK
+  rule (`only chrona.app.mcp_server may import the mcp SDK`), so S4 needs no further change to the tool.
+- A tool result mapping is sorted by key (`placements`, `totalFloat`, a warning's `detail`), not in Project object order as
+  design D2.3c said: `totalFloat` is hash-seed dependent in the use case (#789) and the tool must not pin it. Sorting
+  `placements` too keeps one rule; `criticalObjectIds` keeps the Project object order (a list).
+- `E_RENDER_RASTERIZER_UNAVAILABLE` is `failed` in the tool (D2.3d) although `chrona render` exits 1 for it. A missing
+  workspace file is `E_INPUT_IO` (the code the command uses), not a new `E_MCP_*` code. A render warning has no message
+  today, so the tool reports `message: ""` and keeps the ledger fields in `detail`.
+- Not offered, as designed: `--system-fonts`, `--font-metrics`, `--icon-catalog`, `--visual-profile`, typesetter targets,
+  `pdf`, `--emit-scene`. The viewport pattern is the design's (3 to 5 digits per side); a very large PNG viewport is a
+  local memory cost the first release does not cap.
