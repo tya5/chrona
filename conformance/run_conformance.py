@@ -63,6 +63,7 @@ CHECKS = (
     CheckSpec("example-reachability", _command("tools/check_example_reachability.py")),
     CheckSpec("svg-explicit-fill", _command("tools/check_svg_explicit_fill.py")),
     CheckSpec("scene-perceptibility", _command("tools/check_scene_perceptibility.py")),
+    CheckSpec("legend-truncation", _command("tools/check_legend_truncation.py")),
     CheckSpec("starter-perceptibility", _command("tools/check_starter_perceptibility.py")),
     CheckSpec("presentation-contrast", _command("tools/presentation_contrast.py", "--check")),
     CheckSpec("axis-name-tables", _command("tools/axis_name_tables.py", "--check")),
