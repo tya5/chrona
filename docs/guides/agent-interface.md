@@ -80,7 +80,7 @@ Without `--workspace` the current directory is the workspace. A filesystem root 
 | Tool | Same as | What it returns |
 | --- | --- | --- |
 | `validate_project` | `chrona validate` | `ok`, or typed diagnostics. It does not detect dependency cycles. |
-| `schedule_project` | `chrona schedule` | The computed placements and the critical path; a cycle is rejected here. |
+| `schedule_project` | `chrona schedule` | The computed placements, the critical path and any `W_DEADLINE` warnings; a cycle is rejected here. |
 | `render_draft` | `chrona render` | A PNG preview (or the SVG text with `inline: svg`), the content identity and any warnings. It writes no file. |
 | `list_presets` | `chrona preset list` | The builtin preset ids `render_draft` accepts. |
 

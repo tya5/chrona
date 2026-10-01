@@ -252,6 +252,11 @@ def _schedule_project(call: _Call, arguments: dict[str, Any]) -> ToolResult:
     if not outcome.ok:
         return call.rejected(rejection_report(outcome.diagnostics))
     fields: dict[str, Any] = {"placements": {key: _placement(outcome.placements[key]) for key in sorted(outcome.placements)}}
+    fields["warnings"] = [
+        _warning(call.scope, {"code": item.id, "severity": "warning", "component": "core", "sourceRef": item.path,
+                              "message": item.message, **(item.details or {})})
+        for item in outcome.warnings
+    ]
     if outcome.analysis is not None:
         fields["analysis"] = {
             "criticalObjectIds": list(outcome.analysis["criticalObjectIds"]),
@@ -370,7 +375,8 @@ _TOOLS: tuple[ToolSpec, ...] = (
         "Compute the schedule of a Project YAML file in the workspace. On 'ok' returns placements per object id "
         "({start, end} or {at}, ISO dates, end exclusive) and the analysis (critical object ids, total float in "
         "calendar days). A dependency cycle or a fixed date that contradicts its dependencies is rejected here, "
-        "not by validate_project. Read dates from this result; never compute a date by hand.",
+        "not by validate_project. 'warnings' lists W_DEADLINE for each object planned to finish after its deadline "
+        "(the plan is still scheduled; the deadline is a promise, not a bound). Read dates from this result; never compute a date by hand.",
         _input_schema({"project": _WORKSPACE_PATH_PROPERTY}, ["project"]),
         _output_schema({
             "placements": {"type": "object", "additionalProperties": {
@@ -381,6 +387,7 @@ _TOOLS: tuple[ToolSpec, ...] = (
                          "properties": {"criticalObjectIds": {"type": "array", "items": {"type": "string"}},
                                         "totalFloat": {"type": "object",
                                                        "additionalProperties": {"type": "integer", "minimum": 0}}}},
+            "warnings": {"type": "array", "items": {"$ref": "#/$defs/diagnostic"}},
         }),
         _schedule_project,
     ),

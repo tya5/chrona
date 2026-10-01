@@ -59,4 +59,5 @@ question is whether you accept it.
 | `W_SCENE_TEXT_INTERSECTION` | Two pieces of text overlap in the drawn scene. | Widen `--viewport` or shorten the labels; look at the picture before accepting it. |
 | `W_LAYOUT_*` | Other layout adaptations (a label thinned, a relation suppressed). | Same: widen `--viewport` or simplify; accept if the picture reads. |
 | `W_FONT_*` | A font feature was unavailable or a glyph was substituted. | Accept, or choose a different preset; do not change fonts unless asked. |
+| `W_DEADLINE` | An object is planned to finish after its `deadline`. Unlike the rows above it has a `message` and `details` (`object`, `endpoint`, `finish`, `deadline`, `daysLate`), and `chrona schedule` lists it under `warnings` as well. | Tell the user the days late; move the plan or the deadline only if asked. It is a promise, not a bound: nothing was moved. |
 | `I_LAYOUT_PLOT_LABELS_SUPPRESSED` | A note: plot labels were dropped because they would not fit. | None; widen `--viewport` if you need them. |

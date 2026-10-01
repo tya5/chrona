@@ -338,6 +338,43 @@
   "stderr": "",
   "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_UNSUPPORTED_CYCLE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/objects/a\", \"revisionRefs\": [], \"message\": \"Unresolved dependency system; reference scheduler supports an acyclic subset\"}, {\"code\": \"E_UNSUPPORTED_CYCLE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/objects/b\", \"revisionRefs\": [], \"message\": \"Unresolved dependency system; reference scheduler supports an acyclic subset\"}]}\n"
  },
+ "render-deadline-warning": {
+  "argv": [
+   "render",
+   "late-deadline.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 0,
+  "files": {
+   "out.svg": {
+    "kind": "svg",
+    "root": "{http://www.w3.org/2000/svg}svg"
+   }
+  },
+  "stderr": {
+   "codes": {
+    "W_DEADLINE": {
+     "count": 2,
+     "keys": [
+      "code",
+      "daysLate",
+      "deadline",
+      "diagnostic",
+      "endpoint",
+      "finish",
+      "message",
+      "object",
+      "severity",
+      "sourceRef"
+     ],
+     "sortedKeyLines": true
+    }
+   },
+   "endsWithNewline": true
+  },
+  "stdout": ""
+ },
  "render-default-no-suffix": {
   "argv": [
    "render",
@@ -1443,6 +1480,26 @@
   "stderr": "",
   "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_UNSUPPORTED_CYCLE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/objects/a\", \"revisionRefs\": [], \"message\": \"Unresolved dependency system; reference scheduler supports an acyclic subset\"}, {\"code\": \"E_UNSUPPORTED_CYCLE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/objects/b\", \"revisionRefs\": [], \"message\": \"Unresolved dependency system; reference scheduler supports an acyclic subset\"}]}\n"
  },
+ "schedule-deadline-not-a-date": {
+  "argv": [
+   "schedule",
+   "deadline-not-a-date.yaml"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_SCHEMA\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/objects/release/deadline\", \"revisionRefs\": [], \"message\": \"Expected ISO Date, got '2026-02-30'\"}]}\n"
+ },
+ "schedule-deadline-warning": {
+  "argv": [
+   "schedule",
+   "late-deadline.yaml"
+  ],
+  "exit": 0,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\n  \"placements\": {\n    \"qa\": {\n      \"start\": \"2026-10-01\",\n      \"end\": \"2026-10-08\"\n    },\n    \"launch\": {\n      \"at\": \"2026-10-10\"\n    }\n  },\n  \"diagnostics\": [],\n  \"warnings\": [\n    {\n      \"code\": \"W_DEADLINE\",\n      \"severity\": \"warning\",\n      \"component\": \"core\",\n      \"sourceRef\": \"/objects/qa/deadline\",\n      \"revisionRefs\": [],\n      \"message\": \"qa finishes 2026-10-08, 3 days after its deadline 2026-10-05\",\n      \"details\": {\n        \"object\": \"qa\",\n        \"endpoint\": \"end\",\n        \"finish\": \"2026-10-08\",\n        \"deadline\": \"2026-10-05\",\n        \"daysLate\": 3\n      }\n    },\n    {\n      \"code\": \"W_DEADLINE\",\n      \"severity\": \"warning\",\n      \"component\": \"core\",\n      \"sourceRef\": \"/objects/launch/deadline\",\n      \"revisionRefs\": [],\n      \"message\": \"launch finishes 2026-10-10, 2 days after its deadline 2026-10-08\",\n      \"details\": {\n        \"object\": \"launch\",\n        \"endpoint\": \"at\",\n        \"finish\": \"2026-10-10\",\n        \"deadline\": \"2026-10-08\",\n        \"daysLate\": 2\n      }\n    }\n  ],\n  \"analysis\": {\n    \"criticalObjectIds\": [\n      \"qa\",\n      \"launch\"\n    ],\n    \"totalFloat\": {\n      \"launch\": 0,\n      \"qa\": 0\n    }\n  }\n}\n"
+ },
  "schedule-halcyon-ok": {
   "argv": [
    "schedule",
@@ -1451,7 +1508,7 @@
   "exit": 0,
   "files": {},
   "stderr": "",
-  "stdout": "{\n  \"placements\": {\n    \"pdr\": {\n      \"at\": \"2027-03-05\"\n    },\n    \"structure\": {\n      \"start\": \"2027-03-08\",\n      \"end\": \"2027-04-06\"\n    },\n    \"avionics\": {\n      \"start\": \"2027-04-06\",\n      \"end\": \"2027-04-27\"\n    },\n    \"eps\": {\n      \"start\": \"2027-03-22\",\n      \"end\": \"2027-04-08\"\n    },\n    \"bus-test\": {\n      \"start\": \"2027-04-29\",\n      \"end\": \"2027-05-13\"\n    },\n    \"cdr\": {\n      \"at\": \"2027-05-07\"\n    },\n    \"optics\": {\n      \"start\": \"2027-03-08\",\n      \"end\": \"2027-04-01\"\n    },\n    \"detector\": {\n      \"start\": \"2027-04-05\",\n      \"end\": \"2027-04-19\"\n    },\n    \"payload-tvac\": {\n      \"start\": \"2027-04-19\",\n      \"end\": \"2027-04-27\"\n    },\n    \"payload-delivery\": {\n      \"at\": \"2027-07-02\"\n    },\n    \"integration\": {\n      \"start\": \"2027-07-06\",\n      \"end\": \"2027-07-27\"\n    },\n    \"vibration\": {\n      \"start\": \"2027-07-28\",\n      \"end\": \"2027-08-04\"\n    },\n    \"tvac\": {\n      \"start\": \"2027-08-06\",\n      \"end\": \"2027-08-20\"\n    },\n    \"emc\": {\n      \"start\": \"2027-08-23\",\n      \"end\": \"2027-08-30\"\n    },\n    \"psr\": {\n      \"at\": \"2027-09-10\"\n    },\n    \"mcs\": {\n      \"start\": \"2027-03-08\",\n      \"end\": \"2027-05-11\"\n    },\n    \"station\": {\n      \"start\": \"2027-04-19\",\n      \"end\": \"2027-06-01\"\n    },\n    \"comms-test\": {\n      \"start\": \"2027-06-01\",\n      \"end\": \"2027-06-08\"\n    },\n    \"launch-contract\": {\n      \"at\": \"2027-04-16\"\n    },\n    \"shipment\": {\n      \"start\": \"2027-09-14\",\n      \"end\": \"2027-09-20\"\n    },\n    \"campaign\": {\n      \"start\": \"2027-09-21\",\n      \"end\": \"2027-10-08\"\n    },\n    \"spacecraft-ait\": {\n      \"start\": \"2027-07-06\",\n      \"end\": \"2027-09-10\"\n    },\n    \"ground-segment\": {\n      \"start\": \"2027-03-08\",\n      \"end\": \"2027-09-14\"\n    },\n    \"mission-closeout\": {\n      \"start\": \"2027-10-15\",\n      \"end\": \"2027-11-19\"\n    },\n    \"frr\": {\n      \"at\": \"2027-10-15\"\n    },\n    \"launch\": {\n      \"at\": \"2027-10-22\"\n    },\n    \"rehearsals\": {\n      \"start\": \"2027-08-30\",\n      \"end\": \"2027-09-14\"\n    },\n    \"leop\": {\n      \"start\": \"2027-10-22\",\n      \"end\": \"2027-11-12\"\n    },\n    \"first-light\": {\n      \"at\": \"2027-11-19\"\n    }\n  },\n  \"diagnostics\": [],\n  \"analysis\": {\n    \"criticalObjectIds\": [\n      \"pdr\",\n      \"eps\",\n      \"cdr\",\n      \"optics\",\n      \"payload-delivery\",\n      \"psr\",\n      \"mcs\",\n      \"station\",\n      \"launch-contract\",\n      \"frr\",\n      \"launch\",\n      \"rehearsals\",\n      \"leop\",\n      \"first-light\"\n    ],\n    \"totalFloat\": {\n      \"avionics\": 23,\n      \"bus-test\": 41,\n      \"campaign\": 5,\n      \"cdr\": 0,\n      \"comms-test\": 58,\n      \"detector\": 45,\n      \"emc\": 6,\n      \"eps\": 0,\n      \"first-light\": 0,\n      \"frr\": 0,\n      \"integration\": 6,\n      \"launch\": 0,\n      \"launch-contract\": 0,\n      \"leop\": 0,\n      \"mcs\": 0,\n      \"optics\": 0,\n      \"payload-delivery\": 0,\n      \"payload-tvac\": 45,\n      \"pdr\": 0,\n      \"psr\": 0,\n      \"rehearsals\": 0,\n      \"shipment\": 5,\n      \"station\": 0,\n      \"structure\": 23,\n      \"tvac\": 6,\n      \"vibration\": 6\n    }\n  }\n}\n"
+  "stdout": "{\n  \"placements\": {\n    \"pdr\": {\n      \"at\": \"2027-03-05\"\n    },\n    \"structure\": {\n      \"start\": \"2027-03-08\",\n      \"end\": \"2027-04-06\"\n    },\n    \"avionics\": {\n      \"start\": \"2027-04-06\",\n      \"end\": \"2027-04-27\"\n    },\n    \"eps\": {\n      \"start\": \"2027-03-22\",\n      \"end\": \"2027-04-08\"\n    },\n    \"bus-test\": {\n      \"start\": \"2027-04-29\",\n      \"end\": \"2027-05-13\"\n    },\n    \"cdr\": {\n      \"at\": \"2027-05-07\"\n    },\n    \"optics\": {\n      \"start\": \"2027-03-08\",\n      \"end\": \"2027-04-01\"\n    },\n    \"detector\": {\n      \"start\": \"2027-04-05\",\n      \"end\": \"2027-04-19\"\n    },\n    \"payload-tvac\": {\n      \"start\": \"2027-04-19\",\n      \"end\": \"2027-04-27\"\n    },\n    \"payload-delivery\": {\n      \"at\": \"2027-07-02\"\n    },\n    \"integration\": {\n      \"start\": \"2027-07-06\",\n      \"end\": \"2027-07-27\"\n    },\n    \"vibration\": {\n      \"start\": \"2027-07-28\",\n      \"end\": \"2027-08-04\"\n    },\n    \"tvac\": {\n      \"start\": \"2027-08-06\",\n      \"end\": \"2027-08-20\"\n    },\n    \"emc\": {\n      \"start\": \"2027-08-23\",\n      \"end\": \"2027-08-30\"\n    },\n    \"psr\": {\n      \"at\": \"2027-09-10\"\n    },\n    \"mcs\": {\n      \"start\": \"2027-03-08\",\n      \"end\": \"2027-05-11\"\n    },\n    \"station\": {\n      \"start\": \"2027-04-19\",\n      \"end\": \"2027-06-01\"\n    },\n    \"comms-test\": {\n      \"start\": \"2027-06-01\",\n      \"end\": \"2027-06-08\"\n    },\n    \"launch-contract\": {\n      \"at\": \"2027-04-16\"\n    },\n    \"shipment\": {\n      \"start\": \"2027-09-14\",\n      \"end\": \"2027-09-20\"\n    },\n    \"campaign\": {\n      \"start\": \"2027-09-21\",\n      \"end\": \"2027-10-08\"\n    },\n    \"spacecraft-ait\": {\n      \"start\": \"2027-07-06\",\n      \"end\": \"2027-09-10\"\n    },\n    \"ground-segment\": {\n      \"start\": \"2027-03-08\",\n      \"end\": \"2027-09-14\"\n    },\n    \"mission-closeout\": {\n      \"start\": \"2027-10-15\",\n      \"end\": \"2027-11-19\"\n    },\n    \"frr\": {\n      \"at\": \"2027-10-15\"\n    },\n    \"launch\": {\n      \"at\": \"2027-10-22\"\n    },\n    \"rehearsals\": {\n      \"start\": \"2027-08-30\",\n      \"end\": \"2027-09-14\"\n    },\n    \"leop\": {\n      \"start\": \"2027-10-22\",\n      \"end\": \"2027-11-12\"\n    },\n    \"first-light\": {\n      \"at\": \"2027-11-19\"\n    }\n  },\n  \"diagnostics\": [],\n  \"warnings\": [],\n  \"analysis\": {\n    \"criticalObjectIds\": [\n      \"pdr\",\n      \"eps\",\n      \"cdr\",\n      \"optics\",\n      \"payload-delivery\",\n      \"psr\",\n      \"mcs\",\n      \"station\",\n      \"launch-contract\",\n      \"frr\",\n      \"launch\",\n      \"rehearsals\",\n      \"leop\",\n      \"first-light\"\n    ],\n    \"totalFloat\": {\n      \"avionics\": 23,\n      \"bus-test\": 41,\n      \"campaign\": 5,\n      \"cdr\": 0,\n      \"comms-test\": 58,\n      \"detector\": 45,\n      \"emc\": 6,\n      \"eps\": 0,\n      \"first-light\": 0,\n      \"frr\": 0,\n      \"integration\": 6,\n      \"launch\": 0,\n      \"launch-contract\": 0,\n      \"leop\": 0,\n      \"mcs\": 0,\n      \"optics\": 0,\n      \"payload-delivery\": 0,\n      \"payload-tvac\": 45,\n      \"pdr\": 0,\n      \"psr\": 0,\n      \"rehearsals\": 0,\n      \"shipment\": 5,\n      \"station\": 0,\n      \"structure\": 23,\n      \"tvac\": 6,\n      \"vibration\": 6\n    }\n  }\n}\n"
  },
  "schedule-missing-file": {
   "argv": [
@@ -1510,7 +1567,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\n  \"placements\": {\n    \"design\": {\n      \"start\": \"2026-10-01\",\n      \"end\": \"2026-10-31\"\n    },\n    \"build\": {\n      \"start\": \"2026-11-03\",\n      \"end\": \"2026-12-15\"\n    },\n    \"release\": {\n      \"at\": \"2026-12-18\"\n    }\n  },\n  \"diagnostics\": [],\n  \"analysis\": {\n    \"criticalObjectIds\": [\n      \"design\",\n      \"build\",\n      \"release\"\n    ],\n    \"totalFloat\": {\n      \"build\": 0,\n      \"design\": 0,\n      \"release\": 0\n    }\n  }\n}\n"
+  "stdout": "{\n  \"placements\": {\n    \"design\": {\n      \"start\": \"2026-10-01\",\n      \"end\": \"2026-10-31\"\n    },\n    \"build\": {\n      \"start\": \"2026-11-03\",\n      \"end\": \"2026-12-15\"\n    },\n    \"release\": {\n      \"at\": \"2026-12-18\"\n    }\n  },\n  \"diagnostics\": [],\n  \"warnings\": [],\n  \"analysis\": {\n    \"criticalObjectIds\": [\n      \"design\",\n      \"build\",\n      \"release\"\n    ],\n    \"totalFloat\": {\n      \"build\": 0,\n      \"design\": 0,\n      \"release\": 0\n    }\n  }\n}\n"
  },
  "schedule-starter-ok": {
   "argv": [
@@ -1520,7 +1577,7 @@
   "exit": 0,
   "files": {},
   "stderr": "",
-  "stdout": "{\n  \"placements\": {\n    \"design\": {\n      \"start\": \"2026-10-01\",\n      \"end\": \"2026-10-31\"\n    },\n    \"build\": {\n      \"start\": \"2026-11-03\",\n      \"end\": \"2026-12-15\"\n    },\n    \"release\": {\n      \"at\": \"2026-12-18\"\n    }\n  },\n  \"diagnostics\": [],\n  \"analysis\": {\n    \"criticalObjectIds\": [\n      \"design\",\n      \"build\",\n      \"release\"\n    ],\n    \"totalFloat\": {\n      \"build\": 0,\n      \"design\": 0,\n      \"release\": 0\n    }\n  }\n}\n"
+  "stdout": "{\n  \"placements\": {\n    \"design\": {\n      \"start\": \"2026-10-01\",\n      \"end\": \"2026-10-31\"\n    },\n    \"build\": {\n      \"start\": \"2026-11-03\",\n      \"end\": \"2026-12-15\"\n    },\n    \"release\": {\n      \"at\": \"2026-12-18\"\n    }\n  },\n  \"diagnostics\": [],\n  \"warnings\": [],\n  \"analysis\": {\n    \"criticalObjectIds\": [\n      \"design\",\n      \"build\",\n      \"release\"\n    ],\n    \"totalFloat\": {\n      \"build\": 0,\n      \"design\": 0,\n      \"release\": 0\n    }\n  }\n}\n"
  },
  "schedule-unexpected-exception": {
   "argv": [
@@ -1555,6 +1612,16 @@
   "argv": [
    "validate",
    "cycle.yaml"
+  ],
+  "exit": 0,
+  "files": {},
+  "stderr": "",
+  "stdout": "[]\n"
+ },
+ "validate-deadline-late-unchanged": {
+  "argv": [
+   "validate",
+   "late-deadline.yaml"
   ],
   "exit": 0,
   "files": {},

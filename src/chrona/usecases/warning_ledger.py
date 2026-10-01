@@ -21,7 +21,7 @@ def collect_render_warnings(
     *, surface_diagnostics: Iterable[str], tabular_warnings: Iterable[Any],
     glyph_warnings: Iterable[Any], fit_warnings: Iterable[Any],
     perceptibility_warnings: Iterable[Any], scale_collisions: Iterable[Any],
-    attachment_warnings: Iterable[Any],
+    attachment_warnings: Iterable[Any], deadline_warnings: Iterable[Any] = (),
 ) -> tuple[RenderWarning, ...]:
     """Keep warning multiplicity and stable source identities across transports."""
     records = []
@@ -68,4 +68,7 @@ def collect_render_warnings(
         records.append(_record(item.code, {"sourceRef": item.object_id, "host": item.host_id},
                                sourceRef=item.object_id, host=item.host_id,
                                message=f"{item.object_id} is dated outside the planned span of {item.host_id}"))
+    for item in deadline_warnings:
+        records.append(_record(item.id, {"sourceRef": item.path}, sourceRef=item.path, message=item.message,
+                               **item.details))
     return tuple(records)

@@ -92,13 +92,14 @@ Points to take from it:
   `E_CONTRADICTORY_BOUNDS` when the relations pass it. A `scheduled-point` needs a
   relation into its `at` or a `min` (`E_DERIVATION`).
 - `lag: 0d` means the dependent starts the moment the predecessor ends.
-- `deadline` is a statement of intent drawn with the object; chrona does not compare it
-  with the scheduled date.
+- `deadline` is a promise, never a bound: it moves nothing. `chrona schedule` compares it
+  with the planned finish (`at` of a point, `end` of a span) and lists a `W_DEADLINE`
+  warning, with the days late, when the finish is later; the plan is still produced.
 - Every object's `id` (`design`, `build`) is what an Actual Set refers to as
   `projectObjectId`.
 
-`chrona schedule` returns these placements (its full output also has `diagnostics` and
-an `analysis` of critical objects and float). `build` ends on 2026-12-01 because 15
+`chrona schedule` returns these placements (its full output also has `diagnostics`,
+`warnings` and an `analysis` of critical objects and float). `build` ends on 2026-12-01 because 15
 working days from 2026-11-09 cross the exception on 2026-11-23:
 
 ```json

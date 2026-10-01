@@ -43,7 +43,9 @@ JSON Schema 2020-12 input and output schema of each tool, and the read-only anno
 - `validate_project {project}`: result `projectIdentity` (the SHA-256 of the file bytes) when the file was read.
   Mirrors `chrona validate`: a dependency cycle validates. Run `schedule_project` before calling a plan valid.
 - `schedule_project {project}`: result `placements` (object id to `{start, end}` or `{at}`, ISO dates, `end`
-  exclusive) and `analysis` (`criticalObjectIds` in Project object order, `totalFloat` in calendar days).
+  exclusive), `analysis` (`criticalObjectIds` in Project object order, `totalFloat` in calendar days) and `warnings`
+  (a `W_DEADLINE` per object planned after its `deadline`, Spec 04 Section 10; empty when none; the plan is still
+  scheduled).
 - `render_draft {project, actual?, preset?, view?, theme?, scheme?, layout?, viewport?, locale?, format?, inline?}`:
   `preset` is a builtin id or a workspace path ending `.yaml` or `.yml` (a value that contains `/` and ends
   otherwise is `E_MCP_PATH_SYNTAX`); `viewport` defaults to `1600xauto`, `locale` to `en-US`, `format` (`svg` or `png`, the artifact
@@ -64,11 +66,12 @@ present only when `status` is `ok`.
 - A diagnostic is `{code, severity, component, sourceRef, message}` with the optional `revisionRefs`,
   `resourceKind`, `resourceIdentity`, `phase`, `rule` (as the command reports them) and, for a render warning or
   info record, `detail`: the record's remaining ledger fields, keys sorted. A render warning carries no message
-  today, so `message` is `""`; its meaning is in `skills/chrona/references/diagnostics.md`. `sourceRef` is a JSON
+  today (except `W_DEADLINE`, which has one), so `message` is otherwise `""`; its meaning is in `skills/chrona/references/diagnostics.md`. `sourceRef` is a JSON
   pointer, or the ledger's own reference for a render warning, or `/`.
 - The tool layer applies three transforms the command does not: it drops exact duplicate diagnostics, keeps at most
   50 and reports the rest in `omittedDiagnostics`, and scrubs host paths from every message and `detail` string.
-- Warnings and info records of a successful render are `warnings`, in the order of the render, never dropped or
+- Warnings and info records of a successful render, and the `W_DEADLINE` warnings of a successful schedule (which carry
+  a `message`), are `warnings`, in the order of the render, never dropped or
   invented. `diagnostics` is empty when `status` is `ok`.
 - A failure that is not one of the typed families is `E_TOOL_FAILURE` with the fixed message
   `internal error: <ExceptionClass>`; the traceback goes to the log (standard error), never to the result.
