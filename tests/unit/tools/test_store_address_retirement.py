@@ -12,7 +12,7 @@ import yaml
 
 from chrona.operational.resources import AUTOMATION_RESULT_SCHEMAS, COMMAND_SCHEMAS
 from chrona.presentation.contracts.resources import RENDER_CONTEXT_VERSIONS, _SCHEMAS
-from chrona.presentation.layout.profile import LAYOUT_SCHEMAS
+from chrona.presentation.layout.profile import LAYOUT_SCHEMAS, LAYOUT_VERSION
 from chrona.storage.snapshots import SNAPSHOT_REF_VERSIONS
 from tools.schema_inventory import load_inventory
 
@@ -23,9 +23,6 @@ ENTRIES = {entry["file"]: entry for entry in load_inventory(SCHEMAS / "schema-in
 
 # predecessor file -> (successor file, removal slice, what the removal slice must delete)
 RETIREMENTS: dict[str, tuple[str, str, str]] = {
-    "layout-profile-v0.9.schema.yaml": (
-        "layout-profile-v0.10.schema.yaml", "issue-710-layout-profile-v0.9-retirement",
-        "the schema file, `LAYOUT_SCHEMAS` and the `_SCHEMAS` entry"),
     "render-context-v0.16.schema.yaml": (
         "render-context-v0.17.schema.yaml", "issue-710-render-context-v0.16-retirement",
         "the schema file, `RENDER_CONTEXT_VERSIONS` and the `_SCHEMAS` entry"),
@@ -82,6 +79,13 @@ def test_every_predecessor_is_still_registered_in_the_reader_that_selects_it():
     assert RENDER_CONTEXT_VERSIONS[0].endswith("/v0.16") and RENDER_CONTEXT_VERSIONS[-1].endswith("/v0.17")
 
 
+def test_a_retired_predecessor_is_unregistered_and_an_unsupported_version_to_every_reader():
+    """Layout Profile v0.9 (C1). The archive test already proves the file is out of `schemas/` and the inventory and unnamed."""
+    assert set(LAYOUT_SCHEMAS) == {LAYOUT_VERSION} == {"chrona/layout-profile/v0.10"}
+    assert ("layout-profile", "chrona/layout-profile/v0.9") not in _SCHEMAS
+    assert [name for name, entry in ENTRIES.items() if entry["kind"] == "layout-profile"] == ["layout-profile-v0.10.schema.yaml"]
+
+
 def test_the_snapshot_ref_predecessor_is_the_one_that_is_never_retired_for_reads():
     assert "snapshot-ref-v0.2.schema.yaml" in _SCHEMAS.values()
     assert "authoring" in RETIREMENTS["snapshot-ref-v0.2.schema.yaml"][1]
@@ -97,7 +101,7 @@ def test_no_live_schema_references_the_loose_address_definitions():
     transitioning = [name for name, entry in ENTRIES.items() if entry["state"] == "transitioning"]
     users = {name for name in transitioning if any(ref.endswith(("#/$defs/relativeAddress", "#/$defs/relativeAddressDotTolerant"))
                                                     for ref in _references(name))}
-    assert users == {"layout-profile-v0.9.schema.yaml", "render-context-v0.16.schema.yaml"}
+    assert users == {"render-context-v0.16.schema.yaml"}
 
 
 def test_no_live_kind_references_revision_store_v0_1_and_the_part_has_only_the_recorded_users():

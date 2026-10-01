@@ -98,6 +98,6 @@ Schema validation is therefore stage 1, not full Core conformance.
 definitions for the listed Presentation resources. The current
 `render-context-v0.16.schema.yaml` binds immutable Project and presentation
 references, viewport, locale, measured font assets, and one declared target.
-`layout-profile-v0.9.schema.yaml` defines the current intent-oriented composition
+`layout-profile-v0.10.schema.yaml` defines the current intent-oriented composition
 grammar. `review-detail-profile-v0.1.schema.yaml` owns selected group descriptions,
 milestone IDs, and source-labelled review detail.

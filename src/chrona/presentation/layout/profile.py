@@ -14,9 +14,8 @@ from chrona.schema_diagnostics import explain_errors
 
 
 LAYOUT_VERSION = "chrona/layout-profile/v0.10"
-# v0.9 stays readable while its successor (strict `storeAddress`, #710) is adopted.
+# v0.9 was retired once every committed and packaged profile was on v0.10 (#731); it is an unsupported version now.
 LAYOUT_SCHEMAS = {
-    "chrona/layout-profile/v0.9": "layout-profile-v0.9.schema.yaml",
     LAYOUT_VERSION: "layout-profile-v0.10.schema.yaml",
 }
 

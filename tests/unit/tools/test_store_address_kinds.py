@@ -1,7 +1,7 @@
 """The kinds that adopt the strict `storeAddress` through a version bump (#710, row 1, slice S-B).
 
-layout-profile v0.9 -> v0.10 and render-context v0.16 -> v0.17. Every verdict is decided from data, the
-validators and the production readers; none consults the host path flavour.
+layout-profile v0.9 -> v0.10 (the v0.9 predecessor was retired in #731 C1) and render-context v0.16 -> v0.17.
+Every verdict is decided from data, the validators and the production readers; none consults the host path flavour.
 """
 from __future__ import annotations
 
@@ -28,7 +28,6 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "
 SCHEMAS = load_schema_dir(ROOT / "schemas")
 VALIDATORS = SchemaValidators(SCHEMAS)
 PAIRS = {  # predecessor document version -> (successor document version, predecessor schema, successor schema)
-    "chrona/layout-profile/v0.9": ("chrona/layout-profile/v0.10", "layout-profile-v0.9.schema.yaml", "layout-profile-v0.10.schema.yaml"),
     "chrona/render-context/v0.16": ("chrona/render-context/v0.17", "render-context-v0.16.schema.yaml", "render-context-v0.17.schema.yaml"),
     "chrona/command/v0.2": ("chrona/command/v0.3", "command-request-v0.2.schema.yaml", "command-request-v0.3.schema.yaml"),
     "chrona/automation-result/v0.1": ("chrona/automation-result/v0.2", "automation-result-v0.1.schema.yaml", "automation-result-v0.2.schema.yaml"),
@@ -40,6 +39,8 @@ PINNED = {
         "an immutable, content-pinned baseline: the Halcyon replan Context pins its sha256, so its bytes (and version) cannot change; "
         "it is the committed stand-in for the v0.2 baselines already in operators' Stores",
 }
+# Predecessors already retired (#731): the document version string must appear in no committed or packaged document.
+RETIRED = ("chrona/layout-profile/v0.9",)
 SUCCESSOR_OF = {old: new for old, (new, _, _) in PAIRS.items()}
 PREDECESSOR_OF = {new: old for old, new in SUCCESSOR_OF.items()}
 ADDRESS_SITES = tuple(site for site in PROBE_SITES if site.family in ("address", "segment"))
@@ -64,7 +65,7 @@ def test_the_inventory_marks_the_predecessors_transitioning_with_their_successor
 
 
 def test_the_readers_accept_both_versions_and_emit_the_successor():
-    assert set(LAYOUT_SCHEMAS) == {"chrona/layout-profile/v0.9", "chrona/layout-profile/v0.10"} and LAYOUT_VERSION == "chrona/layout-profile/v0.10"
+    assert set(LAYOUT_SCHEMAS) == {"chrona/layout-profile/v0.10"} and LAYOUT_VERSION == "chrona/layout-profile/v0.10"
     assert RENDER_CONTEXT_VERSIONS == ("chrona/render-context/v0.16", "chrona/render-context/v0.17") and RENDER_CONTEXT_VERSION == RENDER_CONTEXT_VERSIONS[-1]
 
 
@@ -74,13 +75,19 @@ def _document(path: str, version: str) -> dict[str, Any]:
     return document
 
 
-def test_a_predecessor_document_is_still_read_and_keeps_its_loose_address():
+def test_the_retired_layout_version_is_unsupported_and_the_current_one_refuses_a_loose_address():
     layout = _document("conformance/layout-profile-override-v0.2.yaml", "chrona/layout-profile/v0.9")
-    layout["extends"]["address"] = "my layouts/briefing.yaml"
-    _validate_schema(layout)  # v0.9: the loose address family still accepts a space
+    with pytest.raises(LayoutError) as unsupported:
+        _validate_schema(layout)
+    assert (unsupported.value.diagnostic_id, unsupported.value.path) == ("E_LAYOUT_SCHEMA", "/version")
     layout["version"] = LAYOUT_VERSION
+    _validate_schema(layout)
+    layout["extends"]["address"] = "my layouts/briefing.yaml"
     with pytest.raises(LayoutError):
         _validate_schema(layout)
+
+
+def test_a_predecessor_context_is_still_read_and_keeps_its_loose_address():
     context = _document("examples/aster-ssd/contexts/01-overview.yaml", "chrona/render-context/v0.16")
     context["body"]["project"]["address"] = "my projects/main.yaml"
     identity = ClosureIdentity("render-context", context["id"], "draft", "sha256:" + "0" * 64)
@@ -99,8 +106,6 @@ def test_successors_differ_from_their_predecessors_only_at_the_address_sites():
         assert all(pointer.endswith(("/address/pattern", "/address/minLength", "/snapshotId/allOf", "/snapshotId/minLength", "/snapshotId/type"))
                    or pointer == "/properties/version/const" for pointer in changed), changed  # `minLength: 1` is implied by the pattern
         assert "/properties/version/const" in changed
-    layout = [pointer for pointer, *_ in _difference(prints.trees["layout-profile-v0.9.schema.yaml"], prints.trees["layout-profile-v0.10.schema.yaml"], prints.hasher)]
-    assert "/properties/extends/properties/address/pattern" in layout
     context = {pointer for pointer, *_ in _difference(prints.trees["render-context-v0.16.schema.yaml"], prints.trees["render-context-v0.17.schema.yaml"], prints.hasher, limit=500)}
     for pinned in ("project", "view", "theme", "colorScheme", "layout"):
         assert f"/properties/body/properties/{pinned}/allOf/0/properties/address/pattern" in context
@@ -166,13 +171,13 @@ def test_every_migrated_document_keeps_its_verdict_under_the_successor():
         predecessor = VALIDATORS.first_error(old_schema, {**document, "version": old_version})
         assert successor == predecessor, path
         checked += 1
-    assert checked > 50, "the migration covers the committed Contexts and Layout Profiles"
+    assert checked > 25, "the migration covers the committed Contexts"
 
 
 def test_no_committed_or_packaged_document_is_left_on_a_predecessor_version():
     """Anything pinned on purpose must be named here with its reason; the migration leaves none."""
     pinned = PINNED
-    left = [path for path, content in _documents().items() if any(old.encode() in content for old in PAIRS)
+    left = [path for path, content in _documents().items() if any(old.encode() in content for old in (*PAIRS, *RETIRED))
             and not path.startswith(("schemas/", "docs/", "conformance/schema-equivalence/"))]
     assert sorted(left) == sorted(pinned), left
 
@@ -195,6 +200,8 @@ def test_the_baseline_records_of_the_address_probes_are_what_the_predecessors_sa
     for site in ADDRESS_SITES:
         for label, value in PROBE_STRINGS[site.family]:
             document = probe_documents(site, corpus)
+            if document["version"] not in PREDECESSOR_OF:
+                continue  # a retired predecessor can no longer be run; its record stays in the baseline as history
             document["version"] = PREDECESSOR_OF[document["version"]]
             _set_at(document, site.pointer, value)
             assert _same(run_ingress(document, VALIDATORS), baseline[probe_id(site, label)]), (site.pointer, label)

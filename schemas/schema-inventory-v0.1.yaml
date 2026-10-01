@@ -11,7 +11,6 @@ schemas:
   - {file: color-scheme-v0.2.schema.yaml, kind: color-scheme, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: command-request-v0.2.schema.yaml, kind: command-request, state: transitioning, consumers: [src/chrona/operational/resources.py], successor: command-request-v0.3.schema.yaml, removalSlice: issue-710-command-request-v0.2-retirement}
   - {file: command-request-v0.3.schema.yaml, kind: command-request, state: live, consumers: [src/chrona/operational/resources.py]}
-  - {file: layout-profile-v0.9.schema.yaml, kind: layout-profile, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: layout-profile-v0.10.schema.yaml, removalSlice: issue-710-layout-profile-v0.9-retirement}
   - {file: layout-profile-v0.10.schema.yaml, kind: layout-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: icon-catalog-v0.3.schema.yaml, kind: icon-catalog, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: icon-catalog-v0.4.schema.yaml, removalSlice: issue-496-v03-retirement-after-resource-migration}
   - {file: icon-catalog-v0.4.schema.yaml, kind: icon-catalog, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}

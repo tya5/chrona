@@ -211,10 +211,12 @@ does not, by itself, show that. The check is made per site and per refused input
 an `expected-deltas` line with a test; where it fails, the change narrows what a valid document may contain and takes the
 version bump (or is named as a narrowing in the change). The verification for the sites left by #710 is in the #731 design.
 
-*Retirement of the #710 predecessors.* A predecessor (`layout-profile-v0.9`, `render-context-v0.16`,
-`command-request-v0.2`, `automation-result-v0.1`, `snapshot-ref-v0.2`) is `transitioning` with a named
-`removalSlice`, and its schema file, its reader registration and its version string are deleted only in that slice,
-once one release has shipped both versions and no committed or packaged document names it. The loose
+*Retirement of the #710 predecessors.* A predecessor (`render-context-v0.16`,
+`command-request-v0.2`, `automation-result-v0.1`, `snapshot-ref-v0.2`; `layout-profile-v0.9` was retired by #731) is
+`transitioning` with a named `removalSlice`, and its schema file (archived with `git mv`), its reader registration and its
+version string are deleted only in that slice, once no committed, packaged or test document names it; the project has one
+user and no external Store, so no release of dual support is required beyond that, and a document that still declares the
+retired version is an unsupported version (§3.1). The loose
 `relativeAddress` and `relativeAddressDotTolerant` definitions are then unreferenced and may be dropped with a new
 `common` part version; they are frozen until then and no live schema references them. Two things are deliberately not
 retired by that rule: `snapshot-ref-v0.2` for reads (immutable baselines already in Stores), and
