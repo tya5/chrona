@@ -72,7 +72,6 @@ schemas:
   - {file: snapshot-ref-v0.3.schema.yaml, kind: snapshot-ref, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: store-config-v0.1.schema.yaml, kind: store-config, state: live, consumers: [src/chrona/operational/store_config.py]}
   - {file: summary-profile-v0.2.schema.yaml, kind: summary-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
-  - {file: theme-v0.8.schema.yaml, kind: theme, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: theme-v0.9.schema.yaml, removalSlice: I394-1}
   - {file: theme-v0.11.schema.yaml, kind: theme, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: theme-v0.13.schema.yaml, removalSlice: issue-496-theme-v0.11-retirement}
   - {file: theme-v0.12.schema.yaml, kind: derived-theme, state: transitioning, consumers: [src/chrona/presentation/model/theme_inheritance.py], successor: theme-v0.14.schema.yaml, removalSlice: issue-496-theme-v0.12-retirement}
   - {file: theme-v0.13.schema.yaml, kind: theme, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}

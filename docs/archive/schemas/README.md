@@ -1,7 +1,7 @@
 # Archived schema files
 
 These are historical JSON Schema files that the running product no longer reads.
-They were moved here from `schemas/` by issue #662 (slices S5a to S5c) with
+They were moved here from `schemas/` by issue #662 (slices S5a to S5c) and #715 (theme v0.8, once the declared-vocabulary policy was retargeted to theme v0.13) with
 `git mv`, so `git log --follow` on any file shows its full history.
 
 This folder is evidence, not a contract. Nothing under `src/`, `tools/`, `tests/`
@@ -18,9 +18,7 @@ nothing to the package.
   the files reachable for reading.
 - Files that are still accepted at runtime or still have committed documents
   (for example View v0.26 and v0.27, Theme v0.11 and v0.12, icon-catalog v0.3, Scene v0.6)
-  remain in `schemas/` until their own migration issues retire them. Theme v0.8 also
-  remains: `conformance/declared-vocabulary-policy-v0.1.yaml` still pins it, and its
-  live successor declares a wider marker shape set that the policy has not yet accepted.
+  remain in `schemas/` until their own migration issues retire them.
 
 A test (`tests/unit/tools/test_schema_archive.py`) fails if a file here is still
 listed in the inventory, exists in `schemas/`, or is named by executable code.
