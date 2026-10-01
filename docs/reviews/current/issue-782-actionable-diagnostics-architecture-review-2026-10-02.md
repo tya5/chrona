@@ -45,15 +45,17 @@ fact, so Spec 50's count equality is untouched.
 ### F2 (medium): not every change is additive
 
 Additive: `message` on warnings, `count`, `occurrences`. Not additive, all
-intended: messages that equalled a code; the `sourceRef` of `LayoutError` and
-`ColorSchemeError` rows (`/` to the reported location); the number of stderr
-warning lines; and D8, where `validate` and `schedule` of a non-mapping Project
-change from `failed` (exit 2, `E_TOOL_FAILURE`) to `rejected` (exit 1,
-`E_SCHEMA`). A consumer that keys on `message == code`, on `E_TOOL_FAILURE` for a
-malformed plan, or on a line count per warning would notice; none exists in the
-repository (searched tests, skill, guides). *Disposition:* each is a row of the
-golden diff with a reason, D8 is called out in the PR title line and in Spec 66, and
-the acceptance review lists them as "intended incompatibilities".
+intended: messages that equalled a code (a layout finding now names its token); the
+**code** of a `ValueError` whose text carried detail (the whole text used to become
+the code); the number of stderr warning lines; D8, where `validate` and `schedule`
+of a non-mapping Project change from `failed` (exit 2, `E_TOOL_FAILURE`) to
+`rejected` (exit 1, `E_SCHEMA`); and D9, the tool-set version `v0.1` to `v0.2`
+(Spec 66 requires it for an output-schema change). A consumer that keys on
+`message == code`, on `E_TOOL_FAILURE` for a malformed plan, on the whole-text
+code, or on a line count per warning would notice; none exists in the repository
+(searched tests, skill, guides). *Disposition:* each is a row of the golden diff
+with a reason, D8 and D9 are called out in the PR and in Spec 66, and the
+acceptance review lists them as "intended incompatibilities".
 
 ### F3 (medium): plan (`.chrona`) diagnostics use another shape
 
