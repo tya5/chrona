@@ -334,7 +334,7 @@ def validate_inventory(
                 raise SchemaInventoryError("E_SCHEMA_INVENTORY_KIND")
             live_by_kind.setdefault(kind, []).append(entry["file"])
     # A frozen part is never edited in place, so a new part version is published beside its
-    # predecessor and both stay live while a frozen part or a pinned document still references
+    # predecessor and both stay live while a transitioning schema or a reader still references
     # the old one (#710: `revision-store-resource-ref` v0.1 and v0.2). Only parts may coexist.
     duplicates = {kind: files for kind, files in live_by_kind.items()
                   if len(files) > 1 and not all(name in SCHEMA_PARTS for name in files)}

@@ -203,6 +203,19 @@ immutable, content-pinned and already in operators' Stores, so the predecessor s
 baseline can exist, and the bump only changes what new writes emit (a writer emits v0.2 only for a Project reference that
 still carries a legacy loose address, never a v0.3 document that breaks its own contract). The inputs each site now refuses are listed as L3 `expected-deltas`.
 
+*Retirement of the #710 predecessors.* A predecessor (`layout-profile-v0.9`, `render-context-v0.16`,
+`command-request-v0.2`, `automation-result-v0.1`, `snapshot-ref-v0.2`) is `transitioning` with a named
+`removalSlice`, and its schema file, its reader registration and its version string are deleted only in that slice,
+once one release has shipped both versions and no committed or packaged document names it. The loose
+`relativeAddress` and `relativeAddressDotTolerant` definitions are then unreferenced and may be dropped with a new
+`common` part version; they are frozen until then and no live schema references them. Two things are deliberately not
+retired by that rule: `snapshot-ref-v0.2` for reads (immutable baselines already in Stores), and
+`revision-store-resource-ref-v0.1`, which the three transitioning predecessors reference and which `extensions/profiles.py`
+still uses to check a Project's `extensions[].resource` (a schema constraint on that field is Project's next bump,
+an owner decision). A guard test (`tests/unit/tools/test_store_address_retirement.py`) fails when the set of
+predecessors, their removal slices, their reader registrations or the remaining users of the loose forms change
+without this record changing.
+
 Adding a value to an existing `enum` is an in-place widening when every existing resource
 stays valid and behaves the same and the consuming code handles the new value. It is not an
 optional-property insertion, so the mechanical predecessor/successor check above does not apply; the equivalence gate
@@ -307,8 +320,8 @@ target, so a stray or archived schema file can never become one.
   the copy tests and the #662 design.
 * **A part has versions too (#710).** A part is frozen, so a change to a frozen definition is a new
   part file (`revision-store-resource-ref-v0.2`, `urn:chrona:revision-store-resource-ref-v0.2`),
-  published beside its predecessor; both are listed in `SCHEMA_PARTS` and stay `live`, because frozen parts
-  and pinned documents still reference the old URN. The inventory allows two live entries of one kind only
+  published beside its predecessor; both are listed in `SCHEMA_PARTS` and stay `live`, because the
+  transitioning predecessor schemas that reference the old URN stay readable and a reader still validates against it. The inventory allows two live entries of one kind only
   when every one of them is a part. Adding a definition to a part is not a new version:
   `storeAddress` (strict Store-relative address, owner decision 2026-10-01) was added to `common-v0.1`
   in place; it rejects what the loose `relativeAddress` family accepts, so a kind that adopts it

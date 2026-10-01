@@ -23,12 +23,12 @@ $defs:
     type: string
     pattern: "^(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"
   relativeAddress:
-    description: "Loose Store-relative address: not absolute and no `.` or `..` segment; any other character is accepted, and the check sees only the first line."
+    description: "Loose Store-relative address: not absolute and no `.` or `..` segment; any other character is accepted, and the check sees only the first line. Frozen: since #710 only transitioning schemas reference it; a live site references `storeAddress`."
     examples: ["resources/project.yaml"]
     type: string
     pattern: "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$)).+"
   relativeAddressDotTolerant:
-    description: "Loose Context-relative address: not absolute and no `..` segment; a single `.` segment is accepted."
+    description: "Loose Context-relative address: not absolute and no `..` segment; a single `.` segment is accepted. Frozen: since #710 only transitioning schemas reference it; a live site references `storeAddress`."
     examples: ["font_metrics/acme-regular.json"]
     type: string
     pattern: "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
