@@ -219,6 +219,15 @@ def select_lane_relation_route(
     return LaneRouteSelection(None, (), tuple(attempts))
 
 
+def _route_memo_key(content_id: int, start: tuple[float, float], end: tuple[float, float],
+                    grid_offset: float, bend_penalty: float, limit: int,
+                    bounds: tuple[float, float, float, float] | None, port_ids: tuple[str, ...],
+                    classes: tuple[str, ...] | None, regions: tuple[str, ...] | None) -> tuple:
+    """Every input of an index-backed search; `repr` keeps -0.0 and 0.0 (and 1 and 1.0) apart."""
+    return (content_id, repr((start, end, grid_offset, bend_penalty, limit, bounds)), port_ids,
+            None if classes is None else frozenset(classes), None if regions is None else frozenset(regions))
+
+
 def route_orthogonal(start: tuple[float, float], end: tuple[float, float],
                      obstacles: tuple[tuple[float, float, float, float], ...] | SurfaceObstacleIndex, *,
                      grid_offset: float = ROUTE_GRID_OFFSET, bend_penalty: float = 12.0,
@@ -227,7 +236,42 @@ def route_orthogonal(start: tuple[float, float], end: tuple[float, float],
                      port_ids: tuple[str, ...] = (),
                      classes: tuple[str, ...] | None = None,
                      regions: tuple[str, ...] | None = None) -> tuple[tuple[float, float], ...]:
-    """Return the stable shortest orthogonal route on a finite visibility grid."""
+    """Return the stable shortest orthogonal route on a finite visibility grid.
+
+    Searches over an index are memoised on the index lineage by the exact content they read, so a
+    repeated search (the planning rehearsals and the real phase) is answered without redoing it.
+    """
+    index = obstacles if isinstance(obstacles, SurfaceObstacleIndex) else None
+    port_ids = tuple(port_ids)
+    scope = None if index is None else index.route_memo_scope(classes, regions, port_ids)
+    if scope is None:
+        return _search_orthogonal(start, end, obstacles, grid_offset=grid_offset, bend_penalty=bend_penalty,
+                                  limit=limit, bounds=bounds, port_ids=port_ids, classes=classes, regions=regions)
+    memo, content_id = scope
+    key = _route_memo_key(content_id, start, end, grid_offset, bend_penalty, limit, bounds,
+                          port_ids, classes, regions)
+    if key in memo.results:
+        outcome = memo.results[key]
+        if isinstance(outcome, str):  # a stored failure is its message; no traceback is retained
+            raise RouteSearchFailure(outcome)
+        return outcome
+    try:
+        outcome = _search_orthogonal(start, end, obstacles, grid_offset=grid_offset, bend_penalty=bend_penalty,
+                                     limit=limit, bounds=bounds, port_ids=port_ids, classes=classes,
+                                     regions=regions)
+    except RouteSearchFailure as failure:
+        memo.store(key, str(failure))
+        raise
+    memo.store(key, outcome)
+    return outcome
+
+
+def _search_orthogonal(start: tuple[float, float], end: tuple[float, float],
+                       obstacles: tuple[tuple[float, float, float, float], ...] | SurfaceObstacleIndex, *,
+                       grid_offset: float, bend_penalty: float, limit: int,
+                       bounds: tuple[float, float, float, float] | None, port_ids: tuple[str, ...],
+                       classes: tuple[str, ...] | None,
+                       regions: tuple[str, ...] | None) -> tuple[tuple[float, float], ...]:
     index = obstacles if isinstance(obstacles, SurfaceObstacleIndex) else None
     boxes = (tuple(obstacle_envelope(item.geometry) for item in index.select(classes=classes, regions=regions))
              if index is not None else obstacles)
