@@ -51,3 +51,5 @@ def test_the_whole_corpus_reproduction_still_runs_on_every_code_pr():
 def test_the_options_table_has_no_marker_expression():
     options = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["pytest"]["ini_options"]
     assert "-m" not in str(options.get("addopts", "")).split(), "addopts must not deselect corpus tests everywhere"
+
+# throwaway sample 6 for the shard-time measurement of issue 721; do not merge
