@@ -86,6 +86,18 @@ _SYNTHETIC: dict[str, str] = {
         "relations:\n"
         "  - {id: d-b, type: dependency, from: {object: design, endpoint: end}, to: {object: build, endpoint: start}, lag: 0d}\n"
     ),
+    # Valid and schedulable: a fixed span and a derived gate that both finish after their deadline (W_DEADLINE).
+    "late-deadline.yaml": (
+        "version: timeline/v0.7\nproject: {id: late, title: Late}\n"
+        "objects:\n"
+        "  qa: {type: task, title: QA, deadline: '2026-10-05', schedule: {mode: fixed-span, start: '2026-10-01', end: '2026-10-08'}}\n"
+        "  launch: {type: gate, title: Launch, deadline: '2026-10-08', schedule: {mode: scheduled-point}}\n"
+        "relations:\n"
+        "  - {id: qa-launch, type: dependency, from: {object: qa, endpoint: end}, to: {object: launch, endpoint: at}, lag: 2d}\n"
+    ),
+    # A deadline that is not a calendar date is rejected now that it is read.
+    "deadline-not-a-date.yaml": _STARTER.replace(
+        "title: Release,", "title: Release, deadline: '2026-02-30',"),
     "bad-theme.yaml": "version: chrona/theme/v0.1\nkind: theme\nid: nope\nbody: {tokens: 3}\n",
     "snapshot-reference.yaml": (
         "id: starter-ref\nkind: project\nstore: {provider: local, identity: char-store}\n"
@@ -173,6 +185,7 @@ CASES: tuple[Case, ...] = (
     _case("validate-snapshot-ok", "validate", "--snapshot-reference", "snapshot-reference.yaml",
           "--snapshot-root", "snaps", "--store-identity", "char-store", "--allow-missing-content-identity",
           edit=_prepare_snapshot),
+    _case("validate-deadline-late-unchanged", "validate", "late-deadline.yaml"),
     _case("validate-unexpected-exception", "validate", "starter.yaml", boom=True),
     _case("unknown-command", "frobnicate"),
     _case("no-command"),
@@ -185,6 +198,8 @@ CASES: tuple[Case, ...] = (
     _case("schedule-reference-error", "schedule", "reference-error.yaml"),
     _case("schedule-cycle-rejected", "schedule", "cycle.yaml"),
     _case("schedule-contradictory-bounds", "schedule", "contradictory.yaml"),
+    _case("schedule-deadline-warning", "schedule", "late-deadline.yaml"),
+    _case("schedule-deadline-not-a-date", "schedule", "deadline-not-a-date.yaml"),
     _case("schedule-no-project", "schedule"),
     _case("schedule-snapshot-ok", "schedule", "--snapshot-reference", "snapshot-reference.yaml",
           "--snapshot-root", "snaps", "--store-identity", "char-store", "--allow-missing-content-identity",
@@ -194,6 +209,7 @@ CASES: tuple[Case, ...] = (
     _case("render-default-svg", "render", "starter.yaml", "-o", "out.svg"),
     _case("render-default-no-suffix", "render", "starter.yaml", "-o", "out"),
     _case("render-default-png", "render", "starter.yaml", "-o", "out.png"),
+    _case("render-deadline-warning", "render", "late-deadline.yaml", "-o", "out.svg"),
     _case("render-format-svg-explicit", "render", "starter.yaml", "--format", "svg", "-o", "out.svg"),
     _case("render-format-png-no-suffix", "render", "starter.yaml", "--format", "png", "-o", "out"),
     _case("render-actual", "render", "starter.yaml", "--actual", "starter-actual.yaml", "-o", "out.svg"),

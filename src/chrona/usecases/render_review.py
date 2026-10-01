@@ -38,6 +38,7 @@ from chrona.presentation.model.info_diagnostics import PresentationInfo
 from chrona.presentation.fonts.system import DraftFontResolution
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView, effective_draft_numeric_theme
 from chrona.core.attachments import AttachmentWarning, attachment_warnings
+from chrona.core.deadlines import deadline_warnings
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
 from chrona.presentation.model.projection import build_review_projection
 from chrona.presentation.model.surface_content import SummaryContent, TableContent
@@ -116,6 +117,7 @@ class RenderedReview:
     info_diagnostics: tuple[PresentationInfo, ...] = ()
     scale_collisions: tuple[ScaleCollision, ...] = ()
     attachment_warnings: tuple[AttachmentWarning, ...] = ()
+    deadline_warnings: tuple[Diagnostic, ...] = ()
     warning_records: tuple[RenderWarning, ...] = ()
 
 
@@ -200,7 +202,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     manifests = {item.package_id: item.profile_input for item in render_closure.profile_packages}
     if manifests:
         ledger.packages()
-    projection, scenario_provenance, attachments = _project_review(project, view, render_closure, manifests, request.scheduler)
+    projection, scenario_provenance, attachments, deadlines = _project_review(project, view, render_closure, manifests, request.scheduler)
     try:
         color_scale = resolve_color_scale(view.color_encoding, theme["body"].get("colorScales"),
                                           theme["body"].get("categorySlots"),
@@ -388,7 +390,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         surface_diagnostics=surface.diagnostics, tabular_warnings=scene.font_warnings,
         glyph_warnings=glyph_warnings, fit_warnings=surface.fit_warnings,
         perceptibility_warnings=perceptibility_warnings, scale_collisions=collisions,
-        attachment_warnings=attachments,
+        attachment_warnings=attachments, deadline_warnings=deadlines,
     )
     # Surface diagnostics are already in the preliminary Scene. Append only
     # the post-composition families, preserving duplicates and their order.
@@ -396,7 +398,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     scene = replace(scene, diagnostics=(*scene.diagnostics, *(item.identity for item in appended)))
     return RenderedReview(artifact, surface, scene, frozenset(ledger.read), scenario_provenance,
                           glyph_warnings, perceptibility_warnings,
-                          surface.info_diagnostics, collisions, attachments, warning_records)
+                          surface.info_diagnostics, collisions, attachments, deadlines, warning_records)
 
 
 def _inspection_scene(closure: RenderClosure, surface: SceneSurface, projection: Any,
@@ -533,7 +535,7 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
         scenarios=scenarios,
         analysis=result.analysis,
         snapshot_analysis=snapshot_result.analysis if snapshot_result is not None else None,
-    ), tuple(provenance), attachment_warnings(project, result.placements)
+    ), tuple(provenance), attachment_warnings(project, result.placements), deadline_warnings(project, result.placements)
 
 
 def _font_metrics(theme: dict[str, Any], font_metrics: dict[str, Any], asset_root: Path,

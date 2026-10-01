@@ -236,7 +236,7 @@ def test_public_lane_layout_projects_fixed_membership(context_name):
         rendered = render_review(render_request)
         validate_scene_document(scene_document(rendered.scene))
         manifests = {item.package_id: item.profile_input for item in lane_closure.profile_packages}
-        oracle, _, _ = render_usecase._project_review(
+        oracle, _, _, _ = render_usecase._project_review(
             lane_closure.project.scheduler_input, lane_closure.view.view,
             lane_closure, manifests, render_request.scheduler,
         )
@@ -347,7 +347,7 @@ def test_lane_scene_membership_is_theme_independent_for_same_project_and_view():
             request = _request(lane_closure, snapshot)
             rendered = render_usecase._render_review(request)
             manifests = {item.package_id: item.profile_input for item in lane_closure.profile_packages}
-            oracle, _, _ = render_usecase._project_review(
+            oracle, _, _, _ = render_usecase._project_review(
                 lane_closure.project.scheduler_input, lane_closure.view.view,
                 lane_closure, manifests, request.scheduler,
             )

@@ -16,9 +16,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from chrona.core.deadlines import deadline_warnings
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.validation import load_yaml, validate_project
 from chrona.scheduling.scheduler import schedule
+from chrona.usecases.failure_report import diagnostic_record
 
 
 @dataclass(frozen=True)
@@ -32,19 +34,28 @@ class ProjectValidation:
 
 @dataclass(frozen=True)
 class ProjectSchedule:
-    """A scheduling attempt: ``placements`` and ``analysis`` when ``ok``, else ``diagnostics``."""
+    """A scheduling attempt: ``placements`` and ``analysis`` when ``ok``, else ``diagnostics``.
+
+    ``warnings`` are findings about a plan that was scheduled (a ``W_DEADLINE``): they never
+    make the attempt not ``ok``, and a rejected attempt has none.
+    """
 
     diagnostics: tuple[Diagnostic, ...]
     placements: dict[str, dict[str, Any]]
     analysis: dict[str, Any] | None
+    warnings: tuple[Diagnostic, ...] = ()
 
     @property
     def ok(self) -> bool:
         return not self.diagnostics
 
     def payload(self) -> dict[str, Any]:
-        """The schedule document: placements, no diagnostics, and the analysis when derived."""
-        payload: dict[str, Any] = {"placements": self.placements, "diagnostics": []}
+        """The schedule document: placements, no diagnostics, the warnings and the analysis when derived."""
+        payload: dict[str, Any] = {
+            "placements": self.placements, "diagnostics": [],
+            "warnings": [diagnostic_record(item.id, item.message, "core", item.path, details=item.details, severity="warning")
+                         for item in self.warnings],
+        }
         if self.analysis is not None:
             payload["analysis"] = self.analysis
         return payload
@@ -71,7 +82,7 @@ def schedule_project_mapping(project: dict[str, Any]) -> ProjectSchedule:
             "criticalObjectIds": [object_id for object_id in object_order if object_id in analysis.critical],
             "totalFloat": analysis.total_float,
         }
-    return ProjectSchedule((), result.placements, derived)
+    return ProjectSchedule((), result.placements, derived, deadline_warnings(project, result.placements))
 
 
 def schedule_project_file(path: str | Path) -> ProjectSchedule:

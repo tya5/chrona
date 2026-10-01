@@ -58,11 +58,38 @@ def test_schedule_document_keeps_the_published_key_order_and_object_order(tmp_pa
     outcome = schedule_project_file(_write(tmp_path, "ok.yaml", STARTER))
     assert outcome.ok
     document = outcome.payload()
-    assert list(document) == ["placements", "diagnostics", "analysis"]
-    assert document["diagnostics"] == []
+    assert list(document) == ["placements", "diagnostics", "warnings", "analysis"]
+    assert document["diagnostics"] == [] and document["warnings"] == []
     assert list(document["analysis"]) == ["criticalObjectIds", "totalFloat"]
     assert document["analysis"]["criticalObjectIds"] == ["design", "release"]
     assert document["placements"] is outcome.placements
+
+
+def test_a_missed_deadline_is_a_warning_record_beside_a_successful_schedule():
+    project = yaml.safe_load(STARTER)
+    project["objects"]["release"]["deadline"] = "2026-12-01"
+    outcome = schedule_project_mapping(project)
+    assert outcome.ok and [item.id for item in outcome.warnings] == ["W_DEADLINE"]
+    document = outcome.payload()
+    assert document["diagnostics"] == []
+    (record,) = document["warnings"]
+    assert list(record) == ["code", "severity", "component", "sourceRef", "revisionRefs", "message", "details"]
+    assert (record["code"], record["severity"], record["component"]) == ("W_DEADLINE", "warning", "core")
+    assert record["sourceRef"] == "/objects/release/deadline"
+    assert record["details"]["daysLate"] == 17 and record["details"]["object"] == "release"
+
+
+def test_a_rejected_schedule_carries_no_warnings():
+    project = yaml.safe_load(CYCLE)
+    project["objects"]["a"]["deadline"] = "2020-01-01"
+    outcome = schedule_project_mapping(project)
+    assert not outcome.ok and outcome.warnings == ()
+
+
+def test_validate_does_not_judge_a_deadline_because_it_computes_no_placements():
+    project = yaml.safe_load(STARTER)
+    project["objects"]["release"]["deadline"] = "2026-12-01"
+    assert validate_project_mapping(project).ok
 
 
 def test_schedule_mapping_matches_the_file_form(tmp_path):

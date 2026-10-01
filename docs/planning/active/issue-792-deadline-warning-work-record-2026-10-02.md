@@ -83,3 +83,15 @@ fallback, drop a caller) and the result recorded in the PR.
 
 **Must not.** Read `deadline` in the scheduler; add a View mark or vocabulary entry; touch #810 (`_analyze_criticality` backward pass),
 #789 (determinism), #780/#781, #782, or #454.
+
+## 6. Progress
+
+- Unit A merged as #818. Unit B (`I792-S1`) implemented as specified: `core/deadlines.py`, `ProjectSchedule.warnings`, the `schedule`
+  and MCP `warnings`, the render ledger family, `E_SCHEMA` for a non-date deadline, Spec 04 section 10, Spec 66, the diagnostics
+  table, the skill, `mermaid-or-chrona.md`, the guide row and the terse ledger reason. Implementation notes: `_project_review` now
+  returns a fourth element (the deadline warnings; two white-box tests unpack it); the CLI characterization goldens changed in
+  exactly three lines (`"warnings": []` in the three successful `schedule` cases) and gained four cases (a violated deadline in
+  `schedule`, `validate` and `render`, and a non-date deadline); the committed corpus sweep (`corpus`) finds no warning.
+- Unit C: nothing to do. `docs/guides/cli-reference.md` is generated from argparse flags and has no prose; the tutorial has no stale
+  statement. Unit D follows.
+

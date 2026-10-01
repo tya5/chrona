@@ -52,10 +52,11 @@ class FailureReport:
 def diagnostic_record(
     code: str, message: str, component: str, source_ref: str = "/",
     revision_refs: list[str] | None = None, details: Mapping[str, Any] | None = None,
+    severity: str = "error",
 ) -> dict[str, Any]:
     """The one diagnostic record: six fixed keys, then ``details`` only for a code that has one."""
     record: dict[str, Any] = {
-        "code": code, "severity": "error", "component": component,
+        "code": code, "severity": severity, "component": component,
         "sourceRef": source_ref, "revisionRefs": revision_refs or [], "message": message,
     }
     if details is not None:

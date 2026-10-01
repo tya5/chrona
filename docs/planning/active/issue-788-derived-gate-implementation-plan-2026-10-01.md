@@ -157,23 +157,12 @@ the doc-check on the guide.
 **Must not.** Add a keyword other than reusing `at`; accept a bound without an `after` clause; derive a `task`; compute a
 date in the compiler; change any other grammar rule.
 
-## 5. Slice 3 - `W_DEADLINE` (lead-gated, L4)
+## 5. Slice 3 - `W_DEADLINE` (the soft promise, L4 applied)
 
-**Goal.** The soft promise: `deadline` compared with the planned finish, reported as a warning, with the plan and chart
-unchanged.
-
-**Files.** `src/chrona/core/deadlines.py` (new): `deadline_warnings(project, placements)`, pure, strictly later is a
-violation (point `at`, span `end`); `src/chrona/usecases/warning_ledger.py` and `render_review.py`: the warning joins the
-existing stderr JSON path of `render` as `W_DEADLINE`; Spec 04 section 10 and 23, `core-v0.1-diagnostics.md` (the
-identifier's contract: object, finish, deadline, days late). The `chrona schedule` JSON field only after the #142 agent
-interface agrees the shape.
-
-**Tests.** The function (point, span, equal, later, none); `render` stderr; byte identity of the SVG with and without a
-violated deadline; the corpus sweep shows no warning (every committed deadline is on or after its planned date); the scheduler
-never reads `deadline` (a test that a violated deadline changes no placement and no verdict).
-
-**Must not.** Make `deadline` a bound or change any verdict; add a View mark, role or vocabulary entry (a successor issue);
-decide the `chrona schedule` JSON shape alone.
+Specified and tracked in the [#792 work record](issue-792-deadline-warning-work-record-2026-10-02.md), which supersedes the
+file list and tests that stood here: a pure Core function over placements (`core/deadlines.py`), surfaced in `chrona schedule`
+(`warnings`), MCP `schedule_project` (`warnings`) and `render` (stderr ledger); `validate` unchanged; the scheduler never reads
+`deadline`; the View mark and the terse clause are successor #822.
 
 ## 6. Slice 4 - teaching
 
@@ -278,3 +267,7 @@ L4 (`W_DEADLINE`) stays lead-gated.
   gate that follows its work is declared `scheduled-point` and a `fixed-point` date is for a promised date; a skill test
   runs those claims. The #148 go/no-go re-run with fresh agents (the plan's Proof) is not done here: it needs three fresh
   agents and is recorded on #148 when run.
+- Slice 3 (`I792-S1`, #792): implemented per its work record; `L4` is applied (the `schedule` JSON field was decided there, D4/D5,
+  with the #142 record shape now that the agent interface has shipped). Slice 4 assessed: `docs/guides/cli-reference.md` is a
+  generated flag list (no prose to carry `details` or `warnings`), the skill statements that became stale were corrected in
+  slices 2 and 3, and the tutorial (L8: no public example) has no stale statement, so no further teaching change is made.

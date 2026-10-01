@@ -33,5 +33,5 @@ anyone will ask "is that bar really two weeks, across the holiday?", do not hand
 ## What chrona does not promise
 
 No resource leveling at this surface, no interactive editing, and a cycle is rejected
-rather than analysed. A `deadline` before the scheduled date gets no diagnostic. Say so
-to the user instead of implying more.
+rather than analysed. A `deadline` before the scheduled date is a `W_DEADLINE` warning, not a rejection, and the
+picture does not draw it yet. Say so to the user instead of implying more.

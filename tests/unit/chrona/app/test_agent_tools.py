@@ -252,6 +252,36 @@ def test_schedule_equals_the_cli_json(scope, monkeypatch, capsys, workspace):
     assert expected["diagnostics"] == got["diagnostics"] == []
 
 
+def test_schedule_carries_a_missed_deadline_as_a_warning_and_still_schedules(workspace, scope):
+    late = LAUNCH.replace("deadline: 2026-12-18", "deadline: 2026-12-01")
+    assert late != LAUNCH
+    (workspace / "late.yaml").write_text(late, encoding="utf-8")
+    result = run(scope, "schedule_project", project="late.yaml")
+    assert result.structured["status"] == "ok" and result.structured["diagnostics"] == []
+    (warning,) = result.structured["warnings"]
+    assert warning == {
+        "code": "W_DEADLINE", "severity": "warning", "component": "core", "sourceRef": "/objects/launch/deadline",
+        "message": "launch finishes 2026-12-14, 13 days after its deadline 2026-12-01",
+        "detail": {"daysLate": 13, "deadline": "2026-12-01", "endpoint": "at", "finish": "2026-12-14", "object": "launch"},
+    }
+    assert result.structured["placements"] == run(scope, "schedule_project", project="launch.yaml").structured["placements"]
+
+
+def test_schedule_without_a_missed_deadline_has_an_empty_warnings_list(scope):
+    assert run(scope, "schedule_project", project="launch.yaml").structured["warnings"] == []
+
+
+def test_schedule_warnings_equal_the_cli_records(workspace, scope, monkeypatch, capsys):
+    (workspace / "late.yaml").write_text(LAUNCH.replace("deadline: 2026-12-18", "deadline: 2026-12-01"), encoding="utf-8")
+    rc, out, _ = cli(monkeypatch, capsys, workspace, "schedule", "late.yaml")
+    (expected,) = json.loads(out)["warnings"]
+    (got,) = run(scope, "schedule_project", project="late.yaml").structured["warnings"]
+    assert rc == 0
+    assert got["detail"] == expected["details"]
+    assert {key: got[key] for key in ("code", "severity", "component", "sourceRef", "message")} == {
+        key: expected[key] for key in ("code", "severity", "component", "sourceRef", "message")}
+
+
 # --- list_presets --------------------------------------------------------------------------------------------
 
 def test_list_presets_equals_the_cli_in_the_cli_order(scope, monkeypatch, capsys, workspace):

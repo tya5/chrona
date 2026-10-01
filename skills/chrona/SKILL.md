@@ -73,7 +73,7 @@ the same diagnostics as JSON. Otherwise use the commands. Read a result's `statu
 | Tool | Same as | Note |
 | --- | --- | --- |
 | `validate_project` | `chrona validate` | Does not detect a cycle: also run `schedule_project`. |
-| `schedule_project` | `chrona schedule` | Placements and critical path; rejects a cycle. |
+| `schedule_project` | `chrona schedule` | Placements, critical path and `W_DEADLINE` warnings; rejects a cycle. |
 | `render_draft` | `chrona render` | A PNG preview, or the SVG with `inline: svg`; writes no file. |
 | `list_presets` | `chrona preset list` | The ids `render_draft` takes as `preset`. |
 
@@ -142,9 +142,10 @@ that shows it, quote the whole diagnostic to the user, and do not guess a fix.
 ## What chrona does not do
 
 No resource leveling at this surface, no interactive editing, no cycle analysis (a
-cycle is rejected). A `deadline` that falls before the scheduled date produced no
-diagnostic from `validate`, `schedule` or `render` when tried: compare `deadline` fields
-with `chrona schedule` output yourself.
+cycle is rejected). A `deadline` is a promise, not a bound: `chrona schedule` still places
+everything and lists a `W_DEADLINE` in its `warnings` for each object planned after its
+deadline (`render` repeats it on standard error). `validate` does not judge it, and the
+picture does not draw it yet.
 
 ## Install and refresh this skill
 

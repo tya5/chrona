@@ -72,6 +72,11 @@ def validate_project(
             diagnostics.append(Diagnostic("E_REFERENCE", "Unknown object calendar", path + "/calendar"))
         schedule = item["schedule"]
         mode = schedule["mode"]
+        if "deadline" in item:
+            try:
+                as_date(item["deadline"])
+            except TemporalError as exc:
+                diagnostics.append(Diagnostic("E_SCHEMA", str(exc), path + "/deadline"))
         if mode == "fixed-span":
             try:
                 if as_date(schedule["start"]) >= as_date(schedule["end"]):

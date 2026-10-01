@@ -21,11 +21,11 @@ not normative.
 | `E_FIXED_TARGET_VIOLATION` | A bound/dependency conflicts with authoritative fixed placement; carries optional `details` (earliest feasible date, forcing relation) |
 | `E_DERIVATION` | Derived placement cannot be resolved (including a scheduled point with no predecessor and no minimum date) |
 | `W_NEGATIVE_LAG` | Dependency uses negative lag |
-| `W_DEADLINE` | Resolved schedule violates a deadline |
+| `W_DEADLINE` | Resolved schedule violates a deadline; a warning with `details` (`object`, `endpoint`, `finish`, `deadline`, `daysLate`), defined in Spec 04 Section 10 |
 | `W_SUMMARY_DEPENDENCY` | Dependency targets or sources a derived summary object |
 
 Implementations MAY add diagnostics but MUST NOT reuse these identifiers for different
 meanings.
 
 A diagnostic MAY carry an optional `details` object when its row says so; its keys are additive and a diagnostic
-without details omits the field. `E_FIXED_TARGET_VIOLATION` details are defined in Spec 04 Section 20.1.
+without details omits the field. `E_FIXED_TARGET_VIOLATION` details are defined in Spec 04 Section 20.1 and `W_DEADLINE` details in Section 10.

@@ -229,7 +229,20 @@ does not imply:
 end <= 2026-11-30
 ```
 
-A deadline violation may produce derived state or a diagnostic.
+A deadline violation produces the warning `W_DEADLINE` and nothing else: no placement, verdict, analysis or
+diagnostic error changes, and a plan with a missed deadline is still scheduled and drawn.
+
+The finish of an object is `at` for a point and `end` for a span (the stored value that `constraints.end.max` also
+compares, Section 9); a rollup's finish is its `end`. The warning is raised when the finish is strictly later than the
+deadline; a finish equal to the deadline keeps it. Only planned placements are judged: an Actual never counts
+(Section 17), and a scenario is judged only when it is the scheduled Project. The evaluation is a pure function of the
+Project and its placements, applied after scheduling; the scheduler itself never reads `deadline`. A `deadline` that is
+not a calendar date is `E_SCHEMA` at `/objects/<id>/deadline`.
+
+The warning carries `details` with the stable keys `object`, `endpoint` (`at` or `end`), `finish`, `deadline` (ISO
+dates) and `daysLate` (calendar days, at least 1), and the pointer `/objects/<id>/deadline`. Warnings follow Project
+object order. `chrona schedule` prints them as the `warnings` array of its result, beside an empty `diagnostics`;
+`chrona validate` computes no placements and does not judge a deadline.
 
 ## 11. Span amount rule
 
@@ -474,8 +487,8 @@ and its latest date honours `constraints.at.max`.
 
 A scheduled point is a derived **plan**, not a forecast. Actual values never move a planned date
 (Section 17): a late predecessor actual does not move the gate; editing the plan does. A scheduled point is not
-a promise either; the hard cap is `constraints.at.max`, and `deadline` remains a stored target the scheduler
-never reads (Section 10).
+a promise either; the hard cap is `constraints.at.max`, and `deadline` remains a target the scheduler
+never reads; it is judged afterwards and warns (Section 10).
 
 ## 21. Calendar placement normalization
 
