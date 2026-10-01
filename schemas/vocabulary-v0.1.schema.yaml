@@ -54,6 +54,14 @@ $defs:
     description: "The subset of `relationVisibilityMode` a guided authoring override may select."
     examples: [semantic]
     enum: [none, semantic]
+  viewGroupingBy:
+    description: "The dimension a View groups its automatic rows by."
+    examples: [objectType]
+    enum: [objectType, field, hierarchy, none]
+  guidedViewGroupingBy:
+    description: "The subset of `viewGroupingBy` a guided authoring override may select: grouping needs no field name or depth."
+    examples: [objectType]
+    enum: [objectType, none]
   valueFormat:
     description: "Every public value formatter: the union of the subsets below. No site references it; each context accepts its own named subset."
     examples: [text]

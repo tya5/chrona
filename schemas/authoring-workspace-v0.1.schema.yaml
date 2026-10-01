@@ -130,7 +130,7 @@ $defs:
                 properties:
                   start: {description: "Inclusive ISO window start.", $ref: "#/$defs/date"}
                   end: {description: "Inclusive ISO window end.", $ref: "#/$defs/date"}
-              grouping: {description: "Permitted guided grouping choice.", enum: [objectType, none]}
+              grouping: {description: "Permitted guided grouping choice.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/guidedViewGroupingBy"}
               visibility:
                 type: object
                 description: "Permitted View visibility changes without changing selected facts."

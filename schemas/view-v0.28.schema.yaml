@@ -71,7 +71,7 @@ allOf:
             required: [by]
             additionalProperties: false
             properties:
-              by: {description: "Grouping dimension.", enum: [objectType, field, hierarchy, none]}
+              by: {description: "Grouping dimension.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/viewGroupingBy"}
               field: {description: "Project field used when grouping by field.", type: string, minLength: 1}
               order:
                 description: "Preferred order of group values, or a data-derived order."
