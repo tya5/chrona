@@ -1,8 +1,8 @@
 """command-request v0.3, automation-result v0.2 and snapshot-ref v0.3 on the strict `storeAddress` (#710, slice S-C).
 
-Command Request v0.2 (C3) and Automation Result v0.1 (C4) were retired by #731; Snapshot Reference v0.2 stays readable.
-Writers emit the successor, except that a Snapshot Reference whose Project reference still carries a legacy loose Store
-address keeps v0.2 (the authoring fallback goes in C5). Every verdict is decided from data.
+Command Request v0.2 (C3) and Automation Result v0.1 (C4) were retired by #731, and the writers' fallback to Snapshot
+Reference v0.2 went with C5; v0.2 stays readable, because immutable v0.2 baselines already in a Store can never be
+rewritten. Writers emit the successor only. Every verdict is decided from data.
 """
 from __future__ import annotations
 
@@ -79,16 +79,16 @@ def test_a_result_is_stamped_with_the_current_contract_and_nothing_falls_back_to
             parse_document(yaml.safe_dump(content), "automation-result-v0.2.schema.yaml")
 
 
-def test_a_snapshot_ref_is_v0_3_unless_its_project_reference_is_a_legacy_loose_address():
+def test_a_snapshot_ref_is_always_written_as_v0_3():
     assert snapshot_ref_resource("q2", _reference())["version"] == "chrona/snapshot-ref/v0.3"
-    assert snapshot_ref_resource("q2", _reference("my projects/main.yaml"))["version"] == "chrona/snapshot-ref/v0.2"
+    assert snapshot_ref_resource("q2", _reference("my projects/main.yaml"))["version"] == "chrona/snapshot-ref/v0.3", "no v0.2 fallback"
 
 
-def test_both_snapshot_ref_versions_parse_and_v0_2_keeps_its_loose_address():
+def test_both_snapshot_ref_versions_are_read_and_v0_2_keeps_its_loose_address():
     identity = ClosureIdentity("snapshot-ref", "q2", "draft", "sha256:" + "0" * 64)
     v3 = snapshot_ref_resource("q2", _reference())
     assert parse_contract(identity, deepcopy(v3)).version == "chrona/snapshot-ref/v0.3"
-    loose = snapshot_ref_resource("q2", _reference("my projects/main.yaml"))
+    loose = {"version": "chrona/snapshot-ref/v0.2", "kind": "snapshot-ref", "id": "q2", "body": {"project": _reference("my projects/main.yaml")}}
     assert parse_contract(identity, deepcopy(loose)).version == "chrona/snapshot-ref/v0.2"
     with pytest.raises(Exception):
         parse_contract(identity, {**loose, "version": "chrona/snapshot-ref/v0.3"})
@@ -98,8 +98,12 @@ def test_the_registry_publishes_the_successor_and_still_reads_a_stored_predecess
     registry = LocalBaselineRegistry(tmp_path, "test")
     published = registry.publish("q2", _reference())
     assert yaml.safe_load(registry.read(published))["version"] == "chrona/snapshot-ref/v0.3"
+    # A loose legacy address can no longer reach the writer through the CLI (the v0.3 command refuses it); a direct call writes
+    # v0.3 as built, never v0.2, and that document does not satisfy its own schema.
     legacy = registry.publish("q3", _reference("my projects/main.yaml"))
-    assert yaml.safe_load(registry.read(legacy))["version"] == "chrona/snapshot-ref/v0.2"
+    assert yaml.safe_load(registry.read(legacy))["version"] == "chrona/snapshot-ref/v0.3"
+    with pytest.raises(Exception):
+        parse_contract(ClosureIdentity("snapshot-ref", "q3", "draft", "sha256:" + "0" * 64), yaml.safe_load(registry.read(legacy)))
     # An immutable v0.2 baseline already in a Store is read byte for byte; the registry never rewrites it.
     payload = yaml.safe_dump({"version": "chrona/snapshot-ref/v0.2", "kind": "snapshot-ref", "id": "q1",
                               "body": {"project": _reference()}}, sort_keys=True).encode()

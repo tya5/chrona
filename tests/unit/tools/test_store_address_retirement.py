@@ -13,7 +13,7 @@ import yaml
 from chrona.operational.resources import AUTOMATION_RESULT_SCHEMAS, COMMAND_SCHEMAS
 from chrona.presentation.contracts.resources import RENDER_CONTEXT_VERSION, RENDER_CONTEXT_VERSIONS, _SCHEMAS
 from chrona.presentation.layout.profile import LAYOUT_SCHEMAS, LAYOUT_VERSION
-from chrona.storage.snapshots import SNAPSHOT_REF_VERSIONS
+from chrona.storage.snapshots import SNAPSHOT_REF_VERSION
 from tools.schema_inventory import load_inventory
 
 
@@ -21,11 +21,13 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "
 SCHEMAS = ROOT / "schemas"
 ENTRIES = {entry["file"]: entry for entry in load_inventory(SCHEMAS / "schema-inventory-v0.1.yaml")}
 
-# predecessor file -> (successor file, removal slice, what the removal slice must delete)
+# The one #710 predecessor that is never removed (the other four were retired by #731, C1 to C4):
+# predecessor file -> (successor file, recorded slice, what stays and why)
 RETIREMENTS: dict[str, tuple[str, str, str]] = {
     "snapshot-ref-v0.2.schema.yaml": (
-        "snapshot-ref-v0.3.schema.yaml", "issue-710-snapshot-ref-v0.2-authoring-retirement",
-        "only the authoring fallback in `SNAPSHOT_REF_VERSIONS`; the schema and the `_SCHEMAS` entry stay for reads of stored baselines"),
+        "snapshot-ref-v0.3.schema.yaml", "issue-731-snapshot-ref-v0.2-retained-for-reads",
+        "nothing is deleted: the schema, its inventory entry and its `_SCHEMAS` entry stay for reads of stored baselines "
+        "(the authoring side, `SNAPSHOT_REF_VERSIONS` and its v0.2 fallback, was removed by C5)"),
 }
 # Loose forms that remain on purpose, each with its owner and what ends it.
 OPEN_LOOSE_USERS: dict[str, str] = {
@@ -53,7 +55,7 @@ def _references(name: str) -> set[str]:
 
 def test_the_transitioning_predecessors_of_710_are_exactly_the_recorded_ones():
     found = {name: entry for name, entry in ENTRIES.items()
-             if entry["state"] == "transitioning" and str(entry.get("removalSlice", "")).startswith("issue-710-")}
+             if entry["state"] == "transitioning" and str(entry.get("removalSlice", "")).startswith(("issue-710-", "issue-731-"))}
     assert set(found) == set(RETIREMENTS)
     for name, (successor, slice_name, _) in RETIREMENTS.items():
         assert found[name]["successor"] == successor and found[name]["removalSlice"] == slice_name
@@ -61,10 +63,10 @@ def test_the_transitioning_predecessors_of_710_are_exactly_the_recorded_ones():
         assert (SCHEMAS / name).is_file(), "a predecessor is retired only in its removal slice"
 
 
-def test_every_predecessor_is_still_registered_in_the_reader_that_selects_it():
-    """The removal slice deletes exactly these registrations; until then each predecessor is read."""
+def test_the_retained_predecessor_is_still_registered_in_the_reader_that_selects_it():
+    """Snapshot Reference v0.2 stays registered for reads beside its successor; the writer emits the successor only."""
     registered = set(_SCHEMAS.values()) | set(LAYOUT_SCHEMAS.values()) | set(COMMAND_SCHEMAS.values()) \
-        | set(AUTOMATION_RESULT_SCHEMAS.values()) | {schema for _, schema in SNAPSHOT_REF_VERSIONS}
+        | set(AUTOMATION_RESULT_SCHEMAS.values())
     for name, (successor, _, _) in RETIREMENTS.items():
         assert name in registered and successor in registered, name
 
@@ -88,9 +90,14 @@ def test_a_retired_predecessor_is_unregistered_and_an_unsupported_version_to_eve
 
 
 def test_the_snapshot_ref_predecessor_is_the_one_that_is_never_retired_for_reads():
-    assert "snapshot-ref-v0.2.schema.yaml" in _SCHEMAS.values()
-    assert "authoring" in RETIREMENTS["snapshot-ref-v0.2.schema.yaml"][1]
+    assert "snapshot-ref-v0.2.schema.yaml" in _SCHEMAS.values() and ("snapshot-ref", "chrona/snapshot-ref/v0.2") in _SCHEMAS
+    assert "retained-for-reads" in RETIREMENTS["snapshot-ref-v0.2.schema.yaml"][1]
     assert "stay for reads" in RETIREMENTS["snapshot-ref-v0.2.schema.yaml"][2]
+    assert SNAPSHOT_REF_VERSION == "chrona/snapshot-ref/v0.3" and ("snapshot-ref", SNAPSHOT_REF_VERSION) in _SCHEMAS
+    # The committed v0.2 baseline is the stand-in for the baselines in operators' Stores: it is pinned by bytes through
+    # the replan Context, so it stays on v0.2.
+    baseline = yaml.safe_load((ROOT / "examples/halcyon-1/snapshots/baseline-2027-06.yaml").read_bytes())
+    assert baseline["version"] == "chrona/snapshot-ref/v0.2"
 
 
 def test_no_live_schema_references_the_loose_address_definitions():
