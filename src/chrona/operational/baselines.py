@@ -28,19 +28,19 @@ def compare_baseline(
         if code == "E_AUTOMATION_TARGET_CLOSURE":
             code = "E_BASELINE_REFERENCE"
         return stamp_automation_result({
-            "version": "chrona/automation-result/v0.1", "operation": "baseline-compare", "status": "rejected",
+            "version": "chrona/automation-result/v0.2", "operation": "baseline-compare", "status": "rejected",
             "requestContentIdentity": content_identity(request), "inputs": [baseline_reference, candidate_reference],
             "diagnostics": [{"code": code}], "artifacts": [],
         })
     comparison = review_projects(before.value, candidate.value)
     if comparison["status"] != "accepted":
         return stamp_automation_result({
-            "version": "chrona/automation-result/v0.1", "operation": "baseline-compare", "status": "rejected",
+            "version": "chrona/automation-result/v0.2", "operation": "baseline-compare", "status": "rejected",
             "requestContentIdentity": content_identity(request), "inputs": [baseline_reference, project_reference, candidate_reference],
             "diagnostics": comparison["diagnostics"], "artifacts": [],
         })
     return stamp_automation_result({
-        "version": "chrona/automation-result/v0.1", "operation": "baseline-compare", "status": "accepted",
+        "version": "chrona/automation-result/v0.2", "operation": "baseline-compare", "status": "accepted",
         "requestContentIdentity": content_identity(request), "inputs": [baseline_reference, project_reference, candidate_reference],
         "diagnostics": [], "artifacts": [], "comparison": comparison,
     })

@@ -1,8 +1,8 @@
 """command-request v0.3, automation-result v0.2 and snapshot-ref v0.3 on the strict `storeAddress` (#710, slice S-C).
 
-Command Request v0.2 was retired by #731 (C3); the other two predecessors stay readable until their own slices. Writers
-emit the successor, except where the content still carries a legacy loose Store address, which a v0.3 document would not
-be allowed to hold. Every verdict is decided from data.
+Command Request v0.2 (C3) and Automation Result v0.1 (C4) were retired by #731; Snapshot Reference v0.2 stays readable.
+Writers emit the successor, except that a Snapshot Reference whose Project reference still carries a legacy loose Store
+address keeps v0.2 (the authoring fallback goes in C5). Every verdict is decided from data.
 """
 from __future__ import annotations
 
@@ -15,7 +15,8 @@ import yaml
 
 from chrona.operational.command_engine import apply_actual_command, check_command
 from chrona.operational.resources import (
-    COMMAND_SCHEMAS, OperationalResourceError, command_schema_name, parse_command, stamp_automation_result,
+    AUTOMATION_RESULT_SCHEMAS, COMMAND_SCHEMAS, OperationalResourceError, command_schema_name, parse_command, parse_document,
+    stamp_automation_result,
 )
 from chrona.operational.store_config import ConfiguredStoreReader
 from chrona.presentation.contracts import ClosureIdentity, parse_contract
@@ -62,16 +63,20 @@ def test_a_legitimate_v0_3_snapshot_id_is_accepted(snapshot_id):
 
 
 def _result(address: str) -> dict:
-    return {"version": "chrona/automation-result/v0.1", "operation": "command-check", "status": "accepted",
+    return {"version": "chrona/automation-result/v0.2", "operation": "command-check", "status": "accepted",
             "requestContentIdentity": "sha256:" + "d" * 64, "inputs": [_reference(address)], "diagnostics": [], "artifacts": []}
 
 
-def test_a_result_names_the_newest_contract_its_content_satisfies():
-    assert stamp_automation_result(_result("projects/main.yaml"))["version"] == "chrona/automation-result/v0.2"
-    loose = stamp_automation_result(_result("my projects/main.yaml"))
-    assert loose["version"] == "chrona/automation-result/v0.1", "a loose legacy address must not claim the strict contract"
-    broken = _result("projects/main.yaml") | {"inputs": []}
-    assert stamp_automation_result(broken)["version"] == "chrona/automation-result/v0.1", "content valid under neither stays as built"
+def test_a_result_is_stamped_with_the_current_contract_and_nothing_falls_back_to_the_retired_one():
+    assert set(AUTOMATION_RESULT_SCHEMAS) == {"chrona/automation-result/v0.2"}
+    stamped = stamp_automation_result(_result("projects/main.yaml"))
+    assert stamped["version"] == "chrona/automation-result/v0.2"
+    assert parse_document(yaml.safe_dump(stamped), "automation-result-v0.2.schema.yaml")["version"] == "chrona/automation-result/v0.2"
+    # Content that breaks the contract (a loose address, a missing input) is left as built: still v0.2, never the retired v0.1.
+    for content in (_result("my projects/main.yaml"), _result("projects/main.yaml") | {"inputs": []}):
+        assert stamp_automation_result(content)["version"] == "chrona/automation-result/v0.2"
+        with pytest.raises(OperationalResourceError, match="E_OPERATIONAL_SCHEMA"):
+            parse_document(yaml.safe_dump(content), "automation-result-v0.2.schema.yaml")
 
 
 def test_a_snapshot_ref_is_v0_3_unless_its_project_reference_is_a_legacy_loose_address():
