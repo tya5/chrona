@@ -12,8 +12,9 @@ automation result.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
-from typing import Any, Mapping, Sequence
+from typing import Any, Iterable, Mapping, Sequence
 
 import yaml
 
@@ -23,7 +24,11 @@ from chrona.presentation.contracts import PresentationIngressRejected
 from chrona.presentation.fonts.importer import FontImportError
 from chrona.presentation.icons.importer import IconImportError
 from chrona.presentation.model.closure import ClosureError
+from chrona.usecases.diagnostic_messages import error_message
 from chrona.usecases.render_review import RenderFailed, RenderRejected
+
+
+_LEADING_CODE = re.compile(r"E_[A-Z0-9_]+")
 
 
 @dataclass(frozen=True)
@@ -54,14 +59,34 @@ def diagnostic_record(
     revision_refs: list[str] | None = None, details: Mapping[str, Any] | None = None,
     severity: str = "error",
 ) -> dict[str, Any]:
-    """The one diagnostic record: six fixed keys, then ``details`` only for a code that has one."""
+    """The one diagnostic record: six fixed keys, then ``details`` only for a code that has one.
+
+    ``message`` is never empty and never only the code (``error_message``, #782).
+    """
     record: dict[str, Any] = {
         "code": code, "severity": severity, "component": component,
-        "sourceRef": source_ref, "revisionRefs": revision_refs or [], "message": message,
+        "sourceRef": source_ref, "revisionRefs": revision_refs or [], "message": error_message(code, message),
     }
     if details is not None:
         record["details"] = dict(details)
     return record
+
+
+def collapse_records(records: Iterable[Mapping[str, Any]]) -> tuple[dict[str, Any], ...]:
+    """Merge rows equal in every key but ``count`` into the first, which gains ``count`` (2 or more).
+
+    The merged row keeps the position of its first occurrence, so the order is deterministic.
+    A row that occurred once is returned unchanged; ``count`` is absent, not 1 (#782, design D4).
+    """
+    merged: dict[str, dict[str, Any]] = {}
+    for record in records:
+        key = json.dumps({name: value for name, value in record.items() if name != "count"},
+                         sort_keys=True, ensure_ascii=False, default=str)
+        if key in merged:
+            merged[key]["count"] = merged[key].get("count", 1) + record.get("count", 1)
+        else:
+            merged[key] = dict(record)
+    return tuple(merged.values())
 
 
 def version_message(detail: str) -> str:
@@ -72,8 +97,8 @@ def version_message(detail: str) -> str:
 def rejection_report(diagnostics: Sequence[Diagnostic], component: str = "core") -> FailureReport:
     """Report Core diagnostics (a rejected Project or schedule) as one rejected payload."""
     return FailureReport(
-        "rejected", tuple(diagnostic_record(item.id, item.message, component, item.path, details=item.details)
-              for item in diagnostics), 1,
+        "rejected", collapse_records(diagnostic_record(item.id, item.message, component, item.path, details=item.details)
+                                     for item in diagnostics), 1,
     )
 
 
@@ -97,7 +122,7 @@ def _presentation_rejection_report(error: PresentationIngressRejected) -> Failur
             diagnostic |= {"resourceKind": item.resource_kind, "resourceIdentity": item.resource_identity,
                            "phase": item.phase, **({"rule": item.rule} if item.rule is not None else {})}
         diagnostics.append(diagnostic)
-    return FailureReport("rejected", tuple(diagnostics), 1)
+    return FailureReport("rejected", collapse_records(diagnostics), 1)
 
 
 def report_failure(error: Exception) -> FailureReport:
@@ -131,6 +156,7 @@ def report_failure(error: Exception) -> FailureReport:
     if isinstance(error, OSError):
         return _stable_report(StableFailure("E_INPUT_IO", str(error), exit_code=2))
     if isinstance(error, ValueError):
-        code = str(error) if str(error).startswith("E_") else "E_PRESENTATION_REJECTED"
+        leading = _LEADING_CODE.match(str(error))
+        code = leading.group(0) if leading else "E_PRESENTATION_REJECTED"
         return _stable_report(StableFailure(code, str(error), "presentation"))
-    return _stable_report(StableFailure("E_TOOL_FAILURE", str(error), exit_code=2))
+    return _stable_report(StableFailure("E_TOOL_FAILURE", str(error) or type(error).__name__, exit_code=2))

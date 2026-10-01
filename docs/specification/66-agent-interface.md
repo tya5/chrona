@@ -2,7 +2,7 @@
 
 **Status:** Proposed; the tool core is implemented in `chrona.app.agent_tools` (#142, slice I142-S3) and served over
 MCP by `chrona mcp` (`chrona.app.mcp_server`, slice I142-S4).
-**Owns:** the read-only agent tool set `chrona/agent-tools/v0.1`, the shape of a tool result, the workspace path
+**Owns:** the read-only agent tool set `chrona/agent-tools/v0.2`, the shape of a tool result, the workspace path
 rules, the determinism contract of a tool call, the MCP binding rules of section 7, and the `E_MCP_*` diagnostic
 codes.
 **Does not own:** the meaning of a Project or a schedule (Spec 05, Spec 04), the render pipeline (Specs 06, 07,
@@ -19,10 +19,11 @@ the diagnostic code and the bytes the command of the same name returns, and a di
 the two. The tool core imports use cases (and the shared Store address guard) only, imports no transport SDK, prints
 nothing and writes nothing.
 
-## 2. Tool set `chrona/agent-tools/v0.1`
+## 2. Tool set `chrona/agent-tools/v0.2`
 
 All four tools are read-only and take paths relative to one workspace root (section 4). A change to any input or
-output schema, or to the set, changes the tool-set version.
+output schema, or to the set, changes the tool-set version. `v0.2` (#782) added the optional `count` and
+`occurrences` properties of a diagnostic and nothing else.
 
 | Tool | Command equivalent | Use case |
 | --- | --- | --- |
@@ -66,12 +67,20 @@ present only when `status` is `ok`.
   (`E_RENDER_RASTERIZER_UNAVAILABLE`) is `failed` even though the command exits 1, because nothing is wrong with the
   plan. A transport sets its error flag only for `failed`; a `rejected` plan is a result.
 - A diagnostic is `{code, severity, component, sourceRef, message}` with the optional `revisionRefs`,
-  `resourceKind`, `resourceIdentity`, `phase`, `rule` (as the command reports them) and, for a render warning or
-  info record, `detail`: the record's remaining ledger fields, keys sorted. A render warning carries no message
-  today (except `W_DEADLINE`, which has one), so `message` is otherwise `""`; its meaning is in `skills/chrona/references/diagnostics.md`. `sourceRef` is a JSON
+  `resourceKind`, `resourceIdentity`, `phase`, `rule` (as the command reports them), `count` and, for a render
+  warning or info record, `detail`: the record's remaining ledger fields, keys sorted. The `message` of an error row
+  is never empty and never only its code: it is the producer's text when that names something, else a curated
+  sentence for the code, else a derived sentence that says no further detail is recorded for the code
+  (`usecases.diagnostic_messages.error_message`, applied by `usecases.failure_report.diagnostic_record`, so the
+  command prints the same text). `count` (2 or more) is present only when equal rows were merged into one
+  (`usecases.failure_report.collapse_records`); no `count` means once. A render warning carries no message yet, so
+  its `message` is `""` and its meaning is in `skills/chrona/references/diagnostics.md`. `sourceRef` is a JSON
   pointer, or the ledger's own reference for a render warning, or `/`.
-- The tool layer applies three transforms the command does not: it drops exact duplicate diagnostics, keeps at most
-  50 and reports the rest in `omittedDiagnostics`, and scrubs host paths from every message and `detail` string.
+- A file that is empty or parses to a list or a scalar is a rejected Project (`E_SCHEMA`, `sourceRef` `/`, status
+  `rejected`) for `validate_project` and `schedule_project`, as it is for `chrona validate`, `schedule` and `render`.
+- The tool layer applies three transforms the command does not: it merges rows that scrubbing made equal (their
+  counts add), keeps at most 50 and reports the rest in `omittedDiagnostics`, and scrubs host paths from every
+  message and `detail` string.
 - Warnings and info records of a successful render, and the `W_DEADLINE` warnings of a successful schedule (which carry
   a `message`), are `warnings`, in the order of the render, never dropped or
   invented. `diagnostics` is empty when `status` is `ok`.

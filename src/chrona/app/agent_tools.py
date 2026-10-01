@@ -2,7 +2,7 @@
 
 Four tools front the use cases an agent needs to plan and draw a schedule:
 ``validate_project``, ``schedule_project``, ``render_draft`` and ``list_presets``
-(tool set ``chrona/agent-tools/v0.1``, Spec 66). A tool is a use case with a typed
+(tool set ``chrona/agent-tools/v0.2``, Spec 66). A tool is a use case with a typed
 envelope: ``call_tool(scope, name, arguments)`` validates the arguments against the
 tool's input schema, runs the use case on files inside a ``WorkspaceScope`` and returns a
 ``ToolResult`` whose ``structured`` mapping is the envelope (``status``, ``diagnostics``)
@@ -29,11 +29,11 @@ from jsonschema.exceptions import best_match
 from chrona.app.agent_workspace import WorkspaceScope
 from chrona.resources import validator_for_schema
 from chrona.usecases.draft_render import DEFAULT_VIEWPORT, DraftRenderRequest, render_draft, warning_payloads
-from chrona.usecases.failure_report import FailureReport, StableFailure, rejection_report, report_failure
+from chrona.usecases.failure_report import FailureReport, StableFailure, collapse_records, rejection_report, report_failure
 from chrona.usecases.preset_library import list_builtin_presets
 from chrona.usecases.project_checks import schedule_project_file, validate_project_file
 
-TOOL_SET_VERSION = "chrona/agent-tools/v0.1"
+TOOL_SET_VERSION = "chrona/agent-tools/v0.2"
 DEFAULT_PRESET_ID = "chrona-default-draft"
 MAX_DIAGNOSTICS = 50
 MAX_INLINE_SVG_BYTES = 1024 * 1024
@@ -118,6 +118,10 @@ _DIAGNOSTIC = {
         "sourceRef": {"type": "string",
                       "description": "RFC 6901 JSON pointer into the named document, or '/' for the whole input."},
         "message": {"type": "string"},
+        "count": {"type": "integer", "minimum": 2,
+                  "description": "Present only when equal findings were merged into this row; absent means once."},
+        "occurrences": {"type": "array", "items": {"type": "string"}, "maxItems": 20,
+                        "description": "Warnings only: the identities of the merged findings, first occurrence first."},
         "revisionRefs": {"type": "array", "items": {"type": "string"}},
         "resourceKind": {"type": "string"}, "resourceIdentity": {"type": "string"},
         "phase": {"type": "string"}, "rule": {"type": "string"},
@@ -153,7 +157,7 @@ def _output_schema(properties: dict[str, Any] | None = None) -> dict[str, Any]:
 # --- result construction -------------------------------------------------------------------------------------
 
 _DIAGNOSTIC_ORDER = ("code", "severity", "component", "sourceRef", "message")
-_OPTIONAL_DIAGNOSTIC_FIELDS = ("revisionRefs", "resourceKind", "resourceIdentity", "phase", "rule")
+_OPTIONAL_DIAGNOSTIC_FIELDS = ("revisionRefs", "resourceKind", "resourceIdentity", "phase", "rule", "count")
 
 
 def _sorted_value(value: Any) -> Any:
@@ -175,16 +179,13 @@ def _diagnostic(scope: WorkspaceScope, record: Mapping[str, Any]) -> dict[str, A
 
 
 def _envelope(scope: WorkspaceScope, status: str, diagnostics: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
-    """Scrub, drop exact duplicates (a render rejection repeats one finding per union branch) and cap the list."""
-    kept: list[dict[str, Any]] = []
-    seen: set[str] = set()
-    for record in diagnostics:
-        item = _diagnostic(scope, record)
-        key = json.dumps(item, sort_keys=True, ensure_ascii=False)
-        if key not in seen:
-            seen.add(key)
-            kept.append(item)
-    envelope: dict[str, Any] = {"status": status, "diagnostics": kept[:MAX_DIAGNOSTICS]}
+    """Scrub, merge rows that scrubbing made equal (counts add up) and cap the list.
+
+    The use case already merged equal rows (``collapse_records``); scrubbing a host path can make two
+    different rows equal, so the same function runs again here.
+    """
+    kept = collapse_records(_diagnostic(scope, record) for record in diagnostics)
+    envelope: dict[str, Any] = {"status": status, "diagnostics": list(kept[:MAX_DIAGNOSTICS])}
     if len(kept) > MAX_DIAGNOSTICS:
         envelope["omittedDiagnostics"] = len(kept) - MAX_DIAGNOSTICS
     return envelope

@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from chrona.core.diagnostics import Diagnostic
+from chrona.usecases.diagnostic_messages import error_message
 from chrona.usecases.warning_ledger import RenderWarning, collect_render_warnings
 from chrona.core.ports import RenderArtifact, Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
@@ -183,7 +184,9 @@ def render_review(request: RenderRequest) -> RenderedReview:
     try:
         return _render_review(request)
     except (LayoutError, ThemeTokenError, ScenePaintError) as error:
-        raise RenderFailed(error.diagnostic_id, getattr(error, "detail", None) or error.diagnostic_id,
+        message = error_message(error.diagnostic_id, getattr(error, "detail", None))
+        node = getattr(error, "node_id", None)  # a Layout finding names the offending token or node here
+        raise RenderFailed(error.diagnostic_id, f"{message} ({node})" if node else message,
                            "presentation", error.path or "/") from error
 
 
