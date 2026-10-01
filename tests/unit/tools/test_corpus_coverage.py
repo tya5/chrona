@@ -38,6 +38,12 @@ def test_vocabulary_is_sorted_and_matches_direct_wildcard_paths():
     assert list(_values_at({"objects": {"item": {"schedule": {"mode": "scheduled"}}}}, ("objects", "*", "schedule", "mode"))) == ["scheduled"]
 
 
+def test_store_provider_is_read_through_the_revision_store_part():
+    """#715: the Snapshot Reference's provider enum lives in the revision-store part and is part of the vocabulary."""
+    providers = {row.value for row in vocabulary(_root()) if row.contract == "Snapshot reference" and row.path == ("body", "project", "store", "provider")}
+    assert {'"content"', '"git"', '"package"'} <= providers
+
+
 def test_register_predicates_do_not_count_undeclared_resource_kinds(tmp_path):
     project = CorpusProject("empty", tmp_path, (("project", tmp_path / "project.yaml", {"objects": {}}),))
 
