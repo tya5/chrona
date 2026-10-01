@@ -253,3 +253,17 @@ L4 (`W_DEADLINE`) stays lead-gated.
   `compare=False, hash=False`; the `review` mapping needed no code (it serializes `Diagnostic.as_dict()`, which now
   includes `details` when present); a scheduler-time rejection still returns the placements it computed, as before (the
   design's "return no placements" is about the plan-level rule, which slice 0 does not change).
+- Slice 0 merged as #796 (`ab530bb7`).
+- Slice 1 (`I788-S1`): implemented as specified, with these corrections to the plan. (1) The repository has no `hypothesis`
+  (tests/unit/chrona/terse/test_properties.py says so and `pyproject.toml` lists none): the properties I1 to I4 and "never a
+  fixed target" run over a deterministic `random.Random(788)` walk of generated acyclic plans instead (adding a dev
+  dependency would edit `pyproject.toml`, which #142 owns). (2) `validate_project` also checks that `constraints.at.min` and
+  `max` are real dates (`E_SCHEMA` at `/objects/<id>/schedule`, as for `fixed-span`): the schema checks the shape of a date,
+  not the calendar, and the scheduler would otherwise raise `TemporalError` on `2027-02-30`. (3) The ledger test's
+  synthetic-property case lists one more path (`schedule.scheduled-point.constraints.at.target`) because it injects a
+  property into the shared `bounds` definition. (4) Found, not fixed (outside the slice): `schedule()` raises
+  `TemporalError("Latest placement precedes earliest placement")` from the backward pass on some plans that mix calendar-day
+  and working-day lags, with no derived point involved (example: two scheduled spans, lags `{1wd in six}`, `4d`, `4wd`); the
+  property tests schedule with the analysis pass stubbed out for that reason. (5) Baseline: the schema-equivalence baseline
+  gained the 16 probe rows of the new inline Project; the other rows are untouched (a full `--record-baseline` also rewrites
+  unrelated rows, so the rows were merged by hand).

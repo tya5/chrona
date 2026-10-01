@@ -68,6 +68,10 @@ A scheduled placement is solved from some combination of:
 
 A scheduled span SHOULD avoid storing mutually redundant authoritative values.
 
+A **scheduled point** (`scheduled-point`) is the point counterpart: it stores no date and its single
+endpoint `at` is solved from dependencies and an optional lower bound (Section 20.4). Like a fixed point it
+exposes `at` only; like a scheduled span the scheduler owns its date.
+
 ## 3. Schedule authority
 
 A span MUST NOT ambiguously treat `start`, `end`, and amount as three independent
@@ -97,6 +101,9 @@ TemporalSpan:
 ```
 
 A dependency connects a source endpoint to a target endpoint.
+
+A fixed point and a scheduled point are `TemporalPoint`s and expose `at`; fixed spans, scheduled spans and
+rollups are `TemporalSpan`s.
 
 ## 5. Dependency semantics
 
@@ -320,6 +327,9 @@ For a scheduled target, the same dependency lower bound participates in placemen
 
 This preserves a single dependency meaning while keeping placement authority explicit.
 
+For a scheduled point the dependency lower bound participates in placement (Section 20.4); a gate that must
+not move is a fixed point, and a gate that follows its predecessors is a scheduled point.
+
 ## 16. Cycles and unsatisfiable schedules
 
 A scheduling implementation MUST detect contradictory bounds and unsatisfiable
@@ -427,6 +437,46 @@ Upper bounds are feasibility checks unless a backward-scheduling policy explicit
 uses an end authority. Core v0.1 does not silently switch scheduling direction merely
 because an upper bound exists.
 
+### 20.4 Scheduled point
+
+A point with `schedule.mode: scheduled-point` has no stored date. Its only optional properties are
+`constraints.at.min` (not earlier than) and `constraints.at.max` (not later than, a hard cap). It has no
+`amount` and no `anchor`, and it exposes the endpoint `at` only (a relation naming `start` or `end` on it is
+`E_ENDPOINT_MODE_MISMATCH`).
+
+```text
+bounds(P) = { advance(source value, lag, calendar) : each relation into P.at } + { constraints.at.min }
+at(P)     = max(bounds(P))
+```
+
+`calendar` is the lag's own `calendar`, else the object's, else the Project's; only a lag with a `wd` part uses
+one (Section 8). The date is placed exactly: it is **not** normalized to a working day (Section 21 normalizes
+the start of a scheduled span; a point has no amount, and a lag in `d` from a Friday lands on a Sunday). An
+author who wants working days writes `wd` in the lag. When the floor equals a dependency bound the floor wins
+silently.
+
+Consequences, each a tested property: a scheduled point and the fixed point at its derived date are
+interchangeable (the scheduler accepts the substitution with identical placements, and a presentation of
+either is identical); a fixed point one day earlier is rejected with `E_FIXED_TARGET_VIOLATION` whose
+`details.earliest` is the derived date (unless the floor is binding); a later predecessor never makes the
+date earlier; placement does not depend on object or relation order.
+
+If `constraints.at.max` is present and the derived date is later, the schedule fails with
+`E_CONTRADICTORY_BOUNDS` at `/objects/<id>/schedule/constraints/at/max`, and the placement is still returned.
+`details` is `{object, endpoint, derived, max, forcedBy}`, `forcedBy` naming the relation (id, else
+`/relations/N`) that reaches the derived date, or the pointer of the floor when the floor does. A `min` later
+than `max` is the same diagnostic. A point with no relation into `at` and no `min` has nothing to derive from:
+`E_DERIVATION` at `/objects/<id>/schedule`, reported by validation, so `validate` and `schedule` agree. A
+cycle through scheduled points is reported by the scheduler like any other cycle (Section 16).
+
+Analysis treats a scheduled point like any other non-fixed object: it joins the critical path and has float,
+and its latest date honours `constraints.at.max`.
+
+A scheduled point is a derived **plan**, not a forecast. Actual values never move a planned date
+(Section 17): a late predecessor actual does not move the gate; editing the plan does. A scheduled point is not
+a promise either; the hard cap is `constraints.at.max`, and `deadline` remains a stored target the scheduler
+never reads (Section 10).
+
 ## 21. Calendar placement normalization
 
 For Date-based scheduled objects using a working calendar:
@@ -473,6 +523,7 @@ A conforming scheduler MUST support:
 
 - fixed Date points and spans;
 - scheduled Date spans with positive `d`, `w`, or `wd`;
+- scheduled Date points (Section 20.4) where the Project format admits `scheduled-point`;
 - endpoint dependencies;
 - signed Date-based lag using `d`, `w`, or `wd`;
 - lower/upper Date bounds;

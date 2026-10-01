@@ -1706,6 +1706,92 @@
     "pointer": "/relations/0/from/endpoint",
     "rule": ""
    },
+   "project|inline:project-derived-point/objects/gate/schedule/constraints/at/max|date:impossible-day": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '2026-02-30'",
+    "pointer": "/objects/gate/schedule",
+    "rule": ""
+   },
+   "project|inline:project-derived-point/objects/gate/schedule/constraints/at/max|date:impossible-month": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '2026-13-45'",
+    "pointer": "/objects/gate/schedule",
+    "rule": ""
+   },
+   "project|inline:project-derived-point/objects/gate/schedule/constraints/at/max|date:non-leap-february-29": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '2026-02-29'",
+    "pointer": "/objects/gate/schedule",
+    "rule": ""
+   },
+   "project|inline:project-derived-point/objects/gate/schedule/constraints/at/max|date:trailing-newline": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '2026-09-30\\n'",
+    "pointer": "/objects/gate/schedule",
+    "rule": ""
+   },
+   "project|inline:project-derived-point/objects/gate/schedule/constraints/at/max|date:unicode-digits": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '２０２６-09-30'",
+    "pointer": "/objects/gate/schedule",
+    "rule": ""
+   },
+   "project|inline:project-derived-point/objects/gate/schedule/constraints/at/max|date:valid": null,
+   "project|inline:project-derived-point/objects/gate/schedule/constraints/at/max|date:year-zero": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '0000-01-01'",
+    "pointer": "/objects/gate/schedule",
+    "rule": ""
+   },
+   "project|inline:project-derived-point/objects/gate/schedule/constraints/at/max|date:zero-date": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '2026-00-00'",
+    "pointer": "/objects/gate/schedule",
+    "rule": ""
+   },
+   "project|inline:project-derived-point/objects/gate/schedule/constraints/at/min|date:impossible-day": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '2026-02-30'",
+    "pointer": "/objects/gate/schedule",
+    "rule": ""
+   },
+   "project|inline:project-derived-point/objects/gate/schedule/constraints/at/min|date:impossible-month": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '2026-13-45'",
+    "pointer": "/objects/gate/schedule",
+    "rule": ""
+   },
+   "project|inline:project-derived-point/objects/gate/schedule/constraints/at/min|date:non-leap-february-29": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '2026-02-29'",
+    "pointer": "/objects/gate/schedule",
+    "rule": ""
+   },
+   "project|inline:project-derived-point/objects/gate/schedule/constraints/at/min|date:trailing-newline": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '2026-09-30\\n'",
+    "pointer": "/objects/gate/schedule",
+    "rule": ""
+   },
+   "project|inline:project-derived-point/objects/gate/schedule/constraints/at/min|date:unicode-digits": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '２０２６-09-30'",
+    "pointer": "/objects/gate/schedule",
+    "rule": ""
+   },
+   "project|inline:project-derived-point/objects/gate/schedule/constraints/at/min|date:valid": null,
+   "project|inline:project-derived-point/objects/gate/schedule/constraints/at/min|date:year-zero": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '0000-01-01'",
+    "pointer": "/objects/gate/schedule",
+    "rule": ""
+   },
+   "project|inline:project-derived-point/objects/gate/schedule/constraints/at/min|date:zero-date": {
+    "code": "E_SCHEMA",
+    "message": "Expected ISO Date, got '2026-00-00'",
+    "pointer": "/objects/gate/schedule",
+    "rule": ""
+   },
    "render-context|examples/aster-ssd/contexts/01-overview.yaml/body/environment/fontMetrics/assets/0/metrics/contentIdentity|sha256:no-prefix": {
     "code": "E_RESOURCE_SCHEMA",
     "message": "expected value matching pattern '^sha256:[0-9a-f]{64}$'",

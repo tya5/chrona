@@ -81,6 +81,29 @@ objects:
       at: 2026-11-15
 ```
 
+### 4.2.1 Scheduled point
+
+A point whose date is derived from its dependencies stores no date:
+
+```yaml
+objects:
+  launch:
+    type: gate
+    title: Launch
+    schedule:
+      mode: scheduled-point
+      constraints:
+        at:
+          min: 2027-05-07   # optional: not earlier than
+          max: 2027-06-30   # optional: not later than (hard cap)
+```
+
+`mode` is the only required property. There is no `amount`, no `anchor` and no date. A relation into
+the object targets `at`; the scheduler places the object at the latest of every incoming `source + lag` and the
+optional `min` (Spec 04 Section 20.4). `max` rejects a plan whose derived date is later
+(`E_CONTRADICTORY_BOUNDS`). An object with no relation into `at` and no `min` is `E_DERIVATION`. The mode works
+for any object `type` label. Unlike a fixed point it is never a validation target: a dependency moves it.
+
 ### 4.3 Scheduled span
 
 ```yaml
@@ -286,7 +309,7 @@ campaign-readiness:
   schedule: {mode: fixed-point, at: 2027-10-01}
 ```
 
-`attachesTo` is presentation metadata, not a scheduling edge. Like a deadline, it MUST NOT move or constrain either object. It is independent of `parent`. The host MUST exist, MUST NOT be the point itself, and MUST be a span (`E_PROJECT_ATTACH_TARGET_UNKNOWN`, `E_PROJECT_ATTACH_SELF`, `E_PROJECT_ATTACH_TARGET_NOT_SPAN`). Only a fixed point may attach (`E_PROJECT_ATTACH_SOURCE_NOT_POINT`). A point dated outside its host's planned span is valid and is reported as `W_PROJECT_ATTACHED_OUTSIDE_HOST`. The field is optional and additive in `timeline/v0.7` (§16).
+`attachesTo` is presentation metadata, not a scheduling edge. Like a deadline, it MUST NOT move or constrain either object. It is independent of `parent`. The host MUST exist, MUST NOT be the point itself, and MUST be a span (`E_PROJECT_ATTACH_TARGET_UNKNOWN`, `E_PROJECT_ATTACH_SELF`, `E_PROJECT_ATTACH_TARGET_NOT_SPAN`). Only a point (a fixed point or a scheduled point) may attach (`E_PROJECT_ATTACH_SOURCE_NOT_POINT`); a scheduled point is not a span host. A point dated outside its host's planned span is valid and is reported as `W_PROJECT_ATTACHED_OUTSIDE_HOST`. The field is optional and additive in `timeline/v0.7` (§16).
 
 ## 10. Entities and typed references
 

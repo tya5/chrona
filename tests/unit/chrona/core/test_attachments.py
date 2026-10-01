@@ -72,3 +72,37 @@ def test_render_reports_the_outside_span_warning(tmp_path, monkeypatch, capsys):
     lines = [json.loads(line) for line in capsys.readouterr().err.splitlines() if line.startswith("{")]
     assert any(line["code"] == "W_PROJECT_ATTACHED_OUTSIDE_HOST" and line["sourceRef"] == "campaign-readiness"
                for line in lines)
+
+
+def _derived(at_floor: str) -> dict:
+    project = _project()
+    project["objects"]["campaign-readiness"]["schedule"] = {
+        "mode": "scheduled-point", "constraints": {"at": {"min": at_floor}}}
+    return project
+
+
+def test_a_derived_point_attaches_to_a_span_and_changes_no_other_date():
+    attached = _derived("2027-10-01")
+    detached = copy.deepcopy(attached)
+    del detached["objects"]["campaign-readiness"]["attachesTo"]
+    result = schedule(attached)
+    assert result.ok and result.placements["campaign-readiness"]["at"].isoformat() == "2027-10-01"
+    assert result.placements == schedule(detached).placements
+
+
+def test_a_derived_point_is_not_a_span_host():
+    project = _derived("2027-10-01")
+    project["objects"]["campaign"]["attachesTo"] = "campaign-readiness"
+    assert "E_PROJECT_ATTACH_SOURCE_NOT_POINT" in _codes(project)
+    project = _derived("2027-10-01")
+    project["objects"]["campaign-readiness"]["attachesTo"] = "campaign-readiness"
+    project["objects"]["other"] = {"type": "gate", "attachesTo": "campaign-readiness", "schedule": {"mode": "fixed-point", "at": "2027-10-01"}}
+    assert "E_PROJECT_ATTACH_TARGET_NOT_SPAN" in _codes(project)
+
+
+def test_a_derived_point_outside_its_hosts_span_warns_but_schedules():
+    project = _derived("2027-12-01")
+    result = schedule(project)
+    assert result.ok
+    assert [(item.code, item.object_id, item.host_id) for item in attachment_warnings(project, result.placements)] == [
+        ("W_PROJECT_ATTACHED_OUTSIDE_HOST", "campaign-readiness", "campaign")]
