@@ -129,9 +129,8 @@ any other canonical request is `E_COMMAND_ID_REUSE`.
 ### 4.2 Automation result
 
 Every `command-check`, `command-apply`, intake, capture, and comparison invocation
-emits `chrona/automation-result/v0.2`, validated by its schema; a result whose echoed Store references still
-carry a legacy loose address (from a v0.2 command or a v0.2 baseline) is `chrona/automation-result/v0.1`, because it
-must not claim a contract it breaks. A result records its
+emits `chrona/automation-result/v0.2`, validated by its schema (v0.1, which allowed loose Store addresses, was retired by
+#731 and no writer falls back to it). A result records its
 operation, request content identity, status, complete verified input closure, ordered
 diagnostics, and declared artifacts. Accepted mutations also name `resultTarget`;
 checks and rejections do not fabricate it. Console text is never an automation API.

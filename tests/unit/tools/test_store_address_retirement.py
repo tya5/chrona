@@ -23,9 +23,6 @@ ENTRIES = {entry["file"]: entry for entry in load_inventory(SCHEMAS / "schema-in
 
 # predecessor file -> (successor file, removal slice, what the removal slice must delete)
 RETIREMENTS: dict[str, tuple[str, str, str]] = {
-    "automation-result-v0.1.schema.yaml": (
-        "automation-result-v0.2.schema.yaml", "issue-710-automation-result-v0.1-retirement",
-        "the schema file and `AUTOMATION_RESULT_SCHEMAS` (and the writers' fallback to it)"),
     "snapshot-ref-v0.2.schema.yaml": (
         "snapshot-ref-v0.3.schema.yaml", "issue-710-snapshot-ref-v0.2-authoring-retirement",
         "only the authoring fallback in `SNAPSHOT_REF_VERSIONS`; the schema and the `_SCHEMAS` entry stay for reads of stored baselines"),
@@ -73,7 +70,8 @@ def test_every_predecessor_is_still_registered_in_the_reader_that_selects_it():
 
 
 def test_a_retired_predecessor_is_unregistered_and_an_unsupported_version_to_every_reader():
-    """Layout Profile v0.9 (C1) and Render Context v0.16 (C2). The archive test already proves each file is out of
+    """Layout Profile v0.9 (C1), Render Context v0.16 (C2), Command Request v0.2 (C3) and Automation Result v0.1 (C4).
+    The archive test already proves each file is out of
     `schemas/` and the inventory and unnamed; here the readers refuse the version and the kind has one live schema."""
     assert set(LAYOUT_SCHEMAS) == {LAYOUT_VERSION} == {"chrona/layout-profile/v0.10"}
     assert ("layout-profile", "chrona/layout-profile/v0.9") not in _SCHEMAS
@@ -84,6 +82,9 @@ def test_a_retired_predecessor_is_unregistered_and_an_unsupported_version_to_eve
     # Command Request v0.2 (C3): the CLI registers v0.3 only.
     assert set(COMMAND_SCHEMAS) == {"chrona/command/v0.3"}
     assert [name for name, entry in ENTRIES.items() if entry["kind"] == "command-request"] == ["command-request-v0.3.schema.yaml"]
+    # Automation Result v0.1 (C4): one registered version, one live schema.
+    assert set(AUTOMATION_RESULT_SCHEMAS) == {"chrona/automation-result/v0.2"}
+    assert [name for name, entry in ENTRIES.items() if entry["kind"] == "automation-result"] == ["automation-result-v0.2.schema.yaml"]
 
 
 def test_the_snapshot_ref_predecessor_is_the_one_that_is_never_retired_for_reads():
@@ -115,7 +116,7 @@ def test_no_live_kind_references_revision_store_v0_1_and_the_part_has_only_the_r
     assert in_source == {"src/chrona/resources/__init__.py", *OPEN_LOOSE_USERS}, in_source
     transitioning_users = {name for name, entry in ENTRIES.items() if entry["state"] == "transitioning"
                            and any(ref.partition("#")[0] == v1 for ref in _references(name))}
-    assert transitioning_users == {"automation-result-v0.1.schema.yaml", "snapshot-ref-v0.2.schema.yaml"}
+    assert transitioning_users == {"snapshot-ref-v0.2.schema.yaml"}
 
 
 def test_the_frozen_loose_definitions_say_they_are_frozen():

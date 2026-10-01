@@ -25,11 +25,9 @@ COMMAND_SCHEMAS = {
     "chrona/command/v0.3": "command-request-v0.3.schema.yaml",
 }
 COMMAND_SCHEMA = COMMAND_SCHEMAS["chrona/command/v0.3"]
-# Automation Result versions, newest first. A result names the newest contract its content satisfies, so content
-# that still carries a loose legacy Store address (echoed from a v0.2 command or a v0.2 baseline) stays a v0.1 result.
+# Automation Result versions. v0.1 (loose Store addresses) was retired with the writers' fallback to it (#731).
 AUTOMATION_RESULT_SCHEMAS = {
     "chrona/automation-result/v0.2": "automation-result-v0.2.schema.yaml",
-    "chrona/automation-result/v0.1": "automation-result-v0.1.schema.yaml",
 }
 
 
@@ -49,11 +47,10 @@ def parse_command(payload: str | bytes) -> dict[str, Any]:
 
 
 def stamp_automation_result(result: dict[str, Any]) -> dict[str, Any]:
-    """Set `version` to the newest Automation Result contract the content satisfies, and return the result.
+    """Set `version` to the current Automation Result contract when the content satisfies it, and return the result.
 
-    The strict v0.2 refuses a Store address outside `storeAddress`. A result that echoes a legacy v0.2 command's
-    target or a v0.2 baseline's Project reference can carry such an address, and it must not claim a contract it
-    breaks, so it keeps the v0.1 version it is built with. A result that satisfies neither is left as built.
+    The strict v0.2 refuses a Store address outside `storeAddress`. A result that does not satisfy it is left as built
+    (every writer builds the current version); nothing falls back to the retired v0.1 any more (#731).
     """
     for version, schema_name in AUTOMATION_RESULT_SCHEMAS.items():
         candidate = json_value({**result, "version": version})

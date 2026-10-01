@@ -29,7 +29,6 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "
 SCHEMAS = load_schema_dir(ROOT / "schemas")
 VALIDATORS = SchemaValidators(SCHEMAS)
 PAIRS = {  # predecessor document version -> (successor document version, predecessor schema, successor schema)
-    "chrona/automation-result/v0.1": ("chrona/automation-result/v0.2", "automation-result-v0.1.schema.yaml", "automation-result-v0.2.schema.yaml"),
     "chrona/snapshot-ref/v0.2": ("chrona/snapshot-ref/v0.3", "snapshot-ref-v0.2.schema.yaml", "snapshot-ref-v0.3.schema.yaml"),
 }
 # Committed documents that stay on a predecessor on purpose, each with its reason.
@@ -39,7 +38,7 @@ PINNED = {
         "it is the committed stand-in for the v0.2 baselines already in operators' Stores",
 }
 # Predecessors already retired (#731): the document version string must appear in no committed or packaged document.
-RETIRED = ("chrona/layout-profile/v0.9", "chrona/render-context/v0.16", "chrona/command/v0.2")
+RETIRED = ("chrona/layout-profile/v0.9", "chrona/render-context/v0.16", "chrona/command/v0.2", "chrona/automation-result/v0.1")
 SUCCESSOR_OF = {old: new for old, (new, _, _) in PAIRS.items()}
 PREDECESSOR_OF = {new: old for old, new in SUCCESSOR_OF.items()}
 ADDRESS_SITES = tuple(site for site in PROBE_SITES if site.family in ("address", "segment"))
@@ -170,7 +169,9 @@ def test_every_migrated_document_keeps_its_verdict_under_the_successor():
         predecessor = VALIDATORS.first_error(old_schema, {**document, "version": old_version})
         assert successor == predecessor, path
         checked += 1
-    assert checked >= 1, "the migration still covers the committed documents of the remaining successor kinds"
+    # Only Snapshot Reference still has a predecessor and no committed document is on v0.3 yet, so nothing is checked
+    # today; the loop stays so the first committed v0.3 baseline is held to the same rule.
+    assert checked >= 0
 
 
 def test_no_committed_or_packaged_document_is_left_on_a_predecessor_version():
