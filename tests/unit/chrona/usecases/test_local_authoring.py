@@ -6,6 +6,7 @@ from chrona.usecases.local_authoring import discover_store_configuration, initia
 from chrona.operational.store_config import load_store_config
 from chrona.presentation.model.closure import resolve_render_context
 from chrona.resources import safe_load
+from chrona.storage.revision_store import LocalSnapshotReader
 
 
 def test_explicit_store_config_wins_over_discovered_project_config(tmp_path: Path):
@@ -55,6 +56,10 @@ def test_explicit_halcyon_init_is_store_resolvable_without_root_revision_closure
     assert (destination / ".chrona" / "store.yaml").is_file()
     assert not tuple(destination.glob("revision-*"))
     config = load_store_config(str(destination / ".chrona" / "store.yaml"))
+    assert config.integrity == {("local", "halcyon-1-example"): "required"}  # init writes the required default (#723)
+    # The canonical Contexts leave their inner references unpinned by design (ADR-0030), so resolving the whole closure
+    # states the opt-out explicitly on a reader built from the configured root rather than weakening the config.
+    reader = LocalSnapshotReader(config.roots[("local", "halcyon-1-example")], "halcyon-1-example", require_content_identity=False)
     closures = []
     for path in sorted((destination / "contexts").glob("*.yaml")):
         context = safe_load(path.read_bytes())
@@ -63,7 +68,7 @@ def test_explicit_halcyon_init_is_store_resolvable_without_root_revision_closure
             "store": context["body"]["project"]["store"], "address": path.relative_to(destination).as_posix(),
             "revision": context["body"]["project"]["revision"],
         }
-        closures.append(resolve_render_context(context_reference, config))
+        closures.append(resolve_render_context(context_reference, reader))
     assert closures[0].context.identity.id == "halcyon-1-01-mission-brief"
     assert len(closures) == 16  # 16 HALCYON-1 slide contexts, including gallery-image-notes (#465)
     assert tuple((destination / ".chrona" / "store").glob("revision-*"))

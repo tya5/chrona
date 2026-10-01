@@ -107,7 +107,8 @@ def _closure(temporary: Path, context_name: str = "02-programme-board"):
     snapshot = temporary / "snapshot"
     snapshot.mkdir()
     reference, _ = _copy_context_closure(EXAMPLE.resolve(), EXAMPLE / f"contexts/{context_name}.yaml", snapshot)
-    reader = LocalSnapshotReader(snapshot, reference["store"]["identity"])
+    # Canonical example Contexts leave their inner references unpinned by design (ADR-0030), so this read states the opt-out (#723).
+    reader = LocalSnapshotReader(snapshot, reference["store"]["identity"], require_content_identity=False)
     return resolve_render_context(reference, reader), snapshot
 
 
@@ -136,7 +137,7 @@ def test_end_and_finish_anchor_endpoints_render_byte_identical_scenes():
         snapshot = Path(temporary) / "snapshot"
         snapshot.mkdir()
         reference, _ = _copy_context_closure(example.resolve(), example / "contexts/annotations.yaml", snapshot)
-        closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, reference["store"]["identity"]))
+        closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, reference["store"]["identity"], require_content_identity=False))  # unpinned canonical example (ADR-0030, #723)
 
         def render(endpoint_spelling: str):
             # The committed example is a v0.27 View; the widening is in v0.28, so render the same document as v0.28.

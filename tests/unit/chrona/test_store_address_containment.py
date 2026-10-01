@@ -243,7 +243,10 @@ def test_snapshot_reader_refuses_with_the_existing_typed_error(tmp_path, address
 def test_snapshot_reader_still_reads_a_legitimate_address(tmp_path, address):
     _, reader, reference = _store(tmp_path)
     assert reader.read(reference | {"address": address}) == b"id: project\n"
-    assert reader.read({key: value for key, value in (reference | {"address": address}).items() if key != "contentIdentity"}) == b"id: project\n"
+    unpinned = {key: value for key, value in (reference | {"address": address}).items() if key != "contentIdentity"}
+    # An omitted identity is refused by default (#723); the explicit opt-out still reads the address.
+    opted_out = LocalSnapshotReader(reader.root, reader.identity, require_content_identity=False)
+    assert opted_out.read(unpinned) == b"id: project\n"
 
 
 def test_snapshot_reader_still_reports_a_missing_file_and_an_identity_mismatch(tmp_path):

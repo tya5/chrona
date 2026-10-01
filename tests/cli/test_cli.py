@@ -1228,6 +1228,32 @@ def test_cli_schedule_reads_an_immutable_snapshot_without_path_fallback(tmp_path
     assert json.loads(capsys.readouterr().out)["placements"] == {"gate": {"at": "2026-10-01"}}
 
 
+def test_cli_snapshot_read_requires_content_identity_unless_explicitly_allowed(tmp_path, monkeypatch, capsys):
+    # #723: an omitted contentIdentity is refused by default; --allow-missing-content-identity is the explicit opt-out.
+    project = {"version": "timeline/v0.7", "project": {"id": "snapshot"}, "extensions": [],
+               "objects": {"gate": {"type": "milestone", "schedule": {"mode": "fixed-point", "at": "2026-10-01"}}}, "relations": []}
+    payload = yaml.safe_dump(project).encode()
+    snapshot_directory(tmp_path, "snapshot-1").mkdir()
+    (snapshot_directory(tmp_path, "snapshot-1") / "project.yaml").write_bytes(payload)
+    reference_path = tmp_path / "reference.yaml"
+    reference_path.write_text(yaml.safe_dump({"kind": "project", "store": {"provider": "local", "identity": "cli-test"},
+                                              "revision": {"token": "snapshot-1"}, "address": "project.yaml"}))
+    argv = ["chrona", "schedule", "--snapshot-reference", str(reference_path), "--snapshot-root", str(tmp_path), "--store-identity", "cli-test"]
+
+    monkeypatch.setattr(sys, "argv", argv)
+    with pytest.raises(SystemExit) as refused:
+        main()
+    assert refused.value.code == 1
+    assert "E_CONTENT_IDENTITY_REQUIRED" in capsys.readouterr().out
+
+    monkeypatch.setattr(sys, "argv", [*argv, "--allow-missing-content-identity"])
+    try:
+        main()
+    except SystemExit as exit:
+        assert exit.code is False
+    assert json.loads(capsys.readouterr().out)["placements"] == {"gate": {"at": "2026-10-01"}}
+
+
 def test_cli_help_describes_all_commands(monkeypatch, capsys):
     monkeypatch.setattr(sys, "argv", ["chrona", "--help"])
     try:
@@ -1350,7 +1376,7 @@ def test_cli_gallery_rejects_duplicate_scheme_before_rendering(tmp_path, monkeyp
     monkeypatch.setattr(cli, "resolve_render_context", closure)
     monkeypatch.setattr(cli, "load_yaml", lambda path: {"path": str(path)})
     monkeypatch.setattr(cli, "_run_render_review", lambda args: pytest.fail("render must not run"))
-    args = cli.argparse.Namespace(context_reference=["one.yaml", "two.yaml"], snapshot_root=str(tmp_path), store_identity="test", require_content_identity=False, output_directory=str(tmp_path / "gallery"))
+    args = cli.argparse.Namespace(context_reference=["one.yaml", "two.yaml"], snapshot_root=str(tmp_path), store_identity="test", allow_missing_content_identity=False, output_directory=str(tmp_path / "gallery"))
     with pytest.raises(CliFailure, match="E_SCHEME_GALLERY_DUPLICATE"):
         cli._run_render_review_gallery(args)
 

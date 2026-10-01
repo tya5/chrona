@@ -17,7 +17,7 @@ def _reference(payload: bytes) -> dict:
     }
 
 
-def test_reader_computes_identity_when_reference_omits_it_and_strict_mode_rejects(tmp_path):
+def test_reader_computes_identity_when_reference_omits_it_only_under_the_explicit_opt_out(tmp_path):
     payload = b'{"project":{"id":"project"}}'
     location = snapshot_directory(tmp_path, "rev-1")
     location.mkdir()
@@ -25,9 +25,9 @@ def test_reader_computes_identity_when_reference_omits_it_and_strict_mode_reject
     reference = _reference(payload)
     reference.pop("contentIdentity")
 
-    assert LocalSnapshotReader(tmp_path, "test").read(reference) == payload
+    assert LocalSnapshotReader(tmp_path, "test", require_content_identity=False).read(reference) == payload
     with pytest.raises(SnapshotReadError, match="E_CONTENT_IDENTITY_REQUIRED"):
-        LocalSnapshotReader(tmp_path, "test", require_content_identity=True).read(reference)
+        LocalSnapshotReader(tmp_path, "test").read(reference)  # required is the default (#723)
 
 
 def test_reader_store_reference_detail_names_expectation_and_missing_resource(tmp_path):

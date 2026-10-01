@@ -18,7 +18,7 @@ class ConfiguredStoreReader:
             if key in self.roots:
                 raise ValueError("E_STORE_CONFIG")
             self.roots[key] = Path(entry["root"])
-            self.integrity[key] = entry.get("integrity", "optional")
+            self.integrity[key] = entry.get("integrity", "required")  # required unless the Store explicitly opts out (#723)
 
     def read(self, reference: dict[str, Any]) -> bytes:
         store = reference.get("store", {})
@@ -26,12 +26,13 @@ class ConfiguredStoreReader:
         root = self.roots.get(key)
         if root is None:
             raise ValueError("E_AUTOMATION_TARGET_CLOSURE")
-        if self.integrity[key] == "required" and not reference.get("contentIdentity"):
+        required = self.integrity[key] == "required"
+        if required and not reference.get("contentIdentity"):
             raise ValueError("E_CONTENT_IDENTITY_REQUIRED")
         token = reference.get("revision", {}).get("token")
         if reference.get("kind") == "snapshot-ref" and isinstance(token, str) and token.startswith("baseline:"):
-            return LocalBaselineRegistry(root, key[1]).read(reference)
-        return LocalSnapshotReader(root, key[1]).read(reference)
+            return LocalBaselineRegistry(root, key[1], require_content_identity=required).read(reference)
+        return LocalSnapshotReader(root, key[1], require_content_identity=required).read(reference)
 
 
 def load_store_config(path: str) -> ConfiguredStoreReader:
