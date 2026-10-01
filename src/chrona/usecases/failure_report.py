@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 
 import yaml
 
@@ -51,12 +51,16 @@ class FailureReport:
 
 def diagnostic_record(
     code: str, message: str, component: str, source_ref: str = "/",
-    revision_refs: list[str] | None = None,
+    revision_refs: list[str] | None = None, details: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    return {
+    """The one diagnostic record: six fixed keys, then ``details`` only for a code that has one."""
+    record: dict[str, Any] = {
         "code": code, "severity": "error", "component": component,
         "sourceRef": source_ref, "revisionRefs": revision_refs or [], "message": message,
     }
+    if details is not None:
+        record["details"] = dict(details)
+    return record
 
 
 def version_message(detail: str) -> str:
@@ -67,7 +71,8 @@ def version_message(detail: str) -> str:
 def rejection_report(diagnostics: Sequence[Diagnostic], component: str = "core") -> FailureReport:
     """Report Core diagnostics (a rejected Project or schedule) as one rejected payload."""
     return FailureReport(
-        "rejected", tuple(diagnostic_record(item.id, item.message, component, item.path) for item in diagnostics), 1,
+        "rejected", tuple(diagnostic_record(item.id, item.message, component, item.path, details=item.details)
+              for item in diagnostics), 1,
     )
 
 

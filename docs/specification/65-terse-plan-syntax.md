@@ -230,7 +230,9 @@ The shape of every other command, extended additively and only for compile findi
 endColumn}`, 1-based code points, end exclusive, `endLine` equal to `line`, `endColumn` greater than `column`),
 and an optional one-sentence `hint`. Codes are stable; messages and hints may be improved without a version
 change. No terse diagnostic is a bare code. In code, `chrona.terse.TerseDiagnostic` subclasses
-`chrona.core.diagnostics.Diagnostic`.
+`chrona.core.diagnostics.Diagnostic`. A Core finding may also carry an optional `details` object, reported after
+`message`, that a Core code documents (for example `E_FIXED_TARGET_VIOLATION`); a diagnostic without details has no
+`details` key.
 
 ### 6.2 Compiler codes (stable)
 

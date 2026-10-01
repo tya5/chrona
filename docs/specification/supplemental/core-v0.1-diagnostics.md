@@ -18,7 +18,7 @@ not normative.
 | `E_NON_WORKING_ANCHOR` | An explicit WorkPeriod start anchor is not a working date in its calendar |
 | `E_UNSATISFIABLE_DEPENDENCIES` | Dependency system has no feasible solution |
 | `E_UNSUPPORTED_CYCLE` | Implementation supports only an acyclic subset |
-| `E_FIXED_TARGET_VIOLATION` | A bound/dependency conflicts with authoritative fixed placement |
+| `E_FIXED_TARGET_VIOLATION` | A bound/dependency conflicts with authoritative fixed placement; carries optional `details` (earliest feasible date, forcing relation) |
 | `E_DERIVATION` | Derived placement cannot be resolved |
 | `W_NEGATIVE_LAG` | Dependency uses negative lag |
 | `W_DEADLINE` | Resolved schedule violates a deadline |
@@ -26,3 +26,6 @@ not normative.
 
 Implementations MAY add diagnostics but MUST NOT reuse these identifiers for different
 meanings.
+
+A diagnostic MAY carry an optional `details` object when its row says so; its keys are additive and a diagnostic
+without details omits the field. `E_FIXED_TARGET_VIOLATION` details are defined in Spec 04 Section 20.1.

@@ -240,3 +240,16 @@ sweep result, and the derived-document diffs the main sync produced.
   inventory) before continuing.
 - **Hypothesis finds a twin or minimality counterexample.** Treat it as a design defect in the date rule (calendar
   sources are the likely cause), not a test to loosen.
+
+## 11. Progress and lead decisions
+
+Lead decisions (2026-10-01), all as the design recommends: L1 #788 stays open until the derived form ships (slice 1 and
+the lead's acceptance review); L2 the mode is `scheduled-point`; L3 `constraints.at.max` ships beside `min`; L5 in place,
+one L1 delta, one sentence in Spec 56 section 3.2; L6 terse spelling per design 8, after #148 S4; L7 no calendar
+snapping; L8 no public example; L9 the "nothing to derive from" check lives in `validate_project` with `E_DERIVATION`.
+L4 (`W_DEADLINE`) stays lead-gated.
+
+- Slice 0 (`I788-S0`): implemented as specified. Implementation notes: `Diagnostic.details` is keyword-only with
+  `compare=False, hash=False`; the `review` mapping needed no code (it serializes `Diagnostic.as_dict()`, which now
+  includes `details` when present); a scheduler-time rejection still returns the placements it computed, as before (the
+  design's "return no placements" is about the plan-level rule, which slice 0 does not change).
