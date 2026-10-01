@@ -23,7 +23,9 @@ Edit the project, re-run the materializer, and this SVG follows.</sup>
 - endpoint-based dependency lower bounds and Date-only scheduled-span placement;
 - executable conformance checks for the canonical Core v0.1 fixture;
 - deterministic Plan/Actual review SVGs with YAML-controlled legend, group detail,
-  source-labelled observations, and milestone digests.
+  source-labelled observations, and milestone digests;
+- a tested agent skill, installed with `chrona skill copy`, that teaches an AI coding
+  agent this workflow (see [Using chrona from an AI coding agent](docs/guides/agent-interface.md)).
 
 ## Quick start
 
