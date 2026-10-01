@@ -50,5 +50,20 @@ design because it can change routes.
 
 ## Evidence
 
-Baseline profile: see the design document section 1. Slice results are added here after
-2b merges.
+Baseline profile: see the design document section 1.
+
+I721-2b (same command and machine, base and change run back to back, three runs each,
+minimum reported; the machine was shared, load average 50 to 110 on 8 cores, so wall
+times carry noise and CPU time is the steadier figure):
+
+| Measure | Before | After | Speedup |
+| --- | --- | --- | --- |
+| HALCYON `mission-light` render, wall | 74.3 s | 15.5 s | 4.8x |
+| HALCYON `mission-light` render, process CPU | 32.6 s | 6.7 s | 4.9x |
+| `test_every_declared_closure_input_is_read[halcyon-1/gallery-editorial-lanes]`, wall | 84.2 s | 16.3 s | 5.2x |
+
+The SVG and Scene of the timed render are byte-identical before and after. The remaining
+cost is still inside `route_orthogonal` (about 95 % of the profile): the 646 k
+`ObstacleSegment` constructions with their validation, the per-call exemption checks in
+`collisions`, and A* bookkeeping. Cutting further means fewer `clear()` calls, which can
+change tie-breaks and needs its own design.
