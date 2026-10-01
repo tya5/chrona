@@ -45,6 +45,7 @@ schemas:
       fractionalTrack: "sha256:eb154b39286928cddd4836c1d4432db753b63260fb70308503610ad74f9dc8ca"
       license: "sha256:7ba5b38ac1e5af638171c8c0894d0f6952927200073f859b7a87c7fb33f55f44"
       sha256IdentityOrNull: "sha256:ec41ec601f4e71f5e428fcb79f1bdc02746284c05c7672e49832563b918e7095"
+      storeAddress: "sha256:a0a56e56b36ebdc841897e6498a84ba4fc1c43f157e8fe2668f96d3059ac718c"
   - {file: presentation-preset-v0.1.schema.yaml, kind: presentation-preset, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: preset-library-v0.2.schema.yaml, kind: builtin-preset-library, state: live, consumers: [src/chrona/usecases/preset_library.py]}
   - {file: example-registry-v0.1.schema.yaml, kind: example-registry, state: live, consumers: [src/chrona/resources/__init__.py]}
@@ -61,6 +62,12 @@ schemas:
     consumers: [src/chrona/resources/__init__.py, src/chrona/extensions/profiles.py]
     frozenDefs:
       "#": "sha256:649e7dd88ccbb8fa9077aef30bde3979f38a1988b648d6b07d5dd53bb0fb69be"
+  - file: revision-store-resource-ref-v0.2.schema.yaml
+    kind: revision-store-resource-reference
+    state: live
+    consumers: [src/chrona/resources/__init__.py]
+    frozenDefs:
+      "#": "sha256:786939b7c5b16e49b7134250766f1dffa2422336177e47db747617b447908df4"
   - {file: snapshot-ref-v0.2.schema.yaml, kind: snapshot-ref, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: store-config-v0.1.schema.yaml, kind: store-config, state: live, consumers: [src/chrona/operational/store_config.py]}
   - {file: summary-profile-v0.2.schema.yaml, kind: summary-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}

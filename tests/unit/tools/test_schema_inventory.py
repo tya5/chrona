@@ -57,6 +57,24 @@ schemas:
         validate_inventory(schemas, inventory)
 
 
+def test_inventory_lets_a_frozen_part_keep_its_predecessor_live_beside_a_successor(tmp_path):
+    """A part is never edited in place, so v0.1 and v0.2 of one part are both live; a non-part pair still is not allowed."""
+    schemas = tmp_path / "schemas"; schemas.mkdir()
+    names = ("revision-store-resource-ref-v0.1.schema.yaml", "revision-store-resource-ref-v0.2.schema.yaml")
+    for name in names:
+        (schemas / name).write_text("{}")
+    inventory = tmp_path / "inventory.yaml"
+    inventory.write_text("version: chrona/schema-inventory/v0.1\nschemas:\n" + "".join(
+        f"  - file: {name}\n    kind: revision-store-resource-reference\n    state: live\n"
+        "    consumers: [src/chrona/resources/__init__.py]\n" for name in names))
+    assert {entry["file"] for entry in validate_inventory(schemas, inventory)} == set(names)
+    (schemas / "project-v0.1.schema.yaml").write_text("{}")
+    inventory.write_text(inventory.read_text() + "  - file: project-v0.1.schema.yaml\n    kind: revision-store-resource-reference\n"
+                         "    state: live\n    consumers: [src/chrona/core/validation.py]\n")
+    with pytest.raises(SchemaInventoryError, match="E_SCHEMA_INVENTORY_DUPLICATE_LIVE"):
+        validate_inventory(schemas, inventory)
+
+
 def _live_root(root: Path, schema: dict) -> tuple[Path, Path]:
     schemas, inventory = _write(root, """version: chrona/schema-inventory/v0.1
 schemas:

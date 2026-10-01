@@ -23,6 +23,7 @@ SCHEMAS = (
     "project-v0.7.schema.yaml",
     "profile-v0.3.schema.yaml",
     "revision-store-resource-ref-v0.1.schema.yaml",
+    "revision-store-resource-ref-v0.2.schema.yaml",
     "presentation-resource-v0.1.schema.yaml",
     "icon-catalog-v0.3.schema.yaml",
     "icon-catalog-v0.4.schema.yaml",

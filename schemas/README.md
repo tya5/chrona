@@ -37,6 +37,7 @@ record.
 | review-detail-profile | review-detail-profile-v0.1.schema.yaml |
 | inspection-scene | scene-v0.7.schema.yaml |
 | revision-store-resource-reference | revision-store-resource-ref-v0.1.schema.yaml |
+| revision-store-resource-reference | revision-store-resource-ref-v0.2.schema.yaml |
 | snapshot-ref | snapshot-ref-v0.2.schema.yaml |
 | store-config | store-config-v0.1.schema.yaml |
 | summary-profile | summary-profile-v0.2.schema.yaml |
@@ -53,6 +54,10 @@ a pattern, enum or drawing shape is written once. A part's definitions are froze
 digest in the inventory. Spec 56 section 7 gives the rules, and
 `python -m tools.schema_equivalence --base-rev origin/main` is the gate that proves a
 change keeps every schema's accepted set.
+
+`revision-store-resource-reference` has two live files: v0.1 stays published because the frozen
+`vocabulary` part and pinned documents reference its URN, and v0.2 constrains `address` to the strict
+`storeAddress` definition of `common` (#710). A kind adopts v0.2 only through its own version bump.
 
 The v0.3 icon catalog remains readable during migration to v0.4 and is not
 reinterpreted. New Theme asset imports emit v0.4 catalogs; the importer

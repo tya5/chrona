@@ -289,6 +289,14 @@ target, so a stray or archived schema file can never become one.
   without the asset bounds, the loose Store address family keeps today's accepted
   characters, and existing ids keep `minLength: 1`. Each is recorded, with its reason, in
   the copy tests and the #662 design.
+* **A part has versions too (#710).** A part is frozen, so a change to a frozen definition is a new
+  part file (`revision-store-resource-ref-v0.2`, `urn:chrona:revision-store-resource-ref-v0.2`),
+  published beside its predecessor; both are listed in `SCHEMA_PARTS` and stay `live`, because frozen parts
+  and pinned documents still reference the old URN. The inventory allows two live entries of one kind only
+  when every one of them is a part. Adding a definition to a part is not a new version:
+  `storeAddress` (strict Store-relative address, owner decision 2026-10-01) was added to `common-v0.1`
+  in place; it rejects what the loose `relativeAddress` family accepts, so a kind that adopts it
+  takes the version bump of §3.2 (a site never changes to it inside a published version).
 * **No inline copy in a live schema.** Each part has a test that no live schema outside
   the parts repeats a pattern, shape or enum the part defines, with an explicit allowlist
   of documented exceptions. Historical (`transitioning`) schemas keep their own copies and
