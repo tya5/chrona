@@ -4,7 +4,7 @@ The [one-page card](terse-plan.md) teaches the syntax; this page shows what `chr
 
 ## A task, a task that follows it, and a gate
 
-The first line gives the Project its id and title. A date span is `start..end` and its end is exclusive; `3d after a` is a three-day task that starts when `a` ends, so the compiler writes a `dependency` relation from the end of `a` to the start of `b` with a `0d` lag. The relation id is `FROM-TO`. A gate is a fixed point (`at`), and its dependency lands on that point.
+The first line gives the Project its id and title. A date span is `start..end` and its end is exclusive; `3d after a` is a three-day task that starts when `a` ends, so the compiler writes a `dependency` relation from the end of `a` to the start of `b` with a `0d` lag. The relation id is `FROM-TO`. A gate with a date is a fixed point (`at`), and its dependency lands on that point.
 
 <!-- chrona:doc-check expect-yaml: next -->
 ```chrona
@@ -35,6 +35,41 @@ objects:
 relations:
   - {id: a-b, type: dependency, from: {object: a, endpoint: end}, to: {object: b, endpoint: start}, lag: 0d}
   - {id: b-c, type: dependency, from: {object: b, endpoint: end}, to: {object: c, endpoint: at}, lag: 0d}
+```
+
+## A gate whose date is derived
+
+A gate with no date and an `after` clause is a derived point: `mode: scheduled-point` stores no date, and `chrona schedule` places it on the earliest date its relations allow (here 2027-03-10 for `b`). `at >= D` is the floor, written `constraints.at.min` (`at <= D` is `constraints.at.max`, the cap). The dependent gate `c` follows `b.at`, and every relation into a gate targets `at`.
+
+<!-- chrona:doc-check expect-yaml: next -->
+```chrona
+project derived "Derived gate"
+a "Design" task 2027-03-01..2027-03-08
+b "Review" gate after a +2d
+c "Launch" gate at >= 2027-05-07 after b
+```
+
+```yaml
+version: timeline/v0.7
+project:
+  id: derived
+  title: Derived gate
+objects:
+  a:
+    type: task
+    title: Design
+    schedule: {mode: fixed-span, start: '2027-03-01', end: '2027-03-08'}
+  b:
+    type: gate
+    title: Review
+    schedule: {mode: scheduled-point}
+  c:
+    type: gate
+    title: Launch
+    schedule: {mode: scheduled-point, constraints: {at: {min: '2027-05-07'}}}
+relations:
+  - {id: a-b, type: dependency, from: {object: a, endpoint: end}, to: {object: b, endpoint: at}, lag: 2d}
+  - {id: b-c, type: dependency, from: {object: b, endpoint: at}, to: {object: c, endpoint: at}, lag: 0d}
 ```
 
 ## Lags, endpoints and a group

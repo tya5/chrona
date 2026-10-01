@@ -59,6 +59,66 @@
    }
   }
  ],
+ "derived-bound-after-date": [
+  {
+   "code": "E_TERSE_TOKEN_UNEXPECTED",
+   "hint": true,
+   "sourceRange": {
+    "column": 19,
+    "endColumn": 21,
+    "endLine": 3,
+    "line": 3
+   }
+  }
+ ],
+ "derived-bound-duplicate": [
+  {
+   "code": "E_TERSE_CLAUSE_DUPLICATE",
+   "hint": true,
+   "sourceRange": {
+    "column": 25,
+    "endColumn": 27,
+    "endLine": 3,
+    "line": 3
+   }
+  }
+ ],
+ "derived-bound-operator": [
+  {
+   "code": "E_TERSE_TOKEN_UNEXPECTED",
+   "hint": true,
+   "sourceRange": {
+    "column": 11,
+    "endColumn": 21,
+    "endLine": 3,
+    "line": 3
+   }
+  }
+ ],
+ "derived-bound-without-after": [
+  {
+   "code": "E_TERSE_SCHEDULE_REQUIRED",
+   "hint": true,
+   "sourceRange": {
+    "column": 8,
+    "endColumn": 24,
+    "endLine": 3,
+    "line": 3
+   }
+  }
+ ],
+ "derived-task-no-schedule": [
+  {
+   "code": "E_TERSE_SCHEDULE_REQUIRED",
+   "hint": true,
+   "sourceRange": {
+    "column": 8,
+    "endColumn": 13,
+    "endLine": 3,
+    "line": 3
+   }
+  }
+ ],
  "directive-order": [
   {
    "code": "E_TERSE_DIRECTIVE_ORDER",

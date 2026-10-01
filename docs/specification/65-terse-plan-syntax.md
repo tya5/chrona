@@ -1,6 +1,6 @@
 # Terse Plan Syntax
 
-**Status:** Proposed; implemented by `chrona compile` (#148, slice 1), the draft dispatch of section 7.1 (slice 3) and the documentation check of section 10 (slice 4).
+**Status:** Proposed; implemented by `chrona compile` (#148, slice 1), the draft dispatch of section 7.1 (slice 3), the documentation check of section 10 (slice 4) and the derived gate of S3 and section 4 (#788, slice 2).
 **Owns:** the grammar of the terse plan (`terse 0.1`), its mapping to a `timeline/v0.7` Project, the id rules for
 compiled objects and relations, the compiler diagnostic fields and codes, the stream and exit-code rules of
 `chrona compile`, and the determinism contract of the compiler's YAML.
@@ -86,9 +86,12 @@ on          = "work"   date { [ "," ] date } ;
 object      = NAME [ STRING ] KIND [ schedule ] [ "calendar" CAL ] [ after ] ;
 schedule    = DATE                           (fixed point)
             | DATE ".." DATE                 (fixed span, no spaces around "..", end exclusive)
-            | AMOUNT [ anchor ] { bound } ;  (scheduled span)
+            | AMOUNT [ anchor ] { bound }    (scheduled span)
+            | pointbound { pointbound }      (derived point: a gate, with an after clause)
+            | (nothing)                      (derived point: a gate, with an after clause) ;
 anchor      = "from" DATE | "until" DATE ;
 bound       = ( "start" | "end" ) ( ">=" | "<=" ) DATE ;   (each of the four at most once)
+pointbound  = "at" ( ">=" | "<=" ) DATE ;                  (each of the two at most once)
 after       = "after" dep { "," dep } ;
 dep         = REF [ LAG [ "in" CAL ] ] ;
 REF         = NAME [ "." ENDPOINT ] ;        (ENDPOINT = start | end | at)
@@ -116,8 +119,16 @@ DAY         : mon | tue | wed | thu | fri | sat | sun
   group takes no schedule, no `calendar` and no `after` (each is `E_TERSE_TOKEN_UNEXPECTED`); it compiles to a
   rollup and may be a predecessor. An empty group is accepted by the compiler and rejected by Core
   (`E_ROLLUP_EMPTY`, positioned at the group line).
-- **S3 Schedule requirement.** `task` and `gate` require a schedule (`E_TERSE_SCHEDULE_REQUIRED`); the kind does not
-  constrain the form (the Project `type` is a free label), so `gate 2027-05-07` is the common case, not a rule.
+- **S3 Schedule requirement.** `task` and `gate` require a schedule (`E_TERSE_SCHEDULE_REQUIRED`). The kind does not
+  constrain a form that names a date or a duration (the Project `type` is a free label), so `gate 2027-05-07` is the
+  common case, not a rule. One form is the kind's own, the first place the kind selects the form (normalisation N7): a
+  `gate` with no schedule words and an `after` clause is a **derived point**, `launch "Launch" gate after qa +2wd`; its
+  date is the earliest the relations allow and the scheduler computes it (Spec 04 section 20.4), never the compiler.
+  `at >= D` is its floor and `at <= D` its cap; they sit in the schedule slot, before `calendar` and `after`, and each is
+  given at most once (`E_TERSE_CLAUSE_DUPLICATE`). `E_TERSE_SCHEDULE_REQUIRED` remains for a `task` with no schedule
+  (also when it has an `after` clause: there is no derived span), for a `gate` with neither a date nor `after`, and for a
+  `gate` with bounds but no `after` (a floor alone is a fixed date: write `gate DATE`). `at` bounds on anything but a
+  schedule-less gate are `E_TERSE_TOKEN_UNEXPECTED` or `E_TERSE_AMOUNT_INVALID`.
 - **S4 Spans.** `D1..D2` is half-open like the Project's `fixed-span`: `2026-10-01..2026-10-31` ends before the
   31st. Core owns `start < end` (`E_INVALID_SPAN`).
 - **S5 Calendars.** A calendar name is unique among calendars (`E_TERSE_NAME_DUPLICATE`). A day range increases
@@ -146,9 +157,9 @@ A `dep` names a **predecessor**; the dependent is the statement's own object.
 | Predecessor | `after X` | `after X.start` / `.end` / `.at` |
 | --- | --- | --- |
 | span (duration, `D..D`) or group | `X.end` | that endpoint |
-| fixed point (`DATE`) | `X.at` | that endpoint (`.start`/`.end` is Core's `E_ENDPOINT_MODE_MISMATCH`) |
+| fixed point (`DATE`) or derived point (a gate with no date) | `X.at` | that endpoint (`.start`/`.end` is Core's `E_ENDPOINT_MODE_MISMATCH`) |
 
-The successor endpoint is `start` for a span or `at` for a fixed point. Other successor endpoints are YAML.
+The successor endpoint is `start` for a span or `at` for a fixed or derived point. Other successor endpoints are YAML.
 
 ### 3.4 Kinds
 
@@ -172,6 +183,8 @@ The successor endpoint is `start` for a span or `at` for a fixed point. Other su
 | `group` | `type: group`, `schedule: {mode: rollup}` |
 | `DATE` | `schedule: {mode: fixed-point, at: DATE}` |
 | `D1..D2` | `schedule: {mode: fixed-span, start: D1, end: D2}` (end exclusive) |
+| a `gate` with no schedule words, with `after` | `schedule: {mode: scheduled-point}` |
+| `at >= D`, `at <= D` on such a gate | `schedule.constraints.at.min`, `.at.max` |
 | `AMOUNT` | `schedule: {mode: scheduled, amount: AMOUNT}` |
 | `AMOUNT from D` / `until D` | `schedule.anchor: {start: D}` / `{end: D}` |
 | `start >= D`, `start <= D`, `end >= D`, `end <= D` | `schedule.constraints.start.min`, `.start.max`, `.end.min`, `.end.max` |
@@ -185,7 +198,8 @@ The successor endpoint is `start` for a span or `at` for a fixed point. Other su
 
 Normalisations (the only implicit steps): **N1** single-calendar project default (S6); **N2** default endpoints
 (3.3); **N3** an omitted lag is `0d`; **N4** relation ids (section 5); **N5** document order for objects,
-calendars and relations; **N6** a leading `+` on a lag is dropped.
+calendars and relations; **N6** a leading `+` on a lag is dropped; **N7** a schedule-less `gate` with `after` is a
+`scheduled-point` (the kind selects the form, S3).
 
 The compiler emits no `entities`, `annotations`, `scenarios`, `extensions`, `fields`, `wbsCode`, `deadline`,
 `plannedProgress`, `attachesTo` or `link`, and never an empty section.
@@ -265,7 +279,8 @@ capped at 50 (`E_TERSE_TOO_MANY_ERRORS` follows the 50th, positioned at the firs
 ### 6.4 Source map
 
 The compiler also returns a map from JSON pointer to the best source span: `/objects/NAME` to the name,
-`/objects/NAME/schedule` and `.../amount` to the schedule words, `/objects/NAME/calendar` to the clause,
+`/objects/NAME/schedule` and `.../amount` to the schedule words (the kind word for a derived point without bounds, the
+`at` clauses when there are bounds, and `.../constraints/at/min` and `.../max` to their own clause), `/objects/NAME/calendar` to the clause,
 `/calendars/C` to the calendar line, and `/relations/N`, `/relations/N/lag`, `/relations/N/from/object` to the
 dependency item and its parts. Relations are keyed both by index (what `validate_project` reports) and by id (what
 the scheduler reports for `E_FIXED_TARGET_VIOLATION`). A pointer without an entry falls back to its nearest
@@ -341,7 +356,7 @@ produce. A test enforces it on every fixture and on the seeded fuzz.
 
 ## 9. Proof obligations
 
-Golden pairs (`tests/fixtures/terse/*.chrona` with `*.project.yaml`); the 32-line HALCYON-1 schedule core compiles
+Golden pairs (`tests/fixtures/terse/*.chrona` with `*.project.yaml`, including a plan of derived gates); the 32-line HALCYON-1 schedule core compiles
 to a Project that validates and schedules identically to the hand-written example (placements, dependency edges
 modulo relation ids, critical set), compared through the scheduler; a seeded mutation fuzz (never raises, every
 diagnostic positioned inside the text, no partial Project, accepted implies Core-valid, byte-stable); one negative

@@ -89,3 +89,30 @@ def test_the_doc_check_tool_discovers_and_will_run_every_skill_command():
     assert any(command.tokens[:2] == ("chrona", "init") for command in commands)
     assert any("launch.yaml" in token for command in commands for token in command.tokens)
     assert all(command.skip_reason is None for command in commands), "a skill command must be run, not skipped"
+
+
+def _launch_with(tmp_path, schedule: str):
+    path = tmp_path / "launch.yaml"
+    path.write_text(EXAMPLE.read_text(encoding="utf-8").replace("schedule: {mode: fixed-point, at: 2026-12-14}", schedule), encoding="utf-8")
+    return path
+
+
+def test_the_derived_gate_the_skill_teaches_places_where_it_says_and_a_floor_and_a_cap_do_what_it_says(monkeypatch, capsys, tmp_path):
+    rules = (SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+    model = (SKILL_DIR / "references" / "authoring-model.md").read_text(encoding="utf-8")
+    assert "Never compute a date by hand" in rules and "`scheduled-point`" in rules and "five modes" in rules
+    assert "2026-12-01" in model and "min: 2026-12-07" in model and "E_CONTRADICTORY_BOUNDS" in model
+
+    def launch(schedule):
+        status, out, _err = run_cli(monkeypatch, capsys, "schedule", str(_launch_with(tmp_path, schedule)))
+        return status, json.loads(out)
+
+    status, result = launch("schedule: {mode: scheduled-point}")
+    assert status == 0 and result["placements"]["launch"] == {"at": "2026-12-01"}
+    status, result = launch("schedule: {mode: scheduled-point, constraints: {at: {min: 2026-12-07}}}")
+    assert status == 0 and result["placements"]["launch"] == {"at": "2026-12-07"}
+    status, result = launch("schedule: {mode: scheduled-point, constraints: {at: {max: 2026-11-30}}}")
+    assert status == 1 and [item["code"] for item in result["diagnostics"]] == ["E_CONTRADICTORY_BOUNDS"]
+    status, result = launch("schedule: {mode: fixed-point, at: 2026-11-30}")
+    assert status == 1 and [item["code"] for item in result["diagnostics"]] == ["E_FIXED_TARGET_VIOLATION"]
+    assert "2026-12-01" in result["diagnostics"][0]["message"]  # the rejection names the date to write

@@ -51,9 +51,15 @@ def test_a_gate_with_a_date_and_after_is_a_floor_and_the_scheduler_rejects_a_lat
     assert not rejected.ok and [item.id for item in rejected.diagnostics] == ["E_FIXED_TARGET_VIOLATION"]
 
 
-def test_a_gate_cannot_be_derived_from_its_dependencies():
-    compiled = compile_text('project p "P"\na "A" task 2027-03-01..2027-03-08\ng "G" gate after a +2d\n')
-    assert [item.id for item in compiled.diagnostics] == ["E_TERSE_SCHEDULE_REQUIRED"]
+def test_a_gate_with_after_and_no_date_derives_its_date_and_at_bounds_floor_and_cap_it():
+    base = 'project p "P"\na "A" task 2027-03-01..{end}\ng "G" gate {bound}after a +2d\n'
+    assert _placements(base.format(end="2027-03-08", bound=""))["g"] == {"at": "2027-03-10"}  # the card's example
+    assert _placements(base.format(end="2027-03-12", bound=""))["g"] == {"at": "2027-03-14"}  # it follows its dependency
+    assert _placements(base.format(end="2027-03-08", bound="at >= 2027-03-20 "))["g"] == {"at": "2027-03-20"}  # the floor
+    assert _placements(base.format(end="2027-03-08", bound="at >= 2027-03-01 "))["g"] == {"at": "2027-03-10"}
+    rejected = schedule(compile_text(base.format(end="2027-03-12", bound="at <= 2027-03-12 ")).project)
+    assert [item.id for item in rejected.diagnostics] == ["E_CONTRADICTORY_BOUNDS"]  # the cap
+    assert [item.id for item in compile_text('project p "P"\ng "G" gate at >= 2027-03-20\n').diagnostics] == ["E_TERSE_SCHEDULE_REQUIRED"]
 
 
 def test_an_objects_calendar_overrides_the_project_default():

@@ -21,15 +21,15 @@ in the repository); if you meet one, quote it to the user and do not guess a fix
 
 | Code | Command that emits it | What it means | What to change |
 | --- | --- | --- | --- |
-| `E_SCHEMA` | `validate`, `schedule` | The plan's structure is wrong at `sourceRef`. For `/objects/<id>/schedule` the message lists the permitted forms by `mode`; if it omits `scheduled` while your object has an `amount`, the `amount` is invalid. | Fix the first `sourceRef`: a `mode` that is not `fixed-point` (`at`), `fixed-span` (`start`, `end`), `scheduled` (`amount`) or `rollup`, or an `amount` that is not `Nwd` with a positive whole `N`. |
+| `E_SCHEMA` | `validate`, `schedule` | The plan's structure is wrong at `sourceRef`. For `/objects/<id>/schedule` the message lists the permitted forms by `mode`; if it omits `scheduled` while your object has an `amount`, the `amount` is invalid. | Fix the first `sourceRef`: a `mode` that is not `fixed-point` (`at`), `scheduled-point` (no date), `fixed-span` (`start`, `end`), `scheduled` (`amount`) or `rollup`, or an `amount` that is not `Nwd` with a positive whole `N`. |
 | `E_PROJECT_SCHEMA` | `render` | The same structural error as `E_SCHEMA`, reported by `render`. | Same as `E_SCHEMA`; `component` is `closure`. |
 | `E_REFERENCE` | all three | An id names nothing: a relation endpoint object, an object `calendar`. | Correct the id at `sourceRef` or add the missing object or calendar. |
-| `E_ENDPOINT_MODE_MISMATCH` | all three | A relation uses an endpoint the object's schedule does not have: a gate has `at`, not `start`. | Use `at` for a `fixed-point` object and `start` or `end` for a span. |
+| `E_ENDPOINT_MODE_MISMATCH` | all three | A relation uses an endpoint the object's schedule does not have: a gate has `at`, not `start`. | Use `at` for a `fixed-point` or `scheduled-point` object and `start` or `end` for a span. |
 | `E_INVALID_SPAN` | all three | A `fixed-span` has `start` not before `end`. | Make `start` earlier than `end` (`end` is exclusive). |
 | `E_CALENDAR_REQUIRED` | all three | A `wd` amount has no calendar. | Add `calendar:` to the object or `project.calendar`, and define it under `calendars`. |
 | `E_UNSUPPORTED_CYCLE` | `schedule`, `render` (not `validate`) | The relations form a cycle, so no schedule exists. `validate` prints `[]` for a cycle. | Remove or redirect one relation in the cycle named at `sourceRef`, then run `schedule`. |
-| `E_FIXED_TARGET_VIOLATION` | `schedule`, `render` (not `validate`) | A `fixed-point` or `fixed-span` object sits earlier than its predecessors allow; `sourceRef` is the relation. | Move the fixed date later, shorten the work before it, or loosen the relation. |
-| `E_CONTRADICTORY_BOUNDS` | `schedule`, `render` (not `validate`) | A `constraints` bound on `sourceRef` cannot be met by the dependencies. It often comes with `E_FIXED_TARGET_VIOLATION`. | Relax the bound or move the work that pushes it. |
+| `E_FIXED_TARGET_VIOLATION` | `schedule`, `render` (not `validate`) | A `fixed-point` or `fixed-span` object sits earlier than its predecessors allow; `sourceRef` is the relation. | Write the date the message names, or for a gate drop the date and use `scheduled-point`; or shorten the work before it, or loosen the relation. |
+| `E_CONTRADICTORY_BOUNDS` | `schedule`, `render` (not `validate`) | A `constraints` bound on `sourceRef` cannot be met by the dependencies (for a `scheduled-point`, `constraints.at.max`). It often comes with `E_FIXED_TARGET_VIOLATION`. | Relax the bound or move the work that pushes it. |
 
 ## Command and input errors (exit 2, or 1 for a preset)
 

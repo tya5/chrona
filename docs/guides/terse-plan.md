@@ -55,16 +55,16 @@ lines, then objects (objects may refer to objects defined later).
   (`calendar CAL` before `after`). An object's `calendar CAL` overrides the project default for its own `wd` amounts.
 
 **NAME** (and calendar names): lower-case letters, digits, hyphens, starting with a letter (`bus-test`). It is the
-id forever; you must invent one for every object. Not allowed as a name: `terse project calendar task gate group
+id forever; invent one for every object. Not allowed as a name: `terse project calendar task gate group
 after from until in except work start end at`. Names such as `on`, `no` or `null` are fine.
-**Title**: always in double quotes (`"Design review"`); `\"` and `\\` are the only escapes. Titles may be any text.
-**KIND**: `task`, `gate` or `group`, nothing else.
+**Title**: always in double quotes (`"Design review"`); `\"` and `\\` are the only escapes. **KIND**: `task`, `gate`, `group`.
 
 ## Schedules (after the kind)
 
 | Write | Meaning |
 | --- | --- |
 | `2027-03-05` | a fixed date (a gate, usually) |
+| nothing, on a gate with `after` | a derived date: the earliest its dependencies allow (below) |
 | `2027-03-01..2027-03-08` | a fixed span; the end date is **exclusive**; no spaces around `..` |
 | `5d`, `2w`, `20wd` | a duration: calendar days, weeks, working days (`wd` needs a calendar) |
 | `20wd from 2027-03-22` | a duration starting on that date (`until DATE` ends on it) |
@@ -85,24 +85,24 @@ a fixed date; add `.start`, `.end` or `.at` to pick (a fixed date has only `.at`
 Groups: indent children by exactly two spaces under the group line; groups nest. A group takes no schedule, no
 `calendar` and no `after`, but it can be named in someone else's `after`.
 
-## Gates always need a date
+## Gates: a date, or derived from `after`
 
-A gate cannot take its date from its dependencies (a Project-model limit, tracked in #788): write the date yourself.
-With both a date and `after`, the date is a not-earlier-than floor: the gate sits on its date, and `chrona schedule`
-rejects it (`E_FIXED_TARGET_VIOLATION`, on the `after` clause) when its dependencies end later. To compute the date:
-schedule the plan without the gate, read the predecessor's `end` (`at` for a gate) in `placements`, add the lag.
+A gate with no date and an `after` clause takes the earliest date its dependencies allow, so never compute it by hand.
+`at >= D` is a not-earlier-than floor and `at <= D` a hard cap, written before `after`; a floor alone is just a date
+(`gate D`). A gate with a date is fixed: `chrona schedule` rejects it (`E_FIXED_TARGET_VIOLATION`, naming the date to
+write) when its dependencies end later; `E_CONTRADICTORY_BOUNDS` rejects a derived gate pushed past its cap.
 
 ```chrona
 project p "P"
 design "Design" task 2027-03-01..2027-03-08
-review "Review" gate 2027-03-10 after design +2d   # design ends 2027-03-08, plus the 2d lag
+review "Review" gate after design +2d                   # derived: 2027-03-10
+launch "Launch" gate at >= 2027-05-07 after review +2d  # the floor wins: 2027-05-07
 ```
 
 ## What the syntax cannot say
 
 Owners, teams, phases (`fields`), planned progress, deadlines, links, WBS codes, annotations, scenarios, other
-object types, presentation. When you need them: compile first, then edit `project.yaml` by hand. (The guided
-authoring workspace of Spec 51 is a different source: YAML with presentation binding and Actuals.)
+object types, presentation. When you need them: compile first, then edit `project.yaml` by hand.
 
 ## Frequent errors
 
@@ -111,7 +111,7 @@ authoring workspace of Spec 51 is a different source: YAML with presentation bin
 | `design Build the thing task 5d` | `E_TERSE_TITLE_UNQUOTED`: quote the title |
 | `design tsak 5d` | `E_TERSE_KIND_UNKNOWN`: use `task`, `gate` or `group` |
 | `task design 5d` | `E_TERSE_NAME_RESERVED`: the name comes first |
-| `pdr gate` | `E_TERSE_SCHEDULE_REQUIRED`: a gate needs a date |
+| `pdr gate` | `E_TERSE_SCHEDULE_REQUIRED`: a gate needs a date, or `after X` to derive it |
 | `a task 20` | `E_TERSE_AMOUNT_INVALID`: write `20d` |
 | `pdr gate 2027-3-5` | `E_TERSE_DATE_INVALID`: write `2027-03-05` |
 | `after structur` | `E_TERSE_REFERENCE_UNKNOWN`: the hint names the closest object |

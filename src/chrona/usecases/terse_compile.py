@@ -17,11 +17,13 @@ CORE_HINTS: dict[str, str] = {
     "E_INVALID_SPAN": "the end date is exclusive: a span must end after it starts",
     "E_ROLLUP_EMPTY": "a group needs at least one child: indent tasks under it",
     "E_ENDPOINT_MODE_MISMATCH": "a fixed date has only `.at`; a span or group has `.start` and `.end`",
-    "E_FIXED_TARGET_VIOLATION": "this fixed date is earlier than its dependencies allow: move the date later, "
-                                "or drop or shorten the `after` dependency that pushes past it",
+    "E_FIXED_TARGET_VIOLATION": "this fixed date is earlier than its dependencies allow: write the date the message names, "
+                                "drop the date to derive it (`NAME gate after X +2wd`), or shorten the `after` dependency "
+                                "that pushes past it",
     "E_UNSUPPORTED_CYCLE": "these objects wait on each other: break the loop by removing one `after` dependency",
     "E_UNSATISFIABLE_DEPENDENCIES": "these objects wait on each other with a positive lag: break the loop by removing one `after` dependency",
-    "E_CONTRADICTORY_BOUNDS": "a `from`, `until` or end bound contradicts the dates or dependencies around it: relax the bound or move the dates",
+    "E_CONTRADICTORY_BOUNDS": "a `from`, `until`, `start`/`end` bound or an `at <=` cap contradicts the dates or dependencies around it: "
+                              "relax the bound or move the dates",
 }
 
 
