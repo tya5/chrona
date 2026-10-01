@@ -1,0 +1,166 @@
+version: chrona/view/v0.27
+kind: view
+id: halcyon-01-mission-brief
+body:
+  surface: table-timeline
+  rows:
+    mode: automatic
+  selection:
+    include:
+      ids:
+      - pdr
+      - structure
+      - avionics
+      - bus-test
+      - cdr
+      - optics
+      - payload-tvac
+      - payload-delivery
+      - integration
+      - tvac
+      - psr
+      - campaign
+      - frr
+      - launch
+      - leop
+      - first-light
+      types:
+      - span
+      - point
+  grouping:
+    by: none
+    missing: ungrouped
+  ordering:
+    by: plannedStart
+    direction: ascending
+    tieBreak: id
+  window:
+    mode: explicit
+    start: '2027-03-01'
+    end: '2027-12-01'
+  comparison:
+    baseline: primary
+    actual: required
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets:
+    - planned
+    - actual
+    - finishDelta
+    - missingActual
+    - unmatchedActual
+  visibility:
+    labels:
+      placement: plot
+      content:
+      - title
+      - finishDelta
+      side: auto
+      overflow: suppress
+    relations:
+      mode: semantic
+      overflow: suppress
+    annotations:
+      mode: presentation
+      marker: numbered
+  axis:
+    tiers:
+    - unit: quarter
+      every: 1
+      role: band
+    - unit: quarter
+      every: 1
+      role: grid-major
+    - unit: quarter
+      every: 1
+      role: labels
+      label:
+        form: year-quarter
+        align: center
+        overflow: visible-overflow
+        orientation: horizontal
+    - unit: month
+      every: 1
+      role: labels
+      label:
+        form: short-month
+        align: start
+        overflow: visible-overflow
+        orientation: horizontal
+    - unit: month
+      every: 1
+      role: grid-minor
+    - unit: week
+      every: 1
+      role: grid-minor
+  markers:
+  - kind: asOf
+    source: actual
+    label: as of
+    date: {form: localized-date}
+  shading:
+    nonWorking: true
+    exceptions: true
+  backgroundDecoration:
+    rows: none
+    groups: all
+  tableColumns:
+  - id: '#'
+    source: rowIndex
+    missing: em-dash
+    align: start
+    width: content
+    headerOrientation: horizontal
+  - id: Milestone or work package
+    source: title
+    missing: em-dash
+    align: start
+    width: {minmax: {min: content, max: {fr: 1}}}
+    headerOrientation: horizontal
+  - id: Plan
+    source:
+      facet: planned
+    format: dateRange
+    missing: em-dash
+    align: start
+    width: content
+    headerOrientation: horizontal
+  - id: Actual
+    source:
+      facet: actual
+    format: dateRange
+    missing: in-progress
+    align: start
+    width: content
+    headerOrientation: horizontal
+  - id: Δ
+    source:
+      facet: finishDelta
+    format: signedDays
+    missing: em-dash
+    align: end
+    width: content
+    headerOrientation: horizontal
+  - id: Obs
+    source:
+      comparisonFacet: missingActual
+    format:
+      kind: presence
+      whenTrue: Missing
+      whenFalse: Recorded
+    missing: em-dash
+    align: center
+    width: content
+    headerOrientation: horizontal
+  colorEncoding:
+    scale: owner
+    target: planned
+    source:
+      field: owner
+    domain:
+    - bus
+    - payload
+    - ait
+    - ground
+    - launch
+    - ops

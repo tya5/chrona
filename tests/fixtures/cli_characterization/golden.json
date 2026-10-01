@@ -1,0 +1,1762 @@
+{
+ "command-check-broken-json": {
+  "argv": [
+   "command-check",
+   "--command",
+   "broken.json",
+   "--result",
+   "result.json"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_OPERATIONAL_SCHEMA: while parsing a flow node\\ndid not find expected node content\\n  in \\\"<unicode string>\\\", line 2, column 1\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"E_OPERATIONAL_SCHEMA: while parsing a flow node\\ndid not find expected node content\\n  in \\\"<unicode string>\\\", line 2, column 1\"}]}\n"
+ },
+ "command-check-missing": {
+  "argv": [
+   "command-check",
+   "--command",
+   "missing.yaml",
+   "--result",
+   "result.json"
+  ],
+  "exit": 3,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_AUTOMATION_RESULT_IO\", \"severity\": \"error\", \"component\": \"automation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"<os error>: 'missing.yaml'\"}]}\n"
+ },
+ "font-import-missing-source": {
+  "argv": [
+   "font",
+   "import",
+   "missing.ttf",
+   "--family",
+   "X",
+   "--weight",
+   "400",
+   "--output",
+   "fonts"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_FONT_IMPORT_INPUT\", \"severity\": \"error\", \"component\": \"font-import\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"E_FONT_IMPORT_INPUT source=/\"}]}\n"
+ },
+ "font-import-not-a-font": {
+  "argv": [
+   "font",
+   "import",
+   "starter.yaml",
+   "--family",
+   "X",
+   "--weight",
+   "400",
+   "--output",
+   "fonts"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_FONT_IMPORT_FORMAT\", \"severity\": \"error\", \"component\": \"font-import\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"E_FONT_IMPORT_FORMAT source=/\"}]}\n"
+ },
+ "icon-catalog-import-missing-licence": {
+  "argv": [
+   "icon-catalog",
+   "import",
+   "starter.yaml",
+   "--output",
+   "icons.yaml"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_COMMAND_SYNTAX\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"Iconify import requires SOURCE, --license-spdx, and --notice-file\"}]}\n"
+ },
+ "icon-catalog-import-missing-source": {
+  "argv": [
+   "icon-catalog",
+   "import",
+   "missing.json",
+   "--license-spdx",
+   "MIT",
+   "--notice-file",
+   "starter.yaml",
+   "--output",
+   "icons.yaml"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_ICON_IMPORT_IO\", \"severity\": \"error\", \"component\": \"icon-import\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"E_ICON_IMPORT_IO source=/\"}]}\n"
+ },
+ "identity-bytes-missing": {
+  "argv": [
+   "identity",
+   "bytes",
+   "missing.yaml"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_INPUT_IO\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"<os error>: 'missing.yaml'\"}]}\n"
+ },
+ "identity-bytes-ok": {
+  "argv": [
+   "identity",
+   "bytes",
+   "starter.yaml"
+  ],
+  "exit": 0,
+  "files": {},
+  "stderr": "",
+  "stdout": "sha256:ec5f3db77ff1089b8efeb609d2a49f77af1583735887260bbd0e35aace388800\n"
+ },
+ "identity-document-broken-json": {
+  "argv": [
+   "identity",
+   "document",
+   "broken.json"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_INPUT_YAML\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"while parsing a flow node\\ndid not find expected node content\\n  in \\\"<byte string>\\\", line 2, column 1\"}]}\n"
+ },
+ "identity-document-broken-yaml": {
+  "argv": [
+   "identity",
+   "document",
+   "broken-yaml.yaml"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_INPUT_YAML\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"while parsing a flow sequence\\n  in \\\"<byte string>\\\", line 1, column 10\\ndid not find expected ',' or ']'\\n  in \\\"<byte string>\\\", line 2, column 8\"}]}\n"
+ },
+ "identity-document-not-an-object": {
+  "argv": [
+   "identity",
+   "document",
+   "not-a-mapping.yaml"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_IDENTITY_DOCUMENT\", \"severity\": \"error\", \"component\": \"identity\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"document identity requires a YAML or JSON object\"}]}\n"
+ },
+ "identity-document-ok": {
+  "argv": [
+   "identity",
+   "document",
+   "starter.yaml"
+  ],
+  "exit": 0,
+  "files": {},
+  "stderr": "",
+  "stdout": "sha256:f614b8eae3a945a58764ae1920a36804a007fb1a8cb0578550b97ec715263ff4\n"
+ },
+ "no-command": {
+  "argv": [],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_COMMAND_SYNTAX\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"the following arguments are required: command\"}]}\n"
+ },
+ "preset-copy-into-existing-directory": {
+  "argv": [
+   "preset",
+   "copy",
+   "editorial",
+   "--output",
+   "halcyon-1"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_BUILTIN_PRESET_OUTPUT_EXISTS\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"E_BUILTIN_PRESET_OUTPUT_EXISTS\"}]}\n"
+ },
+ "preset-copy-unknown": {
+  "argv": [
+   "preset",
+   "copy",
+   "no-such-preset",
+   "--output",
+   "pc"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_BUILTIN_PRESET_UNKNOWN\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"E_BUILTIN_PRESET_UNKNOWN\"}]}\n"
+ },
+ "preset-list": {
+  "argv": [
+   "preset",
+   "list"
+  ],
+  "exit": 0,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"ok\", \"presets\": [{\"id\": \"mission-light\", \"gallerySet\": \"halcyon-mission-brief-appearance\"}, {\"id\": \"control-room-dark\", \"gallerySet\": \"halcyon-mission-brief-appearance\"}, {\"id\": \"print-mono\", \"gallerySet\": \"halcyon-mission-brief-appearance\"}, {\"id\": \"executive-light\", \"gallerySet\": \"controller-z-treatment-ladder\"}, {\"id\": \"elevated-light\", \"gallerySet\": \"controller-z-treatment-ladder\"}, {\"id\": \"editorial\", \"gallerySet\": \"generated-design-directions\"}, {\"id\": \"technical-print\", \"gallerySet\": \"generated-design-directions\"}]}\n"
+ },
+ "render-actual": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--actual",
+   "starter-actual.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 0,
+  "files": {
+   "out.svg": {
+    "kind": "svg",
+    "root": "{http://www.w3.org/2000/svg}svg"
+   }
+  },
+  "stderr": {
+   "codes": {
+    "W_LAYOUT_ACTUAL_INCOMPLETE": {
+     "count": 2,
+     "keys": [
+      "code",
+      "diagnostic",
+      "severity"
+     ],
+     "sortedKeyLines": true
+    }
+   },
+   "endsWithNewline": true
+  },
+  "stdout": ""
+ },
+ "render-actual-missing": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--actual",
+   "nowhere/actual.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_INPUT_IO\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"<os error>: 'nowhere/actual.yaml'\"}]}\n"
+ },
+ "render-bad-viewport-and-unknown-preset": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--viewport",
+   "0x100",
+   "--preset",
+   "no-such-preset",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_BUILTIN_PRESET_UNKNOWN\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"E_BUILTIN_PRESET_UNKNOWN\"}]}\n"
+ },
+ "render-bad-viewport-number": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--viewport",
+   "wide x tall",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_COMMAND_VIEWPORT\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/viewport\", \"revisionRefs\": [], \"message\": \"viewport must be WIDTHxHEIGHT\"}]}\n"
+ },
+ "render-bad-viewport-shape": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--viewport",
+   "900",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_COMMAND_VIEWPORT\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/viewport\", \"revisionRefs\": [], \"message\": \"viewport must be WIDTHxHEIGHT\"}]}\n"
+ },
+ "render-bad-viewport-zero": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--viewport",
+   "0x100",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_COMMAND_VIEWPORT\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/viewport\", \"revisionRefs\": [], \"message\": \"viewport dimensions must be positive or block size may be auto\"}]}\n"
+ },
+ "render-broken-yaml-project": {
+  "argv": [
+   "render",
+   "broken-yaml.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_INPUT_YAML\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"while parsing a flow sequence\\n  in \\\"<byte string>\\\", line 1, column 10\\ndid not find expected ',' or ']'\\n  in \\\"<byte string>\\\", line 2, column 8\"}]}\n"
+ },
+ "render-contradictory-project": {
+  "argv": [
+   "render",
+   "contradictory.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_CONTRADICTORY_BOUNDS\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/objects/build/schedule/constraints/end/max\", \"revisionRefs\": [], \"message\": \"Resolved endpoint exceeds maximum bound\"}]}\n"
+ },
+ "render-cycle-project-rejected": {
+  "argv": [
+   "render",
+   "cycle.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_UNSUPPORTED_CYCLE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/objects/a\", \"revisionRefs\": [], \"message\": \"Unresolved dependency system; reference scheduler supports an acyclic subset\"}, {\"code\": \"E_UNSUPPORTED_CYCLE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/objects/b\", \"revisionRefs\": [], \"message\": \"Unresolved dependency system; reference scheduler supports an acyclic subset\"}]}\n"
+ },
+ "render-default-no-suffix": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "-o",
+   "out"
+  ],
+  "exit": 0,
+  "files": {
+   "out": {
+    "kind": "file"
+   }
+  },
+  "stderr": "",
+  "stdout": ""
+ },
+ "render-default-png": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "-o",
+   "out.png"
+  ],
+  "exit": 0,
+  "files": {
+   "out.png": {
+    "kind": "png",
+    "signature": true
+   }
+  },
+  "stderr": "",
+  "stdout": ""
+ },
+ "render-default-svg": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 0,
+  "files": {
+   "out.svg": {
+    "kind": "svg",
+    "root": "{http://www.w3.org/2000/svg}svg"
+   }
+  },
+  "stderr": "",
+  "stdout": ""
+ },
+ "render-emit-scene-exists": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "-o",
+   "out.svg",
+   "--emit-scene",
+   "scene.json"
+  ],
+  "exit": 2,
+  "files": {
+   "first.svg": {
+    "kind": "svg",
+    "root": "{http://www.w3.org/2000/svg}svg"
+   },
+   "scene.json": {
+    "keys": [
+     "diagnostics",
+     "kind",
+     "manifest",
+     "provenance",
+     "requiredCapabilities",
+     "surfaces",
+     "version",
+     "viewport"
+    ],
+    "kind": "json"
+   }
+  },
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_SCENE_OUTPUT_EXISTS\", \"severity\": \"error\", \"component\": \"scene\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"scene output destination already exists\"}]}\n"
+ },
+ "render-font-metrics-missing": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--font-metrics",
+   "nowhere/metrics.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_INPUT_IO\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"<os error>: 'nowhere/metrics.yaml'\"}]}\n"
+ },
+ "render-format-pdf": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--format",
+   "pdf",
+   "-o",
+   "out.pdf"
+  ],
+  "exit": 0,
+  "files": {
+   "out.pdf": {
+    "kind": "pdf"
+   }
+  },
+  "stderr": "",
+  "stdout": ""
+ },
+ "render-format-png-no-suffix": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--format",
+   "png",
+   "-o",
+   "out"
+  ],
+  "exit": 0,
+  "files": {
+   "out": {
+    "kind": "file"
+   }
+  },
+  "stderr": "",
+  "stdout": ""
+ },
+ "render-format-svg-explicit": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--format",
+   "svg",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 0,
+  "files": {
+   "out.svg": {
+    "kind": "svg",
+    "root": "{http://www.w3.org/2000/svg}svg"
+   }
+  },
+  "stderr": "",
+  "stdout": ""
+ },
+ "render-halcyon-default": {
+  "argv": [
+   "render",
+   "halcyon-1/project.yaml",
+   "--actual",
+   "halcyon-1/actual.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 0,
+  "files": {
+   "out.svg": {
+    "kind": "svg",
+    "root": "{http://www.w3.org/2000/svg}svg"
+   }
+  },
+  "stderr": {
+   "codes": {
+    "I_LAYOUT_PLOT_LABELS_SUPPRESSED": {
+     "count": 1,
+     "keys": [
+      "code",
+      "count",
+      "severity",
+      "surfaceId"
+     ],
+     "sortedKeyLines": true
+    },
+    "W_LAYOUT_ACTUAL_INCOMPLETE": {
+     "count": 1,
+     "keys": [
+      "code",
+      "diagnostic",
+      "severity"
+     ],
+     "sortedKeyLines": true
+    },
+    "W_LAYOUT_LABEL_SUPPRESSED": {
+     "count": 7,
+     "keys": [
+      "code",
+      "diagnostic",
+      "severity"
+     ],
+     "sortedKeyLines": true
+    }
+   },
+   "endsWithNewline": true
+  },
+  "stdout": ""
+ },
+ "render-halcyon-emit-scene": {
+  "argv": [
+   "render",
+   "halcyon-1/project.yaml",
+   "--view",
+   "halcyon-1/view.yaml",
+   "--theme",
+   "halcyon-1/theme.yaml",
+   "--scheme",
+   "halcyon-1/scheme.yaml",
+   "--layout",
+   "halcyon-1/layout.yaml",
+   "--actual",
+   "halcyon-1/actual.yaml",
+   "-o",
+   "out.svg",
+   "--emit-scene",
+   "scene.json"
+  ],
+  "exit": 0,
+  "files": {
+   "out.svg": {
+    "kind": "svg",
+    "root": "{http://www.w3.org/2000/svg}svg"
+   },
+   "scene.json": {
+    "keys": [
+     "diagnostics",
+     "kind",
+     "manifest",
+     "provenance",
+     "requiredCapabilities",
+     "surfaces",
+     "version",
+     "viewport"
+    ],
+    "kind": "json"
+   }
+  },
+  "stderr": {
+   "codes": {
+    "I_LAYOUT_PLOT_LABELS_SUPPRESSED": {
+     "count": 1,
+     "keys": [
+      "code",
+      "count",
+      "severity",
+      "surfaceId"
+     ],
+     "sortedKeyLines": true
+    },
+    "W_LAYOUT_ACTUAL_INCOMPLETE": {
+     "count": 1,
+     "keys": [
+      "code",
+      "diagnostic",
+      "severity"
+     ],
+     "sortedKeyLines": true
+    },
+    "W_LAYOUT_LABEL_SUPPRESSED": {
+     "count": 2,
+     "keys": [
+      "code",
+      "diagnostic",
+      "severity"
+     ],
+     "sortedKeyLines": true
+    }
+   },
+   "endsWithNewline": true
+  },
+  "stdout": ""
+ },
+ "render-halcyon-resources-png": {
+  "argv": [
+   "render",
+   "halcyon-1/project.yaml",
+   "--view",
+   "halcyon-1/view.yaml",
+   "--theme",
+   "halcyon-1/theme.yaml",
+   "--scheme",
+   "halcyon-1/scheme.yaml",
+   "--layout",
+   "halcyon-1/layout.yaml",
+   "--actual",
+   "halcyon-1/actual.yaml",
+   "-o",
+   "out.png"
+  ],
+  "exit": 0,
+  "files": {
+   "out.png": {
+    "kind": "png",
+    "signature": true
+   }
+  },
+  "stderr": {
+   "codes": {
+    "I_LAYOUT_PLOT_LABELS_SUPPRESSED": {
+     "count": 1,
+     "keys": [
+      "code",
+      "count",
+      "severity",
+      "surfaceId"
+     ],
+     "sortedKeyLines": true
+    },
+    "W_LAYOUT_ACTUAL_INCOMPLETE": {
+     "count": 1,
+     "keys": [
+      "code",
+      "diagnostic",
+      "severity"
+     ],
+     "sortedKeyLines": true
+    },
+    "W_LAYOUT_LABEL_SUPPRESSED": {
+     "count": 2,
+     "keys": [
+      "code",
+      "diagnostic",
+      "severity"
+     ],
+     "sortedKeyLines": true
+    }
+   },
+   "endsWithNewline": true
+  },
+  "stdout": ""
+ },
+ "render-halcyon-view-theme-scheme-layout": {
+  "argv": [
+   "render",
+   "halcyon-1/project.yaml",
+   "--view",
+   "halcyon-1/view.yaml",
+   "--theme",
+   "halcyon-1/theme.yaml",
+   "--scheme",
+   "halcyon-1/scheme.yaml",
+   "--layout",
+   "halcyon-1/layout.yaml",
+   "--actual",
+   "halcyon-1/actual.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 0,
+  "files": {
+   "out.svg": {
+    "kind": "svg",
+    "root": "{http://www.w3.org/2000/svg}svg"
+   }
+  },
+  "stderr": {
+   "codes": {
+    "I_LAYOUT_PLOT_LABELS_SUPPRESSED": {
+     "count": 1,
+     "keys": [
+      "code",
+      "count",
+      "severity",
+      "surfaceId"
+     ],
+     "sortedKeyLines": true
+    },
+    "W_LAYOUT_ACTUAL_INCOMPLETE": {
+     "count": 1,
+     "keys": [
+      "code",
+      "diagnostic",
+      "severity"
+     ],
+     "sortedKeyLines": true
+    },
+    "W_LAYOUT_LABEL_SUPPRESSED": {
+     "count": 2,
+     "keys": [
+      "code",
+      "diagnostic",
+      "severity"
+     ],
+     "sortedKeyLines": true
+    }
+   },
+   "endsWithNewline": true
+  },
+  "stdout": ""
+ },
+ "render-icon-catalog-missing": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--icon-catalog",
+   "nowhere/icons.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_INPUT_IO\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"<os error>: 'nowhere/icons.yaml'\"}]}\n"
+ },
+ "render-ingress-findings-across-resources": {
+  "argv": [
+   "render",
+   "halcyon-1/project.yaml",
+   "--view",
+   "halcyon-1/view.yaml",
+   "--theme",
+   "halcyon-1/theme.yaml",
+   "--scheme",
+   "halcyon-1/scheme.yaml",
+   "--layout",
+   "halcyon-1/layout.yaml",
+   "--actual",
+   "halcyon-1/actual.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_VIEW_SCHEMA\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/body/surface\", \"revisionRefs\": [], \"message\": \"expected one of 'table-timeline', 'dependency-network'\", \"resourceKind\": \"view\", \"resourceIdentity\": \"halcyon-01-mission-brief\", \"phase\": \"schema\", \"rule\": \"enum\"}, {\"code\": \"E_THEME_SCHEMA\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/body/values/opacity.axis-band/type\", \"revisionRefs\": [], \"message\": \"expected one of 'number', 'fontFamily', 'fontWeight', 'dashPattern', 'marker', 'pattern', 'symbol', 'textAlternative', 'lineCap', 'lineJoin', 'fidelity', 'textTransform', 'numericSpacing', 'annotationContainer'\", \"resourceKind\": \"theme\", \"resourceIdentity\": \"briefing\", \"phase\": \"schema\", \"rule\": \"enum\"}]}\n"
+ },
+ "render-ingress-one-finding": {
+  "argv": [
+   "render",
+   "halcyon-1/project.yaml",
+   "--view",
+   "halcyon-1/view.yaml",
+   "--theme",
+   "halcyon-1/theme.yaml",
+   "--scheme",
+   "halcyon-1/scheme.yaml",
+   "--layout",
+   "halcyon-1/layout.yaml",
+   "--actual",
+   "halcyon-1/actual.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_VIEW_SCHEMA\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/body/surface\", \"revisionRefs\": [], \"message\": \"expected one of 'table-timeline', 'dependency-network'\"}]}\n"
+ },
+ "render-layout-only": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--layout",
+   "halcyon-1/layout.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_LAYOUT_TOKEN_REQUIREMENT_UNAVAILABLE\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/root/padding\", \"revisionRefs\": [], \"message\": \"E_LAYOUT_TOKEN_REQUIREMENT_UNAVAILABLE\"}]}\n"
+ },
+ "render-missing-output-argument": {
+  "argv": [
+   "render",
+   "starter.yaml"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_COMMAND_SYNTAX\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"the following arguments are required: --output/-o\"}]}\n"
+ },
+ "render-missing-project": {
+  "argv": [
+   "render",
+   "missing.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_INPUT_IO\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"<os error>: 'missing.yaml'\"}]}\n"
+ },
+ "render-no-project-argument": {
+  "argv": [
+   "render",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_COMMAND_SYNTAX\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"the following arguments are required: project\"}]}\n"
+ },
+ "render-not-a-mapping-project": {
+  "argv": [
+   "render",
+   "not-a-mapping.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_PROJECT_SCHEMA\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"E_PROJECT_SCHEMA\"}]}\n"
+ },
+ "render-output-directory-missing": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "-o",
+   "nowhere/out.svg"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_INPUT_IO\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"<os error>: 'nowhere/out.svg'\"}]}\n"
+ },
+ "render-output-extension-unknown": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "-o",
+   "out.gif"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_RENDER_OUTPUT_EXTENSION\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/output\", \"revisionRefs\": [], \"message\": \"output suffix .gif is unknown; use one of .svg, .png, .pdf, .typ, .tex or no suffix\"}]}\n"
+ },
+ "render-output-format-mismatch": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--format",
+   "png",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_RENDER_OUTPUT_FORMAT_MISMATCH\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/output\", \"revisionRefs\": [], \"message\": \"output suffix .svg selects svg, but the target is png\"}]}\n"
+ },
+ "render-preset-builtin-id": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--preset",
+   "editorial",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 0,
+  "files": {
+   "out.svg": {
+    "kind": "svg",
+    "root": "{http://www.w3.org/2000/svg}svg"
+   }
+  },
+  "stderr": "",
+  "stdout": ""
+ },
+ "render-preset-builtin-id-png": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--preset",
+   "technical-print",
+   "-o",
+   "out.png"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_PRESET_VISUAL_PROFILE_TARGET\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/body/visualProfile/preferred\", \"revisionRefs\": [], \"message\": \"preset prefers chrona-output/visual/v0.7-svg, which cannot serve png; pass --visual-profile explicitly\"}]}\n"
+ },
+ "render-preset-copied-path": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--preset",
+   "pc/preset.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 0,
+  "files": {
+   "out.svg": {
+    "kind": "svg",
+    "root": "{http://www.w3.org/2000/svg}svg"
+   },
+   "pc/detail.yaml": {
+    "kind": "yaml"
+   },
+   "pc/layout.yaml": {
+    "kind": "yaml"
+   },
+   "pc/preset.yaml": {
+    "kind": "yaml"
+   },
+   "pc/scheme.yaml": {
+    "kind": "yaml"
+   },
+   "pc/theme.yaml": {
+    "kind": "yaml"
+   },
+   "pc/view.yaml": {
+    "kind": "yaml"
+   }
+  },
+  "stderr": "",
+  "stdout": ""
+ },
+ "render-preset-path-missing": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--preset",
+   "nowhere/preset.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_INPUT_IO\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"<os error>: 'nowhere/preset.yaml'\"}]}\n"
+ },
+ "render-preset-stale-copy": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--preset",
+   "pc/preset.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 1,
+  "files": {
+   "pc/detail.yaml": {
+    "kind": "yaml"
+   },
+   "pc/layout.yaml": {
+    "kind": "yaml"
+   },
+   "pc/preset.yaml": {
+    "kind": "yaml"
+   },
+   "pc/scheme.yaml": {
+    "kind": "yaml"
+   },
+   "pc/theme.yaml": {
+    "kind": "yaml"
+   },
+   "pc/view.yaml": {
+    "kind": "yaml"
+   }
+  },
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_RESOURCE_VERSION_UNSUPPORTED\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/version\", \"revisionRefs\": [], \"message\": \"theme id=chrona-builtin-editorial declares version chrona/theme/v0.0; supported: chrona/theme/v0.11, chrona/theme/v0.13, chrona/theme/v0.14; run chrona preset copy editorial --output <new-dir> and re-apply your edits\"}]}\n"
+ },
+ "render-preset-unknown": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--preset",
+   "no-such-preset",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_BUILTIN_PRESET_UNKNOWN\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"E_BUILTIN_PRESET_UNKNOWN\"}]}\n"
+ },
+ "render-preset-with-scheme-override": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--preset",
+   "editorial",
+   "--scheme",
+   "halcyon-1/scheme.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 0,
+  "files": {
+   "out.svg": {
+    "kind": "svg",
+    "root": "{http://www.w3.org/2000/svg}svg"
+   }
+  },
+  "stderr": "",
+  "stdout": ""
+ },
+ "render-reference-error-project": {
+  "argv": [
+   "render",
+   "reference-error.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_REFERENCE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/relations/0/to/object\", \"revisionRefs\": [], \"message\": \"Unknown to object\"}]}\n"
+ },
+ "render-review-gallery-one-context": {
+  "argv": [
+   "render-review-gallery",
+   "--context-reference",
+   "starter.yaml",
+   "--snapshot-root",
+   "snaps",
+   "--store-identity",
+   "char-store",
+   "--output-directory",
+   "gallery"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_SCHEME_GALLERY_INPUT\", \"severity\": \"error\", \"component\": \"gallery\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"at least two Context references are required\"}]}\n"
+ },
+ "render-review-missing-context": {
+  "argv": [
+   "render-review",
+   "--context-reference",
+   "missing.yaml",
+   "--snapshot-root",
+   "snaps",
+   "--store-identity",
+   "char-store",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_INPUT_IO\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"<os error>: 'missing.yaml'\"}]}\n"
+ },
+ "render-review-no-store": {
+  "argv": [
+   "render-review",
+   "--context-reference",
+   "starter.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_COMMAND_SYNTAX\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"render-review requires --store-config or both --snapshot-root and --store-identity\"}]}\n"
+ },
+ "render-review-store-config-missing": {
+  "argv": [
+   "render-review",
+   "--context-reference",
+   "starter.yaml",
+   "--store-config",
+   "missing-store.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_STORE_CONFIG_REQUIRED\", \"severity\": \"error\", \"component\": \"store-config\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"cannot use Store config missing-store.yaml: E_STORE_CONFIG_REQUIRED\"}]}\n"
+ },
+ "render-schema-error-project": {
+  "argv": [
+   "render",
+   "schema-error.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_PROJECT_SCHEMA\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/objects/a\", \"revisionRefs\": [], \"message\": \"missing required property 'schedule'\"}]}\n"
+ },
+ "render-starter-emit-scene": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "-o",
+   "out.svg",
+   "--emit-scene",
+   "scene.json"
+  ],
+  "exit": 0,
+  "files": {
+   "out.svg": {
+    "kind": "svg",
+    "root": "{http://www.w3.org/2000/svg}svg"
+   },
+   "scene.json": {
+    "keys": [
+     "diagnostics",
+     "kind",
+     "manifest",
+     "provenance",
+     "requiredCapabilities",
+     "surfaces",
+     "version",
+     "viewport"
+    ],
+    "kind": "json"
+   }
+  },
+  "stderr": "",
+  "stdout": ""
+ },
+ "render-theme-is-a-view": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--theme",
+   "halcyon-1/view.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_RESOURCE_VERSION_UNSUPPORTED\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/version\", \"revisionRefs\": [], \"message\": \"theme id=halcyon-01-mission-brief declares version chrona/view/v0.27; supported: chrona/theme/v0.11, chrona/theme/v0.13, chrona/theme/v0.14; see the current resource schema and migration notes before re-applying edits\"}]}\n"
+ },
+ "render-theme-missing-file": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--theme",
+   "nowhere/theme.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_INPUT_IO\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"<os error>: 'nowhere/theme.yaml'\"}]}\n"
+ },
+ "render-theme-only": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--theme",
+   "halcyon-1/theme.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_SCHEME_INTENT_UNKNOWN\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"E_SCHEME_INTENT_UNKNOWN\"}]}\n"
+ },
+ "render-theme-schema-error": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--theme",
+   "bad-theme.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_RESOURCE_VERSION_UNSUPPORTED\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/version\", \"revisionRefs\": [], \"message\": \"theme id=nope declares version chrona/theme/v0.1; supported: chrona/theme/v0.11, chrona/theme/v0.13, chrona/theme/v0.14; see the current resource schema and migration notes before re-applying edits\"}]}\n"
+ },
+ "render-typesetter-descriptor-missing": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--format",
+   "typst",
+   "-o",
+   "out.typ"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_RENDER_TYPESETTER_DESCRIPTOR\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/typesetter\", \"revisionRefs\": [], \"message\": \"typeset Draft targets require --typesetter-engine, --typesetter-version, and --typesetter-adapter-grammar\"}]}\n"
+ },
+ "render-typesetter-descriptor-on-svg": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--typesetter-engine",
+   "typst",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_RENDER_TYPESETTER_DESCRIPTOR\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/typesetter\", \"revisionRefs\": [], \"message\": \"typesetter descriptor is valid only with --format typst or tikz\"}]}\n"
+ },
+ "render-typst-with-descriptor": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--format",
+   "typst",
+   "--typesetter-engine",
+   "typst",
+   "--typesetter-version",
+   "0.13.1",
+   "--typesetter-adapter-grammar",
+   "chrona/typst-adapter/v0.1",
+   "-o",
+   "out.typ"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_RENDER_CONTEXT_SCHEMA\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/body/environment/typesetter/adapterGrammar\", \"revisionRefs\": [], \"message\": \"expected one of 'chrona-typst/v0.1', 'chrona-tikz/v0.1'\"}]}\n"
+ },
+ "render-unexpected-exception": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_TOOL_FAILURE\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"characterization: unexpected failure\"}]}\n"
+ },
+ "render-view-is-a-theme": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--view",
+   "halcyon-1/theme.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_RESOURCE_VERSION_UNSUPPORTED\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/version\", \"revisionRefs\": [], \"message\": \"view id=briefing declares version chrona/theme/v0.11; supported: chrona/view/v0.26, chrona/view/v0.27, chrona/view/v0.28; see the current resource schema and migration notes before re-applying edits\"}]}\n"
+ },
+ "render-view-missing-file": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--view",
+   "nowhere/view.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_INPUT_IO\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"<os error>: 'nowhere/view.yaml'\"}]}\n"
+ },
+ "render-view-only": {
+  "argv": [
+   "render",
+   "halcyon-1/project.yaml",
+   "--view",
+   "halcyon-1/view.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_ACTUAL_REQUIRED\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"E_ACTUAL_REQUIRED\"}]}\n"
+ },
+ "render-viewport": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--viewport",
+   "900x700",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 0,
+  "files": {
+   "out.svg": {
+    "kind": "svg",
+    "root": "{http://www.w3.org/2000/svg}svg"
+   }
+  },
+  "stderr": "",
+  "stdout": ""
+ },
+ "render-viewport-width-only": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--viewport",
+   "900xauto",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 0,
+  "files": {
+   "out.svg": {
+    "kind": "svg",
+    "root": "{http://www.w3.org/2000/svg}svg"
+   }
+  },
+  "stderr": "",
+  "stdout": ""
+ },
+ "render-visual-profile": {
+  "argv": [
+   "render",
+   "starter.yaml",
+   "--visual-profile",
+   "chrona-output/visual/v0.7-svg",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 0,
+  "files": {
+   "out.svg": {
+    "kind": "svg",
+    "root": "{http://www.w3.org/2000/svg}svg"
+   }
+  },
+  "stderr": "",
+  "stdout": ""
+ },
+ "render-workspace-bad-viewport": {
+  "argv": [
+   "render-workspace",
+   "missing.yaml",
+   "--viewport",
+   "0x0",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_COMMAND_VIEWPORT\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/viewport\", \"revisionRefs\": [], \"message\": \"viewport dimensions must be positive or block size may be auto\"}]}\n"
+ },
+ "render-workspace-missing": {
+  "argv": [
+   "render-workspace",
+   "missing.yaml",
+   "-o",
+   "out.svg"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_INPUT_IO\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"<os error>: 'missing.yaml'\"}]}\n"
+ },
+ "review-missing-reference": {
+  "argv": [
+   "review",
+   "a.yaml",
+   "b.yaml",
+   "--snapshot-root",
+   "snaps",
+   "--store-identity",
+   "char-store"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_INPUT_IO\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"<os error>: 'a.yaml'\"}]}\n"
+ },
+ "schedule-broken-yaml": {
+  "argv": [
+   "schedule",
+   "broken-yaml.yaml"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_INPUT_YAML\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"while parsing a flow sequence\\n  in \\\"broken-yaml.yaml\\\", line 1, column 10\\ndid not find expected ',' or ']'\\n  in \\\"broken-yaml.yaml\\\", line 2, column 8\"}]}\n"
+ },
+ "schedule-contradictory-bounds": {
+  "argv": [
+   "schedule",
+   "contradictory.yaml"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_CONTRADICTORY_BOUNDS\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/objects/build/schedule/constraints/end/max\", \"revisionRefs\": [], \"message\": \"Resolved endpoint exceeds maximum bound\"}]}\n"
+ },
+ "schedule-cycle-rejected": {
+  "argv": [
+   "schedule",
+   "cycle.yaml"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_UNSUPPORTED_CYCLE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/objects/a\", \"revisionRefs\": [], \"message\": \"Unresolved dependency system; reference scheduler supports an acyclic subset\"}, {\"code\": \"E_UNSUPPORTED_CYCLE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/objects/b\", \"revisionRefs\": [], \"message\": \"Unresolved dependency system; reference scheduler supports an acyclic subset\"}]}\n"
+ },
+ "schedule-halcyon-ok": {
+  "argv": [
+   "schedule",
+   "halcyon-1/project.yaml"
+  ],
+  "exit": 0,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\n  \"placements\": {\n    \"pdr\": {\n      \"at\": \"2027-03-05\"\n    },\n    \"structure\": {\n      \"start\": \"2027-03-08\",\n      \"end\": \"2027-04-06\"\n    },\n    \"avionics\": {\n      \"start\": \"2027-04-06\",\n      \"end\": \"2027-04-27\"\n    },\n    \"eps\": {\n      \"start\": \"2027-03-22\",\n      \"end\": \"2027-04-08\"\n    },\n    \"bus-test\": {\n      \"start\": \"2027-04-29\",\n      \"end\": \"2027-05-13\"\n    },\n    \"cdr\": {\n      \"at\": \"2027-05-07\"\n    },\n    \"optics\": {\n      \"start\": \"2027-03-08\",\n      \"end\": \"2027-04-01\"\n    },\n    \"detector\": {\n      \"start\": \"2027-04-05\",\n      \"end\": \"2027-04-19\"\n    },\n    \"payload-tvac\": {\n      \"start\": \"2027-04-19\",\n      \"end\": \"2027-04-27\"\n    },\n    \"payload-delivery\": {\n      \"at\": \"2027-07-02\"\n    },\n    \"integration\": {\n      \"start\": \"2027-07-06\",\n      \"end\": \"2027-07-27\"\n    },\n    \"vibration\": {\n      \"start\": \"2027-07-28\",\n      \"end\": \"2027-08-04\"\n    },\n    \"tvac\": {\n      \"start\": \"2027-08-06\",\n      \"end\": \"2027-08-20\"\n    },\n    \"emc\": {\n      \"start\": \"2027-08-23\",\n      \"end\": \"2027-08-30\"\n    },\n    \"psr\": {\n      \"at\": \"2027-09-10\"\n    },\n    \"mcs\": {\n      \"start\": \"2027-03-08\",\n      \"end\": \"2027-05-11\"\n    },\n    \"station\": {\n      \"start\": \"2027-04-19\",\n      \"end\": \"2027-06-01\"\n    },\n    \"comms-test\": {\n      \"start\": \"2027-06-01\",\n      \"end\": \"2027-06-08\"\n    },\n    \"launch-contract\": {\n      \"at\": \"2027-04-16\"\n    },\n    \"shipment\": {\n      \"start\": \"2027-09-14\",\n      \"end\": \"2027-09-20\"\n    },\n    \"campaign\": {\n      \"start\": \"2027-09-21\",\n      \"end\": \"2027-10-08\"\n    },\n    \"spacecraft-ait\": {\n      \"start\": \"2027-07-06\",\n      \"end\": \"2027-09-10\"\n    },\n    \"ground-segment\": {\n      \"start\": \"2027-03-08\",\n      \"end\": \"2027-09-14\"\n    },\n    \"mission-closeout\": {\n      \"start\": \"2027-10-15\",\n      \"end\": \"2027-11-19\"\n    },\n    \"frr\": {\n      \"at\": \"2027-10-15\"\n    },\n    \"launch\": {\n      \"at\": \"2027-10-22\"\n    },\n    \"rehearsals\": {\n      \"start\": \"2027-08-30\",\n      \"end\": \"2027-09-14\"\n    },\n    \"leop\": {\n      \"start\": \"2027-10-22\",\n      \"end\": \"2027-11-12\"\n    },\n    \"first-light\": {\n      \"at\": \"2027-11-19\"\n    }\n  },\n  \"diagnostics\": [],\n  \"analysis\": {\n    \"criticalObjectIds\": [\n      \"pdr\",\n      \"eps\",\n      \"cdr\",\n      \"optics\",\n      \"payload-delivery\",\n      \"psr\",\n      \"mcs\",\n      \"station\",\n      \"launch-contract\",\n      \"frr\",\n      \"launch\",\n      \"rehearsals\",\n      \"leop\",\n      \"first-light\"\n    ],\n    \"totalFloat\": {\n      \"avionics\": 23,\n      \"bus-test\": 41,\n      \"campaign\": 5,\n      \"cdr\": 0,\n      \"comms-test\": 58,\n      \"detector\": 45,\n      \"emc\": 6,\n      \"eps\": 0,\n      \"first-light\": 0,\n      \"frr\": 0,\n      \"integration\": 6,\n      \"launch\": 0,\n      \"launch-contract\": 0,\n      \"leop\": 0,\n      \"mcs\": 0,\n      \"optics\": 0,\n      \"payload-delivery\": 0,\n      \"payload-tvac\": 45,\n      \"pdr\": 0,\n      \"psr\": 0,\n      \"rehearsals\": 0,\n      \"shipment\": 5,\n      \"station\": 0,\n      \"structure\": 23,\n      \"tvac\": 6,\n      \"vibration\": 6\n    }\n  }\n}\n"
+ },
+ "schedule-missing-file": {
+  "argv": [
+   "schedule",
+   "missing.yaml"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_INPUT_IO\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"<os error>: 'missing.yaml'\"}]}\n"
+ },
+ "schedule-no-project": {
+  "argv": [
+   "schedule"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_COMMAND_SYNTAX\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"a raw project or complete snapshot mode is required\"}]}\n"
+ },
+ "schedule-reference-error": {
+  "argv": [
+   "schedule",
+   "reference-error.yaml"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_REFERENCE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/relations/0/to/object\", \"revisionRefs\": [], \"message\": \"Unknown to object\"}]}\n"
+ },
+ "schedule-schema-error": {
+  "argv": [
+   "schedule",
+   "schema-error.yaml"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_SCHEMA\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/objects/a\", \"revisionRefs\": [], \"message\": \"missing required property 'schedule'\"}]}\n"
+ },
+ "schedule-snapshot-ok": {
+  "argv": [
+   "schedule",
+   "--snapshot-reference",
+   "snapshot-reference.yaml",
+   "--snapshot-root",
+   "snaps",
+   "--store-identity",
+   "char-store",
+   "--allow-missing-content-identity"
+  ],
+  "exit": 0,
+  "files": {
+   "snaps/revision-r1/project.yaml": {
+    "kind": "yaml"
+   }
+  },
+  "stderr": "",
+  "stdout": "{\n  \"placements\": {\n    \"design\": {\n      \"start\": \"2026-10-01\",\n      \"end\": \"2026-10-31\"\n    },\n    \"build\": {\n      \"start\": \"2026-11-03\",\n      \"end\": \"2026-12-15\"\n    },\n    \"release\": {\n      \"at\": \"2026-12-18\"\n    }\n  },\n  \"diagnostics\": [],\n  \"analysis\": {\n    \"criticalObjectIds\": [\n      \"design\",\n      \"build\",\n      \"release\"\n    ],\n    \"totalFloat\": {\n      \"build\": 0,\n      \"design\": 0,\n      \"release\": 0\n    }\n  }\n}\n"
+ },
+ "schedule-starter-ok": {
+  "argv": [
+   "schedule",
+   "starter.yaml"
+  ],
+  "exit": 0,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\n  \"placements\": {\n    \"design\": {\n      \"start\": \"2026-10-01\",\n      \"end\": \"2026-10-31\"\n    },\n    \"build\": {\n      \"start\": \"2026-11-03\",\n      \"end\": \"2026-12-15\"\n    },\n    \"release\": {\n      \"at\": \"2026-12-18\"\n    }\n  },\n  \"diagnostics\": [],\n  \"analysis\": {\n    \"criticalObjectIds\": [\n      \"design\",\n      \"build\",\n      \"release\"\n    ],\n    \"totalFloat\": {\n      \"build\": 0,\n      \"design\": 0,\n      \"release\": 0\n    }\n  }\n}\n"
+ },
+ "schedule-unexpected-exception": {
+  "argv": [
+   "schedule",
+   "starter.yaml"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_TOOL_FAILURE\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"characterization: unexpected failure\"}]}\n"
+ },
+ "unknown-command": {
+  "argv": [
+   "frobnicate"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_COMMAND_SYNTAX\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"argument command: invalid choice: 'frobnicate' (choose from 'validate', 'schedule', 'render', 'icon-catalog', 'font', 'workspace', 'identity', 'authoring-command-apply', 'materialize-presentation-preset', 'render-workspace', 'render-review', 'materialize', 'init', 'preset', 'render-review-gallery', 'review', 'baseline-compare', 'command-check', 'command-apply', 'actual-intake', 'actual-resolve', 'baseline-capture')\"}]}\n"
+ },
+ "validate-broken-yaml": {
+  "argv": [
+   "validate",
+   "broken-yaml.yaml"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_INPUT_YAML\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"while parsing a flow sequence\\n  in \\\"broken-yaml.yaml\\\", line 1, column 10\\ndid not find expected ',' or ']'\\n  in \\\"broken-yaml.yaml\\\", line 2, column 8\"}]}\n"
+ },
+ "validate-cycle-passes-validation": {
+  "argv": [
+   "validate",
+   "cycle.yaml"
+  ],
+  "exit": 0,
+  "files": {},
+  "stderr": "",
+  "stdout": "[]\n"
+ },
+ "validate-empty-file": {
+  "argv": [
+   "validate",
+   "empty.yaml"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_TOOL_FAILURE\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"'NoneType' object has no attribute 'get'\"}]}\n"
+ },
+ "validate-halcyon-ok": {
+  "argv": [
+   "validate",
+   "halcyon-1/project.yaml"
+  ],
+  "exit": 0,
+  "files": {},
+  "stderr": "",
+  "stdout": "[]\n"
+ },
+ "validate-missing-file": {
+  "argv": [
+   "validate",
+   "missing.yaml"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_INPUT_IO\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"<os error>: 'missing.yaml'\"}]}\n"
+ },
+ "validate-no-project": {
+  "argv": [
+   "validate"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_COMMAND_SYNTAX\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"a raw project or complete snapshot mode is required\"}]}\n"
+ },
+ "validate-not-a-mapping": {
+  "argv": [
+   "validate",
+   "not-a-mapping.yaml"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_TOOL_FAILURE\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"'list' object has no attribute 'get'\"}]}\n"
+ },
+ "validate-path-is-directory": {
+  "argv": [
+   "validate",
+   "halcyon-1"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_INPUT_IO\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"<os error>: 'halcyon-1'\"}]}\n"
+ },
+ "validate-reference-error": {
+  "argv": [
+   "validate",
+   "reference-error.yaml"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_REFERENCE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/relations/0/to/object\", \"revisionRefs\": [], \"message\": \"Unknown to object\"}]}\n"
+ },
+ "validate-schema-error": {
+  "argv": [
+   "validate",
+   "schema-error.yaml"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_SCHEMA\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/objects/a\", \"revisionRefs\": [], \"message\": \"missing required property 'schedule'\"}]}\n"
+ },
+ "validate-snapshot-and-project": {
+  "argv": [
+   "validate",
+   "starter.yaml",
+   "--snapshot-reference",
+   "snapshot-reference.yaml",
+   "--snapshot-root",
+   "snaps",
+   "--store-identity",
+   "char-store"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_COMMAND_SYNTAX\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"snapshot mode requires --snapshot-reference, --snapshot-root, and --store-identity without a raw project\"}]}\n"
+ },
+ "validate-snapshot-missing-reference": {
+  "argv": [
+   "validate",
+   "--snapshot-reference",
+   "absent.yaml",
+   "--snapshot-root",
+   "snaps",
+   "--store-identity",
+   "char-store"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_INPUT_IO\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"<os error>: 'absent.yaml'\"}]}\n"
+ },
+ "validate-snapshot-ok": {
+  "argv": [
+   "validate",
+   "--snapshot-reference",
+   "snapshot-reference.yaml",
+   "--snapshot-root",
+   "snaps",
+   "--store-identity",
+   "char-store",
+   "--allow-missing-content-identity"
+  ],
+  "exit": 0,
+  "files": {
+   "snaps/revision-r1/project.yaml": {
+    "kind": "yaml"
+   }
+  },
+  "stderr": "",
+  "stdout": "[]\n"
+ },
+ "validate-snapshot-partial": {
+  "argv": [
+   "validate",
+   "--snapshot-reference",
+   "snapshot-reference.yaml"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_COMMAND_SYNTAX\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"snapshot mode requires --snapshot-reference, --snapshot-root, and --store-identity without a raw project\"}]}\n"
+ },
+ "validate-snapshot-unreadable-resource": {
+  "argv": [
+   "validate",
+   "--snapshot-reference",
+   "snapshot-reference.yaml",
+   "--snapshot-root",
+   "snaps",
+   "--store-identity",
+   "char-store"
+  ],
+  "exit": 1,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_STORE_REFERENCE\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"reference address=project.yaml; expected immutable file under revision=r1; found no file\"}]}\n"
+ },
+ "validate-starter-ok": {
+  "argv": [
+   "validate",
+   "starter.yaml"
+  ],
+  "exit": 0,
+  "files": {},
+  "stderr": "",
+  "stdout": "[]\n"
+ },
+ "validate-unexpected-exception": {
+  "argv": [
+   "validate",
+   "starter.yaml"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_TOOL_FAILURE\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"characterization: unexpected failure\"}]}\n"
+ },
+ "validate-unknown-flag": {
+  "argv": [
+   "validate",
+   "starter.yaml",
+   "--nope"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_COMMAND_SYNTAX\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"unrecognized arguments: --nope\"}]}\n"
+ },
+ "workspace-revision-missing": {
+  "argv": [
+   "workspace",
+   "revision",
+   "missing.yaml"
+  ],
+  "exit": 2,
+  "files": {},
+  "stderr": "",
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_INPUT_IO\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"<os error>: 'missing.yaml'\"}]}\n"
+ }
+}
