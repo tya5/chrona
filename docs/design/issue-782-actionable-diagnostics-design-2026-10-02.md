@@ -45,10 +45,13 @@ table keeps working for the rest.
 (a) fix every producer; (b) leave the rows bare; (c) a guarantee at the one place
 every row passes (`diagnostic_record`): an informative message is kept; a bare one
 is replaced by a curated sentence if the code has one, else by a derived one that
-says no further detail is recorded. Chosen (c), plus curated sentences for every
-code an agent reaches by an ordinary mistake (the codes in the characterization
-golden and in the skill's table), plus (a) for `E_BUILTIN_PRESET_UNKNOWN` and
-`E_BUILTIN_PRESET_OUTPUT_EXISTS` whose producers know the value. Why: (a) is
+says no further detail is recorded. Chosen (c), plus curated sentences for the codes
+whose producer cannot know the value and that an agent reaches by an ordinary
+mistake, plus (a) where the producer knows the value: `E_BUILTIN_PRESET_UNKNOWN`,
+`E_BUILTIN_PRESET_OUTPUT_EXISTS` and the "not a mapping" case of a Draft resource
+file (`E_PROJECT_SCHEMA` and its siblings). The coverage test is that every row the
+characterization golden and the skill's provoking tests produce is informative,
+not that each has a curated entry. Why: (a) is
 rewriting about 650 sites in Layout, Theme and font code that an agent only meets
 as an internal invariant; (b) fails the issue. The derived sentence is honest
 about its limit. The remaining producers stay in the derived inventory backlog and
@@ -96,6 +99,14 @@ plan shape is a rejected input, not a tool failure, and the three commands shoul
 agree. This is the one deliberate change of status and exit code in this issue;
 it is in the golden diff and the Spec 66 note. Reverse: remove the guard.
 
+**D9. Tool-set version.** Spec 66 section 2 says a change to an output schema
+changes the tool-set version. The tool result schema gains optional `count` and
+`occurrences`, so `chrona/agent-tools/v0.1` becomes `v0.2` (both properties in one
+bump, so slice S2 needs none). Options: keep `v0.1` because the properties are
+optional; bump. Chosen: bump, because the rule is stated and a consumer pinning the
+set should see the change. Reverse: keep the property additions and restore the
+string.
+
 ## Contracts
 
 ### Error rows
@@ -110,17 +121,24 @@ It returns the six fixed keys unchanged, with `message` passed through
 - else `<code words>: no further detail is recorded for this code (<CODE>)`, built
   from the code, never empty and never equal to the code.
 
-The failure ladder (`report_failure`) changes in four places, all in
+The failure ladder (`report_failure`) changes in three places, all in
 `usecases/failure_report.py`:
 
 - a bare `ValueError` text is split into a **code** (the leading `E_[A-Z0-9_]+`
   token) and a message (the whole text, so detail after `:` is kept); today a
-  multi-line text becomes the code (`command-check-broken-json`);
-- `LayoutError` and `ColorSchemeError` already carry a location; it becomes
-  `sourceRef` (`/` today) and the token or detail reaches the message;
+  multi-line text becomes the **code** (`command-check-broken-json`);
 - an empty `str(error)` in the last-resort branch becomes the exception class name;
 - `rejection_report` and the ingress report call `collapse_records`, which merges
   rows equal in every key and adds `count` to the first.
+
+`LayoutError` and `ColorSchemeError` reach the ladder already converted
+(`RenderFailed` with a `sourceRef`, and `ClosureError` with one), so the ladder does
+not change for them. Two conversions do: `render_review` drops the token or node a
+`LayoutError` carries (`E_LAYOUT_TOKEN_REQUIREMENT_UNAVAILABLE` names the token in
+`node_id`), so its message now guarantees a sentence and appends `(<node_id>)`; and
+`usecases/project_checks.py` rejects a non-mapping Project (D8). The Draft-resource
+loader in `presentation/model/closure.py` names what was found (`a project file must
+be a YAML mapping; found a list`) in place of the bare `E_PROJECT_SCHEMA`.
 
 ### Warning rows
 
@@ -159,8 +177,9 @@ an emitted code with no entry, so the fallback is a safety net, not a design.
 Every existing key keeps its name, type and position (CLI error rows keep six
 fixed keys in order; stderr lines stay sorted-key JSON). New: `message` on warning
 rows, `count` and `occurrences`. Changed values, all intended and listed in the
-golden diff: messages that were a bare code; `sourceRef` of layout and colour
-scheme findings; the number of stderr warning lines; the D8 status and exit code.
+golden diff: messages that were a bare code (a layout finding now names its
+token); the **code** of a `ValueError` whose text had detail; the number of stderr
+warning lines; the D8 status and exit code; the tool-set version (D9).
 The Scene JSON, the `diagnostics` list of a Scene, the SVG and PNG bytes and the
 schedule output are unchanged.
 
@@ -187,7 +206,7 @@ one `describe_warning` case.
 ## Test design
 
 Synthetic fixtures for the rule (an empty, a code-equal and a `source=` message for
-every code the inventory derives; collapse of equal, near-equal and interleaved
+every code the inventory derives, through the record builder and through the ladder; collapse of equal, near-equal and interleaved
 rows; cap and counts); a per-code test that every `W_` literal the source emits has
 a curated entry; the Halcyon fixture end to end for the real warning set; CLI and
 MCP equality of rows and counts; the characterization golden diff, reviewed row by
