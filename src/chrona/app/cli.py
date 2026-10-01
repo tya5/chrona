@@ -145,7 +145,7 @@ def _add_snapshot_arguments(command: argparse.ArgumentParser) -> None:
     command.add_argument("--snapshot-reference", help="immutable Project resource-reference YAML")
     command.add_argument("--snapshot-root", help="local snapshot adapter root")
     command.add_argument("--store-identity", help="expected local snapshot store identity")
-    command.add_argument("--require-content-identity", action="store_true", help="reject snapshot references without an exact content identity")
+    command.add_argument("--allow-missing-content-identity", action="store_true", help="accept references without an exact content identity (explicit opt-out)")
 
 
 def _add_draft_target_arguments(command: argparse.ArgumentParser) -> None:
@@ -211,7 +211,7 @@ def _load_primary_project(args: argparse.Namespace) -> dict[str, Any]:
                 exit_code=2,
             )
         reference = load_yaml(args.snapshot_reference)
-        return load_project(reference, LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=args.require_content_identity))
+        return load_project(reference, LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=not args.allow_missing_content_identity))
     if not args.project:
         raise CliFailure("E_COMMAND_SYNTAX", "a raw project or complete snapshot mode is required", exit_code=2)
     return load_yaml(args.project)
@@ -309,7 +309,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--context-reference", required=True, help="immutable Render Context resource-reference YAML")
     command.add_argument("--snapshot-root", required=True)
     command.add_argument("--store-identity", required=True)
-    command.add_argument("--require-content-identity", action="store_true", help="reject Context closure references without an exact content identity")
+    command.add_argument("--allow-missing-content-identity", action="store_true", help="accept references without an exact content identity (explicit opt-out)")
     command.add_argument("--reject-unused-closure-inputs", action="store_true", help="reject a render whose Context declares inputs the render never reads")
     command.add_argument("--format", choices=("svg", "png", "pdf", "typst", "tikz"), help="assert the Context target format")
     command.add_argument("--output", "-o", required=True)
@@ -338,7 +338,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--context-reference", required=True, action="append", help="immutable Render Context v0.8 resource-reference YAML; repeat for each scheme")
     command.add_argument("--snapshot-root", required=True)
     command.add_argument("--store-identity", required=True)
-    command.add_argument("--require-content-identity", action="store_true", help="reject Context closure references without an exact content identity")
+    command.add_argument("--allow-missing-content-identity", action="store_true", help="accept references without an exact content identity (explicit opt-out)")
     command.add_argument("--output-directory", required=True)
 
     command = sub.add_parser("review", help="compare two immutable Project snapshots", description="compare two immutable Project snapshots")
@@ -346,7 +346,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("candidate_reference")
     command.add_argument("--snapshot-root", required=True)
     command.add_argument("--store-identity", required=True)
-    command.add_argument("--require-content-identity", action="store_true", help="reject Project references without an exact content identity")
+    command.add_argument("--allow-missing-content-identity", action="store_true", help="accept references without an exact content identity (explicit opt-out)")
 
     command = sub.add_parser("baseline-compare", help="compare a named baseline and immutable candidate")
     command.add_argument("--baseline-reference", required=True)
@@ -384,7 +384,7 @@ def _render_review(closure: RenderClosure, args: argparse.Namespace, *, asset_ro
 
 
 def _run_render_review(args: argparse.Namespace) -> None:
-    reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=args.require_content_identity)
+    reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=not args.allow_missing_content_identity)
     closure = resolve_render_context(load_yaml(args.context_reference), reader)
     _assert_context_format(closure, args.format)
     _resolve_output_target(args.output, closure.context.target.kind)
@@ -593,7 +593,7 @@ def _run_render_review_gallery(args: argparse.Namespace) -> None:
     destination = Path(args.output_directory)
     if destination.exists() and any(destination.iterdir()):
         raise CliFailure("E_SCHEME_GALLERY_OUTPUT", "output directory must be empty", "gallery")
-    reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=args.require_content_identity)
+    reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=not args.allow_missing_content_identity)
     entries = []
     for reference_path in args.context_reference:
         closure = resolve_render_context(load_yaml(reference_path), reader)
@@ -703,7 +703,7 @@ def _run(args: argparse.Namespace) -> None:
         _run_render_review_gallery(args)
         return
     if args.command == "review":
-        reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=args.require_content_identity)
+        reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=not args.allow_missing_content_identity)
         before = load_project(load_yaml(args.before_reference), reader)
         candidate = load_project(load_yaml(args.candidate_reference), reader)
         output = review_projects(before, candidate)

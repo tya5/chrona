@@ -48,7 +48,7 @@ def initialize_project(destination: Path, *, example: str | None = None) -> Path
     config = destination / ".chrona" / "store.yaml"
     config.parent.mkdir(parents=True, exist_ok=True)
     config.write_text(yaml.safe_dump({"version": "chrona/store-config/v0.1", "stores": [{
-        "provider": "local", "identity": f"{example}-example", "root": str(store_root.resolve()), "integrity": "optional",
+        "provider": "local", "identity": f"{example}-example", "root": str(store_root.resolve()), "integrity": "required",
     }]}, sort_keys=False), encoding="utf-8")
     return destination
 

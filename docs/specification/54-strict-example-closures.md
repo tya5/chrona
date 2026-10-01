@@ -10,8 +10,8 @@ references, including canonical example contexts.
 
 The public example materializer copies every authored context and referenced resource
 byte-for-byte. It verifies a `contentIdentity` only when the author supplied one. It does
-not add or rewrite identities, and it does not unconditionally invoke the public CLI with
-`--require-content-identity`.
+not add or rewrite identities, and it does not depend on the Store read path's default
+identity policy (Spec 42, Issue #723): it verifies through its own staged reader.
 
 The materializer may expose an explicit strict verification option in a future release, but
 strictness is not inferred from an example manifest and is not part of the current public

@@ -52,7 +52,7 @@ class MemorySnapshotStore:
 class LocalBaselineRegistry:
     """Append-only local registry for immutable v0.2 baseline resources."""
 
-    def __init__(self, root: Path, identity: str, *, require_content_identity: bool = False):
+    def __init__(self, root: Path, identity: str, *, require_content_identity: bool = True):
         self.root = root
         self.identity = identity
         self.require_content_identity = require_content_identity

@@ -78,7 +78,8 @@ def test_immutable_closure_reports_invalid_scheme_target_at_exact_pointer(tmp_pa
     snapshot = tmp_path / "snapshot"
     reference, _ = copy_context_closure(example, context_path, snapshot)
     with pytest.raises(ClosureError) as error:
-        resolve_render_context(reference, LocalSnapshotReader(snapshot, "controller-z-example"))
+        # Canonical example Contexts are unpinned by design (ADR-0030); the opt-out is explicit (#723).
+        resolve_render_context(reference, LocalSnapshotReader(snapshot, "controller-z-example", require_content_identity=False))
 
     assert error.value.diagnostic_id == "E_THEME_ROLE_PROPERTY_UNSUPPORTED"
     assert error.value.source_ref == "/body/colorBindings/variance-behind.stroke"

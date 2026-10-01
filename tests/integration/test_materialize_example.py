@@ -90,7 +90,8 @@ def test_immutable_automatic_context_rejects_nonpositive_timeline_range(tmp_path
     context_path.write_text(yaml.safe_dump(context, sort_keys=False), encoding="utf-8")
     snapshot = tmp_path / "snapshot"
     reference, _ = copy_context_closure(example, context_path, snapshot)
-    closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, "halcyon-1-example"))
+    # Canonical example Contexts are unpinned by design (ADR-0030); the opt-out is explicit (#723).
+    closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, "halcyon-1-example", require_content_identity=False))
     # R4's shared mark-aware scale cannot place point facets in a collapsed
     # timeline. Diagnose the impossible range instead of serializing clipped
     # marks behind a generic visible-overflow warning.
@@ -124,7 +125,8 @@ def test_context_font_assets_resolve_from_context_revision_not_theme_revision(tm
     assert (snapshot_directory(snapshot, revision) / metric).is_file()
     assert not (snapshot_directory(snapshot, "example-v1") / metric).exists()
 
-    closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, "halcyon-1-example"))
+    # Canonical example Contexts are unpinned by design (ADR-0030); the opt-out is explicit (#723).
+    closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, "halcyon-1-example", require_content_identity=False))
     rendered = render_review(RenderRequest(closure, snapshot, ReferenceScheduler()))
     assert rendered.artifact.content.startswith(b"<svg ")
 
@@ -152,7 +154,8 @@ def test_derived_theme_materializer_copies_pinned_base_and_rejects_tampering(tmp
     reference, _ = copy_context_closure(example, context_path, snapshot)
     revision = context["body"]["theme"]["revision"]["token"]
     assert (snapshot_directory(snapshot, revision) / "themes/executive-light.yaml").read_bytes() == base_source
-    closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, "aster-ssd-example"))
+    # Canonical example Contexts are unpinned by design (ADR-0030); the opt-out is explicit (#723).
+    closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, "aster-ssd-example", require_content_identity=False))
     assert closure.resolved_theme is not None
     theme_resource = closure.resource("theme")
     assert theme_resource is not None
@@ -457,7 +460,8 @@ def test_baseline_capture_materializes_a_context_through_its_windows_safe_token(
     token = captured.snapshot_ref["revision"]["token"]
     assert (snapshot_directory(snapshot, token) / "snapshots/q2.yaml").is_file()
     assert (snapshot_directory(snapshot, revision) / "contexts/executive.yaml").is_file()
-    closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, identity))
+    # Canonical example Contexts are unpinned by design (ADR-0030); the opt-out is explicit (#723).
+    closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, identity, require_content_identity=False))
     assert any(resource.kind == "snapshot-project" for resource in closure.resources)
 
 
@@ -676,7 +680,8 @@ def test_materialized_context_font_pair_reaches_the_default_png_adapter(tmp_path
 
     snapshot = tmp_path / "snapshot"; snapshot.mkdir()
     reference, revision = copy_context_closure(copied_example, context_path, snapshot)
-    closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, "controller-z-example"))
+    # Canonical example Contexts are unpinned by design (ADR-0030); the opt-out is explicit (#723).
+    closure = resolve_render_context(reference, LocalSnapshotReader(snapshot, "controller-z-example", require_content_identity=False))
     rendered = render_review(RenderRequest(closure, snapshot, ReferenceScheduler()))
 
     assert rendered.artifact.content.startswith(b"\x89PNG\r\n\x1a\n")

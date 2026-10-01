@@ -187,7 +187,7 @@ class LocalTransactionalStore:
 class LocalSnapshotReader:
     """Read-only reader for pre-materialized immutable local snapshot directories."""
 
-    def __init__(self, root: Path, identity: str, *, require_content_identity: bool = False):
+    def __init__(self, root: Path, identity: str, *, require_content_identity: bool = True):
         self.root = root
         self.identity = identity
         self.require_content_identity = require_content_identity
