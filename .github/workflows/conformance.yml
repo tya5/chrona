@@ -110,7 +110,7 @@ jobs:
       fail-fast: false
       matrix:
         shard: [1, 2, 3]
-        variant: [base, base2, load]
+        order: [fwd, rev]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -138,13 +138,19 @@ jobs:
       - id: pytest
         continue-on-error: true
         run: |
-          DIST=worksteal; if [ "${{ matrix.variant }}" = load ]; then DIST=load; fi
-          pytest -n 4 --dist $DIST --splits 3 --group ${{ matrix.shard }} --splitting-algorithm least_duration -m "not corpus" -v --durations=0 --junitxml=junit.xml
-      - uses: actions/upload-artifact@v4
-        if: ${{ always() }}
-        with:
-          name: junit-${{ matrix.variant }}-${{ matrix.shard }}
-          path: junit.xml
+          if [ "${{ matrix.order }}" = fwd ]; then VARIANTS="base lf-worksteal lf-load"; else VARIANTS="lf-load lf-worksteal base"; fi
+          for V in $VARIANTS; do
+            case "$V" in
+              base) EXTRA="--dist worksteal" ;;
+              lf-worksteal) EXTRA="--dist worksteal --longest-first" ;;
+              lf-load) EXTRA="--dist load --longest-first" ;;
+            esac
+            echo "=== VARIANT $V ==="
+            python -c "import time;t=time.perf_counter();s=0
+          for i in range(20000000): s+=i*i
+          print('PROBE_SECONDS %.3f' % (time.perf_counter()-t))"
+            pytest -n 4 $EXTRA --splits 3 --group ${{ matrix.shard }} --splitting-algorithm least_duration -m "not corpus" -v --durations=0 -p no:cacheprovider || true
+          done
       - name: Finalize independent CI outcomes
         if: ${{ always() }}
         run: >-
