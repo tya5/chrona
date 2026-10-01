@@ -23,18 +23,22 @@ S1 first because S2's collapse function and curated table extend S1's module.
   `error_message(code, message)`, the curated table, the derived sentence.
 - `src/chrona/usecases/failure_report.py`: `diagnostic_record` calls
   `error_message`; `report_failure` splits a bare `ValueError` text into code and
-  message, maps `LayoutError` and `ColorSchemeError` locations to `sourceRef`, names
-  the exception class for an empty `str(error)`; `collapse_records(records)` merges
-  equal rows (adds `count` >= 2 to the first); `rejection_report` and the ingress
-  report call it.
+  message and names the exception class for an empty `str(error)`;
+  `collapse_records(records)` merges equal rows (adds `count` >= 2 to the first);
+  `rejection_report` and the ingress report call it.
+- `src/chrona/usecases/render_review.py`: a `LayoutError` converted to `RenderFailed`
+  keeps its token or node (`(<node_id>)`) and is never a bare code.
+- `src/chrona/presentation/model/closure.py`: the Draft-resource loader says what it
+  found instead of a bare `E_<KIND>_SCHEMA`.
 - `src/chrona/usecases/preset_library.py`: `E_BUILTIN_PRESET_UNKNOWN` and
   `E_BUILTIN_PRESET_OUTPUT_EXISTS` raised as `StableFailure` with a message that
   names the value; the unknown message lists all ids.
 - `src/chrona/usecases/project_checks.py`: a non-mapping Project is `E_SCHEMA`
   (rejected) for `validate` and `schedule` (D8).
 - `src/chrona/app/agent_tools.py`: `_envelope` scrubs, then calls `collapse_records`
-  (summing counts), then caps; its own duplicate filter is removed; `count` joins the
-  optional diagnostic keys.
+  (summing counts), then caps; its own duplicate filter is removed; the diagnostic
+  output schema gains `count` and `occurrences`, and the tool-set version is
+  `chrona/agent-tools/v0.2` (design D9; Spec 66 section 2, tests, `chrona mcp --list-tools`).
 - Spec 66 section 3 (the diagnostic bullets and the transform list) and
   `skills/chrona/references/diagnostics.md` (the `E_BUILTIN_PRESET_UNKNOWN` row says
   "the message is only the code"; the `E_TOOL_FAILURE`/malformed-plan wording).
@@ -48,13 +52,18 @@ characterization golden (`python -m tests.cli.test_cli_characterization --record
 - `tests/unit/chrona/usecases/test_diagnostic_messages.py`: for **every code the
   inventory derives** (`tools.diagnostic_inventory.discover`, user-facing sites) an
   empty message, a message equal to the code and a `<CODE> source=/` message each
-  yield a non-empty message that is not the code; a message with detail passes
-  through unchanged; every code in the golden and in the skill's table has a curated
-  entry; a curated entry never equals its code.
+  yield a non-empty message that is not the code, through the record builder and
+  through the ladder; a message with detail passes through unchanged; no row of the
+  characterization golden is bare; every curated entry names a code the source still
+  raises and is a real sentence. The skill's provoking tests assert that every row
+  they provoke is informative (the plan's earlier wording "every code has a curated
+  entry" became "every row is informative": a producer that names the value needs no
+  entry).
 - `tests/unit/chrona/usecases/test_failure_report.py`: the ladder splits
-  `ValueError("E_X: detail\nmore")` into code `E_X`; `LayoutError` and
-  `ColorSchemeError` locations; the empty-message exception; `collapse_records` on
-  equal, near-equal (one key differs), interleaved and three-fold rows, order kept.
+  `ValueError("E_X: detail\nmore")` into code `E_X`; the empty-message exception;
+  `collapse_records` on equal, near-equal (one key differs), interleaved and
+  three-fold rows, order kept. `test_render_review.py`: a `LayoutError` keeps its
+  token.
 - `tests/unit/chrona/usecases/test_preset_library*.py`: the unknown message names the
   value and lists exactly the ids of `list_builtin_presets()`.
 - `tests/unit/chrona/usecases/test_project_checks.py`: empty file and YAML list for
@@ -65,10 +74,10 @@ characterization golden (`python -m tests.cli.test_cli_characterization --record
 
 **Golden diff, expected and to be explained row by row in the PR:** the three
 `E_BUILTIN_PRESET_UNKNOWN` cases and `preset-copy-into-existing-directory` (message);
-`render-layout-only` (`sourceRef` and message); `render-theme-only`,
-`render-view-only`, `render-not-a-mapping-project` (curated message);
+`render-layout-only`, `render-theme-only`, `render-view-only` (curated message);
+`render-not-a-mapping-project` (the loader names what it found);
 `command-check-broken-json` (code split from the YAML text); the three importer
-cases (curated message); `validate-empty-file` and `validate-not-a-mapping`
+cases (derived sentence; their `source=` suffix only repeated the `sourceRef`); `validate-empty-file` and `validate-not-a-mapping`
 (`failed`/2 to `rejected`/1, D8). Any other changed case is a defect until
 explained.
 
