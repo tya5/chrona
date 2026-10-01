@@ -183,7 +183,7 @@ $defs:
             properties:
               href: {description: "Link URL.", $ref: "#/$defs/linkHref"}
               title: {description: "Optional human-readable link title.", type: string, minLength: 1}
-      schedule: {description: "One discriminated fixed, scheduled, or rollup schedule form.", $ref: "#/$defs/schedule"}
+      schedule: {description: "One discriminated fixed, scheduled, derived-point, or rollup schedule form.", $ref: "#/$defs/schedule"}
   schedule:
     description: "Completed-date authority for one Project object."
     examples:
@@ -191,11 +191,13 @@ $defs:
       - {mode: fixed-span, start: "2026-09-23", end: "2026-09-24"}
       - {mode: scheduled, amount: "5d"}
       - {mode: rollup}
+      - {mode: scheduled-point, constraints: {at: {min: "2026-10-01"}}}
     oneOf:
       - {description: "Fixed single-date schedule.", $ref: "#/$defs/fixedPoint"}
       - {description: "Fixed start/end schedule.", $ref: "#/$defs/fixedSpan"}
       - {description: "Duration scheduled from anchors and constraints.", $ref: "#/$defs/scheduled"}
       - {description: "Schedule derived from child objects.", $ref: "#/$defs/rollup"}
+      - {description: "Single date derived from the object's dependencies and optional bounds.", $ref: "#/$defs/scheduledPoint"}
   fixedPoint:
     type: object
     description: "Fixed schedule represented by one completed date."
@@ -238,6 +240,19 @@ $defs:
     required: [mode]
     properties:
       mode: {description: "Selects the child-derived rollup form.", const: rollup}
+  scheduledPoint:
+    type: object
+    description: "Point whose completed date is derived from its dependencies and optional bounds; it stores no date."
+    additionalProperties: false
+    required: [mode]
+    properties:
+      mode: {description: "Selects the dependency-derived single-date form.", const: scheduled-point}
+      constraints:
+        type: object
+        description: "Optional bounds on the derived date."
+        additionalProperties: false
+        properties:
+          at: {description: "Not-earlier-than (min) and not-later-than (max) bounds for the derived date.", $ref: "#/$defs/bounds"}
   constraints:
     type: object
     description: "Optional minimum and maximum dates for scheduled placement."

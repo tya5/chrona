@@ -74,6 +74,19 @@ def schedule(
                 pending.remove(object_id)
                 progressed = True
                 continue
+            if raw["mode"] == "scheduled-point":
+                bound, wait, bound_diagnostics = _lower_bound(object_id, project, placements, calendars)
+                if bound_diagnostics:
+                    diagnostics.extend(bound_diagnostics)
+                elif wait:
+                    continue
+                else:
+                    placement, extra = _place_scheduled_point(object_id, raw, bound, project, placements, calendars)
+                    diagnostics.extend(extra)
+                    placements[object_id] = placement
+                pending.remove(object_id)
+                progressed = True
+                continue
             if raw["mode"] != "scheduled":
                 diagnostics.append(Diagnostic("E_ROLLUP_SCHEDULE", "Unsupported rollup schedule", f"/objects/{object_id}/schedule"))
                 pending.remove(object_id)
@@ -157,12 +170,7 @@ def _lower_bound(target_id: str, project: dict, placements: dict,
                 "Dependency source endpoint is unavailable on resolved placement",
                 f"/relations/{relation.get('id', source_id)}/from/endpoint",
             )]
-        source_value = source[endpoint]
-        lag = relation.get("lag", "0d")
-        amount = lag if isinstance(lag, str) else lag["value"]
-        calendar_id = (lag.get("calendar") if isinstance(lag, dict) else None) or project["objects"][target_id].get("calendar") or project.get("project", {}).get("calendar")
-        cal = calendars.get(calendar_id) if requires_working_calendar(amount) else None
-        bound = advance(source_value, amount, cal)
+        bound = _lag_bound(relation, source[endpoint], project, calendars)
         target_endpoint = relation["to"]["endpoint"]
         bounds[target_endpoint] = max(bounds.get(target_endpoint, bound), bound)
     raw_constraints = project["objects"][target_id]["schedule"].get("constraints", {})
@@ -171,6 +179,45 @@ def _lower_bound(target_id: str, project: dict, placements: dict,
             candidate = as_date(value["min"])
             bounds[endpoint] = max(bounds.get(endpoint, candidate), candidate)
     return bounds, False, []
+
+
+def _lag_bound(relation: dict, source_value: date, project: dict, calendars: dict[str, Calendar]) -> date:
+    """The source endpoint plus the relation's lag, read on the lag's own calendar, else the target's, else the project's."""
+    lag = relation.get("lag", "0d")
+    amount = lag if isinstance(lag, str) else lag["value"]
+    calendar_id = ((lag.get("calendar") if isinstance(lag, dict) else None)
+                   or project["objects"][relation["to"]["object"]].get("calendar") or project.get("project", {}).get("calendar"))
+    return advance(source_value, amount, calendars.get(calendar_id) if requires_working_calendar(amount) else None)
+
+
+def _place_scheduled_point(object_id: str, raw: dict, bounds: dict[str, date], project: dict, placements: dict,
+                           calendars: dict[str, Calendar]) -> tuple[dict[str, date], list[Diagnostic]]:
+    """A derived point sits at the latest of every incoming `source + lag` and its floor; the cap only rejects."""
+    derived = bounds["at"]
+    maximum = raw.get("constraints", {}).get("at", {}).get("max")
+    if maximum is None or derived <= as_date(maximum):
+        return {"at": derived}, []
+    forced_by = _derivation_driver(object_id, raw, derived, project, placements, calendars)
+    details = {"object": object_id, "endpoint": "at", "derived": derived.isoformat(),
+               "max": as_date(maximum).isoformat(), "forcedBy": forced_by}
+    return {"at": derived}, [Diagnostic(
+        "E_CONTRADICTORY_BOUNDS", "Resolved endpoint exceeds maximum bound",
+        f"/objects/{object_id}/schedule/constraints/at/max", details=details)]
+
+
+def _derivation_driver(object_id: str, raw: dict, derived: date, project: dict, placements: dict,
+                       calendars: dict[str, Calendar]) -> str:
+    """The first relation (id, else /relations/N) that reaches the derived date; a floor that ties or wins is named by pointer."""
+    floor = raw.get("constraints", {}).get("at", {}).get("min")
+    if floor is not None and as_date(floor) == derived:
+        return f"/objects/{object_id}/schedule/constraints/at/min"
+    for index, relation in enumerate(project.get("relations", [])):
+        if relation["to"]["object"] != object_id or relation["to"]["endpoint"] != "at":
+            continue
+        source_value = placements[relation["from"]["object"]][relation["from"]["endpoint"]]
+        if _lag_bound(relation, source_value, project, calendars) == derived:
+            return relation.get("id") or f"/relations/{index}"
+    return f"/objects/{object_id}/schedule"
 
 
 def _place_scheduled(object_id: str, item: dict, raw: dict, bounds: dict[str, date], project: dict, calendars: dict[str, Calendar]) -> tuple[dict[str, date], list[Diagnostic]]:
@@ -380,7 +427,8 @@ def _latest_at_target(object_id: str, item: dict[str, Any], early: dict[str, dat
     if raw["mode"] in {"fixed-point", "fixed-span"} or raw.get("anchor"):
         return dict(early)
     if "at" in early:
-        return {"at": target}
+        maximum = raw.get("constraints", {}).get("at", {}).get("max")
+        return {"at": min(target, as_date(maximum)) if maximum is not None else target}
     amount = raw["amount"]
     calendar = _object_calendar(item, project, calendars) if requires_working_calendar(amount) else None
     end = min(target, as_date(raw.get("constraints", {}).get("end", {}).get("max", target)))

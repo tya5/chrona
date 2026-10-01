@@ -877,6 +877,8 @@ PROBE_SITES: tuple[ProbeSite, ...] = (
     ProbeSite("example-registry", "src/chrona/resources/example-registry.yaml", "/examples/0/path", "path"),
     ProbeSite("theme-asset-source", "tests/fixtures/icons/theme-assets-valid.yaml", "/id", "identifier"),
     # Kinds with no committed document: inline base documents (see ``INLINE_DOCUMENTS``).
+    ProbeSite("project", "inline:project-derived-point", "/objects/gate/schedule/constraints/at/min", "date"),
+    ProbeSite("project", "inline:project-derived-point", "/objects/gate/schedule/constraints/at/max", "date"),
     ProbeSite("authoring-command", "inline:authoring-command-task", "/commandId", "identifier"),
     ProbeSite("authoring-command", "inline:authoring-command-task", "/target/path", "path"),
     ProbeSite("authoring-command", "inline:authoring-command-task", "/baseRevision", "sha256"),
@@ -933,6 +935,10 @@ def _inline_command(command_type: str, payload: dict[str, Any]) -> dict[str, Any
 
 
 INLINE_DOCUMENTS: dict[str, Callable[[], dict[str, Any]]] = {
+    "project-derived-point": lambda: {
+        "version": "timeline/v0.7", "project": {"id": "derived-point"}, "objects": {
+            "gate": {"type": "gate", "schedule": {"mode": "scheduled-point", "constraints": {"at": {
+                "min": "2026-01-01", "max": "2026-12-31"}}}}}},
     "authoring-command-task": lambda: _inline_command("setWorkspaceTask", {"task": {
         "id": "one", "title": "One", "planned": {"start": "2026-01-01", "finish": "2026-01-02"}}}),
     "authoring-command-actual": lambda: _inline_command("setWorkspaceActual", {"actual": {

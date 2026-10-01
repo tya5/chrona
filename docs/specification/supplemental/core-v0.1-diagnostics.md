@@ -13,13 +13,13 @@ not normative.
 | `E_INVALID_SPAN` | Resolved or fixed span is empty or reversed |
 | `E_INVALID_AMOUNT` | Amount is invalid for the requested scheduling role |
 | `E_CALENDAR_REQUIRED` | WorkPeriod requires a calendar but none resolves |
-| `E_CONTRADICTORY_BOUNDS` | Lower/upper bounds cannot be simultaneously satisfied |
+| `E_CONTRADICTORY_BOUNDS` | Lower/upper bounds cannot be simultaneously satisfied; a scheduled point over its `constraints.at.max` carries optional `details` (Spec 04 Section 20.4) |
 | `E_ENDPOINT_MODE_MISMATCH` | A relation endpoint is unavailable on the referenced point/span placement kind |
 | `E_NON_WORKING_ANCHOR` | An explicit WorkPeriod start anchor is not a working date in its calendar |
 | `E_UNSATISFIABLE_DEPENDENCIES` | Dependency system has no feasible solution |
 | `E_UNSUPPORTED_CYCLE` | Implementation supports only an acyclic subset |
 | `E_FIXED_TARGET_VIOLATION` | A bound/dependency conflicts with authoritative fixed placement; carries optional `details` (earliest feasible date, forcing relation) |
-| `E_DERIVATION` | Derived placement cannot be resolved |
+| `E_DERIVATION` | Derived placement cannot be resolved (including a scheduled point with no predecessor and no minimum date) |
 | `W_NEGATIVE_LAG` | Dependency uses negative lag |
 | `W_DEADLINE` | Resolved schedule violates a deadline |
 | `W_SUMMARY_DEPENDENCY` | Dependency targets or sources a derived summary object |

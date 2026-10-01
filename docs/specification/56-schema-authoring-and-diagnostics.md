@@ -140,7 +140,11 @@ MUST be added to the current schema version in place, without a version bump,
 when omitting it preserves the resource's prior behavior. A schema-level
 `default` annotation does not set a runtime value; the owning consumer MUST
 provide and test the behavior that omission requires. Theme schema additions
-follow the same rule.
+follow the same rule. Adding a tagged branch to an existing discriminated union
+is a widening and is treated like an optional property: it is made in place,
+with one L1 delta entry in the expected-deltas file, when no existing
+document's verdict or behavior changes (precedent: the View `end` anchor
+endpoint in v0.28; the Project `scheduled-point` schedule mode in v0.7).
 
 A version bump is reserved for an incompatible contract change: removing,
 renaming, or retyping an existing field; changing an existing field's default

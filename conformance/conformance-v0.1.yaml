@@ -223,6 +223,35 @@ scheduling:
       amount: 5d
     dependency_start_lower_bound: '2026-10-12'
     expected: E_CONTRADICTORY_BOUNDS
+  - name: derived-point-from-dependency
+    input:
+      mode: scheduled-point
+    dependency_lower_bounds:
+    - '2026-10-10'
+    - '2026-10-12'
+    expected_at: '2026-10-12'
+  - name: derived-point-floor
+    input:
+      mode: scheduled-point
+      constraints:
+        at:
+          min: '2026-10-20'
+    dependency_lower_bounds:
+    - '2026-10-12'
+    expected_at: '2026-10-20'
+  - name: derived-point-cap-violation
+    input:
+      mode: scheduled-point
+      constraints:
+        at:
+          max: '2026-10-10'
+    dependency_lower_bounds:
+    - '2026-10-12'
+    expected: E_CONTRADICTORY_BOUNDS
+  - name: derived-point-nothing-to-derive-from
+    input:
+      mode: scheduled-point
+    expected: E_DERIVATION
 validation:
   valid_scheduled_amounts:
   - 5wd

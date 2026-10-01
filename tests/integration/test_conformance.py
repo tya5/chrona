@@ -198,3 +198,21 @@ def test_authority_fixture_cases_execute_through_scheduler():
     }
     assert {item.id for item in schedule(fixed_target).diagnostics} == {"E_FIXED_TARGET_VIOLATION"}
     assert {item.id for item in schedule(anchored_target).diagnostics} == {"E_CONTRADICTORY_BOUNDS"}
+
+
+def test_derived_point_authority_cases_execute_through_scheduler():
+    cases = {item["name"]: item for item in yaml.safe_load(FIXTURE.read_text(encoding="utf-8"))["scheduling"]["authority"] if item["name"].startswith("derived-point-")}
+    assert set(cases) == {"derived-point-from-dependency", "derived-point-floor", "derived-point-cap-violation",
+                          "derived-point-nothing-to-derive-from"}
+    for case in cases.values():
+        objects = {"gate": {"type": "gate", "schedule": dict(case["input"])}}
+        relations = []
+        for index, bound in enumerate(case.get("dependency_lower_bounds", [])):
+            objects[f"source{index}"] = {"type": "task", "schedule": {"mode": "fixed-span", "start": "2026-10-01", "end": str(bound)}}
+            relations.append({"type": "dependency", "from": {"object": f"source{index}", "endpoint": "end"},
+                              "to": {"object": "gate", "endpoint": "at"}, "lag": "0d"})
+        result = schedule({"version": "timeline/v0.7", "project": {"id": case["name"]}, "objects": objects, "relations": relations})
+        if "expected" in case:
+            assert {item.id for item in result.diagnostics} == {case["expected"]}, case["name"]
+        else:
+            assert result.ok and result.placements["gate"]["at"].isoformat() == case["expected_at"], case["name"]

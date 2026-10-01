@@ -8,6 +8,10 @@ from typing import Any
 from chrona.core.diagnostics import Diagnostic
 
 
+# Schedule modes whose placement is a single date: a fixed point and a point derived from dependencies.
+POINT_MODES = frozenset({"fixed-point", "scheduled-point"})
+
+
 @dataclass(frozen=True)
 class AttachmentWarning:
     """A point dated outside the planned span of the task it attaches to."""
@@ -29,9 +33,9 @@ def attachment_diagnostics(objects: dict[str, Any]) -> list[Diagnostic]:
             diagnostics.append(Diagnostic("E_PROJECT_ATTACH_SELF", "An object cannot attach to itself", path))
         elif host not in objects:
             diagnostics.append(Diagnostic("E_PROJECT_ATTACH_TARGET_UNKNOWN", f"Unknown attachment host {host}", path))
-        elif _mode(item) != "fixed-point":
-            diagnostics.append(Diagnostic("E_PROJECT_ATTACH_SOURCE_NOT_POINT", "Only a fixed-point object can attach to a span", path))
-        elif _mode(objects[host]) == "fixed-point":
+        elif _mode(item) not in POINT_MODES:
+            diagnostics.append(Diagnostic("E_PROJECT_ATTACH_SOURCE_NOT_POINT", "Only a point object can attach to a span", path))
+        elif _mode(objects[host]) in POINT_MODES:
             diagnostics.append(Diagnostic("E_PROJECT_ATTACH_TARGET_NOT_SPAN", f"Attachment host {host} is not a span", path))
     return diagnostics
 

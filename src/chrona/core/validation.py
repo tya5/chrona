@@ -84,6 +84,15 @@ def validate_project(
                 diagnostics.append(Diagnostic("E_INVALID_AMOUNT", "Scheduled spans allow only positive d, w, or wd", path + "/schedule/amount"))
             if requires_working_calendar(amount) and not _resolve_calendar_id(item, project):
                 diagnostics.append(Diagnostic("E_CALENDAR_REQUIRED", "WorkPeriod schedule has no calendar", path))
+        if mode == "scheduled-point":
+            try:
+                for bound in schedule.get("constraints", {}).get("at", {}).values():
+                    as_date(bound)
+            except TemporalError as exc:
+                diagnostics.append(Diagnostic("E_SCHEMA", str(exc), path + "/schedule"))
+                continue
+        if mode == "scheduled-point" and not _has_derivation_source(object_id, schedule, project):
+            diagnostics.append(Diagnostic("E_DERIVATION", "Scheduled point has no predecessor and no minimum date", path + "/schedule"))
         if mode == "rollup" and not children_by_parent.get(object_id):
             diagnostics.append(Diagnostic("E_ROLLUP_EMPTY", "Rollup must have scheduled descendants", path + "/schedule"))
 
@@ -195,8 +204,16 @@ def _resolve_calendar_id(item: dict[str, Any], project: dict[str, Any]) -> str |
     return item.get("calendar") or project.get("project", {}).get("calendar")
 
 
+def _has_derivation_source(object_id: str, schedule: dict[str, Any], project: dict[str, Any]) -> bool:
+    """A derived point needs something to derive from: a relation into its `at` or a minimum date."""
+    if "min" in schedule.get("constraints", {}).get("at", {}):
+        return True
+    return any(relation["to"]["object"] == object_id and relation["to"]["endpoint"] == "at"
+               for relation in project.get("relations", []))
+
+
 def _schedule_endpoints(schedule: dict[str, Any]) -> frozenset[str]:
-    if schedule.get("mode") == "fixed-point":
+    if schedule.get("mode") in {"fixed-point", "scheduled-point"}:
         return frozenset({"at"})
     return frozenset({"start", "end"})
 

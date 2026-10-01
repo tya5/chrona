@@ -79,4 +79,5 @@ def test_a_property_added_to_the_schema_turns_the_ledger_test_red():
     schema["properties"]["risks"] = {"type": "object"}
     schema["$defs"]["bounds"]["properties"]["target"] = {"type": "string"}
     assert authorable_paths(schema) - set(LEDGER) == {
-        "object.costCode", "relation.rationale", "schedule.scheduled.buffer", "top.risks", "constraints.start.target", "constraints.end.target"}
+        "object.costCode", "relation.rationale", "schedule.scheduled.buffer", "top.risks", "constraints.start.target", "constraints.end.target",
+        "schedule.scheduled-point.constraints.at.target"}
