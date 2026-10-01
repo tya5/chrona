@@ -12,7 +12,7 @@ from chrona.app.cli import main
 from chrona.core.validation import validate_project
 from chrona.resources import (
     SCHEMA_PARTS, builtin_preset_source_root, schema_document, schema_registry, schema_resource, schema_validator,
-    validator_for_schema,
+    skill_resource, validator_for_schema,
 )
 from chrona.resources import safe_load
 from chrona.scheduling.scheduler import schedule
@@ -86,6 +86,7 @@ def run() -> None:
         default_svg, starter_svg = root / "default.svg", starter / "plan.svg"
         catalog, raster = root / "material.yaml", root / "smoke.png"
         asset_preset, asset_svg = root / "asset-preset", root / "asset-preset.svg"
+        skill, skill_svg = root / "agent-skill" / "chrona", root / "skill-example.svg"
         draft.write_text(json.dumps(PROJECT), encoding="utf-8")
         for arguments in (
             ["init", str(starter)],
@@ -95,6 +96,10 @@ def run() -> None:
             ["materialize", str(corpus / "manifest.yaml"), "--slide", "mission-brief", "--output", str(output)],
             ["icon-catalog", "material-default", "--output", str(catalog)],
             ["preset", "copy", "technical-print", "--output", str(asset_preset)],
+            ["skill", "copy", "--output", str(skill)],
+            ["validate", str(skill / "examples" / "launch.yaml")],
+            ["schedule", str(skill / "examples" / "launch.yaml")],
+            ["render", str(skill / "examples" / "launch.yaml"), "--output", str(skill_svg)],
             ["render", str(corpus / "project.yaml"), "--preset", "technical-print", "--output", str(asset_svg)],
             ["render", str(corpus / "project.yaml"),
              "--view", str(corpus / "views/01-mission-brief.yaml"),
@@ -116,6 +121,13 @@ def run() -> None:
             raise AssertionError("minimal initialized project did not render with the bundled default")
         if not asset_svg.read_bytes().startswith(b"<svg"):
             raise AssertionError("wheel-owned catalogue preset did not render without asset flags")
+        packaged = skill_resource()
+        assert packaged.joinpath("SKILL.md").is_file(), "the wheel does not carry the agent skill"
+        for relative in ("SKILL.md", "examples/launch.yaml", "references/diagnostics.md"):
+            assert (skill / relative).read_bytes() == packaged.joinpath(*relative.split("/")).read_bytes(), relative
+        assert (skill / "SKILL.md").read_text(encoding="utf-8").startswith("---\nname: chrona\n"), "skill front matter"
+        if not skill_svg.read_bytes().startswith(b"<svg"):
+            raise AssertionError("the skill's worked example did not render from the installed copy")
         if not (asset_preset / "catalogs/chrona-theme-starter-v2026-09-29.NOTICE").is_file():
             raise AssertionError("wheel-owned catalogue notice was not copied")
         catalog_value = safe_load(catalog.read_bytes())

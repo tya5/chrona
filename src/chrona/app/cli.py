@@ -31,6 +31,7 @@ from chrona.usecases.materialize import MaterializationError, materialize
 from chrona.usecases.local_authoring import discover_store_configuration, initialize_project
 from chrona.usecases.terse_compile import compile_plan, input_unreadable, output_exists
 from chrona.usecases.preset_library import copy_builtin_preset, list_builtin_presets
+from chrona.usecases.skill_library import copy_skill
 from chrona.presentation.icons.importer import copy_material_symbols_outline_rounded_catalog, import_iconify, import_theme_assets
 from chrona.presentation.fonts.importer import import_font
 from chrona.presentation.scene.serialization import SceneSerializationError, serialize_scene
@@ -260,6 +261,11 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("directory", nargs="?", default=".")
     command.add_argument("--example", choices=example_ids(),
                          help="create a full named corpus example instead of the editable minimal starter")
+
+    skill = sub.add_parser("skill", help="copy the packaged chrona agent skill")
+    skill_sub = skill.add_subparsers(dest="skill_command", required=True, parser_class=JsonArgumentParser)
+    command = skill_sub.add_parser("copy", help="copy the agent skill into an empty directory")
+    command.add_argument("--output", "-o", required=True, help="empty or absent output directory")
 
     preset = sub.add_parser("preset", help="copy or list a builtin presentation preset")
     preset_sub = preset.add_subparsers(dest="preset_command", required=True, parser_class=JsonArgumentParser)
@@ -584,6 +590,9 @@ def _run(args: argparse.Namespace) -> None:
         return
     if args.command == "init":
         _run_init(args)
+        return
+    if args.command == "skill":
+        copy_skill(Path(args.output))
         return
     if args.command == "preset":
         if args.preset_command == "list":

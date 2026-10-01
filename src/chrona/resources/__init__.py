@@ -47,6 +47,20 @@ def schema_resource(name: str) -> Traversable:
     return files("schemas").joinpath(name)
 
 
+def skill_resource() -> Traversable:
+    """Return the chrona agent skill from the wheel, or from the sole source-tree authority."""
+    packaged = files(__package__).joinpath("skills", "chrona")
+    if packaged.is_dir() and packaged.joinpath("SKILL.md").is_file():
+        return packaged
+    try:
+        source = files("skills").joinpath("chrona")
+    except ModuleNotFoundError as error:
+        raise ValueError("E_SKILL_RESOURCE") from error
+    if source.is_dir() and source.joinpath("SKILL.md").is_file():
+        return source
+    raise ValueError("E_SKILL_RESOURCE")
+
+
 @cache
 def example_registry() -> Mapping[str, Mapping[str, str]]:
     """Return the initialisable examples by id, validated against the registry schema."""

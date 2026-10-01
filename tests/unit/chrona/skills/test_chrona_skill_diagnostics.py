@@ -163,9 +163,10 @@ def test_command_and_input_codes_are_emitted_with_the_exit_status_the_skill_stat
         assert code in {item["code"] for item in json.loads(out)["diagnostics"]}, code
 
 
-def test_existing_output_directories_are_refused_by_init_and_preset_copy(tmp_path, monkeypatch, capsys):
+def test_existing_output_directories_are_refused_by_init_preset_copy_and_skill_copy(tmp_path, monkeypatch, capsys):
     for argv, code in ((["init", str(tmp_path / "plan")], "E_INIT_OUTPUT_EXISTS"),
-                       (["preset", "copy", "executive-light", "--output", str(tmp_path / "look")], "E_BUILTIN_PRESET_OUTPUT_EXISTS")):
+                       (["preset", "copy", "executive-light", "--output", str(tmp_path / "look")], "E_BUILTIN_PRESET_OUTPUT_EXISTS"),
+                       (["skill", "copy", "--output", str(tmp_path / "skill")], "E_SKILL_OUTPUT_EXISTS")):
         assert run_cli(monkeypatch, capsys, *argv)[0] == 0
         result, out, _err = run_cli(monkeypatch, capsys, *argv)
 
@@ -188,7 +189,7 @@ def test_a_cramped_viewport_prints_the_warnings_and_note_the_skill_lists_on_stan
 def test_every_code_this_file_provokes_is_named_by_the_skill():
     provoked = {code for case in PLAN_CASES for code in case[5]}
     provoked |= {"E_INPUT_IO", "E_INPUT_YAML", "E_COMMAND_SYNTAX", "E_RENDER_OUTPUT_EXTENSION", "E_RENDER_OUTPUT_FORMAT_MISMATCH",
-                 "E_BUILTIN_PRESET_UNKNOWN", "E_INIT_OUTPUT_EXISTS", "E_BUILTIN_PRESET_OUTPUT_EXISTS",
+                 "E_BUILTIN_PRESET_UNKNOWN", "E_INIT_OUTPUT_EXISTS", "E_BUILTIN_PRESET_OUTPUT_EXISTS", "E_SKILL_OUTPUT_EXISTS",
                  "W_LAYOUT_LABEL_SUPPRESSED", "W_LAYOUT_LABEL_OVERFLOW", "W_SCENE_TEXT_INTERSECTION", "I_LAYOUT_PLOT_LABELS_SUPPRESSED"}
 
     assert provoked <= _skill_codes()
