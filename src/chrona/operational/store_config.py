@@ -1,6 +1,7 @@
 """Exact local Store routing for M26 CLI operations."""
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
@@ -9,15 +10,26 @@ from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.storage.snapshots import LocalBaselineRegistry
 
 
+def resolve_store_root(root: str, base: Path | None) -> Path:
+    """An absolute `root` as written; a relative one against `base`, the directory of the config file (#781).
+
+    Without a base (a mapping built in code) a relative root keeps meaning "relative to the working directory".
+    """
+    path = Path(root)
+    if base is None or path.is_absolute():
+        return path
+    return Path(os.path.normpath(base / path))
+
+
 class ConfiguredStoreReader:
-    def __init__(self, config: dict[str, Any]):
+    def __init__(self, config: dict[str, Any], *, base: Path | None = None):
         self.roots: dict[tuple[str, str], Path] = {}
         self.integrity: dict[tuple[str, str], str] = {}
         for entry in config["stores"]:
             key = (entry["provider"], entry["identity"])
             if key in self.roots:
                 raise ValueError("E_STORE_CONFIG")
-            self.roots[key] = Path(entry["root"])
+            self.roots[key] = resolve_store_root(entry["root"], base)
             self.integrity[key] = entry.get("integrity", "required")  # required unless the Store explicitly opts out (#723)
 
     def read(self, reference: dict[str, Any]) -> bytes:
@@ -36,4 +48,5 @@ class ConfiguredStoreReader:
 
 
 def load_store_config(path: str) -> ConfiguredStoreReader:
-    return ConfiguredStoreReader(parse_document(Path(path).read_text(encoding="utf-8"), "store-config-v0.1.schema.yaml"))
+    config_path = Path(path).resolve()  # the same resolution `discover_store_configuration` applies: a relative root is anchored here
+    return ConfiguredStoreReader(parse_document(config_path.read_text(encoding="utf-8"), "store-config-v0.1.schema.yaml"), base=config_path.parent)
