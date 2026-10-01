@@ -51,4 +51,14 @@ after are reported honestly.
 
 Baseline: see the design document section 1 (base `8ed48964`, host load average
 170 to 220): slide 02 3.93 s wall / 1.59 s CPU; slide 16 46.7 s wall / 18.3 s CPU.
-After: recorded in the I760-2b PR and added here when it merges.
+After (I760-2b, same commands, minimum of three back to back; host load average 143 to 153, lower
+than the 170 to 220 of the baseline, so wall time flatters the change and CPU is the steadier figure):
+
+| Slide | Wall before / after | CPU before / after | CPU speedup |
+| --- | --- | --- | --- |
+| `02-programme-board` | 3.93 s / 3.10 s | 1.59 s / 1.39 s | 1.14x |
+| `16-gallery-editorial-lanes` | 46.7 s / 25.8 s | 18.3 s / 11.5 s | 1.60x |
+
+Slide 16 meets the 1.5x expectation; the remaining cost is rehearsals 1 and 2 (about 6.6 s and 4.3 s
+CPU of route search), which share no search because their placed member names differ. Byte identity:
+all 29 public slides regenerate unchanged; only the diagnostic inventory's line numbers shift.

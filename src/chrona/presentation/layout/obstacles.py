@@ -162,6 +162,34 @@ _GRID_MIN_ITEMS = 16
 _GRID_WIDE_CELLS = 64
 
 
+# Memoised route searches (#760 item 2). The memo is a value-keyed cache of pure results,
+# private to one index lineage (`copy()` shares it); see the design document for the key.
+ROUTE_MEMO_LIMIT = 4096
+_ROUTE_MEMO_CONTENT_LIMIT = 256
+_UNSET = object()
+
+
+class _RouteMemo:
+    """Search results keyed by the exact content a search read; bounded, never evicting."""
+
+    __slots__ = ("results", "contents")
+
+    def __init__(self) -> None:
+        self.results: dict[tuple, object] = {}
+        self.contents: dict[tuple[str, ...], int] = {}
+
+    def content_id(self, content: tuple[str, ...]) -> int | None:
+        """A small id equal exactly when the contents are equal; None once the bound is reached."""
+        known = self.contents.get(content)
+        if known is None and len(self.contents) < _ROUTE_MEMO_CONTENT_LIMIT:
+            known = self.contents[content] = len(self.contents)
+        return known
+
+    def store(self, key: tuple, value: object) -> None:
+        if len(self.results) < ROUTE_MEMO_LIMIT:
+            self.results[key] = value
+
+
 class _PreparedSelection:
     """One `select()` result with its envelopes, and a conservative grid over them.
 
@@ -170,7 +198,7 @@ class _PreparedSelection:
     and candidates are always visited in ascending (sorted `placement_id`) position.
     """
 
-    __slots__ = ("items", "envelopes", "clearances", "max_clearance", "queries", "_grid")
+    __slots__ = ("items", "envelopes", "clearances", "max_clearance", "queries", "_grid", "content_id")
 
     def __init__(self, items: tuple[SurfaceObstacle, ...]) -> None:
         self.items = items
@@ -179,6 +207,7 @@ class _PreparedSelection:
         self.max_clearance = max(self.clearances, default=0.0)
         self.queries = 0
         self._grid: tuple | None = None
+        self.content_id: int | None | object = _UNSET  # computed on first route-memo use
 
     def candidates(self, box: tuple[float, float, float, float], clearance: float) -> Iterable[int]:
         """Ascending positions that may overlap `box` widened by `clearance`; a superset."""
@@ -236,6 +265,7 @@ class SurfaceObstacleIndex:
         self._by_id: dict[str, SurfaceObstacle] = {}
         self._ordered: tuple[SurfaceObstacle, ...] | None = None
         self._prepared: dict[tuple[frozenset[str] | None, frozenset[str] | None], _PreparedSelection] = {}
+        self._route_memo = _RouteMemo()
 
     def add(self, obstacle: SurfaceObstacle) -> None:
         if obstacle.placement_id in self._by_id:
@@ -248,7 +278,26 @@ class SurfaceObstacleIndex:
         """An independent index holding the same (immutable) obstacles, for a planning dry run."""
         clone = SurfaceObstacleIndex()
         clone._by_id = dict(self._by_id)
+        clone._route_memo = self._route_memo  # value-keyed results of pure searches, valid for any lineage member
         return clone
+
+    def route_memo_scope(self, classes: Iterable[str] | None, regions: Iterable[str] | None,
+                         port_ids: Iterable[str]) -> tuple[_RouteMemo, int] | None:
+        """The memo and the id of the selection's exact content, or None when a search must run fresh.
+
+        A search reads only the selected obstacles and the named port exemptions, so equal content
+        and equal exemptions give an equal result. An exemption that is not an existing port makes
+        `collisions` raise, so such a call is never memoised.
+        """
+        if any(port_id not in self._by_id or self._by_id[port_id].obstacle_class != "port"
+               for port_id in port_ids):
+            return None
+        prepared = self._selection(classes, regions)
+        if prepared.content_id is _UNSET:
+            # `repr` round-trips floats, so it tells 0.0 from -0.0 and one ulp from the next.
+            prepared.content_id = self._route_memo.content_id(tuple(repr(item) for item in prepared.items))
+        content_id = prepared.content_id
+        return None if content_id is None else (self._route_memo, content_id)
 
     def extend(self, obstacles: Iterable[SurfaceObstacle]) -> None:
         for obstacle in obstacles:
