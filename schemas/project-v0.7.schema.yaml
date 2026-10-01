@@ -37,6 +37,10 @@ properties:
     type: object
     description: "Named semantic annotations attached to Project objects."
     additionalProperties: {$ref: "#/$defs/annotation"}
+  periods:
+    type: object
+    description: "Named date ranges, such as a launch window; a Project fact that never schedules."
+    additionalProperties: {$ref: "#/$defs/period"}
   extensions:
     type: array
     description: "Optional extension package declarations in one supported reference form."
@@ -275,6 +279,24 @@ $defs:
     properties:
       object: {description: "Identifier of the referenced Project object.", type: string}
       endpoint: {description: "Completed-date endpoint on the referenced object.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/dateEndpoint"}
+  period:
+    type: object
+    description: "One named date range, the half-open interval from start up to but not including end."
+    examples:
+      - {title: "Launch window", start: "2027-10-22", end: "2027-11-06"}
+      - {start: {object: launch, endpoint: at}, end: "2027-11-06"}
+    required: [start, end]
+    additionalProperties: false
+    properties:
+      title: {description: "Human-readable period title, used as its label; the period identifier when absent.", type: string, minLength: 1}
+      start: {description: "First day of the period, inclusive.", $ref: "#/$defs/periodBoundary"}
+      end: {description: "Day the period ends, exclusive: write the day after the last day it covers.", $ref: "#/$defs/periodBoundary"}
+  periodBoundary:
+    description: "One end of a period: a calendar date, or a completed-date endpoint of a Project object."
+    examples: ["2027-10-22", {object: launch, endpoint: at}]
+    oneOf:
+      - {description: "A calendar date.", $ref: "#/$defs/date"}
+      - {description: "An endpoint of a Project object whose scheduled date is used.", $ref: "#/$defs/endpointRef"}
   relation:
     type: object
     description: "Directed dependency relation between two object endpoints."
