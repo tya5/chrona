@@ -6,9 +6,11 @@ schemas:
   - {file: authoring-workspace-v0.1.schema.yaml, kind: authoring-workspace, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: authoring-command-v0.1.schema.yaml, kind: authoring-command, state: live, consumers: [src/chrona/usecases/authoring_commands.py]}
   - {file: authoring-command-result-v0.1.schema.yaml, kind: authoring-command-result, state: live, consumers: [src/chrona/usecases/authoring_commands.py]}
-  - {file: automation-result-v0.1.schema.yaml, kind: automation-result, state: live, consumers: [src/chrona/operational/command_engine.py]}
+  - {file: automation-result-v0.1.schema.yaml, kind: automation-result, state: transitioning, consumers: [src/chrona/operational/resources.py], successor: automation-result-v0.2.schema.yaml, removalSlice: issue-710-automation-result-v0.1-retirement}
+  - {file: automation-result-v0.2.schema.yaml, kind: automation-result, state: live, consumers: [src/chrona/operational/resources.py]}
   - {file: color-scheme-v0.2.schema.yaml, kind: color-scheme, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
-  - {file: command-request-v0.2.schema.yaml, kind: command-request, state: live, consumers: [src/chrona/app/cli.py]}
+  - {file: command-request-v0.2.schema.yaml, kind: command-request, state: transitioning, consumers: [src/chrona/operational/resources.py], successor: command-request-v0.3.schema.yaml, removalSlice: issue-710-command-request-v0.2-retirement}
+  - {file: command-request-v0.3.schema.yaml, kind: command-request, state: live, consumers: [src/chrona/operational/resources.py]}
   - {file: layout-profile-v0.9.schema.yaml, kind: layout-profile, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: layout-profile-v0.10.schema.yaml, removalSlice: issue-710-layout-profile-v0.9-retirement}
   - {file: layout-profile-v0.10.schema.yaml, kind: layout-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: icon-catalog-v0.3.schema.yaml, kind: icon-catalog, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: icon-catalog-v0.4.schema.yaml, removalSlice: issue-496-v03-retirement-after-resource-migration}
@@ -70,7 +72,8 @@ schemas:
     consumers: [src/chrona/resources/__init__.py]
     frozenDefs:
       "#": "sha256:786939b7c5b16e49b7134250766f1dffa2422336177e47db747617b447908df4"
-  - {file: snapshot-ref-v0.2.schema.yaml, kind: snapshot-ref, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
+  - {file: snapshot-ref-v0.2.schema.yaml, kind: snapshot-ref, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: snapshot-ref-v0.3.schema.yaml, removalSlice: issue-710-snapshot-ref-v0.2-authoring-retirement}
+  - {file: snapshot-ref-v0.3.schema.yaml, kind: snapshot-ref, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: store-config-v0.1.schema.yaml, kind: store-config, state: live, consumers: [src/chrona/operational/store_config.py]}
   - {file: summary-profile-v0.2.schema.yaml, kind: summary-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: theme-v0.8.schema.yaml, kind: theme, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: theme-v0.9.schema.yaml, removalSlice: I394-1}

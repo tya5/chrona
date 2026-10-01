@@ -339,8 +339,8 @@ def test_definitions_that_name_an_existing_pattern_are_byte_exact_to_it():
 
 ADOPTERS = frozenset({
     "actual-intake-batch-v0.2.schema.yaml", "actual-set-v0.3.schema.yaml", "authoring-command-result-v0.1.schema.yaml",
-    "authoring-command-v0.1.schema.yaml", "authoring-workspace-v0.1.schema.yaml", "automation-result-v0.1.schema.yaml",
-    "command-request-v0.2.schema.yaml", "example-registry-v0.1.schema.yaml", "icon-catalog-v0.4.schema.yaml",
+    "authoring-command-v0.1.schema.yaml", "authoring-workspace-v0.1.schema.yaml", "automation-result-v0.2.schema.yaml",
+    "command-request-v0.3.schema.yaml", "example-registry-v0.1.schema.yaml", "icon-catalog-v0.4.schema.yaml",
     "layout-profile-v0.10.schema.yaml", "presentation-materialization-receipt-v0.1.schema.yaml", "presentation-preset-v0.1.schema.yaml",
     "preset-library-v0.2.schema.yaml", "profile-v0.3.schema.yaml", "project-v0.7.schema.yaml",
     "render-context-v0.17.schema.yaml", "scene-v0.7.schema.yaml", "theme-asset-source-v0.1.schema.yaml",
@@ -351,6 +351,10 @@ ADOPTERS = frozenset({
 # Parts published after `common` that reference it: a part may name another part's definition, and each is
 # frozen with that reference in its digest. The parts published before it must still reference nothing.
 PARTS_REFERENCING_COMMON: dict[str, set[str]] = {"revision-store-resource-ref-v0.2.schema.yaml": {"storeAddress"}}
+
+
+# Adopted sites that add a local rule beside the `$ref`: the registry stores `snapshots/<id>.yaml`, so the id is one segment.
+SEGMENT_SITES = {("command-request-v0.3.schema.yaml", "/allOf/4/then/properties/payload/properties/snapshotId")}
 
 
 def _adopted_sites(name: str) -> list[tuple[str, str]]:
@@ -377,6 +381,11 @@ def test_every_adopted_site_accepts_and_rejects_like_its_definition(name):
     for pointer, definition in sites:
         accepted, rejected = PROBES[definition]
         validator = Draft202012Validator({"$ref": f"{schema['$id']}#{pointer}"}, registry=registry)
+        if (name, pointer) in SEGMENT_SITES:  # a site that narrows the definition to one segment: the extra rule is its own sibling
+            assert [value for value in accepted if "/" not in value and not validator.is_valid(value)] == [], (name, pointer)
+            assert [value for value in accepted if "/" in value and validator.is_valid(value)] == [], (name, pointer)
+            assert [value for value in rejected if validator.is_valid(value)] == [], (name, pointer)
+            continue
         assert [value for value in accepted if not validator.is_valid(value)] == [], (name, pointer)
         assert [value for value in rejected if validator.is_valid(value)] == [], (name, pointer)
         assert [value for value in ACCEPTED_TODAY.get(definition, []) if not validator.is_valid(value)] == [], (name, pointer)

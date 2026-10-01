@@ -142,7 +142,7 @@ Federation Command has a child Project target or a payload capable of editing ch
 source, source schedule, or export contents.
 
 The v0.1 YAML examples retain `git:<sha>` as a legacy Git-adapter token. Successor
-command documents use `revision-store-resource-ref-v0.1.schema.yaml` for their target
+command documents use `revision-store-resource-ref-v0.2.schema.yaml` (v0.1 for v0.2 command documents) for their target
 and preserve the Store-owned revision token without changing Command semantics.
 
 ## 4. Command families

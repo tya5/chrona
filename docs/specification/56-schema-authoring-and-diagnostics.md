@@ -195,9 +195,13 @@ accepted, so it is a bump, not an in-place change, for each kind that adopts it,
 (`chrona.core.store_address`) already refuses the unsafe ones at every reader: the schema also closes the
 character set and moves the refusal to the earliest stage. Layout Profile v0.9 becomes v0.10 (`extends.address`) and
 Render Context v0.16 becomes v0.17 (every pinned `reference.address`, which had no guard at all, and the font
-locators); the predecessors are `transitioning` and stay readable, new Contexts and every Draft closure are
-v0.17, and each committed or packaged document was re-pointed by a version-string edit that the gate's L2
-layer proves changes no verdict. The inputs each site now refuses are listed as L3 `expected-deltas`.
+locators), Command Request v0.2 becomes v0.3 (its Store references, and `snapshotId` as one segment), Automation
+Result v0.1 becomes v0.2 and Snapshot Reference v0.2 becomes v0.3 (both through `revision-store-resource-ref-v0.2`);
+the predecessors are `transitioning` and stay readable, new Contexts and every Draft closure are v0.17, and each committed or packaged Context and Layout Profile was re-pointed by a version-string edit that the gate's L2
+layer proves changes no verdict. Snapshot Reference v0.2 cannot be retired the way the others can: its instances are
+immutable, content-pinned and already in operators' Stores, so the predecessor stays readable for as long as such a
+baseline can exist, and the bump only changes what new writes emit (a writer emits v0.2 only for a Project reference that
+still carries a legacy loose address, never a v0.3 document that breaks its own contract). The inputs each site now refuses are listed as L3 `expected-deltas`.
 
 Adding a value to an existing `enum` is an in-place widening when every existing resource
 stays valid and behaves the same and the consuming code handles the new value. It is not an

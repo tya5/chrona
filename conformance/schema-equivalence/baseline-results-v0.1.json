@@ -299,6 +299,57 @@
    "authoring-workspace|inline:authoring-workspace/id|identifier:nul": null,
    "authoring-workspace|inline:authoring-workspace/id|identifier:space": null,
    "authoring-workspace|inline:authoring-workspace/id|identifier:valid": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|address:absolute": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/inputs/0/address",
+    "rule": ""
+   },
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|address:all-dot-segment": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|address:backslash": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|address:colon": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|address:dot-dot": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/inputs/0/address",
+    "rule": ""
+   },
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|address:dot-segment-inner": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/inputs/0/address",
+    "rule": ""
+   },
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|address:dot-segment-leading": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/inputs/0/address",
+    "rule": ""
+   },
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|address:drive-absolute": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|address:drive-relative": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|address:embedded-newline": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|address:empty-segment": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|address:inner-traversal": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/inputs/0/address",
+    "rule": ""
+   },
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|address:non-ascii": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|address:nul": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|address:space": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|address:tab": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|address:trailing-newline": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|address:trailing-slash": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|address:traversal": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/inputs/0/address",
+    "rule": ""
+   },
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|address:unc": null,
+   "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|address:valid": null,
    "automation-result|docs/examples/operational-workflows/accepted-baseline-result.yaml/inputs/0/address|path:absolute": {
     "code": "E_OPERATIONAL_SCHEMA",
     "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
@@ -456,6 +507,72 @@
     "rule": ""
    },
    "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/expectedContentIdentity|sha256:valid": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/payload/snapshotId|segment:all-dot": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/payload/snapshotId|segment:backslash": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/payload/snapshotId|segment:colon": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/payload/snapshotId|segment:dot": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/payload/snapshotId|segment:dot-dot": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/payload/snapshotId|segment:drive-relative": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/payload/snapshotId|segment:embedded-newline": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/payload/snapshotId|segment:non-ascii": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/payload/snapshotId|segment:nul": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/payload/snapshotId|segment:separator": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/payload/snapshotId|segment:space": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/payload/snapshotId|segment:tab": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/payload/snapshotId|segment:trailing-newline": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/payload/snapshotId|segment:valid": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/payload/snapshotId|segment:windows-traversal": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|address:absolute": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/target/address",
+    "rule": ""
+   },
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|address:all-dot-segment": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|address:backslash": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|address:colon": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|address:dot-dot": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/target/address",
+    "rule": ""
+   },
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|address:dot-segment-inner": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/target/address",
+    "rule": ""
+   },
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|address:dot-segment-leading": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/target/address",
+    "rule": ""
+   },
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|address:drive-absolute": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|address:drive-relative": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|address:embedded-newline": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|address:empty-segment": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|address:inner-traversal": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/target/address",
+    "rule": ""
+   },
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|address:non-ascii": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|address:nul": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|address:space": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|address:tab": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|address:trailing-newline": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|address:trailing-slash": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|address:traversal": {
+    "code": "E_OPERATIONAL_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/target/address",
+    "rule": ""
+   },
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|address:unc": null,
+   "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|address:valid": null,
    "command-request|docs/examples/operational-workflows/accepted-capture-command.yaml/target/address|path:absolute": {
     "code": "E_OPERATIONAL_SCHEMA",
     "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
@@ -1336,6 +1453,57 @@
    "snapshot-ref|examples/halcyon-1/snapshots/baseline-2027-06.yaml/id|identifier:nul": null,
    "snapshot-ref|examples/halcyon-1/snapshots/baseline-2027-06.yaml/id|identifier:space": null,
    "snapshot-ref|examples/halcyon-1/snapshots/baseline-2027-06.yaml/id|identifier:valid": null,
+   "snapshot-ref|inline:snapshot-ref/body/project/address|address:absolute": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/body/project/address",
+    "rule": "pattern"
+   },
+   "snapshot-ref|inline:snapshot-ref/body/project/address|address:all-dot-segment": null,
+   "snapshot-ref|inline:snapshot-ref/body/project/address|address:backslash": null,
+   "snapshot-ref|inline:snapshot-ref/body/project/address|address:colon": null,
+   "snapshot-ref|inline:snapshot-ref/body/project/address|address:dot-dot": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/body/project/address",
+    "rule": "pattern"
+   },
+   "snapshot-ref|inline:snapshot-ref/body/project/address|address:dot-segment-inner": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/body/project/address",
+    "rule": "pattern"
+   },
+   "snapshot-ref|inline:snapshot-ref/body/project/address|address:dot-segment-leading": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/body/project/address",
+    "rule": "pattern"
+   },
+   "snapshot-ref|inline:snapshot-ref/body/project/address|address:drive-absolute": null,
+   "snapshot-ref|inline:snapshot-ref/body/project/address|address:drive-relative": null,
+   "snapshot-ref|inline:snapshot-ref/body/project/address|address:embedded-newline": null,
+   "snapshot-ref|inline:snapshot-ref/body/project/address|address:empty-segment": null,
+   "snapshot-ref|inline:snapshot-ref/body/project/address|address:inner-traversal": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/body/project/address",
+    "rule": "pattern"
+   },
+   "snapshot-ref|inline:snapshot-ref/body/project/address|address:non-ascii": null,
+   "snapshot-ref|inline:snapshot-ref/body/project/address|address:nul": null,
+   "snapshot-ref|inline:snapshot-ref/body/project/address|address:space": null,
+   "snapshot-ref|inline:snapshot-ref/body/project/address|address:tab": null,
+   "snapshot-ref|inline:snapshot-ref/body/project/address|address:trailing-newline": null,
+   "snapshot-ref|inline:snapshot-ref/body/project/address|address:trailing-slash": null,
+   "snapshot-ref|inline:snapshot-ref/body/project/address|address:traversal": {
+    "code": "E_RESOURCE_SCHEMA",
+    "message": "expected value matching pattern '^(?!/)(?!.*(?:^|/)\\\\.{1,2}(?:/|$)).+'",
+    "pointer": "/body/project/address",
+    "rule": "pattern"
+   },
+   "snapshot-ref|inline:snapshot-ref/body/project/address|address:unc": null,
+   "snapshot-ref|inline:snapshot-ref/body/project/address|address:valid": null,
    "store-config|inline:store-config/stores/0/identity|identifier:empty": {
     "code": "E_OPERATIONAL_SCHEMA",
     "message": "expected minLength 1",

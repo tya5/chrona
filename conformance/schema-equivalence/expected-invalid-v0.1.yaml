@@ -17,10 +17,10 @@ documents:
       Deliberate negative fixture: a slot with `offsetX` matches no permitted layout node form
       (/root: oneOf, production rule `union`).
   - path: docs/examples/operational-workflows/accepted-capture-command.yaml
-    schema: command-request-v0.2.schema.yaml
+    schema: command-request-v0.3.schema.yaml
     reason: >-
       Stale documentation example: `payload.registry` is written as a full resource reference, but
-      command-request-v0.2 requires `{provider, identity}` (additionalProperties false).
+      command-request-v0.3 (and v0.2) requires `{provider, identity}` (additionalProperties false).
   - path: examples/controller-z/profiles/summary.yaml
     schema: summary-profile-v0.2.schema.yaml
     reason: >-

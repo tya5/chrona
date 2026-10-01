@@ -630,6 +630,7 @@ _SCHEMAS = {
     ("icon-catalog", "chrona/icon-catalog/v0.4"): "icon-catalog-v0.4.schema.yaml",
     ("actual-set", "chrona/actual-set/v0.3"): "actual-set-v0.3.schema.yaml",
     ("snapshot-ref", "chrona/snapshot-ref/v0.2"): "snapshot-ref-v0.2.schema.yaml",
+    ("snapshot-ref", "chrona/snapshot-ref/v0.3"): "snapshot-ref-v0.3.schema.yaml",
     ("profile-package", "chrona/profile/v0.3"): "profile-v0.3.schema.yaml",
     ("summary-profile", "chrona/summary-profile/v0.1"): "summary-profile-v0.2.schema.yaml",
     ("review-detail-profile", "chrona/review-detail-profile/v0.1"): "review-detail-profile-v0.1.schema.yaml",

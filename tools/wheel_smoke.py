@@ -40,6 +40,8 @@ def run() -> None:
     assert schedule(PROJECT).ok
     assert schema_resource("layout-profile-v0.10.schema.yaml").is_file()
     assert schema_resource("render-context-v0.17.schema.yaml").is_file()
+    for name in ("command-request-v0.3", "automation-result-v0.2", "snapshot-ref-v0.3"):
+        assert schema_resource(name + ".schema.yaml").is_file(), name
     # The registry is built from the installed wheel's own schema parts, and a
     # schema that references a part reaches it without any repository file.
     resolver = schema_registry().resolver()

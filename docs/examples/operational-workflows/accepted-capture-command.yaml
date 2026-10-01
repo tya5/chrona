@@ -1,4 +1,4 @@
-version: chrona/command/v0.2
+version: chrona/command/v0.3
 commandId: baseline-q2-capture
 type: captureSnapshot
 target: &project

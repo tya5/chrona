@@ -24,8 +24,10 @@ does not copy a schedule or rendered output.
 ## 2. Immutable references and stores
 
 Every M26 target, output artifact, and baseline Project is a
-`revision-store-resource-ref/v0.1` as defined by
-`revision-store-resource-ref-v0.1.schema.yaml`. The Command Engine verifies its Store,
+`revision-store-resource-ref` as defined by `revision-store-resource-ref-v0.2.schema.yaml`
+(v0.1 remains for documents written before #710). In v0.2 the `address` is the strict
+`storeAddress` of the common schema part: segments of `[A-Za-z0-9._-]` joined by `/`, with no empty or all-dot
+segment, no leading `/`, `:`, backslash, control character or trailing newline. The Command Engine verifies its Store,
 address, kind, ID, opaque revision token, and content identity before execution.
 
 A **baseline registry** is an append-only Revision Store resource namespace. It
@@ -101,9 +103,11 @@ diagnostics but never a partial candidate. Accepted reports have `rejected: 0`.
 
 ## 4. Revision-bound automation (UC-11)
 
-### 4.1 Command v0.2
+### 4.1 Command v0.3 (and v0.2)
 
-`chrona/command/v0.2` replaces v0.1 for this operational profile. It contains
+`chrona/command/v0.3` replaces v0.2 (strict Store addresses, #710); the CLI still reads v0.2, whose Store
+addresses use the loose pre-#710 family, and the code guard of every Store reader refuses an unsafe address in either
+version. `chrona/command/v0.2` replaced v0.1 for this operational profile. It contains
 `commandId`, `type`, immutable `target`, `baseRevision`, optional `expectedContentIdentity`,
 typed `payload`, optional `actor`, and optional `reason`. `baseRevision` MUST equal
 the verified target revision token. When supplied, `expectedContentIdentity` MUST equal
@@ -125,7 +129,9 @@ any other canonical request is `E_COMMAND_ID_REUSE`.
 ### 4.2 Automation result
 
 Every `command-check`, `command-apply`, intake, capture, and comparison invocation
-emits `chrona/automation-result/v0.1`, validated by its schema. A result records its
+emits `chrona/automation-result/v0.2`, validated by its schema; a result whose echoed Store references still
+carry a legacy loose address (from a v0.2 command or a v0.2 baseline) is `chrona/automation-result/v0.1`, because it
+must not claim a contract it breaks. A result records its
 operation, request content identity, status, complete verified input closure, ordered
 diagnostics, and declared artifacts. Accepted mutations also name `resultTarget`;
 checks and rejections do not fabricate it. Console text is never an automation API.
@@ -139,9 +145,10 @@ for process interruption before output publication.
 
 ### 5.1 Capture
 
-`captureSnapshot` v0.2 targets an immutable Project reference and has a `snapshotId`
-that is a valid stable resource ID. The engine verifies the target closure, then
-publishes a `chrona/snapshot-ref/v0.2` resource at the registry's canonical
+`captureSnapshot` targets an immutable Project reference and has a `snapshotId`
+that is a valid stable resource ID (in v0.3, one `storeAddress` segment). The engine verifies the target closure, then
+publishes a `chrona/snapshot-ref/v0.3` resource (`v0.2` when the Project reference carries a legacy loose address;
+immutable v0.2 baselines already in a Store stay readable and are never rewritten) at the registry's canonical
 `snapshots/<snapshotId>.yaml` address. Its body contains exactly the verified Project
 reference. The registry creates it once only. Existing IDs reject with
 `E_BASELINE_EXISTS`, even when their contents are identical. The operation is

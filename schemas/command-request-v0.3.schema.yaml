@@ -1,0 +1,68 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "chrona/command-request-v0.3"
+title: "Chrona revision-bound command request v0.3"
+description: "One revision-store command with optimistic-concurrency preconditions."
+type: object
+required: [version, commandId, type, target, baseRevision, payload]
+additionalProperties: false
+properties:
+  version: {description: "This command-request contract version.", const: chrona/command/v0.3}
+  commandId: {description: "Stable identifier for the requested command.", type: string, minLength: 1}
+  type:
+    description: "Revision-store operation requested."
+    enum: [applyActualIntakeBatch, editActualObservation, resolveActualObservation, unresolveActualObservation, captureSnapshot, setTypedField]
+  target: {description: "Resource the command modifies or reads.", $ref: "urn:chrona:revision-store-resource-ref-v0.2"}
+  baseRevision: {description: "Revision identity required before applying the command.", examples: ["revision-1"], minLength: 1, $ref: "urn:chrona:common-v0.1#/$defs/revisionToken"}
+  expectedContentIdentity: {description: "Optional SHA-256 identity expected for target content.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
+  payload: {description: "Operation-specific command content.", type: object, minProperties: 1}
+  actor: {description: "Actor information recorded with the command.", type: object, additionalProperties: true}
+  reason: {description: "Human-readable reason for the command.", type: string}
+allOf:
+  - description: "Intake-batch commands require immutable Actual and Project references."
+    examples: [{}]
+    if: {properties: {type: {const: applyActualIntakeBatch}}}
+    then:
+      properties:
+        target: {allOf: [{$ref: "urn:chrona:revision-store-resource-ref-v0.2"}, {properties: {kind: {const: actual-set}}}]}
+        payload:
+          type: object
+          required: [batch, project]
+          additionalProperties: false
+          properties:
+            batch: {allOf: [{$ref: "urn:chrona:revision-store-resource-ref-v0.2"}, {properties: {kind: {const: actual-intake-batch}}}]}
+            project: {allOf: [{$ref: "urn:chrona:revision-store-resource-ref-v0.2"}, {properties: {kind: {const: project}}}]}
+  - description: "Resolution commands require an observation, Project object, and Project reference."
+    examples: [{}]
+    if: {properties: {type: {const: resolveActualObservation}}}
+    then:
+      properties:
+        target: {allOf: [{$ref: "urn:chrona:revision-store-resource-ref-v0.2"}, {properties: {kind: {const: actual-set}}}]}
+        payload: {type: object, required: [observationId, projectObjectId, project], additionalProperties: false, properties: {observationId: {type: string, minLength: 1}, projectObjectId: {type: string, minLength: 1}, project: {allOf: [{$ref: "urn:chrona:revision-store-resource-ref-v0.2"}, {properties: {kind: {const: project}}}]}}}
+  - description: "Actual-edit commands require an observation identifier and changed values."
+    examples: [{}]
+    if: {properties: {type: {const: editActualObservation}}}
+    then:
+      properties:
+        target: {allOf: [{$ref: "urn:chrona:revision-store-resource-ref-v0.2"}, {properties: {kind: {const: actual-set}}}]}
+        payload: {type: object, required: [observationId, actual], additionalProperties: false, properties: {observationId: {type: string, minLength: 1}, actual: {type: object, minProperties: 1}}}
+  - description: "Unresolve commands require an observation identifier."
+    examples: [{}]
+    if: {properties: {type: {const: unresolveActualObservation}}}
+    then:
+      properties:
+        target: {allOf: [{$ref: "urn:chrona:revision-store-resource-ref-v0.2"}, {properties: {kind: {const: actual-set}}}]}
+        payload: {type: object, required: [observationId], additionalProperties: false, properties: {observationId: {type: string, minLength: 1}}}
+  - description: "Snapshot commands require a snapshot identifier and local registry."
+    examples: [{}]
+    if: {properties: {type: {const: captureSnapshot}}}
+    then:
+      properties:
+        target: {allOf: [{$ref: "urn:chrona:revision-store-resource-ref-v0.2"}, {properties: {kind: {const: project}}}]}
+        payload: {type: object, required: [snapshotId, registry], additionalProperties: false, properties: {snapshotId: {description: "Registry baseline name: one `storeAddress` segment (no `/`), since the registry stores it as `snapshots/<id>.yaml`.", examples: [baseline-2027-06], pattern: "^[^/]+$", $ref: "urn:chrona:common-v0.1#/$defs/storeAddress"}, registry: {type: object, required: [provider, identity], additionalProperties: false, properties: {provider: {const: local}, identity: {type: string, minLength: 1}}}}}
+  - description: "Typed-field commands require object, field, and value data."
+    examples: [{}]
+    if: {properties: {type: {const: setTypedField}}}
+    then:
+      properties:
+        target: {allOf: [{$ref: "urn:chrona:revision-store-resource-ref-v0.2"}, {properties: {kind: {const: project}}}]}
+        payload: {type: object, required: [objectId, field, value], additionalProperties: false, properties: {objectId: {type: string, minLength: 1}, field: {type: string, minLength: 1}, value: {}}}

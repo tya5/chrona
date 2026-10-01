@@ -10,6 +10,7 @@ from typing import Any, Protocol
 import yaml
 
 from chrona.core.store_address import StoreAddressError, check_store_segment, resolve_store_address
+from chrona.resources import schema_validator
 from chrona.storage.revision_store import ProjectSnapshot
 from chrona.storage.publication import publish_exclusive
 
@@ -49,8 +50,24 @@ class MemorySnapshotStore:
         return deepcopy(value) if value else None
 
 
+# A published baseline is v0.3 (strict `storeAddress`, #710) when its Project reference satisfies it, and v0.2 when the
+# reference still carries a legacy loose address (a v0.2 command's target): it must not claim a contract it breaks. Both
+# stay readable, because an immutable v0.2 baseline already in a Store can never be rewritten.
+SNAPSHOT_REF_VERSIONS = (("chrona/snapshot-ref/v0.3", "snapshot-ref-v0.3.schema.yaml"),
+                         ("chrona/snapshot-ref/v0.2", "snapshot-ref-v0.2.schema.yaml"))
+
+
+def snapshot_ref_resource(snapshot_id: str, project_ref: dict[str, Any]) -> dict[str, Any]:
+    """The named baseline resource, at the newest snapshot-ref version its content satisfies."""
+    for version, schema_name in SNAPSHOT_REF_VERSIONS:
+        resource = {"version": version, "kind": "snapshot-ref", "id": snapshot_id, "body": {"project": deepcopy(project_ref)}}
+        if not any(schema_validator(schema_name).iter_errors(json.loads(json.dumps(resource)))):
+            return resource
+    return resource
+
+
 class LocalBaselineRegistry:
-    """Append-only local registry for immutable v0.2 baseline resources."""
+    """Append-only local registry for immutable v0.2 and v0.3 baseline resources."""
 
     def __init__(self, root: Path, identity: str, *, require_content_identity: bool = True):
         self.root = root
@@ -63,7 +80,7 @@ class LocalBaselineRegistry:
             target = resolve_store_address(self.root, f"snapshots/{snapshot_id}.yaml")
         except StoreAddressError:
             return None
-        resource = {"version": "chrona/snapshot-ref/v0.2", "kind": "snapshot-ref", "id": snapshot_id, "body": {"project": deepcopy(project_ref)}}
+        resource = snapshot_ref_resource(snapshot_id, project_ref)
         payload = yaml.safe_dump(resource, sort_keys=True).encode("utf-8")
         digest = sha256(payload).hexdigest()
         try:

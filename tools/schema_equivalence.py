@@ -795,6 +795,13 @@ PROBE_STRINGS: dict[str, tuple[tuple[str, str], ...]] = {
         ("inner-traversal", "a/../b"), ("absolute", "/x"), ("colon", "a:b"), ("space", "a b"), ("non-ascii", "\u00e9"),
         ("tab", "a\tb"),
     ),
+    # One Store address segment used as a file name (`snapshotId`; the registry stores `snapshots/<id>.yaml`).
+    "segment": (
+        ("valid", "baseline-2027-06"), ("nul", "a\x00b"), ("backslash", "a\\b"), ("windows-traversal", "..\\..\\x"),
+        ("embedded-newline", "a\nb"), ("trailing-newline", "a\n"), ("separator", "a/b"), ("dot", "."), ("dot-dot", ".."),
+        ("all-dot", "..."), ("drive-relative", "C:x"), ("colon", "a:b"), ("space", "a b"), ("non-ascii", "\u00e9"),
+        ("tab", "a\tb"),
+    ),
 }
 
 
@@ -893,6 +900,12 @@ PROBE_SITES: tuple[ProbeSite, ...] = (
     ProbeSite("render-context", "examples/aster-ssd/contexts/01-overview.yaml",
               "/body/environment/fontMetrics/assets/0/metrics/locator/address", "address"),
     ProbeSite("layout-profile", _C + "layout-profile-override-v0.2.yaml", "/extends/address", "address"),
+    ProbeSite("command-request", _OPERATIONAL + "accepted-capture-command.yaml", "/target/address", "address",
+              repair=_REGISTRY_REPAIR),
+    ProbeSite("command-request", _OPERATIONAL + "accepted-capture-command.yaml", "/payload/snapshotId", "segment",
+              repair=_REGISTRY_REPAIR),
+    ProbeSite("automation-result", _OPERATIONAL + "accepted-baseline-result.yaml", "/inputs/0/address", "address"),
+    ProbeSite("snapshot-ref", "inline:snapshot-ref", "/body/project/address", "address"),
 )
 
 _REVISION = "sha256:" + "0123456789abcdef" * 4
@@ -930,6 +943,10 @@ INLINE_DOCUMENTS: dict[str, Callable[[], dict[str, Any]]] = {
             {"id": "one", "title": "One", "planned": {"start": "2026-01-01", "finish": "2026-01-02"}}]},
                  "presentation": {"mode": "guided", "binding": {"preset": {
                      "id": "starter", "version": "1", "path": "preset.yaml"}}}}},
+    "snapshot-ref": lambda: {
+        "version": "chrona/snapshot-ref/v0.3", "kind": "snapshot-ref", "id": "baseline", "body": {"project": {
+            "id": "project", "kind": "project", "store": {"provider": "local", "identity": "store"},
+            "address": "projects/main.yaml", "revision": {"token": "main"}}}},
     "derived-theme": lambda: {
         "version": "chrona/theme/v0.14", "kind": "theme", "id": "variation", "body": {
             "extends": {"id": "base", "path": "base.yaml", "sourceContentIdentity": _REVISION,
