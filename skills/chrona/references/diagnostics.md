@@ -53,8 +53,10 @@ in the repository); if you meet one, quote it to the user and do not guess a fix
 
 ## Warnings and notes (render succeeded, exit 0, on standard error)
 
-A warning has no `message`, only its code and measured facts. The picture is written; the
-question is whether you accept it.
+A warning has a `message` (what happened, then which label or placement) and its measured
+facts. Warnings with the same code and cause are one line: `count` says how many (2 or
+more), the first subject is in `message` and `diagnostic`, and `occurrences` lists the
+others (at most 20). The picture is written; the question is whether you accept it.
 
 | Code | What it means | What to do |
 | --- | --- | --- |

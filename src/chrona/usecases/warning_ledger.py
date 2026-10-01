@@ -5,6 +5,8 @@ from dataclasses import dataclass
 import json
 from typing import Any, Iterable, Mapping
 
+from chrona.usecases.diagnostic_messages import describe_warning, warning_message
+
 
 @dataclass(frozen=True)
 class RenderWarning:
@@ -15,6 +17,11 @@ class RenderWarning:
 def _record(code: str, identity_fields: Mapping[str, Any], **fields: Any) -> RenderWarning:
     identity = code + ":" + json.dumps(identity_fields, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return RenderWarning(identity, {"code": code, "severity": "warning", "diagnostic": identity, **fields})
+
+
+def _described(record: RenderWarning) -> RenderWarning:
+    """The record with the ``message`` every render warning carries (#782): its cause and its subject."""
+    return RenderWarning(record.identity, {**record.payload, "message": warning_message(describe_warning(record.payload))})
 
 
 def collect_render_warnings(
@@ -62,13 +69,12 @@ def collect_render_warnings(
             "code": item.code, "severity": "warning", "diagnostic": item.scene_diagnostic(),
             "scaleId": item.scale_id, "values": [item.first, item.second], "vision": item.vision,
             "deltaE": item.delta_e,
-            "message": f"{item.first} and {item.second} are not separable under {item.vision} vision",
         }))
     for item in attachment_warnings:
         records.append(_record(item.code, {"sourceRef": item.object_id, "host": item.host_id},
-                               sourceRef=item.object_id, host=item.host_id,
-                               message=f"{item.object_id} is dated outside the planned span of {item.host_id}"))
+                               sourceRef=item.object_id, host=item.host_id))
     for item in deadline_warnings:
+        # A family that says what is wrong carries its own message; the catalogue does not replace it.
         records.append(_record(item.id, {"sourceRef": item.path}, sourceRef=item.path, message=item.message,
                                **item.details))
-    return tuple(records)
+    return tuple(_described(record) for record in records)

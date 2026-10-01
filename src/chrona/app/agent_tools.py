@@ -117,7 +117,8 @@ _DIAGNOSTIC = {
         "component": {"type": "string"},
         "sourceRef": {"type": "string",
                       "description": "RFC 6901 JSON pointer into the named document, or '/' for the whole input."},
-        "message": {"type": "string"},
+        "message": {"type": "string", "minLength": 1,
+                    "description": "What is wrong; never empty and never only the code."},
         "count": {"type": "integer", "minimum": 2,
                   "description": "Present only when equal findings were merged into this row; absent means once."},
         "occurrences": {"type": "array", "items": {"type": "string"}, "maxItems": 20,
@@ -193,13 +194,18 @@ def _envelope(scope: WorkspaceScope, status: str, diagnostics: Sequence[Mapping[
 
 def _warning(scope: WorkspaceScope, payload: Mapping[str, Any]) -> dict[str, Any]:
     """A render warning or info record as a diagnostic; its remaining ledger fields are kept verbatim in ``detail``."""
-    known = {"code", "severity", "component", "sourceRef", "message"}
-    return {
+    merged = payload.get("severity") != "info"  # an info record's own ``count`` is a number of labels, not a merge count
+    known = {"code", "severity", "component", "sourceRef", "message"} | ({"count", "occurrences"} if merged else set())
+    item: dict[str, Any] = {
         "code": str(payload["code"]), "severity": str(payload.get("severity", "warning")),
         "component": str(payload.get("component", "render")), "sourceRef": str(payload.get("sourceRef", "/")),
-        "message": scope.scrub(str(payload.get("message", ""))),
-        "detail": _sorted_value(scope.scrub_value({key: value for key, value in payload.items() if key not in known})),
+        "message": scope.scrub(str(payload["message"])),
     }
+    if merged and "count" in payload:
+        item["count"] = int(payload["count"])
+        item["occurrences"] = [scope.scrub(str(entry)) for entry in payload.get("occurrences", ())]
+    item["detail"] = _sorted_value(scope.scrub_value({key: value for key, value in payload.items() if key not in known}))
+    return item
 
 
 class _Call:

@@ -117,6 +117,8 @@ def test_cli_emits_draft_font_substitution_warning_to_stderr(capsys):
         "code": "W_FONT_GLYPH_SUBSTITUTED", "severity": "warning",
         "requestedFamily": "Noto Sans", "fallbackFamily": "Noto Color Emoji Check",
         "weight": 400, "codepoint": "U+2705", "text": "General Availability ✅", "drawn": False,
+        "message": "a glyph missing from Noto Sans is drawn with Noto Color Emoji Check: "
+                   "U+2705 in 'General Availability ✅'",
     }
 
 
@@ -133,6 +135,7 @@ def test_cli_emits_exact_face_tabular_degradation_warning(capsys):
         "code": "W_FONT_TABULAR_UNAVAILABLE", "severity": "warning",
         "role": "numeric", "family": "Georgia", "weight": 400,
         "requestedSpacing": "tabular", "effectiveSpacing": "proportional",
+        "message": "font Georgia 400 has no tabular digits, so numbers use proportional spacing: numeric",
     }
 
 
@@ -145,6 +148,7 @@ def test_cli_emits_structured_scene_perceptibility_warning_to_stderr(capsys):
         "code": "W_SCENE_TEXT_OCCLUDED", "severity": "warning", "findingCode": "E_SCENE_TEXT_OCCLUDED",
         "scenePath": "/surfaces/0:review", "primitiveIds": ["text", "cover"], "slotId": "timeline",
         "measuredFacts": {"coverageRatio": 1.0},
+        "message": "text is covered by another shape: text, cover",
     }
 
 
@@ -159,10 +163,25 @@ def test_cli_emits_completed_fit_warning_to_stderr(capsys):
         "failureKind": "review-row-density", "behaviour": "visible-overflow",
         "requiredInline": 120, "requiredBlock": 72,
         "availableInline": 120, "availableBlock": 40,
+        "message": "a row is too dense for its height (review-row-density, visible-overflow): "
+                   "row:delivery (needs 120x72, has 120x40)",
     }
 
 
-def test_cli_warning_inventory_equals_scene_diagnostics_for_attached_milestones(tmp_path, monkeypatch, capsys):
+def _warning_multiplicity(emitted, scene_diagnostics):
+    """Per code, the CLI rows' counts add up to the Scene's diagnostics, and every named identity is a Scene one."""
+    rows = [item for item in emitted if item.get("severity") == "warning"]
+    scene = [item for item in scene_diagnostics if item.startswith("W_")]
+    carried = Counter()
+    for row in rows:
+        carried[row["code"]] += row.get("count", 1)
+        for identity in (row["diagnostic"], *row.get("occurrences", ())):
+            assert identity in scene
+    assert carried == Counter(item.split(":", 1)[0] for item in scene)
+    return rows
+
+
+def test_cli_warning_rows_account_for_every_scene_diagnostic_for_attached_milestones(tmp_path, monkeypatch, capsys):
     example = Path("examples/attached-milestones")
     scene_path = tmp_path / "attached.scene.json"
     monkeypatch.setattr(sys, "argv", [
@@ -171,11 +190,30 @@ def test_cli_warning_inventory_equals_scene_diagnostics_for_attached_milestones(
     ])
     main()
     emitted = [json.loads(line) for line in capsys.readouterr().err.splitlines() if line.startswith("{")]
-    cli_warnings = [item["diagnostic"] for item in emitted if item.get("severity") == "warning"]
-    scene_warnings = [item for item in json.loads(scene_path.read_text(encoding="utf-8"))["diagnostics"]
-                      if item.startswith("W_")]
-    assert Counter(cli_warnings) == Counter(scene_warnings)
-    assert len([item for item in cli_warnings if item.startswith("W_LAYOUT_LABEL_OVERFLOW:")]) == 2
+    scene = json.loads(scene_path.read_text(encoding="utf-8"))["diagnostics"]
+    rows = _warning_multiplicity(emitted, scene)
+    assert sum(row.get("count", 1) for row in rows if row["code"] == "W_LAYOUT_LABEL_OVERFLOW") == 2
+    assert len(rows) < len([item for item in scene if item.startswith("W_")])  # something was merged
+    assert all(row["message"] for row in emitted)
+
+
+def test_cli_collapses_a_warning_that_repeats_with_the_same_cause_into_one_row_with_a_count(tmp_path, monkeypatch, capsys):
+    scene_path = tmp_path / "halcyon.scene.json"
+    monkeypatch.setattr(sys, "argv", [
+        "chrona", "render", "tests/fixtures/cli_characterization/halcyon-1/project.yaml", "--actual",
+        "tests/fixtures/cli_characterization/halcyon-1/actual.yaml", "--output", str(tmp_path / "h.svg"),
+        "--emit-scene", str(scene_path),
+    ])
+    main()
+    emitted = [json.loads(line) for line in capsys.readouterr().err.splitlines() if line.startswith("{")]
+    rows = _warning_multiplicity(emitted, json.loads(scene_path.read_text(encoding="utf-8"))["diagnostics"])
+    (suppressed,) = [row for row in rows if row["code"] == "W_LAYOUT_LABEL_SUPPRESSED"]
+    assert suppressed["count"] == 7 and len(suppressed["occurrences"]) == 7
+    assert suppressed["diagnostic"] == suppressed["occurrences"][0]
+    assert suppressed["message"].startswith("a label was left out of the picture because it does not fit: ")
+    assert suppressed["message"].endswith(" and 6 more")
+    (info,) = [item for item in emitted if item["code"] == "I_LAYOUT_PLOT_LABELS_SUPPRESSED"]
+    assert info["count"] == 7 and "message" in info and "occurrences" not in info
 
 
 def test_render_parsers_expose_scene_emission_only_on_explicit_and_immutable_routes():

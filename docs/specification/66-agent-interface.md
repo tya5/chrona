@@ -73,9 +73,17 @@ present only when `status` is `ok`.
   sentence for the code, else a derived sentence that says no further detail is recorded for the code
   (`usecases.diagnostic_messages.error_message`, applied by `usecases.failure_report.diagnostic_record`, so the
   command prints the same text). `count` (2 or more) is present only when equal rows were merged into one
-  (`usecases.failure_report.collapse_records`); no `count` means once. A render warning carries no message yet, so
-  its `message` is `""` and its meaning is in `skills/chrona/references/diagnostics.md`. `sourceRef` is a JSON
-  pointer, or the ledger's own reference for a render warning, or `/`.
+  (`usecases.failure_report.collapse_records`); no `count` means once. `sourceRef` is a JSON pointer, or the
+  ledger's own reference for a render warning, or `/`.
+- A render warning has a `message` too, `<cause>: <subject>` (`usecases.diagnostic_messages.describe_warning`,
+  applied by `usecases.warning_ledger`). Warnings of one code, severity and cause are one row, however many
+  placements raised them (`usecases.diagnostic_messages.collapse_warnings`, applied by
+  `usecases.draft_render.warning_payloads`, so the command prints the same rows on standard error): the row keeps
+  the fields and `sourceRef` of the first occurrence, `count` is the exact number (2 or more), `occurrences` lists
+  the distinct `diagnostic` identities in order (at most 20), and the message names the first subject and "and N
+  more". The Scene keeps every per-placement fact; for each code the counts of the rows add up to the number of
+  Scene `diagnostics` of that code. An info record is never merged, and its own `count` (labels left out) stays in
+  `detail`.
 - A file that is empty or parses to a list or a scalar is a rejected Project (`E_SCHEMA`, `sourceRef` `/`, status
   `rejected`) for `validate_project` and `schedule_project`, as it is for `chrona validate`, `schedule` and `render`.
 - The tool layer applies three transforms the command does not: it merges rows that scrubbing made equal (their

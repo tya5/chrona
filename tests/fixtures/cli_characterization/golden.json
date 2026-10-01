@@ -217,10 +217,13 @@
   "stderr": {
    "codes": {
     "W_LAYOUT_ACTUAL_INCOMPLETE": {
-     "count": 2,
+     "count": 1,
      "keys": [
       "code",
+      "count",
       "diagnostic",
+      "message",
+      "occurrences",
       "severity"
      ],
      "sortedKeyLines": true
@@ -549,6 +552,7 @@
      "keys": [
       "code",
       "count",
+      "message",
       "severity",
       "surfaceId"
      ],
@@ -559,15 +563,19 @@
      "keys": [
       "code",
       "diagnostic",
+      "message",
       "severity"
      ],
      "sortedKeyLines": true
     },
     "W_LAYOUT_LABEL_SUPPRESSED": {
-     "count": 7,
+     "count": 1,
      "keys": [
       "code",
+      "count",
       "diagnostic",
+      "message",
+      "occurrences",
       "severity"
      ],
      "sortedKeyLines": true
@@ -623,6 +631,7 @@
      "keys": [
       "code",
       "count",
+      "message",
       "severity",
       "surfaceId"
      ],
@@ -633,15 +642,19 @@
      "keys": [
       "code",
       "diagnostic",
+      "message",
       "severity"
      ],
      "sortedKeyLines": true
     },
     "W_LAYOUT_LABEL_SUPPRESSED": {
-     "count": 2,
+     "count": 1,
      "keys": [
       "code",
+      "count",
       "diagnostic",
+      "message",
+      "occurrences",
       "severity"
      ],
      "sortedKeyLines": true
@@ -682,6 +695,7 @@
      "keys": [
       "code",
       "count",
+      "message",
       "severity",
       "surfaceId"
      ],
@@ -692,15 +706,19 @@
      "keys": [
       "code",
       "diagnostic",
+      "message",
       "severity"
      ],
      "sortedKeyLines": true
     },
     "W_LAYOUT_LABEL_SUPPRESSED": {
-     "count": 2,
+     "count": 1,
      "keys": [
       "code",
+      "count",
       "diagnostic",
+      "message",
+      "occurrences",
       "severity"
      ],
      "sortedKeyLines": true
@@ -741,6 +759,7 @@
      "keys": [
       "code",
       "count",
+      "message",
       "severity",
       "surfaceId"
      ],
@@ -751,15 +770,19 @@
      "keys": [
       "code",
       "diagnostic",
+      "message",
       "severity"
      ],
      "sortedKeyLines": true
     },
     "W_LAYOUT_LABEL_SUPPRESSED": {
-     "count": 2,
+     "count": 1,
      "keys": [
       "code",
+      "count",
       "diagnostic",
+      "message",
+      "occurrences",
       "severity"
      ],
      "sortedKeyLines": true
