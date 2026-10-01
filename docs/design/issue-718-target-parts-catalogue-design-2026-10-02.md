@@ -31,15 +31,19 @@ decision B). So every part of the issue's table is a glyph or a pattern:
 | --- | --- | --- |
 | gate glyphs | glyph | `milestoneSymbol`, `milestoneSymbolActual`, `milestoneSymbolBaseline` (Theme v0.13) |
 | patterns | pattern | the Rect-only role/property pairs of Spec 07 |
-| frames, borders, corners | glyph | **none**: no role paints a frame glyph |
-| seal stamps | glyph | **none**: annotation kinds cannot select a stamp |
+| repeated border, panel corner (`bulb`, `panel-corner`) | glyph | **none**: no role paints a border or corner glyph; owner #587 |
+| kind corner, seal stamps (`hazard-tab`, `seal-risk`, `seal-note`) | glyph | **none**: annotation kinds cannot select a corner or stamp; owner #584 |
+| container artwork (`scroll-frame`, `clipping-edge`) | glyph | **none**: `annotationContainer.image` names a PNG only; owner #848 (filed by this issue) |
 
 **What is missing, and where it is recorded.** Stamps and frames need a Theme role that places a catalogue glyph
-on a surface other than a milestone: a per-kind annotation stamp (#584), a repeated-glyph title border and panel
-corners (#587). Defining that role is a Theme schema change, so it stays in those issues. This design does not add
+on a surface other than a milestone. #584 already proposes a per-kind corner decoration or stamp glyph from a
+catalogue, and #587 a slot frame with a repeated-glyph border and region frames. Neither covers artwork that stretches
+behind an annotation container, because #465 admits a PNG entry only and bundled catalogues are vector-only; that
+gap had no owner, so #848 is filed as a successor. Defining these roles is a Theme schema change, so it stays in
+#584, #587 and #848. This design does not add
 a role, a schema field or an importer branch. The entries are still useful now as the extracted, licensed geometry
 and, technically, as milestone glyphs (the product accepts every glyph as a gate symbol; checked).
-*Reverse:* if #584 or #587 chooses vector `icons` for these, the same geometry is re-issued under that family by
+*Reverse:* if #584, #587 or #848 chooses vector `icons` for these, the same geometry is re-issued under that family by
 a later source version; the glyph entries are then removed in a new catalogue version, never edited in place.
 
 ### D3. Outline twins are explicit entries
@@ -64,8 +68,8 @@ own notice and reserved-name terms, not "original work, MIT" as the issue requir
 `chrona-starter:seigaiha` already names Yuya's pattern (concentric semicircle scales on an 8 by 8 tile). A faithful
 seigaiha has overlapping scales in which the front scale hides the arcs behind it. The closed pattern grammar has no
 per-primitive substrate fill, no occlusion and no clip, and an arc needs its centre and every lowered point inside
-the tile, so the exact picture needs a new primitive: a schema change. Stop and say so: seigaiha is **dropped from
-this catalogue**, with the starter's entry as the shipped answer. Sunday's dots differ from the starter's `halftone`
+the tile, so the exact picture needs a new primitive: a schema change (successor #849). Stop and say so: seigaiha is
+**dropped from this catalogue**, with the starter's entry as the shipped answer. Sunday's dots differ from the starter's `halftone`
 in pitch and angle (6 units at 20 degrees against 8 units at 0), so they are extracted as `ben-day-dots`.
 
 ### D6. No builtin preset binds the new parts

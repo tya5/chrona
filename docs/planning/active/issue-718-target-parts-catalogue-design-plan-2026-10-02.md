@@ -35,6 +35,8 @@ Published on `main` and checked by running the importer and the render path in a
 - **A render check.** A scratch Theme binding a catalogue glyph and a catalogue pattern renders through
   `chrona render --theme ... --icon-catalog ...` to SVG and PNG, so the path from catalogue to pixels is
   open for gates and patterns. For frames and stamps it is not (see "Open decisions", D2).
+- **Successors filed by this issue.** #848 (vector artwork behind an annotation container) and #849 (an occluding
+  pattern primitive for a faithful seigaiha).
 - **Open knob issues.** #582 named date ranges, #583 group header identity, #584 annotation kinds
   (stamps), #585 text treatments, #586 derived header figures, #587 surface decoration (canvas texture,
   repeated-glyph title border, panels), #588 hand wobble and affixes. #464 (gate glyphs), #465 (container
