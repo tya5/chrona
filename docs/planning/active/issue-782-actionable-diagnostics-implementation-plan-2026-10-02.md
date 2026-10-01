@@ -103,11 +103,14 @@ which derived-sync owns); conformance; the doc-check on the skill and guides.
 
 **Tests.**
 
-- `test_diagnostic_messages.py`: every `W_` literal the source can emit (scan of
-  `src/chrona` for `W_[A-Z_]+` literals plus the `E_SCENE_*` perceptibility errors,
-  which become `W_SCENE_*`) has a curated `describe_warning` case; cause is
+- `tests/unit/chrona/usecases/test_warning_messages.py`: every `W_` code the
+  render-warning producers can emit (scan of `presentation/`, `core/attachments.py`
+  and `warning_ledger.py` for `W_` literals, plus the `E_SCENE_*` perceptibility
+  errors, which become `W_SCENE_*`; the scheduler is not scanned, its warnings carry
+  their message) has a curated `describe_warning` case; a family whose records carry
+  their own `message` (`W_DEADLINE`) keeps it and only equal messages merge; cause is
   independent of the subject, and for fit warnings depends on the failure kind.
-- `tests/unit/chrona/usecases/test_warning_ledger.py` and `test_draft_render.py`:
+  The same file holds the collapse tests:
   seven synthetic member-label warnings become one row with `count` 7, the first
   identity and `occurrences`; different causes under one code stay separate rows;
   a single warning has no `count` and exactly today's keys plus `message`;
