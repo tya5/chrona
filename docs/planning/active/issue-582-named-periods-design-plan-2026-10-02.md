@@ -1,6 +1,6 @@
 # Design Plan: Named Periods, Labelled and Patternable Bands (#582)
 
-**Status:** Proposed. Product code, schemas, examples and derived documents are not changed by this pack.
+**Status:** Proposed. Design: [issue-582-named-periods-design-2026-10-02.md](../../design/issue-582-named-periods-design-2026-10-02.md). Product code, schemas, examples and derived documents are not changed by this pack.
 **Base:** `main` at `4981db0a` (observed 2026-10-02, `derived-main` green).
 **Board:** #454 P4-A, first overall; #586 (derived header figures) depends on it; the targets that need it are
 listed in #453 and under `docs/research/presentation/*-target-2026-09-26/`.
@@ -89,8 +89,7 @@ band beneath the marks and treats the label as an obstacle".
 
 ## Open decisions
 
-Each is decided in the design (`docs/design/issue-582-named-periods-design-2026-10-02.md`, next in this
-pack); owner-level ones are recorded with options, choice, reason and reversal on #582.
+Each is decided in the [design](../../design/issue-582-named-periods-design-2026-10-02.md); owner-level ones are recorded with options, choice, reason and reversal on #582.
 
 1. Where the fact lives and its shape (Project `periods`, in place, closed object), and the end convention.
 2. What a date reference may name and when its ordering is checked.
