@@ -125,6 +125,22 @@ cycle is rejected). A `deadline` that falls before the scheduled date produced n
 diagnostic from `validate`, `schedule` or `render` when tried: compare `deadline` fields
 with `chrona schedule` output yourself.
 
+## Install and refresh this skill
+
+This skill ships inside the chrona package, so it always matches the installed command.
+`chrona skill copy` copies it into an empty or absent directory and refuses to
+overwrite anything. Point it at the skills directory your agent host reads (for example
+`.claude/skills/chrona`):
+
+```bash
+chrona skill copy --output agent-skills/chrona
+```
+
+After upgrading chrona, refresh by copying into a new directory, comparing it with the
+installed one (`diff -r` on macOS and Linux), and replacing the old directory with the
+new one. A failing copy writes nothing: `E_SKILL_OUTPUT_EXISTS` means the directory is
+not empty, so choose a new one.
+
 ## Where the rules live
 
 This skill teaches the workflow, not the specification. Spec 05 (project format), Spec 04

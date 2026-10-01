@@ -44,6 +44,7 @@ in the repository); if you meet one, quote it to the user and do not guess a fix
 | `E_BUILTIN_PRESET_UNKNOWN` | `--preset` is neither a path nor a builtin id. The message is only the code. | Run `chrona preset list` and use one of its ids, or pass a path to a `preset.yaml`. |
 | `E_BUILTIN_PRESET_OUTPUT_EXISTS` | `chrona preset copy --output DIR` found `DIR` already in use. | Copy to a new directory; do not overwrite. |
 | `E_INIT_OUTPUT_EXISTS` | `chrona init DIR` found `DIR` already in use. | Pick a new directory name. |
+| `E_SKILL_OUTPUT_EXISTS` | `chrona skill copy --output DIR` found `DIR` already in use. | Copy to a new directory; do not overwrite. |
 | `E_RESOURCE_VERSION_UNSUPPORTED` | A preset copied by an older chrona is stale for this version. | Copy the preset again into a new directory and re-apply your edits. |
 
 ## Warnings and notes (render succeeded, exit 0, on standard error)
