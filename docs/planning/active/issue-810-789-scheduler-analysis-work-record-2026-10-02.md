@@ -135,3 +135,15 @@ every Project scenario, and dumps placements, diagnostics and the whole analysis
   added), no forward search, no backward search, `<` for `<=` in the search, the calendar-day guard dropped, and the analysis pass
   skipped (the old stub). Verification run: scheduling, CLI, app, use case, Core, terse, presentation and integration tests
   (2532 passed, the one failure was the expected golden), `regenerate_public_examples --check` (no derived byte changes), conformance.
+- Unit B merged as #836 (no derived byte change, so no bot commit followed).
+- Unit C (`I789-S1`): implemented as specified (D5, D6). `total_float` and `latest_placements` are keyed in Project object order at
+  the end of `_analyze_criticality`; `_canonical_schedule` and its sorting are deleted from the characterization suite; the MCP sort
+  stays with a rewritten comment (MCP bytes unchanged). `tests/cli/test_hash_seed_determinism.py` (failing first in its own commit)
+  runs `schedule`, `validate` and `compile` in subprocesses under eight hash seeds over the starter plan and HALCYON-1 (six cases
+  must print identical bytes) and checks the Spec 57 order of `totalFloat` and `criticalObjectIds`, plus `latest_placements` and
+  `component_targets` under every seed. Scan of the other JSON commands: no other mapping the CLI prints is built from a set (the
+  analysis was the only one). **Golden review**: four schedule records change (`schedule-starter-ok`, `schedule-halcyon-ok`,
+  `schedule-snapshot-ok`, `schedule-deadline-warning`), each with identical content and `totalFloat` in object order instead of sorted
+  order (parsed and compared). **Sweep** (52 runs): byte-identical under hash seeds 1 and 5, no content difference from the
+  post-#810 sweep. **Mutation check**: three mutants (iterate the set again, leave `latest_placements` in component order, sort by
+  id instead of object order), all killed.
