@@ -48,8 +48,8 @@ Archival follows the #662 S5 procedure: `git mv` to `docs/archive/schemas/`, del
 **D3 (item 3). No shared envelope.** Each kind fixes its own `version` and `kind`, so a shared definition would save about four lines per schema while changing every schema's diagnostic shape (Spec 56 §3 reduces `allOf` branches) and adding an `allOf` to each. Recorded as decided against
 in design D7 of #662; the eleven inline envelopes stay. The `presentation-resource` envelope that View, icon-catalog and summary-profile already reference is unchanged. Reopen only with a concrete diagnostic or maintenance failure.
 
-**D4 (item 4). `store.provider` in corpus coverage.** `tools/corpus_coverage.py` follows every `urn:chrona:` shared part, like `presentation_coverage`, so the Snapshot Reference schema contributes `body.project.store.provider` (`content`, `git`, `package`) through the `revision-store` part.
-The committed report then gains rows for whichever of the three values no committed corpus project uses (an uncovered row is non-gating information, as for the S4a `end` row). The test that pinned the omission is rewritten to pin the new behavior.
+**D4 (item 4). `store.provider` in corpus coverage.** `tools/corpus_coverage.py` follows every `urn:chrona:` shared part, like `presentation_coverage`, so the Snapshot Reference schema contributes `body.project.store.provider` (`content`, `git`, `local`, `package`) through the `revision-store` part.
+The committed report then gains rows for whichever of the four values no committed corpus project uses (an uncovered row is non-gating information, as for the S4a `end` row). The test that pinned the omission is rewritten to pin the new behavior.
 The report text that says which schemas it reads is amended if it implies vocabulary parts only. Following all parts is chosen over adding the one `revision-store` prefix because the part set is the repository's own closed list and the two coverage tools should not disagree; if another part adds rows, they are reviewed in the slice.
 `docs/examples/corpus-coverage.md` changes only through derived-sync.
 
@@ -81,4 +81,4 @@ The issue is closed only after S4's review commit has a green exact-main three-O
 
 ## Progress
 
-Design pack: this PR. S1-S4: not started.
+Design pack #800, S1 #802, S2 #803 and S3 #804 are merged. S4: the [acceptance review](../../reviews/current/issue-715-schema-parts-leftovers-acceptance-review-2026-10-02.md) is in review; the issue closes after its exact-main three-OS run.
