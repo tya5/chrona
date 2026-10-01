@@ -26,6 +26,9 @@ before it reads it, so no frozen container can reach a source document. The norm
 `dict`, `list` and scalar types. Any remaining failure in normalisation is an `AuthoringError` with a stable code (`E_AUTHORING_NORMALIZATION`, `E_AUTHORING_ANNOTATION_ID`, ...); a View that the
 normalised sources fail to parse surfaces as `AuthoringError`, never as a raw representer or schema exception.
 
+Found while testing (I709-A): the duplicate-id check compared the guided annotations only with the preset View's, so two guided annotations with one id passed normalisation. It now also rejects a
+duplicate among the guided annotations (`E_AUTHORING_ANNOTATION_ID`). No committed document uses a guided annotation, so nothing that was accepted is newly refused.
+
 ## Decision D2. The guided annotation works; missing anchor parts are defaulted
 
 The guided annotation is an author-facing, agent-friendly path and is meant to work. authoring-workspace v0.1 is **not** tightened (requiring `facet` and `endpoint` would narrow an accepted

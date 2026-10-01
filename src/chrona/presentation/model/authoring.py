@@ -140,10 +140,24 @@ def _apply_view_overrides(view: dict[str, Any], overrides: Mapping[str, Any]) ->
     if "annotations" in overrides:
         existing = list(body.get("annotations", ()))
         identifiers = {item.get("id") for item in existing if isinstance(item, dict)}
-        additions = list(overrides["annotations"])
-        if identifiers.intersection(item["id"] for item in additions):
+        # `deepcopy` of a frozen contract value is plain data (FrozenDict/FrozenList define it so): a frozen
+        # container in a source document is what made `_identity` raise a raw RepresenterError (#709).
+        additions = [_complete_anchor(item) for item in deepcopy(list(overrides["annotations"]))]
+        added = [item["id"] for item in additions]
+        if identifiers.intersection(added) or len(set(added)) != len(added):
             raise AuthoringError("E_AUTHORING_ANNOTATION_ID")
         body["annotations"] = [*existing, *additions]
+
+
+# The guided anchor names only an object; View's anchor also needs a facet and an endpoint (view-v0.28).
+# Every guided task is a planned fixed-span object, so its planned mark always exists and has a span end.
+# `finish` is the span end the committed View annotations use and the guided vocabulary's own word for it.
+GUIDED_ANCHOR_DEFAULTS = {"facet": "planned", "endpoint": "finish"}
+
+
+def _complete_anchor(annotation: dict[str, Any]) -> dict[str, Any]:
+    annotation["anchor"] = {**GUIDED_ANCHOR_DEFAULTS, **annotation["anchor"]}
+    return annotation
 
 
 def _project_document(workspace: AuthoringWorkspaceContract) -> dict[str, Any]:
