@@ -100,6 +100,10 @@ Direct `enum` and `const` values from the Project, Actual Set, Snapshot Referenc
 | Project | `scenarios.*.relations.add[].type` | `"dependency"` | — | — | — | examples/halcyon-1/project.yaml | — |
 | Project | `version` | `"timeline/v0.7"` | examples/aster-ssd/project.yaml | examples/controller-z/project.yaml | examples/controller-z-ja/project.yaml | examples/halcyon-1/project.yaml | examples/orion-asic/project.yaml |
 | Snapshot reference | `body.project.kind` | `"project"` | — | — | — | examples/halcyon-1/snapshots/baseline-2027-06.yaml | — |
+| Snapshot reference | `body.project.store.provider` | `"content"` | — | — | — | — | — |
+| Snapshot reference | `body.project.store.provider` | `"git"` | — | — | — | — | — |
+| Snapshot reference | `body.project.store.provider` | `"local"` | — | — | — | examples/halcyon-1/snapshots/baseline-2027-06.yaml | — |
+| Snapshot reference | `body.project.store.provider` | `"package"` | — | — | — | — | — |
 | Snapshot reference | `kind` | `"snapshot-ref"` | — | — | — | examples/halcyon-1/snapshots/baseline-2027-06.yaml | — |
 | Snapshot reference | `version` | `"chrona/snapshot-ref/v0.2"` | — | — | — | examples/halcyon-1/snapshots/baseline-2027-06.yaml | — |
 
@@ -126,6 +130,9 @@ Direct `enum` and `const` values from the Project, Actual Set, Snapshot Referenc
 - Project `scenarios.*.relations.add[].from.endpoint` = `"end"`
 - Project `scenarios.*.relations.add[].to.endpoint` = `"at"`
 - Project `scenarios.*.relations.add[].to.endpoint` = `"end"`
+- Snapshot reference `body.project.store.provider` = `"content"`
+- Snapshot reference `body.project.store.provider` = `"git"`
+- Snapshot reference `body.project.store.provider` = `"package"`
 
 ## Unreferenced example presentation files
 
