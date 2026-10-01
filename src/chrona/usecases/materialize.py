@@ -13,6 +13,7 @@ from typing import Any
 
 import yaml
 
+from chrona.presentation.contracts.resources import RENDER_CONTEXT_VERSIONS
 from chrona.presentation.model.closure import resolve_render_context
 from chrona.presentation.model.font_resources import FontResourceError, resolve_font_resource
 from chrona.presentation.model.theme_inheritance import ThemeInheritanceError, is_derived_theme, theme_base_reference
@@ -281,8 +282,8 @@ def copy_context_closure(example: Path, context_path: Path, snapshot: Path,
                          overlay_builder: _OverlayBuilder | None = None) -> tuple[dict[str, Any], str]:
     raw_context = context_path.read_bytes()
     context = safe_load(raw_context)
-    if context.get("version") != "chrona/render-context/v0.16" or context.get("kind") != "render-context":
-        raise _context_error("context", "chrona/render-context/v0.16 render-context", {"version": context.get("version"), "kind": context.get("kind")})
+    if context.get("version") not in RENDER_CONTEXT_VERSIONS or context.get("kind") != "render-context":
+        raise _context_error("context", " or ".join(RENDER_CONTEXT_VERSIONS) + " render-context", {"version": context.get("version"), "kind": context.get("kind")})
     body = context["body"]
     revision = body["project"]["revision"]["token"]
     references = [body[name] for name in ("project", "view", "theme", "colorScheme", "layout")]

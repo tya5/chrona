@@ -1397,7 +1397,7 @@ def test_cli_render_review_uses_only_an_immutable_v05_context(tmp_path, monkeypa
                             "metrics": {"locator": {"provider": "context", "address": f"font_metrics/{name}"}, "contentIdentity": "sha256:" + sha256(metrics_payload).hexdigest()},
                             "font": {"locator": {"provider": "context", "address": f"fonts/noto-sans-{face}-v1.ttf"}, "contentIdentity": "sha256:" + sha256(font_payload).hexdigest()}})
     context = {
-        "version": "chrona/render-context/v0.16", "kind": "render-context", "id": "controller-z-current",
+        "version": "chrona/render-context/v0.17", "kind": "render-context", "id": "controller-z-current",
         "body": {
             "project": refs["project"], "view": refs["view"], "theme": refs["theme"], "colorScheme": refs["colorScheme"], "layout": refs["layout"],
             "inputs": {"actual": refs["actual"]},

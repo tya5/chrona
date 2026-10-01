@@ -32,7 +32,7 @@ def test_fixture_is_current_and_schema_valid(path):
     profile = _load(path)
     assert profile["version"] == LAYOUT_VERSION
     assert profile["id"] == path.stem
-    assert not list(schema_validator("layout-profile-v0.9.schema.yaml").iter_errors(profile))
+    assert not list(schema_validator("layout-profile-v0.10.schema.yaml").iter_errors(profile))
 
 
 @pytest.mark.parametrize("path", FIXTURES, ids=lambda path: path.stem)
@@ -47,4 +47,4 @@ def test_fixture_resolves_with_only_its_declared_tokens(path):
 def test_a_fixture_the_schema_rejects_fails_the_guard():
     profile = _load(FIXTURES[0])
     profile["unknownTopLevelKey"] = True
-    assert list(schema_validator("layout-profile-v0.9.schema.yaml").iter_errors(profile))
+    assert list(schema_validator("layout-profile-v0.10.schema.yaml").iter_errors(profile))

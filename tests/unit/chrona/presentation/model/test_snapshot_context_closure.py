@@ -35,11 +35,11 @@ def test_v06_closure_allows_named_snapshot_project_at_its_own_revision(tmp_path,
     for name, kind in (("view", "view"), ("theme", "theme"), ("scheme", "color-scheme"), ("layout", "layout-profile")):
         versions = {
             "view": "chrona/view/v0.26", "theme": "chrona/theme/v0.11",
-            "color-scheme": "chrona/color-scheme/v0.2", "layout-profile": "chrona/layout-profile/v0.9",
+            "color-scheme": "chrona/color-scheme/v0.2", "layout-profile": "chrona/layout-profile/v0.10",
         }
         value = {"version": versions[kind], "kind": kind, "id": name, "body": {}}
         resources[name] = _write(tmp_path, "current", f"{name}.yaml", value)
-    context = {"version": "chrona/render-context/v0.16", "kind": "render-context", "id": "ctx", "body": {
+    context = {"version": "chrona/render-context/v0.17", "kind": "render-context", "id": "ctx", "body": {
         "project": primary_ref, "view": resources["view"], "theme": resources["theme"],
         "colorScheme": resources["scheme"], "layout": resources["layout"],
         "inputs": {"snapshot": snapshot_ref}, "environment": {"fontMetrics": {"missingFont": "diagnose"}}, "target": {"capabilities": []}}}

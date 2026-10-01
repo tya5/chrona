@@ -786,6 +786,15 @@ PROBE_STRINGS: dict[str, tuple[tuple[str, str], ...]] = {
         ("start", "start"), ("finish", "finish"), ("end", "end"), ("at", "at"), ("body", "body"),
         ("unknown", "middle"),
     ),
+    # A Store address site (#710 design D5): the strict `storeAddress` refuses every input but the first.
+    "address": (
+        ("valid", "layouts/briefing.yaml"), ("nul", "a\x00b"), ("backslash", "a\\b"), ("embedded-newline", "a\nb"),
+        ("trailing-newline", "a\n"), ("dot-segment-leading", "./a"), ("dot-segment-inner", "a/./b"),
+        ("empty-segment", "a//b"), ("trailing-slash", "a/"), ("drive-absolute", "C:/x"), ("drive-relative", "C:x"),
+        ("unc", "\\\\server\\share\\x"), ("all-dot-segment", "a/..."), ("dot-dot", ".."), ("traversal", "../x"),
+        ("inner-traversal", "a/../b"), ("absolute", "/x"), ("colon", "a:b"), ("space", "a b"), ("non-ascii", "\u00e9"),
+        ("tab", "a\tb"),
+    ),
 }
 
 
@@ -878,6 +887,12 @@ PROBE_SITES: tuple[ProbeSite, ...] = (
     ProbeSite("authoring-workspace", "inline:authoring-workspace", "/body/presentation/binding/preset/path", "path"),
     ProbeSite("derived-theme", "inline:derived-theme", "/body/extends/path", "path"),
     ProbeSite("derived-theme", "inline:derived-theme", "/body/extends/contentIdentity", "sha256"),
+    # Store address sites of the strict `storeAddress` (#710): the `address` family lists every rejected input.
+    ProbeSite("render-context", "examples/aster-ssd/contexts/01-overview.yaml", "/body/project/address", "address"),
+    ProbeSite("render-context", "examples/aster-ssd/contexts/01-overview.yaml", "/body/layout/address", "address"),
+    ProbeSite("render-context", "examples/aster-ssd/contexts/01-overview.yaml",
+              "/body/environment/fontMetrics/assets/0/metrics/locator/address", "address"),
+    ProbeSite("layout-profile", _C + "layout-profile-override-v0.2.yaml", "/extends/address", "address"),
 )
 
 _REVISION = "sha256:" + "0123456789abcdef" * 4

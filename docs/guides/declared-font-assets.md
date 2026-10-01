@@ -10,7 +10,7 @@ primary-package extra until that provider is published to an installable index.
 
 ## Context closure
 
-`chrona/render-context/v0.16` requires a metrics record for every family/weight
+`chrona/render-context/v0.17` (and the still-readable v0.16) requires a metrics record for every family/weight
 that its Theme can select. A font record is required only for PNG/PDF. Each
 record is either Context-relative or an identity-named installed package asset.
 

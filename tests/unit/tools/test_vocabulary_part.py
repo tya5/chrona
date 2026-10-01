@@ -89,7 +89,7 @@ def test_a_vocabulary_definition_is_an_untyped_enum_so_a_site_keeps_its_derefere
 DIFFERENT_CONCEPT: dict[tuple[str, str], str] = {
     ("view-v0.28.schema.yaml", "/allOf/1/properties/body/properties/tableColumns/items/properties/align"):
         "inline alignment of a table column's content inside its measured allocation, not an annotation's alignment along a side",
-    ("layout-profile-v0.9.schema.yaml", "/$defs/guide/properties/at/oneOf/0"):
+    ("layout-profile-v0.10.schema.yaml", "/$defs/guide/properties/at/oneOf/0"):
         "a named layout guide position along an axis, not an annotation's alignment along a side",
 }
 
@@ -117,7 +117,7 @@ VISUAL_PROFILES = [
     "chrona-output/visual/v0.7-svg", "chrona-output/visual/v0.7-png",
 ]
 VISUAL_PROFILE_SITES = {
-    "render-context-v0.16.schema.yaml": "/properties/body/properties/target/properties/visualProfile",
+    "render-context-v0.17.schema.yaml": "/properties/body/properties/target/properties/visualProfile",
     "presentation-preset-v0.1.schema.yaml": "/properties/body/properties/visualProfile/properties/preferred",
 }
 
