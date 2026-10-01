@@ -37,14 +37,14 @@ class Item:
 
 @dataclass
 class Schedule:
-    form: str  # "point" | "span" | "scheduled" | "rollup"
+    form: str  # "point" | "span" | "scheduled" | "derived" | "rollup"
     range: SourceRange
     at: str | None = None
     start: str | None = None
     end: str | None = None
     amount: Item | None = None
     anchor: tuple[str, Item] | None = None  # ("start"|"end", date)
-    bounds: list[tuple[str, str, Item]] = field(default_factory=list)  # (start|end, min|max, date)
+    bounds: list[tuple[str, str, Item]] = field(default_factory=list)  # (start|end|at, min|max, date)
 
 
 @dataclass
@@ -294,8 +294,10 @@ class _Parser:
     def finish(self, cursor: _Cursor, hint: str = "remove it") -> None:
         token = cursor.peek()
         if token is not None:
-            if token.kind == "word" and token.text in ("from", "until", "start", "end"):
+            if token.kind == "word" and token.text in ("from", "until", "start", "end", "at"):
                 hint = "`from`, `until` and `start`/`end` bounds follow a duration, for example `20wd from 2027-03-22`"
+                if token.text == "at":
+                    hint = "`at >= D` and `at <= D` follow a gate that has no date, for example `launch gate at >= 2027-05-07 after qa +2wd`"
             raise self.fail("E_TERSE_TOKEN_UNEXPECTED", f"unexpected {describe(token.text)}", token.range, hint)
 
     def project_statement(self, cursor: _Cursor, line: SourceLine) -> None:
@@ -455,7 +457,7 @@ class _Parser:
             calendar_range = None
             deps: list[Dep] = []
         else:
-            schedule = self.schedule(cursor, name, kind)
+            schedule = self.schedule(cursor, name, kind, kind_token)
             calendar = None
             calendar_range = None
             if cursor.is_word("calendar"):
@@ -484,13 +486,44 @@ class _Parser:
         raise self.fail("E_TERSE_INDENT", "this indentation does not match an open group", where,
                         "indent a child exactly two spaces deeper than its group, directly below it")
 
-    def schedule(self, cursor: _Cursor, name: str, kind: str) -> Schedule:
+    def derived(self, cursor: _Cursor, name: str, kind_token: Token) -> Schedule:
+        """A gate with no date: its date is derived from its `after` clause (T1), optionally with `at >= D` / `at <= D` (T2)."""
+        has_after = any(t.kind == "word" and t.text == "after" for t in cursor.tokens[cursor.index:])
+        bounds: list[tuple[str, str, Item]] = []
+        seen: set[str] = set()
+        while cursor.is_word("at"):
+            keyword = cursor.take()
+            op = self.expect_word(cursor, "`>=` or `<=`", "write `at >= 2027-05-07` for a floor or `at <= 2027-06-30` for a cap")
+            if op.text not in (">=", "<="):
+                raise self.fail("E_TERSE_TOKEN_UNEXPECTED", f"expected `>=` or `<=` after `at`, found {describe(op.text)}", op.range,
+                                "write `at >= D` for a minimum or `at <= D` for a maximum")
+            if op.text in seen:
+                raise self.fail("E_TERSE_CLAUSE_DUPLICATE", f"`at {op.text}` is given twice", keyword.range, "keep one")
+            seen.add(op.text)
+            date_token = self.expect_word(cursor, "a date", f"write `at {op.text} 2027-05-07`")
+            bounds.append(("at", "min" if op.text == ">=" else "max",
+                           Item(self.check_date(date_token), keyword.range.through(date_token.range))))
+        if not has_after:
+            if bounds:
+                raise self.fail("E_TERSE_SCHEDULE_REQUIRED", f"'{name}' has a bound but no `after` to derive its date from",
+                                bounds[0][2].range,
+                                f"a floor alone is a fixed date: write `{name} gate DATE`, or add `after X` to derive the date")
+            where = cursor.peek().range if cursor.peek() is not None else cursor.end_range()
+            raise self.fail("E_TERSE_SCHEDULE_REQUIRED", f"'{name}' has no schedule", where,
+                            f"a gate needs a date, or `after X` to derive one, for example `{name} gate 2027-03-05` "
+                            f"or `{name} gate after other +2wd`")
+        where = kind_token.range if not bounds else bounds[0][2].range.through(bounds[-1][2].range)
+        return Schedule("derived", where, bounds=bounds)
+
+    def schedule(self, cursor: _Cursor, name: str, kind: str, kind_token: Token) -> Schedule:
         token = cursor.peek()
+        if kind == "gate" and (token is None or (token.kind == "word" and token.text in ("after", "calendar", "at"))):
+            return self.derived(cursor, name, kind_token)
         if token is None or (token.kind == "word" and token.text in ("after", "calendar")):
             where = token.range if token is not None else cursor.end_range()
-            need = "a gate needs a date" if kind == "gate" else "a task needs a duration (`5d`) or `D..D`"
             raise self.fail("E_TERSE_SCHEDULE_REQUIRED", f"'{name}' has no schedule", where,
-                            f"{need}, for example `{name} {kind} " + ("2027-03-05`" if kind == "gate" else "5d` or `2027-03-01..2027-03-08`"))
+                            f"a task needs a duration (`5d`) or `D..D`, for example `{name} task 5d` or "
+                            f"`{name} task 2027-03-01..2027-03-08`")
         if token.kind != "word":
             raise self.fail("E_TERSE_TOKEN_UNEXPECTED", "expected a date, a date range or a duration", token.range)
         cursor.take()

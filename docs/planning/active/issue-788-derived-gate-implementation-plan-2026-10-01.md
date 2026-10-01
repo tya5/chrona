@@ -267,3 +267,14 @@ L4 (`W_DEADLINE`) stays lead-gated.
   property tests schedule with the analysis pass stubbed out for that reason. (5) Baseline: the schema-equivalence baseline
   gained the 16 probe rows of the new inline Project; the other rows are untouched (a full `--record-baseline` also rewrites
   unrelated rows, so the rows were merged by hand).
+- Slice 2 (`I788-S2`): implemented as specified (rules T1 to T6, narrowed `E_TERSE_SCHEDULE_REQUIRED`, N7 in Spec 65, the
+  slice 1 ledger entries flipped to `mapped`). Implementation notes: a `calendar CAL` clause may sit between a schedule-less
+  gate and its `after` (`g gate calendar std after x`); an `at` bound after a date or after `after`, and `at` on a `task`,
+  keep their existing generic errors (`E_TERSE_TOKEN_UNEXPECTED`, `E_TERSE_AMOUNT_INVALID`) with an `at`-specific hint; the
+  hints of Core's `E_FIXED_TARGET_VIOLATION` and `E_CONTRADICTORY_BOUNDS` in `usecases/terse_compile.py` now name the derived
+  gate and the `at <=` cap. The card replaces its "gates always need a date" rule with the derived-gate spelling and the card
+  test pins the placements it states. The skill (`skills/chrona/**`) teaches the YAML mode (`scheduled-point`) only: it
+  does not teach terse and a test forbids `chrona compile` in it, so its "never compute a date by hand" rule now says a
+  gate that follows its work is declared `scheduled-point` and a `fixed-point` date is for a promised date; a skill test
+  runs those claims. The #148 go/no-go re-run with fresh agents (the plan's Proof) is not done here: it needs three fresh
+  agents and is recorded on #148 when run.

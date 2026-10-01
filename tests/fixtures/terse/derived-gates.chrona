@@ -1,0 +1,7 @@
+project derived "Derived gates"
+calendar standard mon-fri
+qa "QA" task 10wd from 2027-03-01
+launch "Launch" gate after qa +2wd
+floor "Launch, not before May" gate at >= 2027-05-07 after qa +2wd
+capped "Launch, capped" gate at >= 2027-03-01 at <= 2027-06-30 after qa
+signoff "Sign-off" gate after launch, floor.at +1wd

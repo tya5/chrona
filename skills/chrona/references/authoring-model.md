@@ -77,12 +77,20 @@ relations:
 
 Points to take from it:
 
-- A gate is `fixed-point` and has the endpoint `at`. A span (a task) has the
+- A gate is a point and has the endpoint `at`: `fixed-point` for a date it commits to, or
+  `scheduled-point` for a date derived from its relations. A span (a task) has the
   endpoints `start` and `end`. A relation names an endpoint on each side; naming `start`
   on a gate is `E_ENDPOINT_MODE_MISMATCH`.
 - `amount: 5wd` is a positive whole number of working days of the object's `calendar`. A
   `wd` amount with no calendar is `E_CALENDAR_REQUIRED`. These `amount` values are
   rejected as `E_SCHEMA`: `0wd`, `1.5wd`, `5 wd`, `5WD` and a bare number. Use `Nwd`.
+- `launch` is `fixed-point` because 2026-12-14 is a promised date, with slack after the
+  build. Never write a gate's date by reading it off `chrona schedule`: replace it with
+  `schedule: {mode: scheduled-point}` and the gate lands on the build's end plus the
+  relation's lag (here 2026-12-01). `constraints: {at: {min: 2026-12-07}}` is a
+  not-earlier-than floor on it, `max` a hard cap that `chrona schedule` rejects with
+  `E_CONTRADICTORY_BOUNDS` when the relations pass it. A `scheduled-point` needs a
+  relation into its `at` or a `min` (`E_DERIVATION`).
 - `lag: 0d` means the dependent starts the moment the predecessor ends.
 - `deadline` is a statement of intent drawn with the object; chrona does not compare it
   with the scheduled date.

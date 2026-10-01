@@ -120,7 +120,7 @@ def _build(parsed: ParseResult) -> tuple[dict[str, Any], SourceMap]:
             calendars[item.name.value] = entry
         result["calendars"] = calendars
 
-    forms = {s.name.value: ("point" if s.schedule.form == "point" else "span") for s in parsed.objects}
+    forms = {s.name.value: ("point" if s.schedule.form in ("point", "derived") else "span") for s in parsed.objects}
     objects: dict[str, Any] = {}
     for item in parsed.objects:
         base = f"/objects/{item.name.value}"
@@ -187,6 +187,18 @@ def _schedule(item: ObjectStatement, base: str, smap: SourceMap) -> dict[str, An
         return {"mode": "rollup"}
     if schedule.form == "point":
         return {"mode": "fixed-point", "at": schedule.at}
+    if schedule.form == "derived":  # T1, T2: the date is Core's to derive from the relations
+        derived: dict[str, Any] = {"mode": "scheduled-point"}
+        if schedule.bounds:
+            at: dict[str, str] = {}
+            for limit in ("min", "max"):
+                for _, kind, when in schedule.bounds:
+                    if kind == limit:
+                        at[limit] = when.value
+                        smap[f"{base}/schedule/constraints/at/{limit}"] = when.range
+            derived["constraints"] = {"at": at}
+            smap[base + "/schedule/constraints"] = smap[base + "/schedule/constraints/at"] = schedule.range
+        return derived
     if schedule.form == "span":
         return {"mode": "fixed-span", "start": schedule.start, "end": schedule.end}
     assert schedule.amount is not None

@@ -1,0 +1,3 @@
+project p
+qa task 5d
+g gate 2027-05-07 at >= 2027-05-01 after qa

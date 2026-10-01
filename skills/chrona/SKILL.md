@@ -27,7 +27,10 @@ the wrong tool there, and the file says so honestly.
    exclusive: it is the first day after the last day of work. A 5-working-day task that
    starts on Monday 2026-11-02 ends on Monday 2026-11-09, and a 15-working-day task whose
    range crosses a calendar exception ends later than a plain count says (in the worked
-   example, 2026-12-01 instead of 2026-11-30).
+   example, 2026-12-01 instead of 2026-11-30). A gate that follows its work is no exception:
+   do not read its date off the plan and write it. Declare it `scheduled-point`, with no
+   date, and `chrona schedule` derives it. Write a `fixed-point` date only for a date that
+   is promised, not one that is computed.
 3. **Edit `project.yaml`, then render again.** Never edit the generated picture.
 4. **Run `chrona schedule`, not only `chrona validate`.** A dependency cycle, a fixed
    date that contradicts its dependencies and contradictory bounds all pass `validate`
@@ -85,8 +88,9 @@ them again.
 - **Layout** composes the surface.
 - **The CLI renders**, and nothing a renderer produces is ever read back as project data.
 
-The plan is a YAML file. Each object has a `schedule` in one of four modes: `fixed-point`
-(`at`, for a gate), `fixed-span` (`start` and `end`), `scheduled` (an
+The plan is a YAML file. Each object has a `schedule` in one of five modes: `fixed-point`
+(`at`, a gate on a date it commits to), `scheduled-point` (a gate with no date: the earliest
+its relations allow), `fixed-span` (`start` and `end`), `scheduled` (an
 `amount` such as `15wd`, placed from its relations and its calendar) and `rollup`. A
 relation joins two endpoints and has a `lag`. The worked example, with all of it, is in
 [references/authoring-model.md](references/authoring-model.md) and lives as a file at
