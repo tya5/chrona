@@ -136,3 +136,14 @@ def test_a_ledger_record_carries_a_message_and_equal_causes_collapse_through_the
     assert [(item["code"], item.get("count")) for item in payloads] == [
         ("W_LAYOUT_LABEL_SUPPRESSED", 3), ("W_LAYOUT_ROW_DENSITY", None), ("W_PROJECT_ATTACHED_OUTSIDE_HOST", None)]
     assert payloads[2]["message"] == "an attached object is dated outside the planned span of its host h: o"
+
+
+def test_an_ellipsized_text_warning_says_what_was_shortened_and_by_how_much():
+    # #497: the legend's shortened labels carry a typed fit warning with a plain-language cause.
+    text = describe_warning({
+        "code": "W_LAYOUT_TEXT_ELLIPSIZED", "diagnostic": "W_LAYOUT_TEXT_ELLIPSIZED:legend:a", "placementId": "legend:a",
+        "failureKind": "legend-text", "behaviour": "ellipsize-with-source", "requiredInline": 120.5,
+        "requiredBlock": 20, "availableInline": 40, "availableBlock": 30})
+
+    assert text.cause == "text was shortened with an ellipsis to fit its box (legend-text, ellipsize-with-source)"
+    assert text.subject == "legend:a (needs 120.5x20, has 40x30)"

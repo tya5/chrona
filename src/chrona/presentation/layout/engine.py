@@ -34,6 +34,14 @@ def _padding(profile: ResolvedLayoutProfile, node: Mapping[str, Any], path: str)
     return value, value, value, value
 
 
+# Sources whose composer shrinks its content to the inline size it is given and
+# reports every shrink (`W_LAYOUT_TEXT_ELLIPSIZED`). A `content`-sized slot of such
+# a source that declares `ellipsize-with-source` is bounded by its container
+# instead of growing past it (#497, Specification 33 section 6). A source joins
+# this set together with its report, never before.
+_SHRINKING_SOURCES = frozenset({"legend"})
+
+
 def _gap(profile: ResolvedLayoutProfile, node: Mapping[str, Any], path: str) -> Decimal:
     return _distance(profile, f"{path}/gap") if "gap" in node else ZERO
 
@@ -416,6 +424,10 @@ class _Arranger:
             else:
                 _, target, weight = _spec_base(cross_spec, axis="block" if row else "inline", measurement=child_measure, profile=self.profile, path=cross_path)
                 cross_used = cross if weight else (target if target is not None else cross)
+                if (not row and not weight and cross_spec == "content" and child.get("kind") == "slot"
+                        and child.get("source") in _SHRINKING_SOURCES
+                        and child.get("overflow") == "ellipsize-with-source"):
+                    cross_used = min(cross_used, cross)
             align = child.get("place", {}).get("block" if row else "inline", node["alignItems"])
             safety = child.get("place", {}).get("safety", "strict")
             cross_start, cross_used = _cross_position(align, block if row else inline, cross, cross_used, safety)

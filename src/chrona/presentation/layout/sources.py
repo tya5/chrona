@@ -55,6 +55,13 @@ class SourceInput:
     typography_role: str = "text"
     runs: tuple[SourceTextRun, ...] = ()
     table: TableContent | None = None
+    # How the runs lie in the slot: `stack` is one run per line (the widest run
+    # sizes the slot), `line` is every run on one line, `run_gap` apart (#497).
+    run_flow: str = "stack"
+    run_gap: Decimal = Decimal(0)
+    # A producer-declared smallest inline size the content can shrink to; when
+    # unset the smallest size is the preferred one (nothing shrinks).
+    min_inline: Decimal | None = None
 
     def text_runs(self) -> tuple[SourceTextRun, ...]:
         if self.runs:
@@ -160,7 +167,14 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
                 float(run_size), float(run_line_height), str(run_metrics.content_identity),
                 float(treatment.letter_spacing), treatment.transform, treatment.numeric_spacing))
         run_measurements[source] = tuple(measured_runs)
-        measured_width = max((run.inline_size for run in measured_runs), default=average_advance)
+        if value.run_flow == "line" and measured_runs:
+            measured_width = (sum((run.inline_size for run in measured_runs), Decimal(0))
+                              + value.run_gap * (len(measured_runs) - 1))
+        else:
+            measured_width = max((run.inline_size for run in measured_runs), default=average_advance)
+        # The block size stays the stack of every run for a `line` too: how many rows a
+        # wrapping line needs depends on the inline size the slot is given, which is not
+        # known here, so the slot keeps its conservative height (#497 changes inline size only).
         text_block = sum((typography.text_treatment(run.typography_role).font_size
                           * typography.text_treatment(run.typography_role).line_height for run in runs), Decimal(0))
         if not runs:
@@ -190,6 +204,8 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
             preferred_inline, preferred_block = text_inline, text_block
         if source != "table":
             minimum_inline = min(preferred_inline, text_inline)
+            if value.min_inline is not None:
+                minimum_inline = min(preferred_inline, value.min_inline)
         result[source] = Measurement(
             minimum_inline, preferred_inline, preferred_inline * 2,
             min(preferred_block, text_block), preferred_block, preferred_block * 2,

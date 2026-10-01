@@ -25,7 +25,8 @@ from chrona.presentation.layout.engine import (measure_natural_normal_flow_block
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.presentation import table_text_line_block
 from chrona.presentation.layout.profile import resolve_layout_profile
-from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources
+from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources, resolve_theme_metrics
+from chrona.presentation.layout.surface_legend import LegendArrangement, legend_arrangement, legend_source_input
 from chrona.presentation.layout.label_visual_measurement import resolve_label_visual_advances
 from chrona.presentation.layout.surface_composer import timeline_content_block_requirement
 from chrona.presentation.layout.surface_lanes import preflight_fixed_lane_layout
@@ -44,7 +45,8 @@ from chrona.presentation.model.color_scale import ColorScaleError, resolve_color
 from chrona.presentation.model.projection import build_review_projection
 from chrona.presentation.model.surface_content import SummaryContent, TableContent
 from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput, ViewRowMode
-from chrona.presentation.review.v05_content import normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content
+from chrona.presentation.review.v05_content import (
+    legend_entries, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content)
 from chrona.presentation.scene.model import (
     ContentFamilyCounts, InspectionScene, SceneManifest, SceneProvenance,
     SceneSurface,
@@ -247,18 +249,34 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     table_content = normalize_v05_table_content(projection, project, view, actual_set=actual_observations,
                                                 locale=environment.locale)
     source_inputs = _source_inputs(project, view, projection, summary,
-                                   render_closure.detail_profile.detail if render_closure.detail_profile else None,
                                    annotation_input=_annotation_source_input(
                                        view, visual_requests, icon_assets, theme),
-                                   color_scale=color_scale, table=table_content)
+                                   table=table_content)
     required_metrics = (("timeline.groupHeader.blockSize",)
                         if view.grouping is not None and view.grouping.presentation == "header" else ())
+    # The legend slot is measured as the legend Layout will draw: the same entries, the same
+    # swatch geometry, and the legend slot's own declared arrangement (#497). That needs the
+    # resolved Layout Profile, so it is resolved first (it needs only the source names). A Layout
+    # Profile error is still reported after any measurement error, as before.
+    layout_error: LayoutError | None = None
     try:
+        resolved_layout = resolve_layout_profile(layout, available_sources=set(source_inputs), theme=theme)
+    except LayoutError as error:
+        resolved_layout, layout_error = None, error
+    try:
+        source_inputs["legend"] = legend_source_input(
+            legend_entries(render_closure.detail_profile.detail if render_closure.detail_profile else None,
+                           project, projection, color_scale),
+            tokens=ThemeTokenView(theme),
+            mark_block_size=float(resolve_theme_metrics(theme)["timeline.mark.blockSize"]),
+            font_metrics=font_metrics,
+            arrangement=legend_arrangement(resolved_layout) if resolved_layout is not None else LegendArrangement())
         measured = measure_sources(source_inputs, theme, font_metrics=font_metrics,
                                    required_metrics=required_metrics)
     except FontMetricsError as error:
         raise _font_failure(error) from error
-    resolved_layout = resolve_layout_profile(layout, available_sources=set(source_inputs), theme=theme)
+    if layout_error is not None:
+        raise layout_error
     viewport = {"inlineSize": environment.viewport_inline, "blockSize": environment.viewport_block}
     measurements = _slot_measurements(resolved_layout.profile["root"], measured)
     natural_block_floor = max(1, int(measure_natural_normal_flow_block(
@@ -555,10 +573,13 @@ def _font_failure(error: FontMetricsError) -> RenderFailed:
 
 
 def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
-                   summary: SummaryContent, detail: ReviewDetailInput | None = None,
-                   annotation_input: SourceInput | None = None, *, color_scale: Any = None,
+                   summary: SummaryContent, annotation_input: SourceInput | None = None, *,
                    table: TableContent | None = None) -> dict[str, SourceInput]:
-    """Declare what each slot will hold, for measurement before layout."""
+    """Declare what each slot will hold, for measurement before layout.
+
+    The `legend` entry is a placeholder: Layout measures the legend from the entries it
+    draws and the legend slot's own arrangement (`legend_source_input`).
+    """
     lane_mode = view.rows.mode is ViewRowMode.LANES
     rows = projection.lane_rows if lane_mode else projection.rows or ()
     row_count = len(rows) or len(projection.items)
@@ -570,12 +591,6 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
     span_days = max(1, (projection.window[1] - projection.window[0]).days)
     network = getattr(projection, "network", None)
     notes = tuple(str(item.get("text", "")) for item in project.get("annotations", {}).values())
-    legend = tuple(item.label for item in detail.legend) if detail is not None else ()
-    if color_scale is not None:
-        # The colour-scale legend rows are drawn after the fixed legend; measure them too.
-        used = {item.fields.get(color_scale.source_field) for item in projection.items
-                if isinstance(item.fields, Mapping) and item.source_kind in {"primary", "combined"}}
-        legend += tuple(str(value) for value in color_scale.domain if value in used)
     sources = {
         "title": SourceInput((project["project"].get("title", "Chrona"),), typography_role="heading"),
         "table": SourceInput(
@@ -588,7 +603,7 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
                        for node in network.nodes) if network is not None else (),
             typography_role="text"),
         "summary": SourceInput(runs=tuple(SourceTextRun(run.content, run.typography_role) for run in summary.runs)),
-        "legend": SourceInput(legend or ("legend",), typography_role="legend"),
+        "legend": SourceInput(("legend",), typography_role="legend"),
         "group-details": SourceInput(("group details",)),
         "observations": SourceInput(("observations",)),
         "milestones": SourceInput(("milestones",)),

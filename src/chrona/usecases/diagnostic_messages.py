@@ -94,6 +94,7 @@ _SURFACE_CAUSES: Mapping[str, str] = {
 }
 _FIT_CAUSES: Mapping[str, str] = {
     "W_LAYOUT_VISIBLE_OVERFLOW": "text or content is drawn past its box",
+    "W_LAYOUT_TEXT_ELLIPSIZED": "text was shortened with an ellipsis to fit its box",
     "W_LAYOUT_DETAIL_PANEL_CLIPPED": "detail panel content was cut off at the panel edge",
     "W_LAYOUT_NETWORK_OVERFLOW": "the dependency network is larger than its area",
     "W_LAYOUT_ROUTE_FALLBACK": "a relation route fell back to a simpler path",
