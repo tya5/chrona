@@ -90,7 +90,7 @@ def test_one_warning_is_not_merged_and_has_no_count_or_occurrences():
 def test_different_causes_stay_apart_even_under_one_code_family_and_order_follows_first_occurrence():
     def fit(code, kind, placement):
         return {"code": code, "severity": "warning", "diagnostic": f"{code}:{placement}", "placementId": placement,
-                "failureKind": kind, "behaviour": "visible-overflow", "requiredInline": 10, "requiredBlock": 5,
+                "sourceRef": f"/objects/{placement}", "failureKind": kind, "behaviour": "visible-overflow", "requiredInline": 10, "requiredBlock": 5,
                 "availableInline": 4, "availableBlock": 5}
 
     rows = collapse_warnings([
@@ -101,6 +101,7 @@ def test_different_causes_stay_apart_even_under_one_code_family_and_order_follow
         ("W_LAYOUT_VISIBLE_OVERFLOW", 2), ("W_LAYOUT_LABEL_SUPPRESSED", None),
         ("W_LAYOUT_VISIBLE_OVERFLOW", None), ("W_LAYOUT_RELATION_LABEL_SUPPRESSED", None)]
     assert rows[0]["message"].endswith("a (needs 10x5, has 4x5) and 1 more")
+    assert rows[0]["sourceRef"] == "/objects/a"  # the first occurrence's sourceRef, not the last
     assert "(label-collision, visible-overflow)" in rows[0]["message"]
 
 

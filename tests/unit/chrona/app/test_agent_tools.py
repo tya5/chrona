@@ -571,6 +571,16 @@ def test_the_tool_rows_equal_the_cli_rows_for_a_malformed_plan(scope, workspace,
     assert tool == cli_rows and tool[0]["message"].startswith("a Project must be a YAML mapping")
 
 
+def test_an_unknown_preset_names_the_value_and_every_valid_id_in_the_tool_and_the_command(scope, workspace, monkeypatch, capsys):
+    status, out, _err = cli(monkeypatch, capsys, workspace, "render", "small.yaml", "--preset", "nope", "--output", "o.svg")
+    assert status == 1
+    (cli_row,) = json.loads(out)["diagnostics"]
+    (tool_row,) = run(scope, "render_draft", project="small.yaml", preset="nope").structured["diagnostics"]
+    assert tool_row["message"] == cli_row["message"] and tool_row["code"] == "E_BUILTIN_PRESET_UNKNOWN"
+    assert "'nope'" in tool_row["message"]
+    assert all(preset["id"] in tool_row["message"] for preset in run(scope, "list_presets").structured["presets"])
+
+
 def test_no_cap_note_appears_when_nothing_is_omitted(scope, monkeypatch):
     items = [Diagnostic("E_ONE", "one", "/a")] * 5
     monkeypatch.setattr(agent_tools, "validate_project_file", lambda path: ProjectValidation(tuple(items)))
