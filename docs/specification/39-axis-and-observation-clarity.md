@@ -106,3 +106,10 @@ checked against the chip as the text's ground.
 - A bound `axis-rule` role draws the axis/plot boundary along the bottom of the axis slot; every shipped Theme binds it.
 - An axis label role's `labelInset`, a ratio of its font size, insets start-aligned labels from their cell edge.
 - A Theme that declares none of these renders the axis as before.
+
+## Axis ticks (#492)
+
+- An optional `tickLength` (a named number token, px) on the `axis-major` or `axis-minor` role turns the marks of every `grid-major` or `grid-minor` tier bound to that role into ticks. Each tick is a two-point Path that stands on the axis rule: it runs from the bottom edge of the axis slot up by `tickLength`.
+- The marks are the same interval starts as the full-height line, for any unit (a week tier gives week ticks); identity, semantic ids and paint are unchanged, so existing colour, stroke width and dash bindings apply.
+- Without `tickLength` the mark spans the plot as before. A non-positive `tickLength` is `E_PRESENTATION_AXIS_INVALID`; a length greater than the axis slot block size is `E_PRESENTATION_AXIS_OVERFLOW`. Neither is clamped.
+- Design: [#492](../design/issue-492-axis-ticks-design-2026-10-02.md). The property is added in place to Theme v0.11 and v0.13 (Specification 56 section 3.2).
