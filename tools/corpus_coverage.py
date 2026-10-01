@@ -229,16 +229,16 @@ PROBES = (
 )
 
 
-VOCABULARY_PART_PREFIX = "urn:chrona:vocabulary-"
+SCHEMA_PART_PREFIX = "urn:chrona:"
 
 
 def _pointer(schema: Mapping[str, Any], reference: str) -> tuple[Mapping[str, Any], Mapping[str, Any]] | None:
-    """The document that owns a `$ref` target and the target: a local pointer or a shared vocabulary part (I662).
+    """The document that owns a `$ref` target and the target: a local pointer or any shared schema part (I662, I715).
 
-    Only `urn:chrona:vocabulary-*` is followed. The revision-store part's `store.provider` enum (reached through the snapshot reference) was never part of this
-    report and following it would add uncovered rows to a committed derived document, so it stays out of scope here.
+    Every `urn:chrona:*` part is followed, as `presentation_coverage` does, so the revision-store part's `store.provider` enum (reached through the
+    snapshot reference) is read as the vocabulary the Snapshot Reference schema declares.
     """
-    if not reference.startswith(("#", VOCABULARY_PART_PREFIX)):
+    if not reference.startswith(("#", SCHEMA_PART_PREFIX)):
         return None
     return resolve_schema_reference(schema, reference)
 

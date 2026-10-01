@@ -188,7 +188,7 @@ def test_presentation_coverage_sees_the_same_vocabulary_as_the_inlined_schema(ki
     assert set(_integer_minimums(schemas[kind])) == set(_integer_minimums(inlined))
 
 
-def test_the_readers_follow_a_vocabulary_reference_but_corpus_coverage_leaves_other_parts_alone():
+def test_every_declared_value_reader_follows_a_part_reference_including_corpus_coverage():
     from tools import corpus_coverage, presentation_coverage
 
     schema = {"$id": "urn:test", "type": "object", "properties": {
@@ -200,9 +200,9 @@ def test_the_readers_follow_a_vocabulary_reference_but_corpus_coverage_leaves_ot
     everything = _seen(presentation_coverage._schema_values, presentation_coverage.with_parts(schema, presentation_coverage.schema_parts(ROOT)))
     assert everything >= wanted
     assert {item for item in everything if item[0] == ("provider",)}, "presentation coverage follows every part"
-    vocabulary_only = _seen(corpus_coverage._schema_values, schema)
-    assert vocabulary_only >= wanted
-    assert not {item for item in vocabulary_only if item[0] == ("provider",)}, "corpus coverage follows vocabulary parts only"
+    followed = _seen(corpus_coverage._schema_values, schema)
+    assert followed >= wanted
+    assert {item for item in followed if item[0] == ("provider",)}, "corpus coverage follows every part too (#715)"
 
 
 def test_vocabulary_inventory_reads_a_declared_value_through_a_part_reference(tmp_path):
