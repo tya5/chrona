@@ -91,10 +91,16 @@ def test_expected_invalid_list_equals_the_baseline_invalid_documents():
     listed = gate.load_expected_invalid(REPOSITORY / gate.EXPECTED_INVALID)
 
     # The baseline names the schema a document mapped to at S0; a document re-pointed to a successor (I710-S-B)
-    # is listed under the successor, which the inventory names.
-    successor = {entry["file"]: entry.get("successor", entry["file"])
-                 for entry in validate_inventory(SCHEMAS, SCHEMAS / "schema-inventory-v0.1.yaml")}
-    invalid = {record["path"]: successor.get(record["schema"], record["schema"]) for record in baseline["documents"] if not record["valid"]}
+    # is listed under the successor, which the inventory names. A predecessor retired since (#731) has no inventory
+    # entry any more: it resolves to the live schema of its kind (the file name minus its version).
+    entries = validate_inventory(SCHEMAS, SCHEMAS / "schema-inventory-v0.1.yaml")
+    successor = {entry["file"]: entry.get("successor", entry["file"]) for entry in entries}
+    live = {re.sub(r"-v\d+\.\d+\.schema\.yaml$", "", entry["file"]): entry["file"] for entry in entries if entry["state"] == "live"}
+
+    def current(schema: str) -> str:
+        return successor.get(schema) or live.get(re.sub(r"-v\d+\.\d+\.schema\.yaml$", "", schema), schema)
+
+    invalid = {record["path"]: current(record["schema"]) for record in baseline["documents"] if not record["valid"]}
 
     assert invalid == {path: entry["schema"] for path, entry in listed.items()}
     assert set(baseline["diagnostics"]["invalidDocuments"]) == set(listed)
