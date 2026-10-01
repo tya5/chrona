@@ -8,7 +8,7 @@ A resource reference MUST identify a Store, immutable revision, and address. `co
 
 ## Store read path default (Issue #723)
 
-The schema keeps `contentIdentity` optional, but the Store read path requires it by default. `LocalSnapshotReader`, `LocalBaselineRegistry` and a Store config that omits `integrity` all reject an omitted identity with `E_CONTENT_IDENTITY_REQUIRED`; a mismatch still fails with `E_CONTENT_IDENTITY`. An optional pin is not a limiter for what the reader will open, so omission is an explicit opt-out rather than the default: `require_content_identity=False` in code, `integrity: optional` in a Store config, `--allow-missing-content-identity` on the public CLI. `chrona init --example` writes `integrity: required`.
+The schema keeps `contentIdentity` optional, but the Store read path requires it by default. `LocalSnapshotReader`, `LocalBaselineRegistry` and a Store config that omits `integrity` all reject an omitted identity with `E_CONTENT_IDENTITY_REQUIRED`; a mismatch still fails with `E_CONTENT_IDENTITY`. An optional pin is not a limiter for what the reader will open, so omission is an explicit opt-out rather than the default: `require_content_identity=False` in code, `integrity: optional` in a Store config, `--allow-missing-content-identity` on the public CLI. `chrona init --example` writes `integrity: optional` with a comment, because the example Contexts leave inner references unpinned by design (ADR-0030) and the example corpus is not a trust boundary (Issue #727); the plain `chrona init` writes no Store config, and every other Store keeps `required`. `chrona render-review --store-config` reads a Context through that config, so its `integrity` applies.
 
 ## Mandatory pins
 

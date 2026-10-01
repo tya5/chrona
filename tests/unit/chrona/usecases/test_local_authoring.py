@@ -56,9 +56,8 @@ def test_explicit_halcyon_init_is_store_resolvable_without_root_revision_closure
     assert (destination / ".chrona" / "store.yaml").is_file()
     assert not tuple(destination.glob("revision-*"))
     config = load_store_config(str(destination / ".chrona" / "store.yaml"))
-    assert config.integrity == {("local", "halcyon-1-example"): "required"}  # init writes the required default (#723)
-    # The canonical Contexts leave their inner references unpinned by design (ADR-0030), so resolving the whole closure
-    # states the opt-out explicitly on a reader built from the configured root rather than weakening the config.
+    assert config.integrity == {("local", "halcyon-1-example"): "optional"}  # the example corpus opts out explicitly (#727)
+    # The canonical Contexts leave their inner references unpinned by design (ADR-0030); this reader states the opt-out itself.
     reader = LocalSnapshotReader(config.roots[("local", "halcyon-1-example")], "halcyon-1-example", require_content_identity=False)
     closures = []
     for path in sorted((destination / "contexts").glob("*.yaml")):

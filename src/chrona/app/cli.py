@@ -307,8 +307,9 @@ def _parser() -> JsonArgumentParser:
 
     command = sub.add_parser("render-review", help="render an immutable Render Context v0.8", description="render an immutable Render Context v0.8")
     command.add_argument("--context-reference", required=True, help="immutable Render Context resource-reference YAML")
-    command.add_argument("--snapshot-root", required=True)
-    command.add_argument("--store-identity", required=True)
+    command.add_argument("--store-config", help="Store config YAML (for example .chrona/store.yaml); its integrity setting applies and replaces --snapshot-root/--store-identity")
+    command.add_argument("--snapshot-root", help="local snapshot adapter root (required without --store-config)")
+    command.add_argument("--store-identity", help="expected local snapshot store identity (required without --store-config)")
     command.add_argument("--allow-missing-content-identity", action="store_true", help="accept references without an exact content identity (explicit opt-out)")
     command.add_argument("--reject-unused-closure-inputs", action="store_true", help="reject a render whose Context declares inputs the render never reads")
     command.add_argument("--format", choices=("svg", "png", "pdf", "typst", "tikz"), help="assert the Context target format")
@@ -383,9 +384,32 @@ def _render_review(closure: RenderClosure, args: argparse.Namespace, *, asset_ro
         raise CliFailure(error.code, error.message, error.component, error.source_ref) from error
 
 
+def _render_review_reader(args: argparse.Namespace, reference: dict[str, Any]) -> tuple[LocalSnapshotReader, Path]:
+    """Reader and snapshot root from explicit flags, or from the Store config entry the Context reference names (its `integrity` applies)."""
+    allow_missing = args.allow_missing_content_identity
+    if args.store_config is None:
+        if args.snapshot_root is None or args.store_identity is None:
+            raise CliFailure("E_COMMAND_SYNTAX", "render-review requires --store-config or both --snapshot-root and --store-identity", exit_code=2)
+        root = Path(args.snapshot_root)
+        return LocalSnapshotReader(root, args.store_identity, require_content_identity=not allow_missing), root
+    if args.snapshot_root is not None or args.store_identity is not None:
+        raise CliFailure("E_COMMAND_SYNTAX", "--store-config replaces --snapshot-root and --store-identity", exit_code=2)
+    try:
+        config = load_store_config(str(discover_store_configuration(explicit=Path(args.store_config)).path))
+    except (OSError, ValueError) as error:
+        raise CliFailure("E_STORE_CONFIG_REQUIRED", f"cannot use Store config {args.store_config}: {error}", "store-config", exit_code=2) from error
+    store = reference.get("store") if isinstance(reference, dict) else None
+    key = (store.get("provider"), store.get("identity")) if isinstance(store, dict) else None
+    if key not in config.roots:
+        raise CliFailure("E_STORE_CONFIG_REQUIRED", "the Context reference names a Store that the Store config does not declare", "store-config", exit_code=2)
+    root = config.roots[key]
+    return LocalSnapshotReader(root, key[1], require_content_identity=config.integrity[key] == "required" and not allow_missing), root
+
+
 def _run_render_review(args: argparse.Namespace) -> None:
-    reader = LocalSnapshotReader(Path(args.snapshot_root), args.store_identity, require_content_identity=not args.allow_missing_content_identity)
-    closure = resolve_render_context(load_yaml(args.context_reference), reader)
+    reference = load_yaml(args.context_reference)
+    reader, args.snapshot_root = _render_review_reader(args, reference)
+    closure = resolve_render_context(reference, reader)
     _assert_context_format(closure, args.format)
     _resolve_output_target(args.output, closure.context.target.kind)
     rendered = _render_review(closure, args)

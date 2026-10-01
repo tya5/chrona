@@ -194,6 +194,12 @@ prefer an explicit `--store-config`, otherwise discover `.chrona/store.yaml`
 by walking upward from the current project directory. No home-directory or
 broad filesystem fallback is used.
 
+`init --example` writes `integrity: optional` into that Store config, with a comment
+saying why: the example Contexts leave inner references unpinned by design
+(ADR-0030). The plain `chrona init` and every other Store keep content identity
+`required`. [First project](docs/guides/first-project.md#render-an-example-context-from-its-store)
+shows rendering an example Context from this Store with `render-review --store-config`.
+
 Materialization verifies declared generated evidence. If a reviewed source
 change intentionally changes that artifact, rerun the same `chrona materialize`
 command with `--write` to refresh it; without that explicit flag, a mismatch is
