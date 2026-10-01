@@ -64,6 +64,19 @@ def test_a_working_day_span_before_a_non_working_target_has_no_phantom_float():
     assert result.analysis.latest_placements["s"]["start"] == date(2027, 5, 20)
 
 
+def test_the_latest_start_of_a_working_day_span_is_a_working_date():
+    """The gate is fixed on Monday: a Friday start still ends on it, a Sunday start is not a working date."""
+    project = _plan(
+        {"root": {"type": "task", "schedule": {"mode": "fixed-point", "at": "2027-05-20"}},
+         "s": {"type": "task", "schedule": {"mode": "scheduled", "amount": "1wd"}},
+         "g": {"type": "gate", "schedule": {"mode": "fixed-point", "at": "2027-05-24"}}},
+        [_dep("r0", "root", "at", "s", "start"), _dep("r", "s", "end", "g", "at")])
+    result = schedule(project)
+    assert result.ok and result.placements["s"] == {"start": date(2027, 5, 20), "end": date(2027, 5, 21)}
+    assert result.analysis.latest_placements["s"] == {"start": date(2027, 5, 21), "end": date(2027, 5, 24)}
+    assert result.analysis.total_float["s"] == 1
+
+
 def _amounts(rng):
     count = rng.randint(-9, 9)
     return rng.choice([f"{count}wd", f"{count}d", f"{count}w", f"{abs(count) % 4}mo"])
