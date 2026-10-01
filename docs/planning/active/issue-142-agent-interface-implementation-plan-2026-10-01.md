@@ -297,6 +297,7 @@ and exact-main CI, per AGENTS.md.
 | --- | --- | --- |
 | S0 (S0a and S0b together) | Implemented in two PRs: the characterization suite (#783), then the extraction | See the deviations below. |
 | S3 (tool core) | Implemented as the MCP slice 1 of 3: `agent_workspace.py`, `agent_tools.py`, the module rules in `check_import_direction.py`, Spec 66 | See the S3 deviations below. |
+| S4 (binding) | Implemented as the MCP slice 2 of 3: `mcp_server.py`, `chrona mcp`, the `mcp` extra, the guide section, binding tests in `tests/mcp/` | See the S4 verification below. The CI lane and the end-to-end stdio test are the next slice, and the workflow edit its own PR. |
 
 S0 deviations from the plan text (no change of behavior; the CLI bytes are frozen by
 `tests/cli/test_cli_characterization.py`, 110 invocations against
@@ -343,3 +344,30 @@ S3 deviations from the plan text (lead decisions L1 to L5 apply: read-only, stdi
 - Not offered, as designed: `--system-fonts`, `--font-metrics`, `--icon-catalog`, `--visual-profile`, typesetter targets,
   `pdf`, `--emit-scene`. The viewport pattern is the design's (3 to 5 digits per side); a very large PNG viewport is a
   local memory cost the first release does not cap.
+
+S4 verification of the SDK (lead decision L1: verify before pinning). Checked on 2026-10-01 in throwaway virtual
+environments, never in the shared one: PyPI has `mcp` 2.0.0, 2.0.1, 2.1.0, 2.1.1 and 2.2.0 (plus 2.0 pre-releases and the
+1.x line). The design's description of the 2.x API is right (`FastMCP` is renamed `MCPServer`, and `mcp.server.fastmcp`
+now raises on import), but the design did not name what the binding needs, which is:
+
+- `mcp.server.Server(name, version=, instructions=, on_list_tools=, on_call_tool=, on_list_resources=,
+  on_read_resource=)`, the low-level server with constructor-registered handlers. It is used instead of `MCPServer`
+  because the tool core already owns the JSON input and output schemas (`MCPServer` derives a schema from a function
+  signature) and the lowlevel server does not validate arguments, so the core's argument check is the only one.
+- `mcp.server.stdio.stdio_server()` (while serving it points file descriptor 1 at standard error, so stray output
+  cannot corrupt a frame), `mcp.types` (the mirror of `mcp_types`), `mcp.shared.exceptions.MCPError` for protocol errors.
+- On the client side, `mcp.Client` (in process) and `mcp.client.stdio.stdio_client` with `mcp.ClientSession` (a
+  subprocess). `Client(StdioServerParameters(...))` raises a `TypeError` on 2.0.0 and works on 2.1.1 and 2.2.0, so the
+  end-to-end test uses `stdio_client` and `ClientSession`, which work on every 2.x release checked.
+- Result of the check: the binding tests and a real stdio session (initialize, tools/list, a schedule call, a PNG
+  render, the resource list, an unknown tool) pass on 2.0.0, 2.0.1, 2.1.0, 2.1.1 and 2.2.0. The extra is therefore
+  `mcp>=2.0,<3`, not the design's `mcp>=2.2,<3`: no 2.2-only API is used, and a floor that was tested is better than a
+  floor that was only named. The transitive set for 2.2.0 is pydantic, starlette, uvicorn, sse-starlette,
+  `httpx2`, PyJWT with `cryptography`, `opentelemetry-api`, `python-multipart`, `jsonschema` and `mcp-types`
+  (the design named `httpx`; 2.2 depends on `httpx2`), plus `pywin32` on Windows.
+- Not verified here: a real agent host session (the plan's transcript requirement), and Windows (CI decides on the
+  three-OS run).
+
+Other S4 deviations: the two guide resources are served now (S2 is merged), so S5 only adds the skill's tool table;
+`E_MCP_UNAVAILABLE` is `failed`, exit 2, from `chrona mcp` only; a missing packaged skill omits the resources and logs a
+warning instead of failing the server.
