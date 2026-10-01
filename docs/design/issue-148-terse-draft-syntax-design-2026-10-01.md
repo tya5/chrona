@@ -423,7 +423,7 @@ The same JSON shape as every other command, extended additively:
 author gave it, `-` for stdin), `sourceRange` (an object `{line, column, endLine, endColumn}`, 1-based code
 points, end exclusive; `endLine` equals `line` for every token the compiler reports), and an
 optional `hint` (one actionable sentence). `sourceRange` is the additive field the parallel agent-interface design
-([#142, PR 778](https://github.com/tya5/chrona/pull/778)) reserves under that name; using one object keeps the CLI,
+([#142 design](issue-142-agent-interface-design-2026-10-01.md), D2.5 and D1.5) reserves under that name; using one object keeps the CLI,
 the skill and an MCP result on one shape. Codes are stable identifiers; messages and hints may be
 improved without a version change. No terse diagnostic is a bare code (#371): each has a message.
 
@@ -632,7 +632,7 @@ that downstream components never read terse text (the same promise Spec 51 makes
 and its one-page summary; the code catalogue; the diagnostic fields (`sourceRange`, `hint`,
 `source`); `chrona compile -` for stdin; exit codes; the all-errors-in-one-pass behaviour; the stream rule
 (7.2); that `compile` never partially emits; the hand-off rule (the skill should tell an agent to compile and
-then edit YAML when it needs fields, scenarios or annotations). That design (PR 778) takes `project` as an opaque path and promises not to describe `chrona compile` before it exists; the
+then edit YAML when it needs fields, scenarios or annotations). That design takes `project` as an opaque path and promises not to describe `chrona compile` before it exists; the
 hand-over is slice 4, after which one added paragraph and one reference file in the skill are enough. What this design does not decide: the skill's
 text, any MCP tool, or whether an MCP `compile_plan` returns positions as structured data (it can reuse the
 use case result directly, which is why the position data lives in the use case and not only in the CLI).
