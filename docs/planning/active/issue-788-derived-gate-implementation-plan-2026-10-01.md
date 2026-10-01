@@ -15,7 +15,7 @@ the smallest change that gives the owner's rule, and it is indivisible: the sche
 conformance cases, the schema-equivalence delta and the terse-ledger classification each turn a repository gate red when
 landed alone. Slice 2 (terse) waits for #148 S4 because both edit Spec 65 and the terse guide. Slice 3 (the soft promise)
 is lead-gated and must agree its JSON shape with #142. Slice 4 is teaching: skill and guides, after the code they
-describe and after #787.
+describe; #787 (the skill command) has merged.
 
 ## 1. Slice overview
 
@@ -25,7 +25,7 @@ describe and after #787.
 | 1 | `scheduled-point`: schema, Core, scheduler, attachment, conformance, proofs, specs | slice 0 merged (shares `scheduler.py` and the diagnostics path) | L2, L3, L5, L9 |
 | 2 | Terse: `gate after X`, `at >= D`, `at <= D` | slice 1, #148 S4 merged | L6 |
 | 3 | `W_DEADLINE` (the soft promise) | slice 1; #142 result shape agreed | L4 |
-| 4 | Teaching: skill references, guides, CLI reference | slices 0 to 2 (3 if built); #787 merged | L8 |
+| 4 | Teaching: skill references, guides, CLI reference | slices 0 to 2 (3 if built) | L8 |
 
 ## 2. Slice 0 - the better rejection
 
@@ -71,7 +71,7 @@ step. Meets the second branch of the issue's acceptance; changes no verdict.
 
 **Must not.** Change which plans are rejected, the number of diagnostics, a code, or a pointer other than the id-less
 fallback; return placements for a rejected plan; suggest or apply a correction; promise a feature in a hint; edit
-`skills/chrona/references/diagnostics.md` (slice 4, after #787) or any derived document.
+`skills/chrona/references/diagnostics.md` (slice 4) or any derived document.
 
 **Publication.** One PR. Acceptance evidence for the issue row: the test of design 4.4.
 
@@ -180,7 +180,7 @@ decide the `chrona schedule` JSON shape alone.
 scheduled-point, the floor and cap, the promise pair), `skills/chrona/references/diagnostics.md` (the `E_SCHEMA` list of
 forms; the `E_FIXED_TARGET_VIOLATION` row now names the earliest feasible date and `details`; `E_DERIVATION` and
 `E_CONTRADICTORY_BOUNDS` for the point), `docs/guides/cli-reference.md` (the optional `details` object),
-`docs/guides/progressive-project-tutorial.md` only if the lead chooses to teach it (L8). Rebase on #787, which edits the
+`docs/guides/progressive-project-tutorial.md` only if the lead chooses to teach it (L8). Re-check `gh pr list`: #787 (merged) edited the
 diagnostics reference and the skill library.
 
 **Tests.** The skill diagnostics test; the documented-commands check; the wheel skill test.
@@ -207,8 +207,9 @@ them. Commit trailers and the "Refs only" rule apply to every commit and every s
 ## 8. Coordination and publication
 
 - Before editing a shared file, run `gh pr list -R tya5/chrona --state open --json number,title,files` and rebase right
-  before merge. Known overlaps: #787 (`app/cli.py`, `golden.json`, `skills/chrona/references/diagnostics.md`,
-  `tests/unit/chrona/skills/test_chrona_skill_diagnostics.py`) against slices 0 and 4; #148 S3/S4 (Spec 65, the terse guide,
+  before merge. Known overlaps: #787 has merged (it edited `app/cli.py`, `golden.json`,
+  `skills/chrona/references/diagnostics.md` and `tests/unit/chrona/skills/test_chrona_skill_diagnostics.py`), so slices 0
+  and 4 start from its result, and any later skill or CLI PR is re-checked; #148 S3/S4 (Spec 65, the terse guide,
   `src/chrona/terse/`) against slice 2; any #142 slice against `usecases/` and the CLI result shape (slices 0 and 3).
 - #454 is the reviewer's board: read it to pick work, never edit or comment on it.
 - Each slice is a separate publication with its own CI evidence; the acceptance review for #788 is written only after the

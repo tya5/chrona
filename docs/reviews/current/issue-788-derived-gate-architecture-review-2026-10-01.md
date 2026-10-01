@@ -40,7 +40,7 @@ Three things the issue does not say, and the lead should decide knowingly:
 - Spikes outside the repository, working tree restored each time: the schema branch, a scheduler branch, validation and
   attachment edits; the S0 gate; twelve scheduling cases (design 11.2); a draft render of a derived gate and its fixed
   twin (byte-identical SVG).
-- `gh pr list`: open PRs are #787 (the `chrona skill` command; edits `skills/chrona/references/diagnostics.md`,
+- `gh pr list`: when the review was written the open PRs were #787 (the `chrona skill` command, merged since as `5bf4628b`; edited `skills/chrona/references/diagnostics.md`,
   `app/cli.py`, `tests/fixtures/cli_characterization/golden.json`) and #424 (README). This pack's PR adds four new files
   and edits none of them. The implementation plan names the overlaps for later slices.
 
@@ -166,8 +166,8 @@ improved without a version change"); the exact-text fixtures pin it for review, 
 ### F13 (m, open) Overlapping and derived files
 
 Derived documents change on main, never in a PR: `docs/examples/corpus-coverage.md` (a new uncovered row),
-`docs/diagnostics/inventory.md` (moved source locations). `skills/chrona/references/diagnostics.md` is edited by #787 and by
-slice 4; `app/cli.py` and `golden.json` by #787 and slice 0; `docs/guides/terse-plan.md` and Spec 65 by #148 S4 and slice
+`docs/diagnostics/inventory.md` (moved source locations). `skills/chrona/references/diagnostics.md` was edited by #787 (now merged) and is edited by
+slice 4; `app/cli.py` and `golden.json` by #787 (merged) and slice 0; `docs/guides/terse-plan.md` and Spec 65 by #148 S4 and slice
 2. Each slice re-checks `gh pr list` and rebases immediately before merge (implementation plan, section 8).
 
 ### F14 (m, resolved) The issue omits attachment
@@ -214,7 +214,7 @@ recommendation is to keep it open.
    sites, the terse-ledger classification, and Specs 04, 05, 56 in one PR, because any subset leaves a red gate (the ledger
    test, the delta, or a spec that contradicts the schema).
 4. No slice edits a derived document or an existing example.
-5. Slice 2 waits for #148 S4. Slice 3 waits for the lead's L4 and for #142's result shape. Slice 4 rebases on #787.
+5. Slice 2 waits for #148 S4. Slice 3 waits for the lead's L4 and for #142's result shape. Slice 4 builds on #787, now merged.
 6. The twin invariant I1 is a property test, not a hand-checked example.
 
 ## 6. Rejected alternatives (with the reason)
