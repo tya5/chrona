@@ -11,10 +11,10 @@ from chrona.presentation.model.surface_content import SummaryContent, TableCellC
 from chrona.presentation.review.lane_membership import Lane, LaneAssignment, LaneMembership
 from chrona.presentation.table_presentation import BooleanPresencePresentation
 from chrona.presentation.review.v05_content import (
-    normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content,
+    legend_entries, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content,
 )
 from chrona.presentation.contracts.resources import (
-    SummaryMetric, SummaryPanelInput, SummaryProfileInput, TableColumn, ViewComparison, ViewGrouping, ViewInput,
+    LegendEntry, ReviewDetailInput, SummaryMetric, SummaryPanelInput, SummaryProfileInput, TableColumn, ViewComparison, ViewGrouping, ViewInput,
     ViewLaneLabel, ViewLaneTable, ViewRows, ViewVisibility, ViewWindow, freeze,
 )
 
@@ -593,3 +593,30 @@ def test_as_of_label_is_the_declared_text_and_a_date_only_in_a_declared_form():
     assert _as_of_label(dated, as_of, "ja-JP") == "as of 2027/08/20"
     assert _as_of_label({**dated, "date": {"form": "localized-date", "nameTable": "ja-JP"}}, as_of, "en-US") == "as of 2027/08/20"
     assert _as_of_label(None, as_of, "en-US") == "As of Aug 20, 2027"
+
+
+def _scale_projection():
+    items = tuple(ReviewItem(key, key.upper(), "span", {"start": date(2026, 1, 1), "end": date(2026, 1, 2)},
+                             None, None, (), fields={"owner": owner}, source_kind="primary")
+                  for key, owner in (("a", "bus"), ("b", "ground")))
+    return ReviewProjection(items, (date(2026, 1, 1), date(2026, 1, 2)), (), ())
+
+
+def test_legend_entries_are_the_drawn_entries_detail_first_then_one_per_used_scale_value():
+    # #497: Layout measures the legend slot from this list and draws the legend from it.
+    project = {"relations": (), "annotations": {}, "entities": {"bus": {"title": "Spacecraft bus"}}}
+    color_scale = ResolvedColorScale("owner", "planned", "owner", ("bus", "ground", "unused"),
+                                     (("bus", "#111111"), ("ground", "#222222"), ("unused", "#333333")))
+    detail = ReviewDetailInput((), (), (LegendEntry("planned", "Planned"),), None)
+
+    entries = legend_entries(detail, project, _scale_projection(), color_scale)
+
+    assert entries == (("planned", "Planned"), ("scale:owner:bus", "Spacecraft bus"), ("scale:owner:ground", "ground"))
+    drawn = normalize_v05_surface_content(_scale_projection(), project,
+                                          typed_view({"body": {"tableColumns": (), "visibility": {}}}),
+                                          summary=EMPTY_SUMMARY, color_scale=color_scale, detail=detail)
+    assert drawn.legend_entries == entries
+
+
+def test_without_a_scale_or_a_detail_profile_there_are_no_legend_entries():
+    assert legend_entries(None, {}, _scale_projection(), None) == ()
