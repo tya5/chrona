@@ -256,7 +256,7 @@ def render_v05_svg(surface: SceneSurface) -> str:
                  ),
             ) if part)
             treatment = f" {treatment}" if treatment else ""
-            transform = (f' transform="rotate({node.text_layout.rotation_degrees} {number(node.baseline[0])} {number(node.baseline[1])})"'
+            transform = (f' transform="rotate({number(node.text_layout.rotation_degrees)} {number(node.baseline[0])} {number(node.baseline[1])})"'
                          if node.text_layout.rotation_degrees else "")
             append(node, f'<text {common} x="{number(node.baseline[0])}" y="{number(node.baseline[1])}" font-family="{escape(node.text_layout.family, quote=True)}" font-weight="{node.text_layout.weight}" font-size="{number(node.text_layout.font_size)}"{transform}{treatment} {attrs(paint, fill=True, stroke=False)}>{body}</text>')
         elif node.kind == "Symbol":

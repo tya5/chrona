@@ -120,7 +120,7 @@ class TextPlacement:
     text_transform: str = "none"
     numeric_spacing: str = "proportional"
     orientation: str = "horizontal"
-    rotation_degrees: int = 0
+    rotation_degrees: int | float = 0
     font_asset_identity: str = ""
     collision_region: str = "surface"
     collision_domain: CollisionDomain = CollisionDomain("surface", "content")
@@ -591,6 +591,7 @@ class SurfacePlacement:
             for other in required[index + 1:]:
                 if (item.overflow != "visible-overflow" and other.overflow != "visible-overflow"
                         and _collision_domains_intersect(item.collision_domain, other.collision_domain)
+                        and not (item.orientation == other.orientation == "tilt" and item.source_ref == other.source_ref)
                         and intersects(item.bounds, other.bounds)):
                     raise ValueError(f"E_LAYOUT_TEXT_OVERLAP:{item.placement_id}:{other.placement_id}")
         for relation in self.relations:

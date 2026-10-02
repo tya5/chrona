@@ -112,6 +112,9 @@ class _Primitive:
     paint: Mapping[str, Any] | None
     pattern: Mapping[str, Any] | None
     visual_role: str | None = None
+    # (source ref) of a tilted text run (#584): the lines of one rigid, tilted note never overlap by construction,
+    # but the axis-aligned bounds of two rotated neighbouring lines do.
+    tilted_source: str | None = None
 
 
 @dataclass(frozen=True)
@@ -151,8 +154,17 @@ def _primitives(raw_primitives: Any, scene_path: str) -> tuple[_Primitive, ...]:
         primitives.append(_Primitive(index, primitive_id, kind, slot_id,
                                      _rect(primitive.get("bounds"), f"{scene_path}.primitives[{index}].bounds"),
                                      paint_order, host, paint, pattern,
-                                     primitive.get("visualRole") if isinstance(primitive.get("visualRole"), str) else None))
+                                     primitive.get("visualRole") if isinstance(primitive.get("visualRole"), str) else None,
+                                     _tilted_source(primitive)))
     return tuple(primitives)
+
+
+def _tilted_source(primitive: Mapping[str, Any]) -> str | None:
+    layout = primitive.get("textLayout")
+    source = primitive.get("sourceRef")
+    if isinstance(layout, Mapping) and layout.get("orientation") == "tilt" and isinstance(source, str):
+        return source
+    return None
 
 
 def _slot_findings(scene_path: str, slots: Mapping[str, tuple[Rect, str]], primitives: Sequence[_Primitive]) -> list[ScenePerceptibilityFinding]:
@@ -202,6 +214,8 @@ def _text_intersection_findings(scene_path: str, primitives: Sequence[_Primitive
     texts = tuple(item for item in primitives if item.kind == "Text" and item.bounds.positive_area)
     for first_index, first in enumerate(texts):
         for second in texts[first_index + 1:]:
+            if first.tilted_source is not None and first.tilted_source == second.tilted_source:
+                continue
             area = _intersection(first.bounds, second.bounds)
             if area <= TEXT_INTERSECTION_AREA + MICRO_POINT_TOLERANCE:
                 continue

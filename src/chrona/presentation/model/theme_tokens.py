@@ -52,6 +52,9 @@ class AnnotationContainerToken:
     image_ref: str | None = None
     slice_insets_em: tuple[Decimal, Decimal, Decimal, Decimal] | None = None
     content_insets_em: tuple[Decimal, Decimal, Decimal, Decimal] | None = None
+    # The declared tilt cycle in degrees, rectangle outlines only (#584): the annotation at position i of the
+    # View's order takes tilt_degrees[i mod len]; None means no tilt.
+    tilt_degrees: tuple[Decimal, ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -370,8 +373,20 @@ class ThemeTokenView:
         corner_radius = self._decimal(value.get("cornerRadius"), role, "annotationContainer/cornerRadius")
         if corner_radius is None or corner_radius < 0:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/annotationContainer/cornerRadius")
+        tilt = value.get("tiltDegrees")
+        tilt_degrees: tuple[Decimal, ...] | None = None
+        if tilt is not None:
+            pointer = f"/body/roles/{role}/annotationContainer/tiltDegrees"
+            if (outline != "rectangle" or not isinstance(tilt, (list, tuple)) or not tilt
+                    or any(isinstance(item, bool) or not isinstance(item, (int, float)) for item in tilt)):
+                # A balloon tail and an image's slice tiles do not rotate by this rule.
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer)
+            angles = tuple(self._decimal(item, role, "annotationContainer/tiltDegrees") for item in tilt)
+            if any(angle is None or abs(angle) > 15 for angle in angles):
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer)
+            tilt_degrees = angles  # type: ignore[assignment]
         if outline == "rectangle":
-            return AnnotationContainerToken(outline, corner_radius, None, None, None, None)
+            return AnnotationContainerToken(outline, corner_radius, None, None, None, None, tilt_degrees)
         if outline == "balloon":
             tail_base = self._decimal(value.get("tailBaseEm"), role, "annotationContainer/tailBaseEm")
             if tail_base is None or tail_base <= 0:

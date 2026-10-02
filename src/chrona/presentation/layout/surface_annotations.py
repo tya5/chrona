@@ -24,6 +24,9 @@ from chrona.presentation.layout.annotation_search import (
     nearest_free_box, nearest_free_tail_box, nearest_free_routed_tail_box,
 )
 from chrona.presentation.layout.annotation_kind_frame import EMPTY_FRAME, measure_kind_frame, place_kind_frame
+from chrona.presentation.layout.annotation_tilt import (
+    nearest_boundary_point, polygon_commands, rotate_shape, rotate_text, rotated_corners, rotated_extent, tilt_for,
+)
 from chrona.presentation.layout.balloon_geometry import balloon_outline
 from chrona.presentation.layout.labels import LabelPlacement
 from chrona.presentation.layout.annotation_topology import (
@@ -189,6 +192,8 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
             tail_route_search_exhausted = False
             tail_topology: str | None = None
             kind_measure = EMPTY_FRAME
+            tilt_angle = 0.0  # the Theme's deterministic tilt for this annotation's position (#584)
+            frame_width = frame_height = 0.0
             routed_tail_tip: tuple[float, float] | None = None
             selected_leader: tuple[ConnectorEgress, AnnotationRouteTrial,
                                    tuple[tuple[float, float], ...],
@@ -326,6 +331,14 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                                        max(size * line_height * len(annotation_lines) + kind_measure.header_block,
                                            kind_measure.stamp_block)
                                        + kind_measure.block_insets + content_top + content_bottom)
+                    # A tilted note is searched and registered through the axis-aligned bounds of its rotated
+                    # frame; once a position is chosen the whole frame is rotated about their centre (#584).
+                    frame_width, frame_height = annotation_size
+                    tilt_angle = tilt_for(container.tilt_degrees if container is not None else None, index)
+                    if tilt_angle:
+                        if annotation_visuals:
+                            raise LayoutError("E_LAYOUT_ANNOTATION_TILT_VISUAL", f"/annotations/{index}")
+                        annotation_size = rotated_extent(frame_width, frame_height, tilt_angle)
                     candidates, ladder = candidate_order(annotation.candidates, annotation.purpose,
                                                           annotation.fallback_ladder, preferred)
                     box, selected_rung, tail_tip = None, None, None
@@ -497,6 +510,13 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
             bounds = box.placement.bounds
             annotation_bounds = Rect(Decimal(str(bounds.x)), Decimal(str(bounds.y)),
                                      Decimal(str(bounds.width)), Decimal(str(bounds.height)))
+            if tilt_angle:
+                frame_x = bounds.x + (bounds.width - frame_width) / 2
+                frame_y = bounds.y + (bounds.height - frame_height) / 2
+                tilt_center = (bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)
+                tilt_polygon = rotated_corners(frame_x, frame_y, frame_width, frame_height, tilt_center, tilt_angle)
+            else:
+                frame_x, frame_y, frame_width, frame_height = bounds.x, bounds.y, bounds.width, bounds.height
             if tail_tip is not None:
                 container = request.theme_tokens.annotation_container(
                     semantic_binding(presentation.box_semantic_id).theme_role)
@@ -504,6 +524,11 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                 outline = balloon_outline(bounds, tail_tip, corner_radius=corner_radius, tail_base=tail_base)
                 shapes.append(ShapePlacement(f"annotation-box:{annotation_id}", annotation_id, "Balloon",
                                              annotation_bounds, path_commands=outline,
+                                             semantic_id=presentation.box_semantic_id, annotation=presentation,
+                                             paint_order=ANNOTATION_PAINT_ORDER))
+            elif tilt_angle:
+                shapes.append(ShapePlacement(f"annotation-box:{annotation_id}", annotation_id, "Tilt",
+                                             annotation_bounds, path_commands=polygon_commands(tilt_polygon),
                                              semantic_id=presentation.box_semantic_id, annotation=presentation,
                                              paint_order=ANNOTATION_PAINT_ORDER))
             elif container is not None and container.outline == "image":
@@ -529,18 +554,21 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
             if not kind_measure.empty:
                 kind_shapes, kind_text = place_kind_frame(
                     kind_measure, annotation_id=annotation_id, presentation=presentation,
-                    content_box=(bounds.x + content_left, bounds.y + content_top,
-                                 bounds.width - content_left - content_right,
-                                 bounds.height - content_top - content_bottom),
+                    content_box=(frame_x + content_left, frame_y + content_top,
+                                 frame_width - content_left - content_right,
+                                 frame_height - content_top - content_bottom),
                     theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                     annotation_slot=annotation_text_slot, paint_order=ANNOTATION_PAINT_ORDER)
+                if tilt_angle:
+                    kind_shapes = tuple(rotate_shape(item, tilt_center, tilt_angle) for item in kind_shapes)
+                    kind_text = tuple(rotate_text(item, tilt_center, tilt_angle) for item in kind_text)
                 shapes.extend(kind_shapes)
                 for kind_line in kind_text:
                     text.append(kind_line)
                     register_rect(kind_line.placement_id, "text", "annotations", kind_line.bounds)
             placed_annotation = place_text(placement_id=f"annotation-text:{annotation_id}", source_ref=annotation_id, content=content,
-                                           inline=bounds.x + annotation_leading + content_left + kind_measure.body_inset_left,
-                                           baseline_block=(bounds.y + content_top + kind_measure.inset_top
+                                           inline=frame_x + annotation_leading + content_left + kind_measure.body_inset_left,
+                                           baseline_block=(frame_y + content_top + kind_measure.inset_top
                                                            + kind_measure.header_block + size),
                                            typography_role=annotation_text_role,
                                            theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
@@ -548,6 +576,8 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                                            lines=annotation_lines, semantic_id=presentation.text_semantic_id,
                                            annotation=presentation)
             placed_annotation = replace(placed_annotation, paint_order=ANNOTATION_PAINT_ORDER + 1)
+            if tilt_angle:
+                placed_annotation = rotate_text(placed_annotation, tilt_center, tilt_angle)
             text.append(placed_annotation)
             register_rect(placed_annotation.placement_id, "text", "annotations", placed_annotation.bounds)
             if box.placement.visible_overflow:
@@ -645,6 +675,13 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                                       *route_trial.commands[1:])
                                      if route_trial.commands else ())
                     visible_route_segments = tuple(zip(prefix, prefix[1:])) + visible_segments(route_trial)
+                if tilt_angle:
+                    # The route ends at the bounds of the rotated frame; the leader goes on to the paper's edge.
+                    tip = nearest_boundary_point(tilt_polygon, target)
+                    if tip != target:
+                        points = (*points, tip)
+                        if path_commands:
+                            path_commands = (*path_commands, PathCommand("line", (tip,)))
                 source_side = selected_source.side
                 source_port_obstacle_id = f"port:{anchor_host.placement_id}:{source_side}"
                 if not surface_obstacles.has(source_port_obstacle_id):

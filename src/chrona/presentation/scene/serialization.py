@@ -36,8 +36,10 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
                               for surface in scene.surfaces for primitive in surface.primitives)
     has_glow = any(primitive.paint is not None and primitive.paint.glow is not None
                    for surface in scene.surfaces for primitive in surface.primitives)
+    has_tilt = any(primitive.text_layout is not None and primitive.text_layout.orientation == "tilt"
+                   for surface in scene.surfaces for primitive in surface.primitives)
     return {
-        "version": "chrona/scene/v0.7" if has_catalog_pattern or has_glow else "chrona/scene/v0.6",
+        "version": "chrona/scene/v0.7" if has_catalog_pattern or has_glow or has_tilt else "chrona/scene/v0.6",
         "kind": "scene",
         "provenance": {
             "mode": scene.provenance.mode,
