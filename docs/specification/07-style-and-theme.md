@@ -204,7 +204,7 @@ Catalogue pattern tokens are admitted only on roles whose current completed
 primitive is always Rect: `missing-actual.pattern`, `network-node.pattern`,
 `progress-fill.pattern`, `summary-bar.pattern`,
 `annotation-highlight-box.pattern`, `axis-band-decoration.pattern`,
-`axis-band-decoration2.pattern`,
+`axis-band-decoration2.pattern`, `period-band.pattern` (#582),
 `as-of-label-chip.pattern`, `member-label-chip.pattern`, and
 `finish-delta-chip.pattern`. Other pattern values and all other
 role/property pairs retain their current contracts.

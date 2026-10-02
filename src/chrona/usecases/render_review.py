@@ -41,9 +41,9 @@ from chrona.presentation.fonts.system import DraftFontResolution
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView, effective_draft_numeric_theme
 from chrona.core.attachments import AttachmentWarning, attachment_warnings
 from chrona.core.deadlines import deadline_warnings
-from chrona.core.periods import period_range_diagnostics
+from chrona.core.periods import period_range_diagnostics, resolve_periods
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
-from chrona.presentation.model.projection import build_review_projection
+from chrona.presentation.model.projection import ReviewPeriod, build_review_projection
 from chrona.presentation.model.surface_content import SummaryContent, TableContent
 from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput, ViewRowMode
 from chrona.presentation.review.v05_content import (
@@ -553,14 +553,35 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
             raise RenderRejected(scenario_result.diagnostics)
         scenarios[scenario_id] = (scenario_project, scenario_result.placements)
         provenance.append(resolved.provenance)
-    return build_review_projection(
+    projection = build_review_projection(
         project, result.placements, view, actual,
         snapshot_project=snapshot_project,
         snapshot_placements=snapshot_result.placements if snapshot_result is not None else None,
         scenarios=scenarios,
         analysis=result.analysis,
         snapshot_analysis=snapshot_result.analysis if snapshot_result is not None else None,
-    ), tuple(provenance), attachment_warnings(project, result.placements), deadline_warnings(project, result.placements)
+    )
+    projection = replace(projection, periods=_selected_periods(project, result.placements, view))
+    return projection, tuple(provenance), attachment_warnings(project, result.placements), deadline_warnings(project, result.placements)
+
+
+def _selected_periods(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput) -> tuple[ReviewPeriod, ...]:
+    """The Project periods the View names, as dates, in the View's order (#582).
+
+    A View naming a period the Project does not declare is refused with the declared identifiers, never
+    skipped: a silently missing band would read as a period that has no extent.
+    """
+    if not view.periods:
+        return ()
+    declared = {item.period_id: item for item in resolve_periods(project, placements)}
+    for index, selected in enumerate(view.periods):
+        if selected.period_id not in declared:
+            known = ", ".join(declared) if declared else "none"
+            raise RenderFailed("E_VIEW_PERIOD_UNKNOWN",
+                               f"the View selects period {selected.period_id}, which the Project does not declare (declared: {known})",
+                               "presentation", f"/body/periods/{index}/id")
+    return tuple(ReviewPeriod(item.period_id, item.title, item.start, item.end)
+                 for item in (declared[selected.period_id] for selected in view.periods))
 
 
 def _font_metrics(theme: dict[str, Any], font_metrics: dict[str, Any], asset_root: Path,

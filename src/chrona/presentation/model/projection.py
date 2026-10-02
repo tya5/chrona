@@ -142,6 +142,16 @@ class DependencyNetworkProjection:
 
 
 @dataclass(frozen=True)
+class ReviewPeriod:
+    """One View-selected Project period as dates; ``end`` is exclusive (#582)."""
+
+    period_id: str
+    title: str
+    start: date
+    end: date
+
+
+@dataclass(frozen=True)
 class ReviewProjection:
     items: tuple[ReviewItem, ...]
     window: tuple[date, date]
@@ -156,6 +166,7 @@ class ReviewProjection:
     folded_points: tuple[FoldedPointProjection, ...] = ()
     lane_membership: LaneMembership | None = None
     lane_rows: tuple[ReviewLaneRowProjection, ...] = ()
+    periods: tuple[ReviewPeriod, ...] = ()
 
 
 @dataclass(frozen=True)

@@ -111,6 +111,7 @@ _RECT_PATTERN_THEME_ROLES = {
     "annotationHighlightBox": "annotation-highlight-box",
     "axisBandDecoration": "axis-band-decoration",
     "axisBandDecoration2": "axis-band-decoration2",
+    "periodBand": "period-band",
     "asOfLabelChip": "as-of-label-chip",
     "memberLabelChip": "member-label-chip",
     "finishDeltaChip": "finish-delta-chip",

@@ -12,7 +12,7 @@ from chrona.presentation.layout.surface_quality import GroupPlacement, ShapePlac
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, semantic_binding
 
 BACKGROUND_SEMANTIC_IDS = frozenset({
-    "rowBand", "groupBand", "groupHeaderBand", "calendarClosed", *axis_band_semantic_ids(),
+    "rowBand", "groupBand", "groupHeaderBand", "calendarClosed", "periodBand", *axis_band_semantic_ids(),
 })
 
 
@@ -134,9 +134,9 @@ def validate_background_shapes(shapes: tuple[ShapePlacement, ...] | list[ShapePl
             if (shape.source_ref == other.source_ref
                     and {shape.semantic_id, other.semantic_id} == {"groupBand", "groupHeaderBand"}):
                 continue
-            if _is_later_calendar_overlay(shape, other, theme_tokens):
+            if _is_later_overlay(shape, other, theme_tokens):
                 continue
-            if _is_later_calendar_overlay(other, shape, theme_tokens):
+            if _is_later_overlay(other, shape, theme_tokens):
                 continue
             if intersects(shape.bounds, other.bounds):
                 raise LayoutError("E_LAYOUT_BACKGROUND_OVERLAP",
@@ -144,18 +144,22 @@ def validate_background_shapes(shapes: tuple[ShapePlacement, ...] | list[ShapePl
                                   detail=f"{shape.placement_id}:{other.placement_id}")
 
 
-def _is_later_calendar_overlay(calendar: ShapePlacement, band: ShapePlacement,
-                                theme_tokens: Any) -> bool:
-    """Permit only a later-painted translucent calendar cell over a band."""
-    if calendar.semantic_id != "calendarClosed" or band.semantic_id not in {
-        "rowBand", "groupBand", "groupHeaderBand",
-    }:
+# The one explicit relation under which translucent backgrounds may intersect: a later-painted overlay over an
+# earlier background of strictly lower rank. Row, group and header bands come first, a named period (#582)
+# next, the calendar closure last; nothing else is allowed by default.
+_OVERLAY_RANK = {"rowBand": 0, "groupBand": 0, "groupHeaderBand": 0, "periodBand": 1, "calendarClosed": 2}
+
+
+def _is_later_overlay(upper: ShapePlacement, lower: ShapePlacement, theme_tokens: Any) -> bool:
+    """Permit a later-painted translucent overlay over a background of lower rank."""
+    if (upper.semantic_id not in _OVERLAY_RANK or lower.semantic_id not in _OVERLAY_RANK
+            or _OVERLAY_RANK[upper.semantic_id] <= _OVERLAY_RANK[lower.semantic_id]):
         return False
-    calendar_role = semantic_binding(calendar.semantic_id).scene_role
-    band_role = semantic_binding(band.semantic_id).scene_role
-    calendar_treatment, calendar_order = theme_tokens.background(calendar_role)
-    band_treatment, band_order = theme_tokens.background(band_role)
-    return (calendar_treatment == "fill" and band_treatment == "fill"
-            and calendar_order == calendar.paint_order
-            and band_order == band.paint_order
-            and calendar_order > band_order)
+    upper_role = semantic_binding(upper.semantic_id).scene_role
+    lower_role = semantic_binding(lower.semantic_id).scene_role
+    upper_treatment, upper_order = theme_tokens.background(upper_role)
+    lower_treatment, lower_order = theme_tokens.background(lower_role)
+    return (upper_treatment == "fill" and lower_treatment == "fill"
+            and upper_order == upper.paint_order
+            and lower_order == lower.paint_order
+            and upper_order > lower_order)

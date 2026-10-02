@@ -290,6 +290,13 @@ class ViewVisual:
 
 
 @dataclass(frozen=True)
+class ViewPeriod:
+    """One Project period the View selects to draw; geometry and paint belong to Layout and Theme (#582)."""
+
+    period_id: str
+
+
+@dataclass(frozen=True)
 class ViewInput:
     """Closed View v0.3 vocabulary after schema acceptance."""
 
@@ -313,6 +320,7 @@ class ViewInput:
     visuals: tuple[ViewVisual, ...] = ()
     hierarchy_column: str | None = None
     background_decoration: tuple[str, str] = ("none", "all")
+    periods: tuple[ViewPeriod, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -880,7 +888,16 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
               for item in body.get("visuals", ())),
         hierarchy_column=hierarchy_column,
         background_decoration=(str(body.get("backgroundDecoration", FrozenDict()).get("rows", "none")),
-                               str(body.get("backgroundDecoration", FrozenDict()).get("groups", "all"))))
+                               str(body.get("backgroundDecoration", FrozenDict()).get("groups", "all"))),
+        periods=_view_periods(body.get("periods", ())))
+
+
+def _view_periods(raw: Any) -> tuple[ViewPeriod, ...]:
+    """Close the schema-accepted period selection; one entry per Project period (#582)."""
+    periods = tuple(ViewPeriod(str(item["id"])) for item in raw)
+    if len({item.period_id for item in periods}) != len(periods):
+        raise ContractError("E_VIEW_PERIOD_DUPLICATE")
+    return periods
 
 
 def _validate_view_table_intent(table_columns: tuple[TableColumn, ...], grouping: ViewGrouping | None,

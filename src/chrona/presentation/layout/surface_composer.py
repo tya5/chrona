@@ -32,6 +32,7 @@ from chrona.presentation.layout.surface_backgrounds import (
     compose_calendar_backgrounds, compose_row_group_backgrounds, replace_group_header_band,
 )
 from chrona.presentation.layout.surface_axis import compose_axis
+from chrona.presentation.layout.surface_periods import compose_period_bands
 from chrona.presentation.layout.presentation import (MarkGeometry, required_row_block_extents)
 from chrona.presentation.layout.text import metric_for_role, place_text
 from chrona.presentation.layout.labels import (LabelRect, LabelRequest)
@@ -138,6 +139,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     visible_label_overflows = list(axis_batch.visible_label_overflows)
     calendar_intervals = axis_batch.calendar_intervals
     contract = request.presentation_contract
+    period_batch = compose_period_bands(
+        base=base, theme_tokens=request.theme_tokens, periods=projection.periods, window=projection.window)
+    shapes.extend(period_batch.shapes)
+    diagnostics.extend(period_batch.diagnostics)
     shapes.extend(compose_calendar_backgrounds(
         base=base, theme_tokens=request.theme_tokens, intervals=calendar_intervals))
     as_of_label: tuple[float, str] | None = None

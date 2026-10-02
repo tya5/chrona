@@ -31,7 +31,7 @@ PLOT_TEXT_PURPOSES = frozenset({"member-label", "finish-delta", "as-of-label", "
 SLOT_PURPOSES = {
     "title": {"title-text"},
     "table": {"table-column-label", "table-cell"},
-    "timeline": MARK_PURPOSES | {"dependency", "calendar-closed", "as-of"},
+    "timeline": MARK_PURPOSES | {"dependency", "calendar-closed", "as-of", "period-band"},
     "timeline-axis": {"axis-label", "axis-band", "axis-grid"},
     "notes": {"project-note"},
     "legend": {"legend-label", "legend-swatch"},

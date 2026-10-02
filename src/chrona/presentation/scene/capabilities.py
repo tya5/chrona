@@ -241,6 +241,9 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
     register("group-band row-band group-header-band calendar-closed", "Layout background and Scene Rect",
              _RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder")),
              scene_kinds=frozenset(("Rect",)))
+    register("period-band", "Layout period band and Scene Rect",
+             _PATTERNED_RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder")),
+             scene_kinds=frozenset(("Rect",)))
     register("axis-band-decoration axis-band-decoration2", "Layout axis band and Scene Rect",
              _PATTERNED_RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder", "cellGap")),
              scene_kinds=frozenset(("Rect",)))
@@ -257,7 +260,7 @@ _OPEN_AXIS_PROPERTIES = _TEXT_MEASUREMENT | _AXIS_MEASUREMENT
 _OPEN_LEGEND_PROPERTIES = _RECT_PAINT
 _CATALOG_PATTERN_ROLES = frozenset((
     "missing-actual", "network-node", "progress-fill", "summary-bar",
-    "annotation-highlight-box", "axis-band-decoration", "axis-band-decoration2",
+    "annotation-highlight-box", "axis-band-decoration", "axis-band-decoration2", "period-band",
     "as-of-label-chip", "member-label-chip", "finish-delta-chip",
 ))
 

@@ -490,7 +490,7 @@ def test_halcyon_current_project_pin_rejects_changed_source_bytes(tmp_path):
         copy_context_closure(copied_example, context_path, tmp_path / "snapshot")
 
 
-HALCYON_PROJECT_REVISION = "example-v3"
+HALCYON_PROJECT_REVISION = "example-v4"
 
 
 def test_every_halcyon_context_pins_current_project_without_repinning_theme():

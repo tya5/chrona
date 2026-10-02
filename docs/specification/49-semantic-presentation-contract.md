@@ -56,6 +56,7 @@ The registry owns canonical primitive semantics. Its entries declare `semantic_i
 | `asOf` | Path/Text | `as-of`, `as-of-label` | `asOf` |
 | `groupHeader` | Rect/Text | `group-header-band`, `group-header` | `groupHeader` |
 | `calendarClosed` | Rect | `calendar-closed` | `calendarClosed` |
+| `periodBand` | Rect | `period-band` | `period-band` |
 | `axisBand` | Text | `axis-band` | `axis` |
 | `legendEntry` | dispatched by the entry's own role `primitive_kind` (Rect, Symbol, or Path) | `legend-swatch` | entry's own role, sized against `legend-swatch.swatchInlineSize` (#427) |
 | `legendLabel` | Text | `legend-label` | `legend` |

@@ -267,6 +267,17 @@ allOf:
                   properties:
                     form: {const: localized-date}
                     nameTable: {description: "Exact built-in axis name-table ID; defaults to Render Context locale.", enum: [en-US, ja-JP]}
+          periods:
+            description: "Named Project periods drawn as bands across the plot, in paint order of declaration; absent selects none."
+            type: array
+            items:
+              description: "One selected Project period."
+              examples: [{id: launch-window}]
+              type: object
+              required: [id]
+              additionalProperties: false
+              properties:
+                id: {description: "Identifier of a period declared in the Project's `periods`.", type: string, minLength: 1}
           shading:
             type: object
             additionalProperties: false
@@ -651,6 +662,7 @@ allOf:
                   - {required: [backgroundDecoration]}
                   - {required: [axis]}
                   - {required: [markers]}
+                  - {required: [periods]}
                   - {required: [shading]}
                   - {required: [timePresentation]}
                   - {required: [annotations]}

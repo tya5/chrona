@@ -76,7 +76,7 @@ def _paint_family(primitive: ScenePrimitive, tokens: ThemeTokenView) -> PaintFam
         return PaintFamily.TEXT
     if primitive.kind == PrimitiveKind.PATH:
         return PaintFamily.PATH
-    if primitive.purpose in {"group-decoration", "row-decoration", "group-header-band", "calendar-closed"}:
+    if primitive.purpose in {"group-decoration", "row-decoration", "group-header-band", "calendar-closed", "period-band"}:
         treatment, _ = tokens.background(primitive.visual_role)
         if treatment == "none":
             raise SceneBuildError("E_THEME_BACKGROUND_ABSENT", f"/body/roles/{primitive.visual_role}")
@@ -406,7 +406,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         if group.header_bounds is not None:
             emit_semantic_text(f"group-header:{group.group_id}", "groupHeader", "text")
     for placed in placed_surface.shapes:
-        if placed.semantic_id in {"groupBand", "rowBand", "groupHeaderBand", "calendarClosed"}:
+        if placed.semantic_id in {"groupBand", "rowBand", "groupHeaderBand", "calendarClosed", "periodBand"}:
             binding = semantic_binding(placed.semantic_id)
             bounds = (float(placed.bounds.inline), float(placed.bounds.block), float(placed.bounds.inline_size), float(placed.bounds.block_size))
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "decoration",

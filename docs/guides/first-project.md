@@ -110,7 +110,7 @@ store:
   identity: halcyon-1-example
 address: contexts/01-mission-brief.yaml
 revision:
-  token: example-v3
+  token: example-v4
 YAML
 chrona render-review \
   --context-reference my-halcyon-corpus/context-reference.yaml \
