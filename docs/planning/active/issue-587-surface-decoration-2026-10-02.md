@@ -2,7 +2,7 @@
 
 Living record for [#587](https://github.com/tya5/chrona/issues/587): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history.
 
-**Public base:** `432b1169` on `main`. **Status:** design plan (PR #868), design and architecture review (PR #872), implementation plan (PR #874), I587-1 canvas texture (PR #877) and I587-2 glow (section 8) are done. Next: the successor issues and the acceptance review.
+**Public base:** `38a871ee` on `main`. **Status:** all slices are done: design plan (PR #868), design and architecture review (PR #872), implementation plan (PR #874), I587-1 canvas texture (PR #877), I587-2 glow (PR #886). The three other treatments are successor issues #888, #889, #890, and #891 covers texture beyond the opaque tile. The [acceptance review](../../reviews/current/issue-587-surface-decoration-acceptance-review-2026-10-02.md) is published.
 
 ## 1. Published baseline
 
