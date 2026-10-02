@@ -16,10 +16,10 @@
 <rect data-scene-id="group:ground" data-source-ref="ground" data-purpose="group-decoration" x="923.83" y="596" width="956.17" height="110" opacity="1" fill="#142642"/>
 <rect data-scene-id="group:launch" data-source-ref="launch" data-purpose="group-decoration" x="923.83" y="706" width="956.17" height="170" opacity="1" fill="#142642"/>
 <rect data-scene-id="group:ops" data-source-ref="ops" data-purpose="group-decoration" x="923.83" y="876" width="956.17" height="110" opacity="1" fill="#142642"/>
-<rect data-scene-id="axis-band-rect:0:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="928.83" y="40" width="106.659" height="46" opacity="1" fill="#2E3F5E"/>
+<rect data-scene-id="axis-band-rect:0:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="923.83" y="40" width="111.659" height="46" opacity="1" fill="#2E3F5E"/>
 <rect data-scene-id="axis-band-rect:0:1" data-source-ref="timeline-axis" data-purpose="axis-band" x="1035.489" y="40" width="313.096" height="46" opacity="1" fill="#2E3F5E"/>
 <rect data-scene-id="axis-band-rect:0:2" data-source-ref="timeline-axis" data-purpose="axis-band" x="1348.585" y="40" width="316.537" height="46" opacity="1" fill="#2E3F5E"/>
-<rect data-scene-id="axis-band-rect:0:3" data-source-ref="timeline-axis" data-purpose="axis-band" x="1665.122" y="40" width="209.878" height="46" opacity="1" fill="#2E3F5E"/>
+<rect data-scene-id="axis-band-rect:0:3" data-source-ref="timeline-axis" data-purpose="axis-band" x="1665.122" y="40" width="214.878" height="46" opacity="1" fill="#2E3F5E"/>
 <path data-scene-id="axis-grid:1:0" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M928.83 86L928.83 986" opacity="1" fill="none" stroke="#2E3F5E" stroke-width="1"/>
 <path data-scene-id="axis-grid:1:1" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1035.489 86L1035.489 986" opacity="1" fill="none" stroke="#2E3F5E" stroke-width="1"/>
 <path data-scene-id="axis-grid:1:2" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1348.585 86L1348.585 986" opacity="1" fill="none" stroke="#2E3F5E" stroke-width="1"/>

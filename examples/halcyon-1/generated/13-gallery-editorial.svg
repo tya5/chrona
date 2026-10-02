@@ -6,11 +6,11 @@
 <rect data-scene-id="legend-swatch:planned" data-source-ref="planned" data-purpose="legend-swatch" x="20" y="1948.8" width="9.6" height="34" rx="4.8" ry="4.8" opacity="1" fill="none" stroke="#293E56" stroke-width="1"/>
 <rect data-scene-id="legend-swatch:actual" data-source-ref="actual" data-purpose="legend-swatch" x="189.12" y="1948.8" width="9.6" height="20.4" rx="2.4" ry="2.4" opacity="1" fill="none" stroke="#293E56" stroke-width="1"/>
 <rect data-scene-id="group:" data-source-ref="" data-purpose="group-decoration" x="20" y="160.3" width="513.333" height="1768" opacity="1" fill="#E3E5E9"/>
-<rect data-scene-id="axis-band-rect:0:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="571.333" y="65.3" width="101.483" height="50" opacity="1" fill="#293E56"/>
+<rect data-scene-id="axis-band-rect:0:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="553.333" y="65.3" width="119.483" height="50" opacity="1" fill="#293E56"/>
 <rect data-scene-id="axis-band-rect:0:1" data-source-ref="timeline-axis" data-purpose="axis-band" x="674.816" y="65.3" width="346.775" height="50" opacity="1" fill="#293E56"/>
 <rect data-scene-id="axis-band-rect:0:2" data-source-ref="timeline-axis" data-purpose="axis-band" x="1023.591" y="65.3" width="350.607" height="50" opacity="1" fill="#293E56"/>
-<rect data-scene-id="axis-band-rect:0:3" data-source-ref="timeline-axis" data-purpose="axis-band" x="1376.198" y="65.3" width="185.802" height="50" opacity="1" fill="#293E56"/>
-<rect data-scene-id="axis-band-rect:3:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="571.333" y="115.3" width="101.483" height="45" opacity="1" fill="#E3E5E9"/>
+<rect data-scene-id="axis-band-rect:0:3" data-source-ref="timeline-axis" data-purpose="axis-band" x="1376.198" y="65.3" width="203.802" height="50" opacity="1" fill="#293E56"/>
+<rect data-scene-id="axis-band-rect:3:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="553.333" y="115.3" width="119.483" height="45" opacity="1" fill="#E3E5E9"/>
 <rect data-scene-id="axis-band-rect:3:1" data-source-ref="timeline-axis" data-purpose="axis-band" x="674.816" y="115.3" width="112.981" height="45" opacity="1" fill="#E3E5E9"/>
 <rect data-scene-id="axis-band-rect:3:2" data-source-ref="timeline-axis" data-purpose="axis-band" x="789.797" y="115.3" width="116.813" height="45" opacity="1" fill="#E3E5E9"/>
 <rect data-scene-id="axis-band-rect:3:3" data-source-ref="timeline-axis" data-purpose="axis-band" x="908.61" y="115.3" width="112.981" height="45" opacity="1" fill="#E3E5E9"/>
@@ -18,7 +18,7 @@
 <rect data-scene-id="axis-band-rect:3:5" data-source-ref="timeline-axis" data-purpose="axis-band" x="1142.404" y="115.3" width="116.813" height="45" opacity="1" fill="#E3E5E9"/>
 <rect data-scene-id="axis-band-rect:3:6" data-source-ref="timeline-axis" data-purpose="axis-band" x="1261.218" y="115.3" width="112.981" height="45" opacity="1" fill="#E3E5E9"/>
 <rect data-scene-id="axis-band-rect:3:7" data-source-ref="timeline-axis" data-purpose="axis-band" x="1376.198" y="115.3" width="116.813" height="45" opacity="1" fill="#E3E5E9"/>
-<rect data-scene-id="axis-band-rect:3:8" data-source-ref="timeline-axis" data-purpose="axis-band" x="1495.012" y="115.3" width="66.988" height="45" opacity="1" fill="#E3E5E9"/>
+<rect data-scene-id="axis-band-rect:3:8" data-source-ref="timeline-axis" data-purpose="axis-band" x="1495.012" y="115.3" width="84.988" height="45" opacity="1" fill="#E3E5E9"/>
 <path data-scene-id="axis-grid:1:0" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M570.333 160.3L570.333 1928.3" opacity="1" fill="none" stroke="#C9CDD3" stroke-width="1"/>
 <path data-scene-id="axis-grid:1:1" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M673.816 160.3L673.816 1928.3" opacity="1" fill="none" stroke="#C9CDD3" stroke-width="1"/>
 <path data-scene-id="axis-grid:1:2" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1022.591 160.3L1022.591 1928.3" opacity="1" fill="none" stroke="#C9CDD3" stroke-width="1"/>

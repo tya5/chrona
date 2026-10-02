@@ -4,8 +4,8 @@
 <rect data-scene-id="canvas-texture" data-source-ref="canvas" data-purpose="canvas-texture" x="0" y="0" width="1600" height="1032.8" opacity="1" fill="url(#pattern-7b623c1c7029)"/>
 <rect data-scene-id="legend-swatch:planned" data-source-ref="planned" data-purpose="legend-swatch" x="935.338" y="839.338" width="9.6" height="24" opacity="1" fill="#FF7A1A" stroke="#0A0A0C" stroke-width="1"/>
 <rect data-scene-id="legend-swatch:actual" data-source-ref="actual" data-purpose="legend-swatch" x="935.338" y="869.338" width="9.6" height="14.4" rx="2.4" ry="2.4" opacity="1" fill="#39C97B" stroke="#0A0A0C" stroke-width="1"/>
-<rect data-scene-id="axis-band-rect:0:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="518.4" y="68.8" width="411.269" height="48" opacity="1" fill="#26242C"/>
-<rect data-scene-id="axis-band-rect:0:1" data-source-ref="timeline-axis" data-purpose="axis-band" x="929.669" y="68.8" width="634.331" height="48" opacity="1" fill="#26242C"/>
+<rect data-scene-id="axis-band-rect:0:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="506.4" y="68.8" width="423.269" height="48" opacity="1" fill="#26242C"/>
+<rect data-scene-id="axis-band-rect:0:1" data-source-ref="timeline-axis" data-purpose="axis-band" x="929.669" y="68.8" width="646.331" height="48" opacity="1" fill="#26242C"/>
 <path data-scene-id="axis-grid:1:0" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M518.4 116.8L518.4 752.8" opacity="1" fill="none" stroke="#2B2833" stroke-width="1"/>
 <path data-scene-id="axis-grid:1:1" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M929.669 116.8L929.669 752.8" opacity="1" fill="none" stroke="#2B2833" stroke-width="1"/>
 <path data-scene-id="axis-grid:4:0" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M518.4 116.8L518.4 752.8" opacity="1" fill="none" stroke="#2F2B38" stroke-width="1"/>
@@ -13,7 +13,7 @@
 <path data-scene-id="axis-grid:4:2" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M929.669 116.8L929.669 752.8" opacity="1" fill="none" stroke="#2F2B38" stroke-width="1"/>
 <path data-scene-id="axis-grid:4:3" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1138.789 116.8L1138.789 752.8" opacity="1" fill="none" stroke="#2F2B38" stroke-width="1"/>
 <path data-scene-id="axis-grid:4:4" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1354.88 116.8L1354.88 752.8" opacity="1" fill="none" stroke="#2F2B38" stroke-width="1"/>
-<rect data-scene-id="calendar-closed:2026-02-01" data-source-ref="project-calendar" data-purpose="calendar-closed" x="518.4" y="116.8" width="6.971" height="636" opacity="1" fill="none" stroke="#2B2833" stroke-width="1"/>
+<rect data-scene-id="calendar-closed:2026-02-01" data-source-ref="project-calendar" data-purpose="calendar-closed" x="506.4" y="116.8" width="18.971" height="636" opacity="1" fill="none" stroke="#2B2833" stroke-width="1"/>
 <rect data-scene-id="calendar-closed:2026-02-07" data-source-ref="project-calendar" data-purpose="calendar-closed" x="560.224" y="116.8" width="6.971" height="636" opacity="1" fill="none" stroke="#2B2833" stroke-width="1"/>
 <rect data-scene-id="calendar-closed:2026-02-08" data-source-ref="project-calendar" data-purpose="calendar-closed" x="567.195" y="116.8" width="6.971" height="636" opacity="1" fill="none" stroke="#2B2833" stroke-width="1"/>
 <rect data-scene-id="calendar-closed:2026-02-11" data-source-ref="project-calendar" data-purpose="calendar-closed" x="588.107" y="116.8" width="6.971" height="636" opacity="1" fill="none" stroke="#2B2833" stroke-width="1"/>

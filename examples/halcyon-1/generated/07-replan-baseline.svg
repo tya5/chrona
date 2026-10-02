@@ -3,9 +3,9 @@
 <defs><marker id="marker-e7408564aa39" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto"><path d="M0 0L10 5L0 10L0 0" fill="#8EA0BA"/></marker><marker id="marker-17d3ae52d57a" viewBox="0 0 5 5" refX="5" refY="2.5" markerWidth="5" markerHeight="5" orient="auto"><path d="M2.5 0Q5 0 5 2.5Q5 5 2.5 5Q0 5 0 2.5Q0 0 2.5 0" fill="#8EA0BA"/></marker></defs>
 <rect data-scene-id="summary-bar:spacecraft-ait" data-source-ref="spacecraft-ait" data-purpose="summary-bar" x="993.867" y="86" width="440.567" height="3.333" opacity="1" fill="#5FA8FF"/>
 <rect data-scene-id="group:" data-source-ref="" data-purpose="group-decoration" x="935.465" y="86" width="944.535" height="240" opacity="1" fill="#142642"/>
-<rect data-scene-id="axis-band-rect:0:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="940.465" y="40" width="20.026" height="46" opacity="1" fill="#2E3F5E"/>
+<rect data-scene-id="axis-band-rect:0:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="935.465" y="40" width="25.026" height="46" opacity="1" fill="#2E3F5E"/>
 <rect data-scene-id="axis-band-rect:0:1" data-source-ref="timeline-axis" data-purpose="axis-band" x="960.491" y="40" width="614.123" height="46" opacity="1" fill="#2E3F5E"/>
-<rect data-scene-id="axis-band-rect:0:2" data-source-ref="timeline-axis" data-purpose="axis-band" x="1574.614" y="40" width="300.386" height="46" opacity="1" fill="#2E3F5E"/>
+<rect data-scene-id="axis-band-rect:0:2" data-source-ref="timeline-axis" data-purpose="axis-band" x="1574.614" y="40" width="305.386" height="46" opacity="1" fill="#2E3F5E"/>
 <path data-scene-id="axis-grid:1:0" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M940.465 86L940.465 326" opacity="1" fill="none" stroke="#2E3F5E" stroke-width="1"/>
 <path data-scene-id="axis-grid:1:1" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M960.491 86L960.491 326" opacity="1" fill="none" stroke="#2E3F5E" stroke-width="1"/>
 <path data-scene-id="axis-grid:1:2" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1574.614 86L1574.614 326" opacity="1" fill="none" stroke="#2E3F5E" stroke-width="1"/>
@@ -76,7 +76,7 @@
 <rect data-scene-id="calendar-closed:2027-11-06" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1814.923" y="86" width="6.675" height="240" opacity="1" fill="none" stroke="#2E3F5E" stroke-width="1"/>
 <rect data-scene-id="calendar-closed:2027-11-07" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1821.598" y="86" width="6.675" height="240" opacity="1" fill="none" stroke="#2E3F5E" stroke-width="1"/>
 <rect data-scene-id="calendar-closed:2027-11-13" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1861.649" y="86" width="6.675" height="240" opacity="1" fill="none" stroke="#2E3F5E" stroke-width="1"/>
-<rect data-scene-id="calendar-closed:2027-11-14" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1868.325" y="86" width="6.675" height="240" opacity="1" fill="none" stroke="#2E3F5E" stroke-width="1"/>
+<rect data-scene-id="calendar-closed:2027-11-14" data-source-ref="project-calendar" data-purpose="calendar-closed" x="1868.325" y="86" width="11.675" height="240" opacity="1" fill="none" stroke="#2E3F5E" stroke-width="1"/>
 <path data-scene-id="axis-rule" data-source-ref="timeline-axis" data-purpose="axis-rule" d="M935.465 86L1880 86" opacity="1" fill="none" stroke="#EAF0FA" stroke-width="1"/>
 <path data-scene-id="as-of" data-source-ref="actual-set" data-purpose="as-of" d="M1294.253 86L1294.253 326" opacity="1" fill="none" stroke="#FFC857" stroke-width="1" stroke-dasharray="4 3"/>
 <rect data-scene-id="planned:spacecraft-ait:spacecraft-ait" data-source-ref="spacecraft-ait" data-purpose="planned" x="993.867" y="96" width="440.567" height="10" opacity="1" fill="#5FA8FF" stroke="#EAF0FA" stroke-width="1"/>

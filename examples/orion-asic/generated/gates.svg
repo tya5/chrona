@@ -9,11 +9,11 @@
 <rect data-scene-id="group:design" data-source-ref="design" data-purpose="group-decoration" x="506.4" y="116.8" width="1069.6" height="212" opacity="1" fill="#EEF3F8"/>
 <rect data-scene-id="group:product" data-source-ref="product" data-purpose="group-decoration" x="506.4" y="328.8" width="1069.6" height="212" opacity="1" fill="#EEF3F8"/>
 <rect data-scene-id="group:validation" data-source-ref="validation" data-purpose="group-decoration" x="506.4" y="540.8" width="1069.6" height="212" opacity="1" fill="#EEF3F8"/>
-<rect data-scene-id="axis-band-rect:0:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="516.4" y="68.8" width="103.597" height="48" opacity="1" fill="#C9CED8"/>
+<rect data-scene-id="axis-band-rect:0:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="506.4" y="68.8" width="113.597" height="48" opacity="1" fill="#C9CED8"/>
 <rect data-scene-id="axis-band-rect:0:1" data-source-ref="timeline-axis" data-purpose="axis-band" x="619.997" y="68.8" width="250.814" height="48" opacity="1" fill="#C9CED8"/>
 <rect data-scene-id="axis-band-rect:0:2" data-source-ref="timeline-axis" data-purpose="axis-band" x="870.81" y="68.8" width="245.361" height="48" opacity="1" fill="#C9CED8"/>
 <rect data-scene-id="axis-band-rect:0:3" data-source-ref="timeline-axis" data-purpose="axis-band" x="1116.171" y="68.8" width="248.087" height="48" opacity="1" fill="#C9CED8"/>
-<rect data-scene-id="axis-band-rect:0:4" data-source-ref="timeline-axis" data-purpose="axis-band" x="1364.259" y="68.8" width="201.741" height="48" opacity="1" fill="#C9CED8"/>
+<rect data-scene-id="axis-band-rect:0:4" data-source-ref="timeline-axis" data-purpose="axis-band" x="1364.259" y="68.8" width="211.741" height="48" opacity="1" fill="#C9CED8"/>
 <path data-scene-id="axis-grid:1:0" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M516.4 116.8L516.4 752.8" opacity="1" fill="none" stroke="#C9CED8" stroke-width="1"/>
 <path data-scene-id="axis-grid:1:1" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M619.997 116.8L619.997 752.8" opacity="1" fill="none" stroke="#C9CED8" stroke-width="1"/>
 <path data-scene-id="axis-grid:1:2" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M870.81 116.8L870.81 752.8" opacity="1" fill="none" stroke="#C9CED8" stroke-width="1"/>

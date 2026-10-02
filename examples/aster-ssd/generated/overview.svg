@@ -7,9 +7,9 @@
 <rect data-scene-id="row-band:fw-freeze" data-source-ref="fw-freeze" data-purpose="row-decoration" x="24" y="196.8" width="458.4" height="40" opacity="1" fill="#EEF3F8"/>
 <rect data-scene-id="row-band:perf-exit" data-source-ref="perf-exit" data-purpose="row-decoration" x="24" y="276.8" width="458.4" height="40" opacity="1" fill="#EEF3F8"/>
 <rect data-scene-id="row-band:pilot" data-source-ref="pilot" data-purpose="row-decoration" x="24" y="356.8" width="458.4" height="40" opacity="1" fill="#EEF3F8"/>
-<rect data-scene-id="axis-band-rect:0:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="510.4" y="68.8" width="393.185" height="48" opacity="1" fill="#C9CED8"/>
+<rect data-scene-id="axis-band-rect:0:0" data-source-ref="timeline-axis" data-purpose="axis-band" x="506.4" y="68.8" width="397.185" height="48" opacity="1" fill="#C9CED8"/>
 <rect data-scene-id="axis-band-rect:0:1" data-source-ref="timeline-axis" data-purpose="axis-band" x="903.585" y="68.8" width="397.554" height="48" opacity="1" fill="#C9CED8"/>
-<rect data-scene-id="axis-band-rect:0:2" data-source-ref="timeline-axis" data-purpose="axis-band" x="1301.139" y="68.8" width="270.861" height="48" opacity="1" fill="#C9CED8"/>
+<rect data-scene-id="axis-band-rect:0:2" data-source-ref="timeline-axis" data-purpose="axis-band" x="1301.139" y="68.8" width="274.861" height="48" opacity="1" fill="#C9CED8"/>
 <path data-scene-id="axis-grid:1:0" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M510.4 116.8L510.4 436.8" opacity="1" fill="none" stroke="#C9CED8" stroke-width="1"/>
 <path data-scene-id="axis-grid:1:1" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M903.585 116.8L903.585 436.8" opacity="1" fill="none" stroke="#C9CED8" stroke-width="1"/>
 <path data-scene-id="axis-grid:1:2" data-source-ref="timeline-axis" data-purpose="axis-grid" d="M1301.139 116.8L1301.139 436.8" opacity="1" fill="none" stroke="#C9CED8" stroke-width="1"/>
