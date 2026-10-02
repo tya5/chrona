@@ -159,7 +159,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                   detail: ReviewDetailInput | None = None, summary: SummaryContent,
                                   layout_manifest: LayoutManifest | None = None, locale: str = "en-US",
                                   color_scale: ResolvedColorScale | None = None,
-                                  table: TableContent | None = None) -> SurfaceContentInput:
+                                  table: TableContent | None = None,
+                                  group_tints: tuple[tuple[str, str], ...] = ()) -> SurfaceContentInput:
     """Normalize current Project/View/profile facts without legacy Settings."""
     if table is None:
         table = normalize_v05_table_content(projection, project, view, actual_set=actual_set, locale=locale)
@@ -309,7 +310,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                table_hierarchy_column=view.hierarchy_column,
                                row_decoration=view.background_decoration[0],
                                group_decoration=view.background_decoration[1],
-                               group_headers=_group_headers(projection, project, view))
+                               group_headers=_group_headers(projection, project, view),
+                               group_tints=group_tints)
 
 
 def _group_headers(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput) -> tuple[tuple[str, str], ...]:
