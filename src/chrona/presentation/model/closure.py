@@ -604,7 +604,7 @@ def _load_draft_source(kind: str, path: Path) -> PresentationResourceSource:
         derived = kind == "theme" and is_derived_theme(source)
         value = resolve_draft_theme(path, payload=payload) if derived else source
     except ThemeInheritanceError as error:
-        raise ClosureError(error.code) from error
+        raise ClosureError(error.code, detail=error.detail or None) from error
     if not isinstance(value, dict):
         raise _draft_shape_error(kind, value)
     identifier = _resource_id(kind, value)
@@ -1096,7 +1096,7 @@ def _load_reference_source(reference: dict[str, Any], reader: SnapshotReader, ex
         try:
             value = resolve_snapshot_theme(value, reference, reader)
         except ThemeInheritanceError as error:
-            raise ClosureError(error.code) from error
+            raise ClosureError(error.code, detail=error.detail or None) from error
     identity = ClosureIdentity(expected_kind, actual_id, reference["revision"]["token"],
                                content_identity(value) if derived else reference.get("contentIdentity", computed_identity))
     return PresentationResourceSource(identity, value)

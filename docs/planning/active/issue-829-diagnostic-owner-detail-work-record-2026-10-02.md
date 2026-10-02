@@ -125,3 +125,5 @@ only their text gains the value.
   now starts with the code, like every ValueError row that carries detail). Tests: `test_projection_messages.py` (mutation-checked: 2 kills).
 - S4b closure (`presentation/model/closure.py`, 33 sites, 570 to 537): the `ClosureError` raises of the Draft preset, guided authoring, render-context
   and icon-catalog paths carry `detail=` naming the file, id or declared value. Tests: `test_closure_messages.py` (mutation-checked: 2 kills).
+- S4c theme inheritance (`presentation/model/theme_inheritance.py`, 18 sites, 537 to 519): `ThemeInheritanceError` gains `detail`; closure and the
+  materializer carry it. Tests extend `test_theme_inheritance.py` (mutation-checked: 3 kills).

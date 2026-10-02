@@ -161,15 +161,9 @@ diagnosticActionability:
     - {<<: *backlog, code: E_THEME_ASSET_SOURCE_SCHEMA, sites: 1}
     - {<<: *backlog, code: E_THEME_ASSET_SOURCE_VALUE, sites: 1}
     - {<<: *backlog, code: E_THEME_ASSET_SOURCE_YAML, sites: 1}
-    - {<<: *backlog, code: E_THEME_INHERITANCE_BASE_IDENTITY, sites: 1}
-    - {<<: *backlog, code: E_THEME_INHERITANCE_BASE_KIND, sites: 1}
-    - {<<: *backlog, code: E_THEME_INHERITANCE_BASE_MISSING, sites: 3}
-    - {<<: *backlog, code: E_THEME_INHERITANCE_CYCLE, sites: 3}
-    - {<<: *backlog, code: E_THEME_INHERITANCE_EFFECTIVE_SCHEMA, sites: 3}
-    - {<<: *backlog, code: E_THEME_INHERITANCE_OVERRIDE_UNKNOWN, sites: 1}
-    - {<<: *backlog, code: E_THEME_INHERITANCE_PATH, sites: 3}
-    - {<<: *backlog, code: E_THEME_INHERITANCE_SCHEMA, sites: 4}
-    - {<<: *backlog, code: E_THEME_INHERITANCE_SOURCE_IDENTITY, sites: 2}
+    - {<<: *backlog, code: E_THEME_INHERITANCE_BASE_MISSING, sites: 1}
+    - {<<: *backlog, code: E_THEME_INHERITANCE_CYCLE, sites: 1}
+    - {<<: *backlog, code: E_THEME_INHERITANCE_SOURCE_IDENTITY, sites: 1}
     - {<<: *backlog, code: E_THEME_TOKEN_TYPE, sites: 21}
     - {<<: *backlog, code: E_VIEW_BOOLEAN_PRESENTATION, sites: 5}
     - {<<: *backlog, code: E_VIEW_HIERARCHY_COLUMN_REQUIRED, sites: 1}
