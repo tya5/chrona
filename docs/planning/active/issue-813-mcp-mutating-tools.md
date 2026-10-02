@@ -1,7 +1,7 @@
 # Issue #813: MCP mutating tools (`check_command`, `apply_command`)
 
-**Status:** Design (this revision). The architecture review and the implementation plan are added to this record by
-the next two documentation PRs, before any code.
+**Status:** Design and architecture review (this revision). The implementation plan is added to this record by
+the next documentation PR, before any code.
 **Public base:** `main` at `e4429030` (observed 2026-10-02); design on `e11fd97d`.
 **Issue:** [#813](https://github.com/tya5/chrona/issues/813), read with its owner comment of 2026-10-02 (the decision).
 **Living contract:** [Spec 66](../../specification/66-agent-interface.md) (changed with the code slices, not here).
@@ -136,8 +136,8 @@ the MCP tests confirmed on Windows and macOS.
 ### 2.6 Order of design slices
 
 1. Baseline and design plan (published, PR #901).
-2. Design (section 3; this PR), with the successor issue #902 and the decision record on the issue.
-3. Architecture review (section 4).
+2. Design (section 3; published, PR #906), with the successor issue #902 and the decision record on the issue.
+3. Architecture review (section 4; this PR).
 4. Implementation plan (section 5).
 
 ## 3. Design
@@ -330,3 +330,30 @@ file tools; the new tools change a Store, not a plan.
 
 [#902](https://github.com/tya5/chrona/issues/902) covers `resolveActualObservation`, `apply_authoring_command`, a revert tool, inline
 command objects and a multi-process write lock; each is a `deferred` or `narrowed` row of the acceptance review with that link.
+
+## 4. Architecture review
+
+Reviewed against the whole architecture, not only the tool core: Spec 09 (layers), Spec 10 (commands), Spec 66, the
+import-direction table, the Store and command engine code, the #142 review (F2, F3), and the adjacent open work
+([#812](https://github.com/tya5/chrona/issues/812) read-side Store tools, [#815](https://github.com/tya5/chrona/issues/815)
+inline text, #829 diagnostics report layer, which this work only calls through `usecases.failure_report.diagnostic_record`).
+Outcome: the design stands; findings R1 and R2 changed it (already merged into section 3), the rest are recorded
+limits or checks for the code slices.
+
+| # | Finding | Disposition |
+| ---: | --- | --- |
+| R1 | **Spec 10 section 9.1 contradicts the shipped tool.** It says an AI client submits an `ai-command-proposal` and an authorization decision precedes persistence. The owner decided the local tools run no such exchange. Leaving the section unqualified would make the new tool a spec violation. | Design 3.11 now scopes section 9.1 (a note in the code slice that adds the tool). Specified-but-unimplemented is stated, not hidden; schemas and the conformance fixture are untouched. |
+| R2 | **The Store configuration is an unguarded write surface.** `load_store_config` accepts any root; the engine writes `actual-tips/`, `revision-*/`, `snapshots/` and `command-replays.json` below it. A tool that took only a guarded `command` path could still write anywhere. Found in the baseline (1.3), not in the issue. | Design 3.3: every configured root must resolve inside the workspace before any read or write; applies to `check_command` too. One test per root shape (absolute, `..`, symlink) asserting that nothing appeared outside. |
+| R3 | **Layering.** The tool core may import `usecases` and `resources` only; the engine is in `operational`, which imports `usecases`, so a `usecases` facade is a cycle. | One named module edge (`chrona.operational.store_commands`) for `chrona.app.agent_*`, enforced by `tools/check_import_direction.py`; the package table is unchanged (`app` already may import `operational`); `operational` gains no import. A test shows another `operational` module still fails the rule. Alternatives in 3.6. |
+| R4 | **One engine, two front ends.** Today the dispatch is inline in `cli._run`; copying it into the tool core would create two dispatches. | The dispatch moves into the shared function first (slice S1), with the CLI's bytes frozen by the characterization suite, and the tool core is added on top of it. |
+| R5 | **Status mapping.** The command line exits 2 for a rejected Automation Result; Spec 66 section 3 says `rejected` follows exit 1. | The tool reports `rejected` for a refused command (understood and refused). Spec 66 states the difference in one sentence; the exit code of the command line is not changed (out of scope, no behavior change). |
+| R6 | **No path creates a Store resource the owner did not name.** `LocalActualStore` creates its first revision when no tip exists. | The engine checks `tip.is_file()` before constructing the store, so `apply_command` cannot create an Actual set; a test asserts that a missing tip is `E_AUTOMATION_TARGET_CLOSURE` with no file written. Baseline publication is `publish_exclusive`; the tip pointer is the only file replaced, by compare-and-set (a temporary sibling then `replace`), by design. |
+| R7 | **Residual: planted links and races.** The engine's temporary files (`command-replays.json.tmp`, `<tip>.tmp`) are written with plain `write_bytes`; a symlink planted at those names would be followed. Two processes can interleave the read-check-write of the ledger and the tip. | Out of the threat model, stated in 3.9: planting a link needs a shell or file tools inside the Store, and the guard is a safety rail for a local process, not a sandbox. A lost race on a revision directory fails (exclusive `mkdir`), never overwrites. A multi-process lock is in #902. |
+| R8 | **Information in results.** An Automation Result carries Store references and identities, no host path. | Host-path scrubbing still runs over the whole result; a test puts the workspace path in a command id and shows it scrubbed from diagnostics. |
+| R9 | **Annotations.** `idempotentHint: true` is true of `apply_command` only through the ledger (same `commandId` and request in the same Store); a different `commandId` is a different call. | Kept: the hint's definition is about repeating the same call. The description names the ledger. `destructiveHint: true` is the owner's instruction. |
+| R10 | **Adjacent designs.** #812 (read-side Store tools) will need the same Store entry; #815 (inline text) may later add an inline command; #829 changes the report layer. | `open_store_reader(contained_in=)` is the one entry for a workspace Store and #812 should reuse it; `command` has a closed-object schema that can gain an inline sibling in a new tool-set version; this work calls `diagnostic_record` only and adds no code to `failure_report.py` or `diagnostic_messages.py`, so #829 does not conflict. |
+| R11 | **Registry and consumers.** `registry_document()` gains two tools and version `v0.3`; the binding hard-codes read-only annotations today. | The binding must take annotations from the registry (slice S2 changes `_tools()`); a test pins that the listed annotations equal the registry's. The four existing tools are byte-identical in the registry. |
+| R12 | **Honest metadata and documents.** The skill, the guide, the README, the `chrona mcp` help, `INSTRUCTIONS` and Spec 66 all say "read-only" or "never writes". | Listed in 3.11; every statement is changed in the same slice that makes it false, and the skill table is already pinned to the registry by a test. |
+
+Conclusion: no layer breach remains after R1 to R4. Residual risks are R7 (links, races) and the unverified
+cross-process behavior, both named in the acceptance review's disclosures.
