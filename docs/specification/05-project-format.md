@@ -408,6 +408,21 @@ reject the plan with `E_PROJECT_PERIOD_ORDER` (same code and pointer, naming bot
 View selects the period. `validate` computes no dates and cannot report it, the split that already holds for
 `E_FIXED_TARGET_VIOLATION`. The member is optional and additive in `timeline/v0.7` (§16). The terse syntax (Spec 65) does not spell periods; they stay in YAML.
 
+### 12.2 Derived figures
+
+A derived figure is a signed whole number of days computed by the Core from dates a Project and its Actual Set already state (#586). Core defines it; a View declares which figures it needs (Spec 06) and a Summary Profile or a header template shows it (Spec 46, Spec 50). The set of facts and the set of derivations are closed; nothing is an expression and no field is read by name.
+
+A fact is exactly one of: the Actual Set as-of; a named period's `start` or `end` (§12.1; `end` is the exclusive end); an object's placed `at`, `start` or `end` (the completed date the schedule gives that endpoint, which moves with a re-plan).
+
+| Kind | Value |
+| --- | --- |
+| `daysUntil` from `a` to `b` (`a` defaults to the as-of) | Calendar days: `b - a`, negative once `b` has passed, 0 on the same day. Working days: the working days `d` with `a < d <= b`, or the negation of the working days in `(b, a]` when `b` is before `a`. |
+| `daysIn` a period | Calendar days: `end - start`. Working days: the working days `d` with `start <= d < end`; a period with none is 0. |
+
+Working days use a Project calendar: the figure's declared calendar, otherwise the Project default (§6), including its exceptions. The `daysUntil` count is the scheduler's working-day convention (§5: an advance counts days strictly after its start), so counting from `d` to `advance(d, k wd)` gives `k`. For example, with a Monday-to-Friday calendar, from Friday 2027-01-01 to Monday 2027-01-04 is 1 working day and from Monday 2027-01-04 to Saturday 2027-01-09 is 4 (a target on a non-working day counts up to the last working day before it), while the working days in the period `[2027-01-04, 2027-01-09)` are 5 (its start day counts, its exclusive end does not). No value is clamped, rounded or made absolute.
+
+A fact that cannot be read is a diagnostic that names the figure, the fact and what is declared, never a blank, a zero or a guess: `E_FIGURE_PERIOD_UNKNOWN` (a period the Project does not declare), `E_FIGURE_OBJECT_UNKNOWN` (an object the schedule does not place), `E_FIGURE_ENDPOINT_UNAVAILABLE` (an endpoint the object's schedule does not offer), `E_FIGURE_ASOF_MISSING` (the as-of, when the Actual Set declares none) and `E_FIGURE_CALENDAR_UNAVAILABLE` (working days with no declared or default calendar). A figure with a diagnostic has no value.
+
 ## 13. Precision and uncertainty
 
 The semantic model distinguishes precision and uncertainty.
