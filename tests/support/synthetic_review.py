@@ -45,6 +45,14 @@ def project(objects: Mapping[str, Mapping[str, Any]], relations: Iterable[Mappin
             "relations": [dict(item) for item in relations]}
 
 
+def with_calendar(source: dict[str, Any], working_days: Iterable[str] = ("mon", "tue", "wed", "thu", "fri"),
+                  *, name: str = "standard") -> dict[str, Any]:
+    """`source` with a declared default calendar. A Project without one has no closed day (#893)."""
+    source["calendars"] = {name: {"working_days": list(working_days)}}
+    source["project"]["calendar"] = name
+    return source
+
+
 def bunched_project(*, groups: int = 4, per_group: int = 6, start: date = date(2026, 1, 5)) -> dict[str, Any]:
     """Many overlapping tasks with long titles: a project that cannot fit a small canvas without shortage."""
     objects: dict[str, Any] = {}

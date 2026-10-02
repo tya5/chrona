@@ -609,7 +609,7 @@ def test_legend_entries_are_the_drawn_entries_detail_first_then_one_per_used_sca
                                      (("bus", "#111111"), ("ground", "#222222"), ("unused", "#333333")))
     detail = ReviewDetailInput((), (), (LegendEntry("planned", "Planned"),), None)
 
-    entries = legend_entries(detail, project, _scale_projection(), color_scale)
+    entries = legend_entries(detail, project, _scale_projection(), color_scale, closed_days_drawn=True)
 
     assert entries == (("planned", "Planned"), ("scale:owner:bus", "Spacecraft bus"), ("scale:owner:ground", "ground"))
     drawn = normalize_v05_surface_content(_scale_projection(), project,
@@ -619,4 +619,31 @@ def test_legend_entries_are_the_drawn_entries_detail_first_then_one_per_used_sca
 
 
 def test_without_a_scale_or_a_detail_profile_there_are_no_legend_entries():
-    assert legend_entries(None, {}, _scale_projection(), None) == ()
+    assert legend_entries(None, {}, _scale_projection(), None, closed_days_drawn=True) == ()
+
+
+def test_a_project_without_a_default_calendar_has_no_closed_day():
+    # #893: no declared calendar declares no closed day; the scheduler assumes no week either.
+    projection = ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 8)), (), ())
+    view = typed_view({"body": {"tableColumns": (), "visibility": {"relations": "none", "annotations": "none"}}})
+    for project in ({"relations": (), "annotations": {}},
+                    {"project": {}, "calendars": {"standard": {"working_days": ["mon"]}}, "relations": (), "annotations": {}},
+                    {"project": {"calendar": "missing"}, "calendars": {}, "relations": (), "annotations": {}}):
+        value = normalize_v05_surface_content(projection, project, view, summary=EMPTY_SUMMARY)
+        assert (value.calendar_closed, value.calendar_exceptions) == ((), ())
+
+
+def test_the_closed_day_legend_key_is_listed_only_when_a_closed_day_is_selected():
+    detail = ReviewDetailInput((), (), (LegendEntry("planned", "Planned"), LegendEntry("calendar-closed", "Weekend")), None)
+    projection = _scale_projection()
+    assert legend_entries(detail, {}, projection, None, closed_days_drawn=True) == (
+        ("planned", "Planned"), ("calendar-closed", "Weekend"))
+    assert legend_entries(detail, {}, projection, None, closed_days_drawn=False) == (("planned", "Planned"),)
+    project = {"project": {"calendar": "standard"}, "calendars": {"standard": {"working_days": ["mon", "tue", "wed", "thu", "fri"]}},
+               "relations": (), "annotations": {}}
+    view = typed_view({"body": {"tableColumns": (), "visibility": {}}})
+    window = ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 8)), (), ())
+    keyed = normalize_v05_surface_content(window, project, view, summary=EMPTY_SUMMARY, detail=detail)
+    bare = normalize_v05_surface_content(window, {"relations": (), "annotations": {}}, view, summary=EMPTY_SUMMARY, detail=detail)
+    assert [role for role, _ in keyed.legend_entries] == ["planned", "calendar-closed"]
+    assert [role for role, _ in bare.legend_entries] == ["planned"]

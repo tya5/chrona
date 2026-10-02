@@ -377,6 +377,12 @@ def test_bundled_default_closed_day_fill_matches_legend_without_outlines(tmp_pat
     starter = tmp_path / "starter-closed-day"
     monkeypatch.setattr(sys, "argv", ["chrona", "init", str(starter)])
     main()
+    # The starter declares no calendar and so shades no closed day (#893); declare one to see the band.
+    project_file = starter / "project.yaml"
+    project_file.write_text(project_file.read_text(encoding="utf-8").replace(
+        "project: {id: my-first-plan, title: My first plan}",
+        "project: {id: my-first-plan, title: My first plan, calendar: standard}\n"
+        "calendars: {standard: {working_days: [mon, tue, wed, thu, fri]}}"), encoding="utf-8")
     scene, svg_path = _render_project(tmp_path, monkeypatch, "starter-closed-day",
                                       starter / "project.yaml", starter / "actual.yaml")
     primitives = _primitives(scene)

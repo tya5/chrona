@@ -24,7 +24,9 @@ WHOLE = {"title": "Whole window", "start": "2025-12-01", "end": "2026-06-01"}
 
 
 def _render(tmp_path: Path, *, milestone: date = date(2026, 3, 31), periods=("february", "whole")):
-    source = sr.project({"a": sr.span("a", date(2026, 1, 5), 40), "g": sr.point("g", milestone)})
+    # Mondays only: both window edges (Thursday 2026-01-01 and Tuesday 2026-03-31) are closed days.
+    source = sr.with_calendar(sr.project({"a": sr.span("a", date(2026, 1, 5), 40), "g": sr.point("g", milestone)}),
+                              ("mon",))
     source["periods"] = {"february": FEBRUARY, "whole": WHOLE}
     parts = sr.bundle("executive-light")
     parts["view"]["body"]["window"] = dict(WINDOW)
