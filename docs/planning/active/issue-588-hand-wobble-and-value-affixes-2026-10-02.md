@@ -2,7 +2,7 @@
 
 Living record for [#588](https://github.com/tya5/chrona/issues/588): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history.
 
-**Public base:** `7028bf2c` on `main`. **Status:** design plan, design, architecture review and implementation plan published together (this record, `D588`); no code yet. Slices: I588-1 hand wobble (Theme, Scene, SVG/PNG), then I588-2 value affixes (View, content, table Layout).
+**Public base:** `7028bf2c` on `main`. **Status:** design (PR #954) published; I588-1 hand wobble (PR #958) and I588-2 value affixes implemented (section 8); the acceptance review follows.
 
 ## 1. Published baseline
 
@@ -131,7 +131,7 @@ View `tableColumns[].affixes`, an optional object (Specification 56 section 3.2:
 
 States: for the signed formats (`signedDays`, `signedNumber`) `slip` is a value above zero, `onTime` zero and `ahead` below zero (the three variance roles of Specification 04 and 08); `missing` is a `None` value of any format. A prefix or suffix is 1 to 8 characters, no control characters or line breaks; text and markup are literal (the SVG adapter escapes). The affix wraps the **formatted state text**, including the `missing` text, so `missing: blank` plus a `?` suffix reads `?` and `missing: em-dash` plus `?` reads `—?`. The state is derived from the value, never from the text. Judgement call (recorded on the issue): View, not Theme, because content strings are fixed before measurement and Theme is read by Layout, not by content normalisation; #583's header template is the precedent. A Theme-level mapping would need a second channel into content and would break "measure what you draw once".
 
-`signedNumber` is added to `vocabulary-v0.1` `valueFormat` and `tableColumnScalarFormat` (an enum member, in place): `+10`, `+0`, `-3`, typography role `numeric` like `signedDays`. It exists because `signedDays` always writes the unit, and `+10!` (no unit) is the target. Reverse: remove the enum member; a Δ column then reads `+10d!`.
+`signedNumber` is added to the View table-column `format` as one more `oneOf` alternative declared in `view-v0.28` (`const: signedNumber`): `+10`, `+0`, `-3`, typography role `numeric` like `signedDays`. The shared `vocabulary-v0.1` part is frozen (a change is a new part version, never an edit; `test_vocabulary_part` enforces it), so the value is declared at the one site that uses it until that part has a new version. It exists because `signedDays` always writes the unit, and `+10!` (no unit) is the target. Reverse: remove the alternative; a Δ column then reads `+10d!`.
 
 Failures at the contract (`E_VIEW_COLUMN_AFFIX`, one new code, the column id and the state named): an unknown state key, a `slip`, `onTime` or `ahead` entry on a column whose format is not signed, an entry with no non-empty prefix or suffix, a prefix or suffix over 8 characters or with a control character. Nothing is clamped or ignored.
 
@@ -158,7 +158,7 @@ None for existing documents: every property is optional and absent output is unc
 - **Default output.** No property, no field, no filter, no string is written unless declared. Counting tests that depend on the public slide count change once per evidence slide.
 - **Regression surface.** Wobble: the paint resolver, the capability ceiling and rich set, role admission, serialization and schema, the SVG Rect and Path branches (the straight branches are untouched). Affixes: the View schema and contract, `display_value` callers (one added optional argument), `TableCellContent`, the table cell ellipsis branch.
 - **Layering with neighbours.** #587's texture and glow are untouched; a wobbled Rect that also has a glow keeps one `filter` attribute (glow) on the `<path>`. #585 and #491 files are not edited. #583 and #586 string composition is not read.
-- **Risks.** (1) A very long outline at a small wavelength is large; the 8192-point limit and the 4 px floor bound it. (2) A wobbled bar's outline crosses neighbouring bars' gaps by at most the amplitude; Layout gaps are not widened (disclosed). (3) A role shared by a bar and a gate wobbles only the bar (documented). (4) `signedNumber` widens a shared vocabulary enum; the S0 gate entries name its test.
+- **Risks.** (1) A very long outline at a small wavelength is large; the 8192-point limit and the 4 px floor bound it. (2) A wobbled bar's outline crosses neighbouring bars' gaps by at most the amplitude; Layout gaps are not widened (disclosed). (3) A role shared by a bar and a gate wobbles only the bar (documented). (4) `signedNumber` is declared in `view-v0.28` and not in the frozen shared vocabulary; the S0 gate entries name its test.
 - **Extension points.** A second noise basis (e.g. sine) would be a new property with its own declared algorithm, never a change to this one; a wobble on Symbol or Icon needs outline flattening of those shapes (not designed); lane chips with affixes would reuse the same affix mapping.
 - **Decision:** approved for implementation planning.
 
@@ -176,7 +176,7 @@ Each code PR is `Refs #588`, carries the S0 gate result when it touches a schema
 
 ### I588-2: per-state value affixes
 
-- **Files.** `schemas/view-v0.28.schema.yaml` (`tableColumns[].affixes`), `schemas/vocabulary-v0.1.schema.yaml` (`signedNumber`), `schemas/schema-inventory-v0.1.yaml` (regenerated with `tools/schema_inventory.py`), `conformance/schema-equivalence/expected-deltas-v0.1.yaml`; `presentation/contracts/resources.py` (`TableColumn.affixes`, `ColumnAffixes`, validation `E_VIEW_COLUMN_AFFIX`); `presentation/model/surface_content.py` (`display_value`'s affix argument, `TableCellContent` fields); `review/v05_content.py` (compose, numeric typography for `signedNumber`); `layout/surface_table.py` (ellipsis of the core only); `usecases/diagnostic_messages.py`; Specifications 06 and 08 or 50 (the cell rule); Controller Z `value-affixes` (View, context, manifest entry).
+- **Files.** `schemas/view-v0.28.schema.yaml` (`tableColumns[].affixes`), `schemas/schema-inventory-v0.1.yaml` (regenerated with `tools/schema_inventory.py` if the inventory asks), `conformance/schema-equivalence/expected-deltas-v0.1.yaml`; `presentation/contracts/resources.py` (`TableColumn.affixes`, `ColumnAffixes`, validation `E_VIEW_COLUMN_AFFIX`); `presentation/model/surface_content.py` (`display_value`'s affix argument, `TableCellContent` fields); `review/v05_content.py` (compose, numeric typography for `signedNumber`); `layout/surface_table.py` (ellipsis of the core only); `usecases/diagnostic_messages.py`; Specifications 06 and 08 or 50 (the cell rule); Controller Z `value-affixes` (View, context, manifest entry).
 - **Tests.** Unit: each state (slip, onTime, ahead, missing) for `signedDays` and `signedNumber`, prefix and suffix, `missing` with each `missing` mode, no affix for a non-signed value, the contract failures; measurement (a `content` column is exactly as wide as with the affixes typed into the value); overflow (ellipsis keeps the affix; affix wider than the cell falls back to whole-string ellipsis; visible overflow draws whole). Integration: synthetic Project rendered with `+10!`, `+0`, `-3`, `?`; default byte identity.
 - **Mutation checks.** State boundary off by one (zero as slip), affix applied to the wrong state, `missing` affix applied to non-`None`, affix dropped from measurement, ellipsis cuts the affix, prefix and suffix swapped, signed format on a non-int.
 - **Gates and boundary.** As I588-1; merged alone after I588-1.
@@ -187,4 +187,18 @@ Each code PR is `Refs #588`, carries the S0 gate result when it touches a schema
 
 ## 8. Progress and evidence
 
-No code slice is published yet.
+### I588-1 (PR #958): hand wobble
+
+- **As designed,** with one addition: the Typst and TikZ adapters refuse a `required` wobble (section 5.4). `scene/stroke_wobble.py` is the pure generator and outline; `v05_builder._complete_wobble` applies it (stroked Rect without pattern, image or clip host; Path) and drops it elsewhere; Specifications 07, 08 and 63 section 8 carry the rule.
+- **Default unchanged.** Regenerating every public slide changes only the new Controller Z `hand-wobble` slide.
+- **Tests.** `tests/unit/chrona/presentation/scene/test_stroke_wobble.py` (generator and digest pins, bounds, seam, ends, limits, resolution, ladder, admission), `test_stroke_wobble_applicability.py` (where it applies, clip host through a real surface, profile gate, point limit), `tests/integration/test_stroke_wobble_render.py` (SVG shape, bounds and every primitive equal once the wobble is stripped, PNG pixels, determinism, v0.7 and schema, ladder, typeset refusal).
+- **Mutation checks (35, all killed).** Three survived at first (sub-path stream, closed-outline point limit, the direct profile gate) and each got a test.
+- **Rendered check.** The slide read through resvg: bars and dependencies are visibly hand-inked, corners stay corners, both ends of a dependency and its arrowhead stay put, nothing else moved. The corpus contrast gate reports 0 errors.
+- **S0 gate.** Scene v0.7 and Theme v0.11 and v0.13 are classified additive. Against `origin/main` the gate also reports four pre-existing chained entries of #584 (`values/additionalProperties/allOf`) as "does not apply": they are not this work's and were left untouched; with them removed in a scratch copy the gate passes.
+
+### I588-2: value affixes
+
+- **As designed.** View `tableColumns[].affixes` (state to `{prefix, suffix}`), `signedNumber`, `E_VIEW_COLUMN_AFFIX`; `table_presentation.py` holds the typed values and the value-to-state rule; `review/v05_content.py` composes the cell once and carries the affixes; `layout/surface_table.py` cuts only the core under ellipsis.
+- **Internal choice recorded here.** When the affixes leave no room for a character beside an ellipsis, Layout keeps the whole-string ellipsis instead of showing an affix next to nothing (a slip would otherwise read `!!`).
+- **Tests.** `tests/unit/chrona/presentation/test_table_affix_state.py`, `tests/integration/test_table_affixes_render.py` (each state, prefix and suffix, `signedDays` and the missing text, default, measurement equal to typing the affix into the value, ellipsis, failures). **Mutation checks (17, all killed;** two survived at first and got tests).
+- **Evidence.** Controller Z `value-affixes` (View v0.28, Theme derived from `capabilities` with the wobble properties, rich SVG profile): the Δ column reads `+4!` and `?`, the column is as wide as its text, the bars are hand-inked.

@@ -87,6 +87,8 @@ class TableCellContent:
     content: str
     semantic_id: str
     typography_role: str = "text"
+    affix_prefix: str = ""
+    affix_suffix: str = ""
 
 
 @dataclass(frozen=True)
@@ -291,6 +293,8 @@ def display_value(value: Any, missing: str, formatter: str | BooleanPresencePres
             return _format_compact_date(value["at"], include_year=True, locale=locale)
     if formatter == "signedDays" and isinstance(value, int) and not isinstance(value, bool):
         return f"{value:+d}d"
+    if formatter == "signedNumber" and isinstance(value, int) and not isinstance(value, bool):
+        return f"{value:+d}"
     return str(value)
 
 

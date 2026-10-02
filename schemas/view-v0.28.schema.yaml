@@ -399,6 +399,7 @@ allOf:
                   description: "Closed scalar formatter or an explicit boolean presence presentation."
                   oneOf:
                     - {$ref: "urn:chrona:vocabulary-v0.1#/$defs/tableColumnScalarFormat"}
+                    - {description: "A signed whole number with no unit (`+10`, `+0`, `-3`; #588). The shared vocabulary part is frozen, so this one value is declared here until the part has a new version.", const: signedNumber}
                     - type: object
                       required: [kind, whenTrue, whenFalse]
                       additionalProperties: false
@@ -407,6 +408,17 @@ allOf:
                         whenTrue: {description: "Text rendered for boolean true; an empty string is intentional.", type: string}
                         whenFalse: {description: "Text rendered for boolean false; an empty string is intentional.", type: string}
                 missing: {enum: [blank, em-dash, unknown, in-progress]}
+                affixes:
+                  description: "Per-state text affixes (#588) wrapped around the formatted cell text: slip, onTime and ahead for a signed format (a value above, at and below zero), missing for an absent value. Absent, the cell is the formatted text."
+                  examples: [{slip: {suffix: "!"}, missing: {suffix: "?"}}]
+                  type: object
+                  minProperties: 1
+                  additionalProperties: false
+                  properties:
+                    slip: {$ref: "#/$defs/columnAffix"}
+                    onTime: {$ref: "#/$defs/columnAffix"}
+                    ahead: {$ref: "#/$defs/columnAffix"}
+                    missing: {$ref: "#/$defs/columnAffix"}
                 align: {description: "Inline alignment inside the measured column allocation.", enum: [start, center, end]}
                 headerOrientation: {description: "Finite orientation of this column header; table cells remain horizontal.", enum: [horizontal, rotate-cw, rotate-ccw]}
                 width:
@@ -728,6 +740,15 @@ allOf:
                   - {required: [annotations]}
                   - {required: [annotationPresentation]}
 $defs:
+  columnAffix:
+    description: "A literal prefix and suffix of one to eight characters wrapped around a table cell's text in one state (#588); at least one is declared."
+    examples: [{suffix: "!"}]
+    type: object
+    minProperties: 1
+    additionalProperties: false
+    properties:
+      prefix: {description: "Literal text before the cell text.", type: string, minLength: 1, maxLength: 8}
+      suffix: {description: "Literal text after the cell text.", type: string, minLength: 1, maxLength: 8}
   axisSecondaryLabel:
     description: "A second form of the same axis interval, drawn smaller in the same cell as the tier's main label and fitted by Layout; omitted with a record when it does not fit."
     examples: [{form: short-month, nameTable: en-US, typographyRole: axisSecondary, placement: stacked}]

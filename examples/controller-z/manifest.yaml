@@ -77,6 +77,11 @@ slides:
     context: contexts/hand-wobble.yaml
     expectedSvg: generated/hand-wobble.svg
     expectedScene: generated/hand-wobble.scene.json
+  - id: value-affixes
+    evidence: "A delta column whose slips read +4! and whose missing actuals read ? from per-state View affixes on a unit-less signed format, measured with the column, under the hand-wobble Theme (#588)."
+    context: contexts/value-affixes.yaml
+    expectedSvg: generated/value-affixes.svg
+    expectedScene: generated/value-affixes.scene.json
   - id: annotation-kinds
     evidence: "A Title Card style note per Project annotation kind (#584): a kind-coloured title bar with a label, a secondary line, an accent edge and a hazard-tab stamp from the packaged target-parts catalogue, on the dark texture Theme, with no corpus datum edited."
     context: contexts/annotation-kinds.yaml
