@@ -335,7 +335,7 @@ def _group_headers(projection: ReviewProjection, project: Mapping[str, Any], vie
             secondaries[group_id] = value
     try:
         return compose_group_headers(group_ids=group_ids, titles=titles, secondaries=secondaries, text=declared.text,
-                                     first=declared.first, ordinal=declared.ordinal)
+                                     first=declared.first, ordinal=declared.ordinal, figures=dict(projection.figures))
     except GroupHeaderTextError as error:
         raise ValueError(f"{error.code}:{error.detail}") from error
 

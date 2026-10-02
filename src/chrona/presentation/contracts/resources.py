@@ -889,6 +889,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                           for column in body.get("tableColumns", ()))
     hierarchy_column = str(body["hierarchyColumn"]) if "hierarchyColumn" in body else None
     _validate_view_table_intent(table_columns, grouping, row_items, hierarchy_column)
+    figures = _view_figures(body.get("figures", ()))
+    _validate_header_figures(grouping, figures)
     labels = visibility.labels
     if (isinstance(labels, Mapping) and labels.get("placement") == "both"
             and not any(column.source == "title" for column in table_columns)):
@@ -919,7 +921,7 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
         background_decoration=(str(body.get("backgroundDecoration", FrozenDict()).get("rows", "none")),
                                str(body.get("backgroundDecoration", FrozenDict()).get("groups", "all"))),
         periods=_view_periods(body.get("periods", ())),
-        figures=_view_figures(body.get("figures", ())))
+        figures=figures)
 
 
 def _view_periods(raw: Any) -> tuple[ViewPeriod, ...]:
@@ -932,6 +934,21 @@ def _view_periods(raw: Any) -> tuple[ViewPeriod, ...]:
         repeated = sorted({item.period_id for item in periods if [p.period_id for p in periods].count(item.period_id) > 1})
         raise ContractError("E_VIEW_PERIOD_DUPLICATE", f"periods selects a Project period more than once: {repeated}")
     return periods
+
+
+def _validate_header_figures(grouping: ViewGrouping | None, figures: tuple[FigureSpec, ...]) -> None:
+    """A header placeholder may only show a figure the View declares (#586)."""
+    header = grouping.header if grouping is not None else None
+    if header is None:
+        return
+    declared = tuple(item.figure_id for item in figures)
+    for template in (header.text, header.first):
+        for figure_id in sorted(parse_template(template).figure_ids) if template is not None else ():
+            if figure_id not in declared:
+                known = ", ".join(declared) if declared else "none"
+                raise ContractError("E_VIEW_GROUP_HEADER_TEMPLATE",
+                                    f"{{figure:{figure_id}}} names no figure the View declares (declared: {known})",
+                                    "/body/grouping/header")
 
 
 def _view_figures(raw: Any) -> tuple[FigureSpec, ...]:

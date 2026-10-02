@@ -91,7 +91,7 @@ allOf:
                 required: [text]
                 additionalProperties: false
                 properties:
-                  text: {description: "Literal text with the closed placeholders {ordinal}, {title} and {secondary}; {{ and }} are literal braces.", type: string, minLength: 1}
+                  text: {description: "Literal text with the closed placeholders {ordinal}, {title}, {secondary} and {figure:<id>} (a derived figure the View declares); {{ and }} are literal braces.", type: string, minLength: 1}
                   ordinal: {description: "Form of {ordinal}, the group's 1-based position in display order; arabic when omitted.", enum: [arabic, zero-padded, roman, kanji, kanji-formal]}
                   first: {description: "Template for the first group in display order, with the same placeholders.", type: string, minLength: 1}
                   secondary:
