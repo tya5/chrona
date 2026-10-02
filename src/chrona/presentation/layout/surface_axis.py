@@ -17,7 +17,7 @@ from chrona.presentation.layout.surface_geometry import (
     bounds_from_rect, coordinate_for_date, extend_to_plot_edges,
 )
 from chrona.presentation.layout.surface_quality import (
-    AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, PlacementDecision, ScalePlacement,
+    AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, PathCommand, PlacementDecision, ScalePlacement,
     ShapePlacement, SurfaceLayoutRequest, TextPlacement,
 )
 from chrona.presentation.layout.text import measure_text_width, metric_for_role, place_text
@@ -152,6 +152,48 @@ def _secondary_outcomes(*, tier_index: int, plan: _SecondaryPlan, intervals: Any
         decisions.append(PlacementDecision(secondary_id, f"/view/body/axis/tiers/{tier_index}",
                                            ("secondary", "suppress"), "suppress", "suppressed"))
     return tuple(updated), diagnostics, decisions
+
+
+def _cell_corner(theme_tokens: Any, role: str, tier_index: int) -> tuple[str, Decimal] | None:
+    """The Theme-declared corner shape of a band role's cells (#491): ("radius" | "chamfer", ratio), or None."""
+    radius = theme_tokens.optional_number(role, "cellCornerRadius")
+    chamfer = theme_tokens.optional_number(role, "cellCornerChamfer")
+    source = f"/view/body/axis/tiers/{tier_index}"
+    if radius is None and chamfer is None:
+        return None
+    if radius is not None and chamfer is not None:
+        raise LayoutError("E_PRESENTATION_AXIS_INVALID", source, detail=f"cell-corner-both:{tier_index}")
+    shape, ratio = ("radius", radius) if radius is not None else ("chamfer", chamfer)
+    if not 0 < ratio <= Decimal("0.5"):
+        raise LayoutError("E_PRESENTATION_AXIS_INVALID", source, detail=f"cell-corner:{tier_index}")
+    if shape == "chamfer" and theme_tokens.optional_pattern(role) is not None:
+        raise LayoutError("E_PRESENTATION_AXIS_INVALID", source, detail=f"cell-chamfer-pattern:{tier_index}")
+    return shape, ratio
+
+
+def _band_cell(placement_id: str, x: float, x2: float, block: Decimal, block_size: Decimal, *, semantic_id: str,
+               paint_order: int, corner: tuple[str, Decimal] | None, diagnostics: list[str]) -> ShapePlacement:
+    """One band cell: a Rect, a rounded Rect, or a chamfered polygon, always inside its own cell rect (#491)."""
+    width = max(0.0, x2 - x)
+    bounds = Rect(Decimal(str(x)), block, Decimal(str(width)), block_size)
+    if corner is None:
+        return ShapePlacement(placement_id, "timeline-axis", "Rect", bounds, semantic_id=semantic_id, paint_order=paint_order)
+    shape, ratio = corner
+    requested = float(ratio * block_size)
+    applied = min(requested, width / 2)
+    if applied < requested:
+        diagnostics.append(f"W_LAYOUT_AXIS_CELL_CORNER_REDUCED:{placement_id}")
+    if shape == "radius":
+        return ShapePlacement(placement_id, "timeline-axis", "Rect", bounds, semantic_id=semantic_id,
+                              paint_order=paint_order, corner_radius=applied)
+    top, bottom = float(block), float(block + block_size)
+    left, right = x, x + width
+    points = ((left + applied, top), (right - applied, top), (right, top + applied), (right, bottom - applied),
+              (right - applied, bottom), (left + applied, bottom), (left, bottom - applied), (left, top + applied))
+    commands = (PathCommand("move", (points[0],)), *(PathCommand("line", (point,)) for point in points[1:]),
+                PathCommand("line", (points[0],)))
+    return ShapePlacement(placement_id, "timeline-axis", "Chamfer", bounds, semantic_id=semantic_id,
+                          paint_order=paint_order, path_commands=commands)
 
 
 def _axis_tick_length(theme_tokens: Any, role: str, slot_block_size: Decimal, tier_index: int) -> Decimal | None:
@@ -323,6 +365,7 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
                     raise LayoutError("E_PRESENTATION_AXIS_OVERFLOW", f"/view/body/axis/tiers/{tier_index}", detail=f"band-lane:{band_ordinal}")
                 band_block, band_block_size = axis.bounds.block + Decimal(str(band_lane_offset)), Decimal(str(band_lane_size))
             gap = float(tokens.optional_number(semantic_binding(semantic_id).scene_role, "cellGap") or 0)
+            corner = _cell_corner(tokens, semantic_binding(semantic_id).scene_role, tier_index)
             for interval in intervals:
                 raw, raw2 = coordinate_for_date(interval.start, scale), coordinate_for_date(interval.end, scale)
                 x, x2 = raw, raw2
@@ -336,9 +379,8 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
                 treatment_bg, paint_order = tokens.background(semantic_binding(semantic_id).scene_role)
                 if treatment_bg != "none":
                     band_targets[("axis-band", interval.level, str(interval.index))] = placement_id
-                    shapes.append(ShapePlacement(placement_id, "timeline-axis", "Rect",
-                        Rect(Decimal(str(x)), band_block, Decimal(str(max(0.0, x2 - x))), band_block_size),
-                        semantic_id=semantic_id, paint_order=paint_order))
+                    shapes.append(_band_cell(placement_id, x, x2, band_block, band_block_size, semantic_id=semantic_id,
+                                             paint_order=paint_order, corner=corner, diagnostics=diagnostics))
             if band_tier_count > 1 and tier.unit not in lane_by_unit:
                 band_lane_offset += band_lane_size
             band_ordinal += 1

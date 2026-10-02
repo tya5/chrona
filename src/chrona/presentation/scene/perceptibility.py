@@ -5,12 +5,15 @@ from dataclasses import dataclass
 from math import isfinite
 from typing import Any, Mapping, Sequence
 
+from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, semantic_binding
 from chrona.presentation.scene.paint_analysis import composited_contrast, is_hex_color
 
 
 MICRO_POINT_TOLERANCE = 0.001
 TEXT_INTERSECTION_AREA = 4.0
 OCCLUSION_RATIO = 0.5
+# A chamfered axis cell (#491) is a Symbol outline inside its bounds; it grounds text as a band Rect does.
+_BAND_CELL_ROLES = frozenset(semantic_binding(identifier).scene_role for identifier in axis_band_semantic_ids())
 
 
 class ScenePerceptibilityError(ValueError):
@@ -193,7 +196,8 @@ def _occlusion_findings(scene_path: str, primitives: Sequence[_Primitive]) -> li
         if text.kind != "Text" or not text.bounds.positive_area:
             continue
         for rect in primitives:
-            if rect.kind != "Rect" or not rect.bounds.positive_area or not _later(rect, text) or not _opaque_fill(rect.paint):
+            ground = rect.kind == "Rect" or (rect.kind == "Symbol" and rect.visual_role in _BAND_CELL_ROLES)
+            if not ground or not rect.bounds.positive_area or not _later(rect, text) or not _opaque_fill(rect.paint):
                 continue
             ratio = _intersection(text.bounds, rect.bounds) / text.bounds.area
             if ratio < OCCLUSION_RATIO:

@@ -131,7 +131,7 @@ _CANVAS_PAINT = frozenset(("fill", "opacity", "gradientStart", "gradientEnd", "g
 _PATTERNED_RECT_PAINT = _RECT_PAINT | frozenset(("pattern",))
 _LAYOUT_TYPOGRAPHY = _TEXT_MEASUREMENT | _ICON_MEASUREMENT
 _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | frozenset((
-    "cellGap", "chipPadding", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach",
+    "cellGap", "cellCornerRadius", "cellCornerChamfer", "chipPadding", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach",
     "progressInset", "summaryBarHeight", "swatchInlineSize", "annotationContainer", "marker", "symbol", "edge",
     "stampPlacement",
 ))
@@ -261,8 +261,9 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              _PATTERNED_RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder")),
              scene_kinds=frozenset(("Rect",)))
     register("axis-band-decoration axis-band-decoration2", "Layout axis band and Scene Rect",
-             _PATTERNED_RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder", "cellGap")),
-             scene_kinds=frozenset(("Rect",)))
+             _PATTERNED_RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder", "cellGap",
+                                                "cellCornerRadius", "cellCornerChamfer")),
+             scene_kinds=frozenset(("Rect", "Symbol")))
     register("period-label", "Scene state Text and contrast policy",
              _TEXT_MEASUREMENT | _TEXT_PAINT | frozenset(("contrastTreatment",)),
              scene_kinds=frozenset(("Text",)))
