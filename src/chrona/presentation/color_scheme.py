@@ -122,7 +122,7 @@ def _annotation_kinds(*, declared: Any, colors: Mapping[str, str]) -> dict[str, 
             kind_header(kind, declaration)
         except AnnotationKindTextError as error:
             raise ColorSchemeError(error.code, pointer, error.detail) from error
-        entry = {name: str(declaration[name]) for name in ("label", "secondary", "title") if name in declaration}
+        entry = {name: str(declaration[name]) for name in ("label", "secondary", "title", "stamp") if name in declaration}
         intent = declaration.get("color")
         if intent is not None:
             if not isinstance(intent, str) or (intent not in _INTENTS and intent not in colors):

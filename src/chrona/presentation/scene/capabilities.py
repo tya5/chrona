@@ -133,6 +133,7 @@ _LAYOUT_TYPOGRAPHY = _TEXT_MEASUREMENT | _ICON_MEASUREMENT
 _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | frozenset((
     "cellGap", "chipPadding", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius",
     "progressInset", "summaryBarHeight", "swatchInlineSize", "annotationContainer", "marker", "symbol", "edge",
+    "stampPlacement",
 ))
 _LAYOUT_POLICY = frozenset(("backgroundTreatment", "backgroundPaintOrder"))
 _CLOSURE_POLICY = frozenset(("contrastTreatment",))
@@ -249,6 +250,8 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              _RECT_PAINT | frozenset(("chipPadding", "markCornerRadius")), scene_kinds=frozenset(("Rect",)))
     register("annotation-kind-accent", "Layout annotation-kind accent edge and Scene Rect",
              _RECT_PAINT | frozenset(("edge",)), scene_kinds=frozenset(("Rect",)))
+    register("annotation-kind-stamp", "Layout annotation-kind stamp glyph and Scene Symbol",
+             frozenset(("fill", "stroke", "opacity", "stampPlacement")), scene_kinds=frozenset(("Symbol",)))
     register("group-band row-band group-header-band calendar-closed", "Layout background and Scene Rect",
              _RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder")),
              scene_kinds=frozenset(("Rect",)))

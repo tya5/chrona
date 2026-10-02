@@ -12,6 +12,8 @@ from chrona.presentation.scene.paint_analysis import composited_contrast, is_hex
 DECORATION_FLOOR = 1.10
 MARK_FLOOR = 3.0
 STATE_TEXT_FLOORS = {"required": 4.5, "deemphasized": 3.0}
+# Roles whose sibling parts (one source, one role) are a single ink and never each other's ground.
+_SIBLING_INK_ROLES = frozenset({"annotation-kind-stamp"})
 
 
 class SceneContrastPolicyError(ValueError):
@@ -298,6 +300,10 @@ def _ground_under(primitive: Mapping[str, Any], primitives: list[Any], index: in
         # bounds, and a later part's true ground is the earlier part beneath it, not
         # the canvas or the band underneath the whole mark.
         if not isinstance(prior, Mapping) or prior.get("kind") not in {"Rect", "Symbol"}:
+            continue
+        if (primitive.get("visualRole") in _SIBLING_INK_ROLES and prior.get("visualRole") == primitive.get("visualRole")
+                and prior.get("sourceRef") == primitive.get("sourceRef")):
+            # The parts of one stamp glyph are one ink, not grounds for each other (#584).
             continue
         prior_order = prior.get("paintOrder", 0)
         if not isinstance(prior_order, int) or (prior_order, prior_index) >= (order, index):

@@ -299,7 +299,7 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                         kind=kind_token, subject=annotation.subject,
                         frame=kind_theme, theme_tokens=request.theme_tokens, metric_for=metric_for,
                         outline=container.outline if container is not None else None,
-                        pointer=f"/annotations/{index}")
+                        pointer=f"/annotations/{index}", text_size=size)
                     wrap_available = max(1.0, wrap_available - kind_measure.inline_insets)
                     if plot_wrap_em is not None:
                         wrap = "allow"
@@ -323,7 +323,8 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                     body_inline = annotation_leading + text_width + annotation_trailing
                     annotation_size = (max(body_inline, kind_measure.header_inline) + kind_measure.inline_insets
                                        + content_left + content_right,
-                                       size * line_height * len(annotation_lines) + kind_measure.header_block
+                                       max(size * line_height * len(annotation_lines) + kind_measure.header_block,
+                                           kind_measure.stamp_block)
                                        + kind_measure.block_insets + content_top + content_bottom)
                     candidates, ladder = candidate_order(annotation.candidates, annotation.purpose,
                                                           annotation.fallback_ladder, preferred)
@@ -538,7 +539,7 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                     text.append(kind_line)
                     register_rect(kind_line.placement_id, "text", "annotations", kind_line.bounds)
             placed_annotation = place_text(placement_id=f"annotation-text:{annotation_id}", source_ref=annotation_id, content=content,
-                                           inline=bounds.x + annotation_leading + content_left + kind_measure.inset_left,
+                                           inline=bounds.x + annotation_leading + content_left + kind_measure.body_inset_left,
                                            baseline_block=(bounds.y + content_top + kind_measure.inset_top
                                                            + kind_measure.header_block + size),
                                            typography_role=annotation_text_role,
@@ -560,7 +561,7 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                 for visual, icon, icon_width, gap in annotation_visuals:
                     inline = ((bounds.x if visual.side == "leading"
                                else bounds.x + annotation_leading + text_width + annotation_trailing - gap - icon_width)
-                              + kind_measure.inset_left)
+                              + kind_measure.body_inset_left)
                     icon_bounds = Rect(Decimal(str(inline)), Decimal(str(placed_annotation.baseline[1] - cap_height
                                                                           + (cap_height - size) / 2)),
                                        Decimal(str(icon_width)), Decimal(str(size)))

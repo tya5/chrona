@@ -117,3 +117,30 @@ def test_an_invalid_edge_token_is_a_token_type_error(edge):
     with pytest.raises(ThemeTokenError) as failure:
         ThemeTokenView(resolved).annotation_kind_frame()
     assert failure.value.diagnostic_id == "E_THEME_TOKEN_TYPE"
+
+
+def test_a_kind_stamp_reference_is_carried_into_the_resolved_theme_and_the_token_view():
+    _, resolved = _resolve(stamp="end-top")
+    assert resolved["body"]["annotationKinds"]["risk"]["stamp"] == ak.STAMPS["risk"]
+    tokens = ThemeTokenView(resolved)
+    assert tokens.annotation_kind("risk").stamp == ak.STAMPS["risk"]
+    frame = tokens.annotation_kind_frame()
+    assert (frame.stamp_role, frame.stamp_corner, float(frame.stamp_size)) == ("annotation-kind-stamp", "end-top", 2.0)
+
+
+def test_a_theme_without_a_stamp_role_has_no_stamp_in_its_frame():
+    _, resolved = _resolve()
+    frame = ThemeTokenView(resolved).annotation_kind_frame()
+    assert frame.stamp_role is None and frame.stamp_corner is None
+
+
+@pytest.mark.parametrize("placement", [{"corner": "middle", "size": 2}, {"corner": "end-top", "size": 0},
+                                       {"corner": "end-top", "size": -1}])
+def test_an_invalid_stamp_placement_token_is_a_token_type_error(placement):
+    parts = sr.bundle()
+    ak.with_kind_theme(parts, stamp="end-top")
+    parts["theme"]["body"]["values"]["kind-stamp-placement"]["value"] = placement
+    resolved = resolve_theme(parts["theme"], parts["scheme"], scheme_content_identity="sha256:test")
+    with pytest.raises(ThemeTokenError) as failure:
+        ThemeTokenView(resolved).annotation_kind_frame()
+    assert failure.value.diagnostic_id == "E_THEME_TOKEN_TYPE"

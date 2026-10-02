@@ -60,6 +60,7 @@ class AnnotationKindToken:
 
     header: KindHeader
     color: str | None
+    stamp: str | None = None
 
 
 @dataclass(frozen=True)
@@ -73,6 +74,9 @@ class AnnotationKindFrame:
     accent_role: str | None
     accent_side: str | None
     accent_size: Decimal
+    stamp_role: str | None = None
+    stamp_corner: str | None = None
+    stamp_size: Decimal = Decimal(0)
 
 
 @dataclass(frozen=True)
@@ -383,8 +387,9 @@ class ThemeTokenView:
             header = kind_header(str(kind), entry)
         except AnnotationKindTextError as error:
             raise ThemeTokenError(error.code, f"/body/annotationKinds/{kind}") from error
-        color = entry.get("color")
-        return AnnotationKindToken(header, str(color) if isinstance(color, str) else None)
+        color, stamp = entry.get("color"), entry.get("stamp")
+        return AnnotationKindToken(header, str(color) if isinstance(color, str) else None,
+                                   str(stamp) if isinstance(stamp, str) else None)
 
     def annotation_kind_frame(self) -> AnnotationKindFrame:
         """Return which annotation-kind elements this Theme declares and their geometry (#584)."""
@@ -404,8 +409,17 @@ class ThemeTokenView:
             size = self._decimal(edge.get("size") if isinstance(edge, Mapping) else None, accent_role, "edge/size") or Decimal(0)
             if side not in {"start", "end", "top", "bottom"} or size <= 0:
                 raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{accent_role}/edge")
+        stamp_role = declared("annotation-kind-stamp")
+        corner, stamp_size = None, Decimal(0)
+        if stamp_role is not None:
+            placement = self.token(stamp_role, "stampPlacement", "stampPlacement")
+            corner = placement.get("corner") if isinstance(placement, Mapping) else None
+            stamp_size = self._decimal(placement.get("size") if isinstance(placement, Mapping) else None,
+                                       stamp_role, "stampPlacement/size") or Decimal(0)
+            if corner not in {"start-top", "end-top", "start-bottom", "end-bottom"} or stamp_size <= 0:
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{stamp_role}/stampPlacement")
         return AnnotationKindFrame(declared("annotation-kind-label"), declared("annotation-kind-secondary"),
-                                   bar_role, padding, accent_role, side, size)
+                                   bar_role, padding, accent_role, side, size, stamp_role, corner, stamp_size)
 
     def _insets(self, value: Any, role: str, property_name: str) -> tuple[Decimal, Decimal, Decimal, Decimal]:
         """Return a validated (top, right, bottom, left) em-relative inset quadruple."""
