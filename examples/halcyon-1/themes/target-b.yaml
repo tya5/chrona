@@ -179,7 +179,7 @@ body:
       value: 1
     opacity.calendar-closed:
       type: number
-      value: 0.45
+      value: 0.85
     mark-height-container:
       type: number
       value: 1
@@ -610,7 +610,7 @@ body:
     snapshot.stroke: accent
     summary-bar.fill: accent
     actual.fill: text
-    actual.stroke: surface
+    actual.stroke: text
     milestone.fill: text
     missing-actual.fill: accent
     missing-actual.stroke: surface
