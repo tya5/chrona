@@ -2,7 +2,7 @@
 
 Living record for [#893](https://github.com/tya5/chrona/issues/893) (P1 on the read-only board #454). One small record holds the baseline, design plan, design, architecture review and implementation plan; it is published before any code.
 
-**Public base:** `5eeb128e` on `main`. **Status:** design published here (PR 968); S1 in progress. Related: [#880](https://github.com/tya5/chrona/issues/880) (closed; found this on the `chrona init` starter and filed it).
+**Public base:** `5eeb128e` on `main`. **Status:** S0 (#968) and S1 (#971) merged; S2 is the [acceptance review](../../reviews/current/issue-893-no-calendar-closed-days-acceptance-review-2026-10-03.md). Related: [#880](https://github.com/tya5/chrona/issues/880) (closed; found this on the `chrona init` starter and filed it).
 
 ## 1. Published baseline
 
