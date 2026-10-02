@@ -34,3 +34,14 @@ Open `swiss-board.html` in a browser. The PNG in this folder was produced with h
 
     "Google Chrome" --headless=new --hide-scrollbars --window-size=1600,900 \
       --virtual-time-budget=12000 --screenshot=02-programme-board.png stage-only.html
+
+## Parts catalogue (#718)
+
+The reusable parts of this target are extracted as monochrome assets in the packaged catalogue `chrona-target-parts-v2026-10` (set `chrona-target-parts`; see [the gallery](../target-parts-catalogue-2026-10/README.md)). A part carries no colour: the Theme paints it. `chrona-starter` is the older builtin catalogue.
+
+| Part drawn here | Catalogue entry | Status |
+| --- | --- | --- |
+| Circle gate | built-in `circle` symbol | no asset needed |
+| Hatch for unobserved work | `chrona-target-parts:hatch-fine` | in the catalogue; bindable as a pattern on the Rect roles today |
+
+Still needed before this target's preset can be assembled: nothing from #582 to #588; its table lists the 12-column grid and the slide-number block, which no issue in that range covers.

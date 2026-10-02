@@ -32,3 +32,14 @@ Open `flatpack-board.html` in a browser. The PNG in this folder was produced wit
 
     "Google Chrome" --headless=new --hide-scrollbars --window-size=1600,900 \
       --virtual-time-budget=12000 --screenshot=02-programme-board.png stage-only.html
+
+## Parts catalogue (#718)
+
+The reusable parts of this target are extracted as monochrome assets in the packaged catalogue `chrona-target-parts-v2026-10` (set `chrona-target-parts`; see [the gallery](../target-parts-catalogue-2026-10/README.md)). A part carries no colour: the Theme paints it. `chrona-starter` is the older builtin catalogue.
+
+| Part drawn here | Catalogue entry | Status |
+| --- | --- | --- |
+| Ticked gate | `chrona-starter:ticked-circle` | in the catalogue; bindable as a gate symbol today |
+| White dot grid | not extracted | the 4-unit dot grid is not in the table of #718; `chrona-starter:halftone` is the nearest |
+
+Still needed before this target's preset can be assembled: #583 (the step numeral spanning each group), #586 (the team-count figure). A pictogram chosen by note kind is closest to #584. A state-dependent gate (ticked before as-of, open after) is not covered by #582 to #588.

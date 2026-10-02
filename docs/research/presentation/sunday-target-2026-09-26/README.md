@@ -39,3 +39,16 @@ Open `sunday-board.html` in a browser. The PNG in this folder was produced with 
 
     "Google Chrome" --headless=new --hide-scrollbars --window-size=1600,900 \
       --virtual-time-budget=12000 --screenshot=02-programme-board.png stage-only.html
+
+## Parts catalogue (#718)
+
+The reusable parts of this target are extracted as monochrome assets in the packaged catalogue `chrona-target-parts-v2026-10` (set `chrona-target-parts`; see [the gallery](../target-parts-catalogue-2026-10/README.md)). A part carries no colour: the Theme paints it. `chrona-starter` is the older builtin catalogue.
+
+| Part drawn here | Catalogue entry | Status |
+| --- | --- | --- |
+| Star gate, solid and dashed baseline outline | `chrona-target-parts:star`, `star-outline` | in the catalogue; bindable as a gate symbol today |
+| Ben-Day dots on group bands and the launch window | `chrona-target-parts:ben-day-dots`, `ben-day-dots-fine` | in the catalogue; bindable as a pattern on the Rect roles today |
+| Hatch for unobserved work | `chrona-target-parts:hatch` | in the catalogue; bindable as a pattern on the Rect roles today |
+| Inked panel corner | `chrona-target-parts:panel-corner` | in the catalogue; not yet placeable by any Theme role (#587) |
+
+Still needed before this target's preset can be assembled: #582 (the dotted launch window), #583 (the composed caption header), #587 (panels with gutters), #588 (hand wobble, `+10!` and `?` affixes). In-plot speech balloons and the starburst label are not covered by #582 to #588.

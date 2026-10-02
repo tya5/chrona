@@ -33,3 +33,14 @@ Open `onebit-board.html` in a browser. The PNG in this folder was produced with 
 
     "Google Chrome" --headless=new --hide-scrollbars --window-size=1600,900 \
       --virtual-time-budget=12000 --screenshot=02-programme-board.png stage-only.html
+
+## Parts catalogue (#718)
+
+The reusable parts of this target are extracted as monochrome assets in the packaged catalogue `chrona-target-parts-v2026-10` (set `chrona-target-parts`; see [the gallery](../target-parts-catalogue-2026-10/README.md)). A part carries no colour: the Theme paints it. `chrona-starter` is the older builtin catalogue.
+
+| Part drawn here | Catalogue entry | Status |
+| --- | --- | --- |
+| 12.5, 25 and 50 percent dithers | `chrona-starter:ordered-dither-12-5`, `ordered-dither-25`, `ordered-dither-50` | in the catalogue; bindable as a pattern on the Rect roles today |
+| Diagonal-line launch window | `chrona-target-parts:hatch-wide` | in the catalogue; bindable as a pattern on the Rect roles today |
+
+Still needed before this target's preset can be assembled: #582 (the named range that carries the line pattern). Window chrome and the strip header are closest to #587's slot frame; inverted cells and the caution dialogs are not covered by #582 to #588.

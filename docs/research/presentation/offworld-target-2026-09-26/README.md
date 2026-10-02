@@ -39,3 +39,13 @@ Open `offworld-board.html` in a browser. The PNG in this folder was produced wit
 
     "Google Chrome" --headless=new --hide-scrollbars --window-size=1600,900 \
       --virtual-time-budget=8000 --screenshot=02-programme-board.png stage-only.html
+
+## Parts catalogue (#718)
+
+The reusable parts of this target are extracted as monochrome assets in the packaged catalogue `chrona-target-parts-v2026-10` (set `chrona-target-parts`; see [the gallery](../target-parts-catalogue-2026-10/README.md)). A part carries no colour: the Theme paints it. `chrona-starter` is the older builtin catalogue.
+
+| Part drawn here | Catalogue entry | Status |
+| --- | --- | --- |
+| Hatch for unobserved work | `chrona-target-parts:hatch-wide` | in the catalogue; bindable as a pattern on the Rect roles today |
+
+Still needed before this target's preset can be assembled: #582 (the dashed-edge launch window), #583 (the `SECTOR nn` prefix), #584 (colour by annotation kind), #587 (rain, scanlines and smog glow over the slide).

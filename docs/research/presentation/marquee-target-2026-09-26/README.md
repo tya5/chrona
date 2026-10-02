@@ -39,3 +39,17 @@ Open `marquee-board.html` in a browser. The slide is drawn into the SVG on the p
 
     "Google Chrome" --headless=new --hide-scrollbars --window-size=1600,900 \
       --virtual-time-budget=8000 --screenshot=02-programme-board.png stage-only.html
+
+## Parts catalogue (#718)
+
+The reusable parts of this target are extracted as monochrome assets in the packaged catalogue `chrona-target-parts-v2026-10` (set `chrona-target-parts`; see [the gallery](../target-parts-catalogue-2026-10/README.md)). A part carries no colour: the Theme paints it. `chrona-starter` is the older builtin catalogue.
+
+| Part drawn here | Catalogue entry | Status |
+| --- | --- | --- |
+| Gold-star gate (diamond), solid and hollow baseline | `chrona-target-parts:diamond`, `diamond-outline` | in the catalogue; bindable as a gate symbol today |
+| Bulb border element | `chrona-target-parts:bulb` | in the catalogue; not yet placeable by any Theme role (#587) |
+| Bulb row | `chrona-target-parts:bulb-row` | in the catalogue; bindable as a pattern on the Rect roles today |
+| Newspaper-clipping edge | `chrona-target-parts:clipping-edge` | in the catalogue; not yet placeable by any Theme role (#848) |
+| Hatch for unobserved work | `chrona-target-parts:hatch-wide` | in the catalogue; bindable as a pattern on the Rect roles today |
+
+Still needed before this target's preset can be assembled: #582 (the opening-night range), #583 (the `ACT n` prefix), #584 (a deterministic tilt for clippings), #587 (the bulb border on the title slot, the light cone, glow). #848 for the clipping as artwork.

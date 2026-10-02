@@ -38,3 +38,13 @@ Open `montmartre-board.html` in a browser. The PNG in this folder was produced w
 
     "Google Chrome" --headless=new --hide-scrollbars --window-size=1600,900 \
       --virtual-time-budget=8000 --screenshot=02-programme-board.png stage-only.html
+
+## Parts catalogue (#718)
+
+The reusable parts of this target are extracted as monochrome assets in the packaged catalogue `chrona-target-parts-v2026-10` (set `chrona-target-parts`; see [the gallery](../target-parts-catalogue-2026-10/README.md)). A part carries no colour: the Theme paints it. `chrona-starter` is the older builtin catalogue.
+
+| Part drawn here | Catalogue entry | Status |
+| --- | --- | --- |
+| Hatch for unobserved work | `chrona-target-parts:hatch-wide` | in the catalogue; bindable as a pattern on the Rect roles today |
+
+Still needed before this target's preset can be assembled: #582 (the named launch range), #583 (the arrondissement plaque prefix), #584 (a tilt policy for the pinned cards), #587 (vignette and film grain, the framed title plaque).
