@@ -2,7 +2,7 @@
 
 Living record for [#586](https://github.com/tya5/chrona/issues/586): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history.
 
-**Public base:** `e4429030` on `main`. **Status:** design plan (this revision, sections 1 to 4). Design, architecture review and implementation plan are not yet written; no product code.
+**Public base:** `6deb2e4f` on `main`. **Status:** design plan (sections 1 to 4, PR #900) is published; design and architecture review (sections 5 and 6, this revision). The implementation plan is not yet written; no product code.
 
 ## 1. Published baseline
 
@@ -82,3 +82,98 @@ Synthetic tests only, no `examples/` input: each kind, calendar and working-day 
 ### Order of publication
 
 1. This plan (docs PR). 2. Design and architecture review, with the Specification amendments planned and the owner-decision comment on #586. 3. Implementation plan. 4. I586-1, I586-2, I586-3 as separate code PRs. 5. Acceptance review and the exact-main three-OS run.
+
+## 5. Design
+
+### 5.1 The declaration
+
+**Where (D1).** View `body.figures`, an optional array, in place in `view-v0.28` (Spec 56 section 3.2: behaviour-preserving, no version bump; omission is today's output). A figure is content the author chooses to show, as `periods` and `grouping.header` are; it is declared once and consumed by name. Each item has an `id` (unique, `E_VIEW_FIGURE_DUPLICATE`; it may not contain `{`, `}` or whitespace, so a header placeholder can name it, a rule the contract checks as `E_VIEW_FIGURE_INVALID`) and a `kind` that selects a closed shape; `additionalProperties: false` everywhere, no expression, operator or free field reference anywhere.
+
+```yaml
+figures:
+  - id: launch-countdown
+    kind: daysUntil
+    from: asOf                                   # optional; asOf is the default
+    to: {period: launch-window, side: start}
+    days: calendar                               # calendar (default) | working
+  - id: tvac-working-days
+    kind: daysUntil
+    to: {object: tvac, endpoint: end}
+    days: working
+    calendar: engineering                        # working only; default is project.calendar
+  - id: window-length
+    kind: daysIn
+    period: launch-window
+    days: working
+```
+
+**Facts (D2).** A fact is exactly one of three forms, each a Core value that already exists:
+
+| Form | Value | Source |
+| --- | --- | --- |
+| `asOf` | the Actual Set as-of date | `actual_set.body.asOf` |
+| `{period: <id>, side: start \| end}` | a named period's boundary; `end` is the exclusive end of the half-open range (Spec 05 Periods) | `core/periods.py:resolve_periods` |
+| `{object: <id>, endpoint: at \| start \| end}` | an object's placed (completed) date | scheduler placements, as a period reference resolves |
+
+**Kinds (D3).** Two kinds ship; the set is closed by the schema's `oneOf` and by one Core registry, and a new kind is an in-place schema addition plus one registry entry.
+
+| Kind | Value (a signed integer) | Convention |
+| --- | --- | --- |
+| `daysUntil {from?, to, days, calendar?}` | days from `from` to `to` | Calendar: `to - from`, so a past target is negative and the same day is 0. Working: the count of working days `d` with `from < d <= to`, negated (the days in `(to, from]`) when `to` is before `from`. This is the scheduler's `advance` convention (a working-day `advance` counts days strictly after its start), so `daysUntil(d, advance(d, k wd))` is `k`: the scheduler and a figure never disagree on what a working day is. |
+| `daysIn {period, days, calendar?}` | the days a period covers | Calendar: `end - start`. Working: the working days `d` with `start <= d < end`, so the day the period starts is counted and its exclusive end is not. A period with no working day is 0, a value, not an error. |
+
+The two conventions differ because the questions differ (steps from a date, days covered by a range) and each is the natural one for its question; the specification states both with a worked example. No clamping, rounding or absolute value is applied: a past target is a negative number, and the consumer's format decides how it reads.
+
+**Calendar (D3).** `days: working` counts with a Project calendar: the declared `calendar` id, otherwise the Project default `project.calendar`. `days: calendar` never reads a calendar, so `calendar` with `days: calendar` is a dead declaration and `E_VIEW_FIGURE_INVALID`. Counts by state and the critical-path finish delta already exist as Summary Profile sources (baseline item 1) and are not duplicated; the registry is where they could join later, and that is recorded as a successor candidate, not an acceptance row.
+
+### 5.2 Missing facts (D4)
+
+Every declared figure is resolved after scheduling, before content normalisation, in one place. Any condition below is a stable diagnostic that names the figure, the fact and the declared alternatives; the render is refused with all of them (`RenderRejected`, the post-placement precedent of `period_range_diagnostics`). Nothing becomes `unknown`, zero or blank. A figure no consumer uses is still resolved: declaring one asserts the View needs it, and a View used with a Context that lacks a fact should declare another View.
+
+| Condition | Code | Raised at |
+| --- | --- | --- |
+| Duplicate id; `calendar` with `days: calendar`; `from` or `to` mis-shaped beyond the schema | `E_VIEW_FIGURE_DUPLICATE`, `E_VIEW_FIGURE_INVALID` | View contract |
+| A period fact or `period` the Project does not declare | `E_FIGURE_PERIOD_UNKNOWN` (declared ids listed) | resolution |
+| An object fact the Project does not declare | `E_FIGURE_OBJECT_UNKNOWN` | resolution |
+| An endpoint the object's schedule does not offer (`start` of a point) | `E_FIGURE_ENDPOINT_UNAVAILABLE` (offered endpoints listed) | resolution |
+| `asOf` with no Actual Set as-of | `E_FIGURE_ASOF_MISSING` | resolution |
+| `days: working` with no resolvable calendar (an id not in `calendars`, or none declared and no default) | `E_FIGURE_CALENDAR_UNAVAILABLE` | resolution |
+| A consumer names a figure the View does not declare | `E_VIEW_FIGURE_UNKNOWN` (declared ids listed) | consumer site |
+
+### 5.3 Consumers and formatting (D5, D6)
+
+**Summary Profile (I586-2).** A typed metric `source: {figure: <id>}` takes the figure's integer as its value. The metric's existing `format` applies: `count` is the integer, `signedDays` is `+63d`, `text` is the integer as text; `date` is meaningless for an integer and is `E_PRESENTATION_SUMMARY_FORMAT`. The metric `label` is the caption, so a `presentation: figures` panel draws the value run over the caption run exactly as it draws every other figure, and Title Card's `発射まで ... DAYS` is `label: DAYS` plus a literal. The other sources, formats and the `unknown` rule for them are unchanged. Spec 46 already says absent typed data renders `unknown`; that rule stays for the existing sources, and a figure never reaches it because a missing fact refuses the render first.
+
+**Header text (I586-3).** The #583 closed grammar gains one placeholder family, `{figure:<id>}`, still no expression and no format spec. It renders the signed integer in ASCII digits (`63`, `-3`). The contract checks every `{figure:<id>}` of `text` and `first` against the View's declared figures (`E_VIEW_GROUP_HEADER_TEMPLATE`, declared ids listed); a placeholder with no declared figures is the same error. It composes with `{ordinal}`, `{title}`, `{secondary}`, `first` and `{{`/`}}` unchanged, and the figure value is the same in every group's header (group-relative facts, such as the days to a group's first start, would be a fact-set extension and are a successor candidate).
+
+**Locale and calendar rules (D5).** The repo has no locale rule for a bare integer: `count` and `signedDays` print ASCII digits without grouping, and dates use the `en-US` and `ja-JP` forms. A figure introduces no new locale behaviour; the unit word (`DAYS`, `日`) is author text in the caption or the template, and numerals other than ASCII are #583's ordinal forms only. Calendar rules are the Project's: working days are the Project calendar's `is_working`, including its exceptions.
+
+### 5.4 Layering and ownership (D7)
+
+| Layer | Responsibility |
+| --- | --- |
+| Core (`core/figures.py`) | The fact and kind registry, the two derivations, calendar and working-day counting, the missing-fact diagnostics. Pure: takes the as-of, the placements, the resolved periods and the calendars as arguments; reads no resource and imports no presentation module. |
+| View contract (`presentation/contracts/resources.py`) | Parse `figures` into typed values, duplicate and dead-declaration checks, header-placeholder validation against the declared ids. |
+| Use case (`usecases/render_review.py`) | The one place that gathers the facts (as-of from the Actual Set, placements, `resolve_periods`, Project calendars) and calls Core; refuses the render on diagnostics. |
+| Content (`review/v05_content.py`) | Substitutes the resolved integers: the Summary Profile source and the header composition. It does no date arithmetic. |
+| Layout, Scene, adapters | Unchanged: they place and project finished strings. |
+
+### 5.5 Intended incompatibilities
+
+None. `figures`, the Summary Profile source `{figure: id}` and the `{figure:<id>}` placeholder are optional additions in place; omitting them is today's output; the new codes are raised only by a document that uses the new property.
+
+### 5.6 Spec 56 and the specifications
+
+`view-v0.28` and `summary-profile-v0.2` change in place (section 3.2), each PR runs `python -m tools.schema_equivalence --base-rev origin/main` and records the result, with one L1 expected-delta entry each if the gate asks, and regenerates `schemas/schema-inventory-v0.1.yaml`. Normative text: Specification 05 (a "Derived figures" section: facts, the two derivations with the working-day convention and a worked example, the diagnostics), Specification 06 (View `figures`), Specification 46 (the new source, one paragraph) and Specification 50 section 3.4 (the header placeholder).
+
+## 6. Architecture review
+
+- **No second arithmetic.** All date counting is one Core module reusing `Calendar.is_working`; the working-day convention is stated against `advance` and proven by a test that round-trips `advance`. Presentation gathers facts and substitutes integers.
+- **Closed by construction.** The schema's `oneOf` closes kinds and facts; the registry closes the Core side; a hand-written Summary Profile or template cannot name a fact or operator outside it, and every consumer reference is validated against declared ids.
+- **Loud, not blank.** Every missing fact refuses the render with a coded diagnostic that lists the alternatives; the Spec 46 `unknown` rule is untouched for existing sources and unreachable for figures.
+- **One declaration, several consumers.** Declaring in the View avoids a cross-resource reference from header text to the Summary Profile and avoids declaring a figure twice; the Summary Profile stays the owner of metric id, label, format and order (Spec 46).
+- **Spec 56.** Optional in-place additions to two live schemas; the PRs run the S0 gate and regenerate the inventory.
+- **Byte identity.** A View without `figures` and a Summary Profile without the source take no new path (the use case resolves nothing for an empty tuple), so every committed example regenerates byte-identical: evidence of no change only.
+- **Cross-agent files.** No edit to `src/chrona/scheduling/`, the MCP tools (#813), diagnostic detail (#829), presets, axis or the period-band YAML lane (#880), or `src/chrona/resources/presets/`. Shared files: `schemas/view-v0.28.schema.yaml`, `schemas/summary-profile-v0.2.schema.yaml`, `schemas/schema-inventory-v0.1.yaml`, the S0 baseline, Specifications 05, 06, 46 and 50 (a section or paragraph each).
+- **Rejected options.** (a) A `source` kind only in the Summary Profile: header text could not reach it and a figure would be declared twice. (b) A free formula or `{expr}` placeholder: an expression language outside the core. (c) A warning with `unknown` for a missing fact: the issue asks for a diagnostic and a blank-looking figure is the failure it names; reversible by changing the severity in one place if a Context-optional figure is ever wanted. (d) A `daysUntil`-only set: `daysIn` is a different convention that a single kind cannot express. (e) Counting a period's end as inclusive: contradicts the Project convention (Spec 05 Periods). (f) Clamping a past target to 0: hides that the date has passed. (g) Lazy resolution of only the figures a consumer names: typos in unused figures would go undetected and the resolution site would depend on the consumers.
+- **Owner-level judgement calls** (options, choice, why and reversal recorded on #586): D1 View declaration versus Summary Profile source, D3 the two-kind set and the working-day convention, D4 eager resolution with an error versus a lazy warning, D6 the header placeholder family.
