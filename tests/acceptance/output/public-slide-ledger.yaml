@@ -11,6 +11,7 @@ slides:
   controller-z-ja/executive: {axisLabels: 7}
   controller-z/annotation-kinds: {axisLabels: 7, dvtHosted: true}
   controller-z/annotations: {axisLabels: 7, dvtHosted: true}
+  controller-z/as-of-cone: {axisLabels: 7, dvtHosted: true, chips: ['chip:as-of-label']}
   controller-z/axis-cell-corners: {axisLabels: 7, dvtHosted: true}
   controller-z/axis-ticks: {axisLabels: 7, dvtHosted: true}
   controller-z/axis-tiers: {axisLabels: 7, dvtHosted: true}
@@ -24,6 +25,7 @@ slides:
   controller-z/material-icons: {axisLabels: 7, dvtHosted: true}
   controller-z/plan-only: {axisLabels: 6}
   controller-z/progress-track: {axisLabels: 7, dvtHosted: true}
+  controller-z/region-frames: {axisLabels: 7, dvtHosted: true}
   controller-z/surface-glow: {axisLabels: 7, dvtHosted: true}
   controller-z/surface-texture: {axisLabels: 7, dvtHosted: true}
   controller-z/value-affixes: {axisLabels: 7, dvtHosted: true}

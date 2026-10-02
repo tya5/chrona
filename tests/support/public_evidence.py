@@ -109,7 +109,7 @@ def _row(observed: Observed) -> dict[str, Any]:
 
 def format_row(key: str, observed: Observed) -> str:
     """The ledger line for one slide, as it is written in the file."""
-    return f"{key}: " + yaml.safe_dump(_row(observed), default_flow_style=True, width=10_000).strip()
+    return f"{key}: " + yaml.safe_dump(_row(observed), default_flow_style=True, width=10_000, sort_keys=False).strip()
 
 
 def compare_ledger(observed: Mapping[str, Observed], ledger: Mapping[str, Mapping[str, Any]]) -> list[str]:

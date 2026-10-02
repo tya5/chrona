@@ -2,7 +2,7 @@
 
 Living record for [#977](https://github.com/tya5/chrona/issues/977) (hard-coded slide and label counts in tests) and [#970](https://github.com/tya5/chrona/issues/970) (S0 expected-delta entries outlive their PR). Both are one class: a number or an entry that every parallel PR must hand-edit, so each rebase conflicts. One record, edited in place; Git keeps history. Order: #977, then #970.
 
-**Public base:** `5bd31ee8` on `main`. **Status:** design and implementation plan (sections 3 to 5) published with this record; no code yet.
+**Public base:** `5bd31ee8` on `main`. **Status:** design and implementation plan (sections 3 to 5) published (PR #986, `9162d39d`); S2 (#977) implemented, S3 (#970) in progress
 
 ## 1. Published baseline
 
@@ -80,4 +80,8 @@ Each slice is one PR with `Refs #n` only. S2 lands first; #889 rebases onto it i
 
 ## 6. Progress and evidence
 
-None yet.
+### S2 (#977, implemented)
+
+No test states a slide, scene, label or path total any more. [`tests/support/public_evidence.py`](../../../tests/support/public_evidence.py) reads the declared slides from the manifests and holds the pure comparison; [`public-slide-ledger.yaml`](../../../tests/acceptance/output/public-slide-ledger.yaml) has one sorted line per slide (`axisLabels`, `dvtHosted`, `chips`); [`test_public_slide_ledger.py`](../../../tests/acceptance/output/test_public_slide_ledger.py) checks the real corpus and the rule on hand-built input. The geometry test asserts that the generated files equal the declared outputs; the derived-path total is counted from the raw manifests plus `REPORTS`; the coverage and local-authoring tests compare with the declared slides and contexts; the two name sets in `test_label_chips.py` became the ledger's `chips`. The ledger was first generated at `5bd31ee8` and its chip rows were checked against the old hand-written sets (identical). Two slides landed while the PR was in flight (`controller-z/as-of-cone` from #979 and `controller-z/region-frames` from #984, which also edited the old totals 42 to 44): rebasing conflicted on exactly the old literals, and the ledger test named both missing rows with the line to paste, so each cost one added line.
+
+Mutation checks (all killed): a changed, removed, extra, unsorted, chip-less and host-less ledger row; the rule ignoring a missing row, a stale row, `dvtHosted`, `chips`, `axisLabels`, an unknown field or a missing `axisLabels`; a chip-order-sensitive comparison; the observation reading the wrong Scene or SVG purpose, never finding a host, or the wrong chip prefix; the relation always passing; a Scene with one axis label deleted; an undeclared generated SVG; `discover` skipping a slide; `derived_paths` dropping a report or the Scenes.
