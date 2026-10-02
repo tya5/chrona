@@ -57,6 +57,8 @@ The registry owns canonical primitive semantics. Its entries declare `semantic_i
 | `groupHeader` | Rect/Text | `group-header-band`, `group-header` | `groupHeader` |
 | `calendarClosed` | Rect | `calendar-closed` | `calendarClosed` |
 | `periodBand` | Rect | `period-band` | `period-band` |
+| `periodLabel` | Text | `period-label` | `period-label` (state text: the Theme declares `contrastTreatment`; the role is opt-in) |
+| `periodLabelChip` | Rect | `label-chip` | `period-label-chip` |
 | `axisBand` | Text | `axis-band` | `axis` |
 | `legendEntry` | dispatched by the entry's own role `primitive_kind` (Rect, Symbol, or Path) | `legend-swatch` | entry's own role, sized against `legend-swatch.swatchInlineSize` (#427) |
 | `legendLabel` | Text | `legend-label` | `legend` |

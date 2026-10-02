@@ -278,6 +278,15 @@ allOf:
               additionalProperties: false
               properties:
                 id: {description: "Identifier of a period declared in the Project's `periods`.", type: string, minLength: 1}
+                label:
+                  description: "Optional label of the band, its text the period title; absent draws the band without a label."
+                  examples: [{placement: top, overflow: suppress}]
+                  type: object
+                  required: [placement]
+                  additionalProperties: false
+                  properties:
+                    placement: {description: "Where the label sits: at the plot's top edge, at its bottom edge, or centred in the band.", enum: [top, bottom, inside]}
+                    overflow: {description: "What happens when no collision-free position exists: suppress the label with a recorded warning, or place it anyway with a recorded overflow. Defaults to visible-overflow.", enum: [suppress, visible-overflow]}
           shading:
             type: object
             additionalProperties: false

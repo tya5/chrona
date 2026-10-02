@@ -32,7 +32,7 @@ from chrona.presentation.layout.surface_backgrounds import (
     compose_calendar_backgrounds, compose_row_group_backgrounds, replace_group_header_band,
 )
 from chrona.presentation.layout.surface_axis import compose_axis
-from chrona.presentation.layout.surface_periods import compose_period_bands
+from chrona.presentation.layout.surface_periods import compose_period_bands, period_label_requests
 from chrona.presentation.layout.presentation import (MarkGeometry, required_row_block_extents)
 from chrona.presentation.layout.text import metric_for_role, place_text
 from chrona.presentation.layout.labels import (LabelRect, LabelRequest)
@@ -170,6 +170,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         tuple(groups), scale, tuple(marks), timeline_bounds, as_of_label,
     )
     member_label_requests = build_member_label_requests(member_label_context)
+    period_requests = period_label_requests(period_batch.extents, timeline_bounds)
+    if period_requests:  # placed first of the pre-route labels, so routes and later labels avoid them
+        member_label_requests = replace(member_label_requests,
+                                        pre_route=(*period_requests, *member_label_requests.pre_route))
     candidate_icons: list[IconPlacement] = []
     handled_candidate_visuals: set[str] = set()
     lane_label_suppressions: list[LaneLabelSuppression] = []

@@ -580,8 +580,9 @@ def _selected_periods(project: dict[str, Any], placements: dict[str, dict[str, A
             raise RenderFailed("E_VIEW_PERIOD_UNKNOWN",
                                f"the View selects period {selected.period_id}, which the Project does not declare (declared: {known})",
                                "presentation", f"/body/periods/{index}/id")
-    return tuple(ReviewPeriod(item.period_id, item.title, item.start, item.end)
-                 for item in (declared[selected.period_id] for selected in view.periods))
+    return tuple(ReviewPeriod(item.period_id, item.title, item.start, item.end,
+                              selected.label_placement, selected.label_overflow)
+                 for selected, item in ((selected, declared[selected.period_id]) for selected in view.periods))
 
 
 def _font_metrics(theme: dict[str, Any], font_metrics: dict[str, Any], asset_root: Path,

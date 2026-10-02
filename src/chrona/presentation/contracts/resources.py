@@ -294,6 +294,8 @@ class ViewPeriod:
     """One Project period the View selects to draw; geometry and paint belong to Layout and Theme (#582)."""
 
     period_id: str
+    label_placement: str | None = None
+    label_overflow: str = "visible-overflow"
 
 
 @dataclass(frozen=True)
@@ -894,7 +896,10 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
 
 def _view_periods(raw: Any) -> tuple[ViewPeriod, ...]:
     """Close the schema-accepted period selection; one entry per Project period (#582)."""
-    periods = tuple(ViewPeriod(str(item["id"])) for item in raw)
+    periods = tuple(ViewPeriod(str(item["id"]),
+                               str(item["label"]["placement"]) if "label" in item else None,
+                               str(item["label"].get("overflow", "visible-overflow")) if "label" in item else "visible-overflow")
+                    for item in raw)
     if len({item.period_id for item in periods}) != len(periods):
         raise ContractError("E_VIEW_PERIOD_DUPLICATE")
     return periods

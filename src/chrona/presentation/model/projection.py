@@ -149,6 +149,8 @@ class ReviewPeriod:
     title: str
     start: date
     end: date
+    label_placement: str | None = None
+    label_overflow: str = "visible-overflow"
 
 
 @dataclass(frozen=True)

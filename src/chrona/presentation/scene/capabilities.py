@@ -247,7 +247,10 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
     register("axis-band-decoration axis-band-decoration2", "Layout axis band and Scene Rect",
              _PATTERNED_RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder", "cellGap")),
              scene_kinds=frozenset(("Rect",)))
-    register("as-of-label-chip member-label-chip finish-delta-chip", "Layout label chip and Scene Rect",
+    register("period-label", "Scene state Text and contrast policy",
+             _TEXT_MEASUREMENT | _TEXT_PAINT | frozenset(("contrastTreatment",)),
+             scene_kinds=frozenset(("Text",)))
+    register("as-of-label-chip member-label-chip finish-delta-chip period-label-chip", "Layout label chip and Scene Rect",
              _PATTERNED_RECT_PAINT | frozenset(("backgroundTreatment", "chipPadding", "markCornerRadius")),
              scene_kinds=frozenset(("Rect",)))
     register("legend-swatch", "Layout legend swatch size", frozenset(("swatchInlineSize",)))

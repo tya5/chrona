@@ -233,6 +233,19 @@ body:
       backgroundTreatment: fill
       backgroundPaintOrder: 11
       opacity: opacity.period-band
+    period-label:
+      contrastTreatment: required
+      fontFamily: editorial
+      fontWeight: weight.bold
+      fontSize: size.note
+      lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+    period-label-chip:
+      backgroundTreatment: fill
+      chipPadding: chip-padding
+      markCornerRadius: chip-radius
     axis-band-decoration:
       backgroundTreatment: fill
       backgroundPaintOrder: 10
@@ -478,6 +491,8 @@ body:
     calendar-closed.fill: surfaceRaised
     calendar-closed.stroke: neutral
     period-band.fill: surface
+    period-label.fill: text
+    period-label-chip.fill: surfaceRaised
     calendar-exception.fill: warning
     range.fill: warning
     as-of.stroke: warning

@@ -7,7 +7,7 @@ from chrona.presentation.model.semantic_registry import (
 
 def test_contrast_registry_classifies_only_the_finite_state_text_and_decoration_roles():
     assert [item.scene_role for item in contrast_bindings(ContrastClass.STATE_TEXT)] == [
-        "variance-ahead", "variance-on-track", "variance-behind", "missing-actual-cell",
+        "period-label", "variance-ahead", "variance-on-track", "variance-behind", "missing-actual-cell",
         "annotation-note-text",
     ]
     assert [item.scene_role for item in contrast_bindings(ContrastClass.DECORATION)] == [

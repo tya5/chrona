@@ -68,6 +68,28 @@ def _parts(*, treatment: str = "fill", order: int = 11, color: str = "accent", s
     return parts
 
 
+def _labelled(parts: dict, placement: str = "top", *, overflow: str | None = None, chip: bool = False,
+              treatment: str = "required", select: str = "window") -> dict:
+    """Select `select` with a label and give the Theme the label role (and, optionally, its chip)."""
+    body = parts["theme"]["body"]
+    body["roles"]["period-label"] = {**{key: value for key, value in body["roles"]["annotation-note-text"].items()
+                                        if key != "contrastTreatment"}, "contrastTreatment": treatment}
+    body["colorBindings"]["period-label.fill"] = "text"
+    if chip:
+        body["values"]["period-chip-padding"] = {"type": "number", "value": 0.5}
+        body["roles"]["period-label-chip"] = {"backgroundTreatment": "fill", "chipPadding": "period-chip-padding"}
+        body["colorBindings"]["period-label-chip.fill"] = "surfaceRaised"
+    entry: dict = {"id": select, "label": {"placement": placement}}
+    if overflow is not None:
+        entry["label"]["overflow"] = overflow
+    parts["view"]["body"]["periods"] = [entry]
+    return parts
+
+
+def _labels(rendered) -> list:
+    return [item for item in rendered.surface.primitives if item.purpose == "period-label"]
+
+
 def _directory(tmp_path: Path, name: str) -> Path:
     path = tmp_path / name
     path.mkdir()
@@ -370,3 +392,137 @@ def test_two_translucent_periods_may_not_cross():
 def test_opaque_backgrounds_may_overlap_in_any_order():
     orders = _orders(groupBand=10, periodBand=9)
     validate_background_shapes([_shape("groupBand", 10), _shape("periodBand", 9)], _tokens(orders, opacity=1.0))
+
+
+# --- the label ------------------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("placement", ["top", "bottom", "inside"])
+def test_a_label_is_a_scene_text_of_the_period_title_centred_on_its_band(tmp_path, placement):
+    rendered = _render(tmp_path, parts=_labelled(_parts(), placement))
+    (band,), (label,) = _bands(rendered), _labels(rendered)
+    plot = next(slot for slot in rendered.surface.slots if slot.source == "timeline")
+    assert (label.scene_id, label.source_ref, label.visual_role, label.kind, label.text) == (
+        "period-label:window", "window", "period-label", "Text", "window")
+    centre = label.bounds[0] + label.bounds[2] / 2
+    assert centre == pytest.approx(band.bounds[0] + band.bounds[2] / 2, abs=1.0)
+    top, bottom = label.bounds[1], label.bounds[1] + label.bounds[3]
+    assert plot.bounds[1] - 0.01 <= top and bottom <= plot.bounds[1] + plot.bounds[3] + 0.01
+    if placement == "top":
+        assert top - plot.bounds[1] < 4 * label.bounds[3]
+    if placement == "bottom":
+        assert plot.bounds[1] + plot.bounds[3] - bottom < 4 * label.bounds[3]
+    assert label.contrast_treatment == "required"
+
+
+def test_a_band_without_a_label_selection_has_no_label_primitive(tmp_path):
+    assert _labels(_render(tmp_path)) == []
+
+
+def test_the_title_falls_back_to_the_period_identifier(tmp_path):
+    source = _source(window={"start": "2026-02-01", "end": "2026-03-01"})
+    (label,) = _labels(_render(tmp_path, source, _labelled(_parts())))
+    assert label.text == "window"
+    titled = _source(window={"title": "Launch window", "start": "2026-02-01", "end": "2026-03-01"})
+    (named,) = _labels(_render(tmp_path, titled, _labelled(_parts()), name="titled"))
+    assert named.text == "Launch window"
+
+
+def test_a_label_slides_off_a_mark_it_would_cover_and_never_overprints_one(tmp_path):
+    rendered = _render(tmp_path, parts=_labelled(_parts(), "inside"))
+    (label,) = _labels(rendered)
+    marks = [item for item in rendered.surface.primitives if item.purpose in {"planned", "actual"}]
+    for mark in marks:
+        overlap_x = min(label.bounds[0] + label.bounds[2], mark.bounds[0] + mark.bounds[2]) - max(label.bounds[0], mark.bounds[0])
+        overlap_y = min(label.bounds[1] + label.bounds[3], mark.bounds[1] + mark.bounds[3]) - max(label.bounds[1], mark.bounds[1])
+        assert not (overlap_x > 0 and overlap_y > 0), mark.scene_id
+
+
+def _crowded_source() -> dict:
+    """A band narrower than its label, over a plot so full of marks that no collision-free position exists."""
+    objects = {f"t{i}": sr.span(f"t{i}", date(2026, 1, 5), 85, owner=f"o{i % 3}") for i in range(40)}
+    source = sr.project(objects)
+    source["periods"] = {"window": {"title": "A rather long period title", "start": "2026-02-01", "end": "2026-02-03"}}
+    return source
+
+
+def test_the_overflow_policy_decides_what_a_label_with_no_free_position_does(tmp_path):
+    source = _crowded_source()
+    suppressed = _render(tmp_path, source, _labelled(_parts(), "inside", overflow="suppress"), name="suppress")
+    assert _labels(suppressed) == []
+    assert any(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:period-label:window") for item in suppressed.scene.diagnostics)
+    visible = _render(tmp_path, source, _labelled(_parts(), "inside", overflow="visible-overflow"), name="visible")
+    assert len(_labels(visible)) == 1
+    default = _render(tmp_path, source, _labelled(_parts(), "inside"), name="default")
+    assert [item.bounds for item in _labels(default)] == [item.bounds for item in _labels(visible)]
+
+
+def test_a_label_is_an_obstacle_for_the_labels_placed_after_it(tmp_path):
+    with_label = _render(tmp_path, parts=_labelled(_parts(), "top"), name="with")
+    without = _render(tmp_path, name="without")
+    (label,) = _labels(with_label)
+    def overlaps(item) -> bool:
+        return (min(label.bounds[0] + label.bounds[2], item.bounds[0] + item.bounds[2]) > max(label.bounds[0], item.bounds[0])
+                and min(label.bounds[1] + label.bounds[3], item.bounds[1] + item.bounds[3]) > max(label.bounds[1], item.bounds[1]))
+    later = [item for item in with_label.surface.primitives
+             if item.kind == "Text" and item.purpose in {"member-label", "finish-delta"}]
+    assert later and not [item.scene_id for item in later if overlaps(item)]
+    assert [item.purpose for item in without.surface.primitives if item.purpose == "period-label"] == []
+
+
+def test_a_chip_gives_the_label_its_own_ground_and_the_text_is_gated_against_it(tmp_path):
+    rendered = _render(tmp_path, parts=_labelled(_parts(), "top", chip=True))
+    (label,) = _labels(rendered)
+    chips = [item for item in rendered.surface.primitives if item.visual_role == "period-label-chip"]
+    assert [item.scene_id for item in chips] == ["chip:period-label:window"] and chips[0].source_ref == "window"
+    chip = chips[0]
+    assert chip.bounds[0] <= label.bounds[0] and chip.bounds[0] + chip.bounds[2] >= label.bounds[0] + label.bounds[2]
+    document = scene_document(rendered.scene)
+    (finding,) = [item for item in evaluate_scene_contrast(document) if item.visual_role == "period-label"]
+    assert finding.ground_id == "chip:period-label:window" and finding.severity == "info"
+
+
+def test_the_label_text_is_gated_at_its_declared_floor_and_against_its_ground(tmp_path):
+    required = scene_document(_render(tmp_path, parts=_labelled(_parts(), "top"), name="required").scene)
+    (finding,) = [item for item in evaluate_scene_contrast(required) if item.visual_role == "period-label"]
+    assert finding.floor == 4.5 and finding.disposition == "required"
+    relaxed = scene_document(_render(tmp_path, parts=_labelled(_parts(), "top", treatment="deemphasized"), name="relaxed").scene)
+    (soft,) = [item for item in evaluate_scene_contrast(relaxed) if item.visual_role == "period-label"]
+    assert soft.floor == 3.0 and soft.disposition == "deemphasized"
+    # Text over a chip of its own colour cannot be read: the Scene gate fails on the chip ground.
+    blind = _labelled(_parts(), "top", chip=True)
+    blind["theme"]["body"]["colorBindings"]["period-label-chip.fill"] = "text"
+    document = scene_document(_render(tmp_path, parts=blind, name="blind").scene)
+    (weak,) = [item for item in evaluate_scene_contrast(document) if item.visual_role == "period-label"]
+    assert weak.severity == "error" and weak.contrast_ratio < 4.5 and weak.ground_id == "chip:period-label:window"
+
+
+def test_a_label_colour_below_its_floor_against_the_scheme_surface_is_refused_at_closure(tmp_path):
+    faint = _labelled(_parts(), "top")
+    faint["theme"]["body"]["colorBindings"]["period-label.fill"] = "surfaceRaised"
+    with pytest.raises(ClosureError) as raised:
+        _render(tmp_path, parts=faint)
+    assert raised.value.diagnostic_id == "E_SCHEME_STATE_TEXT_CONTRAST"
+
+
+def test_a_theme_that_declares_no_period_label_role_still_renders_every_other_surface(tmp_path):
+    # The role is opt-in: classifying the label as state text must not require it of a Theme that selects none.
+    assert "period-label" not in sr.bundle()["theme"]["body"]["roles"]
+    assert _render(tmp_path, _source(), _parts(select=None)).surface.primitives
+
+
+def test_a_missing_period_label_role_is_refused(tmp_path):
+    parts = _labelled(_parts())
+    del parts["theme"]["body"]["roles"]["period-label"]
+    del parts["theme"]["body"]["colorBindings"]["period-label.fill"]
+    with pytest.raises(RenderFailed):
+        _render(tmp_path, parts=parts)
+
+
+@pytest.mark.parametrize("label", [{}, {"placement": "left"}, {"placement": "top", "overflow": "clip"}, {"placement": "top", "x": 1}])
+def test_a_malformed_label_is_a_schema_error(tmp_path, label):
+    parts = _parts(select=None)
+    parts["view"]["body"]["periods"] = [{"id": "window", "label": label}]
+    with pytest.raises(ClosureError) as raised:
+        _render(tmp_path, parts=parts)
+    assert raised.value.diagnostic_id == "E_VIEW_SCHEMA" and raised.value.source_ref.startswith("/body/periods/0/label")
