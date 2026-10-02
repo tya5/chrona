@@ -55,10 +55,10 @@ def skill_resource() -> Traversable:
     try:
         source = files("skills").joinpath("chrona")
     except ModuleNotFoundError as error:
-        raise ValueError("E_SKILL_RESOURCE") from error
+        raise ValueError("E_SKILL_RESOURCE: the chrona skill is not packaged (no chrona/resources/skills/chrona in the wheel, no skills package in the source tree)") from error
     if source.is_dir() and source.joinpath("SKILL.md").is_file():
         return source
-    raise ValueError("E_SKILL_RESOURCE")
+    raise ValueError("E_SKILL_RESOURCE: skills/chrona has no SKILL.md")
 
 
 @cache
@@ -66,7 +66,7 @@ def example_registry() -> Mapping[str, Mapping[str, str]]:
     """Return the initialisable examples by id, validated against the registry schema."""
     value = safe_load(files(__package__).joinpath("example-registry.yaml").read_bytes())
     if not isinstance(value, Mapping) or tuple(schema_validator("example-registry-v0.1.schema.yaml").iter_errors(value)):
-        raise ValueError("E_EXAMPLE_REGISTRY")
+        raise ValueError("E_EXAMPLE_REGISTRY: example-registry.yaml is not a mapping that satisfies example-registry-v0.1.schema.yaml")
     return {entry["id"]: entry for entry in value["examples"]}
 
 
@@ -87,7 +87,7 @@ def template_resource(name: str) -> Traversable:
     source = files(parts[0]).joinpath(*parts[1:])
     if source.is_dir() and source.joinpath("manifest.yaml").is_file():
         return source
-    raise ValueError("E_INIT_EXAMPLE")
+    raise ValueError(f"E_INIT_EXAMPLE: example {name!r} is registered at {entry['path']} but that directory has no manifest.yaml in the wheel or the source tree")
 
 
 def minimal_template_resource() -> Traversable:
@@ -95,7 +95,8 @@ def minimal_template_resource() -> Traversable:
     resource = files(__package__).joinpath("templates", "minimal")
     required = ("project.yaml", "actual.yaml", "README.md")
     if not resource.is_dir() or any(not resource.joinpath(name).is_file() for name in required):
-        raise ValueError("E_INIT_TEMPLATE")
+        missing = [name for name in required if not resource.joinpath(name).is_file()] if resource.is_dir() else ["templates/minimal"]
+        raise ValueError(f"E_INIT_TEMPLATE: the packaged starter template is missing {', '.join(missing)}")
     return resource
 
 
@@ -103,7 +104,7 @@ def default_preset_resource() -> Traversable:
     """Return the wheel-owned draft default preset without repository lookup."""
     resource = files(__package__).joinpath("presets", "default.yaml")
     if not resource.is_file():
-        raise ValueError("E_DRAFT_DEFAULT_PRESET")
+        raise ValueError("E_DRAFT_DEFAULT_PRESET: the packaged default preset presets/default.yaml is missing")
     return resource
 
 
@@ -111,7 +112,7 @@ def builtin_preset_library_resource() -> Traversable:
     """Return the finite wheel-owned builtin preset catalogue."""
     resource = files(__package__).joinpath("presets", "library.yaml")
     if not resource.is_file():
-        raise ValueError("E_BUILTIN_PRESET_LIBRARY")
+        raise ValueError("E_BUILTIN_PRESET_LIBRARY: the packaged preset catalogue presets/library.yaml is missing")
     return resource
 
 
@@ -119,7 +120,7 @@ def axis_name_tables_resource() -> Traversable:
     """Return the finite, wheel-owned axis vocabulary catalog."""
     resource = files(__package__).joinpath("axis-name-tables-v0.1.yaml")
     if not resource.is_file():
-        raise ValueError("E_AXIS_NAME_TABLE_RESOURCE")
+        raise ValueError("E_AXIS_NAME_TABLE_RESOURCE: the packaged axis-name-tables-v0.1.yaml is missing")
     return resource
 
 
@@ -128,7 +129,7 @@ def builtin_preset_source_root(address: str) -> Traversable:
     path = PurePosixPath(address)
     if (not address or path.is_absolute() or address != path.as_posix()
             or any(part in {"", ".", ".."} for part in path.parts)):
-        raise ValueError("E_BUILTIN_PRESET_LIBRARY")
+        raise ValueError(f"E_BUILTIN_PRESET_LIBRARY: source root {address!r} is not a safe relative address")
     packaged = files(__package__).joinpath(*path.parts)
     if path.parts == ("icons",) and packaged.is_dir():
         return packaged
@@ -137,14 +138,14 @@ def builtin_preset_source_root(address: str) -> Traversable:
         or path.parts[:2] == ("presets", "bundles")
     ):
         return packaged
-    raise ValueError("E_BUILTIN_PRESET_RESOURCE")
+    raise ValueError(f"E_BUILTIN_PRESET_RESOURCE: source root {address!r} is not packaged")
 
 
 def default_preset_root() -> Traversable:
     """Return the packaged presets root that every path of the bundled default is relative to."""
     root = files(__package__).joinpath("presets")
     if not root.joinpath("default.yaml").is_file():
-        raise ValueError("E_DRAFT_DEFAULT_PRESET")
+        raise ValueError("E_DRAFT_DEFAULT_PRESET: the packaged presets root has no default.yaml")
     return root
 
 

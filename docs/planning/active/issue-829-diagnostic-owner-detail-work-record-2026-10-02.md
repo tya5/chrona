@@ -107,3 +107,8 @@ only their text gains the value.
   before, an f-string raise was invisible to the inventory and a literal with text after the colon was counted bare.
   The baseline at the S1 tree is 653 sites, 230 codes (656 and 232 on the work-record base; the difference is the
   string-detail rule and detail #880 added).
+- S2 init, skill, preset and packaged-resource paths: implemented (`local_authoring`, `skill_library`, `preset_library`,
+  `resources/__init__`; 32 sites, 653 to 621). Scope change from the plan: `store_config`, `storage/*` and the
+  automation readers move to S3, because the automation code reads `str(error)` as the code and must split code from
+  detail first. One golden row changed on purpose (`render-review-store-config-missing`: the message now says the
+  file is not a file). Tests: `test_owner_detail_resources.py` (mutation-checked: restoring two bare raises kills 3).

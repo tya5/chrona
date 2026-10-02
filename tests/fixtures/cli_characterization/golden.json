@@ -1171,7 +1171,7 @@
   "exit": 2,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_STORE_CONFIG_REQUIRED\", \"severity\": \"error\", \"component\": \"store-config\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"cannot use Store config missing-store.yaml: E_STORE_CONFIG_REQUIRED\"}]}\n"
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_STORE_CONFIG_REQUIRED\", \"severity\": \"error\", \"component\": \"store-config\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"cannot use Store config missing-store.yaml: E_STORE_CONFIG_REQUIRED: missing-store.yaml is not a file; pass an existing Store config\"}]}\n"
  },
  "render-schema-error-project": {
   "argv": [

@@ -27,23 +27,23 @@ def copy_skill(destination: Path) -> Path:
     refusal leaves nothing behind. Bytes are copied unchanged.
     """
     if destination.exists() and (not destination.is_dir() or any(destination.iterdir())):
-        raise ValueError("E_SKILL_OUTPUT_EXISTS")
+        raise ValueError(f"E_SKILL_OUTPUT_EXISTS: {destination} already exists and is not an empty directory; copy to a new directory")
     root = skill_resource()
     payloads: list[tuple[str, bytes]] = []
     for address, member in _members(root):
         try:
             check_store_address(address)
         except StoreAddressError as error:
-            raise ValueError("E_SKILL_RESOURCE") from error
+            raise ValueError(f"E_SKILL_RESOURCE: packaged skill member {address!r} has an unsafe address") from error
         payloads.append((address, member.read_bytes()))
     if not any(address == "SKILL.md" for address, _ in payloads):
-        raise ValueError("E_SKILL_RESOURCE")
+        raise ValueError("E_SKILL_RESOURCE: the packaged skill has no SKILL.md")
     destination.mkdir(parents=True, exist_ok=True)
     for address, raw in payloads:
         try:
             target = resolve_store_address(destination, address)
         except StoreAddressError as error:
-            raise ValueError("E_SKILL_RESOURCE") from error
+            raise ValueError(f"E_SKILL_RESOURCE: skill member {address!r} resolves outside {destination}") from error
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(raw)
     return destination
