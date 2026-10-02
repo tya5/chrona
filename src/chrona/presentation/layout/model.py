@@ -66,6 +66,18 @@ class ResolvedLayoutProfile:
 
 
 @dataclass(frozen=True)
+class RegionFrame:
+    """A node's region-frame declaration with what the engine knows when it has arranged the subtree (#889).
+
+    ``inset`` is the declared Layout distance (zero when absent). ``populated`` is true for a slot and for a
+    container with at least one slot of positive area beneath it: a panel with nothing in it is not drawn.
+    """
+
+    inset: Decimal
+    populated: bool
+
+
+@dataclass(frozen=True)
 class LayoutDecision:
     node_id: str
     kind: str
@@ -78,6 +90,7 @@ class LayoutDecision:
     direction: str | None = None
     gap: Decimal | None = None
     item_min_inline_size: Decimal | None = None
+    frame: RegionFrame | None = None
 
 
 @dataclass(frozen=True)
@@ -112,21 +125,24 @@ class LayoutManifest:
                 "inlineSize": number(value.inline_size),
             }
 
+        def node(item: LayoutDecision) -> dict[str, Any]:
+            value = {
+                "alignment": dict(sorted(item.alignment.items())),
+                "bounds": rect(item.bounds),
+                "id": item.node_id,
+                "kind": item.kind,
+                "references": list(item.references),
+                "priority": item.priority,
+                "overflow": item.overflow,
+                "source": item.source,
+            }
+            if item.frame is not None:
+                value["frame"] = {"inset": number(item.frame.inset), "populated": item.frame.populated}
+            return value
+
         payload = {
             "diagnostics": list(self.diagnostics),
-            "nodes": [
-                {
-                    "alignment": dict(sorted(item.alignment.items())),
-                    "bounds": rect(item.bounds),
-                    "id": item.node_id,
-                    "kind": item.kind,
-                    "references": list(item.references),
-                    "priority": item.priority,
-                    "overflow": item.overflow,
-                    "source": item.source,
-                }
-                for item in sorted(self.decisions, key=lambda value: value.node_id)
-            ],
+            "nodes": [node(item) for item in sorted(self.decisions, key=lambda value: value.node_id)],
             "profileHash": self.profile_hash,
             "profileId": self.profile_id,
             "relationRouting": {

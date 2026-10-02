@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from hashlib import sha256
 import json
+import re
 from typing import Any, Mapping
 
 from chrona.presentation.layout.model import LayoutError, ResolvedLayoutProfile
@@ -27,10 +28,51 @@ class LayoutBase:
     content_identity: str
 
 
+_FRAME_KEYS = frozenset({"inset"})
+_ID = re.compile(r"^[A-Za-z][A-Za-z0-9._-]*$")
+
+
+def _check_frame(frame: Any, pointer: str) -> None:
+    """Fail a malformed region frame (#889) at its exact pointer.
+
+    The schema reports an error under a container union at the union's own pointer; a frame is a new
+    declaration with its own contract, so its shape is checked first and named precisely. An override is not
+    under that union, so the schema already names its frame's path exactly.
+    """
+    if not isinstance(frame, Mapping):
+        raise LayoutError("E_LAYOUT_SCHEMA", pointer, detail="expected an object")
+    for key in frame:
+        if key not in _FRAME_KEYS:
+            raise LayoutError("E_LAYOUT_SCHEMA", f"{pointer}/{key}", detail=f"unexpected property '{key}'")
+    if "inset" not in frame:
+        return
+    inset = frame["inset"]
+    number = isinstance(inset, (int, float)) and not isinstance(inset, bool) and 0 <= inset <= 1000000
+    token = (isinstance(inset, Mapping) and set(inset) == {"token"} and isinstance(inset["token"], str)
+             and bool(_ID.match(inset["token"])))
+    if not (number or token):
+        raise LayoutError("E_LAYOUT_SCHEMA", f"{pointer}/inset",
+                          detail="expected a non-negative distance or a {token: id} reference")
+
+
+def _check_frames(profile: Mapping[str, Any]) -> None:
+    def visit(node: Any, path: str) -> None:
+        if not isinstance(node, Mapping):
+            return
+        if "frame" in node:
+            _check_frame(node["frame"], f"{path}/frame")
+        children = node.get("children")
+        for index, child in enumerate(children if isinstance(children, list) else ()):
+            visit(child, f"{path}/children/{index}")
+
+    visit(profile.get("root"), "/root")
+
+
 def _validate_schema(profile: Mapping[str, Any]) -> None:
     schema = LAYOUT_SCHEMAS.get(profile.get("version"))
     if schema is None:
         raise LayoutError("E_LAYOUT_SCHEMA", "/version")
+    _check_frames(profile)
     errors = tuple(schema_validator(schema).iter_errors(profile))
     if errors:
         identity = profile.get("id")
@@ -181,6 +223,9 @@ def _semantic_validate(profile: dict[str, Any], available_sources: set[str], the
                     key = f"{path}/{name}/{side}"; distances[key] = _distance(side_value, theme_values, key, literals, used_tokens)
             else:
                 key = f"{path}/{name}"; distances[key] = _distance(value, theme_values, key, literals, used_tokens)
+        if "inset" in node.get("frame", {}):
+            key = f"{path}/frame/inset"
+            distances[key] = _distance(node["frame"]["inset"], theme_values, key, literals, used_tokens)
         if "anchor" in node and "gap" in node["anchor"]:
             anchor = node["anchor"]
             for axis, value in anchor["gap"].items():

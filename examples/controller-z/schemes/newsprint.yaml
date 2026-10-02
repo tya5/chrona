@@ -1,0 +1,39 @@
+version: chrona/color-scheme/v0.2
+kind: color-scheme
+id: newsprint
+body:
+  colors:
+    surface: "#EDE3CB"
+    surfaceRaised: "#FFFCF3"
+    text: "#1A1510"
+    textMuted: "#4A4137"
+    accent: "#1F78C1"
+    positive: "#1F7A52"
+    negative: "#B3261E"
+    warning: "#8A4B00"
+    neutral: "#BDB29A"
+    insideLabelPlanned: "#FFFFFF"
+    insideLabelActual: "#FFFFFF"
+    insideLabelSnapshot: "#000000"
+    insideLabelScenario: "#000000"
+  suitability:
+    background: light
+    colorVision:
+    - none-claimed
+    print: not-claimed
+  provenance:
+    kind: chrona-authored
+    source: Chrona newsprint example
+    license: project-pending
+  categories:
+    default: "#F1E6CC"
+    bus: "#F1E6CC"
+    payload: "#F1E6CC"
+    ait: "#F1E6CC"
+    ground: "#F1E6CC"
+    launch: "#F1E6CC"
+    ops: "#F1E6CC"
+    factory-team: "#F2D3CC"
+    fw-team: "#F4E2A6"
+    validation-team: "#D3E6F0"
+    capabilities-band: "#E6DBBE"

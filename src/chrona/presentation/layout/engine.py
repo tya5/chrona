@@ -1,12 +1,12 @@
 """Deterministic normal-flow engine for intent-oriented Layout Profile v0.2."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from decimal import ROUND_CEILING, Decimal, getcontext
 from typing import Any, Callable, Mapping
 
 from chrona.presentation.layout.model import (
-    LayoutDecision, LayoutError, LayoutManifest, Measurement, Rect, ResolvedLayoutProfile,
+    LayoutDecision, LayoutError, LayoutManifest, Measurement, Rect, RegionFrame, ResolvedLayoutProfile,
 )
 from chrona.presentation.layout.surface_quality import FitWarning
 
@@ -355,6 +355,19 @@ class _Arranger:
         ))
 
     def arrange(self, node: Mapping[str, Any], path: str, rect: Rect, references: tuple[str, ...] = ()) -> None:
+        position = len(self.decisions)
+        self._arrange_node(node, path, rect, references)
+        declared = node.get("frame")
+        if declared is None:
+            return
+        # A region frame is recorded with the arranged subtree and never feeds back into it (#889).
+        inset = _distance(self.profile, f"{path}/frame/inset") if "inset" in declared else ZERO
+        populated = node["kind"] == "slot" or any(
+            item.kind == "slot" and item.bounds.inline_size > ZERO and item.bounds.block_size > ZERO
+            for item in self.decisions[position + 1:])
+        self.decisions[position] = replace(self.decisions[position], frame=RegionFrame(inset, populated))
+
+    def _arrange_node(self, node: Mapping[str, Any], path: str, rect: Rect, references: tuple[str, ...] = ()) -> None:
         kind, node_id = str(node["kind"]), str(node["id"])
         is_slot = kind == "slot"
         self.decisions.append(LayoutDecision(
