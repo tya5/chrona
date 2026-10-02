@@ -1,6 +1,6 @@
 # Work Record: Owner-local diagnostic detail and automation-result messages (#829)
 
-**Status:** Design and implementation plan, one record (local defect class, one owner per slice, no
+**Status:** Implemented through S4 (remainder in successor issues); design and implementation plan, one record (local defect class, one owner per slice, no
 Core/Scene/Layout contract change). Successor of #782; baseline in the
 [#782 acceptance review](../../reviews/current/issue-782-actionable-diagnostics-acceptance-review-2026-10-02.md)
 and [`usecases/diagnostic_messages.py`](../../../src/chrona/usecases/diagnostic_messages.py).
@@ -131,3 +131,7 @@ only their text gains the value.
   refusals, `E_AUTHORING_TASK_ID`, `E_AUTHORING_ACTUAL_TASK` and `E_THEME_ASSET_REFERENCE` name the column, id or catalog (mutation-checked: 2 kills).
 - S4e lane membership (`presentation/review/lane_membership.py`, 12 sites, 506 to 494): every `E_REVIEW_LANE_*` input check names the item, object, key or rule
   (mutation-checked: 1 kill).
+- S4 (a to e) landed as PR #917. S5 (`usecases/materialize`) and the rest are not done here: the remainder is 494 sites in 151 codes (Layout, Scene
+  and renderers 272 in #918; icon and font tooling, model fonts, review detail and color scheme 179 in #919; materialize, authoring, operational
+  and the Actual-command and snapshot result tuples 43 in #920); D4 (render transport) is #921 and D5 (`sourceRef`) is #922. Acceptance review:
+  [issue-829-diagnostic-owner-detail-acceptance-review-2026-10-02.md](../../reviews/current/issue-829-diagnostic-owner-detail-acceptance-review-2026-10-02.md).
