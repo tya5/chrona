@@ -35,7 +35,9 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
     has_catalog_pattern = any(primitive.pattern is not None and primitive.pattern.primitives
                               for surface in scene.surfaces for primitive in surface.primitives)
     has_v07_paint = any(primitive.paint is not None and (primitive.paint.glow is not None
-                                                    or primitive.paint.wobble is not None)
+                                                    or primitive.paint.wobble is not None
+                                                    or (primitive.paint.gradient is not None
+                                                        and primitive.paint.gradient.stop_opacities is not None))
                    for surface in scene.surfaces for primitive in surface.primitives)
     has_tilt = any(primitive.text_layout is not None and primitive.text_layout.orientation == "tilt"
                    for surface in scene.surfaces for primitive in surface.primitives)
@@ -437,9 +439,10 @@ def _image(value: Any) -> dict[str, Any]:
 
 
 def _gradient(value: LinearGradient) -> dict[str, Any]:
-    return {"start": _point(value.start), "end": _point(value.end),
-            "stops": [{"offset": offset, "color": color} for offset, color in value.stops],
-            "fidelity": value.fidelity}
+    stops = [{"offset": offset, "color": color} for offset, color in value.stops]
+    if value.stop_opacities is not None:
+        stops = [{**stop, "opacity": opacity} for stop, opacity in zip(stops, value.stop_opacities)]
+    return {"start": _point(value.start), "end": _point(value.end), "stops": stops, "fidelity": value.fidelity}
 
 
 def _shadow(value: Any) -> dict[str, Any]:

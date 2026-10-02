@@ -26,7 +26,8 @@ def _owner(delivery: str, consumer: str, fields: str) -> Owner:
 # authority until it is added here with a real consumer.
 OWNERS = {
     "ScenePaint": (_owner("inspection", "scene/serialization.py", "fill stroke stroke_width dash opacity gradient shadow stroke_finish image glow wobble"),),
-    "LinearGradient": (_owner("inspection", "scene/serialization.py", "start end stops fidelity"),),
+    "LinearGradient": (_owner("inspection", "scene/serialization.py", "start end stops fidelity stop_opacities"),
+                      _owner("adapter", "renderers/v05_svg.py", "stop_opacities")),
     "DropShadow": (_owner("inspection", "scene/serialization.py", "color offset_x offset_y blur opacity fidelity"),),
     "Glow": (_owner("inspection", "scene/serialization.py", "color blur opacity fidelity region"),
              _owner("adapter", "renderers/v05_svg.py", "color blur opacity region")),

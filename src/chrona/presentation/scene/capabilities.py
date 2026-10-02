@@ -139,7 +139,7 @@ _LAYOUT_TYPOGRAPHY = _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("writing
 _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | _GROUP_TAB | frozenset((
     "cellGap", "cellCornerRadius", "cellCornerChamfer", "chipPadding", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach",
     "progressInset", "summaryBarHeight", "swatchInlineSize", "annotationContainer", "marker", "symbol", "edge",
-    "stampPlacement",
+    "stampPlacement", "coneSpread", "coneExtent",
 ))
 _LAYOUT_POLICY = frozenset(("backgroundTreatment", "backgroundPaintOrder"))
 _CLOSURE_POLICY = frozenset(("contrastTreatment",))
@@ -281,6 +281,9 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
     register("as-of-label-chip member-label-chip finish-delta-chip period-label-chip", "Layout label chip and Scene Rect",
              _PATTERNED_RECT_PAINT | frozenset(("backgroundTreatment", "chipPadding", "markCornerRadius")),
              scene_kinds=frozenset(("Rect",)))
+    register("as-of-cone", "Layout as-of cone and Scene Symbol",
+             frozenset(("fill", "opacity", "coneSpread", "coneExtent", "gradientFidelity")),
+             scene_kinds=frozenset(("Symbol",)))
     register("canvas-texture", "Layout canvas texture and Scene Rect", frozenset(("fill", "stroke", "pattern")),
              scene_kinds=frozenset(("Rect",)))
     register("legend-swatch", "Layout legend swatch size", frozenset(("swatchInlineSize",)))

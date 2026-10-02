@@ -44,7 +44,7 @@ def test_inventory_is_stable_and_matches_tracked_public_materializers():
     ))
     assert tuple(sorted(path.relative_to(Path.cwd()).as_posix()
                          for path in outputs)) == tracked_outputs
-    assert len(derived_paths()) == 93
+    assert len(derived_paths()) == 95
 
 
 def test_new_unindexed_manifest_scene_is_inspected_and_missing_output_fails(tmp_path):

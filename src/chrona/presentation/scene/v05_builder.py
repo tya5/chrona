@@ -30,7 +30,9 @@ from chrona.presentation.scene.model import (
     SceneLaneMember, SceneLaneObstacle, SceneLaneRectObstacle, SceneLaneSegmentObstacle,
     requires_lane_member_provenance,
 )
-from chrona.presentation.scene.paint import PaintFamily, ScenePaintError, complete_icon_path_paints, resolve_scene_paint
+from chrona.presentation.scene.paint import (
+    AS_OF_CONE_ROLE, PaintFamily, ScenePaintError, complete_icon_path_paints, resolve_cone_paint, resolve_scene_paint,
+)
 from chrona.presentation.scene.stroke_wobble import (
     MAX_OUTLINE_POINTS, WobbleLimitError, complete_path_wobble, complete_rect_wobble,
 )
@@ -145,11 +147,11 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
     """Attach the sole adapter-ready paint payload to every completed primitive."""
     clip_hosts = frozenset(item.clip_source_id for item in surface.primitives if item.clip_source_id)
     try:
-        completed = tuple(_complete_primitive_paint(
+        resolved = tuple(_complete_primitive_paint(
             primitive, tokens, visual_profile, scale_target_role, scale_paints or {}, scale_legend_paints or {},
             group_tints or {}, surface.canvas_bounds or (0.0, 0.0, *viewport), annotation_kind_paints or {},
             clip_hosts)
-                           for primitive in surface.primitives)
+                         for primitive in surface.primitives)
         canvas = resolve_scene_paint(tokens, "background", PaintFamily.CANVAS,
                                      visual_profile=visual_profile,
                                      gradient_bounds=(0.0, 0.0, *viewport))
@@ -161,7 +163,9 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
         if (background := tokens.optional_background(binding.scene_role)) is not None
         and background[0] == "none"
     )
-    omissions = (*canvas.omissions, *(omission for _, facts in completed for omission in facts))
+    # An omitted as-of cone (#890) has no primitive left to carry paint, but its omission is still reported.
+    completed = tuple(item for item in resolved if item[0] is not None)
+    omissions = (*canvas.omissions, *(omission for _, facts in resolved for omission in facts))
     unique_omissions: list[PaintOmission] = []
     seen: set[tuple[str, str, str, str]] = set()
     for omission in omissions:
@@ -222,7 +226,11 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
                               canvas: tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0),
                               annotation_kind_paints: Mapping[str, str] = {},
                               clip_hosts: frozenset[str] = frozenset(),
-                              ) -> tuple[ScenePrimitive, tuple[PaintOmission, ...]]:
+                              ) -> tuple[ScenePrimitive | None, tuple[PaintOmission, ...]]:
+    if primitive.visual_role == AS_OF_CONE_ROLE:
+        # The cone's paint is its gradient; a profile that cannot paint one omits the whole cone (#890).
+        cone = resolve_cone_paint(tokens, primitive.visual_role, visual_profile=visual_profile, bounds=primitive.bounds)
+        return (replace(primitive, paint=cone.paint) if cone.paint is not None else None), cone.omissions
     family = _paint_family(primitive, tokens)
     paint_role = primitive.visual_role
     resolution = resolve_scene_paint(tokens, paint_role, family,
@@ -643,6 +651,14 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                              (float(placed.bounds.inline), float(placed.bounds.block), float(placed.bounds.inline_size), float(placed.bounds.block_size)),
                                              points=placed.points, paint_order=placed.paint_order))
             emit_semantic_text("as-of-label", "asOfLabel")
+        elif placed.semantic_id == "asOfCone":
+            # The marker's light (#890): a closed polygon Symbol; its gradient is completed with its paint.
+            cone_binding = semantic_binding("asOfCone")
+            primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.SYMBOL, placed.source_ref, "actual",
+                                             cone_binding.purpose, cone_binding.scene_role,
+                                             (float(placed.bounds.inline), float(placed.bounds.block),
+                                              float(placed.bounds.inline_size), float(placed.bounds.block_size)),
+                                             symbol=SymbolGeometry(placed.path_commands), paint_order=placed.paint_order))
     legend_binding = semantic_binding("legendEntry")
     for mark in placed_surface.marks:
         if not mark.placement_id.startswith("legend-swatch:"):

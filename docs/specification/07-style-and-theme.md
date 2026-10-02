@@ -246,6 +246,28 @@ hidden. The texture is ground, not content: it carries no contrast class and no
 floor of its own, and marks and state text that lie on it are gated against both
 its substrate and its ink (a decoration tint is judged against the substrate).
 Typst and TikZ reject it like any pattern. See Specification 08 section 4.0.1.
+
+**As-of light cone (#890).** The Theme role `as-of-cone` paints the light the as-of
+marker casts: a polygon from the top of the as-of line, widening downward, fading from
+ink to transparent. It admits exactly `fill` (the ink, a Colour Scheme binding),
+`opacity` (the strength where the cone leaves the plot top, `0..1`, absent means 1),
+`coneSpread` (named number: the half-width the beam gains per unit of depth, a ratio,
+`0 < spread <= 4`), `coneExtent` (named number: the depth of the foot as a fraction of
+the plot height, `0 < extent <= 1`, 1 reaching the last row) and `gradientFidelity`
+(`required` or `decorative-optional`, absent means `required`). A role without `fill`,
+`coneSpread` or `coneExtent` is `E_THEME_ROLE_REQUIRED` at that property's pointer; a
+value out of range is `E_VISUAL_CAPABILITY_LIMIT` at `coneSpread` or `coneExtent`; any
+other property (a stroke, a pattern, `backgroundPaintOrder`, a shadow or glow) is
+`E_THEME_ROLE_PROPERTY_UNSUPPORTED`. `coneSpread` and `coneExtent` are optional role
+properties of `theme-v0.11` and `theme-v0.13`, added in place (Specification 56
+section 3.2). A Theme that does not declare the role has no cone and its output is
+unchanged; the View has no cone switch, and no as-of marker in the window means no
+cone. The cone is ground, not content: it carries no contrast class and no floor of
+its own, and it is painted above the band grounds and below every mark, the as-of
+line and all text whatever a Theme declares (the role admits no paint order). Marks and
+state text that lie on it are gated on the ground it makes (Specification 46 section 8).
+A profile that cannot paint a gradient omits a `decorative-optional` cone whole and
+fails a `required` one (Specification 63 section 9). See Specification 08.
 `planned`, `actual`, `snapshot`, and `scenario` can emit either Rect or Symbol;
 `milestone` emits Symbol; callout/arrow boxes can be balloon Symbols. Catalogue
 patterns on these roles require a separate completed Symbol clip/paint design

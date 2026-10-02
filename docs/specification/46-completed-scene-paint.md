@@ -229,6 +229,23 @@ worse ratio deciding (`ground_kind` `pattern-host-substrate` or
 `pattern-host-ink`; a canvas texture stays `texture-substrate` and
 `texture-ink`).
 
+**The as-of light cone as a translucent ground (#890).** The cone (role `as-of-cone`,
+a Symbol with a gradient whose stops carry opacities) is never an ordinary opaque host.
+`_ground_under` skips it, and an explicit step composites it over the host a mark, state
+text or ground text truly lies on: the cone applies when it is painted after that host
+and before the primitive (an opaque host painted after it hides it). The gradient is
+linear and the polygon convex, so the worst ground over the stops a primitive spans is
+found at the two ends of its block extent inside the gradient range: at each end where its
+box meets the polygon's chord, the ground is the host colour with the cone ink composited
+at the strength the gradient has there (the paint opacity times the interpolated stop
+opacity). A primitive wholly inside the polygon lies on the blended grounds only; one
+that straddles the edge also lies on the unblended host; one the polygon does not reach
+keeps its host. The finding keeps one finding per channel, reports the worse ratio, the
+cone's identifier as `groundId`, the blended colour as `groundColor` and `groundKind`
+`cone-blend`; a canvas texture's or pattern's two colours are each blended. A decoration
+is not judged against the cone. No floor changes, and an unreadable cone is a malformed
+Scene document (`E_SCENE_CONTRAST_DOCUMENT`), never a silent skip.
+
 A dual-channel Rect or Symbol is evaluated at a separate painted sample for
 each channel: fill at bounds centre, stroke at the left-edge block midpoint.
 Either channel may carry a data mark's 3.0:1 visibility floor, and the

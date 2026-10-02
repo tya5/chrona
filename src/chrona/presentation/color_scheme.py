@@ -286,6 +286,19 @@ def _canvas_texture(*, roles: Mapping[str, Any], values: Mapping[str, Any]) -> N
         raise ColorSchemeError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", pointer)
 
 
+def _as_of_cone(*, roles: Mapping[str, Any]) -> None:
+    """Require the as-of cone role to declare its ink, spread and extent (#890).
+
+    Range limits are Layout's (it owns the geometry); a role that names none of them is no cone.
+    """
+    binding = roles.get("as-of-cone")
+    if not isinstance(binding, Mapping):
+        return
+    for property_name in ("fill", "coneSpread", "coneExtent"):
+        if not isinstance(binding.get(property_name), str):
+            raise ColorSchemeError("E_THEME_ROLE_REQUIRED", f"/body/roles/as-of-cone/{property_name}")
+
+
 def resolve_color_scheme(scheme: Mapping[str, Any], *, content_identity: str) -> dict[str, str]:
     body = scheme.get("body", {})
     colors = body.get("colors") if isinstance(body, Mapping) else None
@@ -345,6 +358,7 @@ def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme
     _annotation_note_ground(declared_roles=body.get("roles", {}), resolved_roles=roles,
                             values=values, color_bindings=body["colorBindings"])
     _canvas_texture(roles=roles, values=values)
+    _as_of_cone(roles=roles)
     inside_roles = set(_INSIDE_LABEL_HOSTS)
     if inside_roles & set(roles):
         for label_role, host_role in _INSIDE_LABEL_HOSTS.items():

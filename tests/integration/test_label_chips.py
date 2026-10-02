@@ -89,5 +89,7 @@ def test_themes_without_a_chip_role_draw_no_chip():
                 "02-programme-board", "11-overlay-briefing", "12-glyph-gates", "19-gallery-text-compression",
                 "20-gallery-vertical-group-tags"} else []
             assert sorted(chips) == sorted(["chip:as-of-label", *window]), path
+        elif path.parent.parent.name == "controller-z" and path.stem.split(".")[0] == "as-of-cone":
+            assert chips == ["chip:as-of-label"], path  # the cone slide gives the as-of label a chip (#890)
         else:
             assert chips == [], path

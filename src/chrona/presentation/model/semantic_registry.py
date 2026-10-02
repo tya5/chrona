@@ -87,6 +87,9 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     # Public Scene role remains hyphenated; theme authoring resolves the canonical asOf binding.
     _binding("asOf", "line", "as-of", "as-of", "asOf"),
     _binding("asOfLabel", "label", "as-of-label", "text", "text"),
+    # The as-of light cone (#890): a translucent gradient polygon from the marker, under every mark. Deliberately
+    # not contrast-classified (a faint light is the point); the gates composite it as the ground of what lies on it.
+    _binding("asOfCone", "decoration", "as-of-cone", "as-of-cone", "as-of-cone"),
     # A Project deadline (#822): a tick at the promised date and, when the planned finish is later, a run to it.
     # One role paints both, so a Theme gives them one ink; the run is what tells a missed promise from a kept one.
     _binding("deadlineMark", "line", "deadline-mark", "deadline-mark", "deadline-mark", ContrastClass.MARK),

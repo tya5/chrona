@@ -2,7 +2,7 @@
 
 Living record for [#890](https://github.com/tya5/chrona/issues/890) (P4-B, split from #587): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history.
 
-**Public base:** `24f686f1` on `main`. **Status:** design plan, design, architecture review and implementation plan are published together by this record; no product code yet. Slices: I890-1 cone (Theme role, Layout completion, Scene gradient with stop opacity, contrast ground, SVG) with the Controller Z evidence slide, then the acceptance review. The direction was recorded in section 5.9 of the archived [#587 record](../../archive/planning/issue-587-surface-decoration-2026-10-02.md).
+**Public base:** `24f686f1` on `main`. **Status:** design plan, design, architecture review and implementation plan are published (PR #974); I890-1 (the cone, with the Controller Z evidence slide) is implemented in the code PR recorded in section 8; the acceptance review follows. The direction was recorded in section 5.9 of the archived [#587 record](../../archive/planning/issue-587-surface-decoration-2026-10-02.md).
 
 ## 1. Published baseline
 
@@ -116,7 +116,7 @@ The cone is gradient paint, so it needs `paint.linear-gradient`; no new capabili
 
 ### 5.8 Adapters and Scene version (D8)
 
-SVG draws the existing `<linearGradient>` with `stop-opacity` on each stop when the gradient carries stop opacities (the gradient id includes them; a gradient without them is byte-identical to today). PNG is the same SVG through the pinned resvg; both are rendered and read. PDF, Typst and TikZ never receive a gradient: the profile gate decides, never the adapter. Scene serialization writes `stopOpacities` on a gradient that has them and writes the Scene as v0.7 (the glow precedent); `scene-v0.7.schema.yaml` gains the optional member in place; v0.6 is the transitioning schema and is not edited.
+SVG draws the existing `<linearGradient>` with `stop-opacity` on each stop when the gradient carries stop opacities (the gradient id includes them; a gradient without them is byte-identical to today). PNG is the same SVG through the pinned resvg; both are rendered and read. PDF, Typst and TikZ never receive a gradient: the profile gate decides, never the adapter. Scene serialization writes an optional `opacity` on each stop of a gradient that has stop opacities and writes the Scene as v0.7 (the glow precedent); `scene-v0.7.schema.yaml` gains the optional member in place; v0.6 is the transitioning schema and is not edited.
 
 ### 5.9 Committed evidence (D9)
 
@@ -147,7 +147,7 @@ One code publication, `Refs #890`, default output unchanged. Generated Scene and
   - `src/chrona/presentation/scene/capabilities.py`: role contract for `as-of-cone`; `coneSpread`, `coneExtent` classified as Layout geometry.
   - `src/chrona/presentation/color_scheme.py`: structural check of the role at resolution (5.3).
   - `src/chrona/presentation/scene/model.py`: `LinearGradient.stop_opacities`. `scene/paint.py`: cone paint resolution and the ladder. `scene/v05_builder.py`: emit the Symbol; omit under the baseline. `model/info_diagnostics.py`: the `as-of-cone` treatment. `usecases/diagnostic_messages.py` if a message enumerates treatments.
-  - `src/chrona/presentation/scene/serialization.py` and `schemas/scene-v0.7.schema.yaml`: `stopOpacities`, version choice. `schemas/theme-v0.11.schema.yaml`, `schemas/theme-v0.13.schema.yaml`: `coneSpread`, `coneExtent`, in place; `conformance/schema-equivalence/expected-deltas-v0.1.yaml`: entries for them; the S0 result is recorded.
+  - `src/chrona/presentation/scene/serialization.py` and `schemas/scene-v0.7.schema.yaml`: an optional `opacity` on a gradient stop, version choice. `schemas/theme-v0.11.schema.yaml`, `schemas/theme-v0.13.schema.yaml`: `coneSpread`, `coneExtent`, in place; `conformance/schema-equivalence/expected-deltas-v0.1.yaml`: entries for them; the S0 result is recorded.
   - `src/chrona/presentation/renderers/v05_svg.py`: `stop-opacity`.
   - `src/chrona/presentation/scene/paint_analysis.py`, `contrast_policy.py`, `perceptibility.py`: the ground rule of 5.6.
   - `tools/check_scene_primitive_delivery.py`: the new gradient field.
@@ -166,3 +166,21 @@ One code publication, `Refs #890`, default output unchanged. Generated Scene and
 ### A890: acceptance
 
 `docs/reviews/current/issue-890-as-of-light-cone-acceptance-review-<date>.md` with the `chrona:literal-acceptance/v1` marker and one row per literal criterion; any narrowed row names a successor issue found by a duplicate search; checked by `tools/check_issue_acceptance_reviews.py`; merged; the exact-main three-OS run on the review commit located; #890 closed only when every row is met or narrowed with a successor and that run is green.
+
+## 8. Progress and evidence
+
+### I890-1 (implemented): the cone
+
+- **As designed**, with these internal choices recorded here (within the approved contract):
+  1. **A stop carries its opacity.** The Scene member is an optional `opacity` on each gradient stop (`stops[i].opacity`), not a separate `stopOpacities` list; the model keeps a `stop_opacities` tuple on `LinearGradient`. The S0 gate classifies the `scene-v0.7` and both Theme schema additions as additive; no expected-delta entry was needed.
+  2. **A cone is declared by its `coneSpread`.** A resolved role object that names no spread is no cone in Layout, as for the canvas texture (the registry-driven fixture Themes create a role for every registered binding); resource resolution rejects a role with no `fill`, `coneSpread` or `coneExtent` earlier with `E_THEME_ROLE_REQUIRED`.
+  3. **Omission is reported from the primitive that was dropped.** The builder keeps the omission fact of a cone that the profile removed, so `I_VISUAL_TREATMENT_OMITTED` is emitted once even though no primitive is left to carry paint.
+  4. **An unreadable cone in a Scene document fails the contrast evaluator** (`E_SCENE_CONTRAST_DOCUMENT`) instead of being skipped, because a skipped cone would silently weaken the gate.
+  5. **The fixed Layout helper is `layout/as_of_cone.py`**; the polygon is a `ShapePlacement` of kind `Polygon`, emitted as a Symbol with the as-of line's source (`actual-set`).
+- **Default unchanged.** Regenerating all 41 public slides locally (`tools/regenerate_public_examples.py --write`) changes nothing except the new `as-of-cone` slide; every other Scene and SVG is byte-identical. That is evidence only that no Theme without the role changed. A synthetic test also shows that a render with the cone removed from its SVG equals the render of the same Theme without the role (the cone moved no label, route or bar).
+- **Committed evidence.** Controller Z `as-of-cone` (the `title-card-dark` scheme, a Theme copy declaring `as-of-cone` with spread 0.22, extent 1, strength 0.55 and an `as-of-label-chip`, rich SVG profile). Read in full through resvg: a warm cone leaves the top of the as-of line (apex at the plot top), widens and fades, ends at the last row, runs under every bar, gate and label, and the chip keeps the date legible. The corpus contrast report has 0 errors on 3124 findings; `planned:dvt` and `planned:pvt` are judged on `cone-blend` grounds (ratios 5.4 and 6.5 against floor 3.0).
+- **S0 gate.** `python -m tools.schema_equivalence --base-rev origin/main`: PASS; `scene-v0.7`, `theme-v0.11` and `theme-v0.13` additive, the rest equal.
+- **Tests.** `tests/unit/chrona/presentation/layout/test_as_of_cone.py`, `tests/unit/chrona/presentation/scene/test_as_of_cone_scene.py`, `tests/integration/test_as_of_cone_render.py` (synthetic Project through the packaged `executive-light` bundle; SVG structure and order, PNG pixels through resvg, determinism, default absence, v0.7 and schema validity, baseline omission and failure, role admission). No test reads `examples/`.
+- **Mutation checks (32).** Apex at the foot; spread doubled; no clip; extent ignored; paint order above the marks or below the bands; apex not first; spread and extent limits loosened; no stop opacities; fade reversed; strength ignored; omission dropped; baseline paints flat; required passes; cone as an ordinary ground; cone ignored by the gate; host painted later still blended; cone painted later than the mark still applied; straddling mark judged on the cone only; best instead of worst ground; decoration judged on the cone; only the top stop sampled; strength fixed at the apex; never partial; unreadable cone skipped; SVG drops stop opacity; gradient identity ignores opacities; v0.6 written with the field; stop opacity not serialized; omission not reported; cone emitted at paint order 0. Four survived the first test set (straddle on the cone only, top stop only, never partial, gradient identity); three pale-mark-on-dark-ink tests and a two-gradient SVG test were added and all 32 are killed.
+- **Scope kept.** Free text (the as-of label, an outside member label) is unclassified and stays ungated, as before; a general `gradientStartOpacity`/`gradientEndOpacity` Theme surface is not built.
+
