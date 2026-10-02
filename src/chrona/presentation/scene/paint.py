@@ -129,6 +129,47 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
     return PaintResolution(paint, omissions)
 
 
+AS_OF_CONE_ROLE = "as-of-cone"
+
+
+@dataclass(frozen=True)
+class ConeResolution:
+    """The completed paint of the as-of cone, or no paint when the profile omits the cone (#890)."""
+
+    paint: ScenePaint | None
+    omissions: tuple[PaintOmission, ...] = ()
+
+
+def resolve_cone_paint(tokens: ThemeTokenView, role: str, *, visual_profile: VisualProfile | None,
+                       bounds: tuple[float, float, float, float]) -> ConeResolution:
+    """Complete the as-of cone's gradient from its polygon bounds: ink at the apex, transparent at the foot.
+
+    The cone is gradient paint, so it needs ``paint.linear-gradient``. Where the selected profile
+    cannot paint one, a ``decorative-optional`` cone is omitted whole (never a flat ink polygon) and
+    reported; a ``required`` one fails before serialization. The strength is the role's ``opacity``;
+    the fade is the gradient's own stop opacity, so the ground it lies on is never named here.
+    """
+    path = f"/body/roles/{role}"
+    try:
+        fill = tokens.optional_color(role, "fill")
+        opacity = tokens.optional_number(role, "opacity")
+        if fill is None:
+            raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/fill")
+        if opacity is not None and not 0 <= opacity <= 1:
+            raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", f"{path}/opacity")
+        fidelity = _fidelity(tokens, role, "gradientFidelity")
+        if not _admit(visual_profile, frozenset((LINEAR_GRADIENT,)), fidelity, f"{path}/coneSpread"):
+            return ConeResolution(None, (_omission(role, "as-of-cone", "coneSpread", visual_profile,
+                                                   frozenset((LINEAR_GRADIENT,))),))
+    except ThemeTokenError as error:
+        raise ScenePaintError(error.diagnostic_id, error.path) from error
+    inline, block, inline_size, block_size = bounds
+    centre = inline + inline_size / 2
+    gradient = LinearGradient((centre, block), (centre, block + block_size), ((0.0, fill), (1.0, fill)), fidelity,
+                              stop_opacities=(1.0, 0.0))
+    return ConeResolution(ScenePaint(fill, None, None, (), 1.0 if opacity is None else float(opacity), gradient))
+
+
 def complete_icon_path_paints(role_paint: ScenePaint, path_intents: tuple[object, ...],
                               role: str) -> tuple[SceneIconPath, ...]:
     """Convert Layout path paint modes into completed icon paints."""

@@ -32,6 +32,7 @@ from chrona.presentation.layout.surface_backgrounds import (
     compose_calendar_backgrounds, compose_group_tabs, compose_row_group_backgrounds, replace_group_header_band,
 )
 from chrona.presentation.layout.surface_axis import compose_axis
+from chrona.presentation.layout.as_of_cone import complete_as_of_cone
 from chrona.presentation.layout.surface_deadlines import compose_deadline_marks
 from chrona.presentation.layout.surface_periods import compose_period_bands, period_label_requests
 from chrona.presentation.layout.presentation import (MarkGeometry, required_row_block_extents)
@@ -154,6 +155,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                                      Rect(Decimal(str(x)), base.plot.block, Decimal(0), base.plot.block_size),
                                      ((x, float(base.plot.block)), (x, float(base.plot.block + base.plot.block_size))),
                                      paint_order=MARK_PAINT_ORDER_BASE))
+        as_of_cone = complete_as_of_cone(request.theme_tokens, base.plot, x)  # #890: the light the marker casts
+        if as_of_cone is not None:
+            shapes.append(as_of_cone)
         as_of_label = (x, contract.time.as_of_label) if contract.time.as_of_label else None
     mark_batch = compose_surface_marks(base, lane_owner=_lane_owner)
     marks = list(mark_batch.marks)

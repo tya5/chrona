@@ -92,10 +92,17 @@ class ImageFill:
 
 @dataclass(frozen=True)
 class LinearGradient:
+    """A completed two-stop linear gradient.
+
+    ``stop_opacities`` (#890) optionally gives each stop its own opacity, so a gradient can fade from ink
+    to transparent without naming the ground; absent, every stop is opaque.
+    """
+
     start: tuple[float, float]
     end: tuple[float, float]
     stops: tuple[tuple[float, str], ...]
     fidelity: str
+    stop_opacities: tuple[float, ...] | None = None
 
 
 @dataclass(frozen=True)

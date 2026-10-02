@@ -53,9 +53,14 @@ def render_v05_svg(surface: SceneSurface) -> str:
         if paint.glow is not None:
             result.append(f'filter="url(#{glow_id(paint)})"')
         return " ".join(result)
+    def stop_opacity(gradient: object, index: int) -> str:
+        opacities = gradient.stop_opacities
+        return "" if opacities is None else f' stop-opacity="{number(opacities[index])}"'
     def gradient_id(paint: ScenePaint) -> str:
         assert paint.gradient is not None
-        payload = repr((paint.gradient.start, paint.gradient.end, paint.gradient.stops)).encode()
+        identity = (paint.gradient.start, paint.gradient.end, paint.gradient.stops)
+        if paint.gradient.stop_opacities is not None: identity += (paint.gradient.stop_opacities,)
+        payload = repr(identity).encode()
         return "gradient-" + sha256(payload).hexdigest()[:12]
     def shadow_id(paint: ScenePaint) -> str:
         assert paint.shadow is not None
@@ -154,7 +159,7 @@ def render_v05_svg(surface: SceneSurface) -> str:
                 definitions.append(f'<pattern id="{pattern_id(pattern, paint)}" patternUnits="userSpaceOnUse" width="{number(pattern.tile_inline_size)}" height="{number(pattern.tile_block_size)}" patternTransform="rotate({number(pattern.angle_degrees)})">{strokes}</pattern>')
         for identifier, gradient in sorted(gradients.items()):
             assert gradient is not None
-            definitions.append(f'<linearGradient id="{identifier}" gradientUnits="userSpaceOnUse" x1="{number(gradient.start[0])}" y1="{number(gradient.start[1])}" x2="{number(gradient.end[0])}" y2="{number(gradient.end[1])}">' + "".join(f'<stop offset="{number(position * 100)}%" stop-color="{escape(color, quote=True)}"/>' for position, color in gradient.stops) + '</linearGradient>')
+            definitions.append(f'<linearGradient id="{identifier}" gradientUnits="userSpaceOnUse" x1="{number(gradient.start[0])}" y1="{number(gradient.start[1])}" x2="{number(gradient.end[0])}" y2="{number(gradient.end[1])}">' + "".join(f'<stop offset="{number(position * 100)}%" stop-color="{escape(color, quote=True)}"{stop_opacity(gradient, index)}/>' for index, (position, color) in enumerate(gradient.stops)) + '</linearGradient>')
         for identifier, shadow in sorted(shadows.items()):
             assert shadow is not None
             definitions.append(f'<filter id="{identifier}"><feDropShadow dx="{number(shadow.offset_x)}" dy="{number(shadow.offset_y)}" stdDeviation="{number(shadow.blur)}" flood-color="{escape(shadow.color, quote=True)}" flood-opacity="{number(shadow.opacity)}"/></filter>')

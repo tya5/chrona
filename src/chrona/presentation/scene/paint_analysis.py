@@ -63,3 +63,11 @@ def _contrast(first: tuple[float, float, float], second: tuple[float, float, flo
                          for channel in color)
         return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2]
     return (max(luminance(first), luminance(second)) + 0.05) / (min(luminance(first), luminance(second)) + 0.05)
+
+
+def blend_over(*, ink: str, opacity: float, ground: str) -> str:
+    """Return the opaque colour of ``ink`` at ``opacity`` composited over an opaque ground, as ``#RRGGBB``."""
+    if not is_hex_color(ink) or not is_hex_color(ground) or not 0 <= opacity <= 1:
+        raise ValueError(f"E_SCENE_PAINT_ANALYSIS_INPUT: ink {ink!r} and ground {ground!r} must be #RRGGBB and opacity {opacity!r} in [0, 1]")
+    channels = _composite(_rgb(ink), opacity, _rgb(ground))
+    return "#" + "".join(f"{min(255, max(0, int(channel * 255 + 0.5))):02X}" for channel in channels)

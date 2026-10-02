@@ -243,6 +243,25 @@ it: a mark or state text is measured against the worse of the two
 (`groundKind` `texture-substrate` or `texture-ink`), a decoration tint against the
 substrate, and the texture itself has no floor.
 
+**As-of light cone (#890).** When the Theme declares the role `as-of-cone` and the
+as-of marker lies in the window, Layout completes one closed polygon beside the as-of
+line it already places: apex at the top of the line (the as-of x, the plot top), a foot
+at depth `coneExtent` times the plot height (the plot ends at the last row, #880) and
+half-width `coneSpread` times that depth, clipped to the plot's inline extent
+(Sutherland-Hodgman against the two vertical plot edges), coordinates rounded to
+1/1000 px, vertices in order from the apex, no trigonometry. A clip that leaves no area
+gives no cone. Layout gives it paint order 50 (above the row, group, calendar and
+period bands and the axis rules at 10 to 12, below every mark from 100, the as-of line
+and all hosted and foreground text) and does not register it as an obstacle. Scene emits
+it as one `Symbol` with purpose and visual role `as-of-cone` (source `actual-set`) and
+completes its paint: a `LinearGradient` from the polygon's apex row to its foot row
+with two stops of the role ink at stop opacities 1 and 0, and the role strength as the
+paint opacity. Where the selected profile cannot paint a gradient the cone is omitted
+whole (Specification 63 section 9). SVG writes `stop-opacity` on each stop of a gradient
+that carries stop opacities (the gradient identity includes them; any other gradient is
+byte-identical); PNG is that SVG through resvg. A Scene that carries stop opacities is
+written as `chrona/scene/v0.7` (optional `opacity` on a gradient stop).
+
 ### 4.0 v0.1 Scene profile
 
 A Scene profile declares layout policy, not geometry. The first Date-only profile is

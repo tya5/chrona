@@ -6,6 +6,7 @@ from math import isfinite
 from typing import Any, Mapping
 
 from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding, contrast_binding_for
+from chrona.presentation.scene.cone_ground import AS_OF_CONE_ROLE, ConeGround, cones_in
 from chrona.presentation.scene.paint_analysis import composited_contrast, is_hex_color, sample_linear_gradient
 
 
@@ -74,10 +75,14 @@ def evaluate_scene_contrast(document: Mapping[str, Any]) -> tuple[SceneContrastF
         ground = _ground(canvas, scene_path)
         primitives = raw_surface.get("primitives")
         _require(isinstance(primitives, list), f"missing primitives at {scene_path}")
+        try:
+            cones = cones_in(primitives)
+        except ValueError as error:
+            raise SceneContrastPolicyError(f"E_SCENE_CONTRAST_DOCUMENT: invalid as-of cone at {scene_path}") from error
         for index, primitive in enumerate(primitives):
             _require(isinstance(primitive, Mapping), f"invalid primitive {index} at {scene_path}")
             findings.extend(_primitive_findings(scene_path, primitive, ground, primitives, index,
-                                                catalog_patterns=version == "chrona/scene/v0.7"))
+                                                catalog_patterns=version == "chrona/scene/v0.7", cones=cones))
         findings.extend(_absence_findings(scene_path, raw_surface.get("decorationDispositions", [])))
     return tuple(sorted(findings, key=lambda item: (
         item.scene_path, item.purpose, item.visual_role, item.disposition, item.primitive_id or "", item.code,
@@ -86,7 +91,8 @@ def evaluate_scene_contrast(document: Mapping[str, Any]) -> tuple[SceneContrastF
 
 def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: str | None,
                         primitives: list[Any], index: int, *,
-                        catalog_patterns: bool = False) -> tuple[SceneContrastFinding, ...]:
+                        catalog_patterns: bool = False,
+                        cones: tuple[ConeGround, ...] = ()) -> tuple[SceneContrastFinding, ...]:
     role = primitive.get("visualRole")
     if not isinstance(role, str):
         return ()
@@ -128,7 +134,7 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
     if is_catalog_pattern:
         return _pattern_findings(scene_path, primitive, pattern, paint, opacity, floor,
                                  disposition, code, purpose, role, primitive_id, canvas,
-                                 primitives, index, catalog_patterns)
+                                 primitives, index, catalog_patterns, cones)
     channels = (("fill",) if binding.contrast_class in (ContrastClass.STATE_TEXT, ContrastClass.GROUND_TEXT)
                 else ("fill", "stroke"))
     candidates = []
@@ -153,17 +159,20 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
             continue
         if ground is None:
             continue
-        ratio = composited_contrast(fill=paint[channel], opacity=float(opacity), ground=ground)
-        host_ink = (_host_ink(primitives, ground_id, catalog_patterns)
-                    if binding.contrast_class != ContrastClass.DECORATION else None)
+        decoration = binding.contrast_class == ContrastClass.DECORATION
+        host_ink = _host_ink(primitives, ground_id, catalog_patterns) if not decoration else None
+        # A canvas texture and a catalogue pattern are ground in two colours: a mark or a label may lie
+        # on either. A decoration is a tint judged against the dominant substrate, not against thin ink lines.
+        options = [(ground, f"{host_ink[1]}-substrate" if host_ink is not None else ground_kind, ground_id)]
         if host_ink is not None:
-            # A canvas texture and a catalogue pattern are ground in two colours: a mark or a label may lie
-            # on either. A decoration is a tint judged against the dominant substrate, not against thin ink lines.
-            ink, family = host_ink
-            ground_kind = f"{family}-substrate"
-            ink_ratio = composited_contrast(fill=paint[channel], opacity=float(opacity), ground=ink)
-            if ink_ratio < ratio:
-                ratio, ground, ground_kind = ink_ratio, ink, f"{family}-ink"
+            options.append((host_ink[0], f"{host_ink[1]}-ink", ground_id))
+        overlay = () if decoration else _cone_overlay(cones, primitives, index, ground_id)
+        ratio = None
+        for option_ground, option_kind, option_id in (
+                expanded for option in options for expanded in _under_cone(overlay, primitive, *option)):
+            option_ratio = composited_contrast(fill=paint[channel], opacity=float(opacity), ground=option_ground)
+            if ratio is None or option_ratio < ratio:
+                ratio, ground, ground_kind, ground_id = option_ratio, option_ground, option_kind, option_id
         candidates.append((ratio, channel, ground_id, ground, sample, ground_kind))
     if not candidates:
         error_code = "E_SCENE_CONTRAST_GROUND_UNSUPPORTED" if unsupported_ground else "E_SCENE_CONTRAST_PAINT"
@@ -179,7 +188,8 @@ def _pattern_findings(scene_path: str, primitive: Mapping[str, Any], pattern: An
                       paint: Mapping[str, Any], opacity: float, floor: float,
                       disposition: str, code: str, purpose: str, role: str, primitive_id: str,
                       canvas: str | None, primitives: list[Any], index: int,
-                      catalog_patterns: bool = True) -> tuple[SceneContrastFinding, ...]:
+                      catalog_patterns: bool = True,
+                      cones: tuple[ConeGround, ...] = ()) -> tuple[SceneContrastFinding, ...]:
     """Gate each effective pattern channel pair; neither channel can mask another."""
     if (not isinstance(pattern, Mapping)
             or not isinstance(pattern.get("densityBasisPoints"), int)
@@ -216,6 +226,13 @@ def _pattern_findings(scene_path: str, primitive: Mapping[str, Any], pattern: An
         pairs[2] = ("stroke", host_id, host, f"{family}-substrate", ink)
         pairs += [("fill", host_id, host_ink_color, f"{family}-ink", substrate),
                   ("stroke", host_id, host_ink_color, f"{family}-ink", ink)]
+    overlay = () if code == "E_SCENE_DECORATION_CONTRAST" else _cone_overlay(cones, primitives, index, host_id)
+    # The host's own grounds lie under the cone; a pattern's substrate under its ink is the primitive's own.
+    pairs = [(channel, cone_id, cone_ground, cone_kind, foreground)
+             for channel, pair_id, pair_ground, pair_kind, foreground in pairs
+             for cone_ground, cone_kind, cone_id in (
+                 _under_cone(overlay, primitive, pair_ground, pair_kind, pair_id) if pair_id == host_id
+                 else ((pair_ground, pair_kind, pair_id),))]
     findings = []
     for channel, ground_id, ground, ground_kind, foreground in pairs:
         ratio = composited_contrast(fill=foreground, opacity=1.0, ground=ground)
@@ -224,6 +241,45 @@ def _pattern_findings(scene_path: str, primitive: Mapping[str, Any], pattern: An
                                              ratio, floor, disposition, ground_id, ground, channel,
                                              *sample, ground_kind, density))
     return tuple(findings)
+
+
+def _cone_overlay(cones: tuple[ConeGround, ...], primitives: list[Any], index: int,
+                  host_id: str | None) -> tuple[ConeGround, ...]:
+    """The cones painted after a primitive's host and before the primitive: the ones that tint its ground.
+
+    A cone is translucent, so it is never the host; an opaque host painted after it hides it (#890).
+    """
+    if not cones:
+        return ()
+    primitive = primitives[index]
+    key = (primitive.get("paintOrder", 0), index)
+    host_key = next(((item.get("paintOrder", 0), position) for position, item in enumerate(primitives)
+                     if isinstance(item, Mapping) and item.get("id") == host_id), None) if host_id else None
+    return tuple(cone for cone in cones if cone.key < key and (host_key is None or cone.key > host_key))
+
+
+def _under_cone(overlay: tuple[ConeGround, ...], primitive: Mapping[str, Any], ground: str, kind: str,
+                ground_id: str | None) -> tuple[tuple[str, str, str | None], ...]:
+    """The grounds a primitive lies on once the cones over its host are composited.
+
+    A primitive wholly inside a cone lies on the blended grounds only (one per end of its block extent inside
+    the gradient: the worst of the stops it spans decides). One that straddles the cone's edge also lies on the
+    unblended host. A primitive the cone does not reach keeps its host.
+    """
+    box = primitive.get("bounds")
+    try:
+        bounds = (float(box["inline"]), float(box["block"]), float(box["inlineSize"]), float(box["blockSize"]))
+    except (KeyError, TypeError, ValueError):
+        return ((ground, kind, ground_id),)
+    blended: list[tuple[str, str, str | None]] = []
+    wholly_inside = False
+    for cone in overlay:
+        colours, partial = cone.blends(bounds, ground)
+        blended.extend((colour, "cone-blend", cone.cone_id) for colour in colours)
+        wholly_inside = wholly_inside or (bool(colours) and not partial)
+    if not blended:
+        return ((ground, kind, ground_id),)
+    return tuple(blended) if wholly_inside else ((ground, kind, ground_id), *blended)
 
 
 def _host_ink(primitives: list[Any], host_id: str | None, catalog_patterns: bool = False) -> tuple[str, str] | None:
@@ -320,6 +376,9 @@ def _ground_under(primitive: Mapping[str, Any], primitives: list[Any], index: in
         # bounds, and a later part's true ground is the earlier part beneath it, not
         # the canvas or the band underneath the whole mark.
         if not isinstance(prior, Mapping) or prior.get("kind") not in {"Rect", "Symbol"}:
+            continue
+        if prior.get("visualRole") == AS_OF_CONE_ROLE:
+            # A translucent light is never an opaque host: it tints the host's ground instead (#890).
             continue
         if (primitive.get("visualRole") in _SIBLING_INK_ROLES and prior.get("visualRole") == primitive.get("visualRole")
                 and prior.get("sourceRef") == primitive.get("sourceRef")):

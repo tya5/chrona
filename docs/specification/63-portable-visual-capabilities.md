@@ -217,3 +217,21 @@ the Rect's fill, stroke and filter attributes, and a wobbled Path as one `<path>
 `M...L...` sub-paths with its markers; PNG is that SVG through resvg, so the two share
 every coordinate. A Scene that carries a wobble is written as `chrona/scene/v0.7`
 (optional `paint.wobble`).
+
+## 9. As-of light cone (#890)
+
+The cone (Specification 07, role `as-of-cone`) is gradient paint and needs
+`paint.linear-gradient`; no capability ID is added. `LinearGradient` gains optional
+`stop_opacities` (one opacity per stop, `0..1`): a completed fact, so the same
+fidelity, profile and omission rules govern it. Scene completes the cone's gradient from
+its polygon: start at the apex row, end at the foot row, two stops of the role ink at
+opacities 1 and 0, so the ground it fades into is never named. Under a profile that
+does not admit the gradient (the baseline), a `decorative-optional` cone is **omitted
+whole** (never a flat ink polygon) and reported as
+`I_VISUAL_TREATMENT_OMITTED:role=as-of-cone;treatment=as-of-cone;profile=<selected>;paintable=<first rich profile of the target>`;
+a `required` cone (the default when `gradientFidelity` is absent) is
+`E_VISUAL_CAPABILITY_UNSUPPORTED` at `/body/roles/as-of-cone/coneSpread`. The treatment
+name `as-of-cone` joins the closed set of omitted treatments. A shipped Draft preset
+may declare a cone `decorative-optional`: no cone is a complete visible treatment. PDF,
+Typst and TikZ never receive a gradient. A Scene whose gradient carries stop opacities
+is written as `chrona/scene/v0.7` (optional `opacity` on a gradient stop).
