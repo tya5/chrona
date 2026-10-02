@@ -59,12 +59,12 @@ body:
       revision:
         token: example-v1
     summaryProfile:
-      id: halcyon-key-figures
+      id: halcyon-countdown-figures
       kind: summary-profile
       store:
         provider: local
         identity: halcyon-1-example
-      address: profiles/summary.yaml
+      address: profiles/summary-countdown.yaml
       revision:
         token: example-v1
     detailProfile:
