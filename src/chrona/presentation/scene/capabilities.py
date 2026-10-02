@@ -115,6 +115,7 @@ _TEXT_MEASUREMENT = frozenset(("fontFamily", "fontWeight", "fontSize", "lineHeig
 _ICON_MEASUREMENT = frozenset(("iconScale", "iconGap"))
 _AXIS_MEASUREMENT = frozenset(("laneBlockSize", "labelInset", "labelGap"))
 _AXIS_TICK = frozenset(("tickLength",))
+_GROUP_TAB = frozenset(("tabInlineSize", "tabBlockSize", "tabGap", "tabPosition"))
 _RECT_PAINT = frozenset(("fill", "stroke", "strokeWidth", "dash", "opacity",
                          "gradientStart", "gradientEnd", "gradientAngle", "gradientFidelity",
                          "shadowColor", "shadowOffsetX", "shadowOffsetY", "shadowBlur",
@@ -135,7 +136,7 @@ _CANVAS_PAINT = frozenset(("fill", "opacity", "gradientStart", "gradientEnd", "g
                            "shadowBlur", "shadowOpacity", "shadowFidelity"))
 _PATTERNED_RECT_PAINT = _RECT_PAINT | frozenset(("pattern",))
 _LAYOUT_TYPOGRAPHY = _TEXT_MEASUREMENT | _ICON_MEASUREMENT
-_LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | frozenset((
+_LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | _GROUP_TAB | frozenset((
     "cellGap", "cellCornerRadius", "cellCornerChamfer", "chipPadding", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach",
     "progressInset", "summaryBarHeight", "swatchInlineSize", "annotationContainer", "marker", "symbol", "edge",
     "stampPlacement",
@@ -262,6 +263,9 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
     register("group-band row-band group-header-band calendar-closed", "Layout background and Scene Rect",
              _RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder")),
              scene_kinds=frozenset(("Rect",)))
+    register("group-tab", "Layout group header tab and Scene Rect",
+             _PATTERNED_RECT_PAINT | _GROUP_TAB | frozenset(("backgroundTreatment", "backgroundPaintOrder")),
+             scene_kinds=frozenset(("Rect",)))
     register("period-band", "Layout period band and Scene Rect",
              _PATTERNED_RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder")),
              scene_kinds=frozenset(("Rect",)))
@@ -287,7 +291,7 @@ _OPEN_AXIS_PROPERTIES = _TEXT_MEASUREMENT | _AXIS_MEASUREMENT
 _OPEN_LEGEND_PROPERTIES = _RECT_PAINT
 _CATALOG_PATTERN_ROLES = frozenset((
     "missing-actual", "network-node", "progress-fill", "summary-bar",
-    "annotation-highlight-box", "axis-band-decoration", "axis-band-decoration2", "period-band",
+    "annotation-highlight-box", "axis-band-decoration", "axis-band-decoration2", "period-band", "group-tab",
     "as-of-label-chip", "member-label-chip", "finish-delta-chip", "canvas-texture",
 ))
 

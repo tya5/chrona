@@ -248,6 +248,16 @@ class ThemeTokenView:
             return None
         return self.number(role, property_name)
 
+    def optional_choice(self, role: str, property_name: str, allowed: tuple[str, ...]) -> str | None:
+        """Resolve an optional finite literal (a schema enum property), rejecting any other value."""
+        binding = self._body["roles"].get(role)
+        if not isinstance(binding, Mapping) or property_name not in binding:
+            return None
+        value = binding[property_name]
+        if value not in allowed:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/{property_name}")
+        return str(value)
+
     def optional_token(self, role: str, property_name: str, expected_type: str) -> Any | None:
         binding = self._body["roles"].get(role)
         if not isinstance(binding, Mapping) or property_name not in binding:

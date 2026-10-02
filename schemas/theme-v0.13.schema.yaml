@@ -260,6 +260,10 @@ properties:
             labelInset: {description: "Named inset, as a ratio of the role's font size, of a start-aligned axis label from its cell edge (#426).", type: string, minLength: 1}
             labelGap: {description: "Named gap, as a ratio of the role's font size, between an axis label and its secondary label: below it when stacked, after it when inline; absent, 0 when stacked and one measured space when inline (#493).", type: string, minLength: 1}
             tickLength: {description: "Named length in px of the tick a grid-major or grid-minor tier draws at each interval start, standing on the axis rule; absent keeps the full-height line (#492).", type: string, minLength: 1}
+            tabInlineSize: {description: "Named length in px of the group-tab role's inline extent, standing on the inline start (or end) edge of a group header; required when the role's backgroundTreatment is not none (#882).", type: string, minLength: 1}
+            tabBlockSize: {description: "Named length in px of the group-tab role's block extent from the header's block start; absent means the full header block size (#882).", type: string, minLength: 1}
+            tabGap: {description: "Named length in px between the group tab and the header text; absent means 0 (#882).", type: string, minLength: 1}
+            tabPosition: {description: "Inline edge of the group header the tab stands on; absent means start (#882).", enum: [start, end]}
             chipPadding: {description: "Named label-chip padding ratio of the label's font size (inline; half on the block axis) for a <purpose>-chip role.", type: string, minLength: 1}
             progressInset: {description: "Named progress-track inset ratio of the host mark's block size; the fill sits inside the track with this gap (0 <= ratio < 0.5).", type: string, minLength: 1}
             annotationContainer: {description: "Named outline/tail-geometry token for an annotation-box role (#466); absent keeps today's plain rectangle.", type: string, minLength: 1}

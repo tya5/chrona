@@ -204,10 +204,12 @@ Catalogue pattern tokens are admitted only on roles whose current completed
 primitive is always Rect: `missing-actual.pattern`, `network-node.pattern`,
 `progress-fill.pattern`, `summary-bar.pattern`,
 `annotation-highlight-box.pattern`, `axis-band-decoration.pattern`,
-`axis-band-decoration2.pattern`, `period-band.pattern` (#582),
+`axis-band-decoration2.pattern`, `period-band.pattern` (#582), `group-tab.pattern` (#882),
 `as-of-label-chip.pattern`, `member-label-chip.pattern`, and
 `finish-delta-chip.pattern`. Other pattern values and all other
 role/property pairs retain their current contracts.
+
+**Group tab (#882).** Theme role `group-tab` declares a tab Rect on each group header: `backgroundTreatment` and `backgroundPaintOrder` as for every background role, `tabInlineSize`, `tabBlockSize` and `tabGap` (named number tokens, px), `tabPosition` (`start` or `end`), `opacity`, the paint channels and a catalogue `pattern`. The properties are optional in `theme-v0.11` and `theme-v0.13` (Specification 56 section 3.2: no version bump) and are admitted on this role only; a Theme without the role is unchanged. Geometry, failures and contrast are Specification 50 section 3.4.
 
 **Deadline mark (#822).** Theme role `deadline-mark` paints a deadline's tick and run (Spec 06 section 7.3) as Scene
 `Path` primitives: `stroke`, `strokeWidth`, `dash` and `opacity` as for `as-of`, plus `markReach` (a named number, `0 < reach
