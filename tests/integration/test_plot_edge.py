@@ -31,6 +31,7 @@ def _render(tmp_path: Path, *, milestone: date = date(2026, 3, 31), periods=("fe
     parts["view"]["body"]["periods"] = [{"id": item} for item in periods]
     parts["theme"]["body"]["roles"]["period-band"] = {
         "backgroundTreatment": "fill", "backgroundPaintOrder": 11, "opacity": "opacity.axis-band"}
+    parts["theme"]["body"]["colorBindings"].pop("period-band.stroke", None)  # the packaged band is an outline
     parts["theme"]["body"]["colorBindings"]["period-band.fill"] = "accent"
     directory = tmp_path / "render"
     directory.mkdir()
