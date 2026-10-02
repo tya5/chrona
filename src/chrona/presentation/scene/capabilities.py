@@ -110,7 +110,7 @@ def validate_substitution_request(capability_id: str) -> None:
 _TEXT_MEASUREMENT = frozenset(("fontFamily", "fontWeight", "fontSize", "lineHeight",
                                "letterSpacing", "textTransform", "numericSpacing"))
 _ICON_MEASUREMENT = frozenset(("iconScale", "iconGap"))
-_AXIS_MEASUREMENT = frozenset(("laneBlockSize", "labelInset"))
+_AXIS_MEASUREMENT = frozenset(("laneBlockSize", "labelInset", "labelGap"))
 _AXIS_TICK = frozenset(("tickLength",))
 _RECT_PAINT = frozenset(("fill", "stroke", "strokeWidth", "dash", "opacity",
                          "gradientStart", "gradientEnd", "gradientAngle", "gradientFidelity",
@@ -189,7 +189,7 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT)
     register("axis", "Layout axis-tier measurement and inline visual reservation",
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _AXIS_MEASUREMENT)
-    register("axisMonth axisQuarter axis2 axis3", "Layout axis-tier measurement",
+    register("axisMonth axisQuarter axisSecondary axis2 axis3", "Layout axis-tier measurement",
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _AXIS_MEASUREMENT)
     register("annotation", "Layout annotation text and Scene Text",
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT, scene_kinds=frozenset(("Text",)))

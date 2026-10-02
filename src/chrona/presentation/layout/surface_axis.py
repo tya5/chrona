@@ -65,6 +65,95 @@ def _axis_label_inset(theme_tokens: Any, tier: Any, font_size: float) -> float:
     return float(ratio) * font_size if ratio is not None else 0.0
 
 
+@dataclass(frozen=True)
+class _SecondaryPlan:
+    """The measured pieces of one tier's secondary label (#493); everything is Theme- and table-derived."""
+    intent: Any
+    treatment: Any
+    metrics: Any
+    table: Any
+    size: float
+    gap: float
+
+
+def _secondary_plan(tokens: Any, tier: Any, tier_index: int, primary: Any, primary_metrics: Any,
+                    font_metrics: Any) -> _SecondaryPlan | None:
+    """Resolve a labels tier's secondary text role, table and gap once (#493); None when it declares none."""
+    secondary = tier.label.secondary if tier.role == "labels" and tier.label is not None else None
+    if secondary is None:
+        return None
+    treatment = tokens.text_treatment(secondary.typography_role)
+    size = float(treatment.font_size)
+    ratio = tokens.optional_number(secondary.typography_role, "labelGap")
+    if ratio is not None and ratio < 0:
+        raise LayoutError("E_PRESENTATION_AXIS_INVALID", f"/view/body/axis/tiers/{tier_index}",
+                          detail=f"label-gap:{secondary.typography_role}")
+    if ratio is not None:
+        gap = float(ratio) * size
+    else:
+        gap = 0.0 if secondary.placement == "stacked" else _measure(" ", primary, primary_metrics)
+    return _SecondaryPlan(secondary, treatment, metric_for_role(tokens, secondary.typography_role, font_metrics),
+                          axis_name_table(secondary.name_table_id), size, gap)
+
+
+def _line_extents(treatment: Any) -> tuple[float, float]:
+    """Block extent of one text line above and below its baseline, the convention `place_text` boxes use."""
+    size = float(treatment.font_size)
+    return size, size * (float(treatment.line_height) - 1)
+
+
+def _label_block(primary: Any, plan: _SecondaryPlan | None) -> float:
+    """Block size the label line(s) of one cell occupy: the primary alone, a stack, or one shared baseline."""
+    above, below = _line_extents(primary)
+    if plan is None:
+        return above + below
+    above_s, below_s = _line_extents(plan.treatment)
+    if plan.intent.placement == "stacked":
+        return above + below + plan.gap + above_s + below_s
+    return max(above, above_s) + max(below, below_s)
+
+
+def _measure(content: str, treatment: Any, metrics: Any) -> float:
+    """Width of one axis text in its own role's treatment: the single measurement both texts use."""
+    return measure_text_width(content, font_size=float(treatment.font_size), font_metrics=metrics,
+                              letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
+                              numeric_spacing=treatment.numeric_spacing)
+
+
+def _secondary_outcomes(*, tier_index: int, plan: _SecondaryPlan, intervals: Any, outcomes: tuple[AxisIntervalOutcome, ...],
+                        scale: ScalePlacement, inset: float, primary: Any, primary_metrics: Any
+                        ) -> tuple[tuple[AxisIntervalOutcome, ...], list[str], list[PlacementDecision]]:
+    """Decide each cell's secondary label from measured fit (#493); it never alters the primary's outcome."""
+    gap = plan.gap
+    diagnostics: list[str] = []
+    decisions: list[PlacementDecision] = []
+    updated: list[AxisIntervalOutcome] = []
+    for interval, outcome in zip(intervals, outcomes, strict=True):
+        if outcome.disposition != "placed" or outcome.label is None:
+            updated.append(outcome)
+            continue
+        content = format_axis_tier_label(interval, plan.intent.form, plan.table)
+        available = max(0.0, coordinate_for_date(interval.end, scale) - coordinate_for_date(interval.start, scale) - inset)
+        secondary_width = _measure(content, plan.treatment, plan.metrics)
+        required = (secondary_width if plan.intent.placement == "stacked"
+                    else _measure(outcome.label, primary, primary_metrics) + gap + secondary_width)
+        if not outcome.label_fits:
+            reason: str | None = "primary-does-not-fit"
+        else:
+            reason = None if required <= available else "does-not-fit"
+        secondary_id = f"axis-label-secondary:{tier_index}:{interval.index}"
+        if reason is None:
+            updated.append(replace(outcome, secondary_label=content, secondary_disposition="placed"))
+            for canonical in plan.table.coincident_canonicals(plan.intent.form, interval.natural_start.month):
+                diagnostics.append(f"W_LAYOUT_AXIS_FORM_EQUIVALENT:{secondary_id}:table={plan.table.table_id}:form={plan.intent.form}:canonical={canonical}:month={interval.natural_start.month}")
+            continue
+        updated.append(replace(outcome, secondary_label=content, secondary_disposition="omitted", secondary_reason=reason))
+        diagnostics.append(f"W_LAYOUT_AXIS_SECONDARY_OMITTED:{outcome.candidate_id}:{reason}")
+        decisions.append(PlacementDecision(secondary_id, f"/view/body/axis/tiers/{tier_index}",
+                                           ("secondary", "suppress"), "suppress", "suppressed"))
+    return tuple(updated), diagnostics, decisions
+
+
 def _axis_tick_length(theme_tokens: Any, role: str, slot_block_size: Decimal, tier_index: int) -> Decimal | None:
     """The Theme-declared tick length of a grid role (#492), or None for the full-height line."""
     declared = theme_tokens.optional_number(role, "tickLength")
@@ -113,7 +202,11 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
             lane_by_unit.setdefault(tier.unit, (lane_cursor, float(declared)))
             lane_cursor += float(declared)
         else:
-            lane_cursor += float(treatment.font_size * treatment.line_height) + float(GEOMETRY_TOLERANCE)
+            first_plan = _secondary_plan(tokens, tier, tier_index, treatment,
+                                         metric_for_role(tokens, role, font_metrics), font_metrics)
+            lane_cursor += ((_label_block(treatment, first_plan) if first_plan is not None
+                             else float(treatment.font_size * treatment.line_height))
+                            + float(GEOMETRY_TOLERANCE))
 
     for tier_index, tier in enumerate(tiers):
         form = tier.label.form if tier.label else None
@@ -121,6 +214,7 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
         treatment = tokens.text_treatment(tier.typography_role or "axis")
         metrics = metric_for_role(tokens, tier.typography_role or "axis", font_metrics)
         axis_size = float(treatment.font_size)
+        plan = _secondary_plan(tokens, tier, tier_index, treatment, metrics, font_metrics)
         requested_units = (tuple(candidate for candidate, _ in tier.label.candidate_forms)
                            if tier.unit == "auto" and tier.label else (tier.unit,))
         try:
@@ -203,6 +297,13 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
                 if outcome.disposition == "placed":
                     for canonical in name_table.coincident_canonicals(form, interval.natural_start.month):
                         diagnostics.append(f"W_LAYOUT_AXIS_FORM_EQUIVALENT:{outcome.candidate_id}:table={name_table.table_id}:form={form}:canonical={canonical}:month={interval.natural_start.month}")
+        if plan is not None and tier.role == "labels" and form is not None:
+            interval_outcomes, secondary_diagnostics, secondary_decisions = _secondary_outcomes(
+                tier_index=tier_index, plan=plan, intervals=intervals, outcomes=interval_outcomes,
+                scale=scale, inset=_axis_label_inset(tokens, tier, axis_size), primary=treatment,
+                primary_metrics=metrics)
+            diagnostics.extend(secondary_diagnostics)
+            decisions.extend(secondary_decisions)
         outcomes.append(AxisTierOutcome(
             tier_index, f"/view/body/axis/tiers/{tier_index}", tier.role, requested_units,
             intervals[0].level if intervals else (tier.unit if tier.unit != "auto" else ""), tier.every,
@@ -268,10 +369,18 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
                 numeric_spacing=treatment.numeric_spacing) for item in interval_outcomes if item.disposition == "placed")
             lane_size = (axis_size * float(treatment.line_height) + float(GEOMETRY_TOLERANCE)
                          if orientation == "horizontal" else max(widths, default=0.0))
+            block = _label_block(treatment, plan)
+            if plan is not None:
+                lane_size = block + float(GEOMETRY_TOLERANCE)
             if tier_index in declared_lanes:
                 label_lane_offset, lane_size = declared_lanes[tier_index]
             inset = _axis_label_inset(tokens, tier, axis_size)
             lane_overflow = label_lane_offset + lane_size > float(axis.bounds.block_size)
+            if plan is not None and (lane_overflow or (tier_index in declared_lanes
+                                                       and block > lane_size + float(GEOMETRY_TOLERANCE))):
+                # A secondary the lane or slot cannot hold is a Theme/slot mismatch, not a per-cell condition.
+                raise LayoutError("E_PRESENTATION_AXIS_OVERFLOW", f"/view/body/axis/tiers/{tier_index}",
+                                  detail=f"secondary-lane:{tier_index}")
             for interval, outcome in zip(intervals, interval_outcomes, strict=True):
                 if outcome.disposition == "thinned":
                     continue
@@ -291,12 +400,28 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
                     letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
                     numeric_spacing=treatment.numeric_spacing)
                 occupied = width if orientation == "horizontal" else axis_size * float(treatment.line_height)
+                secondary_text = outcome.secondary_label if outcome.secondary_disposition == "placed" else None
+                gap = plan.gap if plan is not None else 0.0
+                secondary_width = _measure(secondary_text, plan.treatment, plan.metrics) if secondary_text else 0.0
+                if secondary_text and plan.intent.placement == "inline":
+                    occupied = width + gap + secondary_width
                 inline = x if tier.label.align == "start" else x + (available - occupied) / 2
                 if tier_index in declared_lanes:
                     line_block = axis_size * float(treatment.line_height)
                     baseline = float(axis.bounds.block) + label_lane_offset + (lane_size - line_block) / 2 + axis_size
                 else:
                     baseline = float(axis.bounds.block) + label_lane_offset + (axis_size if orientation == "horizontal" else (0 if orientation == "rotate-cw" else width))
+                secondary_baseline = baseline
+                if plan is not None:
+                    line_top = float(axis.bounds.block) + label_lane_offset + (
+                        (lane_size - block) / 2 if tier_index in declared_lanes else 0.0)
+                    above, below = _line_extents(treatment)
+                    above_secondary, _ = _line_extents(plan.treatment)
+                    if plan.intent.placement == "stacked":
+                        baseline = line_top + above
+                        secondary_baseline = line_top + above + below + plan.gap + above_secondary
+                    else:
+                        baseline = secondary_baseline = line_top + max(above, above_secondary)
                 placed = place_text(placement_id=f"axis-label:{tier_index}:{interval.index}", source_ref="timeline-axis",
                     content=label, inline=inline, baseline_block=baseline,
                     typography_role=tier.typography_role or "axis", theme_tokens=tokens, font_metrics=font_metrics,
@@ -305,6 +430,17 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
                     overflow="visible-overflow" if not outcome.label_fits or lane_overflow else "fit")
                 placed = replace(placed, semantic_id=label_semantic_id)
                 text.append(placed)
+                if secondary_text:
+                    secondary_inline = (inline + width + gap if plan.intent.placement == "inline"
+                                        else x if tier.label.align == "start"
+                                        else x + (available - secondary_width) / 2)
+                    text.append(replace(place_text(
+                        placement_id=f"axis-label-secondary:{tier_index}:{interval.index}", source_ref="timeline-axis",
+                        content=secondary_text, inline=secondary_inline, baseline_block=secondary_baseline,
+                        typography_role=plan.intent.typography_role, theme_tokens=tokens, font_metrics=font_metrics,
+                        collision_region="timeline-axis-label", collision_domain=CollisionDomain("timeline-axis", "labels"),
+                        source_content=secondary_text, available_inline_start=x, available_inline_size=available,
+                        orientation=orientation, overflow="fit"), semantic_id=label_semantic_id))
                 if not outcome.label_fits or lane_overflow:
                     visible_overflows.append((placed, LabelRect(*bounds_from_rect(axis.bounds))))
             label_lane_offset += lane_size

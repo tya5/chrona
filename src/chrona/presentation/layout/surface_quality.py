@@ -385,6 +385,10 @@ class AxisIntervalOutcome:
     label_fits: bool | None = None
     disposition: str = "not-applicable"
     reason: str | None = None
+    # The secondary label of the cell (#493): None when the tier declares none.
+    secondary_label: str | None = None
+    secondary_disposition: str | None = None  # "placed" | "omitted"
+    secondary_reason: str | None = None  # "does-not-fit" | "primary-does-not-fit" when omitted
 
 
 @dataclass(frozen=True)
@@ -708,8 +712,21 @@ class SurfacePlacement:
                         raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")
                     if item.disposition == "thinned" and item.reason != "label-does-not-fit":
                         raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")
+                    if item.secondary_disposition is None:
+                        secondary_valid = item.secondary_label is None and item.secondary_reason is None
+                    elif item.secondary_disposition == "placed":
+                        secondary_valid = (item.disposition == "placed" and item.label_fits
+                                           and item.secondary_label is not None and item.secondary_reason is None)
+                    else:
+                        secondary_valid = (item.disposition == "placed" and item.secondary_disposition == "omitted"
+                                           and item.secondary_label is not None
+                                           and item.secondary_reason in {"does-not-fit", "primary-does-not-fit"})
+                    if not secondary_valid:
+                        raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")
             elif outcome.label_form is not None or outcome.name_table_id is not None or any(item.label is not None or item.label_fits is not None
                                                        or item.disposition != "not-applicable" or item.reason is not None
+                                                       or item.secondary_label is not None or item.secondary_disposition is not None
+                                                       or item.secondary_reason is not None
                                                        for item in outcome.intervals):
                 raise ValueError(f"E_LAYOUT_AXIS_OUTCOME_INVALID:{outcome.tier_index}")
             identifiers = tuple(item.candidate_id for item in outcome.intervals)
