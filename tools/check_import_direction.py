@@ -47,10 +47,13 @@ ALLOWED: dict[str, set[str]] = {
 # presentation, scheduling, storage or operational code directly. One named module outside those packages is allowed
 # (#813): the tool core and the command line call the same dispatch of the revision-bound Store commands,
 # `chrona.operational.store_commands`; it cannot be a use case because `operational` imports `usecases`, and a tool
-# still cannot import the command engine or any other `operational` module.
+# still cannot import the command engine or any other `operational` module. A second named module is allowed for the
+# read side (#812): `chrona.operational.store_reads` (choose the reader of the Store a reference names, with the
+# configured integrity; compare a baseline), shared with the command line for the same reason; the Render Context
+# closure it cannot hold (`operational` may not import `presentation`) is a use case, `usecases.context_review`.
 MODULE_RULES: dict[str, dict[str, set[str]]] = {
     "chrona.app.agent_": {"packages": {"usecases", "resources"}, "core_modules": {"chrona.core.store_address"},
-                          "modules": {"chrona.operational.store_commands"}},
+                          "modules": {"chrona.operational.store_commands", "chrona.operational.store_reads"}},
     "chrona.app.mcp_server": {"packages": {"usecases", "resources"}, "core_modules": {"chrona.core.store_address"}},
 }
 

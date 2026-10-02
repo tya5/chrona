@@ -109,7 +109,8 @@ def test_the_real_tool_core_imports_only_use_cases_the_path_guard_the_validator_
         "chrona.app.agent_workspace", "chrona.core.store_address", "chrona.resources", "chrona.operational.store_commands"}
 
 
-OPERATIONAL = {**PRODUCT, "operational/store_commands.py": "Q = 1\n", "operational/command_engine.py": "E = 1\n"}
+OPERATIONAL = {**PRODUCT, "operational/store_commands.py": "Q = 1\n", "operational/command_engine.py": "E = 1\n",
+               "operational/store_reads.py": "R = 1\n", "operational/baselines.py": "B = 1\n"}
 
 
 def test_the_tool_core_may_import_the_one_shared_store_command_module(tmp_path, monkeypatch, capsys):
@@ -118,16 +119,24 @@ def test_the_tool_core_may_import_the_one_shared_store_command_module(tmp_path, 
     assert (code, out.splitlines()[-1].endswith("all inward")) == (0, True), out
 
 
+def test_the_tool_core_may_import_the_one_shared_store_read_module(tmp_path, monkeypatch, capsys):
+    code, out = _run(tmp_path, monkeypatch, capsys,
+                     {**OPERATIONAL, "app/agent_tools.py": "from chrona.operational.store_reads import R\n"})
+    assert (code, out.splitlines()[-1].endswith("all inward")) == (0, True), out
+
+
 @pytest.mark.parametrize("statement", [
     "from chrona.operational.command_engine import E", "from chrona.operational import store_commands",
-    "import chrona.operational.command_engine",
+    "import chrona.operational.command_engine", "from chrona.operational.baselines import B",
+    "from chrona.operational import store_reads",
 ])
 def test_no_other_operational_import_is_allowed_to_the_tool_core(tmp_path, monkeypatch, capsys, statement):
     code, out = _run(tmp_path, monkeypatch, capsys, {**OPERATIONAL, "app/agent_tools.py": statement + "\n"})
     assert code == 1 and "chrona.app.agent_tools must not import chrona.operational" in out
 
 
-def test_the_binding_gets_no_operational_edge(tmp_path, monkeypatch, capsys):
+@pytest.mark.parametrize("module", ["store_commands", "store_reads"])
+def test_the_binding_gets_no_operational_edge(tmp_path, monkeypatch, capsys, module):
     code, out = _run(tmp_path, monkeypatch, capsys,
-                     {**OPERATIONAL, "app/mcp_server.py": "from chrona.operational.store_commands import Q\n"})
-    assert code == 1 and "chrona.app.mcp_server must not import chrona.operational.store_commands" in out
+                     {**OPERATIONAL, "app/mcp_server.py": f"from chrona.operational.{module} import Q\n"})
+    assert code == 1 and f"chrona.app.mcp_server must not import chrona.operational.{module}" in out
