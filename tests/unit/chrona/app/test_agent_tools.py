@@ -100,13 +100,14 @@ def cli(monkeypatch, capsys, cwd: Path, *arguments: str) -> tuple[int, str, str]
 
 # --- the registry --------------------------------------------------------------------------------------------
 
-def test_the_tool_set_is_the_four_read_only_tools_in_order():
-    assert [spec.name for spec in tool_specs()] == ["validate_project", "schedule_project", "render_draft", "list_presets"]
+def test_the_tool_set_is_four_read_only_tools_a_read_only_preview_and_one_writer_in_order():
+    assert [spec.name for spec in tool_specs()] == ["validate_project", "schedule_project", "render_draft", "list_presets", "check_command", "apply_command"]
     document = registry_document()
-    assert document["toolSet"] == "chrona/agent-tools/v0.2"
+    assert document["toolSet"] == "chrona/agent-tools/v0.3"
     assert [tool["name"] for tool in document["tools"]] == list(SPECS)
     for tool in document["tools"]:
-        assert tool["annotations"] == {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True,
+        writes = tool["name"] == "apply_command"
+        assert tool["annotations"] == {"readOnlyHint": not writes, "destructiveHint": writes, "idempotentHint": True,
                                        "openWorldHint": False}
         assert tool["description"] and tool["title"]
 
@@ -121,10 +122,11 @@ def test_every_schema_is_a_valid_closed_json_schema():
 
 
 def test_no_tool_accepts_an_integrity_font_or_filesystem_override():
-    # The first release offers exactly these inputs: nothing that lowers Store integrity, consults host fonts,
-    # reads an arbitrary descriptor, writes a file or names a typesetter.
+    # The tool set offers exactly these inputs: nothing that lowers Store integrity, consults host fonts,
+    # reads an arbitrary descriptor, names an output path or a Store root, or names a typesetter.
     assert {name: set(spec.input_schema["properties"]) for name, spec in SPECS.items()} == {
         "validate_project": {"project"}, "schedule_project": {"project"}, "list_presets": set(),
+        "check_command": {"command", "storeConfig"}, "apply_command": {"command", "storeConfig"},
         "render_draft": {"project", "actual", "preset", "view", "theme", "scheme", "layout", "viewport", "locale",
                          "format", "inline"},
     }
@@ -145,7 +147,7 @@ def test_the_registry_document_is_a_copy_not_the_live_schemas():
 
 def test_an_unknown_tool_is_a_protocol_error(scope):
     with pytest.raises(UnknownToolError):
-        call_tool(scope, "apply_command", {})
+        call_tool(scope, "approve_command", {})
 
 
 @pytest.mark.parametrize(("name", "arguments"), [

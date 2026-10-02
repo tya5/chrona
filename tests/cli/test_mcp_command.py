@@ -38,12 +38,12 @@ def test_list_tools_prints_the_registry_and_needs_no_sdk(monkeypatch, capsys):
     assert (code, err) == (0, "")
     assert json.loads(out) == registry_document()
     assert [tool["name"] for tool in json.loads(out)["tools"]] == [
-        "validate_project", "schedule_project", "render_draft", "list_presets"]
+        "validate_project", "schedule_project", "render_draft", "list_presets", "check_command", "apply_command"]
 
 
 def test_list_tools_validates_an_explicit_workspace(monkeypatch, capsys, tmp_path):
     code, out, _ = run_main(monkeypatch, capsys, "--list-tools", "--workspace", str(tmp_path))
-    assert code == 0 and json.loads(out)["toolSet"] == "chrona/agent-tools/v0.2"
+    assert code == 0 and json.loads(out)["toolSet"] == "chrona/agent-tools/v0.3"
     code, out, _ = run_main(monkeypatch, capsys, "--list-tools", "--workspace", str(tmp_path / "absent"))
     assert code == 2 and json.loads(out)["diagnostics"][0]["code"] == "E_INPUT_IO"
     code, out, _ = run_main(monkeypatch, capsys, "--list-tools", "--workspace", str(Path(tmp_path.anchor)))
@@ -80,12 +80,23 @@ def test_the_sdk_check_is_false_when_the_package_is_blocked(monkeypatch):
 def test_serving_hands_the_workspace_to_the_binding(monkeypatch, capsys, tmp_path):
     served: list[object] = []
     binding = types.ModuleType("chrona.app.mcp_server")
-    binding.serve = served.append
+    binding.serve = lambda workspace, *, allow_write=False: served.append((workspace, allow_write))
     monkeypatch.setitem(sys.modules, "chrona.app.mcp_server", binding)
     monkeypatch.setattr(cli, "_mcp_sdk_installed", lambda: True)
     assert run_main(monkeypatch, capsys, "--workspace", str(tmp_path)) == (0, "", "")
     assert run_main(monkeypatch, capsys) == (0, "", "")
-    assert served == [str(tmp_path), "."]
+    assert run_main(monkeypatch, capsys, "--allow-write", "--workspace", str(tmp_path)) == (0, "", "")
+    assert served == [(str(tmp_path), False), (".", False), (str(tmp_path), True)]
+
+
+def test_allow_write_is_a_flag_with_no_value_and_defaults_off(monkeypatch, capsys):
+    served: list[object] = []
+    binding = types.ModuleType("chrona.app.mcp_server")
+    binding.serve = lambda workspace, *, allow_write=False: served.append(allow_write)
+    monkeypatch.setitem(sys.modules, "chrona.app.mcp_server", binding)
+    monkeypatch.setattr(cli, "_mcp_sdk_installed", lambda: True)
+    assert run_main(monkeypatch, capsys, "--allow-write=yes")[0] == 2 and served == []
+    assert run_main(monkeypatch, capsys, "--allow-write")[0] == 0 and served == [True]
 
 
 def test_the_module_entry_point_lists_tools_without_the_sdk(tmp_path):

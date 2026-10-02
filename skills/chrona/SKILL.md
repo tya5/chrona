@@ -77,9 +77,13 @@ the same diagnostics as JSON. Otherwise use the commands. Read a result's `statu
 | `schedule_project` | `chrona schedule` | Placements, critical path and `W_DEADLINE` warnings; also rejects a date or bound the dependencies contradict. |
 | `render_draft` | `chrona render` | A PNG preview, or the SVG with `inline: svg`; writes no file. |
 | `list_presets` | `chrona preset list` | The ids `render_draft` takes as `preset`. |
+| `check_command` | `chrona command-check` | Previews a Store command (an Actual intake batch or a baseline capture); writes nothing. |
+| `apply_command` | `chrona command-apply` | Applies that command to the Store. It runs only if the user started the server with `--allow-write`. |
 
-The tools never write the plan. Edit `project.yaml` with your own file tools, then call
-them again.
+No tool writes the plan. Edit `project.yaml` with your own file tools, then call the
+tools again. `apply_command` changes a Store, never the plan, and has no approval step of
+its own: apply only what the user asked for. A stale `baseRevision` is rejected, a repeated
+`commandId` is a no-op, and nothing is overwritten.
 
 ## The model in five lines
 

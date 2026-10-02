@@ -15,6 +15,7 @@ TOOL_LIKE = re.compile(r"`((?:validate|schedule|render|list|compare|apply|check|
 EQUIVALENT_COMMANDS = {
     "validate_project": "chrona validate", "schedule_project": "chrona schedule",
     "render_draft": "chrona render", "list_presets": "chrona preset list",
+    "check_command": "chrona command-check", "apply_command": "chrona command-apply",
 }
 
 

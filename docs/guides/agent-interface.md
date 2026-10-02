@@ -46,10 +46,10 @@ directory with the new one.
 
 ## Use chrona from an MCP client
 
-The same plan-and-draw loop is also available as a small, read-only MCP server for a host that speaks the
+The same plan-and-draw loop is also available as a small MCP server for a host that speaks the
 [Model Context Protocol](https://modelcontextprotocol.io/) over standard input and output (a chat client or an
-agent host that has no shell). The server is optional: install the extra with the SDK it needs, and add `render`
-for PNG previews.
+agent host that has no shell). It is read-only unless you start it with `--allow-write` (see below). The server is
+optional: install the extra with the SDK it needs, and add `render` for PNG previews.
 
 ```bash
 pip install 'chrona[mcp,render]'
@@ -75,6 +75,31 @@ chrona mcp --workspace .
 
 Without `--workspace` the current directory is the workspace. A filesystem root is refused.
 
+### Letting the agent write a Store
+
+By default the server writes nothing. Two tools take a Store command, an Actual intake batch or a named baseline
+capture: `check_command` previews one and never writes, and `apply_command` applies it. `apply_command` is refused with
+`E_MCP_WRITE_DISABLED` unless you start the server with `--allow-write`. That flag is configuration, not approval: chrona
+adds no approval step of its own, so the agent applies a command the moment it calls the tool, and whether your host
+asks you first is the host's setting. Start it only for a workspace whose Store you are willing to let the agent change:
+
+<!-- chrona:doc-check skip: starts a server that reads standard input until the host closes it -->
+```bash
+chrona mcp --workspace . --allow-write
+```
+
+What protects the Store is not authorization but integrity, and it is the same as `chrona command-apply`:
+
+- a stale `baseRevision` is rejected (compare-and-set), so two agents cannot silently overwrite each other;
+- a command is identified by its `commandId`: sending the same command again is a no-op that returns the first result
+  (`replayed: true`), and reusing the id for a different command is rejected;
+- nothing is overwritten: an existing baseline name and different facts for an existing external key are rejected;
+- every write is a new immutable Store revision, so an earlier one can be inspected and written back.
+
+The Command Request is a file in the workspace (`command`), the Store is named by a configuration file (`storeConfig`,
+default `.chrona/store.yaml`), and every Store root in that file must lie inside the workspace. The result carries the
+same Automation Result the command line writes to `--result`.
+
 ### What the server offers
 
 | Tool | Same as | What it returns |
@@ -83,6 +108,8 @@ Without `--workspace` the current directory is the workspace. A filesystem root 
 | `schedule_project` | `chrona schedule` | The computed placements, the critical path and any `W_DEADLINE` warnings; a fixed date or bound the dependencies contradict is rejected here, and a cycle as in `validate_project`. |
 | `render_draft` | `chrona render` | A PNG preview (or the SVG text with `inline: svg`), the content identity and any warnings. It writes no file. |
 | `list_presets` | `chrona preset list` | The builtin preset ids `render_draft` accepts. |
+| `check_command` | `chrona command-check` | Previews an Actual intake or baseline capture command against its Store; writes nothing. |
+| `apply_command` | `chrona command-apply` | Applies it. Refused unless the server was started with `--allow-write`; no approval step. |
 
 Every result carries a `status`: `ok`, `rejected` (the plan is refused: read each diagnostic's `code` and
 `sourceRef`) or `failed` (the call could not run, for example a path outside the workspace). A rejection is a
@@ -93,9 +120,12 @@ the same guidance.
 ### Limits
 
 - Every path is relative to the workspace and must name an existing file inside it: no `..`, no absolute path,
-  no symlink that leaves the workspace, no input over 2 MiB. The server never writes a file.
-- The first release has no tool that changes anything (no authoring command, no baseline) and no tool that reads a
-  Store. Use the command line for those.
+  no symlink that leaves the workspace, no input over 2 MiB. The only file the server writes is the Store that
+  `apply_command` changes, and only with `--allow-write`; it never writes a plan, a picture or a path you name.
+- `apply_command` takes an Actual intake batch and a baseline capture only. It has no authoring command, no resolve
+  command and no revert command, and there is no tool that reads a Store. Use the command line for those.
+- One writer per Store: the server handles its own calls one at a time, but a command line and a server writing one
+  Store at the same moment are not guaranteed to be safe.
 - A render cannot be cancelled and takes a few seconds for a large plan; calls are handled one at a time. An inline
   image over 1.5 MiB (SVG over 1 MiB) is refused: lower the viewport or render to a file with `chrona render`.
 - PNG needs the `render` extra. Without it `render_draft` still answers and reports `pngAvailable: false`.

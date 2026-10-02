@@ -2,29 +2,16 @@
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 
 import pytest
 import yaml
 
-from chrona.app.cli import main
 from chrona.operational.resources import parse_command
 from chrona.operational.store_commands import (
     OPERATIONS, REQUIRED_TYPE, StoreRootOutsideWorkspace, open_store_reader, run_store_command,
 )
-from tests.support.store_workspace import StoreWorkspace
-
-
-def _cli(monkeypatch, capsys, cwd: Path, *arguments: str) -> tuple[int, str]:
-    monkeypatch.chdir(cwd)
-    monkeypatch.setattr(sys, "argv", ["chrona", *arguments])
-    code = 0
-    try:
-        main()
-    except SystemExit as error:
-        code = error.code if isinstance(error.code, int) else 0
-    return code, capsys.readouterr().out
+from tests.support.store_workspace import StoreWorkspace, run_cli
 
 
 def test_the_operations_are_the_five_command_line_commands():
@@ -77,7 +64,7 @@ def test_the_command_line_and_the_shared_function_return_the_same_bytes(tmp_path
     for work in (cli_side, function_side):
         work.write_command("c1.yaml", work.intake("c1", work.batch("b1")))
 
-    code, _ = _cli(monkeypatch, capsys, cli_side.root, "command-apply", "--command", "commands/c1.yaml",
+    code, _ = run_cli(monkeypatch, capsys, cli_side.root, "command-apply", "--command", "commands/c1.yaml",
                    "--store-config", ".chrona/store.yaml", "--result", "result.json")
     command = parse_command((function_side.root / "commands" / "c1.yaml").read_text(encoding="utf-8"))
     result = run_store_command("command-apply", command, open_store_reader(function_side.config))
