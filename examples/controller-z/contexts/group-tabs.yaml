@@ -1,51 +1,50 @@
 version: chrona/render-context/v0.17
 kind: render-context
-id: halcyon-1-20-gallery-group-tabs
+id: controller-z-group-tabs
 body:
   project:
-    id: halcyon-1
+    id: controller-z-silicon-bringup
     kind: project
     store:
       provider: local
-      identity: halcyon-1-example
+      identity: controller-z-example
     address: project.yaml
     revision:
-      token: example-v4
-    contentIdentity: sha256:c5587b3a835de585f4220ffa98ebcb1e534c950ffd81ecc7323cd359206caaec
+      token: example-v1
   view:
-    id: halcyon-20-gallery-group-tabs
+    id: controller-z-group-tabs
     kind: view
     store:
       provider: local
-      identity: halcyon-1-example
-    address: views/20-gallery-group-tabs.yaml
+      identity: controller-z-example
+    address: views/group-tabs.yaml
     revision:
       token: example-v1
   theme:
-    id: wallboard-group-tabs
+    id: group-tabs
     kind: theme
     store:
       provider: local
-      identity: halcyon-1-example
-    address: themes/wallboard-group-tabs.yaml
+      identity: controller-z-example
+    address: themes/group-tabs.yaml
     revision:
       token: example-v1
   colorScheme:
-    id: control-room-dark
+    id: title-card-dark
     kind: color-scheme
     store:
       provider: local
-      identity: halcyon-1-example
-    address: schemes/control-room-dark.yaml
+      identity: controller-z-example
+    address: schemes/title-card-dark.yaml
     revision:
       token: example-v1
   layout:
-    id: wallboard-programme-board
+    id: executive-review
     kind: layout-profile
     store:
       provider: local
-      identity: halcyon-1-example
-    address: layouts/wallboard-programme-board.yaml
+      identity: controller-z-example
+    address: layouts/executive-review.yaml
     revision:
       token: example-v1
   inputs:
@@ -60,36 +59,27 @@ body:
         token: v2026-10
       contentIdentity: sha256:22fb3e80b35568bf3cbd55f94c0af715b8606322547b5e81a0254009ca45d1dc
     actual:
-      id: halcyon-1-observed-2027-08-20
+      id: controller-z-observed
       kind: actual-set
       store:
         provider: local
-        identity: halcyon-1-example
+        identity: controller-z-example
       address: actual.yaml
       revision:
         token: example-v1
-    summaryProfile:
-      id: halcyon-countdown-figures
-      kind: summary-profile
-      store:
-        provider: local
-        identity: halcyon-1-example
-      address: profiles/summary-countdown.yaml
-      revision:
-        token: example-v1
     detailProfile:
-      id: halcyon-board-legend
+      id: controller-z-review-detail
       kind: review-detail-profile
       store:
         provider: local
-        identity: halcyon-1-example
-      address: profiles/detail.yaml
+        identity: controller-z-example
+      address: profiles/review-detail.yaml
       revision:
         token: example-v1
   environment:
     viewport:
-      inlineSize: 1920
-      blockSize: 1080
+      inlineSize: 1600
+      blockSize: 900
     locale: en-US
     fontMetrics:
       algorithm: declared-metrics-v3

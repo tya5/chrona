@@ -175,6 +175,38 @@ def test_the_text_is_bounded_by_the_room_the_tab_and_its_gap_leave_and_the_sourc
     assert _ellipsized(plain) == set()
 
 
+def test_layout_marks_the_shortened_header_text_ellipsized_and_the_others_fit(tmp_path, monkeypatch):
+    from chrona.presentation.scene import v05_builder
+
+    placed = []
+    real = v05_builder.compose_surface_layout
+    monkeypatch.setattr(v05_builder, "compose_surface_layout", lambda request: placed.append(real(request)) or placed[-1])
+    title = "Title " * 6
+    header = _headers(_render(tmp_path, _parts(declare=False), _source(title)))["bus"]
+    (tmp_path / "tab").mkdir()
+    placed.clear()
+    _render(tmp_path / "tab", _parts(inline=header[2] - 200, gap=10), _source(title))
+    (tmp_path / "fit").mkdir()
+    placed_tab = placed[-1]
+    _render(tmp_path / "fit", _parts(), _source())
+
+    def dispositions(composition) -> set[tuple[str, str]]:
+        return {(item.placement_id, item.overflow) for item in composition.placement.text
+                if item.placement_id.startswith("group-header:")}
+
+    assert {overflow for _, overflow in dispositions(placed_tab)} == {"ellipsized"}
+    assert {overflow for _, overflow in dispositions(placed[-1])} == {"fit"}
+
+
+def test_a_header_without_a_tab_keeps_its_text_whatever_its_width(tmp_path):
+    title = "Title " * 400  # far wider than the header: today's unbounded text, with or without the role
+    plain = _render(tmp_path, _parts(declare=False), _source(title))
+
+    assert _by_id(plain)["group-header:bus"].text == title
+    assert _by_id(plain)["group-header:bus"].bounds[2] > _headers(plain)["bus"][2]
+    assert _ellipsized(plain) == set()
+
+
 def test_a_title_that_fits_beside_the_tab_is_not_shortened(tmp_path):
     tabbed = _render(tmp_path, _parts())
 

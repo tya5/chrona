@@ -148,6 +148,8 @@ def test_one_tab_per_header_in_group_order_with_the_role_paint_order_and_no_tab_
 
     assert [(item.placement_id, item.source_ref, item.semantic_id, item.kind, item.paint_order) for item in shapes] == [
         ("group-tab:a", "a", "groupTab", "Rect", 20), ("group-tab:b", "b", "groupTab", "Rect", 20)]
+    # The header spans table and timeline, so the tab belongs to the combined review-surface slot, as a `both` band does.
+    assert {item.slot_id for item in shapes} == {"review-surface"}
 
 
 def test_the_theme_without_the_role_composes_no_tab():

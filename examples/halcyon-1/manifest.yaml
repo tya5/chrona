@@ -98,8 +98,3 @@ slides:
     context: contexts/19-gallery-text-compression.yaml
     expectedSvg: generated/19-gallery-text-compression.svg
     expectedScene: generated/19-gallery-text-compression.scene.json
-  - id: gallery-group-tabs
-    evidence: "Programme board group headers numbered and tabbed in the Title Card manner (#882): a zero-padded ordinal from the View header template and a 56 px hazard-stripe tab from the Theme role group-tab (catalogue pattern, size, gap), as a new View id, Theme and Context over the 02-programme-board sources, no corpus datum edited."
-    context: contexts/20-gallery-group-tabs.yaml
-    expectedSvg: generated/20-gallery-group-tabs.svg
-    expectedScene: generated/20-gallery-group-tabs.scene.json
