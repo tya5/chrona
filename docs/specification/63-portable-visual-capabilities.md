@@ -18,11 +18,12 @@ The initial v0.6 vocabulary is closed:
 
 - `paint.linear-gradient` (exactly two ordered stops);
 - `effect.drop-shadow` (one layer, finite offsets, blur `0..64`, opacity `0..1`);
+- `effect.glow` (#587: one centred halo, blur `(0, 64]` as a standard deviation in px, opacity `0..1`);
 - `stroke.line-cap` / `stroke.line-join` (closed values `butt|round|square` and
   `miter|round|bevel`).
 
 No raw SVG/XML/CSS, transform, arbitrary definition, filter graph, rectangular
-or path clip, mask, blend, generic image, radial gradient, glow/blur, animation,
+or path clip, mask, blend, generic image, radial gradient, general blur, animation,
 script, HTML, or network asset is admitted. A future target cannot make a
 deferred capability available by silently interpreting package data.
 
@@ -56,15 +57,15 @@ IDs and limits; it is an immutable evaluation input. The valid identifiers are:
 | Profile | Target | Supported capability IDs |
 | --- | --- | --- |
 | `chrona-output/visual/v0.5-baseline` | SVG, PNG, PDF, Typst, TikZ | none |
-| `chrona-output/visual/v0.6-svg` | SVG | all initial v0.6 IDs |
-| `chrona-output/visual/v0.6-png` | PNG through pinned resvg | all initial v0.6 IDs |
+| `chrona-output/visual/v0.6-svg` | SVG | all initial v0.6 IDs and `effect.glow` |
+| `chrona-output/visual/v0.6-png` | PNG through pinned resvg | all initial v0.6 IDs and `effect.glow` |
 
 PDF, Typst, and TikZ have no v0.6 profile. PDF's current svglib/ReportLab route
 does not preserve the required drop-shadow; it must reject a rich profile before
 serialization rather than silently dropping treatment. A future PDF profile
 requires independent per-capability evidence and a new profile identifier.
 
-Each requested gradient, shadow, and stroke finish independently declares either
+Each requested gradient, shadow, glow, and stroke finish independently declares either
 `required` or `decorative-optional`; it is not one role-wide value. A baseline
 profile permits deterministic omission only for an unsupported
 `decorative-optional` treatment.
@@ -127,3 +128,26 @@ and source-observation evidence are published in the
 [presentation capability prior-art matrix](../research/presentation/presentation-capability-prior-art.md).
 The matrix is review evidence only: it cannot configure a profile, adapter, or
 presentation resource.
+
+## 7. Glow (#587)
+
+A Theme role that admits a shadow admits a glow: the properties `glowColor` (a
+Color Scheme binding `<role>.glowColor`), `glowBlur` (`0 < blur <= 64`),
+`glowOpacity` (`0..1`) and `glowFidelity` (`required` or `decorative-optional`).
+Colour, blur and opacity are declared together or not at all
+(`E_VISUAL_CAPABILITY_VALUE` at `glowBlur`); out-of-range values are
+`E_VISUAL_CAPABILITY_LIMIT`; a role declares a shadow or a glow, not both
+(`E_VISUAL_CAPABILITY_VALUE`). The canvas, Icon-shared and shared `text` roles do
+not admit it. Scene completes `Glow(color, blur, opacity, fidelity, region)`:
+`region` is the primitive's visible extent (for a Path, the box of its points)
+grown by three blur on every side and intersected with the canvas, so the halo
+never leaves the slide and is no part of the primitive's bounds, collision or
+hosting. `effect.glow` is in the rich profiles (`v0.6-svg`, `v0.6-png`, `v0.7-svg`,
+`v0.7-png`) and not in the baseline: a `decorative-optional` glow is omitted there
+with `I_VISUAL_TREATMENT_OMITTED:...;treatment=glow;...;paintable=<first rich
+profile of the target>`, a `required` glow is `E_VISUAL_CAPABILITY_UNSUPPORTED`
+at `/body/roles/<role>/glowBlur`. SVG draws it as one filter per glowing element
+over `region` (`filterUnits="userSpaceOnUse"`): the Gaussian-blurred alpha,
+flooded with the colour at the opacity, merged twice under the source graphic;
+PNG is that SVG through resvg. The drop-shadow filter is unchanged. A Scene that
+carries a glow is written as `chrona/scene/v0.7` (optional `paint.glow`).

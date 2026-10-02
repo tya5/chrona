@@ -8,9 +8,9 @@ from typing import Mapping
 
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
 from chrona.presentation.model.info_diagnostics import PaintOmission
-from chrona.presentation.scene.model import DropShadow, LinearGradient, SceneIconPath, ScenePaint, StrokeFinish
+from chrona.presentation.scene.model import DropShadow, Glow, LinearGradient, SceneIconPath, ScenePaint, StrokeFinish
 from chrona.presentation.scene.visual_capabilities import (
-    DROP_SHADOW, LINEAR_GRADIENT, LINE_CAP, LINE_JOIN,
+    DROP_SHADOW, GLOW, LINEAR_GRADIENT, LINE_CAP, LINE_JOIN,
     VisualProfile, first_supporting_visual_profile,
 )
 
@@ -43,6 +43,8 @@ class PaintResolution:
 def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
                         *, visual_profile: VisualProfile | None = None,
                         gradient_bounds: tuple[float, float, float, float] | None = None,
+                        glow_extent: tuple[float, float, float, float] | None = None,
+                        canvas_bounds: tuple[float, float, float, float] | None = None,
                         part_mode: str | None = None, part_color: str | None = None,
                         catalog_pattern: bool = False,
                         catalog_glyph_stroke_width: float | None = None,
@@ -85,13 +87,14 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
     try:
         gradient, gradient_omitted = _gradient(tokens, role, visual_profile, gradient_bounds)
         shadow, shadow_omitted = _shadow(tokens, role, visual_profile)
+        glow, glow_omitted = _glow(tokens, role, visual_profile, glow_extent, canvas_bounds, shadow is not None or shadow_omitted)
         finish, finish_omitted = _stroke_finish(tokens, role, visual_profile)
     except ThemeTokenError as error:
         raise ScenePaintError(error.diagnostic_id, error.path) from error
     if family == PaintFamily.OUTLINE:
         fill = None
     paint = ScenePaint(fill, stroke, float(width) if width is not None else None, dash,
-                       1.0 if opacity is None else float(opacity), gradient, shadow, finish)
+                       1.0 if opacity is None else float(opacity), gradient, shadow, finish, glow=glow)
     if part_mode is not None:
         if part_mode not in {"fill", "stroke"}:
             raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", path)
@@ -116,6 +119,7 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
                       for omitted, treatment, property_name, required in (
                           (gradient_omitted, "linear-gradient", "gradientAngle", frozenset((LINEAR_GRADIENT,))),
                           (shadow_omitted, "drop-shadow", "shadowBlur", frozenset((DROP_SHADOW,))),
+                          (glow_omitted, "glow", "glowBlur", frozenset((GLOW,))),
                           (finish_omitted, "stroke-finish", "strokeLineCap", frozenset((LINE_CAP, LINE_JOIN))),
                       ) if omitted)
     return PaintResolution(paint, omissions)
@@ -216,6 +220,39 @@ def _shadow(tokens: ThemeTokenView, role: str, profile: VisualProfile | None) ->
                   f"/body/roles/{role}/shadowBlur"):
         return None, True
     return DropShadow(color, float(values[0]), float(values[1]), float(values[2]), float(values[3]), fidelity), False
+
+
+def _glow(tokens: ThemeTokenView, role: str, profile: VisualProfile | None,
+          extent: tuple[float, float, float, float] | None,
+          canvas: tuple[float, float, float, float] | None,
+          has_shadow: bool) -> tuple[Glow | None, bool]:
+    color = tokens.optional_color(role, "glowColor")
+    blur, opacity = tokens.optional_number(role, "glowBlur"), tokens.optional_number(role, "glowOpacity")
+    if color is None and blur is None and opacity is None:
+        return None, False
+    pointer = f"/body/roles/{role}/glowBlur"
+    if color is None or blur is None or opacity is None:
+        raise ScenePaintError("E_VISUAL_CAPABILITY_VALUE", pointer,
+                              "glowColor, glowBlur, and glowOpacity must be declared together")
+    if has_shadow:
+        raise ScenePaintError("E_VISUAL_CAPABILITY_VALUE", pointer,
+                              "a role declares a shadow or a glow, not both")
+    if not 0 < float(blur) <= 64:
+        raise ScenePaintError("E_VISUAL_CAPABILITY_LIMIT", pointer, f"glowBlur {float(blur):g} must be in (0, 64]")
+    if not 0 <= float(opacity) <= 1:
+        raise ScenePaintError("E_VISUAL_CAPABILITY_LIMIT", f"/body/roles/{role}/glowOpacity",
+                              f"glowOpacity {float(opacity):g} must be in [0, 1]")
+    fidelity = _fidelity(tokens, role, "glowFidelity")
+    if not _admit(profile, frozenset((GLOW,)), fidelity, pointer):
+        return None, True
+    if extent is None or canvas is None:
+        raise ScenePaintError("E_VISUAL_CAPABILITY_VALUE", pointer, "glow extent and canvas are required for a declared glow")
+    reach = 3 * float(blur)
+    left, top = max(canvas[0], extent[0] - reach), max(canvas[1], extent[1] - reach)
+    right = min(canvas[0] + canvas[2], extent[0] + extent[2] + reach)
+    bottom = min(canvas[1] + canvas[3], extent[1] + extent[3] + reach)
+    region = (left, top, max(0.0, right - left), max(0.0, bottom - top))
+    return Glow(color, float(blur), float(opacity), fidelity, region), False
 
 
 def _stroke_finish(tokens: ThemeTokenView, role: str, profile: VisualProfile | None) -> tuple[StrokeFinish | None, bool]:

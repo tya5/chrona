@@ -29,7 +29,7 @@ CURATED_MESSAGES: Mapping[str, str] = {
     ),
     "E_SCHEME_THEME_BINDING": (
         "a Color Scheme colorBindings target names an unsupported property; "
-        "use fill, stroke, gradientStart, gradientEnd or shadowColor"
+        "use fill, stroke, gradientStart, gradientEnd, shadowColor or glowColor"
     ),
     "E_THEME_ROLE_PROPERTY_UNSUPPORTED": (
         "a Theme role binds a property that no drawing rule reads; remove it or bind a supported property"

@@ -59,6 +59,7 @@ class ScenePaint:
     shadow: "DropShadow | None" = None
     stroke_finish: "StrokeFinish | None" = None
     image: "ImageFill | None" = None
+    glow: "Glow | None" = None
 
 
 @dataclass(frozen=True)
@@ -104,6 +105,22 @@ class DropShadow:
     blur: float
     opacity: float
     fidelity: str
+
+
+@dataclass(frozen=True)
+class Glow:
+    """A completed halo of colour around a primitive (#587).
+
+    ``region`` is the primitive's visible extent grown by three blur on every side and
+    clipped to the canvas, completed by Scene: the halo never leaves the slide and is no
+    part of the primitive's bounds. Adapters serialize it and decide nothing.
+    """
+
+    color: str
+    blur: float
+    opacity: float
+    fidelity: str
+    region: tuple[float, float, float, float]
 
 
 @dataclass(frozen=True)

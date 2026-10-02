@@ -48,6 +48,8 @@ def render_v05_svg(surface: SceneSurface) -> str:
                 result.extend((f'stroke-linecap="{paint.stroke_finish.line_cap}"', f'stroke-linejoin="{paint.stroke_finish.line_join}"'))
         if paint.shadow is not None:
             result.append(f'filter="url(#{shadow_id(paint)})"')
+        if paint.glow is not None:
+            result.append(f'filter="url(#{glow_id(paint)})"')
         return " ".join(result)
     def gradient_id(paint: ScenePaint) -> str:
         assert paint.gradient is not None
@@ -56,6 +58,9 @@ def render_v05_svg(surface: SceneSurface) -> str:
     def shadow_id(paint: ScenePaint) -> str:
         assert paint.shadow is not None
         return "shadow-" + sha256(repr(paint.shadow).encode()).hexdigest()[:12]
+    def glow_id(paint: ScenePaint) -> str:
+        assert paint.glow is not None
+        return "glow-" + sha256(repr(paint.glow).encode()).hexdigest()[:12]
     def commands_data(commands: tuple[object, ...]) -> str:
         parts: list[str] = []
         for command in commands:
@@ -123,9 +128,10 @@ def render_v05_svg(surface: SceneSurface) -> str:
     paints = (surface.canvas_paint, *(completed(node) for node in surface.primitives))
     gradients = {gradient_id(paint): paint.gradient for paint in paints if paint.gradient}
     shadows = {shadow_id(paint): paint.shadow for paint in paints if paint.shadow}
+    glows = {glow_id(paint): paint.glow for paint in paints if paint.glow}
     clip_hosts = {node.scene_id: node for node in surface.primitives
                   if any(item.clip_source_id == node.scene_id for item in surface.primitives)}
-    if marker_pairs or patterns or gradients or shadows or clip_hosts:
+    if marker_pairs or patterns or gradients or shadows or glows or clip_hosts:
         definitions: list[str] = []
         for color, marker in sorted(marker_pairs, key=repr):
             if color is None or marker is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
@@ -150,6 +156,15 @@ def render_v05_svg(surface: SceneSurface) -> str:
         for identifier, shadow in sorted(shadows.items()):
             assert shadow is not None
             definitions.append(f'<filter id="{identifier}"><feDropShadow dx="{number(shadow.offset_x)}" dy="{number(shadow.offset_y)}" stdDeviation="{number(shadow.blur)}" flood-color="{escape(shadow.color, quote=True)}" flood-opacity="{number(shadow.opacity)}"/></filter>')
+        for identifier, glow in sorted(glows.items()):
+            assert glow is not None
+            x, y, w, h = glow.region
+            definitions.append(
+                f'<filter id="{identifier}" filterUnits="userSpaceOnUse" x="{number(x)}" y="{number(y)}" '
+                f'width="{number(w)}" height="{number(h)}"><feGaussianBlur in="SourceAlpha" stdDeviation="{number(glow.blur)}" result="halo-blur"/>'
+                f'<feFlood flood-color="{escape(glow.color, quote=True)}" flood-opacity="{number(glow.opacity)}"/>'
+                '<feComposite in2="halo-blur" operator="in" result="halo"/>'
+                '<feMerge><feMergeNode in="halo"/><feMergeNode in="halo"/><feMergeNode in="SourceGraphic"/></feMerge></filter>')
         for identifier, host in sorted(clip_hosts.items()):
             if host.kind not in {"Rect", "Symbol"}:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")

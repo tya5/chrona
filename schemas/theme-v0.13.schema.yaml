@@ -234,6 +234,9 @@ properties:
             strokeLineJoin: {description: "Named stroke-join token.", type: string, minLength: 1}
             gradientFidelity: {description: "Named gradient fidelity token.", type: string, minLength: 1}
             shadowFidelity: {description: "Named shadow fidelity token.", type: string, minLength: 1}
+            glowBlur: {description: "Named glow blur token (standard deviation in px, at most 64).", type: string, minLength: 1}
+            glowOpacity: {description: "Named glow opacity token.", type: string, minLength: 1}
+            glowFidelity: {description: "Named glow fidelity token.", type: string, minLength: 1}
             strokeFinishFidelity: {description: "Named stroke-finish fidelity token.", type: string, minLength: 1}
       colorBindings:
         type: object
@@ -243,6 +246,15 @@ properties:
         patternProperties:
           "^[A-Za-z][A-Za-z0-9._:-]*\\.(fill|stroke|gradientStart|gradientEnd|shadowColor)$":
             description: "Color Scheme intent selected for one fill or stroke role."
+            examples: [accent, "category:bus"]
+            anyOf:
+              - description: "One closed non-category Scheme intent."
+                enum: [surface, surfaceRaised, text, textMuted, accent, positive, negative, warning, neutral, insideLabelPlanned, insideLabelActual, insideLabelSnapshot, insideLabelScenario]
+              - description: "One explicit named category slot."
+                pattern: "^category:[A-Za-z][A-Za-z0-9_-]*$"
+                examples: ["category:bus"]
+          "^[A-Za-z][A-Za-z0-9._:-]*\\.glowColor$":
+            description: "Color Scheme intent selected for a glow colour (#587)."
             examples: [accent, "category:bus"]
             anyOf:
               - description: "One closed non-category Scheme intent."
