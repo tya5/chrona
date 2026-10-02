@@ -7,3 +7,8 @@ slides:
     evidence: "Japanese translation register with long title, table labels, plot labels, and ja-JP axis evidence measured by the optional CJK provider."
     expectedSvg: generated/executive.svg
     expectedScene: generated/executive.scene.json
+  - id: axis-secondary
+    evidence: "A month cell with two labels: the ja-JP month and, smaller beneath it, the upper-cased en-US month, both measured by the optional CJK provider and fitted to the cell from a View `label.secondary` and a Theme `axisSecondary` role (#493)."
+    context: contexts/axis-secondary.yaml
+    expectedSvg: generated/axis-secondary.svg
+    expectedScene: generated/axis-secondary.scene.json
