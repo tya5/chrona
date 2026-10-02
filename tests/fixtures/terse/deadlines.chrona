@@ -1,0 +1,15 @@
+terse 0.1
+project deadlines "Deadlines"
+calendar standard mon-fri
+
+# the clause is the last of the line, after `after`, and works on every kind
+design "Design" task 2027-03-01..2027-03-08 deadline 2027-03-05
+build "Build" task 10wd after design +1wd deadline 2027-03-31
+review "Review" gate after build +2d deadline 2027-04-30
+launch "Launch" gate 2027-05-07 after review deadline 2027-05-07
+phase "Phase" group deadline 2027-06-30
+  tests "Tests" task 5wd calendar standard after launch deadline 2027-05-21
+
+# `deadline` is a contextual keyword, not a reserved word: it can still name an object
+deadline "An object named deadline" task 3d after tests
+ship "Ship" gate after deadline deadline 2027-08-31

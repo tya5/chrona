@@ -45,7 +45,7 @@ LEDGER: dict[str, tuple[str, str]] = {
     "object.attachesTo": (YAML_ONLY, "presentation-adjacent metadata; never a scheduling edge"),
     "object.wbsCode": (YAML_ONLY, "the derived document order is the default"),
     "object.plannedProgress": (YAML_ONLY, "does not affect dates"),
-    "object.deadline": (YAML_ONLY, "a promise checked by W_DEADLINE, not a date"),
+    "object.deadline": (MAPPED, "`deadline D`, the last clause of an object line (a promise `W_DEADLINE` checks; it never schedules)"),
     "object.link": (YAML_ONLY, "two shapes; not schedule"),
     "object.link.href": (YAML_ONLY, "two shapes; not schedule"),
     "object.link.title": (YAML_ONLY, "two shapes; not schedule"),

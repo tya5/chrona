@@ -207,10 +207,13 @@ object   = NAME [ STRING ] KIND [ schedule ] [ "calendar" CAL ] [ after ] [ "dea
   recognised only where an object line may continue after its last clause, and a dependency name is still a name after `after`
   or a comma; so every plan that compiled yesterday compiles to the same Project (strictly additive, version stays 0.1), and the
   only newly accepted lines were errors before.
-- New normalisation **N8**: none beyond the clause (the date is emitted verbatim; Core validates it with `as_date`, so a
-  non-date that passes the lexical shape is `E_SCHEMA` positioned through the source map). New compiler behaviour reuses
-  `E_TERSE_DATE_INVALID` (shape or calendar), `E_TERSE_CLAUSE_DUPLICATE` (a second `deadline`) and `E_TERSE_LINE_INCOMPLETE`
-  (no date); no new code.
+- No new normalisation (the date is emitted verbatim). The lexer-level date check (`E_TERSE_DATE_INVALID`, shape or calendar)
+  already rejects every value Core's `as_date` would, so `E_SCHEMA` at `/objects/NAME/deadline` is unreachable from a terse
+  plan. The clause reuses `E_TERSE_DATE_INVALID`, `E_TERSE_CLAUSE_DUPLICATE` (a second `deadline`), `E_TERSE_LINE_INCOMPLETE`
+  (no date), `E_TERSE_TOKEN_UNEXPECTED` (a clause before `calendar` or `after`) and `E_TERSE_SCHEDULE_REQUIRED` (a deadline with
+  no schedule); no new code. The source map entry `/objects/NAME/deadline` positions the clause for any future Core finding at
+  that pointer; `W_DEADLINE` warnings carry no `sourceRange` for a terse plan today (the warnings channel has none), recorded as
+  a successor candidate.
 - Scope rule 1.1 (1) is amended: a construct belongs when it determines identity, hierarchy, dates or dependencies, **or is a
   date the plan states about the thing it names**. The ledger entry `object.deadline` becomes `mapped`
   ("`deadline D` clause"), the card's "cannot say" list drops deadlines, the mapping guide gains an executable pair, and the
@@ -316,4 +319,20 @@ the issue closed only when every row is met or narrowed with a successor link an
 
 ## 8. Progress and evidence
 
-Nothing implemented yet; this record is the first publication.
+### I822-1 (terse clause, implemented)
+
+- **Behaviour change: none by default.** A plan without the clause compiles to the same bytes (every committed golden is
+  unchanged); the clause only accepts lines that were errors before.
+- **Where.** `terse/parser.py` (`deadline` after `after`; groups too; `deadline` also counts as "no schedule words" so a lone
+  `deadline` is `E_TERSE_SCHEDULE_REQUIRED`; a clause before `calendar` or `after` gets the "last clause" hint), `terse/compiler.py`
+  (`deadline` after `schedule`, source map `/objects/NAME/deadline`), `terse/ledger.py` (`object.deadline` mapped), Specification 65
+  (status, scope rule 1.1, grammar 3.1, S10, L9 note, mapping, N-rules, source map 6.4, emitter key order), the card (still 120 lines:
+  the shape line, the statement bullet and the "cannot say" list), `docs/guides/terse-plan-mapping.md` (an executable pair).
+- **Tests.** `tests/unit/chrona/terse/test_deadline_clause.py` (12: mapping on every kind, key order, source map position, nothing
+  moves and exactly the missed promise warns, the word still names objects and dependencies, every earlier golden unchanged, each
+  error code, kind-specific hints, group refusals), golden pair `deadlines`, five negative fixtures, the ledger test and the fuzz
+  pool.
+- **Mutation checks (all 12 killed).** Clause value dropped; statement forgets it; compiler does not emit it; source map entry dropped;
+  `deadline` reserved; duplicate allowed; group ignores it; gate or task with only a deadline not `E_TERSE_SCHEDULE_REQUIRED` (the
+  gate case was first missed and is now covered by its kind-specific hint and position); hint always shown; ledger back to yaml-only;
+  date not checked.

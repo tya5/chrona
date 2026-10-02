@@ -32,10 +32,10 @@ terse 0.1
 project my-plan "My plan" calendar standard
 calendar standard mon-fri except 2027-04-02 2027-05-31
 
-# NAME "Title" KIND  schedule  [calendar CAL]  [after DEP, DEP ...]
+# NAME "Title" KIND  schedule  [calendar CAL]  [after DEP, DEP ...]  [deadline D]
 kickoff "Kickoff" gate 2027-03-01
 design "Design" task 10wd from 2027-03-02
-build "Build" task 20wd after design +1wd
+build "Build" task 20wd after design +1wd deadline 2027-05-14
 review "Design review" gate 2027-05-07 after design.start
 phase-2 "Phase 2" group
   tests "Tests" task 5wd after build
@@ -51,8 +51,8 @@ lines, then objects (objects may refer to objects defined later).
 - `calendar CAL DAYS [except DATE ...] [work DATE ...]`: `DAYS` is `mon-fri`, `mon-wed,fri`, `sat,sun`. `except` lists
   non-working dates, `work` extra working dates. With exactly one calendar it is the project default; with two or
   more, say which on the project line (`project p "P" calendar standard`) or on each object.
-- `NAME ["Title"] KIND SCHEDULE [calendar CAL] [after DEP, ...]` for an object; the parts come in that order
-  (`calendar CAL` before `after`). An object's `calendar CAL` overrides the project default for its own `wd` amounts.
+- `NAME ["Title"] KIND SCHEDULE [calendar CAL] [after DEP, ...] [deadline DATE]` for an object, in that order. Its `calendar CAL`
+  overrides the project default for its own `wd` amounts; `deadline DATE` moves nothing, and `schedule` lists a `W_DEADLINE` if it is missed.
 
 **NAME** (and calendar names): lower-case letters, digits, hyphens, starting with a letter (`bus-test`). It is the
 id forever; invent one for every object. Not allowed as a name: `terse project calendar task gate group
@@ -101,7 +101,7 @@ launch "Launch" gate at >= 2027-05-07 after review +2d  # the floor wins: 2027-0
 
 ## What the syntax cannot say
 
-Owners, teams, phases (`fields`), planned progress, deadlines, links, WBS codes, annotations, scenarios, other
+Owners, teams, phases (`fields`), planned progress, links, WBS codes, annotations, scenarios, other
 object types, presentation. When you need them: compile first, then edit `project.yaml` by hand.
 
 ## Frequent errors

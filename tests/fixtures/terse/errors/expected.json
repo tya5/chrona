@@ -59,6 +59,66 @@
    }
   }
  ],
+ "deadline-date-invalid": [
+  {
+   "code": "E_TERSE_DATE_INVALID",
+   "hint": true,
+   "sourceRange": {
+    "column": 44,
+    "endColumn": 54,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "deadline-duplicate": [
+  {
+   "code": "E_TERSE_CLAUSE_DUPLICATE",
+   "hint": true,
+   "sourceRange": {
+    "column": 55,
+    "endColumn": 63,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "deadline-incomplete": [
+  {
+   "code": "E_TERSE_LINE_INCOMPLETE",
+   "hint": true,
+   "sourceRange": {
+    "column": 43,
+    "endColumn": 44,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
+ "deadline-not-last": [
+  {
+   "code": "E_TERSE_TOKEN_UNEXPECTED",
+   "hint": true,
+   "sourceRange": {
+    "column": 35,
+    "endColumn": 40,
+    "endLine": 3,
+    "line": 3
+   }
+  }
+ ],
+ "deadline-without-schedule": [
+  {
+   "code": "E_TERSE_SCHEDULE_REQUIRED",
+   "hint": true,
+   "sourceRange": {
+    "column": 12,
+    "endColumn": 20,
+    "endLine": 2,
+    "line": 2
+   }
+  }
+ ],
  "derived-bound-after-date": [
   {
    "code": "E_TERSE_TOKEN_UNEXPECTED",

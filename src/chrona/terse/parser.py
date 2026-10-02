@@ -67,6 +67,7 @@ class ObjectStatement:
     calendar_range: SourceRange | None
     deps: list[Dep]
     parent: str | None
+    deadline: Item | None = None  # the `deadline D` clause: the date, ranged over the keyword and the date (#822)
 
 
 @dataclass
@@ -291,9 +292,11 @@ class _Parser:
                             version.range, f"write `terse {VERSION}` or update chrona")
         self.finish(cursor)
 
-    def finish(self, cursor: _Cursor, hint: str = "remove it") -> None:
+    def finish(self, cursor: _Cursor, hint: str = "remove it", after_deadline: bool = False) -> None:
         token = cursor.peek()
         if token is not None:
+            if after_deadline and token.kind == "word" and token.text in ("calendar", "after"):
+                hint = "`deadline D` is the last clause of a line; write it after the calendar and the dependencies"
             if token.kind == "word" and token.text in ("from", "until", "start", "end", "at"):
                 hint = "`from`, `until` and `start`/`end` bounds follow a duration, for example `20wd from 2027-03-22`"
                 if token.text == "at":
@@ -445,8 +448,10 @@ class _Parser:
         cursor.take()
         kind = kind_token.text
         self.previous = (line.indent, name, kind)
+        deadline: Item | None = None
         if kind == "group":
             self.open_groups.append((line.indent, name))
+            deadline = self.deadline(cursor) if cursor.is_word("deadline") else None
             leftover = cursor.peek()
             if leftover is not None:
                 what = {"after": "a group takes no `after`; it may be a predecessor", "calendar": "a group takes no calendar"}.get(
@@ -465,9 +470,10 @@ class _Parser:
                 calendar = self.calendar_ref(self.expect_word(cursor, "a calendar name"))
                 calendar_range = keyword.range.through(calendar.range)
             deps = self.after(cursor) if cursor.is_word("after") else []
-            self.finish(cursor, "separate dependencies with a comma" if deps else "remove it")
+            deadline = self.deadline(cursor) if cursor.is_word("deadline") else None
+            self.finish(cursor, "separate dependencies with a comma" if deps else "remove it", deadline is not None)
         self.objects.append(ObjectStatement(line.number, Item(name, first.range), title, Item(kind, kind_token.range),
-                                            schedule, calendar, calendar_range, deps, parent))
+                                            schedule, calendar, calendar_range, deps, parent, deadline))
 
     def place(self, line: SourceLine, name: str) -> str | None:
         """S2: the parent of this line from its indentation. Raises through `fail` for an impossible indent."""
@@ -485,6 +491,19 @@ class _Parser:
                             f"make '{previous[1]}' a group or remove the indentation")
         raise self.fail("E_TERSE_INDENT", "this indentation does not match an open group", where,
                         "indent a child exactly two spaces deeper than its group, directly below it")
+
+    def deadline(self, cursor: _Cursor) -> Item:
+        """The `deadline D` clause (#822): the last clause of an object line, a date the plan promises for the object.
+
+        `deadline` is a contextual keyword, not a reserved word: it is read here only, after the kind, the schedule, the
+        calendar and the dependencies, where a name cannot start, so a plan that used the word as a name still compiles.
+        """
+        keyword = cursor.take()
+        date_token = self.expect_word(cursor, "a date", "write `deadline 2027-06-30`")
+        when = self.check_date(date_token)
+        if cursor.is_word("deadline"):
+            raise self.fail("E_TERSE_CLAUSE_DUPLICATE", "`deadline` is given twice", cursor.peek().range, "keep one")
+        return Item(when, keyword.range.through(date_token.range))
 
     def derived(self, cursor: _Cursor, name: str, kind_token: Token) -> Schedule:
         """A gate with no date: its date is derived from its `after` clause (T1), optionally with `at >= D` / `at <= D` (T2)."""
@@ -517,9 +536,9 @@ class _Parser:
 
     def schedule(self, cursor: _Cursor, name: str, kind: str, kind_token: Token) -> Schedule:
         token = cursor.peek()
-        if kind == "gate" and (token is None or (token.kind == "word" and token.text in ("after", "calendar", "at"))):
+        if kind == "gate" and (token is None or (token.kind == "word" and token.text in ("after", "calendar", "at", "deadline"))):
             return self.derived(cursor, name, kind_token)
-        if token is None or (token.kind == "word" and token.text in ("after", "calendar")):
+        if token is None or (token.kind == "word" and token.text in ("after", "calendar", "deadline")):
             where = token.range if token is not None else cursor.end_range()
             raise self.fail("E_TERSE_SCHEDULE_REQUIRED", f"'{name}' has no schedule", where,
                             f"a task needs a duration (`5d`) or `D..D`, for example `{name} task 5d` or "
