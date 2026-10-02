@@ -143,8 +143,8 @@ to render, each pinned by a content identity) lives in a **Store**, which a **St
 (`.chrona/store.yaml`) names. A reference file (`id`, `kind`, `store`, `address`, `revision`,
 `contentIdentity`) points at one resource in it. `render_review` takes the Context's reference file and
 renders exactly that, in the Context's own format and viewport (so it has no `preset` or `viewport`);
-`compare_baseline` takes a named baseline's reference and a candidate Project's reference and returns
-what changed. Both only read, refuse a Store root outside the workspace, and refuse bytes that do not
+`compare_baseline` takes the reference of a named baseline (an immutable snapshot of a Project) and a
+candidate Project's reference and returns what changed. Both only read, refuse a Store root outside the workspace, and refuse bytes that do not
 match the pinned identity; no argument loosens that. Do not edit a Store file or unpin a reference to
 make a call pass, and do not change a Store's `integrity` setting: it is the user's. Without the tools,
 `chrona render-review` and `chrona baseline-compare` do the same work.

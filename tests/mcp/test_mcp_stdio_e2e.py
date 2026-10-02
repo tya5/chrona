@@ -433,3 +433,132 @@ def test_a_filesystem_root_workspace_ends_the_command_before_serving(tmp_path):
     assert done.returncode == 2
     report = json.loads(done.stdout)
     assert report["status"] == "failed" and report["diagnostics"][0]["code"] == "E_MCP_WORKSPACE_TOO_BROAD"
+
+
+# --- the Store read tools over stdio (#812) -----------------------------------------------------------------------
+
+CONTEXT_REFERENCE = (
+    "id: halcyon-1-01-mission-brief\nkind: render-context\nstore: {provider: local, identity: halcyon-1-example}\n"
+    "address: contexts/01-mission-brief.yaml\nrevision: {token: example-v4}\n")
+
+
+def tree(root: Path) -> dict[str, bytes]:
+    return {path.relative_to(root).as_posix(): path.read_bytes() for path in sorted(root.rglob("*")) if path.is_file()}
+
+
+def corpus(tmp_path: Path) -> Path:
+    from chrona.usecases.local_authoring import initialize_project
+
+    root = initialize_project(tmp_path / "corpus", example="halcyon-1")
+    (root / "ctx.yaml").write_text(CONTEXT_REFERENCE, encoding="utf-8")
+    return root
+
+
+def compare_workspace(tmp_path: Path) -> tuple[StoreWorkspace, dict[str, str]]:
+    """A Store with a captured baseline ``q2`` of ``project-r1`` and a changed candidate Project; both references on disk."""
+    import yaml
+
+    from chrona.operational.resources import parse_command
+    from chrona.operational.store_commands import open_store_reader, run_store_command
+    from tests.support.store_workspace import PROJECT
+
+    work = StoreWorkspace(tmp_path / "ws")
+    captured = run_store_command("command-apply", parse_command(yaml.safe_dump(work.capture("cap-1", "q2"))),
+                                 open_store_reader(work.config))
+    assert captured["status"] == "accepted"
+    changed = {**PROJECT, "objects": {**PROJECT["objects"], "gate": {
+        "type": "milestone", "schedule": {"mode": "fixed-point", "at": "2026-02-01"}}}}
+    candidate = work.write_resource("project-r2", "project.yaml", changed, "project", "p")
+    (work.root / "baseline.yaml").write_text(yaml.safe_dump(captured["resultTarget"]), encoding="utf-8")
+    (work.root / "candidate.yaml").write_text(yaml.safe_dump(candidate), encoding="utf-8")
+    return work, {"baselineReference": "baseline.yaml", "candidateReference": "candidate.yaml"}
+
+
+def test_render_review_over_stdio_equals_the_command_line_and_needs_no_write_flag(tmp_path, monkeypatch, capsys):
+    root = corpus(tmp_path)
+    before = tree(root)
+
+    async def scenario(client, init):
+        return {"inline": await client.call_tool("render_review", {"contextReference": "ctx.yaml"}),
+                "none": await client.call_tool("render_review", {"contextReference": "ctx.yaml", "inline": "none"}),
+                "tools": await client.list_tools(), "instructions": init.instructions}
+
+    results = session(root, scenario, cwd=tmp_path)  # no --allow-write; the server's working directory is not the workspace
+    after_tools = tree(root)
+    code, _ = cli(monkeypatch, capsys, root, "render-review", "--context-reference", "ctx.yaml", "--store-config",
+                  ".chrona/store.yaml", "--output", "cli.svg")
+    expected = (root / "cli.svg").read_bytes()
+
+    assert code == 0 and after_tools == before  # the tools wrote nothing
+    inline, none = results["inline"], results["none"]
+    assert not inline.is_error and inline.structured_content["status"] == "ok" and "Writes are off" in results["instructions"]
+    assert [type(block) for block in inline.content] == [types.TextContent, types.EmbeddedResource]
+    assert inline.content[1].resource.text.encode("utf-8") == expected
+    assert inline.structured_content["contentIdentity"] == sha(expected) == none.structured_content["contentIdentity"]
+    assert (inline.structured_content["byteLength"], inline.structured_content["format"]) == (len(expected), "svg")
+    assert len(none.content) == 1 and none.structured_content["inlined"] is False
+    annotations = {tool.name: tool.annotations for tool in results["tools"].tools}
+    for name in ("render_review", "compare_baseline"):
+        assert (annotations[name].read_only_hint, annotations[name].destructive_hint) == (True, False)
+
+
+def test_compare_baseline_over_stdio_equals_the_command_line_and_writes_nothing(tmp_path, monkeypatch, capsys):
+    work, arguments = compare_workspace(tmp_path)
+
+    async def scenario(client, init):
+        return {"ok": await client.call_tool("compare_baseline", arguments),
+                "not_a_baseline": await client.call_tool("compare_baseline", {**arguments, "baselineReference": "candidate.yaml"})}
+
+    before = tree(work.root)
+    results = session(work.root, scenario, cwd=tmp_path)
+    after = tree(work.root)
+    code, _ = cli(monkeypatch, capsys, work.root, "baseline-compare", "--baseline-reference", "baseline.yaml",
+                  "--candidate-reference", "candidate.yaml", "--store-config", ".chrona/store.yaml", "--result", "result.json")
+
+    assert code == 0 and after == before
+    ok = results["ok"]
+    assert not ok.is_error and ok.structured_content["status"] == "ok"
+    assert ok.structured_content["automationResult"]["comparison"]["changes"] == [{"kind": "object", "id": "gate", "change": "added"}]
+    assert json.dumps(ok.structured_content["automationResult"], sort_keys=True) == (work.root / "result.json").read_text(encoding="utf-8")
+    refused = results["not_a_baseline"]
+    assert not refused.is_error and refused.structured_content["status"] == "rejected"
+    assert [row["code"] for row in refused.structured_content["diagnostics"]] == ["E_BASELINE_REFERENCE"]
+
+
+def test_store_escapes_a_symlink_and_tampered_bytes_are_refused_over_stdio_and_nothing_is_written(tmp_path):
+    root = corpus(tmp_path)
+    outside = tmp_path / "outside-store"
+    import shutil
+
+    shutil.copytree(root / ".chrona" / "store", outside)  # a Store that would render, in the wrong place
+    (root / "outside.yaml").write_text(
+        "version: chrona/store-config/v0.1\nstores:\n"
+        f"  - {{provider: local, identity: halcyon-1-example, root: {json.dumps(str(outside))}, integrity: optional}}\n", encoding="utf-8")
+    (tmp_path / "ctx-elsewhere.yaml").write_text(CONTEXT_REFERENCE, encoding="utf-8")
+    try:
+        (root / "linked.yaml").symlink_to(tmp_path / "ctx-elsewhere.yaml")
+        linked = True
+    except (OSError, NotImplementedError):
+        linked = False
+    pinned = root / "pinned.yaml"
+    context_file = root / ".chrona" / "store" / "revision-example-v4" / "contexts" / "01-mission-brief.yaml"
+    pinned.write_text(CONTEXT_REFERENCE + f"contentIdentity: {sha(context_file.read_bytes())}\n", encoding="utf-8")
+    context_file.write_bytes(context_file.read_bytes() + b"\n# tampered\n")
+    before, outside_before = tree(root), tree(outside)
+
+    async def scenario(client, init):
+        calls = [{"contextReference": "../ctx.yaml"}, {"contextReference": "/etc/passwd"},
+                 {"contextReference": "ctx.yaml", "storeConfig": "outside.yaml"},
+                 {"contextReference": "pinned.yaml"}]
+        if linked:
+            calls.append({"contextReference": "linked.yaml"})
+        return [await client.call_tool("render_review", arguments) for arguments in calls]
+
+    results = session(root, scenario)
+
+    codes = [result.structured_content["diagnostics"][0]["code"] for result in results]
+    assert codes[:2] == ["E_MCP_PATH_SYNTAX"] * 2 and codes[2] == "E_MCP_PATH_CONTAINMENT"
+    assert codes[3] == "E_CONTENT_IDENTITY" and (not linked or codes[4] == "E_MCP_PATH_CONTAINMENT")
+    assert [result.is_error for result in results][:3] == [True, True, True]
+    assert not any(type(block) is types.EmbeddedResource for result in results for block in result.content)
+    assert tree(root) == before and tree(outside) == outside_before
