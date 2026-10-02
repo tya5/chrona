@@ -123,3 +123,5 @@ only their text gains the value.
 - S4a review projection (`presentation/model/projection.py`, 22 sites, 592 to 570): every `E_REVIEW_*` and `E_ACTUAL_REQUIRED` raise names the
   row, item, object or value; the curated sentence for `E_ACTUAL_REQUIRED` moved to its raise site (one golden row changes: its message
   now starts with the code, like every ValueError row that carries detail). Tests: `test_projection_messages.py` (mutation-checked: 2 kills).
+- S4b closure (`presentation/model/closure.py`, 33 sites, 570 to 537): the `ClosureError` raises of the Draft preset, guided authoring, render-context
+  and icon-catalog paths carry `detail=` naming the file, id or declared value. Tests: `test_closure_messages.py` (mutation-checked: 2 kills).

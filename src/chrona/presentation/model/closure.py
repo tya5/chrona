@@ -99,7 +99,7 @@ class RenderClosure:
     def project(self) -> ProjectContract:
         item = self.resource("project")
         if item is None:
-            raise ClosureError("E_CLOSURE_REQUIRED")
+            raise ClosureError("E_CLOSURE_REQUIRED", detail="the closure has no project resource")
         if not isinstance(item.contract, ProjectContract):
             raise self._kind_error(item, ProjectContract)
         return item.contract
@@ -108,7 +108,7 @@ class RenderClosure:
     def view(self) -> ViewContract:
         item = self.resource("view")
         if item is None:
-            raise ClosureError("E_CLOSURE_REQUIRED")
+            raise ClosureError("E_CLOSURE_REQUIRED", detail="the closure has no view resource")
         if not isinstance(item.contract, ViewContract):
             raise self._kind_error(item, ViewContract)
         return item.contract
@@ -117,7 +117,7 @@ class RenderClosure:
     def layout_profile(self) -> LayoutProfileContract:
         item = self.resource("layout-profile")
         if item is None:
-            raise ClosureError("E_CLOSURE_REQUIRED")
+            raise ClosureError("E_CLOSURE_REQUIRED", detail="the closure has no layout-profile resource")
         if not isinstance(item.contract, LayoutProfileContract):
             raise self._kind_error(item, LayoutProfileContract)
         return item.contract
@@ -170,7 +170,7 @@ class RenderClosure:
     def icon_asset(self, reference: str) -> IconAsset:
         """Resolve one authored ``set:name`` only against this closed Context."""
         if reference.count(":") != 1:
-            raise ClosureError("E_ICON_REFERENCE")
+            raise ClosureError("E_ICON_REFERENCE", detail=f"icon reference {reference!r} must be set:name with exactly one colon")
         set_name, name = reference.split(":", 1)
         catalogs = [catalog for catalog in self.icon_catalogs if set_name in {catalog.set_name, *catalog.aliases}]
         if len(catalogs) != 1:
@@ -244,7 +244,7 @@ def resolve_draft_render(
              ("color-scheme", scheme_path or preset_paths.get("color-scheme")),
              ("layout-profile", layout_path or preset_paths.get("layout-profile")))
     if any(path is None for _kind, path in paths):
-        raise ClosureError("E_DRAFT_PRESENTATION_INCOMPLETE")
+        raise ClosureError("E_DRAFT_PRESENTATION_INCOMPLETE", detail="no file for " + ", ".join(kind for kind, path in paths if path is None) + "; pass it, or a preset that declares it")
     optional = (
         ("actual-set", actual_path), ("summary-profile", summary_path),
         # A preset legend names roles of the preset's own Theme, so it applies
@@ -285,7 +285,7 @@ def _preset_visual_profile(preset: object, requested: str | None, target_kind: s
 def _draft_preset_paths(preset: Any, preset_path: Path, preset_root: Path | None = None) -> dict[str, Path]:
     """Resolve one explicit preset into safe ordinary-resource paths."""
     if not isinstance(preset.contract, PresentationPresetContract):
-        raise ClosureError("E_DRAFT_PRESET_SCHEMA")
+        raise ClosureError("E_DRAFT_PRESET_SCHEMA", detail=f"{preset_path.name} is not a presentation preset")
     mapping = {"view": "view", "theme": "theme", "colorScheme": "color-scheme", "layout": "layout-profile",
                "detailProfile": "review-detail-profile"}
     paths: dict[str, Path] = {}
@@ -294,7 +294,7 @@ def _draft_preset_paths(preset: Any, preset_path: Path, preset_root: Path | None
         if declaration is None and kind == "review-detail-profile":
             continue
         if not isinstance(declaration, Mapping):
-            raise ClosureError("E_DRAFT_PRESET_SCHEMA")
+            raise ClosureError("E_DRAFT_PRESET_SCHEMA", detail=f"preset {preset.id!r} declares no valid {name!r} resource")
         path = _declared_child(preset_root or preset_path.parent, str(declaration["path"]))
         try:
             resource = _load_draft_resource(kind, path)
@@ -306,7 +306,7 @@ def _draft_preset_paths(preset: Any, preset_path: Path, preset_root: Path | None
             raise ClosureError(error.diagnostic_id, error.source_ref, error.detail,
                                declaring_preset_id=preset.id) from error
         if resource.id != declaration["id"]:
-            raise ClosureError("E_DRAFT_PRESET_RESOURCE")
+            raise ClosureError("E_DRAFT_PRESET_RESOURCE", detail=f"preset {preset.id!r} declares {name} id {declaration['id']!r}, but {path.name} has id {resource.id!r}")
         paths[kind] = path
     return paths
 
@@ -315,18 +315,18 @@ def _draft_preset_catalog_paths(preset: Any, preset_path: Path,
                                 preset_root: Path | None = None) -> tuple[Path, ...]:
     """Close only the catalogue paths explicitly pinned by a Draft preset."""
     if not isinstance(preset.contract, PresentationPresetContract):
-        raise ClosureError("E_DRAFT_PRESET_SCHEMA")
+        raise ClosureError("E_DRAFT_PRESET_SCHEMA", detail=f"{preset_path.name} is not a presentation preset")
     declarations = preset.contract.resources.get("iconCatalogs", ())
     if not isinstance(declarations, (tuple, list)):
-        raise ClosureError("E_DRAFT_PRESET_SCHEMA")
+        raise ClosureError("E_DRAFT_PRESET_SCHEMA", detail="resources.iconCatalogs of the preset must be a list")
     paths: list[Path] = []
     for declaration in declarations:
         if not isinstance(declaration, Mapping):
-            raise ClosureError("E_DRAFT_PRESET_SCHEMA")
+            raise ClosureError("E_DRAFT_PRESET_SCHEMA", detail="every entry of resources.iconCatalogs of the preset must be a mapping")
         path = _declared_child(preset_root or preset_path.parent, str(declaration["path"]))
         resource = _load_draft_resource("icon-catalog", path)
         if resource.id != declaration["id"]:
-            raise ClosureError("E_DRAFT_PRESET_RESOURCE")
+            raise ClosureError("E_DRAFT_PRESET_RESOURCE", detail=f"preset {preset.id!r} declares icon catalog id {declaration['id']!r}, but {path.name} has id {resource.id!r}")
         paths.append(path)
     return tuple(paths)
 
@@ -338,12 +338,12 @@ def resolve_guided_draft_render(
     """Resolve one guided Draft without creating files or a second render pipeline."""
     workspace_resource = _load_draft_resource("authoring-workspace", workspace_path)
     if not isinstance(workspace_resource.contract, AuthoringWorkspaceContract):
-        raise ClosureError("E_AUTHORING_WORKSPACE_SCHEMA")
+        raise ClosureError("E_AUTHORING_WORKSPACE_SCHEMA", detail=f"{workspace_path.name} is not an authoring workspace")
     preset_selector = workspace_resource.contract.binding["preset"]
     preset_path = _declared_child(workspace_path.parent, str(preset_selector["path"]))
     preset_resource = _load_draft_resource("presentation-preset", preset_path)
     if not isinstance(preset_resource.contract, PresentationPresetContract):
-        raise ClosureError("E_AUTHORING_PRESET_SCHEMA")
+        raise ClosureError("E_AUTHORING_PRESET_SCHEMA", detail=f"{preset_path.name} is not a presentation preset")
     visual_profile = _preset_visual_profile(preset_resource.contract, visual_profile, target_kind)
     resource_declarations = (*preset_resource.contract.resources.values(), *preset_resource.contract.compatible_color_schemes)
     resources_by_path = {
@@ -351,7 +351,7 @@ def resolve_guided_draft_render(
         for declaration in resource_declarations if isinstance(declaration, Mapping)
     }
     if not all(isinstance(value, dict) for value in resources_by_path.values()):
-        raise ClosureError("E_AUTHORING_PRESET_RESOURCE")
+        raise ClosureError("E_AUTHORING_PRESET_RESOURCE", detail="a resource the preset declares is not a mapping document")
     try:
         normalized = normalize_authoring_workspace(workspace_resource.contract, preset_resource.contract, resources_by_path)
     except ContractError as error:
@@ -361,13 +361,13 @@ def resolve_guided_draft_render(
     sources = [_normalized_draft_source(kind, source) for kind, source in normalized.draft_sources()]
     catalog_declarations = preset_resource.contract.resources.get("iconCatalogs", ())
     if not isinstance(catalog_declarations, (tuple, list)):
-        raise ClosureError("E_AUTHORING_PRESET_RESOURCE")
+        raise ClosureError("E_AUTHORING_PRESET_RESOURCE", detail="resources.iconCatalogs of the preset must be a list")
     catalog_paths = tuple(_declared_child(preset_path.parent, str(item["path"])) for item in catalog_declarations)
     sources.extend(_load_draft_source("icon-catalog", path) for path in catalog_paths)
     resources = _collect_presentation_resources(sources)
     catalog_resources = tuple(resource for resource in resources if resource.kind == "icon-catalog")
     if any(resource.id != declaration["id"] for resource, declaration in zip(catalog_resources, catalog_declarations)):
-        raise ClosureError("E_AUTHORING_PRESET_RESOURCE")
+        raise ClosureError("E_AUTHORING_PRESET_RESOURCE", detail="the icon catalog files do not carry the ids the preset declares for them, in order")
     _validate_icon_catalog_set(catalog_resources)
     binding_identity = "sha256:" + sha256(yaml.safe_dump(_plain_value(workspace_resource.contract.binding), sort_keys=True).encode()).hexdigest()
     provenance = GuidedAuthoringProvenance(workspace_resource.content_identity, preset_resource.content_identity, binding_identity)
@@ -381,7 +381,7 @@ def _declared_child(root: Path, relative: str) -> Path:
     try:
         return resolve_store_address(root, relative)
     except StoreAddressError as error:
-        raise ClosureError("E_AUTHORING_PRESET_PATH") from error
+        raise ClosureError("E_AUTHORING_PRESET_PATH", detail=f"{relative!r} is not a safe relative path inside the preset directory") from error
 
 
 def _draft_view(resources: list[ClosureResource]) -> ViewContract:
@@ -424,7 +424,7 @@ def _normalized_draft_source(kind: str, document: Mapping[str, Any]) -> Presenta
     payload = yaml.safe_dump(document, sort_keys=True).encode("utf-8")
     identifier = _resource_id(kind, dict(document))
     if not isinstance(identifier, str) or not identifier:
-        raise ClosureError("E_AUTHORING_NORMALIZATION")
+        raise ClosureError("E_AUTHORING_NORMALIZATION", detail=f"the normalized {kind} resource has no id")
     identity = ClosureIdentity(kind, identifier, "draft", "sha256:" + sha256(payload).hexdigest())
     return PresentationResourceSource(identity, document)
 
@@ -660,7 +660,7 @@ def _packaged_font_metrics(asset_root: Path) -> dict[str, Any]:
     """Load the selected packaged default as declared data, never code literals."""
     value = safe_load((asset_root / "fonts" / "default-font-metrics.yaml").read_bytes())
     if not isinstance(value, dict):
-        raise ClosureError("E_FONT_METRICS_UNAVAILABLE")
+        raise ClosureError("E_FONT_METRICS_UNAVAILABLE", detail="the packaged default-font-metrics.yaml is not a mapping")
     return value
 
 
@@ -680,10 +680,10 @@ def _draft_rasterizer(target_kind: str) -> dict[str, Any]:
 def _draft_typesetter(target_kind: str, typesetter: TypesetterIdentity | None) -> dict[str, Any] | None:
     if target_kind not in {"typst", "tikz"}:
         if typesetter is not None:
-            raise ClosureError("E_RENDER_TYPESETTER_DESCRIPTOR")
+            raise ClosureError("E_RENDER_TYPESETTER_DESCRIPTOR", detail=f"a {target_kind} render takes no typesetter, got {typesetter.engine}")
         return None
     if typesetter is None:
-        raise ClosureError("E_RENDER_TYPESETTER_DESCRIPTOR")
+        raise ClosureError("E_RENDER_TYPESETTER_DESCRIPTOR", detail=f"a {target_kind} render needs a typesetter identity (engine, version, adapter grammar)")
     return {"engine": typesetter.engine, "version": typesetter.version,
             "adapterGrammar": typesetter.adapter_grammar}
 
@@ -692,14 +692,14 @@ def resolve_render_context(reference: dict[str, Any], reader: SnapshotReader,
                            *, decoded_resources: Mapping[str, Any] | None = None) -> RenderClosure:
     context = _load_presentation(reference, reader, decoded_resources)
     if context.version not in RENDER_CONTEXT_VERSIONS:
-        raise ClosureError("E_RENDER_CONTEXT_SCHEMA")
+        raise ClosureError("E_RENDER_CONTEXT_SCHEMA", detail=f"render context version {context.version!r} is not one of {sorted(RENDER_CONTEXT_VERSIONS)}")
     return _resolve_layout_context(context, reader, decoded_resources)
 
 
 def _resolve_layout_context(context_contract: RenderContextContract, reader: SnapshotReader,
                             decoded_resources: Mapping[str, Any] | None = None) -> RenderClosure:
     if context_contract.environment.font_metrics.get("missingFont") != "diagnose":
-        raise ClosureError("E_FONT_SUBSTITUTE_CONTEXT")
+        raise ClosureError("E_FONT_SUBSTITUTE_CONTEXT", detail=f"environment.fontMetrics.missingFont is {context_contract.environment.font_metrics.get('missingFont')!r}; a render context must say diagnose")
     ordered = (
         (context_contract.project.as_reader_reference(), "project"),
         (context_contract.view.as_reader_reference(), "view"),
@@ -727,19 +727,19 @@ def _resolve_layout_context(context_contract: RenderContextContract, reader: Sna
         if package_reference is not None:
             package = next((item for item in resources if item.kind == "profile-package" and item.id == package_reference.get("id")), None)
             if package is None:
-                raise ClosureError("E_CLOSURE_REQUIRED")
+                raise ClosureError("E_CLOSURE_REQUIRED", detail=f"the extension names profile-package {package_reference.get('id')!r}, which the closure does not contain")
             if package.contract.package_id != extension.get("packageId"):
-                raise ClosureError("E_CLOSURE_ID")
+                raise ClosureError("E_CLOSURE_ID", detail=f"profile-package {package_reference.get('id')!r} declares packageId {package.contract.package_id!r}, the extension says {extension.get('packageId')!r}")
     if context_contract.snapshot is not None:
         snapshot = _load_reference(context_contract.snapshot.as_reader_reference(), reader, "snapshot-ref", decoded_resources)
         snapshot_project = _load_reference(snapshot.contract.project.as_reader_reference(), reader, "project", decoded_resources)
         if snapshot_project.id != resources[0].id:
-            raise ClosureError("E_CLOSURE_ID")
+            raise ClosureError("E_CLOSURE_ID", detail=f"the snapshot project id {snapshot_project.id!r} is not the context project id {resources[0].id!r}")
         resources.extend((snapshot, ClosureResource(
             "snapshot-project", snapshot_project.id, snapshot_project.revision,
             snapshot_project.content_identity, snapshot_project.contract)))
     if context_contract.target.capabilities != tuple(sorted(context_contract.target.capabilities)):
-        raise ClosureError("E_TARGET_CAPABILITY_ORDER")
+        raise ClosureError("E_TARGET_CAPABILITY_ORDER", detail=f"target.capabilities must be sorted, got {list(context_contract.target.capabilities)}")
     theme, scheme = resources[2], resources[3]
     try:
         value = resolve_theme(theme.contract.theme_input, scheme.contract.scheme_input, scheme_content_identity=scheme.content_identity)
@@ -771,7 +771,7 @@ def _validate_icon_catalog_set(resources: tuple[ClosureResource, ...]) -> None:
         catalog = resource.contract
         names = (catalog.set_name, *catalog.aliases)
         if len(names) != len(set(names)) or any(name in namespaces for name in names):
-            raise ClosureError("E_ICON_SET_AMBIGUOUS")
+            raise ClosureError("E_ICON_SET_AMBIGUOUS", detail=f"icon catalog {resource.id!r} reuses a set name or alias: {[name for name in names if names.count(name) > 1 or name in namespaces]}")
         namespaces.update(names)
 
 
@@ -922,19 +922,19 @@ def _selected_icon_entry(catalog: IconCatalogContract, name: str) -> IconEntry:
     raw = catalog.raw_icons[name]
     viewport, paths, source = raw["viewport"], raw.get("paths", ()), raw.get("source")
     if not isinstance(viewport, FrozenDict) or not isinstance(paths, (FrozenList, tuple)):
-        raise ClosureError("E_ICON_CATALOG_SCHEMA")
+        raise ClosureError("E_ICON_CATALOG_SCHEMA", detail=f"icon {name!r} of catalog {catalog.set_name!r} needs a viewport mapping and a paths list")
     normalized = tuple(IconPath(str(path["paint"]), str(path["data"]),
                                 float(path["strokeWidth"]) if "strokeWidth" in path else None,
                                 str(path["lineCap"]) if "lineCap" in path else None,
                                 str(path["lineJoin"]) if "lineJoin" in path else None)
                        for path in paths if isinstance(path, FrozenDict))
     if len(normalized) != len(paths):
-        raise ClosureError("E_ICON_CATALOG_SCHEMA")
+        raise ClosureError("E_ICON_CATALOG_SCHEMA", detail=f"icon {name!r} of catalog {catalog.set_name!r}: every entry of paths must be a mapping")
     source_value = raw.get("source")
     source = None
     if source_value is not None:
         if not isinstance(source_value, FrozenDict):
-            raise ClosureError("E_ICON_CATALOG_SCHEMA")
+            raise ClosureError("E_ICON_CATALOG_SCHEMA", detail=f"icon {name!r} of catalog {catalog.set_name!r}: source must be a mapping")
         source = IconRasterSource(str(source_value["address"]), str(source_value["contentIdentity"]))
     return IconEntry(name, str(raw["kind"]), (int(viewport["inlineSize"]), int(viewport["blockSize"])),
                      str(raw["alternative"]), normalized, source)
@@ -1090,7 +1090,7 @@ def _load_reference_source(reference: dict[str, Any], reader: SnapshotReader, ex
         if not isinstance(value, dict) or value.get("kind") != expected_kind:
             raise ClosureError("E_CLOSURE_KIND", detail=f"reference id={reference.get('id')!r}; expected kind={expected_kind}; found kind={value.get('kind') if isinstance(value, dict) else type(value).__name__}")
     if actual_id != reference.get("id"):
-        raise ClosureError("E_CLOSURE_ID")
+        raise ClosureError("E_CLOSURE_ID", detail=f"reference id {reference.get('id')!r} names a {expected_kind} whose own id is {actual_id!r}")
     derived = expected_kind == "theme" and is_derived_theme(value)
     if derived:
         try:
