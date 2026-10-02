@@ -100,6 +100,21 @@ allOf:
                     required: [entityField]
                     additionalProperties: false
                     properties: {entityField: {description: "Entity field name.", type: string, minLength: 1}}
+              tint:
+                description: "Per-group band tint: a Theme colour scale over the grouping field's values; usable only when grouping by field."
+                type: object
+                required: [scale]
+                additionalProperties: false
+                properties:
+                  scale: {description: "Named Theme colour scale applied to each group's band and header band.", type: string, minLength: 1}
+                  domain:
+                    description: "Closed set of group values admitted by the scale, or firstAppearance (the default) to derive it from the groups in display order."
+                    oneOf:
+                      - type: array
+                        minItems: 1
+                        uniqueItems: true
+                        items: {description: "One admitted group value.", type: string, minLength: 1}
+                      - {description: "Distinct group values in display order.", const: firstAppearance}
             allOf:
               - description: "Field grouping requires its field name and missing-value label."
                 examples: [{by: field, field: status, missing: Unset}]

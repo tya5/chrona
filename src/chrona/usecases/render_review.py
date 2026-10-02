@@ -214,6 +214,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                                           theme["body"].get("categorySlots"),
                                           color_vision=tuple(theme["body"].get("colorVision", ())),
                                           observed=_observed_scale_values(view.color_encoding, projection))
+        group_tints, group_tint_collisions = _resolve_group_tints(view, projection, theme)
     except ColorScaleError as error:
         raise RenderFailed(str(error), str(error), "presentation") from error
     if render_closure.actual_set is not None:
@@ -322,7 +323,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             projection, project, view, actual_set=actual_observations,
             detail=render_closure.detail_profile.detail if render_closure.detail_profile else None,
             summary=summary, layout_manifest=manifest, locale=environment.locale,
-            color_scale=color_scale, table=table_content,
+            color_scale=color_scale, table=table_content, group_tints=group_tints,
         )
         fixed_lane_preflight = preflight_fixed_lane_layout(
             projection=projection, layout_manifest=manifest, surface_content=seed_content,
@@ -358,6 +359,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         locale=environment.locale,
         color_scale=color_scale,
         table=table_content,
+        group_tints=group_tints,
     )
     if render_closure.detail_profile is not None:
         ledger.detail()
@@ -388,7 +390,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         validate_surface_visual_profile(surface, visual_profile)
     except VisualCapabilityError as error:
         raise RenderFailed(error.diagnostic_id, error.message, "presentation", error.path) from error
-    collisions = color_scale.collisions if color_scale is not None else ()
+    collisions = (color_scale.collisions if color_scale is not None else ()) + group_tint_collisions
     scene = _inspection_scene(render_closure, surface, projection, surface_content,
                               (surface.canvas_bounds[2], surface.canvas_bounds[3]),
                               resolution.tabular_warnings if resolution is not None else (),
@@ -488,6 +490,23 @@ def _warnings_from_findings(findings: tuple[ScenePerceptibilityFinding, ...]) ->
         "W_" + finding.code.removeprefix("E_"), finding.code, finding.scene_path,
         finding.primitive_ids, finding.slot_id, finding.measured_facts, finding.disposition,
     ) for finding in findings if finding.severity == "error")
+
+
+def _resolve_group_tints(view: Any, projection: Any, theme: Mapping[str, Any]
+                         ) -> tuple[tuple[tuple[str, str], ...], tuple[Any, ...]]:
+    """Resolve the View's per-group tint scale to one colour per group, in display order (#583)."""
+    tint = view.grouping.tint if view.grouping is not None else None
+    if tint is None:
+        return (), ()
+    groups = tuple(dict.fromkeys(row.group_id for row in projection.rows if row.group_id))
+    scale = resolve_color_scale(
+        {"scale": tint.scale, "target": "group", "source": {"field": view.grouping.field},
+         "domain": list(tint.domain) if tint.domain is not None else "firstAppearance"},
+        theme["body"].get("colorScales"), theme["body"].get("categorySlots"),
+        color_vision=tuple(theme["body"].get("colorVision", ())), observed=groups)
+    if scale is None:
+        return (), ()
+    return tuple((group, scale.color_for(group, {scale.source_field: group})) for group in groups), scale.collisions
 
 
 def _observed_scale_values(encoding: Any, projection: Any) -> tuple[str, ...]:

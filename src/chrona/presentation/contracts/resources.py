@@ -243,6 +243,14 @@ class ViewGroupHeader:
 
 
 @dataclass(frozen=True)
+class ViewGroupTint:
+    """View-declared per-group band tint: a Theme colour scale over the grouping field (#583)."""
+
+    scale: str
+    domain: tuple[str, ...] | None = None  # None: firstAppearance, the groups in display order
+
+
+@dataclass(frozen=True)
 class ViewGrouping:
     by: str
     field: str | None
@@ -253,6 +261,7 @@ class ViewGrouping:
     rollup: str | None
     order_by: str | None = None
     header: ViewGroupHeader | None = None
+    tint: ViewGroupTint | None = None
 
 
 @dataclass(frozen=True)
@@ -841,7 +850,7 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                              int(raw_grouping["depth"]) if "depth" in raw_grouping else None,
                              str(raw_grouping["rollup"]) if "rollup" in raw_grouping else None,
                              str(raw_grouping["order"]["by"]) if isinstance(raw_grouping.get("order"), FrozenDict) else None,
-                             _group_header(raw_grouping))
+                             _group_header(raw_grouping), _group_tint(raw_grouping))
                 if raw_grouping else None)
     raw_ordering = body.get("ordering")
     ordering = (ViewOrdering(str(raw_ordering["by"]), str(raw_ordering["direction"]), str(raw_ordering["tieBreak"]))
@@ -916,6 +925,17 @@ def _view_periods(raw: Any) -> tuple[ViewPeriod, ...]:
     if len({item.period_id for item in periods}) != len(periods):
         raise ContractError("E_VIEW_PERIOD_DUPLICATE")
     return periods
+
+
+def _group_tint(raw_grouping: Any) -> ViewGroupTint | None:
+    """Type the optional group tint; it needs a grouping field to read values from (#583)."""
+    raw = raw_grouping.get("tint")
+    if raw is None:
+        return None
+    if raw_grouping["by"] != "field":
+        raise ContractError("E_VIEW_GROUP_TINT_UNUSABLE", "tint needs grouping by field")
+    domain = raw.get("domain", "firstAppearance")
+    return ViewGroupTint(str(raw["scale"]), None if domain == "firstAppearance" else tuple(str(item) for item in domain))
 
 
 def _group_header(raw_grouping: Any) -> ViewGroupHeader | None:
