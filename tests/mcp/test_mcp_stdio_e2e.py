@@ -31,6 +31,7 @@ from mcp.shared.exceptions import MCPError  # noqa: E402
 
 from chrona.app.agent_tools import registry_document  # noqa: E402
 from chrona.app.cli import main  # noqa: E402
+from tests.support.store_workspace import StoreWorkspace  # noqa: E402
 
 REPO = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
 LAUNCH = (REPO / "skills" / "chrona" / "examples" / "launch.yaml").read_text(encoding="utf-8")
@@ -67,16 +68,17 @@ def child_environment() -> dict[str, str]:
     return env
 
 
-def server_parameters(workspace: Path, cwd: Path | None = None) -> StdioServerParameters:
-    return StdioServerParameters(command=sys.executable, args=["-m", "chrona", "mcp", "--workspace", str(workspace)],
+def server_parameters(workspace: Path, cwd: Path | None = None, allow_write: bool = False) -> StdioServerParameters:
+    options = ["--allow-write"] if allow_write else []
+    return StdioServerParameters(command=sys.executable, args=["-m", "chrona", "mcp", "--workspace", str(workspace), *options],
                                  env=child_environment(), cwd=cwd)
 
 
-def session(workspace: Path, scenario, cwd: Path | None = None):
+def session(workspace: Path, scenario, cwd: Path | None = None, allow_write: bool = False):
     """Run ``scenario(session)`` against a freshly started server process."""
     async def go():
         with anyio.fail_after(SESSION_SECONDS):
-            async with stdio_client(server_parameters(workspace, cwd)) as (read, write):
+            async with stdio_client(server_parameters(workspace, cwd, allow_write)) as (read, write):
                 async with ClientSession(read, write) as client:
                     init = await client.initialize()
                     return await scenario(client, init)
@@ -231,6 +233,119 @@ def test_protocol_errors_and_resources_over_stdio(workspace):
     assert errors == [types.INVALID_PARAMS] * 3
     assert [resource.uri for resource in listed.resources] == ["chrona://guide/authoring", "chrona://guide/diagnostics"]
     assert "chrona schedule" in authoring.contents[0].text and "E_UNSUPPORTED_CYCLE" in diagnostics.contents[0].text
+
+
+# --- the Store command tools over stdio (#813) ---------------------------------------------------------------------
+
+def test_without_allow_write_the_writer_is_refused_over_stdio_and_the_preview_works(tmp_path):
+    work = StoreWorkspace(tmp_path / "ws")
+    path = work.write_command("c1.yaml", work.intake("c1", work.batch("b1")))
+    before = work.snapshot()
+
+    async def scenario(client, init):
+        return (await client.call_tool("apply_command", {"command": path}),
+                await client.call_tool("check_command", {"command": path}), init.instructions)
+
+    applied, checked, instructions = session(work.root, scenario)
+
+    assert applied.is_error and [row["code"] for row in applied.structured_content["diagnostics"]] == ["E_MCP_WRITE_DISABLED"]
+    assert not checked.is_error and checked.structured_content["status"] == "ok"
+    assert "Writes are off" in instructions
+    assert work.snapshot() == before
+
+
+def test_with_allow_write_an_intake_and_a_capture_are_applied_and_equal_the_command_line(tmp_path, monkeypatch, capsys):
+    tool_side, cli_side = StoreWorkspace(tmp_path / "tool"), StoreWorkspace(tmp_path / "cli")
+    for side in (tool_side, cli_side):
+        side.write_command("intake.yaml", side.intake("c1", side.batch("b1")))
+        side.write_command("capture.yaml", side.capture("capture-1", "q2"))
+
+    async def scenario(client, init):
+        return {"instructions": init.instructions, "tools": await client.list_tools(),
+                "intake": await client.call_tool("apply_command", {"command": "commands/intake.yaml"}),
+                "replay": await client.call_tool("apply_command", {"command": "commands/intake.yaml"}),
+                "capture": await client.call_tool("apply_command", {"command": "commands/capture.yaml"})}
+
+    results = session(tool_side.root, scenario, cwd=tmp_path, allow_write=True)
+
+    assert "Writes are on" in results["instructions"] and "no approval step" in results["instructions"]
+    annotations = {tool.name: tool.annotations for tool in results["tools"].tools}
+    assert (annotations["apply_command"].read_only_hint, annotations["apply_command"].destructive_hint) == (False, True)
+    assert annotations["check_command"].read_only_hint is True
+    for name in ("intake", "capture"):
+        assert not results[name].is_error and results[name].structured_content["status"] == "ok"
+    assert results["replay"].structured_content["automationResult"]["replayed"] is True
+
+    for name in ("intake", "capture"):
+        code, _ = cli(monkeypatch, capsys, cli_side.root, "command-apply", "--command", f"commands/{name}.yaml",
+                      "--store-config", ".chrona/store.yaml", "--result", f"{name}.json")
+        assert code == 0
+        assert json.dumps(results[name].structured_content["automationResult"], sort_keys=True) == (
+            cli_side.root / f"{name}.json").read_text(encoding="utf-8")
+    assert tool_side.snapshot() == cli_side.snapshot() and tool_side.tip()["counter"] == 2
+
+
+def test_stale_replayed_and_overwriting_commands_are_refused_over_stdio_and_nothing_is_overwritten(tmp_path):
+    work = StoreWorkspace(tmp_path / "ws")
+    first = work.write_command("c1.yaml", work.intake("c1", work.batch("b1")))
+    stale = work.write_command("c2.yaml", work.intake("c2", work.batch("b2", finish="2026-05-05", key="43")))
+    reuse = work.write_command("c1-other.yaml", work.intake("c1", work.batch("b3", finish="2026-06-06", key="44")))
+    capture = work.write_command("cap1.yaml", work.capture("cap-1", "q2"))
+    capture_again = work.write_command("cap2.yaml", work.capture("cap-2", "q2"))
+
+    async def scenario(client, init):
+        names = ("first", "stale", "reuse", "capture", "again")
+        files = (first, stale, reuse, capture, capture_again)
+        return {name: await client.call_tool("apply_command", {"command": path})
+                for name, path in zip(names, files, strict=True)}
+
+    results = session(work.root, scenario, allow_write=True)
+
+    def code(name: str) -> list[str]:
+        return [row["code"] for row in results[name].structured_content["diagnostics"]]
+
+    assert results["first"].structured_content["status"] == "ok"
+    assert (results["stale"].structured_content["status"], code("stale")) == ("rejected", ["E_AUTOMATION_TARGET_CLOSURE"])
+    assert (results["reuse"].structured_content["status"], code("reuse")) == ("rejected", ["E_COMMAND_ID_REUSE"])
+    assert results["capture"].structured_content["status"] == "ok"
+    assert (results["again"].structured_content["status"], code("again")) == ("rejected", ["E_BASELINE_EXISTS"])
+    assert not any(result.is_error for result in results.values())
+    assert work.tip()["counter"] == 2  # only the first intake advanced the tip
+
+
+def test_path_escapes_a_symlink_and_an_outside_store_are_refused_over_stdio(tmp_path):
+    work = StoreWorkspace(tmp_path / "ws")
+    path = work.write_command("c1.yaml", work.intake("c1", work.batch("b1")))
+    outside = tmp_path / "outside-store"
+    outside.mkdir()
+    (work.root / "outside.yaml").write_text(yaml_store_config(str(outside)), encoding="utf-8")
+    (tmp_path / "config-elsewhere.yaml").write_bytes(work.config.read_bytes())  # a valid configuration, in the wrong place
+    try:
+        (work.root / "linked.yaml").symlink_to(tmp_path / "config-elsewhere.yaml")
+        linked = True
+    except (OSError, NotImplementedError):
+        linked = False
+    before = work.snapshot()
+
+    async def scenario(client, init):
+        calls = [("../c1.yaml", None), ("/etc/passwd", None), (path, "../outside.yaml"), (path, "outside.yaml")]
+        if linked:
+            calls.append((path, "linked.yaml"))
+        return [await client.call_tool("apply_command", {"command": command, **({"storeConfig": config} if config else {})})
+                for command, config in calls]
+
+    results = session(work.root, scenario, allow_write=True)
+
+    codes = [result.structured_content["diagnostics"][0]["code"] for result in results]
+    assert codes[:2] == ["E_MCP_PATH_SYNTAX"] * 2 and codes[2] == "E_MCP_PATH_SYNTAX"  # ".." is a syntax failure
+    assert codes[3] == "E_MCP_PATH_CONTAINMENT" and (not linked or codes[4] == "E_MCP_PATH_CONTAINMENT")
+    assert all(result.is_error for result in results)
+    assert not list(outside.iterdir()) and work.snapshot() == before
+
+
+def yaml_store_config(root: str) -> str:
+    return ("version: chrona/store-config/v0.1\nstores:\n"
+            f"  - {{provider: local, identity: test, root: {json.dumps(root)}, integrity: required}}\n")
 
 
 # --- standard output carries protocol frames only, and the server ends with its input -----------------------------
