@@ -2,7 +2,7 @@
 
 Living record for [#587](https://github.com/tya5/chrona/issues/587): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history.
 
-**Public base:** `ded433ae` on `main`. **Status:** the design plan is published (section 4, PR #868); the design and architecture review are this publication (sections 5 and 6). Next: the implementation plan (section 7), then I587-1 (canvas texture) and I587-2 (glow).
+**Public base:** `ded433ae` on `main`. **Status:** the design plan (section 4, PR #868) and the design and architecture review (sections 5 and 6, PR #872) are published; the implementation plan is this publication (section 7). Next: I587-1 (canvas texture), then I587-2 (glow).
 
 ## 1. Published baseline
 
@@ -92,8 +92,8 @@ The issue's "Need" and "Proposal" list five treatments: canvas texture, a decora
 ### Order of design slices
 
 1. **D587-1** (PR #868, merged): baseline and design plan.
-2. **D587-2** (this PR): design and architecture review: decisions D1 to D10, the owner decision comment on the issue. The Spec 07, 08 and 63 amendments land with the slice that implements each rule.
-3. **D587-3**: implementation plan (slices, owned files, tests, generated evidence).
+2. **D587-2** (PR #872): design and architecture review: decisions D1 to D10, the owner decision comment on the issue. The Spec 07, 08 and 63 amendments land with the slice that implements each rule.
+3. **D587-3** (this PR): implementation plan (slices, owned files, tests, generated evidence).
 4. Code slices as planned in D587-3, then the acceptance review.
 
 ## 5. Design
@@ -172,3 +172,51 @@ Controller Z (`examples/controller-z/`) gains new slides, as #492 added `axis-ti
 - **Risks.** (1) A texture under an opaque canvas gradient hides the gradient (recorded; successor for a transparent texture). (2) A texture on a very large canvas emits one pattern fill, not per-tile geometry, so size is constant. (3) Contrast evaluators that look up a host by "latest earlier Rect" now find the texture for primitives not on any band; the change is that they measure against substrate and ink, and a unit test pins it. (4) The double-halo glow is intentionally brighter than a drop shadow of the same parameters; the Theme owns the strength through opacity and blur.
 - **Extension points.** A new texture is a new catalogue pattern; a transparent, overlay or seeded texture is a successor with its own admission; a glow on Icon needs the Icon adapter to serialize outer paint (not done).
 - **Decision:** approved for implementation planning.
+
+## 7. Implementation plan
+
+Two code publications, each its own PR with `Refs #587`, each with default output unchanged. Generated Scene and SVG evidence of a committed slide is produced by the derived sync after the merge (CI rejects PR edits to manifest-declared evidence); locally it is regenerated into a scratch directory with `tools/regenerate_public_examples.py` to be inspected. Every committed Scene and SVG that exists before a slice must be byte-identical after it, which proves only that the default is unchanged.
+
+### I587-1: canvas texture
+
+- **Files.**
+  - `src/chrona/presentation/layout/canvas_texture.py` (new): `complete_canvas_texture(theme_tokens, canvas)`; nothing without a `canvas-texture` role.
+  - `src/chrona/presentation/layout/surface_completion.py`: call it after `completed_canvas`; append the shape, its pattern and the `canvas` pseudo-slot to the `SurfacePlacement`.
+  - `src/chrona/presentation/layout/dependency_network.py`: the same call for the network surface; its pattern joins `DependencyNetworkLayout.patterns`, the Rect and slot are added by the builder.
+  - `src/chrona/presentation/model/semantic_registry.py`: the `canvasTexture` binding (no contrast class).
+  - `src/chrona/presentation/scene/v05_builder.py`: emit the texture Rect first on both surfaces, attach its pattern through the existing path, add the `canvas` Scene slot of the network surface.
+  - `src/chrona/presentation/scene/capabilities.py`: role contract for `canvas-texture` (`fill`, `stroke`, `pattern`; consumer "Layout canvas texture and Scene Rect") and its entry in the catalogue-pattern allowlist.
+  - `src/chrona/presentation/color_scheme.py`: where the resolved Theme's roles are admitted, a `canvas-texture` role without a `pattern`, or with an inline pattern, fails with `E_THEME_ROLE_REQUIRED` or `E_THEME_ROLE_PROPERTY_UNSUPPORTED` at `/body/roles/canvas-texture/pattern`. Layout treats a resolved role that names no pattern as no texture (fail safe for a hand-built Theme), and an inline pattern as an error.
+  - `src/chrona/presentation/scene/paint_analysis.py`, `contrast_policy.py`, `perceptibility.py`: the ground rule of section 5.5.
+  - `docs/specification/07-style-and-theme.md` (the role and its admission), `08-scene-and-rendering.md` (the texture primitive and the `canvas` pseudo-slot).
+  - Schemas: none expected (`schema_equivalence --base-rev origin/main` is run and recorded).
+  - Not touched: presets, catalogues, the Controller Z or HALCYON corpus data, #582 and #583 files.
+- **Tests (synthetic, no `examples/` input).**
+  - `tests/unit/chrona/presentation/layout/test_canvas_texture.py`: absent role gives nothing; declared role gives one Rect over the completed canvas, paint order 0, slot `canvas`, origin at the canvas top-left, pattern equal to the catalogue entry; a non-zero canvas origin; a canvas larger than the viewport.
+  - `tests/unit/chrona/presentation/scene/test_canvas_texture_scene.py`: first primitive on both surfaces, below a band of any paint order; the `canvas` slot present only with a texture; role admission rejects a texture with an inline pattern, a missing `fill` or `stroke`, an opacity other than 1, a `strokeWidth`, a gradient, a shadow, a `backgroundPaintOrder`; contrast policy measures a mark and a state text against the worse of substrate and ink (and a primitive on a later band against the band only); `I_SCENE_PAINT_CONTRAST` uses the worse ground; a texture needs no contrast floor of its own.
+  - `tests/integration/test_canvas_texture_render.py`: end to end through `tests/support/synthetic_review.py` with a catalogue fixture: SVG has one `<pattern>` and one patterned Rect as the first drawn shape after the canvas; PNG (resvg) shows ink pixels at lattice positions and substrate elsewhere, and a mark pixel above it; two renders are byte-identical; a Theme without the role is byte-identical to the render before the change; Typst and TikZ reject it with `E_VISUAL_CAPABILITY_UNSUPPORTED`; both surface kinds.
+- **Mutation checks.** Each new test is run against a deliberately broken implementation and must fail: emit the texture last; give it a non-zero paint order; drop the substrate; use `background.fill` as substrate; skip the network surface; add the slot without a texture; ignore the ink in the contrast ground; ignore the substrate; return the better ground; admit an inline pattern; origin at the viewport instead of the canvas. Results are listed in the PR.
+- **Committed evidence.** A new Controller Z slide `surface-texture` (view, Theme, context and a manifest entry, as #492 added `axis-ticks`): a dark Theme (version `chrona/theme/v0.13`, the version that admits catalogue patterns) that declares `canvas-texture` with `chrona-target-parts:hexagon-lattice`, so the Title Card surface exists as YAML. SVG and PNG of it are read in full; the rest of the corpus is byte-identical.
+- **Acceptance gates.** Focused tests, the neighbouring suites (scene, layout, closure, role admission), `conformance/run_conformance.py`, `tools/check_import_direction.py`, `tools/regenerate_public_examples.py --check`, the S0 gate result, and the PR checks including `derived-ready`.
+- **Publication boundary.** One PR; merged with the merge lock; the next slice bases on the derived-sync bot commit that follows it.
+
+### I587-2: glow
+
+- **Files.**
+  - `src/chrona/presentation/scene/model.py`: `Glow` and `ScenePaint.glow`.
+  - `src/chrona/presentation/scene/paint.py`: resolve `glowColor`, `glowBlur`, `glowOpacity`, `glowFidelity`, the region from the primitive extent and the canvas, the shadow-and-glow conflict and the omission; `src/chrona/presentation/scene/v05_builder.py`: pass the canvas bounds and a Path's point extent.
+  - `src/chrona/presentation/scene/capabilities.py`: the `effect.glow` entry, the properties on the Rect, Text and Path paint sets, closure role admission; `src/chrona/presentation/scene/visual_capabilities.py`: the ID in the rich capability set and in `validate_surface_visual_profile`.
+  - `src/chrona/presentation/model/info_diagnostics.py`: the `glow` treatment; `src/chrona/presentation/color_scheme.py` and `src/chrona/presentation/model/closure.py`: the `glowColor` binding.
+  - `src/chrona/presentation/scene/serialization.py` and `schemas/scene-v0.7.schema.yaml`: `paint.glow`, version choice; `schemas/theme-v0.11.schema.yaml` and `schemas/theme-v0.13.schema.yaml`: the role properties and the `glowColor` binding pattern, in place; the S0 gate result is recorded.
+  - `src/chrona/presentation/renderers/v05_svg.py`: the glow filter; the shadow filter is untouched.
+  - `docs/specification/07-style-and-theme.md`, `08-scene-and-rendering.md`, `63-portable-visual-capabilities.md` and the generated capability prior-art matrix.
+- **Tests (synthetic, no `examples/` input).**
+  - Unit: limits, together-or-none, fidelity, conflict with a shadow, admission on Rect, Symbol, Text and Path roles and rejection on the canvas, Icon and shared `text` roles; region equals extent plus three blur, clipped to the canvas; a Path's region from its points; omission and `I_VISUAL_TREATMENT_OMITTED` for `decorative-optional` under the baseline and `E_VISUAL_CAPABILITY_UNSUPPORTED` for `required`; the suggested profile; deduplication; scene serialization and the schema.
+  - Integration: SVG filter markup and identity; PNG pixels of a halo around a mark, inside the region and absent outside it, and the glow not clipped at the element box; two renders equal; a Theme without the properties byte-identical to before; the existing shadow filter bytes unchanged; Typst, TikZ and PDF routes never receive a glow.
+- **Mutation checks.** Drop the region growth; skip the canvas clip; use the shadow region; omit a `required` glow; fail a `decorative-optional` one; skip the conflict check; drop the capability from the rich set; single halo instead of double; swap colour and flood opacity. Results are listed in the PR.
+- **Committed evidence.** A second Controller Z slide `surface-glow` (or the glow on the texture slide's gates, decided when it is built) whose Theme gives the milestone gate a gold glow (the Marquee star), rendered under the rich SVG profile; SVG and PNG are read in full.
+- **Acceptance gates and boundary.** As I587-1.
+
+### I587-3: acceptance
+
+The acceptance review `docs/reviews/current/issue-587-surface-decoration-acceptance-review-<date>.md` with the `chrona:literal-acceptance/v1` marker and one row per literal criterion; any treatment not delivered is narrowed with a linked successor issue; checked by `tools/check_issue_acceptance_reviews.py`; merged; the exact-main three-OS run on the review commit located; #587 closed only when every row is met or narrowed with a successor and the full matrix and `reproduction-newest-python` are green on that commit. Successor issues (title border, panels with gutters, as-of cone, texture beyond the opaque tile) are filed before the review, each short, with direction, after a duplicate search.
