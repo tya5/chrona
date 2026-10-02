@@ -306,6 +306,13 @@ gain two tools and the version `v0.3`. Statements that become stale and change w
 - Spec 66: status line, "Owns", section 1 ("writes nothing"), section 2 (all tools read-only, "no mutating tool",
   annotations), section 3 (fields only on `ok`), section 4 (workspace rules apply to Store roots), section 6 (new codes
   `E_MCP_WRITE_DISABLED`), section 7 (`--allow-write`, `instructions`, "read-only annotations").
+- [Spec 10](../../specification/10-command-model.md) section 9.1 says an AI client submits an
+  `ai-command-proposal` and an authorization decision precedes persistence. The owner decided the local tools do not
+  run that exchange, so the section would contradict the shipped tool. It gets a scope note in the code slice that
+  adds the tool: the exchange is specified for a deployment with an authenticated principal and a policy (the
+  Collaboration Coordinator of Spec 09 section 10), no runtime implements it, and the local command line and the
+  `apply_command` tool apply a validated, revision-bound command without it; validation, compare-and-set and the
+  replay ledger are unchanged. The proposal and decision schemas and their conformance fixture are not touched.
 - `docs/guides/agent-interface.md`: "small, read-only MCP server", the table, "The server never writes a file", "no tool that
   changes anything".
 - `skills/chrona/SKILL.md` ("The tools never write the plan"; the table, pinned to the registry by
