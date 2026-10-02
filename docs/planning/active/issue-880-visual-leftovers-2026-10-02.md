@@ -78,5 +78,6 @@ Publication boundary: S1 to S4 are independent and each leaves `main` consistent
 | Slice | State | Evidence |
 | --- | --- | --- |
 | S0 | merged, #895 | this record |
-| S1 | in review | 26 committed Scenes change, only `axis-grid`, `calendar-closed` and `as-of` bounds and points (script diff of every changed Scene); 02, 11, 12 unchanged; Controller Z `axis-ticks` and HALCYON 04 read before and after: lines now end at the ground. Ghost text is still visible in both images (S2). |
-| S2, S3, S4, S5 | not started | |
+| S1 | merged, #897 | 26 committed Scenes change, only `axis-grid`, `calendar-closed` and `as-of` bounds and points (script diff of every changed Scene); 02, 11, 12 unchanged; Controller Z `axis-ticks` and HALCYON 04 read before and after: lines now end at the ground. Ghost text is still visible in both images (S2). |
+| S2 | in review | every changed Scene differs only in `relation-label` paint and visual role (script diff of every Scene that changed, plus the manifest role list); Controller Z `axis-ticks` and HALCYON 04 read: the labels (`end->start`, `end->at +5wd`, `at->start +2wd`) are now legible and no label moved. |
+| S3, S4, S5 | not started | |

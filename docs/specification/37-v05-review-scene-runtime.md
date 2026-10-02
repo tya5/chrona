@@ -151,7 +151,10 @@ There is no role-to-color fallback map.
 Selected text roles bind `fontFamily`, `fontWeight`, `fontSize`, and `lineHeight`.
 Selected dependency roles bind `stroke` and `marker`; selected annotation roles bind
 `fill` and `stroke`, while annotation text uses the selected `annotation` typography
-role. A missing selected binding diagnoses at the token boundary.
+role. A relation label (`relation-label`) is label text: it is typeset in the `annotation`
+typography role and painted with the `text` role's ink, like every other label, so a Theme's
+`annotation.fill` (the annotation box) never colours it (#880). A missing selected binding
+diagnoses at the token boundary.
 
 ## 5. Migration and acceptance
 

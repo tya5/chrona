@@ -155,7 +155,10 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     # Relations.
     _binding("dependency", "line", "dependency", "dependency", "dependency"),
     _binding("dependency-critical", "line", "dependency", "dependency-critical", "dependency-critical"),
-    _binding("relationLabel", "label", "relation-label", "annotation", "annotation"),
+    # A relation label is label text: its ink is the text role's, like every other label (#880). Its visual role
+    # used to be "annotation", whose fill every Theme binds to a ground colour (it paints annotation boxes), so the
+    # label read as ghost text. Its typography is still the Theme's "annotation" role (the theme-role field).
+    _binding("relationLabel", "label", "relation-label", "text", "annotation"),
     _binding("networkNode", "mark", "network-node", "network-node", "network-node", ContrastClass.MARK),
     _binding("networkEdge", "line", "network-edge", "network-edge", "network-edge"),
     _binding("criticalEdge", "line", "critical-edge", "critical-edge", "critical-edge"),
