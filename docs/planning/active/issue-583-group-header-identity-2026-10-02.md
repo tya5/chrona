@@ -2,7 +2,7 @@
 
 Living record for [#583](https://github.com/tya5/chrona/issues/583): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history.
 
-**Public base:** `f1624ab6` on `main`. **Status:** design plan (section 4, PR #866), design and architecture review (sections 5 and 6, PR #869) and implementation plan (section 7, PR #873) are published. I583-1 (header text template) is implemented in the code PR that carries this revision; I583-2 (tint) is next; I583-3 (tab) needs its own design PR first.
+**Public base:** `f1624ab6` on `main`. **Status:** design plan (section 4, PR #866), design and architecture review (sections 5 and 6, PR #869) and implementation plan (section 7, PR #873) are published. I583-1 (header text template, #876) and I583-2 (tint, #878) are merged; I583-3 (tab) is designed in section 5.3 (this revision) and not yet implemented.
 
 ## 1. Published baseline
 
@@ -134,9 +134,30 @@ The title keeps flowing to the lane table, group details and legend as `group_la
 
 **Contrast.** The scene contrast gate (`evaluate_scene_contrast`) takes the ground under a text from the completed primitives, so the header text on a tinted band and the table and mark text over it are evaluated against the tinted colour. The acceptance test is a synthetic Project whose Scheme tint is too close to the header ink: the finding must appear, and a legible tint must not produce one. A new gate is added only if this test shows a gap.
 
-### 5.3 I583-3: tab decoration (outline, designed before its code)
+### 5.3 I583-3: tab decoration (design, written against `main` at `432b1169`)
 
-A Theme-owned tab Rect at the start or end of the group header with a catalogue pattern, a declared size and position, completed by Layout (the header text then starts after a start-side tab) and projected by Scene like any pattern Rect. Open points to close in its own design PR: a new Theme role and its capability registration (`scene/capabilities.py`), the size metrics' names, the pattern-admission rule on a Rect (#496), the byte identity of a Theme without the role, and whether the tab needs a View switch. It touches the Theme schema, which #587 also edits: the design PR is written against `main` at that time.
+**Where (D8).** The Theme owns it: a tab is appearance, and the same View under two Themes may show a tab or not. A new Theme role `group-tab` (semantic id `groupTab`) is a Layout-completed Rect beside the header text of every group that has a header. Absence of the role is today's output: no tab, no change to the text start. This follows the #492 `tickLength` precedent for Theme additions: optional properties added in place to the live Theme schemas that list role properties (`theme-v0.13`, and the transitioning `theme-v0.11`, exactly as #492 did), no version bump (Spec 56 section 3.2), S0 gate recorded.
+
+**Role properties** (admitted for `group-tab` only, in `scene/capabilities.py`, together with the patterned-Rect paint set and `backgroundTreatment` / `backgroundPaintOrder`, as `period-band` is):
+
+| Property | Meaning |
+| --- | --- |
+| `tabInlineSize` | Named length (px): the tab's inline extent. Required when the role has a treatment other than `none`. |
+| `tabBlockSize` | Optional named length: the tab's block extent, from the header's block start; absent means the full header block size. |
+| `tabGap` | Optional named length: space between a start-side tab and the header text; absent is 0. |
+| `tabPosition` | Optional enum `start` (default) or `end`: which inline edge of the header band the tab stands on. |
+
+The pattern is the role's existing `pattern` property, a catalogue pattern on a Rect (#496: opaque substrate and ink, admitted only on a completed Rect). Paint and `opacity` follow the role's other properties; the tab is never tinted by `grouping.tint` (its pattern ink is the Theme's).
+
+**Layout.** `layout/surface_groups.py` completes, for each group with `header_bounds`, one `ShapePlacement` `group-tab:<id>` (source ref the group id) at the header's inline start (`start`) or end (`end`), `tabInlineSize` wide and `tabBlockSize` (default the header block size) high; the header text of a `start` tab begins at `tabInlineSize + tabGap` inside the header bounds, and an `end` tab shortens the text's available inline size by the same amount. The tab joins the background shapes that `validate_background_shapes` already checks (`groupTab` is added to the background semantic ids): an opaque tab inside the header band is not an overlap error; a translucent one is, as for every other pair. Pattern placement is completed like the `period-band` pattern (complete_pattern_placement on the Rect, projected by Scene).
+
+**Scene and adapters.** `v05_builder` emits the placed shape (purpose `group-tab`, added to the background purposes in `_paint_family`), attaches the completed pattern, and completes paint with the role's paint. Adapters serialize a Rect with a catalogue pattern as they do today (Typst and TikZ reject it by the existing visual-capability rule).
+
+**Contrast and perceptibility.** The tab role joins the `DECORATION` contrast class like the bands, so its fill against its ground is gated; the header text keeps its existing gating (`groupHeader` carries no contrast class today, a known gap recorded as a successor candidate).
+
+**Failure behaviour.** A declared tab whose size cannot be drawn is a declaration error, not a content overflow (the "never refuse because content does not fit" rule of #449 concerns content): `tabInlineSize` missing or non-positive, `tabBlockSize` non-positive, or a tab plus gap not smaller than the header's inline size or higher than its block size is `E_LAYOUT_GROUP_TAB_SIZE` (role, property, value, available size). A header band that does not exist (`presentation: band`) draws no tab and is not an error.
+
+**Whole-architecture check.** View is untouched (no new View field: the tab is appearance). Layout owns geometry and the text offset; Scene carries completed primitives; the Theme names only lengths and a pattern. #587 adds canvas texture and glow through other roles and `canvas_paint`; the two share `theme-v0.13` and `capabilities.py`, so the code PR rebases onto `main` at that time and edits only the `group-tab` lines. Rejected: a View `grouping.tab` switch (appearance in the View), a tab as part of `group-header-band` (cannot carry its own pattern and size), a Layout Profile region for the tab (a tab is not a slot).
 
 ### 5.4 Intended incompatibilities
 
@@ -191,9 +212,14 @@ Publication units, in order. Each code PR is `Refs #583`, carries the S0 gate re
 - **Verification.** As I583-1, plus a rendered image per Theme treatment (solid, outline).
 - **Boundary.** Merged alone.
 
-### I583-3: tab decoration
+### I583-3: tab decoration (one code PR, after this design)
 
-Not planned in detail here. It starts with its own design PR (section 5.3) against `main` at that time, because it needs a Theme schema widening shared with #587. If the budget ends first, it is recorded as one short successor issue (searched for duplicates first) and #583's tab row is narrowed with that link.
+- **Schema.** `tabInlineSize`, `tabBlockSize`, `tabGap`, `tabPosition` on the role property map of `theme-v0.13` and `theme-v0.11`, in place; S0 gate result in the PR; one L1 expected-delta entry per schema if the gate asks.
+- **Capabilities.** `scene/capabilities.py`: register `group-tab`; `semantic_registry.py`: binding `groupTab` (decoration, `DECORATION` contrast class); `surface_backgrounds.BACKGROUND_SEMANTIC_IDS` gains `groupTab`.
+- **Layout.** `surface_groups.py` (tab shape, text offset, `E_LAYOUT_GROUP_TAB_SIZE`); pattern completion beside the period band's; `surface_composer.py` wiring.
+- **Scene.** `v05_builder.py`: emit the shape, add the purpose to the background purposes.
+- **Tests (synthetic).** Tab emitted per header group at `start` and `end`; text offset and available size; `tabBlockSize` default and explicit; a Theme without the role byte-identical in Scene primitives; every size failure; opaque tab inside the band is accepted and a translucent one rejected; the catalogue pattern attached; band presentation draws no tab; contrast class applied. Mutation checks on each rule. Rendered image read.
+- **Boundary.** Merged alone; rebase onto `main` immediately before the PR because of #587.
 
 ### Acceptance review
 
