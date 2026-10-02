@@ -1,0 +1,38 @@
+<!-- chrona:literal-acceptance/v1 -->
+
+# Issue #583 — group header identity acceptance review
+
+Source: [Issue #583](https://github.com/tya5/chrona/issues/583), observed 2026-10-02 (body unchanged since filing, re-fetched before this review; two comments, both of the implementing session: the owner decisions and a status block). The four acceptance rows are copied below. Living record: [work record](../../planning/active/issue-583-group-header-identity-2026-10-02.md); living contract [Specification 50](../../specification/50-constraint-driven-gantt-surface-quality.md) section 3.4 ("Header text", "Group tint"), [Specification 06](../../specification/06-view-model.md) section 6, [Specification 60](../../specification/60-declared-colour-scales.md) section 6.
+
+Slices: design plan [PR #866](https://github.com/tya5/chrona/pull/866) (`cbd8f6f2`); design and architecture review [PR #869](https://github.com/tya5/chrona/pull/869) (`26b03851`); implementation plan [PR #873](https://github.com/tya5/chrona/pull/873) (`d2c50597`); I583-1 header text template [PR #876](https://github.com/tya5/chrona/pull/876) (`7bde9ddf`); I583-2 per-group tint [PR #878](https://github.com/tya5/chrona/pull/878) (`eab91cba`); I583-3 tab design [PR #879](https://github.com/tya5/chrona/pull/879) (`df0bbf2e`). Owner decisions (D1 View versus Theme, D2 string template, D3 forms, D4 entity field, D6 separate `grouping.tint`, evidence placement; options, choice, reversal) are [a comment on the issue](https://github.com/tya5/chrona/issues/583#issuecomment-5943784752).
+
+## Literal issue acceptance
+
+### Issue #583
+
+- Source: [Issue #583](https://github.com/tya5/chrona/issues/583)
+- Observed: 2026-10-02
+
+| # | Literal acceptance criterion | Disposition | Evidence | Successor |
+| ---: | --- | --- | --- | --- |
+| 1 | Template and ordinal forms are declared and validated; synthetic tests cover each ordinal form and the first-group variant. | met | View `grouping.header` ([`view-v0.28`](../../../schemas/view-v0.28.schema.yaml), in place under Specification 56 section 3.2; S0 gate PASS) holds `text`, `ordinal` (`arabic`, `zero-padded`, `roman`, `kanji`, `kanji-formal`), `first` and `secondary.entityField`. The contract validates grammar and usability (`E_VIEW_GROUP_HEADER_TEMPLATE`, `E_VIEW_GROUP_HEADER_UNUSABLE`; [`resources.py`](../../../src/chrona/presentation/contracts/resources.py)); projection checks the range and the secondary value (`E_REVIEW_GROUP_ORDINAL_RANGE`, `E_REVIEW_GROUP_HEADER_SECONDARY`; [`group_header_text.py`](../../../src/chrona/presentation/group_header_text.py), [`v05_content.py`](../../../src/chrona/presentation/review/v05_content.py)). Synthetic tests: [`test_group_header_text.py`](../../../tests/unit/chrona/presentation/test_group_header_text.py) (56: every form at its values and edges, every grammar rejection, first-group variant, secondary) and [`test_group_header_template.py`](../../../tests/integration/test_group_header_template.py) (13, rendered through the packaged bundle: arabic, zero-padded, roman, first-group variant, secondary title, literal braces, each failure, default unchanged). 12 mutations killed. Rendered images read: `ACT I · Bus`, and `In the Bus BUS SEGMENT` then `Meanwhile, in the Payload PAYLOAD SEGMENT`. Not image-verified: the `kanji` and `kanji-formal` forms drawn (the synthetic bundle has no CJK metrics); their strings are unit-tested. | — |
+| 2 | Per-group tint through a colour scale spans the table and the timeline band; the contrast gates cover tinted bands. | met | View `grouping.tint {scale, domain?}` resolves through the existing colour-scale machinery (Theme `colorScales`, `E_PRESENTATION_SCALE_MAPPING` / `_VALUE`, separability warning) and Scene replaces only the band's visible channel ([`v05_builder.py`](../../../src/chrona/presentation/scene/v05_builder.py); [`render_review.py`](../../../src/chrona/usecases/render_review.py) `_resolve_group_tints`). [`test_group_tint.py`](../../../tests/integration/test_group_tint.py) (17, synthetic): each group band takes its scale colour in display order; only the bands' fill changes (every other primitive equal); with `backgroundExtents.groupBand: both` the tinted Rect spans the table slot start to the timeline slot end; listed domain with slots; unknown scale and out-of-domain group are errors; `alternate` and `none` selections; outline stroke; opacity kept; separability warning from the tint's own scale; the gate reads the tint as ground: a tint as light as the marks gives `E_SCENE_MARK_CONTRAST` on the marks over it, a tint equal to the canvas gives `E_SCENE_DECORATION_CONTRAST` on the band, a row stripe is judged against the tint under it. 13 mutations killed (one equivalent). Rendered image read: blue, green and purple bands across table and timeline. | — |
+| 3 | Tab decoration with a catalogue pattern. | narrowed | Designed, not implemented, by the coordinator's direction to deliver I583-3 as a design only: Theme role `group-tab` with `tabInlineSize`, `tabBlockSize`, `tabGap`, `tabPosition`, a catalogue pattern on a Layout-completed Rect, header text offset and `E_LAYOUT_GROUP_TAB_SIZE` ([work record](../../planning/active/issue-583-group-header-identity-2026-10-02.md) section 5.3 and the I583-3 slice of section 7, PR #879). No code exists, so nothing draws a tab. | [#882](https://github.com/tya5/chrona/issues/882) |
+| 4 | Evidence: target-B tints, Marquee `ACT n` and Title Card tabs reproduced in YAML on corpus slides. | narrowed | The general knobs are proven on synthetic fixtures with rendered images (rows 1 and 2; [`test_group_header_template.py`](../../../tests/integration/test_group_header_template.py), [`test_group_tint.py`](../../../tests/integration/test_group_tint.py)); no corpus slide, preset or catalogue Theme was edited (corpus data is never edited to pass a render criterion). Target YAML on corpus slides belongs with the packaged presets and parts catalogue (#718) and the target gap map; the Title Card tab also waits for row 3. | [#883](https://github.com/tya5/chrona/issues/883) |
+
+## Programme-level criteria (optional)
+
+None.
+
+## Architecture and release conclusion
+
+The text is View content, composed once in content normalisation; the colour is a Theme scale resolved before Layout and applied as completed Scene paint; Layout reads neither a Scheme nor a field value, and adapters are unchanged. Both properties are optional additions to `view-v0.28` in place (Specification 56 section 3.2): omission is today's output and every committed slide regenerates byte-identical (no-change evidence only, not a quality bar). The issue proposal placed the per-group paint in the Theme; it is a View declaration naming a Theme scale (D6) because `colorEncoding` is closed to one encoding on planned marks, and the Theme still owns every colour.
+
+Disclosures:
+
+- **S0 gate repair.** The gate failed on main before #876 because #582 S4 added `periods[].label` without updating the `periods` expected-delta entry; #876 repaired that one entry so the gate is meaningful.
+- **Authoring consequence of a tint:** row stripes are judged against the tint they lie on, so a stripe close to a tint is a gate error; pair tints with distinct stripes or `rows: none`.
+- **Known gap, not architecture-critical:** the `groupHeader` text role carries no contrast class, so header text over a tint is not gated: [#884](https://github.com/tya5/chrona/issues/884).
+- **Rendering of a tab** and **target YAML** remain with #882 and #883.
+
+Exact review-bearing-main three-OS CI and newest-Python materializer run must pass before closing #583; record that run in the issue closing comment.
