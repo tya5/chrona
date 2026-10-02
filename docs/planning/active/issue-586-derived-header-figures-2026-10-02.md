@@ -2,7 +2,7 @@
 
 Living record for [#586](https://github.com/tya5/chrona/issues/586): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history.
 
-**Public base:** `f4fd1444` on `main`. **Status:** design plan (PR #900), design and architecture review (PR #904), implementation plan (PR #908), I586-1 (Core derivation, PR #912), I586-2 (View `figures` and the Summary Profile source, PR #916) and I586-3 (header placeholder, PR #923) are published; I586-4 (evidence) is implemented in this revision. The acceptance review is not yet written.
+**Public base:** `e20c459f` on `main`. **Status:** every slice is published: design plan (PR #900), design and architecture review (PR #904), implementation plan (PR #908), I586-1 Core derivation (PR #912), I586-2 View `figures` and the Summary Profile source (PR #916), I586-3 header placeholder (PR #923) and I586-4 Title Card countdown evidence (PR #926). The acceptance review is [docs/reviews/current/issue-586-derived-header-figures-acceptance-review-2026-10-02.md](../../reviews/current/issue-586-derived-header-figures-acceptance-review-2026-10-02.md); optional extensions are tracked in #927.
 
 ## 1. Published baseline
 
