@@ -243,6 +243,18 @@ it: a mark or state text is measured against the worse of the two
 (`groundKind` `texture-substrate` or `texture-ink`), a decoration tint against the
 substrate, and the texture itself has no floor.
 
+**Region frames (#889).** A Theme that declares the role `region-frame` adds one Rect primitive per
+drawable frame of the table-timeline surface. Layout completes it (Specification 33 section 3): the Rect,
+its corner radius, and the pseudo-slot `frame:<node id>` (source `frame:<node id>`, bounds the Rect) that
+owns it, which exist in the Scene only for such a Theme. Its identity is `region-frame:<node id>`,
+its purpose and visual role are `region-frame`, its paint order 0, and Scene emits the frames right after
+the canvas texture, a container's frame before its children's, and before every other primitive, so a
+panel paints below bands, rows, gridlines, marks and text whatever paint order those declare. It is an
+ordinary Rect (a catalogue pattern makes the Scene v0.7, as for any patterned Rect): SVG and PNG paint it,
+Typst and TikZ draw a plain one and reject a patterned one, and no Scene field is added. A frame is an
+allocation, not a plot-height overlay: it follows the node's bounds, and the plot rule of Specification 50
+is unchanged inside it.
+
 ### 4.0 v0.1 Scene profile
 
 A Scene profile declares layout policy, not geometry. The first Date-only profile is

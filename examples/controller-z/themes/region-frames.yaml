@@ -20,6 +20,16 @@ body:
     frame.radius:
       type: number
       value: 10
+    # The key panel: two rows of three columns (#889).
+    key.column:
+      type: number
+      value: 170
+    key.height:
+      type: number
+      value: 52
+    masthead.height:
+      type: number
+      value: 96
     monospace:
       type: fontFamily
       value: Noto Sans Mono, monospace

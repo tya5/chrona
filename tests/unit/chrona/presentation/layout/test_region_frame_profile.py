@@ -144,6 +144,18 @@ def test_an_absent_optional_slot_leaves_an_unpopulated_container_and_moves_nothi
     assert {item.node_id: item.frame for item in present.decisions if item.frame} == {"notes-panel": RegionFrame(Decimal(0), True)}
 
 
+def test_a_slot_that_collapsed_to_no_area_does_not_populate_its_panel() -> None:
+    node = container("row", "empty", [slot("a", "title")], frame={})
+    collapsed = {**MEASUREMENTS, "a": m(0, 0)}
+
+    manifest = solved(profile(node), collapsed)
+
+    assert {item.node_id: item.frame for item in manifest.decisions if item.frame} == {"empty": RegionFrame(Decimal(0), False)}
+    assert bounds(manifest)["a"].inline_size == 0
+    present = solved(profile(deepcopy(node)))
+    assert {item.node_id: item.frame for item in present.decisions if item.frame} == {"empty": RegionFrame(Decimal(0), True)}
+
+
 def test_the_manifest_names_a_frame_only_when_one_is_declared() -> None:
     plain = solved(profile(panel("row", frame=None))).canonical_bytes()
     framed = solved(profile(panel("row", frame={"inset": 4}))).canonical_bytes()

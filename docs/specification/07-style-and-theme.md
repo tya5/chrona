@@ -246,6 +246,22 @@ hidden. The texture is ground, not content: it carries no contrast class and no
 floor of its own, and marks and state text that lie on it are gated against both
 its substrate and its ink (a decoration tint is judged against the substrate).
 Typst and TikZ reject it like any pattern. See Specification 08 section 4.0.1.
+
+**Region frame (#889).** The Theme role `region-frame` paints every panel a Layout Profile
+`frame` declaration asks for (Specification 33 section 3). It admits the Rect paint set (`fill`,
+`stroke`, `strokeWidth`, `dash`, `opacity`, gradient, shadow, glow and wobble properties), a
+catalogue `pattern` (the halftone panel; the pattern closure rule applies, so a patterned role
+declares no `strokeWidth`, `dash` or gradient and its `stroke` is the ink), and one Layout
+property, `frameCornerRadius` (a named number token, pixels, at least 0). The radius is the radius
+of the stroke's centre line and is reduced to half the shorter side when larger
+(`W_LAYOUT_REGION_FRAME_CORNER_REDUCED:<node>`). A role with a `fill` is a solid panel (the stroke is
+optional); a role with only a `stroke` is an outline panel; a role with neither is
+`E_THEME_ROLE_REQUIRED` at `/body/roles/region-frame/stroke`. A Theme that does not declare the role
+draws no frame, so a shared Layout Profile stays valid under any Theme. The role carries no contrast
+class: a frame is ground, and what lies on it (a mark, state text, a group header) is gated against its
+fill by the ground rule of Specification 46 (completed Scene paint; a frame without a fill is not ground; a translucent fill is
+an unsupported ground and fails closed). `frameCornerRadius` is added in place to the live Theme
+schemas (Specification 56 section 3.2).
 `planned`, `actual`, `snapshot`, and `scenario` can emit either Rect or Symbol;
 `milestone` emits Symbol; callout/arrow boxes can be balloon Symbols. Catalogue
 patterns on these roles require a separate completed Symbol clip/paint design
