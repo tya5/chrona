@@ -156,8 +156,10 @@ Text is the period `title` (the id when absent), measured by Layout with the `pe
 `textTransform`, like every label. Anchors, in the plot (the timeline rows region):
 
 * `top`: block start at the plot's top edge plus the label gap; `bottom`: block end at the plot's bottom edge
-  minus the gap; `inside`: centred on the band in both axes. For `top` and `bottom` the inline start is the
-  band's visible start, shifted inward so the box stays inside the plot.
+  minus the gap; `inside`: centred on the band in both axes. For `top` and `bottom` the label is centred on the
+  band's visible extent in the inline axis (the engine's own `above`/`below` geometry about a zero-height anchor on
+  the plot edge), and the plot bounds keep the box inside the plot. A label wider than a narrow band therefore
+  extends equally on both sides.
 * The period label is one more request to the shared label engine that already places the as-of label and member
   labels (`LabelRequest`, `surface_member_labels.py`), with the three anchors above as its candidate list. It
   therefore inherits, rather than re-implements, the obstacle index (marks, text and rules registered so far),
