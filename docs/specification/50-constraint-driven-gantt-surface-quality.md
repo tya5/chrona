@@ -278,11 +278,13 @@ Scene projection; adapters do not decide which background is visible. The
 legend's calendar key uses the same Theme role without inheriting the plot's
 underlying bands.
 
+**The plot (#880).** The plot is the timeline slot down to the bottom of its last row (the last group's content when groups exist), and never past the slot; with no rows it is the slot. A slot is an allocation and the rows are the content, so a surface given more block room than its rows need has an empty strip under the last row. The ground (group and row bands) stops at the last row, and every overlay that spans the height of the plot ends there too: the full-height `grid-major` and `grid-minor` lines, each closed day, the as-of line and a period band (and the anchor of a `bottom` period label). Axis ticks and the axis rule are not plot-height overlays and are unchanged. A slot the rows fill is unchanged. Layout owns the extent; Scene and adapters carry the completed primitives.
+
 A selected named period (#582; Spec 06 §7.1) completes one `Rect` background:
 placement id `period-band:<period id>`, `sourceRef` the period id, semantic
 `periodBand`, slot `timeline`. Its inline extent is the period's half-open range
 clipped to the View window and to the plot, mapped through the scale that places
-marks; its block extent is the timeline slot's plot rows, as the calendar
+marks; its block extent is the plot (above), as the calendar
 closure's. Fill, stroke, opacity, an optional catalogue pattern and the paint
 order come from Theme role `period-band` (`backgroundTreatment` and
 `backgroundPaintOrder`, as the axis band); `backgroundTreatment: none` is the

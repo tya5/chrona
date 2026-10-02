@@ -2,7 +2,7 @@
 
 Living record for [#880](https://github.com/tya5/chrona/issues/880): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history.
 
-**Public base:** `175a7890` on `main`. **Status:** this record is the first publication (S0); no code yet. Owner decisions with options, choice, reason and reversal are recorded as a comment on the issue and summarised in section 4.
+**Public base:** `175a7890` on `main`. **Status:** S0 (this record) is merged ([#895](https://github.com/tya5/chrona/pull/895)); see section 6 for the slices. Owner decisions with options, choice, reason and reversal are recorded as a comment on the issue and summarised in section 4.
 
 ## 1. Published baseline
 
@@ -75,4 +75,8 @@ Publication boundary: S1 to S4 are independent and each leaves `main` consistent
 
 ## 6. Progress
 
-S0 in review.
+| Slice | State | Evidence |
+| --- | --- | --- |
+| S0 | merged, #895 | this record |
+| S1 | in review | 26 committed Scenes change, only `axis-grid`, `calendar-closed` and `as-of` bounds and points (script diff of every changed Scene); 02, 11, 12 unchanged; Controller Z `axis-ticks` and HALCYON 04 read before and after: lines now end at the ground. Ghost text is still visible in both images (S2). |
+| S2, S3, S4, S5 | not started | |

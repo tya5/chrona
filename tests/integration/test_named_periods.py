@@ -107,6 +107,11 @@ def _patterned(tmp_path: Path):
     return _render(tmp_path, parts=parts, catalogs=(STARTER_CATALOG,))
 
 
+def _plot_bottom(rendered) -> float:
+    """Where the plot ends (#880): the bottom of the last row, which is above the slot when the slot is taller."""
+    return max(float(row.bounds[1] + row.bounds[3]) for row in rendered.surface.rows)
+
+
 def _bands(rendered) -> list:
     return [item for item in rendered.surface.primitives if item.purpose == "period-band"]
 
@@ -127,7 +132,8 @@ def test_a_band_spans_its_dates_through_the_marks_scale_and_the_plot_rows(tmp_pa
         "period-band:window", "window", "period-band", "Rect")
     assert band.bounds[0] == pytest.approx(_x(rendered, date(2026, 2, 1)))
     assert band.bounds[0] + band.bounds[2] == pytest.approx(_x(rendered, date(2026, 3, 1)))
-    assert (band.bounds[1], band.bounds[3]) == pytest.approx((plot.bounds[1], plot.bounds[3]))
+    assert band.bounds[1] == pytest.approx(plot.bounds[1])
+    assert band.bounds[1] + band.bounds[3] == pytest.approx(_plot_bottom(rendered))
     assert band.slot_id == "timeline"
 
 
@@ -323,7 +329,7 @@ def _band_batch(scale_origin: float, ratio: float, periods: tuple[ReviewPeriod, 
     plot = Rect(Decimal(100), Decimal(50), Decimal(300), Decimal(200))
     scale = ScalePlacement("table-timeline", "primary", date(2026, 1, 1), date(2026, 1, 31), 100.0, 400.0,
                            scale_origin, ratio)
-    base = SimpleNamespace(timeline=SimpleNamespace(bounds=plot), scale=scale)
+    base = SimpleNamespace(timeline=SimpleNamespace(bounds=plot), plot=plot, scale=scale)
     tokens = SimpleNamespace(background=lambda role: ("fill", 11))
     return compose_period_bands(base=base, theme_tokens=tokens, periods=periods,
                                 window=(date(2026, 1, 1), date(2026, 1, 31)))
@@ -407,11 +413,11 @@ def test_a_label_is_a_scene_text_of_the_period_title_centred_on_its_band(tmp_pat
     centre = label.bounds[0] + label.bounds[2] / 2
     assert centre == pytest.approx(band.bounds[0] + band.bounds[2] / 2, abs=1.0)
     top, bottom = label.bounds[1], label.bounds[1] + label.bounds[3]
-    assert plot.bounds[1] - 0.01 <= top and bottom <= plot.bounds[1] + plot.bounds[3] + 0.01
+    assert plot.bounds[1] - 0.01 <= top and bottom <= _plot_bottom(rendered) + 0.01
     if placement == "top":
         assert top - plot.bounds[1] < 4 * label.bounds[3]
     if placement == "bottom":
-        assert plot.bounds[1] + plot.bounds[3] - bottom < 4 * label.bounds[3]
+        assert _plot_bottom(rendered) - bottom < 4 * label.bounds[3]
     assert label.contrast_treatment == "required"
 
 

@@ -23,9 +23,7 @@ def _background_bounds(*, semantic_id: str, extent: str, source_bounds: Rect,
     if semantic_id == "calendarClosed":
         if extent != "timeline":
             raise LayoutError("E_LAYOUT_BACKGROUND_EXTENT", "/layoutManifest/reviewSurface/backgroundExtents")
-        _, timeline_block, _, timeline_block_size = timeline_bounds
-        return (Rect(source_bounds.inline, Decimal(str(timeline_block)), source_bounds.inline_size,
-                     Decimal(str(timeline_block_size))), "timeline")
+        return source_bounds, "timeline"
     table_inline, _, table_inline_size, _ = table_bounds
     timeline_inline, _, timeline_inline_size, _ = timeline_bounds
     if extent == "table":
@@ -97,14 +95,14 @@ def compose_calendar_backgrounds(*, base: SurfaceBaseGeometry, theme_tokens: Any
     """Complete ordered axis-derived calendar intervals as Theme-treated background shapes."""
     shapes = []
     for interval in intervals:
-        timeline = base.timeline.bounds
+        plot = base.plot
         shape = _background_shape(
             base=base, theme_tokens=theme_tokens,
             placement_id=f"calendar-closed:{interval.day.isoformat()}",
             source_ref="project-calendar", semantic_id="calendarClosed",
-            source_bounds=Rect(Decimal(str(interval.inline_start)), timeline.block,
+            source_bounds=Rect(Decimal(str(interval.inline_start)), plot.block,
                                Decimal(str(max(0.0, interval.inline_end - interval.inline_start))),
-                               timeline.block_size))
+                               plot.block_size))
         if shape is not None:
             shapes.append(shape)
     return tuple(shapes)
