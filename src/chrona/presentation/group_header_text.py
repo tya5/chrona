@@ -1,16 +1,19 @@
 """Group-header text template: closed grammar, ordinal forms, composition (#583).
 
-A View declares the header of each group as a template of literal text and three
-closed placeholders, ``{ordinal}``, ``{title}`` and ``{secondary}`` (``{{`` and ``}}``
-are literal braces).  This module is pure: it parses and renders strings and reads
-no Project, Theme or Layout fact.  Callers supply the title and the secondary text.
+A View declares the header of each group as a template of literal text and closed
+placeholders, ``{ordinal}``, ``{title}``, ``{secondary}`` and ``{figure:<id>}``, which
+shows a derived figure the View declares (#586); ``{{`` and ``}}`` are literal braces.
+This module is pure: it parses and renders strings and reads no Project, Theme or
+Layout fact.  Callers supply the title, the secondary text and the resolved figures.
 """
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 ORDINAL_FORMS = ("arabic", "zero-padded", "roman", "kanji", "kanji-formal")
 PLACEHOLDERS = ("ordinal", "title", "secondary")
+FIGURE_PREFIX = "figure:"
 
 _ROMAN = ((1000, "M"), (900, "CM"), (500, "D"), (400, "CD"), (100, "C"), (90, "XC"),
           (50, "L"), (40, "XL"), (10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I"))
@@ -38,6 +41,15 @@ class HeaderTemplate:
     def fields(self) -> frozenset[str]:
         return frozenset(value for kind, value in self.parts if kind == "field")
 
+    @property
+    def figure_ids(self) -> frozenset[str]:
+        """The identifiers of the derived figures this template shows."""
+        return frozenset(value[len(FIGURE_PREFIX):] for value in self.fields if value.startswith(FIGURE_PREFIX))
+
+
+def _is_placeholder(name: str) -> bool:
+    return name in PLACEHOLDERS or (name.startswith(FIGURE_PREFIX) and len(name) > len(FIGURE_PREFIX))
+
 
 def parse_template(source: str) -> HeaderTemplate:
     """Parse ``source`` or raise ``E_VIEW_GROUP_HEADER_TEMPLATE`` for any other brace use."""
@@ -53,7 +65,7 @@ def parse_template(source: str) -> HeaderTemplate:
                 continue
             end = source.find("}", index + 1)
             name = source[index + 1:end] if end != -1 else ""
-            if name not in PLACEHOLDERS:
+            if not _is_placeholder(name):
                 raise GroupHeaderTextError("E_VIEW_GROUP_HEADER_TEMPLATE", f"unknown or unterminated placeholder in {source!r}")
             if literal:
                 parts.append(("text", "".join(literal)))
@@ -98,8 +110,9 @@ def format_ordinal(position: int, form: str, *, group_count: int) -> str:
     return prefix + (table["digits"][ones] if ones else "")
 
 
-def render_header(template: HeaderTemplate, *, ordinal: str, title: str, secondary: str | None) -> str:
-    """Substitute the placeholders; a ``{secondary}`` without a value is an error."""
+def render_header(template: HeaderTemplate, *, ordinal: str, title: str, secondary: str | None,
+                  figures: Mapping[str, int] | None = None) -> str:
+    """Substitute the placeholders; a ``{secondary}`` without a value or a figure not resolved is an error."""
     out: list[str] = []
     for kind, value in template.parts:
         if kind == "text":
@@ -108,6 +121,11 @@ def render_header(template: HeaderTemplate, *, ordinal: str, title: str, seconda
             out.append(ordinal)
         elif value == "title":
             out.append(title)
+        elif value.startswith(FIGURE_PREFIX):
+            figure_id = value[len(FIGURE_PREFIX):]
+            if figures is None or figure_id not in figures:
+                raise GroupHeaderTextError("E_VIEW_GROUP_HEADER_TEMPLATE", f"no resolved figure {figure_id!r}")
+            out.append(str(figures[figure_id]))
         else:
             if secondary is None:
                 raise GroupHeaderTextError("E_REVIEW_GROUP_HEADER_SECONDARY", "template uses {secondary} without a value")
@@ -116,7 +134,8 @@ def render_header(template: HeaderTemplate, *, ordinal: str, title: str, seconda
 
 
 def compose_group_headers(*, group_ids: tuple[str, ...], titles: dict[str, str], secondaries: dict[str, str] | None,
-                          text: str, first: str | None, ordinal: str) -> tuple[tuple[str, str], ...]:
+                          text: str, first: str | None, ordinal: str,
+                          figures: Mapping[str, int] | None = None) -> tuple[tuple[str, str], ...]:
     """Return ``(group id, header text)`` for each group in display order."""
     main = parse_template(text)
     opening = parse_template(first) if first is not None else main
@@ -130,5 +149,6 @@ def compose_group_headers(*, group_ids: tuple[str, ...], titles: dict[str, str],
         rendered_ordinal = (format_ordinal(position, ordinal, group_count=count)
                             if "ordinal" in template.fields else "")
         result.append((group_id, render_header(template, ordinal=rendered_ordinal,
-                                               title=titles.get(group_id, group_id), secondary=secondary)))
+                                               title=titles.get(group_id, group_id), secondary=secondary,
+                                               figures=figures)))
     return tuple(result)
