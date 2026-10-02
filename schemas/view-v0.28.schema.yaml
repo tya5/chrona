@@ -329,6 +329,14 @@ allOf:
               oneOf:
                 - $ref: "#/$defs/figureDaysUntil"
                 - $ref: "#/$defs/figureDaysIn"
+          deadlines:
+            description: "Draws each object's Project deadline as a tick at its date and, when the planned finish is later, a run from the tick to that finish; absent draws none."
+            examples: [{show: slipped}]
+            type: object
+            required: [show]
+            additionalProperties: false
+            properties:
+              show: {description: "Which deadlines are drawn: only those the plan misses (slipped), or every deadline (all), the missed ones with their run.", enum: [slipped, all]}
           shading:
             type: object
             additionalProperties: false
@@ -714,6 +722,7 @@ allOf:
                   - {required: [axis]}
                   - {required: [markers]}
                   - {required: [periods]}
+                  - {required: [deadlines]}
                   - {required: [shading]}
                   - {required: [timePresentation]}
                   - {required: [annotations]}

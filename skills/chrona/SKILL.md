@@ -165,8 +165,9 @@ that shows it, quote the whole diagnostic to the user, and do not guess a fix.
 No resource leveling at this surface, no interactive editing, no cycle analysis (a
 cycle is rejected). A `deadline` is a promise, not a bound: `chrona schedule` still places
 everything and lists a `W_DEADLINE` in its `warnings` for each object planned after its
-deadline (`render` repeats it on standard error). `validate` does not judge it, and the
-picture does not draw it yet.
+deadline (`render` repeats it on standard error). `validate` does not judge it. A View
+can draw it (`deadlines: {show: slipped}`: a tick at the date and a run to the planned
+finish), and a terse plan states it with a last clause, `deadline 2027-06-30`.
 
 ## Install and refresh this skill
 

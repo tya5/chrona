@@ -99,10 +99,12 @@ def _write(path: Path, value: Mapping[str, Any]) -> Path:
 
 def render(directory: Path, source: Mapping[str, Any], *, presentation: Mapping[str, Mapping[str, Any]] | None = None,
            actual: Mapping[str, Any] | None = None, viewport: tuple[int, int | None] = (1600, 900),
-           icon_catalogs: tuple[Path, ...] = (), summary: Mapping[str, Any] | None = None) -> RenderedReview:
+           icon_catalogs: tuple[Path, ...] = (), summary: Mapping[str, Any] | None = None,
+           detail: Mapping[str, Any] | None = None) -> RenderedReview:
     """Render `source` through `presentation` (default: the packaged preset bundle) and return the review.
 
     `summary` is an optional Summary Profile document; the Layout Profile must carry a `summary` slot to show it.
+    `detail` is an optional Review Detail Profile document; its `legend` shows in a Layout Profile with a `legend` slot.
     """
     parts = presentation or bundle()
     paths = {kind: _write(directory / f"{kind}.yaml", value) for kind, value in parts.items()}
@@ -111,6 +113,7 @@ def render(directory: Path, source: Mapping[str, Any], *, presentation: Mapping[
         theme_path=paths["theme"], scheme_path=paths["scheme"], layout_path=paths["layout"],
         actual_path=_write(directory / "actual.yaml", actual) if actual is not None else None,
         summary_path=_write(directory / "summary.yaml", summary) if summary is not None else None,
+        detail_path=_write(directory / "detail.yaml", detail) if detail is not None else None,
         icon_catalog_paths=icon_catalogs, viewport=viewport)
     return render_review(RenderRequest(
         closure=draft.closure, snapshot_root=draft.asset_root, asset_root=draft.asset_root,

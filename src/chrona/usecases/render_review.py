@@ -41,12 +41,12 @@ from chrona.presentation.model.info_diagnostics import PresentationInfo
 from chrona.presentation.fonts.system import DraftFontResolution
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView, effective_draft_numeric_theme
 from chrona.core.attachments import AttachmentWarning, attachment_warnings
-from chrona.core.deadlines import deadline_warnings
+from chrona.core.deadlines import deadline_statuses, deadline_warnings
 from chrona.core.figures import resolve_figures
 from chrona.core.periods import period_range_diagnostics, resolve_periods
 from chrona.core.temporal import Calendar
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
-from chrona.presentation.model.projection import ReviewPeriod, build_review_projection
+from chrona.presentation.model.projection import ReviewDeadline, ReviewPeriod, build_review_projection
 from chrona.presentation.model.surface_content import SummaryContent, TableContent
 from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput, ViewRowMode
 from chrona.presentation.review.v05_content import (
@@ -596,7 +596,8 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
         snapshot_analysis=snapshot_result.analysis if snapshot_result is not None else None,
     )
     projection = replace(projection, periods=_selected_periods(project, result.placements, view),
-                         figures=_resolved_figures(project, result.placements, view, actual))
+                         figures=_resolved_figures(project, result.placements, view, actual),
+                         deadlines=_shown_deadlines(project, result.placements, view))
     return projection, tuple(provenance), attachment_warnings(project, result.placements), deadline_warnings(project, result.placements)
 
 
@@ -639,6 +640,18 @@ def _resolved_figures(project: dict[str, Any], placements: dict[str, dict[str, A
     if resolution.diagnostics:
         raise RenderRejected(list(resolution.diagnostics))
     return tuple(resolution.values.items())
+
+
+def _shown_deadlines(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput) -> tuple[ReviewDeadline, ...]:
+    """The Project deadlines the View asks to draw, judged by the Core (#822).
+
+    ``slipped`` keeps the objects planned to finish after their deadline, the set `W_DEADLINE` names; ``all`` keeps
+    every object that has a deadline. Layout receives the verdict and draws it; it compares no dates.
+    """
+    if view.deadlines is None:
+        return ()
+    return tuple(ReviewDeadline(item.object_id, item.deadline, item.finish, item.slipped)
+                 for item in deadline_statuses(project, placements) if item.slipped or view.deadlines == "all")
 
 
 def _selected_periods(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput) -> tuple[ReviewPeriod, ...]:

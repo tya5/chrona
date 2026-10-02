@@ -244,6 +244,10 @@ dates) and `daysLate` (calendar days, at least 1), and the pointer `/objects/<id
 object order. `chrona schedule` prints them as the `warnings` array of its result, beside an empty `diagnostics`;
 `chrona validate` computes no placements and does not judge a deadline.
 
+A View may draw the finished verdict (Spec 06 section 7.3): a tick at the deadline date and, for a slipped deadline, a run
+to the planned finish. The verdict is the same one `W_DEADLINE` names (`core/deadlines.py` `deadline_statuses`), so the
+picture and the warning cannot disagree, and drawing it changes no placement, verdict or analysis.
+
 ## 11. Span amount rule
 
 For a start-anchored scheduled span:
