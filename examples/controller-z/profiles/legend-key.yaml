@@ -1,0 +1,10 @@
+version: chrona/review-detail-profile/v0.1
+id: controller-z-legend-key
+body:
+  legend:
+    - {role: planned, label: Plan}
+    - {role: actual, label: Actual}
+    - {role: missing-actual, label: Not yet observed}
+    - {role: dependency, label: Depends on}
+    - {role: calendar-closed, label: Holiday}
+    - {role: as-of, label: As of today}

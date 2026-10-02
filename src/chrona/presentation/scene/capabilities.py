@@ -137,7 +137,7 @@ _CANVAS_PAINT = frozenset(("fill", "opacity", "gradientStart", "gradientEnd", "g
 _PATTERNED_RECT_PAINT = _RECT_PAINT | frozenset(("pattern",))
 _LAYOUT_TYPOGRAPHY = _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("writingMode",))
 _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | _GROUP_TAB | frozenset((
-    "cellGap", "cellCornerRadius", "cellCornerChamfer", "chipPadding", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach",
+    "cellGap", "cellCornerRadius", "cellCornerChamfer", "frameCornerRadius", "chipPadding", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach",
     "progressInset", "summaryBarHeight", "swatchInlineSize", "annotationContainer", "marker", "symbol", "edge",
     "stampPlacement",
 ))
@@ -283,6 +283,8 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              scene_kinds=frozenset(("Rect",)))
     register("canvas-texture", "Layout canvas texture and Scene Rect", frozenset(("fill", "stroke", "pattern")),
              scene_kinds=frozenset(("Rect",)))
+    register("region-frame", "Layout region frame and Scene Rect", _PATTERNED_RECT_PAINT | frozenset(("frameCornerRadius",)),
+             scene_kinds=frozenset(("Rect",)))
     register("legend-swatch", "Layout legend swatch size", frozenset(("swatchInlineSize",)))
     register("baseline", "Retired Theme paint alias", frozenset())
     return roles
@@ -294,7 +296,7 @@ _OPEN_LEGEND_PROPERTIES = _RECT_PAINT
 _CATALOG_PATTERN_ROLES = frozenset((
     "missing-actual", "network-node", "progress-fill", "summary-bar",
     "annotation-highlight-box", "axis-band-decoration", "axis-band-decoration2", "period-band", "group-tab",
-    "as-of-label-chip", "member-label-chip", "finish-delta-chip", "canvas-texture",
+    "as-of-label-chip", "member-label-chip", "finish-delta-chip", "canvas-texture", "region-frame",
 ))
 
 

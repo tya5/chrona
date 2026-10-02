@@ -284,6 +284,7 @@ properties:
             wobbleWavelength: {description: "Named hand-wobble wavelength token (px, in [4, 1000]).", type: string, minLength: 1}
             wobbleSeed: {description: "Named hand-wobble seed token (an integer in [0, 2^32)).", type: string, minLength: 1}
             wobbleFidelity: {description: "Named hand-wobble fidelity token.", type: string, minLength: 1}
+            frameCornerRadius: {description: "Named corner-radius token (px, at least 0) of a region frame; reduced to half the shorter side when larger. Admitted on the role region-frame (#889).", type: string, minLength: 1}
             strokeFinishFidelity: {description: "Named stroke-finish fidelity token.", type: string, minLength: 1}
       colorBindings:
         type: object

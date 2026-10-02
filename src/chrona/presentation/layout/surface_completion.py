@@ -21,6 +21,7 @@ from chrona.presentation.layout.surface_quality import (
     SlotPlacement, SurfaceLayoutRequest, SurfacePlacement, TextPlacement,
 )
 from chrona.presentation.layout.canvas_texture import complete_canvas_texture
+from chrona.presentation.layout.region_frame import complete_region_frames
 from chrona.presentation.layout.surface_visuals import place_axis_band_visuals
 from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids
@@ -299,9 +300,12 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
             "group-header-density", "visible-overflow", float(header.inline_size),
             float(header.block_size), float(header.inline_size), available_block,
         ))
+    # Region frames (#889) are completed from the arranged profile; the canvas grows to contain one, never the reverse.
+    frames = complete_region_frames(request.theme_tokens, layout_manifest.decisions)
     canvas = completed_canvas(
         requested=request.layout_manifest.viewport,
         rectangles=(tuple(slot.bounds for slot in slots) + tuple(row.bounds for row in rows)
+                    + frames.extents
                     + tuple(column.bounds for column in column_placements)
                     + tuple(group.content_bounds for group in groups)
                     + tuple(group.header_bounds for group in groups if group.header_bounds is not None)
@@ -339,6 +343,13 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
         shapes = [texture.shape, *shapes]
         patterns = (texture.pattern, *patterns)
         slots = (*slots, texture.slot)
+    if frames.shapes or frames.diagnostics:
+        # Frames are ground one step above the texture: first among the shapes, parent before child.
+        at = 1 if texture is not None else 0
+        shapes = [*shapes[:at], *frames.shapes, *shapes[at:]]
+        patterns = (*patterns, *frames.patterns)
+        slots = (*slots, *frames.slots)
+        diagnostics = [*diagnostics, *frames.diagnostics]
     placement = SurfacePlacement(text=completed_text, slots=slots, rows=rows, columns=column_placements,
                                  groups=tuple(groups), scale=scale,
                                  marks=tuple(marks), shapes=tuple(shapes), relations=tuple(relations),

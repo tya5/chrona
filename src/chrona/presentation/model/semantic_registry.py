@@ -104,6 +104,9 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     # contrast-classified: a faint texture is the point, and the gates treat its
     # substrate and ink as the ground of what lies on it instead.
     _binding("canvasTexture", "decoration", "canvas-texture", "canvas-texture", "canvas-texture"),
+    # Region frame (#889): the panel Layout completes behind a framed Layout Profile node. Ground like the
+    # texture and for the same reason not contrast-classified: what lies on it is gated against its fill.
+    _binding("regionFrame", "decoration", "region-frame", "region-frame", "region-frame"),
     # Axis.
     _binding("axisBand", "label", "axis-band", "axis-band", "axis"),
     _binding("axisBandDecoration", "decoration", "axis-band", "axis-band-decoration", "axis-band-decoration", ContrastClass.DECORATION),
