@@ -32,6 +32,7 @@ from chrona.presentation.layout.surface_backgrounds import (
     compose_calendar_backgrounds, compose_row_group_backgrounds, replace_group_header_band,
 )
 from chrona.presentation.layout.surface_axis import compose_axis
+from chrona.presentation.layout.surface_deadlines import compose_deadline_marks
 from chrona.presentation.layout.surface_periods import compose_period_bands, period_label_requests
 from chrona.presentation.layout.presentation import (MarkGeometry, required_row_block_extents)
 from chrona.presentation.layout.text import metric_for_role, place_text
@@ -164,6 +165,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         shapes = list(replace_group_header_band(tuple(shapes), update))
     shapes.extend(mark_batch.progress_shapes)
     shapes.extend(mark_batch.summary_shapes)
+    deadline_batch = compose_deadline_marks(
+        base=base, theme_tokens=request.theme_tokens, deadlines=projection.deadlines, marks=mark_batch.marks,
+        window=projection.window, paint_order_base=MARK_PAINT_ORDER_BASE)
+    shapes.extend(deadline_batch.shapes)
+    diagnostics.extend(deadline_batch.diagnostics)
     placement_decisions: list[PlacementDecision] = list(axis_decisions)
     member_label_context = SurfaceMemberLabelContext(
         request, projection, layout_manifest, by_source, text_slot, review_rows, tuple(rows), tuple(tracks),
@@ -208,6 +214,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         if shape.placement_id == "as-of" and len(shape.points) >= 2:
             surface_obstacles.add(SurfaceObstacle(shape.placement_id, "rule", "timeline",
                                                   ObstacleSegment(shape.points[0], shape.points[1])))
+        elif shape.semantic_id == "deadlineMark":  # a thin rule an annotation candidate must not cover, as for the as-of rule
+            register_path(shape.placement_id, "rule", "timeline", shape.points)
 
     timeline_rect = LabelRect(*timeline_bounds)
 

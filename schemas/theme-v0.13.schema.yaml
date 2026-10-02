@@ -238,6 +238,7 @@ properties:
             markOffset: {description: "Named lane-slot-relative mark block-start ratio for this semantic role.", type: string, minLength: 1}
             markPaintOrder: {description: "Named completed mark paint-order value for this semantic role.", type: string, minLength: 1}
             markCornerRadius: {description: "Named mark corner-radius ratio for this semantic role.", type: string, minLength: 1}
+            markReach: {description: "Named ratio of the planned mark's block size that a deadline tick spans, centred on that mark (0 < ratio <= 4); above 1 the tick stands above and below the bar (#822).", type: string, minLength: 1}
             laneBlockSize: {description: "Named axis-lane block size in px for a labels tier's typography role; the tier becomes a declared lane with vertically centred labels (#426).", type: string, minLength: 1}
             cellGap: {description: "Named gap in px between adjacent cells of an axis band tier (#426).", type: string, minLength: 1}
             labelInset: {description: "Named inset, as a ratio of the role's font size, of a start-aligned axis label from its cell edge (#426).", type: string, minLength: 1}

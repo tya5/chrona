@@ -154,6 +154,19 @@ class ReviewPeriod:
 
 
 @dataclass(frozen=True)
+class ReviewDeadline:
+    """One Project deadline the View shows, with the finish the Core judged it against (#822).
+
+    ``slipped`` is the Core's verdict (the finish is strictly after the deadline); Layout never compares the dates.
+    """
+
+    object_id: str
+    deadline: date
+    finish: date
+    slipped: bool
+
+
+@dataclass(frozen=True)
 class ReviewProjection:
     items: tuple[ReviewItem, ...]
     window: tuple[date, date]
@@ -170,6 +183,7 @@ class ReviewProjection:
     lane_rows: tuple[ReviewLaneRowProjection, ...] = ()
     periods: tuple[ReviewPeriod, ...] = ()
     figures: tuple[tuple[str, int], ...] = ()  # (figure id, days) the Core resolved from the View's `figures` (#586)
+    deadlines: tuple[ReviewDeadline, ...] = ()  # the Project deadlines the View's `deadlines` shows, in Project order (#822)
 
 
 @dataclass(frozen=True)

@@ -171,7 +171,9 @@ receives finished dates and draws; it never subtracts two dates to judge latenes
   legend swatch, not a folded group-header point) complete a tick `Path` and, when slipped, a run `Path`
   (`deadline:<mark id>`, `deadline-run:<mark id>`, `source_ref` the object id, semantic `deadlineMark`, slot `timeline`).
   Inline coordinates come from the same scale as the marks; the run is clipped to the plot's right edge. Both are registered as
-  `rule`-class obstacles so labels and routes avoid them (as the as-of rule is). Lane and explicit rows need no special case:
+  `rule`-class obstacles so annotation candidates avoid them, as they avoid the as-of rule (design correction found while
+  testing: member labels and relation routes do not treat a `rule` as an obstacle, so they may cross a tick, as they may cross the
+  as-of rule; Spec 50 says so). Lane and explicit rows need no special case:
   the geometry is anchored to the completed planned mark, wherever its track put it.
 - **Failure behaviour (D9).** A deadline outside the View window is not drawn and is recorded as the Scene diagnostic
   `I_LAYOUT_DEADLINE_OUTSIDE_WINDOW:<object>`; a planned mark folded into a group header is not decorated and is recorded as
@@ -336,3 +338,40 @@ the issue closed only when every row is met or narrowed with a successor link an
   `deadline` reserved; duplicate allowed; group ignores it; gate or task with only a deadline not `E_TERSE_SCHEDULE_REQUIRED` (the
   gate case was first missed and is now covered by its kind-specific hint and position); hint always shown; ledger back to yaml-only;
   date not checked.
+
+### I822-2 (Core status, implemented)
+
+- **Behaviour change: none.** `core/deadlines.py` gains `DeadlineStatus` and `deadline_statuses`; `deadline_warnings` is the slipped
+  statuses. The `#792` tests, the CLI goldens and the render stderr test pass unmodified (PR #939).
+- **Mutation checks.** 9 of 10 killed; the tenth (a point judged by `end` first) is an equivalent mutant (a point placement has only `at`).
+
+### I822-3 (the View mark, implemented)
+
+- **Behaviour change: none by default.** A View without `deadlines` selects nothing (`_shown_deadlines` returns first) and renders
+  byte-identical (tested, with and without the Theme role declared). The S0 gate passes: the optional `deadlines` member and the
+  dependency-network prohibition are two L1 expected-delta entries; `markReach` is an additive optional Theme role property in
+  `theme-v0.11` and `theme-v0.13` (recognised by the gate as additive).
+- **Where.** `schemas/view-v0.28.schema.yaml`, `schemas/theme-v0.11.schema.yaml`, `schemas/theme-v0.13.schema.yaml`;
+  `contracts/resources.py` (`ViewInput.deadlines`), `model/projection.py` (`ReviewDeadline`, `ReviewProjection.deadlines`),
+  `usecases/render_review.py` (`_shown_deadlines`, the Core verdict), new `layout/surface_deadlines.py` (one call and the obstacle
+  registration in `surface_composer.py`), `layout/surface_legend.py` (`deadlineMark` is a line swatch), `model/semantic_registry.py`
+  (`deadlineMark`, `mark` class), `scene/capabilities.py` (role `deadline-mark`, `markReach`), `model/theme_tokens.py`
+  (`deadline_mark`), `scene/v05_builder.py`; Specifications 04, 06 (section 7.3), 07, 33 (module table), 49, 50; the skill statements
+  that said the picture does not draw a deadline. `tests/support/synthetic_review.py` gains an optional `detail` argument.
+- **Tests.** `tests/integration/test_deadline_mark.py` (33, synthetic): tick position, centring and reach; run for a span and a point
+  and its clip; before-the-bar deadline; `slipped` and `all`; the runs equal the `W_DEADLINE` set on three plans; equal date kept;
+  both window edges inclusive; default byte identity; lanes and automatic rows; outside-window record; folded-point record and
+  snapshot marks never hosting; missing role and out-of-range reach refused; malformed member; dependency-network prohibition;
+  annotation candidates avoid the paths; contrast passes a sufficient paint (a tick over a bar judged on the bar, the rest on the
+  row ground) and fails a faint one on both grounds; perceptibility; SVG paint; legend swatch.
+- **Mutation checks (all 26 killed or equivalent).** Selection ignoring or dropping `all`; no member still drawing; verdict forced;
+  tick at the finish; run for kept or never; run end at the deadline; no clip; window checks removed or made exclusive (two were first
+  missed and now have edge tests); reach ignored; tick anchored at the bar top; paint order ignoring the Theme; snapshot marks and
+  folded points hosting; records dropped; composer call dropped; obstacles not registered (first missed, now covered by an annotation
+  placement test); builder not emitting; legend swatch not a line; role not required; reach unchecked; `show` not read. Finding: the
+  `slipped` verdict and `finish > x` were redundant in Layout, so the geometry now keys on the verdict alone.
+- **Rendered check.** A synthetic board read as an image (span and point, slipped and kept, `show: all`): the tick stands at the date
+  on every row, the slipped span and point carry an L-shaped bracket under the bar to the planned finish, the kept span and the point
+  kept on its day carry the tick only. With the packaged `warning` brown the tick over a blue bar fails the 3:1 gate, which is why
+  the tests' Theme uses `text`; this is the intended gate working, and is a preset-lane choice (#718).
+

@@ -635,6 +635,11 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                              progress.purpose, progress.scene_role, bounds, slot_id=placed.slot_id,
                                              paint_order=placed.paint_order, clip_source_id=placed.clip_host_id,
                                              corner_radius=placed.corner_radius or None))
+        elif placed.semantic_id == "deadlineMark":
+            deadline = semantic_binding("deadlineMark")
+            primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.PATH, placed.source_ref, "object",
+                                             deadline.purpose, deadline.scene_role, bounds, slot_id=placed.slot_id,
+                                             points=placed.points, paint_order=placed.paint_order))
         elif placed.placement_id.startswith("chip:"):
             chip_binding = semantic_binding(placed.semantic_id)
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "review",

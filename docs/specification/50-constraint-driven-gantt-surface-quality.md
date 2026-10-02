@@ -296,6 +296,19 @@ beneath its centre, and a translucent host beneath cannot be gated
 (`E_SCENE_CONTRAST_GROUND_UNSUPPORTED`), so a Theme paints a pattern band
 opaque or a translucent band over opaque bands only.
 
+A shown deadline (#822; Spec 06 section 7.3) completes `Path` shapes from the View-shown deadlines the use case
+carries on the projection, each with the Core's slipped verdict (`ReviewDeadline`; Layout compares no dates to judge
+lateness). For every completed planned mark of the object (semantic `planned`; a snapshot or scenario mark and a point folded
+into a group header never host one) the tick is the vertical segment at the deadline date, mapped through the scale that
+places marks, centred on the mark and `markReach` times its block size tall (placement id `deadline-tick:<mark instance>`);
+a slipped deadline adds the run, the horizontal segment from the tick's lower end to the planned finish clipped to the plot's
+inline end (`deadline-run:<mark instance>`). Both carry `sourceRef` the object id, semantic `deadlineMark`, slot `timeline`
+and paint order the mark base plus Theme `markPaintOrder`. A deadline outside the View window (the closed range, both
+edges inclusive) is recorded as `I_LAYOUT_DEADLINE_OUTSIDE_WINDOW:<object>` and a folded header point as
+`I_LAYOUT_DEADLINE_FOLDED:<object>`. The paths are registered as `rule` obstacles, so annotation candidates avoid them as they
+avoid the as-of rule; member labels and relation routes treat a rule as they treat the as-of rule and may cross it.
+Contrast is gated as a `mark` role at 3:1 over the primitive beneath its centre.
+
 A selected period's label (`label: {placement, overflow}`) is one request to the shared label engine that places the
 as-of and member labels, built in the first pre-route phase: `top` and `bottom` anchor a zero-height strip on the plot
 edge so the engine's `below` and `above` geometry centres the label on the band against it, `inside` anchors the band;

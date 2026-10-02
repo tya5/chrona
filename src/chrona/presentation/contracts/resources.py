@@ -346,6 +346,7 @@ class ViewInput:
     background_decoration: tuple[str, str] = ("none", "all")
     periods: tuple[ViewPeriod, ...] = ()
     figures: tuple[FigureSpec, ...] = ()
+    deadlines: str | None = None  # `slipped` or `all`: which Project deadlines the surface draws; None draws none (#822)
 
 
 @dataclass(frozen=True)
@@ -921,7 +922,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
         background_decoration=(str(body.get("backgroundDecoration", FrozenDict()).get("rows", "none")),
                                str(body.get("backgroundDecoration", FrozenDict()).get("groups", "all"))),
         periods=_view_periods(body.get("periods", ())),
-        figures=figures)
+        figures=figures,
+        deadlines=str(body["deadlines"]["show"]) if "deadlines" in body else None)
 
 
 def _view_periods(raw: Any) -> tuple[ViewPeriod, ...]:

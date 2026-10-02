@@ -77,7 +77,7 @@ def swatch_extent(role: str, tokens: Any, mark_block_size: float, legend_size: f
         return side, side, "point"
     if role in MARK_GEOMETRY_ROLES:
         return fallback_inline, float(tokens.mark_geometry(role)[0]) * mark_block_size, "mark"
-    if role in ("asOf", "dependency", "dependency-critical"):
+    if role in ("asOf", "dependency", "dependency-critical", "deadlineMark"):
         return fallback_inline, text_line_block, "line"
     return legacy, legacy, "legacy"
 

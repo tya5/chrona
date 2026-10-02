@@ -54,6 +54,7 @@ The registry owns canonical primitive semantics. Its entries declare `semantic_i
 | `planned` | Rect/Symbol | `planned` | `planned` |
 | `actual` | Rect/Symbol | `actual` | `actual` |
 | `asOf` | Path/Text | `as-of`, `as-of-label` | `asOf` |
+| `deadlineMark` | Path | `deadline-mark` | `deadline-mark` (contrast class `mark`; the role is required when a View shows deadlines) |
 | `groupHeader` | Rect/Text | `group-header-band`, `group-header` | `groupHeader` |
 | `calendarClosed` | Rect | `calendar-closed` | `calendarClosed` |
 | `periodBand` | Rect | `period-band` | `period-band` |

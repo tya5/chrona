@@ -306,6 +306,22 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markHeight")
         return height, offset, int(order), corner_radius
 
+    def deadline_mark(self, role: str) -> tuple[Decimal, int]:
+        """Return the deadline tick's reach and paint order (#822).
+
+        ``markReach`` is the tick's block extent as a ratio of the planned mark it belongs to (centred on it), so a
+        reach above 1 stands above and below the bar. The role is required when a View shows deadlines: there is no
+        fallback to another role.
+        """
+        if not isinstance(self._body["roles"].get(role), Mapping):
+            raise ThemeTokenError("E_THEME_ROLE_REQUIRED", f"/body/roles/{role}")
+        reach, order = self.number(role, "markReach"), self.number(role, "markPaintOrder")
+        if reach <= 0 or reach > 4:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markReach")
+        if order < 0 or order != order.to_integral_value():
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markPaintOrder")
+        return reach, int(order)
+
     def progress_track(self, role: str) -> tuple[Decimal, Decimal]:
         """Return the optional track inset and fill corner-radius ratios (#430).
 
