@@ -65,13 +65,16 @@ def test_workspace_normalizes_to_existing_typed_contracts_only():
 def test_workspace_rejects_duplicate_task_and_unknown_actual_task():
     document = _workspace()
     document["body"]["project"]["tasks"].append(document["body"]["project"]["tasks"][0].copy())
-    with pytest.raises(ContractError, match="E_AUTHORING_TASK_ID"):
+    repeated_id = document["body"]["project"]["tasks"][0]["id"]
+    with pytest.raises(ContractError, match="E_AUTHORING_TASK_ID") as duplicate:
         _contract("authoring-workspace", document)
+    assert repr(repeated_id) in duplicate.value.detail
 
     document = _workspace()
     document["body"]["actuals"][0]["taskId"] = "missing"
-    with pytest.raises(ContractError, match="E_AUTHORING_ACTUAL_TASK"):
+    with pytest.raises(ContractError, match="E_AUTHORING_ACTUAL_TASK") as unknown:
         _contract("authoring-workspace", document)
+    assert "'missing'" in unknown.value.detail
 
 
 def test_workspace_rejects_scheme_not_declared_by_preset():

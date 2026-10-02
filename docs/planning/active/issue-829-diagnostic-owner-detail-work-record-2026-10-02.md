@@ -127,3 +127,5 @@ only their text gains the value.
   and icon-catalog paths carry `detail=` naming the file, id or declared value. Tests: `test_closure_messages.py` (mutation-checked: 2 kills).
 - S4c theme inheritance (`presentation/model/theme_inheritance.py`, 18 sites, 537 to 519): `ThemeInheritanceError` gains `detail`; closure and the
   materializer carry it. Tests extend `test_theme_inheritance.py` (mutation-checked: 3 kills).
+- S4d View and workspace contracts (`presentation/contracts/resources.py`, 12 sites, 519 to 506): the `E_VIEW_*` table, hierarchy-column, period and label
+  refusals, `E_AUTHORING_TASK_ID`, `E_AUTHORING_ACTUAL_TASK` and `E_THEME_ASSET_REFERENCE` name the column, id or catalog (mutation-checked: 2 kills).

@@ -434,3 +434,37 @@ def test_downstream_presentation_code_has_no_raw_contract_input_escape_hatch():
     assert "projection_input" not in source
     assert "summary_input" not in source
     assert "detail_input" not in source
+
+
+def _detail_of(value) -> str:
+    with pytest.raises(ContractError) as raised:
+        _view_contract(value)
+    return raised.value.detail
+
+
+def test_view_contract_errors_name_the_column_or_id_at_fault():
+    """#829: every ambiguity the typed View refuses says which column, id or setting it found."""
+    halcyon = ROOT / "examples/halcyon-1/views/06-flight-readiness.yaml"
+    value = yaml.safe_load(halcyon.read_text(encoding="utf-8"))
+    value["body"].pop("hierarchyColumn")
+    assert "hierarchyColumn must name a table column" in _detail_of(value)
+
+    value = yaml.safe_load(halcyon.read_text(encoding="utf-8"))
+    value["body"]["hierarchyColumn"] = "missing"
+    assert "'missing'" in _detail_of(value)
+
+    flat = yaml.safe_load((ROOT / "examples/aster-ssd/views/01-overview.yaml").read_text(encoding="utf-8"))
+    flat["body"]["hierarchyColumn"] = flat["body"]["tableColumns"][0]["id"]
+    assert repr(flat["body"]["hierarchyColumn"]) in _detail_of(flat)
+
+    value = yaml.safe_load(halcyon.read_text(encoding="utf-8"))
+    duplicate = dict(value["body"]["tableColumns"][0])
+    duplicate["source"] = "id"
+    value["body"]["tableColumns"].append(duplicate)
+    assert repr(duplicate["id"]) in _detail_of(value)
+
+    value = yaml.safe_load((ROOT / "examples/halcyon-1/views/04-tvac-slip.yaml").read_text(encoding="utf-8"))
+    value["body"]["tableColumns"].append({
+        "id": "Obs", "source": {"comparisonFacet": "missingActual"}, "format": "text", "missing": "em-dash",
+        "align": "center", "width": "content", "headerOrientation": "horizontal"})
+    assert "'Obs'" in _detail_of(value)
