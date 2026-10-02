@@ -1,12 +1,14 @@
 """Canonical codecs for M26 operational workflow documents."""
 from __future__ import annotations
 
+import re
 from typing import Any, Mapping
 
 import yaml
 
 from chrona.resources import safe_load, schema_validator
 from chrona.schema_diagnostics import explain_errors
+from chrona.usecases.diagnostic_messages import error_message
 from chrona.core.identity import canonical_bytes, content_identity, json_value
 
 
@@ -46,12 +48,32 @@ def parse_command(payload: str | bytes) -> dict[str, Any]:
     return parse_document(payload, command_schema_name(payload))
 
 
+_LEADING_CODE = re.compile(r"^[EW]_[A-Z0-9_]+")
+
+
+def diagnostic_row(text: str) -> dict[str, str]:
+    """The result row for ``"E_X"`` or ``"E_X: detail"``: the leading code, and the detail as the message (#829)."""
+    leading = _LEADING_CODE.match(text)
+    if leading is None:
+        return {"code": "E_AUTOMATION_FAILURE", "message": text or "the automation operation failed without a message"}
+    detail = text[leading.end():].lstrip(": ").strip()
+    return {"code": leading.group(0), "message": detail} if detail else {"code": leading.group(0)}
+
+
 def stamp_automation_result(result: dict[str, Any]) -> dict[str, Any]:
     """Set `version` to the current Automation Result contract when the content satisfies it, and return the result.
+
+    Every diagnostic row leaves with a `message` that says more than its code: the producer's own, else the curated
+    or derived sentence of `usecases.diagnostic_messages` (#829, as for the CLI rows of #782).
 
     The strict v0.2 refuses a Store address outside `storeAddress`. A result that does not satisfy it is left as built
     (every writer builds the current version); nothing falls back to the retired v0.1 any more (#731).
     """
+    result["diagnostics"] = [
+        {**row, "message": error_message(str(row["code"]), row.get("message"))}
+        if isinstance(row, dict) and isinstance(row.get("code"), str) and row["code"] else row
+        for row in result.get("diagnostics", [])
+    ]
     for version, schema_name in AUTOMATION_RESULT_SCHEMAS.items():
         candidate = json_value({**result, "version": version})
         if not any(schema_validator(schema_name).iter_errors(candidate)):

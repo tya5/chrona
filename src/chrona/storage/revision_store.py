@@ -199,11 +199,11 @@ class LocalSnapshotReader:
         token = reference.get("revision", {}).get("token", "")
         address = reference.get("address", "")
         if not token:
-            raise SnapshotReadError("E_IMMUTABLE_SNAPSHOT_REQUIRED")
+            raise SnapshotReadError("E_IMMUTABLE_SNAPSHOT_REQUIRED", f"reference address={address!r} has no revision token; a mutable tip cannot be read")
         try:
             directory = snapshot_directory(self.root, token)
         except ValueError as error:
-            raise SnapshotReadError(str(error)) from error
+            raise SnapshotReadError("E_IMMUTABLE_SNAPSHOT_REQUIRED", str(error).partition(": ")[2] or str(error)) from error
         try:
             path = resolve_store_address(directory, address, root=self.root)
         except StoreAddressError as error:
@@ -219,7 +219,7 @@ class LocalSnapshotReader:
         actual_identity = f"sha256:{sha256(payload).hexdigest()}"
         expected_identity = reference.get("contentIdentity")
         if expected_identity is None and self.require_content_identity:
-            raise SnapshotReadError("E_CONTENT_IDENTITY_REQUIRED")
+            raise SnapshotReadError("E_CONTENT_IDENTITY_REQUIRED", f"reference address={address!r} has no contentIdentity and this Store requires one")
         if expected_identity is not None and expected_identity != actual_identity:
-            raise SnapshotReadError("E_CONTENT_IDENTITY")
+            raise SnapshotReadError("E_CONTENT_IDENTITY", f"reference address={address!r} has contentIdentity {expected_identity}, the stored bytes are {actual_identity}")
         return payload

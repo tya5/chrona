@@ -51,4 +51,4 @@ def test_apply_capture_rejects_different_command_for_existing_baseline(tmp_path:
     assert apply_actual_command(reader, command)["status"] == "accepted"
     rejected = apply_actual_command(reader, command | {"commandId": "capture-2"})
     assert rejected["status"] == "rejected"
-    assert rejected["diagnostics"] == [{"code": "E_BASELINE_EXISTS"}]
+    assert [row["code"] for row in rejected["diagnostics"]] == ["E_BASELINE_EXISTS"] and rejected["diagnostics"][0]["message"]

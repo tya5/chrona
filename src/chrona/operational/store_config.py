@@ -28,7 +28,7 @@ class ConfiguredStoreReader:
         for entry in config["stores"]:
             key = (entry["provider"], entry["identity"])
             if key in self.roots:
-                raise ValueError("E_STORE_CONFIG")
+                raise ValueError(f"E_STORE_CONFIG: Store {key[0]}/{key[1]} is declared more than once")
             self.roots[key] = resolve_store_root(entry["root"], base)
             self.integrity[key] = entry.get("integrity", "required")  # required unless the Store explicitly opts out (#723)
 
@@ -37,10 +37,10 @@ class ConfiguredStoreReader:
         key = (store.get("provider"), store.get("identity"))
         root = self.roots.get(key)
         if root is None:
-            raise ValueError("E_AUTOMATION_TARGET_CLOSURE")
+            raise ValueError(f"E_AUTOMATION_TARGET_CLOSURE: the Store config declares no Store {key[0]}/{key[1]}")
         required = self.integrity[key] == "required"
         if required and not reference.get("contentIdentity"):
-            raise ValueError("E_CONTENT_IDENTITY_REQUIRED")
+            raise ValueError(f"E_CONTENT_IDENTITY_REQUIRED: the reference {reference.get('id')!r} has no contentIdentity and Store {key[0]}/{key[1]} requires one")
         token = reference.get("revision", {}).get("token")
         if reference.get("kind") == "snapshot-ref" and isinstance(token, str) and token.startswith("baseline:"):
             return LocalBaselineRegistry(root, key[1], require_content_identity=required).read(reference)

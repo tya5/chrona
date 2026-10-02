@@ -648,7 +648,7 @@ def _run(args: argparse.Namespace) -> None:
             raise CliFailure("E_AUTOMATION_RESULT_IO", str(error), "automation", exit_code=3) from error
         required_type = {"actual-intake": "applyActualIntakeBatch", "actual-resolve": "resolveActualObservation", "baseline-capture": "captureSnapshot"}.get(args.command)
         if required_type and command["type"] != required_type:
-            result = stamp_automation_result({"version": "chrona/automation-result/v0.2", "operation": args.command, "status": "rejected", "requestContentIdentity": "sha256:" + "0" * 64, "inputs": [command["target"]], "diagnostics": [{"code": "E_AUTOMATION_OPERATION_UNSUPPORTED"}], "artifacts": []})
+            result = stamp_automation_result({"version": "chrona/automation-result/v0.2", "operation": args.command, "status": "rejected", "requestContentIdentity": "sha256:" + "0" * 64, "inputs": [command["target"]], "diagnostics": [{"code": "E_AUTOMATION_OPERATION_UNSUPPORTED", "message": f"{args.command} needs a command of type {required_type!r}, got {command['type']!r}"}], "artifacts": []})
         else:
             result = check_command(reader, command) if args.command == "command-check" else apply_actual_command(reader, command)
             result["operation"] = args.command

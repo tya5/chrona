@@ -95,7 +95,7 @@ class LocalActualStore:
             tip = resolve_store_address(root, f"actual-tips/{self.actual_set_id}.json", charset="file-name")
             check_store_segment(self.actual_set_id, charset="file-name")
         except StoreAddressError as error:
-            raise ValueError("E_STORE_REFERENCE") from error
+            raise ValueError(f"E_STORE_REFERENCE: Actual set id {self.actual_set_id!r} is not a safe file name inside the Store") from error
         self.tip = tip
         self._commands: dict[str, tuple[dict[str, Any], dict[str, Any], bool]] = {}
         if self.tip.is_file():

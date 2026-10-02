@@ -26,16 +26,10 @@ diagnosticActionability:
     - {<<: *backlog, code: E_AUTHORING_PRESET_SCHEMA, sites: 2}
     - {<<: *backlog, code: E_AUTHORING_TASK_ID, sites: 1}
     - {<<: *backlog, code: E_AUTHORING_WORKSPACE_SCHEMA, sites: 2}
-    - {<<: *backlog, code: E_AUTOMATION_BASE_REVISION, sites: 1}
-    - {<<: *backlog, code: E_AUTOMATION_OPERATION_UNSUPPORTED, sites: 2}
-    - {<<: *backlog, code: E_AUTOMATION_TARGET_CLOSURE, sites: 10}
     - {<<: *backlog, code: E_AXIS_NAME_TABLE_UNKNOWN, sites: 1}
-    - {<<: *backlog, code: E_BASELINE_REFERENCE, sites: 6}
     - {<<: *backlog, code: E_CLOSURE_ID, sites: 3}
     - {<<: *backlog, code: E_CLOSURE_REQUIRED, sites: 4}
-    - {<<: *backlog, code: E_COMMAND_ID_REUSE, sites: 2}
-    - {<<: *backlog, code: E_CONTENT_IDENTITY, sites: 5}
-    - {<<: *backlog, code: E_CONTENT_IDENTITY_REQUIRED, sites: 3}
+    - {<<: *backlog, code: E_CONTENT_IDENTITY, sites: 4}
     - {<<: *backlog, code: E_DETAIL_DUPLICATE_COLUMN, sites: 2}
     - {<<: *backlog, code: E_DETAIL_DUPLICATE_GROUP, sites: 2}
     - {<<: *backlog, code: E_DETAIL_DUPLICATE_MILESTONE, sites: 2}
@@ -71,7 +65,6 @@ diagnosticActionability:
     - {<<: *backlog, code: E_ICON_SET_AMBIGUOUS, sites: 1}
     - {<<: *backlog, code: E_ICON_SVG_LIMIT, sites: 2}
     - {<<: *backlog, code: E_ICON_SVG_UNSAFE, sites: 13}
-    - {<<: *backlog, code: E_IMMUTABLE_SNAPSHOT_REQUIRED, sites: 2}
     - {<<: *backlog, code: E_LAYOUT_ANNOTATION_SEARCH_INPUT, sites: 3}
     - {<<: *backlog, code: E_LAYOUT_ASOF_LABEL_GEOMETRY, sites: 1}
     - {<<: *backlog, code: E_LAYOUT_ASOF_LABEL_RULE_HOST, sites: 1}
@@ -188,8 +181,6 @@ diagnosticActionability:
     - {<<: *backlog, code: E_SCHEME_PROVENANCE, sites: 1}
     - {<<: *backlog, code: E_SCHEME_SCHEMA, sites: 4}
     - {<<: *backlog, code: E_SCHEME_THEME_BINDING, sites: 4}
-    - {<<: *backlog, code: E_STORE_CONFIG, sites: 1}
-    - {<<: *backlog, code: E_STORE_REFERENCE, sites: 1}
     - {<<: *backlog, code: E_TARGET_CAPABILITY_ORDER, sites: 1}
     - {<<: *backlog, code: E_THEME_ASSET_REFERENCE, sites: 2}
     - {<<: *backlog, code: E_THEME_ASSET_SOURCE_DENSITY, sites: 2}
