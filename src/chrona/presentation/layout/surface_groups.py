@@ -8,6 +8,7 @@ from typing import Any
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, GroupPlacement, TextPlacement
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_role, place_text
+from chrona.presentation.layout.vertical_text import place_vertical_label
 
 
 @dataclass(frozen=True)
@@ -84,12 +85,27 @@ def group_tab_bounds(tab: GroupTabSpec, header: Rect) -> Rect:
 
 def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
                                review_rows: tuple[Any, ...], groups: tuple[GroupPlacement, ...],
-                               body_size: float) -> SurfaceGroupPresentation:
+                               body_size: float,
+                               tag_column: tuple[float, float] | None = None) -> SurfaceGroupPresentation:
     """Place declared group labels inside completed group-header bounds."""
     labels = {row.group_id: next((item.group_label for item in review_row.items if item.group_label), row.group_id)
               for review_row, row in zip(review_rows, rows, strict=True) if row.group_id}
     # A View-declared header template replaces the title text only (#583).
     labels.update(dict(request.surface_content.group_headers))
+    if tag_column is not None:
+        # A vertical label spans the group's rows in the column carved from the table's start (#585).
+        text = []
+        for group in groups:
+            if group.group_id and group.group_id in labels:
+                text.extend(place_vertical_label(
+                    label=labels[group.group_id], placement_prefix=f"group-tag:{group.group_id}",
+                    source_ref=group.group_id, column_inline=tag_column[0], column_size=tag_column[1],
+                    block_start=float(group.content_bounds.block),
+                    available_block=float(group.content_bounds.block_size), typography_role="groupHeader",
+                    theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                    collision_region=f"group:{group.group_id}",
+                    collision_domain=CollisionDomain("group-header", group.group_id), semantic_id="groupHeader"))
+        return SurfaceGroupPresentation(tuple(text))
     group_header_font_size = (float(request.theme_tokens.text_treatment("groupHeader").font_size)
                               if any(group.header_bounds is not None for group in groups) else body_size)
     text, warnings = [], []

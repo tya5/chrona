@@ -296,7 +296,9 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     if view.surface == "table-timeline":
         timeline_requirement = timeline_content_block_requirement(
             projection=projection,
-            group_presentation=view.grouping.presentation if view.grouping and view.grouping.presentation else "band",
+            group_presentation=("band" if ThemeTokenView(theme).writing_mode("groupHeader") == "vertical"
+                                else view.grouping.presentation if view.grouping and view.grouping.presentation
+                                else "band"),
             metric_values=measured.metric_values,
             role_geometries=resolve_mark_geometries(ThemeTokenView(theme)),
             text_line_block=table_text_line_block(

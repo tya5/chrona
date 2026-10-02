@@ -200,8 +200,11 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
     requirements = tuple(max(float(metric_values["timeline.row.minBlockSize"]),
                              line_block + row_padding if line_block else 0.0,
                              lane_requirements[row.row_id]) for row in rows)
+    # A vertical group label replaces the header row, so no header row is reserved (#585).
+    header_rows = (surface_content.group_presentation == "header"
+                   and theme_tokens.writing_mode("groupHeader") != "vertical")
     headers = len(tuple(row for index, row in enumerate(rows)
-                        if row.group_id and surface_content.group_presentation == "header"
+                        if row.group_id and header_rows
                         and (index == 0 or rows[index - 1].group_id != row.group_id)))
     required = (Decimal(str(geometry_sum(requirements)))
                 + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0))

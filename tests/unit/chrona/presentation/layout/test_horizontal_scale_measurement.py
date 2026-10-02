@@ -3,7 +3,7 @@ from decimal import Decimal
 
 import pytest
 
-from chrona.presentation.color_scheme import ColorSchemeError, _horizontal_scales
+from chrona.presentation.color_scheme import ColorSchemeError, _horizontal_scales, _writing_modes
 from chrona.presentation.layout.text import (
     ScaledMetric, ellipsize_text, measure_text_width, metric_for_family, metric_for_role, place_text, scaled_metric,
     wrap_text,
@@ -162,3 +162,19 @@ def test_the_scene_text_layout_only_admits_the_declared_range():
     for bad in (0.49, 1.01, True, "0.6", float("nan")):
         with pytest.raises(ValueError, match="E_PRESENTATION_TEXT_LAYOUT_INVALID"):
             _layout(bad)
+
+
+def test_theme_resolution_rejects_a_scale_on_a_vertical_role_and_a_bad_writing_mode():
+    values = {"v": {"type": "writingMode", "value": "vertical"}, "h": {"type": "writingMode", "value": "horizontal"},
+              "s": {"type": "number", "value": 0.8}, "one": {"type": "number", "value": 1}}
+    _writing_modes(declared_roles={"r": {"writingMode": "v"}}, values=values)
+    _writing_modes(declared_roles={"r": {"writingMode": "h", "horizontalScale": "s"}}, values=values)
+    _writing_modes(declared_roles={"r": {"writingMode": "v", "horizontalScale": "one"}}, values=values)
+    with pytest.raises(ColorSchemeError) as failure:
+        _writing_modes(declared_roles={"r": {"writingMode": "v", "horizontalScale": "s"}}, values=values)
+    assert (failure.value.diagnostic_id, failure.value.source_ref) == (
+        "E_THEME_TEXT_TREATMENT_CONFLICT", "/body/roles/r/horizontalScale")
+    for bad in ({"type": "writingMode", "value": "diagonal"}, {"type": "textTransform", "value": "vertical"}):
+        with pytest.raises(ColorSchemeError) as failure:
+            _writing_modes(declared_roles={"r": {"writingMode": "bad"}}, values={"bad": bad})
+        assert failure.value.diagnostic_id == "E_THEME_TOKEN_TYPE"

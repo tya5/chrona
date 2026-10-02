@@ -171,6 +171,23 @@ def _horizontal_scales(*, declared_roles: Mapping[str, Any], values: Mapping[str
             raise ColorSchemeError(error.diagnostic_id, pointer, detail=str(declared["value"])) from error
 
 
+def _writing_modes(*, declared_roles: Mapping[str, Any], values: Mapping[str, Any]) -> None:
+    """Validate every declared writing mode and reject one combined with a horizontal compression (#585)."""
+    for role, binding in declared_roles.items():
+        if not isinstance(binding, Mapping) or "writingMode" not in binding:
+            continue
+        pointer = f"/body/roles/{role}/writingMode"
+        declared = values.get(binding["writingMode"])
+        if (not isinstance(declared, Mapping) or declared.get("type") != "writingMode"
+                or declared.get("value") not in {"horizontal", "vertical"}):
+            raise ColorSchemeError("E_THEME_TOKEN_TYPE", pointer)
+        if declared["value"] == "vertical" and "horizontalScale" in binding:
+            scale = values.get(binding["horizontalScale"])
+            if isinstance(scale, Mapping) and Decimal(str(scale.get("value", 1))) != 1:
+                raise ColorSchemeError("E_THEME_TEXT_TREATMENT_CONFLICT", f"/body/roles/{role}/horizontalScale",
+                                       detail="a horizontal scale has no meaning on a vertical inline axis")
+
+
 def _annotation_kind_text_contrast(*, declared_roles: Mapping[str, Any], resolved_roles: Mapping[str, Any],
                                    values: Mapping[str, Any], kinds: Mapping[str, Mapping[str, str]]) -> None:
     """Judge the kind header text against the grounds it lies on (#584).
@@ -319,6 +336,7 @@ def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme
         values[token] = {"type": "color", "value": color}
         roles.setdefault(role, {})[property_name] = token
     _horizontal_scales(declared_roles=body.get("roles", {}), values=values)
+    _writing_modes(declared_roles=body.get("roles", {}), values=values)
     _state_text_contrast(declared_roles=body.get("roles", {}), resolved_roles=roles,
                          values=values, surface=colors["surface"])
     annotation_kinds = _annotation_kinds(declared=body.get("annotationKinds"), colors=colors)
