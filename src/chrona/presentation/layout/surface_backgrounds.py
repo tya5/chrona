@@ -7,6 +7,7 @@ from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.surface_base import SurfaceBaseGeometry
+from chrona.presentation.layout.surface_geometry import extend_to_plot_edges
 from chrona.presentation.layout.surface_groups import GroupHeaderExtentUpdate
 from chrona.presentation.layout.surface_quality import GroupPlacement, ShapePlacement, intersects
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, semantic_binding
@@ -96,12 +97,12 @@ def compose_calendar_backgrounds(*, base: SurfaceBaseGeometry, theme_tokens: Any
     shapes = []
     for interval in intervals:
         plot = base.plot
+        left, right = extend_to_plot_edges(interval.inline_start, interval.inline_end, scale=base.scale, plot=plot)
         shape = _background_shape(
             base=base, theme_tokens=theme_tokens,
             placement_id=f"calendar-closed:{interval.day.isoformat()}",
             source_ref="project-calendar", semantic_id="calendarClosed",
-            source_bounds=Rect(Decimal(str(interval.inline_start)), plot.block,
-                               Decimal(str(max(0.0, interval.inline_end - interval.inline_start))),
+            source_bounds=Rect(Decimal(str(left)), plot.block, Decimal(str(max(0.0, right - left))),
                                plot.block_size))
         if shape is not None:
             shapes.append(shape)
