@@ -152,11 +152,12 @@ def test_a_translucent_band_stays_translucent_under_the_tint(tmp_path):
 
 
 def test_two_groups_a_reader_cannot_tell_apart_are_warned_about(tmp_path):
-    def mutate(parts):
-        parts["scheme"]["body"]["categories"]["series-2"] = parts["scheme"]["body"]["categories"]["series-1"]
-    rendered = _render(tmp_path, _parts({"scale": "series"}, mutate=mutate))
-    assert any(item.startswith("W_PRESENTATION_SCALE_NOT_SEPARABLE:series:bus:payload")
+    def mutate(parts):  # a scale of its own, so the mark scale's identical diagnostics cannot stand in for it
+        parts["theme"]["body"]["colorScales"]["groups"] = {"palette": ["series-1", "series-1", "series-3"]}
+    rendered = _render(tmp_path, _parts({"scale": "groups"}, mutate=mutate))
+    assert any(item.startswith("W_PRESENTATION_SCALE_NOT_SEPARABLE:groups:bus:payload")
                for item in rendered.scene.diagnostics)
+    assert any(item.scale_id == "groups" for item in rendered.scale_collisions)
 
 
 def _findings(rendered):

@@ -93,3 +93,8 @@ Multiple simultaneous encodings, predicates, ranges, continuous scales,
 per-object literals, rule ordering, conditional style, and progress/disposition
 paint are outside this contract.  Progress fill remains a distinct mark
 vocabulary decision.
+
+A per-group band tint (View `grouping.tint`, [Specification 50](50-constraint-driven-gantt-surface-quality.md)
+section 3.4) is a second, separately named scale over the grouping field's
+values. It reuses sections 2, 3 and 5.1 unchanged and does not widen the
+single mark encoding above.
