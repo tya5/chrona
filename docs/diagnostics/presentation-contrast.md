@@ -19,6 +19,7 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | legend-swatch | `planned` | required | 3.000 | 20 | 41 | 10.019 | 16.354 | 0 |
 | missingActual | `missing-actual` | required | 3.000 | 18 | 23 | 4.436 | 14.573 | 0 |
 | network-node | `network-node` | required | 3.000 | 2 | 32 | 16.354 | 17.050 | 0 |
+| period-band | `period-band` | enabled | 1.100 | 3 | 3 | 1.235 | 1.235 | 0 |
 | planned | `planned` | required | 3.000 | 28 | 376 | 6.157 | 13.973 | 0 |
 | progress-fill | `progress-fill` | required | 3.000 | 16 | 56 | 3.216 | 4.789 | 0 |
 | row-decoration | `row-band` | enabled | 1.100 | 8 | 32 | 1.116 | 1.116 | 0 |
@@ -1157,6 +1158,7 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `legend-swatch:scale:owner:payload` | `planned` | 40.000, 556.200 | `canvas` | canvas | `#0B1220` | stroke | 16.354 | 3.000 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `missing-actual:review-lane:["generated","bus","pdr"]:pdr` | `missing-actual` | 958.241, 236.500 | `planned:review-lane:["generated","bus","pdr"]:pdr` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `missing-actual:review-lane:["generated","launch","launch-contract"]:launch-contract` | `missing-actual` | 1100.322, 854.250 | `planned:review-lane:["generated","launch","launch-contract"]:launch-contract` | flat | `#3A1A24` | stroke | 13.556 | 3.000 | info |
+| `examples/halcyon-1/generated/02-programme-board.scene.json` | `period-band:launch-window` | `period-band` | 1765.057, 564.500 | `group:ait` | flat | `#142642` | fill | 1.235 | 1.100 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `planned:review-lane:["generated","ait","integration"]:emc` | `planned` | 1536.713, 553.250 | `group:ait` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `planned:review-lane:["generated","ait","integration"]:integration` | `planned` | 1374.335, 553.250 | `group:ait` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `planned:review-lane:["generated","ait","integration"]:psr` | `planned` | 1592.604, 553.250 | `group:ait` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
@@ -1177,7 +1179,7 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:launch-contract` | `planned` | 1095.322, 854.250 | `group:launch` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:shipment` | `planned` | 1611.136, 854.250 | `group:launch` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:first-light` | `planned` | 1829.406, 995.250 | `group:ops` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
-| `examples/halcyon-1/generated/02-programme-board.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:leop` | `planned` | 1739.685, 995.250 | `group:ops` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
+| `examples/halcyon-1/generated/02-programme-board.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:leop` | `planned` | 1739.685, 995.250 | `period-band:launch-window` | flat | `#0B1220` | stroke | 16.354 | 3.000 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:rehearsals` | `planned` | 1560.393, 995.250 | `group:ops` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `planned:review-lane:["generated","payload","optics"]:detector` | `planned` | 1063.111, 388.500 | `group:payload` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `planned:review-lane:["generated","payload","optics"]:optics` | `planned` | 968.390, 388.500 | `group:payload` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
@@ -1688,7 +1690,7 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `actual:review-lane:["generated","payload","optics"]:payload-tvac` | `actual` | 1148.546, 584.500 | `group:payload` | flat | `#142642` | fill | 7.708 | 3.000 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `annotation-box:station-note` | `annotation-note-box` | 907.710, 988.750 | `group:launch` | flat | `#142642` | stroke | 1.435 | 1.100 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `annotation-box:tvac-note` | `annotation-note-box` | 1078.155, 499.375 | `group:payload` | flat | `#142642` | stroke | 1.435 | 1.100 | info |
-| `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `annotation-box:window-note` | `annotation-note-box` | 1853.265, 1086.625 | `group:launch` | flat | `#142642` | stroke | 1.435 | 1.100 | info |
+| `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `annotation-box:window-note` | `annotation-note-box` | 1853.265, 1086.625 | `period-band:launch-window` | flat | `#0B1220` | stroke | 1.773 | 1.100 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `annotation-text:station-note` | `annotation-note-text` | 992.595, 988.750 | `annotation-box:station-note` | flat | `#16213A` | fill | 13.973 | 4.500 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `annotation-text:tvac-note` | `annotation-note-text` | 1163.378, 499.375 | `annotation-box:tvac-note` | flat | `#16213A` | fill | 13.973 | 4.500 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `annotation-text:window-note` | `annotation-note-text` | 1926.000, 1086.625 | `annotation-box:window-note` | flat | `#16213A` | fill | 13.973 | 4.500 | info |
@@ -1708,6 +1710,7 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `group:payload` | `group-band` | 1457.710, 569.000 | `canvas` | canvas | `#0B1220` | fill | 1.235 | 1.100 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `missing-actual:review-lane:["generated","bus","pdr"]:pdr` | `missing-actual` | 928.565, 421.500 | `planned:review-lane:["generated","bus","pdr"]:pdr` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `missing-actual:review-lane:["generated","launch","launch-contract"]:launch-contract` | `missing-actual` | 1095.037, 1039.250 | `planned:review-lane:["generated","launch","launch-contract"]:launch-contract` | flat | `#3A1A24` | stroke | 13.556 | 3.000 | info |
+| `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `period-band:launch-window` | `period-band` | 1873.892, 728.000 | `group:ait` | flat | `#142642` | fill | 1.235 | 1.100 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `planned:review-lane:["generated","ait","integration"]:emc` | `planned` | 1606.346, 738.250 | `group:ait` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `planned:review-lane:["generated","ait","integration"]:integration` | `planned` | 1416.092, 738.250 | `group:ait` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `planned:review-lane:["generated","ait","integration"]:psr` | `planned` | 1672.692, 738.250 | `group:ait` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
@@ -1728,7 +1731,7 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:launch-contract` | `planned` | 1090.037, 1039.250 | `group:launch` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:shipment` | `planned` | 1693.546, 1039.250 | `group:launch` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:first-light` | `planned` | 1950.146, 1180.250 | `group:ops` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
-| `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:leop` | `planned` | 1844.165, 1180.250 | `group:ops` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
+| `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:leop` | `planned` | 1844.165, 1180.250 | `period-band:launch-window` | flat | `#0B1220` | stroke | 16.354 | 3.000 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:rehearsals` | `planned` | 1634.092, 1180.250 | `group:ops` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `planned:review-lane:["generated","payload","optics"]:detector` | `planned` | 1051.437, 573.500 | `group:payload` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `planned:review-lane:["generated","payload","optics"]:optics` | `planned` | 940.455, 573.500 | `group:payload` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
@@ -1781,6 +1784,7 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `legend-swatch:scale:owner:payload` | `planned` | 40.000, 556.200 | `canvas` | canvas | `#0B1220` | stroke | 16.354 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `missing-actual:review-lane:["generated","bus","pdr"]:pdr` | `missing-actual` | 958.241, 236.500 | `planned:review-lane:["generated","bus","pdr"]:pdr:part:1` | flat | `#1B1B1B` | stroke | 15.045 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `missing-actual:review-lane:["generated","launch","launch-contract"]:launch-contract` | `missing-actual` | 1100.322, 854.250 | `planned:review-lane:["generated","launch","launch-contract"]:launch-contract:part:1` | flat | `#1B1B1B` | stroke | 15.045 | 3.000 | info |
+| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `period-band:launch-window` | `period-band` | 1765.057, 564.500 | `group:ait` | flat | `#142642` | fill | 1.235 | 1.100 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ait","integration"]:emc` | `planned` | 1536.713, 553.250 | `group:ait` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ait","integration"]:integration` | `planned` | 1374.335, 553.250 | `group:ait` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ait","integration"]:psr:part:0` | `planned` | 1597.604, 553.250 | `group:ait` | flat | `#142642` | fill | 6.157 | 3.000 | info |
@@ -1803,12 +1807,12 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:frr:part:1` | `planned` | 1716.005, 854.250 | `planned:review-lane:["generated","launch","launch-contract"]:frr:part:0` | flat | `#5FA8FF` | fill | 6.998 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:launch-contract:part:0` | `planned` | 1100.322, 854.250 | `group:launch` | flat | `#142642` | fill | 6.157 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:launch-contract:part:1` | `planned` | 1100.322, 854.250 | `planned:review-lane:["generated","launch","launch-contract"]:launch-contract:part:0` | flat | `#5FA8FF` | fill | 6.998 | 3.000 | info |
-| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:launch:part:0` | `planned` | 1739.685, 854.250 | `group:launch` | flat | `#142642` | fill | 6.157 | 3.000 | info |
+| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:launch:part:0` | `planned` | 1739.685, 854.250 | `period-band:launch-window` | flat | `#0B1220` | fill | 7.607 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:launch:part:1` | `planned` | 1739.685, 854.250 | `planned:review-lane:["generated","launch","launch-contract"]:launch:part:0` | flat | `#5FA8FF` | fill | 6.998 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:shipment` | `planned` | 1611.136, 854.250 | `group:launch` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:first-light:part:0` | `planned` | 1834.406, 995.250 | `group:ops` | flat | `#142642` | fill | 6.157 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:first-light:part:1` | `planned` | 1834.406, 995.250 | `planned:review-lane:["generated","ops","rehearsals"]:first-light:part:0` | flat | `#5FA8FF` | fill | 6.998 | 3.000 | info |
-| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:leop` | `planned` | 1739.685, 995.250 | `group:ops` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
+| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:leop` | `planned` | 1739.685, 995.250 | `period-band:launch-window` | flat | `#0B1220` | stroke | 16.354 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:rehearsals` | `planned` | 1560.393, 995.250 | `group:ops` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","payload","optics"]:detector` | `planned` | 1063.111, 388.500 | `group:payload` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","payload","optics"]:optics` | `planned` | 968.390, 388.500 | `group:payload` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
@@ -2160,4 +2164,4 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 Every non-exclusive decoration role is enabled in committed Scene evidence; group-band or group-header-band supplies the group concept when there are no corpus errors.
 
 
-Findings: 2121; errors: 0.
+Findings: 2124; errors: 0.
