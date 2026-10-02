@@ -4,7 +4,7 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 
 | Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| actual | `actual` | required | 3.000 | 35 | 245 | 3.204 | 7.708 | 0 |
+| actual | `actual` | required | 3.000 | 36 | 249 | 3.204 | 7.708 | 0 |
 | annotation-box | `annotation-note-box` | enabled | 1.100 | 8 | 22 | 1.435 | 1.435 | 0 |
 | annotation-kind-accent | `annotation-kind-accent` | enabled | 1.100 | 2 | 5 | 5.765 | 6.499 | 0 |
 | annotation-kind-bar | `annotation-kind-bar` | enabled | 1.100 | 2 | 5 | 5.765 | 6.499 | 0 |
@@ -12,31 +12,31 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | annotation-kind-secondary | `annotation-kind-secondary` | required | 4.500 | 2 | 5 | 6.747 | 7.583 | 0 |
 | annotation-kind-stamp | `annotation-kind-stamp` | enabled | 1.100 | 1 | 16 | 6.833 | 6.833 | 0 |
 | annotation-text | `annotation-note-text` | required | 4.500 | 8 | 22 | 13.973 | 13.973 | 0 |
-| axis-band | `axis-band-decoration` | enabled | 1.100 | 37 | 104 | 1.292 | 1.773 | 0 |
+| axis-band | `axis-band-decoration` | enabled | 1.100 | 38 | 106 | 1.292 | 1.773 | 0 |
 | axis-band | `axis-band-decoration2` | enabled | 1.100 | 5 | 37 | 1.119 | 1.146 | 0 |
-| calendar-closed | `calendar-closed` | enabled | 1.100 | 37 | 1356 | 1.370 | 1.414 | 0 |
+| calendar-closed | `calendar-closed` | enabled | 1.100 | 38 | 1404 | 1.370 | 1.414 | 0 |
 | finish-delta | `variance-ahead` | deemphasized | 3.000 | 3 | 9 | 7.708 | 7.708 | 0 |
-| finish-delta | `variance-behind` | required | 4.500 | 23 | 56 | 4.562 | 5.571 | 0 |
+| finish-delta | `variance-behind` | required | 4.500 | 24 | 58 | 4.562 | 5.571 | 0 |
 | finish-delta | `variance-on-track` | required | 4.500 | 4 | 11 | 5.692 | 5.692 | 0 |
 | group-decoration | `group-band` | absent | 1.100 | 3 | 0 | — | — | 0 |
-| group-decoration | `group-band` | enabled | 1.100 | 33 | 99 | 1.116 | 1.154 | 0 |
+| group-decoration | `group-band` | enabled | 1.100 | 34 | 102 | 1.116 | 1.203 | 0 |
 | group-header-band | `group-header-band` | absent | 1.100 | 3 | 0 | — | — | 0 |
-| legend-swatch | `actual` | required | 3.000 | 28 | 28 | 6.442 | 16.268 | 0 |
+| legend-swatch | `actual` | required | 3.000 | 29 | 29 | 6.442 | 16.268 | 0 |
 | legend-swatch | `calendar-closed` | enabled | 1.100 | 3 | 3 | 1.460 | 1.460 | 0 |
-| legend-swatch | `planned` | required | 3.000 | 29 | 68 | 5.284 | 16.354 | 0 |
-| missingActual | `missing-actual` | required | 3.000 | 26 | 34 | 4.436 | 13.996 | 0 |
+| legend-swatch | `planned` | required | 3.000 | 30 | 69 | 5.284 | 16.354 | 0 |
+| missingActual | `missing-actual` | required | 3.000 | 27 | 35 | 4.436 | 14.437 | 0 |
 | network-node | `network-node` | required | 3.000 | 2 | 32 | 16.354 | 17.050 | 0 |
 | period-band | `period-band` | enabled | 1.100 | 4 | 4 | 6.157 | 6.157 | 0 |
 | period-label | `period-label` | required | 4.500 | 4 | 4 | 13.973 | 13.973 | 0 |
-| planned | `planned` | required | 3.000 | 37 | 502 | 5.284 | 13.238 | 0 |
-| progress-fill | `progress-fill` | required | 3.000 | 25 | 76 | 3.216 | 4.789 | 0 |
+| planned | `planned` | required | 3.000 | 38 | 510 | 5.284 | 13.238 | 0 |
+| progress-fill | `progress-fill` | required | 3.000 | 26 | 79 | 3.216 | 4.789 | 0 |
 | row-decoration | `row-band` | absent | 1.100 | 3 | 0 | — | — | 0 |
-| row-decoration | `row-band` | enabled | 1.100 | 10 | 40 | 1.116 | 1.116 | 0 |
+| row-decoration | `row-band` | enabled | 1.100 | 11 | 44 | 1.116 | 1.116 | 0 |
 | snapshot | `snapshot` | required | 3.000 | 2 | 10 | 13.238 | 14.512 | 0 |
 | summary-bar | `summary-bar` | required | 3.000 | 2 | 2 | 5.817 | 6.712 | 0 |
 | table-cell | `missing-actual-cell` | required | 4.500 | 3 | 3 | 5.448 | 7.032 | 0 |
 | table-cell | `variance-ahead` | deemphasized | 3.000 | 3 | 9 | 9.523 | 9.523 | 0 |
-| table-cell | `variance-behind` | required | 4.500 | 8 | 34 | 5.438 | 6.747 | 0 |
+| table-cell | `variance-behind` | required | 4.500 | 9 | 36 | 5.438 | 6.747 | 0 |
 | table-cell | `variance-on-track` | required | 4.500 | 7 | 19 | 5.448 | 7.032 | 0 |
 
 ## Per-primitive grounds
@@ -1327,6 +1327,85 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/controller-z/generated/surface-texture.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 811.168, 244.800 | `actual:firmware:firmware` | flat | `#39C97B` | fill | 9.245 | 3.000 | info |
 | `examples/controller-z/generated/surface-texture.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1142.972, 480.800 | `actual:performance:performance` | flat | `#39C97B` | fill | 9.245 | 3.000 | info |
 | `examples/controller-z/generated/surface-texture.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1142.275, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#39C97B` | fill | 9.245 | 3.000 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `actual:evb-arrival:evb-arrival` | `actual` | 1054.912, 424.800 | `group:validation-team` | flat | `#D8DDE6` | stroke | 11.934 | 3.000 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `actual:firmware:firmware` | `actual` | 602.048, 248.800 | `planned:firmware:firmware` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `actual:performance:performance` | `actual` | 1110.907, 512.800 | `planned:performance:performance` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `actual:silicon-bringup:silicon-bringup` | `actual` | 1069.083, 336.800 | `planned:silicon-bringup:silicon-bringup` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 718.035, 92.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.579 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `axis-band-rect:0:1` | `axis-band-decoration` | 1252.835, 92.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.579 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-02-01` | `calendar-closed` | 506.400, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-02-07` | `calendar-closed` | 560.224, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-02-08` | `calendar-closed` | 567.195, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-02-11` | `calendar-closed` | 588.107, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-02-14` | `calendar-closed` | 609.019, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-02-15` | `calendar-closed` | 615.989, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-02-21` | `calendar-closed` | 657.813, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-02-22` | `calendar-closed` | 664.784, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-02-28` | `calendar-closed` | 706.608, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-03-01` | `calendar-closed` | 713.579, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-03-07` | `calendar-closed` | 755.403, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-03-08` | `calendar-closed` | 762.373, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-03-14` | `calendar-closed` | 804.197, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-03-15` | `calendar-closed` | 811.168, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-03-21` | `calendar-closed` | 852.992, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-03-22` | `calendar-closed` | 859.963, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-03-28` | `calendar-closed` | 901.787, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-03-29` | `calendar-closed` | 908.757, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-04-04` | `calendar-closed` | 950.581, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-04-05` | `calendar-closed` | 957.552, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-04-11` | `calendar-closed` | 999.376, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-04-12` | `calendar-closed` | 1006.347, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-04-18` | `calendar-closed` | 1048.171, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-04-19` | `calendar-closed` | 1055.141, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-04-25` | `calendar-closed` | 1096.965, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-04-26` | `calendar-closed` | 1103.936, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-04-29` | `calendar-closed` | 1124.848, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-05-02` | `calendar-closed` | 1145.760, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-05-03` | `calendar-closed` | 1152.731, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-05-04` | `calendar-closed` | 1159.701, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-05-05` | `calendar-closed` | 1166.672, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-05-06` | `calendar-closed` | 1173.643, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-05-09` | `calendar-closed` | 1194.555, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-05-10` | `calendar-closed` | 1201.525, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-05-16` | `calendar-closed` | 1243.349, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-05-17` | `calendar-closed` | 1250.320, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-05-23` | `calendar-closed` | 1292.144, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-05-24` | `calendar-closed` | 1299.115, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-05-30` | `calendar-closed` | 1340.939, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-05-31` | `calendar-closed` | 1347.909, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-06-06` | `calendar-closed` | 1389.733, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-06-07` | `calendar-closed` | 1396.704, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-06-13` | `calendar-closed` | 1438.528, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-06-14` | `calendar-closed` | 1445.499, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-06-20` | `calendar-closed` | 1487.323, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-06-21` | `calendar-closed` | 1494.293, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-06-27` | `calendar-closed` | 1536.117, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `calendar-closed:2026-06-28` | `calendar-closed` | 1543.088, 468.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `variance:firmware:firmware` | `variance-behind` | 1036.101, 248.800 | `group:fw-team` | flat | `#D8DDE6` | fill | 4.562 | 4.500 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `variance:silicon-bringup:silicon-bringup` | `variance-behind` | 1142.275, 365.300 | `row-band:silicon-bringup` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `group:factory-team` | `group-band` | 1041.200, 732.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.363 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `group:fw-team` | `group-band` | 1041.200, 248.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.363 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `group:validation-team` | `group-band` | 1041.200, 512.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.363 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `legend-swatch:actual` | `actual` | 935.338, 876.538 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `legend-swatch:planned` | `planned` | 935.338, 851.338 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `missing-actual:architecture:architecture` | `missing-actual` | 602.048, 160.800 | `row-band:architecture` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `planned:architecture:architecture` | `planned` | 525.371, 160.800 | `row-band:architecture` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `planned:dvt:dvt` | `planned` | 1215.467, 600.800 | `group:validation-team` | flat | `#D8DDE6` | stroke | 11.934 | 3.000 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `planned:evb-arrival:evb-arrival` | `planned` | 1029.200, 424.800 | `group:validation-team` | flat | `#D8DDE6` | stroke | 11.934 | 3.000 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `planned:firmware:firmware` | `planned` | 602.048, 248.800 | `group:fw-team` | flat | `#D8DDE6` | stroke | 11.934 | 3.000 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `planned:ga:ga` | `planned` | 1545.029, 776.800 | `group:factory-team` | flat | `#D8DDE6` | stroke | 11.934 | 3.000 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `planned:performance:performance` | `planned` | 1062.112, 512.800 | `row-band:performance` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `planned:pvt:pvt` | `planned` | 1313.056, 688.800 | `row-band:pvt` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1062.112, 336.800 | `row-band:silicon-bringup` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 602.048, 248.800 | `actual:firmware:firmware` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1110.907, 512.800 | `actual:performance:performance` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1069.083, 336.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `row-band:architecture` | `row-band` | 800.000, 160.800 | `group:fw-team` | flat | `#D8DDE6` | fill | 1.221 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `row-band:performance` | `row-band` | 800.000, 512.800 | `group:validation-team` | flat | `#D8DDE6` | fill | 1.221 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `row-band:pvt` | `row-band` | 800.000, 688.800 | `group:factory-team` | flat | `#D8DDE6` | fill | 1.221 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `row-band:silicon-bringup` | `row-band` | 800.000, 336.800 | `group:fw-team` | flat | `#D8DDE6` | fill | 1.221 | 1.100 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `cell:firmware:Δ` | `variance-behind` | 455.800, 248.800 | `canvas` | canvas | `#FFFFFF` | fill | 6.219 | 4.500 | info |
+| `examples/controller-z/generated/value-affixes.scene.json` | `cell:silicon-bringup:Δ` | `variance-behind` | 455.800, 336.800 | `row-band:silicon-bringup` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `actual:evb-arrival:evb-arrival` | `actual` | 1054.912, 418.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `actual:firmware:firmware` | `actual` | 602.048, 254.800 | `planned:firmware:firmware` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `actual:silicon-bringup:silicon-bringup` | `actual` | 1069.083, 326.800 | `planned:silicon-bringup:silicon-bringup` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
@@ -2914,4 +2993,4 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 Every non-exclusive decoration role is enabled in committed Scene evidence; group-band or group-header-band supplies the group concept when there are no corpus errors.
 
 
-Findings: 2874; errors: 0.
+Findings: 2953; errors: 0.
