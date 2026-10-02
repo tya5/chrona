@@ -195,6 +195,9 @@ class SurfaceContentInput:
     table_hierarchy_column: str | None = None
     row_decoration: str = "none"
     group_decoration: str = "all"
+    # Composed group-header text, (group id, text), in display order (#583); a
+    # group without an entry keeps its entity title.
+    group_headers: tuple[tuple[str, str], ...] = ()
     # Required plot-label text of each point drawn on the row of the span it
     # attaches to (#486): title, planned date and finish delta, never dropped.
     attached_labels: tuple[tuple[str, str], ...] = ()

@@ -165,6 +165,12 @@ Core shape (`point` or `span`), not an implementation profile name. Ordering is 
 tuple `(ordering key, tieBreak, stable object ID)`; missing values sort after present
 values in ascending order and before in descending order.
 
+A grouping with `presentation: header` may declare `header`, a text template for each
+group header (literal text, an ordinal in a declared form, the entity title and an entity
+field as a secondary title; a first-group variant). The text is View content; its
+grammar, ordinal forms and diagnostics are owned by
+[Specification 50](50-constraint-driven-gantt-surface-quality.md) section 3.4.
+
 ## 7. Temporal Window
 
 A View selects a temporal window independently from scheduling semantics. v0.1 allows

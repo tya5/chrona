@@ -85,6 +85,21 @@ allOf:
               presentation: {description: "Visual treatment for groups.", enum: [band, header]}
               depth: {description: "Maximum hierarchy depth.", type: integer, minimum: 0}
               rollup: {description: "Hierarchy rollup presentation.", enum: [bar, header, none]}
+              header:
+                description: "Group-header text template; usable only with presentation header and grouping by field or object type."
+                type: object
+                required: [text]
+                additionalProperties: false
+                properties:
+                  text: {description: "Literal text with the closed placeholders {ordinal}, {title} and {secondary}; {{ and }} are literal braces.", type: string, minLength: 1}
+                  ordinal: {description: "Form of {ordinal}, the group's 1-based position in display order; arabic when omitted.", enum: [arabic, zero-padded, roman, kanji, kanji-formal]}
+                  first: {description: "Template for the first group in display order, with the same placeholders.", type: string, minLength: 1}
+                  secondary:
+                    description: "Source of {secondary}: a non-empty string in the group entity's fields."
+                    type: object
+                    required: [entityField]
+                    additionalProperties: false
+                    properties: {entityField: {description: "Entity field name.", type: string, minLength: 1}}
             allOf:
               - description: "Field grouping requires its field name and missing-value label."
                 examples: [{by: field, field: status, missing: Unset}]
