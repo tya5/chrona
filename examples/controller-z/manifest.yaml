@@ -57,3 +57,8 @@ slides:
     context: contexts/axis-ticks.yaml
     expectedSvg: generated/axis-ticks.svg
     expectedScene: generated/axis-ticks.scene.json
+  - id: surface-texture
+    evidence: "A dark Theme with a faint hexagon-lattice canvas texture (the packaged target-parts pattern) under every mark and label, from the Theme role canvas-texture (#587)."
+    context: contexts/surface-texture.yaml
+    expectedSvg: generated/surface-texture.svg
+    expectedScene: generated/surface-texture.scene.json

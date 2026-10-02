@@ -208,6 +208,22 @@ primitive is always Rect: `missing-actual.pattern`, `network-node.pattern`,
 `as-of-label-chip.pattern`, `member-label-chip.pattern`, and
 `finish-delta-chip.pattern`. Other pattern values and all other
 role/property pairs retain their current contracts.
+
+**Canvas texture (#587).** The Theme role `canvas-texture` paints one catalogue
+pattern over the whole completed canvas, below every other primitive. It admits
+exactly `pattern` (a `{kind: catalog, ref}` token; an inline pattern kind is
+`E_THEME_ROLE_PROPERTY_UNSUPPORTED`), `fill` (the opaque substrate, declared and
+never inherited from `background`) and `stroke` (the ink). A role that names no
+pattern is `E_THEME_ROLE_REQUIRED` at `/body/roles/canvas-texture/pattern`;
+`opacity`, `backgroundPaintOrder`, `strokeWidth`, gradient and shadow properties
+are not admitted. A Theme that does not declare the role has no texture and its
+output is unchanged. The tile is repeated from the canvas top-left: nothing is
+random and no seed exists, so one Theme always renders the same bytes. The
+substrate paints over the canvas fill, so a canvas gradient under a texture is
+hidden. The texture is ground, not content: it carries no contrast class and no
+floor of its own, and marks and state text that lie on it are gated against both
+its substrate and its ink (a decoration tint is judged against the substrate).
+Typst and TikZ reject it like any pattern. See Specification 08 section 4.0.1.
 `planned`, `actual`, `snapshot`, and `scenario` can emit either Rect or Symbol;
 `milestone` emits Symbol; callout/arrow boxes can be balloon Symbols. Catalogue
 patterns on these roles require a separate completed Symbol clip/paint design

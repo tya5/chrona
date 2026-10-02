@@ -1,0 +1,40 @@
+version: chrona/color-scheme/v0.2
+kind: color-scheme
+id: title-card-dark
+body:
+  colors:
+    surface: "#0A0A0C"
+    surfaceRaised: "#18171C"
+    text: "#F3EEE6"
+    textMuted: "#B9B2A6"
+    accent: "#FF7A1A"
+    positive: "#39C97B"
+    negative: "#FF4D3D"
+    warning: "#FFB52E"
+    neutral: "#8E8A96"
+    insideLabelPlanned: "#000000"
+    insideLabelActual: "#000000"
+    insideLabelSnapshot: "#000000"
+    insideLabelScenario: "#000000"
+  suitability:
+    background: dark
+    colorVision:
+    - none-claimed
+    print: not-claimed
+  provenance:
+    kind: chrona-authored
+    source: Chrona title-card-dark example
+    license: project-pending
+  categories:
+    default: "#26242C"
+    bus: "#26242C"
+    payload: "#2B2733"
+    ait: "#232B29"
+    ground: "#2E2A24"
+    launch: "#26242C"
+    ops: "#2B2733"
+    factory-team: "#26242C"
+    fw-team: "#2B2733"
+    validation-team: "#232B29"
+    capabilities-band: "#2B2833"
+    lattice: "#2F2B38"

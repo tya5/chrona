@@ -253,6 +253,8 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
     register("as-of-label-chip member-label-chip finish-delta-chip period-label-chip", "Layout label chip and Scene Rect",
              _PATTERNED_RECT_PAINT | frozenset(("backgroundTreatment", "chipPadding", "markCornerRadius")),
              scene_kinds=frozenset(("Rect",)))
+    register("canvas-texture", "Layout canvas texture and Scene Rect", frozenset(("fill", "stroke", "pattern")),
+             scene_kinds=frozenset(("Rect",)))
     register("legend-swatch", "Layout legend swatch size", frozenset(("swatchInlineSize",)))
     register("baseline", "Retired Theme paint alias", frozenset())
     return roles
@@ -264,7 +266,7 @@ _OPEN_LEGEND_PROPERTIES = _RECT_PAINT
 _CATALOG_PATTERN_ROLES = frozenset((
     "missing-actual", "network-node", "progress-fill", "summary-bar",
     "annotation-highlight-box", "axis-band-decoration", "axis-band-decoration2", "period-band",
-    "as-of-label-chip", "member-label-chip", "finish-delta-chip",
+    "as-of-label-chip", "member-label-chip", "finish-delta-chip", "canvas-texture",
 ))
 
 

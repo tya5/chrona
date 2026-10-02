@@ -94,6 +94,10 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("periodBand", "decoration", "period-band", "period-band", "period-band", ContrastClass.DECORATION),
     _binding("periodLabel", "label", "period-label", "period-label", "period-label", ContrastClass.STATE_TEXT),
     _binding("periodLabelChip", "decoration", "label-chip", "period-label-chip", "period-label-chip"),
+    # Canvas texture (#587): ground under every primitive. Deliberately not
+    # contrast-classified: a faint texture is the point, and the gates treat its
+    # substrate and ink as the ground of what lies on it instead.
+    _binding("canvasTexture", "decoration", "canvas-texture", "canvas-texture", "canvas-texture"),
     # Axis.
     _binding("axisBand", "label", "axis-band", "axis-band", "axis"),
     _binding("axisBandDecoration", "decoration", "axis-band", "axis-band-decoration", "axis-band-decoration", ContrastClass.DECORATION),

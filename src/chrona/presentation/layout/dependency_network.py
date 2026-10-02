@@ -9,6 +9,7 @@ from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.pattern_placement import PatternedPlacement, complete_pattern_placement
 from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun
+from chrona.presentation.layout.canvas_texture import CanvasTexture, complete_canvas_texture
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, RelationPlacement, TextPlacement, intersects
 
 
@@ -38,6 +39,7 @@ class DependencyNetworkLayout:
     canvas_bounds: Rect
     fit_warnings: tuple[FitWarning, ...] = ()
     patterns: tuple[PatternedPlacement, ...] = ()
+    texture: CanvasTexture | None = None
 
 
 def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bounds: Rect,
@@ -86,6 +88,9 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bound
             patterns = tuple(PatternedPlacement(
                 node.placement_id, complete_pattern_placement(token, node.bounds))
                 for node in placed)
+    texture = complete_canvas_texture(theme_tokens, canvas)
+    if texture is not None:
+        patterns = (texture.pattern, *patterns)
     overflowed = (canvas.inline_size > requested_canvas.inline_size
                   or canvas.block_size > requested_canvas.block_size)
     title_overflow = (title_placement.bounds.inline_size > title_bounds.inline_size
@@ -102,7 +107,7 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bound
                        float(title_bounds.block_size)) if title_overflow else None,
         ) if item is not None
     ) + route_warnings
-    return DependencyNetworkLayout(tuple(placed), text, relations, canvas, warnings, patterns)
+    return DependencyNetworkLayout(tuple(placed), text, relations, canvas, warnings, patterns, texture)
 
 
 def _title_measurement(measured_sources: MeasuredSources) -> MeasuredTextRun:

@@ -147,6 +147,14 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
         if ground is None:
             continue
         ratio = composited_contrast(fill=paint[channel], opacity=float(opacity), ground=ground)
+        ink = _texture_ink(primitives, ground_id) if binding.contrast_class != ContrastClass.DECORATION else None
+        if ink is not None:
+            # A canvas texture is ground in two colours: a mark or a label may lie on either.
+            # A decoration is a tint judged against the dominant substrate, not against thin ink lines.
+            ground_kind = "texture-substrate"
+            ink_ratio = composited_contrast(fill=paint[channel], opacity=float(opacity), ground=ink)
+            if ink_ratio < ratio:
+                ratio, ground, ground_kind = ink_ratio, ink, "texture-ink"
         candidates.append((ratio, channel, ground_id, ground, sample, ground_kind))
     if not candidates:
         error_code = "E_SCENE_CONTRAST_GROUND_UNSUPPORTED" if unsupported_ground else "E_SCENE_CONTRAST_PAINT"
@@ -187,9 +195,17 @@ def _pattern_findings(scene_path: str, primitive: Mapping[str, Any], pattern: An
                                      host_id, paint_channel="fill", ground_kind="unsupported",
                                      density_basis_points=density),)
     substrate, ink = str(paint["fill"]), str(paint["stroke"])
-    pairs = (("fill", host_id, host, host_kind, substrate),
+    pairs = [("fill", host_id, host, host_kind, substrate),
              ("stroke", primitive_id, substrate, "pattern-substrate", ink),
-             ("stroke", host_id, host, host_kind, ink))
+             ("stroke", host_id, host, host_kind, ink)]
+    # As for a flat primitive: a mark or a label sees the ink as ground, a decoration tint does not.
+    texture_ink = _texture_ink(primitives, host_id) if code != "E_SCENE_DECORATION_CONTRAST" else None
+    if texture_ink is not None:
+        # The host is a canvas texture: its ink is a second ground under this primitive.
+        pairs[0] = ("fill", host_id, host, "texture-substrate", substrate)
+        pairs[2] = ("stroke", host_id, host, "texture-substrate", ink)
+        pairs += [("fill", host_id, texture_ink, "texture-ink", substrate),
+                  ("stroke", host_id, texture_ink, "texture-ink", ink)]
     findings = []
     for channel, ground_id, ground, ground_kind, foreground in pairs:
         ratio = composited_contrast(fill=foreground, opacity=1.0, ground=ground)
@@ -198,6 +214,19 @@ def _pattern_findings(scene_path: str, primitive: Mapping[str, Any], pattern: An
                                              ratio, floor, disposition, ground_id, ground, channel,
                                              *sample, ground_kind, density))
     return tuple(findings)
+
+
+def _texture_ink(primitives: list[Any], host_id: str | None) -> str | None:
+    """Return the ink of the canvas texture a ground host is, else nothing."""
+    if host_id is None:
+        return None
+    for primitive in primitives:
+        if (isinstance(primitive, Mapping) and primitive.get("id") == host_id
+                and primitive.get("visualRole") == "canvas-texture"):
+            paint = primitive.get("paint")
+            stroke = paint.get("stroke") if isinstance(paint, Mapping) else None
+            return str(stroke) if is_hex_color(stroke) else None
+    return None
 
 
 def _note_box_ground(primitive: Mapping[str, Any], primitives: list[Any], index: int,

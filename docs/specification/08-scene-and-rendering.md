@@ -216,6 +216,22 @@ opaque representative-ground rule applies to all three colors. Perceptibility
 inspection receives the same channels and geometry/density facts; it does not
 reconstruct effective paint from the catalogue.
 
+**Canvas texture (#587).** A Theme that declares the role `canvas-texture`
+(Specification 07 section 5.2) adds one Rect primitive to every Layout-completed
+surface (table-timeline and dependency-network). Layout completes it: the Rect
+is the completed canvas, the tile origin is the canvas top-left, and the Rect
+belongs to the pseudo-slot `canvas` (source `canvas`, bounds the canvas), which
+exists in the Scene slot list only for such a Theme. Its identity is
+`canvas-texture`, purpose and visual role `canvas-texture`, paint order 0, and it
+is the first primitive Scene emits, so it paints below every other primitive
+whatever paint order a band or mark declares. It is an ordinary patterned Rect:
+scene v0.7 carries it, SVG and PNG paint it, Typst and TikZ reject it, and no
+Scene field is added. The contrast policy and the perceptibility observation
+`I_SCENE_PAINT_CONTRAST` treat its substrate and ink as the ground of what lies on
+it: a mark or state text is measured against the worse of the two
+(`groundKind` `texture-substrate` or `texture-ink`), a decoration tint against the
+substrate, and the texture itself has no floor.
+
 ### 4.0 v0.1 Scene profile
 
 A Scene profile declares layout policy, not geometry. The first Date-only profile is
