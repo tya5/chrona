@@ -1,6 +1,6 @@
 # Design — Content identity is required by default on the Store read path (#723)
 
-**Plan:** [implementation plan](../planning/active/issue-723-content-identity-required-by-default-implementation-plan-2026-10-01.md).
+**Plan:** [implementation plan](../archive/planning/issue-723-content-identity-required-by-default-implementation-plan-2026-10-01.md).
 **Found by:** [#710 design](issue-710-store-address-containment-design-2026-10-01.md), part A (the `contentIdentity` finding).
 Baseline: `main` at `55087f1d` (2026-10-01). Every claim marked *measured* was run at that commit with the defaults flipped in a scratch copy of the tree; nothing measured is committed except through the tests this design asks for.
 

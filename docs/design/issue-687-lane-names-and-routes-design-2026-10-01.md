@@ -1,6 +1,6 @@
 # Design — Lane Member Names Placed Before Routes (#687)
 
-**Plan:** [implementation plan](../planning/active/issue-687-lane-names-and-routes-implementation-plan-2026-10-01.md); **review:** [architecture review](../reviews/current/issue-687-lane-names-and-routes-architecture-review-2026-10-01.md), whose findings are part of this design.
+**Plan:** [implementation plan](../archive/planning/issue-687-lane-names-and-routes-implementation-plan-2026-10-01.md); **review:** [architecture review](../archive/reviews/issue-687-lane-names-and-routes-architecture-review-2026-10-01.md), whose findings are part of this design.
 
 ## Question
 

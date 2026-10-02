@@ -1,7 +1,7 @@
 # Design — Store address containment and the strict `storeAddress` (#710)
 
-**Plan:** [implementation plan](../planning/active/issue-710-store-address-containment-implementation-plan-2026-10-01.md);
-**review:** [architecture review](../reviews/current/issue-710-store-address-containment-architecture-review-2026-10-01.md).
+**Plan:** [implementation plan](../archive/planning/issue-710-store-address-containment-implementation-plan-2026-10-01.md);
+**review:** [architecture review](../archive/reviews/issue-710-store-address-containment-architecture-review-2026-10-01.md).
 Evolution rule: [Spec 56 §3.2](../specification/56-schema-authoring-and-diagnostics.md). Adjacent design: [#662 design](issue-662-schema-parts-design-2026-09-30.md) (D1 part lifecycle, D3 row N5).
 
 Baseline: `main` at `0ab5a6eb` (2026-10-01). Every claim marked *measured* was run against that commit with a throwaway script; none of the scripts is committed.

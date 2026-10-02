@@ -1,8 +1,8 @@
 # Design — Store address leftovers from #710 (#731)
 
-**Plan:** [implementation plan](../planning/active/issue-731-store-address-leftovers-implementation-plan-2026-10-01.md).
+**Plan:** [implementation plan](../archive/planning/issue-731-store-address-leftovers-implementation-plan-2026-10-01.md).
 Predecessor design: [#710 design](issue-710-store-address-containment-design-2026-10-01.md) (parts C, D, E);
-[#710 acceptance review](../reviews/current/issue-710-store-address-containment-acceptance-review-2026-10-01.md).
+[#710 acceptance review](../archive/reviews/issue-710-store-address-containment-acceptance-review-2026-10-01.md).
 Evolution rule: [Spec 56 §3.2 and §7](../specification/56-schema-authoring-and-diagnostics.md).
 
 Baseline: `main` at `6c46123a` (2026-10-01). Claims marked *measured* were run against that commit with throwaway scripts that are

@@ -1,9 +1,9 @@
 # Design — Terse draft syntax that compiles to Project YAML (#148)
 
 **Status:** Proposed for architecture review
-([review](../reviews/current/issue-148-terse-draft-syntax-architecture-review-2026-10-01.md)).
-**Plans:** [design plan](../planning/active/issue-148-terse-draft-syntax-design-plan-2026-10-01.md),
-[implementation plan](../planning/active/issue-148-terse-draft-syntax-implementation-plan-2026-10-01.md).
+([review](../archive/reviews/issue-148-terse-draft-syntax-architecture-review-2026-10-01.md)).
+**Plans:** [design plan](../archive/planning/issue-148-terse-draft-syntax-design-plan-2026-10-01.md),
+[implementation plan](../archive/planning/issue-148-terse-draft-syntax-implementation-plan-2026-10-01.md).
 **Normative home:** [`docs/specification/65-terse-plan-syntax.md`](../specification/65-terse-plan-syntax.md)
 (landed with slice 1). Section 3 and the mapping table of section 4 are a pointer here (AGENTS.md: normative
 behaviour lives in one living specification); this document keeps the rationale, measurements and alternatives.

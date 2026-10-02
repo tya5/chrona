@@ -1,7 +1,7 @@
 # Design — PR pytest shard balance (#721 item 1)
 
-**Plan:** [implementation plan](../planning/active/issue-721-shard-balance-implementation-plan-2026-10-01.md).
-**Background:** [#657 design](issue-657-pr-pytest-speed-design-2026-09-30.md), [#657 acceptance review](../reviews/current/issue-657-pr-pytest-speed-acceptance-review-2026-10-01.md).
+**Plan:** [implementation plan](../archive/planning/issue-721-shard-balance-implementation-plan-2026-10-01.md).
+**Background:** [#657 design](issue-657-pr-pytest-speed-design-2026-09-30.md), [#657 acceptance review](../archive/reviews/issue-657-pr-pytest-speed-acceptance-review-2026-10-01.md).
 
 This design changes no product behaviour, schema or public artifact. It decides what, if anything, to change in how the `pr-pytest` shards are split, after measuring where the imbalance comes from. Times below are `Run pytest` step or in-log pytest times from GitHub-hosted runs, never a developer machine.
 
@@ -63,4 +63,4 @@ The acceptance review states which of these held. If the 20% target is not met, 
 
 ## 4. Result
 
-Measured after the refresh merged (table in the [plan](../planning/active/issue-721-shard-balance-implementation-plan-2026-10-01.md), "Measured after"): slowest shard at most 77 s in 8 of 8 samples (median 75 s, against a median of 140 s before); spread at most 20% in 4 of 8 (the target was 6 of 8, **not met**); spread at most 25 s in 6 of 8 (the honest target, met at the threshold). Of the shard-time reduction, the routing speed-up of #735 accounts for nearly all (140 s to about 60 to 75 s); the refresh adds about 4%. The remaining spread is the runner-CPU draw (slow-class shards 72 to 77 s, fast-class 35 to 50 s for the same split, inferred from the earlier probe runs); the three samples with a fast-class shard are the three with spreads of 38% or more. The 20% target is not reachable by changing the split while the hosted pool varies as measured; the samples ran concurrently (24 jobs at once), which may exaggerate the pool mix.
+Measured after the refresh merged (table in the [plan](../archive/planning/issue-721-shard-balance-implementation-plan-2026-10-01.md), "Measured after"): slowest shard at most 77 s in 8 of 8 samples (median 75 s, against a median of 140 s before); spread at most 20% in 4 of 8 (the target was 6 of 8, **not met**); spread at most 25 s in 6 of 8 (the honest target, met at the threshold). Of the shard-time reduction, the routing speed-up of #735 accounts for nearly all (140 s to about 60 to 75 s); the refresh adds about 4%. The remaining spread is the runner-CPU draw (slow-class shards 72 to 77 s, fast-class 35 to 50 s for the same split, inferred from the earlier probe runs); the three samples with a fast-class shard are the three with spreads of 38% or more. The 20% target is not reachable by changing the split while the hosted pool varies as measured; the samples ran concurrently (24 jobs at once), which may exaggerate the pool mix.

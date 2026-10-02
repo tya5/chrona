@@ -1,8 +1,8 @@
 # Design - A gate that is derived from its dependencies (#788)
 
-**Status:** Proposed. Published with its [design plan](../planning/active/issue-788-derived-gate-design-plan-2026-10-01.md),
-[architecture review](../reviews/current/issue-788-derived-gate-architecture-review-2026-10-01.md) and
-[implementation plan](../planning/active/issue-788-derived-gate-implementation-plan-2026-10-01.md). No product code,
+**Status:** Proposed. Published with its [design plan](../archive/planning/issue-788-derived-gate-design-plan-2026-10-01.md),
+[architecture review](../archive/reviews/issue-788-derived-gate-architecture-review-2026-10-01.md) and
+[implementation plan](../archive/planning/issue-788-derived-gate-implementation-plan-2026-10-01.md). No product code,
 schema, specification or example changes in the pack's PR.
 **Base:** `main` at `648c4f9a` (2026-10-01).
 **Owner direction:** "even a gate should support a scheduled form." A point whose date is derived is wanted.

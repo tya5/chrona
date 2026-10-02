@@ -2,9 +2,9 @@
 
 **Status:** Proposed. Depth C: resources, YAML, tests and documentation only.
 **Base:** `main` at `4981db0a`. Design plan:
-[issue-718-target-parts-catalogue-design-plan-2026-10-02.md](../planning/active/issue-718-target-parts-catalogue-design-plan-2026-10-02.md).
+[issue-718-target-parts-catalogue-design-plan-2026-10-02.md](../archive/planning/issue-718-target-parts-catalogue-design-plan-2026-10-02.md).
 Architecture review (accepted with three conditions, C1 to C3):
-[issue-718-target-parts-catalogue-architecture-review-2026-10-02.md](../reviews/current/issue-718-target-parts-catalogue-architecture-review-2026-10-02.md).
+[issue-718-target-parts-catalogue-architecture-review-2026-10-02.md](../archive/reviews/issue-718-target-parts-catalogue-architecture-review-2026-10-02.md).
 **Normative contracts used, not changed:** [Spec 64](../specification/64-portable-icon-catalogs.md) section 8
 (Theme glyph and pattern assets), [Spec 07](../specification/07-style-and-theme.md) section 5.2 (symbol and pattern
 tokens), `schemas/theme-asset-source-v0.1.schema.yaml`, `schemas/icon-catalog-v0.4.schema.yaml`.
