@@ -2,7 +2,7 @@
 
 Living record for [#890](https://github.com/tya5/chrona/issues/890) (P4-B, split from #587): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history.
 
-**Public base:** `24f686f1` on `main`. **Status:** design plan, design, architecture review and implementation plan are published (PR #974); I890-1 (the cone, with the Controller Z evidence slide) is implemented in the code PR recorded in section 8; the acceptance review follows. The direction was recorded in section 5.9 of the archived [#587 record](../../archive/planning/issue-587-surface-decoration-2026-10-02.md).
+**Public base:** `24f686f1` on `main`. **Status:** design plan, design, architecture review and implementation plan are published (PR #974); I890-1 (the cone, with the Controller Z evidence slide) is merged (PR #979, `86cb9878`); the [acceptance review](../../reviews/current/issue-890-as-of-light-cone-acceptance-review-2026-10-03.md) is published. The direction was recorded in section 5.9 of the archived [#587 record](../../archive/planning/issue-587-surface-decoration-2026-10-02.md).
 
 ## 1. Published baseline
 
