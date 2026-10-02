@@ -111,7 +111,7 @@ def validate_substitution_request(capability_id: str) -> None:
 # Theme admission is a consumer projection of the same presentation ceiling.
 # These sets describe completed renderer-neutral uses, not current YAML usage.
 _TEXT_MEASUREMENT = frozenset(("fontFamily", "fontWeight", "fontSize", "lineHeight",
-                               "letterSpacing", "textTransform", "numericSpacing"))
+                               "letterSpacing", "textTransform", "numericSpacing", "horizontalScale"))
 _ICON_MEASUREMENT = frozenset(("iconScale", "iconGap"))
 _AXIS_MEASUREMENT = frozenset(("laneBlockSize", "labelInset", "labelGap"))
 _AXIS_TICK = frozenset(("tickLength",))

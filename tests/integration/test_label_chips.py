@@ -82,10 +82,11 @@ def test_themes_without_a_chip_role_draw_no_chip():
         chips = [key for key in primitives if key.startswith("chip:")]
         if path.parent.parent.name == "halcyon-1" and path.stem.split(".")[0] in {
                 "02-programme-board", "04-tvac-slip", "07-replan-baseline", "11-overlay-briefing", "12-glyph-gates",
-                "15-gallery-image-notes", "17-gallery-annotation-kinds", "18-gallery-annotation-tilt"}:
+                "15-gallery-image-notes", "17-gallery-annotation-kinds", "18-gallery-annotation-tilt",
+                "19-gallery-text-compression"}:
             # The three slides that share View 02 also select the launch window (#582), whose label carries a chip.
             window = ["chip:period-label:launch-window"] if path.name.split(".")[0] in {
-                "02-programme-board", "11-overlay-briefing", "12-glyph-gates"} else []
+                "02-programme-board", "11-overlay-briefing", "12-glyph-gates", "19-gallery-text-compression"} else []
             assert sorted(chips) == sorted(["chip:as-of-label", *window]), path
         else:
             assert chips == [], path

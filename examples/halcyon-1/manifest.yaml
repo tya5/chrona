@@ -93,3 +93,8 @@ slides:
     context: contexts/18-gallery-annotation-tilt.yaml
     expectedSvg: generated/18-gallery-annotation-tilt.svg
     expectedScene: generated/18-gallery-annotation-tilt.scene.json
+  - id: gallery-text-compression
+    evidence: "Programme board text compressed horizontally by a declared, measured Theme scale (#585): the title at 0.7 and the group headers and axis at 0.8, set in Noto Sans JP (the packaged CJK face; no Mincho face is packaged) with a Japanese locale and a CJK group-header template, as a new View id, Theme and Context over the 02-programme-board sources, no corpus datum edited."
+    context: contexts/19-gallery-text-compression.yaml
+    expectedSvg: generated/19-gallery-text-compression.svg
+    expectedScene: generated/19-gallery-text-compression.scene.json

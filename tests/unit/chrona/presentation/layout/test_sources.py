@@ -166,3 +166,21 @@ def test_table_column_floor_binds_when_the_measured_columns_are_narrower():
     # more than the table actually needs, even though the column floor grows
     # `preferred_inline` past it.
     assert measured.measurements["table"].min_inline < Decimal(240)
+
+
+def test_a_scaled_role_is_measured_compressed_and_the_run_carries_the_factor():
+    class Metrics:
+        content_identity = "sha256:test"
+        def width(self, value, size, letter_spacing=0): return len(value) * size / 2
+        def baseline(self, top, size, line_height): return top + size
+    resolved = theme()
+    resolved["body"]["values"]["squeeze"] = {"type": "number", "value": "0.5"}
+    resolved["body"]["roles"]["heading"] = {**resolved["body"]["roles"]["heading"], "horizontalScale": "squeeze"}
+    measured = measure_sources({"title": SourceInput(("Controller Z",), typography_role="heading")}, resolved,
+                               font_metrics=Metrics())
+    (run,) = measured.run_measurements["title"]
+    assert measured.measurements["title"].preferred_inline == Decimal(102)  # 204 at natural width
+    assert (run.inline_size, run.horizontal_scale) == (Decimal(102), 0.5)
+    natural = measure_sources({"title": SourceInput(("Controller Z",), typography_role="heading")}, theme(),
+                              font_metrics=Metrics())
+    assert natural.run_measurements["title"][0].horizontal_scale == 1.0

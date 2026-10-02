@@ -1,3 +1,4 @@
+from dataclasses import replace
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
@@ -101,3 +102,20 @@ def test_network_layout_completes_rect_pattern_on_each_exact_node_placement():
     )
     assert all(pattern.pattern.region == node.bounds
                for pattern, node in zip(layout.patterns, layout.nodes, strict=True))
+
+
+def test_network_text_placements_carry_the_measured_horizontal_scale():
+    measured = _measured("a", "b")
+    squeezed = replace(measured, run_measurements={key: tuple(replace(run, horizontal_scale=0.6) for run in runs)
+                                                  for key, runs in measured.run_measurements.items()})
+    layout = compose_dependency_network_layout(_network(("a", "b"), (("ab", "a", "b"),)),
+                                               title_bounds=Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(40)),
+                                               bounds=Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(200)),
+                                               measured_sources=squeezed, flow_direction="horizontal")
+    assert {item.placement_id: item.horizontal_scale for item in layout.text} == {
+        "title": 0.6, "network-label:a": 0.6, "network-label:b": 0.6}
+    plain = compose_dependency_network_layout(_network(("a", "b"), (("ab", "a", "b"),)),
+                                              title_bounds=Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(40)),
+                                              bounds=Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(200)),
+                                              measured_sources=measured, flow_direction="horizontal")
+    assert {item.horizontal_scale for item in plain.text} == {1.0}

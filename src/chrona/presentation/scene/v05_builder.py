@@ -445,7 +445,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                             placed.baseline or (float(placed.bounds.inline), float(placed.bounds.block)),
                             placed.lines, placed.font_family, placed.font_weight, placed.font_size,
                             placed.line_height, placed.font_asset_identity, placed.letter_spacing,
-                            placed.text_transform, placed.numeric_spacing, placed.orientation, placed.rotation_degrees)
+                            placed.text_transform, placed.numeric_spacing, placed.orientation, placed.rotation_degrees,
+                            placed.horizontal_scale)
         classification = contrast_binding(role)
         treatment = (value.theme_tokens.contrast_treatment(role)
                      if classification is not None and classification.contrast_class == ContrastClass.STATE_TEXT else None)
@@ -931,7 +932,8 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
                             text.baseline or (float(text.bounds.inline), float(text.bounds.block)),
                             text.lines, text.font_family, text.font_weight, text.font_size,
                             text.line_height, text.font_asset_identity, text.letter_spacing,
-                            text.text_transform, text.numeric_spacing, text.orientation, text.rotation_degrees)
+                            text.text_transform, text.numeric_spacing, text.orientation, text.rotation_degrees,
+                            text.horizontal_scale)
         primitives.append(ScenePrimitive(text.placement_id, PrimitiveKind.TEXT, text.source_ref, "network",
                                          binding.purpose, binding.scene_role, layout.bounds, text=text.content,
                                          baseline=layout.baseline, text_layout=layout,
