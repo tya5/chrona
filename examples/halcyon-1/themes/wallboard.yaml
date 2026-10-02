@@ -166,6 +166,9 @@ body:
     opacity.calendar-closed:
       type: number
       value: 1
+    opacity.period-band:
+      type: number
+      value: 1
     mark-height-container:
       type: number
       value: 1
@@ -226,6 +229,10 @@ body:
       backgroundPaintOrder: 12
       strokeWidth: stroke-width
       opacity: opacity.calendar-closed
+    period-band:
+      backgroundTreatment: fill
+      backgroundPaintOrder: 11
+      opacity: opacity.period-band
     axis-band-decoration:
       backgroundTreatment: fill
       backgroundPaintOrder: 10
@@ -470,6 +477,7 @@ body:
     dependency.stroke: textMuted
     calendar-closed.fill: surfaceRaised
     calendar-closed.stroke: neutral
+    period-band.fill: surface
     calendar-exception.fill: warning
     range.fill: warning
     as-of.stroke: warning

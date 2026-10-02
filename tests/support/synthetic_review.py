@@ -98,7 +98,8 @@ def _write(path: Path, value: Mapping[str, Any]) -> Path:
 
 
 def render(directory: Path, source: Mapping[str, Any], *, presentation: Mapping[str, Mapping[str, Any]] | None = None,
-           actual: Mapping[str, Any] | None = None, viewport: tuple[int, int | None] = (1600, 900)) -> RenderedReview:
+           actual: Mapping[str, Any] | None = None, viewport: tuple[int, int | None] = (1600, 900),
+           icon_catalogs: tuple[Path, ...] = ()) -> RenderedReview:
     """Render `source` through `presentation` (default: the packaged preset bundle) and return the review."""
     parts = presentation or bundle()
     paths = {kind: _write(directory / f"{kind}.yaml", value) for kind, value in parts.items()}
@@ -106,7 +107,7 @@ def render(directory: Path, source: Mapping[str, Any], *, presentation: Mapping[
         project_path=_write(directory / "project.yaml", source), view_path=paths["view"],
         theme_path=paths["theme"], scheme_path=paths["scheme"], layout_path=paths["layout"],
         actual_path=_write(directory / "actual.yaml", actual) if actual is not None else None,
-        viewport=viewport)
+        icon_catalog_paths=icon_catalogs, viewport=viewport)
     return render_review(RenderRequest(
         closure=draft.closure, snapshot_root=draft.asset_root, asset_root=draft.asset_root,
         scheduler=ReferenceScheduler(), renderer=V05SvgRenderer(), draft_auto_block=draft.auto_block))

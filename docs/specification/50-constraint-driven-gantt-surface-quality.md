@@ -261,16 +261,34 @@ View grouping gains `presentation: band | header`; `header` requires a non-zero 
 
 A group's background band and its header band share one selection decision under `backgroundDecoration.groups: all | alternate`: a group selected for a band is banded from its own header row through its own last content row; a group not selected carries neither band, so an unselected group's header is never painted as an extension of a neighboring group's band. `backgroundDecoration.groups: none` is the sole unconditional case: every group's header band still paints (the header-only decoration), independent of body selection. A row-decoration stripe (`backgroundDecoration.rows: alternate`) and a group band may cover the same extent; Layout paints row stripes after group bands so an opaque stripe is not hidden by an opaque band at the same declared Theme paint order.
 
-Translucent background intersections remain invalid except an intentional
-`calendarClosed` overlay over a `rowBand`, `groupBand`, or `groupHeaderBand`.
-That exception requires the calendar role's Theme paint order to be strictly
-later than the band's; ordinary source-over composition at those completed
-orders preserves both signals. Equal-order overlaps, closed-day/closed-day
-overlaps, and every other translucent pair still raise
-`E_LAYOUT_BACKGROUND_OVERLAP`. Layout validates the pair and order before
+Translucent background intersections remain invalid except one explicit
+relation: an overlay of higher rank over an earlier background of lower rank.
+The ranks are, in order, `rowBand`, `groupBand` and `groupHeaderBand`; a named
+period's `periodBand` (#582); `calendarClosed`. The exception requires the
+overlay role's Theme paint order to be strictly later than the lower role's;
+ordinary source-over composition at those completed orders preserves both
+signals. Equal-order overlaps, same-rank overlaps (two period bands, two
+closed days, a header band over a row band) and every other translucent pair
+still raise `E_LAYOUT_BACKGROUND_OVERLAP`. Layout validates the pair and order before
 Scene projection; adapters do not decide which background is visible. The
 legend's calendar key uses the same Theme role without inheriting the plot's
 underlying bands.
+
+A selected named period (#582; Spec 06 §7.1) completes one `Rect` background:
+placement id `period-band:<period id>`, `sourceRef` the period id, semantic
+`periodBand`, slot `timeline`. Its inline extent is the period's half-open range
+clipped to the View window and to the plot, mapped through the scale that places
+marks; its block extent is the timeline slot's plot rows, as the calendar
+closure's. Fill, stroke, opacity, an optional catalogue pattern and the paint
+order come from Theme role `period-band` (`backgroundTreatment` and
+`backgroundPaintOrder`, as the axis band); `backgroundTreatment: none` is the
+explicit absent disposition. A Theme that omits the role while a View selects a
+period fails with `E_THEME_ROLE_REQUIRED` at `/body/roles/period-band`; no other
+role paints it. The band is a background and never enters the obstacle index.
+Contrast is gated as a decoration role at the 1.10 floor over the primitive
+beneath its centre, and a translucent host beneath cannot be gated
+(`E_SCENE_CONTRAST_GROUND_UNSUPPORTED`), so a Theme paints a pattern band
+opaque or a translucent band over opaque bands only.
 
 A Layout `legend` slot is the sole authority for legend geometry. When it exists, every selected legend entry emits one swatch and one measured label. When absent, there are no legend primitives. It is a resource choice, not a renderer fallback. Header or row capacity shortfall completes visible stacked/natural geometry and a warning rather than rejecting the surface.
 

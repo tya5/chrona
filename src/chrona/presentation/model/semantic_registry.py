@@ -90,6 +90,8 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("memberLabelChip", "decoration", "label-chip", "member-label-chip", "member-label-chip"),
     _binding("finishDeltaChip", "decoration", "label-chip", "finish-delta-chip", "finish-delta-chip"),
     _binding("calendarClosed", "decoration", "calendar-closed", "calendar-closed", "calendarClosed", ContrastClass.DECORATION),
+    # A named Project period (#582): a band across the plot, selected by the View and painted by the Theme.
+    _binding("periodBand", "decoration", "period-band", "period-band", "period-band", ContrastClass.DECORATION),
     # Axis.
     _binding("axisBand", "label", "axis-band", "axis-band", "axis"),
     _binding("axisBandDecoration", "decoration", "axis-band", "axis-band-decoration", "axis-band-decoration", ContrastClass.DECORATION),

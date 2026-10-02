@@ -73,6 +73,8 @@ body:
     mode: explicit
     start: '2027-03-01'
     end: '2027-12-01'
+  periods:
+  - id: launch-window
   comparison:
     baseline: primary
     actual: required

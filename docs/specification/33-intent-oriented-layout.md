@@ -342,6 +342,7 @@ These private modules divide Layout implementation only; they do not change auth
 | `surface_legend` | Place legend entries and role-derived swatches. |
 | `surface_content` | Place title, detail, summary, notes and footer source content. |
 | `surface_backgrounds` | Complete source-bound row/group/axis/calendar background geometry from completed extents and overlay intervals. |
+| `surface_periods` | Complete named-period band geometry (#582) from the View-selected periods, the completed scale and the Theme treatment; clip to the window and plot and record a period with no extent. |
 | `surface_visuals` | Reserve and place text/mark/axis label visuals. |
 | `surface_completion` | Complete slot ownership, overflow evidence, canvas bounds, lane row anchors and catalogue patterns for final Rect shapes and span marks, and assemble the final placement. |
 | `surface_geometry` | Pure rectangle/date conversions and shared precision/paint-order constants. |
