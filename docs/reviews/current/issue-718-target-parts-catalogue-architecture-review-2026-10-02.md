@@ -34,7 +34,8 @@ the three milestone symbol roles. A scroll frame, a clipping edge, a panel corne
 on an annotation, title or panel by any Theme today. Spec 64 section 5 refuses valid-but-unreachable *schema forms*;
 this is a catalogue resource, not a schema form, and the entries are reachable as gate glyphs (checked), but it is
 the same smell at resource level. The remedy is not here: a role that places a catalogue glyph on a surface is a Theme
-schema change owned by #584 (per-kind stamp) and #587 (repeated-glyph border, panel corners). Keeping the entries is
+schema change owned by #584 (per-kind corner and stamp), #587 (repeated-glyph border, panel corners) and, for artwork
+behind an annotation container, the new successor #848 (#465 admits PNG only). Keeping the entries is
 right: the issue's acceptance asks for them or a reason, the extracted and licensed geometry is the reusable value, and
 a future role then has assets to bind. Mitigation (C1).
 
@@ -66,7 +67,7 @@ state that the starter holds the simple builtin forms and this set holds the tar
 **F7. Seigaiha is a real schema limit (accept the drop).** The pattern grammar has no per-primitive substrate fill,
 occlusion or clip, and an arc must have its centre inside the tile. Overlapping occluded scales therefore cannot be
 written. An approximation would misrepresent the target; the starter's seigaiha is the shipped answer. A faithful one
-needs an occluding or clipped primitive, which is a schema change and is left to a successor if the owner wants it.
+needs an occluding or clipped primitive, which is a schema change and is left to the successor #849.
 
 **F8. Identity and packaging (accept).** The importer writes the catalogue with a temporary file whose mode is `0600`;
 the committed file mode is set to the usual `0644`, and git carries only the executable bit. The catalogue and source
@@ -80,7 +81,7 @@ file is shared. The README sections are self-contained appends to limit conflict
 ## Conditions
 
 - **C1.** The manifest records, for each entry with no consumer, `consumer: none-yet` with the knob issue that owns it
-  (#584 or #587), and the gallery and READMEs say the same. No preset binds such an entry.
+  (#584, #587 or #848), and the gallery and READMEs say the same. No preset binds such an entry.
 - **C2.** An integration test renders a Theme that binds a catalogue glyph and a catalogue pattern through the real
   product, so an entry that stops being accepted fails CI, not a user.
 - **C3.** The acceptance review rows for the catalogue say `met` only for what the importer and the render evidence
@@ -89,5 +90,5 @@ file is shared. The README sections are self-contained appends to limit conflict
 ## Conclusion
 
 The design keeps the catalogue in the resource layer, adds no role, schema or importer branch, and records the two
-gaps it cannot close. The accepted extension points are a frame/stamp role (#584, #587) and an occluding pattern
-primitive; neither is needed to ship the parts that exist.
+gaps it cannot close. The accepted extension points are a frame/stamp role (#584, #587, #848) and an occluding pattern
+primitive (#849); neither is needed to ship the parts that exist.
