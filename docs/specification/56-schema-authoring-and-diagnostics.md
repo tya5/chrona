@@ -359,3 +359,8 @@ target, so a stray or archived schema file can never become one.
   and the diagnostic of every probe (L3) with a base revision; a deliberate change is a
   line in `conformance/schema-equivalence/expected-deltas-v0.1.yaml` with its reason and
   test. A schema change that touches a part or a site pastes this output into its PR.
+  An L1 entry is meaningful only against the base that predates its PR. Once its PR is merged the entry is stale
+  (the base file holds it and the base already moved past `before`): a `--base-rev` run reports it, and fails when it
+  outlives its landing commit by more than one later merge that touches `schemas/`. `--prune-stale` retires stale
+  entries, each only after proving it against the base it was recorded for (the landing commit's first parent). An
+  L2 or L3 entry compares with the recorded baseline, not a base revision, and stays until the baseline is re-recorded.
