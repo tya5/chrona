@@ -317,7 +317,19 @@ class ThemeTokenView:
         scale = self.optional_number(role, "horizontalScale")
         scale = (Decimal(1) if scale is None
                  else checked_horizontal_scale(scale, f"/body/roles/{role}/horizontalScale"))
+        if scale != 1 and self.writing_mode(role) == "vertical":
+            raise ThemeTokenError("E_THEME_TEXT_TREATMENT_CONFLICT", f"/body/roles/{role}/horizontalScale")
         return TextTreatment(family, weight, size, line_height, spacing, transform, numeric_spacing, scale)
+
+    def writing_mode(self, role: str) -> str:
+        """Return the role's declared writing mode: horizontal when absent (#585)."""
+        binding = self._body["roles"].get(role)
+        if not isinstance(binding, Mapping) or "writingMode" not in binding:
+            return "horizontal"
+        value = self.token(role, "writingMode", "writingMode")
+        if value not in {"horizontal", "vertical"}:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/writingMode")
+        return str(value)
 
     def icon_ratios(self, role: str) -> tuple[Decimal, Decimal]:
         """Return the closed typography-relative icon scale and gap for one role."""

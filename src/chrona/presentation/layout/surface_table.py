@@ -35,6 +35,10 @@ def compose_table(base: SurfaceBaseGeometry) -> SurfaceTablePlacements:
     table = base.table
     rows = base.rows
     table_bounds = base.table_bounds
+    if base.group_tag_inline_size:
+        # The vertical group tag column takes the table's start edge; columns are laid out in what remains (#585).
+        tag = base.group_tag_inline_size
+        table_bounds = (table_bounds[0] + tag, table_bounds[1], table_bounds[2] - tag, table_bounds[3])
     body_treatment = tokens.text_treatment("text")
     body_size = float(body_treatment.font_size)
     body_metrics = metric_for_role(tokens, "text", font_metrics)

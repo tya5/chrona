@@ -24,7 +24,7 @@ properties:
           required: [type, value]
           additionalProperties: false
           properties:
-            type: {description: "Kind of non-color token value.", enum: [number, fontFamily, fontWeight, dashPattern, marker, pattern, symbol, textAlternative, lineCap, lineJoin, fidelity, textTransform, numericSpacing, annotationContainer, edge, stampPlacement]}
+            type: {description: "Kind of non-color token value.", enum: [number, fontFamily, fontWeight, dashPattern, marker, pattern, symbol, textAlternative, lineCap, lineJoin, fidelity, textTransform, numericSpacing, annotationContainer, edge, stampPlacement, writingMode]}
             value: {}
           allOf:
             - description: "Dash-pattern tokens use a positive numeric sequence; other tokens use scalar values."
@@ -227,6 +227,14 @@ properties:
                     properties:
                       corner: {description: "The note corner the stamp stands at.", enum: [start-top, end-top, start-bottom, end-bottom]}
                       size: {description: "Stamp block size as a ratio of the note text size.", type: number, exclusiveMinimum: 0}
+            - description: "Writing mode is finite so Layout measures the block/inline swap of a vertical label (#585)."
+              examples: [{type: writingMode, value: vertical}]
+              if:
+                properties: {type: {const: writingMode}}
+              required: [type]
+              then:
+                properties:
+                  value: {enum: [horizontal, vertical]}
       roles:
         type: object
         description: "Semantic role bindings to named non-color tokens."
@@ -246,6 +254,7 @@ properties:
             horizontalScale: {description: "Named number token, 0.5 to 1, compressing the role's text along its own inline axis; Layout measures the compressed width (#585). Absent is 1.", type: string, minLength: 1}
             textTransform: {description: "Named finite transform token applied before Layout measurement.", type: string, minLength: 1}
             numericSpacing: {description: "Named finite numeric-spacing token selected before Layout measurement.", type: string, minLength: 1}
+            writingMode: {description: "Named writingMode token: horizontal (absent) or vertical, a single column read top to bottom with upright CJK and sideways Latin; admitted on the group-label role only (#585).", type: string, minLength: 1}
             iconScale: {description: "Named typography-relative icon block-size ratio for the role.", type: string, minLength: 1}
             iconGap: {description: "Named typography-relative icon inline-gap ratio for the role.", type: string, minLength: 1}
             markHeight: {description: "Named lane-slot-relative mark block-size ratio for this semantic role.", type: string, minLength: 1}

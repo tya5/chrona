@@ -121,7 +121,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     column_placements = table_batch.columns
     text.extend(table_batch.text)
     group_batch = compose_group_presentation(
-        request=request, rows=rows, review_rows=review_rows, groups=groups, body_size=body_size)
+        request=request, rows=rows, review_rows=review_rows, groups=groups, body_size=body_size,
+        tag_column=(base.table_bounds[0], base.group_tag_inline_size) if base.group_tag_inline_size else None)
     text.extend(group_batch.text)
     shapes: list[ShapePlacement] = []
     shapes.extend(compose_row_group_backgrounds(

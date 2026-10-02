@@ -135,7 +135,7 @@ _CANVAS_PAINT = frozenset(("fill", "opacity", "gradientStart", "gradientEnd", "g
                            "gradientFidelity", "shadowColor", "shadowOffsetX", "shadowOffsetY",
                            "shadowBlur", "shadowOpacity", "shadowFidelity"))
 _PATTERNED_RECT_PAINT = _RECT_PAINT | frozenset(("pattern",))
-_LAYOUT_TYPOGRAPHY = _TEXT_MEASUREMENT | _ICON_MEASUREMENT
+_LAYOUT_TYPOGRAPHY = _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("writingMode",))
 _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | _GROUP_TAB | frozenset((
     "cellGap", "cellCornerRadius", "cellCornerChamfer", "chipPadding", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach",
     "progressInset", "summaryBarHeight", "swatchInlineSize", "annotationContainer", "marker", "symbol", "edge",
@@ -192,8 +192,10 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
 
     register("text", "Layout text and Scene Text/Icon", _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _SHARED_TEXT_ICON_PAINT,
              scene_kinds=frozenset(("Text", "Icon")))
-    register("heading groupHeader legend numeric summary", "Layout text measurement",
+    register("heading legend numeric summary", "Layout text measurement",
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT)
+    register("groupHeader", "Layout text measurement and group tag column",
+             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("writingMode",)))
     register("axis", "Layout axis-tier measurement and inline visual reservation",
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _AXIS_MEASUREMENT)
     register("axisMonth axisQuarter axisSecondary axis2 axis3", "Layout axis-tier measurement",

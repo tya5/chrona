@@ -98,3 +98,8 @@ slides:
     context: contexts/19-gallery-text-compression.yaml
     expectedSvg: generated/19-gallery-text-compression.svg
     expectedScene: generated/19-gallery-text-compression.scene.json
+  - id: gallery-vertical-group-tags
+    evidence: "Programme board group labels written vertically (#585): a tag column at the table's start, each tag spanning its group's rows, kanji-formal ordinal and the group title (CJK upright, Latin turned sideways, ellipsis cut by measured extent) from a Theme writingMode on the groupHeader role and the #583 header template, set in Noto Sans JP, as a new View id, Theme and Context over the 02-programme-board sources, no corpus datum edited."
+    context: contexts/20-gallery-vertical-group-tags.yaml
+    expectedSvg: generated/20-gallery-vertical-group-tags.svg
+    expectedScene: generated/20-gallery-vertical-group-tags.scene.json

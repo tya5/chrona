@@ -7,6 +7,8 @@ from decimal import Decimal
 from collections.abc import Mapping
 from typing import Any
 
+from chrona.presentation.layout.group_tags import (
+    group_tag_column_size, vertical_group_tags)
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect, geometry_sum
 from chrona.presentation.layout.lane_preflight import lane_inline_frame_for_manifest
 from chrona.presentation.layout.lane_projection import LaneProjectionInstance, lane_missing_actual_visible
@@ -58,6 +60,8 @@ class SurfaceBaseGeometry:
     text_line_block: float
     table_bounds: tuple[float, float, float, float]
     plot: Rect
+    # Inline size of the vertical group tag column carved from the table's start; 0 when labels are horizontal (#585).
+    group_tag_inline_size: float = 0.0
 
     def text_slot(self, item: Any) -> str:
         """Resolve a text host against the prepared base slot identities."""
@@ -167,8 +171,10 @@ def prepare_surface_base(request: SurfaceLayoutRequest) -> SurfaceBaseGeometry:
         timeline_bounds[0] + timeline_bounds[2], timeline_bounds[0],
         timeline_bounds[2] / max(1, (end - start).days),
     )
+    group_tags = vertical_group_tags(request)
+    # A vertical group label replaces the header row: no row is reserved for it (#585).
     group_header_size = (float(metric_values["timeline.groupHeader.blockSize"])
-                         if request.surface_content.group_presentation == "header" else 0.0)
+                         if request.surface_content.group_presentation == "header" and not group_tags else 0.0)
     role_geometries = resolve_mark_geometries(request.theme_tokens)
     mark_block_size = float(metric_values["timeline.mark.blockSize"])
     if projection.lane_membership is not None:
@@ -238,4 +244,5 @@ def prepare_surface_base(request: SurfaceLayoutRequest) -> SurfaceBaseGeometry:
         scale, rows, raw_rows, groups, tracks, role_geometries, mark_block_size,
         lane_subtracks, group_header_size, row_padding, text_line_block, table_bounds,
         plot_rect(timeline.bounds, (row.bounds for row in rows)),
+        group_tag_inline_size=group_tag_column_size(request.theme_tokens) if group_tags else 0.0,
     )
