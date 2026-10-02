@@ -148,7 +148,7 @@ def validate_materializers_present(root: Path = ROOT) -> None:
 
 
 def derived_paths(root: Path = ROOT) -> tuple[Path, ...]:
-    """Return the closed derived-output inventory (currently 58 + 9 paths)."""
+    """Return the closed derived-output inventory: every manifest-declared SVG and Scene, then the reports."""
     return tuple(sorted((*materializer_outputs(root), *(root / item for item in REPORTS))))
 
 

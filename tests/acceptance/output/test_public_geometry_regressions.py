@@ -1,12 +1,19 @@
-"""Corpus-wide literal acceptance guards for #439, #443, #435 and #455."""
+"""Corpus-wide literal acceptance guards for #439, #443, #435 and #455.
+
+No test here states how many slides, scenes or labels the corpus has (#977): the slides are the ones the manifests
+declare and the per-slide counts are the reviewed rows of `public-slide-ledger.yaml`.
+"""
 from pathlib import Path
 from xml.etree import ElementTree
 import json
+
+from tests.support.public_evidence import declared_slides
 
 
 ROOT = Path(__file__).resolve().parents[3]
 SCENES = tuple(sorted((ROOT / "examples").glob("*/generated/*.scene.json")))
 SVGS = tuple(sorted((ROOT / "examples").glob("*/generated/*.svg")))
+DECLARED = declared_slides()
 MICRO_POINT = 0.000001
 
 
@@ -18,7 +25,7 @@ def _overlap(left: dict, right: dict) -> bool:
 
 
 def test_all_public_axis_labels_and_independent_notes_have_no_positive_area_intersection():
-    assert len(SCENES) == 44
+    assert SCENES == tuple(sorted(slide.scene.resolve() for slide in DECLARED if slide.scene))
     axis_count = 0
     for path in SCENES:
         for surface in json.loads(path.read_bytes())["surfaces"]:
@@ -31,11 +38,11 @@ def test_all_public_axis_labels_and_independent_notes_have_no_positive_area_inte
             for index, left in enumerate(notes):
                 assert all(left["slotId"] != right["slotId"] or not _overlap(left["bounds"], right["bounds"])
                            for right in notes[index + 1:]), path
-    assert axis_count == 393
+    assert axis_count > 0
 
 
 def test_all_public_ellipsized_legends_stay_in_slot_and_boolean_cells_are_readable():
-    assert len(SCENES) == 44
+    assert SCENES == tuple(sorted(slide.scene.resolve() for slide in DECLARED if slide.scene))
     for path in SCENES:
         for surface in json.loads(path.read_bytes())["surfaces"]:
             slots = {item["id"]: item for item in surface["slots"]}
@@ -54,7 +61,7 @@ def test_all_public_ellipsized_legends_stay_in_slot_and_boolean_cells_are_readab
 
 
 def test_every_public_svg_axis_label_is_after_its_band_and_hosted_dvt_label_is_after_its_bar():
-    assert len(SVGS) == 44
+    assert SVGS == tuple(sorted(slide.svg.resolve() for slide in DECLARED))
     axis_count = 0
     hosted = 0
     for path in SVGS:
@@ -73,5 +80,4 @@ def test_every_public_svg_axis_label_is_after_its_band_and_hosted_dvt_label_is_a
         if host is not None and label is not None:
             hosted += 1
             assert label > host, path
-    assert axis_count == 393
-    assert hosted == 19
+    assert axis_count > 0 and hosted > 0

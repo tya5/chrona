@@ -69,5 +69,9 @@ def test_explicit_halcyon_init_is_store_resolvable_without_root_revision_closure
         }
         closures.append(resolve_render_context(context_reference, reader))
     assert closures[0].context.identity.id == "halcyon-1-01-mission-brief"
-    assert len(closures) == 20  # 20 HALCYON-1 slide contexts, including gallery-image-notes (#465), gallery-annotation-kinds and gallery-annotation-tilt (#584) gallery-text-compression and gallery-vertical-group-tags (#585)
+    # One closure per slide Context the copied manifest declares (no count to edit when a slide is added, #977).
+    declared = safe_load((destination / "manifest.yaml").read_bytes())["slides"]
+    assert closures and len(closures) == len(declared)
+    assert sorted(path.name for path in (destination / "contexts").glob("*.yaml")) == sorted(
+        Path(slide["context"]).name for slide in declared)
     assert tuple((destination / ".chrona" / "store").glob("revision-*"))

@@ -44,7 +44,11 @@ def test_inventory_is_stable_and_matches_tracked_public_materializers():
     ))
     assert tuple(sorted(path.relative_to(Path.cwd()).as_posix()
                          for path in outputs)) == tracked_outputs
-    assert len(derived_paths()) == 97
+    # Counted from the raw manifests, not from `derived_paths` itself: one SVG per slide, a Scene where declared, the reports.
+    slides = [slide for path in sorted(Path("examples").glob("*/manifest.yaml"))
+              for slide in yaml.safe_load(path.read_bytes())["slides"]]
+    declared = len(slides) + sum(1 for slide in slides if slide.get("expectedScene"))
+    assert len(derived_paths()) == declared + len(evidence.REPORTS)
 
 
 def test_new_unindexed_manifest_scene_is_inspected_and_missing_output_fails(tmp_path):

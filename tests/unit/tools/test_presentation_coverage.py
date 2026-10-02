@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 
+from tests.support.public_evidence import declared_slides
 from tools.presentation_coverage import PresentationCoverageError, RunLocalYamlLoader, _validate_resource_versions, discover, live_schemas, render, vocabulary, _vocabulary
 
 
@@ -11,7 +12,8 @@ def _root() -> Path:
 
 def test_presentation_coverage_is_deterministic_and_complete():
     root = _root()
-    assert len(discover(root)) == 44
+    slides = discover(root)
+    assert [slide.identifier for slide in slides] == [slide.key for slide in declared_slides(root)]
     report = render(root)
     assert report == render(root)
     assert "## Layout slot evidence" in report
