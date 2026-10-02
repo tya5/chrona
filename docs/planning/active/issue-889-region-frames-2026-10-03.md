@@ -1,0 +1,154 @@
+# Issue #889: panels with gutters, Layout region frames (work record)
+
+Living record for [#889](https://github.com/tya5/chrona/issues/889): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history.
+
+**Public base:** `24f686f1` on `main`. **Status:** design plan, design, architecture review and implementation plan published together (this document); code not started. Owner-level decisions are recorded as options, choice, reason and reversal in section 5 and on the issue.
+
+## 1. Published baseline
+
+Issue #889 had no comments before this work (body unchanged since filing; the claim is the first comment). It is Depth B, the P4-B "Sunday" item split from #587 (its [work record](../../archive/planning/issue-587-surface-decoration-2026-10-02.md) section 5.9 gives the direction) and the successor to which #588's acceptance row 3 was narrowed. It is a successor of a closed issue and is read, not edited, on the board [#454](https://github.com/tya5/chrona/issues/454). The design target is [`sunday-target-2026-09-26`](../../research/presentation/sunday-target-2026-09-26/README.md): "inked panels: title, key, chart ... slots drawn as bordered panels with a gutter between them", the legend "in its own panel beside the title". Read on `24f686f1` from code, specifications and the README, and the target image (a hand-drawn study, not renderer output):
+
+1. **A Layout Profile already owns gutters.** `layout-profile-v0.10` containers (`row`, `column`, `grid`, `flow`) declare `gap` (space between children) and `padding` (space inside), both Layout distances that may be Theme tokens (`requiredThemeTokens` is checked for exactness). The engine (`layout/engine.py`) arranges every node, container and slot, and records one `LayoutDecision(node_id, kind, bounds, ...)` per arranged node in pre-order. So "there is no gutter between regions" is a gap in what a profile *draws*, not in what it *spaces*: nothing paints a region, and a container has no decision that reaches Scene.
+2. **Only slots reach Scene.** `surface_base.prepare_surface_base` turns each decision with a `source` into a `SlotPlacement`; container decisions are not slots and no primitive refers to them. An absent `optional` slot is omitted by the engine (`_active_children`) and has no decision; its siblings and gaps close over it. A container whose children are all absent still has a decision.
+3. **The canvas texture (#587) is the template for a Layout-completed ground.** `layout/canvas_texture.py` completes one `ShapePlacement` (paint order 0) and one pseudo-slot; `surface_completion.complete_surface_layout` prepends it to the shapes; `v05_builder` emits it first, before every other primitive; its role `canvas-texture` is registered in `semantic_registry` and `scene/capabilities` without a Theme schema change and is deliberately not contrast-classified. Paint order sorts `(paint_order, emission index)` in SVG and Typst/TikZ, so an early emission at order 0 paints under everything that is emitted later at order 0.
+4. **Ground for the contrast gates is geometric.** `scene/contrast_policy._ground_under` takes, for a classified primitive, the last earlier Rect or Symbol with a flat fill whose bounds contain the primitive's sample point; a translucent or non-flat fill is `unsupported` and fails closed. A Rect with a fill and an earlier paint order is therefore ground for marks (floor 3.0), state text (4.5 or 3.0) and group-header text (4.5) with no change to the policy. The shared `text` role (title, table body, member labels) is unclassified today, with or without a panel; that classification belongs to #884 and #950 and is not touched here.
+5. **Rect paint is closed and rich treatments are already laddered.** A Rect role admits fill, stroke, strokeWidth, dash, opacity, gradient, shadow, glow, wobble (#588) and, for the patterned roles, a catalogue pattern; the profile ladder (`I_VISUAL_TREATMENT_OMITTED`, `E_VISUAL_CAPABILITY_UNSUPPORTED`) decides per profile. Corner radius is a completed Layout fact on the primitive (`ShapePlacement.corner_radius`, `ScenePrimitive.corner_radius`); #491 (axis cells) declared radius and chamfer as a ratio of the cell block size in Theme properties (`cellCornerRadius`, `cellCornerChamfer`).
+6. **The plot rule (#880).** The plot is the timeline slot down to the bottom of its last row; the ground and every plot-height overlay (gridlines, closed days, as-of line, period band) end there; the slot is an allocation and the rows are the content (Specification 50, "The plot").
+7. **Schema evolution.** A new optional Layout Profile property is added in place (Specification 56 section 3.2) and the S0 gate `python -m tools.schema_equivalence --base-rev origin/main` is run and recorded. At the base the gate passes, with notes of unused L1 entries (the "does not apply" class that earlier PRs recorded; tracked separately, not edited here).
+8. **Catalogue parts.** `chrona-target-parts:panel-corner` is a 16 x 16 heavy L bracket with a fine inner rule, monochrome, "not yet placeable by any Theme role (#587)". Placing it needs a glyph rotated or mirrored at each corner of a frame, the same glyph-run machinery the title border (#888, repeated catalogue glyph along a slot edge) needs.
+9. **Adapters.** SVG draws a Rect as `<rect>` (with `rx` for a radius); PNG is that SVG through the pinned resvg; Typst and TikZ draw a Rect with fill, stroke, dash and radius and reject a Rect that carries a catalogue pattern (`v05_typeset.py`).
+
+Inferred (confirmed by the slice that touches it): that no Scene schema change is needed, because a frame is an ordinary Rect (kind, `cornerRadius`, `paint`, `slotId` exist); that the presentation-coverage tool accepts a pseudo-slot as it accepts `canvas`.
+
+Unverified: the rendered look (read as images in the slice); the Windows run (no Windows host here; the three-OS CI is the check).
+
+## 2. Literal acceptance (copied from the issue)
+
+1. The declaration is parsed, validated with exact pointers and completed by Layout, with synthetic tests: gutter size, frame bounds, regions that do not tile, default output unchanged without the declaration; the S0 gate result is recorded.
+2. The frame never clips or moves content, and text on a framed panel is ground for the contrast gates.
+3. Evidence: the Sunday surface through YAML, rendered through SVG and PNG and read.
+
+Principle from the issue body: core gets general declarative knobs only, tested on synthetic fixtures; the target look is reached by Theme, View and Layout YAML as evidence, not as a core pass condition.
+
+## 3. Dependencies and neighbours
+
+- #587 (closed) supplies the ground template (texture), #588 (closed) the wobble and affixes the evidence slide combines, #718 (closed) the catalogue, #880 (closed) the plot rule, #491 (closed) the corner-ratio precedent, #583 (closed) the group band pattern. None is changed.
+- #888 (title border of repeated glyphs) is the neighbour for corner and edge glyphs; #890 (as-of cone) and #891 (texture beyond the opaque tile) are unrelated.
+- **Not touched:** #585 (vertical writing, text), #893 (calendar shading), #950 and #884 (contrast gates: `scene/contrast_policy.py`, `semantic_registry` classification of text), the Project schema, presets, catalogues and every corpus datum. #454 is read only.
+- Shared files kept to minimal diffs: `schemas/layout-profile-v0.10.schema.yaml`, `schemas/theme-v0.11.schema.yaml`, `schemas/theme-v0.13.schema.yaml`, `conformance/schema-equivalence/expected-deltas-v0.1.yaml`, `scene/capabilities.py`, `model/semantic_registry.py`, Specifications 07, 08, 33, 50, the Controller Z manifest and the public-slide count tests (an evidence slide).
+
+## 4. Design plan
+
+### Use cases
+
+| Id | Use case | Target |
+| --- | --- | --- |
+| U1 | A profile frames its title region, its key (legend) region and its chart region; the Theme paints one ink outline and a cream fill; a 16 px gap between the regions is the gutter. | Sunday |
+| U2 | The same profile under a Theme that declares no `region-frame` role, or with no `frame` declaration: output is byte for byte what it was. | default unchanged |
+| U3 | A framed optional region is absent (no notes, no legend): its panel is not drawn, and no other bound moves. | acceptance 1 |
+| U4 | Regions that do not tile the canvas (page padding, a gap, an overlay with a free corner): the frames cover only their own nodes; the rest is canvas. | acceptance 1 |
+| U5 | A mark or state text lies on a panel fill: the contrast gates judge it against that fill and fail it when it is too faint. | acceptance 2 |
+| U6 | A panel with rounded corners, a dashed outline, a halftone fill or a hand-inked wobble, from Theme properties that already exist plus one corner radius. | Sunday |
+| U7 | A panel around a timeline slot taller than its rows: the panel is the allocation; gridlines and the as-of line still end at the last row. | #880 |
+| U8 | The slide through SVG, PNG, Typst and TikZ: the panel is an ordinary Rect; what an adapter cannot draw follows the existing ladder. | adapters |
+
+### Open decisions (closed in section 5, recorded on the issue)
+
+F1 where a frame is declared; F2 what the declaration holds; F3 where the gutter lives; F4 frame bounds against the node and its stroke; F5 the Theme role; F6 corner treatment; F7 absent and collapsed regions; F8 paint order and the overlay rule; F9 contrast; F10 surfaces; F11 adapters; F12 schema and diagnostics; E1 committed evidence.
+
+### Responsibility boundaries
+
+Layout Profile declares *which* regions are framed and the frame's own margin; the engine records the declaration with each node's completed bounds; Layout completion (`layout/region_frame.py`) turns each framed node into one completed Rect, its identity and its pseudo-slot, and decides omission and corner reduction; Theme declares *how* a frame is painted (one role); Scene emits the completed Rect first, after the canvas texture, and completes its paint like any Rect; adapters serialize. Core rules name no target, preset or corpus file.
+
+### Order of design slices
+
+1. **D889** (this publication): baseline, design plan, design, architecture review, implementation plan.
+2. I889-1 (section 7), then the acceptance review.
+
+## 5. Design
+
+### F1. Where a frame is declared
+
+An optional `frame` property on any container (`row`, `column`, `grid`, `flow`, `overlay`) and on a `slot`, and on an `override` (so a derived profile can frame or re-inset a node it extends). Options: (A) a top-level `frames` list naming node ids (duplicates ids, needs reference validation, and an override cannot reach it); (B) **a property of the node** (chosen: node-local, `extends`/`overrides` merge it for free, the `requiredThemeTokens` walk already visits every node); (C) a new container kind `panel` (changes composition for a paint concern). Reverse: remove the property; the schema change is additive.
+
+A framed container is the natural panel: its `padding` is the panel's inner margin and its children are the content. A framed slot frames that surface's allocation exactly. An override replaces a node's `frame` wholesale and cannot remove one (a derived profile unframes by declaring a Theme without the role, or the base without the frame); removal syntax is deferred, additive later.
+
+### F2. What the declaration holds
+
+`frame` is an object with one optional property, `inset` (a Layout `distance`, number or `{token}`, default 0): the distance kept clear between the node's allocated bounds and the frame's outer edge on every side. `frame: {}` is a frame with defaults. An unknown key, a negative or non-numeric inset, or a non-object is `E_LAYOUT_SCHEMA` at the exact pointer (`/root/children/0/frame`, `/root/children/0/frame/inset`, `/overrides/<id>/frame/...`). The JSON Schema alone would report such an error at the container union's own pointer (`/root`), so `layout/profile.py` checks a frame's shape first and names the exact path; the schema still rejects the same documents as a backstop; an inset token the Theme does not declare is `E_LAYOUT_TOKEN_REQUIREMENT_UNAVAILABLE` (and the exactness of `requiredThemeTokens` applies to it) at `.../frame/inset`.
+
+### F3. Where the gutter lives (the owner-level call)
+
+Options: (A) a new `gutter` property on containers that reserves space and shifts children (a second spacing concept next to `gap` and `padding`, and it would move content, which acceptance row 2 forbids a frame to do); (B) **the gutter is what a profile already declares** (chosen): the space between two panels is the parent's `gap` (or, in a grid, its `gap`), the space inside a panel is the framed container's `padding`, and `inset` is a paint-only margin that lets a panel's outline stand back from its allocation. Two sibling frames therefore stand `gap + 2 * inset` apart between their outer stroke edges (`gap + 2 * (inset + half stroke)` between their rectangles' centre lines), and a panel at the page edge stands `inset` from the edge of its node. Reason: one spacing vocabulary, Theme-tokenised, already validated; a frame that only paints cannot move or clip anything. Reverse: add a `gutter` that adjusts `gap`; the declaration shape keeps room for it.
+
+### F4. Frame bounds
+
+The frame Rect is the node's completed bounds deflated on each side by `inset + strokeWidth / 2` when the role declares a stroke (zero otherwise), so the outer edge of the stroke, not its centre line, is `inset` inside the node: a stroke never spills into the gap or past the canvas edge, and the fill reaches the stroke's centre line. Options: centred on the node edge (a stroke would spill half its width into the gutter and off the page at an edge node). Arithmetic is `Decimal`, as for every Layout bound. The frame is never smaller than a point of area: a deflated Rect with a non-positive side is omitted (F7).
+
+### F5. The Theme role
+
+One role, `region-frame`, paints every frame. It admits the Rect paint set (`fill`, `stroke`, `strokeWidth`, `dash`, `opacity`, gradient, shadow, glow, wobble properties), `pattern` (a `{kind: catalog}` token is the halftone panel; Specification 07 keeps the inline kinds), and one new Layout property `frameCornerRadius` (F6). A Theme that does not declare the role draws no frames and fails nothing: Layout says *where*, Theme says *whether and how*, as for every decoration. The paint family follows the declaration: a role with a `fill` is solid (the stroke is optional), a role with only a `stroke` is an outline, and a role that declares neither is `E_THEME_ROLE_REQUIRED` at `/body/roles/region-frame/stroke` (the outline family's own rule). A role with a catalogue pattern follows the existing pattern-paint closure rule: the pattern's substrate is the `fill`, its ink the `stroke` colour, and `strokeWidth`, `dash` and gradient properties are `E_THEME_ROLE_PROPERTY_UNSUPPORTED`, so a halftone panel has no separate outline (a framed container inside it, or the outline of an enclosing frame, gives one). Options: a role per frame (an open namespace like `group:<id>`; needs registry, admission and witness changes) or a `variant` property on `frame`; deferred, additive: `frame: {variant: key}` selecting `region-frame:key` can be added later without changing this.
+
+### F6. Corner treatment (the owner-level call)
+
+Options: (A) the #491 idea, a ratio of the shorter side (`0 < r <= 0.5`), radius or chamfer; (B) catalogue `panel-corner` glyphs at the four corners; (C) **a radius in pixels** `frameCornerRadius` (a named number token, `>= 0`, 0 or absent is square), reduced to half the shorter side with `W_LAYOUT_REGION_FRAME_CORNER_REDUCED:<node>` when larger (chosen). Reason: the ratio is right for cells that share one height and wrong for panels of unrelated sizes (a 0.1 ratio is a 10 px radius on a title panel and a 70 px radius on the chart panel); the clamp and its record follow `W_LAYOUT_AXIS_CELL_CORNER_REDUCED`. The radius is the radius of the stroke's centre line, and a primitive `corner_radius` the adapters already draw. Chamfer and corner glyphs are not designed here: a chamfer is a Path shape with its own pattern exclusion, and a corner glyph needs rotated or mirrored glyph placement, which #888 (repeated glyph along a slot edge) needs for the same reason, so they are recorded as part of that design. Reverse: add the ratio or chamfer properties beside the radius.
+
+### F7. Absent and collapsed regions
+
+A frame is drawn only when (a) its node has a completed decision, (b) it is a slot, or a container with at least one slot of positive area beneath it (a panel with nothing in it, or only slots that collapsed to no area, is not drawn), and (c) the deflated Rect has a positive width and height. Otherwise it is omitted and Layout records `I_LAYOUT_REGION_FRAME_OMITTED:<node id>:<no-content|too-small>` in the surface diagnostics. An absent optional slot is already omitted by the engine and closes its gap; the omission of its panel changes no other bound, which a test proves by comparing every decision with and without the declaration. A required slot is never absent.
+
+### F8. Order, and the overlay rule
+
+Layout completes frames in the profile's pre-order (the order of the engine's decisions: a parent before its children, an earlier sibling before a later one), as `ShapePlacement`s with paint order 0, and `complete_surface_layout` places them right after the canvas texture and before every other shape. Scene emits them right after the texture and before all other primitives, so they paint under bands, rows, gridlines, marks and text whatever paint order those declare, and a nested panel paints over its container's. A frame is an allocation, not an overlay: it follows the node's bounds, never the plot extent, so the #880 rule is unchanged: inside a panel taller than its rows the ground and the plot-height overlays still end at the last row and the strip below is the panel's own paper. The extent each frame paints in, stroke included, joins the canvas completion, so a panel's stroke is never cut by the canvas (a wobble or glow reaches slightly further, as it does for every primitive). No knob fits a panel to the plot; an author who wants that sizes the slot (`rowDistribution: pack` with a `content` slot). Reverse: a `frame.extent: plot` property, additive.
+
+### F9. Contrast
+
+The `region-frame` role is a ground, not content, and carries no contrast class of its own (as the canvas texture): a `DECORATION` class would impose a 1.10 floor on a fill against the canvas, which a deliberately faint panel may miss, and would add the corpus-wide witness requirement (a scene that paints every decoration role at once, `tools/presentation_contrast.py`) that a panel does not suit. What is gated is what lies on it: marks, state text and group-header text are judged by the existing `_ground_under` against the panel's fill, because the frame is an earlier flat-filled Rect. A frame without a `fill` is not ground (the canvas or the next earlier fill is), and a translucent fill is an `unsupported` ground that fails closed (the existing rule). `scene/contrast_policy.py` and `semantic_registry` classifications are not edited. The unclassified shared `text` role (title, table body) is ungated with or without a panel, a disclosure for #884 and #950, not a gap this work opens. A test shows a gated primitive failing against a faint panel fill and passing without the panel, and the same primitive passing on a strong fill.
+
+### F10. Surfaces
+
+The table-timeline surface draws frames. The dependency-network surface composes only a title and the network from the slot decisions and has no panel use case; it ignores a `frame` declaration (its output is unchanged), disclosed here and in the acceptance review. Reverse: complete frames from the same decisions in `compose_dependency_network_layout`, as the texture is.
+
+### F11. Adapters
+
+No adapter code changes. SVG draws the frame as `<rect>` (or, with a wobble, the existing outline path), PNG is that SVG through resvg. Typst and TikZ draw a plain frame (fill, stroke, dash, radius); a frame that carries a catalogue pattern is rejected like any patterned Rect, and a gradient, shadow, glow or wobble follows the existing profile ladder (omitted when `decorative-optional`, refused when `required`). Typst and TikZ output is read in the slice as text and compiled where a compiler exists, and the claim is limited to that.
+
+### F12. Schema, diagnostics, identity
+
+`layout-profile-v0.10`: a `$defs/frame` object (`additionalProperties: false`, optional `inset` referencing the local `distance`), and `frame` on `linear`, `grid`, `flow`, `overlay`, `slot` and `override`: optional, behaviour-preserving, in place (Specification 56 section 3.2; no version bump). `theme-v0.11` and `theme-v0.13`: the role property `frameCornerRadius` (a named token). The S0 gate is run and its result recorded in the PR. Any change to `layout-profile-v0.10` reports the one L1 entry for that file (`after: added`, I710-S-B) as "does not apply", because v0.10 is already in the base revision: the entry is provably stale (it describes the introduction of a file the base already has) and is removed in I889-1; no other entry is touched. The gate then classifies the Layout Profile and both Theme additions as additive, so no new entry is needed. New diagnostics: `W_LAYOUT_REGION_FRAME_CORNER_REDUCED` and `I_LAYOUT_REGION_FRAME_OMITTED` (messages registered in `usecases/diagnostic_messages.py`); every failure uses an existing code. Identity: the Rect is `region-frame:<node id>` (node ids are unique, `E_LAYOUT_NODE_DUPLICATE`), its pseudo-slot is `frame:<node id>`, its purpose, visual role and Theme role are `region-frame`, its semantic id `regionFrame`. The Layout Manifest canonical bytes carry a node's `frame` only when declared, so every manifest without one is byte-identical.
+
+### E1. Committed evidence
+
+Controller Z gains one slide, `region-frames`, YAML only (a Layout Profile, a Theme, a render context; the View is the existing `value-affixes` View), no preset, catalogue or corpus datum edited: a masthead row with a title panel and a key panel (the legend, inline, in its own panel), a chart panel framed around the table and the timeline, a gap as the gutter, newsprint canvas, ink outline and cream fill from the Theme, the hand wobble (#588) on the panels and bars, the `+4!` and `?` affixes (#588) in the Δ column and the Ben-Day halftone (#718) on the group bands. It is rendered through SVG and PNG and read in full. It is evidence against the target, not a core criterion; the synthetic tests are. The Sunday target also needs in-plot speech balloons, the starburst as-of label and the composed header text with a yellow caption box (#583 delivered the composition); no existing issue covers assembling the whole target, and the acceptance review states what the slide lacks.
+
+## 6. Architecture review
+
+- **Ownership.** Layout Profile declares and the engine completes node bounds (unchanged); `layout/region_frame.py` completes the frame Rect, identity, pseudo-slot, omission and corner reduction (Layout owns completed geometry); Theme declares paint; Scene emits and completes paint like any Rect; adapters serialize. No new Layout-to-Scene back channel and no Theme read in Scene geometry. `region_frame.py` imports `model` and `surface_quality` types only, like `canvas_texture.py` (`tools/check_import_direction.py` expected green).
+- **Frame never moves or clips content.** The frame is drawn from decisions and never feeds back into them: the engine arranges before frames are completed, frames join the canvas rectangle list (so the canvas grows to contain a frame, never shrinks content), and a frame is emitted under every other primitive. A test compares every Layout decision, every slot and every non-frame primitive with and without the declaration.
+- **Default output.** No declaration, no manifest key, no shape, no slot, no diagnostic; a declaration under a Theme without the role also adds nothing to the Scene. Every committed Scene and SVG must be byte-identical after the slice except the new slide; that proves "default unchanged" only, not quality.
+- **Regression surface.** Layout Profile schema and `profile.py` distance collection (one more site), `engine.arrange` (a wrapper that records the frame with its descendants), `LayoutDecision` (one trailing optional field), `surface_completion` (frames joined to shapes and canvas), the builder's Rect emission and paint family, the role registry and the catalogue-pattern role set (so a halftone panel is admitted), diagnostics messages. The wobble, glow and shadow paths are reached only through the existing paint.
+- **Layering with neighbours.** #587 texture order is kept (texture first, frames second). #880: frames are allocations, plot overlays unchanged. #884 and #950 files are not edited; the contrast result is a consequence of geometry already in the policy. #491 and #583 code is not touched.
+- **Failure behaviour.** Declaration errors are schema or token errors at exact pointers before geometry; a Theme without the role draws nothing; an unpaintable role is the existing paint error; omission and corner reduction are recorded, never silent, never partial.
+- **Risks.** (1) A frame around a slot whose content overflows the slot is drawn at the allocation, so overflowing content crosses the frame; the existing `W_LAYOUT_VISIBLE_OVERFLOW` fit warning is the record (disclosed, nothing moves). (2) A role shared by many frames paints them alike; per-frame variants are the additive extension. (3) A pseudo-slot per frame adds slots to the Scene; the coverage and perceptibility tools are checked against it in the slice. (4) The dependency-network surface ignores frames (F10).
+- **Extension points.** `frame.variant`, `frame.extent: plot`, `gutter`, chamfer and corner glyphs (with #888), a frame on the network surface: each additive, none changes the declaration's current meaning.
+- **Decision:** approved for implementation planning.
+
+## 7. Implementation plan
+
+I889-1 is one code PR (`Refs #889`). It regenerates nothing by hand (the derived sync regenerates evidence; locally it is regenerated into a scratch directory to inspect), carries the S0 gate result, and leaves every committed example byte-identical except its own new slide.
+
+### I889-1: region frames
+
+- **Files.** `schemas/layout-profile-v0.10.schema.yaml` (`$defs/frame`; `frame` on `linear`, `grid`, `flow`, `overlay`, `slot`, `override`; examples untouched); `schemas/theme-v0.11.schema.yaml` and `theme-v0.13.schema.yaml` (`frameCornerRadius`); `conformance/schema-equivalence/expected-deltas-v0.1.yaml` (only entries the gate asks for); `layout/profile.py` (the inset as a collected distance at `.../frame/inset`); `layout/model.py` (`RegionFrame`, `LayoutDecision.frame`, canonical bytes key only when declared); `layout/engine.py` (record `frame` and `populated` per node); `layout/region_frame.py` (new: completion, omission, corner reduction); `layout/surface_completion.py` (join frames to shapes, slots and the canvas rectangle list); `scene/v05_builder.py` (emit after the texture; paint family); `model/semantic_registry.py` (`regionFrame`, unclassified); `scene/capabilities.py` (role contract, `frameCornerRadius` as a Layout property, catalogue-pattern role); `usecases/diagnostic_messages.py`; Specifications 07, 08, 33 and 50; Controller Z `region-frames` (layout, Theme, context, manifest entry); the public-slide count tests.
+- **Tests (synthetic, no `examples/` input).** Unit, profile and engine: schema acceptance and each rejection with its exact pointer (non-object, unknown key, negative, non-number, token not required, token unavailable), override adds a frame, an override on an unknown node; decisions carry the frame; **every decision's bounds equal with and without frames** across row, column, grid, flow and overlay; an optional absent slot leaves `populated` false and moves nothing. Unit, completion: bounds equal the node bounds deflated by `inset + stroke / 2` exactly (Decimal), with and without stroke and inset; **gutter size** (two sibling frames stand `gap + 2 * (inset + half stroke)` apart, for a token gap too); **regions that do not tile** (page padding, an uncovered strip, overlapping overlay children keep pre-order); a panel with no slot beneath it and a too-small panel are omitted with the info record; corner radius reduced with the warning; frame bounds enlarge the canvas. Scene: emission order (texture, then frames in pre-order, then everything else), ids, roles, slots, paint (fill and stroke, outline when no fill, dash, radius, pattern, wobble composes and changes no bound), scene version unchanged without a pattern; a Theme without the role or a profile without `frame`: Scene byte-identical to the base; **contrast**: a state-text or mark primitive on a faint panel fill fails with the frame as `groundId`, passes on a strong fill, passes without the panel, a fill-less frame is not ground, a translucent fill fails closed. Integration through `tests/support/synthetic_review.py`: SVG and PNG (resvg) pixels (fill inside, ink on the stroke, canvas in the gutter), every non-frame Scene primitive equal with and without frames, determinism, Typst and TikZ output for a plain frame and the pattern rejection.
+- **Mutation checks.** Break each rule and require a failure: stroke deflation dropped or doubled, inset ignored, gap changed by a frame, frame emitted after content, pre-order reversed, empty panel drawn, `populated` ignored, too-small panel drawn, radius not clamped, frame omitted from canvas completion, a frame turned into ground when fill-less, family always solid, role registry entry missing, pattern role missing, diagnostic not registered. Results are listed in the PR.
+- **Gates.** Focused tests; presentation scene, layout, closure and tools suites; `conformance/run_conformance.py`; `tools/check_import_direction.py`; `tools/regenerate_public_examples.py --check` (only the new slide may change); the S0 gate; the PR checks including `derived-ready`. The new slide and probe renders are read in full as PNG.
+- **Boundary.** One PR, merged with the merge lock; the next PR bases on the derived-sync bot commit.
+
+### I889-2: acceptance
+
+`docs/reviews/current/issue-889-region-frames-acceptance-review-<date>.md` with `<!-- chrona:literal-acceptance/v1 -->` and one row per literal criterion; any narrowed row names a successor issue found by a duplicate search; `tools/check_issue_acceptance_reviews.py` run unpiped; merged; the exact-main three-OS run on the review-bearing commit located; #889 closed only when every row is met or narrowed with a successor and that run is green.
+
+## 8. Progress and evidence
+
+D889 published. I889-1 and I889-2 not started.
