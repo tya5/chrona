@@ -189,7 +189,7 @@ def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme
                 or (intent not in _INTENTS and intent not in colors)):
             raise ColorSchemeError("E_SCHEME_INTENT_UNKNOWN")
         role, property_name = target.rsplit(".", 1)
-        if property_name not in {"fill", "stroke", "gradientStart", "gradientEnd", "shadowColor"}:
+        if property_name not in {"fill", "stroke", "gradientStart", "gradientEnd", "shadowColor", "glowColor"}:
             raise ColorSchemeError("E_SCHEME_THEME_BINDING")
         if theme_role_property_consumer(role, property_name) is None:
             raise ColorSchemeError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", f"/body/colorBindings/{target}")

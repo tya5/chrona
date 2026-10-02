@@ -209,6 +209,11 @@ primitive is always Rect: `missing-actual.pattern`, `network-node.pattern`,
 `finish-delta-chip.pattern`. Other pattern values and all other
 role/property pairs retain their current contracts.
 
+**Glow (#587).** A role that admits a shadow (Rect, Symbol, Text or Path paint)
+also admits `glowColor` (a Scheme binding), `glowBlur`, `glowOpacity` and
+`glowFidelity`; the rules, limits, the shadow conflict and the profile ladder are
+in Specification 63 section 7.
+
 **Canvas texture (#587).** The Theme role `canvas-texture` paints one catalogue
 pattern over the whole completed canvas, below every other primitive. It admits
 exactly `pattern` (a `{kind: catalog, ref}` token; an inline pattern kind is

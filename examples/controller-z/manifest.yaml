@@ -62,3 +62,8 @@ slides:
     context: contexts/surface-texture.yaml
     expectedSvg: generated/surface-texture.svg
     expectedScene: generated/surface-texture.scene.json
+  - id: surface-glow
+    evidence: "A glow around every planned mark and gate on a dark stage, drawn as a per-element halo clipped to the canvas under the rich SVG profile, from the Theme properties glowColor, glowBlur and glowOpacity (#587)."
+    context: contexts/surface-glow.yaml
+    expectedSvg: generated/surface-glow.svg
+    expectedScene: generated/surface-glow.scene.json

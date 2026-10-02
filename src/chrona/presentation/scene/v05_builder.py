@@ -142,7 +142,7 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
     try:
         completed = tuple(_complete_primitive_paint(
             primitive, tokens, visual_profile, scale_target_role, scale_paints or {}, scale_legend_paints or {},
-            group_tints or {})
+            group_tints or {}, surface.canvas_bounds or (0.0, 0.0, *viewport))
                            for primitive in surface.primitives)
         canvas = resolve_scene_paint(tokens, "background", PaintFamily.CANVAS,
                                      visual_profile=visual_profile,
@@ -168,14 +168,26 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
                    info_diagnostics=(*surface.info_diagnostics, *unique_omissions))
 
 
+def _visible_extent(primitive: ScenePrimitive) -> tuple[float, float, float, float]:
+    """The box a primitive paints in: its bounds, or for a Path (whose bounds are zero) its points."""
+    points = [point for command in primitive.path_commands for point in command.points] or list(primitive.points)
+    if primitive.kind != "Path" or not points:
+        return primitive.bounds
+    xs, ys = [point[0] for point in points], [point[1] for point in points]
+    return (min(xs), min(ys), max(xs) - min(xs), max(ys) - min(ys))
+
+
 def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView, visual_profile: VisualProfile | None,
                               scale_target_role: str | None, scale_paints: Mapping[str, str],
                               scale_legend_paints: Mapping[str, str],
-                              group_tints: Mapping[str, str] = {}) -> tuple[ScenePrimitive, tuple[PaintOmission, ...]]:
+                              group_tints: Mapping[str, str] = {},
+                              canvas: tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0),
+                              ) -> tuple[ScenePrimitive, tuple[PaintOmission, ...]]:
     family = _paint_family(primitive, tokens)
     paint_role = primitive.visual_role
     resolution = resolve_scene_paint(tokens, paint_role, family,
                                      visual_profile=visual_profile, gradient_bounds=primitive.bounds,
+                                     glow_extent=_visible_extent(primitive), canvas_bounds=canvas,
                                      part_mode=primitive.glyph_paint_mode,
                                      part_color=primitive.glyph_paint_color,
                                      catalog_pattern=bool(primitive.pattern and primitive.pattern.primitives),

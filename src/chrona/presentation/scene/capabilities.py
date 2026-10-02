@@ -27,6 +27,7 @@ class PresentationCapability:
 
 LINEAR_GRADIENT = "paint.linear-gradient"
 DROP_SHADOW = "effect.drop-shadow"
+GLOW = "effect.glow"
 LINE_CAP = "stroke.line-cap"
 LINE_JOIN = "stroke.line-join"
 ICON_VECTOR = "icon.vector"
@@ -59,6 +60,8 @@ _CAPABILITIES = (
                            "Two-stop completed gradient is decorative rich paint.", "specification-63"),
     PresentationCapability(DROP_SHADOW, "effect", CapabilityDisposition.ADMITTED, "Theme",
                            "One completed shadow is decorative rich paint.", "specification-63"),
+    PresentationCapability(GLOW, "effect", CapabilityDisposition.ADMITTED, "Theme",
+                           "One completed halo with a Scene-completed region is decorative rich paint.", "specification-63"),
     PresentationCapability(LINE_CAP, "effect", CapabilityDisposition.ADMITTED, "Theme",
                            "Completed stroke cap is finite rich paint.", "specification-63"),
     PresentationCapability(LINE_JOIN, "effect", CapabilityDisposition.ADMITTED, "Theme",
@@ -113,13 +116,14 @@ _RECT_PAINT = frozenset(("fill", "stroke", "strokeWidth", "dash", "opacity",
                          "gradientStart", "gradientEnd", "gradientAngle", "gradientFidelity",
                          "shadowColor", "shadowOffsetX", "shadowOffsetY", "shadowBlur",
                          "shadowOpacity", "shadowFidelity", "strokeLineCap", "strokeLineJoin",
-                         "strokeFinishFidelity"))
+                         "strokeFinishFidelity", "glowColor", "glowBlur", "glowOpacity", "glowFidelity"))
 _PATH_PAINT = frozenset(("stroke", "strokeWidth", "dash", "opacity", "shadowColor",
                          "shadowOffsetX", "shadowOffsetY", "shadowBlur", "shadowOpacity",
-                         "shadowFidelity", "strokeLineCap", "strokeLineJoin", "strokeFinishFidelity"))
+                         "shadowFidelity", "strokeLineCap", "strokeLineJoin", "strokeFinishFidelity",
+                         "glowColor", "glowBlur", "glowOpacity", "glowFidelity"))
 _TEXT_PAINT = frozenset(("fill", "opacity", "gradientStart", "gradientEnd", "gradientAngle",
                          "gradientFidelity", "shadowColor", "shadowOffsetX", "shadowOffsetY",
-                         "shadowBlur", "shadowOpacity", "shadowFidelity"))
+                         "shadowBlur", "shadowOpacity", "shadowFidelity", "glowColor", "glowBlur", "glowOpacity", "glowFidelity"))
 _SHARED_TEXT_ICON_PAINT = frozenset(("fill", "opacity"))
 _CANVAS_PAINT = frozenset(("fill", "opacity", "gradientStart", "gradientEnd", "gradientAngle",
                            "gradientFidelity", "shadowColor", "shadowOffsetX", "shadowOffsetY",

@@ -216,6 +216,11 @@ opaque representative-ground rule applies to all three colors. Perceptibility
 inspection receives the same channels and geometry/density facts; it does not
 reconstruct effective paint from the catalogue.
 
+**Glow (#587).** `ScenePaint.glow` is the completed halo
+`{color, blur, opacity, fidelity, region}` (Specification 63 section 7); the
+adapter serializes it and decides nothing, and a Scene that carries one is
+`chrona/scene/v0.7`.
+
 **Canvas texture (#587).** A Theme that declares the role `canvas-texture`
 (Specification 07 section 5.2) adds one Rect primitive to every Layout-completed
 surface (table-timeline and dependency-network). Layout completes it: the Rect

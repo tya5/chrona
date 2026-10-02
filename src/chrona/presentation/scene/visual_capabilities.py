@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from chrona.presentation.scene.capabilities import (
     DROP_SHADOW,
+    GLOW,
     ICON_RASTER,
     ICON_VECTOR,
     LINE_CAP,
@@ -23,7 +24,7 @@ SVG_PROFILE = "chrona-output/visual/v0.6-svg"
 PNG_PROFILE = "chrona-output/visual/v0.6-png"
 SVG_ICON_PROFILE = "chrona-output/visual/v0.7-svg"
 PNG_ICON_PROFILE = "chrona-output/visual/v0.7-png"
-RICH_CAPABILITIES = admitted_capability_ids(LINEAR_GRADIENT, DROP_SHADOW, LINE_CAP, LINE_JOIN)
+RICH_CAPABILITIES = admitted_capability_ids(LINEAR_GRADIENT, DROP_SHADOW, GLOW, LINE_CAP, LINE_JOIN)
 MARK_GEOMETRY_CAPABILITIES = admitted_capability_ids(MARKER_GEOMETRY, PATTERN_GEOMETRY, SYMBOL_OUTLINE)
 ICON_CAPABILITIES = admitted_capability_ids(ICON_VECTOR, ICON_RASTER)
 
@@ -96,6 +97,7 @@ def validate_surface_visual_profile(surface: SceneSurface, profile: VisualProfil
             continue
         _require(profile, LINEAR_GRADIENT, paint.gradient.fidelity if paint.gradient else None, path)
         _require(profile, DROP_SHADOW, paint.shadow.fidelity if paint.shadow else None, path)
+        _require(profile, GLOW, paint.glow.fidelity if paint.glow else None, path)
         if paint.stroke_finish is not None:
             _require(profile, LINE_CAP, paint.stroke_finish.fidelity, path)
             _require(profile, LINE_JOIN, paint.stroke_finish.fidelity, path)
