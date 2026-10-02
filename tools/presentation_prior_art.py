@@ -72,6 +72,7 @@ OBSERVATIONS: Mapping[str, Mapping[str, SourceObservation]] = {
     "paint.linear-gradient": _observations(),
     "effect.drop-shadow": _observations(),
     "effect.glow": _observations(),
+    "stroke.wobble": _observations(),
     "stroke.line-cap": _observations(),
     "stroke.line-join": _observations(),
     "icon.vector": _observations(),

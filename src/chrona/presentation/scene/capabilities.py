@@ -28,6 +28,7 @@ class PresentationCapability:
 LINEAR_GRADIENT = "paint.linear-gradient"
 DROP_SHADOW = "effect.drop-shadow"
 GLOW = "effect.glow"
+WOBBLE = "stroke.wobble"
 LINE_CAP = "stroke.line-cap"
 LINE_JOIN = "stroke.line-join"
 ICON_VECTOR = "icon.vector"
@@ -62,6 +63,8 @@ _CAPABILITIES = (
                            "One completed shadow is decorative rich paint.", "specification-63"),
     PresentationCapability(GLOW, "effect", CapabilityDisposition.ADMITTED, "Theme",
                            "One completed halo with a Scene-completed region is decorative rich paint.", "specification-63"),
+    PresentationCapability(WOBBLE, "effect", CapabilityDisposition.ADMITTED, "Theme",
+                           "One completed deterministic stroke perturbation is decorative rich paint.", "specification-63"),
     PresentationCapability(LINE_CAP, "effect", CapabilityDisposition.ADMITTED, "Theme",
                            "Completed stroke cap is finite rich paint.", "specification-63"),
     PresentationCapability(LINE_JOIN, "effect", CapabilityDisposition.ADMITTED, "Theme",
@@ -116,11 +119,13 @@ _RECT_PAINT = frozenset(("fill", "stroke", "strokeWidth", "dash", "opacity",
                          "gradientStart", "gradientEnd", "gradientAngle", "gradientFidelity",
                          "shadowColor", "shadowOffsetX", "shadowOffsetY", "shadowBlur",
                          "shadowOpacity", "shadowFidelity", "strokeLineCap", "strokeLineJoin",
-                         "strokeFinishFidelity", "glowColor", "glowBlur", "glowOpacity", "glowFidelity"))
+                         "strokeFinishFidelity", "glowColor", "glowBlur", "glowOpacity", "glowFidelity",
+                         "wobbleAmplitude", "wobbleWavelength", "wobbleSeed", "wobbleFidelity"))
 _PATH_PAINT = frozenset(("stroke", "strokeWidth", "dash", "opacity", "shadowColor",
                          "shadowOffsetX", "shadowOffsetY", "shadowBlur", "shadowOpacity",
                          "shadowFidelity", "strokeLineCap", "strokeLineJoin", "strokeFinishFidelity",
-                         "glowColor", "glowBlur", "glowOpacity", "glowFidelity"))
+                         "glowColor", "glowBlur", "glowOpacity", "glowFidelity",
+                         "wobbleAmplitude", "wobbleWavelength", "wobbleSeed", "wobbleFidelity"))
 _TEXT_PAINT = frozenset(("fill", "opacity", "gradientStart", "gradientEnd", "gradientAngle",
                          "gradientFidelity", "shadowColor", "shadowOffsetX", "shadowOffsetY",
                          "shadowBlur", "shadowOpacity", "shadowFidelity", "glowColor", "glowBlur", "glowOpacity", "glowFidelity"))

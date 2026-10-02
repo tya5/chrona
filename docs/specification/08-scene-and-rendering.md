@@ -221,6 +221,12 @@ reconstruct effective paint from the catalogue.
 adapter serializes it and decides nothing, and a Scene that carries one is
 `chrona/scene/v0.7`.
 
+**Hand wobble (#588).** `ScenePaint.wobble` is the completed perturbation
+`{amplitude, wavelength, seed, fidelity, closed, outline}` (Specification 63 section 8):
+`outline` is one closed polygon for a Rect or one open polyline per sub-path for a Path.
+The primitive's bounds, points and commands are not changed; adapters draw `outline`
+verbatim, and a Scene that carries one is `chrona/scene/v0.7`.
+
 **Canvas texture (#587).** A Theme that declares the role `canvas-texture`
 (Specification 07 section 5.2) adds one Rect primitive to every Layout-completed
 surface (table-timeline and dependency-network). Layout completes it: the Rect

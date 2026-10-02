@@ -25,6 +25,7 @@ External columns are curated review observations, not runtime inputs or feature 
 | `paint.linear-gradient` | effect | supported | Theme | Two-stop completed gradient is decorative rich paint. | specification-63 | unknown | unknown | unknown |
 | `effect.drop-shadow` | effect | supported | Theme | One completed shadow is decorative rich paint. | specification-63 | unknown | unknown | unknown |
 | `effect.glow` | effect | supported | Theme | One completed halo with a Scene-completed region is decorative rich paint. | specification-63 | unknown | unknown | unknown |
+| `stroke.wobble` | effect | supported | Theme | One completed deterministic stroke perturbation is decorative rich paint. | specification-63 | unknown | unknown | unknown |
 | `stroke.line-cap` | effect | supported | Theme | Completed stroke cap is finite rich paint. | specification-63 | unknown | unknown | unknown |
 | `stroke.line-join` | effect | supported | Theme | Completed stroke join is finite rich paint. | specification-63 | unknown | unknown | unknown |
 | `icon.vector` | icon | supported | View | Normalized vector icon closure is owned by the icon catalog contract. | specification-64 | unknown | unknown | unknown |

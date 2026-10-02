@@ -8,9 +8,11 @@ from typing import Mapping
 
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
 from chrona.presentation.model.info_diagnostics import PaintOmission
-from chrona.presentation.scene.model import DropShadow, Glow, LinearGradient, SceneIconPath, ScenePaint, StrokeFinish
+from chrona.presentation.scene.model import (
+    DropShadow, Glow, LinearGradient, SceneIconPath, ScenePaint, StrokeFinish, StrokeWobble,
+)
 from chrona.presentation.scene.visual_capabilities import (
-    DROP_SHADOW, GLOW, LINEAR_GRADIENT, LINE_CAP, LINE_JOIN,
+    DROP_SHADOW, GLOW, LINEAR_GRADIENT, LINE_CAP, LINE_JOIN, WOBBLE,
     VisualProfile, first_supporting_visual_profile,
 )
 
@@ -88,13 +90,14 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
         gradient, gradient_omitted = _gradient(tokens, role, visual_profile, gradient_bounds)
         shadow, shadow_omitted = _shadow(tokens, role, visual_profile)
         glow, glow_omitted = _glow(tokens, role, visual_profile, glow_extent, canvas_bounds, shadow is not None or shadow_omitted)
+        wobble, wobble_omitted = _wobble(tokens, role, visual_profile)
         finish, finish_omitted = _stroke_finish(tokens, role, visual_profile)
     except ThemeTokenError as error:
         raise ScenePaintError(error.diagnostic_id, error.path) from error
     if family == PaintFamily.OUTLINE:
         fill = None
     paint = ScenePaint(fill, stroke, float(width) if width is not None else None, dash,
-                       1.0 if opacity is None else float(opacity), gradient, shadow, finish, glow=glow)
+                       1.0 if opacity is None else float(opacity), gradient, shadow, finish, glow=glow, wobble=wobble)
     if part_mode is not None:
         if part_mode not in {"fill", "stroke"}:
             raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", path)
@@ -120,6 +123,7 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
                           (gradient_omitted, "linear-gradient", "gradientAngle", frozenset((LINEAR_GRADIENT,))),
                           (shadow_omitted, "drop-shadow", "shadowBlur", frozenset((DROP_SHADOW,))),
                           (glow_omitted, "glow", "glowBlur", frozenset((GLOW,))),
+                          (wobble_omitted, "wobble", "wobbleAmplitude", frozenset((WOBBLE,))),
                           (finish_omitted, "stroke-finish", "strokeLineCap", frozenset((LINE_CAP, LINE_JOIN))),
                       ) if omitted)
     return PaintResolution(paint, omissions)
@@ -253,6 +257,32 @@ def _glow(tokens: ThemeTokenView, role: str, profile: VisualProfile | None,
     bottom = min(canvas[1] + canvas[3], extent[1] + extent[3] + reach)
     region = (left, top, max(0.0, right - left), max(0.0, bottom - top))
     return Glow(color, float(blur), float(opacity), fidelity, region), False
+
+
+def _wobble(tokens: ThemeTokenView, role: str, profile: VisualProfile | None) -> tuple[StrokeWobble | None, bool]:
+    """The declared parameters of a hand-wobble; Scene completes the outline from the primitive (#588)."""
+    amplitude = tokens.optional_number(role, "wobbleAmplitude")
+    wavelength = tokens.optional_number(role, "wobbleWavelength")
+    seed = tokens.optional_number(role, "wobbleSeed")
+    if amplitude is None and wavelength is None and seed is None:
+        return None, False
+    pointer = f"/body/roles/{role}/wobbleAmplitude"
+    if amplitude is None or wavelength is None or seed is None:
+        raise ScenePaintError("E_VISUAL_CAPABILITY_VALUE", pointer,
+                              "wobbleAmplitude, wobbleWavelength, and wobbleSeed must be declared together")
+    if not 0 < float(amplitude) <= 16:
+        raise ScenePaintError("E_VISUAL_CAPABILITY_LIMIT", pointer,
+                              f"wobbleAmplitude {float(amplitude):g} must be in (0, 16]")
+    if not 4 <= float(wavelength) <= 1000:
+        raise ScenePaintError("E_VISUAL_CAPABILITY_LIMIT", f"/body/roles/{role}/wobbleWavelength",
+                              f"wobbleWavelength {float(wavelength):g} must be in [4, 1000]")
+    if seed != seed.to_integral_value() or not 0 <= seed < 2 ** 32:
+        raise ScenePaintError("E_VISUAL_CAPABILITY_LIMIT", f"/body/roles/{role}/wobbleSeed",
+                              f"wobbleSeed {seed} must be an integer in [0, 2^32)")
+    fidelity = _fidelity(tokens, role, "wobbleFidelity")
+    if not _admit(profile, frozenset((WOBBLE,)), fidelity, pointer):
+        return None, True
+    return StrokeWobble(float(amplitude), float(wavelength), int(seed), fidelity), False
 
 
 def _stroke_finish(tokens: ThemeTokenView, role: str, profile: VisualProfile | None) -> tuple[StrokeFinish | None, bool]:

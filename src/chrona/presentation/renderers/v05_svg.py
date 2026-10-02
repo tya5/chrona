@@ -29,6 +29,8 @@ def render_v05_svg(surface: SceneSurface) -> str:
             elif command.kind == "quadratic": parts.append("Q" + " ".join(number(value) for point in command.points for value in point))
             else: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         return "".join(parts)
+    def polyline_data(points: tuple[tuple[float, float], ...]) -> str:
+        return "M" + "L".join(f"{number(px)} {number(py)}" for px, py in points)
     def attrs(paint: ScenePaint, *, fill: bool, stroke: bool,
               fill_override: str | None = None) -> str:
         result = [f'opacity="{number(paint.opacity)}"']
@@ -240,7 +242,14 @@ def render_v05_svg(surface: SceneSurface) -> str:
                           if node.pattern is not None else attrs(paint, fill=paint.fill is not None, stroke=paint.stroke is not None))
             radius = f' rx="{number(node.corner_radius)}" ry="{number(node.corner_radius)}"' if node.corner_radius else ""
             clip = f' clip-path="url(#clip-{escape(node.clip_source_id, quote=True)})"' if node.clip_source_id else ""
-            rect_markup = f'<rect {common} x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}"{radius}{clip} {appearance}/>'
+            if paint.wobble is not None and paint.wobble.outline:
+                # A completed hand-wobble (#588): the outline is drawn verbatim as one closed path.
+                if node.pattern is not None or paint.image is not None or node.clip_source_id or not paint.wobble.closed:
+                    raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID",
+                                     "a wobbled Rect carries one closed outline and no pattern, image or clip")
+                rect_markup = f'<path {common} d="{polyline_data(paint.wobble.outline[0])}Z" {appearance}/>'
+            else:
+                rect_markup = f'<rect {common} x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}"{radius}{clip} {appearance}/>'
             if paint.image is not None:
                 append(node, rect_markup + image_tiles_markup(node, paint.image))
             else:
@@ -267,7 +276,9 @@ def render_v05_svg(surface: SceneSurface) -> str:
             if len(node.points) < 2 or paint.stroke is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             start = f' marker-start="url(#{marker_id(paint.stroke, node.marker_start)})"' if node.marker_start else ""
             end = f' marker-end="url(#{marker_id(paint.stroke, node.marker_end)})"' if node.marker_end else ""
-            append(node, f'<path {common} d="{path_data(node)}" {attrs(paint, fill=False, stroke=True)}{start}{end}/>')
+            data = ("".join(polyline_data(polyline) for polyline in paint.wobble.outline)
+                    if paint.wobble is not None and paint.wobble.outline else path_data(node))
+            append(node, f'<path {common} d="{data}" {attrs(paint, fill=False, stroke=True)}{start}{end}/>')
         elif node.kind == "Icon":
             if node.icon_kind not in {"vector", "raster"} or node.icon_asset_identity is None:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")

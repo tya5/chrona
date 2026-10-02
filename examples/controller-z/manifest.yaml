@@ -72,6 +72,11 @@ slides:
     context: contexts/surface-glow.yaml
     expectedSvg: generated/surface-glow.svg
     expectedScene: generated/surface-glow.scene.json
+  - id: hand-wobble
+    evidence: "Every plan, actual and missing-actual bar and every dependency drawn as a hand-inked line: a Theme-declared amplitude, wavelength and seed perturb each stroke deterministically (each primitive its own line), changing no bound, under the rich SVG profile (#588)."
+    context: contexts/hand-wobble.yaml
+    expectedSvg: generated/hand-wobble.svg
+    expectedScene: generated/hand-wobble.scene.json
   - id: annotation-kinds
     evidence: "A Title Card style note per Project annotation kind (#584): a kind-coloured title bar with a label, a secondary line, an accent edge and a hazard-tab stamp from the packaged target-parts catalogue, on the dark texture Theme, with no corpus datum edited."
     context: contexts/annotation-kinds.yaml
