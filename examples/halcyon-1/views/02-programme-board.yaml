@@ -76,6 +76,8 @@ body:
   periods:
   - id: launch-window
     label: {placement: top}
+  figures:
+  - {id: launch-countdown, kind: daysUntil, to: {period: launch-window, side: start}}
   comparison:
     baseline: primary
     actual: required

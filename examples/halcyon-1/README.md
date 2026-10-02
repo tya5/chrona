@@ -13,7 +13,9 @@ second surface, on one spacecraft programme.
   unmatched external records.
 - `project.yaml` also names one period, `launch-window` (opens at the `launch` gate, closes 5 Nov 2027, exclusive end
   6 Nov). `views/02-programme-board.yaml` selects it and the `wallboard` Theme's `period-band` role paints it; the
-  programme-board, overlay-briefing and glyph-gates slides share that View and show the band.
+  programme-board, overlay-briefing and glyph-gates slides share that View and show the band. The View also declares the
+  derived figure `launch-countdown` (calendar days from the as-of to the start of `launch-window`); the programme board's
+  `profiles/summary-countdown.yaml` shows it as the first key figure, the Title Card target's `63 DAYS` by YAML only.
 - `snapshots/baseline-2027-06.yaml` is a `snapshot-ref` pinning
   `snapshots/baseline-2027-06/project.yaml`, the plan as approved in June, under its own
   revision token. `views/07-replan-baseline.yaml` compares the current plan against it
