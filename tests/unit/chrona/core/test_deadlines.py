@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from chrona.core.deadlines import deadline_warnings
+from chrona.core.deadlines import DeadlineStatus, deadline_statuses, deadline_warnings
 from chrona.core.validation import load_yaml, validate_project
 from chrona.scheduling.scheduler import schedule
 
@@ -133,6 +133,52 @@ def test_a_deadline_that_is_not_a_calendar_date_is_rejected_where_it_is_written(
     assert (diagnostic.id, diagnostic.path) == ("E_SCHEMA", "/objects/qa/deadline")
     assert schedule(project).diagnostics[0].path == "/objects/qa/deadline"
     assert validate_project(_project(qa="2026-02-28")) == []
+
+
+# --- the shared status (#822): the warning and a View's mark are both derived from it -----------------------
+
+
+def _statuses(project):
+    result = schedule(project)
+    assert result.ok, result.diagnostics
+    return deadline_statuses(project, result.placements)
+
+
+def test_a_status_carries_the_promise_the_finish_the_endpoint_and_the_signed_lateness_for_kept_and_slipped_alike():
+    first, second = _statuses(_project(qa="2026-10-10", launch="2026-10-12"))
+    assert first == DeadlineStatus("qa", date(2026, 10, 10), date(2026, 10, 8), "end", -2)
+    assert second == DeadlineStatus("launch", date(2026, 10, 12), date(2026, 10, 12), "at", 0)
+    assert (first.slipped, second.slipped) == (False, False)  # slack and "on the day" both keep the promise
+    (late,) = _statuses(_project(qa="2026-10-07", launch=None))
+    assert late == DeadlineStatus("qa", date(2026, 10, 7), date(2026, 10, 8), "end", 1) and late.slipped
+
+
+def test_the_point_endpoint_is_at_the_span_endpoint_is_end_and_a_rollup_is_judged_by_its_end():
+    project = _project(qa="2026-10-07", launch="2026-10-11")
+    project["objects"]["phase"] = {"type": "phase", "title": "Phase", "deadline": "2026-10-07", "schedule": {"mode": "rollup"}}
+    project["objects"]["qa"]["parent"] = "phase"
+    assert {item.object_id: (item.endpoint, item.finish.isoformat()) for item in _statuses(project)} == {
+        "qa": ("end", "2026-10-08"), "launch": ("at", "2026-10-12"), "phase": ("end", "2026-10-08")}
+
+
+def test_statuses_skip_an_object_without_a_deadline_or_a_placement_and_follow_project_order():
+    assert _statuses(_project(qa=None, launch=None)) == ()
+    project = _project()
+    placements = schedule(project).placements
+    assert [item.object_id for item in deadline_statuses(project, placements)] == ["qa", "launch"]
+    assert [item.object_id for item in deadline_statuses(project, {"launch": placements["launch"]})] == ["launch"]
+    assert deadline_statuses(project, {}) == ()
+
+
+def test_the_warnings_are_exactly_the_slipped_statuses_in_the_same_order():
+    for qa, launch in (("2026-10-05", "2026-10-11"), ("2026-10-08", "2026-10-11"), ("2026-10-09", "2026-10-12"),
+                       ("2026-10-09", "2026-10-13")):
+        project = _project(qa=qa, launch=launch)
+        result = schedule(project)
+        slipped = [item for item in deadline_statuses(project, result.placements) if item.slipped]
+        warned = deadline_warnings(project, result.placements)
+        assert [item.path for item in warned] == [f"/objects/{item.object_id}/deadline" for item in slipped]
+        assert [item.details["daysLate"] for item in warned] == [item.days_late for item in slipped]
 
 
 def _committed_projects():
