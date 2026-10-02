@@ -35,3 +35,14 @@ produces from the same project today.
 | `board/` | table (work package, delta finish) beside the timeline, callout rail on the right | `mission-light` | 1600 x 900 |
 | `sidebar/` | no table: labels on the plot; title, key figures and numbered notes in a left sidebar | `control-room-dark` | 1920 x 1080 |
 | `dossier/` | print dossier: numbered rows with plan / actual / delta columns, outlined plan bars | `print-mono` | 1200 x 1120 |
+
+## Parts catalogue (#718)
+
+The reusable parts of this target are extracted as monochrome assets in the packaged catalogue `chrona-target-parts-v2026-10` (set `chrona-target-parts`; see [the gallery](../target-parts-catalogue-2026-10/README.md)). A part carries no colour: the Theme paints it. `chrona-starter` is the older builtin catalogue.
+
+| Part drawn here | Catalogue entry | Status |
+| --- | --- | --- |
+| Gate diamond and its hollow baseline | `chrona-target-parts:diamond`, `diamond-outline` | in the catalogue; bindable as a gate symbol today |
+| Hatch for in-progress work | `chrona-target-parts:hatch-wide` | in the catalogue; bindable as a pattern on the Rect roles today |
+
+Still needed before this target's preset can be assembled: #582 (the labelled launch-window band), #583 (per-group tint), #584 (kind header and accent bar on a note). The per-target gap map is in #453.

@@ -33,3 +33,14 @@ Open `rpg-board.html` in a browser. The PNG in this folder was produced with hea
 
     "Google Chrome" --headless=new --hide-scrollbars --window-size=1600,900 \
       --virtual-time-budget=12000 --screenshot=02-programme-board.png stage-only.html
+
+## Parts catalogue (#718)
+
+The reusable parts of this target are extracted as monochrome assets in the packaged catalogue `chrona-target-parts-v2026-10` (set `chrona-target-parts`; see [the gallery](../target-parts-catalogue-2026-10/README.md)). A part carries no colour: the Theme paints it. `chrona-starter` is the older builtin catalogue.
+
+| Part drawn here | Catalogue entry | Status |
+| --- | --- | --- |
+| Treasure chest gate and its ghost sprite | `chrona-starter:chest` | in the catalogue; bindable as a gate symbol today |
+| Checker and 4-unit hatch | not extracted | not in the table of #718 |
+
+Still needed before this target's preset can be assembled: #586 (the status figures and gauge). The titled windows are closest to #587's slot frame; pixel snapping and bitmap-face measurement are not covered by #582 to #588.

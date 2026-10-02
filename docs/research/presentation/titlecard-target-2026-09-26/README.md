@@ -42,3 +42,17 @@ Open `titlecard-board.html` in a browser. The PNG in this folder was produced wi
       --virtual-time-budget=12000 --screenshot=02-programme-board.png stage-only.html
 
 Chrome may not exit after writing the file while the Japanese web fonts load; the PNG is complete once written.
+
+## Parts catalogue (#718)
+
+The reusable parts of this target are extracted as monochrome assets in the packaged catalogue `chrona-target-parts-v2026-10` (set `chrona-target-parts`; see [the gallery](../target-parts-catalogue-2026-10/README.md)). A part carries no colour: the Theme paints it. `chrona-starter` is the older builtin catalogue.
+
+| Part drawn here | Catalogue entry | Status |
+| --- | --- | --- |
+| Hexagon gate, solid and baseline outline | `chrona-target-parts:hexagon`, `hexagon-outline` | in the catalogue; bindable as a gate symbol today |
+| Hexagon lattice: launch window and canvas | `chrona-target-parts:hexagon-lattice`, `hexagon-lattice-wide` | in the catalogue; bindable as a pattern on the Rect roles today |
+| Hazard stripes | `chrona-target-parts:hazard-stripes` | in the catalogue; bindable as a pattern on the Rect roles today |
+| Hazard-stripe tab (group tab, kind corner) | `chrona-target-parts:hazard-tab` | in the catalogue; not yet placeable by any Theme role (#584) |
+| Hatch for unobserved work | `chrona-target-parts:hatch` | in the catalogue; bindable as a pattern on the Rect roles today |
+
+Still needed before this target's preset can be assembled: #582 (launch window as a patterned range), #583 (the numbered hazard tab on each group header), #584 (title bar and hazard corner by annotation kind), #585 (horizontal compression), #586 (the countdown figure), #587 (the canvas lattice).
