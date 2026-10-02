@@ -1,8 +1,8 @@
 # Design: Actionable and De-duplicated Diagnostics (#782)
 
-**Status:** Proposed, pending the [architecture review](../reviews/current/issue-782-actionable-diagnostics-architecture-review-2026-10-02.md).
-Plan: [design plan](../planning/active/issue-782-actionable-diagnostics-design-plan-2026-10-02.md),
-[implementation plan](../planning/active/issue-782-actionable-diagnostics-implementation-plan-2026-10-02.md).
+**Status:** Proposed, pending the [architecture review](../archive/reviews/issue-782-actionable-diagnostics-architecture-review-2026-10-02.md).
+Plan: [design plan](../archive/planning/issue-782-actionable-diagnostics-design-plan-2026-10-02.md),
+[implementation plan](../archive/planning/issue-782-actionable-diagnostics-implementation-plan-2026-10-02.md).
 Living contract to update at implementation: [Spec 66](../specification/66-agent-interface.md) section 2 and
 [`skills/chrona/references/diagnostics.md`](../../skills/chrona/references/diagnostics.md).
 

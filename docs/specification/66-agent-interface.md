@@ -10,9 +10,9 @@ codes.
 the agent skill (`skills/chrona/`).
 Design rationale, alternatives and review:
 [`docs/design/issue-142-agent-interface-design-2026-10-01.md`](../design/issue-142-agent-interface-design-2026-10-01.md),
-[`docs/reviews/current/issue-142-agent-interface-architecture-review-2026-10-01.md`](../reviews/current/issue-142-agent-interface-architecture-review-2026-10-01.md);
-the Store command tools: [`docs/planning/active/issue-813-mcp-mutating-tools.md`](../planning/active/issue-813-mcp-mutating-tools.md);
-the Store read tools: [`docs/planning/active/issue-812-mcp-store-read-tools.md`](../planning/active/issue-812-mcp-store-read-tools.md).
+[`docs/archive/reviews/issue-142-agent-interface-architecture-review-2026-10-01.md`](../archive/reviews/issue-142-agent-interface-architecture-review-2026-10-01.md);
+the Store command tools: [`docs/archive/planning/issue-813-mcp-mutating-tools.md`](../archive/planning/issue-813-mcp-mutating-tools.md);
+the Store read tools: [`docs/archive/planning/issue-812-mcp-store-read-tools.md`](../archive/planning/issue-812-mcp-store-read-tools.md).
 
 ## 1. Principle
 

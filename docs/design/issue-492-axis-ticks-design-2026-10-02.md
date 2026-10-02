@@ -1,6 +1,6 @@
 # Design — Axis Ticks at Interval Starts (#492)
 
-**Plan:** [design plan](../planning/active/issue-492-axis-ticks-design-plan-2026-10-02.md). **Normative home:** [Specification 39](../specification/39-axis-and-observation-clarity.md), "Axis ticks (#492)". **Builds on:** the [#426 cells correction](issue-426-axis-cells-correction-2026-09-27.md).
+**Plan:** [design plan](../archive/planning/issue-492-axis-ticks-design-plan-2026-10-02.md). **Normative home:** [Specification 39](../specification/39-axis-and-observation-clarity.md), "Axis ticks (#492)". **Builds on:** the [#426 cells correction](issue-426-axis-cells-correction-2026-09-27.md).
 
 A Theme that does not declare the new property renders exactly as today, byte for byte. No View version is needed.
 

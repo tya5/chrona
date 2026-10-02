@@ -1,7 +1,7 @@
 # Design — Guided annotations and the guided grouping subset (#709)
 
-**Plan:** [implementation plan](../planning/active/issue-709-guided-annotations-implementation-plan-2026-10-01.md).
-**Found by:** #662 ([design D5](issue-662-schema-parts-design-2026-09-30.md), [architecture review F11](../reviews/current/issue-662-schema-parts-architecture-review-2026-09-30.md)).
+**Plan:** [implementation plan](../archive/planning/issue-709-guided-annotations-implementation-plan-2026-10-01.md).
+**Found by:** #662 ([design D5](issue-662-schema-parts-design-2026-09-30.md), [architecture review F11](../archive/reviews/issue-662-schema-parts-architecture-review-2026-09-30.md)).
 Evolution rule: [Spec 56 §3.2](../specification/56-schema-authoring-and-diagnostics.md). The lead engineer fixed the decisions below before code; this note records them and the evidence.
 
 ## Problem

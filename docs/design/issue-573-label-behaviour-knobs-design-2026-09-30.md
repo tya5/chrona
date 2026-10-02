@@ -1,6 +1,6 @@
 # Design — Knobs for Hard-Coded Label Behaviour (#573)
 
-**Plan:** [implementation plan](../planning/active/issue-573-label-behaviour-knobs-implementation-plan-2026-09-30.md); **review:** [architecture review](../reviews/current/issue-573-label-behaviour-knobs-architecture-review-2026-09-30.md), whose amendments A1-A3 are part of this design.
+**Plan:** [implementation plan](../archive/planning/issue-573-label-behaviour-knobs-implementation-plan-2026-09-30.md); **review:** [architecture review](../archive/reviews/issue-573-label-behaviour-knobs-architecture-review-2026-09-30.md), whose amendments A1-A3 are part of this design.
 
 ## Decisions
 

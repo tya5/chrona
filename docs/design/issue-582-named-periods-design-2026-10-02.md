@@ -1,7 +1,7 @@
 # Design: Named Periods, Labelled and Patternable Bands (#582)
 
-**Plan:** [design plan](../planning/active/issue-582-named-periods-design-plan-2026-10-02.md).
-**Status:** Proposed. Review: [architecture review](../reviews/current/issue-582-named-periods-architecture-review-2026-10-02.md).
+**Plan:** [design plan](../archive/planning/issue-582-named-periods-design-plan-2026-10-02.md).
+**Status:** Proposed. Review: [architecture review](../archive/reviews/issue-582-named-periods-architecture-review-2026-10-02.md).
 **Normative homes (updated by the slice that changes behaviour, never copied here):** Specification 05 (Project),
 06 (View), 49 (semantic registry), 50 (surface backgrounds and label obstacles).
 

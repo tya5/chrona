@@ -1,7 +1,7 @@
 # Design — PR pytest speed and balance (#657)
 
-**Plan:** [design plan](../planning/active/issue-657-pr-pytest-speed-design-plan-2026-09-30.md) (measurements, acceptance, decisions D1 to D6).
-**Review:** [architecture review](../reviews/current/issue-657-pr-pytest-speed-architecture-review-2026-09-30.md).
+**Plan:** [design plan](../archive/planning/issue-657-pr-pytest-speed-design-plan-2026-09-30.md) (measurements, acceptance, decisions D1 to D6).
+**Review:** [architecture review](../archive/reviews/issue-657-pr-pytest-speed-architecture-review-2026-09-30.md).
 
 This design changes the test suite and how CI selects and splits it. It changes no product behaviour, no schema and no public artifact. The living specifications are untouched; the only normative text added is the AGENTS.md paragraph of I657-4.
 

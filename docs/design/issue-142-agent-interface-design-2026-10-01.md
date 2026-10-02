@@ -1,9 +1,9 @@
 # Design: Agent Interface, a Skill and an MCP Surface (#142)
 
 **Status:** Proposed, pending architecture review and lead decisions.
-**Plan:** [issue-142-agent-interface-design-plan-2026-10-01.md](../planning/active/issue-142-agent-interface-design-plan-2026-10-01.md)
-**Review:** [issue-142-agent-interface-architecture-review-2026-10-01.md](../reviews/current/issue-142-agent-interface-architecture-review-2026-10-01.md)
-**Implementation plan:** [issue-142-agent-interface-implementation-plan-2026-10-01.md](../planning/active/issue-142-agent-interface-implementation-plan-2026-10-01.md)
+**Plan:** [issue-142-agent-interface-design-plan-2026-10-01.md](../archive/planning/issue-142-agent-interface-design-plan-2026-10-01.md)
+**Review:** [issue-142-agent-interface-architecture-review-2026-10-01.md](../archive/reviews/issue-142-agent-interface-architecture-review-2026-10-01.md)
+**Implementation plan:** [issue-142-agent-interface-implementation-plan-2026-10-01.md](../archive/planning/issue-142-agent-interface-implementation-plan-2026-10-01.md)
 **Depends on:** Spec 09 (application architecture), Spec 10 §9.1 (AI proposal and authorization), Spec 57 (schedule analysis), `src/chrona/core/store_address.py`, the Store config contract (#723, #727).
 **Does not design:** the terse draft syntax (#148, a parallel design by another author).
 
@@ -617,7 +617,7 @@ guidance. Prompts and subscriptions are not offered.
 
 Order: S1 (skill) and S0a/S0b (extraction) in parallel; S2 (delivery) after S1; S3 after
 S0; S4 after S3; S5 after S2 and S4; S6, S7 conditional. Detail, files and proof are
-in the [implementation plan](../planning/active/issue-142-agent-interface-implementation-plan-2026-10-01.md).
+in the [implementation plan](../archive/planning/issue-142-agent-interface-implementation-plan-2026-10-01.md).
 
 ## 4. Out of scope
 

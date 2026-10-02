@@ -1,6 +1,6 @@
 # Design — The `init --example` Store and its own unpinned Contexts (#727)
 
-**Plan:** [implementation plan](../planning/active/issue-727-init-example-integrity-implementation-plan-2026-10-01.md).
+**Plan:** [implementation plan](../archive/planning/issue-727-init-example-integrity-implementation-plan-2026-10-01.md).
 **Found by:** #723 ([design](issue-723-content-identity-required-by-default-design-2026-10-01.md), risk 1).
 Baseline: `main` at `6c46123a` (2026-10-01).
 
