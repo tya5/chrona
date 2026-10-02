@@ -210,7 +210,7 @@ threat model, as in #813 3.9). Reversal: one check in the tool's store opener.
   but that code covers the baseline, its project and the candidate alike, so the honest source is the whole input.) The command line exits 2 for a rejected result; the
   tool reports `rejected` (understood and refused, Spec 66 section 3).
 - Reader failures keep the codes and messages the command line gives them: the render closure reports a generic
-  message for `E_STORE_REFERENCE` and `E_CONTENT_IDENTITY` (`usecases.diagnostic_messages`, not changed here); the
+  message for `E_STORE_REFERENCE`, `E_CONTENT_IDENTITY` and `E_CONTENT_IDENTITY_REQUIRED` (`usecases.diagnostic_messages`, not changed here); the
   comparison reports the engine's specific message. Better closure messages are a change to that shared table, not to the
   tools.
 - A failure that is not a result of the engine (unreadable or oversized file, no or invalid Store configuration, an
@@ -267,7 +267,7 @@ so the guards protect disclosure and integrity of evidence, not the workspace.
 | A configured root is absolute, uses `..` or is a symlink out | `open_store_reader(contained_in=)` | `failed`, `E_MCP_PATH_CONTAINMENT`; nothing outside is read | one per shape, with a file outside that would otherwise render |
 | An address inside the Store is a link leaving the Store root | `LocalSnapshotReader` | typed `E_STORE_REFERENCE` | one |
 | Tampered bytes behind a pinned reference | content identity | refused: `E_CONTENT_IDENTITY` from the render closure; `E_BASELINE_REFERENCE` with the mismatch in the engine's message from the comparison | one per tool |
-| A `required` Store and a reference without an identity | integrity | refused: `E_STORE_REFERENCE` from the render closure (the closure's own code, as on the command line); `E_BASELINE_REFERENCE`, "has no contentIdentity", from the comparison; the same reference renders under `optional` | one per tool |
+| A `required` Store and a reference without an identity | integrity | refused: `E_CONTENT_IDENTITY_REQUIRED` from the render closure (as on the command line); `E_BASELINE_REFERENCE`, "has no contentIdentity", from the comparison; the same reference renders under `optional` | one per tool |
 | An argument that lowers integrity or names a root | closed input schema | protocol error | one |
 | Undeclared Store in the reference | `snapshot_reader_for` | `E_STORE_CONFIG_REQUIRED` | one |
 | Write | none exists | the Store's every file and the workspace tree are byte-identical afterwards | one per tool |

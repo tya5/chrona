@@ -126,7 +126,7 @@ command line returns.
   `inline: artifact` (the default) an `svg` target travels as an `svg` payload and a `png` target as an `image`; any other
   target is not inlined. An inline SVG over 1 MiB or PNG over 1.5 MiB is `E_MCP_RESULT_TOO_LARGE` (use `inline: none` or
   the command line). A closure or render failure carries the code the command line reports (for example
-  `E_CONTENT_IDENTITY` or `E_STORE_REFERENCE` from the closure); an unschedulable Project is `rejected`.
+  `E_CONTENT_IDENTITY`, `E_CONTENT_IDENTITY_REQUIRED` or `E_STORE_REFERENCE` from the closure); an unschedulable Project is `rejected`.
 - `compare_baseline` result: the envelope plus `automationResult`, the Automation Result
   (`chrona/automation-result/v0.2`, `operation: baseline-compare`) exactly as the command line writes it to `--result`
   (a date is its ISO text); serialized with sorted keys it is byte-equal to that file. Accepted is `ok` (it carries

@@ -73,11 +73,14 @@ class Corpus:
         (self.root / name).write_text(yaml.safe_dump({**CONTEXT_REFERENCE, **changes}), encoding="utf-8")
         return name
 
-    def set_config(self, name: str = "store.yaml", **changes) -> str:
+    def set_config(self, name: str = "changed.yaml", directory: str = ".chrona", **changes) -> str:
+        """A copy of the Store configuration with ``changes``, written beside the original (so ``root: store`` still
+        names the real Store) unless ``directory`` says otherwise; returns its workspace path."""
         document = yaml.safe_load(self.config.read_text(encoding="utf-8"))
         document["stores"][0].update(changes)
-        (self.root / name).write_text(yaml.safe_dump(document, sort_keys=False), encoding="utf-8")
-        return name
+        target = self.root / directory / name
+        target.write_text(yaml.safe_dump(document, sort_keys=False), encoding="utf-8")
+        return target.relative_to(self.root).as_posix()
 
 
 @pytest.fixture
@@ -162,7 +165,7 @@ def test_a_store_that_requires_an_identity_refuses_an_unpinned_reference(corpus)
 
     result = call(corpus.root, "render_review", {"contextReference": reference, "storeConfig": config})
 
-    assert (result.structured["status"], CODES(result)) == ("rejected", ["E_STORE_REFERENCE"]) and not result.attachments
+    assert (result.structured["status"], CODES(result)) == ("rejected", ["E_CONTENT_IDENTITY_REQUIRED"]) and not result.attachments
     # The same reference through the example's own configuration (integrity: optional) renders: only the setting differs.
     assert call(corpus.root, "render_review", {"contextReference": reference, "inline": "none"}).structured["status"] == "ok"
 
@@ -257,7 +260,7 @@ def test_a_store_root_outside_the_workspace_is_refused_although_it_would_render(
         link(outside, corpus.root / "linked-store")
     root = {"absolute": str(outside), "dotdot": "../outside-store", "symlink": "linked-store"}[shape]
     reference = corpus.reference()
-    config = corpus.set_config(root=root)
+    config = corpus.set_config(root=root, directory=".")  # beside the workspace root, so "../" leaves the workspace
     before = tree(outside)
 
     result = call(corpus.root, "render_review", {"contextReference": reference, "storeConfig": config})
@@ -269,7 +272,7 @@ def test_a_store_root_outside_the_workspace_is_refused_although_it_would_render(
 
 def test_the_workspace_itself_is_not_a_valid_store_root(corpus):
     reference = corpus.reference()
-    config = corpus.set_config(root=".")  # the configuration is in the workspace root, so the root is the workspace
+    config = corpus.set_config(root=".", directory=".")  # the configuration is in the workspace root: the root is the workspace
 
     result = call(corpus.root, "render_review", {"contextReference": reference, "storeConfig": config})
 
