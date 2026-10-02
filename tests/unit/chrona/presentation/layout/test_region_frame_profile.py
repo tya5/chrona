@@ -251,10 +251,13 @@ def test_an_override_adds_or_replaces_a_frame_and_cannot_name_an_unknown_node() 
         resolve_layout_profile(value, available_sources=SOURCES, theme=THEME, bases=bases)
     assert error.value.diagnostic_id == "E_LAYOUT_OVERRIDE_UNKNOWN"
 
-    value, bases = derived(base, {"panel": {"frame": {"inset": -1}}})
-    with pytest.raises(LayoutError) as error:
-        resolve_layout_profile(value, available_sources=SOURCES, theme=THEME, bases=bases)
-    assert (error.value.diagnostic_id, error.value.path) == ("E_LAYOUT_SCHEMA", "/overrides/panel/frame/inset")
+    # An override is not under a container union, so the schema itself names the exact path.
+    for frame, pointer in ((True, "/overrides/panel/frame"), ({"colour": "red"}, "/overrides/panel/frame"),
+                           ({"inset": -1}, "/overrides/panel/frame/inset"), ({"inset": "4"}, "/overrides/panel/frame/inset")):
+        value, bases = derived(base, {"panel": {"frame": frame}})
+        with pytest.raises(LayoutError) as error:
+            resolve_layout_profile(value, available_sources=SOURCES, theme=THEME, bases=bases)
+        assert (error.value.diagnostic_id, error.value.path) == ("E_LAYOUT_SCHEMA", pointer)
 
 
 def test_the_frame_is_part_of_the_profile_identity() -> None:

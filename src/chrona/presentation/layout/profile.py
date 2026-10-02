@@ -36,7 +36,8 @@ def _check_frame(frame: Any, pointer: str) -> None:
     """Fail a malformed region frame (#889) at its exact pointer.
 
     The schema reports an error under a container union at the union's own pointer; a frame is a new
-    declaration with its own contract, so its shape is checked first and named precisely.
+    declaration with its own contract, so its shape is checked first and named precisely. An override is not
+    under that union, so the schema already names its frame's path exactly.
     """
     if not isinstance(frame, Mapping):
         raise LayoutError("E_LAYOUT_SCHEMA", pointer, detail="expected an object")
@@ -65,10 +66,6 @@ def _check_frames(profile: Mapping[str, Any]) -> None:
             visit(child, f"{path}/children/{index}")
 
     visit(profile.get("root"), "/root")
-    overrides = profile.get("overrides")
-    for node_id, override in (overrides.items() if isinstance(overrides, Mapping) else ()):
-        if isinstance(override, Mapping) and "frame" in override:
-            _check_frame(override["frame"], f"/overrides/{node_id}/frame")
 
 
 def _validate_schema(profile: Mapping[str, Any]) -> None:

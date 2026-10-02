@@ -339,17 +339,15 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
     patterns = complete_catalog_patterns(tuple(marks), tuple(shapes), request.theme_tokens)
     # The canvas texture is ground: completed over the final canvas; Scene emits it first.
     texture = complete_canvas_texture(request.theme_tokens, canvas)
+    # Frames are ground one step above the texture: first among the shapes, parent before child.
+    shapes = [*frames.shapes, *shapes]
+    patterns = (*frames.patterns, *patterns)
+    slots = (*slots, *frames.slots)
+    diagnostics = [*diagnostics, *frames.diagnostics]
     if texture is not None:
         shapes = [texture.shape, *shapes]
         patterns = (texture.pattern, *patterns)
         slots = (*slots, texture.slot)
-    if frames.shapes or frames.diagnostics:
-        # Frames are ground one step above the texture: first among the shapes, parent before child.
-        at = 1 if texture is not None else 0
-        shapes = [*shapes[:at], *frames.shapes, *shapes[at:]]
-        patterns = (*patterns, *frames.patterns)
-        slots = (*slots, *frames.slots)
-        diagnostics = [*diagnostics, *frames.diagnostics]
     placement = SurfacePlacement(text=completed_text, slots=slots, rows=rows, columns=column_placements,
                                  groups=tuple(groups), scale=scale,
                                  marks=tuple(marks), shapes=tuple(shapes), relations=tuple(relations),
