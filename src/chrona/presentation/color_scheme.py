@@ -52,6 +52,23 @@ _OPTIONAL_STATE_TEXT_ROLES = frozenset({"annotation-note-text", "period-label"})
 # against its real grounds by `_annotation_kind_text_contrast` instead of by `_state_text_contrast`.
 _KIND_TEXT_ROLES = ("annotation-kind-label", "annotation-kind-secondary")
 _KIND_BOX_ROLES = ("annotation-callout-box", "annotation-highlight-box", "annotation-note-box", "annotation-arrow-box")
+# Note prose lies on its own note box (the Scene gate pairs them, #466), never on the canvas it floats above (#950).
+_NOTE_TEXT_ROLE = "annotation-note-text"
+_NOTE_BOX_ROLE = "annotation-note-box"
+
+
+def _state_text_ground(role: str, *, resolved_roles: Mapping[str, Any], values: Mapping[str, Any],
+                       surface: str) -> tuple[str, str | None]:
+    """The colour a state-text role lies on, and the box role that supplies it (None for the canvas).
+
+    Note prose is judged on the resolved note box fill, the ground the Scene gate reads; the canvas only
+    where the box declares no readable colour. Every other state text lies on the canvas surface.
+    """
+    if role == _NOTE_TEXT_ROLE:
+        box = _role_color(resolved_roles, values, _NOTE_BOX_ROLE)
+        if box is not None and fullmatch(r"#[0-9A-Fa-f]{6}", box) is not None:
+            return box, _NOTE_BOX_ROLE
+    return surface, None
 
 
 def _state_text_contrast(*, declared_roles: Mapping[str, Any], resolved_roles: Mapping[str, Any],
@@ -91,12 +108,15 @@ def _state_text_contrast(*, declared_roles: Mapping[str, Any], resolved_roles: M
                 raise ColorSchemeError("E_SCHEME_STATE_TEXT_CONTRAST", f"{path}/opacity")
             opacity = float(opacity_value["value"])
         try:
-            contrast = composited_contrast(fill=value["value"], opacity=opacity, ground=surface)
+            ground, box_role = _state_text_ground(role, resolved_roles=resolved_roles, values=values,
+                                                  surface=surface)
+            contrast = composited_contrast(fill=value["value"], opacity=opacity, ground=ground)
         except ValueError as error:
             raise ColorSchemeError("E_SCHEME_STATE_TEXT_CONTRAST", f"{path}/fill") from error
         if contrast < _STATE_TEXT_CONTRAST_FLOORS[treatment]:
             raise ColorSchemeError("E_SCHEME_STATE_TEXT_CONTRAST", f"{path}/fill",
-                                   detail=f"{role}:{contrast:.2f}")
+                                   detail=(f"{role}:{contrast:.2f}" if box_role is None
+                                           else f"{role}:{box_role}:{contrast:.2f}"))
 
 
 def _role_color(roles: Mapping[str, Any], values: Mapping[str, Any], role: str, property_name: str = "fill") -> str | None:

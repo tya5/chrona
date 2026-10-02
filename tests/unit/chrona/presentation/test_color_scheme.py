@@ -84,7 +84,7 @@ def _note_theme():
             "variance-on-track.fill": "textMuted",
             "variance-behind.fill": "negative",
             "missing-actual-cell.fill": "textMuted",
-            "annotation-note-box.fill": "accent",
+            "annotation-note-box.fill": "surfaceRaised",
             "annotation-note-text.fill": "text",
         }, "metrics": {},
     }}
@@ -119,7 +119,7 @@ def test_annotation_note_box_requires_effective_flat_opaque_fill():
 
 def test_annotation_note_box_accepts_scheme_inserted_opaque_fill_and_default_opacity():
     resolved = resolve_theme(_note_theme(), scheme(), scheme_content_identity="sha256:" + "a" * 64)
-    assert resolved["body"]["roles"]["annotation-note-box"]["fill"].startswith("__scheme.accent.")
+    assert resolved["body"]["roles"]["annotation-note-box"]["fill"].startswith("__scheme.surfaceRaised.")
 
 
 def test_annotation_note_box_rejects_gradient_or_pattern_ground_with_exact_pointer():
@@ -136,3 +136,93 @@ def test_annotation_note_box_rejects_gradient_or_pattern_ground_with_exact_point
         resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
     assert error.value.diagnostic_id == "E_SCHEME_ANNOTATION_NOTE_GROUND"
     assert error.value.source_ref == "/body/roles/annotation-note-box/pattern"
+
+
+# #950: note ink is judged on the note box it lies on, not on the canvas it floats above.
+IDENTITY = "sha256:" + "a" * 64
+
+
+def _dark_scheme(**colors):
+    value = scheme()
+    value["body"]["colors"].update({"surface": "#101820", "surfaceRaised": "#1B2733", "text": "#F2EBDD",
+                                    "textMuted": "#C9C1B0", "accent": "#7FB2E5"})
+    value["body"]["colors"].update(colors)
+    return value
+
+
+def _paper_note_theme(box="text", ink="surface"):
+    """A dark-first Theme with paper notes: the box fill is a light intent, the ink a dark one."""
+    theme = _note_theme()
+    theme["body"]["colorBindings"].update({
+        "annotation-note-box.fill": box, "annotation-note-text.fill": ink,
+        "variance-ahead.fill": "text", "variance-on-track.fill": "textMuted",
+        "variance-behind.fill": "accent", "missing-actual-cell.fill": "textMuted"})
+    return theme
+
+
+def test_dark_ink_on_a_light_note_box_over_a_dark_canvas_resolves():
+    resolved = resolve_theme(_paper_note_theme(), _dark_scheme(), scheme_content_identity=IDENTITY)
+    roles = resolved["body"]["roles"]
+    assert roles["annotation-note-box"]["fill"].startswith("__scheme.text.")
+    assert roles["annotation-note-text"]["fill"].startswith("__scheme.surface.")
+
+
+def test_note_ink_too_close_to_its_box_fails_naming_the_role_and_the_box():
+    # The ink contrasts the dark canvas well; it is the light box it lies on that it cannot be read against.
+    theme = _paper_note_theme(box="text", ink="textMuted")
+    with pytest.raises(ColorSchemeError) as error:
+        resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)
+    assert error.value.diagnostic_id == "E_SCHEME_STATE_TEXT_CONTRAST"
+    assert error.value.source_ref == "/body/roles/annotation-note-text/fill"
+    assert error.value.detail.startswith("annotation-note-text:annotation-note-box:")
+
+
+def test_note_ink_that_reads_on_the_canvas_but_not_on_its_box_fails():
+    # Light ink passes the dark canvas (the old rule) and fails the light box it is drawn on.
+    theme = _paper_note_theme(box="text", ink="text")
+    with pytest.raises(ColorSchemeError) as error:
+        resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)
+    assert error.value.detail.startswith("annotation-note-text:annotation-note-box:")
+
+
+def test_light_canvas_notes_resolve_as_before_and_a_dark_box_needs_a_light_ink():
+    resolve_theme(_note_theme(), scheme(), scheme_content_identity=IDENTITY)
+    theme = _note_theme()
+    theme["body"]["colorBindings"]["annotation-note-box.fill"] = "accent"
+    with pytest.raises(ColorSchemeError) as error:
+        resolve_theme(theme, scheme(), scheme_content_identity=IDENTITY)
+    assert error.value.detail.startswith("annotation-note-text:annotation-note-box:")
+
+
+def test_note_ink_opacity_counts_against_the_box():
+    theme = _paper_note_theme()
+    theme["body"]["roles"]["annotation-note-text"]["opacity"] = "ink-opacity"
+    theme["body"]["values"]["ink-opacity"] = {"type": "number", "value": 0.25}
+    with pytest.raises(ColorSchemeError) as error:
+        resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)
+    assert error.value.detail.startswith("annotation-note-text:annotation-note-box:")
+
+
+def test_a_note_box_with_no_readable_fill_leaves_the_canvas_as_the_ground():
+    # Without a box colour the canvas is the only ground there is: ink invisible on it is still the contrast error,
+    # and ink readable on it reaches the note-ground check, which names the box.
+    theme = _paper_note_theme(ink="surface")
+    theme["body"]["colorBindings"].pop("annotation-note-box.fill")
+    with pytest.raises(ColorSchemeError) as error:
+        resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)
+    assert error.value.diagnostic_id == "E_SCHEME_STATE_TEXT_CONTRAST"
+    assert error.value.detail.startswith("annotation-note-text:")
+    assert "annotation-note-box" not in error.value.detail
+    theme = _paper_note_theme(ink="text")
+    theme["body"]["colorBindings"].pop("annotation-note-box.fill")
+    with pytest.raises(ColorSchemeError) as error:
+        resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)
+    assert error.value.diagnostic_id == "E_SCHEME_ANNOTATION_NOTE_GROUND"
+
+
+def test_only_the_note_box_is_the_ground_of_note_ink():
+    # A dark callout box never carries note prose: it is not a ground for it.
+    theme = _paper_note_theme()
+    theme["body"]["roles"]["annotation-callout-box"] = {}
+    theme["body"]["colorBindings"]["annotation-callout-box.fill"] = "surface"
+    resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)

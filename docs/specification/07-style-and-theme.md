@@ -277,7 +277,13 @@ gate does not reparse the nested token or move Layout geometry into Scene.
 The note annotation roles have explicit contrast responsibilities. The
 `annotation-note-text` role is state text and MUST declare
 `contrastTreatment: required`; its Theme/Scheme closure is checked against the
-4.5:1 state-text floor on the resolved Scheme surface, and its completed Scene
+4.5:1 state-text floor on the surface the prose lies on, the resolved fill of
+`annotation-note-box` (the ground the Scene gate pairs with it; #950), and on
+the Scheme surface only when that box declares no readable colour. A Theme may
+therefore draw light notes on a dark canvas with dark ink. An ink that fails
+against its box is `E_SCHEME_STATE_TEXT_CONTRAST` at the role's `fill`, with the
+role and the box named in the detail; the callout, highlight and arrow boxes
+are not grounds for note prose. Its completed Scene
 paint is checked against its actual declared host ground. The
 effective note-text role MUST reject a missing or weaker treatment after
 inheritance and Scheme insertion; the generic state-text treatment set does
