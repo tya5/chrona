@@ -2,7 +2,7 @@
 
 Living record for [#493](https://github.com/tya5/chrona/issues/493): baseline, design plan, design, architecture review and implementation plan. Edited in place; Git keeps history. Normative behavior lives in [Specification 39](../../specification/39-axis-and-observation-clarity.md), "Axis secondary labels (#493)".
 
-**Public base:** `339d87d4` on `main`. **Status:** this record (sections 1 to 7) is the design publication; no code yet.
+**Public base:** `339d87d4` on `main`. **Status:** this record (sections 1 to 7) is published (PR #933); the `labelGap` amendment (D6, sections 5.4, 5.7 to 5.8, 6, 7) is a second docs PR; no code is published yet.
 
 ## 1. Published baseline
 
@@ -48,7 +48,7 @@ Read on `339d87d4`:
 - **D3 placements.** Which of stacked, inline, corner, and what each measures.
 - **D4 narrow cell behaviour.** Omission versus ellipsis; per cell versus per tier; a static lane that cannot hold the stack.
 - **D5 scope.** `unit: auto`, rotated orientation, repeated secondaries.
-- **D6 the inline gap.** A Theme knob or a measured quantity.
+- **D6 the gap between the two texts.** A Theme knob, a measured quantity, or both.
 
 ### Responsibility and architecture review questions
 
@@ -101,8 +101,9 @@ The secondary has **its own typography role** (`typographyRole`, a Theme text ro
 
 Let `Hp` and `Hs` be the line boxes (`fontSize * lineHeight`) of the tier's role and the secondary's role.
 
-- **stacked:** the secondary sits on the line below the primary, aligned like the primary (`start` at the label inset, `center` centred, each line on its own). The pair occupies `Hp + Hs`. In a declared lane the pair is centred in the lane; otherwise the tier's lane grows to `Hp + Hs` (plus the tolerance the lane already carries).
-- **inline:** the secondary follows the primary on the primary's baseline, separated by one measured space of the primary's role (`measure_text_width(" ")` with the primary treatment: no gap constant and no new Theme knob). The pair is aligned as one unit. The line occupies `max(Hp, Hs)`.
+- **gap:** the secondary's typography role may declare `labelGap`, a ratio of that role's own font size (the shape of `labelInset`, #426). Absent, the gap is **0 for `stacked`** and **one measured space of the primary's role for `inline`** (`measure_text_width(" ")` with the primary treatment: a measured quantity, not a width constant). A declared gap is the distance between the two line boxes (`stacked`) or between the two texts (`inline`).
+- **stacked:** the secondary sits on the line below the primary, aligned like the primary (`start` at the label inset, `center` centred, each line on its own). The pair occupies `Hp + gap + Hs`. In a declared lane the pair is centred in the lane; otherwise the tier's lane grows to that block (plus the tolerance the lane already carries).
+- **inline:** the secondary follows the primary on the primary's baseline, separated by the gap. The pair is aligned as one unit. The line occupies the shared-baseline extent of the two texts (`max(Hp, Hs)` for same-proportion fonts).
 - **corner** (Tenth Frame's sub-box) is not built: a box needs a Theme-owned background and padding and is a different mechanism. Additive successor: another `placement` value.
 
 All widths come from `measure_text_width` with the font metrics of each text's own role, the function the primary uses.
@@ -120,7 +121,7 @@ Per interval whose primary is placed:
 
 There is **no ellipsis rung**: a truncated `Ma…` or `3…` misreads, and axis labels have no ellipsis today (the rules are omission with a record). The secondary never changes the primary's fit, thinning or `unit: auto` selection, which are computed from the primary alone, so adding a secondary cannot thin a label that fit without it.
 
-**Per tier, not per cell,** the block geometry is fixed: in `stacked` the primary keeps its upper-line position in a cell whose secondary is omitted, so baselines stay aligned along the axis. If the stack (stacked: `Hp + Hs`; inline: `max(Hp, Hs)`) cannot lie inside the tier's declared lane, or inside the axis slot for an undeclared lane, Layout raises `E_PRESENTATION_AXIS_OVERFLOW` (detail `secondary-lane:<tier>`), the family the band lanes and the #492 tick length use. This is a Theme/slot mismatch the author must fix, not a per-cell condition to drop silently.
+**Per tier, not per cell,** the block geometry is fixed: in `stacked` the primary keeps its upper-line position in a cell whose secondary is omitted, so baselines stay aligned along the axis. If the block (stacked: `Hp + gap + Hs`; inline: the shared-baseline extent) cannot lie inside the tier's declared lane, or inside the axis slot for an undeclared lane, Layout raises `E_PRESENTATION_AXIS_OVERFLOW` (detail `secondary-lane:<tier>`), the family the band lanes and the #492 tick length use. This is a Theme/slot mismatch the author must fix, not a per-cell condition to drop silently.
 
 ### 5.6 Output and gates
 
@@ -128,7 +129,7 @@ Each drawn secondary is one `TextPlacement` `axis-label-secondary:<tier>:<index>
 
 ### 5.7 Schema and migration
 
-Optional property added in place to `view-v0.28` (a view-local `$defs/axisSecondaryLabel` for the shared object, referenced by each unit branch with the unit's form definition beside it), recorded with one L1 expected-delta entry; `python -m tools.schema_equivalence --base-rev origin/main` result goes in the PR. No Theme schema change, no version bump, no corpus migration; the default path is unchanged.
+Two optional properties are added in place. (1) `view-v0.28`: the optional property (a view-local `$defs/axisSecondaryLabel` for the shared object, referenced by each unit branch with the unit's form definition beside it), recorded with one L1 expected-delta entry. (2) `theme-v0.11` and `theme-v0.13`: the optional role property `labelGap` (a named number token, the shape of `labelInset`), admitted with the other axis measurement properties. `python -m tools.schema_equivalence --base-rev origin/main` runs for both and its result goes in the PR. No version bump, no corpus migration; the default path is unchanged.
 
 ### 5.8 Owner decisions (also posted on #493)
 
@@ -139,14 +140,14 @@ Optional property added in place to `view-v0.28` (a view-local `$defs/axisSecond
 | D3 | stacked; inline; corner | stacked and inline | each is a pure measured placement; corner needs a box (Theme background) | add `corner` to the `placement` enum |
 | D4 | omit; ellipsis; per tier or per cell | omit per cell with record; static lane failure errors | no misleading fragment; matches thinning; baselines stay aligned | add `ellipsis` as another rung only with a reading rule |
 | D5 | support `auto` and rotated | fixed unit and horizontal only | `auto` selection would have to weigh the secondary; rotation has no agreed stacking | widen the schema branches |
-| D6 | knob; measured space | measured space | no hard-coded width, no new Theme property | a `labelGap` role property |
+| D6 | knob; measured space; both | a measured space by default plus an optional Theme role property `labelGap` (also a vertical gap when stacked) | no width constant, yet an author can open the pair when one space reads as a single token (a rendered probe of `Jan` + `01` did) | drop `labelGap` from the admission and schema; the default stays valid |
 
 ## 6. Architecture review
 
 | Boundary | Result |
 | --- | --- |
 | View | One optional object, in place; it names content (which second form, which table, which Theme text role, where in the cell), not coordinates or colours. `unit: auto` and rotated labels are excluded by schema. |
-| Theme | No schema change. `axisSecondary` is admitted as an axis typography role; colour reuses the tier's ordinal role. A missing role fails with the existing token error. |
+| Theme | One optional role property `labelGap` added in place to v0.11 and v0.13 (Spec 56 section 3.2, the shape of `labelInset`); `axisSecondary` is admitted as an axis typography role; colour reuses the tier's ordinal role. A missing role fails with the existing token error. |
 | Content | Detaches the declaration into a typed intent; formats nothing. |
 | Layout | Owns formatting through the name table, measurement, fit, placement and the omission and lane rules inside the existing `labels` branch; the primary path is untouched when no secondary is declared. |
 | Scene and adapters | Unchanged: one more Text primitive per drawn secondary. |
@@ -160,11 +161,11 @@ Optional property added in place to `view-v0.28` (a view-local `$defs/axisSecond
 Four publications: this docs PR; I493-1; I493-2; the acceptance review. Each code PR is `Refs #493`.
 
 **I493-1: declaration, content, Layout, tests.**
-- `schemas/view-v0.28.schema.yaml` (the `axisSecondaryLabel` def, `secondary` on each unit branch, the horizontal condition) and `conformance/schema-equivalence/expected-deltas-v0.1.yaml` (one L1 entry). Run the S0 gate and record it.
+- `schemas/view-v0.28.schema.yaml` (the `axisSecondaryLabel` def, `secondary` on each unit branch, the horizontal condition) and `conformance/schema-equivalence/expected-deltas-v0.1.yaml` (one L1 entry); `schemas/theme-v0.11.schema.yaml` and `schemas/theme-v0.13.schema.yaml` (`labelGap`, beside `labelInset`). Run the S0 gate and record it.
 - `model/surface_content.py` (`AxisSecondaryIntent`, `AxisLabelIntent.secondary`), `review/v05_content.py` (`_axis_tier`).
-- `scene/capabilities.py`: add `axisSecondary` to the axis typography role contract.
+- `scene/capabilities.py`: add `axisSecondary` to the axis typography role contract and `labelGap` to the axis measurement properties.
 - `layout/surface_quality.py` (`AxisIntervalOutcome` secondary fields and their validation), `layout/surface_axis.py` (the secondary placement, the omission and lane rules, both lane cursors), `usecases/diagnostic_messages.py` (the new warning text).
-- Tests `tests/unit/chrona/presentation/scene/test_axis_secondary.py` built on `_axis_tiers_scene`, plus a schema test: stacked geometry from measured widths (line positions, `Hp + Hs`), inline geometry with the measured space, `start` and `center` alignment, each omission reason and its diagnostic and decision, thinned primary draws neither, the secondary never changes the primary's fit or thinning, a lane that cannot hold the stack raises, a role absent from the Theme fails, perceptibility has no `E_SCENE_TEXT_INTERSECTION` or `E_SCENE_TEXT_OCCLUDED` on the output and does report one for a forced overlap, the default path is primitive-for-primitive identical to the pre-change output, schema accepts and rejects (auto, rotated, missing required, wrong form for the unit). **Mutation check** on measurement, the fit comparison, the omission, the lane guard and the alignment.
+- Tests `tests/unit/chrona/presentation/scene/test_axis_secondary.py` built on `_axis_tiers_scene`, plus a schema test: stacked geometry from measured widths (line positions, `Hp + gap + Hs`), inline geometry with the measured space and with a declared `labelGap`, the stacked gap, `start` and `center` alignment, each omission reason and its diagnostic and decision, thinned primary draws neither, the secondary never changes the primary's fit or thinning, a lane that cannot hold the stack raises, a role absent from the Theme fails, perceptibility has no `E_SCENE_TEXT_INTERSECTION` or `E_SCENE_TEXT_OCCLUDED` on the output and does report one for a forced overlap, the default path is primitive-for-primitive identical to the pre-change output, schema accepts and rejects (auto, rotated, missing required, wrong form for the unit). **Mutation check** on measurement, the fit comparison, the omission, the lane guard and the alignment.
 - Evidence: `tools/regenerate_public_examples.py --check` shows every existing slide byte-identical; conformance; the focused and presentation pytest suites.
 - Boundary: no example, preset, Theme schema, Scene or adapter file.
 
