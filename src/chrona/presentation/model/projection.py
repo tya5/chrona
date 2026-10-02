@@ -209,7 +209,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
                             snapshot_analysis: Any | None = None) -> ReviewProjection:
     """Derive review facts; composition belongs to View, never Project."""
     if view.comparison.actual == "required" and actual_set is None:
-        raise ValueError("E_ACTUAL_REQUIRED")
+        raise ValueError("E_ACTUAL_REQUIRED: the View compares against actuals (comparison.actual is required) but no actual "
+                         "file was given; pass --actual FILE, or change the View so actuals are not required")
     latest, unmatched = _latest_observations(
         (actual_set or {}).get("body", actual_set or {}).get("observations", []), placements)
     as_of_value = (actual_set or {}).get("body", actual_set or {}).get("asOf")
@@ -255,7 +256,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
             planned_progress=project["objects"][object_id].get("plannedProgress"),
             observation_state=observation_state))
     if not selected:
-        raise ValueError("E_REVIEW_EMPTY")
+        raise ValueError("E_REVIEW_EMPTY: the View selects no object of the Project; check its selection against the Project objects")
     if (grouping is not None and grouping.by == "field" and grouping.presentation == "header"
             and all(grouping.field not in (item.fields or {}) for item in selected)):
         # A header that distinguishes nothing is not drawn (Specification 45).
@@ -280,7 +281,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         start, end = (_date_or_number(value) for value in (view.window.start, view.window.end))
         margin = 0
         if start >= end:
-            raise ValueError("E_REVIEW_WINDOW")
+            raise ValueError(f"E_REVIEW_WINDOW: window.start {view.window.start} is not before window.end {view.window.end}")
     return ReviewProjection(tuple(selected),
         (date.fromordinal(start.toordinal() - margin), date.fromordinal(end.toordinal() + margin)),
         tuple(sorted(unmatched)), tuple("E_ACTUAL_UNMATCHED" for _ in unmatched), rows,
@@ -299,11 +300,15 @@ def _project_lane_rows(rows: tuple[ReviewRowProjection, ...], membership: LaneMe
             continue
         member_id = row.items[0].item_id or row.items[0].object_id
         if member_id in source_rows:
-            raise ValueError("E_REVIEW_LANE_ROW_DUPLICATE_MEMBER")
+            raise ValueError(f"E_REVIEW_LANE_ROW_DUPLICATE_MEMBER: member {member_id!r} appears in more than one row")
         source_rows[member_id] = row
     assigned = [assignment.item_id for assignment in membership.assignments]
     if len(assigned) != len(set(assigned)) or set(assigned) != set(source_rows):
-        raise ValueError("E_REVIEW_LANE_ROW_MEMBERSHIP_MISMATCH")
+        only_assigned = sorted(set(assigned) - set(source_rows))
+        only_rows = sorted(set(source_rows) - set(assigned))
+        raise ValueError(f"E_REVIEW_LANE_ROW_MEMBERSHIP_MISMATCH: lane assignments and rows disagree "
+                         f"(assigned without a row: {only_assigned}; row without an assignment: {only_rows}; "
+                         f"an item assigned twice: {len(assigned) != len(set(assigned))})")
     output = []
     for lane in membership.lanes:
         members = []
@@ -311,7 +316,7 @@ def _project_lane_rows(rows: tuple[ReviewRowProjection, ...], membership: LaneMe
         for member_id in lane.member_item_ids:
             row = source_rows.get(member_id)
             if row is None:
-                raise ValueError("E_REVIEW_LANE_ROW_MEMBERSHIP_MISMATCH")
+                raise ValueError(f"E_REVIEW_LANE_ROW_MEMBERSHIP_MISMATCH: lane {lane.lane_id!r} lists member {member_id!r} that has no row")
             assignment = membership.assignment_for(member_id)
             for item in row.items:
                 attached_to = (source_rows.get(assignment.source_id).items[0].object_id
@@ -332,7 +337,8 @@ def _project_lane_membership(project: dict[str, Any], rows: tuple[ReviewRowProje
     lane_keys = view.rows.lane_keys
     by_object = lane_keys.by_object if lane_keys is not None and lane_keys.by_object is not None else {}
     if set(by_object) - set(primary):
-        raise ValueError("E_REVIEW_LANE_KEY_TARGET")
+        raise ValueError("E_REVIEW_LANE_KEY_TARGET: rows.laneKeys.byObject names objects that are not selected rows: "
+                         f"{sorted(set(by_object) - set(primary))}")
     items: list[LaneItem] = []
     for row in rows:
         if not row.items:
@@ -351,7 +357,7 @@ def _project_lane_membership(project: dict[str, Any], rows: tuple[ReviewRowProje
         if key is None and lane_keys is not None and lane_keys.field is not None:
             key = (item.fields or {}).get(lane_keys.field)
         if key is not None and (not isinstance(key, str) or not key):
-            raise ValueError("E_REVIEW_LANE_KEY")
+            raise ValueError(f"E_REVIEW_LANE_KEY: the lane key of object {item.object_id!r} must be a non-empty string, got {key!r}")
         items.append(LaneItem(item.item_id, item.object_id, group_id, planned, key, attached_host))
     relations = tuple(SelectedFSRelation(str(relation["id"]), str(relation["from"]["object"]),
                                          str(relation["to"]["object"]))
@@ -431,31 +437,36 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[s
     for row in view.rows.items:
         row_id = row.id
         if row_id in seen_rows:
-            raise ValueError("E_REVIEW_ROW_ID_DUPLICATE")
+            raise ValueError(f"E_REVIEW_ROW_ID_DUPLICATE: rows.items repeats the row id {row_id!r}")
         seen_rows.add(row_id)
         members, member_ids = [], set()
         for spec in row.items:
             item_id = spec.id
             if item_id in member_ids:
-                raise ValueError("E_REVIEW_ITEM_ID_DUPLICATE")
+                raise ValueError(f"E_REVIEW_ITEM_ID_DUPLICATE: row {row_id!r} repeats the item id {item_id!r}")
             member_ids.add(item_id)
             object_id, kind = spec.source_object, spec.source_kind
             base = (snapshots.get(object_id) if kind == "snapshot" else
                     scenarios.get(spec.scenario_id or "", {}).get(object_id) if kind == "scenario" else
                     available.get(object_id))
-            if kind not in {"primary", "actual", "snapshot", "scenario"} or base is None:
-                raise ValueError("E_REVIEW_ITEM_SOURCE_UNAVAILABLE")
+            if kind not in {"primary", "actual", "snapshot", "scenario"}:
+                raise ValueError(f"E_REVIEW_ITEM_SOURCE_UNAVAILABLE: item {item_id!r} of row {row_id!r} has source kind {kind!r}; "
+                                 "use primary, actual, snapshot or scenario")
+            if base is None:
+                raise ValueError(f"E_REVIEW_ITEM_SOURCE_UNAVAILABLE: item {item_id!r} of row {row_id!r} reads the {kind} source of "
+                                 f"object {object_id!r}, which that source does not contain")
             if kind == "actual" and base.actual is None:
-                raise ValueError("E_REVIEW_ITEM_SOURCE_UNAVAILABLE")
+                raise ValueError(f"E_REVIEW_ITEM_SOURCE_UNAVAILABLE: item {item_id!r} of row {row_id!r} reads the actual of "
+                                 f"object {object_id!r}, which has no actual observation")
             track = spec.track
             if track not in {"stacked", "shared"}:
-                raise ValueError("E_REVIEW_ITEM_TRACK")
+                raise ValueError(f"E_REVIEW_ITEM_TRACK: item {item_id!r} of row {row_id!r} has track {track!r}; use stacked or shared")
             intent = spec.presentation if spec.presentation is not None else row.presentation
             members.append(replace(base, item_id=item_id, source_kind=kind, track=track, scenario_id=spec.scenario_id,
                                    presentation=dict(intent) if intent is not None else None))
         subject = row.table_subject or (members[0].item_id if members else "")
         if subject not in member_ids:
-            raise ValueError("E_REVIEW_TABLE_SUBJECT")
+            raise ValueError(f"E_REVIEW_TABLE_SUBJECT: the table subject {subject!r} of row {row_id!r} is not one of its item ids {sorted(member_ids)}")
         output.append(ReviewRowProjection(row_id, row.label or members[0].title,
             row.group or "", subject, tuple(members), depth=row.depth, parent_row_id=row.parent_row))
     _validate_explicit_row_hierarchy(output)
@@ -473,20 +484,22 @@ def _fold_automatic_points(rows: tuple[ReviewRowProjection, ...], view: ViewInpu
         return rows, ()
     if view.rows.points == "group-header":
         if view.grouping is None or view.grouping.presentation != "header":
-            raise ValueError("E_REVIEW_POINT_GROUP_HEADER_REQUIRED")
+            raise ValueError("E_REVIEW_POINT_GROUP_HEADER_REQUIRED: rows.points group-header needs a grouping with presentation header")
         labels = view.visibility.labels
         has_title_label = (labels is True or
                            (isinstance(labels, Mapping) and labels.get("placement") in {"plot", "both"}
                             and "title" in labels.get("content", ())))
         if not has_title_label:
-            raise ValueError("E_REVIEW_POINT_GROUP_HEADER_LABEL_REQUIRED")
+            raise ValueError("E_REVIEW_POINT_GROUP_HEADER_LABEL_REQUIRED: rows.points group-header needs visibility.labels "
+                             "to show titles on the plot")
         folded = tuple(FoldedPointProjection(row.items[0], row.group_id, members=row.items[1:])
                        for row in rows if row.items and row.items[0].source_type == "point")
         if any(not point.group_id for point in folded):
-            raise ValueError("E_REVIEW_POINT_GROUP_HEADER_UNAVAILABLE")
+            raise ValueError("E_REVIEW_POINT_GROUP_HEADER_UNAVAILABLE: these points belong to no group, so no header can hold them: "
+                             f"{[point.item.object_id for point in folded if not point.group_id]}")
         return tuple(row for row in rows if not row.items or row.items[0].source_type != "point"), folded
     if view.rows.points != "predecessor":
-        raise ValueError("E_REVIEW_POINT_POLICY")
+        raise ValueError(f"E_REVIEW_POINT_POLICY: rows.points {view.rows.points!r} is not one of own-row, attached, predecessor, group-header")
     by_object = {row.table_subject_id: row for row in rows}
     incoming: dict[str, list[str]] = {}
     for relation in project.get("relations", ()):
@@ -539,15 +552,18 @@ def _validate_explicit_row_hierarchy(rows: list[ReviewRowProjection]) -> None:
             continue
         parent = by_id.get(row.parent_row_id)
         if parent is None:
-            raise ValueError("E_REVIEW_ROW_PARENT_UNAVAILABLE")
+            raise ValueError(f"E_REVIEW_ROW_PARENT_UNAVAILABLE: row {row.row_id!r} names parent row {row.parent_row_id!r}, which is not a row of the View")
         subject = next((item for item in row.items if item.item_id == row.table_subject_id), None)
         parent_subject = next((item for item in parent.items if item.item_id == parent.table_subject_id), None)
         if subject is None or parent_subject is None or subject.source_kind != "primary" or parent_subject.source_kind != "primary":
-            raise ValueError("E_REVIEW_ROW_PARENT_SOURCE")
+            raise ValueError(f"E_REVIEW_ROW_PARENT_SOURCE: row {row.row_id!r} and its parent row {parent.row_id!r} must both "
+                             "have a primary table subject")
         if subject.parent_id is None:
-            raise ValueError("E_REVIEW_ROW_PARENT_ROOT")
+            raise ValueError(f"E_REVIEW_ROW_PARENT_ROOT: row {row.row_id!r} names a parent row but its subject "
+                             f"{subject.object_id!r} is a hierarchy root")
         if subject.parent_id != parent_subject.object_id:
-            raise ValueError("E_REVIEW_ROW_PARENT_MISMATCH")
+            raise ValueError(f"E_REVIEW_ROW_PARENT_MISMATCH: the Project parent of {subject.object_id!r} (row {row.row_id!r}) is "
+                             f"{subject.parent_id!r}, not {parent_subject.object_id!r}, the subject of parent row {parent.row_id!r}")
 
 
 def _snapshot_items(project: dict[str, Any] | None, placements: dict[str, dict[str, date]] | None,

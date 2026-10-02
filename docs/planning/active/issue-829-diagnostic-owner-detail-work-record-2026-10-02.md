@@ -112,7 +112,7 @@ only their text gains the value.
   automation readers move to S3, because the automation code reads `str(error)` as the code and must split code from
   detail first. One golden row changed on purpose (`render-review-store-config-missing`: the message now says the
   file is not a file). Tests: `test_owner_detail_resources.py` (mutation-checked: restoring two bare raises kills 3).
-- S3 automation-result rows (D2): implemented (this PR). `stamp_automation_result` gives every diagnostic row a message
+- S3 automation-result rows (D2): PR #913 (merged). `stamp_automation_result` gives every diagnostic row a message
   (the producer's, else the shared curated or derived sentence); `diagnostic_row` splits `"E_X: detail"`; owner detail in
   `references`, `command_engine`, `store_config`, `baselines`, `storage/*` and the `cli.py` literal (30 sites, 621 to 592);
   the schema declares optional `message` (additive, `schema_equivalence` passes after dropping the stale L1 `added` marker
@@ -120,3 +120,14 @@ only their text gains the value.
   `commands/actual_commands.py` and `storage/snapshots.py` return code-only tuples (about 24 literals, not inventory sites);
   their rows carry the derived sentence; S3b gives them detail. Tests: `test_result_messages.py` (mutation-checked: removing the
   floor and the unsupported-type detail kills 2). Spec 35 says every row has a message.
+- S4a review projection (`presentation/model/projection.py`, 22 sites, 592 to 570): every `E_REVIEW_*` and `E_ACTUAL_REQUIRED` raise names the
+  row, item, object or value; the curated sentence for `E_ACTUAL_REQUIRED` moved to its raise site (one golden row changes: its message
+  now starts with the code, like every ValueError row that carries detail). Tests: `test_projection_messages.py` (mutation-checked: 2 kills).
+- S4b closure (`presentation/model/closure.py`, 33 sites, 570 to 537): the `ClosureError` raises of the Draft preset, guided authoring, render-context
+  and icon-catalog paths carry `detail=` naming the file, id or declared value. Tests: `test_closure_messages.py` (mutation-checked: 2 kills).
+- S4c theme inheritance (`presentation/model/theme_inheritance.py`, 18 sites, 537 to 519): `ThemeInheritanceError` gains `detail`; closure and the
+  materializer carry it. Tests extend `test_theme_inheritance.py` (mutation-checked: 3 kills).
+- S4d View and workspace contracts (`presentation/contracts/resources.py`, 12 sites, 519 to 506): the `E_VIEW_*` table, hierarchy-column, period and label
+  refusals, `E_AUTHORING_TASK_ID`, `E_AUTHORING_ACTUAL_TASK` and `E_THEME_ASSET_REFERENCE` name the column, id or catalog (mutation-checked: 2 kills).
+- S4e lane membership (`presentation/review/lane_membership.py`, 12 sites, 506 to 494): every `E_REVIEW_LANE_*` input check names the item, object, key or rule
+  (mutation-checked: 1 kill).

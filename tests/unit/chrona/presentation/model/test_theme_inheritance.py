@@ -106,3 +106,33 @@ def test_draft_theme_distinguishes_missing_and_wrong_kind_base(tmp_path: Path):
     path.write_text(yaml.safe_dump(_derived(wrong, wrong_source)), encoding="utf-8")
     with pytest.raises(ThemeInheritanceError) as error: resolve_draft_theme(path)
     assert error.value.code == "E_THEME_INHERITANCE_BASE_KIND"
+
+
+@pytest.mark.parametrize("mutate, needle", [
+    (lambda value: value["body"]["extends"].update(path="../base.yaml"), "derived Theme does not satisfy"),
+    (lambda value: value["body"]["extends"].update(sourceContentIdentity="sha256:" + "0" * 64), "sha256:" + "0" * 64),
+    (lambda value: value["body"]["extends"].update(contentIdentity="sha256:" + "0" * 64), "sha256:" + "0" * 64),
+    (lambda value: value["body"]["values"].update(new={"type": "number", "value": 1}), "['new']"),
+    (lambda value: value["body"]["values"].update({"spacing.m": {"type": "number", "value": []}}), "resolved Theme does not satisfy"),
+])
+def test_every_inheritance_failure_says_what_it_found(tmp_path: Path, mutate, needle: str):
+    base = _base(); source = yaml.safe_dump(base).encode(); (tmp_path / "base.yaml").write_bytes(source)
+    derived = _derived(base, source); mutate(derived)
+    path = tmp_path / "derived.yaml"; path.write_text(yaml.safe_dump(derived), encoding="utf-8")
+    with pytest.raises(ThemeInheritanceError) as error: resolve_draft_theme(path)
+    assert needle in error.value.detail
+
+
+def test_cycle_missing_base_and_wrong_kind_name_the_themes(tmp_path: Path):
+    source = _base(); raw = yaml.safe_dump(source).encode(); derived = _derived(source, raw)
+    with pytest.raises(ThemeInheritanceError) as cycle:
+        _resolve(derived, "dir/derived.yaml", lambda _key, _declaration: (derived, _pin(raw), "dir/derived.yaml"))
+    assert "derived.yaml -> derived.yaml" in cycle.value.detail
+    path = tmp_path / "derived.yaml"; path.write_text(yaml.safe_dump(derived), encoding="utf-8")
+    with pytest.raises(ThemeInheritanceError) as missing: resolve_draft_theme(path)
+    assert "base.yaml" in missing.value.detail
+    wrong = {**source, "kind": "color-scheme"}; wrong_raw = yaml.safe_dump(wrong).encode()
+    (tmp_path / "base.yaml").write_bytes(wrong_raw)
+    path.write_text(yaml.safe_dump(_derived(wrong, wrong_raw)), encoding="utf-8")
+    with pytest.raises(ThemeInheritanceError) as kind: resolve_draft_theme(path)
+    assert "color-scheme" in kind.value.detail and "'base'" in kind.value.detail

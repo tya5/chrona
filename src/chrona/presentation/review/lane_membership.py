@@ -21,7 +21,8 @@ class PlannedSpan:
 
     def __post_init__(self) -> None:
         if type(self.start) is not date or type(self.end) is not date or self.end < self.start:
-            raise LaneMembershipError("E_REVIEW_LANE_INVALID_SPAN")
+            raise LaneMembershipError(f"E_REVIEW_LANE_INVALID_SPAN: planned span {self.start!r} to {self.end!r} must be dates, "
+                                      "the end not before the start")
 
 
 @dataclass(frozen=True)
@@ -32,7 +33,7 @@ class PlannedPoint:
 
     def __post_init__(self) -> None:
         if type(self.at) is not date:
-            raise LaneMembershipError("E_REVIEW_LANE_INVALID_POINT")
+            raise LaneMembershipError(f"E_REVIEW_LANE_INVALID_POINT: planned point {self.at!r} must be a date")
 
 
 PlannedInterval: TypeAlias = PlannedSpan | PlannedPoint
@@ -149,31 +150,36 @@ def _validate_input(value: LanePackingInput) -> None:
     if not isinstance(value, LanePackingInput):
         raise TypeError("value must be LanePackingInput")
     if any(rule not in _RULES for rule in value.packing) or len(set(value.packing)) != len(value.packing):
-        raise LaneMembershipError("E_REVIEW_LANE_PACKING")
+        raise LaneMembershipError(f"E_REVIEW_LANE_PACKING: rows.packing {list(value.packing)} must list each of {list(_RULES)} at most once")
     if tuple(rule for rule in _RULES if rule in value.packing) != value.packing:
-        raise LaneMembershipError("E_REVIEW_LANE_PACKING_ORDER")
+        raise LaneMembershipError(f"E_REVIEW_LANE_PACKING_ORDER: rows.packing {list(value.packing)} must follow the order {list(_RULES)}")
     item_ids = [item.item_id for item in value.items]
     if any(not isinstance(item_id, str) or not item_id for item_id in item_ids) or len(set(item_ids)) != len(item_ids):
-        raise LaneMembershipError("E_REVIEW_LANE_DUPLICATE_ITEM")
+        bad = [item_id for item_id in dict.fromkeys(item_ids)
+               if not isinstance(item_id, str) or not item_id or item_ids.count(item_id) > 1]
+        raise LaneMembershipError(f"E_REVIEW_LANE_DUPLICATE_ITEM: item ids must be unique non-empty strings; offending: {bad}")
     for item in value.items:
         if (not isinstance(item, LaneItem) or not isinstance(item.object_id, str) or not item.object_id
                 or not isinstance(item.group_id, str)
                 or not isinstance(item.planned, (PlannedSpan, PlannedPoint))):
-            raise LaneMembershipError("E_REVIEW_LANE_ITEM_IDENTITY")
+            raise LaneMembershipError(f"E_REVIEW_LANE_ITEM_IDENTITY: item {getattr(item, 'item_id', item)!r} needs a non-empty object id, "
+                                      "a group id and a planned span or point")
         if item.explicit_key is not None and (not isinstance(item.explicit_key, str) or not item.explicit_key):
-            raise LaneMembershipError("E_REVIEW_LANE_KEY")
+            raise LaneMembershipError(f"E_REVIEW_LANE_KEY: the lane key of item {item.item_id!r} must be a non-empty string, "
+                                      f"got {item.explicit_key!r}")
     by_group_object: set[tuple[str, str]] = set()
     for item in value.items:
         identity = item.group_id, item.object_id
         if identity in by_group_object:
-            raise LaneMembershipError("E_REVIEW_LANE_DUPLICATE_OBJECT")
+            raise LaneMembershipError(f"E_REVIEW_LANE_DUPLICATE_OBJECT: object {item.object_id!r} appears twice in group {item.group_id!r}")
         by_group_object.add(identity)
     relation_ids = [relation.relation_id for relation in value.selected_fs_relations]
     if any(not isinstance(value, str) or not value for relation in value.selected_fs_relations
            for value in (relation.relation_id, relation.predecessor_object_id, relation.successor_object_id)):
-        raise LaneMembershipError("E_REVIEW_LANE_RELATION")
+        raise LaneMembershipError("E_REVIEW_LANE_RELATION: a selected relation needs non-empty relation, predecessor and successor ids")
     if len(relation_ids) != len(set(relation_ids)):
-        raise LaneMembershipError("E_REVIEW_LANE_DUPLICATE_RELATION")
+        repeated = sorted({item for item in relation_ids if relation_ids.count(item) > 1})
+        raise LaneMembershipError(f"E_REVIEW_LANE_DUPLICATE_RELATION: relation ids repeat: {repeated}")
 
 
 def _make_bundles(value: LanePackingInput) -> tuple[_Bundle, ...]:
@@ -186,7 +192,9 @@ def _make_bundles(value: LanePackingInput) -> tuple[_Bundle, ...]:
             continue
         host = items_by_id.get(host_id)
         if host is None or host.group_id != item.group_id or not isinstance(item.planned, PlannedPoint) or not isinstance(host.planned, PlannedSpan):
-            raise LaneMembershipError("E_REVIEW_LANE_ATTACHMENT")
+            reason = ("is not a selected item" if host is None else "is in another group" if host.group_id != item.group_id
+                      else "must be a span, and the attached item a point")
+            raise LaneMembershipError(f"E_REVIEW_LANE_ATTACHMENT: item {item.item_id!r} is attached to {host_id!r}, which {reason}")
         children.setdefault(host_id, []).append(item)
 
     consumed = {child.item_id for members in children.values() for child in members}
@@ -198,7 +206,8 @@ def _make_bundles(value: LanePackingInput) -> tuple[_Bundle, ...]:
         keys = ({member.explicit_key for member in members if member.explicit_key is not None}
                 if "explicit" in value.packing else set())
         if len(keys) > 1:
-            raise LaneMembershipError("E_REVIEW_LANE_KEY_CONFLICT")
+            raise LaneMembershipError(f"E_REVIEW_LANE_KEY_CONFLICT: items {[member.item_id for member in members]} share one bundle "
+                                      f"but declare different lane keys {sorted(keys)}")
         bundles.append(_Bundle(root, members, next(iter(keys), None)))
     return tuple(bundles)
 

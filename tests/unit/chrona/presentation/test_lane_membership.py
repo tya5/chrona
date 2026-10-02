@@ -132,3 +132,30 @@ def test_duplicate_objects_in_group_are_rejected_for_relation_resolution():
             item("row-1", "same-object", PlannedSpan(d(1), d(2))),
             item("row-2", "same-object", PlannedSpan(d(3), d(4))),
         )))
+
+
+def _message(call) -> str:
+    with pytest.raises(LaneMembershipError) as raised:
+        call()
+    return str(raised.value)
+
+
+def test_lane_membership_errors_name_the_item_object_or_setting_at_fault():
+    """#829: each fail-closed input check says which item, object, key or rule it refused."""
+    a, b = item("i-a", "a", PlannedSpan(d(1), d(2))), item("i-b", "b", PlannedSpan(d(3), d(4)))
+    assert "'same-object'" in _message(lambda: derive_lane_membership(LanePackingInput((
+        item("row-1", "same-object", PlannedSpan(d(1), d(2))), item("row-2", "same-object", PlannedSpan(d(3), d(4)))))))
+    assert "['dates', 'chain']" in _message(lambda: derive_lane_membership(LanePackingInput((a,), ("dates", "chain"))))
+    assert "['bogus']" in _message(lambda: derive_lane_membership(LanePackingInput((a,), ("bogus",))))
+    assert "'i-a'" in _message(lambda: derive_lane_membership(LanePackingInput((a, a))))
+    assert "'i-a'" in _message(lambda: derive_lane_membership(LanePackingInput((item("i-a", "a", PlannedSpan(d(1), d(2)), key=""),))))
+    assert "'ghost'" in _message(lambda: derive_lane_membership(LanePackingInput(
+        (item("i-a", "a", PlannedPoint(d(1)), host="ghost"),), ("attached",))))
+    assert "['rel']" in _message(lambda: derive_lane_membership(LanePackingInput(
+        (a, b), ("chain",), (SelectedFSRelation("rel", "a", "b"), SelectedFSRelation("rel", "a", "b")))))
+    host = item("i-host", "host", PlannedSpan(d(1), d(9)), key="k1")
+    point = item("i-point", "point", PlannedPoint(d(2)), key="k2", host="i-host")
+    assert "['i-host', 'i-point']" in _message(lambda: derive_lane_membership(LanePackingInput(
+        (host, point), ("explicit", "attached"))))
+    assert "end not before the start" in _message(lambda: PlannedSpan(d(5), d(1)))
+    assert "must be a date" in _message(lambda: PlannedPoint("x"))

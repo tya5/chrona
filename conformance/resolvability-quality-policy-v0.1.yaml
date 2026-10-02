@@ -6,8 +6,6 @@ diagnosticActionability:
   # site means lowering `sites` (or deleting the entry) in the same change; `sufficient` needs a `reason`.
   backlog: &backlog {disposition: backlog, nextAction: "Add owner-local actionable detail (the offending value, and the valid values where the set is small) or classify the identifier as sufficient with a reason."}
   bareDiagnostics:
-    - {<<: *backlog, code: E_ACTUAL_REQUIRED, sites: 1}
-    - {<<: *backlog, code: E_AUTHORING_ACTUAL_TASK, sites: 1}
     - {<<: *backlog, code: E_AUTHORING_AGGREGATE_CANDIDATE, sites: 1}
     - {<<: *backlog, code: E_AUTHORING_AGGREGATE_PATH, sites: 2}
     - {<<: *backlog, code: E_AUTHORING_AGGREGATE_RECOVERY, sites: 1}
@@ -19,16 +17,12 @@ diagnosticActionability:
     - {<<: *backlog, code: E_AUTHORING_MATERIALIZE_COLLISION, sites: 1}
     - {<<: *backlog, code: E_AUTHORING_MATERIALIZE_OUTPUT_PROOF, sites: 1}
     - {<<: *backlog, code: E_AUTHORING_MATERIALIZE_PATH, sites: 2}
-    - {<<: *backlog, code: E_AUTHORING_NORMALIZATION, sites: 5}
+    - {<<: *backlog, code: E_AUTHORING_NORMALIZATION, sites: 4}
     - {<<: *backlog, code: E_AUTHORING_PRESET_IDENTITY, sites: 1}
-    - {<<: *backlog, code: E_AUTHORING_PRESET_PATH, sites: 1}
-    - {<<: *backlog, code: E_AUTHORING_PRESET_RESOURCE, sites: 5}
-    - {<<: *backlog, code: E_AUTHORING_PRESET_SCHEMA, sites: 2}
-    - {<<: *backlog, code: E_AUTHORING_TASK_ID, sites: 1}
-    - {<<: *backlog, code: E_AUTHORING_WORKSPACE_SCHEMA, sites: 2}
+    - {<<: *backlog, code: E_AUTHORING_PRESET_RESOURCE, sites: 2}
+    - {<<: *backlog, code: E_AUTHORING_PRESET_SCHEMA, sites: 1}
+    - {<<: *backlog, code: E_AUTHORING_WORKSPACE_SCHEMA, sites: 1}
     - {<<: *backlog, code: E_AXIS_NAME_TABLE_UNKNOWN, sites: 1}
-    - {<<: *backlog, code: E_CLOSURE_ID, sites: 3}
-    - {<<: *backlog, code: E_CLOSURE_REQUIRED, sites: 4}
     - {<<: *backlog, code: E_CONTENT_IDENTITY, sites: 4}
     - {<<: *backlog, code: E_DETAIL_DUPLICATE_COLUMN, sites: 2}
     - {<<: *backlog, code: E_DETAIL_DUPLICATE_GROUP, sites: 2}
@@ -39,18 +33,14 @@ diagnosticActionability:
     - {<<: *backlog, code: E_DETAIL_OBSERVATION_CELLS, sites: 2}
     - {<<: *backlog, code: E_DETAIL_OBSERVATION_PROVENANCE, sites: 1}
     - {<<: *backlog, code: E_DETAIL_SLOT_REQUIRED, sites: 1}
-    - {<<: *backlog, code: E_DRAFT_PRESENTATION_INCOMPLETE, sites: 1}
-    - {<<: *backlog, code: E_DRAFT_PRESET_RESOURCE, sites: 2}
-    - {<<: *backlog, code: E_DRAFT_PRESET_SCHEMA, sites: 5}
     - {<<: *backlog, code: E_FONT_IMPORT_ARGUMENT, sites: 1}
     - {<<: *backlog, code: E_FONT_IMPORT_FORMAT, sites: 3}
     - {<<: *backlog, code: E_FONT_IMPORT_INPUT, sites: 1}
-    - {<<: *backlog, code: E_FONT_METRICS_UNAVAILABLE, sites: 27}
-    - {<<: *backlog, code: E_FONT_SUBSTITUTE_CONTEXT, sites: 1}
+    - {<<: *backlog, code: E_FONT_METRICS_UNAVAILABLE, sites: 26}
     - {<<: *backlog, code: E_ICON_ASSET_IDENTITY, sites: 1}
     - {<<: *backlog, code: E_ICON_ASSET_PATH, sites: 2}
     - {<<: *backlog, code: E_ICON_CATALOG_GEOMETRY, sites: 5}
-    - {<<: *backlog, code: E_ICON_CATALOG_SCHEMA, sites: 6}
+    - {<<: *backlog, code: E_ICON_CATALOG_SCHEMA, sites: 3}
     - {<<: *backlog, code: E_ICON_IMPORT_ALIAS, sites: 1}
     - {<<: *backlog, code: E_ICON_IMPORT_COLLECTION, sites: 1}
     - {<<: *backlog, code: E_ICON_IMPORT_ELEMENT, sites: 1}
@@ -61,8 +51,6 @@ diagnosticActionability:
     - {<<: *backlog, code: E_ICON_IMPORT_PATH, sites: 5}
     - {<<: *backlog, code: E_ICON_PNG_INVALID, sites: 2}
     - {<<: *backlog, code: E_ICON_PNG_LIMIT, sites: 1}
-    - {<<: *backlog, code: E_ICON_REFERENCE, sites: 1}
-    - {<<: *backlog, code: E_ICON_SET_AMBIGUOUS, sites: 1}
     - {<<: *backlog, code: E_ICON_SVG_LIMIT, sites: 2}
     - {<<: *backlog, code: E_ICON_SVG_UNSAFE, sites: 13}
     - {<<: *backlog, code: E_LAYOUT_ANNOTATION_SEARCH_INPUT, sites: 3}
@@ -135,43 +123,11 @@ diagnosticActionability:
     - {<<: *backlog, code: E_PRESENTATION_TEXT_LAYOUT_INVALID, sites: 1}
     - {<<: *backlog, code: E_PRESENTATION_TEXT_ORIENTATION, sites: 2}
     - {<<: *backlog, code: E_PRESENTATION_WRAP_INPUT, sites: 1}
-    - {<<: *backlog, code: E_RENDER_CONTEXT_SCHEMA, sites: 1}
     - {<<: *backlog, code: E_RENDER_FONT_CLOSURE, sites: 1}
     - {<<: *backlog, code: E_RENDER_RASTERIZER_IDENTITY, sites: 4}
     - {<<: *backlog, code: E_RENDER_RASTERIZER_UNAVAILABLE, sites: 4}
-    - {<<: *backlog, code: E_RENDER_TYPESETTER_DESCRIPTOR, sites: 2}
     - {<<: *backlog, code: E_RENDER_TYPESETTER_IDENTITY, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_EMPTY, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_ITEM_ID_DUPLICATE, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_ITEM_SOURCE_UNAVAILABLE, sites: 2}
-    - {<<: *backlog, code: E_REVIEW_ITEM_TRACK, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_LANE_ATTACHMENT, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_LANE_DUPLICATE_ITEM, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_LANE_DUPLICATE_OBJECT, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_LANE_DUPLICATE_RELATION, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_LANE_INVALID_POINT, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_LANE_INVALID_SPAN, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_LANE_ITEM_IDENTITY, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_LANE_KEY, sites: 2}
-    - {<<: *backlog, code: E_REVIEW_LANE_KEY_CONFLICT, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_LANE_KEY_TARGET, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_LANE_PACKING, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_LANE_PACKING_ORDER, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_LANE_RELATION, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_LANE_ROW_DUPLICATE_MEMBER, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_LANE_ROW_MEMBERSHIP_MISMATCH, sites: 2}
     - {<<: *backlog, code: E_REVIEW_LANE_TABLE_PROJECTION, sites: 3}
-    - {<<: *backlog, code: E_REVIEW_POINT_GROUP_HEADER_LABEL_REQUIRED, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_POINT_GROUP_HEADER_REQUIRED, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_POINT_GROUP_HEADER_UNAVAILABLE, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_POINT_POLICY, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_ROW_ID_DUPLICATE, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_ROW_PARENT_MISMATCH, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_ROW_PARENT_ROOT, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_ROW_PARENT_SOURCE, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_ROW_PARENT_UNAVAILABLE, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_TABLE_SUBJECT, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_WINDOW, sites: 1}
     - {<<: *backlog, code: E_SCENE_PAINT_ANALYSIS_INPUT, sites: 3}
     - {<<: *backlog, code: E_SCENE_SERIALIZATION, sites: 7}
     - {<<: *backlog, code: E_SCHEMA_VIOLATION_EMPTY, sites: 2}
@@ -181,8 +137,6 @@ diagnosticActionability:
     - {<<: *backlog, code: E_SCHEME_PROVENANCE, sites: 1}
     - {<<: *backlog, code: E_SCHEME_SCHEMA, sites: 4}
     - {<<: *backlog, code: E_SCHEME_THEME_BINDING, sites: 4}
-    - {<<: *backlog, code: E_TARGET_CAPABILITY_ORDER, sites: 1}
-    - {<<: *backlog, code: E_THEME_ASSET_REFERENCE, sites: 2}
     - {<<: *backlog, code: E_THEME_ASSET_SOURCE_DENSITY, sites: 2}
     - {<<: *backlog, code: E_THEME_ASSET_SOURCE_GLYPH, sites: 6}
     - {<<: *backlog, code: E_THEME_ASSET_SOURCE_IO, sites: 1}
@@ -192,23 +146,11 @@ diagnosticActionability:
     - {<<: *backlog, code: E_THEME_ASSET_SOURCE_SCHEMA, sites: 1}
     - {<<: *backlog, code: E_THEME_ASSET_SOURCE_VALUE, sites: 1}
     - {<<: *backlog, code: E_THEME_ASSET_SOURCE_YAML, sites: 1}
-    - {<<: *backlog, code: E_THEME_INHERITANCE_BASE_IDENTITY, sites: 1}
-    - {<<: *backlog, code: E_THEME_INHERITANCE_BASE_KIND, sites: 1}
-    - {<<: *backlog, code: E_THEME_INHERITANCE_BASE_MISSING, sites: 3}
-    - {<<: *backlog, code: E_THEME_INHERITANCE_CYCLE, sites: 3}
-    - {<<: *backlog, code: E_THEME_INHERITANCE_EFFECTIVE_SCHEMA, sites: 3}
-    - {<<: *backlog, code: E_THEME_INHERITANCE_OVERRIDE_UNKNOWN, sites: 1}
-    - {<<: *backlog, code: E_THEME_INHERITANCE_PATH, sites: 3}
-    - {<<: *backlog, code: E_THEME_INHERITANCE_SCHEMA, sites: 4}
-    - {<<: *backlog, code: E_THEME_INHERITANCE_SOURCE_IDENTITY, sites: 2}
+    - {<<: *backlog, code: E_THEME_INHERITANCE_BASE_MISSING, sites: 1}
+    - {<<: *backlog, code: E_THEME_INHERITANCE_CYCLE, sites: 1}
+    - {<<: *backlog, code: E_THEME_INHERITANCE_SOURCE_IDENTITY, sites: 1}
     - {<<: *backlog, code: E_THEME_TOKEN_TYPE, sites: 21}
-    - {<<: *backlog, code: E_VIEW_BOOLEAN_PRESENTATION, sites: 5}
-    - {<<: *backlog, code: E_VIEW_HIERARCHY_COLUMN_REQUIRED, sites: 1}
-    - {<<: *backlog, code: E_VIEW_HIERARCHY_COLUMN_UNEXPECTED, sites: 1}
-    - {<<: *backlog, code: E_VIEW_HIERARCHY_COLUMN_UNKNOWN, sites: 1}
-    - {<<: *backlog, code: E_VIEW_LABELS_BOTH_TABLE_TITLE, sites: 1}
-    - {<<: *backlog, code: E_VIEW_PERIOD_DUPLICATE, sites: 1}
-    - {<<: *backlog, code: E_VIEW_TABLE_COLUMN_DUPLICATE, sites: 1}
+    - {<<: *backlog, code: E_VIEW_BOOLEAN_PRESENTATION, sites: 2}
     - {<<: *backlog, code: E_VIEW_TABLE_WIDTH, sites: 1}
     - {<<: *backlog, code: E_VIEW_VISUAL_REQUEST, sites: 1}
     - {<<: *backlog, code: E_VISUAL_CAPABILITY_SUBSTITUTION, sites: 1}

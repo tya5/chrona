@@ -806,10 +806,12 @@ def validate_theme_asset_entry(catalog: IconCatalogContract, asset_kind: str, na
     """Schema-check one selected normalized glyph or pattern entry."""
     collection = {"glyph": catalog.raw_glyphs, "pattern": catalog.raw_patterns}.get(asset_kind)
     if catalog.version != "chrona/icon-catalog/v0.4" or collection is None:
-        raise ContractError("E_THEME_ASSET_REFERENCE")
+        raise ContractError("E_THEME_ASSET_REFERENCE",
+                            f"catalog {catalog.identity.id!r} ({catalog.version}) cannot serve a {asset_kind} reference; "
+                            "only chrona/icon-catalog/v0.4 declares glyphs and patterns")
     raw = collection.get(name)
     if raw is None:
-        raise ContractError("E_THEME_ASSET_REFERENCE")
+        raise ContractError("E_THEME_ASSET_REFERENCE", f"catalog {catalog.identity.id!r} declares no {asset_kind} {name!r}")
     source = {
         "version": catalog.version, "kind": "icon-catalog", "id": catalog.identity.id,
         "body": {"set": catalog.set_name, "aliases": list(catalog.aliases),
@@ -890,7 +892,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
     labels = visibility.labels
     if (isinstance(labels, Mapping) and labels.get("placement") == "both"
             and not any(column.source == "title" for column in table_columns)):
-        raise ContractError("E_VIEW_LABELS_BOTH_TABLE_TITLE")
+        raise ContractError("E_VIEW_LABELS_BOTH_TABLE_TITLE",
+                            "visibility.labels placement both draws labels on the plot and in the table, so a tableColumns entry with source title is required")
     return ViewInput(
         selection, grouping, ordering, window, comparison, visibility,
         table_columns,
@@ -926,7 +929,8 @@ def _view_periods(raw: Any) -> tuple[ViewPeriod, ...]:
                                str(item["label"].get("overflow", "visible-overflow")) if "label" in item else "visible-overflow")
                     for item in raw)
     if len({item.period_id for item in periods}) != len(periods):
-        raise ContractError("E_VIEW_PERIOD_DUPLICATE")
+        repeated = sorted({item.period_id for item in periods if [p.period_id for p in periods].count(item.period_id) > 1})
+        raise ContractError("E_VIEW_PERIOD_DUPLICATE", f"periods selects a Project period more than once: {repeated}")
     return periods
 
 
@@ -1005,21 +1009,27 @@ def _validate_view_table_intent(table_columns: tuple[TableColumn, ...], grouping
     """Reject View composition ambiguities before Layout measures them."""
     column_ids = tuple(column.id for column in table_columns)
     if len(set(column_ids)) != len(column_ids):
-        raise ContractError("E_VIEW_TABLE_COLUMN_DUPLICATE")
+        repeated = sorted({item for item in column_ids if column_ids.count(item) > 1})
+        raise ContractError("E_VIEW_TABLE_COLUMN_DUPLICATE", f"tableColumns repeats the column id {repeated}")
     for column in table_columns:
         if (isinstance(column.source, Mapping) and column.source.get("comparisonFacet") == "missingActual"
                 and not isinstance(column.format, BooleanPresencePresentation)):
-            raise ContractError("E_VIEW_BOOLEAN_PRESENTATION")
+            raise ContractError("E_VIEW_BOOLEAN_PRESENTATION",
+                                f"column {column.id!r} shows the comparison facet missingActual, so its format must be a presence mapping "
+                                "with whenTrue and whenFalse")
     visible_nesting = ((grouping is not None and grouping.by == "hierarchy")
                        or any(row.depth > 0 or row.parent_row is not None for row in rows))
     if hierarchy_column is None:
         if visible_nesting:
-            raise ContractError("E_VIEW_HIERARCHY_COLUMN_REQUIRED")
+            raise ContractError("E_VIEW_HIERARCHY_COLUMN_REQUIRED",
+                                "the View nests rows (hierarchy grouping, row depth or parentRow), so hierarchyColumn must name a table column")
         return
     if hierarchy_column not in column_ids:
-        raise ContractError("E_VIEW_HIERARCHY_COLUMN_UNKNOWN")
+        raise ContractError("E_VIEW_HIERARCHY_COLUMN_UNKNOWN",
+                            f"hierarchyColumn {hierarchy_column!r} is not one of the tableColumns ids {list(column_ids)}")
     if not visible_nesting:
-        raise ContractError("E_VIEW_HIERARCHY_COLUMN_UNEXPECTED")
+        raise ContractError("E_VIEW_HIERARCHY_COLUMN_UNEXPECTED",
+                            f"hierarchyColumn {hierarchy_column!r} is declared but the View shows no nesting (no hierarchy grouping, row depth or parentRow)")
 
 
 def _table_format(value: object) -> str | BooleanPresencePresentation:
@@ -1027,10 +1037,10 @@ def _table_format(value: object) -> str | BooleanPresencePresentation:
     if isinstance(value, Mapping):
         if value.get("kind") == "presence" and isinstance(value.get("whenTrue"), str) and isinstance(value.get("whenFalse"), str):
             return BooleanPresencePresentation(value["whenTrue"], value["whenFalse"])
-        raise ContractError("E_VIEW_BOOLEAN_PRESENTATION")
+        raise ContractError("E_VIEW_BOOLEAN_PRESENTATION", "a mapping format must be kind presence with string whenTrue and whenFalse")
     if isinstance(value, str):
         return value
-    raise ContractError("E_VIEW_BOOLEAN_PRESENTATION")
+    raise ContractError("E_VIEW_BOOLEAN_PRESENTATION", f"a column format must be a string or a presence mapping, got {type(value).__name__}")
 
 
 def _validate_view_fallback(raw_fallback: Any) -> None:
@@ -1181,7 +1191,11 @@ def _validate_workspace_identifiers(identity: ClosureIdentity, project: FrozenDi
         raise _closure_kind_error(identity, "workspace task object list", tasks)
     task_ids = tuple(str(task["id"]) for task in tasks if isinstance(task, FrozenDict))
     if len(task_ids) != len(tasks) or len(task_ids) != len(set(task_ids)):
-        raise ContractError("E_AUTHORING_TASK_ID")
+        repeated = sorted({item for item in task_ids if task_ids.count(item) > 1})
+        raise ContractError("E_AUTHORING_TASK_ID", f"workspace tasks must be objects with unique ids; repeated: {repeated}")
     actual_ids = tuple(str(item["taskId"]) for item in actuals)
     if len(actual_ids) != len(set(actual_ids)) or any(task_id not in task_ids for task_id in actual_ids):
-        raise ContractError("E_AUTHORING_ACTUAL_TASK")
+        unknown = sorted({item for item in actual_ids if item not in task_ids})
+        raise ContractError("E_AUTHORING_ACTUAL_TASK",
+                            "workspace actuals must name a declared task once each; "
+                            + (f"unknown task ids: {unknown}" if unknown else "a task id is repeated"))

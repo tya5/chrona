@@ -1373,7 +1373,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_ACTUAL_REQUIRED\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"the View compares against actuals (comparison.actual is required) but no actual file was given; pass --actual FILE, or change the View so actuals are not required\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_ACTUAL_REQUIRED\", \"severity\": \"error\", \"component\": \"presentation\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"E_ACTUAL_REQUIRED: the View compares against actuals (comparison.actual is required) but no actual file was given; pass --actual FILE, or change the View so actuals are not required\"}]}\n"
  },
  "render-viewport": {
   "argv": [

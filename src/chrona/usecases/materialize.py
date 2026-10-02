@@ -197,7 +197,7 @@ def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path, *,
             try:
                 base = theme_base_reference(reference, value)
             except ThemeInheritanceError as error:
-                raise ValueError(error.code) from error
+                raise ValueError(f"{error.code}: {error.detail}" if error.detail else error.code) from error
             try:
                 _copy_reference(example, base, snapshot, theme_stack=(*theme_stack, address), overlay=overlay)
             except ValueError as error:
