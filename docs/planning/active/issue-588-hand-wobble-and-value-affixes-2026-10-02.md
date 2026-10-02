@@ -2,7 +2,7 @@
 
 Living record for [#588](https://github.com/tya5/chrona/issues/588): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history.
 
-**Public base:** `7028bf2c` on `main`. **Status:** design (PR #954) published; I588-1 hand wobble (PR #958) and I588-2 value affixes implemented (section 8); the acceptance review follows.
+**Public base:** `7028bf2c` on `main`. **Status:** all slices are done: design (PR #954), I588-1 hand wobble (PR #958), I588-2 value affixes (PR #965). The [acceptance review](../../reviews/current/issue-588-hand-wobble-and-value-affixes-acceptance-review-2026-10-03.md) is published.
 
 ## 1. Published baseline
 
@@ -196,7 +196,7 @@ Each code PR is `Refs #588`, carries the S0 gate result when it touches a schema
 - **Rendered check.** The slide read through resvg: bars and dependencies are visibly hand-inked, corners stay corners, both ends of a dependency and its arrowhead stay put, nothing else moved. The corpus contrast gate reports 0 errors.
 - **S0 gate.** Scene v0.7 and Theme v0.11 and v0.13 are classified additive. Against `origin/main` the gate also reports four pre-existing chained entries of #584 (`values/additionalProperties/allOf`) as "does not apply": they are not this work's and were left untouched; with them removed in a scratch copy the gate passes.
 
-### I588-2: value affixes
+### I588-2 (PR #965): value affixes
 
 - **As designed.** View `tableColumns[].affixes` (state to `{prefix, suffix}`), `signedNumber`, `E_VIEW_COLUMN_AFFIX`; `table_presentation.py` holds the typed values and the value-to-state rule; `review/v05_content.py` composes the cell once and carries the affixes; `layout/surface_table.py` cuts only the core under ellipsis.
 - **Internal choice recorded here.** When the affixes leave no room for a character beside an ellipsis, Layout keeps the whole-string ellipsis instead of showing an affix next to nothing (a slip would otherwise read `!!`).
