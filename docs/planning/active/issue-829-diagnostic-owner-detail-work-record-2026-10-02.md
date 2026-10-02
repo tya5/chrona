@@ -98,4 +98,12 @@ only their text gains the value.
 
 ## Progress
 
-Nothing implemented yet.
+- Work record: PR #899 (merged).
+- S1 ratchet: implemented (this PR). Baseline 232 codes, 656 sites; `validate` reports `missing`, `grown`,
+  `lower`, `unknown`; `test_the_real_tree_matches_the_recorded_baseline` enforces it in the PR shards.
+  Mutation-checked: dropping the growth check turns `test_a_new_bare_site_of_a_recorded_code_fails_the_ratchet` red;
+  adding one bare `E_PRESENTATION_PRIMITIVE_INVALID` raise turns the real-tree test red (`grown=... 76 found=77`).
+  Discovery also counts detail written inside the code string (`"E_X: the value"`, `f"E_X: {value}"`) as detail:
+  before, an f-string raise was invisible to the inventory and a literal with text after the colon was counted bare.
+  The baseline at the S1 tree is 653 sites, 230 codes (656 and 232 on the work-record base; the difference is the
+  string-detail rule and detail #880 added).
