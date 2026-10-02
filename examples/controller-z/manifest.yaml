@@ -57,6 +57,11 @@ slides:
     context: contexts/axis-ticks.yaml
     expectedSvg: generated/axis-ticks.svg
     expectedScene: generated/axis-ticks.scene.json
+  - id: axis-cell-corners
+    evidence: "Quarter cells with cut (chamfered) corners and month cells with rounded corners, each separated by a cell gap, from the Theme properties cellCornerChamfer and cellCornerRadius on the two band roles (#491)."
+    context: contexts/axis-cell-corners.yaml
+    expectedSvg: generated/axis-cell-corners.svg
+    expectedScene: generated/axis-cell-corners.scene.json
   - id: surface-texture
     evidence: "A dark Theme with a faint hexagon-lattice canvas texture (the packaged target-parts pattern) under every mark and label, from the Theme role canvas-texture (#587)."
     context: contexts/surface-texture.yaml
