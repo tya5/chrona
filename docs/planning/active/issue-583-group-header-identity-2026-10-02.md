@@ -2,7 +2,7 @@
 
 Living record for [#583](https://github.com/tya5/chrona/issues/583): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history.
 
-**Public base:** `f1624ab6` on `main`. **Status:** design plan (this revision, sections 1 to 4). Design, review and implementation plan follow as separate docs PRs before any code.
+**Public base:** `f1624ab6` on `main`. **Status:** design plan published (section 4, PR #866). Design and architecture review (sections 5 and 6, this revision). The implementation plan (section 7) follows as its own docs PR before any code.
 
 ## 1. Published baseline
 
@@ -78,3 +78,88 @@ Synthetic tests only, no `examples/` input: one test per ordinal form and its ra
 ### Order of publication
 
 1. This plan (docs PR). 2. Design and architecture review, with the Specification amendments and the owner-decision comment on #583. 3. Implementation plan. 4. I583-1, I583-2, (I583-3) as separate code PRs. 5. Acceptance review and the exact-main three-OS run.
+
+## 5. Design (I583-1 and I583-2; I583-3 is outlined and gets its own design PR before its code)
+
+### 5.1 I583-1: header text template
+
+**Where.** View `body.grouping.header`, an optional object (Spec 56 section 3.2: optional, in place in `view-v0.28`, no version bump, omission is today's behaviour). It is meaningful only when `grouping.presentation` is `header` and `by` is `field` or `objectType`; otherwise the contract rejects it with `E_VIEW_GROUP_HEADER_UNUSABLE` (a header knob that can never show is an authoring error, not an ignored property). A header that "distinguishes nothing" (Spec 45: no group is drawn) draws nothing and the template is simply unused.
+
+```yaml
+grouping:
+  by: field
+  field: owner
+  presentation: header
+  header:
+    text: "ACT {ordinal} · {title}"      # required
+    ordinal: roman                       # arabic (default) | zero-padded | roman | kanji | kanji-formal
+    first: "In the {title}"              # optional: the first group in display order
+    secondary: {entityField: titleJa}    # optional: a string in entity.fields
+```
+
+**Grammar (D2).** `text` and `first` are strings of literal text and exactly three closed placeholders, `{ordinal}`, `{title}`, `{secondary}`, with `{{` and `}}` for literal braces. Any other brace use is `E_VIEW_GROUP_HEADER_TEMPLATE` at the contract (one code, the template named in the message). No expressions, conditionals or formatting specs: a phrase differing for the first group is the only variation, declared by `first`. `{secondary}` in either template requires `secondary`, and a declared `secondary` that no template uses is the same code (a dead declaration).
+
+**Ordinal (D3).** The ordinal is the 1-based position of the group in the rendered group order (the order of the header rows, after `grouping.order`). Forms, each a pure function of the position:
+
+| Form | 1, 2, 6, 10, 11, 20 | Range |
+| --- | --- | --- |
+| `arabic` | 1 2 6 10 11 20 | any |
+| `zero-padded` | 01 02 06 10 11 20 | any; width is the digit count of the group count, at least 2 |
+| `roman` | I II VI X XI XX | 1 to 3999 |
+| `kanji` | 一 二 六 十 十一 二十 | 1 to 99 |
+| `kanji-formal` | 壱 弐 陸 拾 拾壱 弐拾 | 1 to 99 (daiji: 壱弐参肆伍陸漆捌玖拾) |
+
+A position outside a form's range is `E_REVIEW_GROUP_ORDINAL_RANGE` (group id, form, position) at projection time: no clamping and no fallback to arabic. `first` is chosen by position 1.
+
+**Secondary (D4).** Read from `entities[<group id>].fields[<entityField>]` of the Project; it must be a non-empty string, otherwise `E_REVIEW_GROUP_HEADER_SECONDARY` names the group and field. Reading an entity field adds no Project schema change (`entity.fields` is an open map), so the Project schema, #582's file, is untouched. For `by: objectType` there is no entity, so `secondary` is rejected as unusable there.
+
+**Ownership and data flow.**
+
+| Layer | Responsibility |
+| --- | --- |
+| View contract (`contracts/resources.py`) | Parse into a typed `ViewGroupHeader`; validate grammar, usability and the secondary pairing (`E_VIEW_GROUP_HEADER_*`). |
+| Content normalisation (`review/v05_content.py`) | Compose each group's final header string from the template, ordinal, entity title and secondary; carry it as `SurfaceContentInput.group_headers` (group id, text), default empty. This is the only place that reads the Project entity. |
+| Layout (`layout/surface_groups.py`) | Place one completed string exactly as today: measure, bound by the header's inline size, ellipsize or warn by the existing rule. With no entry for a group the label is the entity title as today. |
+| Scene and adapters | Unchanged: they project the `group-header:<id>` text primitive. |
+
+The title keeps flowing to the lane table, group details and legend as `group_label`; only the header text changes. The composition is one function, tested once.
+
+### 5.2 I583-2: per-group tint
+
+**Where (D6).** View `body.grouping.tint`, an optional object `{scale: <id>, domain?: <list | firstAppearance>}` (default `firstAppearance`), valid only with `by: field` (the scale's source field is the grouping field) and rejected as `E_VIEW_GROUP_TINT_UNUSABLE` otherwise. `colorEncoding` is not widened: its `target` stays the constant `planned` and Spec 60 section 6 keeps "one encoding" for marks; a group tint is a second, separately named, optional scale. A new optional object is behaviour-preserving, so Spec 56 section 3.2 applies.
+
+**Resolution.** `render_review.py` resolves it with the existing `resolve_color_scale` (Theme `colorScales.<id>` as `slots` or cyclic `palette`, Scheme `categories`, the same total-mapping and separability rules, `W_PRESENTATION_SCALE_NOT_SEPARABLE` for near colours) with `target: group`, `source.field: <grouping field>` and `observed` = the group ids in display order. A missing mapping is `E_PRESENTATION_SCALE_MAPPING`, as for marks. No new Theme schema field is needed: `colorScales` already exists and is not tied to a target.
+
+**Paint (D7).** The result is `SurfaceContentInput.group_tints` (group id, colour). Scene paint completion replaces only the visible channel of the `groupBand` and `groupHeaderBand` primitives of that group (`source_ref` is the group id): the fill for a solid treatment, the stroke for an outline treatment; opacity, order and geometry stay the Theme role's, so the existing `E_LAYOUT_BACKGROUND_OVERLAP` rules are unaffected (Layout never reads a Scheme or a field value). A group that carries no band under `groups: alternate` has no primitive and so no tint. Because the band spans the table and the timeline in one Rect (Spec 50 section 3.4), the tint spans both with no extra work.
+
+**Contrast.** The scene contrast gate (`evaluate_scene_contrast`) takes the ground under a text from the completed primitives, so the header text on a tinted band and the table and mark text over it are evaluated against the tinted colour. The acceptance test is a synthetic Project whose Scheme tint is too close to the header ink: the finding must appear, and a legible tint must not produce one. A new gate is added only if this test shows a gap.
+
+### 5.3 I583-3: tab decoration (outline, designed before its code)
+
+A Theme-owned tab Rect at the start or end of the group header with a catalogue pattern, a declared size and position, completed by Layout (the header text then starts after a start-side tab) and projected by Scene like any pattern Rect. Open points to close in its own design PR: a new Theme role and its capability registration (`scene/capabilities.py`), the size metrics' names, the pattern-admission rule on a Rect (#496), the byte identity of a Theme without the role, and whether the tab needs a View switch. It touches the Theme schema, which #587 also edits: the design PR is written against `main` at that time.
+
+### 5.4 Intended incompatibilities
+
+None. Every property is optional and its omission is today's output. The new codes are new, raised only for a document that uses the new property.
+
+### 5.5 Failure behaviour
+
+| Condition | Code | Raised at |
+| --- | --- | --- |
+| Template grammar, unknown placeholder, `{secondary}` without `secondary` or the reverse | `E_VIEW_GROUP_HEADER_TEMPLATE` | View contract |
+| `header` without `presentation: header`, or with `by` other than `field`/`objectType`; `secondary` with `objectType` | `E_VIEW_GROUP_HEADER_UNUSABLE` | View contract |
+| Ordinal outside the form's range | `E_REVIEW_GROUP_ORDINAL_RANGE` | Projection/content |
+| Secondary missing or not a non-empty string | `E_REVIEW_GROUP_HEADER_SECONDARY` | Projection/content |
+| `tint` with `by` other than `field` | `E_VIEW_GROUP_TINT_UNUSABLE` | View contract |
+| Tint scale unmapped | `E_PRESENTATION_SCALE_MAPPING` (existing) | Closure/content |
+
+## 6. Architecture review
+
+- **View selects, Theme paints, Layout places.** The text is data-dependent content the author writes (like column labels and legend entries), so it is View. Colours stay Theme and Scheme through the existing scale; the tint is a completed Scene paint. Layout reads neither.
+- **No second mechanism.** The tint reuses `resolve_color_scale`; the ordinal and the template live in one content function. No new Theme field is needed for I583-1 or I583-2.
+- **Spec 56 section 3.2.** Two optional View objects, in place, no version bump. The PRs run `python -m tools.schema_equivalence --base-rev origin/main`, regenerate `schemas/schema-inventory-v0.1.yaml`, and add the expected L1 delta for `view-v0.28` if the gate requires it.
+- **Byte identity.** A View without the objects takes the unchanged path in all consumers (`group_headers` and `group_tints` default empty). Every committed example regenerates byte-identical; this is evidence of no change only.
+- **Diagnostics.** New codes are registered in the diagnostic messages and inventory; no existing code changes.
+- **Cross-agent files.** No edit to the Project schema, date-range Scene/layout (#582), Theme/adapters surface decoration (#587) or presets/parts (#718). Shared files: `schemas/view-v0.28.schema.yaml`, `schemas/schema-inventory-v0.1.yaml`, Specification 50 section 3.4 (the normative home of group presentation), Specification 06 section 6 (View grouping) and Specification 60 section 6 (a one-line note that a group tint is a separate declaration).
+- **Rejected options.** (a) Template in the Theme: puts data content in appearance and breaks "same View, two Themes". (b) A structured parts list: more schema for no extra expressiveness at this depth. (c) A second `colorEncoding` target `group`: changes an existing closed field. (d) A View literal map for the secondary title: duplicates Project facts. (e) A silent arabic or blank fallback: hides an authoring error. Reversal: each property is optional and removable without a version bump while no committed document uses it.
+- **Owner-level judgement calls** (options, choice, why and reversal recorded on #583): D1 View versus Theme, D2 string template versus parts, D4 entity field versus literal, D6 a separate `grouping.tint` versus widening `colorEncoding`, and the `kanji-formal` form added beside `kanji`.
