@@ -15,7 +15,7 @@ from tests.support.terse_plans import FIXTURES
 
 CASES = 4000
 POOL = ['"', ",", "#", ".", "..", " ", "  ", "\t", "\r", "\x00", "\x7f", "-", "+", "+1wd", "-2d", "5d", "wd", "0", "9", "after", "task",
-        "gate", "group", "calendar", "from", "until", "except", "work", "start", ">=", "<=", "end", "at", "in", "terse", "project",
+        "gate", "group", "calendar", "from", "until", "except", "work", "start", ">=", "<=", "end", "at", "in", "terse", "project", "deadline",
         "2026-10-01", "2026-02-30", "mon-fri", "é", " ", "あ", "\U0001f680", "\u0085", " ", "﻿", "\n", "\\", "\\\""]
 
 

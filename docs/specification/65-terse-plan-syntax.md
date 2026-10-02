@@ -1,6 +1,6 @@
 # Terse Plan Syntax
 
-**Status:** Proposed; implemented by `chrona compile` (#148, slice 1), the draft dispatch of section 7.1 (slice 3), the documentation check of section 10 (slice 4) and the derived gate of S3 and section 4 (#788, slice 2).
+**Status:** Proposed; implemented by `chrona compile` (#148, slice 1), the draft dispatch of section 7.1 (slice 3), the documentation check of section 10 (slice 4), the derived gate of S3 and section 4 (#788, slice 2) and the `deadline` clause of S3 and section 4 (#822, I822-1).
 **Owns:** the grammar of the terse plan (`terse 0.1`), its mapping to a `timeline/v0.7` Project, the id rules for
 compiled objects and relations, the compiler diagnostic fields and codes, the stream and exit-code rules of
 `chrona compile`, and the determinism contract of the compiler's YAML.
@@ -14,7 +14,7 @@ Design rationale, measurements and alternatives:
 ## 1. Purpose and boundary
 
 The terse plan is a small line-oriented text syntax for the first draft of a plan: identity, title, kind,
-hierarchy, schedule, constraints, calendars and dependencies. It **compiles to** a Project; it never replaces
+hierarchy, schedule, constraints, calendars, dependencies and a deadline. It **compiles to** a Project; it never replaces
 one. The compiler is a pure function from text to either a Project (as deterministic YAML bytes) or a list of
 positioned diagnostics. It does not read files, schedule, or know about presentation, and it repeats no Core
 rule: Core validation is the only owner of Project meaning, and a plan the compiler accepts is validated by Core
@@ -32,10 +32,11 @@ binding and Actuals; this is a text syntax for the Project only. Neither normali
 ### 1.1 Scope rule
 
 A construct belongs in the grammar if and only if (1) it determines identity, hierarchy, dates or dependencies,
-or is the title of the thing it names; (2) its value is a scalar, a date, an amount or a short list, never a
+or is the title of the thing it names, or is a date the plan states about the thing it names (a deadline, which
+determines no placement); (2) its value is a scalar, a date, an amount or a short list, never a
 free-form map, prose or a reference to another top-level section; and (3) it has one unambiguous one-line
 spelling that maps to exactly one Project construct. Everything else (`fields`, `entities`, `annotations`,
-`scenarios`, `extensions`, `link`, `wbsCode`, `deadline`, `plannedProgress`, `attachesTo`, `fiscalStartMonth`,
+`scenarios`, `extensions`, `link`, `wbsCode`, `plannedProgress`, `attachesTo`, `fiscalStartMonth`,
 endpoints other than `start`/`at` on the successor, `mo`/`y` lags) stays in YAML.
 
 `chrona.terse.ledger.LEDGER` classifies every authorable property path of `schemas/project-v0.7.schema.yaml`
@@ -65,7 +66,7 @@ forces a decision; it does not force a construct.
 - **L8 Case.** Keywords are lower case and case-sensitive.
 - **L9 Reserved words.** `terse project calendar task gate group after from until in except work start end at`
   are never names (`E_TERSE_NAME_RESERVED`). The set is larger than version 0.1 needs so that later versions can
-  add forms without renaming anyone.
+  add forms without renaming anyone. `deadline` is deliberately not in the set: it is a contextual keyword (S10).
 
 ## 3. Grammar (terse 0.1)
 
@@ -83,7 +84,7 @@ days        = dayitem { "," dayitem } ;      (dayitem = DAY | DAY "-" DAY, e.g. 
 off         = "except" date { [ "," ] date } ;
 on          = "work"   date { [ "," ] date } ;
 
-object      = NAME [ STRING ] KIND [ schedule ] [ "calendar" CAL ] [ after ] ;
+object      = NAME [ STRING ] KIND [ schedule ] [ "calendar" CAL ] [ after ] [ deadline ] ;
 schedule    = DATE                           (fixed point)
             | DATE ".." DATE                 (fixed span, no spaces around "..", end exclusive)
             | AMOUNT [ anchor ] { bound }    (scheduled span)
@@ -93,6 +94,7 @@ anchor      = "from" DATE | "until" DATE ;
 bound       = ( "start" | "end" ) ( ">=" | "<=" ) DATE ;   (each of the four at most once)
 pointbound  = "at" ( ">=" | "<=" ) DATE ;                  (each of the two at most once)
 after       = "after" dep { "," dep } ;
+deadline    = "deadline" DATE ;                (the last clause of an object line, every kind; a promise, never a bound)
 dep         = REF [ LAG [ "in" CAL ] ] ;
 REF         = NAME [ "." ENDPOINT ] ;        (ENDPOINT = start | end | at)
 
@@ -149,6 +151,16 @@ DAY         : mon | tue | wed | thu | fri | sat | sun
 - **S9 References.** Names resolve over the whole file after it is read, so forward references are legal
   (`E_TERSE_REFERENCE_UNKNOWN` for a name defined nowhere). The compiler never computes a date, a cycle or a float.
   A cycle is `E_UNSUPPORTED_CYCLE`, reported by `validate` and `schedule`.
+- **S10 Deadline.** `deadline D` is the last clause of an object line, after `calendar` and `after`, on a task, a gate or a
+  group (a rollup is judged by its `end`). It is the Project's `deadline` (Spec 05 section 9): a promise the scheduler
+  never reads, so it moves no placement and changes no verdict, and `chrona schedule` lists a `W_DEADLINE` for an
+  object planned to finish after it (Spec 04 section 10). A second `deadline` is `E_TERSE_CLAUSE_DUPLICATE`, a missing
+  date `E_TERSE_LINE_INCOMPLETE`, a date that is not a calendar date `E_TERSE_DATE_INVALID`, a clause before `calendar`
+  or `after` `E_TERSE_TOKEN_UNEXPECTED`, and a `gate` or `task` with a deadline but no schedule
+  `E_TERSE_SCHEDULE_REQUIRED`. `deadline` is a **contextual keyword**, not a reserved word (L9): it is read only where an
+  object line can continue after its last clause, so an object may still be named `deadline` and a dependency may still
+  name it (`after deadline deadline 2027-09-01`). The grammar change is therefore additive: every plan that compiled before
+  compiles to the same Project, and `terse 0.1` stays.
 
 ### 3.3 Default endpoints
 
@@ -189,6 +201,7 @@ The successor endpoint is `start` for a span or `at` for a fixed or derived poin
 | `AMOUNT from D` / `until D` | `schedule.anchor: {start: D}` / `{end: D}` |
 | `start >= D`, `start <= D`, `end >= D`, `end <= D` | `schedule.constraints.start.min`, `.start.max`, `.end.min`, `.end.max` |
 | `calendar C` on an object | `objects.NAME.calendar: C` |
+| `deadline D` | `objects.NAME.deadline: D` (the last key of the object) |
 | `after X` (each comma item) | one `relations[]` entry `{id, type: dependency, from, to, lag}` |
 | `X`, `X.start`, `X.end`, `X.at` | `from: {object: X, endpoint: ...}` (section 3.3) |
 | the dependent object | `to: {object: NAME, endpoint: start or at}` |
@@ -199,10 +212,10 @@ The successor endpoint is `start` for a span or `at` for a fixed or derived poin
 Normalisations (the only implicit steps): **N1** single-calendar project default (S6); **N2** default endpoints
 (3.3); **N3** an omitted lag is `0d`; **N4** relation ids (section 5); **N5** document order for objects,
 calendars and relations; **N6** a leading `+` on a lag is dropped; **N7** a schedule-less `gate` with `after` is a
-`scheduled-point` (the kind selects the form, S3).
+`scheduled-point` (the kind selects the form, S3). The `deadline` clause adds no normalisation: its date is emitted verbatim (S10).
 
-The compiler emits no `entities`, `annotations`, `scenarios`, `extensions`, `fields`, `wbsCode`, `deadline`,
-`plannedProgress`, `attachesTo` or `link`, and never an empty section.
+The compiler emits no `entities`, `annotations`, `scenarios`, `extensions`, `fields`, `wbsCode`,
+`plannedProgress`, `attachesTo` or `link`, and never an empty section; it emits `deadline` only for a `deadline` clause.
 
 ## 5. Identity
 
@@ -280,7 +293,7 @@ capped at 50 (`E_TERSE_TOO_MANY_ERRORS` follows the 50th, positioned at the firs
 
 The compiler also returns a map from JSON pointer to the best source span: `/objects/NAME` to the name,
 `/objects/NAME/schedule` and `.../amount` to the schedule words (the kind word for a derived point without bounds, the
-`at` clauses when there are bounds, and `.../constraints/at/min` and `.../max` to their own clause), `/objects/NAME/calendar` to the clause,
+`at` clauses when there are bounds, and `.../constraints/at/min` and `.../max` to their own clause), `/objects/NAME/calendar` to the clause, `/objects/NAME/deadline` to the clause (the keyword and the date),
 `/calendars/C` to the calendar line, and `/relations/N`, `/relations/N/lag`, `/relations/N/from/object` to the
 dependency item and its parts. Relations are keyed both by index (what `validate_project` reports) and by id (what
 the scheduler reports for `E_FIXED_TARGET_VIOLATION`). A pointer without an entry falls back to its nearest
@@ -342,7 +355,7 @@ comment (`# generated by chrona compile (terse 0.1); once edited, this file is t
 The YAML is written by a hand-written emitter, not `yaml.safe_dump`, so the bytes cannot move with a PyYAML
 release. Format: LF only, UTF-8 without BOM, a final newline, two-space block mappings, one-line flow `schedule`,
 weekday list and relation entries, fixed key order (`version`, `project`, `calendars`, `objects`, `relations`;
-per object `type`, `title`, `parent`, `calendar`, `schedule`; per relation `id`, `type`, `from`, `to`, `lag`).
+per object `type`, `title`, `parent`, `calendar`, `schedule`, `deadline`; per relation `id`, `type`, `from`, `to`, `lag`).
 Dates are always single quoted. A scalar is plain only when it matches `[A-Za-z][A-Za-z0-9 _-]*` (no trailing
 space) and is not a YAML 1.1 special word (`y n yes no true false on off null`, any case), or is an amount or lag
 (`-?(0|[1-9][0-9]*)(d|w|wd)`) or the Project version; every other scalar is single quoted with `''` escaping and

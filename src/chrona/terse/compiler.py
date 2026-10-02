@@ -136,6 +136,9 @@ def _build(parsed: ParseResult) -> tuple[dict[str, Any], SourceMap]:
             entry["calendar"] = item.calendar.value
             smap[base + "/calendar"] = item.calendar_range or item.calendar.range
         entry["schedule"] = _schedule(item, base, smap)
+        if item.deadline is not None:  # #822: the date verbatim; Core validates it and `W_DEADLINE` judges it
+            entry["deadline"] = item.deadline.value
+            smap[base + "/deadline"] = item.deadline.range
         objects[item.name.value] = entry
     if objects:
         result["objects"] = objects

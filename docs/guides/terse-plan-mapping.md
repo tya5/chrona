@@ -151,6 +151,37 @@ relations:
   - {id: design-build, type: dependency, from: {object: design, endpoint: end}, to: {object: build, endpoint: start}, lag: 1wd}
 ```
 
+## A deadline
+
+`deadline DATE` is the last clause of an object line and becomes the object's `deadline`. It is a promise, never a bound: the compiler and the scheduler place everything as they would without it, `chrona schedule` lists a `W_DEADLINE` for an object planned to finish after it (here `a` ends 2027-03-08, three days after its deadline), and a View may draw the miss. The clause works on a task, a gate (derived or fixed) and a group; the word is not reserved, so an object may still be named `deadline`.
+
+<!-- chrona:doc-check expect-yaml: next -->
+```chrona
+project promise "A promise"
+a "Design" task 2027-03-01..2027-03-08 deadline 2027-03-05
+b "Review" gate after a +2d deadline 2027-03-12
+```
+
+```yaml
+version: timeline/v0.7
+project:
+  id: promise
+  title: A promise
+objects:
+  a:
+    type: task
+    title: Design
+    schedule: {mode: fixed-span, start: '2027-03-01', end: '2027-03-08'}
+    deadline: '2027-03-05'
+  b:
+    type: gate
+    title: Review
+    schedule: {mode: scheduled-point}
+    deadline: '2027-03-12'
+relations:
+  - {id: a-b, type: dependency, from: {object: a, endpoint: end}, to: {object: b, endpoint: at}, lag: 2d}
+```
+
 ## A rejected plan
 
 Every problem in a plan is reported at once, each with its source position and a hint, and nothing is written. The plan below is deliberately wrong (the doc-check expects `E_TERSE_KIND_UNKNOWN`); `chrona validate plan.chrona` prints this JSON and exits 1.
