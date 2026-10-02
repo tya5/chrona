@@ -1,7 +1,7 @@
 # Issue #813: MCP mutating tools (`check_command`, `apply_command`)
 
-**Status:** Design and architecture review (this revision). The implementation plan is added to this record by
-the next documentation PR, before any code.
+**Status:** Design, architecture review and implementation plan (this revision); code follows slice by slice, and this
+record is updated with the progress of each.
 **Public base:** `main` at `e4429030` (observed 2026-10-02); design on `e11fd97d`.
 **Issue:** [#813](https://github.com/tya5/chrona/issues/813), read with its owner comment of 2026-10-02 (the decision).
 **Living contract:** [Spec 66](../../specification/66-agent-interface.md) (changed with the code slices, not here).
@@ -137,8 +137,8 @@ the MCP tests confirmed on Windows and macOS.
 
 1. Baseline and design plan (published, PR #901).
 2. Design (section 3; published, PR #906), with the successor issue #902 and the decision record on the issue.
-3. Architecture review (section 4; this PR).
-4. Implementation plan (section 5).
+3. Architecture review (section 4; published, PR #910).
+4. Implementation plan (section 5; this PR).
 
 ## 3. Design
 
@@ -357,3 +357,31 @@ limits or checks for the code slices.
 
 Conclusion: no layer breach remains after R1 to R4. Residual risks are R7 (links, races) and the unverified
 cross-process behavior, both named in the acceptance review's disclosures.
+
+## 5. Implementation plan
+
+Slices land as separate small PRs, merged one at a time (the merge lock), each with `Refs #813` only. Gates for every
+code slice: focused tests, `python conformance/run_conformance.py` (which also checks the generated
+`docs/diagnostics/inventory.md` and `docs/guides/cli-reference.md`, regenerated with their tools, never by hand),
+`python tools/check_import_direction.py`, and the CI matrix; the Windows and macOS runs must execute the MCP tests (the
+extra is installed in the three-OS matrix).
+
+| Slice | Owner files | Change | Focused tests | Publication boundary |
+| --- | --- | --- | --- | --- |
+| S1 | `src/chrona/operational/store_commands.py` (new), `src/chrona/app/cli.py`, `tools/check_import_direction.py`, `tests/support/store_workspace.py` (new) | Move the dispatch of `command-check`, `command-apply`, `actual-intake`, `actual-resolve`, `baseline-capture` into `run_store_command`; add `open_store_reader(contained_in=)`; the CLI calls both. Add the `modules` entry for `chrona.operational.store_commands` to the rules of `chrona.app.agent_` (the reason is in the commit). No behavior change. | `tests/unit/chrona/operational/test_store_commands.py` (types, `allowed_types`, containment for absolute, `..`, the workspace itself and symlink roots, nothing written, byte equality with the command line); a test that the import rule accepts the facade and rejects `operational.command_engine` from `chrona.app.agent_*` and gives the binding no edge; the CLI characterization suite and `tests/cli` unchanged. | Behavior-preserving: CLI bytes identical. |
+| S2 | `src/chrona/app/agent_tools.py`, `agent_workspace.py` (`root`), `mcp_server.py` (`allow_write`, annotations from the registry, instructions), `cli.py` (`--allow-write`, help), Spec 66, Spec 10 section 9.1 note, `skills/chrona/SKILL.md` table and sentence, `docs/guides/agent-interface.md`, `README.md`, generated inventory and CLI reference | `ToolSpec.mutating`, `check_command` and `apply_command`, `call_tool(..., allow_write=False)`, the write gate and `E_MCP_WRITE_DISABLED`, messages for the integrity codes, `automationResult`, `TOOL_SET_VERSION` `v0.3`, the start option and its documentation. Every document that said "read-only" or "never writes" changes in this slice, so no merged state is false. | `tests/unit/chrona/app/test_agent_commands.py`: one test per row of the threat model (3.9), byte equality with `chrona command-apply --result` on a twin Store, write then revert through the Store, annotations, closed inputs; `tests/mcp/test_mcp_binding.py` (flag off and on, default off, registry annotations); `tests/cli/test_mcp_command.py` (`--allow-write` is a flag, default off); skill table (`EQUIVALENT_COMMANDS`). Mutation check: a script deletes or weakens each guard (write gate, annotations, type narrowing, both path guards, Store containment, the binding and CLI defaults, exclusive creation, the replay ledger, the tip check, the base-revision check); each must fail a named test; output pasted in the PR. | Writes become possible only with `--allow-write`; the default is unchanged. |
+| S3 | `tests/mcp/test_mcp_stdio_e2e.py` | The real server over stdio like the existing end-to-end test: flag off refuses and writes nothing; flag on applies an intake and a capture; replay is a no-op; a stale base is rejected; path escapes, a symlink and an outside Store root are refused; result bytes equal the command line's; the four read-only tools unchanged; the instructions say whether writes are on. | The new tests, run on Windows and macOS by the matrix. | Tests only. |
+| S4 | `docs/reviews/current/issue-813-mcp-mutating-tools-acceptance-review-2026-10-02.md` | Literal acceptance review on the model of the #142 review, from a fresh read of the issue body and every comment. | `tools/check_issue_acceptance_reviews.py`. | Then the exact-main three-OS run on the review commit decides closing. |
+
+Notes:
+
+- The scratch Store fixture (an Actual set with a tip, a Project, batches, a Store configuration inside a workspace, Command
+  Requests, a snapshot of every Store file) is one helper under `tests/support/`, reused by the core, binding and stdio
+  tests; the twin-Store comparison builds the fixture twice, because `apply` is stateful.
+- Windows: link tests skip only when the OS refuses to create a symlink (`OSError`/`NotImplementedError`), as the existing
+  symlink test does; path-escape tests use only strings and run everywhere.
+- No `CHANGELOG.md` entry: the file records no MCP change so far and is not a release record yet.
+- Out of this plan: [#902](https://github.com/tya5/chrona/issues/902) and [#812](https://github.com/tya5/chrona/issues/812).
+- Acceptance map (rows of 1.1): 1, 2, 9 by the S2 registry, binding and stdio tests; 3, 4, 5, 6 by the threat-model tests of
+  S2 and S3; 7 by the revert test; 8 by S2 and the guide; 10 by S2; 11 and 12 narrowed (#902; the Store path is the
+  workspace-contained configuration); 13 dropped by the owner.
