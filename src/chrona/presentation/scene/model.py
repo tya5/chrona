@@ -60,6 +60,7 @@ class ScenePaint:
     stroke_finish: "StrokeFinish | None" = None
     image: "ImageFill | None" = None
     glow: "Glow | None" = None
+    wobble: "StrokeWobble | None" = None
 
 
 @dataclass(frozen=True)
@@ -121,6 +122,24 @@ class Glow:
     opacity: float
     fidelity: str
     region: tuple[float, float, float, float]
+
+
+@dataclass(frozen=True)
+class StrokeWobble:
+    """A completed hand-wobble of a stroke's geometry (#588).
+
+    ``outline`` is the perturbed geometry, completed by Scene from Layout's geometry with the declared
+    ``amplitude``, ``wavelength`` and ``seed``: one closed polygon for a Rect, one open polyline per
+    sub-path for a Path, in final surface coordinates rounded to three decimals. The primitive's
+    bounds, points and commands stay the Layout values; adapters draw ``outline`` verbatim.
+    """
+
+    amplitude: float
+    wavelength: float
+    seed: int
+    fidelity: str
+    closed: bool = False
+    outline: tuple[tuple[tuple[float, float], ...], ...] = ()
 
 
 @dataclass(frozen=True)

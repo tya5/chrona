@@ -31,6 +31,9 @@ from chrona.presentation.scene.model import (
     requires_lane_member_provenance,
 )
 from chrona.presentation.scene.paint import PaintFamily, ScenePaintError, complete_icon_path_paints, resolve_scene_paint
+from chrona.presentation.scene.stroke_wobble import (
+    MAX_OUTLINE_POINTS, WobbleLimitError, complete_path_wobble, complete_rect_wobble,
+)
 from chrona.presentation.scene.visual_capabilities import VisualProfile
 
 
@@ -140,10 +143,12 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
                             group_tints: Mapping[str, str] | None = None,
                             annotation_kind_paints: Mapping[str, str] | None = None) -> SceneSurface:
     """Attach the sole adapter-ready paint payload to every completed primitive."""
+    clip_hosts = frozenset(item.clip_source_id for item in surface.primitives if item.clip_source_id)
     try:
         completed = tuple(_complete_primitive_paint(
             primitive, tokens, visual_profile, scale_target_role, scale_paints or {}, scale_legend_paints or {},
-            group_tints or {}, surface.canvas_bounds or (0.0, 0.0, *viewport), annotation_kind_paints or {})
+            group_tints or {}, surface.canvas_bounds or (0.0, 0.0, *viewport), annotation_kind_paints or {},
+            clip_hosts)
                            for primitive in surface.primitives)
         canvas = resolve_scene_paint(tokens, "background", PaintFamily.CANVAS,
                                      visual_profile=visual_profile,
@@ -178,12 +183,45 @@ def _visible_extent(primitive: ScenePrimitive) -> tuple[float, float, float, flo
     return (min(xs), min(ys), max(xs) - min(xs), max(ys) - min(ys))
 
 
+def _complete_wobble(primitive: ScenePrimitive, paint: ScenePaint, clip_host: bool) -> ScenePaint:
+    """Complete a declared hand-wobble into its outline, or drop it where it does not apply (#588).
+
+    It applies to a stroked Rect and to a Path. A Symbol, Text or Icon, a Rect that carries a
+    pattern or an image fill, a fill-only Rect and a clip host keep their exact geometry: a pattern
+    region, an image tile and a clip are defined to equal the rectangle.
+    """
+    wobble = paint.wobble
+    assert wobble is not None
+    if paint.stroke is None or paint.image is not None or clip_host:
+        return replace(paint, wobble=None)
+    try:
+        if primitive.kind == "Rect" and primitive.pattern is None:
+            outline = complete_rect_wobble(primitive.scene_id, primitive.bounds, primitive.corner_radius,
+                                           amplitude=wobble.amplitude, wavelength=wobble.wavelength,
+                                           seed=wobble.seed)
+            closed = True
+        elif primitive.kind == "Path" and (len(primitive.points) >= 2 or primitive.path_commands):
+            outline = complete_path_wobble(primitive.scene_id, primitive.path_commands, primitive.points,
+                                           amplitude=wobble.amplitude, wavelength=wobble.wavelength,
+                                           seed=wobble.seed)
+            closed = False
+        else:
+            return replace(paint, wobble=None)
+    except WobbleLimitError as error:
+        raise SceneBuildError("E_VISUAL_CAPABILITY_LIMIT",
+                              f"/body/roles/{primitive.visual_role}/wobbleWavelength",
+                              f"the wobbled outline of {primitive.scene_id} has {error} points, over "
+                              f"{MAX_OUTLINE_POINTS}") from error
+    return replace(paint, wobble=replace(wobble, closed=closed, outline=outline))
+
+
 def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView, visual_profile: VisualProfile | None,
                               scale_target_role: str | None, scale_paints: Mapping[str, str],
                               scale_legend_paints: Mapping[str, str],
                               group_tints: Mapping[str, str] = {},
                               canvas: tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0),
                               annotation_kind_paints: Mapping[str, str] = {},
+                              clip_hosts: frozenset[str] = frozenset(),
                               ) -> tuple[ScenePrimitive, tuple[PaintOmission, ...]]:
     family = _paint_family(primitive, tokens)
     paint_role = primitive.visual_role
@@ -227,6 +265,8 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
                      glyph_paint_mode=None, glyph_paint_color=None,
                      glyph_stroke_width=None, glyph_line_cap=None, glyph_line_join=None,
                      image_fill_pending=None)
+    if completed.wobble is not None:
+        result = replace(result, paint=_complete_wobble(result, completed, primitive.scene_id in clip_hosts))
     if result.kind == "Icon" and result.icon_kind == "vector":
         try:
             icon_paths = complete_icon_path_paints(completed, primitive.icon_path_geometry, primitive.visual_role)

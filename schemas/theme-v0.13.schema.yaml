@@ -284,6 +284,10 @@ properties:
             glowBlur: {description: "Named glow blur token (standard deviation in px, at most 64).", type: string, minLength: 1}
             glowOpacity: {description: "Named glow opacity token.", type: string, minLength: 1}
             glowFidelity: {description: "Named glow fidelity token.", type: string, minLength: 1}
+            wobbleAmplitude: {description: "Named hand-wobble amplitude token (px, in (0, 16]).", type: string, minLength: 1}
+            wobbleWavelength: {description: "Named hand-wobble wavelength token (px, in [4, 1000]).", type: string, minLength: 1}
+            wobbleSeed: {description: "Named hand-wobble seed token (an integer in [0, 2^32)).", type: string, minLength: 1}
+            wobbleFidelity: {description: "Named hand-wobble fidelity token.", type: string, minLength: 1}
             strokeFinishFidelity: {description: "Named stroke-finish fidelity token.", type: string, minLength: 1}
       colorBindings:
         type: object

@@ -19,6 +19,7 @@ The initial v0.6 vocabulary is closed:
 - `paint.linear-gradient` (exactly two ordered stops);
 - `effect.drop-shadow` (one layer, finite offsets, blur `0..64`, opacity `0..1`);
 - `effect.glow` (#587: one centred halo, blur `(0, 64]` as a standard deviation in px, opacity `0..1`);
+- `stroke.wobble` (#588: one deterministic perturbation of a stroke's geometry, section 8);
 - `stroke.line-cap` / `stroke.line-join` (closed values `butt|round|square` and
   `miter|round|bevel`).
 
@@ -57,15 +58,15 @@ IDs and limits; it is an immutable evaluation input. The valid identifiers are:
 | Profile | Target | Supported capability IDs |
 | --- | --- | --- |
 | `chrona-output/visual/v0.5-baseline` | SVG, PNG, PDF, Typst, TikZ | none |
-| `chrona-output/visual/v0.6-svg` | SVG | all initial v0.6 IDs and `effect.glow` |
-| `chrona-output/visual/v0.6-png` | PNG through pinned resvg | all initial v0.6 IDs and `effect.glow` |
+| `chrona-output/visual/v0.6-svg` | SVG | all initial v0.6 IDs, `effect.glow` and `stroke.wobble` |
+| `chrona-output/visual/v0.6-png` | PNG through pinned resvg | all initial v0.6 IDs, `effect.glow` and `stroke.wobble` |
 
 PDF, Typst, and TikZ have no v0.6 profile. PDF's current svglib/ReportLab route
 does not preserve the required drop-shadow; it must reject a rich profile before
 serialization rather than silently dropping treatment. A future PDF profile
 requires independent per-capability evidence and a new profile identifier.
 
-Each requested gradient, shadow, glow, and stroke finish independently declares either
+Each requested gradient, shadow, glow, wobble, and stroke finish independently declares either
 `required` or `decorative-optional`; it is not one role-wide value. A baseline
 profile permits deterministic omission only for an unsupported
 `decorative-optional` treatment.
@@ -151,3 +152,68 @@ over `region` (`filterUnits="userSpaceOnUse"`): the Gaussian-blurred alpha,
 flooded with the colour at the opacity, merged twice under the source graphic;
 PNG is that SVG through resvg. The drop-shadow filter is unchanged. A Scene that
 carries a glow is written as `chrona/scene/v0.7` (optional `paint.glow`).
+
+## 8. Hand wobble (#588)
+
+A Theme role whose completed primitive is a Rect or a Path admits four properties:
+`wobbleAmplitude` (px, `0 < amplitude <= 16`), `wobbleWavelength` (px,
+`4 <= wavelength <= 1000`), `wobbleSeed` (an integer, `0 <= seed < 2^32`) and
+`wobbleFidelity` (`required` or `decorative-optional`). The first three are declared
+together or not at all (`E_VISUAL_CAPABILITY_VALUE` at `wobbleAmplitude`); out-of-range
+values are `E_VISUAL_CAPABILITY_LIMIT` at the property; the canvas, text, Icon-shared and
+`canvas-texture` roles do not admit them. It applies to **a Rect that has a stroke** (the
+fill and the stroke both follow one closed perturbed outline) and **a Path** (each
+sub-path); a Symbol, Text or Icon, a fill-only Rect, a Rect with a pattern or an image
+fill, and a clip host keep their exact geometry, because a pattern region, an image tile
+and a clip are defined to equal the rectangle.
+
+Scene completes `StrokeWobble(amplitude, wavelength, seed, fidelity, closed, outline)`
+from the primitive's Layout geometry; adapters draw `outline` verbatim and never
+perturb. The primitive's `bounds`, `points` and path commands stay the Layout values, so
+placement, collision, hosting, label fitting, contrast grounds and perceptibility are
+the same with and without the treatment. The ink of a wobbled primitive lies within the
+effective amplitude of the nominal outline, so its extent is the bounds grown by at most
+that amplitude plus half the stroke width; a glow region is computed from the nominal
+extent.
+
+**The algorithm is normative and platform independent.**
+
+1. *Nominal outline.* A Rect is its clockwise outline from the top-left (a corner
+   radius is flattened to the quadratic Bezier whose control point is the sharp corner,
+   evaluated at `t = 0.25, 0.5, 0.75`, `1`); a Path is each sub-path, each quadratic
+   flattened the same way in four steps; consecutive equal points are dropped.
+2. *Cells.* With `P` the outline's length, `n = floor(P / wavelength + 0.5)` (at least 2
+   for a closed outline, 1 for an open one) and the realised wavelength `P / n`. Each
+   edge is split into `max(1, ceil(length / (P / n / 4)))` equal parts, every nominal
+   vertex kept. More than 8192 points is `E_VISUAL_CAPABILITY_LIMIT` at
+   `wobbleWavelength`.
+3. *Generator.* `mix(x)` is the splitmix64 finalizer of `x` modulo `2^64`. The stream of
+   one outline is `mix(mix(seed) XOR fnv1a64(utf8(scene id)) XOR (sub-path index << 56))`,
+   where `fnv1a64` is the 64-bit FNV-1a hash. Lattice point `k` has the value
+   `(mix(stream XOR (k * 0xD1B54A32D192ED03 mod 2^64)) >> 11) / 2^53 * 2 - 1`, an exact
+   double in `[-1, 1)`. The seed therefore selects a family of lines and each primitive
+   draws its own member of it, stably.
+4. *Noise.* At arc length `s` the position is `u = s * n / P`, `k = floor(u)`,
+   `t = u - k`, `w = t * t * (3 - 2t)`, and the noise is `L(k) + (L(k + 1) - L(k)) * w`
+   (the index wraps modulo `n` for a closed outline, so it closes without a seam).
+5. *Displacement.* Each vertex moves along its unit normal (the normalised sum of the
+   adjacent unit segment normals, the segment normal at an open end, `(dy, -dx)` of a
+   clockwise outline, so outward) by `amplitude * noise * envelope`. The envelope is 1 for
+   a closed outline and `min(1, s / realised, (P - s) / realised)` for an open one, so both
+   end points and a marker keep their place. A Rect's amplitude is limited to a quarter of
+   its shorter side.
+6. *Arithmetic.* Only `+ - * /`, `sqrt`, `floor`, `ceil` and integer arithmetic; no
+   `sin`, `cos`, `pow`, `exp`, `hypot`, `random`, hash or iteration-order dependence.
+   Coordinates are rounded with `round(value, 3)`, and SVG writes them with three decimals.
+
+`stroke.wobble` is in the rich profiles (`v0.6-svg`, `v0.6-png`, `v0.7-svg`, `v0.7-png`)
+and not in the baseline: a `decorative-optional` wobble is omitted there with
+`I_VISUAL_TREATMENT_OMITTED:...;treatment=wobble;...;paintable=<first rich profile of the
+target>` and the primitive is drawn straight; a `required` wobble is
+`E_VISUAL_CAPABILITY_UNSUPPORTED` at `/body/roles/<role>/wobbleAmplitude`. The Typst and
+TikZ adapters refuse a Scene that carries a `required` wobble (as they refuse a pattern)
+and draw an optional one straight. SVG draws a wobbled Rect as one closed `<path>` carrying
+the Rect's fill, stroke and filter attributes, and a wobbled Path as one `<path>` of
+`M...L...` sub-paths with its markers; PNG is that SVG through resvg, so the two share
+every coordinate. A Scene that carries a wobble is written as `chrona/scene/v0.7`
+(optional `paint.wobble`).

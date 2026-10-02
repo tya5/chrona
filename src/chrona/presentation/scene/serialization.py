@@ -34,12 +34,13 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
     """Map each public Scene field explicitly; no dataclass reflection is used."""
     has_catalog_pattern = any(primitive.pattern is not None and primitive.pattern.primitives
                               for surface in scene.surfaces for primitive in surface.primitives)
-    has_glow = any(primitive.paint is not None and primitive.paint.glow is not None
+    has_v07_paint = any(primitive.paint is not None and (primitive.paint.glow is not None
+                                                    or primitive.paint.wobble is not None)
                    for surface in scene.surfaces for primitive in surface.primitives)
     has_tilt = any(primitive.text_layout is not None and primitive.text_layout.orientation == "tilt"
                    for surface in scene.surfaces for primitive in surface.primitives)
     return {
-        "version": "chrona/scene/v0.7" if has_catalog_pattern or has_glow or has_tilt else "chrona/scene/v0.6",
+        "version": "chrona/scene/v0.7" if has_catalog_pattern or has_v07_paint or has_tilt else "chrona/scene/v0.6",
         "kind": "scene",
         "provenance": {
             "mode": scene.provenance.mode,
@@ -416,6 +417,7 @@ def _paint(value: ScenePaint) -> dict[str, Any]:
                     "gradient": _gradient(value.gradient) if value.gradient is not None else None,
                     "shadow": _shadow(value.shadow) if value.shadow is not None else None,
                     "glow": _glow(value.glow) if value.glow is not None else None,
+                    "wobble": _wobble(value.wobble) if value.wobble is not None else None,
                     "strokeFinish": _finish(value.stroke_finish) if value.stroke_finish is not None else None,
                     "image": _image(value.image) if value.image is not None else None})
     return result
@@ -443,6 +445,12 @@ def _shadow(value: Any) -> dict[str, Any]:
 def _glow(value: Any) -> dict[str, Any]:
     return {"color": value.color, "blur": value.blur, "opacity": value.opacity,
             "fidelity": value.fidelity, "region": _bounds(value.region)}
+
+
+def _wobble(value: Any) -> dict[str, Any]:
+    return {"amplitude": value.amplitude, "wavelength": value.wavelength, "seed": value.seed,
+            "fidelity": value.fidelity, "closed": value.closed,
+            "outline": [[[px, py] for px, py in polyline] for polyline in value.outline]}
 
 
 def _finish(value: StrokeFinish) -> dict[str, Any]:

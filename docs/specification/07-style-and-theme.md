@@ -222,6 +222,13 @@ also admits `glowColor` (a Scheme binding), `glowBlur`, `glowOpacity` and
 `glowFidelity`; the rules, limits, the shadow conflict and the profile ladder are
 in Specification 63 section 7.
 
+**Hand wobble (#588).** A role whose completed primitive is a Rect or a Path also admits
+`wobbleAmplitude`, `wobbleWavelength`, `wobbleSeed` and `wobbleFidelity`: a deterministic
+perturbation of a stroke that changes no bound. It reaches a stroked Rect and a Path, not a
+Symbol, Text, Icon, patterned or image-filled Rect, or clip host. The properties are added
+in place to the live Theme schemas (Spec 56 section 3.2); the algorithm, limits and the
+profile ladder are in Specification 63 section 8.
+
 **Canvas texture (#587).** The Theme role `canvas-texture` paints one catalogue
 pattern over the whole completed canvas, below every other primitive. It admits
 exactly `pattern` (a `{kind: catalog, ref}` token; an inline pattern kind is
