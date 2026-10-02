@@ -390,6 +390,15 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         emit_layout_text(scene_id, binding.purpose, role or binding.scene_role, href, link_title,
                          table_row_id, table_column_id)
 
+    # The canvas texture is ground: it is the first primitive, below every paint order.
+    for placed in placed_surface.shapes:
+        if placed.semantic_id == "canvasTexture":
+            texture = semantic_binding("canvasTexture")
+            primitives.append(ScenePrimitive(
+                placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "decoration", texture.purpose,
+                texture.scene_role, (float(placed.bounds.inline), float(placed.bounds.block),
+                                     float(placed.bounds.inline_size), float(placed.bounds.block_size)),
+                slot_id=placed.slot_id, paint_order=placed.paint_order))
     emit_semantic_text("title", "titleText")
     for column in value.surface_content.table_columns:
         emit_semantic_text(f"column:{column.column_id}", "tableColumnLabel", table_column_id=column.column_id)
@@ -808,6 +817,20 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
                             item.priority or "required", item.overflow or "visible-overflow")
                   for item in decisions)
     primitives: list[ScenePrimitive] = []
+    texture_slot: dict[str, str] = {}
+    if placed.texture is not None:
+        # Ground first, as on the table-timeline surface: below every paint order.
+        shape, slot, texture = placed.texture.shape, placed.texture.slot, semantic_binding("canvasTexture")
+        slots += (SceneSlot(slot.slot_id, slot.source_ref, None,
+                            (float(slot.bounds.inline), float(slot.bounds.block),
+                             float(slot.bounds.inline_size), float(slot.bounds.block_size)),
+                            slot.priority, slot.overflow),)
+        primitives.append(ScenePrimitive(
+            shape.placement_id, PrimitiveKind.RECT, shape.source_ref, "decoration", texture.purpose,
+            texture.scene_role, (float(shape.bounds.inline), float(shape.bounds.block),
+                                 float(shape.bounds.inline_size), float(shape.bounds.block_size)),
+            paint_order=shape.paint_order))
+        texture_slot[shape.placement_id] = shape.slot_id
     title_binding = semantic_binding("titleText")
     node_binding = semantic_binding("networkNode")
     edge_bindings = {"dependency": semantic_binding("networkEdge"),
@@ -845,6 +868,7 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
     ownership.update({item.relation_id: item.slot_id for item in placed.relations})
     ownership.update({f"network-node:{item.object_id}": item.slot_id for item in placed.nodes})
     ownership.update({f"network-edge:{item.relation_id}": item.slot_id for item in placed.relations})
+    ownership.update(texture_slot)
     try:
         completed_primitives = tuple(replace(item, slot_id=ownership[item.scene_id]) for item in primitives)
     except KeyError as error:

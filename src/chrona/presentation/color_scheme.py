@@ -129,6 +129,25 @@ def _annotation_note_ground(*, declared_roles: Mapping[str, Any], resolved_roles
         raise ColorSchemeError("E_SCHEME_ANNOTATION_NOTE_GROUND", f"/body/roles/{role}/opacity")
 
 
+def _canvas_texture(*, roles: Mapping[str, Any], values: Mapping[str, Any]) -> None:
+    """Require the canvas texture role to name a catalogue pattern (#587).
+
+    Fill (substrate) and stroke (ink) are checked with the other catalogue-pattern
+    paint by resource closure. An inline pattern has no tile, so it cannot be a texture.
+    """
+    binding = roles.get("canvas-texture")
+    if not isinstance(binding, Mapping):
+        return
+    token_id = binding.get("pattern")
+    pointer = "/body/roles/canvas-texture/pattern"
+    if not isinstance(token_id, str):
+        raise ColorSchemeError("E_THEME_ROLE_REQUIRED", pointer)
+    token = values.get(token_id)
+    value = token.get("value") if isinstance(token, Mapping) else None
+    if not isinstance(value, Mapping) or value.get("kind") != "catalog":
+        raise ColorSchemeError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", pointer)
+
+
 def resolve_color_scheme(scheme: Mapping[str, Any], *, content_identity: str) -> dict[str, str]:
     body = scheme.get("body", {})
     colors = body.get("colors") if isinstance(body, Mapping) else None
@@ -182,6 +201,7 @@ def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme
                          values=values, surface=colors["surface"])
     _annotation_note_ground(declared_roles=body.get("roles", {}), resolved_roles=roles,
                             values=values, color_bindings=body["colorBindings"])
+    _canvas_texture(roles=roles, values=values)
     inside_roles = set(_INSIDE_LABEL_HOSTS)
     if inside_roles & set(roles):
         for label_role, host_role in _INSIDE_LABEL_HOSTS.items():

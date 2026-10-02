@@ -20,6 +20,7 @@ from chrona.presentation.layout.surface_quality import (
     MarkPlacement, PlacementDecision, RelationPlacement, RowPlacement, ScalePlacement, ShapePlacement,
     SlotPlacement, SurfaceLayoutRequest, SurfacePlacement, TextPlacement,
 )
+from chrona.presentation.layout.canvas_texture import complete_canvas_texture
 from chrona.presentation.layout.surface_visuals import place_axis_band_visuals
 from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids
@@ -331,6 +332,12 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
     # Scene primitive ID completed by this typed lane-emission closure.
     completed_text = complete_hosted_text_identity(tuple(text), tuple(marks), lane_emissions)
     patterns = complete_catalog_patterns(tuple(marks), tuple(shapes), request.theme_tokens)
+    # The canvas texture is ground: completed over the final canvas; Scene emits it first.
+    texture = complete_canvas_texture(request.theme_tokens, canvas)
+    if texture is not None:
+        shapes = [texture.shape, *shapes]
+        patterns = (texture.pattern, *patterns)
+        slots = (*slots, texture.slot)
     placement = SurfacePlacement(text=completed_text, slots=slots, rows=rows, columns=column_placements,
                                  groups=tuple(groups), scale=scale,
                                  marks=tuple(marks), shapes=tuple(shapes), relations=tuple(relations),

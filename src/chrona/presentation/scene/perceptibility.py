@@ -111,6 +111,7 @@ class _Primitive:
     host_placement_id: str | None
     paint: Mapping[str, Any] | None
     pattern: Mapping[str, Any] | None
+    visual_role: str | None = None
 
 
 @dataclass(frozen=True)
@@ -149,7 +150,8 @@ def _primitives(raw_primitives: Any, scene_path: str) -> tuple[_Primitive, ...]:
         _require(pattern is None or isinstance(pattern, Mapping), f"invalid pattern for {primitive_id}")
         primitives.append(_Primitive(index, primitive_id, kind, slot_id,
                                      _rect(primitive.get("bounds"), f"{scene_path}.primitives[{index}].bounds"),
-                                     paint_order, host, paint, pattern))
+                                     paint_order, host, paint, pattern,
+                                     primitive.get("visualRole") if isinstance(primitive.get("visualRole"), str) else None))
     return tuple(primitives)
 
 
@@ -258,10 +260,17 @@ def _paint_findings(scene_path: str, surface: Mapping[str, Any], primitives: Seq
     ground_opacity = _opacity(canvas)
     if ground_opacity != 1.0:
         return findings
+    # A canvas texture covers the canvas, so what lies on it lies on its substrate or on its ink.
+    texture = next((item for item in primitives if item.visual_role == "canvas-texture"
+                    and isinstance(item.paint, Mapping) and is_hex_color(item.paint.get("fill"))
+                    and is_hex_color(item.paint.get("stroke"))), None)
     for item in primitives:
         if not item.bounds.positive_area or not isinstance(item.paint, Mapping) or not is_hex_color(item.paint.get("fill")):
             continue
-        ratio = composited_contrast(fill=str(item.paint["fill"]), opacity=_opacity(item.paint), ground=str(canvas["fill"]))
+        grounds = ((str(texture.paint["fill"]), str(texture.paint["stroke"]))
+                   if texture is not None and item is not texture else (str(canvas["fill"]),))
+        ratio = min(composited_contrast(fill=str(item.paint["fill"]), opacity=_opacity(item.paint), ground=ground)
+                    for ground in grounds)
         findings.append(_finding("I_SCENE_PAINT_CONTRAST", "info", scene_path, (item.primitive_id,), item.slot_id,
                                  (("contrastRatio", ratio),), None))
     return findings
