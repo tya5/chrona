@@ -4,32 +4,33 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 
 | Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| actual | `actual` | required | 3.000 | 30 | 205 | 3.204 | 7.708 | 0 |
+| actual | `actual` | required | 3.000 | 31 | 209 | 3.204 | 7.708 | 0 |
 | annotation-box | `annotation-note-box` | enabled | 1.100 | 6 | 16 | 1.435 | 1.435 | 0 |
-| annotation-kind-accent | `annotation-kind-accent` | enabled | 1.100 | 1 | 3 | 5.765 | 6.499 | 0 |
-| annotation-kind-bar | `annotation-kind-bar` | enabled | 1.100 | 1 | 3 | 5.765 | 6.499 | 0 |
-| annotation-kind-label | `annotation-kind-label` | required | 4.500 | 1 | 3 | 6.747 | 7.607 | 0 |
-| annotation-kind-secondary | `annotation-kind-secondary` | required | 4.500 | 1 | 3 | 6.747 | 7.607 | 0 |
+| annotation-kind-accent | `annotation-kind-accent` | enabled | 1.100 | 2 | 5 | 5.765 | 6.499 | 0 |
+| annotation-kind-bar | `annotation-kind-bar` | enabled | 1.100 | 2 | 5 | 5.765 | 6.499 | 0 |
+| annotation-kind-label | `annotation-kind-label` | required | 4.500 | 2 | 5 | 6.747 | 7.583 | 0 |
+| annotation-kind-secondary | `annotation-kind-secondary` | required | 4.500 | 2 | 5 | 6.747 | 7.583 | 0 |
+| annotation-kind-stamp | `annotation-kind-stamp` | enabled | 1.100 | 1 | 16 | 6.833 | 6.833 | 0 |
 | annotation-text | `annotation-note-text` | required | 4.500 | 6 | 16 | 13.973 | 13.973 | 0 |
-| axis-band | `axis-band-decoration` | enabled | 1.100 | 32 | 90 | 1.292 | 1.773 | 0 |
+| axis-band | `axis-band-decoration` | enabled | 1.100 | 33 | 92 | 1.292 | 1.773 | 0 |
 | axis-band | `axis-band-decoration2` | enabled | 1.100 | 4 | 32 | 1.119 | 1.154 | 0 |
-| calendar-closed | `calendar-closed` | enabled | 1.100 | 32 | 1204 | 1.370 | 1.414 | 0 |
+| calendar-closed | `calendar-closed` | enabled | 1.100 | 33 | 1252 | 1.370 | 1.414 | 0 |
 | finish-delta | `variance-ahead` | deemphasized | 3.000 | 2 | 6 | 7.708 | 7.708 | 0 |
-| finish-delta | `variance-behind` | required | 4.500 | 19 | 44 | 4.562 | 5.571 | 0 |
+| finish-delta | `variance-behind` | required | 4.500 | 20 | 46 | 4.562 | 5.571 | 0 |
 | finish-delta | `variance-on-track` | required | 4.500 | 3 | 8 | 5.692 | 5.692 | 0 |
-| group-decoration | `group-band` | absent | 1.100 | 2 | 0 | — | — | 0 |
+| group-decoration | `group-band` | absent | 1.100 | 3 | 0 | — | — | 0 |
 | group-decoration | `group-band` | enabled | 1.100 | 29 | 81 | 1.116 | 1.129 | 0 |
-| group-header-band | `group-header-band` | absent | 1.100 | 2 | 0 | — | — | 0 |
-| legend-swatch | `actual` | required | 3.000 | 23 | 23 | 6.442 | 16.268 | 0 |
+| group-header-band | `group-header-band` | absent | 1.100 | 3 | 0 | — | — | 0 |
+| legend-swatch | `actual` | required | 3.000 | 24 | 24 | 6.442 | 16.268 | 0 |
 | legend-swatch | `calendar-closed` | enabled | 1.100 | 3 | 3 | 1.460 | 1.460 | 0 |
-| legend-swatch | `planned` | required | 3.000 | 24 | 51 | 5.284 | 16.354 | 0 |
-| missingActual | `missing-actual` | required | 3.000 | 21 | 27 | 4.436 | 14.573 | 0 |
+| legend-swatch | `planned` | required | 3.000 | 25 | 52 | 5.284 | 16.354 | 0 |
+| missingActual | `missing-actual` | required | 3.000 | 22 | 28 | 4.436 | 14.505 | 0 |
 | network-node | `network-node` | required | 3.000 | 2 | 32 | 16.354 | 17.050 | 0 |
 | period-band | `period-band` | enabled | 1.100 | 3 | 3 | 6.157 | 6.157 | 0 |
 | period-label | `period-label` | required | 4.500 | 3 | 3 | 13.973 | 13.973 | 0 |
-| planned | `planned` | required | 3.000 | 32 | 426 | 5.284 | 13.238 | 0 |
-| progress-fill | `progress-fill` | required | 3.000 | 20 | 65 | 3.216 | 4.789 | 0 |
-| row-decoration | `row-band` | absent | 1.100 | 2 | 0 | — | — | 0 |
+| planned | `planned` | required | 3.000 | 33 | 434 | 5.284 | 13.238 | 0 |
+| progress-fill | `progress-fill` | required | 3.000 | 21 | 68 | 3.216 | 4.789 | 0 |
+| row-decoration | `row-band` | absent | 1.100 | 3 | 0 | — | — | 0 |
 | row-decoration | `row-band` | enabled | 1.100 | 8 | 32 | 1.116 | 1.116 | 0 |
 | snapshot | `snapshot` | required | 3.000 | 2 | 10 | 13.238 | 14.512 | 0 |
 | summary-bar | `summary-bar` | required | 3.000 | 2 | 2 | 5.817 | 6.712 | 0 |
@@ -138,6 +139,100 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/aster-ssd/generated/overview.scene.json` | `row-band:fw-freeze` | `row-band` | 253.200, 216.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
 | `examples/aster-ssd/generated/overview.scene.json` | `row-band:perf-exit` | `row-band` | 253.200, 296.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
 | `examples/aster-ssd/generated/overview.scene.json` | `row-band:pilot` | `row-band` | 253.200, 376.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `actual:evb-arrival:evb-arrival` | `actual` | 1062.112, 408.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 6.442 | 3.000 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `actual:firmware:firmware` | `actual` | 602.048, 244.800 | `planned:firmware:firmware` | flat | `#FF7A1A` | stroke | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `actual:performance:performance` | `actual` | 1110.907, 480.800 | `planned:performance:performance` | flat | `#FF7A1A` | stroke | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `actual:silicon-bringup:silicon-bringup` | `actual` | 1069.083, 316.800 | `planned:silicon-bringup:silicon-bringup` | flat | `#FF7A1A` | stroke | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-accent:evb-note` | `annotation-kind-accent` | 987.790, 556.900 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-accent:pvt-note` | `annotation-kind-accent` | 1418.884, 527.800 | `annotation-box:pvt-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-bar:evb-note` | `annotation-kind-bar` | 1039.605, 527.500 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-bar:pvt-note` | `annotation-kind-bar` | 1470.692, 478.800 | `annotation-box:pvt-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-text:evb-note:0` | `annotation-kind-label` | 1032.988, 521.500 | `annotation-kind-bar:evb-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-text:pvt-note:0` | `annotation-kind-label` | 1464.082, 472.800 | `annotation-kind-bar:pvt-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-text:evb-note:1` | `annotation-kind-secondary` | 1034.560, 536.500 | `annotation-kind-bar:evb-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-text:pvt-note:1` | `annotation-kind-secondary` | 1465.654, 487.800 | `annotation-kind-bar:pvt-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part0` | `annotation-kind-stamp` | 1095.920, 518.500 | `annotation-box:evb-note` | flat | `#18171C` | stroke | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part1` | `annotation-kind-stamp` | 1120.420, 518.500 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part2` | `annotation-kind-stamp` | 1120.420, 518.500 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part3` | `annotation-kind-stamp` | 1120.420, 518.500 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part4` | `annotation-kind-stamp` | 1120.420, 518.500 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part5` | `annotation-kind-stamp` | 1120.420, 518.500 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part6` | `annotation-kind-stamp` | 1120.420, 518.500 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part7` | `annotation-kind-stamp` | 1120.420, 518.500 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:pvt-note:part0` | `annotation-kind-stamp` | 1527.000, 469.800 | `annotation-box:pvt-note` | flat | `#18171C` | stroke | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:pvt-note:part1` | `annotation-kind-stamp` | 1551.500, 469.800 | `annotation-box:pvt-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:pvt-note:part2` | `annotation-kind-stamp` | 1551.500, 469.800 | `annotation-box:pvt-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:pvt-note:part3` | `annotation-kind-stamp` | 1551.500, 469.800 | `annotation-box:pvt-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:pvt-note:part4` | `annotation-kind-stamp` | 1551.500, 469.800 | `annotation-box:pvt-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:pvt-note:part5` | `annotation-kind-stamp` | 1551.500, 469.800 | `annotation-box:pvt-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:pvt-note:part6` | `annotation-kind-stamp` | 1551.500, 469.800 | `annotation-box:pvt-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:pvt-note:part7` | `annotation-kind-stamp` | 1551.500, 469.800 | `annotation-box:pvt-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 718.035, 92.800 | `canvas-texture` | flat | `#0A0A0C` | fill | 1.292 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `axis-band-rect:0:1` | `axis-band-decoration` | 1252.835, 92.800 | `canvas-texture` | flat | `#0A0A0C` | fill | 1.292 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-02-01` | `calendar-closed` | 506.400, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-02-07` | `calendar-closed` | 560.224, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-02-08` | `calendar-closed` | 567.195, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-02-11` | `calendar-closed` | 588.107, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-02-14` | `calendar-closed` | 609.019, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-02-15` | `calendar-closed` | 615.989, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-02-21` | `calendar-closed` | 657.813, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-02-22` | `calendar-closed` | 664.784, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-02-28` | `calendar-closed` | 706.608, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-03-01` | `calendar-closed` | 713.579, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-03-07` | `calendar-closed` | 755.403, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-03-08` | `calendar-closed` | 762.373, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-03-14` | `calendar-closed` | 804.197, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-03-15` | `calendar-closed` | 811.168, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-03-21` | `calendar-closed` | 852.992, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-03-22` | `calendar-closed` | 859.963, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-03-28` | `calendar-closed` | 901.787, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-03-29` | `calendar-closed` | 908.757, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-04-04` | `calendar-closed` | 950.581, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-04-05` | `calendar-closed` | 957.552, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-04-11` | `calendar-closed` | 999.376, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-04-12` | `calendar-closed` | 1006.347, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-04-18` | `calendar-closed` | 1048.171, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-04-19` | `calendar-closed` | 1055.141, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-04-25` | `calendar-closed` | 1096.965, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-04-26` | `calendar-closed` | 1103.936, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-04-29` | `calendar-closed` | 1124.848, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-05-02` | `calendar-closed` | 1145.760, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-05-03` | `calendar-closed` | 1152.731, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-05-04` | `calendar-closed` | 1159.701, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-05-05` | `calendar-closed` | 1166.672, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-05-06` | `calendar-closed` | 1173.643, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-05-09` | `calendar-closed` | 1194.555, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-05-10` | `calendar-closed` | 1201.525, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-05-16` | `calendar-closed` | 1243.349, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-05-17` | `calendar-closed` | 1250.320, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-05-23` | `calendar-closed` | 1292.144, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-05-24` | `calendar-closed` | 1299.115, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-05-30` | `calendar-closed` | 1340.939, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-05-31` | `calendar-closed` | 1347.909, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-06-06` | `calendar-closed` | 1389.733, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-06-07` | `calendar-closed` | 1396.704, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-06-13` | `calendar-closed` | 1438.528, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-06-14` | `calendar-closed` | 1445.499, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-06-20` | `calendar-closed` | 1487.323, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-06-21` | `calendar-closed` | 1494.293, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-06-27` | `calendar-closed` | 1536.117, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `calendar-closed:2026-06-28` | `calendar-closed` | 1543.088, 434.800 | `canvas-texture` | flat | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `variance:firmware:firmware` | `variance-behind` | 1036.101, 244.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 7.812 | 4.500 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `variance:silicon-bringup:silicon-bringup` | `variance-behind` | 1142.275, 345.300 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 7.812 | 4.500 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `legend-swatch:actual` | `actual` | 940.138, 821.338 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 6.442 | 3.000 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `legend-swatch:planned` | `planned` | 940.138, 796.138 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 5.284 | 3.000 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `missing-actual:architecture:architecture` | `missing-actual` | 602.048, 172.800 | `canvas-texture` | texture-ink | `#2F2B38` | stroke | 11.935 | 3.000 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `planned:architecture:architecture` | `planned` | 563.709, 172.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 5.284 | 3.000 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `planned:dvt:dvt` | `planned` | 1288.659, 552.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 5.284 | 3.000 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `planned:evb-arrival:evb-arrival` | `planned` | 1041.200, 408.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 5.284 | 3.000 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `planned:firmware:firmware` | `planned` | 797.227, 244.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 5.284 | 3.000 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `planned:ga:ga` | `planned` | 1557.029, 716.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 5.284 | 3.000 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `planned:performance:performance` | `planned` | 1100.451, 480.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 5.284 | 3.000 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `planned:pvt:pvt` | `planned` | 1368.821, 644.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 5.284 | 3.000 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1124.848, 316.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 5.284 | 3.000 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 811.168, 244.800 | `actual:firmware:firmware` | flat | `#39C97B` | fill | 9.245 | 3.000 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1142.972, 480.800 | `actual:performance:performance` | flat | `#39C97B` | fill | 9.245 | 3.000 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1142.275, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#39C97B` | fill | 9.245 | 3.000 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `actual:evb-arrival:evb-arrival` | `actual` | 1054.912, 408.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `actual:firmware:firmware` | `actual` | 602.048, 244.800 | `planned:firmware:firmware` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `actual:performance:performance` | `actual` | 1110.907, 480.800 | `planned:performance:performance` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
@@ -2492,4 +2587,4 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 Every non-exclusive decoration role is enabled in committed Scene evidence; group-band or group-header-band supplies the group concept when there are no corpus errors.
 
 
-Findings: 2450; errors: 0.
+Findings: 2547; errors: 0.
