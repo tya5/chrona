@@ -1,9 +1,9 @@
 # Issue #812: MCP Store read tools (`render_review`, `compare_baseline`)
 
 **Status:** Design pack (baseline, design plan, design, architecture review, implementation plan) published in one PR
-([#932](https://github.com/tya5/chrona/pull/932)) before any code, as the owner asked for fewer, larger units. S1 is
-[#935](https://github.com/tya5/chrona/pull/935); S2 (the tools and documents) follows; S3 (stdio tests and the acceptance
-review) closes the issue.
+([#932](https://github.com/tya5/chrona/pull/932)) before any code, as the owner asked for fewer, larger units. Implemented:
+S1 [#935](https://github.com/tya5/chrona/pull/935), S2 [#940](https://github.com/tya5/chrona/pull/940); S3 (real-stdio tests
+and the [acceptance review](../../reviews/current/issue-812-mcp-store-read-tools-acceptance-review-2026-10-02.md)) in one PR.
 **Public base:** `main` at `339d87d4` (observed 2026-10-02); design on `7c207760`.
 **Issue:** [#812](https://github.com/tya5/chrona/issues/812), read with its owner comment of 2026-10-01 (teach the
 pinned-evidence path in the skill).
