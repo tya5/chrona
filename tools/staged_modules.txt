@@ -1,2 +1,3 @@
 # Unreachable in-flight modules are listed here with their owner and reason.
 # Empty: the retired #467 geometry-first modules were removed under #505.
+chrona.core.figures  # I586-1: the Core derivation; I586-2 wires it into the render use case, then remove this line
