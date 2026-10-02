@@ -269,6 +269,13 @@ Authorization, approvals, and policy enforcement are application concerns, but a
 
 ### 9.1 AI proposal and authorization exchange
 
+**Scope and implementation status.** This exchange is specified for a deployment that has an authenticated principal
+and an authorization policy (the Collaboration Coordinator of Specification 09 section 10). No runtime implements it.
+The local `chrona` command line and the MCP tool `apply_command` ([Spec 66](66-agent-interface.md) section 2.1) apply a
+validated, revision-bound command without it, by owner decision (#813): validation, compare-and-set on the base
+revision and the replay ledger are unchanged, and the tool description says that no approval step exists. A deployment
+that needs authorization places it at its own boundary, in front of those tools.
+
 An AI client submits `chrona/ai-command-proposal/v0.1`, not a source rewrite. Its
 `proposedCommand` MUST validate against the closed Command registry and preserves the
 original `commandId`, target, and base revision. The proposal records the authenticated

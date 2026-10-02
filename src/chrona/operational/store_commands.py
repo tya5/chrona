@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Collection
 
 from chrona.operational.command_engine import apply_actual_command, check_command
-from chrona.operational.resources import stamp_automation_result
+from chrona.operational.resources import parse_command, stamp_automation_result
 from chrona.operational.store_config import ConfiguredStoreReader, load_store_config
 
 OPERATIONS = ("command-check", "command-apply", "actual-intake", "actual-resolve", "baseline-capture")
@@ -34,6 +34,11 @@ UNSUPPORTED = "E_AUTOMATION_OPERATION_UNSUPPORTED"
 
 class StoreRootOutsideWorkspace(ValueError):
     """A Store configuration names a root that does not resolve strictly inside the allowed directory."""
+
+
+def parse_command_request(text: str | bytes) -> dict[str, Any]:
+    """Parse and validate one Command Request document, as ``chrona command-apply --command FILE`` does."""
+    return parse_command(text)
 
 
 def open_store_reader(config_path: str | Path, *, contained_in: str | Path | None = None) -> ConfiguredStoreReader:

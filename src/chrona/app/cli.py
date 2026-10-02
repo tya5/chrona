@@ -280,9 +280,10 @@ def _parser() -> JsonArgumentParser:
     command = skill_sub.add_parser("copy", help="copy the agent skill into an empty directory")
     command.add_argument("--output", "-o", required=True, help="empty or absent output directory")
 
-    command = sub.add_parser("mcp", help="serve the read-only agent tools over MCP on standard input and output",
-                             description="serve validate_project, schedule_project, render_draft and list_presets to an MCP client; needs the optional chrona[mcp] extra")
-    command.add_argument("--workspace", help="the only directory the tools may read (default: the current directory)")
+    command = sub.add_parser("mcp", help="serve the agent tools over MCP on standard input and output; read-only unless --allow-write",
+                             description="serve validate_project, schedule_project, render_draft, list_presets, check_command and apply_command to an MCP client; apply_command writes a Store only with --allow-write; needs the optional chrona[mcp] extra")
+    command.add_argument("--workspace", help="the only directory the tools may read, and below which a Store may be written (default: the current directory)")
+    command.add_argument("--allow-write", action="store_true", help="let apply_command write the Store (configuration, not approval: it has no approval step); without it the server is read-only and the call is refused with E_MCP_WRITE_DISABLED")
     command.add_argument("--list-tools", action="store_true", help="print the tool registry as JSON and exit (needs no MCP SDK)")
 
     preset = sub.add_parser("preset", help="copy or list a builtin presentation preset")
@@ -485,7 +486,7 @@ def _run_mcp(args: argparse.Namespace) -> None:
         raise CliFailure("E_MCP_UNAVAILABLE", "the MCP server needs the optional MCP SDK: pip install 'chrona[mcp]'",
                          "mcp", exit_code=2)
     from chrona.app.mcp_server import serve
-    serve(args.workspace if args.workspace is not None else ".")
+    serve(args.workspace if args.workspace is not None else ".", allow_write=args.allow_write)
 
 
 def _run_preset_copy(args: argparse.Namespace) -> None:

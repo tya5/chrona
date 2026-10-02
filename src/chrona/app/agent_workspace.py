@@ -1,4 +1,4 @@
-"""The workspace an agent tool may read: one resolved root, a path guard, and a scrubber.
+"""The workspace an agent tool may read, and below which `apply_command` may write a Store: one resolved root, a path guard, and a scrubber.
 
 An agent names files by text, so every path is untrusted. ``WorkspaceScope`` resolves its
 root once, refuses a filesystem root, and turns a tool's path argument into a regular
@@ -71,6 +71,11 @@ class WorkspaceScope:
             )
         self._root = resolved
         self._scrubbers = self._scrubbers_for(given, resolved)
+
+    @property
+    def root(self) -> Path:
+        """The resolved workspace root (what a Store root must lie strictly inside)."""
+        return self._root
 
     @staticmethod
     def _scrubbers_for(given: Path, resolved: Path) -> tuple[tuple[re.Pattern[str], Any], ...]:

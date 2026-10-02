@@ -1,29 +1,31 @@
 # Agent Tool Interface
 
-**Status:** Proposed; the tool core is implemented in `chrona.app.agent_tools` (#142, slice I142-S3) and served over
-MCP by `chrona mcp` (`chrona.app.mcp_server`, slice I142-S4).
-**Owns:** the read-only agent tool set `chrona/agent-tools/v0.2`, the shape of a tool result, the workspace path
-rules, the determinism contract of a tool call, the MCP binding rules of section 7, and the `E_MCP_*` diagnostic
+**Status:** Proposed; the tool core is implemented in `chrona.app.agent_tools` (#142, slice I142-S3; the Store command
+tools, #813) and served over MCP by `chrona mcp` (`chrona.app.mcp_server`, slice I142-S4).
+**Owns:** the agent tool set `chrona/agent-tools/v0.3`, the shape of a tool result, the workspace path rules, the
+write gate, the determinism contract of a tool call, the MCP binding rules of section 7, and the `E_MCP_*` diagnostic
 codes.
 **Does not own:** the meaning of a Project or a schedule (Spec 05, Spec 04), the render pipeline (Specs 06, 07,
-33), the Store and any mutating command (Spec 09, Spec 10), the wire protocol of any transport, or the text of
+33), the Store and the meaning of a command (Spec 09, Spec 10), the wire protocol of any transport, or the text of
 the agent skill (`skills/chrona/`).
 Design rationale, alternatives and review:
 [`docs/design/issue-142-agent-interface-design-2026-10-01.md`](../design/issue-142-agent-interface-design-2026-10-01.md),
-[`docs/reviews/current/issue-142-agent-interface-architecture-review-2026-10-01.md`](../reviews/current/issue-142-agent-interface-architecture-review-2026-10-01.md).
+[`docs/reviews/current/issue-142-agent-interface-architecture-review-2026-10-01.md`](../reviews/current/issue-142-agent-interface-architecture-review-2026-10-01.md);
+the Store command tools: [`docs/planning/active/issue-813-mcp-mutating-tools.md`](../planning/active/issue-813-mcp-mutating-tools.md).
 
 ## 1. Principle
 
 A tool is a use case with a typed envelope. The tool set adds no behavior: for the same files it returns the verdict,
 the diagnostic code and the bytes the command of the same name returns, and a disagreement is a defect in one of
-the two. The tool core imports use cases (and the shared Store address guard) only, imports no transport SDK, prints
-nothing and writes nothing.
+the two. The tool core imports use cases, the shared Store address guard and one shared dispatch of the Store commands
+(`chrona.operational.store_commands`, which the command line calls too) only, imports no transport SDK and prints
+nothing. One tool, `apply_command`, writes (section 2.1); every other tool writes nothing.
 
-## 2. Tool set `chrona/agent-tools/v0.2`
+## 2. Tool set `chrona/agent-tools/v0.3`
 
-All four tools are read-only and take paths relative to one workspace root (section 4). A change to any input or
-output schema, or to the set, changes the tool-set version. `v0.2` (#782) added the optional `count` and
-`occurrences` properties of a diagnostic and nothing else.
+Every tool takes paths relative to one workspace root (section 4). A change to any input or output schema, or to the
+set, changes the tool-set version. `v0.2` (#782) added the optional `count` and `occurrences` properties of a
+diagnostic and nothing else; `v0.3` (#813) added `check_command` and `apply_command` and changed no existing tool.
 
 | Tool | Command equivalent | Use case |
 | --- | --- | --- |
@@ -31,15 +33,18 @@ output schema, or to the set, changes the tool-set version. `v0.2` (#782) added 
 | `schedule_project` | `chrona schedule` | `usecases.project_checks.schedule_project_file` |
 | `render_draft` | `chrona render` | `usecases.draft_render.render_draft` |
 | `list_presets` | `chrona preset list` | `usecases.preset_library.list_builtin_presets` |
+| `check_command` | `chrona command-check` | `operational.store_commands.run_store_command` |
+| `apply_command` | `chrona command-apply` | `operational.store_commands.run_store_command` |
 
-There is no mutating tool, no Store-based tool and no `compare_baseline`: no runtime approval model exists for a
-write (review F3), and a Store tool would need `operational/` (review F2).
+The first four tools are read-only. There is no Store-read tool and no `compare_baseline` (#812). The two command
+tools are section 2.1.
 
 Inputs are closed objects (`additionalProperties: false`). A tool accepts no integrity override, no system-font
-switch, no font-metrics or icon-catalog path, no typesetter descriptor, no output path and no
+switch, no font-metrics or icon-catalog path, no typesetter descriptor, no output path, no Store root and no
 `allow-missing-content-identity`. The registry (`registry_document()`, served as the tool list) carries the exact
-JSON Schema 2020-12 input and output schema of each tool, and the read-only annotations
-(`readOnlyHint`, `idempotentHint`, `destructiveHint: false`, `openWorldHint: false`).
+JSON Schema 2020-12 input and output schema of each tool, and its annotations: for a read-only tool `readOnlyHint:
+true`, `destructiveHint: false`; for `apply_command` `readOnlyHint: false`, `destructiveHint: true` (the metadata does
+not understate a write, whatever it overwrites); `idempotentHint: true` and `openWorldHint: false` for every tool.
 
 - `validate_project {project}`: result `projectIdentity` (the SHA-256 of the file bytes) when the file was read.
   Mirrors `chrona validate`: it reports the dependency cycles the reference scheduler cannot place (`E_UNSUPPORTED_CYCLE`,
@@ -57,10 +62,47 @@ JSON Schema 2020-12 input and output schema of each tool, and the read-only anno
 - `list_presets {}`: result `presets` (`id`, `gallerySet`, in the order of `chrona preset list`) and `default`
   (`chrona-default-draft`).
 
+### 2.1 The Store command tools
+
+`check_command {command, storeConfig?}` and `apply_command {command, storeConfig?}` run the revision-bound Store
+commands of Spec 10 through the one dispatch the command line uses (`operational.store_commands.run_store_command`):
+`check_command` is `chrona command-check` and writes nothing; `apply_command` is `chrona command-apply`.
+
+- `command` is a workspace path to a Command Request (`chrona/command/v0.3`), parsed and validated as the command line
+  does. `storeConfig` is a workspace path to a Store configuration (`chrona/store-config/v0.1`); omitted it is
+  `.chrona/store.yaml` at the workspace root (no ancestor search, no working-directory lookup). Every Store root in the
+  configuration is resolved with symlinks followed and must lie strictly inside the workspace, otherwise the call is
+  `failed` with `E_MCP_PATH_CONTAINMENT` (`sourceRef` `/storeConfig`) before any file is read from or written to a root.
+- Accepted command types: `applyActualIntakeBatch` and `captureSnapshot`. Any other type is `rejected` with
+  `E_AUTOMATION_OPERATION_UNSUPPORTED` (`sourceRef` `/type`) and no Store is touched.
+- Result: the envelope plus `automationResult`, the Automation Result (`chrona/automation-result/v0.2`) exactly as the
+  command line writes it to `--result` (a replay carries `replayed: true`). Serialized with sorted keys it is byte-equal
+  to that file for the same Store state. `automationResult` is present also when the status is `rejected`. An accepted
+  result is `ok`; a rejected one is `rejected`, with one diagnostic per code of the Automation Result, component
+  `operational`. The command line exits 2 for a rejected Automation Result; the tool reports `rejected`, the document
+  having been understood and refused.
+- **No approval step.** `apply_command` executes directly: it takes no confirm token and no proposal or decision
+  exchange, and says so in its description. The exchange of Spec 10 section 9.1 is specified for a deployment with an
+  authenticated principal and a policy and is not implemented here (owner decision on #813). The safeguards that remain
+  protect data integrity, not authorization: compare-and-set on `baseRevision` (a stale one is `rejected`:
+  `E_AUTOMATION_BASE_REVISION` when it differs from the target reference, `E_AUTOMATION_TARGET_CLOSURE` when the target is
+  no longer the Store's current revision), the replay ledger (the same `commandId` and request is a no-op that returns the
+  first result; the same `commandId` with another request is `E_COMMAND_ID_REUSE`), exclusive creation (an existing
+  baseline name is `E_BASELINE_EXISTS`, different facts for an existing external key are `E_ACTUAL_EXTERNAL_CONFLICT`;
+  nothing is overwritten) and revisions (every accepted Actual write is a new immutable Store revision; the previous one
+  stays readable and can be written back through the Store's compare-and-set write).
+- **Write gate.** `apply_command` writes only when the server was started with `--allow-write` (section 7). Otherwise a
+  call is `failed` with `E_MCP_WRITE_DISABLED` before any file is opened. The flag is configuration, not approval: it is
+  read once at start and no argument, file or environment variable changes it. Both tools are listed whatever the flag is,
+  so the registry is one document; `check_command` works without the flag.
+- Not guaranteed: two processes writing one Store at once (a command line and a server). The server serializes only its
+  own calls; a lost race on a revision directory fails and never overwrites.
+
 ## 3. Result
 
 Every result is the envelope `{status, diagnostics, omittedDiagnostics?}` plus the tool's own fields, which are
-present only when `status` is `ok`.
+present only when `status` is `ok` (a field a call had already produced, such as `projectIdentity` or
+`automationResult`, is kept on a `rejected` result).
 
 - `status` follows the exit code of the command: `ok` (0), `rejected` (1: the input was understood and refused) and
   `failed` (an adapter-level refusal, or exit 2). One exception: a missing rasterizer
@@ -103,8 +145,8 @@ present only when `status` is `ok`.
 
 ## 4. Workspace rules
 
-A tool call reads files below one directory, resolved once when the server starts. A filesystem root is refused
-(`E_MCP_WORKSPACE_TOO_BROAD`).
+A tool call reads files below one directory, resolved once when the server starts, and `apply_command` writes a Store
+below it. A filesystem root is refused (`E_MCP_WORKSPACE_TOO_BROAD`).
 
 1. Every path argument passes `resolve_store_address(workspace, value, charset="file-name")` of
    `core/store_address.py`: `/`-separated, no backslash, colon, drive, anchor, control character, empty or all-dot
@@ -116,7 +158,9 @@ A tool call reads files below one directory, resolved once when the server start
    no larger than 2 MiB (`E_MCP_INPUT_TOO_LARGE`).
 4. References inside a document (preset members, Theme `extends`, assets) keep the guard against the document's own
    directory; the tool adds nothing there.
-5. The check and the open are separate steps. The guard is a safety rail for a local process the user started, not a
+5. The Store roots named by a Store configuration are held to the same rule (section 2.1): inside the workspace, symlinks
+   followed.
+6. The check and the open are separate steps. The guard is a safety rail for a local process the user started, not a
    sandbox against an agent that has its own shell.
 
 ## 5. Determinism
@@ -136,22 +180,24 @@ rasterizer of the `render` extra.
 | `E_MCP_INPUT_TOO_LARGE` | An input file exceeds 2 MiB. |
 | `E_MCP_RESULT_TOO_LARGE` | An inline payload exceeds its cap; lower the viewport, use `inline: none`, or use the command line. |
 | `E_MCP_WORKSPACE_TOO_BROAD` | The workspace is a filesystem root. |
+| `E_MCP_WRITE_DISABLED` | `apply_command` is called on a server started without `--allow-write` (status `failed`). |
 | `E_MCP_UNAVAILABLE` | `chrona mcp` is run without the optional SDK; the message says `pip install 'chrona[mcp]'` (exit 2). |
 
 ## 7. The MCP binding
 
-`chrona mcp [--workspace DIR] [--list-tools]` serves the tool set over MCP on standard input and output; it is the
-only transport. The binding is the one module that imports the SDK (`chrona.app.mcp_server`, optional extra
+`chrona mcp [--workspace DIR] [--allow-write] [--list-tools]` serves the tool set over MCP on standard input and output;
+it is the only transport. `--allow-write` lets `apply_command` write (section 2.1); without it the server is read-only
+and the registry is unchanged. The binding is the one module that imports the SDK (`chrona.app.mcp_server`, optional extra
 `chrona[mcp]`, `mcp>=2.0,<3`); `chrona mcp --list-tools` prints the registry and needs no SDK.
 
-- `tools/list` is the registry: names, titles, descriptions, input and output schemas and the read-only annotations.
+- `tools/list` is the registry: names, titles, descriptions, input and output schemas and the annotations of section 2.
   `tools/call` is `call_tool` with its result in content blocks: block 0 is the structured result as JSON text; an
   `image` block carries the PNG preview; an embedded resource carries the SVG. The structured content equals block 0.
 - The error flag is set only when `status` is `failed`. Unknown tool names and malformed arguments are protocol errors
   (`INVALID_PARAMS`), never an envelope.
 - Calls are handled one at a time (a render cannot be cancelled) in a worker thread; the server holds no state between
   calls and writes nothing to standard output but protocol frames. Logging goes to standard error.
-- `initialize` carries `instructions` (under 1 KB: the model in three sentences, that a rejection is a result, and that
+- `initialize` carries `instructions` (under 1 KB: the model in three sentences, that a rejection is a result, whether writes are on, and that
   `schedule_project` is the tool that computes dates). Two read-only resources serve the packaged skill, `chrona://guide/authoring`
   (the body of `SKILL.md`) and `chrona://guide/diagnostics` (`references/diagnostics.md`); without a packaged skill they
   are omitted. No prompts, subscriptions, sampling or other capability is offered.

@@ -7,12 +7,14 @@ command line with a tool builds the fixture twice.
 from __future__ import annotations
 
 import json
+import sys
 from hashlib import sha256
 from pathlib import Path
 from typing import Any
 
 import yaml
 
+from chrona.app.cli import main
 from chrona.commands.actual_commands import LocalActualStore
 from chrona.storage.snapshot_paths import snapshot_directory
 
@@ -90,3 +92,15 @@ class StoreWorkspace:
         """Every file of the Store by relative path: equal before and after means nothing was written."""
         return {path.relative_to(self.store).as_posix(): path.read_bytes()
                 for path in sorted(self.store.rglob("*")) if path.is_file()}
+
+
+def run_cli(monkeypatch, capsys, cwd: Path, *arguments: str) -> tuple[int, str]:
+    """Run ``chrona ARGUMENTS`` in ``cwd`` in this process; return the exit code and standard output."""
+    monkeypatch.chdir(cwd)
+    monkeypatch.setattr(sys, "argv", ["chrona", *arguments])
+    code = 0
+    try:
+        main()
+    except SystemExit as error:
+        code = error.code if isinstance(error.code, int) else 0
+    return code, capsys.readouterr().out

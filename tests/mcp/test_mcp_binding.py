@@ -25,6 +25,7 @@ from chrona.app import agent_tools, mcp_server  # noqa: E402
 from chrona.app.agent_tools import registry_document  # noqa: E402
 from chrona.resources import skill_resource  # noqa: E402
 from chrona.usecases.failure_report import StableFailure  # noqa: E402
+from tests.support.store_workspace import StoreWorkspace  # noqa: E402
 
 REPO = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
 PROJECT = (REPO / "skills" / "chrona" / "examples" / "launch.yaml").read_text(encoding="utf-8")
@@ -49,10 +50,10 @@ def workspace(tmp_path: Path) -> Path:
     return root
 
 
-def run(workspace: Path, scenario):
+def run(workspace: Path, scenario, *, allow_write: bool = False):
     """Run ``scenario(client)`` against a fresh in-process server over ``workspace``."""
     async def go():
-        async with Client(mcp_server.build_server(workspace)) as client:
+        async with Client(mcp_server.build_server(workspace, allow_write=allow_write)) as client:
             return await scenario(client)
 
     return anyio.run(go)
@@ -65,8 +66,13 @@ def test_the_tool_list_is_the_registry(workspace):
     for tool, expected in zip(listed, document, strict=True):
         assert tool.input_schema == expected["inputSchema"] and tool.output_schema == expected["outputSchema"]
         assert tool.description == expected["description"] and tool.title == expected["title"]
+        annotations = expected["annotations"]
         assert (tool.annotations.read_only_hint, tool.annotations.destructive_hint, tool.annotations.idempotent_hint,
-                tool.annotations.open_world_hint) == (True, False, True, False)
+                tool.annotations.open_world_hint) == (annotations["readOnlyHint"], annotations["destructiveHint"],
+                                                      annotations["idempotentHint"], annotations["openWorldHint"])
+    by_name = {tool.name: tool.annotations for tool in listed}
+    assert by_name["check_command"].read_only_hint is True and by_name["apply_command"].read_only_hint is False
+    assert by_name["apply_command"].destructive_hint is True and by_name["schedule_project"].destructive_hint is False
 
 
 def test_initialize_carries_the_name_the_instructions_and_no_prompt_capability(workspace):
@@ -156,13 +162,13 @@ def test_calls_are_serialized(workspace, monkeypatch):
     active, peak, lock = [0], [0], threading.Lock()
     real = agent_tools.call_tool
 
-    def slow(scope, name, arguments=None):
+    def slow(scope, name, arguments=None, **options):
         with lock:
             active[0] += 1
             peak[0] = max(peak[0], active[0])
         time.sleep(0.05)
         try:
-            return real(scope, name, arguments)
+            return real(scope, name, arguments, **options)
         finally:
             with lock:
                 active[0] -= 1
@@ -195,3 +201,70 @@ def test_without_the_packaged_skill_the_server_still_serves_tools_and_omits_reso
         return await client.call_tool("list_presets", {})
 
     assert run(workspace, scenario).structured_content["status"] == "ok"
+
+
+# --- the write start option (#813) ------------------------------------------------------------------------------
+
+def test_without_allow_write_apply_command_is_refused_over_the_binding_and_check_command_still_works(tmp_path):
+    work = StoreWorkspace(tmp_path / "ws")
+    path = work.write_command("c1.yaml", work.intake("c1", work.batch("b1")))
+    before = work.snapshot()
+
+    async def scenario(client):
+        return (await client.call_tool("apply_command", {"command": path}),
+                await client.call_tool("check_command", {"command": path}), client.instructions)
+
+    applied, checked, instructions = run(work.root, scenario)
+
+    assert applied.is_error and applied.structured_content["status"] == "failed"
+    assert [row["code"] for row in applied.structured_content["diagnostics"]] == ["E_MCP_WRITE_DISABLED"]
+    assert not checked.is_error and checked.structured_content["status"] == "ok"
+    assert instructions == mcp_server.INSTRUCTIONS and "Writes are off" in instructions
+    assert work.snapshot() == before
+
+
+def test_with_allow_write_apply_command_writes_a_new_store_revision_and_a_replay_is_a_no_op(tmp_path):
+    work = StoreWorkspace(tmp_path / "ws")
+    path = work.write_command("c1.yaml", work.intake("c1", work.batch("b1")))
+
+    async def scenario(client):
+        return (await client.call_tool("apply_command", {"command": path}),
+                await client.call_tool("apply_command", {"command": path}), client.instructions)
+
+    first, second, instructions = run(work.root, scenario, allow_write=True)
+
+    assert not first.is_error and first.structured_content["status"] == "ok"
+    assert second.structured_content["automationResult"]["replayed"] is True
+    assert work.tip()["counter"] == 2
+    assert instructions == mcp_server.WRITE_INSTRUCTIONS and "no approval step" in instructions
+    assert len(mcp_server.WRITE_INSTRUCTIONS.encode("utf-8")) < 1024
+    assert json.loads(first.content[0].text) == first.structured_content
+
+
+def test_a_rejected_command_is_a_result_and_not_a_tool_error(tmp_path):
+    work = StoreWorkspace(tmp_path / "ws")
+    path = work.write_command("c1.yaml", work.intake("c1", work.batch("b1"), base="actual:0:stale"))
+
+    result = run(work.root, lambda client: client.call_tool("apply_command", {"command": path}), allow_write=True)
+
+    assert not result.is_error and result.structured_content["status"] == "rejected"
+    assert result.structured_content["automationResult"]["status"] == "rejected"
+
+
+def test_a_server_built_without_the_option_refuses_writes_and_the_option_defaults_off(tmp_path):
+    import inspect
+
+    work = StoreWorkspace(tmp_path / "ws")
+    path = work.write_command("c1.yaml", work.intake("c1", work.batch("b1")))
+    before = work.snapshot()
+
+    async def go():
+        async with Client(mcp_server.build_server(work.root)) as client:  # no allow_write argument at all
+            return await client.call_tool("apply_command", {"command": path})
+
+    result = anyio.run(go)
+
+    assert result.is_error and result.structured_content["diagnostics"][0]["code"] == "E_MCP_WRITE_DISABLED"
+    assert work.snapshot() == before
+    for function in (mcp_server.build_server, mcp_server.serve):
+        assert inspect.signature(function).parameters["allow_write"].default is False

@@ -1,7 +1,8 @@
 """The MCP binding: the one module that imports the SDK (the optional ``chrona[mcp]`` extra).
 
 It registers the SDK-free tool core (``chrona.app.agent_tools``) with the SDK's low-level
-``Server`` and serves it over stdio. It adds no behavior: a ``tools/list`` is the tool registry,
+``Server`` and serves it over stdio. It adds no behavior but one start option, ``allow_write``
+(``chrona mcp --allow-write``), which it hands to the core and which no call can change: a ``tools/list`` is the tool registry,
 a ``tools/call`` is ``call_tool`` with its result moved into content blocks, and the two
 resources are the packaged skill's own text. The tool core owns the input schemas, so the
 binding passes the registry's schemas to the SDK and maps the core's two protocol errors
@@ -39,15 +40,19 @@ from chrona.resources import skill_resource
 SERVER_NAME = "chrona"
 AUTHORING_URI = "chrona://guide/authoring"
 DIAGNOSTICS_URI = "chrona://guide/diagnostics"
-INSTRUCTIONS = (
+_BASE_INSTRUCTIONS = (
     "Chrona turns a YAML plan into computed dates and a deterministic picture: edit the plan file, never the "
     "picture. Tools: validate_project (structure and dependency cycles, no dates), schedule_project "
     "(computed placements; it also rejects contradictory fixed dates and bounds, so run it to read dates), "
-    "render_draft (a PNG preview by default, SVG on request) and list_presets. Paths are relative to the workspace "
-    "root. A result's status is ok, rejected (the plan is refused: read each diagnostic's code and sourceRef) or "
-    "failed (the call could not run); a rejection is a normal result, so read status, not only isError. The "
+    "render_draft (a PNG preview by default, SVG on request), list_presets, and check_command and apply_command "
+    "(preview and apply a Store command: an Actual intake batch or a named baseline). Paths are relative to the "
+    "workspace root. A result's status is ok, rejected (the input is refused: read each diagnostic's code and "
+    "sourceRef) or failed (the call could not run); a rejection is a normal result, so read status, not only "
+    "isError. The "
     f"resources {AUTHORING_URI} and {DIAGNOSTICS_URI} explain the model and every diagnostic code."
 )
+INSTRUCTIONS = _BASE_INSTRUCTIONS + " Writes are off: apply_command is refused unless the server is started with --allow-write."
+WRITE_INSTRUCTIONS = _BASE_INSTRUCTIONS + " Writes are on (--allow-write): apply_command executes directly, with no approval step."
 _LOG = logging.getLogger("chrona.mcp")
 _FRONT_MATTER = "---"
 
@@ -67,7 +72,10 @@ def _tools() -> list[types.Tool]:
             name=document["name"], title=document["title"], description=document["description"],
             input_schema=document["inputSchema"], output_schema=document["outputSchema"],
             annotations=types.ToolAnnotations(
-                read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False),
+                read_only_hint=document["annotations"]["readOnlyHint"],
+                destructive_hint=document["annotations"]["destructiveHint"],
+                idempotent_hint=document["annotations"]["idempotentHint"],
+                open_world_hint=document["annotations"]["openWorldHint"]),
         ))
     return tools
 
@@ -102,15 +110,18 @@ def _guides() -> dict[str, tuple[str, str, str]]:
     }
 
 
-def build_server(workspace: str | Path) -> Server:
-    """The MCP server over one workspace; raises ``StableFailure`` for a workspace the scope refuses."""
+def build_server(workspace: str | Path, *, allow_write: bool = False) -> Server:
+    """The MCP server over one workspace; raises ``StableFailure`` for a workspace the scope refuses.
+
+    ``allow_write`` is the start option ``--allow-write``: configuration, read once here, never an argument of a call.
+    """
     scope = WorkspaceScope(workspace)
     lock = threading.Lock()
     guides = _guides()
 
     def locked_call(name: str, arguments: Any) -> ToolResult:
         with lock:
-            return call_tool(scope, name, arguments)
+            return call_tool(scope, name, arguments, allow_write=allow_write)
 
     async def on_list_tools(ctx: Any, params: Any) -> types.ListToolsResult:
         return types.ListToolsResult(tools=_tools())
@@ -141,7 +152,8 @@ def build_server(workspace: str | Path) -> Server:
     handlers: dict[str, Any] = {"on_list_tools": on_list_tools, "on_call_tool": on_call_tool}
     if guides:
         handlers |= {"on_list_resources": on_list_resources, "on_read_resource": on_read_resource}
-    return Server(SERVER_NAME, version=_server_version(), instructions=INSTRUCTIONS, **handlers)
+    instructions = WRITE_INSTRUCTIONS if allow_write else INSTRUCTIONS
+    return Server(SERVER_NAME, version=_server_version(), instructions=instructions, **handlers)
 
 
 async def _serve(server: Server) -> None:
@@ -149,7 +161,7 @@ async def _serve(server: Server) -> None:
         await server.run(read_stream, write_stream, server.create_initialization_options())
 
 
-def serve(workspace: str | Path) -> None:
+def serve(workspace: str | Path, *, allow_write: bool = False) -> None:
     """Run the server over standard input and output until the client closes the stream."""
     logging.basicConfig(level=logging.WARNING, stream=sys.stderr, format="%(name)s: %(message)s")
-    anyio.run(_serve, build_server(workspace))
+    anyio.run(_serve, build_server(workspace, allow_write=allow_write))

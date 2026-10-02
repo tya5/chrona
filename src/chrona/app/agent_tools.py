@@ -1,16 +1,19 @@
-"""The SDK-free agent tools: a registry of read-only tools over the use cases, and their result contract.
+"""The SDK-free agent tools: a registry of tools over the use cases, and their result contract.
 
-Four tools front the use cases an agent needs to plan and draw a schedule:
-``validate_project``, ``schedule_project``, ``render_draft`` and ``list_presets``
-(tool set ``chrona/agent-tools/v0.2``, Spec 66). A tool is a use case with a typed
-envelope: ``call_tool(scope, name, arguments)`` validates the arguments against the
+Four read-only tools front the use cases an agent needs to plan and draw a schedule:
+``validate_project``, ``schedule_project``, ``render_draft`` and ``list_presets``; two tools front the
+revision-bound Store commands, ``check_command`` (read-only) and ``apply_command`` (writes, only when the
+caller passes ``allow_write``; #813). Tool set ``chrona/agent-tools/v0.3``, Spec 66. A tool is a use case
+with a typed envelope: ``call_tool(scope, name, arguments)`` validates the arguments against the
 tool's input schema, runs the use case on files inside a ``WorkspaceScope`` and returns a
 ``ToolResult`` whose ``structured`` mapping is the envelope (``status``, ``diagnostics``)
 plus the tool's own fields. A transport adapter (the MCP binding) only moves that result.
 
-This module imports no SDK, prints nothing and writes no file. Failures reach the caller
-as typed diagnostics through ``usecases.failure_report``, never as a traceback, and every
-mapping it returns is sorted so a result is a pure function of the workspace bytes and the
+This module imports no SDK and prints nothing. The one tool that writes, ``apply_command``, writes only
+through the shared dispatch of the Store commands (``operational.store_commands``, the one operational
+module a tool may import) into Store roots that lie inside the workspace; every other tool writes nothing.
+Failures reach the caller as typed diagnostics through ``usecases.failure_report``, never as a traceback,
+and every mapping it returns is sorted so a result is a pure function of the workspace bytes and the
 arguments.
 """
 from __future__ import annotations
@@ -27,13 +30,22 @@ from typing import Any, Callable, Mapping, Sequence
 from jsonschema.exceptions import best_match
 
 from chrona.app.agent_workspace import WorkspaceScope
+from chrona.operational.store_commands import (
+    StoreRootOutsideWorkspace, open_store_reader, parse_command_request, run_store_command,
+)
 from chrona.resources import validator_for_schema
 from chrona.usecases.draft_render import DEFAULT_VIEWPORT, DraftRenderRequest, render_draft, warning_payloads
-from chrona.usecases.failure_report import FailureReport, StableFailure, collapse_records, rejection_report, report_failure
+from chrona.usecases.failure_report import (
+    FailureReport, StableFailure, collapse_records, diagnostic_record, rejection_report, report_failure,
+)
 from chrona.usecases.preset_library import list_builtin_presets
 from chrona.usecases.project_checks import schedule_project_file, validate_project_file
 
-TOOL_SET_VERSION = "chrona/agent-tools/v0.2"
+TOOL_SET_VERSION = "chrona/agent-tools/v0.3"
+COMMAND_TYPES = frozenset({"applyActualIntakeBatch", "captureSnapshot"})
+"""The command types the command tools accept in this release (#813); anything else is rejected before a Store is opened."""
+DEFAULT_STORE_CONFIG = ".chrona/store.yaml"
+WRITE_DISABLED = "E_MCP_WRITE_DISABLED"
 DEFAULT_PRESET_ID = "chrona-default-draft"
 MAX_DIAGNOSTICS = 50
 MAX_INLINE_SVG_BYTES = 1024 * 1024
@@ -89,14 +101,20 @@ class ToolSpec:
     input_schema: dict[str, Any]
     output_schema: dict[str, Any]
     handler: Callable[["_Call", dict[str, Any]], ToolResult]
+    mutating: bool = False
 
     def document(self) -> dict[str, Any]:
-        """The tool as a registry entry: schemas and the read-only annotations a host uses to skip approval prompts."""
+        """The tool as a registry entry: schemas and annotations that say truthfully whether it can write.
+
+        A read-only tool is ``readOnlyHint`` true (a host may skip its approval prompt); a mutating tool is
+        ``readOnlyHint`` false and ``destructiveHint`` true whatever it overwrites, because the metadata must not
+        understate it. ``idempotentHint`` is true for both: repeating a call is a no-op (the replay ledger).
+        """
         return {
             "name": self.name, "title": self.title, "description": self.description,
             "inputSchema": copy.deepcopy(self.input_schema), "outputSchema": copy.deepcopy(self.output_schema),
-            "annotations": {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True,
-                            "openWorldHint": False},
+            "annotations": {"readOnlyHint": not self.mutating, "destructiveHint": self.mutating,
+                            "idempotentHint": True, "openWorldHint": False},
         }
 
 
@@ -153,6 +171,26 @@ def _output_schema(properties: dict[str, Any] | None = None) -> dict[str, Any]:
         },
         "$defs": {"diagnostic": copy.deepcopy(_DIAGNOSTIC), "sha256": copy.deepcopy(_SHA256)},
     }
+
+
+def _command_input_schema() -> dict[str, Any]:
+    return _input_schema({
+        "command": {**_WORKSPACE_PATH_PROPERTY, "description": "A '/'-separated workspace path to a Command Request "
+                    "document (chrona/command/v0.3, Spec 10), as chrona command-apply --command takes. The file must "
+                    "already exist inside the workspace."},
+        "storeConfig": {**_WORKSPACE_PATH_PROPERTY, "description": "A '/'-separated workspace path to a Store configuration "
+                        f"(chrona/store-config/v0.1). Omitted means {DEFAULT_STORE_CONFIG}. Every Store root in it must lie "
+                        "strictly inside the workspace."},
+    }, ["command"])
+
+
+def _command_output_schema() -> dict[str, Any]:
+    return _output_schema({"automationResult": {
+        "type": "object",
+        "description": "The Automation Result (chrona/automation-result/v0.2) exactly as the command line writes it to "
+                       "--result: operation, status accepted or rejected, requestContentIdentity, inputs, diagnostics, "
+                       "resultTarget when accepted, replayed true for a replay. Present when the engine produced one.",
+    }})
 
 
 # --- result construction -------------------------------------------------------------------------------------
@@ -365,6 +403,35 @@ def _list_presets(call: _Call, arguments: dict[str, Any]) -> ToolResult:
     return ToolResult(call.ok(presets=list_builtin_presets(), default=DEFAULT_PRESET_ID))
 
 
+# The JSON pointer into the Command Request each code of the command engine is about. The message of a row is the
+# engine's own (every Automation Result row carries one since #829), so the tool and the command line say the same.
+_COMMAND_SOURCE_REFS = {"E_AUTOMATION_BASE_REVISION": "/baseRevision", "E_AUTOMATION_OPERATION_UNSUPPORTED": "/type"}
+
+
+def _command_tool(operation: str) -> Callable[[_Call, dict[str, Any]], ToolResult]:
+    def handle(call: _Call, arguments: dict[str, Any]) -> ToolResult:
+        command_path = call.scope.resolve_path(arguments["command"], "/command")
+        config_path = call.scope.resolve_path(arguments.get("storeConfig", DEFAULT_STORE_CONFIG), "/storeConfig")
+        command = parse_command_request(command_path.read_text(encoding="utf-8"))
+        try:
+            reader = open_store_reader(config_path, contained_in=call.scope.root)
+        except StoreRootOutsideWorkspace as error:
+            raise StableFailure(
+                "E_MCP_PATH_CONTAINMENT",
+                "a Store root in the configuration resolves outside the workspace; every Store root must lie inside it",
+                "mcp", "/storeConfig", 2,
+            ) from error
+        result = call.scope.scrub_value(run_store_command(operation, command, reader, allowed_types=COMMAND_TYPES))
+        if result["status"] == "accepted":
+            return ToolResult(call.ok(automationResult=result))
+        call.carried["automationResult"] = result
+        rows = [diagnostic_record(item["code"], item.get("message", ""), "operational",
+                                  _COMMAND_SOURCE_REFS.get(item["code"], "/")) for item in result["diagnostics"]]
+        return call.rejected(FailureReport("rejected", collapse_records(rows), 1))
+
+    return handle
+
+
 # --- registry ------------------------------------------------------------------------------------------------
 
 _TOOLS: tuple[ToolSpec, ...] = (
@@ -442,6 +509,30 @@ _TOOLS: tuple[ToolSpec, ...] = (
         }),
         _list_presets,
     ),
+    ToolSpec(
+        "check_command", "Preview a Store command",
+        "Check a Command Request file in the workspace against its Store without writing anything: the same check "
+        "as chrona command-check. The request must be applyActualIntakeBatch (an Actual intake batch) or captureSnapshot "
+        "(a named baseline); any other type is rejected with E_AUTOMATION_OPERATION_UNSUPPORTED. 'storeConfig' is a "
+        "workspace path to a Store configuration and defaults to .chrona/store.yaml; every Store root in it must lie "
+        "inside the workspace. Returns status 'ok' with automationResult (the Automation Result the command line writes), "
+        "or 'rejected' with typed diagnostics, for example a stale baseRevision. A preview is not a precondition of "
+        "apply_command, and it works whether or not writes are enabled.",
+        _command_input_schema(), _command_output_schema(), _command_tool("command-check"),
+    ),
+    ToolSpec(
+        "apply_command", "Apply a Store command",
+        "Apply a Command Request file in the workspace to its Store: the same work as chrona command-apply. It "
+        "executes directly. There is no approval step and no confirm token, and the proposal and decision exchange of "
+        "Spec 10 section 9.1 is not implemented. It writes only when the server was started with --allow-write; "
+        "otherwise it is refused with E_MCP_WRITE_DISABLED and writes nothing. The request must be "
+        "applyActualIntakeBatch or captureSnapshot. Safeguards that are not approvals: a stale baseRevision is "
+        "rejected (compare-and-set), the same commandId with the same request is a no-op that returns the first result "
+        "(replayed: true), a baseline name or an observation with different facts is never overwritten, and every write "
+        "is a new immutable Store revision, so an earlier one can be inspected and restored. Store roots must lie "
+        "inside the workspace. Returns status 'ok' with automationResult, or 'rejected' with typed diagnostics.",
+        _command_input_schema(), _command_output_schema(), _command_tool("command-apply"), mutating=True,
+    ),
 )
 _BY_NAME = {spec.name: spec for spec in _TOOLS}
 assert len(_BY_NAME) == len(_TOOLS)
@@ -474,13 +565,24 @@ def _check_arguments(spec: ToolSpec, arguments: object) -> dict[str, Any]:
     return arguments
 
 
-def call_tool(scope: WorkspaceScope, name: str, arguments: object = None) -> ToolResult:
-    """Run one tool. Unknown names and malformed arguments raise (protocol errors); everything else is a result."""
+def call_tool(scope: WorkspaceScope, name: str, arguments: object = None, *, allow_write: bool = False) -> ToolResult:
+    """Run one tool. Unknown names and malformed arguments raise (protocol errors); everything else is a result.
+
+    A mutating tool runs only when ``allow_write`` is true (a server start option, never an argument); otherwise the
+    result is ``failed`` with ``E_MCP_WRITE_DISABLED`` before any file is opened.
+    """
     spec = _BY_NAME.get(name)
     if spec is None:
         raise UnknownToolError(name)
     checked = _check_arguments(spec, {} if arguments is None else arguments)
     call = _Call(scope)
+    if spec.mutating and not allow_write:
+        return call.failure(StableFailure(
+            WRITE_DISABLED,
+            f"{spec.name} writes, and this server was started without --allow-write; restart it with "
+            "'chrona mcp --allow-write' to enable writes. Nothing was read or written.",
+            "mcp", "/", 2,
+        ))
     try:
         return spec.handler(call, checked)
     except InvalidArgumentsError:
