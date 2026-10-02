@@ -29,7 +29,7 @@ from chrona.presentation.layout.surface_annotations import SurfaceAnnotationCont
 from chrona.presentation.layout.surface_table import compose_table
 from chrona.presentation.layout.surface_groups import (compose_group_presentation)
 from chrona.presentation.layout.surface_backgrounds import (
-    compose_calendar_backgrounds, compose_row_group_backgrounds, replace_group_header_band,
+    compose_calendar_backgrounds, compose_group_tabs, compose_row_group_backgrounds, replace_group_header_band,
 )
 from chrona.presentation.layout.surface_axis import compose_axis
 from chrona.presentation.layout.surface_deadlines import compose_deadline_marks
@@ -163,6 +163,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     groups = list(mark_batch.groups)
     for update in mark_batch.group_header_updates:
         shapes = list(replace_group_header_band(tuple(shapes), update))
+    shapes.extend(compose_group_tabs(groups=tuple(groups), theme_tokens=request.theme_tokens))
     shapes.extend(mark_batch.progress_shapes)
     shapes.extend(mark_batch.summary_shapes)
     deadline_batch = compose_deadline_marks(
@@ -253,7 +254,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     diagnostics.extend(relation_labels.diagnostics)
     visible_label_overflows.extend(relation_labels.visible_label_overflows)
 
-    side_content_warnings: list[FitWarning] = []
+    side_content_warnings: list[FitWarning] = list(group_batch.warnings)
     legend = by_source.get("legend")
     if legend:
         legend_batch = place_legend(SurfaceLegendContext(request, legend, metric_values, metric_for))

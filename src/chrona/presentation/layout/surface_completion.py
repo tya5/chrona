@@ -113,6 +113,7 @@ _RECT_PATTERN_THEME_ROLES = {
     "axisBandDecoration": "axis-band-decoration",
     "axisBandDecoration2": "axis-band-decoration2",
     "periodBand": "period-band",
+    "groupTab": "group-tab",
     "asOfLabelChip": "as-of-label-chip",
     "memberLabelChip": "member-label-chip",
     "finishDeltaChip": "finish-delta-chip",
