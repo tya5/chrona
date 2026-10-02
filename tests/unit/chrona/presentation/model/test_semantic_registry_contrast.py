@@ -8,11 +8,12 @@ from chrona.presentation.model.semantic_registry import (
 def test_contrast_registry_classifies_only_the_finite_state_text_and_decoration_roles():
     assert [item.scene_role for item in contrast_bindings(ContrastClass.STATE_TEXT)] == [
         "period-label", "variance-ahead", "variance-on-track", "variance-behind", "missing-actual-cell",
-        "annotation-note-text",
+        "annotation-note-text", "annotation-kind-label", "annotation-kind-secondary",
     ]
     assert [item.scene_role for item in contrast_bindings(ContrastClass.DECORATION)] == [
         "calendar-closed", "period-band", "axis-band-decoration", "axis-band-decoration2",
         "group-band", "row-band", "group-header-band", "annotation-note-box",
+        "annotation-kind-bar", "annotation-kind-accent",
     ]
     assert contrast_binding("text") is None
     assert contrast_binding("group-band").theme_role == "group-band"

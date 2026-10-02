@@ -132,7 +132,7 @@ _PATTERNED_RECT_PAINT = _RECT_PAINT | frozenset(("pattern",))
 _LAYOUT_TYPOGRAPHY = _TEXT_MEASUREMENT | _ICON_MEASUREMENT
 _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | frozenset((
     "cellGap", "chipPadding", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius",
-    "progressInset", "summaryBarHeight", "swatchInlineSize", "annotationContainer", "marker", "symbol",
+    "progressInset", "summaryBarHeight", "swatchInlineSize", "annotationContainer", "marker", "symbol", "edge",
 ))
 _LAYOUT_POLICY = frozenset(("backgroundTreatment", "backgroundPaintOrder"))
 _CLOSURE_POLICY = frozenset(("contrastTreatment",))
@@ -201,6 +201,9 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
     register("annotation-note-text", "Scene state Text and contrast policy",
              _TEXT_MEASUREMENT | _TEXT_PAINT | frozenset(("contrastTreatment",)),
              scene_kinds=frozenset(("Text",)))
+    register("annotation-kind-label annotation-kind-secondary", "Layout annotation-kind header text and Scene state Text",
+             _TEXT_MEASUREMENT | _TEXT_PAINT | frozenset(("contrastTreatment",)),
+             scene_kinds=frozenset(("Text",)))
     register("variance-ahead variance-on-track variance-behind missing-actual-cell",
              "Scene state Text and contrast policy", _TEXT_PAINT | frozenset(("contrastTreatment",)),
              scene_kinds=frozenset(("Text",)))
@@ -242,6 +245,10 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              "Layout annotation container and Scene Rect/Symbol",
              _PATTERNED_RECT_PAINT | frozenset(("annotationContainer",)),
              scene_kinds=frozenset(("Rect", "Symbol")))
+    register("annotation-kind-bar", "Layout annotation-kind title bar and Scene Rect",
+             _RECT_PAINT | frozenset(("chipPadding", "markCornerRadius")), scene_kinds=frozenset(("Rect",)))
+    register("annotation-kind-accent", "Layout annotation-kind accent edge and Scene Rect",
+             _RECT_PAINT | frozenset(("edge",)), scene_kinds=frozenset(("Rect",)))
     register("group-band row-band group-header-band calendar-closed", "Layout background and Scene Rect",
              _RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder")),
              scene_kinds=frozenset(("Rect",)))

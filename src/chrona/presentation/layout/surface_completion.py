@@ -197,7 +197,7 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
             return by_source["legend"].slot_id
         if item.placement_id.startswith("summary-bar:"):
             return by_source.get("summary", timeline).slot_id
-        if item.placement_id.startswith("annotation-box:"):
+        if item.placement_id.startswith(("annotation-box:", "annotation-kind-")):
             return by_source.get("annotations", timeline).slot_id
         if item.source_ref == "timeline-axis":
             return axis.slot_id

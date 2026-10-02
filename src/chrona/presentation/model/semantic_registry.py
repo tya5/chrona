@@ -182,6 +182,13 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("annotationArrowBox", "decoration", "annotation-box", "annotation-arrow-box", "annotation-arrow-box"),
     _binding("annotationArrowText", "label", "annotation-text", "annotation-arrow-text", "annotation-arrow-text"),
     _binding("annotationArrowLeader", "line", "annotation-leader", "annotation-arrow-leader", "annotation-arrow-leader"),
+    # Annotation kind header (#584): a title bar, the header text and an accent edge, painted from one
+    # role set shared by every kind (the kind colour replaces the fill). The text is judged against the
+    # bar (or the note box) it lies on; the bar and the accent are decorations.
+    _binding("annotationKindBar", "decoration", "annotation-kind-bar", "annotation-kind-bar", "annotation-kind-bar", ContrastClass.DECORATION),
+    _binding("annotationKindAccent", "decoration", "annotation-kind-accent", "annotation-kind-accent", "annotation-kind-accent", ContrastClass.DECORATION),
+    _binding("annotationKindLabel", "label", "annotation-kind-label", "annotation-kind-label", "annotation-kind-label", ContrastClass.STATE_TEXT),
+    _binding("annotationKindSecondary", "label", "annotation-kind-secondary", "annotation-kind-secondary", "annotation-kind-secondary", ContrastClass.STATE_TEXT),
     # Summary panels.
     _binding("summaryHeader", "label", "summary-header", "text", "summary"),
     _binding("summaryMetric", "label", "summary-metric", "text", "summary"),

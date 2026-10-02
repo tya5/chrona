@@ -23,6 +23,7 @@ from chrona.presentation.layout.annotations import (
 from chrona.presentation.layout.annotation_search import (
     nearest_free_box, nearest_free_tail_box, nearest_free_routed_tail_box,
 )
+from chrona.presentation.layout.annotation_kind_frame import EMPTY_FRAME, measure_kind_frame, place_kind_frame
 from chrona.presentation.layout.balloon_geometry import balloon_outline
 from chrona.presentation.layout.labels import LabelPlacement
 from chrona.presentation.layout.annotation_topology import (
@@ -113,6 +114,7 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
     annotation_slot_id = annotation_slot.slot_id if annotation_slot is not None else ""
     if annotation_slot or request.surface_content.annotations:
         annotation_marks = comparison_marks(projection)
+        kind_theme = None  # the Theme's kind roles, read once and only when an annotation's kind is dressed (#584)
         for index, annotation in enumerate(request.surface_content.annotations):
             presentation = annotation_presentation(annotation.purpose)
             annotation_id, content = annotation.annotation_id, annotation.content
@@ -186,6 +188,7 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
             tail_route_state_limit = tail_route_states_examined = 0
             tail_route_search_exhausted = False
             tail_topology: str | None = None
+            kind_measure = EMPTY_FRAME
             routed_tail_tip: tuple[float, float] | None = None
             selected_leader: tuple[ConnectorEgress, AnnotationRouteTrial,
                                    tuple[tuple[float, float], ...],
@@ -285,6 +288,19 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                     plot_wrap_em = max((candidate.search.max_inline_em for candidate in annotation.candidates
                                         if candidate.search.max_inline_em is not None), default=None)
                     wrap_available = float(plot_wrap_em) * size if plot_wrap_em is not None else text_available
+                    annotation_box_role = semantic_binding(presentation.box_semantic_id).theme_role
+                    container = request.theme_tokens.annotation_container(annotation_box_role)
+                    # A Theme-dressed Project kind (#584) adds a header block and an accent edge to the
+                    # note; the body text wraps in what they leave.
+                    kind_token = request.theme_tokens.annotation_kind(annotation.kind)
+                    if kind_token is not None and kind_theme is None:
+                        kind_theme = request.theme_tokens.annotation_kind_frame()
+                    kind_measure = measure_kind_frame(
+                        kind=kind_token, subject=annotation.subject,
+                        frame=kind_theme, theme_tokens=request.theme_tokens, metric_for=metric_for,
+                        outline=container.outline if container is not None else None,
+                        pointer=f"/annotations/{index}")
+                    wrap_available = max(1.0, wrap_available - kind_measure.inline_insets)
                     if plot_wrap_em is not None:
                         wrap = "allow"
                     annotation_lines = (wrap_text(content, available_inline=wrap_available, font_size=size, font_metrics=annotation_metrics,
@@ -295,8 +311,6 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                                                         letter_spacing=float(annotation_treatment.letter_spacing),
                                                         text_transform=annotation_treatment.transform)
                                      for line in annotation_lines)
-                    annotation_box_role = semantic_binding(presentation.box_semantic_id).theme_role
-                    container = request.theme_tokens.annotation_container(annotation_box_role)
                     # An image-backed container (#465) declares a content
                     # inset: Layout measures text into that smaller box, then
                     # expands it by the inset to the paint box the search and
@@ -306,8 +320,11 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                     if container is not None and container.outline == "image":
                         content_top, content_right, content_bottom, content_left = (
                             float(value) * size for value in container.content_insets_em)
-                    annotation_size = (annotation_leading + text_width + annotation_trailing + content_left + content_right,
-                                       size * line_height * len(annotation_lines) + content_top + content_bottom)
+                    body_inline = annotation_leading + text_width + annotation_trailing
+                    annotation_size = (max(body_inline, kind_measure.header_inline) + kind_measure.inline_insets
+                                       + content_left + content_right,
+                                       size * line_height * len(annotation_lines) + kind_measure.header_block
+                                       + kind_measure.block_insets + content_top + content_bottom)
                     candidates, ladder = candidate_order(annotation.candidates, annotation.purpose,
                                                           annotation.fallback_ladder, preferred)
                     box, selected_rung, tail_tip = None, None, None
@@ -508,9 +525,23 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                                              paint_order=ANNOTATION_PAINT_ORDER))
             register_rect(f"annotation-box:{annotation_id}", "annotation-box", "annotations", annotation_bounds)
             annotation_text_slot = "annotations" if annotation_slot is not None else timeline.slot_id
+            if not kind_measure.empty:
+                kind_shapes, kind_text = place_kind_frame(
+                    kind_measure, annotation_id=annotation_id, presentation=presentation,
+                    content_box=(bounds.x + content_left, bounds.y + content_top,
+                                 bounds.width - content_left - content_right,
+                                 bounds.height - content_top - content_bottom),
+                    theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                    annotation_slot=annotation_text_slot, paint_order=ANNOTATION_PAINT_ORDER)
+                shapes.extend(kind_shapes)
+                for kind_line in kind_text:
+                    text.append(kind_line)
+                    register_rect(kind_line.placement_id, "text", "annotations", kind_line.bounds)
             placed_annotation = place_text(placement_id=f"annotation-text:{annotation_id}", source_ref=annotation_id, content=content,
-                                           inline=bounds.x + annotation_leading + content_left,
-                                           baseline_block=bounds.y + content_top + size, typography_role=annotation_text_role,
+                                           inline=bounds.x + annotation_leading + content_left + kind_measure.inset_left,
+                                           baseline_block=(bounds.y + content_top + kind_measure.inset_top
+                                                           + kind_measure.header_block + size),
+                                           typography_role=annotation_text_role,
                                            theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                                            collision_region="annotations", collision_domain=CollisionDomain(annotation_text_slot, "content"),
                                            lines=annotation_lines, semantic_id=presentation.text_semantic_id,
@@ -527,8 +558,9 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                     raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(visual.source_ref for visual, _, _, _ in annotation_visuals))
                 cap_height = float(annotation_metrics.cap_height_at(size))
                 for visual, icon, icon_width, gap in annotation_visuals:
-                    inline = (bounds.x if visual.side == "leading"
-                              else bounds.x + annotation_leading + text_width + annotation_trailing - gap - icon_width)
+                    inline = ((bounds.x if visual.side == "leading"
+                               else bounds.x + annotation_leading + text_width + annotation_trailing - gap - icon_width)
+                              + kind_measure.inset_left)
                     icon_bounds = Rect(Decimal(str(inline)), Decimal(str(placed_annotation.baseline[1] - cap_height
                                                                           + (cap_height - size) / 2)),
                                        Decimal(str(icon_width)), Decimal(str(size)))

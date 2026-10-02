@@ -160,7 +160,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                   layout_manifest: LayoutManifest | None = None, locale: str = "en-US",
                                   color_scale: ResolvedColorScale | None = None,
                                   table: TableContent | None = None,
-                                  group_tints: tuple[tuple[str, str], ...] = ()) -> SurfaceContentInput:
+                                  group_tints: tuple[tuple[str, str], ...] = (),
+                                  annotation_kind_colors: Mapping[str, str] | None = None) -> SurfaceContentInput:
     """Normalize current Project/View/profile facts without legacy Settings."""
     if table is None:
         table = normalize_v05_table_content(projection, project, view, actual_set=actual_set, locale=locale)
@@ -247,23 +248,34 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         consumed_note_ids.add(str(reference))
         return text
 
+    item_titles = {item.object_id: item.title for item in projection.items}
+
     def _annotation(index: int, annotation: Mapping[str, Any]) -> AnnotationIntent:
         anchor = {str(key): ("finish" if key == "endpoint" and value == "end" else str(value)) for key, value in annotation["anchor"].items()}  # `end` aliases `finish` (I662 S4a)
         purpose = str(annotation["purpose"])
         number = index + 1 if annotation_numbered else None
         content = _annotation_text(annotation)
+        # The kind is the referenced Project annotation's own `kind` (#584); an annotation that
+        # carries its own text has none.
+        reference = annotation.get("projectAnnotation")
+        source_note = project_notes.get(reference) if reference is not None and isinstance(project_notes, Mapping) else None
+        declared_kind = source_note.get("kind") if isinstance(source_note, Mapping) else None
+        kind = declared_kind if isinstance(declared_kind, str) and declared_kind else None
+        subject = item_titles.get(anchor.get("id", ""), "")
         declared_candidates = annotation.get("candidates")
         if declared_candidates is not None:
             # The declared candidate-list spelling (#466): no legacy fallback
             # ladder applies, and Layout falls back to visible-overflow on
             # the first declared candidate if every one is exhausted.
             return AnnotationIntent(str(annotation["id"]), purpose, anchor, "rail", "center",
-                                    content, number, (), parse_candidates(declared_candidates))
+                                    content, number, (), parse_candidates(declared_candidates),
+                                    kind=kind, subject=subject)
         placement = annotation["placement"]
         return AnnotationIntent(str(annotation["id"]), purpose, anchor,
                                 str(placement["side"]), str(placement["alignment"]),
                                 content, number, annotation_fallback or ("rail",),
-                                legacy_candidate_order(purpose, annotation_fallback)[0])
+                                legacy_candidate_order(purpose, annotation_fallback)[0],
+                                kind=kind, subject=subject)
 
     annotations = tuple(_annotation(index, annotation) for index, annotation in enumerate(raw_annotations))
     # A selected Project annotation is consumed once: it is presented through
@@ -311,7 +323,10 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                row_decoration=view.background_decoration[0],
                                group_decoration=view.background_decoration[1],
                                group_headers=_group_headers(projection, project, view),
-                               group_tints=group_tints)
+                               group_tints=group_tints,
+                               annotation_kind_paints=tuple(
+                                   (item.annotation_id, annotation_kind_colors[item.kind]) for item in annotations
+                                   if annotation_kind_colors and item.kind in annotation_kind_colors))
 
 
 def _group_headers(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput) -> tuple[tuple[str, str], ...]:

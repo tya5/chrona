@@ -410,6 +410,8 @@ serialize the completed box/image/text paints without inspecting pixels,
 selecting a ground, or repairing contrast. Geometry and image tile placement
 remain Layout/Scene facts.
 
+The annotation kind header (#584, Specification 07) is completed by Layout as separate shapes and text beside the annotation box: `annotation-kind-bar:<id>` and `annotation-kind-accent:<id>` Rect primitives (purposes `annotation-kind-bar` and `annotation-kind-accent`, roles of the same names, `DECORATION` contrast class) and `annotation-kind-text:<id>:<n>` Text primitives (roles `annotation-kind-label` and `annotation-kind-secondary`, `STATE_TEXT` class with a required `contrastTreatment`), all in the annotations slot with paint order 400 for the shapes (emitted after the box) and 401 for the text. Scene replaces only the fill of the bar and accent with the colour of the annotation's kind, keyed by the annotation id; opacity, order and geometry stay Layout's and the role's. The header text has no same-pair rule like note prose: its ground is the topmost prior opaque Rect or Symbol under its sample point, which is the bar, or the note box when the Theme draws no bar.
+
 `optional` defaults to false. It is true only for a label or annotation family whose
 applicable Detail rule has `required=false`; generated children of that optional
 annotation box inherit the flag. It is not inferred by an adapter from purpose names.
