@@ -17,6 +17,19 @@ class ThemeTokenError(ValueError):
         self.path = path
 
 
+# A role's declared horizontal compression (#585): the painted run is scaled along its own inline axis. The floor keeps
+# a compressed face recognisably the same face; the ceiling makes it compression only (no extension).
+HORIZONTAL_SCALE_FLOOR = Decimal("0.5")
+HORIZONTAL_SCALE_CEILING = Decimal("1")
+
+
+def checked_horizontal_scale(value: Decimal, pointer: str) -> Decimal:
+    """Return a declared horizontal scale, or raise the typed range diagnostic at its Theme pointer."""
+    if not value.is_finite() or value < HORIZONTAL_SCALE_FLOOR or value > HORIZONTAL_SCALE_CEILING:
+        raise ThemeTokenError("E_THEME_TEXT_SCALE_RANGE", pointer)
+    return value
+
+
 @dataclass(frozen=True)
 class TextTreatment:
     """Finite text values resolved before Layout measures a painted run."""
@@ -28,6 +41,7 @@ class TextTreatment:
     letter_spacing_em: Decimal
     transform: str
     numeric_spacing: str
+    horizontal_scale: Decimal = Decimal(1)
 
     def paint_content(self, content: str) -> str:
         return {
@@ -290,7 +304,10 @@ class ThemeTokenView:
                 or transform not in {"none", "uppercase", "lowercase", "capitalize"}
                 or numeric_spacing not in {"proportional", "tabular"}):
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}")
-        return TextTreatment(family, weight, size, line_height, spacing, transform, numeric_spacing)
+        scale = self.optional_number(role, "horizontalScale")
+        scale = (Decimal(1) if scale is None
+                 else checked_horizontal_scale(scale, f"/body/roles/{role}/horizontalScale"))
+        return TextTreatment(family, weight, size, line_height, spacing, transform, numeric_spacing, scale)
 
     def icon_ratios(self, role: str) -> tuple[Decimal, Decimal]:
         """Return the closed typography-relative icon scale and gap for one role."""

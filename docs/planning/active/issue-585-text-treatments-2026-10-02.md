@@ -2,7 +2,7 @@
 
 Living record for [#585](https://github.com/tya5/chrona/issues/585): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history.
 
-**Public base:** `7028bf2c` on `main`. **Status:** this record (design plan, design, architecture review, implementation plan) is the first publication; no code yet. The owner-level decisions are recorded as a comment on the issue.
+**Public base:** `7028bf2c` on `main`. **Status:** the record (PR #955, `d8f9be03`) is published. I585-1 (horizontal compression) is implemented in its code PR; I585-2 (vertical writing) is next. The owner-level decisions are recorded as a comment on the issue.
 
 ## 1. Published baseline
 

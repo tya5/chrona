@@ -39,8 +39,11 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
                    for surface in scene.surfaces for primitive in surface.primitives)
     has_tilt = any(primitive.text_layout is not None and primitive.text_layout.orientation == "tilt"
                    for surface in scene.surfaces for primitive in surface.primitives)
+    has_scale = any(primitive.text_layout is not None and primitive.text_layout.horizontal_scale != 1
+                    for surface in scene.surfaces for primitive in surface.primitives)
     return {
-        "version": "chrona/scene/v0.7" if has_catalog_pattern or has_v07_paint or has_tilt else "chrona/scene/v0.6",
+        "version": ("chrona/scene/v0.7" if has_catalog_pattern or has_v07_paint or has_tilt or has_scale
+                    else "chrona/scene/v0.6"),
         "kind": "scene",
         "provenance": {
             "mode": scene.provenance.mode,
@@ -408,6 +411,8 @@ def _text_layout(value: TextLayout) -> dict[str, Any]:
     result["numericSpacing"] = value.numeric_spacing
     result["orientation"] = value.orientation
     result["rotationDegrees"] = value.rotation_degrees
+    if value.horizontal_scale != 1:
+        result["horizontalScale"] = value.horizontal_scale
     return result
 
 

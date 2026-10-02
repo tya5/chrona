@@ -1,11 +1,13 @@
 """Immutable Color Scheme validation and deterministic paint resolution."""
 from __future__ import annotations
 
+from decimal import Decimal, InvalidOperation
 from re import fullmatch
 from typing import Any, Mapping
 
 from chrona.presentation.annotation_kind_text import AnnotationKindTextError, kind_header
 from chrona.presentation.model.semantic_registry import ContrastClass, contrast_bindings
+from chrona.presentation.model.theme_tokens import ThemeTokenError, checked_horizontal_scale
 from chrona.presentation.scene.capabilities import theme_role_property_consumer
 from chrona.presentation.scene.paint_analysis import composited_contrast
 
@@ -130,6 +132,23 @@ def _annotation_kinds(*, declared: Any, colors: Mapping[str, str]) -> dict[str, 
             entry["color"] = colors[intent]
         resolved[kind] = entry
     return resolved
+
+
+def _horizontal_scales(*, declared_roles: Mapping[str, Any], values: Mapping[str, Any]) -> None:
+    """Reject a declared horizontal compression outside its range at the Theme, whether or not a role is used (#585)."""
+    for role, binding in declared_roles.items():
+        if not isinstance(binding, Mapping) or "horizontalScale" not in binding:
+            continue
+        pointer = f"/body/roles/{role}/horizontalScale"
+        declared = values.get(binding["horizontalScale"])
+        if not isinstance(declared, Mapping) or declared.get("type") != "number" or "value" not in declared:
+            raise ColorSchemeError("E_THEME_TOKEN_TYPE", pointer)
+        try:
+            checked_horizontal_scale(Decimal(str(declared["value"])), pointer)
+        except InvalidOperation as error:
+            raise ColorSchemeError("E_THEME_TOKEN_TYPE", pointer) from error
+        except ThemeTokenError as error:
+            raise ColorSchemeError(error.diagnostic_id, pointer, detail=str(declared["value"])) from error
 
 
 def _annotation_kind_text_contrast(*, declared_roles: Mapping[str, Any], resolved_roles: Mapping[str, Any],
@@ -279,6 +298,7 @@ def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme
         color = colors[intent]
         values[token] = {"type": "color", "value": color}
         roles.setdefault(role, {})[property_name] = token
+    _horizontal_scales(declared_roles=body.get("roles", {}), values=values)
     _state_text_contrast(declared_roles=body.get("roles", {}), resolved_roles=roles,
                          values=values, surface=colors["surface"])
     annotation_kinds = _annotation_kinds(declared=body.get("annotationKinds"), colors=colors)

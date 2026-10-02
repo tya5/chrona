@@ -120,7 +120,8 @@ def place_text_visuals(text: tuple[TextPlacement, ...], request: SurfaceLayoutRe
         by_side = requested.pop(item.placement_id, None)
         if not by_side or item.overflow == "suppressed":
             continue
-        item_metrics = metric_for_family(item.font_family, item.font_weight, request.font_metrics)
+        item_metrics = metric_for_family(item.font_family, item.font_weight, request.font_metrics,
+                                        item.horizontal_scale)
         reservation = reserve_text_visuals(typography_role=item.typography_role,
                                            font_size=item.font_size, visuals=by_side,
                                            request=request)

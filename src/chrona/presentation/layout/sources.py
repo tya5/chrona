@@ -42,6 +42,7 @@ class MeasuredTextRun:
     letter_spacing: float = 0.0
     text_transform: str = "none"
     numeric_spacing: str = "proportional"
+    horizontal_scale: float = 1.0
 
 
 @dataclass(frozen=True)
@@ -165,7 +166,8 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
                 run.source_ref, paint_text(run.content, text_transform=treatment.transform), run.typography_role, width,
                 run_size * run_line_height, baseline, family, int(weight),
                 float(run_size), float(run_line_height), str(run_metrics.content_identity),
-                float(treatment.letter_spacing), treatment.transform, treatment.numeric_spacing))
+                float(treatment.letter_spacing), treatment.transform, treatment.numeric_spacing,
+                float(treatment.horizontal_scale)))
         run_measurements[source] = tuple(measured_runs)
         if value.run_flow == "line" and measured_runs:
             measured_width = (sum((run.inline_size for run in measured_runs), Decimal(0))

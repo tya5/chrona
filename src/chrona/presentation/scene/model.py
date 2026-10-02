@@ -166,6 +166,9 @@ class TextLayout:
     numeric_spacing: str = "proportional"
     orientation: str = "horizontal"
     rotation_degrees: int | float = 0
+    # Declared horizontal compression of the painted run along its own inline axis (#585); the bounds above already
+    # carry the compressed width. 1 is no compression.
+    horizontal_scale: float = 1.0
 
     def __post_init__(self) -> None:
         # `tilt` (#584) is a Layout-completed rigid rotation of a note by a small non-zero angle about the
@@ -177,6 +180,9 @@ class TextLayout:
                 or not (tilted or (self.orientation, self.rotation_degrees) in {
                     ("horizontal", 0), ("rotate-cw", 90), ("rotate-ccw", -90)})):
             raise ValueError("E_PRESENTATION_TEXT_LAYOUT_INVALID")
+        if (isinstance(self.horizontal_scale, bool) or not isinstance(self.horizontal_scale, (int, float))
+                or not 0.5 <= self.horizontal_scale <= 1):
+            raise ValueError("E_PRESENTATION_TEXT_LAYOUT_INVALID: horizontal scale outside 0.5 to 1")
 
 
 @dataclass(frozen=True)

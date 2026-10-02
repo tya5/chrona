@@ -121,6 +121,7 @@ class TextPlacement:
     numeric_spacing: str = "proportional"
     orientation: str = "horizontal"
     rotation_degrees: int | float = 0
+    horizontal_scale: float = 1.0
     font_asset_identity: str = ""
     collision_region: str = "surface"
     collision_domain: CollisionDomain = CollisionDomain("surface", "content")

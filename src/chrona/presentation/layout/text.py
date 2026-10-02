@@ -18,16 +18,45 @@ def paint_text(content: str, *, text_transform: str = "none") -> str:
     }[text_transform]
 
 
+class ScaledMetric:
+    """One selected face measured at a declared horizontal compression (#585).
+
+    ``width`` is the base width multiplied by the scale, letter spacing included: that is the width of the same run
+    painted through a horizontal transform. Everything else (identity, ascent, numeric features) is the base face's.
+    """
+
+    __slots__ = ("base", "scale")
+
+    def __init__(self, base: Any, scale: float) -> None:
+        self.base, self.scale = base, scale
+
+    def width(self, *args: Any, **kwargs: Any) -> float:
+        return float(self.base.width(*args, **kwargs)) * self.scale
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.base, name)
+
+
+def scaled_metric(font_metrics: Any, horizontal_scale: Any = 1) -> Any:
+    """Return the metric itself for scale 1 (default output is the same object), else its compressed measure."""
+    scale = float(horizontal_scale)
+    if isinstance(font_metrics, ScaledMetric):
+        font_metrics = font_metrics.base  # re-base: a scale is applied once, never stacked
+    return font_metrics if scale == 1.0 else ScaledMetric(font_metrics, scale)
+
+
 def metric_for_role(theme_tokens: Any, typography_role: str, font_metrics: Any) -> Any:
-    """Select the exact declared metric before a role can affect geometry."""
+    """Select the exact declared metric, at the role's declared compression, before a role can affect geometry."""
     treatment = theme_tokens.text_treatment(typography_role)
-    return metric_for_family(treatment.family, int(treatment.weight), font_metrics)
+    return metric_for_family(treatment.family, int(treatment.weight), font_metrics, treatment.horizontal_scale)
 
 
-def metric_for_family(family: str, weight: int, font_metrics: Any) -> Any:
-    """Select one exact metric when a completed placement owns family/weight."""
+def metric_for_family(family: str, weight: int, font_metrics: Any, horizontal_scale: Any = 1) -> Any:
+    """Select one exact metric when a completed placement owns family/weight (and its compression)."""
+    if isinstance(font_metrics, ScaledMetric):
+        font_metrics = font_metrics.base
     select = getattr(font_metrics, "select", None)
-    return select(family, weight) if callable(select) else font_metrics
+    return scaled_metric(select(family, weight) if callable(select) else font_metrics, horizontal_scale)
 
 
 def measure_text_width(content: str, *, font_size: float, font_metrics: Any,
@@ -159,6 +188,7 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
                                    letter_spacing=letter_spacing,
                                    numeric_spacing=treatment.numeric_spacing)
                 for line in (lines or (content,)))
+    scale = float(treatment.horizontal_scale)
     rotation = {"horizontal": 0, "rotate-cw": 90, "rotate-ccw": -90}.get(orientation)
     if rotation is None:
         raise ValueError("E_PRESENTATION_TEXT_ORIENTATION")
@@ -179,7 +209,7 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
         baseline=(inline, baseline_block), lines=resolved_lines, font_family=treatment.family,
         font_weight=int(treatment.weight), font_size=font_size, line_height=leading,
         letter_spacing=letter_spacing, text_transform=treatment.transform, numeric_spacing=treatment.numeric_spacing,
-        orientation=orientation, rotation_degrees=rotation,
+        orientation=orientation, rotation_degrees=rotation, horizontal_scale=scale,
         font_asset_identity=str(font_metrics.content_identity), collision_region=collision_region,
         collision_domain=collision_domain,
         source_content=source,

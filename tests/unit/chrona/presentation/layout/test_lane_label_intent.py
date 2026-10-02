@@ -18,7 +18,7 @@ class _Theme:
     def text_treatment(self, _role):
         return SimpleNamespace(family="Test", weight=400, font_size=Decimal(10),
                                line_height=Decimal("1.2"), letter_spacing=Decimal(0),
-                               transform="none", numeric_spacing="proportional")
+                               transform="none", numeric_spacing="proportional", horizontal_scale=Decimal(1))
 
     def icon_ratios(self, _role):
         return Decimal("0.5"), Decimal("0.2")

@@ -69,5 +69,5 @@ def test_explicit_halcyon_init_is_store_resolvable_without_root_revision_closure
         }
         closures.append(resolve_render_context(context_reference, reader))
     assert closures[0].context.identity.id == "halcyon-1-01-mission-brief"
-    assert len(closures) == 18  # 18 HALCYON-1 slide contexts, including gallery-image-notes (#465), gallery-annotation-kinds and gallery-annotation-tilt (#584)
+    assert len(closures) == 19  # 19 HALCYON-1 slide contexts, including gallery-image-notes (#465), gallery-annotation-kinds and gallery-annotation-tilt (#584) and gallery-text-compression (#585)
     assert tuple((destination / ".chrona" / "store").glob("revision-*"))

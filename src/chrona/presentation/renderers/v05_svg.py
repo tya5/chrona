@@ -265,8 +265,14 @@ def render_v05_svg(surface: SceneSurface) -> str:
                  ),
             ) if part)
             treatment = f" {treatment}" if treatment else ""
-            transform = (f' transform="rotate({number(node.text_layout.rotation_degrees)} {number(node.baseline[0])} {number(node.baseline[1])})"'
-                         if node.text_layout.rotation_degrees else "")
+            # Compression acts in the text's own frame (about the baseline start), so it is composed after the
+            # rotation in the list and applies first (#585).
+            steps = ([f"rotate({number(node.text_layout.rotation_degrees)} {number(node.baseline[0])} {number(node.baseline[1])})"]
+                     if node.text_layout.rotation_degrees else [])
+            if node.text_layout.horizontal_scale != 1:
+                scale = node.text_layout.horizontal_scale
+                steps.append(f"matrix({number(scale)} 0 0 1 {number(node.baseline[0] * (1 - scale))} 0)")
+            transform = f' transform="{" ".join(steps)}"' if steps else ""
             append(node, f'<text {common} x="{number(node.baseline[0])}" y="{number(node.baseline[1])}" font-family="{escape(node.text_layout.family, quote=True)}" font-weight="{node.text_layout.weight}" font-size="{number(node.text_layout.font_size)}"{transform}{treatment} {attrs(paint, fill=True, stroke=False)}>{body}</text>')
         elif node.kind == "Symbol":
             if node.symbol is None or paint.image is not None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
