@@ -130,7 +130,10 @@ def complete_catalog_patterns(marks: tuple[MarkPlacement, ...],
         return ()
     result: list[PatternedPlacement] = []
     for shape in shapes:
-        role = _RECT_PATTERN_THEME_ROLES.get(shape.semantic_id)
+        # A legend key is a miniature of its mark: it carries the mark's Theme role in `source_ref` (#991).
+        role = (shape.source_ref if shape.placement_id.startswith("legend-swatch:")
+                and shape.source_ref in _RECT_PATTERN_THEME_ROLES.values()
+                else _RECT_PATTERN_THEME_ROLES.get(shape.semantic_id))
         if shape.kind != "Rect" or role is None:
             continue
         pattern = optional_pattern(role)
