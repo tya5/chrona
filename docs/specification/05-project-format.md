@@ -378,6 +378,33 @@ annotations:
 
 Presentation-specific placement offsets are not part of this Core representation.
 
+### 12.1 Periods
+
+A Project MAY name date ranges, such as a launch window, in an optional top-level `periods` map (#582):
+
+```yaml
+periods:
+  launch-window:
+    title: Launch window
+    start: {object: launch, endpoint: at}
+    end: 2027-11-06
+```
+
+A period is the half-open range `[start, end)`, the convention of every Project span (§4.1): "22 October to 5
+November inclusive" is written `end: 2027-11-06`. Each side is a calendar date or an endpoint reference
+`{object, endpoint}` (the form relations use, §7), which names the completed date the schedule gives that
+endpoint. `title` is optional and is the period's label text. The object is closed: it has no presentation member
+(placement, paint, pattern), which belong to a View and a Theme.
+
+A period is a fact that never schedules. Like a deadline (§9) it MUST NOT move or constrain any object, add a
+relation, or be read by the scheduler. Scenario overrides do not change it.
+
+Validation, in `validate`, with the period's pointer under `/periods/<id>`: a side that is not a calendar date is
+`E_SCHEMA`; when both sides are dates, `start` MUST be before `end` (`E_PROJECT_PERIOD_ORDER`); a reference MUST
+name a Project object (`E_PROJECT_PERIOD_OBJECT_UNKNOWN`) and an endpoint its schedule offers, `at` for a point and
+`start` or `end` for a span (`E_PROJECT_PERIOD_ENDPOINT_UNAVAILABLE`). The member is optional and additive in
+`timeline/v0.7` (§16). The terse syntax (Spec 65) does not spell periods; they stay in YAML.
+
 ## 13. Precision and uncertainty
 
 The semantic model distinguishes precision and uncertainty.
