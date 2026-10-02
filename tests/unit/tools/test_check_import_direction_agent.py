@@ -96,7 +96,7 @@ def test_a_similarly_named_module_is_not_the_sdk(tmp_path, monkeypatch, capsys):
     assert code == 0, out
 
 
-def test_the_real_tool_core_imports_only_use_cases_the_path_guard_the_validator_factory_and_the_store_command_module():
+def test_the_real_tool_core_imports_only_use_cases_the_path_guard_the_validator_factory_and_the_two_shared_store_modules():
     seen: set[str] = set()
     import ast
     for name in ("agent_tools.py", "agent_workspace.py"):
@@ -106,7 +106,8 @@ def test_the_real_tool_core_imports_only_use_cases_the_path_guard_the_validator_
             elif isinstance(node, ast.Import):
                 seen.update(item.name for item in node.names if item.name.startswith("chrona"))
     assert {module for module in seen if not module.startswith("chrona.usecases.")} == {
-        "chrona.app.agent_workspace", "chrona.core.store_address", "chrona.resources", "chrona.operational.store_commands"}
+        "chrona.app.agent_workspace", "chrona.core.store_address", "chrona.resources", "chrona.operational.store_commands",
+        "chrona.operational.store_reads"}
 
 
 OPERATIONAL = {**PRODUCT, "operational/store_commands.py": "Q = 1\n", "operational/command_engine.py": "E = 1\n",

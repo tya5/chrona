@@ -282,7 +282,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--output", "-o", required=True, help="empty or absent output directory")
 
     command = sub.add_parser("mcp", help="serve the agent tools over MCP on standard input and output; read-only unless --allow-write",
-                             description="serve validate_project, schedule_project, render_draft, list_presets, check_command and apply_command to an MCP client; apply_command writes a Store only with --allow-write; needs the optional chrona[mcp] extra")
+                             description="serve validate_project, schedule_project, render_draft, list_presets, render_review, compare_baseline, check_command and apply_command to an MCP client; render_review and compare_baseline read a Store inside the workspace; apply_command writes a Store only with --allow-write; needs the optional chrona[mcp] extra")
     command.add_argument("--workspace", help="the only directory the tools may read, and below which a Store may be written (default: the current directory)")
     command.add_argument("--allow-write", action="store_true", help="let apply_command write the Store (configuration, not approval: it has no approval step); without it the server is read-only and the call is refused with E_MCP_WRITE_DISABLED")
     command.add_argument("--list-tools", action="store_true", help="print the tool registry as JSON and exit (needs no MCP SDK)")

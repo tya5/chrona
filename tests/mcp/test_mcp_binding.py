@@ -268,3 +268,50 @@ def test_a_server_built_without_the_option_refuses_writes_and_the_option_default
     assert work.snapshot() == before
     for function in (mcp_server.build_server, mcp_server.serve):
         assert inspect.signature(function).parameters["allow_write"].default is False
+
+
+# --- the Store read tools (#812) --------------------------------------------------------------------------------
+
+def test_the_store_read_tools_are_listed_read_only_and_the_instructions_name_them(workspace):
+    listed = {tool.name: tool for tool in run(workspace, lambda client: client.list_tools()).tools}
+
+    for name in ("render_review", "compare_baseline"):
+        hints = listed[name].annotations
+        assert (hints.read_only_hint, hints.destructive_hint, hints.idempotent_hint, hints.open_world_hint) == (True, False, True, False)
+    for text in (mcp_server.INSTRUCTIONS, mcp_server.WRITE_INSTRUCTIONS):
+        assert "render_review" in text and "compare_baseline" in text and len(text.encode("utf-8")) < 1024
+
+
+def test_render_review_on_a_read_only_server_returns_the_svg_as_an_embedded_resource(tmp_path):
+    from chrona.usecases.local_authoring import initialize_project
+
+    root = initialize_project(tmp_path / "corpus", example="halcyon-1")
+    (root / "ctx.yaml").write_text(
+        "id: halcyon-1-01-mission-brief\nkind: render-context\nstore: {provider: local, identity: halcyon-1-example}\n"
+        "address: contexts/01-mission-brief.yaml\nrevision: {token: example-v4}\n", encoding="utf-8")
+
+    result = run(root, lambda client: client.call_tool("render_review", {"contextReference": "ctx.yaml"}))
+
+    assert not result.is_error and result.structured_content["status"] == "ok"
+    assert [type(block) for block in result.content] == [types.TextContent, types.EmbeddedResource]
+    resource = result.content[1].resource
+    assert resource.uri == f"chrona://render/{result.structured_content['contentIdentity']}.svg"
+    assert resource.text.startswith("<svg") and len(resource.text.encode("utf-8")) == result.structured_content["byteLength"]
+    assert json.loads(result.content[0].text) == result.structured_content
+
+
+def test_a_refused_comparison_is_a_result_and_an_escaping_path_is_a_tool_error(tmp_path):
+    work = StoreWorkspace(tmp_path / "ws")
+    (work.root / "project.yaml").write_text(json.dumps(work.project_ref), encoding="utf-8")
+    before = work.snapshot()
+
+    async def scenario(client):
+        return (await client.call_tool("compare_baseline", {"baselineReference": "project.yaml", "candidateReference": "project.yaml"}),
+                await client.call_tool("compare_baseline", {"baselineReference": "../x.yaml", "candidateReference": "project.yaml"}))
+
+    refused, escaped = run(work.root, scenario)
+
+    assert not refused.is_error and refused.structured_content["status"] == "rejected"
+    assert refused.structured_content["automationResult"]["operation"] == "baseline-compare"
+    assert escaped.is_error and escaped.structured_content["diagnostics"][0]["code"] == "E_MCP_PATH_SYNTAX"
+    assert work.snapshot() == before

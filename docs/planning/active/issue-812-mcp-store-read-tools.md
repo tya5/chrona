@@ -1,8 +1,10 @@
 # Issue #812: MCP Store read tools (`render_review`, `compare_baseline`)
 
-**Status:** Design pack (baseline, design plan, design, architecture review, implementation plan) published in one PR before
-any code, as the owner asked for fewer, larger units. Code slices follow (section 5).
-**Public base:** `main` at `339d87d4` (observed 2026-10-02).
+**Status:** Design pack (baseline, design plan, design, architecture review, implementation plan) published in one PR
+([#932](https://github.com/tya5/chrona/pull/932)) before any code, as the owner asked for fewer, larger units. S1 is
+[#935](https://github.com/tya5/chrona/pull/935); S2 (the tools and documents) follows; S3 (stdio tests and the acceptance
+review) closes the issue.
+**Public base:** `main` at `339d87d4` (observed 2026-10-02); design on `7c207760`.
 **Issue:** [#812](https://github.com/tya5/chrona/issues/812), read with its owner comment of 2026-10-01 (teach the
 pinned-evidence path in the skill).
 **Living contract:** [Spec 66](../../specification/66-agent-interface.md) (changed with the code slices, not here).
@@ -203,9 +205,14 @@ threat model, as in #813 3.9). Reversal: one check in the tool's store opener.
 - `compare_baseline` result: the envelope plus `automationResult`, the Automation Result mapping
   (`chrona/automation-result/v0.2`) exactly as `chrona baseline-compare` writes it to `--result`; serialized with sorted
   keys it is byte-equal to that file. Accepted is `ok` (with `comparison`); rejected is `rejected` with one diagnostic per
-  code of the result, component `operational`, `sourceRef` `/` (`/baselineReference` for `E_BASELINE_REFERENCE`) and the
-  engine's own message; `automationResult` is kept on a rejected result. The command line exits 2 for a rejected result; the
+  code of the result, component `operational`, `sourceRef` `/` and the engine's own message; `automationResult` is kept
+  on a rejected result. (Recorded with S2: an earlier draft gave `E_BASELINE_REFERENCE` the pointer `/baselineReference`,
+  but that code covers the baseline, its project and the candidate alike, so the honest source is the whole input.) The command line exits 2 for a rejected result; the
   tool reports `rejected` (understood and refused, Spec 66 section 3).
+- Reader failures keep the codes and messages the command line gives them: the render closure reports a generic
+  message for `E_STORE_REFERENCE`, `E_CONTENT_IDENTITY` and `E_CONTENT_IDENTITY_REQUIRED` (`usecases.diagnostic_messages`, not changed here); the
+  comparison reports the engine's specific message. Better closure messages are a change to that shared table, not to the
+  tools.
 - A failure that is not a result of the engine (unreadable or oversized file, no or invalid Store configuration, an
   undeclared Store, a root outside the workspace) is `failed` through the shared failure report.
 
@@ -259,8 +266,8 @@ so the guards protect disclosure and integrity of evidence, not the workspace.
 | A reference or the configuration is a symlink out | shared guard, symlinks followed | `failed`, `E_MCP_PATH_CONTAINMENT` | one per input; skipped only where the OS cannot create a link |
 | A configured root is absolute, uses `..` or is a symlink out | `open_store_reader(contained_in=)` | `failed`, `E_MCP_PATH_CONTAINMENT`; nothing outside is read | one per shape, with a file outside that would otherwise render |
 | An address inside the Store is a link leaving the Store root | `LocalSnapshotReader` | typed `E_STORE_REFERENCE` | one |
-| Tampered bytes behind a pinned reference | content identity | `E_CONTENT_IDENTITY` | one per tool |
-| A `required` Store and a reference without an identity | integrity | `E_CONTENT_IDENTITY_REQUIRED` | one |
+| Tampered bytes behind a pinned reference | content identity | refused: `E_CONTENT_IDENTITY` from the render closure; `E_BASELINE_REFERENCE` with the mismatch in the engine's message from the comparison | one per tool |
+| A `required` Store and a reference without an identity | integrity | refused: `E_CONTENT_IDENTITY_REQUIRED` from the render closure (as on the command line); `E_BASELINE_REFERENCE`, "has no contentIdentity", from the comparison; the same reference renders under `optional` | one per tool |
 | An argument that lowers integrity or names a root | closed input schema | protocol error | one |
 | Undeclared Store in the reference | `snapshot_reader_for` | `E_STORE_CONFIG_REQUIRED` | one |
 | Write | none exists | the Store's every file and the workspace tree are byte-identical afterwards | one per tool |
