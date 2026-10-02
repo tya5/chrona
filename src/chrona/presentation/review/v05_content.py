@@ -7,7 +7,7 @@ from typing import Any, Mapping
 from chrona.presentation.model.projection import ObservationState, ReviewProjection
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.model.surface_content import (
-    AnnotationIntent, AxisLabelIntent, AxisTier, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, _format_compact_date, display_value, table_value,
+    AnnotationIntent, AxisLabelIntent, AxisSecondaryIntent, AxisTier, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, _format_compact_date, display_value, table_value,
 )
 from chrona.presentation.review.detail import resolve_v05_review_detail_profile
 from chrona.presentation.layout.model import LayoutManifest
@@ -401,10 +401,17 @@ def _axis_tier(value: Mapping[str, Any], *, locale: str) -> AxisTier:
     candidate_forms = tuple((str(candidate), str(form)) for candidate, form in candidates.items()) if isinstance(candidates, Mapping) else ()
     table_id = str(raw_label.get("nameTable", locale))
     axis_name_table(table_id)
+    raw_secondary = raw_label.get("secondary")
+    secondary = None
+    if isinstance(raw_secondary, Mapping):
+        secondary_table = str(raw_secondary.get("nameTable", table_id))
+        axis_name_table(secondary_table)
+        secondary = AxisSecondaryIntent(str(raw_secondary["form"]), secondary_table,
+                                        str(raw_secondary["typographyRole"]), str(raw_secondary["placement"]))
     return AxisTier(unit, int(value["every"]), role,
                     AxisLabelIntent(str(raw_label["form"]) if "form" in raw_label else None,
                                     candidate_forms, str(raw_label["align"]), str(raw_label["overflow"]),
-                                    str(raw_label["orientation"]), table_id),
+                                    str(raw_label["orientation"]), table_id, secondary),
                     typography_role=typography_role)
 
 

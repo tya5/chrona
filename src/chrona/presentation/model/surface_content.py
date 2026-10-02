@@ -130,6 +130,16 @@ class AnnotationIntent:
 
 
 @dataclass(frozen=True)
+class AxisSecondaryIntent:
+    """A second form of the same interval, drawn smaller in the same cell (#493)."""
+
+    form: str
+    name_table_id: str
+    typography_role: str
+    placement: str  # "stacked" | "inline"
+
+
+@dataclass(frozen=True)
 class AxisLabelIntent:
     """Finite label vocabulary and placement policy for one labels tier."""
 
@@ -139,6 +149,7 @@ class AxisLabelIntent:
     overflow: str
     orientation: str
     name_table_id: str
+    secondary: AxisSecondaryIntent | None = None
 
 
 @dataclass(frozen=True)

@@ -83,6 +83,7 @@ _SURFACE_CAUSES: Mapping[str, str] = {
     "W_LAYOUT_AXIS_LABEL_THINNED": "an axis label was dropped because the labels of its tier do not all fit",
     "W_LAYOUT_AXIS_DENSITY": "an axis tier was thinned because its labels do not all fit",
     "W_LAYOUT_AXIS_FORM_EQUIVALENT": "an axis label form coincides with another canonical form of the same month",
+    "W_LAYOUT_AXIS_SECONDARY_OMITTED": "the secondary label of an axis cell was omitted because it does not fit beside or below the main label",
     "W_LAYOUT_ANNOTATION_ROUTE_SEARCH_EXHAUSTED": "the search for a route for an annotation tail ran out of candidates",
     "W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK": "an annotation was placed at a later candidate than the first one declared",
     "W_LAYOUT_ANNOTATION_SUPPRESSED": "an annotation was left out because it does not fit",

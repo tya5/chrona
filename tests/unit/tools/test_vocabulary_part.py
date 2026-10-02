@@ -244,8 +244,8 @@ def test_month_and_quarter_label_forms_are_the_published_forms_in_order():
 
 
 @pytest.mark.parametrize(("name", "definition", "count"), [
-    ("view-v0.28.schema.yaml", "monthLabelForm", 2),
-    ("view-v0.28.schema.yaml", "quarterLabelForm", 2),
+    ("view-v0.28.schema.yaml", "monthLabelForm", 3),
+    ("view-v0.28.schema.yaml", "quarterLabelForm", 3),
     ("axis-name-tables-v0.1.schema.yaml", "monthLabelForm", 2),
 ])
 def test_each_axis_label_form_site_references_the_definition_and_accepts_exactly_it(name, definition, count):

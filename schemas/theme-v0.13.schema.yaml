@@ -227,6 +227,7 @@ properties:
             laneBlockSize: {description: "Named axis-lane block size in px for a labels tier's typography role; the tier becomes a declared lane with vertically centred labels (#426).", type: string, minLength: 1}
             cellGap: {description: "Named gap in px between adjacent cells of an axis band tier (#426).", type: string, minLength: 1}
             labelInset: {description: "Named inset, as a ratio of the role's font size, of a start-aligned axis label from its cell edge (#426).", type: string, minLength: 1}
+            labelGap: {description: "Named gap, as a ratio of the role's font size, between an axis label and its secondary label: below it when stacked, after it when inline; absent, 0 when stacked and one measured space when inline (#493).", type: string, minLength: 1}
             tickLength: {description: "Named length in px of the tick a grid-major or grid-minor tier draws at each interval start, standing on the axis rule; absent keeps the full-height line (#492).", type: string, minLength: 1}
             chipPadding: {description: "Named label-chip padding ratio of the label's font size (inline; half on the block axis) for a <purpose>-chip role.", type: string, minLength: 1}
             progressInset: {description: "Named progress-track inset ratio of the host mark's block size; the fill sits inside the track with this gap (0 <= ratio < 0.5).", type: string, minLength: 1}
