@@ -4,7 +4,7 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 
 | Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| actual | `actual` | required | 3.000 | 36 | 249 | 3.204 | 7.708 | 0 |
+| actual | `actual` | required | 3.000 | 37 | 253 | 3.204 | 7.708 | 0 |
 | annotation-box | `annotation-note-box` | enabled | 1.100 | 8 | 22 | 1.435 | 1.435 | 0 |
 | annotation-kind-accent | `annotation-kind-accent` | enabled | 1.100 | 2 | 5 | 5.765 | 6.499 | 0 |
 | annotation-kind-bar | `annotation-kind-bar` | enabled | 1.100 | 2 | 5 | 5.765 | 6.499 | 0 |
@@ -12,26 +12,28 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | annotation-kind-secondary | `annotation-kind-secondary` | required | 4.500 | 2 | 5 | 6.747 | 7.583 | 0 |
 | annotation-kind-stamp | `annotation-kind-stamp` | enabled | 1.100 | 1 | 16 | 6.833 | 6.833 | 0 |
 | annotation-text | `annotation-note-text` | required | 4.500 | 8 | 22 | 13.973 | 13.973 | 0 |
-| axis-band | `axis-band-decoration` | enabled | 1.100 | 38 | 106 | 1.292 | 1.773 | 0 |
+| axis-band | `axis-band-decoration` | enabled | 1.100 | 39 | 108 | 1.292 | 1.773 | 0 |
 | axis-band | `axis-band-decoration2` | enabled | 1.100 | 5 | 37 | 1.119 | 1.146 | 0 |
+| calendar-closed | `calendar-closed` | absent | 1.100 | 1 | 0 | — | — | 0 |
 | calendar-closed | `calendar-closed` | enabled | 1.100 | 38 | 1404 | 1.370 | 1.414 | 0 |
 | finish-delta | `variance-ahead` | deemphasized | 3.000 | 3 | 9 | 7.708 | 7.708 | 0 |
-| finish-delta | `variance-behind` | required | 4.500 | 24 | 58 | 4.562 | 5.571 | 0 |
+| finish-delta | `variance-behind` | required | 4.500 | 25 | 60 | 4.562 | 5.571 | 0 |
 | finish-delta | `variance-on-track` | required | 4.500 | 4 | 11 | 5.692 | 5.692 | 0 |
-| group-decoration | `group-band` | absent | 1.100 | 3 | 0 | — | — | 0 |
+| group-decoration | `group-band` | absent | 1.100 | 4 | 0 | — | — | 0 |
 | group-decoration | `group-band` | enabled | 1.100 | 34 | 102 | 1.116 | 1.203 | 0 |
-| group-header | `text` | required | 4.500 | 25 | 95 | 11.935 | 16.268 | 0 |
-| group-header-band | `group-header-band` | absent | 1.100 | 3 | 0 | — | — | 0 |
-| legend-swatch | `actual` | required | 3.000 | 29 | 29 | 6.442 | 16.268 | 0 |
+| group-header | `text` | required | 4.500 | 26 | 98 | 11.935 | 16.354 | 0 |
+| group-header-band | `group-header-band` | absent | 1.100 | 4 | 0 | — | — | 0 |
+| group-tab | `group-tab` | enabled | 1.100 | 1 | 9 | 2.259 | 7.583 | 0 |
+| legend-swatch | `actual` | required | 3.000 | 30 | 30 | 6.442 | 16.268 | 0 |
 | legend-swatch | `calendar-closed` | enabled | 1.100 | 3 | 3 | 1.460 | 1.460 | 0 |
-| legend-swatch | `planned` | required | 3.000 | 30 | 69 | 5.284 | 16.354 | 0 |
-| missingActual | `missing-actual` | required | 3.000 | 27 | 35 | 4.436 | 14.437 | 0 |
+| legend-swatch | `planned` | required | 3.000 | 31 | 70 | 5.284 | 16.354 | 0 |
+| missingActual | `missing-actual` | required | 3.000 | 28 | 36 | 4.436 | 14.505 | 0 |
 | network-node | `network-node` | required | 3.000 | 2 | 32 | 16.354 | 17.050 | 0 |
 | period-band | `period-band` | enabled | 1.100 | 4 | 4 | 6.157 | 6.157 | 0 |
 | period-label | `period-label` | required | 4.500 | 4 | 4 | 13.973 | 13.973 | 0 |
-| planned | `planned` | required | 3.000 | 38 | 510 | 5.284 | 13.238 | 0 |
-| progress-fill | `progress-fill` | required | 3.000 | 26 | 79 | 3.216 | 4.789 | 0 |
-| row-decoration | `row-band` | absent | 1.100 | 3 | 0 | — | — | 0 |
+| planned | `planned` | required | 3.000 | 39 | 518 | 5.284 | 13.238 | 0 |
+| progress-fill | `progress-fill` | required | 3.000 | 27 | 82 | 3.216 | 4.789 | 0 |
+| row-decoration | `row-band` | absent | 1.100 | 4 | 0 | — | — | 0 |
 | row-decoration | `row-band` | enabled | 1.100 | 11 | 44 | 1.116 | 1.116 | 0 |
 | snapshot | `snapshot` | required | 3.000 | 2 | 10 | 13.238 | 14.512 | 0 |
 | summary-bar | `summary-bar` | required | 3.000 | 2 | 2 | 5.817 | 6.712 | 0 |
@@ -884,6 +886,40 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/controller-z/generated/executive.scene.json` | `row-band:performance` | `row-band` | 253.200, 480.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
 | `examples/controller-z/generated/executive.scene.json` | `row-band:pvt` | `row-band` | 253.200, 644.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
 | `examples/controller-z/generated/executive.scene.json` | `row-band:silicon-bringup` | `row-band` | 253.200, 316.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `actual:evb-arrival:evb-arrival` | `actual` | 1062.112, 408.800 | `canvas` | canvas | `#0A0A0C` | fill | 9.245 | 3.000 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `actual:firmware:firmware` | `actual` | 602.048, 244.800 | `planned:firmware:firmware` | flat | `#FF7A1A` | stroke | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `actual:performance:performance` | `actual` | 1191.069, 480.800 | `canvas` | canvas | `#0A0A0C` | fill | 9.245 | 3.000 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `actual:silicon-bringup:silicon-bringup` | `actual` | 1069.083, 316.800 | `planned:silicon-bringup:silicon-bringup` | flat | `#FF7A1A` | stroke | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 718.035, 92.800 | `canvas` | canvas | `#0A0A0C` | fill | 1.292 | 1.100 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `axis-band-rect:0:1` | `axis-band-decoration` | 1252.835, 92.800 | `canvas` | canvas | `#0A0A0C` | fill | 1.292 | 1.100 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `variance:firmware:firmware` | `variance-behind` | 1036.101, 244.800 | `canvas` | canvas | `#0A0A0C` | fill | 11.210 | 4.500 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `variance:silicon-bringup:silicon-bringup` | `variance-behind` | 1142.275, 345.300 | `canvas` | canvas | `#0A0A0C` | fill | 11.210 | 4.500 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `group-header:factory-team` | `text` | 165.490, 598.600 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `group-header:fw-team` | `text` | 128.138, 126.600 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `group-header:validation-team` | `text` | 156.264, 362.600 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `group-tab:factory-team` | `group-tab` | 52.000, 598.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 1.100 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `group-tab:factory-team` | `group-tab` | 52.000, 598.800 | `group-tab:factory-team` | pattern-substrate | `#FF7A1A` | stroke | 2.259 | 1.100 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `group-tab:factory-team` | `group-tab` | 52.000, 598.800 | `canvas` | canvas | `#0A0A0C` | stroke | 17.128 | 1.100 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `group-tab:fw-team` | `group-tab` | 52.000, 126.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 1.100 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `group-tab:fw-team` | `group-tab` | 52.000, 126.800 | `group-tab:fw-team` | pattern-substrate | `#FF7A1A` | stroke | 2.259 | 1.100 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `group-tab:fw-team` | `group-tab` | 52.000, 126.800 | `canvas` | canvas | `#0A0A0C` | stroke | 17.128 | 1.100 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `group-tab:validation-team` | `group-tab` | 52.000, 362.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 1.100 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `group-tab:validation-team` | `group-tab` | 52.000, 362.800 | `group-tab:validation-team` | pattern-substrate | `#FF7A1A` | stroke | 2.259 | 1.100 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `group-tab:validation-team` | `group-tab` | 52.000, 362.800 | `canvas` | canvas | `#0A0A0C` | stroke | 17.128 | 1.100 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `legend-swatch:actual` | `actual` | 940.138, 876.538 | `canvas` | canvas | `#0A0A0C` | fill | 9.245 | 3.000 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `legend-swatch:planned` | `planned` | 940.138, 851.338 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `missing-actual:architecture:architecture` | `missing-actual` | 602.048, 172.800 | `canvas` | canvas | `#0A0A0C` | stroke | 17.128 | 3.000 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `planned:architecture:architecture` | `planned` | 563.709, 172.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `planned:dvt:dvt` | `planned` | 1288.659, 552.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `planned:evb-arrival:evb-arrival` | `planned` | 1041.200, 408.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `planned:firmware:firmware` | `planned` | 797.227, 244.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `planned:ga:ga` | `planned` | 1557.029, 716.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `planned:performance:performance` | `planned` | 1100.451, 480.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `planned:pvt:pvt` | `planned` | 1368.821, 644.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1124.848, 316.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 811.168, 244.800 | `actual:firmware:firmware` | flat | `#39C97B` | fill | 9.245 | 3.000 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1142.972, 480.800 | `actual:performance:performance` | flat | `#39C97B` | fill | 9.245 | 3.000 | info |
+| `examples/controller-z/generated/group-tabs.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1142.275, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#39C97B` | fill | 9.245 | 3.000 | info |
 | `examples/controller-z/generated/hand-wobble.scene.json` | `actual:evb-arrival:evb-arrival` | `actual` | 1054.912, 408.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/hand-wobble.scene.json` | `actual:firmware:firmware` | `actual` | 602.048, 244.800 | `planned:firmware:firmware` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
 | `examples/controller-z/generated/hand-wobble.scene.json` | `actual:performance:performance` | `actual` | 1110.907, 480.800 | `planned:performance:performance` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
@@ -3089,4 +3125,4 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 Every non-exclusive decoration role is enabled in committed Scene evidence; group-band or group-header-band supplies the group concept when there are no corpus errors.
 
 
-Findings: 3048; errors: 0.
+Findings: 3086; errors: 0.
