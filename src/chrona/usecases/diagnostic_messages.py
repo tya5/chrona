@@ -19,10 +19,6 @@ from typing import Iterable, Mapping
 # next action instead. Add one entry per code an agent reaches by an ordinary mistake;
 # a code with no entry is still safe (the derived sentence), only less helpful.
 CURATED_MESSAGES: Mapping[str, str] = {
-    "E_ACTUAL_REQUIRED": (
-        "the View compares against actuals (comparison.actual is required) but no actual file was given; "
-        "pass --actual FILE, or change the View so actuals are not required"
-    ),
     "E_SCHEME_INTENT_UNKNOWN": (
         "a Color Scheme colorBindings entry is not ROLE.PROPERTY bound to a known intent or a declared color; "
         "check every target name and value in colorBindings"

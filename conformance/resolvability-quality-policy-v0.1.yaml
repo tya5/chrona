@@ -6,7 +6,6 @@ diagnosticActionability:
   # site means lowering `sites` (or deleting the entry) in the same change; `sufficient` needs a `reason`.
   backlog: &backlog {disposition: backlog, nextAction: "Add owner-local actionable detail (the offending value, and the valid values where the set is small) or classify the identifier as sufficient with a reason."}
   bareDiagnostics:
-    - {<<: *backlog, code: E_ACTUAL_REQUIRED, sites: 1}
     - {<<: *backlog, code: E_AUTHORING_ACTUAL_TASK, sites: 1}
     - {<<: *backlog, code: E_AUTHORING_AGGREGATE_CANDIDATE, sites: 1}
     - {<<: *backlog, code: E_AUTHORING_AGGREGATE_PATH, sites: 2}
@@ -141,10 +140,6 @@ diagnosticActionability:
     - {<<: *backlog, code: E_RENDER_RASTERIZER_UNAVAILABLE, sites: 4}
     - {<<: *backlog, code: E_RENDER_TYPESETTER_DESCRIPTOR, sites: 2}
     - {<<: *backlog, code: E_RENDER_TYPESETTER_IDENTITY, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_EMPTY, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_ITEM_ID_DUPLICATE, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_ITEM_SOURCE_UNAVAILABLE, sites: 2}
-    - {<<: *backlog, code: E_REVIEW_ITEM_TRACK, sites: 1}
     - {<<: *backlog, code: E_REVIEW_LANE_ATTACHMENT, sites: 1}
     - {<<: *backlog, code: E_REVIEW_LANE_DUPLICATE_ITEM, sites: 1}
     - {<<: *backlog, code: E_REVIEW_LANE_DUPLICATE_OBJECT, sites: 1}
@@ -152,26 +147,12 @@ diagnosticActionability:
     - {<<: *backlog, code: E_REVIEW_LANE_INVALID_POINT, sites: 1}
     - {<<: *backlog, code: E_REVIEW_LANE_INVALID_SPAN, sites: 1}
     - {<<: *backlog, code: E_REVIEW_LANE_ITEM_IDENTITY, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_LANE_KEY, sites: 2}
+    - {<<: *backlog, code: E_REVIEW_LANE_KEY, sites: 1}
     - {<<: *backlog, code: E_REVIEW_LANE_KEY_CONFLICT, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_LANE_KEY_TARGET, sites: 1}
     - {<<: *backlog, code: E_REVIEW_LANE_PACKING, sites: 1}
     - {<<: *backlog, code: E_REVIEW_LANE_PACKING_ORDER, sites: 1}
     - {<<: *backlog, code: E_REVIEW_LANE_RELATION, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_LANE_ROW_DUPLICATE_MEMBER, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_LANE_ROW_MEMBERSHIP_MISMATCH, sites: 2}
     - {<<: *backlog, code: E_REVIEW_LANE_TABLE_PROJECTION, sites: 3}
-    - {<<: *backlog, code: E_REVIEW_POINT_GROUP_HEADER_LABEL_REQUIRED, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_POINT_GROUP_HEADER_REQUIRED, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_POINT_GROUP_HEADER_UNAVAILABLE, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_POINT_POLICY, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_ROW_ID_DUPLICATE, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_ROW_PARENT_MISMATCH, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_ROW_PARENT_ROOT, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_ROW_PARENT_SOURCE, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_ROW_PARENT_UNAVAILABLE, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_TABLE_SUBJECT, sites: 1}
-    - {<<: *backlog, code: E_REVIEW_WINDOW, sites: 1}
     - {<<: *backlog, code: E_SCENE_PAINT_ANALYSIS_INPUT, sites: 3}
     - {<<: *backlog, code: E_SCENE_SERIALIZATION, sites: 7}
     - {<<: *backlog, code: E_SCHEMA_VIOLATION_EMPTY, sites: 2}

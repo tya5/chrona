@@ -120,3 +120,6 @@ only their text gains the value.
   `commands/actual_commands.py` and `storage/snapshots.py` return code-only tuples (about 24 literals, not inventory sites);
   their rows carry the derived sentence; S3b gives them detail. Tests: `test_result_messages.py` (mutation-checked: removing the
   floor and the unsupported-type detail kills 2). Spec 35 says every row has a message.
+- S4a review projection (`presentation/model/projection.py`, 22 sites, 592 to 570): every `E_REVIEW_*` and `E_ACTUAL_REQUIRED` raise names the
+  row, item, object or value; the curated sentence for `E_ACTUAL_REQUIRED` moved to its raise site (one golden row changes: its message
+  now starts with the code, like every ValueError row that carries detail). Tests: `test_projection_messages.py` (mutation-checked: 2 kills).
