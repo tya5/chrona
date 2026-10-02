@@ -2,7 +2,7 @@
 
 Living record for [#497](https://github.com/tya5/chrona/issues/497): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history.
 
-**Public base:** `4981db0a` on `main`. **Status:** I497-1 (measure, bound, report) is published (PR #853); I497-2 (the gate) is implemented in the publication that carries this edit; I497-3 (corpus read, acceptance review) follows. Published before code: design plan (section 4, PR #840), design and architecture review (sections 5 and 6, PR #841), implementation plan (section 7, PR #851).
+**Public base:** `4981db0a` on `main`. **Status:** I497-1 (measure, bound, report, PR #853), I497-2 (the gate, PR #856) and I497-3 (corpus read: no corpus slide still truncates, so no corpus edit; the [acceptance review](../../reviews/current/issue-497-legend-slot-sizing-acceptance-review-2026-10-02.md)) are done. Published before code: design plan (section 4, PR #840), design and architecture review (sections 5 and 6, PR #841), implementation plan (section 7, PR #851).
 
 ## 1. Published baseline
 
