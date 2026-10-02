@@ -26,9 +26,10 @@ from chrona.usecases.render_review import RenderRejected, RenderRequest, Rendere
 from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.storage.loader import load_project
 from chrona.storage.revision_store import LocalSnapshotReader
-from chrona.operational.baselines import compare_baseline
 from chrona.operational.store_config import load_store_config
 from chrona.operational.store_commands import OPERATIONS, run_store_command
+from chrona.operational.store_reads import compare_store_baseline, load_reference, snapshot_reader_for
+from chrona.usecases.context_review import render_context_closure, resolve_context_closure
 from chrona.usecases.authoring_commands import apply_authoring_command, parse_authoring_command, workspace_revision
 from chrona.operational.authoring_commands import cas_write_authoring_aggregate, cas_write_authoring_workspace, read_authoring_workspace
 from chrona.operational.resources import parse_command, parse_document
@@ -352,21 +353,16 @@ def _render_review_reader(args: argparse.Namespace, reference: dict[str, Any]) -
         config = load_store_config(str(discover_store_configuration(explicit=Path(args.store_config)).path))
     except (OSError, ValueError) as error:
         raise CliFailure("E_STORE_CONFIG_REQUIRED", f"cannot use Store config {args.store_config}: {error}", "store-config", exit_code=2) from error
-    store = reference.get("store") if isinstance(reference, dict) else None
-    key = (store.get("provider"), store.get("identity")) if isinstance(store, dict) else None
-    if key not in config.roots:
-        raise CliFailure("E_STORE_CONFIG_REQUIRED", "the Context reference names a Store that the Store config does not declare", "store-config", exit_code=2)
-    root = config.roots[key]
-    return LocalSnapshotReader(root, key[1], require_content_identity=config.integrity[key] == "required" and not allow_missing), root
+    return snapshot_reader_for(config, reference, allow_missing_content_identity=allow_missing)
 
 
 def _run_render_review(args: argparse.Namespace) -> None:
-    reference = load_yaml(args.context_reference)
+    reference = load_reference(args.context_reference)
     reader, args.snapshot_root = _render_review_reader(args, reference)
-    closure = resolve_render_context(reference, reader)
+    closure = resolve_context_closure(reference, reader)
     _assert_context_format(closure, args.format)
     _resolve_output_target(args.output, closure.context.target.kind)
-    rendered = _render_review(closure, args)
+    rendered = render_context_closure(closure, Path(args.snapshot_root), reject_unused_inputs=args.reject_unused_closure_inputs)
     _write_render_outputs(rendered, args)
     _emit_render_warnings(rendered)
 
@@ -655,11 +651,11 @@ def _run(args: argparse.Namespace) -> None:
     if args.command == "baseline-compare":
         try:
             reader = _store_reader(args)
-            baseline_reference = load_yaml(args.baseline_reference)
-            candidate_reference = load_yaml(args.candidate_reference)
+            baseline_reference = load_reference(args.baseline_reference)
+            candidate_reference = load_reference(args.candidate_reference)
         except OSError as error:
             raise CliFailure("E_AUTOMATION_RESULT_IO", str(error), "automation", exit_code=3) from error
-        result = compare_baseline(reader, baseline_reference, reader, candidate_reference)
+        result = compare_store_baseline(reader, baseline_reference, candidate_reference)
         _write_result(Path(args.result), result)
         if result["status"] != "accepted":
             raise SystemExit(2)
