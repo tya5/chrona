@@ -107,3 +107,27 @@ def test_the_real_tool_core_imports_only_use_cases_the_path_guard_and_the_valida
                 seen.update(item.name for item in node.names if item.name.startswith("chrona"))
     assert {module for module in seen if not module.startswith("chrona.usecases.")} == {
         "chrona.app.agent_workspace", "chrona.core.store_address", "chrona.resources"}
+
+
+OPERATIONAL = {**PRODUCT, "operational/store_commands.py": "Q = 1\n", "operational/command_engine.py": "E = 1\n"}
+
+
+def test_the_tool_core_may_import_the_one_shared_store_command_module(tmp_path, monkeypatch, capsys):
+    code, out = _run(tmp_path, monkeypatch, capsys,
+                     {**OPERATIONAL, "app/agent_tools.py": "from chrona.operational.store_commands import Q\n"})
+    assert (code, out.splitlines()[-1].endswith("all inward")) == (0, True), out
+
+
+@pytest.mark.parametrize("statement", [
+    "from chrona.operational.command_engine import E", "from chrona.operational import store_commands",
+    "import chrona.operational.command_engine",
+])
+def test_no_other_operational_import_is_allowed_to_the_tool_core(tmp_path, monkeypatch, capsys, statement):
+    code, out = _run(tmp_path, monkeypatch, capsys, {**OPERATIONAL, "app/agent_tools.py": statement + "\n"})
+    assert code == 1 and "chrona.app.agent_tools must not import chrona.operational" in out
+
+
+def test_the_binding_gets_no_operational_edge(tmp_path, monkeypatch, capsys):
+    code, out = _run(tmp_path, monkeypatch, capsys,
+                     {**OPERATIONAL, "app/mcp_server.py": "from chrona.operational.store_commands import Q\n"})
+    assert code == 1 and "chrona.app.mcp_server must not import chrona.operational.store_commands" in out
