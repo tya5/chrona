@@ -2,7 +2,7 @@
 
 Living record for [#893](https://github.com/tya5/chrona/issues/893) (P1 on the read-only board #454). One small record holds the baseline, design plan, design, architecture review and implementation plan; it is published before any code.
 
-**Public base:** `5eeb128e` on `main`. **Status:** design published here; code not started. Related: [#880](https://github.com/tya5/chrona/issues/880) (closed; found this on the `chrona init` starter and filed it).
+**Public base:** `5eeb128e` on `main`. **Status:** design published here (PR 968); S1 in progress. Related: [#880](https://github.com/tya5/chrona/issues/880) (closed; found this on the `chrona init` starter and filed it).
 
 ## 1. Published baseline
 
@@ -34,9 +34,9 @@ Lane requirements: synthetic tests with no `examples/` input; mutation check; st
 | B | Shade a defined default calendar (Monday to Friday) | rejected: the Spec defines none, scheduling refuses to assume one (`E_CALENDAR_REQUIRED`), so shading Saturday and Sunday would show a calendar the schedule does not use |
 | C | Keep "no working day" | rejected: it is the defect; it contradicts the scheduler, which treats a missing calendar as missing, not as empty |
 
-**Rule.** Closed-day shading derives only from the Project default calendar (`project.calendar`, resolved in `calendars`). With none, there are no closed days and no exception days. A declared calendar with an empty `working_days` list is a declared fact (every day closed) and is unchanged. Shading and scheduling then agree: both use the declared default calendar or neither does. An object-level `calendar` does not shade (the View has no per-object shading; unchanged).
+**Rule.** Closed-day shading derives only from the Project default calendar (`project.calendar`, resolved in `calendars`). With none, there are no closed days and no exception days. A calendar name that `calendars` does not declare is rejected by core before presentation (`RenderRejected`), so "no default calendar" means `project.calendar` absent. Shading and scheduling then agree: both use the declared default calendar or neither does. An object-level `calendar` does not shade (the View has no per-object shading; unchanged).
 
-**Legend key.** A legend entry with the role `calendar-closed` is drawn only when the Scene draws a closed-day band, because a key for something that is not on the plot misleads. The one decision point is `legend_entries`, which both the slot measurement and the drawing use, so the legend slot shrinks together with the entry. This also drops the key when a View turns closed-day shading off or a window holds no closed day; that is the same rule (no band, no key), and it changes no declared-calendar Project that shows a closed day.
+**Legend key.** A legend entry with the role `calendar-closed` is listed only when the View selects at least one closed day (the narrow-scale rule that keeps exception days only is Layout's and unchanged), because a key for something that is not on the plot misleads. The one decision point is `legend_entries`, which both the slot measurement and the drawing use, so the legend slot shrinks together with the entry. This also drops the key when a View turns closed-day shading off or a window holds no closed day; that is the same rule (no band, no key), and it changes no declared-calendar Project that shows a closed day.
 
 **How to reverse.** Return the old closed set from `_calendar_closures` for a missing calendar, and pass `True` for the drawn flag.
 

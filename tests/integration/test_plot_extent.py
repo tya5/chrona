@@ -25,11 +25,11 @@ ACTUAL = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "obse
 
 
 def _source() -> dict:
-    return sr.project({
+    return sr.with_calendar(sr.project({
         "a": sr.span("a", date(2026, 1, 5), 40),
         "b": sr.span("b", date(2026, 2, 10), 30, owner="b"),
         "g": sr.point("g", date(2026, 3, 20)),
-    })
+    }))
 
 
 def _parts() -> dict:

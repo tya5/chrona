@@ -149,15 +149,20 @@ def _used_scale_values(color_scale: ResolvedColorScale, projection: ReviewProjec
             if isinstance(item.fields, Mapping) and item.source_kind in {"primary", "combined"}}
 
 
+CALENDAR_CLOSED_LEGEND_ROLE = "calendar-closed"
+
+
 def legend_entries(detail: ReviewDetailInput | None, project: Mapping[str, Any], projection: ReviewProjection,
-                   color_scale: ResolvedColorScale | None) -> tuple[tuple[str, str], ...]:
+                   color_scale: ResolvedColorScale | None, *, closed_days_drawn: bool) -> tuple[tuple[str, str], ...]:
     """Return the legend entries, `(role, label)`, exactly as Layout draws them (#497).
 
     The Detail Profile's own entries come first; a colour scale then adds one entry per
     value in use, labelled with the entity's declared title when the Project has one.
-    Layout measures the legend slot and draws the legend from this one list.
+    Layout measures the legend slot and draws the legend from this one list. The closed-day key
+    is a key for a band on the plot, so it is listed only when a closed day is drawn (#893).
     """
-    entries = tuple((item.role, item.label) for item in detail.legend) if detail is not None else ()
+    entries = tuple((item.role, item.label) for item in detail.legend
+                    if closed_days_drawn or item.role != CALENDAR_CLOSED_LEGEND_ROLE) if detail is not None else ()
     if color_scale is None:
         return entries
     used = _used_scale_values(color_scale, projection)
@@ -298,7 +303,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     resolved_detail = (resolve_v05_review_detail_profile(_detail_mapping(detail), projection.items, layout_manifest,
                                                           profile_is_validated=True)
                        if layout_manifest is not None else None)
-    legend = legend_entries(detail, project, projection, color_scale)
+    calendar_closed, calendar_exceptions = calendar_closures(project, projection, view)
+    legend = legend_entries(detail, project, projection, color_scale, closed_days_drawn=bool(calendar_closed))
     scale_paints: tuple[tuple[str, str], ...] = ()
     scale_legend_paints: tuple[tuple[str, str], ...] = ()
     if color_scale is not None:
@@ -308,7 +314,6 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         used = _used_scale_values(color_scale, projection)
         scale_legend_paints = tuple((f"scale:{color_scale.scale_id}:{value}", dict(color_scale.colors)[value])
                                     for value in color_scale.domain if value in used)
-    calendar_closed, calendar_exceptions = _calendar_closures(project, projection.window, view.shading or {}, temporal)
     return SurfaceContentInput(table_columns=columns, table_cells=cells, relations=relations, annotations=annotations,
                                show_member_labels=label_placement in {"plot", "legacy"}, label_placement=label_placement, label_content=label_content,
                                label_side=label_side,
@@ -447,11 +452,22 @@ def _column_width(value: object) -> TableColumnWidth:
     raise ValueError("E_VIEW_TABLE_WIDTH")
 
 
+def calendar_closures(project: Mapping[str, Any], projection: ReviewProjection,
+                      view: ViewInput) -> tuple[tuple[date, ...], tuple[date, ...]]:
+    """The closed days and closed exception days the View selects to draw, from the Project default calendar."""
+    return _calendar_closures(project, projection.window, view.shading or {}, view.time_presentation or {})
+
+
 def _calendar_closures(project: Mapping[str, Any], window: tuple[date, date], shading: Mapping[str, Any],
                        temporal: Mapping[str, Any]) -> tuple[tuple[date, ...], tuple[date, ...]]:
     """Derive View-eligible closure and exception facts from the Project calendar."""
     calendar_id = project.get("project", {}).get("calendar")
-    calendar = project.get("calendars", {}).get(calendar_id, {}) if isinstance(calendar_id, str) else {}
+    calendars = project.get("calendars", {})
+    calendar = calendars.get(calendar_id) if isinstance(calendar_id, str) and isinstance(calendars, Mapping) else None
+    if not isinstance(calendar, Mapping):
+        # No declared default calendar declares no closed day: the scheduler does not assume a week for a Project
+        # without one (`E_CALENDAR_REQUIRED`), so the plot is not shaded as if every day were closed (#893).
+        return (), ()
     working = set(calendar.get("working_days", ())) if isinstance(calendar, Mapping) else set()
     exceptions = {
         date.fromisoformat(str(entry["date"])): bool(entry["working"])

@@ -50,7 +50,7 @@ from chrona.presentation.model.projection import ReviewDeadline, ReviewPeriod, b
 from chrona.presentation.model.surface_content import SummaryContent, TableContent
 from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput, ViewRowMode
 from chrona.presentation.review.v05_content import (
-    legend_entries, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content)
+    calendar_closures, legend_entries, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content)
 from chrona.presentation.scene.model import (
     ContentFamilyCounts, InspectionScene, SceneManifest, SceneProvenance,
     SceneSurface,
@@ -275,7 +275,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     try:
         source_inputs["legend"] = legend_source_input(
             legend_entries(render_closure.detail_profile.detail if render_closure.detail_profile else None,
-                           project, projection, color_scale),
+                           project, projection, color_scale,
+                           closed_days_drawn=bool(calendar_closures(project, projection, view)[0])),
             tokens=ThemeTokenView(theme),
             mark_block_size=float(resolve_theme_metrics(theme)["timeline.mark.blockSize"]),
             font_metrics=font_metrics,

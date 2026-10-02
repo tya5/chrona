@@ -278,6 +278,14 @@ Scene projection; adapters do not decide which background is visible. The
 legend's calendar key uses the same Theme role without inheriting the plot's
 underlying bands.
 
+**Closed days (#893).** Closed days come from the Project default calendar
+(`project.calendar` resolved in `calendars`) and from nothing else. A Project
+that declares none has no closed day and no exception day, so no `calendar-closed`
+background is drawn; a declared calendar is unchanged. A Detail Profile legend entry with the
+role `calendar-closed` is listed only when the View selects at least one closed
+day: a key for a band that is not on the plot misleads. The entry is dropped where
+the legend list is derived, so the legend slot is measured and drawn without it.
+
 **The plot (#880).** The plot is the timeline slot down to the bottom of its last row (the last group's content when groups exist), and never past the slot; with no rows it is the slot. A slot is an allocation and the rows are the content, so a surface given more block room than its rows need has an empty strip under the last row. The ground (group and row bands) stops at the last row, and every overlay that spans the height of the plot ends there too: the full-height `grid-major` and `grid-minor` lines, each closed day, the as-of line and a period band (and the anchor of a `bottom` period label). Axis ticks and the axis rule are not plot-height overlays and are unchanged. A slot the rows fill is unchanged. Inline, the plot is the timeline slot: the scale is inset by what point marks protrude (#501), so the window maps to a range narrower than the slot, and the margin that leaves at each end belongs to the plot. An axis band cell, a closed-day cell or a period band that starts or ends at the window edge reaches the plot edge there (an axis band cell takes no `cellGap` on that outer end), so band, ground and axis rule end at the same edge. Positions inside the window (interval starts, gridlines, labels, marks, the as-of line) do not move, and a scale that fills the plot is unchanged. Layout owns the extent; Scene and adapters carry the completed primitives.
 
 A selected named period (#582; Spec 06 §7.1) completes one `Rect` background:

@@ -211,6 +211,13 @@ objects:
     calendar: factory
 ```
 
+A Project that declares no default calendar (`project.calendar` absent) has no
+built-in one: Chrona assumes no Monday-to-Friday week, so working-day arithmetic
+without a calendar is `E_CALENDAR_REQUIRED` and a View shades no closed day
+(`calendar-closed`; [Spec 50 §3.4](50-constraint-driven-gantt-surface-quality.md#34-groups-and-legend), #893).
+Closed days come only from the declared default calendar, so scheduling and
+shading read the same fact.
+
 Project schema evolution follows the additive-in-place and incompatible-change
 rules in [Spec 56 §3.2](56-schema-authoring-and-diagnostics.md#32-schema-version-evolution-591).
 Calendar inheritance and external holiday feeds remain deferred until their
