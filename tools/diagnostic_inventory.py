@@ -42,10 +42,22 @@ class DiagnosticSite:
 
 
 def _literal_code(node: ast.AST) -> str | None:
+    return _code_and_inline_detail(node)[0]
+
+
+def _code_and_inline_detail(node: ast.AST) -> tuple[str | None, bool]:
+    """The diagnostic code a string literal or f-string starts with, and whether its text goes on to say more.
+
+    ``"E_X"`` is a bare code; ``"E_X: the value"`` and ``f"E_X: {value}"`` carry their detail in the same string (#829).
+    """
     if isinstance(node, ast.Constant) and isinstance(node.value, str):
-        value = node.value.split(":", 1)[0]
-        return value if DIAGNOSTIC_CODE.fullmatch(value) else None
-    return None
+        value, _, rest = node.value.partition(":")
+        return (value, bool(rest.strip())) if DIAGNOSTIC_CODE.fullmatch(value) else (None, False)
+    if isinstance(node, ast.JoinedStr) and node.values and isinstance(node.values[0], ast.Constant) and isinstance(node.values[0].value, str):
+        value, colon, _ = node.values[0].value.partition(":")
+        if colon and DIAGNOSTIC_CODE.fullmatch(value):
+            return value, True
+    return None, False
 
 
 def _name(node: ast.AST) -> str:
@@ -125,7 +137,7 @@ def _calls(tree: ast.AST, path: str, *, layer: str) -> Iterable[DiagnosticSite]:
         code_index = next((index for index, value in enumerate(node.args) if _literal_code(value)), None)
         if code_index is None:
             continue
-        code = _literal_code(node.args[code_index])
+        code, inline_detail = _code_and_inline_detail(node.args[code_index])
         assert code is not None
         detail_arguments = node.args[code_index + 1:]
         detail_keywords = [item for item in node.keywords if item.arg in {"detail", "message", "path", "source_ref"}]
@@ -137,7 +149,7 @@ def _calls(tree: ast.AST, path: str, *, layer: str) -> Iterable[DiagnosticSite]:
             function=functions.get(id(node), "<module>"),
             constructor=_name(node.func),
             layer=layer,
-            has_detail=bool(detail_arguments or detail_keywords),
+            has_detail=bool(detail_arguments or detail_keywords or inline_detail),
         )
 
 
@@ -170,9 +182,6 @@ def load_policy(path: Path) -> tuple[Mapping[str, Any], ...]:
     bare = actionability.get("bareDiagnostics")
     if not isinstance(bare, list):
         raise DiagnosticInventoryError("E_DIAGNOSTIC_POLICY_BARE")
-    default = _mapping(actionability.get("defaultBacklog"), "DEFAULT_BACKLOG")
-    if default.get("disposition") != "backlog" or not isinstance(default.get("nextAction"), str) or not default["nextAction"].strip():
-        raise DiagnosticInventoryError("E_DIAGNOSTIC_POLICY_DEFAULT_BACKLOG")
     entries: list[Mapping[str, Any]] = []
     for entry in bare:
         entry = _mapping(entry, "ENTRY")
@@ -183,20 +192,36 @@ def load_policy(path: Path) -> tuple[Mapping[str, Any], ...]:
             raise DiagnosticInventoryError("E_DIAGNOSTIC_POLICY_ENTRY")
         if disposition == "backlog" and (not isinstance(entry.get("nextAction"), str) or not entry["nextAction"].strip()):
             raise DiagnosticInventoryError("E_DIAGNOSTIC_POLICY_ENTRY")
+        sites = entry.get("sites")
+        if not isinstance(sites, int) or isinstance(sites, bool) or sites < 1:
+            raise DiagnosticInventoryError("E_DIAGNOSTIC_POLICY_ENTRY")
         entries.append(entry)
-    return (*entries, {"code": "*", **default})
+    return tuple(entries)
 
 
 def validate(sites: tuple[DiagnosticSite, ...], policy: tuple[Mapping[str, Any], ...]) -> None:
-    bare = {site.code for site in sites if site.layer == "user-facing-ingress" and not site.has_detail}
-    classified = {str(entry["code"]) for entry in policy if entry["code"] != "*"}
-    if len(classified) != len(policy) - 1:
+    """The ratchet (#829): the bare sites of every user-facing code equal the recorded count, and no code is unrecorded.
+
+    A new code, an extra site, a fixed site whose count was not lowered, and an entry for a code that is no longer
+    bare all fail, so the backlog can only shrink and a change that adds detail must say so in the policy.
+    """
+    found: dict[str, int] = {}
+    for site in sites:
+        if site.layer == "user-facing-ingress" and not site.has_detail:
+            found[site.code] = found.get(site.code, 0) + 1
+    recorded = {str(entry["code"]): int(entry["sites"]) for entry in policy}
+    if len(recorded) != len(policy):
         raise DiagnosticInventoryError("E_DIAGNOSTIC_POLICY_DUPLICATE")
-    unknown = sorted(classified - bare)
-    missing: list[str] = []
-    if unknown or missing:
-        detail = [*(f"unknown={item}" for item in unknown), *(f"missing={item}" for item in missing)]
-        raise DiagnosticInventoryError("E_DIAGNOSTIC_ACTIONABILITY\n" + "\n".join(detail))
+    problems = [f"missing={code} sites={count} (add owner-local detail at the raise site, or record a classification)"
+                for code, count in sorted(found.items()) if code not in recorded]
+    problems += [f"grown={code} recorded={recorded[code]} found={count} (a new bare site: add detail to it)"
+                 for code, count in sorted(found.items()) if code in recorded and count > recorded[code]]
+    problems += [f"lower={code} recorded={recorded[code]} found={count} (lower the policy count)"
+                 for code, count in sorted(found.items()) if code in recorded and count < recorded[code]]
+    problems += [f"unknown={code} (no bare user-facing site remains: delete the entry)"
+                 for code in sorted(set(recorded) - set(found))]
+    if problems:
+        raise DiagnosticInventoryError("E_DIAGNOSTIC_ACTIONABILITY\n" + "\n".join(problems))
 
 
 def render(sites: tuple[DiagnosticSite, ...], policy: tuple[Mapping[str, Any], ...]) -> str:
@@ -213,10 +238,9 @@ def render(sites: tuple[DiagnosticSite, ...], policy: tuple[Mapping[str, Any], .
         lines.append(f"| `{site.code}` | {site.layer} | {detail} | `{site.constructor}` | `{site.anchor}` ({site.function}) |")
     bare = [site for site in sites if site.layer == "user-facing-ingress" and not site.has_detail]
     entries = {str(entry["code"]): entry for entry in policy}
-    default = entries.pop("*")
     backlog = [(code, sum(site.code == code for site in bare), entry["nextAction"])
                for code, entry in sorted(entries.items()) if entry["disposition"] == "backlog"]
-    backlog.extend((code, sum(site.code == code for site in bare), default["nextAction"])
+    backlog.extend((code, sum(site.code == code for site in bare), "Unclassified: add owner-local detail.")
                    for code in sorted({site.code for site in bare} - set(entries)))
     lines.extend(["", "## Actionability backlog", "", "| Code | Bare reachable sites | Next action |", "| --- | ---: | --- |"])
     lines.extend(f"| `{code}` | {count} | {action} |" for code, count, action in sorted(backlog, key=lambda item: (-item[1], item[0])))
