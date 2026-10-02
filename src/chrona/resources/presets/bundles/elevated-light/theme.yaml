@@ -228,6 +228,18 @@ body:
     opacity.axis-band:
       type: number
       value: 1
+    chip-padding:
+      type: number
+      value: 0.5
+    chip-radius:
+      type: number
+      value: 0.5
+    opacity.period-band:
+      type: number
+      value: 1
+    period-stroke-width:
+      type: number
+      value: 2
   roles:
     group-band:
       backgroundTreatment: fill
@@ -438,6 +450,24 @@ body:
       numericSpacing: tabular-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+    period-band:
+      backgroundTreatment: outline
+      backgroundPaintOrder: 11
+      strokeWidth: period-stroke-width
+      opacity: opacity.period-band
+    period-label:
+      contrastTreatment: required
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: annotation-size
+      lineHeight: annotation-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+    period-label-chip:
+      backgroundTreatment: fill
+      chipPadding: chip-padding
+      markCornerRadius: chip-radius
   colorBindings:
     axis-band-decoration2.fill: surfaceRaised
     axis-label2.fill: surface
@@ -487,6 +517,9 @@ body:
     progress-fill.fill: warning
     progress-fill.stroke: text
     icon-mark.fill: surface
+    period-band.stroke: accent
+    period-label.fill: text
+    period-label-chip.fill: surface
   metrics:
     text.body.size: text-size
     text.body.lineHeight: text-line-height

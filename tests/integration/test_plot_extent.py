@@ -39,6 +39,7 @@ def _parts() -> dict:
     body["periods"] = [{"id": "freeze"}]
     parts["theme"]["body"]["roles"]["period-band"] = {
         "backgroundTreatment": "fill", "backgroundPaintOrder": 11, "opacity": "opacity.axis-band"}
+    parts["theme"]["body"]["colorBindings"].pop("period-band.stroke", None)  # the packaged band is an outline
     parts["theme"]["body"]["colorBindings"]["period-band.fill"] = "accent"
     return parts
 

@@ -51,6 +51,9 @@ def _parts(*, treatment: str = "fill", order: int = 11, color: str = "accent", s
            preset: str = "executive-light", pattern: str | None = None) -> dict:
     parts = sr.bundle(preset)
     body = parts["theme"]["body"]
+    # The packaged Theme paints the band as an outline; each test states its own paint, so start from none (#880).
+    for key in ("period-band.fill", "period-band.stroke"):
+        body["colorBindings"].pop(key, None)
     role = {"backgroundTreatment": treatment, "backgroundPaintOrder": order, "opacity": "opacity.axis-band"}
     if pattern is not None:
         role["pattern"] = pattern
@@ -515,8 +518,14 @@ def test_a_label_colour_below_its_floor_against_the_scheme_surface_is_refused_at
 
 def test_a_theme_that_declares_no_period_label_role_still_renders_every_other_surface(tmp_path):
     # The role is opt-in: classifying the label as state text must not require it of a Theme that selects none.
-    assert "period-label" not in sr.bundle()["theme"]["body"]["roles"]
-    assert _render(tmp_path, _source(), _parts(select=None)).surface.primitives
+    parts = _parts(select=None)
+    body = parts["theme"]["body"]
+    for role in ("period-band", "period-label", "period-label-chip"):
+        body["roles"].pop(role, None)
+        for key in [key for key in body["colorBindings"] if key.startswith(f"{role}.")]:
+            del body["colorBindings"][key]
+    assert "period-label" not in body["roles"]
+    assert _render(tmp_path, _source(), parts).surface.primitives
 
 
 def test_a_missing_period_label_role_is_refused(tmp_path):

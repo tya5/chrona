@@ -202,6 +202,18 @@ body:
         headLength: 5
         headWidth: 5
         attachmentOffset: 0
+    chip-padding:
+      type: number
+      value: 0.5
+    chip-radius:
+      type: number
+      value: 0.5
+    opacity.period-band:
+      type: number
+      value: 1
+    period-stroke-width:
+      type: number
+      value: 2
   roles:
     group-band:
       backgroundTreatment: fill
@@ -425,6 +437,24 @@ body:
       markOffset: mark-offset-nested
       markPaintOrder: mark-paint-front
       markCornerRadius: mark-radius-rounded
+    period-band:
+      backgroundTreatment: outline
+      backgroundPaintOrder: 11
+      strokeWidth: period-stroke-width
+      opacity: opacity.period-band
+    period-label:
+      contrastTreatment: required
+      fontFamily: sans
+      fontWeight: weight.bold
+      fontSize: size.note
+      lineHeight: leading.body
+      letterSpacing: letter-spacing.none
+      textTransform: text-transform.none
+      numericSpacing: numeric-spacing
+    period-label-chip:
+      backgroundTreatment: fill
+      chipPadding: chip-padding
+      markCornerRadius: chip-radius
   colorBindings:
     axis-band-decoration.fill: text
     axis-band-decoration2.fill: surfaceRaised
@@ -471,6 +501,9 @@ body:
     missing-actual.stroke: text
     missing-actual-cell.fill: textMuted
     dependency.stroke: textMuted
+    period-band.stroke: text
+    period-label.fill: text
+    period-label-chip.fill: surface
   metrics:
     text.body.size: size.body
     text.body.lineHeight: leading.body
