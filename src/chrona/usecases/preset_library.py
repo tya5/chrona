@@ -18,7 +18,7 @@ def _safe(address: object) -> str:
     try:
         check_store_address(address)
     except StoreAddressError as error:
-        raise ValueError("E_BUILTIN_PRESET_RESOURCE") from error
+        raise ValueError(f"E_BUILTIN_PRESET_RESOURCE: catalogue address {address!r} is not a safe relative address") from error
     return address  # type: ignore[return-value]
 
 
@@ -26,18 +26,18 @@ def _library() -> list[dict[str, Any]]:
     try:
         value = safe_load(builtin_preset_library_resource().read_bytes())
     except (OSError, yaml.YAMLError) as error:
-        raise ValueError("E_BUILTIN_PRESET_LIBRARY") from error
+        raise ValueError(f"E_BUILTIN_PRESET_LIBRARY: presets/library.yaml cannot be read: {error}") from error
     if not isinstance(value, dict) or tuple(schema_validator("preset-library-v0.2.schema.yaml").iter_errors(value)):
-        raise ValueError("E_BUILTIN_PRESET_LIBRARY")
+        raise ValueError("E_BUILTIN_PRESET_LIBRARY: presets/library.yaml does not satisfy preset-library-v0.2.schema.yaml")
     entries = value["entries"]
     if not isinstance(entries, list) or len({item.get("id") for item in entries if isinstance(item, dict)}) != len(entries):
-        raise ValueError("E_BUILTIN_PRESET_LIBRARY")
+        raise ValueError("E_BUILTIN_PRESET_LIBRARY: presets/library.yaml declares a preset id twice")
     for entry in entries:
         members = entry.get("members", {})
         catalogs = members.get("iconCatalogs", []) if isinstance(members, dict) else []
         identifiers = [member.get("id") for member in catalogs if isinstance(member, dict)]
         if len(identifiers) != len(catalogs) or len(set(identifiers)) != len(identifiers):
-            raise ValueError("E_BUILTIN_PRESET_LIBRARY")
+            raise ValueError(f"E_BUILTIN_PRESET_LIBRARY: preset {entry.get('id')!r} declares an icon catalog without an id or with a repeated id")
     return entries
 
 
@@ -53,7 +53,7 @@ def _member(entry: dict[str, Any], name: str) -> dict[str, Any]:
     members = entry.get("members")
     value = members.get(name) if isinstance(members, dict) else None
     if not isinstance(value, dict):
-        raise ValueError("E_BUILTIN_PRESET_RESOURCE")
+        raise ValueError(f"E_BUILTIN_PRESET_RESOURCE: preset {entry.get('id')!r} declares no {name!r} member")
     return value
 
 
@@ -64,17 +64,17 @@ def _read_member(member: dict[str, Any]) -> bytes:
     try:
         raw = item.read_bytes()
     except OSError as error:
-        raise ValueError("E_BUILTIN_PRESET_RESOURCE") from error
+        raise ValueError(f"E_BUILTIN_PRESET_RESOURCE: member {member.get('id')!r} cannot be read at {address}: {error}") from error
     expected_identity = member.get("contentIdentity")
     if expected_identity is not None and sha256(raw).hexdigest() != str(expected_identity).removeprefix("sha256:"):
-        raise ValueError("E_BUILTIN_PRESET_RESOURCE")
+        raise ValueError(f"E_BUILTIN_PRESET_RESOURCE: member {member.get('id')!r} at {address} does not match its declared content identity")
     value = safe_load(raw)
     if not isinstance(value, dict) or value.get("id") != member.get("id"):
-        raise ValueError("E_BUILTIN_PRESET_RESOURCE")
+        raise ValueError(f"E_BUILTIN_PRESET_RESOURCE: the document at {address} is not a mapping with id {member.get('id')!r}")
     # Layout Profile and review-detail documents intentionally identify their
     # contract through `version`, unlike presentation resources which also carry `kind`.
     if member.get("kind") not in {"layout-profile", "review-detail-profile"} and value.get("kind") != member.get("kind"):
-        raise ValueError("E_BUILTIN_PRESET_RESOURCE")
+        raise ValueError(f"E_BUILTIN_PRESET_RESOURCE: the document at {address} has kind {value.get('kind')!r}, the catalogue declares {member.get('kind')!r}")
     return raw
 
 
@@ -125,19 +125,19 @@ def copy_builtin_preset(identifier: str, destination: Path) -> Path:
             if not isinstance(catalog, IconCatalogContract) or catalog.identity.id != member["id"]:
                 raise ValueError
         except Exception as error:
-            raise ValueError("E_BUILTIN_PRESET_RESOURCE") from error
+            raise ValueError(f"E_BUILTIN_PRESET_RESOURCE: icon catalog {member['id']!r} is not a valid icon catalog with that id") from error
         source = builtin_preset_source_root(_safe(member.get("sourceRoot")))
         notice_path = _safe(member.get("noticeSourcePath"))
         try:
             notice = source.joinpath(*PurePosixPath(notice_path).parts).read_bytes()
         except OSError as error:
-            raise ValueError("E_BUILTIN_PRESET_NOTICE") from error
+            raise ValueError(f"E_BUILTIN_PRESET_NOTICE: the notice {notice_path} of icon catalog {member['id']!r} cannot be read: {error}") from error
         if sha256(notice).hexdigest() != str(member.get("noticeContentIdentity", "")).removeprefix("sha256:"):
-            raise ValueError("E_BUILTIN_PRESET_NOTICE")
+            raise ValueError(f"E_BUILTIN_PRESET_NOTICE: the notice {notice_path} does not match its declared content identity")
         license_value = catalog.provenance.get("license")
         declared = license_value.get("notice") if hasattr(license_value, "get") else None
         if not isinstance(declared, str) or notice != declared.encode("utf-8"):
-            raise ValueError("E_BUILTIN_PRESET_NOTICE")
+            raise ValueError(f"E_BUILTIN_PRESET_NOTICE: the notice {notice_path} differs from the license notice in the provenance of icon catalog {member['id']!r}")
         output = f"catalogs/{member['id']}.yaml"
         notice_output = f"catalogs/{member['id']}.NOTICE"
         payloads[output] = raw

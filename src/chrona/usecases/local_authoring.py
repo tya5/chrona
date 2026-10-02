@@ -28,20 +28,20 @@ def discover_store_configuration(*, explicit: Path | None = None, start: Path | 
     if explicit is not None:
         path = explicit.resolve()
         if not path.is_file():
-            raise ValueError("E_STORE_CONFIG_REQUIRED")
+            raise ValueError(f"E_STORE_CONFIG_REQUIRED: {explicit} is not a file; pass an existing Store config")
         return StoreConfiguration(path, path.parent.parent if path.parent.name == ".chrona" else path.parent)
     current = (start or Path.cwd()).resolve()
     for root in (current, *current.parents):
         path = root / ".chrona" / "store.yaml"
         if path.is_file():
             return StoreConfiguration(path, root)
-    raise ValueError("E_STORE_CONFIG_REQUIRED")
+    raise ValueError(f"E_STORE_CONFIG_REQUIRED: no .chrona/store.yaml in {start or 'the current directory'} or any parent; pass --store-config")
 
 
 def initialize_project(destination: Path, *, example: str | None = None) -> Path:
     """Create an editable starter or an explicitly selected corpus without replacement."""
     if destination.exists() and any(destination.iterdir()):
-        raise ValueError("E_INIT_OUTPUT_EXISTS")
+        raise ValueError(f"E_INIT_OUTPUT_EXISTS: {destination} already exists and is not empty; init into a new or empty directory")
     source = minimal_template_resource() if example is None else template_resource(example)
     _copy_template(source, destination)
     if example is None:

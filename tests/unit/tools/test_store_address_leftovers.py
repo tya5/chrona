@@ -108,7 +108,7 @@ def test_schema_guard_and_both_consumers_agree_on_every_vector(text):
         assert preset_library._safe(text) == text
         consumed = True
     except ValueError as error:
-        assert str(error) == "E_BUILTIN_PRESET_RESOURCE"
+        assert str(error).startswith("E_BUILTIN_PRESET_RESOURCE: ")
         consumed = False
     assert consumed is expected
 
