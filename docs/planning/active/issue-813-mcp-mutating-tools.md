@@ -1,7 +1,8 @@
 # Issue #813: MCP mutating tools (`check_command`, `apply_command`)
 
-**Status:** Design, architecture review and implementation plan (this revision); code follows slice by slice, and this
-record is updated with the progress of each.
+**Status:** Implemented. Published: design pack #901, #906, #910, #915; S1 #924; S2 #928; S3 (real-stdio tests) and the
+[acceptance review](../../reviews/current/issue-813-mcp-mutating-tools-acceptance-review-2026-10-02.md) in one PR, as the
+owner asked for fewer, larger units. Open: [#902](https://github.com/tya5/chrona/issues/902) (successor).
 **Public base:** `main` at `e4429030` (observed 2026-10-02); design on `e11fd97d`.
 **Issue:** [#813](https://github.com/tya5/chrona/issues/813), read with its owner comment of 2026-10-02 (the decision).
 **Living contract:** [Spec 66](../../specification/66-agent-interface.md) (changed with the code slices, not here).
