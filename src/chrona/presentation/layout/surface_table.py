@@ -114,6 +114,15 @@ def compose_table(base: SurfaceBaseGeometry) -> SurfaceTablePlacements:
                       if column_id == request.surface_content.table_hierarchy_column else 0)
             available = max(0.0, column_widths[column_id] - indent - body_size)
             resolved, overflow = table_text(content, available, typography_role)
+            if overflow == "ellipsized" and (cell.affix_prefix or cell.affix_suffix):
+                # The state's affix survives an ellipsis (#588): only the formatted core is cut, within the
+                # width the affixes leave; when they alone do not fit, the whole string stays ellipsized.
+                affix_width = measure_table_text(cell.affix_prefix + cell.affix_suffix, typography_role, "horizontal")
+                core = content[len(cell.affix_prefix):len(content) - len(cell.affix_suffix)]
+                if available > affix_width:
+                    cut, _ = table_text(core, available - affix_width, typography_role)
+                    if cut not in ("", "…"):   # an affix beside a bare ellipsis says nothing: keep the whole-string cut
+                        resolved = cell.affix_prefix + cut + cell.affix_suffix
             text.append(place_text(
                 placement_id=f"cell:{object_id}:{column_id}", source_ref=object_id, content=resolved,
                 inline=aligned_inline(resolved, column_id, position[0] + indent, available, typography_role),

@@ -14,7 +14,9 @@ from chrona.core.store_address import StoreAddressError, check_store_address
 from chrona.resources import schema_validator
 from chrona.schema_diagnostics import SchemaViolation, explain_all_errors, explain_errors
 from chrona.presentation.group_header_text import GroupHeaderTextError, parse_template
-from chrona.presentation.table_presentation import BooleanPresencePresentation
+from chrona.presentation.table_presentation import (
+    AFFIX_STATES, SIGNED_FORMATS, BooleanPresencePresentation, CellAffix, ColumnAffixes,
+)
 
 
 class ContractError(ValueError):
@@ -153,6 +155,7 @@ class TableColumn:
     align: str = "start"
     width: str | FrozenDict = "content"
     header_orientation: str = "horizontal"
+    affixes: ColumnAffixes | None = None
 
 
 @dataclass(frozen=True)
@@ -886,7 +889,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
         for row in rows.get("items", ()))
     table_columns = tuple(TableColumn(str(column["id"]), column["source"], _table_format(column.get("format", "text")),
                                       str(column["missing"]), str(column["align"]), column["width"],
-                                      str(column["headerOrientation"]))
+                                      str(column["headerOrientation"]),
+                                      _column_affixes(column["id"], column.get("affixes")))
                           for column in body.get("tableColumns", ()))
     hierarchy_column = str(body["hierarchyColumn"]) if "hierarchyColumn" in body else None
     _validate_view_table_intent(table_columns, grouping, row_items, hierarchy_column)
@@ -1036,6 +1040,11 @@ def _validate_view_table_intent(table_columns: tuple[TableColumn, ...], grouping
             raise ContractError("E_VIEW_BOOLEAN_PRESENTATION",
                                 f"column {column.id!r} shows the comparison facet missingActual, so its format must be a presence mapping "
                                 "with whenTrue and whenFalse")
+    for column in table_columns:
+        if column.affixes is not None and column.format not in SIGNED_FORMATS and any(
+                item is not None for item in (column.affixes.slip, column.affixes.on_time, column.affixes.ahead)):
+            raise ContractError("E_VIEW_COLUMN_AFFIX",
+                                f"column {column.id!r} declares slip, onTime or ahead affixes, so its format must be signedDays or signedNumber")
     visible_nesting = ((grouping is not None and grouping.by == "hierarchy")
                        or any(row.depth > 0 or row.parent_row is not None for row in rows))
     if hierarchy_column is None:
@@ -1049,6 +1058,30 @@ def _validate_view_table_intent(table_columns: tuple[TableColumn, ...], grouping
     if not visible_nesting:
         raise ContractError("E_VIEW_HIERARCHY_COLUMN_UNEXPECTED",
                             f"hierarchyColumn {hierarchy_column!r} is declared but the View shows no nesting (no hierarchy grouping, row depth or parentRow)")
+
+
+def _column_affixes(column_id: object, value: object) -> ColumnAffixes | None:
+    """Close a column's per-state affixes (#588): known states, literal one-to-eight character text."""
+    if value is None:
+        return None
+    if not isinstance(value, Mapping) or not value:
+        raise ContractError("E_VIEW_COLUMN_AFFIX", f"column {column_id!r} affixes must be a non-empty mapping of states")
+    entries: dict[str, CellAffix] = {}
+    for state, declared in value.items():
+        if state not in AFFIX_STATES:
+            raise ContractError("E_VIEW_COLUMN_AFFIX",
+                                f"column {column_id!r} affix state {state!r} is not one of {list(AFFIX_STATES)}")
+        if not isinstance(declared, Mapping) or not declared or set(declared) - {"prefix", "suffix"}:
+            raise ContractError("E_VIEW_COLUMN_AFFIX",
+                                f"column {column_id!r} affix {state!r} must declare a prefix, a suffix or both")
+        for side in ("prefix", "suffix"):
+            text = declared.get(side, "")
+            if (not isinstance(text, str) or (side in declared and not 1 <= len(text) <= 8)
+                    or any(ord(char) < 32 or ord(char) == 127 for char in text)):
+                raise ContractError("E_VIEW_COLUMN_AFFIX",
+                                    f"column {column_id!r} affix {state!r} {side} must be 1 to 8 characters with no control character")
+        entries[state] = CellAffix(str(declared.get("prefix", "")), str(declared.get("suffix", "")))
+    return ColumnAffixes(entries.get("slip"), entries.get("onTime"), entries.get("ahead"), entries.get("missing"))
 
 
 def _table_format(value: object) -> str | BooleanPresencePresentation:

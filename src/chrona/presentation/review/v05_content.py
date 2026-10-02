@@ -9,6 +9,7 @@ from chrona.core.relation_identity import relation_identity
 from chrona.presentation.model.surface_content import (
     AnnotationIntent, AxisLabelIntent, AxisSecondaryIntent, AxisTier, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, _format_compact_date, display_value, table_value,
 )
+from chrona.presentation.table_presentation import affix_state
 from chrona.presentation.review.detail import resolve_v05_review_detail_profile
 from chrona.presentation.layout.model import LayoutManifest
 from chrona.presentation.model.placement_candidates import legacy_candidate_order, parse_candidates
@@ -20,7 +21,7 @@ from chrona.presentation.model.axis_names import axis_name_table
 
 def cell_typography_role(column: Any) -> str:
     """Return the typography role in which one View table column's cells are set."""
-    return "numeric" if column.format == "signedDays" else "text"
+    return "numeric" if column.format in {"signedDays", "signedNumber"} else "text"
 
 
 def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput,
@@ -33,11 +34,23 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
     columns = tuple(TableColumnContent(column.id, column.id, column.align, _column_width(column.width), column.header_orientation)
                     for column in view.table_columns)
     as_of = date.fromisoformat(str(actual_body["asOf"])) if isinstance(actual_body.get("asOf"), str) else None
-    def cell(item: Any, column: Any, row_index: int) -> str:
+    def cell_parts(item: Any, column: Any, row_index: int) -> tuple[str, str, str]:
+        """The cell's (prefix, core, suffix): the affix of its state wraps the formatted text (#588)."""
         value = table_value(item, dict(project), column.source, row_index)
         if value is None and column.missing == "in-progress" and _is_actual_source(column.source):
-            return _missing_actual_display(item, as_of)
-        return display_value(value, column.missing, column.format, locale=locale)
+            core = _missing_actual_display(item, as_of)
+        else:
+            core = display_value(value, column.missing, column.format, locale=locale)
+        affix = column.affixes.for_state(affix_state(value, column.format)) if column.affixes is not None else None
+        return (affix.prefix, core, affix.suffix) if affix is not None else ("", core, "")
+
+    def cell(item: Any, column: Any, row_index: int) -> str:
+        prefix, core, suffix = cell_parts(item, column, row_index)
+        return prefix + core + suffix
+
+    def cell_affixes(item: Any, column: Any, row_index: int) -> tuple[str, str]:
+        prefix, _, suffix = cell_parts(item, column, row_index)
+        return prefix, suffix
     def cell_semantic(item: Any, column: Any) -> str:
         source = column.source
         facet = (source.get("comparisonFacet") if isinstance(source, Mapping) else None)
@@ -49,7 +62,7 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
         return "tableCell"
     if projection.rows:
         cells = tuple(
-            TableCellContent(row.row_id, column.id, cell(item := next(item for item in row.items if item.item_id == row.table_subject_id), column, row_index), cell_semantic(item, column), cell_typography_role(column))
+            TableCellContent(row.row_id, column.id, cell(item := next(item for item in row.items if item.item_id == row.table_subject_id), column, row_index), cell_semantic(item, column), cell_typography_role(column), *cell_affixes(item, column, row_index))
             for row_index, row in enumerate(projection.rows, 1) for column in view.table_columns)
         table_cell_objects = tuple(
             (row.row_id, column.id,
@@ -59,7 +72,7 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
         row_levels = tuple(TableRowLevel((row.row_id, row.table_subject_id), bool(row.group_id), row.depth)
                            for row in projection.rows)
     else:
-        cells = tuple(TableCellContent(item.object_id, column.id, cell(item, column, row_index), cell_semantic(item, column), cell_typography_role(column))
+        cells = tuple(TableCellContent(item.object_id, column.id, cell(item, column, row_index), cell_semantic(item, column), cell_typography_role(column), *cell_affixes(item, column, row_index))
                       for row_index, item in enumerate(projection.items, 1) for column in view.table_columns)
         table_cell_objects = tuple((item.object_id, column.id, item.object_id, True)
                                    for item in projection.items for column in view.table_columns)

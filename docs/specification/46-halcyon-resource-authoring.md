@@ -24,7 +24,20 @@ A table column source may address a review item facet:
 - `actual`: the actual interval; absent actual data renders the configured missing value.
 - `finishDelta`: actual finish minus planned finish.
 
-A column declares its display formatter rather than embedding date strings in a renderer. Supported formatters are `dateRange`, `date`, and `signedDays`; `missing: in-progress` is the HALCYON value for an unavailable actual finish.
+A column declares its display formatter rather than embedding date strings in a renderer. Supported formatters are `dateRange`, `date`, `signedDays` (`+10d`) and `signedNumber` (`+10`, the same sign without the unit); `missing: in-progress` is the HALCYON value for an unavailable actual finish.
+
+**Per-state affixes (#588).** A column may declare `affixes`, a mapping from a state to `{prefix, suffix}`
+(each 1 to 8 characters, literal, no control character, at least one present). The states are `slip`, `onTime`
+and `ahead` (a `signedDays` or `signedNumber` value above, at and below zero) and `missing` (an absent value, of any
+format); the state is derived from the value, never from the text. The affix wraps the formatted state text, including
+the `missing` text, so `format: signedNumber`, `missing: blank` and `affixes: {slip: {suffix: "!"}, missing: {suffix: "?"}}`
+read `+10!` and `?`. A `slip`, `onTime` or `ahead` entry on a column whose format is not signed, an unknown state, or a
+malformed entry is `E_VIEW_COLUMN_AFFIX` (a schema failure for the shape, a contract failure for the usability and
+control characters). Content normalisation composes the cell string once, so column measurement and placement use the
+text with its affixes; under `ellipsize-with-source` Layout cuts only the formatted text and keeps the affixes, and
+falls back to cutting the whole string when the affixes leave no room for a character beside an ellipsis. Lane
+member labels, summary metrics and Detail labels are not table cells and keep their own formatting. A column without
+`affixes` renders as before.
 
 ### Axis, marker, and calendar configuration
 
