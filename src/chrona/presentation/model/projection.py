@@ -169,6 +169,7 @@ class ReviewProjection:
     lane_membership: LaneMembership | None = None
     lane_rows: tuple[ReviewLaneRowProjection, ...] = ()
     periods: tuple[ReviewPeriod, ...] = ()
+    figures: tuple[tuple[str, int], ...] = ()  # (figure id, days) the Core resolved from the View's `figures` (#586)
 
 
 @dataclass(frozen=True)
