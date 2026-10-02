@@ -7,6 +7,8 @@ scheduler never reads it. This module owns its static validation.
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
+from dataclasses import dataclass
+from datetime import date
 from typing import Any
 
 from chrona.core.diagnostics import Diagnostic
@@ -41,6 +43,50 @@ def period_diagnostics(project: Mapping[str, Any],
         if len(literals) == len(_SIDES) and literals["start"] >= literals["end"]:
             diagnostics.append(order_diagnostic(period_id, literals["start"], literals["end"]))
     return diagnostics
+
+
+@dataclass(frozen=True)
+class ResolvedPeriod:
+    """One period with both sides turned into dates; ``end`` is exclusive."""
+
+    period_id: str
+    title: str
+    start: date
+    end: date
+
+
+def resolve_periods(project: Mapping[str, Any], placements: Mapping[str, Mapping[str, date]]) -> tuple[ResolvedPeriod, ...]:
+    """Every declared period as dates, in Project order, from the placements a scheduler returned.
+
+    A reference names the completed date of an object endpoint, so a re-plan moves the period. The
+    title falls back to the period identifier, as an object's does. Nothing here reorders, clips or
+    rejects: an empty or inverted range is reported by ``period_range_diagnostics``.
+    """
+    return tuple(
+        ResolvedPeriod(period_id, str(period.get("title") or period_id),
+                       _boundary_date(period["start"], placements), _boundary_date(period["end"], placements))
+        for period_id, period in (project.get("periods") or {}).items())
+
+
+def period_range_diagnostics(project: Mapping[str, Any],
+                             placements: Mapping[str, Mapping[str, date]]) -> tuple[Diagnostic, ...]:
+    """Reject a period whose references resolve to an empty or inverted range.
+
+    A range with two literal dates was already ordered by ``period_diagnostics``; only a reference needs
+    placements. Like every post-placement finding of the reference scheduler it rejects the plan.
+    """
+    periods = project.get("periods") or {}
+    return tuple(
+        order_diagnostic(item.period_id, item.start, item.end)
+        for item in resolve_periods(project, placements)
+        if item.end <= item.start
+        and any(isinstance(periods[item.period_id][side], Mapping) for side in _SIDES))
+
+
+def _boundary_date(boundary: Any, placements: Mapping[str, Mapping[str, date]]) -> date:
+    if isinstance(boundary, Mapping):
+        return placements[boundary["object"]][boundary["endpoint"]]
+    return as_date(boundary)
 
 
 def order_diagnostic(period_id: str, start: Any, end: Any) -> Diagnostic:
