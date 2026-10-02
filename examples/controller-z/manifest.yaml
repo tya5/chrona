@@ -82,6 +82,11 @@ slides:
     context: contexts/value-affixes.yaml
     expectedSvg: generated/value-affixes.svg
     expectedScene: generated/value-affixes.scene.json
+  - id: region-frames
+    evidence: "A masthead of a title panel and, beside it, the legend in its own key panel, over one framed chart panel holding the table and the timeline, each panel an ink outline with rounded corners and a hand wobble on newsprint, a gap as the gutter between panels, from the Layout Profile frame declaration and the Theme role region-frame, with the delta affixes of #588 (#889)."
+    context: contexts/region-frames.yaml
+    expectedSvg: generated/region-frames.svg
+    expectedScene: generated/region-frames.scene.json
   - id: annotation-kinds
     evidence: "A Title Card style note per Project annotation kind (#584): a kind-coloured title bar with a label, a secondary line, an accent edge and a hazard-tab stamp from the packaged target-parts catalogue, on the dark texture Theme, with no corpus datum edited."
     context: contexts/annotation-kinds.yaml

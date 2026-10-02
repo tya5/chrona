@@ -2,7 +2,7 @@
 
 Living record for [#889](https://github.com/tya5/chrona/issues/889): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history.
 
-**Public base:** `24f686f1` on `main`. **Status:** design plan, design, architecture review and implementation plan published together (this document); code not started. Owner-level decisions are recorded as options, choice, reason and reversal in section 5 and on the issue.
+**Public base:** `24f686f1` on `main`. **Status:** design plan, design, architecture review and implementation plan published together (this document); I889-1 (PR pending) implements it; the acceptance review follows. Owner-level decisions are recorded as options, choice, reason and reversal in section 5 and on the issue.
 
 ## 1. Published baseline
 
@@ -151,4 +151,9 @@ I889-1 is one code PR (`Refs #889`). It regenerates nothing by hand (the derived
 
 ## 8. Progress and evidence
 
-D889 published. I889-1 and I889-2 not started.
+### I889-1: region frames
+
+- **As designed**, with these implementation notes. `layout/region_frame.py` completes the frames; `engine.arrange` records `frame` (inset, populated) with each arranged subtree; `profile._check_frames` names a malformed frame at its exact pointer (an override's frame is named exactly by the schema itself); `surface_completion` joins frames and their stroke extent to the shapes, slots and canvas; `v05_builder` emits them after the texture and picks the outline family for a fill-less role; the role is registered in `capabilities.py` and `semantic_registry.py` (unclassified). A slot that collapsed to no area does not populate its panel.
+- **Evidence.** Controller Z `region-frames` (Layout, Theme, Scheme `newsprint`, context, the `legend-key` Detail Profile, manifest entry; no preset, catalogue or corpus datum edited), read as SVG-through-resvg PNG at 1x and 2x: a masthead of a title panel and a key panel (the legend in two rows), one chart panel, ink outlines with the #588 wobble and rounded corners on newsprint, the `+4!` and `?` affixes. The contrast gate reports 0 errors and its findings name `region-frame:*` as the ground of marks, state text and decorations. The slide lacks speech balloons, the starburst and caption boxes, and corner glyphs (with #888).
+- **Tests (synthetic).** `tests/unit/chrona/presentation/layout/test_region_frame.py`, `test_region_frame_profile.py`, `tests/integration/test_region_frames_render.py`. **Mutation checks:** 33, 32 killed; the survivor is equivalent (the order of frames in Layout's shape list, which the Scene builder re-establishes).
+- **S0 gate.** Layout Profile v0.10, Theme v0.11 and v0.13 classify as additive. Two kinds of stale entries blocked it and are removed: the `layout-profile-v0.10` `after: added` entry (I710-S-B; the file is in the base), and the earlier links of the #584 and #585 chained Theme entries (`values/additionalProperties/allOf` and `.../type/enum`, v0.11 and v0.13): each was already landed and superseded by the last link, which is kept. This is the cleanup #970 tracks, done only for what this change touches.

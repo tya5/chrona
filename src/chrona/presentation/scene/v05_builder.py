@@ -91,6 +91,9 @@ def _paint_family(primitive: ScenePrimitive, tokens: ThemeTokenView) -> PaintFam
         return PaintFamily.OUTLINE
     if pattern is not None and pattern_kind(pattern) == "diagonal-hatch":
         return PaintFamily.HATCH
+    if primitive.purpose == "region-frame" and tokens.optional_color(primitive.visual_role, "fill") is None:
+        # A frame role that declares no fill is an outline panel (#889).
+        return PaintFamily.OUTLINE
     return PaintFamily.SOLID
 
 
@@ -480,6 +483,16 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                 texture.scene_role, (float(placed.bounds.inline), float(placed.bounds.block),
                                      float(placed.bounds.inline_size), float(placed.bounds.block_size)),
                 slot_id=placed.slot_id, paint_order=placed.paint_order))
+    # Region frames (#889) are ground too: emitted right after the texture, a parent before its children.
+    for placed in placed_surface.shapes:
+        if placed.semantic_id == "regionFrame":
+            frame = semantic_binding("regionFrame")
+            primitives.append(ScenePrimitive(
+                placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "decoration", frame.purpose,
+                frame.scene_role, (float(placed.bounds.inline), float(placed.bounds.block),
+                                   float(placed.bounds.inline_size), float(placed.bounds.block_size)),
+                slot_id=placed.slot_id, paint_order=placed.paint_order,
+                corner_radius=placed.corner_radius or None))
     emit_semantic_text("title", "titleText")
     for column in value.surface_content.table_columns:
         emit_semantic_text(f"column:{column.column_id}", "tableColumnLabel", table_column_id=column.column_id)
