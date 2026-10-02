@@ -146,12 +146,17 @@ class TextLayout:
     text_transform: str = "none"
     numeric_spacing: str = "proportional"
     orientation: str = "horizontal"
-    rotation_degrees: int = 0
+    rotation_degrees: int | float = 0
 
     def __post_init__(self) -> None:
+        # `tilt` (#584) is a Layout-completed rigid rotation of a note by a small non-zero angle about the
+        # baseline start; the quarter turns remain the only other rotations.
+        tilted = (self.orientation == "tilt" and not isinstance(self.rotation_degrees, bool)
+                  and isinstance(self.rotation_degrees, (int, float)) and self.rotation_degrees == self.rotation_degrees
+                  and 0 < abs(self.rotation_degrees) <= 15)
         if (self.numeric_spacing not in {"proportional", "tabular"}
-                or (self.orientation, self.rotation_degrees) not in {
-                    ("horizontal", 0), ("rotate-cw", 90), ("rotate-ccw", -90)}):
+                or not (tilted or (self.orientation, self.rotation_degrees) in {
+                    ("horizontal", 0), ("rotate-cw", 90), ("rotate-ccw", -90)})):
             raise ValueError("E_PRESENTATION_TEXT_LAYOUT_INVALID")
 
 

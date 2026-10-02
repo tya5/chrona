@@ -88,3 +88,8 @@ slides:
     context: contexts/17-gallery-annotation-kinds.yaml
     expectedSvg: generated/17-gallery-annotation-kinds.svg
     expectedScene: generated/17-gallery-annotation-kinds.scene.json
+  - id: gallery-annotation-tilt
+    evidence: "Programme board notes tilted by a deterministic Theme cycle (#584): a three-angle cycle on the rectangle note container, rotated bounds for the search and the obstacles, with a new View id and Theme over the 15-gallery-image-notes sources, no corpus datum edited."
+    context: contexts/18-gallery-annotation-tilt.yaml
+    expectedSvg: generated/18-gallery-annotation-tilt.svg
+    expectedScene: generated/18-gallery-annotation-tilt.scene.json

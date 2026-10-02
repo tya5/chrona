@@ -163,6 +163,12 @@ properties:
                           right: {type: number, minimum: 0}
                           bottom: {type: number, minimum: 0}
                           left: {type: number, minimum: 0}
+                      tiltDegrees:
+                        description: "A deterministic tilt cycle in degrees, clockwise: the annotation at position i of the View's order takes tiltDegrees[i mod length]. Rectangle outlines only (#584)."
+                        examples: [[-2, 1.5, -1]]
+                        type: array
+                        minItems: 1
+                        items: {type: number, minimum: -15, maximum: 15}
                       contentInsetEm:
                         description: "The box Layout measures note text into (top/right/bottom/left, in em); the image is stretched to the resulting paint box (#465)."
                         type: object
@@ -174,6 +180,13 @@ properties:
                           bottom: {type: number, minimum: 0}
                           left: {type: number, minimum: 0}
                     allOf:
+                      - description: "A tilt cycle belongs to a rectangle outline: a balloon tail and an image's slice tiles do not rotate (#584)."
+                        examples: [{outline: rectangle, cornerRadius: 0, tiltDegrees: [-2, 2]}]
+                        if:
+                          properties: {outline: {enum: [balloon, image]}}
+                          required: [outline]
+                        then:
+                          not: {required: [tiltDegrees]}
                       - if:
                           properties: {outline: {const: balloon}}
                           required: [outline]

@@ -29,14 +29,14 @@ _TEXT_PROPERTIES = {"fontFamily": "editorial", "fontWeight": "text-weight", "let
 
 
 def render(directory: Path, source: Mapping[str, Any], parts: Mapping[str, Mapping[str, Any]], *,
-           visual_profile: str = "chrona-output/visual/v0.6-svg", viewport: tuple[int, int | None] = (1600, 900)
-           ) -> RenderedReview:
+           visual_profile: str = "chrona-output/visual/v0.6-svg", viewport: tuple[int, int | None] = (1600, 900),
+           catalogs: tuple[Path, ...] | None = None) -> RenderedReview:
     """Render through the packaged target-parts catalogue under a rich profile: a stamp glyph's stroked
     parts carry a required line cap and join, which the baseline profile does not admit."""
     paths = {kind: sr._write(directory / f"{kind}.yaml", value) for kind, value in parts.items()}
     draft = resolve_draft_render(
         project_path=sr._write(directory / "project.yaml", source), view_path=paths["view"], theme_path=paths["theme"],
-        scheme_path=paths["scheme"], layout_path=paths["layout"], icon_catalog_paths=(TARGET_PARTS,),
+        scheme_path=paths["scheme"], layout_path=paths["layout"], icon_catalog_paths=catalogs if catalogs is not None else (TARGET_PARTS,),
         viewport=viewport, visual_profile=visual_profile)
     return render_review(RenderRequest(
         closure=draft.closure, snapshot_root=draft.asset_root, asset_root=draft.asset_root,
@@ -44,9 +44,10 @@ def render(directory: Path, source: Mapping[str, Any], parts: Mapping[str, Mappi
 
 
 def project(kinds: Iterable[str] = ("risk", "note"), text: str | None = None) -> dict[str, Any]:
-    """Three tasks and one Project annotation per requested kind, anchored on the first tasks."""
+    """At least three tasks and one Project annotation per requested kind, anchored on the first tasks."""
+    kinds = tuple(kinds)
     objects = {f"t{index}": sr.span(f"t{index}", date(2026, 1, 5) + timedelta(days=index * 40), 28, owner="a",
-                                    title=f"Task {index}") for index in range(3)}
+                                    title=f"Task {index}") for index in range(max(3, len(kinds)))}
     source = sr.project(objects)
     source["annotations"] = {}
     for index, kind in enumerate(kinds):
@@ -108,3 +109,15 @@ def with_kind_theme(parts: dict[str, dict[str, Any]], *, kinds: Mapping[str, Map
         roles["annotation-kind-stamp"] = {"stampPlacement": "kind-stamp-placement"}
         bindings["annotation-kind-stamp.fill"] = "text"
         bindings["annotation-kind-stamp.stroke"] = "text"
+
+
+def with_tilt(parts: dict[str, dict[str, Any]], degrees: Any, *,
+              roles: Iterable[str] = ("annotation-note-box",), outline: str = "rectangle") -> None:
+    """Give the note box role(s) an `annotationContainer` token that declares a tilt cycle."""
+    theme = parts["theme"]["body"]
+    theme["values"]["tilt-container"] = {
+        "type": "annotationContainer",
+        "value": {"outline": outline, "cornerRadius": 0,
+                  "tiltDegrees": list(degrees) if isinstance(degrees, (list, tuple)) else degrees}}
+    for role in roles:
+        theme["roles"].setdefault(role, {})["annotationContainer"] = "tilt-container"
