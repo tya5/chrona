@@ -2,7 +2,7 @@
 
 Living record for [#882](https://github.com/tya5/chrona/issues/882), the I583-3 successor of #583 acceptance row 3. Baseline, design (current authority for the tab), architecture review, implementation plan and progress; edited in place, Git keeps history. The rest of #583 is closed and archived; its record is evidence only (`docs/archive/planning/issue-583-group-header-identity-2026-10-02.md`, section 5.3 is the design this record adopts and refines).
 
-**Public base:** `00ae84d7` on `main` (the docs PR #973 that published this record). **Status:** design adopted with refinements (section 3), implementation plan published (section 5); I882-1 (the one code PR) is implemented and in review (section 7); the acceptance review follows its merge.
+**Public base:** `63a8ca0e` on `main` (the derived commit after #976). **Status:** design adopted with refinements (section 3), implementation plan published (section 5); I882-1 (the one code PR) merged as PR #976 (`d1cb196c`, section 7); the literal acceptance review is [issue-882-group-tab-acceptance-review-2026-10-03.md](../../reviews/current/issue-882-group-tab-acceptance-review-2026-10-03.md).
 
 ## 1. Published baseline
 
