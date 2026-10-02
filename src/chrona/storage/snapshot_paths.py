@@ -12,6 +12,6 @@ def snapshot_directory(root: Path, token: str) -> Path:
     deliberately applied only at the local filesystem adapter boundary.
     """
     if not isinstance(token, str) or not token or token in {"Draft", "draft"}:
-        raise ValueError("E_IMMUTABLE_SNAPSHOT_REQUIRED")
+        raise ValueError(f"E_IMMUTABLE_SNAPSHOT_REQUIRED: revision token {token!r} is empty or names the mutable Draft; an immutable revision is required")
     component = quote(token, safe="-_").replace(".", "%2E")
     return root / f"revision-{component}"

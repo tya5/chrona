@@ -13,7 +13,7 @@ properties:
   requestContentIdentity: {description: "SHA-256 identity of the originating request.", examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"], $ref: "urn:chrona:common-v0.1#/$defs/sha256Identity"}
   inputs: {description: "Immutable resources consumed by the operation.", type: array, minItems: 1, items: {$ref: "urn:chrona:revision-store-resource-ref-v0.2"}}
   resultTarget: {$ref: "urn:chrona:revision-store-resource-ref-v0.2"}
-  diagnostics: {description: "Diagnostics emitted while processing the request.", type: array, items: {description: "One diagnostic record with a stable code.", type: object, required: [code], additionalProperties: true, properties: {code: {description: "Stable diagnostic code.", type: string, minLength: 1}}}}
+  diagnostics: {description: "Diagnostics emitted while processing the request.", type: array, items: {description: "One diagnostic record with a stable code.", type: object, required: [code], additionalProperties: true, properties: {code: {description: "Stable diagnostic code.", type: string, minLength: 1}, message: {description: "What is wrong, naming the offending value where one exists; never only the code.", type: string, minLength: 1}}}}
   artifacts: {description: "Immutable artifacts produced by the operation.", type: array, items: {$ref: "urn:chrona:revision-store-resource-ref-v0.2"}}
   actualIntake: {description: "Operation-specific Actual intake result data.", type: object, additionalProperties: true}
   comparison: {description: "Operation-specific baseline comparison result data.", type: object, additionalProperties: true}

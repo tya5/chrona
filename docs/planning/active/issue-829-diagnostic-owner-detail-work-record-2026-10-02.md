@@ -99,7 +99,7 @@ only their text gains the value.
 ## Progress
 
 - Work record: PR #899 (merged).
-- S1 ratchet: implemented (this PR). Baseline 232 codes, 656 sites; `validate` reports `missing`, `grown`,
+- S1 ratchet: PR #905 (merged). Baseline 232 codes, 656 sites; `validate` reports `missing`, `grown`,
   `lower`, `unknown`; `test_the_real_tree_matches_the_recorded_baseline` enforces it in the PR shards.
   Mutation-checked: dropping the growth check turns `test_a_new_bare_site_of_a_recorded_code_fails_the_ratchet` red;
   adding one bare `E_PRESENTATION_PRIMITIVE_INVALID` raise turns the real-tree test red (`grown=... 76 found=77`).
@@ -107,8 +107,16 @@ only their text gains the value.
   before, an f-string raise was invisible to the inventory and a literal with text after the colon was counted bare.
   The baseline at the S1 tree is 653 sites, 230 codes (656 and 232 on the work-record base; the difference is the
   string-detail rule and detail #880 added).
-- S2 init, skill, preset and packaged-resource paths: implemented (`local_authoring`, `skill_library`, `preset_library`,
+- S2 init, skill, preset and packaged-resource paths: PR #909 (`local_authoring`, `skill_library`, `preset_library`,
   `resources/__init__`; 32 sites, 653 to 621). Scope change from the plan: `store_config`, `storage/*` and the
   automation readers move to S3, because the automation code reads `str(error)` as the code and must split code from
   detail first. One golden row changed on purpose (`render-review-store-config-missing`: the message now says the
   file is not a file). Tests: `test_owner_detail_resources.py` (mutation-checked: restoring two bare raises kills 3).
+- S3 automation-result rows (D2): implemented (this PR). `stamp_automation_result` gives every diagnostic row a message
+  (the producer's, else the shared curated or derived sentence); `diagnostic_row` splits `"E_X: detail"`; owner detail in
+  `references`, `command_engine`, `store_config`, `baselines`, `storage/*` and the `cli.py` literal (30 sites, 621 to 592);
+  the schema declares optional `message` (additive, `schema_equivalence` passes after dropping the stale L1 `added` marker
+  of the file, which made any later edit of it fail). Remaining in this area, measured: the result objects of
+  `commands/actual_commands.py` and `storage/snapshots.py` return code-only tuples (about 24 literals, not inventory sites);
+  their rows carry the derived sentence; S3b gives them detail. Tests: `test_result_messages.py` (mutation-checked: removing the
+  floor and the unsupported-type detail kills 2). Spec 35 says every row has a message.

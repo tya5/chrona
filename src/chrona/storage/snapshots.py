@@ -86,23 +86,27 @@ class LocalBaselineRegistry:
         store = reference.get("store", {})
         address = reference.get("address", "")
         if store != {"provider": "local", "identity": self.identity} or not isinstance(address, str) or not address.startswith("snapshots/"):
-            raise ValueError("E_BASELINE_REFERENCE")
+            raise ValueError(f"E_BASELINE_REFERENCE: a baseline reference needs store local/{self.identity} and an address under "
+                             f"snapshots/; got store={store} address={address!r}")
         try:
             path = resolve_store_address(self.root, address)
         except StoreAddressError as error:
-            raise ValueError("E_BASELINE_REFERENCE") from error
+            raise ValueError(f"E_BASELINE_REFERENCE: baseline address {address!r} is not a safe Store address") from error
         if not path.is_file():
-            raise ValueError("E_BASELINE_REFERENCE")
+            raise ValueError(f"E_BASELINE_REFERENCE: no baseline file at {address!r} in the Store")
         try:
             payload = path.read_bytes()
         except OSError as error:
-            raise ValueError("E_BASELINE_REFERENCE") from error
+            raise ValueError(f"E_BASELINE_REFERENCE: baseline file {address!r} could not be read") from error
         digest = sha256(payload).hexdigest()
         expected_identity = reference.get("contentIdentity")
         if expected_identity is None and self.require_content_identity:
-            raise ValueError("E_CONTENT_IDENTITY_REQUIRED")
-        if (expected_identity is not None and expected_identity != f"sha256:{digest}") or reference.get("revision", {}).get("token") != f"baseline:{digest}":
-            raise ValueError("E_BASELINE_REFERENCE")
+            raise ValueError(f"E_CONTENT_IDENTITY_REQUIRED: the baseline reference {address!r} has no contentIdentity and this Store requires one")
+        if expected_identity is not None and expected_identity != f"sha256:{digest}":
+            raise ValueError(f"E_BASELINE_REFERENCE: baseline {address!r} has contentIdentity {expected_identity}, the stored bytes are sha256:{digest}")
+        if reference.get("revision", {}).get("token") != f"baseline:{digest}":
+            raise ValueError(f"E_BASELINE_REFERENCE: baseline {address!r} has revision token {reference.get('revision', {}).get('token')!r}, "
+                             f"expected baseline:{digest}")
         return payload
 
 

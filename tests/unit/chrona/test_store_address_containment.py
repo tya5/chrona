@@ -465,7 +465,8 @@ def test_actual_command_target_id_cannot_walk_out_of_the_tip_directory(tmp_path)
                "baseRevision": "actual:1", "payload": {"observationId": "o", "projectObjectId": "p", "project": _project_ref()}}
     result = apply_actual_command(Reader(), command)
     assert result["status"] == "rejected"
-    assert result["diagnostics"] == [{"code": "E_AUTOMATION_TARGET_CLOSURE"}]
+    assert [row["code"] for row in result["diagnostics"]] == ["E_AUTOMATION_TARGET_CLOSURE"]
+    assert "'../../x'" in result["diagnostics"][0]["message"]
 
 
 @pytest.mark.parametrize("directory", ["C:/x", "C:x", "\\x", "/x", "a/../b", "..", "link"])

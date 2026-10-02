@@ -132,7 +132,11 @@ Every `command-check`, `command-apply`, intake, capture, and comparison invocati
 emits `chrona/automation-result/v0.2`, validated by its schema (v0.1, which allowed loose Store addresses, was retired by
 #731 and no writer falls back to it). A result records its
 operation, request content identity, status, complete verified input closure, ordered
-diagnostics, and declared artifacts. Accepted mutations also name `resultTarget`;
+diagnostics, and declared artifacts. Every diagnostic row has a `code` and a `message`
+that says more than the code: the owner's sentence naming the offending value where one
+exists, else the shared curated or derived sentence of the CLI diagnostics (#829, as #782
+for the CLI rows; `message` is an optional schema property, so no version changed).
+Accepted mutations also name `resultTarget`;
 checks and rejections do not fabricate it. Console text is never an automation API.
 
 The CLI exits `0` for accepted work (including an accepted replay), `2` for a declared
