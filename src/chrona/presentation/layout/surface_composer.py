@@ -149,8 +149,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     if contract.time.as_of is not None and start <= contract.time.as_of < end:
         x = _coordinate(contract.time.as_of, scale)
         shapes.append(ShapePlacement("as-of", "actual-set", "Path",
-                                     Rect(Decimal(str(x)), timeline.bounds.block, Decimal(0), timeline.bounds.block_size),
-                                     ((x, float(timeline.bounds.block)), (x, float(timeline.bounds.block + timeline.bounds.block_size))),
+                                     Rect(Decimal(str(x)), base.plot.block, Decimal(0), base.plot.block_size),
+                                     ((x, float(base.plot.block)), (x, float(base.plot.block + base.plot.block_size))),
                                      paint_order=MARK_PAINT_ORDER_BASE))
         as_of_label = (x, contract.time.as_of_label) if contract.time.as_of_label else None
     mark_batch = compose_surface_marks(base, lane_owner=_lane_owner)
@@ -170,7 +170,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         tuple(groups), scale, tuple(marks), timeline_bounds, as_of_label,
     )
     member_label_requests = build_member_label_requests(member_label_context)
-    period_requests = period_label_requests(period_batch.extents, timeline_bounds)
+    period_requests = period_label_requests(period_batch.extents, _bounds(base.plot))
     if period_requests:  # placed first of the pre-route labels, so routes and later labels avoid them
         member_label_requests = replace(member_label_requests,
                                         pre_route=(*period_requests, *member_label_requests.pre_route))

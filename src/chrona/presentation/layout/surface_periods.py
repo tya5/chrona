@@ -43,7 +43,7 @@ def compose_period_bands(*, base: SurfaceBaseGeometry, theme_tokens: Any, period
         return PeriodBandBatch((), ())
     treatment, paint_order = theme_tokens.background(semantic_binding("periodBand").scene_role)
     window_start, window_end = window
-    plot = base.timeline.bounds
+    plot = base.plot
     plot_left, plot_right = float(plot.inline), float(plot.inline + plot.inline_size)
     shapes: list[ShapePlacement] = []
     extents: list[tuple[ReviewPeriod, float, float]] = []

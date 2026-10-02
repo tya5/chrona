@@ -240,7 +240,7 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
             semantic_id = "axisGrid" if tier.role == "grid-major" else "axisGridMinor"
             tick = _axis_tick_length(tokens, semantic_binding(semantic_id).scene_role, axis.bounds.block_size, tier_index)
             if tick is None:
-                grid_top, grid_size = timeline.bounds.block, timeline.bounds.block_size
+                grid_top, grid_size = base.plot.block, base.plot.block_size
             else:
                 grid_top, grid_size = axis.bounds.block + axis.bounds.block_size - tick, tick
             for interval in intervals:

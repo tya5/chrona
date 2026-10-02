@@ -20,7 +20,7 @@ from chrona.presentation.layout.presentation import (
 from chrona.presentation.layout.surface_lanes import place_lane_mark_tracks
 from chrona.presentation.layout.surface_marks import folded_instance_id, resolve_mark_geometries
 from chrona.presentation.layout.surface_lanes import review_rows
-from chrona.presentation.layout.surface_geometry import bounds_from_rect, rect_from_bounds
+from chrona.presentation.layout.surface_geometry import bounds_from_rect, plot_rect, rect_from_bounds
 from chrona.presentation.layout.surface_quality import (
     GroupPlacement, RowPlacement, ScalePlacement, SlotPlacement, SurfaceLayoutRequest,
 )
@@ -57,6 +57,7 @@ class SurfaceBaseGeometry:
     row_padding: float
     text_line_block: float
     table_bounds: tuple[float, float, float, float]
+    plot: Rect
 
     def text_slot(self, item: Any) -> str:
         """Resolve a text host against the prepared base slot identities."""
@@ -236,4 +237,5 @@ def prepare_surface_base(request: SurfaceLayoutRequest) -> SurfaceBaseGeometry:
         frozenset(slot.slot_id for slot in slots),
         scale, rows, raw_rows, groups, tracks, role_geometries, mark_block_size,
         lane_subtracks, group_header_size, row_padding, text_line_block, table_bounds,
+        plot_rect(timeline.bounds, (row.bounds for row in rows)),
     )
