@@ -18,7 +18,7 @@ def _overlap(left: dict, right: dict) -> bool:
 
 
 def test_all_public_axis_labels_and_independent_notes_have_no_positive_area_intersection():
-    assert len(SCENES) == 41
+    assert len(SCENES) == 42
     axis_count = 0
     for path in SCENES:
         for surface in json.loads(path.read_bytes())["surfaces"]:
@@ -35,7 +35,7 @@ def test_all_public_axis_labels_and_independent_notes_have_no_positive_area_inte
 
 
 def test_all_public_ellipsized_legends_stay_in_slot_and_boolean_cells_are_readable():
-    assert len(SCENES) == 41
+    assert len(SCENES) == 42
     for path in SCENES:
         for surface in json.loads(path.read_bytes())["surfaces"]:
             slots = {item["id"]: item for item in surface["slots"]}
@@ -54,7 +54,7 @@ def test_all_public_ellipsized_legends_stay_in_slot_and_boolean_cells_are_readab
 
 
 def test_every_public_svg_axis_label_is_after_its_band_and_hosted_dvt_label_is_after_its_bar():
-    assert len(SVGS) == 41
+    assert len(SVGS) == 42
     axis_count = 0
     hosted = 0
     for path in SVGS:
