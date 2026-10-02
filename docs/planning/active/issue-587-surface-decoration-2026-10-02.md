@@ -2,7 +2,7 @@
 
 Living record for [#587](https://github.com/tya5/chrona/issues/587): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history.
 
-**Public base:** `274e662c` on `main` (derived evidence `f1624ab6`). **Status:** design plan (this publication). Next: design and architecture review, then the implementation plan, then I587-1 (canvas texture) and I587-2 (glow).
+**Public base:** `ded433ae` on `main`. **Status:** the design plan is published (section 4, PR #868); the design and architecture review are this publication (sections 5 and 6). Next: the implementation plan (section 7), then I587-1 (canvas texture) and I587-2 (glow).
 
 ## 1. Published baseline
 
@@ -91,7 +91,84 @@ The issue's "Need" and "Proposal" list five treatments: canvas texture, a decora
 
 ### Order of design slices
 
-1. **D587-1** (this PR): baseline and design plan.
-2. **D587-2**: design and architecture review: decisions D1 to D10, the Spec 63, 07 and 08 amendments, the owner decision comment on the issue.
+1. **D587-1** (PR #868, merged): baseline and design plan.
+2. **D587-2** (this PR): design and architecture review: decisions D1 to D10, the owner decision comment on the issue. The Spec 07, 08 and 63 amendments land with the slice that implements each rule.
 3. **D587-3**: implementation plan (slices, owned files, tests, generated evidence).
 4. Code slices as planned in D587-3, then the acceptance review.
+
+## 5. Design
+
+Decisions D1 to D10 of section 4 are taken as follows. Each is an owner-level judgement recorded on the issue with options, choice, reason and how to reverse it. The normative text goes into [Specification 07](../../specification/07-style-and-theme.md) (Theme roles and properties), [08](../../specification/08-scene-and-rendering.md) (Scene) and [63](../../specification/63-portable-visual-capabilities.md) (capabilities and profiles) with the slice that implements it, not here.
+
+### 5.1 Slicing (D1)
+
+I587-1 canvas texture, then I587-2 glow, each its own code PR with default output unchanged. Title border, panels with gutters and the as-of cone are not designed here beyond section 5.9; each has an independent design question (a Theme slot frame, a Layout Profile region frame, a gradient polygon) and none shares a mechanism with the first two except the omission ladder. Reverse: none needed; the order is only a plan.
+
+### 5.2 A texture is an ordinary Rect primitive (D2)
+
+Option A (a `SceneSurface.canvas_texture` field) is cleaner in name but adds a Scene schema field, a version rule, a branch in every adapter and a second place that knows patterns. Option B reuses what exists: a Layout shape completes one Rect over the canvas with a catalogue pattern, Scene emits it as a Rect with `pattern` data (scene v0.7 already carries it, so **no Scene schema change**), SVG and PNG paint it, and Typst and TikZ reject it exactly as they reject any pattern. Choice: B. Reverse: add the field and move the same Layout completion behind it.
+
+- **Layout** (`layout/canvas_texture.py`, new; not a `surface_*` module, because Spec 33 section 8.3 names every `surface_*` phase module and the texture is a helper beside `pattern_placement`): `complete_canvas_texture(theme_tokens, canvas)` returns nothing when the resolved Theme has no `canvas-texture` role, and otherwise one `ShapePlacement` (`placement_id` `canvas-texture`, `semantic_id` `canvasTexture`, kind Rect, bounds = the completed canvas, `paint_order` 0, slot `canvas`) and its `PatternedPlacement` from `complete_pattern_placement` (origin is the canvas top-left, so the lattice phase is fixed by the canvas, not by content). Both Layout-completed surfaces call it, so a Theme's texture does not depend on the View kind: the table-timeline surface in `complete_surface_layout` after `completed_canvas` (its shape joins `SurfacePlacement.shapes`, its pattern `SurfacePlacement.patterns`, its slot `SurfacePlacement.slots`), and the dependency-network surface in `compose_dependency_network_layout` after its completed canvas (the placement joins `DependencyNetworkLayout.patterns`; its Scene builder adds the Rect and the `canvas` Scene slot, because that surface builds its slot list from the manifest decisions rather than from a placement). A surface with no completed canvas has no texture.
+- **Slot.** The Rect needs an owner. Layout adds one pseudo-slot `canvas` (source `canvas`, bounds = canvas) next to the existing `review-surface` pseudo-slot, only when a texture is declared. The Scene slot list therefore changes only for a Theme that declares a texture.
+- **Order.** The texture is the first primitive Scene emits and has paint order 0. Primitives paint by `(paint_order, emission index)`, so it is below every primitive whatever order the Theme gives a band or a mark. This makes "below everything" a rule; the Theme has no `backgroundPaintOrder` for it (the role does not admit one).
+- **Scene.** `semantic_registry` gains `canvasTexture` (kind decoration, purpose `canvas-texture`, Scene and Theme role `canvas-texture`, **no contrast class**). The builder emits it first, attaches the pattern through the existing `_attach_completed_patterns`, and paint resolves as a catalogue pattern (`PaintFamily.SOLID`).
+
+### 5.3 Authoring surface (D3)
+
+A Theme declares the role `canvas-texture` with `pattern` (a typed pattern token of kind `catalog`), `fill` (the substrate) and `stroke` (the ink). The role is admitted for those three properties only, in the catalogue-pattern allowlist of Spec 07. Absent role means absent texture; there is no `none` spelling. A role without a catalogue pattern, with an inline pattern kind, with an `opacity` other than 1, or with any other property is `E_THEME_ROLE_REQUIRED` or `E_THEME_ROLE_PROPERTY_UNSUPPORTED` at its exact pointer (the existing role-admission and `validate_pattern_paint` paths).
+
+The substrate is declared, not inherited from `background.fill`: resolution "without defaults" is the rule of `resolve_scene_paint`, and a Scheme binding `canvas-texture.fill: surface` states the intent. The substrate is opaque and paints over the canvas fill (a canvas gradient under a texture is hidden; section 5.4 records the consequence for the gates and 5.9 the successor for a transparent texture). The Theme schema needs no new property: `canvas-texture` is a role name and `pattern`, `fill`, `stroke` exist, so `schema_equivalence` is expected to report no change; it is run and recorded all the same.
+
+### 5.4 Determinism and seeds (D4)
+
+A texture is the repetition of a declared catalogue tile from a fixed origin. Nothing is random, nothing depends on hash or iteration order, and no generator runs, so two renders of one Theme are byte-identical and there is no seed to declare. A future generator (grain, rain) must declare its seed and algorithm in the Theme and use a specified PRNG, never Python's `random` or dictionary order; that is recorded in the successor issue (5.9), not designed now. Wheel size: no bundled byte is added (the lattice is in the packaged `chrona-target-parts` catalogue).
+
+### 5.5 Ground rule for the gates (D5)
+
+A texture is ground, not content. Its substrate and its ink are both colours a mark or a label can lie on.
+
+- `contrast_policy`: when the host of a classified primitive is a `canvas-texture` Rect, the ground is both the substrate and the ink. For a flat primitive the finding carries the **worse** of the two (the minimum ratio) with `groundKind` `texture-substrate` or `texture-ink`, so it still has one finding per channel; a catalogue-patterned primitive already has one finding per channel pair, and the texture adds the pairs against its ink.
+- `perceptibility`: with a texture present, `I_SCENE_PAINT_CONTRAST` is measured against the worse of the substrate and the ink instead of the canvas fill (the substrate covers the canvas).
+- The texture itself has no contrast floor: a faint lattice is the point, and an unclassified role forces no new corpus witness (the decoration witness requires every classified decoration role to be painted in committed evidence).
+- Occlusion: the texture is never later than a text, so it cannot raise `E_SCENE_TEXT_OCCLUDED`.
+
+### 5.6 Glow is a typed completed paint fact (D6)
+
+Option A (a zero-offset `DropShadow` with a different filter region) needs no schema change, but an adapter would then decide that "offset zero means widen the region", and nothing in the Scene would say that this is a halo. Option B adds an optional completed `Glow(color, blur, opacity, fidelity, region)` to `ScenePaint`. Choice: B, because it makes the omission ladder, the capability ID and the filter region explicit, and because Scene already completes geometry-dependent paint (the gradient endpoints) from primitive bounds. `region` is the primitive's visible extent grown by 3 blur on every side and intersected with the canvas: the halo cannot leave the slide and is not part of the primitive's bounds, so it changes no collision, hosting or measurement. A Path's extent is the box of its points (a relation primitive's `bounds` are zero).
+
+Scene serialization writes `paint.glow` as `{color, blur, opacity, fidelity, region}`; `schemas/scene-v0.7.schema.yaml` gains the optional definition in place and a Scene that carries a glow is written as `chrona/scene/v0.7`. Scene v0.6 is the transitioning schema and is not edited. The perceptibility and contrast readers already accept both versions. Reverse: option A, with the Scene field removed.
+
+### 5.7 Glow authoring and admission (D7)
+
+Theme role properties `glowColor` (a Colour Scheme binding, `<role>.glowColor`), `glowBlur` (number, 0 < blur <= 64, the shadow limit), `glowOpacity` (0..1) and `glowFidelity` (`required` or `decorative-optional`). All of colour, blur and opacity are declared together or none (`E_VISUAL_CAPABILITY_VALUE`); limits are `E_VISUAL_CAPABILITY_LIMIT`; fidelity is `E_VISUAL_CAPABILITY_FIDELITY`. The properties are admitted exactly where the shadow properties are: roles whose completed primitive is Rect, Symbol, Text or Path (the `_RECT_PAINT`, `_TEXT_PAINT` and `_PATH_PAINT` sets), and not on the canvas, on Icon-shared roles or on the shared `text` role. A role that declares both a shadow and a glow is `E_VISUAL_CAPABILITY_VALUE` at `glowBlur`: one effect per primitive, as one `filter` per element.
+
+Capability: `effect.glow` is a new ADMITTED entry (owner Theme) in the closed ceiling, and joins `RICH_CAPABILITIES`, so all four rich profiles (`v0.6-svg`, `v0.6-png`, `v0.7-svg`, `v0.7-png`) paint it and the baseline does not. Under the baseline a `decorative-optional` glow is omitted with `I_VISUAL_TREATMENT_OMITTED:...;treatment=glow;profile=...;paintable=<first rich profile>` and a `required` glow fails before serialization with `E_VISUAL_CAPABILITY_UNSUPPORTED`. Joining the existing profile identifiers instead of minting a new one is a judgement call: no committed Theme declares a glow, so no existing result changes, and a new identifier would force every suggestion, test and render-context enumeration to name a profile that differs only by one ID. Reverse: split the ID out into a new profile identifier and move the suggestion. Spec 63 (vocabulary, profile table, omission text) and the capability prior-art matrix (generated) change with the slice.
+
+### 5.8 Adapters (D8)
+
+SVG draws a glow as one filter per glowing element, with identity from the completed glow (which includes its region): `filterUnits="userSpaceOnUse"` over `region`, a Gaussian blur of the element's alpha, flooded with the glow colour at its opacity, composited and merged twice under the source graphic (the double halo reads as a glow where a single feDropShadow reads as a faint shadow). PNG is the same SVG through the pinned resvg; both are rendered and read. PDF, Typst and TikZ never receive a glow: their profiles do not admit it, so the profile gate (Scene) decides, never the adapter. The existing drop-shadow filter is unchanged, byte for byte.
+
+### 5.9 The other treatments (D9)
+
+Not designed in this publication; each is recorded as a successor with its direction, searched first for a duplicate (none exists at `274e662c`):
+
+- **Title border of repeated elements** (Marquee bulbs): a Theme slot-frame role on the title slot whose border is a repeated catalogue glyph along the slot edge; needs a Layout completion of the glyph run (count, spacing, corners) and a Scene emission of Symbol parts; the packaged parts exist (#718 `bulb-row`).
+- **Panels with gutters** (Sunday): a Layout Profile region frame and gutter declaration (a Layout Profile schema change under Spec 56 section 3.2); frames are Rects with stroke drawn behind a region's slots.
+- **As-of light cone** (Marquee): a gradient polygon from the top of the plot to its foot beneath the marks; needs a filled, gradient-capable polygon primitive (a Path carries neither fill nor gradient today) or a gradient Rect plus clip, and contrast handling as ground.
+- **Texture beyond the opaque tile** (Montmartre grain above content, Off-World rain over a gradient): a transparent-substrate pattern, an overlay paint order, and seeded generators.
+
+### 5.10 Committed evidence (D10)
+
+Controller Z (`examples/controller-z/`) gains new slides, as #492 added `axis-ticks`, and no existing slide, preset or corpus datum is edited: a dark Theme that declares `canvas-texture` with `chrona-target-parts:hexagon-lattice` (the Title Card surface), and a Theme that gives the milestone gate a glow (the Marquee star). They are evidence against the targets, not a core criterion; the synthetic tests are the core criterion. Sunday needs panels, so acceptance row 3 is narrowed unless the panels slice is delivered.
+
+## 6. Architecture review
+
+- **Ownership.** Theme declares; Layout owns the texture's region, phase, clip and pseudo-slot; Scene owns the glow region and the omission ladder and emits the texture as an ordinary primitive; adapters serialize completed values and read neither Theme, Scheme nor profile. No new Layout-to-Scene back channel.
+- **Layering.** `layout/canvas_texture.py` imports `pattern_placement`, `surface_quality` and `model` types only, like its neighbours; `scene` imports nothing new from Layout. `tools/check_import_direction.py` is expected to stay green.
+- **Default output.** No Theme role, no property, no pseudo-slot, no emission, no filter, no schema field is written unless declared. Every committed Scene and SVG must be byte-identical after each slice; that proves "default unchanged" only, not quality.
+- **Regression surface.** Texture: the role allowlist, the semantic registry, the builder's first emission, two contrast evaluators, and the slot list (only with a texture). Glow: the paint resolver, the capability ceiling and profile, the closure role admission, serialization and schema, the SVG filter. Existing `drop-shadow` behaviour is untouched.
+- **Failure behaviour.** All new failures are existing codes at exact Theme pointers (`E_THEME_ROLE_*`, `E_VISUAL_CAPABILITY_*`); no new code except none is planned. A texture with no completed canvas fails closed (no texture), never a partial one.
+- **Adjacent designs.** #496 (catalogue patterns) is reused unchanged; #478 (ladder) gains one treatment; #718 supplies the tile and is not edited; #582 (named periods) and #583 (group bands and headers) add Rects and bands whose paint order is above 0 and whose ground, where text lies on them, is the later band, so the texture is not their ground. Spec 56 section 3.2: Theme additions in place.
+- **Risks.** (1) A texture under an opaque canvas gradient hides the gradient (recorded; successor for a transparent texture). (2) A texture on a very large canvas emits one pattern fill, not per-tile geometry, so size is constant. (3) Contrast evaluators that look up a host by "latest earlier Rect" now find the texture for primitives not on any band; the change is that they measure against substrate and ink, and a unit test pins it. (4) The double-halo glow is intentionally brighter than a drop shadow of the same parameters; the Theme owns the strength through opacity and blur.
+- **Extension points.** A new texture is a new catalogue pattern; a transparent, overlay or seeded texture is a successor with its own admission; a glow on Icon needs the Icon adapter to serialize outer paint (not done).
+- **Decision:** approved for implementation planning.
