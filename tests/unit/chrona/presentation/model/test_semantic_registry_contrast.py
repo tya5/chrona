@@ -13,7 +13,7 @@ def test_contrast_registry_classifies_only_the_finite_state_text_and_decoration_
     assert [item.scene_role for item in contrast_bindings(ContrastClass.DECORATION)] == [
         "calendar-closed", "period-band", "axis-band-decoration", "axis-band-decoration2",
         "group-band", "row-band", "group-header-band", "annotation-note-box",
-        "annotation-kind-bar", "annotation-kind-accent",
+        "annotation-kind-bar", "annotation-kind-accent", "annotation-kind-stamp",
     ]
     assert contrast_binding("text") is None
     assert contrast_binding("group-band").theme_role == "group-band"

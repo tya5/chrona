@@ -218,6 +218,8 @@ class ShapePlacement:
     image_fill: LayoutImageFill | None = None
     lane_row_id: str | None = None
     lane_member_id: str | None = None
+    # Completed catalogue-glyph parts of an annotation kind stamp (#584); Scene emits one Symbol per part.
+    symbol_parts: tuple[Any, ...] = ()
 
 
 @dataclass(frozen=True)

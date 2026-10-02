@@ -24,7 +24,7 @@ properties:
           required: [type, value]
           additionalProperties: false
           properties:
-            type: {description: "Kind of non-color token value.", enum: [number, fontFamily, fontWeight, dashPattern, marker, pattern, symbol, textAlternative, lineCap, lineJoin, fidelity, textTransform, numericSpacing, annotationContainer, edge]}
+            type: {description: "Kind of non-color token value.", enum: [number, fontFamily, fontWeight, dashPattern, marker, pattern, symbol, textAlternative, lineCap, lineJoin, fidelity, textTransform, numericSpacing, annotationContainer, edge, stampPlacement]}
             value: {}
           allOf:
             - description: "Dash-pattern tokens use a positive numeric sequence; other tokens use scalar values."
@@ -200,6 +200,20 @@ properties:
                     properties:
                       side: {description: "The note edge the accent stands on.", enum: [start, end, top, bottom]}
                       size: {description: "Accent thickness in px.", type: number, exclusiveMinimum: 0}
+            - description: "An annotation-kind stamp: the note corner it stands at and its square size as a ratio of the note text size (#584)."
+              examples: [{type: stampPlacement, value: {corner: end-top, size: 2}}]
+              if:
+                properties: {type: {const: stampPlacement}}
+              required: [type]
+              then:
+                properties:
+                  value:
+                    type: object
+                    additionalProperties: false
+                    required: [corner, size]
+                    properties:
+                      corner: {description: "The note corner the stamp stands at.", enum: [start-top, end-top, start-bottom, end-bottom]}
+                      size: {description: "Stamp block size as a ratio of the note text size.", type: number, exclusiveMinimum: 0}
       roles:
         type: object
         description: "Semantic role bindings to named non-color tokens."
@@ -233,6 +247,7 @@ properties:
             progressInset: {description: "Named progress-track inset ratio of the host mark's block size; the fill sits inside the track with this gap (0 <= ratio < 0.5).", type: string, minLength: 1}
             annotationContainer: {description: "Named outline/tail-geometry token for an annotation-box role (#466); absent keeps today's plain rectangle.", type: string, minLength: 1}
             edge: {description: "Named edge token (side and thickness) for the annotation-kind accent role (#584).", type: string, minLength: 1}
+            stampPlacement: {description: "Named stampPlacement token (corner and size) for the annotation-kind stamp role (#584).", type: string, minLength: 1}
             swatchInlineSize: {description: "Named absolute inline length for a legend swatch whose on-chart length has no single value (a span, line, or decoration key); absent means Layout falls back to the legend label's own font size (#427).", type: string, minLength: 1}
             backgroundTreatment: {description: "Finite treatment for a completed review-surface background role; none is an explicit non-drawable disposition.", enum: [fill, outline, none]}
             contrastTreatment: {description: "Finite contrast-floor treatment for a classified state-text role.", enum: [required, deemphasized]}
@@ -317,6 +332,7 @@ properties:
             secondary: {description: "Optional second-script label, set as a second header line unless the title template shows it.", type: string, minLength: 1}
             title: {description: "Optional header template of literal text and the closed placeholders {label}, {secondary} and {subject}; {{ and }} are literal braces. Default is {label}.", type: string, minLength: 1}
             color: {description: "Optional Scheme intent or explicit category slot that paints the kind's bar, accent and stamp; checked at Theme resolution.", type: string, minLength: 1}
+            stamp: {description: "Optional authored `set:name` reference to a normalized catalogue glyph drawn as the kind's stamp.", examples: ["chrona-target-parts:seal-risk"], type: string, pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"}
       metrics:
         type: object
         description: "Named source-measurement metric bindings used by Layout."

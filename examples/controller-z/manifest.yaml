@@ -67,3 +67,8 @@ slides:
     context: contexts/surface-glow.yaml
     expectedSvg: generated/surface-glow.svg
     expectedScene: generated/surface-glow.scene.json
+  - id: annotation-kinds
+    evidence: "A Title Card style note per Project annotation kind (#584): a kind-coloured title bar with a label, a secondary line, an accent edge and a hazard-tab stamp from the packaged target-parts catalogue, on the dark texture Theme, with no corpus datum edited."
+    context: contexts/annotation-kinds.yaml
+    expectedSvg: generated/annotation-kinds.svg
+    expectedScene: generated/annotation-kinds.scene.json

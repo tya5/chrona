@@ -868,6 +868,12 @@ def _resolve_theme_catalog_assets(theme: Mapping[str, Any],
             if property_name == "pattern":
                 validate_pattern_paint(str(role), binding)
             resolve(reference, expected_kind, pointer)
+    declared_kinds = body.get("annotationKinds") if isinstance(body, Mapping) else None
+    if isinstance(declared_kinds, Mapping):
+        # A kind's stamp (#584) is a catalogue glyph the Theme names, resolved with the other glyphs.
+        for kind, entry in declared_kinds.items():
+            if isinstance(entry, Mapping) and entry.get("stamp") is not None:
+                resolve(entry["stamp"], "glyph", f"/body/annotationKinds/{kind}/stamp")
     return glyphs, patterns
 
 

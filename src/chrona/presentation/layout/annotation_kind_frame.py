@@ -1,10 +1,11 @@
-"""Annotation kind header geometry: header block, accent edge and title bar (#584).
+"""Annotation kind frame geometry: header block, accent edge, title bar and stamp (#584).
 
 Pure Layout composition for one annotation whose Project kind the Theme dresses.  `measure_kind_frame`
-sizes the frame (the header block and the accent insets that grow the note box) before the
-annotation search runs; `place_kind_frame` completes the accent Rect, the bar Rect and the header
-text inside the box that search chose.  A Theme that declares nothing for the kind measures to the
-empty frame, so the note's size, position and primitives are exactly what they were without #584.
+sizes the frame (the header block, the accent insets and the stamp column that grow the note box)
+before the annotation search runs; `place_kind_frame` completes the accent Rect, the bar Rect, the stamp
+glyph and the header text inside the box that search chose.  A Theme that declares nothing for the
+kind measures to the empty frame, so the note's size, position and primitives are exactly what they
+were without #584.
 """
 from __future__ import annotations
 
@@ -13,12 +14,17 @@ from decimal import Decimal
 from typing import Any, Callable
 
 from chrona.presentation.annotation_kind_text import header_lines
+from chrona.presentation.layout.mark_geometry import symbol_parts
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
 from chrona.presentation.layout.surface_quality import (
     AnnotationPresentation, CollisionDomain, ShapePlacement, TextPlacement,
 )
 from chrona.presentation.layout.text import measure_text_width, place_text
-from chrona.presentation.model.theme_tokens import AnnotationKindFrame, AnnotationKindToken, ThemeTokenView
+from chrona.presentation.model.theme_tokens import (
+    AnnotationKindFrame, AnnotationKindToken, ThemeTokenError, ThemeTokenView,
+)
+
+STAMP_GAP_EM = 0.5  # the space between a stamp and the note content, in note text sizes
 
 
 @dataclass(frozen=True)
@@ -50,10 +56,24 @@ class KindFrameMeasure:
     accent_side: str | None
     accent_size: float
     bar_role: str | None
+    stamp_ref: str | None = None
+    stamp_corner: str | None = None
+    stamp_inline: float = 0.0
+    stamp_block: float = 0.0
+    stamp_column: float = 0.0
+
+    @property
+    def stamp_at_start(self) -> bool:
+        return self.stamp_corner is not None and self.stamp_corner.startswith("start")
 
     @property
     def inline_insets(self) -> float:
-        return self.inset_left + self.inset_right
+        return self.inset_left + self.inset_right + self.stamp_column
+
+    @property
+    def body_inset_left(self) -> float:
+        """The inline start of the body text and the bar: past the accent and a start-side stamp column."""
+        return self.inset_left + (self.stamp_column if self.stamp_at_start else 0.0)
 
     @property
     def block_insets(self) -> float:
@@ -61,7 +81,7 @@ class KindFrameMeasure:
 
     @property
     def empty(self) -> bool:
-        return not self.lines and self.accent_role is None
+        return not self.lines and self.accent_role is None and self.stamp_ref is None
 
 
 EMPTY_FRAME = KindFrameMeasure((), False, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, None, None, 0.0, None)
@@ -69,8 +89,8 @@ EMPTY_FRAME = KindFrameMeasure((), False, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 
 def measure_kind_frame(*, kind: AnnotationKindToken | None, subject: str, frame: AnnotationKindFrame,
                        theme_tokens: ThemeTokenView, metric_for: Callable[[str], Any],
-                       outline: str | None, pointer: str) -> KindFrameMeasure:
-    """Measure the header block and accent insets; raise when a straight strip cannot sit on this outline."""
+                       outline: str | None, pointer: str, text_size: float = 0.0) -> KindFrameMeasure:
+    """Measure the header block, accent insets and stamp column; raise when a strip cannot sit on this outline."""
     if kind is None:
         return EMPTY_FRAME
     lines: list[KindHeaderLine] = []
@@ -92,7 +112,18 @@ def measure_kind_frame(*, kind: AnnotationKindToken | None, subject: str, frame:
         # A straight strip at the box edge cannot follow a balloon or an image outline: a declaration
         # conflict, never a strip silently dropped.
         raise LayoutError("E_LAYOUT_ANNOTATION_KIND_FRAME_OUTLINE", pointer)
-    if not lines and not has_accent:
+    stamp_ref = kind.stamp if frame.stamp_role is not None else None
+    stamp_inline = stamp_block = stamp_column = 0.0
+    if stamp_ref is not None:
+        try:
+            viewport = theme_tokens.catalog_glyph(stamp_ref)["viewport"]
+            aspect = float(viewport["inlineSize"]) / float(viewport["blockSize"])
+        except (ThemeTokenError, KeyError, TypeError, ValueError, ZeroDivisionError) as error:
+            raise LayoutError("E_THEME_ASSET_REFERENCE", pointer) from error
+        stamp_block = float(frame.stamp_size) * text_size
+        stamp_inline = stamp_block * aspect
+        stamp_column = stamp_inline + STAMP_GAP_EM * text_size
+    if not lines and not has_accent and stamp_ref is None:
         return EMPTY_FRAME
     padding_inline = float(frame.bar_padding_em) * lines[0].font_size if bar else 0.0
     padding_block = padding_inline / 2
@@ -104,14 +135,15 @@ def measure_kind_frame(*, kind: AnnotationKindToken | None, subject: str, frame:
         tuple(lines), bar, padding_inline, padding_block, header_block, header_inline,
         size if side == "top" else 0.0, size if side == "end" else 0.0,
         size if side == "bottom" else 0.0, size if side == "start" else 0.0,
-        frame.accent_role, side, size, frame.bar_role if bar else None)
+        frame.accent_role, side, size, frame.bar_role if bar else None,
+        stamp_ref, frame.stamp_corner if stamp_ref is not None else None, stamp_inline, stamp_block, stamp_column)
 
 
 def place_kind_frame(measure: KindFrameMeasure, *, annotation_id: str, presentation: AnnotationPresentation,
                      content_box: tuple[float, float, float, float], theme_tokens: ThemeTokenView,
                      font_metrics: Any, annotation_slot: str, paint_order: int
                      ) -> tuple[tuple[ShapePlacement, ...], tuple[TextPlacement, ...]]:
-    """Complete the accent Rect, bar Rect and header text inside ``content_box`` (x, y, width, height)."""
+    """Complete the accent Rect, bar Rect, stamp glyph and header text inside ``content_box`` (x, y, width, height)."""
     x, y, width, height = content_box
     shapes: list[ShapePlacement] = []
     text: list[TextPlacement] = []
@@ -128,12 +160,26 @@ def place_kind_frame(measure: KindFrameMeasure, *, annotation_id: str, presentat
             "top": (x, y, width, size), "bottom": (x, y + height - size, width, size),
         }[str(side)]
         shapes.append(rect(f"annotation-kind-accent:{annotation_id}", "annotationKindAccent", left, top, w, h))
-    inner_x = x + measure.inset_left
+    inner_x = x + measure.body_inset_left
     inner_y = y + measure.inset_top
     inner_width = width - measure.inline_insets
     if measure.bar:
         shapes.append(rect(f"annotation-kind-bar:{annotation_id}", "annotationKindBar",
                            inner_x, inner_y, inner_width, measure.header_block))
+    if measure.stamp_ref is not None:
+        gap = measure.stamp_column - measure.stamp_inline
+        stamp_x = (x + measure.inset_left if measure.stamp_at_start
+                   else x + width - measure.inset_right - measure.stamp_column + gap)
+        stamp_y = (y + measure.inset_top if str(measure.stamp_corner).endswith("top")
+                   else y + height - measure.inset_bottom - measure.stamp_block)
+        bounds = (stamp_x, stamp_y, measure.stamp_inline, measure.stamp_block)
+        try:
+            parts = symbol_parts({"shape": {"catalog": measure.stamp_ref}}, bounds,
+                                 catalog_glyphs=theme_tokens.catalog_glyphs)
+        except ValueError as error:
+            raise LayoutError("E_THEME_ASSET_REFERENCE", f"/annotations/{annotation_id}") from error
+        shapes.append(replace(rect(f"annotation-kind-stamp:{annotation_id}", "annotationKindStamp", *bounds),
+                              kind="Glyph", symbol_parts=parts))
     line_top = inner_y + measure.bar_padding_block
     for index, line in enumerate(measure.lines):
         semantic_id = "annotationKindLabel" if index == 0 else "annotationKindSecondary"

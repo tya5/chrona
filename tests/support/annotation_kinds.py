@@ -7,10 +7,18 @@ from __future__ import annotations
 
 from copy import deepcopy
 from datetime import date, timedelta
+from pathlib import Path
 from typing import Any, Iterable, Mapping
 
+from chrona.presentation.model.closure import resolve_draft_render
+from chrona.presentation.renderers.v05_svg import V05SvgRenderer
+from chrona.scheduling.scheduler import ReferenceScheduler
+from chrona.usecases.render_review import RenderRequest, RenderedReview, render_review
 from tests.support import synthetic_review as sr
 
+TARGET_PARTS = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file()
+                    ) / "src/chrona/resources/icons/chrona-target-parts-v2026-10.yaml"
+STAMPS = {"risk": "chrona-target-parts:seal-risk", "note": "chrona-target-parts:seal-note"}
 KIND_COLORS = {"kind-alert": "#8E1B12", "kind-report": "#1D3F73"}
 KINDS = {
     "risk": {"label": "RISK", "secondary": "WARNING", "title": "{label} · {subject}", "color": "category:kind-alert"},
@@ -20,14 +28,29 @@ _TEXT_PROPERTIES = {"fontFamily": "editorial", "fontWeight": "text-weight", "let
                     "textTransform": "text-transform", "numericSpacing": "numeric-spacing"}
 
 
-def project(kinds: Iterable[str] = ("risk", "note")) -> dict[str, Any]:
+def render(directory: Path, source: Mapping[str, Any], parts: Mapping[str, Mapping[str, Any]], *,
+           visual_profile: str = "chrona-output/visual/v0.6-svg", viewport: tuple[int, int | None] = (1600, 900)
+           ) -> RenderedReview:
+    """Render through the packaged target-parts catalogue under a rich profile: a stamp glyph's stroked
+    parts carry a required line cap and join, which the baseline profile does not admit."""
+    paths = {kind: sr._write(directory / f"{kind}.yaml", value) for kind, value in parts.items()}
+    draft = resolve_draft_render(
+        project_path=sr._write(directory / "project.yaml", source), view_path=paths["view"], theme_path=paths["theme"],
+        scheme_path=paths["scheme"], layout_path=paths["layout"], icon_catalog_paths=(TARGET_PARTS,),
+        viewport=viewport, visual_profile=visual_profile)
+    return render_review(RenderRequest(
+        closure=draft.closure, snapshot_root=draft.asset_root, asset_root=draft.asset_root,
+        scheduler=ReferenceScheduler(), renderer=V05SvgRenderer(), draft_auto_block=draft.auto_block))
+
+
+def project(kinds: Iterable[str] = ("risk", "note"), text: str | None = None) -> dict[str, Any]:
     """Three tasks and one Project annotation per requested kind, anchored on the first tasks."""
     objects = {f"t{index}": sr.span(f"t{index}", date(2026, 1, 5) + timedelta(days=index * 40), 28, owner="a",
                                     title=f"Task {index}") for index in range(3)}
     source = sr.project(objects)
     source["annotations"] = {}
     for index, kind in enumerate(kinds):
-        source["annotations"][f"n{index}"] = {"kind": kind, "text": f"A {kind} note on task {index} with a few words.",
+        source["annotations"][f"n{index}"] = {"kind": kind, "text": text or f"A {kind} note on task {index} with a few words.",
                                               "anchor": {"object": f"t{index}"}}
     return source
 
@@ -54,8 +77,9 @@ def _role(prefix: str, size: str, line: str, treatment: bool = True) -> dict[str
 
 def with_kind_theme(parts: dict[str, dict[str, Any]], *, kinds: Mapping[str, Mapping[str, Any]] | None = None,
                     bar: bool = True, accent: str | None = None, accent_size: float = 6, secondary: bool = True,
-                    label_fill: str = "surface", padding: float = 0.6) -> None:
-    """Declare `annotationKinds` and the roles that draw the header, bar and accent."""
+                    label_fill: str = "surface", padding: float = 0.6, stamp: str | None = None,
+                    stamp_size: float = 2.0, stamps: Mapping[str, str] | None = None) -> None:
+    """Declare `annotationKinds` and the roles that draw the header, bar, accent and (with `stamp`, a corner) stamp."""
     scheme, theme = parts["scheme"]["body"], parts["theme"]["body"]
     scheme["categories"].update(KIND_COLORS)
     theme["annotationKinds"] = deepcopy(dict(KINDS if kinds is None else kinds))
@@ -76,3 +100,11 @@ def with_kind_theme(parts: dict[str, dict[str, Any]], *, kinds: Mapping[str, Map
         values["kind-accent-edge"] = {"type": "edge", "value": {"side": accent, "size": accent_size}}
         roles["annotation-kind-accent"] = {"edge": "kind-accent-edge"}
         bindings["annotation-kind-accent.fill"] = "accent"
+    if stamp is not None:
+        for kind, glyph in (STAMPS if stamps is None else stamps).items():
+            if kind in theme["annotationKinds"]:
+                theme["annotationKinds"][kind]["stamp"] = glyph
+        values["kind-stamp-placement"] = {"type": "stampPlacement", "value": {"corner": stamp, "size": stamp_size}}
+        roles["annotation-kind-stamp"] = {"stampPlacement": "kind-stamp-placement"}
+        bindings["annotation-kind-stamp.fill"] = "text"
+        bindings["annotation-kind-stamp.stroke"] = "text"

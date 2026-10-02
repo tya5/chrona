@@ -211,10 +211,13 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
         # A group's tint replaces only the band's visible channel (#583).
         completed = replace(completed, stroke=tint) if family == PaintFamily.OUTLINE else replace(completed, fill=tint)
     kind_paint = (annotation_kind_paints.get(primitive.source_ref)
-                  if primitive.purpose in {"annotation-kind-bar", "annotation-kind-accent"} else None)
+                  if primitive.purpose in {"annotation-kind-bar", "annotation-kind-accent",
+                                           "annotation-kind-stamp"} else None)
     if kind_paint is not None:
-        # A kind's colour replaces only the fill of its bar and accent (#584).
-        completed = replace(completed, fill=kind_paint)
+        # A kind's colour replaces only the visible channel of its bar, accent and stamp (#584): the
+        # fill of a bar, accent or fill part, the stroke of a stroke part of the stamp glyph.
+        completed = (replace(completed, stroke=kind_paint) if primitive.glyph_paint_mode == "stroke"
+                     else replace(completed, fill=kind_paint))
     if primitive.image_fill_pending is not None:
         completed = replace(completed, image=primitive.image_fill_pending)
     treatment = tokens.optional_pattern(primitive.visual_role)
@@ -643,6 +646,11 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "summary",
                                              summary_bar.purpose, summary_bar.scene_role, bounds,
                                              paint_order=placed.paint_order))
+        elif placed.semantic_id == "annotationKindStamp":
+            stamp = semantic_binding("annotationKindStamp")
+            primitives.extend(_symbol_primitives(placed.placement_id, placed.source_ref, "annotation", stamp.purpose,
+                                                 stamp.scene_role, bounds, placed.symbol_parts,
+                                                 paint_order=placed.paint_order))
         elif placed.annotation is not None:
             annotation_box = semantic_binding(placed.semantic_id)
             image_fill_pending = (ImageFill(placed.image_fill.asset_identity, placed.image_fill.viewport,
