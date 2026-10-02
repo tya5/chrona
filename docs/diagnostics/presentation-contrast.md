@@ -4,7 +4,7 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 
 | Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| actual | `actual` | required | 3.000 | 38 | 267 | 3.204 | 7.708 | 0 |
+| actual | `actual` | required | 3.000 | 39 | 271 | 3.204 | 7.708 | 0 |
 | annotation-box | `annotation-note-box` | enabled | 1.100 | 9 | 25 | 1.435 | 1.435 | 0 |
 | annotation-kind-accent | `annotation-kind-accent` | enabled | 1.100 | 2 | 5 | 5.765 | 6.499 | 0 |
 | annotation-kind-bar | `annotation-kind-bar` | enabled | 1.100 | 2 | 5 | 5.765 | 6.499 | 0 |
@@ -12,28 +12,28 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | annotation-kind-secondary | `annotation-kind-secondary` | required | 4.500 | 2 | 5 | 6.747 | 7.583 | 0 |
 | annotation-kind-stamp | `annotation-kind-stamp` | enabled | 1.100 | 1 | 16 | 6.833 | 6.833 | 0 |
 | annotation-text | `annotation-note-text` | required | 4.500 | 9 | 25 | 13.973 | 13.973 | 0 |
-| axis-band | `axis-band-decoration` | enabled | 1.100 | 40 | 112 | 1.292 | 1.773 | 0 |
+| axis-band | `axis-band-decoration` | enabled | 1.100 | 41 | 114 | 1.292 | 1.773 | 0 |
 | axis-band | `axis-band-decoration2` | enabled | 1.100 | 5 | 37 | 1.119 | 1.146 | 0 |
 | calendar-closed | `calendar-closed` | absent | 1.100 | 1 | 0 | — | — | 0 |
-| calendar-closed | `calendar-closed` | enabled | 1.100 | 39 | 1408 | 1.370 | 1.414 | 0 |
+| calendar-closed | `calendar-closed` | enabled | 1.100 | 40 | 1456 | 1.370 | 1.414 | 0 |
 | finish-delta | `variance-ahead` | deemphasized | 3.000 | 3 | 9 | 7.708 | 7.708 | 0 |
-| finish-delta | `variance-behind` | required | 4.500 | 25 | 60 | 4.562 | 5.571 | 0 |
+| finish-delta | `variance-behind` | required | 4.500 | 26 | 62 | 4.562 | 5.571 | 0 |
 | finish-delta | `variance-on-track` | required | 4.500 | 4 | 11 | 5.692 | 5.692 | 0 |
-| group-decoration | `group-band` | absent | 1.100 | 4 | 0 | — | — | 0 |
+| group-decoration | `group-band` | absent | 1.100 | 5 | 0 | — | — | 0 |
 | group-decoration | `group-band` | enabled | 1.100 | 35 | 108 | 1.116 | 1.235 | 0 |
-| group-header | `text` | required | 4.500 | 27 | 121 | 11.935 | 16.354 | 0 |
-| group-header-band | `group-header-band` | absent | 1.100 | 4 | 0 | — | — | 0 |
+| group-header | `text` | required | 4.500 | 28 | 124 | 11.935 | 16.354 | 0 |
+| group-header-band | `group-header-band` | absent | 1.100 | 5 | 0 | — | — | 0 |
 | group-tab | `group-tab` | enabled | 1.100 | 1 | 9 | 2.259 | 7.583 | 0 |
-| legend-swatch | `actual` | required | 3.000 | 31 | 31 | 6.442 | 16.268 | 0 |
+| legend-swatch | `actual` | required | 3.000 | 32 | 32 | 6.442 | 16.268 | 0 |
 | legend-swatch | `calendar-closed` | enabled | 1.100 | 3 | 3 | 1.460 | 1.460 | 0 |
-| legend-swatch | `planned` | required | 3.000 | 32 | 77 | 5.284 | 16.354 | 0 |
-| missingActual | `missing-actual` | required | 3.000 | 29 | 38 | 4.436 | 13.996 | 0 |
+| legend-swatch | `planned` | required | 3.000 | 33 | 78 | 5.284 | 16.354 | 0 |
+| missingActual | `missing-actual` | required | 3.000 | 30 | 39 | 4.436 | 14.437 | 0 |
 | network-node | `network-node` | required | 3.000 | 2 | 32 | 16.354 | 17.050 | 0 |
 | period-band | `period-band` | enabled | 1.100 | 5 | 5 | 6.157 | 6.157 | 0 |
 | period-label | `period-label` | required | 4.500 | 5 | 5 | 13.973 | 13.973 | 0 |
-| planned | `planned` | required | 3.000 | 40 | 544 | 5.284 | 13.238 | 0 |
-| progress-fill | `progress-fill` | required | 3.000 | 28 | 83 | 3.216 | 4.789 | 0 |
-| row-decoration | `row-band` | absent | 1.100 | 4 | 0 | — | — | 0 |
+| planned | `planned` | required | 3.000 | 41 | 552 | 5.284 | 13.238 | 0 |
+| progress-fill | `progress-fill` | required | 3.000 | 29 | 86 | 3.216 | 4.789 | 0 |
+| row-decoration | `row-band` | absent | 1.100 | 5 | 0 | — | — | 0 |
 | row-decoration | `row-band` | enabled | 1.100 | 11 | 44 | 1.116 | 1.116 | 0 |
 | snapshot | `snapshot` | required | 3.000 | 2 | 10 | 13.238 | 14.512 | 0 |
 | summary-bar | `summary-bar` | required | 3.000 | 2 | 2 | 5.817 | 6.712 | 0 |
@@ -317,6 +317,79 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/controller-z/generated/annotations.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 602.048, 244.800 | `actual:firmware:firmware` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1110.907, 480.800 | `actual:performance:performance` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1069.083, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `actual:evb-arrival:evb-arrival` | `actual` | 1062.112, 408.800 | `canvas` | canvas | `#0A0A0C` | fill | 9.245 | 3.000 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `actual:firmware:firmware` | `actual` | 602.048, 244.800 | `planned:firmware:firmware` | flat | `#FF7A1A` | stroke | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `actual:performance:performance` | `actual` | 1110.907, 480.800 | `planned:performance:performance` | flat | `#FF7A1A` | stroke | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `actual:silicon-bringup:silicon-bringup` | `actual` | 1069.083, 316.800 | `planned:silicon-bringup:silicon-bringup` | flat | `#FF7A1A` | stroke | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 718.035, 92.800 | `canvas` | canvas | `#0A0A0C` | fill | 1.292 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `axis-band-rect:0:1` | `axis-band-decoration` | 1252.835, 92.800 | `canvas` | canvas | `#0A0A0C` | fill | 1.292 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-02-01` | `calendar-closed` | 506.400, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-02-07` | `calendar-closed` | 560.224, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-02-08` | `calendar-closed` | 567.195, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-02-11` | `calendar-closed` | 588.107, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-02-14` | `calendar-closed` | 609.019, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-02-15` | `calendar-closed` | 615.989, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-02-21` | `calendar-closed` | 657.813, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-02-22` | `calendar-closed` | 664.784, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-02-28` | `calendar-closed` | 706.608, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-03-01` | `calendar-closed` | 713.579, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-03-07` | `calendar-closed` | 755.403, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-03-08` | `calendar-closed` | 762.373, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-03-14` | `calendar-closed` | 804.197, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-03-15` | `calendar-closed` | 811.168, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-03-21` | `calendar-closed` | 852.992, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-03-22` | `calendar-closed` | 859.963, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-03-28` | `calendar-closed` | 901.787, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-03-29` | `calendar-closed` | 908.757, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-04-04` | `calendar-closed` | 950.581, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-04-05` | `calendar-closed` | 957.552, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-04-11` | `calendar-closed` | 999.376, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-04-12` | `calendar-closed` | 1006.347, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-04-18` | `calendar-closed` | 1048.171, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-04-19` | `calendar-closed` | 1055.141, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-04-25` | `calendar-closed` | 1096.965, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-04-26` | `calendar-closed` | 1103.936, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-04-29` | `calendar-closed` | 1124.848, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-05-02` | `calendar-closed` | 1145.760, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-05-03` | `calendar-closed` | 1152.731, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-05-04` | `calendar-closed` | 1159.701, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-05-05` | `calendar-closed` | 1166.672, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-05-06` | `calendar-closed` | 1173.643, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-05-09` | `calendar-closed` | 1194.555, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-05-10` | `calendar-closed` | 1201.525, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-05-16` | `calendar-closed` | 1243.349, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-05-17` | `calendar-closed` | 1250.320, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-05-23` | `calendar-closed` | 1292.144, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-05-24` | `calendar-closed` | 1299.115, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-05-30` | `calendar-closed` | 1340.939, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-05-31` | `calendar-closed` | 1347.909, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-06-06` | `calendar-closed` | 1389.733, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-06-07` | `calendar-closed` | 1396.704, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-06-13` | `calendar-closed` | 1438.528, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-06-14` | `calendar-closed` | 1445.499, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-06-20` | `calendar-closed` | 1487.323, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-06-21` | `calendar-closed` | 1494.293, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-06-27` | `calendar-closed` | 1536.117, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `calendar-closed:2026-06-28` | `calendar-closed` | 1543.088, 434.800 | `canvas` | canvas | `#0A0A0C` | stroke | 1.370 | 1.100 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `variance:firmware:firmware` | `variance-behind` | 1036.101, 244.800 | `canvas` | canvas | `#0A0A0C` | fill | 11.210 | 4.500 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `variance:silicon-bringup:silicon-bringup` | `variance-behind` | 1142.275, 345.300 | `canvas` | canvas | `#0A0A0C` | fill | 11.210 | 4.500 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `group-header:factory-team` | `text` | 91.578, 598.600 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `group-header:fw-team` | `text` | 55.143, 126.600 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `group-header:validation-team` | `text` | 82.471, 362.600 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `legend-swatch:actual` | `actual` | 940.138, 876.538 | `canvas` | canvas | `#0A0A0C` | fill | 9.245 | 3.000 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `legend-swatch:planned` | `planned` | 940.138, 851.338 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `missing-actual:architecture:architecture` | `missing-actual` | 602.048, 172.800 | `canvas` | canvas | `#0A0A0C` | stroke | 17.128 | 3.000 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `planned:architecture:architecture` | `planned` | 563.709, 172.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `planned:dvt:dvt` | `planned` | 1288.659, 552.800 | `as-of-cone` | cone-blend | `#372912` | fill | 5.409 | 3.000 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `planned:evb-arrival:evb-arrival` | `planned` | 1041.200, 408.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `planned:firmware:firmware` | `planned` | 797.227, 244.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `planned:ga:ga` | `planned` | 1557.029, 716.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `planned:performance:performance` | `planned` | 1100.451, 480.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `planned:pvt:pvt` | `planned` | 1368.821, 644.800 | `as-of-cone` | cone-blend | `#231C10` | fill | 6.466 | 3.000 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1124.848, 316.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 811.168, 244.800 | `actual:firmware:firmware` | flat | `#39C97B` | fill | 9.245 | 3.000 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1142.972, 480.800 | `actual:performance:performance` | flat | `#39C97B` | fill | 9.245 | 3.000 | info |
+| `examples/controller-z/generated/as-of-cone.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1142.275, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#39C97B` | fill | 9.245 | 3.000 | info |
 | `examples/controller-z/generated/axis-cell-corners.scene.json` | `actual:evb-arrival:evb-arrival` | `actual` | 1054.912, 408.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/axis-cell-corners.scene.json` | `actual:firmware:firmware` | `actual` | 602.048, 244.800 | `planned:firmware:firmware` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
 | `examples/controller-z/generated/axis-cell-corners.scene.json` | `actual:performance:performance` | `actual` | 1110.907, 480.800 | `planned:performance:performance` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
@@ -3221,4 +3294,4 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 Every non-exclusive decoration role is enabled in committed Scene evidence; group-band or group-header-band supplies the group concept when there are no corpus errors.
 
 
-Findings: 3182; errors: 0.
+Findings: 3258; errors: 0.
