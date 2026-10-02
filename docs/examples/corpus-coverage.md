@@ -84,6 +84,12 @@ Direct `enum` and `const` values from the Project, Actual Set, Snapshot Referenc
 | Project | `objects.*.schedule.mode` | `"rollup"` | — | — | — | examples/halcyon-1/project.yaml | — |
 | Project | `objects.*.schedule.mode` | `"scheduled"` | examples/aster-ssd/project.yaml | examples/controller-z/project.yaml | examples/controller-z-ja/project.yaml | examples/halcyon-1/project.yaml | examples/orion-asic/project.yaml |
 | Project | `objects.*.schedule.mode` | `"scheduled-point"` | — | — | — | — | — |
+| Project | `periods.*.end.endpoint` | `"at"` | — | — | — | — | — |
+| Project | `periods.*.end.endpoint` | `"end"` | — | — | — | — | — |
+| Project | `periods.*.end.endpoint` | `"start"` | — | — | — | — | — |
+| Project | `periods.*.start.endpoint` | `"at"` | — | — | — | — | — |
+| Project | `periods.*.start.endpoint` | `"end"` | — | — | — | — | — |
+| Project | `periods.*.start.endpoint` | `"start"` | — | — | — | — | — |
 | Project | `relations[].from.endpoint` | `"at"` | examples/aster-ssd/project.yaml | examples/controller-z/project.yaml | examples/controller-z-ja/project.yaml | examples/halcyon-1/project.yaml | examples/orion-asic/project.yaml |
 | Project | `relations[].from.endpoint` | `"end"` | examples/aster-ssd/project.yaml | examples/controller-z/project.yaml | examples/controller-z-ja/project.yaml | examples/halcyon-1/project.yaml | examples/orion-asic/project.yaml |
 | Project | `relations[].from.endpoint` | `"start"` | examples/aster-ssd/project.yaml | examples/controller-z/project.yaml | examples/controller-z-ja/project.yaml | examples/halcyon-1/project.yaml | examples/orion-asic/project.yaml |
@@ -125,6 +131,12 @@ Direct `enum` and `const` values from the Project, Actual Set, Snapshot Referenc
 - Profile package `profiles.*.fields.*.type` = `"resourceReference"`
 - Profile package `profiles.*.fields.*.type` = `"string"`
 - Project `objects.*.schedule.mode` = `"scheduled-point"`
+- Project `periods.*.end.endpoint` = `"at"`
+- Project `periods.*.end.endpoint` = `"end"`
+- Project `periods.*.end.endpoint` = `"start"`
+- Project `periods.*.start.endpoint` = `"at"`
+- Project `periods.*.start.endpoint` = `"end"`
+- Project `periods.*.start.endpoint` = `"start"`
 - Project `relations[].to.endpoint` = `"end"`
 - Project `scenarios.*.relations.add[].from.endpoint` = `"at"`
 - Project `scenarios.*.relations.add[].from.endpoint` = `"end"`
