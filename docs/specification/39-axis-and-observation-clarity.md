@@ -90,9 +90,9 @@ a space. A View without an `asOf` marker keeps the implicit label
 `As of <localized date>`.
 
 Any label whose semantic has a registered chip binding (`asOfLabelChip`,
-`memberLabelChip`, `finishDeltaChip`) may carry a chip. A chip is drawn when
+`memberLabelChip`, `finishDeltaChip`, `periodLabelChip`) may carry a chip. A chip is drawn when
 the Theme declares the binding's role (`as-of-label-chip`,
-`member-label-chip`, `finish-delta-chip`) with `backgroundTreatment: fill`,
+`member-label-chip`, `finish-delta-chip`, `period-label-chip`) with `backgroundTreatment: fill`,
 optional `chipPadding` (a ratio of the label's font size inline, and half of
 it on the block axis) and optional `markCornerRadius` (a ratio of the chip's
 block size). Layout inflates the label's footprint by the padding before

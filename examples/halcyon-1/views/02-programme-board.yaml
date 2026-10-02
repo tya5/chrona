@@ -75,6 +75,7 @@ body:
     end: '2027-12-01'
   periods:
   - id: launch-window
+    label: {placement: top}
   comparison:
     baseline: primary
     actual: required

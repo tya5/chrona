@@ -405,6 +405,9 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
     for group in groups:
         if group.header_bounds is not None:
             emit_semantic_text(f"group-header:{group.group_id}", "groupHeader", "text")
+    for period in projection.periods:
+        if f"period-label:{period.period_id}" in layout_text:
+            emit_semantic_text(f"period-label:{period.period_id}", "periodLabel")
     for placed in placed_surface.shapes:
         if placed.semantic_id in {"groupBand", "rowBand", "groupHeaderBand", "calendarClosed", "periodBand"}:
             binding = semantic_binding(placed.semantic_id)

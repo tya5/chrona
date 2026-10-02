@@ -290,6 +290,15 @@ beneath its centre, and a translucent host beneath cannot be gated
 (`E_SCENE_CONTRAST_GROUND_UNSUPPORTED`), so a Theme paints a pattern band
 opaque or a translucent band over opaque bands only.
 
+A selected period's label (`label: {placement, overflow}`) is one request to the shared label engine that places the
+as-of and member labels, built in the first pre-route phase: `top` and `bottom` anchor a zero-height strip on the plot
+edge so the engine's `below` and `above` geometry centres the label on the band against it, `inside` anchors the band;
+the candidate search, collision predicate, chip, and `W_LAYOUT_LABEL_SUPPRESSED` / `W_LAYOUT_LABEL_OVERFLOW` records are
+the engine's. The placed label is a `text` obstacle for relation routes, relation labels, later member labels and
+annotations. Its Theme role `period-label` is state text (`contrastTreatment` `required` 4.5:1 or `deemphasized`
+3.0:1, checked against the scheme surface at closure and against the primitive beneath it, the chip when present, in the
+Scene gate) and is opt-in: a Theme that selects no label declares none.
+
 A Layout `legend` slot is the sole authority for legend geometry. When it exists, every selected legend entry emits one swatch and one measured label. When absent, there are no legend primitives. It is a resource choice, not a renderer fallback. Header or row capacity shortfall completes visible stacked/natural geometry and a warning rather than rejecting the surface.
 
 ## 4. Schema and normalization

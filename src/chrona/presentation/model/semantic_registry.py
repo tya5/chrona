@@ -92,6 +92,8 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("calendarClosed", "decoration", "calendar-closed", "calendar-closed", "calendarClosed", ContrastClass.DECORATION),
     # A named Project period (#582): a band across the plot, selected by the View and painted by the Theme.
     _binding("periodBand", "decoration", "period-band", "period-band", "period-band", ContrastClass.DECORATION),
+    _binding("periodLabel", "label", "period-label", "period-label", "period-label", ContrastClass.STATE_TEXT),
+    _binding("periodLabelChip", "decoration", "label-chip", "period-label-chip", "period-label-chip"),
     # Axis.
     _binding("axisBand", "label", "axis-band", "axis-band", "axis"),
     _binding("axisBandDecoration", "decoration", "axis-band", "axis-band-decoration", "axis-band-decoration", ContrastClass.DECORATION),
@@ -204,7 +206,7 @@ def axis_label_semantic_ids() -> tuple[str, ...]:
 def label_chip_semantic(label_semantic_id: str) -> str | None:
     """Return the chip semantic a label may carry, keyed by the label's own semantic (#428)."""
     return {"asOfLabel": "asOfLabelChip", "memberLabel": "memberLabelChip",
-            "finishDelta": "finishDeltaChip"}.get(label_semantic_id)
+            "finishDelta": "finishDeltaChip", "periodLabel": "periodLabelChip"}.get(label_semantic_id)
 
 
 def semantic_binding(semantic_id: str) -> SemanticBinding:

@@ -43,6 +43,8 @@ def _contrast(first: str, second: str) -> float:
 
 
 _STATE_TEXT_CONTRAST_FLOORS = {"required": 4.5, "deemphasized": 3.0}
+# State-text roles a Theme may omit entirely: the feature they belong to is opt-in. A declared one is still checked.
+_OPTIONAL_STATE_TEXT_ROLES = frozenset({"annotation-note-text", "period-label"})
 
 
 def _state_text_contrast(*, declared_roles: Mapping[str, Any], resolved_roles: Mapping[str, Any],
@@ -57,7 +59,7 @@ def _state_text_contrast(*, declared_roles: Mapping[str, Any], resolved_roles: M
         role = binding.theme_role
         path = f"/body/roles/{role}"
         declared = declared_roles.get(role)
-        if role == "annotation-note-text" and not isinstance(declared, Mapping) and role not in resolved_roles:
+        if role in _OPTIONAL_STATE_TEXT_ROLES and not isinstance(declared, Mapping) and role not in resolved_roles:
             continue
         treatment = declared.get("contrastTreatment") if isinstance(declared, Mapping) else None
         if role == "annotation-note-text" and treatment != "required":
