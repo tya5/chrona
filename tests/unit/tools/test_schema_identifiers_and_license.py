@@ -80,7 +80,7 @@ ID_SITES: dict[tuple[str, str], int] = {
     ("theme-asset-source-v0.1.schema.yaml", "portable-name"): 1,
     ("theme-v0.13.schema.yaml", "non-empty-string"): 1,
     ("theme-v0.14.schema.yaml", "non-empty-string"): 2,
-    ("view-v0.28.schema.yaml", "non-empty-string"): 17,
+    ("view-v0.28.schema.yaml", "non-empty-string"): 19,
 }
 
 

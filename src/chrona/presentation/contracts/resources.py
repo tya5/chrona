@@ -9,6 +9,7 @@ import re
 from typing import Any, Mapping
 
 
+from chrona.core.figures import AsOfFact, FigureSpec, ObjectFact, PeriodFact
 from chrona.core.store_address import StoreAddressError, check_store_address
 from chrona.resources import schema_validator
 from chrona.schema_diagnostics import SchemaViolation, explain_all_errors, explain_errors
@@ -344,6 +345,7 @@ class ViewInput:
     hierarchy_column: str | None = None
     background_decoration: tuple[str, str] = ("none", "all")
     periods: tuple[ViewPeriod, ...] = ()
+    figures: tuple[FigureSpec, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -913,7 +915,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
         hierarchy_column=hierarchy_column,
         background_decoration=(str(body.get("backgroundDecoration", FrozenDict()).get("rows", "none")),
                                str(body.get("backgroundDecoration", FrozenDict()).get("groups", "all"))),
-        periods=_view_periods(body.get("periods", ())))
+        periods=_view_periods(body.get("periods", ())),
+        figures=_view_figures(body.get("figures", ())))
 
 
 def _view_periods(raw: Any) -> tuple[ViewPeriod, ...]:
@@ -925,6 +928,40 @@ def _view_periods(raw: Any) -> tuple[ViewPeriod, ...]:
     if len({item.period_id for item in periods}) != len(periods):
         raise ContractError("E_VIEW_PERIOD_DUPLICATE")
     return periods
+
+
+def _view_figures(raw: Any) -> tuple[FigureSpec, ...]:
+    """Type the declared figures and reject what the schema cannot (#586).
+
+    Each spec carries the pointer of its declaration, so a diagnostic raised after scheduling names it.
+    """
+    specs: list[FigureSpec] = []
+    for index, item in enumerate(raw):
+        path = f"/body/figures/{index}"
+        figure_id = str(item["id"])
+        if any(char in "{}" or char.isspace() or not char.isprintable() for char in figure_id):
+            raise ContractError("E_VIEW_FIGURE_INVALID", f"figure id {figure_id!r} may not contain braces, whitespace or control characters", f"{path}/id")
+        days = str(item.get("days", "calendar"))
+        calendar = str(item["calendar"]) if "calendar" in item else None
+        if calendar is not None and days != "working":
+            raise ContractError("E_VIEW_FIGURE_INVALID", f"figure {figure_id} names a calendar but counts calendar days", f"{path}/calendar")
+        if item["kind"] == "daysUntil":
+            specs.append(FigureSpec(figure_id, "daysUntil", to=_figure_fact(item["to"]),
+                                    origin=_figure_fact(item["from"]) if "from" in item else AsOfFact(),
+                                    days=days, calendar_id=calendar, path=path))
+        else:
+            specs.append(FigureSpec(figure_id, "daysIn", period_id=str(item["period"]), days=days, calendar_id=calendar, path=path))
+    if len({item.figure_id for item in specs}) != len(specs):
+        raise ContractError("E_VIEW_FIGURE_DUPLICATE", "two figures share an id", "/body/figures")
+    return tuple(specs)
+
+
+def _figure_fact(raw: Any) -> AsOfFact | PeriodFact | ObjectFact:
+    if raw == "asOf":
+        return AsOfFact()
+    if "period" in raw:
+        return PeriodFact(str(raw["period"]), str(raw["side"]))
+    return ObjectFact(str(raw["object"]), str(raw["endpoint"]))
 
 
 def _group_tint(raw_grouping: Any) -> ViewGroupTint | None:

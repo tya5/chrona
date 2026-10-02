@@ -510,6 +510,9 @@ def normalize_summary_content(summary: SummaryProfileInput | None, projection: R
                         values[f"scenario.{source['scenario']}"] = _scenario_summary_value(
                             projection, project or {}, source["scenario"])
                         source = f"scenario.{source['scenario']}"
+                    elif isinstance(source.get("figure"), str):
+                        values[f"figure.{source['figure']}"] = dict(projection.figures).get(source["figure"])
+                        source = f"figure.{source['figure']}"
                     elif isinstance(source.get("object"), str) and source.get("facet") == "planned":
                         if definition.scope == "subtree":
                             values[f"object.{source['object']}.planned"] = _subtree_planned_completion(

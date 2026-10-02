@@ -317,6 +317,14 @@ allOf:
                   properties:
                     placement: {description: "Where the label sits: at the plot's top edge, at its bottom edge, or centred in the band.", enum: [top, bottom, inside]}
                     overflow: {description: "What happens when no collision-free position exists: suppress the label with a recorded warning, or place it anyway with a recorded overflow. Defaults to visible-overflow.", enum: [suppress, visible-overflow]}
+          figures:
+            description: "Derived figures: signed whole numbers of days the Core computes from declared facts, each shown by name from a Summary Profile metric (source figure) or a group-header placeholder; absent declares none."
+            examples: [[{id: launch-countdown, kind: daysUntil, to: {period: launch-window, side: start}}]]
+            type: array
+            items:
+              oneOf:
+                - $ref: "#/$defs/figureDaysUntil"
+                - $ref: "#/$defs/figureDaysIn"
           shading:
             type: object
             additionalProperties: false
@@ -707,6 +715,50 @@ allOf:
                   - {required: [annotations]}
                   - {required: [annotationPresentation]}
 $defs:
+  figureFact:
+    description: "One fact a figure reads: the Actual Set as-of, a named period's start or end (end is exclusive), or the placed date of an object endpoint."
+    examples: [asOf, {period: launch-window, side: start}, {object: tvac, endpoint: end}]
+    oneOf:
+      - {description: "The Actual Set as-of date.", const: asOf}
+      - description: "One boundary of a named Project period."
+        type: object
+        required: [period, side]
+        additionalProperties: false
+        properties:
+          period: {description: "Identifier of a period declared in the Project's `periods`.", type: string, minLength: 1}
+          side: {description: "The period's start, or its exclusive end.", enum: [start, end]}
+      - description: "The completed (placed) date of one endpoint of a Project object."
+        type: object
+        required: [object, endpoint]
+        additionalProperties: false
+        properties:
+          object: {description: "Identifier of a Project object.", type: string, minLength: 1}
+          endpoint: {description: "The endpoint the object's schedule offers: at for a point, start or end for a span.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/dateEndpoint"}
+  figureDaysUntil:
+    description: "Signed days from one fact to another; negative once the target has passed."
+    examples: [{id: launch-countdown, kind: daysUntil, to: {period: launch-window, side: start}}]
+    type: object
+    required: [id, kind, to]
+    additionalProperties: false
+    properties:
+      id: {description: "Figure identifier, unique in this View and named by consumers; no braces or whitespace.", type: string, minLength: 1}
+      kind: {description: "Days from `from` to `to`.", const: daysUntil}
+      from: {description: "The starting fact; the as-of when omitted.", $ref: "#/$defs/figureFact"}
+      to: {description: "The target fact.", $ref: "#/$defs/figureFact"}
+      days: {description: "Count calendar days (the default) or working days of the figure's calendar.", enum: [calendar, working]}
+      calendar: {description: "Project calendar for working days; the Project default calendar when omitted. Only with days working.", type: string, minLength: 1}
+  figureDaysIn:
+    description: "The days a named period covers, its end exclusive."
+    examples: [{id: window-length, kind: daysIn, period: launch-window, days: working}]
+    type: object
+    required: [id, kind, period]
+    additionalProperties: false
+    properties:
+      id: {description: "Figure identifier, unique in this View and named by consumers; no braces or whitespace.", type: string, minLength: 1}
+      kind: {description: "Days covered by `period`.", const: daysIn}
+      period: {description: "Identifier of a period declared in the Project's `periods`.", type: string, minLength: 1}
+      days: {description: "Count calendar days (the default) or working days of the figure's calendar.", enum: [calendar, working]}
+      calendar: {description: "Project calendar for working days; the Project default calendar when omitted. Only with days working.", type: string, minLength: 1}
   visual:
     description: "One direct or data-encoded icon request for an admitted occurrence."
     examples:

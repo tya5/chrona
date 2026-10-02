@@ -61,8 +61,8 @@ $defs:
       label: {description: "Optional human-readable metric label.", type: string}
       scope: {description: "Optional aggregation scope.", enum: [subtree]}
       source:
-        description: "Built-in, actual, count, scenario, or object-facet metric source."
-        examples: [actual.asOf, {actual: asOf}, {counts: finishDelta}, {scenario: title}, {object: task-1, facet: planned}]
+        description: "Built-in, actual, count, scenario, object-facet, or derived-figure metric source."
+        examples: [actual.asOf, {actual: asOf}, {counts: finishDelta}, {scenario: title}, {object: task-1, facet: planned}, {figure: launch-countdown}]
         oneOf:
           - {description: "Built-in scalar metric.", enum: [actual.asOf, planned.nextPoint, count.selected, count.missingActual, count.knownFinishVariance]}
           - type: object
@@ -87,6 +87,11 @@ $defs:
             properties:
               object: {description: "Selected Project object identifier.", type: string, minLength: 1}
               facet: {description: "The only supported object metric facet.", const: planned}
+          - type: object
+            description: "A derived figure the View declares, by its identifier."
+            required: [figure]
+            additionalProperties: false
+            properties: {figure: {description: "Identifier of a figure in the View's `figures`.", type: string, minLength: 1}}
       format: {description: "Public formatting applied to the metric value.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/summaryMetricFormat"}
     allOf:
       - description: "Subtree scope is available only for a planned facet of one object."

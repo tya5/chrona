@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass, field, replace
+from datetime import date
 from decimal import Decimal, ROUND_CEILING
 from importlib.metadata import version
 from pathlib import Path
@@ -41,7 +42,9 @@ from chrona.presentation.fonts.system import DraftFontResolution
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView, effective_draft_numeric_theme
 from chrona.core.attachments import AttachmentWarning, attachment_warnings
 from chrona.core.deadlines import deadline_warnings
+from chrona.core.figures import resolve_figures
 from chrona.core.periods import period_range_diagnostics, resolve_periods
+from chrona.core.temporal import Calendar
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
 from chrona.presentation.model.projection import ReviewPeriod, build_review_projection
 from chrona.presentation.model.surface_content import SummaryContent, TableContent
@@ -233,6 +236,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         theme = effective_draft_numeric_theme(theme, tuple(item.role for item in resolution.tabular_warnings))
     font_metrics = resolution.metrics if resolution is not None else _font_metrics(
         theme, environment.font_metrics, asset_root, request.asset_resolver)
+    _check_summary_figures(render_closure.summary_profile.summary if render_closure.summary_profile else None, projection)
     summary = normalize_summary_content(render_closure.summary_profile.summary if render_closure.summary_profile else None,
                                         projection, render_closure.actual_set.observations_input if render_closure.actual_set else None,
                                         project)
@@ -583,8 +587,50 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
         analysis=result.analysis,
         snapshot_analysis=snapshot_result.analysis if snapshot_result is not None else None,
     )
-    projection = replace(projection, periods=_selected_periods(project, result.placements, view))
+    projection = replace(projection, periods=_selected_periods(project, result.placements, view),
+                         figures=_resolved_figures(project, result.placements, view, actual))
     return projection, tuple(provenance), attachment_warnings(project, result.placements), deadline_warnings(project, result.placements)
+
+
+def _check_summary_figures(summary: Any, projection: Any) -> None:
+    """A Summary Profile metric naming a figure must name one the View declared, in a format an integer has (#586)."""
+    declared = dict(projection.figures)
+    for panel in summary.panels if summary is not None else ():
+        for metric in panel.metrics:
+            source = getattr(metric, "source", None)
+            if not isinstance(source, Mapping) or "figure" not in source:
+                continue
+            path = f"/body/panels/{panel.id}/metrics/{metric.id}"
+            if source["figure"] not in declared:
+                known = ", ".join(declared) if declared else "none"
+                raise RenderFailed("E_VIEW_FIGURE_UNKNOWN",
+                                   f"summary metric {metric.id} names figure {source['figure']}, which the View does not declare (declared: {known})",
+                                   "presentation", path)
+            if metric.format == "date":
+                raise RenderFailed("E_PRESENTATION_SUMMARY_FORMAT",
+                                   f"summary metric {metric.id} formats figure {source['figure']} as a date, but a figure is a number of days",
+                                   "presentation", f"{path}/format")
+
+
+def _resolved_figures(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput,
+                      actual: Mapping[str, Any] | None) -> tuple[tuple[str, int], ...]:
+    """Every figure the View declares, computed by the Core from the facts gathered here (#586).
+
+    This is the one place the as-of, the placements, the resolved periods and the Project calendars are
+    collected; the arithmetic is Core's. A finding on any figure refuses the render with all findings: a
+    figure with a missing fact never becomes a blank or a made-up number.
+    """
+    if not view.figures:
+        return ()
+    as_of = ((actual or {}).get("body") or {}).get("asOf")
+    resolution = resolve_figures(
+        view.figures, as_of=date.fromisoformat(as_of) if isinstance(as_of, str) else None, placements=placements,
+        periods=resolve_periods(project, placements),
+        calendars={key: Calendar.from_mapping(value) for key, value in (project.get("calendars") or {}).items()},
+        default_calendar=(project.get("project") or {}).get("calendar"))
+    if resolution.diagnostics:
+        raise RenderRejected(list(resolution.diagnostics))
+    return tuple(resolution.values.items())
 
 
 def _selected_periods(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput) -> tuple[ReviewPeriod, ...]:
