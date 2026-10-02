@@ -8,7 +8,7 @@ from typing import Any
 from chrona.presentation.layout.labels import LabelRect, LabelRequest
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.surface_base import SurfaceBaseGeometry
-from chrona.presentation.layout.surface_geometry import coordinate_for_date
+from chrona.presentation.layout.surface_geometry import coordinate_for_date, extend_to_plot_edges
 from chrona.presentation.layout.surface_quality import CollisionDomain, ShapePlacement
 from chrona.presentation.model.projection import ReviewPeriod
 from chrona.presentation.model.semantic_registry import semantic_binding
@@ -54,6 +54,8 @@ def compose_period_bands(*, base: SurfaceBaseGeometry, theme_tokens: Any, period
         if start < end:
             left = max(coordinate_for_date(start, base.scale), plot_left)
             right = min(coordinate_for_date(end, base.scale), plot_right)
+        if left < right:
+            left, right = extend_to_plot_edges(left, right, scale=base.scale, plot=plot)
         if not left < right:
             diagnostics.append(f"I_LAYOUT_PERIOD_OUTSIDE_WINDOW:{period.period_id}")
             continue

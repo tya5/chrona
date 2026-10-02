@@ -162,10 +162,12 @@ def test_a_period_is_clipped_to_the_window_and_never_extends_it(tmp_path):
     early, late = _bands(rendered)
     scale = rendered.surface.scale_manifest
     assert (scale.domain_start, scale.domain_end) == (date(2026, 1, 1), date(2026, 4, 1))
-    assert early.bounds[0] == pytest.approx(_x(rendered, date(2026, 1, 1)))
+    # The window does not grow; a band clipped at the window edge reaches the plot edge, the margin the scale leaves (#880).
+    plot = next(slot for slot in rendered.surface.slots if slot.source == "timeline")
+    assert early.bounds[0] == pytest.approx(plot.bounds[0])
     assert early.bounds[0] + early.bounds[2] == pytest.approx(_x(rendered, date(2026, 2, 1)))
     assert late.bounds[0] == pytest.approx(_x(rendered, date(2026, 3, 1)))
-    assert late.bounds[0] + late.bounds[2] == pytest.approx(_x(rendered, date(2026, 4, 1)))
+    assert late.bounds[0] + late.bounds[2] == pytest.approx(plot.bounds[0] + plot.bounds[2])
 
 
 def test_a_period_outside_the_window_draws_nothing_and_is_recorded(tmp_path):

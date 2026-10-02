@@ -103,14 +103,22 @@ def test_fixed_lane_preflight_and_final_composition_share_the_completed_scale(mo
         key=lambda shape: shape.bounds.inline,
     )
     assert first_tier
-    assert float(first_tier[0].bounds.inline) == pytest.approx(scale.range_start)
-    assert float(first_tier[-1].bounds.inline + first_tier[-1].bounds.inline_size) == pytest.approx(scale.range_end)
+    # The window maps through the shared scale; a cell at the window edge reaches the plot edge, the margin the
+    # point-mark inset leaves (#880), so band, ground and rule end together.
+    timeline = next(slot for slot in placement.slots if slot.source_ref == "timeline")
+    plot_start = float(timeline.bounds.inline)
+    plot_end = float(timeline.bounds.inline + timeline.bounds.inline_size)
+    assert plot_start <= scale.range_start and scale.range_end <= plot_end
+    assert float(first_tier[0].bounds.inline) == pytest.approx(plot_start)
+    assert float(first_tier[-1].bounds.inline + first_tier[-1].bounds.inline_size) == pytest.approx(plot_end)
     closed_days = [shape for shape in placement.shapes
                    if shape.placement_id.startswith("calendar-closed:")]
     assert closed_days
     for shape in closed_days:
         closed_day = date.fromisoformat(shape.placement_id.removeprefix("calendar-closed:"))
         expected = scale.origin + (closed_day - scale.domain_start).days * scale.unit_ratio
+        if closed_day == scale.domain_start:
+            expected = plot_start
         assert float(shape.bounds.inline) == pytest.approx(expected)
 
 

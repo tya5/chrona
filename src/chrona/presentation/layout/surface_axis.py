@@ -14,7 +14,7 @@ from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.surface_base import SurfaceBaseGeometry
 from chrona.presentation.layout.surface_geometry import (
     BACKGROUND_PAINT_ORDER, GEOMETRY_TOLERANCE, HOSTED_TEXT_PAINT_ORDER,
-    bounds_from_rect, coordinate_for_date,
+    bounds_from_rect, coordinate_for_date, extend_to_plot_edges,
 )
 from chrona.presentation.layout.surface_quality import (
     AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, PlacementDecision, ScalePlacement,
@@ -223,9 +223,14 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
                 band_block, band_block_size = axis.bounds.block + Decimal(str(band_lane_offset)), Decimal(str(band_lane_size))
             gap = float(tokens.optional_number(semantic_binding(semantic_id).scene_role, "cellGap") or 0)
             for interval in intervals:
-                x, x2 = coordinate_for_date(interval.start, scale), coordinate_for_date(interval.end, scale)
+                raw, raw2 = coordinate_for_date(interval.start, scale), coordinate_for_date(interval.end, scale)
+                x, x2 = raw, raw2
                 if gap:
                     x, x2 = x + gap / 2, max(x + gap / 2, x2 - gap / 2)
+                # A cell at the window edge reaches the plot edge (#880); the cell gap lies between cells, so the
+                # outer edge of that cell takes no gap and ends where the axis rule ends.
+                edge, edge2 = extend_to_plot_edges(raw, raw2, scale=scale, plot=base.plot)
+                x, x2 = (edge if edge != raw else x), (edge2 if edge2 != raw2 else x2)
                 placement_id = f"axis-band-rect:{tier_index}:{interval.index}"
                 treatment_bg, paint_order = tokens.background(semantic_binding(semantic_id).scene_role)
                 if treatment_bg != "none":
