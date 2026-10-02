@@ -55,6 +55,9 @@ EXPECTED_DELTAS_VERSION = "chrona/schema-equivalence-expected-deltas/v0.1"
 
 # Runtime budget for L2 plus L3 in one process, in seconds (conformance runs it as one step).
 RUNTIME_BUDGET_SECONDS = 60.0
+# A merged L1 entry is stale (its PR landed, so no later base can use it). It may outlive its landing by this many
+# later merges that touch `schemas/`; beyond that a `--base-rev` run fails until `--prune-stale` retires it (#970).
+STALE_MERGE_LIMIT = 1
 
 # Explicit document-version to schema-file overrides.  The mapping is otherwise derived from each
 # schema's ``version`` constant; the overrides pin the two families whose schema file name does not
@@ -403,27 +406,197 @@ class Delta:
     reason: str
     test: str
     used: bool = False
+    pr: int | None = None  # optional, for readers: the PR that adds the entry (the logic never reads it)
+    merged: bool = False  # the base revision's file already holds this entry (L1, set by ``mark_merged``)
+    landing: str | None = None  # the first-parent commit that brought it in
+    age: int | None = None  # later first-parent commits that touch ``schemas/``, up to the base revision
+    applied: bool = False  # ``compare_l1`` applied it to the base in this run
 
 
-def load_deltas(path: Path) -> list[Delta]:
-    if not path.is_file():
-        return []
-    document = _decode(path.name, path.read_bytes())
+def parse_deltas(content: bytes, *, label: str, name: str = EXPECTED_DELTAS.name) -> list[Delta]:
+    document = _decode(name, content)
     if not isinstance(document, dict) or document.get("version") != EXPECTED_DELTAS_VERSION:
-        raise GateError(f"E_EQUIV_DELTAS_FORMAT:{path}")
+        raise GateError(f"E_EQUIV_DELTAS_FORMAT:{label}")
     deltas: list[Delta] = []
     for entry in document.get("deltas") or ():
         if not isinstance(entry, dict) or not entry.get("reason") or not entry.get("test"):
             raise GateError(f"E_EQUIV_DELTAS_ENTRY:{entry!r}")
         layer = entry.get("layer", "L1")
         subject = entry.get({"L1": "schema", "L2": "document", "L3": "probe"}.get(layer, ""), "")
-        if layer not in ("L1", "L2", "L3") or not subject:
+        pr = entry.get("pr")
+        if layer not in ("L1", "L2", "L3") or not subject or (
+                pr is not None and (not isinstance(pr, int) or isinstance(pr, bool) or pr < 1)):
             raise GateError(f"E_EQUIV_DELTAS_ENTRY:{entry!r}")
         deltas.append(Delta(layer, subject, entry.get("pointer", ""),
                             entry["before"] if "before" in entry else _MISSING,
                             entry["after"] if "after" in entry else _MISSING,
-                            entry["reason"], entry["test"]))
+                            entry["reason"], entry["test"], pr=pr))
     return deltas
+
+
+def load_deltas(path: Path) -> list[Delta]:
+    if not path.is_file():
+        return []
+    return parse_deltas(path.read_bytes(), label=str(path), name=path.name)
+
+
+# --------------------------------------------------------------------------------------------
+# Entry lifecycle (#970): an L1 entry is meaningful only against the base that predates its PR
+# --------------------------------------------------------------------------------------------
+
+def delta_key(item: Delta) -> str:
+    """Identity of an entry: layer, subject, pointer and both values (an absent value is its own marker)."""
+    def plain(value: Any) -> Any:
+        return {"absent": True} if value is _MISSING else value
+    return json.dumps([item.layer, item.subject, item.pointer, plain(item.before), plain(item.after)],
+                      sort_keys=True, default=str)
+
+
+def _deltas_at(root: Path, commit: str, path: str) -> list[Delta]:
+    try:
+        content = _git(root, "show", f"{commit}:{path}")
+    except GateError:  # the file does not exist in that commit
+        return []
+    return parse_deltas(content, label=f"{commit}:{path}")
+
+
+def entry_landings(root: Path, base_rev: str, path: str = EXPECTED_DELTAS.as_posix()) -> dict[str, tuple[str, int]]:
+    """For each entry the file holds at ``base_rev``: its landing commit and the later merges that touched ``schemas/``.
+
+    The landing commit is the oldest commit of the unbroken run, in the first-parent history of the file, that holds
+    the entry; its first parent is the base the entry was recorded for.
+    """
+    commits = _git(root, "log", "--first-parent", "--format=%H", base_rev, "--", path).decode().split()
+    if not commits:
+        return {}
+    landing = {delta_key(item): commits[0] for item in _deltas_at(root, commits[0], path)}
+    running = set(landing)
+    for commit in commits[1:]:
+        if not running:
+            break
+        present = {delta_key(item) for item in _deltas_at(root, commit, path)}
+        for key in tuple(running):
+            if key in present:
+                landing[key] = commit
+            else:
+                running.discard(key)
+    ages: dict[str, int] = {}
+    result: dict[str, tuple[str, int]] = {}
+    for key, commit in landing.items():
+        if commit not in ages:
+            ages[commit] = int(_git(root, "rev-list", "--count", "--first-parent", f"{commit}..{base_rev}",
+                                    "--", "schemas").decode().strip())
+        result[key] = (commit, ages[commit])
+    return result
+
+
+def mark_merged(root: Path, base_rev: str, deltas: list[Delta], path: str = EXPECTED_DELTAS.as_posix()) -> None:
+    """Flag the L1 entries the base revision's file already holds, with their landing commit and age."""
+    landings = entry_landings(root, base_rev, path)
+    for item in deltas:
+        found = landings.get(delta_key(item)) if item.layer == "L1" else None
+        if found is not None:
+            item.merged, (item.landing, item.age) = True, found
+
+
+def stale_entries(deltas: Iterable[Delta]) -> list[Delta]:
+    """Merged L1 entries that did not apply to the base: their PR landed and nothing needs them."""
+    return [item for item in deltas if item.layer == "L1" and item.merged and not item.applied]
+
+
+def stale_findings(deltas: Iterable[Delta]) -> tuple[list[str], list[str]]:
+    """Failures (stale for more than ``STALE_MERGE_LIMIT`` later schema merges) and notes (still within the limit)."""
+    failures: list[str] = []
+    notes: list[str] = []
+    for item in stale_entries(deltas):
+        age = item.age or 0
+        text = (f"stale expected-delta for {item.subject} {item.pointer or '<file>'}: landed in "
+                f"{(item.landing or '')[:8]}, {age} later schema merge(s); retire it with --prune-stale")
+        if age > STALE_MERGE_LIMIT:
+            failures.append(f"L1 {text} (limit {STALE_MERGE_LIMIT})")
+        else:
+            notes.append(text)
+    return failures, notes
+
+
+def _applies(trees: Mapping[str, Any], item: Delta) -> bool:
+    """Would the entry excuse a change made on top of these (dereferenced) schemas?"""
+    if item.pointer == "" and item.after == "removed":
+        return item.subject in trees
+    if item.pointer == "" and item.after == "added":
+        return item.subject not in trees
+    return item.subject in trees and _same(_follow(trees[item.subject], _pointer_tokens(item.pointer)), item.before)
+
+
+def _landed(trees: Mapping[str, Any], item: Delta) -> bool:
+    """Do these (dereferenced) schemas already show the entry's result?"""
+    if item.pointer == "" and item.after == "removed":
+        return item.subject not in trees
+    if item.pointer == "" and item.after == "added":
+        return item.subject in trees
+    return item.subject in trees and _same(_follow(trees[item.subject], _pointer_tokens(item.pointer)), item.after)
+
+
+@dataclass
+class PruneResult:
+    removed: list[Delta] = field(default_factory=list)
+    kept: list[tuple[Delta, str]] = field(default_factory=list)
+    proofs: dict[str, str] = field(default_factory=dict)  # delta_key -> how the entry was proven stale
+
+
+def prune_stale(root: Path, base_rev: str, *, deltas_path: Path | None = None) -> PruneResult:
+    """Remove the stale L1 entries, each only after proving it against the base it was recorded for.
+
+    The proof: ``before`` no longer holds at ``base_rev``, and either ``before`` holds at the landing commit's first
+    parent and ``after`` holds at the landing commit, or ``after`` already held at that parent (a repair entry).
+    An entry that fails the proof is kept and named with the reason.
+    """
+    path = deltas_path or root / EXPECTED_DELTAS
+    relative = path.resolve().relative_to(root.resolve()).as_posix()
+    deltas = load_deltas(path)
+    mark_merged(root, base_rev, deltas, relative)
+    cache: dict[str, dict[str, Any]] = {}
+
+    def trees(rev: str) -> dict[str, Any]:
+        if rev not in cache:
+            cache[rev] = fingerprint_schemas(load_schema_rev(root, rev)).trees
+        return cache[rev]
+
+    result = PruneResult()
+    for item in deltas:
+        if item.layer != "L1" or not item.merged:
+            continue
+        assert item.landing is not None
+        if _applies(trees(base_rev), item):
+            result.kept.append((item, f"its before value still holds at {base_rev}"))
+            continue
+        parent = _git(root, "rev-parse", f"{item.landing}^1").decode().strip()
+        if _landed(trees(parent), item):
+            result.removed.append(item)  # a repair: the result already held in the base it was recorded for
+            result.proofs[delta_key(item)] = f"after already held at {parent[:8]}, the base it was recorded for"
+        elif not _applies(trees(parent), item):
+            result.kept.append((item, f"neither its before nor its after value holds at {parent[:8]}, the base it was recorded for"))
+        elif not _landed(trees(item.landing), item):
+            result.kept.append((item, f"its after value does not hold at the landing commit {item.landing[:8]}"))
+        else:
+            result.removed.append(item)
+            result.proofs[delta_key(item)] = (f"before held at {parent[:8]}, after holds at {item.landing[:8]}, "
+                                              f"before no longer holds at the base")
+    if result.removed:
+        dropped = {delta_key(item) for item in result.removed}
+        lines = path.read_text(encoding="utf-8").splitlines(keepends=True)
+        kept_lines = []
+        for line in lines:
+            if line.startswith("  - "):
+                header = f"version: {EXPECTED_DELTAS_VERSION}\ndeltas:\n"
+                entries = parse_deltas((header + line).encode(), label=relative)
+                if len(entries) == 1 and delta_key(entries[0]) in dropped:
+                    continue
+            kept_lines.append(line)
+        if len(lines) - len(kept_lines) != len(result.removed):
+            raise GateError(f"E_EQUIV_PRUNE_LINES:{relative}: an entry spans lines or repeats; edit the file by hand")
+        path.write_text("".join(kept_lines), encoding="utf-8")
+    return result
 
 
 @dataclass
@@ -468,10 +641,10 @@ def compare_l1(base: SchemaFingerprints, head: SchemaFingerprints, deltas: list[
                 applied.append(item)
             elif _same(current, item.after):
                 item.used = True  # already landed in the base revision
-            else:
+            elif not item.merged:  # a merged entry that no longer applies is stale; run_gate reports it by age
                 problems.append(f"delta {item.pointer} does not apply: base has {_short(current)}")
         for item in applied:
-            item.used = True
+            item.used = item.applied = True
         if problems:
             rows.append(L1Row(name, "changed", "; ".join(problems)))
             continue
@@ -1125,6 +1298,11 @@ def run_gate(root: Path, *, layers: Iterable[str] = ("L1", "L2", "L3"), base_rev
             report.lines.append(f"L1 structural: {len(head_prints.fingerprints)} schema fingerprints computed; "
                                 "no base revision given, nothing compared")
         else:
+            if base_rev is not None:
+                try:
+                    mark_merged(root, base_rev, deltas, deltas_path.resolve().relative_to(root.resolve()).as_posix())
+                except (GateError, ValueError) as error:
+                    report.notes.append(f"expected-deltas: merged entries not checked ({error})")
             report.l1 = compare_l1(fingerprint_schemas(base_schemas), head_prints, deltas)
             tally = Counter(row.status for row in report.l1)
             report.lines.append("L1 structural (base " + (base_rev or "<supplied>") + "): "
@@ -1198,8 +1376,12 @@ def run_gate(root: Path, *, layers: Iterable[str] = ("L1", "L2", "L3"), base_rev
             report.lines.append(f"  invalid {path}: {_record_text(record)}")
         report.timings["L3"] = time.monotonic() - started
 
+    if "L1" in wanted:
+        stale_failures, stale_notes = stale_findings(deltas)
+        report.failures.extend(stale_failures)
+        report.notes.extend(stale_notes)
     for item in deltas:
-        if not item.used:
+        if not item.used and not item.merged:
             report.notes.append(f"expected-deltas: unused {item.layer} entry for {item.subject} {item.pointer}".rstrip())
     total = report.timings.get("L2", 0.0) + report.timings.get("L3", 0.0)
     if wanted & {"L2", "L3"}:
@@ -1246,7 +1428,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--record-baseline", action="store_true",
                         help="write the L2 verdicts and L3 diagnostics of this tree to the baseline file")
     parser.add_argument("--list-probes", action="store_true", help="print every probe verdict, not only the summary")
+    parser.add_argument("--prune-stale", action="store_true",
+                        help="remove the stale L1 expected-delta entries (merged and no longer applying), each proven "
+                             "against the base it was recorded for; needs --base-rev")
     args = parser.parse_args(argv)
+    if args.prune_stale and not args.base_rev:
+        parser.error("--prune-stale needs --base-rev")
     root = args.root.resolve()
     try:
         if args.record_baseline:
@@ -1256,6 +1443,14 @@ def main(argv: list[str] | None = None) -> int:
             path.write_text(json.dumps(baseline, ensure_ascii=False, indent=1, sort_keys=True) + "\n", encoding="utf-8")
             print(f"recorded {len(baseline['documents'])} document verdicts, "
                   f"{len(baseline['diagnostics']['probes'])} probes to {path}")
+            return 0
+        if args.prune_stale:
+            pruned = prune_stale(root, args.base_rev)
+            for item in pruned.removed:
+                print(f"pruned {item.subject} {item.pointer or '<file>'}: {pruned.proofs[delta_key(item)]}")
+            for item, reason in pruned.kept:
+                print(f"kept   {item.subject} {item.pointer or '<file>'}: {reason}")
+            print(f"schema-equivalence: pruned {len(pruned.removed)} stale entries, kept {len(pruned.kept)} merged entries")
             return 0
         layers = tuple(item.strip() for item in args.layers.split(",") if item.strip())
         report = run_gate(root, layers=layers, base_rev=args.base_rev)
