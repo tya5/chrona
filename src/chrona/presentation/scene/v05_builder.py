@@ -137,12 +137,13 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
                             *, scale_target_role: str | None = None,
                             scale_paints: Mapping[str, str] | None = None,
                             scale_legend_paints: Mapping[str, str] | None = None,
-                            group_tints: Mapping[str, str] | None = None) -> SceneSurface:
+                            group_tints: Mapping[str, str] | None = None,
+                            annotation_kind_paints: Mapping[str, str] | None = None) -> SceneSurface:
     """Attach the sole adapter-ready paint payload to every completed primitive."""
     try:
         completed = tuple(_complete_primitive_paint(
             primitive, tokens, visual_profile, scale_target_role, scale_paints or {}, scale_legend_paints or {},
-            group_tints or {}, surface.canvas_bounds or (0.0, 0.0, *viewport))
+            group_tints or {}, surface.canvas_bounds or (0.0, 0.0, *viewport), annotation_kind_paints or {})
                            for primitive in surface.primitives)
         canvas = resolve_scene_paint(tokens, "background", PaintFamily.CANVAS,
                                      visual_profile=visual_profile,
@@ -182,6 +183,7 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
                               scale_legend_paints: Mapping[str, str],
                               group_tints: Mapping[str, str] = {},
                               canvas: tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0),
+                              annotation_kind_paints: Mapping[str, str] = {},
                               ) -> tuple[ScenePrimitive, tuple[PaintOmission, ...]]:
     family = _paint_family(primitive, tokens)
     paint_role = primitive.visual_role
@@ -208,6 +210,11 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
     if tint is not None:
         # A group's tint replaces only the band's visible channel (#583).
         completed = replace(completed, stroke=tint) if family == PaintFamily.OUTLINE else replace(completed, fill=tint)
+    kind_paint = (annotation_kind_paints.get(primitive.source_ref)
+                  if primitive.purpose in {"annotation-kind-bar", "annotation-kind-accent"} else None)
+    if kind_paint is not None:
+        # A kind's colour replaces only the fill of its bar and accent (#584).
+        completed = replace(completed, fill=kind_paint)
     if primitive.image_fill_pending is not None:
         completed = replace(completed, image=primitive.image_fill_pending)
     treatment = tokens.optional_pattern(primitive.visual_role)
@@ -272,7 +279,8 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                                        scale_target_role=value.surface_content.scale_target_role,
                                        scale_paints=dict(value.surface_content.scale_paints),
                                        scale_legend_paints=dict(value.surface_content.scale_legend_paints),
-                                       group_tints=dict(value.surface_content.group_tints))
+                                       group_tints=dict(value.surface_content.group_tints),
+                                       annotation_kind_paints=dict(value.surface_content.annotation_kind_paints))
     if surface == "dependency-network":
         return _complete_surface_paint(_compose_dependency_network_surface(value), value.theme_tokens, value.visual_profile, value.viewport)
     raise SceneBuildError("E_PRESENTATION_SURFACE_UNSUPPORTED", "/projection/surface")

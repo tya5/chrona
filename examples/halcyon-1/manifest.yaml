@@ -83,3 +83,8 @@ slides:
     context: contexts/16-gallery-editorial-lanes.yaml
     expectedSvg: generated/16-gallery-editorial-lanes.svg
     expectedScene: generated/16-gallery-editorial-lanes.scene.json
+  - id: gallery-annotation-kinds
+    evidence: "Programme board notes dressed by Project annotation kind (#584): a kind-coloured title bar with a label, the anchored object and a secondary line, and an accent edge, from the Theme annotationKinds and kind roles, derived from 15-gallery-image-notes without editing it."
+    context: contexts/17-gallery-annotation-kinds.yaml
+    expectedSvg: generated/17-gallery-annotation-kinds.svg
+    expectedScene: generated/17-gallery-annotation-kinds.scene.json

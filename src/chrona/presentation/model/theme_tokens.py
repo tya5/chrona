@@ -5,6 +5,8 @@ from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
 from typing import Any, Mapping
 
+from chrona.presentation.annotation_kind_text import AnnotationKindTextError, KindHeader, kind_header
+
 
 class ThemeTokenError(ValueError):
     """Stable diagnostic for a missing or mistyped resolved Theme token."""
@@ -50,6 +52,27 @@ class AnnotationContainerToken:
     image_ref: str | None = None
     slice_insets_em: tuple[Decimal, Decimal, Decimal, Decimal] | None = None
     content_insets_em: tuple[Decimal, Decimal, Decimal, Decimal] | None = None
+
+
+@dataclass(frozen=True)
+class AnnotationKindToken:
+    """One Theme-declared annotation kind (#584): header text sources and the resolved kind colour."""
+
+    header: KindHeader
+    color: str | None
+
+
+@dataclass(frozen=True)
+class AnnotationKindFrame:
+    """The Theme's annotation-kind elements: which exist and their finite geometry (#584)."""
+
+    label_role: str | None
+    secondary_role: str | None
+    bar_role: str | None
+    bar_padding_em: Decimal
+    accent_role: str | None
+    accent_side: str | None
+    accent_size: Decimal
 
 
 @dataclass(frozen=True)
@@ -345,6 +368,44 @@ class ThemeTokenView:
         slice_insets = self._insets(value.get("sliceInsetsEm"), role, "annotationContainer/sliceInsetsEm")
         content_insets = self._insets(value.get("contentInsetEm"), role, "annotationContainer/contentInsetEm")
         return AnnotationContainerToken(outline, corner_radius, None, image_ref, slice_insets, content_insets)
+
+    def annotation_kind(self, kind: str | None) -> "AnnotationKindToken | None":
+        """Return the Theme's declaration for one Project annotation kind (#584).
+
+        A kind the Theme does not declare, and an annotation with no kind, get no kind
+        treatment: absence is today's plain annotation, not a fallback.
+        """
+        declared = self._body.get("annotationKinds")
+        entry = declared.get(kind) if isinstance(declared, Mapping) and kind is not None else None
+        if not isinstance(entry, Mapping):
+            return None
+        try:
+            header = kind_header(str(kind), entry)
+        except AnnotationKindTextError as error:
+            raise ThemeTokenError(error.code, f"/body/annotationKinds/{kind}") from error
+        color = entry.get("color")
+        return AnnotationKindToken(header, str(color) if isinstance(color, str) else None)
+
+    def annotation_kind_frame(self) -> AnnotationKindFrame:
+        """Return which annotation-kind elements this Theme declares and their geometry (#584)."""
+        def declared(role: str) -> str | None:
+            return role if self.has_role(role) else None
+        bar_role = declared("annotation-kind-bar")
+        padding = Decimal(0)
+        if bar_role is not None:
+            padding = self.optional_number(bar_role, "chipPadding") or Decimal(0)
+            if not Decimal(0) <= padding <= Decimal(2):
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{bar_role}/chipPadding")
+        accent_role = declared("annotation-kind-accent")
+        side, size = None, Decimal(0)
+        if accent_role is not None:
+            edge = self.token(accent_role, "edge", "edge")
+            side = edge.get("side") if isinstance(edge, Mapping) else None
+            size = self._decimal(edge.get("size") if isinstance(edge, Mapping) else None, accent_role, "edge/size") or Decimal(0)
+            if side not in {"start", "end", "top", "bottom"} or size <= 0:
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{accent_role}/edge")
+        return AnnotationKindFrame(declared("annotation-kind-label"), declared("annotation-kind-secondary"),
+                                   bar_role, padding, accent_role, side, size)
 
     def _insets(self, value: Any, role: str, property_name: str) -> tuple[Decimal, Decimal, Decimal, Decimal]:
         """Return a validated (top, right, bottom, left) em-relative inset quadruple."""

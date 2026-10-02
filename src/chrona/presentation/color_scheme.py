@@ -4,6 +4,7 @@ from __future__ import annotations
 from re import fullmatch
 from typing import Any, Mapping
 
+from chrona.presentation.annotation_kind_text import AnnotationKindTextError, kind_header
 from chrona.presentation.model.semantic_registry import ContrastClass, contrast_bindings
 from chrona.presentation.scene.capabilities import theme_role_property_consumer
 from chrona.presentation.scene.paint_analysis import composited_contrast
@@ -45,6 +46,10 @@ def _contrast(first: str, second: str) -> float:
 _STATE_TEXT_CONTRAST_FLOORS = {"required": 4.5, "deemphasized": 3.0}
 # State-text roles a Theme may omit entirely: the feature they belong to is opt-in. A declared one is still checked.
 _OPTIONAL_STATE_TEXT_ROLES = frozenset({"annotation-note-text", "period-label"})
+# The annotation kind header text (#584) lies on a per-kind bar, not on the canvas surface, so it is judged
+# against its real grounds by `_annotation_kind_text_contrast` instead of by `_state_text_contrast`.
+_KIND_TEXT_ROLES = ("annotation-kind-label", "annotation-kind-secondary")
+_KIND_BOX_ROLES = ("annotation-callout-box", "annotation-highlight-box", "annotation-note-box", "annotation-arrow-box")
 
 
 def _state_text_contrast(*, declared_roles: Mapping[str, Any], resolved_roles: Mapping[str, Any],
@@ -57,6 +62,8 @@ def _state_text_contrast(*, declared_roles: Mapping[str, Any], resolved_roles: M
     """
     for binding in contrast_bindings(ContrastClass.STATE_TEXT):
         role = binding.theme_role
+        if role in _KIND_TEXT_ROLES:
+            continue
         path = f"/body/roles/{role}"
         declared = declared_roles.get(role)
         if role in _OPTIONAL_STATE_TEXT_ROLES and not isinstance(declared, Mapping) and role not in resolved_roles:
@@ -88,6 +95,81 @@ def _state_text_contrast(*, declared_roles: Mapping[str, Any], resolved_roles: M
         if contrast < _STATE_TEXT_CONTRAST_FLOORS[treatment]:
             raise ColorSchemeError("E_SCHEME_STATE_TEXT_CONTRAST", f"{path}/fill",
                                    detail=f"{role}:{contrast:.2f}")
+
+
+def _role_color(roles: Mapping[str, Any], values: Mapping[str, Any], role: str, property_name: str = "fill") -> str | None:
+    """The resolved ``#RRGGBB`` of one role property, or None when the role does not declare it."""
+    binding = roles.get(role)
+    token = binding.get(property_name) if isinstance(binding, Mapping) else None
+    value = values.get(token) if isinstance(token, str) else None
+    if isinstance(value, Mapping) and value.get("type") == "color" and isinstance(value.get("value"), str):
+        return str(value["value"])
+    return None
+
+
+def _annotation_kinds(*, declared: Any, colors: Mapping[str, str]) -> dict[str, dict[str, str]]:
+    """Validate the Theme's `annotationKinds` and resolve each kind colour (#584)."""
+    if declared is None:
+        return {}
+    if not isinstance(declared, Mapping):
+        raise ColorSchemeError("E_THEME_ANNOTATION_KIND_TEMPLATE", "/body/annotationKinds")
+    resolved: dict[str, dict[str, str]] = {}
+    for kind, declaration in declared.items():
+        pointer = f"/body/annotationKinds/{kind}"
+        if not isinstance(kind, str) or not kind or not isinstance(declaration, Mapping):
+            raise ColorSchemeError("E_THEME_ANNOTATION_KIND_TEMPLATE", pointer)
+        try:
+            kind_header(kind, declaration)
+        except AnnotationKindTextError as error:
+            raise ColorSchemeError(error.code, pointer, error.detail) from error
+        entry = {name: str(declaration[name]) for name in ("label", "secondary", "title") if name in declaration}
+        intent = declaration.get("color")
+        if intent is not None:
+            if not isinstance(intent, str) or (intent not in _INTENTS and intent not in colors):
+                raise ColorSchemeError("E_SCHEME_INTENT_UNKNOWN", f"{pointer}/color")
+            entry["color"] = colors[intent]
+        resolved[kind] = entry
+    return resolved
+
+
+def _annotation_kind_text_contrast(*, declared_roles: Mapping[str, Any], resolved_roles: Mapping[str, Any],
+                                   values: Mapping[str, Any], kinds: Mapping[str, Mapping[str, str]]) -> None:
+    """Judge the kind header text against the grounds it lies on (#584).
+
+    With a bar role the ground is each declared kind's colour (the bar's own fill for a kind
+    without one); without a bar the text lies on the note box, so every declared box fill is a ground.
+    """
+    for role in _KIND_TEXT_ROLES:
+        declared = declared_roles.get(role)
+        if not isinstance(declared, Mapping) and role not in resolved_roles:
+            continue
+        path = f"/body/roles/{role}"
+        treatment = declared.get("contrastTreatment") if isinstance(declared, Mapping) else None
+        if treatment not in _STATE_TEXT_CONTRAST_FLOORS:
+            raise ColorSchemeError("E_SCHEME_STATE_TEXT_TREATMENT", path)
+        ink = _role_color(resolved_roles, values, role)
+        if ink is None:
+            raise ColorSchemeError("E_SCHEME_STATE_TEXT_CONTRAST", f"{path}/fill")
+        grounds: list[tuple[str, str]] = []
+        bar_fill = _role_color(resolved_roles, values, "annotation-kind-bar")
+        if "annotation-kind-bar" in resolved_roles:
+            if kinds:
+                for kind, entry in kinds.items():
+                    ground = entry.get("color", bar_fill)
+                    if ground is not None:
+                        grounds.append((kind, ground))
+            elif bar_fill is not None:
+                grounds.append(("bar", bar_fill))
+        else:
+            for box in _KIND_BOX_ROLES:
+                ground = _role_color(resolved_roles, values, box)
+                if ground is not None:
+                    grounds.append((box, ground))
+        for name, ground in grounds:
+            contrast = _contrast(ink, ground)
+            if contrast < _STATE_TEXT_CONTRAST_FLOORS[treatment]:
+                raise ColorSchemeError("E_SCHEME_ANNOTATION_KIND_CONTRAST", f"{path}/fill",
+                                       detail=f"{role}:{name}:{contrast:.2f}")
 
 
 def _annotation_note_ground(*, declared_roles: Mapping[str, Any], resolved_roles: Mapping[str, Any],
@@ -199,6 +281,9 @@ def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme
         roles.setdefault(role, {})[property_name] = token
     _state_text_contrast(declared_roles=body.get("roles", {}), resolved_roles=roles,
                          values=values, surface=colors["surface"])
+    annotation_kinds = _annotation_kinds(declared=body.get("annotationKinds"), colors=colors)
+    _annotation_kind_text_contrast(declared_roles=body.get("roles", {}), resolved_roles=roles,
+                                   values=values, kinds=annotation_kinds)
     _annotation_note_ground(declared_roles=body.get("roles", {}), resolved_roles=roles,
                             values=values, color_bindings=body["colorBindings"])
     _canvas_texture(roles=roles, values=values)
@@ -236,4 +321,4 @@ def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme
     suitability = scheme.get("body", {}).get("suitability", {}) if isinstance(scheme.get("body"), Mapping) else {}
     claimed = suitability.get("colorVision", ()) if isinstance(suitability, Mapping) else ()
     color_vision = [str(item) for item in claimed if item != "none-claimed"]
-    return {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme", "id": theme.get("id"), "body": {"values": values, "roles": roles, "metrics": dict(body.get("metrics", {})), "colorScales": resolved_scales, "categorySlots": {key.removeprefix("category:"): value for key, value in colors.items() if key.startswith("category:")}, "colorVision": color_vision}}
+    return {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme", "id": theme.get("id"), "body": {"values": values, "roles": roles, "metrics": dict(body.get("metrics", {})), "colorScales": resolved_scales, **({"annotationKinds": annotation_kinds} if annotation_kinds else {}), "categorySlots": {key.removeprefix("category:"): value for key, value in colors.items() if key.startswith("category:")}, "colorVision": color_vision}}

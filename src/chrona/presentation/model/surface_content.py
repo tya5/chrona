@@ -122,6 +122,11 @@ class AnnotationIntent:
     number: int | None = None
     fallback_ladder: tuple[str, ...] = ()
     candidates: tuple[PlacementCandidate, ...] = ()
+    # The `kind` of the Project annotation a `projectAnnotation` reference selects (#584);
+    # None for a View annotation that carries its own text.
+    kind: str | None = None
+    # The title of the anchored Project object, the `{subject}` of a kind header (#584).
+    subject: str = ""
 
 
 @dataclass(frozen=True)
@@ -201,6 +206,9 @@ class SurfaceContentInput:
     # Completed per-group band colour, (group id, "#RRGGBB"), from the View's
     # `grouping.tint` scale (#583); Scene replaces only the band's visible channel.
     group_tints: tuple[tuple[str, str], ...] = ()
+    # Completed per-annotation kind colour, (annotation id, "#RRGGBB"), from the Theme's
+    # `annotationKinds` (#584); Scene replaces only the fill of the kind bar, accent and stamp.
+    annotation_kind_paints: tuple[tuple[str, str], ...] = ()
     # Required plot-label text of each point drawn on the row of the span it
     # attaches to (#486): title, planned date and finish delta, never dropped.
     attached_labels: tuple[tuple[str, str], ...] = ()
