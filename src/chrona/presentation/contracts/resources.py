@@ -12,6 +12,7 @@ from typing import Any, Mapping
 from chrona.core.store_address import StoreAddressError, check_store_address
 from chrona.resources import schema_validator
 from chrona.schema_diagnostics import SchemaViolation, explain_all_errors, explain_errors
+from chrona.presentation.group_header_text import GroupHeaderTextError, parse_template
 from chrona.presentation.table_presentation import BooleanPresencePresentation
 
 
@@ -232,6 +233,16 @@ class ViewSelection:
 
 
 @dataclass(frozen=True)
+class ViewGroupHeader:
+    """View-declared group-header text template (#583); composed by content normalization."""
+
+    text: str
+    ordinal: str = "arabic"
+    first: str | None = None
+    secondary_field: str | None = None
+
+
+@dataclass(frozen=True)
 class ViewGrouping:
     by: str
     field: str | None
@@ -241,6 +252,7 @@ class ViewGrouping:
     depth: int | None
     rollup: str | None
     order_by: str | None = None
+    header: ViewGroupHeader | None = None
 
 
 @dataclass(frozen=True)
@@ -828,7 +840,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                              str(raw_grouping["presentation"]) if "presentation" in raw_grouping else None,
                              int(raw_grouping["depth"]) if "depth" in raw_grouping else None,
                              str(raw_grouping["rollup"]) if "rollup" in raw_grouping else None,
-                             str(raw_grouping["order"]["by"]) if isinstance(raw_grouping.get("order"), FrozenDict) else None)
+                             str(raw_grouping["order"]["by"]) if isinstance(raw_grouping.get("order"), FrozenDict) else None,
+                             _group_header(raw_grouping))
                 if raw_grouping else None)
     raw_ordering = body.get("ordering")
     ordering = (ViewOrdering(str(raw_ordering["by"]), str(raw_ordering["direction"]), str(raw_ordering["tieBreak"]))
@@ -903,6 +916,31 @@ def _view_periods(raw: Any) -> tuple[ViewPeriod, ...]:
     if len({item.period_id for item in periods}) != len(periods):
         raise ContractError("E_VIEW_PERIOD_DUPLICATE")
     return periods
+
+
+def _group_header(raw_grouping: Any) -> ViewGroupHeader | None:
+    """Type and validate the optional group-header template (#583)."""
+    raw = raw_grouping.get("header")
+    if raw is None:
+        return None
+    secondary = raw.get("secondary")
+    header = ViewGroupHeader(str(raw["text"]), str(raw.get("ordinal", "arabic")),
+                             str(raw["first"]) if "first" in raw else None,
+                             str(secondary["entityField"]) if secondary is not None else None)
+    if raw_grouping.get("presentation") != "header" or raw_grouping["by"] not in {"field", "objectType"}:
+        raise ContractError("E_VIEW_GROUP_HEADER_UNUSABLE", "header needs presentation header and grouping by field or objectType")
+    if header.secondary_field is not None and raw_grouping["by"] != "field":
+        raise ContractError("E_VIEW_GROUP_HEADER_UNUSABLE", "secondary needs grouping by field (an entity)")
+    used: set[str] = set()
+    try:
+        for template in (header.text, header.first):
+            if template is not None:
+                used |= parse_template(template).fields
+    except GroupHeaderTextError as error:
+        raise ContractError(error.code, error.detail) from error
+    if ("secondary" in used) != (header.secondary_field is not None):
+        raise ContractError("E_VIEW_GROUP_HEADER_TEMPLATE", "{secondary} and the secondary declaration must appear together")
+    return header
 
 
 def _validate_view_table_intent(table_columns: tuple[TableColumn, ...], grouping: ViewGrouping | None,

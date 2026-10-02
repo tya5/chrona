@@ -28,6 +28,8 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
     """Place declared group labels inside completed group-header bounds."""
     labels = {row.group_id: next((item.group_label for item in review_row.items if item.group_label), row.group_id)
               for review_row, row in zip(review_rows, rows, strict=True) if row.group_id}
+    # A View-declared header template replaces the title text only (#583).
+    labels.update(dict(request.surface_content.group_headers))
     group_header_font_size = (float(request.theme_tokens.text_treatment("groupHeader").font_size)
                               if any(group.header_bounds is not None for group in groups) else body_size)
     text = []
