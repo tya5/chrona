@@ -2,7 +2,7 @@
 
 Living record for [#584](https://github.com/tya5/chrona/issues/584): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history.
 
-**Public base:** `99a52a83` on `main`. **Status:** design plan, design, architecture review and implementation plan are published together in this record (PR #931). Code slices A584-1 (kind header: title bar, accent edge; PR #937), A584-2 (stamp; PR #944) and A584-3 (tilt; implemented, section 8) follow, each default-output-unchanged.
+**Public base:** `99a52a83` on `main`. **Status:** all slices are done: the design record (PR #931), A584-1 kind header, title bar and accent edge (PR #937), A584-2 stamp (PR #944) and A584-3 tilt (PR #948). The [acceptance review](../../reviews/current/issue-584-annotation-kinds-acceptance-review-2026-10-02.md) is published; the successor for the one gap found is [#950](https://github.com/tya5/chrona/issues/950).
 
 ## 1. Published baseline
 
