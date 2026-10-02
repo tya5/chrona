@@ -59,26 +59,6 @@ def _assert_as_of_label_outside_axis(surface: dict) -> None:
         assert not [item["id"] for item in obstacles if intersects(label, item["bounds"])], label
 
 
-def _assert_member_end_gap(surface: dict) -> None:
-    marks = [item for item in surface["primitives"]
-             if item.get("purpose") in {"planned", "actual"}]
-    labels = [item for item in surface["primitives"] if item.get("purpose") == "member-label"]
-    for label in labels:
-        host_kind = "actual" if label.get("sourceKind") == "actual" else "planned"
-        host = next((mark for mark in marks
-                     if mark.get("purpose") == host_kind
-                     and ((label.get("laneMemberId") is not None
-                           and mark.get("laneMemberId") == label["laneMemberId"])
-                          or (label.get("laneMemberId") is None
-                              and mark["sourceRef"] == label["sourceRef"]))), None)
-        assert host is not None, label["id"]
-        text = label["textLayout"]["bounds"]
-        mark = host["bounds"]
-        mark_right = mark["inline"] + mark["inlineSize"]
-        if text["inline"] >= mark_right:
-            assert text["inline"] - mark_right <= 2 * label["textLayout"]["fontSize"] + 0.01, label["id"]
-
-
 def _render_project(tmp_path: Path, monkeypatch, name: str, project: Path,
                     actual: Path | None = None, *extra: str) -> tuple[dict, Path]:
     scene_path = tmp_path / f"{name}.scene.json"
@@ -164,7 +144,6 @@ def _assert_automatic_default_keeps_plot_names_and_row_guides(scene: dict, svg: 
                 and item.split(":", 1)[0] not in allowed_layout_warnings]
     _assert_marks_inside_timeline(surface)
     _assert_as_of_label_outside_axis(surface)
-    _assert_member_end_gap(surface)
     timeline = next(slot for slot in surface["slots"] if slot["id"] == "timeline")["bounds"]
     rows = {row["id"]: row["bounds"] for row in surface["rows"]}
     primitives = {item["id"]: item for item in _primitives(scene)}

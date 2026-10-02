@@ -41,7 +41,7 @@ properties:
         description: "Optional placement policy for plot member names that have their own mark. Absent keys keep the built-in behaviour."
         additionalProperties: false
         properties:
-          maxEndGapEm: {description: "Reach of a member name from its mark, in multiples of the label font size, extended by how far the item's last own drawn mark extends past its host. Omitted means 2; 0 disables end placement.", type: number, minimum: 0, maximum: 100}
+          maxEndGapEm: {description: "Reach of a member name from its mark, in multiples of the label font size, extended by how far the item's last own drawn mark extends past its host. One value bounds the end-side gap, the nearest-perimeter association distance on both sides and the final-rung gap, so the name is narrower than the meaning (Spec 50). Omitted means 2; 0 disables end placement.", type: number, minimum: 0, maximum: 100}
           search: {description: "Block-position search for member names: side-band keeps the side neighbourhood; full-band searches the whole row band. Omitted means full-band for a lane row under rowDistribution fill and side-band otherwise.", enum: [side-band, full-band]}
       annotationRouting:
         type: object
