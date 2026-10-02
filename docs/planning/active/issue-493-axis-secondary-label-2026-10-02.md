@@ -2,7 +2,7 @@
 
 Living record for [#493](https://github.com/tya5/chrona/issues/493): baseline, design plan, design, architecture review and implementation plan. Edited in place; Git keeps history. Normative behavior lives in [Specification 39](../../specification/39-axis-and-observation-clarity.md), "Axis secondary labels (#493)".
 
-**Public base:** `339d87d4` on `main`. **Status:** this record (sections 1 to 7) is published (PR #933); the `labelGap` amendment (D6, sections 5.4, 5.7 to 5.8, 6, 7) is a second docs PR; no code is published yet.
+**Public base:** `339d87d4` on `main`. **Status:** sections 1 to 7 were published in PR #933 and amended by PR #936 (`labelGap`, D6). I493-1 (code, PR #941) and I493-2 (the Controller Z ja `axis-secondary` slide, PR #943) are merged; the [acceptance review](../../reviews/current/issue-493-axis-secondary-label-acceptance-review-2026-10-02.md) closes the record.
 
 ## 1. Published baseline
 
