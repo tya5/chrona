@@ -65,6 +65,19 @@ def _axis_label_inset(theme_tokens: Any, tier: Any, font_size: float) -> float:
     return float(ratio) * font_size if ratio is not None else 0.0
 
 
+def _axis_tick_length(theme_tokens: Any, role: str, slot_block_size: Decimal, tier_index: int) -> Decimal | None:
+    """The Theme-declared tick length of a grid role (#492), or None for the full-height line."""
+    declared = theme_tokens.optional_number(role, "tickLength")
+    if declared is None:
+        return None
+    source = f"/view/body/axis/tiers/{tier_index}"
+    if not declared > 0:
+        raise LayoutError("E_PRESENTATION_AXIS_INVALID", source, detail=f"tick-length:{role}")
+    if declared > slot_block_size:
+        raise LayoutError("E_PRESENTATION_AXIS_OVERFLOW", source, detail=f"tick-length:{role}")
+    return declared
+
+
 def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> SurfaceAxisPlacements:
     """Place all axis tiers against completed scale and return calendar intervals, not shapes."""
     if request.theme_tokens is None or request.font_metrics is None:
@@ -225,11 +238,16 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
             band_ordinal += 1
         elif tier.role in {"grid-major", "grid-minor"}:
             semantic_id = "axisGrid" if tier.role == "grid-major" else "axisGridMinor"
+            tick = _axis_tick_length(tokens, semantic_binding(semantic_id).scene_role, axis.bounds.block_size, tier_index)
+            if tick is None:
+                grid_top, grid_size = timeline.bounds.block, timeline.bounds.block_size
+            else:
+                grid_top, grid_size = axis.bounds.block + axis.bounds.block_size - tick, tick
             for interval in intervals:
                 x = coordinate_for_date(interval.start, scale)
                 shapes.append(ShapePlacement(f"axis-grid:{tier_index}:{interval.index}", "timeline-axis", "Path",
-                    Rect(Decimal(str(x)), timeline.bounds.block, Decimal(0), timeline.bounds.block_size),
-                    ((x, float(timeline.bounds.block)), (x, float(timeline.bounds.block + timeline.bounds.block_size))),
+                    Rect(Decimal(str(x)), grid_top, Decimal(0), grid_size),
+                    ((x, float(grid_top)), (x, float(grid_top + grid_size))),
                     semantic_id=semantic_id, paint_order=BACKGROUND_PAINT_ORDER + 1))
         elif tier.role == "labels" and form is not None:
             if tier.typography_role is None:

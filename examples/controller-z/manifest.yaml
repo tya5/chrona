@@ -52,3 +52,8 @@ slides:
     context: contexts/axis-tiers.yaml
     expectedSvg: generated/axis-tiers.svg
     expectedScene: generated/axis-tiers.scene.json
+  - id: axis-ticks
+    evidence: "Week ticks standing on the axis rule at every week start, under month labels and quarter bands, from a Theme-declared tick length (#492)."
+    context: contexts/axis-ticks.yaml
+    expectedSvg: generated/axis-ticks.svg
+    expectedScene: generated/axis-ticks.scene.json

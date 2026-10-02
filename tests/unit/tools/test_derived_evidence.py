@@ -33,15 +33,18 @@ def test_inventory_is_stable_and_matches_tracked_public_materializers():
     outputs = materializer_outputs()
     assert outputs == tuple(sorted(outputs))
     assert scene_paths() == tuple(sorted(scene_paths()))
+    # A PR never authors declared evidence (the snapshot writes it into the work tree), so a
+    # slide a PR adds is untracked until the main sync commits it: count untracked, unignored files.
     tracked = subprocess.run(
-        ("git", "ls-files", "-z", "examples"), check=True, capture_output=True,
+        ("git", "ls-files", "-z", "--cached", "--others", "--exclude-standard", "examples"),
+        check=True, capture_output=True,
     ).stdout.split(b"\0")
     tracked_outputs = tuple(sorted(
         path.decode() for path in tracked if path.endswith((b".svg", b".scene.json"))
     ))
     assert tuple(sorted(path.relative_to(Path.cwd()).as_posix()
                          for path in outputs)) == tracked_outputs
-    assert len(derived_paths()) == 67
+    assert len(derived_paths()) == 69
 
 
 def test_new_unindexed_manifest_scene_is_inspected_and_missing_output_fails(tmp_path):

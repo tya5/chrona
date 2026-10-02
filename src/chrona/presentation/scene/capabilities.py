@@ -108,6 +108,7 @@ _TEXT_MEASUREMENT = frozenset(("fontFamily", "fontWeight", "fontSize", "lineHeig
                                "letterSpacing", "textTransform", "numericSpacing"))
 _ICON_MEASUREMENT = frozenset(("iconScale", "iconGap"))
 _AXIS_MEASUREMENT = frozenset(("laneBlockSize", "labelInset"))
+_AXIS_TICK = frozenset(("tickLength",))
 _RECT_PAINT = frozenset(("fill", "stroke", "strokeWidth", "dash", "opacity",
                          "gradientStart", "gradientEnd", "gradientAngle", "gradientFidelity",
                          "shadowColor", "shadowOffsetX", "shadowOffsetY", "shadowBlur",
@@ -125,7 +126,7 @@ _CANVAS_PAINT = frozenset(("fill", "opacity", "gradientStart", "gradientEnd", "g
                            "shadowBlur", "shadowOpacity", "shadowFidelity"))
 _PATTERNED_RECT_PAINT = _RECT_PAINT | frozenset(("pattern",))
 _LAYOUT_TYPOGRAPHY = _TEXT_MEASUREMENT | _ICON_MEASUREMENT
-_LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | frozenset((
+_LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | frozenset((
     "cellGap", "chipPadding", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius",
     "progressInset", "summaryBarHeight", "swatchInlineSize", "annotationContainer", "marker", "symbol",
 ))
@@ -220,7 +221,9 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              frozenset(("symbol",)))
     register("icon-mark", "Layout icon size and Scene Icon", _ICON_MEASUREMENT | _SHARED_TEXT_ICON_PAINT,
              scene_kinds=frozenset(("Icon",)))
-    register("dependency-critical network-edge critical-edge axis-major axis-minor axis-rule axis-cell-separator as-of",
+    register("axis-major axis-minor", "Layout axis grid or tick and Scene Path", _PATH_PAINT | _AXIS_TICK,
+             scene_kinds=frozenset(("Path",)))
+    register("dependency-critical network-edge critical-edge axis-rule axis-cell-separator as-of",
              "Layout relation and Scene Path", _PATH_PAINT, scene_kinds=frozenset(("Path",)))
     register("dependency", "Scene Path and Layout legend swatch marker", _PATH_PAINT | frozenset(("marker",)),
              scene_kinds=frozenset(("Path",)))
