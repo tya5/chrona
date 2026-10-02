@@ -213,6 +213,22 @@ interpolation; the finding identifies a `gradient-sample` ground. This
 supersedes the first #459 design's exclusion of all gradient hosts. Other
 non-flat or non-opaque hosts still require an explicit contract.
 
+**Ground text and pattern grounds (#884).** Group header text keeps the
+shared visual role `text` (and so the Theme `text` ink), so its contrast class
+is resolved from its purpose `group-header`, never from the role: the class
+`ground-text` is "ink of the shared text role that lies on a decoration
+ground". Its treatment is always `required` (4.5:1, paint channel `fill`,
+`E_SCENE_STATE_TEXT_CONTRAST`) and is not authored by the Theme; no other
+text in the role `text` is classified. The ground is the one above, so a group
+tint, a gradient or a flat band under the header is read as completed, and a
+header whose ink is too close to its band is a gate error. A Rect with a
+completed catalogue pattern (Scene v0.7) is ground in two colours, as a canvas
+texture is: the substrate is its fill and the ink its stroke, and every
+classified text and mark over it, except a decoration, is judged on both, the
+worse ratio deciding (`ground_kind` `pattern-host-substrate` or
+`pattern-host-ink`; a canvas texture stays `texture-substrate` and
+`texture-ink`).
+
 A dual-channel Rect or Symbol is evaluated at a separate painted sample for
 each channel: fill at bounds centre, stroke at the left-edge block midpoint.
 Either channel may carry a data mark's 3.0:1 visibility floor, and the

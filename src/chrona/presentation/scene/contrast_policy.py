@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from math import isfinite
 from typing import Any, Mapping
 
-from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding
+from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding, contrast_binding_for
 from chrona.presentation.scene.paint_analysis import composited_contrast, is_hex_color, sample_linear_gradient
 
 
@@ -90,7 +90,7 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
     role = primitive.get("visualRole")
     if not isinstance(role, str):
         return ()
-    binding = contrast_binding(role)
+    binding = contrast_binding_for(role, primitive.get("purpose") if primitive.get("kind") == "Text" else None)
     if binding is None:
         return ()
     primitive_id = _string(primitive.get("id"), f"primitive id at {scene_path}")
@@ -101,6 +101,10 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
     elif binding.contrast_class == ContrastClass.MARK:
         floor, disposition = MARK_FLOOR, "required"
         code = "E_SCENE_MARK_CONTRAST"
+    elif binding.contrast_class == ContrastClass.GROUND_TEXT:
+        # Ink of the shared text role on a decoration ground: always required, never authored (#884).
+        floor, disposition = STATE_TEXT_FLOORS["required"], "required"
+        code = "E_SCENE_STATE_TEXT_CONTRAST"
     else:
         treatment = primitive.get("contrastTreatment")
         if (treatment not in STATE_TEXT_FLOORS
@@ -124,8 +128,9 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
     if is_catalog_pattern:
         return _pattern_findings(scene_path, primitive, pattern, paint, opacity, floor,
                                  disposition, code, purpose, role, primitive_id, canvas,
-                                 primitives, index)
-    channels = ("fill",) if binding.contrast_class == ContrastClass.STATE_TEXT else ("fill", "stroke")
+                                 primitives, index, catalog_patterns)
+    channels = (("fill",) if binding.contrast_class in (ContrastClass.STATE_TEXT, ContrastClass.GROUND_TEXT)
+                else ("fill", "stroke"))
     candidates = []
     unsupported_host: str | None = None
     unsupported_ground = False
@@ -149,14 +154,16 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
         if ground is None:
             continue
         ratio = composited_contrast(fill=paint[channel], opacity=float(opacity), ground=ground)
-        ink = _texture_ink(primitives, ground_id) if binding.contrast_class != ContrastClass.DECORATION else None
-        if ink is not None:
-            # A canvas texture is ground in two colours: a mark or a label may lie on either.
-            # A decoration is a tint judged against the dominant substrate, not against thin ink lines.
-            ground_kind = "texture-substrate"
+        host_ink = (_host_ink(primitives, ground_id, catalog_patterns)
+                    if binding.contrast_class != ContrastClass.DECORATION else None)
+        if host_ink is not None:
+            # A canvas texture and a catalogue pattern are ground in two colours: a mark or a label may lie
+            # on either. A decoration is a tint judged against the dominant substrate, not against thin ink lines.
+            ink, family = host_ink
+            ground_kind = f"{family}-substrate"
             ink_ratio = composited_contrast(fill=paint[channel], opacity=float(opacity), ground=ink)
             if ink_ratio < ratio:
-                ratio, ground, ground_kind = ink_ratio, ink, "texture-ink"
+                ratio, ground, ground_kind = ink_ratio, ink, f"{family}-ink"
         candidates.append((ratio, channel, ground_id, ground, sample, ground_kind))
     if not candidates:
         error_code = "E_SCENE_CONTRAST_GROUND_UNSUPPORTED" if unsupported_ground else "E_SCENE_CONTRAST_PAINT"
@@ -171,8 +178,8 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
 def _pattern_findings(scene_path: str, primitive: Mapping[str, Any], pattern: Any,
                       paint: Mapping[str, Any], opacity: float, floor: float,
                       disposition: str, code: str, purpose: str, role: str, primitive_id: str,
-                      canvas: str | None, primitives: list[Any], index: int
-                      ) -> tuple[SceneContrastFinding, ...]:
+                      canvas: str | None, primitives: list[Any], index: int,
+                      catalog_patterns: bool = True) -> tuple[SceneContrastFinding, ...]:
     """Gate each effective pattern channel pair; neither channel can mask another."""
     if (not isinstance(pattern, Mapping)
             or not isinstance(pattern.get("densityBasisPoints"), int)
@@ -201,13 +208,14 @@ def _pattern_findings(scene_path: str, primitive: Mapping[str, Any], pattern: An
              ("stroke", primitive_id, substrate, "pattern-substrate", ink),
              ("stroke", host_id, host, host_kind, ink)]
     # As for a flat primitive: a mark or a label sees the ink as ground, a decoration tint does not.
-    texture_ink = _texture_ink(primitives, host_id) if code != "E_SCENE_DECORATION_CONTRAST" else None
-    if texture_ink is not None:
-        # The host is a canvas texture: its ink is a second ground under this primitive.
-        pairs[0] = ("fill", host_id, host, "texture-substrate", substrate)
-        pairs[2] = ("stroke", host_id, host, "texture-substrate", ink)
-        pairs += [("fill", host_id, texture_ink, "texture-ink", substrate),
-                  ("stroke", host_id, texture_ink, "texture-ink", ink)]
+    host_ink = _host_ink(primitives, host_id, catalog_patterns) if code != "E_SCENE_DECORATION_CONTRAST" else None
+    if host_ink is not None:
+        # The host is a canvas texture or a catalogue pattern: its ink is a second ground under this primitive.
+        host_ink_color, family = host_ink
+        pairs[0] = ("fill", host_id, host, f"{family}-substrate", substrate)
+        pairs[2] = ("stroke", host_id, host, f"{family}-substrate", ink)
+        pairs += [("fill", host_id, host_ink_color, f"{family}-ink", substrate),
+                  ("stroke", host_id, host_ink_color, f"{family}-ink", ink)]
     findings = []
     for channel, ground_id, ground, ground_kind, foreground in pairs:
         ratio = composited_contrast(fill=foreground, opacity=1.0, ground=ground)
@@ -218,16 +226,28 @@ def _pattern_findings(scene_path: str, primitive: Mapping[str, Any], pattern: An
     return tuple(findings)
 
 
-def _texture_ink(primitives: list[Any], host_id: str | None) -> str | None:
-    """Return the ink of the canvas texture a ground host is, else nothing."""
+def _host_ink(primitives: list[Any], host_id: str | None, catalog_patterns: bool = False) -> tuple[str, str] | None:
+    """Return the ink of the textured ground a host is, with its family, else nothing.
+
+    A canvas texture (family `texture`) and a Rect with a completed catalogue pattern (family `pattern-host`,
+    Scene v0.7 only) each lie in two colours: the substrate is the host's fill, the ink its stroke (#587, #884).
+    """
     if host_id is None:
         return None
     for primitive in primitives:
-        if (isinstance(primitive, Mapping) and primitive.get("id") == host_id
-                and primitive.get("visualRole") == "canvas-texture"):
-            paint = primitive.get("paint")
-            stroke = paint.get("stroke") if isinstance(paint, Mapping) else None
-            return str(stroke) if is_hex_color(stroke) else None
+        if not isinstance(primitive, Mapping) or primitive.get("id") != host_id:
+            continue
+        paint = primitive.get("paint")
+        stroke = paint.get("stroke") if isinstance(paint, Mapping) else None
+        if not is_hex_color(stroke):
+            return None
+        if primitive.get("visualRole") == "canvas-texture":
+            return str(stroke), "texture"
+        pattern = primitive.get("pattern")
+        if catalog_patterns and isinstance(pattern, Mapping) and any(
+                key in pattern for key in ("densityBasisPoints", "primitives", "origin", "regionBounds", "clipBounds")):
+            return str(stroke), "pattern-host"
+        return None
     return None
 
 

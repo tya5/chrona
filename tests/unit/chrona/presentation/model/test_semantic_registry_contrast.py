@@ -15,6 +15,7 @@ def test_contrast_registry_classifies_only_the_finite_state_text_and_decoration_
         "group-band", "row-band", "group-header-band", "annotation-note-box",
         "annotation-kind-bar", "annotation-kind-accent", "annotation-kind-stamp",
     ]
+    assert [item.purpose for item in contrast_bindings(ContrastClass.GROUND_TEXT)] == ["group-header"]
     assert contrast_binding("text") is None
     assert contrast_binding("group-band").theme_role == "group-band"
 

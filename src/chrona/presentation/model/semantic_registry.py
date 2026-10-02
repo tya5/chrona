@@ -31,6 +31,9 @@ class ContrastClass(str, Enum):
     STATE_TEXT = "state-text"
     DECORATION = "decoration"
     MARK = "mark"
+    # Ink of the shared `text` role that lies on a decoration ground (a group header on its band, #884).
+    # Resolved by purpose, never by role: the role `text` stays unclassified. The treatment is fixed `required`.
+    GROUND_TEXT = "ground-text"
 
 
 class Slot(str, Enum):
@@ -135,7 +138,7 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("groupBand", "decoration", "group-decoration", "group-band", "group-band", ContrastClass.DECORATION),
     _binding("rowBand", "decoration", "row-decoration", "row-band", "row-band", ContrastClass.DECORATION),
     _binding("groupHeaderBand", "decoration", "group-header-band", "group-header-band", "group-header-band", ContrastClass.DECORATION),
-    _binding("groupHeader", "decoration", "group-header", "group-header", "groupHeader"),
+    _binding("groupHeader", "decoration", "group-header", "group-header", "groupHeader", ContrastClass.GROUND_TEXT),
     _binding("groupDetail", "label", "group-detail", "text", "text"),
     # Table.
     _binding("titleText", "label", "title-text", "text", "heading"),
@@ -236,12 +239,23 @@ def semantic_binding(semantic_id: str) -> SemanticBinding:
 
 
 def contrast_binding(scene_role: str) -> SemanticBinding | None:
-    """Return the unique classified binding for one completed Scene role."""
+    """Return the unique classified binding for one completed Scene role (a ground-text binding is not by role)."""
     matches = tuple(binding for binding in _REGISTRY.values()
-                    if binding.scene_role == scene_role and binding.contrast_class is not None)
+                    if binding.scene_role == scene_role and binding.contrast_class not in (None, ContrastClass.GROUND_TEXT))
     if len(matches) > 1:
         raise ValueError(f"E_PRESENTATION_SEMANTIC_CONTRAST_AMBIGUOUS:{scene_role}")
     return matches[0] if matches else None
+
+
+def contrast_binding_for(scene_role: str, purpose: str | None) -> SemanticBinding | None:
+    """Return the classified binding of a completed Text primitive: by its role, else by its purpose.
+
+    Only a Text primitive in the shared role `text` can be ground text, and only for a registered purpose.
+    """
+    binding = contrast_binding(scene_role)
+    if binding is not None or scene_role != "text" or purpose is None:
+        return binding
+    return next((item for item in contrast_bindings(ContrastClass.GROUND_TEXT) if item.purpose == purpose), None)
 
 
 def contrast_bindings(contrast_class: ContrastClass) -> tuple[SemanticBinding, ...]:
