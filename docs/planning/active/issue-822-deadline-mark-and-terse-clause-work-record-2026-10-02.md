@@ -5,6 +5,7 @@ review, implementation plan, progress. It continues the [#792 work record](issue
 (decisions D9 and D10 there deferred exactly these two surfaces) and its
 [acceptance review](../../reviews/current/issue-792-deadline-warning-acceptance-review-2026-10-02.md).
 **Public base:** `main` at `339d87d4`. Every PR is `Refs #822` with no closing keyword.
+**Progress:** every slice is published: the record (PR #934), I822-1 terse clause (PR #938), I822-2 Core status (PR #939) and I822-3 the View mark (PR #945). The acceptance review is [docs/reviews/current/issue-822-deadline-mark-and-terse-clause-acceptance-review-2026-10-02.md](../../reviews/current/issue-822-deadline-mark-and-terse-clause-acceptance-review-2026-10-02.md); optional extensions are tracked in #946.
 
 ## 1. Published baseline (verified on `main`)
 
