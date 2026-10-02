@@ -100,6 +100,25 @@ The Command Request is a file in the workspace (`command`), the Store is named b
 default `.chrona/store.yaml`), and every Store root in that file must lie inside the workspace. The result carries the
 same Automation Result the command line writes to `--result`.
 
+### Reading pinned evidence from a Store
+
+Two read-only tools reach a Store, the same one `apply_command` writes, and work with or without `--allow-write`:
+
+- `render_review` renders an immutable Render Context (the pinned, reproducible picture of `chrona render-review`, not a
+  draft). Its `contextReference` is a workspace path to the Context's resource reference. The Context fixes its own
+  format and viewport, so the tool takes neither, and an SVG or PNG result travels inline (`inline: none` returns only
+  the identity, length and warnings).
+- `compare_baseline` compares a named baseline with a candidate Project (`chrona baseline-compare`): `baselineReference`
+  and `candidateReference` are workspace paths to their references, and the result is the same Automation Result the
+  command line writes to `--result`.
+
+Both name the Store with `storeConfig` (default `.chrona/store.yaml`), and every Store root in that file must lie inside
+the workspace. Integrity is the Store configuration's, as on the command line: every reference is checked against its
+pinned content identity, a Store with `integrity: required` (the default) refuses a reference that has none, and no
+argument lowers either. A Store whose configuration says `integrity: optional` (the packaged example corpus does) is its
+owner's explicit choice. Failures keep the codes the command line reports, so an identity mismatch on a render is
+`E_CONTENT_IDENTITY` and one on a comparison is `E_BASELINE_REFERENCE` with a message that names the mismatch.
+
 ### What the server offers
 
 | Tool | Same as | What it returns |
@@ -108,6 +127,8 @@ same Automation Result the command line writes to `--result`.
 | `schedule_project` | `chrona schedule` | The computed placements, the critical path and any `W_DEADLINE` warnings; a fixed date or bound the dependencies contradict is rejected here, and a cycle as in `validate_project`. |
 | `render_draft` | `chrona render` | A PNG preview (or the SVG text with `inline: svg`), the content identity and any warnings. It writes no file. |
 | `list_presets` | `chrona preset list` | The builtin preset ids `render_draft` accepts. |
+| `render_review` | `chrona render-review` | The pinned picture of an immutable Render Context from a Store: its format, content identity, warnings and the SVG or PNG inline. Read-only. |
+| `compare_baseline` | `chrona baseline-compare` | What changed between a named baseline and a candidate Project in a Store. Read-only. |
 | `check_command` | `chrona command-check` | Previews an Actual intake or baseline capture command against its Store; writes nothing. |
 | `apply_command` | `chrona command-apply` | Applies it. Refused unless the server was started with `--allow-write`; no approval step. |
 
@@ -120,12 +141,17 @@ the same guidance.
 ### Limits
 
 - Every path is relative to the workspace and must name an existing file inside it: no `..`, no absolute path,
-  no symlink that leaves the workspace, no input over 2 MiB. The only file the server writes is the Store that
+  no symlink that leaves the workspace, no input over 2 MiB. A Store root named by a configuration is held to the same
+  rule. The only file the server writes is the Store that
   `apply_command` changes, and only with `--allow-write`; it never writes a plan, a picture or a path you name.
 - `apply_command` takes an Actual intake batch and a baseline capture only. It has no authoring command, no resolve
-  command and no revert command, and there is no tool that reads a Store. Use the command line for those.
+  command and no revert command. Use the command line for those.
 - One writer per Store: the server handles its own calls one at a time, but a command line and a server writing one
   Store at the same moment are not guaranteed to be safe.
+- A `compare_baseline` result over 1 MiB is refused (`E_MCP_RESULT_TOO_LARGE`) and `chrona baseline-compare` writes it to a
+  file; `render_review` has the same inline caps as `render_draft`, and reading a Store has no cap of its own (a Store's
+  content is pinned by identity and may hold large assets such as fonts). `render_review` offers no `--format`,
+  `--reject-unused-closure-inputs` or `--emit-scene` and no snapshot-root mode: use the command line for those.
 - A render cannot be cancelled and takes a few seconds for a large plan; calls are handled one at a time. An inline
   image over 1.5 MiB (SVG over 1 MiB) is refused: lower the viewport or render to a file with `chrona render`.
 - PNG needs the `render` extra. Without it `render_draft` still answers and reports `pngAvailable: false`.

@@ -15,6 +15,7 @@ TOOL_LIKE = re.compile(r"`((?:validate|schedule|render|list|compare|apply|check|
 EQUIVALENT_COMMANDS = {
     "validate_project": "chrona validate", "schedule_project": "chrona schedule",
     "render_draft": "chrona render", "list_presets": "chrona preset list",
+    "render_review": "chrona render-review", "compare_baseline": "chrona baseline-compare",
     "check_command": "chrona command-check", "apply_command": "chrona command-apply",
 }
 
@@ -58,3 +59,18 @@ def test_the_table_notes_agree_with_the_tool_descriptions():
     assert "computes no dates" in descriptions["validate_project"]
     assert "not by validate_project (a dependency cycle is rejected by both)" in descriptions["schedule_project"]
     assert "writes no file" in descriptions["render_draft"] and "inline 'svg'" in descriptions["render_draft"]
+
+
+def test_the_skill_teaches_the_pinned_evidence_path_and_agrees_with_the_store_tools():
+    text = SKILL.read_text(encoding="utf-8")
+    descriptions = {spec.name: spec.description for spec in tool_specs()}
+    section = text.split("## Pinned evidence from a Store", 1)[1].split("\n## ", 1)[0]
+
+    for needle in ("Render Context", "Store configuration", "`.chrona/store.yaml`", "reference file", "`render_review`",
+                   "`compare_baseline`", "only read", "outside the workspace", "pinned identity", "`integrity`"):
+        assert needle in section, needle
+    assert "only when the user asks" in text.split("## Pinned evidence from a Store", 1)[1].split("\n", 1)[0]
+    assert "do not use them unless the user asks for pinned evidence" in text
+    for name in ("render_review", "compare_baseline"):
+        assert "read-only" in descriptions[name] and "no argument lowers" in descriptions[name]
+    assert "fixes its own format and viewport" in descriptions["render_review"]

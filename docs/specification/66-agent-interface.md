@@ -1,8 +1,8 @@
 # Agent Tool Interface
 
 **Status:** Proposed; the tool core is implemented in `chrona.app.agent_tools` (#142, slice I142-S3; the Store command
-tools, #813) and served over MCP by `chrona mcp` (`chrona.app.mcp_server`, slice I142-S4).
-**Owns:** the agent tool set `chrona/agent-tools/v0.3`, the shape of a tool result, the workspace path rules, the
+tools, #813; the Store read tools, #812) and served over MCP by `chrona mcp` (`chrona.app.mcp_server`, slice I142-S4).
+**Owns:** the agent tool set `chrona/agent-tools/v0.4`, the shape of a tool result, the workspace path rules, the
 write gate, the determinism contract of a tool call, the MCP binding rules of section 7, and the `E_MCP_*` diagnostic
 codes.
 **Does not own:** the meaning of a Project or a schedule (Spec 05, Spec 04), the render pipeline (Specs 06, 07,
@@ -11,21 +11,23 @@ the agent skill (`skills/chrona/`).
 Design rationale, alternatives and review:
 [`docs/design/issue-142-agent-interface-design-2026-10-01.md`](../design/issue-142-agent-interface-design-2026-10-01.md),
 [`docs/reviews/current/issue-142-agent-interface-architecture-review-2026-10-01.md`](../reviews/current/issue-142-agent-interface-architecture-review-2026-10-01.md);
-the Store command tools: [`docs/planning/active/issue-813-mcp-mutating-tools.md`](../planning/active/issue-813-mcp-mutating-tools.md).
+the Store command tools: [`docs/planning/active/issue-813-mcp-mutating-tools.md`](../planning/active/issue-813-mcp-mutating-tools.md);
+the Store read tools: [`docs/planning/active/issue-812-mcp-store-read-tools.md`](../planning/active/issue-812-mcp-store-read-tools.md).
 
 ## 1. Principle
 
 A tool is a use case with a typed envelope. The tool set adds no behavior: for the same files it returns the verdict,
 the diagnostic code and the bytes the command of the same name returns, and a disagreement is a defect in one of
-the two. The tool core imports use cases, the shared Store address guard and one shared dispatch of the Store commands
-(`chrona.operational.store_commands`, which the command line calls too) only, imports no transport SDK and prints
-nothing. One tool, `apply_command`, writes (section 2.1); every other tool writes nothing.
+the two. The tool core imports use cases, the shared Store address guard and the shared Store functions
+(`chrona.operational.store_commands` and `chrona.operational.store_reads`, which the command line calls too) only,
+imports no transport SDK and prints nothing. One tool, `apply_command`, writes (section 2.1); every other tool writes nothing.
 
-## 2. Tool set `chrona/agent-tools/v0.3`
+## 2. Tool set `chrona/agent-tools/v0.4`
 
 Every tool takes paths relative to one workspace root (section 4). A change to any input or output schema, or to the
 set, changes the tool-set version. `v0.2` (#782) added the optional `count` and `occurrences` properties of a
-diagnostic and nothing else; `v0.3` (#813) added `check_command` and `apply_command` and changed no existing tool.
+diagnostic and nothing else; `v0.3` (#813) added `check_command` and `apply_command`; `v0.4` (#812) added `render_review` and `compare_baseline`.
+Neither version changed an existing tool.
 
 | Tool | Command equivalent | Use case |
 | --- | --- | --- |
@@ -33,11 +35,13 @@ diagnostic and nothing else; `v0.3` (#813) added `check_command` and `apply_comm
 | `schedule_project` | `chrona schedule` | `usecases.project_checks.schedule_project_file` |
 | `render_draft` | `chrona render` | `usecases.draft_render.render_draft` |
 | `list_presets` | `chrona preset list` | `usecases.preset_library.list_builtin_presets` |
+| `render_review` | `chrona render-review --store-config` | `usecases.context_review.render_context_closure` |
+| `compare_baseline` | `chrona baseline-compare` | `operational.store_reads.compare_store_baseline` |
 | `check_command` | `chrona command-check` | `operational.store_commands.run_store_command` |
 | `apply_command` | `chrona command-apply` | `operational.store_commands.run_store_command` |
 
-The first four tools are read-only. There is no Store-read tool and no `compare_baseline` (#812). The two command
-tools are section 2.1.
+The first four tools are read-only. `render_review` and `compare_baseline` are read-only too and read a Store
+(section 2.2); the two command tools are section 2.1.
 
 Inputs are closed objects (`additionalProperties: false`). A tool accepts no integrity override, no system-font
 switch, no font-metrics or icon-catalog path, no typesetter descriptor, no output path, no Store root and no
@@ -98,6 +102,41 @@ commands of Spec 10 through the one dispatch the command line uses (`operational
 - Not guaranteed: two processes writing one Store at once (a command line and a server). The server serializes only its
   own calls; a lost race on a revision directory fails and never overwrites.
 
+### 2.2 The Store read tools
+
+`render_review {contextReference, storeConfig?, inline?}` is `chrona render-review --store-config`, and
+`compare_baseline {baselineReference, candidateReference, storeConfig?}` is `chrona baseline-compare`. Both are
+read-only (`readOnlyHint: true`), need no `--allow-write` and write no file, and both call the functions the command
+line calls (`usecases.context_review`, `operational.store_reads`), so for the same Store they return the bytes the
+command line returns.
+
+- `contextReference`, `baselineReference` and `candidateReference` are workspace paths to resource-reference YAML files
+  (the files `--context-reference`, `--baseline-reference` and `--candidate-reference` take). `storeConfig` is as in
+  section 2.1: a workspace path, default `.chrona/store.yaml`, no ancestor search; every Store root in it is resolved
+  with symlinks followed and must lie strictly inside the workspace, otherwise the call is `failed` with
+  `E_MCP_PATH_CONTAINMENT` (`sourceRef` `/storeConfig`) before any file is read from a root.
+- **Integrity.** The reference's Store must be declared by the configuration (`E_STORE_CONFIG_REQUIRED`). Every
+  reference the closure reads is verified against its pinned `contentIdentity` (a mismatch is refused), and the
+  configuration's `integrity` for that Store applies exactly as on the command line: `required` (the default) demands
+  an identity on every reference, `optional` is the configuration owner's explicit setting. No argument can lower it:
+  there is no snapshot-root, store-identity, integrity or `--allow-missing-content-identity` input.
+- `render_review` renders the immutable Render Context, which fixes its own target format and viewport, so neither is an
+  input. Result: `format` (the Context's target: `svg`, `png`, `pdf`, `typst`, `tikz`), `contentIdentity` (`sha256:` of the
+  artifact bytes the command line writes to `--output`), `byteLength`, `inlined` and `warnings` (as `render_draft`). With
+  `inline: artifact` (the default) an `svg` target travels as an `svg` payload and a `png` target as an `image`; any other
+  target is not inlined. An inline SVG over 1 MiB or PNG over 1.5 MiB is `E_MCP_RESULT_TOO_LARGE` (use `inline: none` or
+  the command line). A closure or render failure carries the code the command line reports (for example
+  `E_CONTENT_IDENTITY` or `E_STORE_REFERENCE` from the closure); an unschedulable Project is `rejected`.
+- `compare_baseline` result: the envelope plus `automationResult`, the Automation Result
+  (`chrona/automation-result/v0.2`, `operation: baseline-compare`) exactly as the command line writes it to `--result`
+  (a date is its ISO text); serialized with sorted keys it is byte-equal to that file. Accepted is `ok` (it carries
+  `comparison`); a refused comparison is `rejected` with one diagnostic per code of the result (component `operational`,
+  `sourceRef` `/`, the engine's message, which names the reference and the mismatch) and `automationResult` kept. A
+  result that serializes to more than 1 MiB is `E_MCP_RESULT_TOO_LARGE`. The command line exits 2 for a rejected result;
+  the tool reports `rejected`.
+- A Store read has no size cap beyond the file system: Store content is identity-bound and an asset such as a font is
+  legitimately large. A reference or configuration file over 2 MiB is `E_MCP_INPUT_TOO_LARGE`.
+
 ## 3. Result
 
 Every result is the envelope `{status, diagnostics, omittedDiagnostics?}` plus the tool's own fields, which are
@@ -145,8 +184,8 @@ present only when `status` is `ok` (a field a call had already produced, such as
 
 ## 4. Workspace rules
 
-A tool call reads files below one directory, resolved once when the server starts, and `apply_command` writes a Store
-below it. A filesystem root is refused (`E_MCP_WORKSPACE_TOO_BROAD`).
+A tool call reads files below one directory, resolved once when the server starts, the Store tools read a Store below
+it, and `apply_command` writes a Store below it. A filesystem root is refused (`E_MCP_WORKSPACE_TOO_BROAD`).
 
 1. Every path argument passes `resolve_store_address(workspace, value, charset="file-name")` of
    `core/store_address.py`: `/`-separated, no backslash, colon, drive, anchor, control character, empty or all-dot
@@ -158,8 +197,8 @@ below it. A filesystem root is refused (`E_MCP_WORKSPACE_TOO_BROAD`).
    no larger than 2 MiB (`E_MCP_INPUT_TOO_LARGE`).
 4. References inside a document (preset members, Theme `extends`, assets) keep the guard against the document's own
    directory; the tool adds nothing there.
-5. The Store roots named by a Store configuration are held to the same rule (section 2.1): inside the workspace, symlinks
-   followed.
+5. The Store roots named by a Store configuration are held to the same rule (sections 2.1 and 2.2): inside the workspace,
+   symlinks followed.
 6. The check and the open are separate steps. The guard is a safety rail for a local process the user started, not a
    sandbox against an agent that has its own shell.
 
@@ -178,7 +217,7 @@ rasterizer of the `render` extra.
 | `E_MCP_PATH_SYNTAX` | A path argument fails the syntax rules or names a reserved device. |
 | `E_MCP_PATH_CONTAINMENT` | A path resolves outside the workspace. |
 | `E_MCP_INPUT_TOO_LARGE` | An input file exceeds 2 MiB. |
-| `E_MCP_RESULT_TOO_LARGE` | An inline payload exceeds its cap; lower the viewport, use `inline: none`, or use the command line. |
+| `E_MCP_RESULT_TOO_LARGE` | An inline payload, or a `compare_baseline` result, exceeds its cap; lower the viewport (`render_draft`), use `inline: none`, or use the command line. |
 | `E_MCP_WORKSPACE_TOO_BROAD` | The workspace is a filesystem root. |
 | `E_MCP_WRITE_DISABLED` | `apply_command` is called on a server started without `--allow-write` (status `failed`). |
 | `E_MCP_UNAVAILABLE` | `chrona mcp` is run without the optional SDK; the message says `pip install 'chrona[mcp]'` (exit 2). |

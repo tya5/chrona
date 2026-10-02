@@ -1,17 +1,20 @@
 """The SDK-free agent tools: a registry of tools over the use cases, and their result contract.
 
 Four read-only tools front the use cases an agent needs to plan and draw a schedule:
-``validate_project``, ``schedule_project``, ``render_draft`` and ``list_presets``; two tools front the
-revision-bound Store commands, ``check_command`` (read-only) and ``apply_command`` (writes, only when the
-caller passes ``allow_write``; #813). Tool set ``chrona/agent-tools/v0.3``, Spec 66. A tool is a use case
+``validate_project``, ``schedule_project``, ``render_draft`` and ``list_presets``; two read-only tools read a
+Store, ``render_review`` and ``compare_baseline`` (#812); two tools front the revision-bound Store commands,
+``check_command`` (read-only) and ``apply_command`` (writes, only when the caller passes ``allow_write``; #813).
+Tool set ``chrona/agent-tools/v0.4``, Spec 66. A tool is a use case
 with a typed envelope: ``call_tool(scope, name, arguments)`` validates the arguments against the
 tool's input schema, runs the use case on files inside a ``WorkspaceScope`` and returns a
 ``ToolResult`` whose ``structured`` mapping is the envelope (``status``, ``diagnostics``)
 plus the tool's own fields. A transport adapter (the MCP binding) only moves that result.
 
 This module imports no SDK and prints nothing. The one tool that writes, ``apply_command``, writes only
-through the shared dispatch of the Store commands (``operational.store_commands``, the one operational
-module a tool may import) into Store roots that lie inside the workspace; every other tool writes nothing.
+through the shared dispatch of the Store commands (``operational.store_commands``) into Store roots that lie
+inside the workspace; every other tool writes nothing. The Store tools reach a Store through that module's
+``open_store_reader`` and ``operational.store_reads`` (the two operational modules a tool may import), and a Store
+root outside the workspace is refused before anything is read from it.
 Failures reach the caller as typed diagnostics through ``usecases.failure_report``, never as a traceback,
 and every mapping it returns is sorted so a result is a pure function of the workspace bytes and the
 arguments.
@@ -24,7 +27,9 @@ import json
 import logging
 import re
 from dataclasses import dataclass, replace
+from datetime import date
 from functools import cache
+from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 
 from jsonschema.exceptions import best_match
@@ -33,7 +38,9 @@ from chrona.app.agent_workspace import WorkspaceScope
 from chrona.operational.store_commands import (
     StoreRootOutsideWorkspace, open_store_reader, parse_command_request, run_store_command,
 )
+from chrona.operational.store_reads import compare_store_baseline, load_reference, snapshot_reader_for
 from chrona.resources import validator_for_schema
+from chrona.usecases.context_review import render_context_closure, resolve_context_closure
 from chrona.usecases.draft_render import DEFAULT_VIEWPORT, DraftRenderRequest, render_draft, warning_payloads
 from chrona.usecases.failure_report import (
     FailureReport, StableFailure, collapse_records, diagnostic_record, rejection_report, report_failure,
@@ -41,7 +48,7 @@ from chrona.usecases.failure_report import (
 from chrona.usecases.preset_library import list_builtin_presets
 from chrona.usecases.project_checks import schedule_project_file, validate_project_file
 
-TOOL_SET_VERSION = "chrona/agent-tools/v0.3"
+TOOL_SET_VERSION = "chrona/agent-tools/v0.4"
 COMMAND_TYPES = frozenset({"applyActualIntakeBatch", "captureSnapshot"})
 """The command types the command tools accept in this release (#813); anything else is rejected before a Store is opened."""
 DEFAULT_STORE_CONFIG = ".chrona/store.yaml"
@@ -50,6 +57,8 @@ DEFAULT_PRESET_ID = "chrona-default-draft"
 MAX_DIAGNOSTICS = 50
 MAX_INLINE_SVG_BYTES = 1024 * 1024
 MAX_INLINE_PNG_BYTES = 1536 * 1024
+MAX_COMPARISON_BYTES = 1024 * 1024
+"""A ``compare_baseline`` Automation Result that serializes to more than this is ``E_MCP_RESULT_TOO_LARGE`` (#812)."""
 RASTERIZER_UNAVAILABLE = "E_RENDER_RASTERIZER_UNAVAILABLE"
 
 _LOG = logging.getLogger("chrona.agent")
@@ -191,6 +200,41 @@ def _command_output_schema() -> dict[str, Any]:
                        "--result: operation, status accepted or rejected, requestContentIdentity, inputs, diagnostics, "
                        "resultTarget when accepted, replayed true for a replay. Present when the engine produced one.",
     }})
+
+
+_STORE_CONFIG_PROPERTY = {
+    **_WORKSPACE_PATH_PROPERTY,
+    "description": "A '/'-separated workspace path to a Store configuration (chrona/store-config/v0.1). Omitted means "
+                   f"{DEFAULT_STORE_CONFIG}. Every Store root in it must lie strictly inside the workspace, and its "
+                   "integrity setting applies: a tool input cannot lower it.",
+}
+
+
+def _reference_property(what: str) -> dict[str, Any]:
+    return {**_WORKSPACE_PATH_PROPERTY, "description": f"A '/'-separated workspace path to {what}: a YAML "
+            "resource reference (id, kind, store, address, revision, contentIdentity). The file must already exist "
+            "inside the workspace."}
+
+
+def _render_review_input_schema() -> dict[str, Any]:
+    return _input_schema({
+        "contextReference": _reference_property("the immutable Render Context to render, as chrona render-review "
+                                                "--context-reference takes"),
+        "storeConfig": copy.deepcopy(_STORE_CONFIG_PROPERTY),
+        "inline": {"enum": ["none", "artifact"], "default": "artifact",
+                   "description": "'artifact' carries an SVG target as SVG text and a PNG target as an image; any other "
+                                  "target, or 'none', carries only the structured result."},
+    }, ["contextReference"])
+
+
+def _compare_baseline_input_schema() -> dict[str, Any]:
+    return _input_schema({
+        "baselineReference": _reference_property("the named baseline (a snapshot-ref), as chrona baseline-compare "
+                                                 "--baseline-reference takes"),
+        "candidateReference": _reference_property("the candidate Project, as chrona baseline-compare "
+                                                  "--candidate-reference takes"),
+        "storeConfig": copy.deepcopy(_STORE_CONFIG_PROPERTY),
+    }, ["baselineReference", "candidateReference"])
 
 
 # --- result construction -------------------------------------------------------------------------------------
@@ -399,6 +443,16 @@ def _too_large(kind: str, limit: int) -> StableFailure:
     )
 
 
+def _too_large_review(kind: str, limit: int) -> StableFailure:
+    """An immutable Context fixes its own viewport, so the advice is ``inline: none`` or the command line only."""
+    return StableFailure(
+        "E_MCP_RESULT_TOO_LARGE",
+        f"the inline {kind} is larger than {limit} bytes; use inline 'none' (the identity and length still describe "
+        "it) or render to a file with chrona render-review, which has no size cap",
+        "mcp", "/inline", 2,
+    )
+
+
 def _list_presets(call: _Call, arguments: dict[str, Any]) -> ToolResult:
     return ToolResult(call.ok(presets=list_builtin_presets(), default=DEFAULT_PRESET_ID))
 
@@ -408,19 +462,87 @@ def _list_presets(call: _Call, arguments: dict[str, Any]) -> ToolResult:
 _COMMAND_SOURCE_REFS = {"E_AUTOMATION_BASE_REVISION": "/baseRevision", "E_AUTOMATION_OPERATION_UNSUPPORTED": "/type"}
 
 
+def _open_contained_store(call: _Call, config_path: Path) -> Any:
+    """Open the Store configuration; every Store root in it must lie strictly inside the workspace (Spec 66 section 4).
+
+    The one entry for every tool that reaches a Store: a root outside the workspace is ``E_MCP_PATH_CONTAINMENT`` before
+    any file is read from or written to a root.
+    """
+    try:
+        return open_store_reader(config_path, contained_in=call.scope.root)
+    except StoreRootOutsideWorkspace as error:
+        raise StableFailure(
+            "E_MCP_PATH_CONTAINMENT",
+            "a Store root in the configuration resolves outside the workspace; every Store root must lie inside it",
+            "mcp", "/storeConfig", 2,
+        ) from error
+
+
+def _iso_date(item: object) -> str:
+    if isinstance(item, date):
+        return item.isoformat()
+    raise TypeError(f"Not JSON serializable: {type(item)!r}")
+
+
+def _render_review(call: _Call, arguments: dict[str, Any]) -> ToolResult:
+    context_path = call.scope.resolve_path(arguments["contextReference"], "/contextReference")
+    config_path = call.scope.resolve_path(arguments.get("storeConfig", DEFAULT_STORE_CONFIG), "/storeConfig")
+    reference = load_reference(context_path)
+    config = _open_contained_store(call, config_path)
+    reader, root = snapshot_reader_for(config, reference)
+    closure = resolve_context_closure(reference, reader)
+    rendered = render_context_closure(closure, root)
+    artifact, kind = rendered.artifact, closure.context.target.kind
+    attachments: list[Attachment] = []
+    if arguments.get("inline", "artifact") == "artifact":
+        if kind == "svg":
+            if len(artifact.content) > MAX_INLINE_SVG_BYTES:
+                raise _too_large_review("SVG", MAX_INLINE_SVG_BYTES)
+            attachments.append(Attachment("svg", artifact.media_type, artifact.content,
+                                          f"chrona://render/{_identity(artifact.content)}.svg"))
+        elif kind == "png":
+            if len(artifact.content) > MAX_INLINE_PNG_BYTES:
+                raise _too_large_review("PNG", MAX_INLINE_PNG_BYTES)
+            attachments.append(Attachment("image", artifact.media_type, artifact.content))
+    fields = call.ok(
+        format=kind, contentIdentity=_identity(artifact.content), byteLength=len(artifact.content),
+        inlined=bool(attachments),
+        warnings=[_warning(call.scope, payload) for payload in warning_payloads(rendered)],
+    )
+    return ToolResult(fields, tuple(attachments))
+
+
+def _compare_baseline(call: _Call, arguments: dict[str, Any]) -> ToolResult:
+    baseline_path = call.scope.resolve_path(arguments["baselineReference"], "/baselineReference")
+    candidate_path = call.scope.resolve_path(arguments["candidateReference"], "/candidateReference")
+    config_path = call.scope.resolve_path(arguments.get("storeConfig", DEFAULT_STORE_CONFIG), "/storeConfig")
+    baseline, candidate = load_reference(baseline_path), load_reference(candidate_path)
+    config = _open_contained_store(call, config_path)
+    # The command line writes the result with a date as ISO text (cli._json_default); the same round trip keeps the bytes equal.
+    result = json.loads(json.dumps(compare_store_baseline(config, baseline, candidate), default=_iso_date))
+    if len(json.dumps(result, sort_keys=True).encode("utf-8")) > MAX_COMPARISON_BYTES:
+        raise StableFailure(
+            "E_MCP_RESULT_TOO_LARGE",
+            f"the comparison result is larger than {MAX_COMPARISON_BYTES} bytes; use chrona baseline-compare, "
+            "which writes it to a file with no size cap",
+            "mcp", "/", 2,
+        )
+    result = call.scope.scrub_value(result)
+    if result["status"] == "accepted":
+        return ToolResult(call.ok(automationResult=result))
+    call.carried["automationResult"] = result
+    # One row per code of the result, with the engine's message; the whole input is the source (a code such as
+    # E_BASELINE_REFERENCE covers the baseline, its project and the candidate alike).
+    rows = [diagnostic_record(item["code"], item.get("message", ""), "operational") for item in result["diagnostics"]]
+    return call.rejected(FailureReport("rejected", collapse_records(rows), 1))
+
+
 def _command_tool(operation: str) -> Callable[[_Call, dict[str, Any]], ToolResult]:
     def handle(call: _Call, arguments: dict[str, Any]) -> ToolResult:
         command_path = call.scope.resolve_path(arguments["command"], "/command")
         config_path = call.scope.resolve_path(arguments.get("storeConfig", DEFAULT_STORE_CONFIG), "/storeConfig")
         command = parse_command_request(command_path.read_text(encoding="utf-8"))
-        try:
-            reader = open_store_reader(config_path, contained_in=call.scope.root)
-        except StoreRootOutsideWorkspace as error:
-            raise StableFailure(
-                "E_MCP_PATH_CONTAINMENT",
-                "a Store root in the configuration resolves outside the workspace; every Store root must lie inside it",
-                "mcp", "/storeConfig", 2,
-            ) from error
+        reader = _open_contained_store(call, config_path)
         result = call.scope.scrub_value(run_store_command(operation, command, reader, allowed_types=COMMAND_TYPES))
         if result["status"] == "accepted":
             return ToolResult(call.ok(automationResult=result))
@@ -508,6 +630,42 @@ _TOOLS: tuple[ToolSpec, ...] = (
             "default": {"type": "string"},
         }),
         _list_presets,
+    ),
+    ToolSpec(
+        "render_review", "Render pinned evidence from a Store",
+        "Render an immutable Render Context from a Store: the same render as chrona render-review with --store-config, "
+        "not a draft. 'contextReference' is a workspace path to the Context's resource reference; 'storeConfig' is a "
+        "workspace path to the Store configuration (default .chrona/store.yaml) and every Store root in it must lie "
+        "inside the workspace. The Context fixes its own format and viewport, so none is an argument. Every reference "
+        "is verified against its pinned contentIdentity, and the Store's integrity setting applies; no argument lowers "
+        "it. Returns the target 'format', the artifact's contentIdentity and byteLength, 'warnings', and with inline "
+        "'artifact' the SVG text or PNG image. The tool is read-only, works without --allow-write, and writes no file.",
+        _render_review_input_schema(),
+        _output_schema({
+            "format": {"enum": ["svg", "png", "pdf", "typst", "tikz"]}, "contentIdentity": {"$ref": "#/$defs/sha256"},
+            "byteLength": {"type": "integer", "minimum": 0}, "inlined": {"type": "boolean"},
+            "warnings": {"type": "array", "items": {"$ref": "#/$defs/diagnostic"}},
+        }),
+        _render_review,
+    ),
+    ToolSpec(
+        "compare_baseline", "Compare a named baseline with a candidate",
+        "Compare a named baseline (a snapshot-ref) with a candidate Project in a Store: the same comparison as chrona "
+        "baseline-compare. Both references are workspace paths; 'storeConfig' is a workspace path to the Store "
+        "configuration (default .chrona/store.yaml) and every Store root in it must lie inside the workspace. Both "
+        "closures are verified against their pinned contentIdentity; no argument lowers the Store's integrity. Returns "
+        "status 'ok' with automationResult (the Automation Result the command line writes: the changed objects and both "
+        "schedules), or 'rejected' with typed diagnostics. The tool is read-only, works without --allow-write, and "
+        "writes no file.",
+        _compare_baseline_input_schema(),
+        _output_schema({"automationResult": {
+            "type": "object",
+            "description": "The Automation Result (chrona/automation-result/v0.2) exactly as chrona baseline-compare "
+                           "writes it to --result: operation baseline-compare, status accepted or rejected, "
+                           "requestContentIdentity, inputs, diagnostics and, when accepted, comparison (changes, "
+                           "beforeSchedule, afterSchedule). Present when the comparison produced one.",
+        }}),
+        _compare_baseline,
     ),
     ToolSpec(
         "check_command", "Preview a Store command",

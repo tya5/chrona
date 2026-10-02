@@ -77,6 +77,8 @@ the same diagnostics as JSON. Otherwise use the commands. Read a result's `statu
 | `schedule_project` | `chrona schedule` | Placements, critical path and `W_DEADLINE` warnings; also rejects a date or bound the dependencies contradict. |
 | `render_draft` | `chrona render` | A PNG preview, or the SVG with `inline: svg`; writes no file. |
 | `list_presets` | `chrona preset list` | The ids `render_draft` takes as `preset`. |
+| `render_review` | `chrona render-review` | Pinned evidence: renders an immutable Render Context from a Store (see below); read-only. |
+| `compare_baseline` | `chrona baseline-compare` | What changed between a named baseline and a candidate Project in a Store; read-only. |
 | `check_command` | `chrona command-check` | Previews a Store command (an Actual intake batch or a baseline capture); writes nothing. |
 | `apply_command` | `chrona command-apply` | Applies that command to the Store. It runs only if the user started the server with `--allow-write`. |
 
@@ -131,7 +133,21 @@ narrower viewport can clip or drop labels; see the warnings below.
 
 Reach for explicit `--view`, `--theme`, `--scheme` or `--layout` files only to override
 one member of a preset. Immutable Render Contexts, snapshots and Store configuration are
-the pinned-evidence path; do not use them unless the user asks for pinned evidence.
+the pinned-evidence path (next section); do not use them unless the user asks for pinned evidence.
+
+## Pinned evidence from a Store (only when the user asks)
+
+`render` draws a draft of a Project file. Evidence that must be reproducible is another path: an
+immutable **Render Context** (the closed list of Project, View, Theme, Color Scheme, Layout and fonts
+to render, each pinned by a content identity) lives in a **Store**, which a **Store configuration**
+(`.chrona/store.yaml`) names. A reference file (`id`, `kind`, `store`, `address`, `revision`,
+`contentIdentity`) points at one resource in it. `render_review` takes the Context's reference file and
+renders exactly that, in the Context's own format and viewport (so it has no `preset` or `viewport`);
+`compare_baseline` takes a named baseline's reference and a candidate Project's reference and returns
+what changed. Both only read, refuse a Store root outside the workspace, and refuse bytes that do not
+match the pinned identity; no argument loosens that. Do not edit a Store file or unpin a reference to
+make a call pass, and do not change a Store's `integrity` setting: it is the user's. Without the tools,
+`chrona render-review` and `chrona baseline-compare` do the same work.
 
 ## Warnings and diagnostics
 
