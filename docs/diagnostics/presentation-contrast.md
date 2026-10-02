@@ -4,24 +4,24 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 
 | Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| actual | `actual` | required | 3.000 | 25 | 176 | 3.204 | 7.730 | 0 |
+| actual | `actual` | required | 3.000 | 26 | 180 | 3.204 | 7.730 | 0 |
 | annotation-box | `annotation-note-box` | enabled | 1.100 | 5 | 13 | 1.435 | 1.435 | 0 |
 | annotation-text | `annotation-note-text` | required | 4.500 | 5 | 13 | 13.973 | 13.973 | 0 |
-| axis-band | `axis-band-decoration` | enabled | 1.100 | 27 | 78 | 1.574 | 1.773 | 0 |
+| axis-band | `axis-band-decoration` | enabled | 1.100 | 28 | 80 | 1.574 | 1.773 | 0 |
 | axis-band | `axis-band-decoration2` | enabled | 1.100 | 4 | 32 | 1.119 | 1.154 | 0 |
-| calendar-closed | `calendar-closed` | enabled | 1.100 | 27 | 1008 | 1.392 | 1.414 | 0 |
+| calendar-closed | `calendar-closed` | enabled | 1.100 | 28 | 1056 | 1.392 | 1.414 | 0 |
 | finish-delta | `variance-ahead` | deemphasized | 3.000 | 1 | 3 | 7.708 | 7.708 | 0 |
-| finish-delta | `variance-behind` | required | 4.500 | 14 | 30 | 4.562 | 5.571 | 0 |
+| finish-delta | `variance-behind` | required | 4.500 | 15 | 32 | 4.562 | 5.571 | 0 |
 | finish-delta | `variance-on-track` | required | 4.500 | 2 | 5 | 5.692 | 5.692 | 0 |
-| group-decoration | `group-band` | enabled | 1.100 | 26 | 69 | 1.116 | 1.129 | 0 |
-| legend-swatch | `actual` | required | 3.000 | 18 | 18 | 9.523 | 16.268 | 0 |
+| group-decoration | `group-band` | enabled | 1.100 | 27 | 72 | 1.116 | 1.124 | 0 |
+| legend-swatch | `actual` | required | 3.000 | 19 | 19 | 9.523 | 16.268 | 0 |
 | legend-swatch | `calendar-closed` | enabled | 1.100 | 3 | 3 | 1.460 | 1.460 | 0 |
-| legend-swatch | `planned` | required | 3.000 | 19 | 40 | 10.019 | 16.354 | 0 |
-| missingActual | `missing-actual` | required | 3.000 | 17 | 22 | 4.436 | 14.573 | 0 |
+| legend-swatch | `planned` | required | 3.000 | 20 | 41 | 10.019 | 16.354 | 0 |
+| missingActual | `missing-actual` | required | 3.000 | 18 | 23 | 4.436 | 14.573 | 0 |
 | network-node | `network-node` | required | 3.000 | 2 | 32 | 16.354 | 17.050 | 0 |
-| planned | `planned` | required | 3.000 | 27 | 368 | 6.157 | 13.238 | 0 |
-| progress-fill | `progress-fill` | required | 3.000 | 15 | 53 | 3.216 | 4.789 | 0 |
-| row-decoration | `row-band` | enabled | 1.100 | 7 | 28 | 1.116 | 1.116 | 0 |
+| planned | `planned` | required | 3.000 | 28 | 376 | 6.157 | 13.973 | 0 |
+| progress-fill | `progress-fill` | required | 3.000 | 16 | 56 | 3.216 | 4.789 | 0 |
+| row-decoration | `row-band` | enabled | 1.100 | 8 | 32 | 1.116 | 1.116 | 0 |
 | snapshot | `snapshot` | required | 3.000 | 2 | 10 | 13.238 | 14.512 | 0 |
 | summary-bar | `summary-bar` | required | 3.000 | 2 | 2 | 5.817 | 6.712 | 0 |
 | table-cell | `missing-actual-cell` | required | 4.500 | 3 | 3 | 5.448 | 7.032 | 0 |
@@ -204,6 +204,83 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 | `examples/controller-z/generated/annotations.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 602.048, 244.800 | `actual:firmware:firmware` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1110.907, 480.800 | `actual:performance:performance` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1069.083, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `actual:evb-arrival:evb-arrival` | `actual` | 1054.912, 408.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `actual:firmware:firmware` | `actual` | 602.048, 244.800 | `planned:firmware:firmware` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `actual:performance:performance` | `actual` | 1110.907, 480.800 | `planned:performance:performance` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `actual:silicon-bringup:silicon-bringup` | `actual` | 1069.083, 316.800 | `planned:silicon-bringup:silicon-bringup` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 724.035, 92.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.579 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `axis-band-rect:0:1` | `axis-band-decoration` | 1246.835, 92.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.579 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-02-01` | `calendar-closed` | 518.400, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-02-07` | `calendar-closed` | 560.224, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-02-08` | `calendar-closed` | 567.195, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-02-11` | `calendar-closed` | 588.107, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-02-14` | `calendar-closed` | 609.019, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-02-15` | `calendar-closed` | 615.989, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-02-21` | `calendar-closed` | 657.813, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-02-22` | `calendar-closed` | 664.784, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-02-28` | `calendar-closed` | 706.608, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-03-01` | `calendar-closed` | 713.579, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-03-07` | `calendar-closed` | 755.403, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-03-08` | `calendar-closed` | 762.373, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-03-14` | `calendar-closed` | 804.197, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-03-15` | `calendar-closed` | 811.168, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-03-21` | `calendar-closed` | 852.992, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-03-22` | `calendar-closed` | 859.963, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-03-28` | `calendar-closed` | 901.787, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-03-29` | `calendar-closed` | 908.757, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-04-04` | `calendar-closed` | 950.581, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-04-05` | `calendar-closed` | 957.552, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-04-11` | `calendar-closed` | 999.376, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-04-12` | `calendar-closed` | 1006.347, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-04-18` | `calendar-closed` | 1048.171, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-04-19` | `calendar-closed` | 1055.141, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-04-25` | `calendar-closed` | 1096.965, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-04-26` | `calendar-closed` | 1103.936, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-04-29` | `calendar-closed` | 1124.848, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-05-02` | `calendar-closed` | 1145.760, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-05-03` | `calendar-closed` | 1152.731, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-05-04` | `calendar-closed` | 1159.701, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-05-05` | `calendar-closed` | 1166.672, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-05-06` | `calendar-closed` | 1173.643, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-05-09` | `calendar-closed` | 1194.555, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-05-10` | `calendar-closed` | 1201.525, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-05-16` | `calendar-closed` | 1243.349, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-05-17` | `calendar-closed` | 1250.320, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-05-23` | `calendar-closed` | 1292.144, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-05-24` | `calendar-closed` | 1299.115, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-05-30` | `calendar-closed` | 1340.939, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-05-31` | `calendar-closed` | 1347.909, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-06-06` | `calendar-closed` | 1389.733, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-06-07` | `calendar-closed` | 1396.704, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-06-13` | `calendar-closed` | 1438.528, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-06-14` | `calendar-closed` | 1445.499, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-06-20` | `calendar-closed` | 1487.323, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-06-21` | `calendar-closed` | 1494.293, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-06-27` | `calendar-closed` | 1536.117, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `calendar-closed:2026-06-28` | `calendar-closed` | 1543.088, 468.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `variance:firmware:firmware` | `variance-behind` | 1036.101, 244.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `variance:silicon-bringup:silicon-bringup` | `variance-behind` | 1142.275, 345.300 | `group:fw-team` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `group:factory-team` | `group-band` | 1041.200, 670.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `group:fw-team` | `group-band` | 1041.200, 234.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `group:validation-team` | `group-band` | 1041.200, 470.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `legend-swatch:actual` | `actual` | 935.338, 876.538 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `legend-swatch:planned` | `planned` | 935.338, 851.338 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `missing-actual:architecture:architecture` | `missing-actual` | 602.048, 172.800 | `group:fw-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `planned:architecture:architecture` | `planned` | 525.371, 172.800 | `group:fw-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `planned:dvt:dvt` | `planned` | 1215.467, 552.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `planned:evb-arrival:evb-arrival` | `planned` | 1029.200, 408.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `planned:firmware:firmware` | `planned` | 602.048, 244.800 | `group:fw-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `planned:ga:ga` | `planned` | 1545.029, 716.800 | `group:factory-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `planned:performance:performance` | `planned` | 1062.112, 480.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `planned:pvt:pvt` | `planned` | 1313.056, 644.800 | `group:factory-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1062.112, 316.800 | `group:fw-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 602.048, 244.800 | `actual:firmware:firmware` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1110.907, 480.800 | `actual:performance:performance` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1069.083, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `row-band:architecture` | `row-band` | 253.200, 172.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `row-band:performance` | `row-band` | 253.200, 480.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `row-band:pvt` | `row-band` | 253.200, 644.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
+| `examples/controller-z/generated/axis-ticks.scene.json` | `row-band:silicon-bringup` | `row-band` | 253.200, 316.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
 | `examples/controller-z/generated/axis-tiers.scene.json` | `actual:evb-arrival:evb-arrival` | `actual` | 1054.912, 408.800 | `group:validation-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
 | `examples/controller-z/generated/axis-tiers.scene.json` | `actual:firmware:firmware` | `actual` | 602.048, 244.800 | `planned:firmware:firmware` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
 | `examples/controller-z/generated/axis-tiers.scene.json` | `actual:performance:performance` | `actual` | 1110.907, 480.800 | `planned:performance:performance` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
@@ -2083,4 +2160,4 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 Every non-exclusive decoration role is enabled in committed Scene evidence; group-band or group-header-band supplies the group concept when there are no corpus errors.
 
 
-Findings: 2044; errors: 0.
+Findings: 2121; errors: 0.
