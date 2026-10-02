@@ -574,11 +574,18 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
     for placed in placed_surface.shapes:
         if placed.semantic_id in axis_band_semantic_ids():
             band = semantic_binding(placed.semantic_id)
-            primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, "timeline-axis", "axis", band.purpose,
-                                             band.scene_role,
-                                             (float(placed.bounds.inline), float(placed.bounds.block),
-                                              float(placed.bounds.inline_size), float(placed.bounds.block_size)),
-                                             paint_order=placed.paint_order))
+            cell = (float(placed.bounds.inline), float(placed.bounds.block),
+                    float(placed.bounds.inline_size), float(placed.bounds.block_size))
+            if placed.kind == "Chamfer":
+                # A chamfered cell (#491) is Layout's closed polygon, carried as a Symbol outline.
+                primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.SYMBOL, "timeline-axis", "axis",
+                                                 band.purpose, band.scene_role, cell,
+                                                 symbol=SymbolGeometry(placed.path_commands),
+                                                 paint_order=placed.paint_order))
+            else:
+                primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, "timeline-axis", "axis", band.purpose,
+                                                 band.scene_role, cell, paint_order=placed.paint_order,
+                                                 corner_radius=placed.corner_radius or None))
         if placed.semantic_id in {"axisGrid", "axisGridMinor", "axisRule", "axisCellSeparator"}:
             bounds = (float(placed.bounds.inline), float(placed.bounds.block), float(placed.bounds.inline_size), float(placed.bounds.block_size))
             axis_grid = semantic_binding(placed.semantic_id)

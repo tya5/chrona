@@ -2,7 +2,7 @@
 
 Living record for [#491](https://github.com/tya5/chrona/issues/491): baseline, design plan, design, architecture review and implementation plan. Edited in place; Git keeps history. Normative behavior lives in [Specification 39](../../specification/39-axis-and-observation-clarity.md), "Axis cell corners (#491)".
 
-**Public base:** `7028bf2c` on `main`. **Status:** this record is the design publication (docs only, no code); implementation slices are section 7.
+**Public base:** `7028bf2c` on `main`. **Status:** sections 1 to 7 were published in PR #953 (`faa76be5`, docs only). I491-1 (code) is in review; I491-2 (slide) and the acceptance review follow.
 
 ## 1. Published baseline
 
