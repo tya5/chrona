@@ -2,7 +2,7 @@
 
 Living record for [#585](https://github.com/tya5/chrona/issues/585): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history.
 
-**Public base:** `7028bf2c` on `main`. **Status:** the record (PR #955, `d8f9be03`) is published. I585-1 (horizontal compression) is implemented in its code PR; I585-2 (vertical writing) is next. The owner-level decisions are recorded as a comment on the issue.
+**Public base:** `7028bf2c` on `main`. **Status:** all slices are done: the record (PR #955), I585-1 horizontal compression (PR #959), the design correction for lane rows (PR #960) and I585-2 vertical writing (PR #966). The [acceptance review](../../reviews/current/issue-585-text-treatments-acceptance-review-2026-10-03.md) is published; successors for the narrowed and beyond-row gaps are [#981](https://github.com/tya5/chrona/issues/981), [#982](https://github.com/tya5/chrona/issues/982) and [#983](https://github.com/tya5/chrona/issues/983). The owner-level decisions are recorded as a comment on the issue.
 
 ## 1. Published baseline
 
