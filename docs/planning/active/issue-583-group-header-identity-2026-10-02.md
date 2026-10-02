@@ -2,7 +2,7 @@
 
 Living record for [#583](https://github.com/tya5/chrona/issues/583): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history.
 
-**Public base:** `f1624ab6` on `main`. **Status:** design plan published (section 4, PR #866). Design and architecture review (sections 5 and 6, this revision). The implementation plan (section 7) follows as its own docs PR before any code.
+**Public base:** `f1624ab6` on `main`. **Status:** design plan published (section 4, PR #866). Design and architecture review (sections 5 and 6, this revision). Implementation plan (section 7, this revision); no product code before it is merged.
 
 ## 1. Published baseline
 
@@ -163,3 +163,38 @@ None. Every property is optional and its omission is today's output. The new cod
 - **Cross-agent files.** No edit to the Project schema, date-range Scene/layout (#582), Theme/adapters surface decoration (#587) or presets/parts (#718). Shared files: `schemas/view-v0.28.schema.yaml`, `schemas/schema-inventory-v0.1.yaml`, Specification 50 section 3.4 (the normative home of group presentation), Specification 06 section 6 (View grouping) and Specification 60 section 6 (a one-line note that a group tint is a separate declaration).
 - **Rejected options.** (a) Template in the Theme: puts data content in appearance and breaks "same View, two Themes". (b) A structured parts list: more schema for no extra expressiveness at this depth. (c) A second `colorEncoding` target `group`: changes an existing closed field. (d) A View literal map for the secondary title: duplicates Project facts. (e) A silent arabic or blank fallback: hides an authoring error. Reversal: each property is optional and removable without a version bump while no committed document uses it.
 - **Owner-level judgement calls** (options, choice, why and reversal recorded on #583): D1 View versus Theme, D2 string template versus parts, D4 entity field versus literal, D6 a separate `grouping.tint` versus widening `colorEncoding`, and the `kanji-formal` form added beside `kanji`.
+
+## 7. Implementation plan
+
+Publication units, in order. Each code PR is `Refs #583`, carries the S0 gate result when it touches a schema, regenerates nothing by hand (the derived sync regenerates evidence), and leaves every committed example byte-identical.
+
+### I583-1: header text template (one code PR)
+
+- **Schema.** `schemas/view-v0.28.schema.yaml`: optional `grouping.header` (`text` required; `ordinal` enum default `arabic`; `first`; `secondary.entityField`), in place per Spec 56 section 3.2. Regenerate `schemas/schema-inventory-v0.1.yaml` with `tools/schema_inventory.py`. Run `python -m tools.schema_equivalence --base-rev origin/main` and record the result in the PR (expected: an optional-property insertion, with the L1 expected-delta entry if the gate asks).
+- **Contract.** `contracts/resources.py`: typed `ViewGroupHeader`, `ViewGrouping.header` (trailing default `None`), validation `E_VIEW_GROUP_HEADER_TEMPLATE` / `E_VIEW_GROUP_HEADER_UNUSABLE`.
+- **Composition.** A pure module `presentation/model/group_header_text.py`: template parse (closed placeholders, brace escapes), the five ordinal forms, `compose_group_header(...)`. `review/v05_content.py` builds `SurfaceContentInput.group_headers` from `projection.rows` order, entity titles and entity fields; `model/surface_content.py` gains the field with default `()`. Errors `E_REVIEW_GROUP_ORDINAL_RANGE`, `E_REVIEW_GROUP_HEADER_SECONDARY`.
+- **Layout.** `layout/surface_groups.py:compose_group_presentation` reads the completed string per group, falling back to today's label when absent.
+- **Diagnostics.** Register the new codes in `usecases/diagnostic_messages.py` and regenerate `docs/diagnostics/inventory.md` through the repository tool (the derived sync owns it when it is generated).
+- **Specifications.** Spec 50 section 3.4 (header text), Spec 06 section 6 (View grouping), each a short normative paragraph.
+- **Tests (synthetic, no `examples/`).** Unit: each ordinal form at its edges and one past (`roman` 3999/4000, `kanji` 99/100, `zero-padded` width with 9, 10, 100 groups), the template parser (placeholders, escapes, every rejection), the first-group variant, the secondary title and its failures. Contract: each `E_VIEW_GROUP_HEADER_*`. Integration through `tests/support/synthetic_review.py`: `ACT {ordinal} · {title}` with each form, a Sunday-style `first`, a bilingual secondary, the header text measured and bounded in Layout, and default byte identity (the same Project and View with and without an empty-effect `header` is not claimed; the View without the property equals the base render). **Mutation checks** on every rule (off-by-one ordinal, `first` chosen for the wrong position, brace escape dropped, secondary read from the wrong field, range check removed, padding width fixed).
+- **Verification.** Focused tests, conformance, the non-corpus suite once, and regenerate all public slides locally to prove no byte moved. Render a synthetic slide to an image for each of the five forms and a composed phrase, and read it in full.
+- **Boundary.** Merged alone; no Theme change; I583-2 does not depend on it.
+
+### I583-2: per-group tint (one code PR)
+
+- **Schema.** `grouping.tint` (`scale`, optional `domain`), in place, same S0 and inventory steps.
+- **Contract.** `ViewGrouping.tint`, `E_VIEW_GROUP_TINT_UNUSABLE`.
+- **Resolution.** `usecases/render_review.py` resolves `resolve_color_scale` for `target: group` once, with the display-order group ids as `observed`; collisions join the existing `scale_collisions` path so `W_PRESENTATION_SCALE_NOT_SEPARABLE` reaches the Scene diagnostics.
+- **Content and paint.** `SurfaceContentInput.group_tints` (default `()`); `scene/v05_builder.py:_complete_primitive_paint` replaces the fill (solid) or stroke (outline) of the `group-decoration` and `group-header-band` primitives of a tinted group.
+- **Specifications.** Spec 50 section 3.4 and a one-line note in Spec 60 section 6.
+- **Tests.** Unit: resolution (palette and slots, firstAppearance and listed domain, unmapped scale). Integration: a tint on a table and timeline band (one Rect spans both, asserted from the Scene), the unselected group under `groups: alternate`, an outline treatment, opacity kept, the separability warning, the contrast gate failing on a too-close tint and passing on a legible one, default byte identity. Mutation checks: tint keyed by the wrong id, fill replaced on the row band, opacity dropped, domain order ignored.
+- **Verification.** As I583-1, plus a rendered image per Theme treatment (solid, outline).
+- **Boundary.** Merged alone.
+
+### I583-3: tab decoration
+
+Not planned in detail here. It starts with its own design PR (section 5.3) against `main` at that time, because it needs a Theme schema widening shared with #587. If the budget ends first, it is recorded as one short successor issue (searched for duplicates first) and #583's tab row is narrowed with that link.
+
+### Acceptance review
+
+After the last merged slice: one `docs/reviews/current/issue-583-group-header-identity-acceptance-review-<date>.md` with `<!-- chrona:literal-acceptance/v1 -->`, a row per criterion of section 2 (met, or narrowed with a successor link), `tools/check_issue_acceptance_reviews.py` run unpiped, the review merged, the exact-main three-OS run located on the review commit and cited, and the issue closed only when every row is met or narrowed with a successor and the full matrix (ubuntu, macOS, Windows) and `reproduction-newest-python` are green on that commit.
