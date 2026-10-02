@@ -112,7 +112,7 @@ only their text gains the value.
   automation readers move to S3, because the automation code reads `str(error)` as the code and must split code from
   detail first. One golden row changed on purpose (`render-review-store-config-missing`: the message now says the
   file is not a file). Tests: `test_owner_detail_resources.py` (mutation-checked: restoring two bare raises kills 3).
-- S3 automation-result rows (D2): implemented (this PR). `stamp_automation_result` gives every diagnostic row a message
+- S3 automation-result rows (D2): PR #913 (merged). `stamp_automation_result` gives every diagnostic row a message
   (the producer's, else the shared curated or derived sentence); `diagnostic_row` splits `"E_X: detail"`; owner detail in
   `references`, `command_engine`, `store_config`, `baselines`, `storage/*` and the `cli.py` literal (30 sites, 621 to 592);
   the schema declares optional `message` (additive, `schema_equivalence` passes after dropping the stale L1 `added` marker
@@ -129,3 +129,5 @@ only their text gains the value.
   materializer carry it. Tests extend `test_theme_inheritance.py` (mutation-checked: 3 kills).
 - S4d View and workspace contracts (`presentation/contracts/resources.py`, 12 sites, 519 to 506): the `E_VIEW_*` table, hierarchy-column, period and label
   refusals, `E_AUTHORING_TASK_ID`, `E_AUTHORING_ACTUAL_TASK` and `E_THEME_ASSET_REFERENCE` name the column, id or catalog (mutation-checked: 2 kills).
+- S4e lane membership (`presentation/review/lane_membership.py`, 12 sites, 506 to 494): every `E_REVIEW_LANE_*` input check names the item, object, key or rule
+  (mutation-checked: 1 kill).
