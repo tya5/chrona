@@ -122,7 +122,7 @@ $defs:
     additionalProperties: false
     properties:
       address:
-        description: "Relative, traversal-free catalog asset address."
+        description: "Relative, traversal-free catalog asset address. The loose pattern is deliberate: this version serves the vector-only bundled Material catalog, which has no raster address (#715 decision B); icon-catalog-v0.4 uses the strict Store-address grammar."
         examples: [assets/programme-mark.png]
         type: string
         minLength: 1
