@@ -44,9 +44,13 @@ ALLOWED: dict[str, set[str]] = {
 # module prefix -> what a module under it may import, stricter than its package's row (#142). The agent tool
 # core reaches the product through use cases only, plus the core modules that are contract types and the
 # packaged-resource loader (the one validator factory a guard test requires), so a tool can never import
-# presentation, scheduling, storage or operational code directly.
+# presentation, scheduling, storage or operational code directly. One named module outside those packages is allowed
+# (#813): the tool core and the command line call the same dispatch of the revision-bound Store commands,
+# `chrona.operational.store_commands`; it cannot be a use case because `operational` imports `usecases`, and a tool
+# still cannot import the command engine or any other `operational` module.
 MODULE_RULES: dict[str, dict[str, set[str]]] = {
-    "chrona.app.agent_": {"packages": {"usecases", "resources"}, "core_modules": {"chrona.core.store_address"}},
+    "chrona.app.agent_": {"packages": {"usecases", "resources"}, "core_modules": {"chrona.core.store_address"},
+                          "modules": {"chrona.operational.store_commands"}},
     "chrona.app.mcp_server": {"packages": {"usecases", "resources"}, "core_modules": {"chrona.core.store_address"}},
 }
 
@@ -60,6 +64,8 @@ def module_rule(module: str) -> dict[str, set[str]] | None:
 
 
 def breaks_module_rule(rule: dict[str, set[str]], target: str, package: str) -> bool:
+    if target in rule.get("modules", set()):
+        return False
     other = package_of(target)
     if other == package:  # a sibling in the same package: only another module under a module rule
         return module_rule(target) is None

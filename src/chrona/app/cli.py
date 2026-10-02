@@ -28,10 +28,10 @@ from chrona.storage.loader import load_project
 from chrona.storage.revision_store import LocalSnapshotReader
 from chrona.operational.baselines import compare_baseline
 from chrona.operational.store_config import load_store_config
-from chrona.operational.command_engine import apply_actual_command, check_command
+from chrona.operational.store_commands import OPERATIONS, run_store_command
 from chrona.usecases.authoring_commands import apply_authoring_command, parse_authoring_command, workspace_revision
 from chrona.operational.authoring_commands import cas_write_authoring_aggregate, cas_write_authoring_workspace, read_authoring_workspace
-from chrona.operational.resources import parse_command, parse_document, stamp_automation_result
+from chrona.operational.resources import parse_command, parse_document
 from chrona.usecases.materialize import MaterializationError, materialize
 from chrona.usecases.local_authoring import discover_store_configuration, initialize_project
 from chrona.usecases.terse_compile import PlanCompilation, compile_plan, input_unreadable, output_exists, position_findings
@@ -313,7 +313,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--store-config")
     command.add_argument("--result", required=True)
 
-    for name in ("command-check", "command-apply", "actual-intake", "actual-resolve", "baseline-capture"):
+    for name in OPERATIONS:
         command = sub.add_parser(name, help=f"run M26 {name} command")
         command.add_argument("--command", dest="command_path", required=True)
         command.add_argument("--store-config")
@@ -640,18 +640,13 @@ def _run(args: argparse.Namespace) -> None:
             result = copy_material_symbols_outline_rounded_catalog(Path(args.output))
         print(json.dumps(result, sort_keys=True))
         return
-    if args.command in {"command-check", "command-apply", "actual-intake", "actual-resolve", "baseline-capture"}:
+    if args.command in OPERATIONS:
         try:
             command = parse_command(Path(args.command_path).read_text(encoding="utf-8"))
             reader = _store_reader(args)
         except OSError as error:
             raise CliFailure("E_AUTOMATION_RESULT_IO", str(error), "automation", exit_code=3) from error
-        required_type = {"actual-intake": "applyActualIntakeBatch", "actual-resolve": "resolveActualObservation", "baseline-capture": "captureSnapshot"}.get(args.command)
-        if required_type and command["type"] != required_type:
-            result = stamp_automation_result({"version": "chrona/automation-result/v0.2", "operation": args.command, "status": "rejected", "requestContentIdentity": "sha256:" + "0" * 64, "inputs": [command["target"]], "diagnostics": [{"code": "E_AUTOMATION_OPERATION_UNSUPPORTED", "message": f"{args.command} needs a command of type {required_type!r}, got {command['type']!r}"}], "artifacts": []})
-        else:
-            result = check_command(reader, command) if args.command == "command-check" else apply_actual_command(reader, command)
-            result["operation"] = args.command
+        result = run_store_command(args.command, command, reader)
         _write_result(Path(args.result), result)
         if result["status"] != "accepted":
             raise SystemExit(2)
