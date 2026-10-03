@@ -6,7 +6,7 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 
 | Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors | Warnings |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| actual | `actual` | required | 3.000 | 50 | 324 | 3.204 | 7.708 | 0 | 0 |
+| actual | `actual` | required | 3.000 | 51 | 328 | 3.204 | 7.708 | 0 | 0 |
 | annotation-artwork | `annotation-artwork` | enabled | 1.100 | 1 | 13 | 17.128 | 17.128 | 0 | 0 |
 | annotation-box | `annotation-note-box` | enabled | 1.100 | 10 | 28 | 1.056 | 1.435 | 0 | 1 |
 | annotation-kind-accent | `annotation-kind-accent` | enabled | 1.100 | 3 | 8 | 4.837 | 6.132 | 0 | 0 |
@@ -18,63 +18,63 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | annotation-text | `annotation-callout-text` | required | 4.500 | 3 | 5 | 14.191 | 15.434 | 0 | 0 |
 | annotation-text | `annotation-highlight-text` | required | 4.500 | 2 | 2 | 16.268 | 16.698 | 0 | 0 |
 | annotation-text | `annotation-note-text` | required | 4.500 | 10 | 28 | 13.973 | 13.973 | 0 | 0 |
-| as-of-label | `text` | required | 4.500 | 48 | 48 | 4.774 | 14.573 | 0 | 0 |
-| axis-band | `axis-band-decoration` | enabled | 1.100 | 52 | 138 | 1.124 | 1.579 | 0 | 0 |
+| as-of-label | `text` | required | 4.500 | 49 | 49 | 4.774 | 14.573 | 0 | 0 |
+| axis-band | `axis-band-decoration` | enabled | 1.100 | 53 | 140 | 1.124 | 1.579 | 0 | 0 |
 | axis-band | `axis-band-decoration2` | absent | 1.100 | 1 | 0 | — | — | 0 | 0 |
 | axis-band | `axis-band-decoration2` | enabled | 1.100 | 5 | 37 | 1.119 | 1.146 | 0 | 0 |
 | axis-label | `axis-label2` | required | 4.500 | 6 | 20 | 5.727 | 10.019 | 0 | 0 |
 | axis-label | `axis-label3` | required | 4.500 | 6 | 46 | 5.448 | 8.683 | 0 | 0 |
-| axis-label | `text` | required | 4.500 | 46 | 403 | 8.629 | 10.306 | 0 | 0 |
+| axis-label | `text` | required | 4.500 | 47 | 410 | 8.629 | 10.306 | 0 | 0 |
 | calendar-closed | `calendar-closed` | absent | 1.100 | 1 | 0 | — | — | 0 | 0 |
-| calendar-closed | `calendar-closed` | enabled | 1.100 | 51 | 2009 | 1.083 | 1.414 | 0 | 78 |
+| calendar-closed | `calendar-closed` | enabled | 1.100 | 52 | 2057 | 1.083 | 1.414 | 0 | 78 |
 | calendar-exception | `calendar-exception` | enabled | 1.100 | 2 | 9 | 1.240 | 1.559 | 0 | 0 |
 | finish-delta | `variance-ahead` | deemphasized | 3.000 | 3 | 9 | 7.708 | 7.708 | 0 | 0 |
-| finish-delta | `variance-behind` | required | 4.500 | 36 | 82 | 4.562 | 5.571 | 0 | 0 |
+| finish-delta | `variance-behind` | required | 4.500 | 37 | 84 | 4.562 | 5.571 | 0 | 0 |
 | finish-delta | `variance-on-track` | required | 4.500 | 4 | 11 | 5.692 | 5.692 | 0 | 0 |
 | group-decoration | `group-band` | absent | 1.100 | 7 | 0 | — | — | 0 | 0 |
-| group-decoration | `group-band` | enabled | 1.100 | 44 | 135 | 1.116 | 1.119 | 0 | 0 |
-| group-detail | `text` | required | 4.500 | 30 | 90 | 11.935 | 16.268 | 0 | 0 |
-| group-header | `text` | required | 4.500 | 38 | 157 | 11.935 | 16.268 | 0 | 0 |
+| group-decoration | `group-band` | enabled | 1.100 | 45 | 138 | 1.116 | 1.116 | 0 | 0 |
+| group-detail | `text` | required | 4.500 | 31 | 93 | 11.935 | 16.268 | 0 | 0 |
+| group-header | `text` | required | 4.500 | 39 | 160 | 11.935 | 16.268 | 0 | 0 |
 | group-header-band | `group-header-band` | absent | 1.100 | 6 | 0 | — | — | 0 | 0 |
 | group-header-band | `group-header-band` | enabled | 1.100 | 1 | 6 | 1.126 | 1.154 | 0 | 0 |
 | group-tab | `group-tab` | enabled | 1.100 | 1 | 9 | 2.259 | 7.583 | 0 | 0 |
-| legend-label | `text` | required | 4.500 | 44 | 163 | 10.019 | 16.354 | 0 | 0 |
-| legend-swatch | `actual` | required | 3.000 | 43 | 43 | 6.442 | 16.268 | 0 | 0 |
+| legend-label | `text` | required | 4.500 | 45 | 165 | 10.019 | 16.354 | 0 | 0 |
+| legend-swatch | `actual` | required | 3.000 | 44 | 44 | 6.442 | 16.268 | 0 | 0 |
 | legend-swatch | `calendar-closed` | enabled | 1.100 | 5 | 5 | 1.083 | 1.460 | 0 | 1 |
 | legend-swatch | `calendar-exception` | enabled | 1.100 | 1 | 1 | 1.240 | 1.240 | 0 | 0 |
 | legend-swatch | `gate` | required | 3.000 | 1 | 1 | 17.747 | 17.747 | 0 | 0 |
 | legend-swatch | `missing-actual` | required | 3.000 | 2 | 2 | 5.817 | 11.742 | 0 | 0 |
-| legend-swatch | `planned` | required | 3.000 | 44 | 89 | 4.777 | 16.354 | 0 | 0 |
+| legend-swatch | `planned` | required | 3.000 | 45 | 90 | 4.777 | 16.354 | 0 | 0 |
 | legend-swatch | `snapshot` | required | 3.000 | 2 | 2 | 5.817 | 11.742 | 0 | 0 |
-| member-label | `member-label-inside-planned` | required | 4.500 | 27 | 27 | 4.651 | 5.727 | 0 | 0 |
-| member-label | `text` | required | 4.500 | 44 | 424 | 9.348 | 14.573 | 0 | 0 |
-| milestone-digest-entry | `text` | required | 4.500 | 30 | 60 | 11.935 | 16.268 | 0 | 0 |
-| missingActual | `missing-actual` | required | 3.000 | 41 | 50 | 3.973 | 14.573 | 0 | 0 |
+| member-label | `member-label-inside-planned` | required | 4.500 | 28 | 28 | 4.651 | 5.727 | 0 | 0 |
+| member-label | `text` | required | 4.500 | 45 | 431 | 9.348 | 14.573 | 0 | 0 |
+| milestone-digest-entry | `text` | required | 4.500 | 31 | 62 | 11.935 | 16.268 | 0 | 0 |
+| missingActual | `missing-actual` | required | 3.000 | 42 | 51 | 3.973 | 14.573 | 0 | 0 |
 | network-node | `network-node` | required | 3.000 | 2 | 32 | 16.354 | 17.050 | 0 | 0 |
 | note-index | `note-index` | required | 4.500 | 9 | 16 | 4.597 | 6.157 | 0 | 0 |
 | period-band | `period-band` | enabled | 1.100 | 6 | 6 | 1.255 | 1.337 | 0 | 0 |
 | period-label | `period-label` | required | 4.500 | 6 | 6 | 4.636 | 13.973 | 0 | 0 |
 | planned | `gate` | required | 3.000 | 2 | 10 | 14.143 | 17.747 | 0 | 0 |
-| planned | `planned` | required | 3.000 | 52 | 648 | 3.807 | 13.238 | 0 | 0 |
-| progress-fill | `progress-fill` | required | 3.000 | 39 | 115 | 3.216 | 4.789 | 0 | 0 |
-| project-note | `text` | required | 4.500 | 39 | 87 | 10.019 | 16.268 | 0 | 0 |
-| relation-label | `text` | required | 4.500 | 24 | 139 | 6.663 | 14.573 | 0 | 0 |
+| planned | `planned` | required | 3.000 | 53 | 656 | 3.807 | 13.238 | 0 | 0 |
+| progress-fill | `progress-fill` | required | 3.000 | 40 | 118 | 3.216 | 4.789 | 0 | 0 |
+| project-note | `text` | required | 4.500 | 40 | 89 | 10.019 | 16.268 | 0 | 0 |
+| relation-label | `text` | required | 4.500 | 25 | 145 | 6.663 | 14.573 | 0 | 0 |
 | row-decoration | `row-band` | absent | 1.100 | 7 | 0 | — | — | 0 | 0 |
-| row-decoration | `row-band` | enabled | 1.100 | 20 | 80 | 1.111 | 1.116 | 0 | 0 |
+| row-decoration | `row-band` | enabled | 1.100 | 21 | 84 | 1.111 | 1.116 | 0 | 0 |
 | snapshot | `snapshot` | required | 3.000 | 4 | 24 | 5.373 | 14.573 | 0 | 0 |
-| subtitle-text | `text` | required | 4.500 | 3 | 3 | 16.268 | 16.268 | 0 | 0 |
+| subtitle-text | `text` | required | 4.500 | 4 | 4 | 16.268 | 16.268 | 0 | 0 |
 | summary-bar | `summary-bar` | required | 3.000 | 2 | 2 | 5.817 | 6.712 | 0 | 0 |
 | summary-figure-caption | `subtitle` | required | 4.500 | 7 | 24 | 7.032 | 7.032 | 0 | 0 |
 | summary-figure-value | `metric` | required | 4.500 | 7 | 24 | 16.354 | 16.354 | 0 | 0 |
 | summary-header | `text` | required | 4.500 | 8 | 8 | 16.354 | 16.354 | 0 | 0 |
 | summary-metric | `text` | required | 4.500 | 1 | 1 | 16.354 | 16.354 | 0 | 0 |
 | table-cell | `missing-actual-cell` | required | 4.500 | 3 | 3 | 5.448 | 7.032 | 0 | 0 |
-| table-cell | `text` | required | 4.500 | 52 | 1184 | 8.683 | 16.354 | 0 | 0 |
+| table-cell | `text` | required | 4.500 | 53 | 1192 | 8.683 | 16.354 | 0 | 0 |
 | table-cell | `variance-ahead` | deemphasized | 3.000 | 4 | 12 | 4.312 | 9.523 | 0 | 0 |
 | table-cell | `variance-behind` | required | 4.500 | 11 | 44 | 5.438 | 6.747 | 0 | 0 |
 | table-cell | `variance-on-track` | required | 4.500 | 8 | 22 | 5.448 | 7.032 | 0 | 0 |
-| table-column-label | `text` | required | 4.500 | 50 | 96 | 10.019 | 16.354 | 0 | 0 |
-| title-text | `text` | required | 4.500 | 54 | 86 | 10.019 | 16.268 | 0 | 0 |
+| table-column-label | `text` | required | 4.500 | 51 | 97 | 10.019 | 16.354 | 0 | 0 |
+| title-text | `text` | required | 4.500 | 55 | 87 | 10.019 | 16.268 | 0 | 0 |
 
 ## Per-primitive grounds
 
@@ -584,6 +584,128 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | `examples/controller-z/generated/annotations.scene.json` | `cell:silicon-bringup:Workstream` | `text` | 75.765, 316.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `column:Workstream` | `text` | 64.565, 78.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `title` | `text` | 800.000, 42.456 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `actual:evb-arrival:evb-arrival` | `actual` | 1054.912, 428.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `actual:firmware:firmware` | `actual` | 602.048, 264.400 | `planned:firmware:firmware` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `actual:performance:performance` | `actual` | 1110.907, 500.400 | `planned:performance:performance` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `actual:silicon-bringup:silicon-bringup` | `actual` | 1069.083, 336.400 | `planned:silicon-bringup:silicon-bringup` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `as-of-label` | `text` | 1271.232, 785.700 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 718.035, 112.400 | `canvas` | canvas | `#FFFFFF` | fill | 1.579 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `axis-band-rect:0:1` | `axis-band-decoration` | 1252.835, 112.400 | `canvas` | canvas | `#FFFFFF` | fill | 1.579 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `axis-label:2:0` | `text` | 724.035, 95.600 | `axis-band-rect:0:0` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `axis-label:2:1` | `text` | 1246.835, 95.600 | `axis-band-rect:0:1` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `axis-label:3:0` | `text` | 528.588, 110.000 | `axis-band-rect:0:0` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `axis-label:3:1` | `text` | 724.865, 110.000 | `axis-band-rect:0:0` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `axis-label:3:2` | `text` | 939.671, 110.000 | `axis-band-rect:0:1` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `axis-label:3:3` | `text` | 1150.657, 110.000 | `axis-band-rect:0:1` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `axis-label:3:4` | `text` | 1363.934, 110.000 | `axis-band-rect:0:1` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-02-01` | `calendar-closed` | 506.400, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-02-07` | `calendar-closed` | 560.224, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-02-08` | `calendar-closed` | 567.195, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-02-11` | `calendar-closed` | 588.107, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-02-14` | `calendar-closed` | 609.019, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-02-15` | `calendar-closed` | 615.989, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-02-21` | `calendar-closed` | 657.813, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-02-22` | `calendar-closed` | 664.784, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-02-28` | `calendar-closed` | 706.608, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-03-01` | `calendar-closed` | 713.579, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-03-07` | `calendar-closed` | 755.403, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-03-08` | `calendar-closed` | 762.373, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-03-14` | `calendar-closed` | 804.197, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-03-15` | `calendar-closed` | 811.168, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-03-21` | `calendar-closed` | 852.992, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-03-22` | `calendar-closed` | 859.963, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-03-28` | `calendar-closed` | 901.787, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-03-29` | `calendar-closed` | 908.757, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-04-04` | `calendar-closed` | 950.581, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-04-05` | `calendar-closed` | 957.552, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-04-11` | `calendar-closed` | 999.376, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-04-12` | `calendar-closed` | 1006.347, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-04-18` | `calendar-closed` | 1048.171, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-04-19` | `calendar-closed` | 1055.141, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-04-25` | `calendar-closed` | 1096.965, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-04-26` | `calendar-closed` | 1103.936, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-04-29` | `calendar-closed` | 1124.848, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-05-02` | `calendar-closed` | 1145.760, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-05-03` | `calendar-closed` | 1152.731, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-05-04` | `calendar-closed` | 1159.701, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-05-05` | `calendar-closed` | 1166.672, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-05-06` | `calendar-closed` | 1173.643, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-05-09` | `calendar-closed` | 1194.555, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-05-10` | `calendar-closed` | 1201.525, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-05-16` | `calendar-closed` | 1243.349, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-05-17` | `calendar-closed` | 1250.320, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-05-23` | `calendar-closed` | 1292.144, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-05-24` | `calendar-closed` | 1299.115, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-05-30` | `calendar-closed` | 1340.939, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-05-31` | `calendar-closed` | 1347.909, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-06-06` | `calendar-closed` | 1389.733, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-06-07` | `calendar-closed` | 1396.704, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-06-13` | `calendar-closed` | 1438.528, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-06-14` | `calendar-closed` | 1445.499, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-06-20` | `calendar-closed` | 1487.323, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-06-21` | `calendar-closed` | 1494.293, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-06-27` | `calendar-closed` | 1536.117, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `calendar-closed:2026-06-28` | `calendar-closed` | 1543.088, 454.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 1.414 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `variance:firmware:firmware` | `variance-behind` | 1036.101, 264.400 | `group:fw-team` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `variance:silicon-bringup:silicon-bringup` | `variance-behind` | 1142.275, 364.900 | `group:fw-team` | flat | `#EEF3F8` | fill | 5.571 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `group:factory-team` | `group-band` | 1041.200, 690.400 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `group:fw-team` | `group-band` | 1041.200, 254.400 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `group:validation-team` | `group-band` | 1041.200, 490.400 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `group-detail:factory-team` | `text` | 108.665, 1003.400 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `group-detail:fw-team` | `text` | 101.098, 866.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `group-detail:validation-team` | `text` | 97.458, 934.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `group-header:factory-team` | `text` | 91.578, 618.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `group-header:fw-team` | `text` | 55.143, 146.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `group-header:validation-team` | `text` | 82.471, 382.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `legend:actual` | `text` | 967.240, 876.538 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `legend:planned` | `text` | 972.772, 851.338 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `legend-swatch:actual` | `actual` | 935.338, 876.538 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `legend-swatch:planned` | `planned` | 935.338, 851.338 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `member-label:dvt:dvt` | `member-label-inside-planned` | 1288.659, 572.400 | `planned:dvt:dvt` | flat | `#3986E6` | fill | 5.727 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `member-label:architecture:architecture` | `text` | 571.709, 167.100 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `member-label:evb-arrival:evb-arrival` | `text` | 977.200, 403.100 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `member-label:firmware:firmware` | `text` | 797.227, 239.100 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `member-label:ga:ga` | `text` | 1509.029, 711.100 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `member-label:performance:performance` | `text` | 1172.451, 475.100 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `member-label:pvt:pvt` | `text` | 1408.821, 639.100 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `member-label:silicon-bringup:silicon-bringup` | `text` | 1124.848, 311.100 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `milestone:evb-arrival` | `text` | 409.357, 846.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `milestone:ga` | `text` | 399.676, 876.000 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `missing-actual:architecture:architecture` | `missing-actual` | 602.048, 192.400 | `group:fw-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `planned:architecture:architecture` | `planned` | 525.371, 192.400 | `group:fw-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `planned:dvt:dvt` | `planned` | 1215.467, 572.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `planned:evb-arrival:evb-arrival` | `planned` | 1029.200, 428.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `planned:firmware:firmware` | `planned` | 602.048, 264.400 | `group:fw-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `planned:ga:ga` | `planned` | 1545.029, 736.400 | `group:factory-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `planned:performance:performance` | `planned` | 1062.112, 500.400 | `group:validation-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `planned:pvt:pvt` | `planned` | 1313.056, 664.400 | `group:factory-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1062.112, 336.400 | `group:fw-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 602.048, 264.400 | `actual:firmware:firmware` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1110.907, 500.400 | `actual:performance:performance` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1069.083, 336.400 | `actual:silicon-bringup:silicon-bringup` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `note:evb-risk` | `text` | 1357.845, 846.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `note:pvt-exit` | `text` | 1407.559, 866.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `relation-label:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 564.486, 228.400 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `relation-label:bringup-to-dvt:silicon-bringup:silicon-bringup:dvt:dvt` | `text` | 1273.732, 323.100 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1112.520, 418.400 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `relation-label:dvt-to-pvt:dvt:dvt:pvt:pvt` | `text` | 1202.883, 618.400 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `relation-label:firmware-to-evb:firmware:firmware:evb-arrival:evb-arrival` | `text` | 971.862, 346.400 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `relation-label:pvt-to-ga:pvt:pvt:ga:ga` | `text` | 1484.808, 750.700 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `row-band:architecture` | `row-band` | 253.200, 192.400 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `row-band:performance` | `row-band` | 253.200, 500.400 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `row-band:pvt` | `row-band` | 253.200, 664.400 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `row-band:silicon-bringup` | `row-band` | 253.200, 336.400 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `subtitle` | `text` | 784.669, 66.656 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `cell:architecture:Workstream` | `text` | 87.861, 192.400 | `row-band:architecture` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `cell:dvt:Workstream` | `text` | 80.749, 572.400 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `cell:evb-arrival:Workstream` | `text` | 59.812, 428.400 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `cell:firmware:Workstream` | `text` | 94.721, 264.400 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `cell:ga:Workstream` | `text` | 87.077, 736.400 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `cell:performance:Workstream` | `text` | 122.672, 500.400 | `row-band:performance` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `cell:pvt:Workstream` | `text` | 111.353, 664.400 | `row-band:pvt` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `cell:silicon-bringup:Workstream` | `text` | 75.765, 336.400 | `row-band:silicon-bringup` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `column:Workstream` | `text` | 64.565, 98.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/as-of-below-plot.scene.json` | `title` | `text` | 800.000, 42.456 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/as-of-cone.scene.json` | `actual:evb-arrival:evb-arrival` | `actual` | 1062.112, 408.800 | `canvas` | canvas | `#0A0A0C` | fill | 9.245 | 3.000 | info |
 | `examples/controller-z/generated/as-of-cone.scene.json` | `actual:firmware:firmware` | `actual` | 602.048, 244.800 | `planned:firmware:firmware` | flat | `#FF7A1A` | stroke | 7.583 | 3.000 | info |
 | `examples/controller-z/generated/as-of-cone.scene.json` | `actual:performance:performance` | `actual` | 1110.907, 480.800 | `planned:performance:performance` | flat | `#FF7A1A` | stroke | 7.583 | 3.000 | info |
@@ -7278,4 +7400,4 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 Every non-exclusive decoration role is enabled in committed Scene evidence; group-band or group-header-band supplies the group concept when there are no corpus errors.
 
 
-Findings: 7214; errors: 0; warnings: 80.
+Findings: 7336; errors: 0; warnings: 80.
