@@ -519,7 +519,9 @@ def _scene_contrast_warnings(scene: InspectionScene, theme: Mapping[str, Any]) -
     """
     severity = theme["body"].get("contrastPolicy", {}).get("decoration", "warning")
     findings = evaluate_scene_contrast(scene_document(scene), decoration_severity=severity)
-    blocking = [item for item in findings if item.severity == "error"
+    # Only a decoration can block a render: a mark or text on a translucent host carries the same
+    # `E_SCENE_CONTRAST_GROUND_UNSUPPORTED` code and stays the corpus gate's, as before.
+    blocking = [item for item in findings if item.severity == "error" and item.severity_class == "decoration"
                 and item.code in DECORATION_WARNING_BLOCKING_CODES.values()]
     if blocking:
         first = blocking[0]

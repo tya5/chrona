@@ -119,6 +119,24 @@ def test_a_theme_that_declares_decoration_warning_is_the_default(tmp_path):
     assert declared.artifact.content == default.artifact.content
 
 
+@pytest.mark.parametrize("policy", [None, {"decoration": "warning"}, {"decoration": "error"}])
+def test_a_mark_on_a_translucent_ground_never_fails_a_render_whatever_the_knob(tmp_path, policy):
+    # A mark on a translucent host has the code the decoration knob restores, but it is a legibility finding:
+    # the corpus gate keeps it, and the render does not start failing on it.
+    parts = _parts("accent")
+    # Translucent, but strong enough that every decoration still clears its own floor.
+    parts["theme"]["body"]["values"]["opacity.axis-band"] = {"type": "number", "value": 0.9}
+    if policy is not None:
+        parts["theme"]["body"]["contrastPolicy"] = policy
+    rendered = sr.render(tmp_path, _source(), presentation=parts)
+
+    findings = evaluate_scene_contrast(scene_document(rendered.scene))
+    marks = [item for item in findings if item.severity == "error"]
+    assert marks and {(item.code, item.severity_class) for item in marks} == {
+        ("E_SCENE_CONTRAST_GROUND_UNSUPPORTED", "legibility")}
+    assert rendered.artifact.content
+
+
 def test_the_knob_changes_nothing_about_text_legibility_at_theme_resolution(tmp_path):
     for policy in (None, {"decoration": "warning"}, {"decoration": "error"}):
         parts = _parts("accent")
