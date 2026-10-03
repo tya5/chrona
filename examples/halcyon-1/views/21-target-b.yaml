@@ -19,7 +19,7 @@ body:
       placement: top
   comparison:
     baseline: snapshot
-    baselineMarks: ghost
+    baselineMarks: ghost-when-changed
     missingActualScope: in-progress
     actual: required
     observationSelection: latest
@@ -179,7 +179,11 @@ body:
     source:
       facet: finishDelta
     format: signedDays
-    missing: em-dash
+    missing: blank
+    missingBy:
+      inProgress: em-dash
+      dueUnobserved: blank
+      notYetDue: blank
     align: end
     width: content
     headerOrientation: horizontal
