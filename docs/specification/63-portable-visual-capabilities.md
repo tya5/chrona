@@ -235,3 +235,7 @@ name `as-of-cone` joins the closed set of omitted treatments. A shipped Draft pr
 may declare a cone `decorative-optional`: no cone is a complete visible treatment. PDF,
 Typst and TikZ never receive a gradient. A Scene whose gradient carries stop opacities
 is written as `chrona/scene/v0.7` (optional `opacity` on a gradient stop).
+
+## 10. Annotation artwork (#848)
+
+The artwork of a rectangle annotation container (Specification 07) is a few `Symbol` parts. A fill part needs `mark.symbol-outline`, which every profile admits; a stroke part carries a required line cap and join and so needs `stroke.line-cap` and `stroke.line-join`. Where the selected profile lacks them and an annotation's artwork has a stroke part, the Theme role `annotation-artwork` property `artworkFidelity` decides: `required` (the default) is `E_VISUAL_CAPABILITY_UNSUPPORTED` at `/body/roles/annotation-artwork/artworkFidelity`; `decorative-optional` omits the **whole** artwork of that annotation and reports `I_VISUAL_TREATMENT_OMITTED:role=annotation-artwork;treatment=annotation-artwork;profile=<selected>;paintable=<first rich profile of the target>`. The treatment name `annotation-artwork` joins the closed set of omitted treatments. Layout geometry does not depend on the profile. Typst and TikZ never receive a stroked artwork part; Typst receives no `Symbol` at all.

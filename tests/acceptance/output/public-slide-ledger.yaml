@@ -9,6 +9,7 @@ slides:
   aster-ssd/overview: {axisLabels: 11}
   controller-z-ja/axis-secondary: {axisLabels: 12}
   controller-z-ja/executive: {axisLabels: 7}
+  controller-z/annotation-artwork: {axisLabels: 7, dvtHosted: true}
   controller-z/annotation-kinds: {axisLabels: 7, dvtHosted: true}
   controller-z/annotations: {axisLabels: 7, dvtHosted: true}
   controller-z/as-of-cone: {axisLabels: 7, dvtHosted: true, chips: ['chip:as-of-label']}

@@ -31,7 +31,8 @@ from chrona.presentation.scene.model import (
     requires_lane_member_provenance,
 )
 from chrona.presentation.scene.paint import (
-    AS_OF_CONE_ROLE, PaintFamily, ScenePaintError, complete_icon_path_paints, resolve_cone_paint, resolve_scene_paint,
+    ARTWORK_ROLE, AS_OF_CONE_ROLE, PaintFamily, ScenePaintError, complete_icon_path_paints, resolve_artwork_admission,
+    resolve_cone_paint, resolve_scene_paint,
 )
 from chrona.presentation.scene.stroke_wobble import (
     MAX_OUTLINE_POINTS, WobbleLimitError, complete_path_wobble, complete_rect_wobble,
@@ -107,13 +108,15 @@ def _symbol_primitives(scene_id: str, source_ref: str, source_kind: str, purpose
     primitive identity and delegates each part's paint conversion.
     """
     base_paint_order = shared.pop("paint_order", 0)
+    # Parts stack in ascending paint order, except where the whole glyph is one layer (a note's artwork, #848).
+    order_step = shared.pop("part_order_step", 1)
     if primitive_ids is not None and len(primitive_ids) != len(completed_parts):
         raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", scene_id,
                               "typed lane handoff part count differs from Layout geometry")
     return [ScenePrimitive((primitive_ids[index] if primitive_ids is not None else
                             f"{scene_id}:part{index}" if part.paint_mode is not None else scene_id),
                            PrimitiveKind.SYMBOL, source_ref, source_kind, purpose, visual_role,
-                           bounds, symbol=SymbolGeometry(part.commands), paint_order=base_paint_order + index,
+                           bounds, symbol=SymbolGeometry(part.commands), paint_order=base_paint_order + index * order_step,
                            glyph_paint_mode=part.paint_mode, glyph_paint_color=part.paint_color,
                            glyph_stroke_width=part.stroke_width,
                            glyph_line_cap=part.line_cap, glyph_line_join=part.line_join, **shared)
@@ -148,6 +151,7 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
                             group_tints: Mapping[str, str] | None = None,
                             annotation_kind_paints: Mapping[str, str] | None = None) -> SceneSurface:
     """Attach the sole adapter-ready paint payload to every completed primitive."""
+    surface, artwork_omissions = _admit_artworks(surface, tokens, visual_profile)
     clip_hosts = frozenset(item.clip_source_id for item in surface.primitives if item.clip_source_id)
     try:
         resolved = tuple(_complete_primitive_paint(
@@ -168,7 +172,7 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
     )
     # An omitted as-of cone (#890) has no primitive left to carry paint, but its omission is still reported.
     completed = tuple(item for item in resolved if item[0] is not None)
-    omissions = (*canvas.omissions, *(omission for _, facts in resolved for omission in facts))
+    omissions = (*canvas.omissions, *artwork_omissions, *(omission for _, facts in resolved for omission in facts))
     unique_omissions: list[PaintOmission] = []
     seen: set[tuple[str, str, str, str]] = set()
     for omission in omissions:
@@ -179,6 +183,36 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
     return replace(surface, primitives=tuple(item for item, _ in completed), canvas_paint=canvas.paint,
                    decoration_dispositions=absent_decorations,
                    info_diagnostics=(*surface.info_diagnostics, *unique_omissions))
+
+
+def _admit_artworks(surface: SceneSurface, tokens: ThemeTokenView,
+                    visual_profile: VisualProfile | None) -> tuple[SceneSurface, tuple[PaintOmission, ...]]:
+    """Drop the whole artwork of each annotation the selected profile cannot paint, and report it (#848).
+
+    The decision is per annotation and reads only the completed parts (a stroke part carries a line finish), so
+    a frame is never painted with some of its parts missing and Layout's geometry never depends on the profile.
+    """
+    sources: dict[str, bool] = {}
+    for primitive in surface.primitives:
+        if primitive.visual_role == ARTWORK_ROLE:
+            sources[primitive.source_ref] = sources.get(primitive.source_ref, False) or primitive.glyph_paint_mode == "stroke"
+    if not sources:
+        return surface, ()
+    omitted: set[str] = set()
+    omissions: list[PaintOmission] = []
+    try:
+        for source_ref, needs_finish in sources.items():
+            admission = resolve_artwork_admission(tokens, needs_finish=needs_finish, visual_profile=visual_profile)
+            if not admission.admitted:
+                omitted.add(source_ref)
+                omissions.extend(admission.omissions)
+    except ScenePaintError as error:
+        raise SceneBuildError(error.diagnostic_id, error.path, error.detail) from error
+    if not omitted:
+        return surface, ()
+    kept = tuple(item for item in surface.primitives
+                 if not (item.visual_role == ARTWORK_ROLE and item.source_ref in omitted))
+    return replace(surface, primitives=kept), tuple(omissions)
 
 
 def _visible_extent(primitive: ScenePrimitive) -> tuple[float, float, float, float]:
@@ -751,6 +785,11 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "summary",
                                              summary_bar.purpose, summary_bar.scene_role, bounds,
                                              paint_order=placed.paint_order))
+        elif placed.semantic_id == "annotationArtwork":
+            artwork = semantic_binding("annotationArtwork")
+            primitives.extend(_symbol_primitives(placed.placement_id, placed.source_ref, "annotation", artwork.purpose,
+                                                 artwork.scene_role, bounds, placed.symbol_parts,
+                                                 paint_order=placed.paint_order, part_order_step=0))
         elif placed.semantic_id == "annotationKindStamp":
             stamp = semantic_binding("annotationKindStamp")
             primitives.extend(_symbol_primitives(placed.placement_id, placed.source_ref, "annotation", stamp.purpose,

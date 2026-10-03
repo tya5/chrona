@@ -23,6 +23,7 @@ from chrona.presentation.layout.annotations import (
 from chrona.presentation.layout.annotation_search import (
     nearest_free_box, nearest_free_tail_box, nearest_free_routed_tail_box,
 )
+from chrona.presentation.layout.annotation_artwork import place_artwork
 from chrona.presentation.layout.annotation_kind_frame import EMPTY_FRAME, measure_kind_frame, place_kind_frame
 from chrona.presentation.layout.annotation_tilt import (
     nearest_boundary_point, polygon_commands, rotate_shape, rotate_text, rotated_corners, rotated_extent, tilt_for,
@@ -550,6 +551,13 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                                              semantic_id=presentation.box_semantic_id, annotation=presentation,
                                              paint_order=ANNOTATION_PAINT_ORDER))
             register_rect(f"annotation-box:{annotation_id}", "annotation-box", "annotations", annotation_bounds)
+            # Vector artwork (#848) is ink over the paper the box just painted, under the kind frame and the text.
+            artwork_shape = place_artwork(
+                container.artwork if container is not None else None, annotation_id=annotation_id,
+                presentation=presentation, box=(frame_x, frame_y, frame_width, frame_height), text_size=size,
+                theme_tokens=request.theme_tokens, paint_order=ANNOTATION_PAINT_ORDER, pointer=f"/annotations/{index}")
+            if artwork_shape is not None:
+                shapes.append(rotate_shape(artwork_shape, tilt_center, tilt_angle) if tilt_angle else artwork_shape)
             annotation_text_slot = "annotations" if annotation_slot is not None else timeline.slot_id
             if not kind_measure.empty:
                 kind_shapes, kind_text = place_kind_frame(

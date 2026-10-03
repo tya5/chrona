@@ -211,6 +211,8 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("annotationKindBar", "decoration", "annotation-kind-bar", "annotation-kind-bar", "annotation-kind-bar", ContrastClass.DECORATION),
     _binding("annotationKindAccent", "decoration", "annotation-kind-accent", "annotation-kind-accent", "annotation-kind-accent", ContrastClass.DECORATION),
     _binding("annotationKindStamp", "decoration", "annotation-kind-stamp", "annotation-kind-stamp", "annotation-kind-stamp", ContrastClass.DECORATION),
+    # Vector artwork behind an annotation container (#848): catalogue glyph parts painted over the note box.
+    _binding("annotationArtwork", "decoration", "annotation-artwork", "annotation-artwork", "annotation-artwork", ContrastClass.DECORATION),
     _binding("annotationKindLabel", "label", "annotation-kind-label", "annotation-kind-label", "annotation-kind-label", ContrastClass.STATE_TEXT),
     _binding("annotationKindSecondary", "label", "annotation-kind-secondary", "annotation-kind-secondary", "annotation-kind-secondary", ContrastClass.STATE_TEXT),
     # Summary panels.
