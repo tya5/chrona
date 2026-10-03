@@ -295,7 +295,8 @@ are. *Decoration* paint is ground (closed-day and exception stripes, group, row 
 the note box, the kind bar and accent): a miss of its 1.10 floor, or a decoration on a ground the gate cannot
 read, is a `warning` with a stable code (`W_SCENE_DECORATION_CONTRAST`, `W_SCENE_DECORATION_GROUND_UNSUPPORTED`)
 that is reported and fails nothing. The class comes from the semantic registry, never from a slide; there is
-no per-slide exemption. The normative rule, the codes and the report are in Specification 46 section 8. A
+no per-slide exemption. A Theme that wants a faint decoration to block declares `contrastPolicy.decoration:
+error` (Specification 07). The normative rule, the codes and the report are in Specification 46 section 8. A
 weekend stripe at the owner-approved faint opacity is therefore a warning, and the marks that cross it are still
 judged on its colour.
 
@@ -317,7 +318,8 @@ Contrast is measured as a decoration role at the 1.10 floor over the primitive
 beneath its centre; a band below the floor, or over a translucent host that
 cannot be measured, is a warning (`W_SCENE_DECORATION_CONTRAST`,
 `W_SCENE_DECORATION_GROUND_UNSUPPORTED`) and never fails a render, Theme
-resolution or the corpus gate (#995; Specification 46 section 8). The marks and
+resolution or the corpus gate unless the Theme declares
+`contrastPolicy.decoration: error` (#995; Specification 46 section 8). The marks and
 text that lie on the band keep their blocking floors on the band's colour, and
 a translucent host beneath a mark or text still cannot be judged
 (`E_SCENE_CONTRAST_GROUND_UNSUPPORTED`), so a Theme paints a pattern band
