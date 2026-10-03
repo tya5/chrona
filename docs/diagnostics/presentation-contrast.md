@@ -4427,7 +4427,7 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | `examples/halcyon-1/generated/04-tvac-slip.scene.json` | `note:tvac` | `text` | 214.210, 207.225 | `canvas` | canvas | `#0B1220` | fill | 16.354 | 4.500 | info |
 | `examples/halcyon-1/generated/04-tvac-slip.scene.json` | `note:window` | `text` | 218.815, 185.475 | `canvas` | canvas | `#0B1220` | fill | 16.354 | 4.500 | info |
 | `examples/halcyon-1/generated/04-tvac-slip.scene.json` | `relation-label:emc-psr:emc:emc:group-header:ait:psr` | `text` | 1302.164, 111.625 | `group:ait` | flat | `#142642` | fill | 13.238 | 4.500 | info |
-| `examples/halcyon-1/generated/04-tvac-slip.scene.json` | `relation-label:psr-shipment:group-header:ait:psr:shipment:shipment` | `text` | 1398.034, 148.500 | `group:ait` | flat | `#142642` | fill | 13.238 | 4.500 | info |
+| `examples/halcyon-1/generated/04-tvac-slip.scene.json` | `relation-label:psr-shipment:group-header:ait:psr:shipment:shipment` | `text` | 1398.034, 149.750 | `group:ait` | flat | `#142642` | fill | 13.238 | 4.500 | info |
 | `examples/halcyon-1/generated/04-tvac-slip.scene.json` | `planned:campaign:scenario:tvac-slip:campaign` | `snapshot` | 1409.553, 231.000 | `group:launch` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/04-tvac-slip.scene.json` | `planned:emc:scenario:tvac-slip:emc` | `snapshot` | 1225.997, 151.000 | `group:ait` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/04-tvac-slip.scene.json` | `planned:group-header:ait:scenario:tvac-slip:psr` | `snapshot` | 1332.442, 96.000 | `group:ait` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
