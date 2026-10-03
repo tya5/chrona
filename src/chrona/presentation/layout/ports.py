@@ -106,9 +106,11 @@ def connector_egress_candidates(mark: MarkPlacement, endpoint: str,
     ranked = tuple(sorted(candidates, key=lambda item: (
         abs(item.exposed_port[0] - toward[0]) + abs(item.exposed_port[1] - toward[1]),
         order[item.side])))
-    if entry != "side-when-free" or stub_free is None or mark.mark_shape == "point" or endpoint in {"at", "body"}:
+    point = mark.mark_shape == "point"
+    if (entry not in {"side-when-free", "side"} or stub_free is None
+            or (point and entry != "side") or (endpoint in {"at", "body"} and not (point and endpoint == "at"))):
         return ranked
-    horizontal = ("start" if endpoint == "start" and toward[0] < left
+    horizontal = ("start" if endpoint in {"start", "at"} and toward[0] < left
                   else "end" if endpoint in {"finish", "end"} and toward[0] > right else None)
     plain = next((item for item in ranked if item.side == horizontal), None)
     if plain is None or stub_length <= 0:

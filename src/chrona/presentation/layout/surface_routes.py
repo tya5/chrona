@@ -17,7 +17,7 @@ from chrona.presentation.layout.ports import (
 from chrona.presentation.layout.presentation import TrackPlacement
 from chrona.presentation.layout.relation_terminals import centred_on_route, marker_geometry, trim_for_centred_terminals
 from chrona.presentation.layout.routing import (
-    RouteSearchFailure, RouteSuppressionEvidence, place_relation_route,
+    RouteSearchFailure, RouteSuppressionEvidence, back_route_points, place_relation_route,
     relation_route_quality, repair_self_reversal, select_lane_relation_route,
 )
 from chrona.presentation.layout.path_geometry import flatten_path, rounded_orthogonal_path
@@ -134,7 +134,9 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     instance_anchors: dict[str, list[tuple[str, tuple[float, float]]]] = {}
     comparison_instances: set[str] = set()
     instance_rows: dict[str, str] = {}
+    row_edges: dict[str, tuple[float, float]] = {}
     for review_row, row in zip(context.review_rows, rows, strict=True):
+        row_edges[review_row.row_id] = (float(row.bounds.block), float(row.bounds.block + row.bounds.block_size))
         fallback = (float(row.bounds.inline + row.bounds.inline_size),
                     float(row.bounds.block + row.bounds.block_size / 2))
         for item in review_row.items:
@@ -205,6 +207,49 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         return not obstacles.egress_collisions(ObstacleSegment(*egress.corridor), host_ids=egress.host_ids,
             classes=route_classes, regions=("timeline", "group-header"))
 
+    def back_route(relation, source_mark, target_mark, source_id, target_id, source_nominal):
+        """`entry: side` (#1060): a target the source does not approach from the entry side is entered through the
+        gap between the rows. Returns (egress pair, points) or None when it does not fit; the order then falls back."""
+        endpoint = relation.target_endpoint
+        if (context.layout_manifest.relation_entry != "side" or source_mark is None or target_mark is None
+                or endpoint not in {"start", "at", "finish", "end"}):
+            return None
+        starts = endpoint in {"start", "at"}
+        bounds = target_mark.bounds
+        left, right = float(bounds.inline), float(bounds.inline + bounds.inline_size)
+        if (source_nominal[0] < left) if starts else (source_nominal[0] > right):
+            return None  # the source lies on the approach side: the forward side entry applies
+        source_edges, target_edges = row_edges.get(instance_rows.get(source_id, "")), row_edges.get(instance_rows.get(target_id, ""))
+        if source_edges is None or target_edges is None or source_edges == target_edges:
+            return None
+        below = target_edges[0] > source_edges[0]
+        gap_y = target_edges[0] if below else target_edges[1]
+        far = (-1e9 if starts else 1e9, float(bounds.block))
+        stub = next((item for item in connector_egress_candidates(target_mark, endpoint, far,
+            comparison_clusters.get((target_mark.source_ref, instance_rows[target_id]), ()), entry="side",
+            stub_length=entry_stub_length(relation.semantic_id), stub_free=entry_stub_free)
+            if item.exposed_port != item.semantic_port and item.side == ("start" if starts else "end")), None)
+        if stub is None:
+            return None
+        if source_mark.mark_shape == "point":
+            sx = float(source_mark.bounds.inline) if relation.source_endpoint in {"start", "at"} else float(
+                source_mark.bounds.inline + source_mark.bounds.inline_size)
+            port = (sx, float(source_mark.bounds.block + source_mark.bounds.block_size / 2))
+        else:
+            port = source_mark.start_port if relation.source_endpoint in {"start", "at"} else source_mark.end_port
+        exit_dx = (-1.0 if relation.source_endpoint in {"start", "at"} else 1.0) * entry_stub_length(relation.semantic_id)
+        points = back_route_points(port, exit_dx, gap_y, stub.exposed_port, stub.semantic_port)
+        hosts = (*stub.host_ids, source_mark.placement_id)
+        if len(points) < 3 or not relation_route_quality(points, max_bends=context.layout_manifest.relation_max_bends,
+                max_detour_ratio=context.layout_manifest.relation_max_detour_ratio):
+            return None
+        if any(obstacles.egress_collisions(ObstacleSegment(left_, right_), host_ids=hosts, classes=route_classes,
+                regions=("timeline", "group-header")) for left_, right_ in zip(points, points[1:]) if left_ != right_):
+            return None
+        source_side = "start" if relation.source_endpoint in {"start", "at"} else "end"
+        return ((ConnectorEgress(source_side, port, port, (source_mark.placement_id,)),
+                 ConnectorEgress(stub.side, stub.semantic_port, stub.semantic_port, stub.host_ids)), points)
+
     for relation in request.surface_content.relations:
         source, target, relation_id = relation.source_object_id, relation.target_object_id, relation.relation_id
         for source_id, source_anchor in relation_anchors.get(str(source), ()):
@@ -224,14 +269,17 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     source_nominal, comparison_clusters.get((target_mark.source_ref,
                         instance_rows[target_id]), ()), entry=context.layout_manifest.relation_entry,
                     stub_length=(entry_stub_length(relation.semantic_id)
-                                 if context.layout_manifest.relation_entry == "side-when-free" else 0.0),
+                                 if context.layout_manifest.relation_entry in {"side-when-free", "side"} else 0.0),
                     stub_free=entry_stub_free) if target_mark else
                     (ConnectorEgress(relation.target_endpoint, target_nominal, target_nominal, ()),))
                 port_pairs = tuple((left, right) for left in source_candidates for right in target_candidates)
                 selected_pair: tuple[ConnectorEgress, ConnectorEgress] | None = None
                 points: tuple[tuple[float, float], ...] = ()
                 lane_selection = None
-                if projection.lane_membership is not None:
+                backed = back_route(relation, source_mark, target_mark, source_id, target_id, source_nominal)
+                if backed is not None:
+                    selected_pair, points = backed
+                elif projection.lane_membership is not None:
                     lane_selection = select_lane_relation_route(port_pairs, obstacles=obstacles,
                         bounds=(timeline_bounds[0], route_top, timeline_bounds[0] + timeline_bounds[2], route_bottom),
                         source_host_id=source_mark.placement_id if source_mark else None,
@@ -319,6 +367,13 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     marker_start=marker_start, marker_end=marker_end,
                     label_content=relation_label_content(relation), source_ref=relation_id)
                 relations.append(placed)
+                if (context.layout_manifest.relation_entry == "side" and target_mark is not None
+                        and relation.target_endpoint in {"start", "at", "finish", "end"} and len(points) >= 2):
+                    # #1060: with `entry: side` a relation that still does not enter along the bar is reported
+                    entering_start = relation.target_endpoint in {"start", "at"}
+                    if not (points[-1][1] == points[-2][1]
+                            and ((points[-2][0] < points[-1][0]) if entering_start else (points[-2][0] > points[-1][0]))):
+                        diagnostics.append(f"I_LAYOUT_RELATION_ENTRY_FALLBACK:{scene_id}")
                 dependency_role = semantic_binding(placed.semantic_id).theme_role
                 register_path(scene_id, placed.points,
                     float(request.theme_tokens.number(dependency_role, "strokeWidth")), placed.path_commands)
