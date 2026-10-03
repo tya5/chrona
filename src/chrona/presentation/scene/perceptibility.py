@@ -77,6 +77,7 @@ def evaluate_scene_perceptibility(document: Mapping[str, Any]) -> tuple[ScenePer
         slots = _slots(surface.get("slots"), scene_path)
         primitives = _primitives(surface.get("primitives"), scene_path)
         findings.extend(_suppressed_primitive_findings(scene_path, primitives, suppressed_ids))
+        findings.extend(_relation_duplicate_findings(scene_path, surface.get("primitives")))
         findings.extend(_slot_findings(scene_path, slots, primitives))
         findings.extend(_occlusion_findings(scene_path, primitives))
         findings.extend(_text_intersection_findings(scene_path, primitives))
@@ -90,6 +91,21 @@ def _suppressed_primitive_findings(scene_path: str, primitives: Sequence[_Primit
     return [_finding("E_SCENE_SUPPRESSED_PRIMITIVE_EMITTED", "error", scene_path,
                      (item.primitive_id,), item.slot_id, (), "suppressed")
             for item in primitives if item.primitive_id in suppressed_ids]
+
+
+def _relation_duplicate_findings(scene_path: str, raw_primitives: Any) -> list[ScenePerceptibilityFinding]:
+    """A relation is drawn once: two paths for one relation id are a duplication, never silent (#1031).
+
+    Only relation placements (`relation:` ids) count; the legend's dependency swatch shares the source kind.
+    """
+    paths: dict[str, list[str]] = {}
+    for raw in raw_primitives if isinstance(raw_primitives, list) else ():
+        if (isinstance(raw, Mapping) and raw.get("kind") == "Path" and raw.get("sourceKind") == "relation"
+                and isinstance(raw.get("sourceRef"), str) and str(raw.get("id")).startswith("relation:")):
+            paths.setdefault(raw["sourceRef"], []).append(raw["id"])
+    return [_finding("E_SCENE_RELATION_PATH_DUPLICATE", "error", scene_path, tuple(ids), None,
+                     (("relation", relation), ("paths", len(ids))))
+            for relation, ids in sorted(paths.items()) if len(ids) > 1]
 
 
 def _slots(raw_slots: Any, scene_path: str) -> dict[str, tuple[Rect, str]]:

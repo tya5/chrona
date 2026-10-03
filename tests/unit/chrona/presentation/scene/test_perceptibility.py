@@ -169,3 +169,23 @@ def test_findings_are_ordered_independently_of_primitive_input_order():
 def test_rejects_malformed_or_incomplete_scene_facts(document):
     with pytest.raises(ScenePerceptibilityError, match="E_SCENE_PERCEPTIBILITY_DOCUMENT"):
         evaluate_scene_perceptibility(document)
+
+
+def _relation_path(identifier, relation):
+    return {**_primitive(identifier, "Path"), "sourceKind": "relation", "sourceRef": relation}
+
+
+def test_two_paths_for_one_relation_are_an_error_and_one_path_each_is_not_1031():
+    one_each = _scene(_relation_path("relation:a:x:y", "a"), _relation_path("relation:b:x:y", "b"))
+    assert "E_SCENE_RELATION_PATH_DUPLICATE" not in _codes(one_each)
+    findings = evaluate_scene_perceptibility(_scene(
+        _relation_path("relation:a:x:y", "a"), _relation_path("relation:a:x:snapshot:y", "a"),
+        _relation_path("relation:b:x:y", "b")))
+    finding = next(item for item in findings if item.code == "E_SCENE_RELATION_PATH_DUPLICATE")
+    assert (finding.severity, finding.primitive_ids) == ("error", ("relation:a:x:y", "relation:a:x:snapshot:y"))
+    assert dict(finding.measured_facts) == {"relation": "a", "paths": 2}
+
+
+def test_the_legend_dependency_swatch_is_not_a_relation_path_1031():
+    swatch = _relation_path("legend-swatch:dependency", "dependency")
+    assert "E_SCENE_RELATION_PATH_DUPLICATE" not in _codes(_scene(swatch, _relation_path("relation:dependency", "dependency")))
