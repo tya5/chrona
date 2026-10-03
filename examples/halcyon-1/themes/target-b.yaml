@@ -92,7 +92,6 @@ body:
         parts:
         - d: M50 0L100 50L50 100L0 50Z
           paint: fill
-          color: '#101828'
     milestone-symbol-baseline:
       type: symbol
       value:
@@ -106,6 +105,21 @@ body:
     stroke-width:
       type: number
       value: 1
+    header-size:
+      type: number
+      value: 11
+    header-spacing:
+      type: number
+      value: 0.08
+    opacity.calendar-exception:
+      type: number
+      value: 1
+    note-container:
+      type: annotationContainer
+      value:
+        outline: rectangle
+        cornerRadius: 0
+        contentInsetEm: {top: 0.7, right: 0.7, bottom: 0.7, left: 0.7}
     hatch:
       type: pattern
       value:
@@ -179,7 +193,7 @@ body:
       value: 1
     opacity.calendar-closed:
       type: number
-      value: 0.85
+      value: 1
     mark-height-container:
       type: number
       value: 1
@@ -398,6 +412,7 @@ body:
       iconGap: icon-gap
     annotation-note-box:
       strokeWidth: stroke-width
+      annotationContainer: note-container
     annotation-note-text:
       contrastTreatment: required
       fontFamily: editorial
@@ -437,6 +452,22 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+    gate:
+      strokeWidth: stroke-width
+    tableColumnLabel:
+      fontFamily: editorial
+      fontWeight: weight.regular
+      fontSize: header-size
+      lineHeight: leading.body
+      letterSpacing: header-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+    calendar-exception:
+      backgroundTreatment: fill
+      backgroundPaintOrder: 12
+      opacity: opacity.calendar-exception
     milestoneSymbol:
       symbol: milestone-symbol
     milestoneSymbolActual:
@@ -572,7 +603,7 @@ body:
       strokeWidth: stroke-width
       dash: dash.leader
   colorBindings:
-    axis-rule.stroke: category:rule
+    axis-rule.stroke: rule
     background.fill: surface
     text.fill: text
     member-label-inside-planned.fill: insideLabelPlanned
@@ -613,13 +644,17 @@ body:
     actual.stroke: text
     milestone.fill: text
     missing-actual.fill: accent
-    missing-actual.stroke: surface
+    missing-actual.stroke: accent
     variance-ahead.fill: positive
     variance-on-track.fill: textMuted
     variance-behind.fill: negative
     missing-actual-cell.fill: textMuted
     dependency.stroke: textMuted
-    calendar-closed.fill: surfaceRaised
+    calendar-closed.fill: category:closed
+    calendar-exception.fill: category:exception
+    gate.fill: text
+    gate.stroke: text
+    tableColumnLabel.fill: textMuted
     range.fill: warning
     as-of.stroke: warning
     as-of-label-chip.fill: warning
@@ -631,7 +666,7 @@ body:
     axis-band-decoration2.fill: surfaceRaised
     axis-label2.fill: text
     axis-label3.fill: textMuted
-    axis-cell-separator.stroke: category:rule
+    axis-cell-separator.stroke: rule
     period-band.fill: category:window
     period-label.fill: accent
     annotation-note-leader.stroke: textMuted
