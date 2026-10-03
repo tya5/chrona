@@ -205,6 +205,18 @@ def place_table_columns(*, columns: tuple[TableColumnContent, ...],
     return tuple(placements)
 
 
+def validate_table_text_roles(columns: Any, theme_tokens: Any) -> None:
+    """Fail a View column whose `textRole` names a role the Theme does not declare (#1062).
+
+    The pointer is the View property the author must change; the missing Theme role is in the detail.
+    """
+    for index, column in enumerate(columns):
+        role = getattr(column, "text_role", None)
+        if role is not None and not theme_tokens.has_role(role):
+            raise LayoutError("E_THEME_ROLE_REQUIRED", f"/body/tableColumns/{index}/textRole",
+                              detail=f"the Theme declares no text role {role!r} (/body/roles/{role})")
+
+
 def table_text_line_block(theme_tokens: Any, typography_roles: Any) -> float:
     """Return the tallest line block among the table cell roles a row holds."""
     return max((float(theme_tokens.text_treatment(role).font_size * theme_tokens.text_treatment(role).line_height)

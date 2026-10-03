@@ -137,6 +137,11 @@ slides:
     context: contexts/table-header.yaml
     expectedSvg: generated/table-header.svg
     expectedScene: generated/table-header.scene.json
+  - id: text-roles
+    evidence: "Text set apart per column and for the legend (#1062): a View column that names the Theme text role table-cell-secondary (here the Team column, 12 px in textMuted against 14 px cells) and a Theme that binds legend.fill (textMuted legend labels, swatches unchanged), over the executive sources."
+    context: contexts/text-roles.yaml
+    expectedSvg: generated/text-roles.svg
+    expectedScene: generated/text-roles.scene.json
   - id: gate-paint
     evidence: "Gates painted apart from the bars (#991): a Theme that declares the role gate colours the primary gates with it (here the text ink, as the target's black diamonds) while the bars keep the planned paint, over the executive sources."
     context: contexts/gate-paint.yaml

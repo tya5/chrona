@@ -21,7 +21,9 @@ from chrona.presentation.model.axis_names import axis_name_table
 
 
 def cell_typography_role(column: Any) -> str:
-    """Return the typography role in which one View table column's cells are set."""
+    """Return the typography role in which one View table column's cells are set (`textRole`, #1062, else by format)."""
+    if getattr(column, "text_role", None) is not None:
+        return column.text_role
     return "numeric" if column.format in {"signedDays", "signedNumber"} else "text"
 
 

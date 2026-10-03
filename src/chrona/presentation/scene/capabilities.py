@@ -194,8 +194,10 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
 
     register("text", "Layout text and Scene Text/Icon", _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _SHARED_TEXT_ICON_PAINT,
              scene_kinds=frozenset(("Text", "Icon")))
-    register("heading legend numeric summary", "Layout text measurement",
+    register("heading numeric summary", "Layout text measurement",
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT)
+    register("legend", "Layout legend label measurement and Scene Text",
+             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _SHARED_TEXT_ICON_PAINT, scene_kinds=frozenset(("Text",)))
     register("groupHeader", "Layout text measurement and group tag column",
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("writingMode",)))
     register("axis", "Layout axis-tier measurement and inline visual reservation",
@@ -335,7 +337,7 @@ def theme_role_property_consumer(role: str, property_name: str) -> str | None:
                 if property_name == "fill" and fullmatch(r"group:[A-Za-z][A-Za-z0-9_-]*", role)
                 else None)
     if property_name in _OPEN_AXIS_PROPERTIES:
-        return "View-named axis-tier measurement"
+        return "View-named axis-tier or table column text measurement"
     if property_name in _OPEN_LEGEND_PROPERTIES:
         return "Detail Profile legend fixed-square Rect"
     return None

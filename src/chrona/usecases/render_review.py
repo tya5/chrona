@@ -24,7 +24,7 @@ from chrona.extensions.profiles import validate_profiles
 from chrona.presentation.layout.engine import (measure_natural_normal_flow_block,
                                                resolve_content_block_extent, solve_layout)
 from chrona.presentation.layout.model import LayoutError
-from chrona.presentation.layout.presentation import table_text_line_block
+from chrona.presentation.layout.presentation import table_text_line_block, validate_table_text_roles
 from chrona.presentation.layout.profile import resolve_layout_profile
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources, resolve_theme_metrics
 from chrona.presentation.layout.surface_legend import LegendArrangement, legend_arrangement, legend_source_input
@@ -273,6 +273,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     actual_observations = render_closure.actual_set.observations_input if render_closure.actual_set else None
     table_content = normalize_v05_table_content(projection, project, view, actual_set=actual_observations,
                                                 locale=environment.locale)
+    validate_table_text_roles(view.table_columns, ThemeTokenView(theme))
     source_inputs = _source_inputs(project, view, projection, summary,
                                    annotation_input=_annotation_source_input(
                                        view, visual_requests, icon_assets, theme),
