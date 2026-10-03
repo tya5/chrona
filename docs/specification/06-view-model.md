@@ -261,11 +261,12 @@ A table column MAY declare `missingBy` (optional, #991): the text of an absent v
 
 `comparison.missingActualScope` (optional; omitted or `due-unobserved` is the behaviour above,
 #991) selects which work the missing-Actual **mark** covers; the projected state and every table
-and summary count stay as above. `in-progress` marks only a span that has started, is
-unfinished and has progress below 1 (the owner's rule: an Actual with a `start`, no `finish` and a
-`progress` that is absent or below 1, whether or not it declares `openUntil`; one at progress 1
-without a finish is not in progress and keeps its open Actual), drawn as a span from that start to
-`asOf` in place of its open Actual, and puts no mark on a due-unobserved span or on a gate. It is `E_REVIEW_MISSING_ACTUAL_SCOPE_LANES`
+and summary count stay as above. `in-progress` marks only a span in progress at `asOf` (the
+owner's rule: an observed span with a `start` on or before `asOf`, no `finish`, and a `progress`
+that is absent or below 1; `openUntil: asOf` stays a sufficient explicit signal, even at progress 1;
+a span at progress 1 without a finish or `openUntil`, or one that has not started, is not in
+progress), drawn as a span from that start to `asOf` in place of its open Actual, and puts no mark
+on a due-unobserved span or on a gate. It is `E_REVIEW_MISSING_ACTUAL_SCOPE_LANES`
 with lane rows, whose expected-mark inventory is closed.
 
 ## 9. Annotations and Layout Intent

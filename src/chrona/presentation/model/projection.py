@@ -294,7 +294,7 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     if view.comparison.missing_actual_scope == "in-progress":
         if view.rows.mode == "lanes":
             raise ValueError("E_REVIEW_MISSING_ACTUAL_SCOPE_LANES: comparison.missingActualScope in-progress is not available with lane rows")
-        selected = [replace(item, missing_actual_mark=_in_progress_mark(item)) for item in selected]
+        selected = [replace(item, missing_actual_mark=_in_progress_mark(item, as_of)) for item in selected]
     rows, folded_points = _compose_rows(view, selected, snapshots, scenario_items, project)
     lane_membership = _project_lane_membership(project, rows, view) if view.rows.mode == "lanes" else None
     lane_rows = _project_lane_rows(rows, lane_membership) if lane_membership is not None else ()
@@ -434,21 +434,23 @@ def _network_order_key(item: ReviewItem, view: ViewInput) -> tuple[Any, ...]:
     return (value, item.object_id)
 
 
-def _in_progress_mark(item: ReviewItem) -> str:
-    """`comparison.missingActualScope: in-progress`: a span that has started, is unfinished and has progress below 1.
+def _in_progress_mark(item: ReviewItem, as_of: date | None) -> str:
+    """`comparison.missingActualScope: in-progress`: a span in progress at as-of.
 
-    The owner's rule (#991): an Actual with a `start`, no `finish` and a `progress` that is absent or below 1 is in
-    progress, whether or not it declares `openUntil`; one at progress 1 without a finish is not.
+    The owner's rule (#991): an observed span is in progress when it has started (an actual `start` on or before
+    as-of), has no actual finish, and its progress is below 1 or absent; `openUntil: asOf` stays a sufficient
+    explicit signal. One that has not started, or sits at progress 1 without a finish and without `openUntil`, is not.
     """
     actual = item.actual or {}
     if item.observation_state == ObservationState.DUE_UNOBSERVED:
         return "none"
+    start = actual.get("start")
+    if (item.source_type != "span" or not isinstance(start, date) or as_of is None or start > as_of
+            or actual.get("finish") is not None or actual.get("at") is not None):
+        return "due-end"
     progress = actual.get("progress")
     below_one = progress is None or (isinstance(progress, (int, float)) and not isinstance(progress, bool) and progress < 1)
-    if (item.source_type == "span" and isinstance(actual.get("start"), date)
-            and actual.get("finish") is None and actual.get("at") is None and below_one):
-        return "in-progress"
-    return "due-end"
+    return "in-progress" if actual.get("openUntil") == "asOf" or below_one else "due-end"
 
 
 def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[str, ReviewItem],
