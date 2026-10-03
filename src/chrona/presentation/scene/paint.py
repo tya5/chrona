@@ -130,6 +130,39 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
 
 
 AS_OF_CONE_ROLE = "as-of-cone"
+ARTWORK_ROLE = "annotation-artwork"
+
+
+@dataclass(frozen=True)
+class ArtworkAdmission:
+    """Whether the selected profile paints an annotation artwork, and the omission it reports when it does not (#848)."""
+
+    admitted: bool
+    omissions: tuple[PaintOmission, ...] = ()
+
+
+def resolve_artwork_admission(tokens: ThemeTokenView, *, needs_finish: bool,
+                              visual_profile: VisualProfile | None) -> ArtworkAdmission:
+    """Decide, for the whole artwork of one annotation, whether the profile paints it.
+
+    A fill part needs only the symbol outline every profile admits. A stroke part carries a required line cap and
+    join, so an artwork with one needs `stroke.line-cap` and `stroke.line-join`. Where the profile has neither, the
+    role's `artworkFidelity` decides: `required` (the default) fails with `E_VISUAL_CAPABILITY_UNSUPPORTED`;
+    `decorative-optional` omits the whole artwork (never a frame with its rods dropped) and reports one omission.
+    The decision reads no geometry: the box and the text are exactly what they are with the artwork.
+    """
+    required = frozenset((LINE_CAP, LINE_JOIN))
+    if not needs_finish or visual_profile is None or required.issubset(visual_profile.capabilities):
+        return ArtworkAdmission(True)
+    try:
+        fidelity = _fidelity(tokens, ARTWORK_ROLE, "artworkFidelity")
+        admitted = _admit(visual_profile, required, fidelity, f"/body/roles/{ARTWORK_ROLE}/artworkFidelity")
+    except ThemeTokenError as error:
+        raise ScenePaintError(error.diagnostic_id, error.path) from error
+    if admitted:
+        return ArtworkAdmission(True)
+    return ArtworkAdmission(False, (_omission(ARTWORK_ROLE, "annotation-artwork", "artworkFidelity",
+                                              visual_profile, required),))
 
 
 @dataclass(frozen=True)

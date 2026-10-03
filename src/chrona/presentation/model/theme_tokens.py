@@ -57,6 +57,19 @@ class TextTreatment:
 
 
 @dataclass(frozen=True)
+class ArtworkToken:
+    """A vector artwork behind a rectangle annotation container (#848).
+
+    ``glyph`` is a catalogue ``set:name``; ``slice_insets`` are the fixed borders (top, right, bottom, left) in the
+    glyph's viewport units; ``unit_em`` is the size of one viewport unit in em of the annotation text size.
+    """
+
+    glyph: str
+    slice_insets: tuple[Decimal, Decimal, Decimal, Decimal]
+    unit_em: Decimal
+
+
+@dataclass(frozen=True)
 class AnnotationContainerToken:
     """One declared annotation-box outline (#466 rectangle/balloon, #465 image)."""
 
@@ -69,6 +82,8 @@ class AnnotationContainerToken:
     # The declared tilt cycle in degrees, rectangle outlines only (#584): the annotation at position i of the
     # View's order takes tilt_degrees[i mod len]; None means no tilt.
     tilt_degrees: tuple[Decimal, ...] | None = None
+    # A catalogue glyph stretched behind a rectangle container (#848); None means no artwork.
+    artwork: ArtworkToken | None = None
 
 
 @dataclass(frozen=True)
@@ -431,8 +446,9 @@ class ThemeTokenView:
         # A rectangle or balloon may also declare a content inset (#991): padding between the box edge and its text.
         padding = (self._insets(value["contentInsetEm"], role, "annotationContainer/contentInsetEm")
                    if outline != "image" and "contentInsetEm" in value else None)
+        artwork = self._artwork(value.get("artwork"), role, outline, padding)
         if outline == "rectangle":
-            return AnnotationContainerToken(outline, corner_radius, None, None, None, padding, tilt_degrees)
+            return AnnotationContainerToken(outline, corner_radius, None, None, None, padding, tilt_degrees, artwork)
         if outline == "balloon":
             tail_base = self._decimal(value.get("tailBaseEm"), role, "annotationContainer/tailBaseEm")
             if tail_base is None or tail_base <= 0:
@@ -449,6 +465,37 @@ class ThemeTokenView:
         slice_insets = self._insets(value.get("sliceInsetsEm"), role, "annotationContainer/sliceInsetsEm")
         content_insets = self._insets(value.get("contentInsetEm"), role, "annotationContainer/contentInsetEm")
         return AnnotationContainerToken(outline, corner_radius, None, image_ref, slice_insets, content_insets)
+
+    def _artwork(self, value: Any, role: str, outline: str, padding: Any) -> "ArtworkToken | None":
+        """Validate the optional ``artwork`` of an annotation container (#848): a rectangle only, with a content inset."""
+        if value is None:
+            return None
+        base = "annotationContainer/artwork"
+        pointer = "/body/roles/" + role + "/" + base
+        if (outline != "rectangle" or padding is None or not isinstance(value, Mapping)
+                or set(value) != {"glyph", "sliceInsets", "unitEm"}):
+            # A balloon's tail and an image's own artwork do not take one; a framed note must say where its paper is.
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer)
+        glyph = value["glyph"]
+        if not isinstance(glyph, str) or glyph.count(":") != 1 or not all(glyph.split(":")):
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer + "/glyph")
+        insets = self._insets(value["sliceInsets"], role, base + "/sliceInsets")
+        unit = value["unitEm"]
+        unit_em = (self._decimal(unit, role, base + "/unitEm")
+                   if isinstance(unit, (int, float)) and not isinstance(unit, bool) else None)
+        if unit_em is None or unit_em <= 0:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer + "/unitEm")
+        entry = self._catalog_glyphs.get(glyph)
+        if isinstance(entry, Mapping):
+            # The pinned glyph's viewport bounds the fixed borders: a border larger than the glyph has no source.
+            viewport = entry.get("viewport")
+            try:
+                width, height = Decimal(str(viewport["inlineSize"])), Decimal(str(viewport["blockSize"]))
+            except (KeyError, TypeError, ValueError, InvalidOperation) as error:
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer + "/glyph") from error
+            if insets[1] + insets[3] > width or insets[0] + insets[2] > height:
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer + "/sliceInsets")
+        return ArtworkToken(glyph, insets, unit_em)
 
     def annotation_kind(self, kind: str | None) -> "AnnotationKindToken | None":
         """Return the Theme's declaration for one Project annotation kind (#584).

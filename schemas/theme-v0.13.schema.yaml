@@ -169,6 +169,31 @@ properties:
                         type: array
                         minItems: 1
                         items: {type: number, minimum: -15, maximum: 15}
+                      artwork:
+                        description: "A catalogue glyph stretched behind a rectangle container as vector artwork (#848): nine-slice with fixed borders in the glyph's viewport units. The box keeps painting the paper; the parts paint from the annotation-artwork role. Rectangle outlines with contentInsetEm only."
+                        examples: [{glyph: "chrona-target-parts:scroll-frame", sliceInsets: {top: 16.3, right: 8.2, bottom: 11.5, left: 8.2}, unitEm: 0.09}]
+                        type: object
+                        additionalProperties: false
+                        required: [glyph, sliceInsets, unitEm]
+                        properties:
+                          glyph:
+                            description: "Authored `set:name` reference to a normalized catalogue glyph."
+                            type: string
+                            pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"
+                          sliceInsets:
+                            description: "The fixed borders (top/right/bottom/left) in the glyph's viewport units: each keeps its authored size while the middle stretches."
+                            type: object
+                            additionalProperties: false
+                            required: [top, right, bottom, left]
+                            properties:
+                              top: {type: number, minimum: 0}
+                              right: {type: number, minimum: 0}
+                              bottom: {type: number, minimum: 0}
+                              left: {type: number, minimum: 0}
+                          unitEm:
+                            description: "The size of one glyph viewport unit, in em of the annotation text size."
+                            type: number
+                            exclusiveMinimum: 0
                       contentInsetEm:
                         description: "The box Layout measures note text into (top/right/bottom/left, in em), so the note keeps that padding inside its edge; an image is stretched to the resulting paint box (#465). Required for an image outline; optional for a rectangle or balloon, where omitted means no padding."
                         type: object
@@ -187,6 +212,13 @@ properties:
                           required: [outline]
                         then:
                           not: {required: [tiltDegrees]}
+                      - description: "Artwork belongs to a rectangle outline and needs the content inset that says where its paper is (#848)."
+                        examples: [{outline: rectangle, cornerRadius: 0, contentInsetEm: {top: 1, right: 1, bottom: 1, left: 1}, artwork: {glyph: "chrona-target-parts:scroll-frame", sliceInsets: {top: 0, right: 0, bottom: 0, left: 0}, unitEm: 0.1}}]
+                        if:
+                          required: [artwork]
+                        then:
+                          required: [contentInsetEm]
+                          properties: {outline: {const: rectangle}}
                       - if:
                           properties: {outline: {const: balloon}}
                           required: [outline]
@@ -293,6 +325,7 @@ properties:
             shadowOpacity: {description: "Named shadow opacity token.", type: string, minLength: 1}
             strokeLineCap: {description: "Named stroke-cap token.", type: string, minLength: 1}
             strokeLineJoin: {description: "Named stroke-join token.", type: string, minLength: 1}
+            artworkFidelity: {description: "Named fidelity token (required or decorative-optional) for the annotation-artwork role: whether a profile that cannot paint the artwork's stroked parts fails or omits it whole (#848).", type: string, minLength: 1}
             gradientFidelity: {description: "Named gradient fidelity token.", type: string, minLength: 1}
             shadowFidelity: {description: "Named shadow fidelity token.", type: string, minLength: 1}
             glowBlur: {description: "Named glow blur token (standard deviation in px, at most 64).", type: string, minLength: 1}

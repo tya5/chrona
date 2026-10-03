@@ -144,7 +144,8 @@ _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | _GROUP_TAB | frozenset((
 _LAYOUT_POLICY = frozenset(("backgroundTreatment", "backgroundPaintOrder"))
 _CLOSURE_POLICY = frozenset(("contrastTreatment",))
 _PAINT_GEOMETRY = frozenset(("strokeWidth",))
-_SCENE_PAINT = (_RECT_PAINT | _PATH_PAINT | _TEXT_PAINT | _CANVAS_PAINT
+_ARTWORK_PAINT = frozenset(("fill", "stroke", "opacity", "artworkFidelity"))
+_SCENE_PAINT = (_RECT_PAINT | _PATH_PAINT | _TEXT_PAINT | _CANVAS_PAINT | _ARTWORK_PAINT
                 | frozenset(("pattern",))) - _PAINT_GEOMETRY
 
 
@@ -265,6 +266,8 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              _RECT_PAINT | frozenset(("edge",)), scene_kinds=frozenset(("Rect",)))
     register("annotation-kind-stamp", "Layout annotation-kind stamp glyph and Scene Symbol",
              frozenset(("fill", "stroke", "opacity", "stampPlacement")), scene_kinds=frozenset(("Symbol",)))
+    register("annotation-artwork", "Layout annotation-container artwork glyph and Scene Symbol",
+             _ARTWORK_PAINT, scene_kinds=frozenset(("Symbol",)))
     register("group-band row-band group-header-band calendar-closed calendar-exception", "Layout background and Scene Rect",
              _RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder")),
              scene_kinds=frozenset(("Rect",)))

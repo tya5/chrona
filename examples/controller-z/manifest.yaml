@@ -92,6 +92,11 @@ slides:
     context: contexts/annotation-kinds.yaml
     expectedSvg: generated/annotation-kinds.svg
     expectedScene: generated/annotation-kinds.scene.json
+  - id: annotation-artwork
+    evidence: "A hanging scroll behind each callout and a deckled newspaper-clipping edge on a highlight (#848): the packaged scroll-frame and clipping-edge glyphs of the target-parts catalogue stretched to the note by nine-slice from the Theme annotationContainer artwork, the paper the note box fill and the frame one ink role, the text measured into the content inset and judged on the paper, with no corpus datum edited."
+    context: contexts/annotation-artwork.yaml
+    expectedSvg: generated/annotation-artwork.svg
+    expectedScene: generated/annotation-artwork.scene.json
   - id: group-tabs
     evidence: "Group headers numbered and tabbed in the Title Card manner (#882): a zero-padded ordinal from the View header template and a 56 px hazard-stripe tab with an 8 px gap from the Theme role group-tab (catalogue pattern, size, gap), from the packaged target-parts catalogue, as a new View, Theme and Context over the executive sources."
     context: contexts/group-tabs.yaml

@@ -868,6 +868,14 @@ def _resolve_theme_catalog_assets(theme: Mapping[str, Any],
             if property_name == "pattern":
                 validate_pattern_paint(str(role), binding)
             resolve(reference, expected_kind, pointer)
+    for role, binding in roles.items():
+        # The vector artwork of an annotation container (#848) is a catalogue glyph the Theme names.
+        token_id = binding.get("annotationContainer") if isinstance(binding, Mapping) else None
+        token = values.get(token_id) if isinstance(token_id, str) else None
+        token_value = token.get("value") if isinstance(token, Mapping) else None
+        artwork = token_value.get("artwork") if isinstance(token_value, Mapping) else None
+        if isinstance(artwork, Mapping) and artwork.get("glyph") is not None:
+            resolve(artwork["glyph"], "glyph", f"/body/values/{token_id}/value/artwork/glyph")
     declared_kinds = body.get("annotationKinds") if isinstance(body, Mapping) else None
     if isinstance(declared_kinds, Mapping):
         # A kind's stamp (#584) is a catalogue glyph the Theme names, resolved with the other glyphs.

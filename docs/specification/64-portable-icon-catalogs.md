@@ -199,6 +199,7 @@ the same `set:name` reference form is reused, but the *consumer* differs.
   independent selections of the same closed asset, one by View, one by
   Theme, exactly as an ordinary icon reference is independent of any other
   View field that might name the same entry.
+- **A vector glyph is a container backdrop too (#848).** A normalized catalogue **glyph** (§8) MAY be the backdrop artwork of a rectangle `annotationContainer` through the Theme property `artwork` (Specification 07), nine-slice stretched by Layout over the container's paint box. The glyph contributes only its viewport and parts; the fixed borders and the unit are Theme facts, the ink is the Theme role `annotation-artwork`, and the packaged `chrona-target-parts` entries (`scroll-frame`, `clipping-edge`, `panel-corner`, ...) are usable as they are, with no catalogue edit. A View still cannot select it.
 - **Nine-slice and content insets are Theme facts, not catalog facts.** The
   entry contributes only its identity, pixel viewport, and PNG payload,
   exactly as it does for an icon. `sliceInsetsEm` and `contentInsetEm` are
