@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 import re
+from collections.abc import Callable
 from typing import Any, Mapping
 
 from chrona.presentation.layout.labels import LabelRect, place_label
@@ -19,10 +20,10 @@ from chrona.presentation.layout.routing import (
     RouteSearchFailure, RouteSuppressionEvidence, place_relation_route,
     relation_route_quality, select_lane_relation_route,
 )
-from chrona.presentation.layout.path_geometry import rounded_orthogonal_path
+from chrona.presentation.layout.path_geometry import flatten_path, rounded_orthogonal_path
 from chrona.presentation.layout.surface_geometry import bounds_from_rect
 from chrona.presentation.layout.surface_quality import (
-    CollisionDomain, MarkPlacement, RelationPlacement, RowPlacement, ShapePlacement,
+    CollisionDomain, MarkPlacement, PathCommand, RelationPlacement, RowPlacement, ShapePlacement,
     SurfaceLayoutRequest, TextPlacement,
 )
 from chrona.presentation.layout.text import metric_for_role, measure_text_width, place_text
@@ -111,6 +112,16 @@ def _combined_connector_points(source: ConnectorEgress, middle: tuple[tuple[floa
     return tuple(completed)
 
 
+def corner_arc_blocker(obstacles: SurfaceObstacleIndex, hosts: frozenset[str], width: float,
+                       classes: tuple[str, ...]) -> Callable[[tuple[tuple[float, float], ...]], bool]:
+    """A corner arc must clear what the polyline cleared; the route's own host marks are exempt (#1046)."""
+    def blocked(chords: tuple[tuple[float, float], ...]) -> bool:
+        return any(item.placement_id not in hosts for left, right in zip(chords, chords[1:])
+                   for item in obstacles.collisions(ObstacleSegment(left, right, width), classes=classes,
+                                                    regions=("timeline", "group-header")))
+    return blocked
+
+
 def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     """Complete semantic relation routes and labels against the pre-route index."""
     request, projection, obstacles = context.request, context.projection, context.obstacles
@@ -153,11 +164,20 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
             key = (mark.source_ref, row_id)
             comparison_clusters[key] = (*comparison_clusters.get(key, ()), mark)
 
-    def register_path(placement_id: str, points: tuple[tuple[float, float], ...], stroke_width: float) -> None:
+    def register_path(placement_id: str, points: tuple[tuple[float, float], ...], stroke_width: float,
+                      commands: tuple[PathCommand, ...] = ()) -> None:
         for index, (source, target) in enumerate(zip(points, points[1:])):
             if source != target:
                 obstacles.add(SurfaceObstacle(f"{placement_id}:segment:{index}", "dependency-route",
                     "timeline", ObstacleSegment(source, target, stroke_width)))
+        # The drawn arcs lie inside each turn: register their chords too so a label or later route
+        # in the elbow keeps its distance from the ink, not only from the polyline (#1046).
+        if any(command.kind == "quadratic" for command in commands):
+            drawn = flatten_path(commands)
+            for index, (source, target) in enumerate(zip(drawn, drawn[1:])):
+                if source != target:
+                    obstacles.add(SurfaceObstacle(f"{placement_id}:arc:{index}", "dependency-route",
+                        "timeline", ObstacleSegment(source, target, stroke_width)))
 
     def register_port(placement_id: str, point: tuple[float, float]) -> None:
         obstacles.add(SurfaceObstacle(placement_id, "port", "timeline",
@@ -277,16 +297,25 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     if not obstacles.has(obstacle_id):
                         register_port(obstacle_id, port)
                 radius = float(context.metric_values.get("timeline.relation.cornerRadius", 0))
+                marker_start = marker_geometry(request.theme_tokens.marker("relationSourceTerminal"))
+                marker_end = marker_geometry(request.theme_tokens.marker("relationTargetTerminal"))
+                dependency_stroke = float(request.theme_tokens.number(
+                    semantic_binding(relation.semantic_id).theme_role, "strokeWidth"))
+                arc_blocked = corner_arc_blocker(obstacles, frozenset((*source_egress.host_ids, *target_egress.host_ids)),
+                                                 dependency_stroke, route_classes)
+
                 placed = RelationPlacement(scene_id, source_port_id, target_port_id, tuple(points),
                     semantic_id=relation.semantic_id, corner_radius=radius,
-                    path_commands=(rounded_orthogonal_path(tuple(points), radius) if radius > 0 and not fallback else ()),
-                    marker_start=marker_geometry(request.theme_tokens.marker("relationSourceTerminal")),
-                    marker_end=marker_geometry(request.theme_tokens.marker("relationTargetTerminal")),
+                    path_commands=(rounded_orthogonal_path(tuple(points), radius,
+                        start_run=0.0 if marker_start.centred else marker_start.head_length,
+                        end_run=0.0 if marker_end.centred else marker_end.head_length, blocked=arc_blocked)
+                        if radius > 0 and not fallback else ()),
+                    marker_start=marker_start, marker_end=marker_end,
                     label_content=relation_label_content(relation), source_ref=relation_id)
                 relations.append(placed)
                 dependency_role = semantic_binding(placed.semantic_id).theme_role
                 register_path(scene_id, placed.points,
-                    float(request.theme_tokens.number(dependency_role, "strokeWidth")))
+                    float(request.theme_tokens.number(dependency_role, "strokeWidth")), placed.path_commands)
                 if fallback:
                     route_fallbacks.append(placed)
 

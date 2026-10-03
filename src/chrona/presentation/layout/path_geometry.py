@@ -1,18 +1,26 @@
 """Completed rounded path geometry, derived only by Layout."""
 from __future__ import annotations
 
+from collections.abc import Callable
 from math import isfinite
 
 from chrona.presentation.layout.surface_quality import PathCommand
 
 
-def rounded_orthogonal_path(points: tuple[tuple[float, float], ...], radius: float) -> tuple[PathCommand, ...]:
-    """Close an orthogonal polyline into move/line/quadratic commands.
+def rounded_orthogonal_path(points: tuple[tuple[float, float], ...], radius: float, *,
+                            start_run: float = 0.0, end_run: float = 0.0,
+                            blocked: Callable[[tuple[tuple[float, float], ...]], bool] | None = None,
+                            ) -> tuple[PathCommand, ...]:
+    """Close an orthogonal polyline into move/line/quadratic commands (#1046).
 
     Each turn consumes no more than half of either adjoining leg.  The original
     turn is the quadratic control point, preserving endpoint provenance.
+    ``start_run`` and ``end_run`` keep that much of the first and last leg
+    straight (a terminal head needs its tangent).  ``blocked`` receives the
+    flattened arc of one corner; a blocked corner halves its radius until the arc
+    is clear, down to a square corner.
     """
-    if len(points) < 2 or radius < 0 or not isfinite(radius):
+    if len(points) < 2 or radius < 0 or not isfinite(radius) or start_run < 0 or end_run < 0:
         raise ValueError("E_LAYOUT_PATH_INPUT")
     if any(left[0] != right[0] and left[1] != right[1] for left, right in zip(points, points[1:])):
         raise ValueError("E_LAYOUT_PATH_INPUT")
@@ -22,21 +30,62 @@ def rounded_orthogonal_path(points: tuple[tuple[float, float], ...], radius: flo
     current = points[0]
     for index, vertex in enumerate(points[1:-1], 1):
         previous, following = points[index - 1], points[index + 1]
-        if not ((previous[0] == vertex[0] or previous[1] == vertex[1]) and (following[0] == vertex[0] or following[1] == vertex[1])):
-            raise ValueError("E_LAYOUT_PATH_INPUT")
         left = abs(vertex[0] - previous[0]) + abs(vertex[1] - previous[1])
         right = abs(following[0] - vertex[0]) + abs(following[1] - vertex[1])
-        amount = min(radius, left / 2, right / 2)
-        before = (vertex[0] + (previous[0] - vertex[0]) * amount / left,
-                  vertex[1] + (previous[1] - vertex[1]) * amount / left)
-        after = (vertex[0] + (following[0] - vertex[0]) * amount / right,
-                 vertex[1] + (following[1] - vertex[1]) * amount / right)
+        cap = min(radius, left / 2, right / 2)
+        if (previous[0] == vertex[0] == following[0]) or (previous[1] == vertex[1] == following[1]):
+            cap = 0.0  # not a turn (straight or doubled back): nothing to round
+        if index == 1:
+            cap = min(cap, max(0.0, left - start_run))
+        if index == len(points) - 2:
+            cap = min(cap, max(0.0, right - end_run))
+        amount = cap
+        while amount > 0:
+            before = (vertex[0] + (previous[0] - vertex[0]) * amount / left,
+                      vertex[1] + (previous[1] - vertex[1]) * amount / left)
+            after = (vertex[0] + (following[0] - vertex[0]) * amount / right,
+                     vertex[1] + (following[1] - vertex[1]) * amount / right)
+            if blocked is None or not blocked(flatten_corner(before, vertex, after)):
+                break
+            amount = amount / 2 if amount > 0.5 else 0.0
+        if amount <= 0:
+            if current != vertex:
+                commands.append(PathCommand("line", (vertex,)))
+            current = vertex
+            continue
         if current != before:
             commands.append(PathCommand("line", (before,)))
         commands.append(PathCommand("quadratic", (vertex, after)))
         current = after
     commands.append(PathCommand("line", (points[-1],)))
     return tuple(commands)
+
+
+CORNER_STEPS = 4
+
+
+def flatten_corner(before: tuple[float, float], control: tuple[float, float],
+                   after: tuple[float, float]) -> tuple[tuple[float, float], ...]:
+    """Chords of one quadratic corner arc, ``before`` to ``after`` inclusive."""
+    result = []
+    for step in range(CORNER_STEPS + 1):
+        t = step / CORNER_STEPS
+        result.append(((1 - t) ** 2 * before[0] + 2 * (1 - t) * t * control[0] + t * t * after[0],
+                       (1 - t) ** 2 * before[1] + 2 * (1 - t) * t * control[1] + t * t * after[1]))
+    return tuple(result)
+
+
+def flatten_path(commands: tuple[PathCommand, ...]) -> tuple[tuple[float, float], ...]:
+    """The drawn route as a polyline: straight commands as given, quadratics as chords."""
+    result: list[tuple[float, float]] = []
+    for command in commands:
+        if command.kind in {"move", "line"}:
+            result.append(command.points[0])
+        elif command.kind == "quadratic":
+            result.extend(flatten_corner(result[-1], *command.points)[1:])
+        else:
+            raise ValueError("E_LAYOUT_PATH_INPUT")
+    return tuple(result)
 
 
 def rounded_diamond_path(*, inline: float, block: float, inline_size: float, block_size: float,

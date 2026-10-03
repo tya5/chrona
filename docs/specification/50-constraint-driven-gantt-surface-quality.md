@@ -212,6 +212,8 @@ Layout routes between completed ports through deterministic orthogonal candidate
 
 Relation terminals are Theme `marker` tokens resolved by Layout (`relation_terminals.marker_geometry`) into completed outlines. `triangle` is a filled closed triangle; `open-triangle` is the same three-edge outline stroked, not filled; `chevron` is an open V with no closing edge (#1042). Typst and TikZ reject any marker with `E_VISUAL_CAPABILITY_UNSUPPORTED`; SVG draws it and PNG is that SVG.
 
+`timeline.relation.cornerRadius` (a Theme metric in px; absent or `0` keeps square corners) rounds the turns of an orthogonal relation route when Layout completes the path: each turn becomes a quadratic arc whose radius is `min(r, half the incoming leg, half the outgoing leg)`; a leg that meets a terminal keeps a straight run of the terminal's `headLength` (a round terminal centred on the endpoint needs none); a point that is not a turn is not rounded; an arc whose chords meet a mark, text or label the polyline cleared halves its radius until clear, down to square. Scene `points` stay the orthogonal polyline and `pathCommands` carry the arcs; SVG and PNG draw the same commands, and the arcs are registered as route obstacles beside the polyline. The bundled default Theme (`editorial-readable-default`) declares 4 px; other presets declare their own value or none (#1046).
+
 Required, route-independent lane item names and deltas are measured and
 registered as obstacles before semantic routes. A route body or endpoint
 egress MUST NOT cross any required lane/member label; the named host-mark
