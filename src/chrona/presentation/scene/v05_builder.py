@@ -545,7 +545,10 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             bounds = (float(planned_mark.bounds.inline), float(planned_mark.bounds.block),
                       float(planned_mark.bounds.inline_size), float(planned_mark.bounds.block_size))
             if item.source_type == "point":
-                primitives.extend(_symbol_primitives(planned_id, item.object_id, "object", planned_binding.purpose, planned_role,
+                # A Theme that declares the `gate` role paints primary gates with it (#991); a baseline or
+                # scenario gate keeps its own role.
+                gate_role = ("gate" if planned_role == "planned" and value.theme_tokens.has_role("gate") else planned_role)
+                primitives.extend(_symbol_primitives(planned_id, item.object_id, "object", planned_binding.purpose, gate_role,
                                                     bounds, planned_mark.symbol_parts,
                                                     primitive_ids=planned_ids,
                                                     corner_radius=planned_mark.corner_radius,
@@ -615,7 +618,10 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                 bounds = (float(planned_mark.bounds.inline), float(planned_mark.bounds.block),
                           float(planned_mark.bounds.inline_size), float(planned_mark.bounds.block_size))
                 primitives.extend(_symbol_primitives(f"planned:{instance_id}", item.object_id, "object",
-                                                    binding.purpose, binding.scene_role, bounds, planned_mark.symbol_parts,
+                                                    binding.purpose,
+                                                    "gate" if (binding.scene_role == "planned" and item.source_type == "point"
+                                                               and value.theme_tokens.has_role("gate")) else binding.scene_role,
+                                                    bounds, planned_mark.symbol_parts,
                                                     corner_radius=planned_mark.corner_radius,
                                                     path_commands=planned_mark.path_commands, href=href, link_title=link_title,
                                                     slot_id=planned_mark.slot_id, paint_order=planned_mark.paint_order,
@@ -686,7 +692,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             # A legend key is a miniature of the chart's own gate, including a
             # Theme-bound multi-part glyph (#427, #464).
             primitives.extend(_symbol_primitives(mark.placement_id, mark.source_ref, "legend", legend_binding.purpose,
-                                                 mark.source_ref, bounds, mark.symbol_parts,
+                                                 "gate" if (mark.source_ref == "milestone" and value.theme_tokens.has_role("gate"))
+                                                 else mark.source_ref, bounds, mark.symbol_parts,
                                                  corner_radius=mark.corner_radius, slot_id=mark.slot_id,
                                                  paint_order=mark.paint_order))
         else:

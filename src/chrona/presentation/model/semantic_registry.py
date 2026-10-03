@@ -79,6 +79,8 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("planned", "mark", "planned", "planned", "planned", ContrastClass.MARK),
     _binding("actual", "mark", "actual", "actual", "actual", ContrastClass.MARK),
     _binding("snapshot", "mark", "snapshot", "snapshot", "snapshot", ContrastClass.MARK),
+    # A gate (point mark) painted by its own Theme role when the Theme declares one (#991); its purpose stays `planned`.
+    _binding("gate", "mark", "planned", "gate", "gate", ContrastClass.MARK),
     _binding("missingActual", "mark", "missingActual", "missing-actual", "missing-actual", ContrastClass.MARK),
     _binding("summaryBar", "mark", "summary-bar", "summary-bar", "summaryBar", ContrastClass.MARK),
     _binding("progressFill", "mark", "progress-fill", "progress-fill", "progressFill", ContrastClass.MARK),
