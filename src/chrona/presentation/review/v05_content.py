@@ -38,10 +38,14 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
     def cell_parts(item: Any, column: Any, row_index: int) -> tuple[str, str, str]:
         """The cell's (prefix, core, suffix): the affix of its state wraps the formatted text (#588)."""
         value = table_value(item, dict(project), column.source, row_index)
-        if value is None and column.missing == "in-progress" and _is_actual_source(column.source):
+        missing = column.missing
+        if value is None and column.missing_by:
+            # The text of an absent value follows the item's observation state when the column declares it (#991).
+            missing = str(column.missing_by.get(_absence_state(item), missing))
+        if value is None and missing == "in-progress" and _is_actual_source(column.source):
             core = _missing_actual_display(item, as_of)
         else:
-            core = display_value(value, column.missing, column.format, locale=locale)
+            core = display_value(value, missing, column.format, locale=locale)
         affix = column.affixes.for_state(affix_state(value, column.format)) if column.affixes is not None else None
         return (affix.prefix, core, affix.suffix) if affix is not None else ("", core, "")
 
@@ -546,6 +550,19 @@ def _resource_body(value: Mapping[str, Any] | None, name: str) -> Mapping[str, A
 
 def _is_actual_source(source: Any) -> bool:
     return isinstance(source, Mapping) and source.get("facet") == "actual"
+
+
+def _absence_state(item: Any) -> str:
+    """The `missingBy` key of an item: how its observation stands (#991)."""
+    state = getattr(item, "observation_state", None)
+    if state == ObservationState.DUE_UNOBSERVED:
+        return "dueUnobserved"
+    if state == ObservationState.NOT_YET_DUE:
+        return "notYetDue"
+    if state == ObservationState.RECORDED:
+        actual = getattr(item, "actual", None) or {}
+        return "inProgress" if actual.get("start") is not None and actual.get("finish") is None and actual.get("at") is None else "other"
+    return "unavailable"
 
 
 def _missing_actual_display(item: Any, as_of: date | None) -> str:

@@ -421,6 +421,17 @@ allOf:
                         whenTrue: {description: "Text rendered for boolean true; an empty string is intentional.", type: string}
                         whenFalse: {description: "Text rendered for boolean false; an empty string is intentional.", type: string}
                 missing: {enum: [blank, em-dash, unknown, in-progress]}
+                missingBy:
+                  description: "The text of an absent value by the item's observation state (#991), each taking the values of `missing` that need no actual source; a state not named keeps `missing`. `inProgress` is a span with an actual start and no finish, `dueUnobserved` a due item with no observation, `notYetDue` an item still before its due date, `unavailable` one with no as-of date or due date."
+                  examples: [{inProgress: em-dash, dueUnobserved: blank, notYetDue: blank}]
+                  type: object
+                  minProperties: 1
+                  additionalProperties: false
+                  properties:
+                    inProgress: {enum: [blank, em-dash, unknown]}
+                    dueUnobserved: {enum: [blank, em-dash, unknown]}
+                    notYetDue: {enum: [blank, em-dash, unknown]}
+                    unavailable: {enum: [blank, em-dash, unknown]}
                 affixes:
                   description: "Per-state text affixes (#588) wrapped around the formatted cell text: slip, onTime and ahead for a signed format (a value above, at and below zero), missing for an absent value. Absent, the cell is the formatted text."
                   examples: [{slip: {suffix: "!"}, missing: {suffix: "?"}}]
