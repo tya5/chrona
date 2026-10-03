@@ -1,6 +1,7 @@
 """Finite Layout-owned boundary ports for visible connector geometry."""
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacleIndex
@@ -65,8 +66,15 @@ def connector_boundary_port(mark: MarkPlacement, endpoint: str,
 
 def connector_egress_candidates(mark: MarkPlacement, endpoint: str,
                                 toward: tuple[float, float],
-                                siblings: tuple[MarkPlacement, ...]) -> tuple[ConnectorEgress, ...]:
-    """Keep the temporal port while leaving only its connected comparison host."""
+                                siblings: tuple[MarkPlacement, ...], *, entry: str = "any", stub_length: float = 0.0,
+                                stub_free: Callable[[ConnectorEgress], bool] | None = None) -> tuple[ConnectorEgress, ...]:
+    """Keep the temporal port while leaving only its connected comparison host.
+
+    ``entry="side-when-free"`` (``relationRouting.entry``, #1030) puts a stub candidate first for a span ``start``
+    whose ``toward`` lies left of the cluster (the mirrored ``end``: right of it): the route must end ``stub_length``
+    beside the port and run straight into it. It is offered only when ``stub_free`` accepts the stub; the distance
+    order follows it unchanged, so a stub that cannot be routed falls back to today's order.
+    """
     if endpoint not in {"start", "finish", "end", "at", "body"}:
         raise ValueError("E_PRESENTATION_ANCHOR_MISSING")
     connected = {mark.placement_id: mark}
@@ -95,9 +103,20 @@ def connector_egress_candidates(mark: MarkPlacement, endpoint: str,
                    "above": (semantic[0], top), "below": (semantic[0], bottom)}[side]
         candidates.append(ConnectorEgress(side, semantic, exposed, tuple(sorted(connected))))
     order = {"end": 0, "start": 1, "above": 2, "below": 3}
-    return tuple(sorted(candidates, key=lambda item: (
+    ranked = tuple(sorted(candidates, key=lambda item: (
         abs(item.exposed_port[0] - toward[0]) + abs(item.exposed_port[1] - toward[1]),
         order[item.side])))
+    if entry != "side-when-free" or stub_free is None or mark.mark_shape == "point" or endpoint in {"at", "body"}:
+        return ranked
+    horizontal = ("start" if endpoint == "start" and toward[0] < left
+                  else "end" if endpoint in {"finish", "end"} and toward[0] > right else None)
+    plain = next((item for item in ranked if item.side == horizontal), None)
+    if plain is None or stub_length <= 0:
+        return ranked
+    direction = -1.0 if horizontal == "start" else 1.0
+    stub = ConnectorEgress(plain.side, plain.semantic_port,
+                           (plain.exposed_port[0] + direction * stub_length, plain.exposed_port[1]), plain.host_ids)
+    return (stub, *ranked) if stub_free(stub) else ranked
 
 
 def _overlaps(left: MarkPlacement, right: MarkPlacement) -> bool:
