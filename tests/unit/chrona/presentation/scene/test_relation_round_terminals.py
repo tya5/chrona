@@ -28,7 +28,7 @@ def _item(oid, start, end, track="stacked"):
                       source_kind="primary", track=track)
 
 
-def _compose(items, rows, relation, source_shape, target_shape, *, head=6, entry="any"):
+def _compose(items, rows, relation, source_shape, target_shape, *, head=6, entry="any", radius=None):
     theme = _theme()
     for name, shape in (("src", source_shape), ("dst", target_shape)):
         theme["body"]["values"][name] = {"type": "marker", "value": {"shape": shape, "headLength": head,
@@ -40,7 +40,8 @@ def _compose(items, rows, relation, source_shape, target_shape, *, head=6, entry
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8),
-                                   "timeline.mark.blockSize": Decimal(8)})
+                                   "timeline.mark.blockSize": Decimal(8),
+                                   **({"timeline.relation.cornerRadius": Decimal(radius)} if radius else {})})
     manifest = replace(_manifest("title", "table", "timeline", "timeline-axis"), relation_entry=entry)
     value = build_scene_input(projection=projection, surface_content=surface_content(relations=(relation,)),
                               layout_manifest=manifest, resolved_theme=theme, font_metrics=_Font(),

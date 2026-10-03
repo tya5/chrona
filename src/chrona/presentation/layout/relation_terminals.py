@@ -8,7 +8,7 @@ from math import atan2, cos, hypot, isfinite, pi, sin, tan
 from chrona.presentation.layout.surface_quality import MarkerGeometry, PathCommand
 
 SHAPES = {"triangle", "open-triangle", "chevron", "circle", "open-circle",
-          "stealth", "rounded-triangle", "dot", "half", "double-chevron"}
+          "stealth", "rounded-triangle", "dot", "half", "double-chevron", "none"}
 ROUND_SHAPES = {"circle", "open-circle", "dot"}
 FILLED_SHAPES = {"triangle", "stealth", "rounded-triangle", "half"}
 STEALTH_NOTCH = 0.3          # the notch lies this fraction of the length in from the barbs (0.7 L from the tip)
@@ -16,12 +16,18 @@ ROUNDED_CORNER = 0.12        # corner radius of `rounded-triangle`, as a fractio
 CHEVRON_STEP = 0.4           # `double-chevron`: the back chevron is offset by this fraction of the length
 
 
-def marker_geometry(value: Mapping[str, object]) -> MarkerGeometry:
-    """Resolve a closed terminal token before Scene receives the relation."""
+def marker_geometry(value: Mapping[str, object]) -> MarkerGeometry | None:
+    """Resolve a closed terminal token before Scene receives the relation.
+
+    ``none`` (#1105) resolves to ``None``, the existing "no marker" value: no primitive, no setback. Its numbers
+    are validated like any other shape and ignored.
+    """
     shape = _choice(value, "shape", SHAPES)
     length, width, offset = (_number(value, name) for name in ("headLength", "headWidth", "attachmentOffset"))
     if length <= 0 or width <= 0 or not 0 <= offset <= length:
         raise ValueError("E_THEME_TOKEN_TYPE")
+    if shape == "none":
+        return None
     if shape in ROUND_SHAPES:
         diameter = min(length, width)
         outline = (PathCommand("move", ((diameter / 2, 0.0),)),
@@ -52,14 +58,24 @@ def marker_geometry(value: Mapping[str, object]) -> MarkerGeometry:
     return MarkerGeometry(outline, length, width, offset, mode)
 
 
-def centred_on_route(marker: MarkerGeometry, role: str) -> MarkerGeometry:
+def terminal_run(marker: MarkerGeometry | None) -> float:
+    """The straight run a terminal needs on its leg: none for no terminal or a centred round one."""
+    return 0.0 if marker is None or marker.centred else marker.head_length
+
+
+def terminal_length(marker: MarkerGeometry | None) -> float:
+    """How far a terminal reaches back from its port along the route (0 for none)."""
+    return 0.0 if marker is None else marker.head_length
+
+
+def centred_on_route(marker: MarkerGeometry | None, role: str) -> MarkerGeometry | None:
     """A round terminal is centred on the endpoint and the line touches its edge (#1044).
 
     The SVG marker's reference point is the path start (source) or end (target): the source circle lies behind
     its start (the leg leaves from the circle's edge); the target circle lies ahead of its end (the leg stops at
     the circle's near edge). A declared ``attachmentOffset`` is superseded for these shapes.
     """
-    if not marker.centred:
+    if marker is None or not marker.centred:
         return marker
     return replace(marker, attachment_offset=marker.head_length if role == "target" else 0.0)
 
