@@ -458,7 +458,7 @@ body:
   colorBindings:
     axis-band-decoration.fill: text
     axis-band-decoration2.fill: surfaceRaised
-    axis-band-decoration2.stroke: text
+    axis-band-decoration2.stroke: neutral
     axis-label2.fill: surface
     axis-label3.fill: text
     axis-cell-separator.stroke: surfaceRaised

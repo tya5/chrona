@@ -218,7 +218,7 @@ def test_what_lies_on_a_panel_is_gated_against_its_fill(tmp_path) -> None:
     assert on_panel and {item.ground_kind for item in on_panel} == {"flat"}
     assert not [item for item in strong if item.severity == "error"]
     failed = [item for item in faint if item.severity == "error" and item.ground_id == "region-frame:review"]
-    assert failed and {item.code for item in failed} <= {"E_SCENE_DECORATION_CONTRAST", "E_SCENE_MARK_CONTRAST"}
+    assert failed and {item.code for item in failed} <= {"E_SCENE_DECORATION_CONTRAST", "E_SCENE_MARK_CONTRAST", "E_SCENE_STATE_TEXT_CONTRAST"}
     assert all(item.ground_color == "#3986E6" for item in failed)
 
 

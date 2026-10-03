@@ -460,7 +460,7 @@ body:
     annotation-arrow-box.stroke: negative
     annotation-arrow-text.fill: text
     annotation-arrow-leader.stroke: negative
-    note-index.fill: accent
+    note-index.fill: textMuted
     progress-fill.fill: warning
     progress-fill.stroke: text
     icon-mark.fill: surface

@@ -478,7 +478,7 @@ body:
     axis-minor.stroke: surfaceRaised
     axis-band-decoration.fill: accent
     axis-band-decoration2.fill: surfaceRaised
-    axis-label2.fill: surface
+    axis-label2.fill: insideLabelPlanned
     axis-label3.fill: text
     table-header.fill: surfaceRaised
     group-band.fill: category:default

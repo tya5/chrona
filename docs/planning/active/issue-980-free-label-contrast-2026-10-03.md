@@ -2,7 +2,7 @@
 
 Living record for [#980](https://github.com/tya5/chrona/issues/980) (P1 on the [#454](https://github.com/tya5/chrona/issues/454) board, read only): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history. The owner-level choices are also recorded as a comment on #980 (options, choice, why, how to reverse).
 
-**Public base:** `fb191bdd` on `main`. **Status:** design plan, design, architecture review and implementation plan published together (this PR). No product code yet.
+**Public base:** `fb191bdd` on `main`. **Status:** design plan, design, architecture review and implementation plan published together (PR #1005, `b94847ed`). C980-1 and C980-2 publish as one PR with two commits (an internal sequencing choice: integration tests that render the packaged presets cannot stay green with the class alone); see section 8.
 
 ## 1. Published baseline
 
@@ -109,7 +109,7 @@ No new ground rule; the table states what the existing one gives a free label, e
 Each finding is reviewed against the general rule and fixed in the slide's own Theme YAML, never in generated output or by relaxing a floor:
 
 - **`axis-label2` on the quarter band (`axis-tiers`, `axis-cell-corners`, 3.67).** The Themes bind the band to `accent` and its label to `surface`. The scheme already names the legible ink on `accent`: `insideLabelPlanned` (`#000000`, 5.73 against `#3986E6`; the planned bar is the same fill). **Chosen:** `axis-label2.fill: insideLabelPlanned` in the two Themes. **Options:** a darker band (`text`, a look change of the band), `text` ink (4.44, still below the floor). **Reverse:** restore `surface` (the gate then fails again, so the reverse is a gate decision).
-- **`note-index` (`annotations`, 3.28).** The index digit is the note's marker; the note box stroke and leader are `warning`. **Chosen:** `note-index.fill: warning` in the Theme the slide uses (`examples/controller-z/themes/executive-light.yaml`; about 5.4 against the raised surface it lies on, confirmed by the gate in the slice), tying the index to its note. **Options:** `text` (16, loses the tie), `textMuted`. **Reverse:** restore `accent`.
+- **`note-index` (`annotations`, 3.28).** The index digit is the note's marker, and the Theme inked it `accent` on the raised surface. **Chosen:** `note-index.fill: textMuted` in the Theme the slide uses (`examples/controller-z/themes/executive-light.yaml`), a neutral secondary ink (7 against the raised surface). **Options:** `warning` (the note box stroke colour; read as an image it collides with the `variance-behind` figures, which use the same ink, so the digit reads as a state), `text` (16, loses the secondary weight). **Reverse:** restore `accent`.
 
 A finding whose fix would need a data edit or a floor change is not fixed here: it is recorded in this section and a short issue is filed (none expected).
 
@@ -146,3 +146,5 @@ A malformed paint, an unreadable ground and a translucent host are the existing 
 ## 8. Progress and evidence
 
 Per slice: the PR, the corpus report summary, the images read, the preset sweep. (Empty until C980-1.)
+
+**C980-2 (packaged presets; Refs #980).** `executive-light` and `elevated-light`: `axis-label2.fill: insideLabelPlanned` (5.73 on the accent band). `technical-print`: the month band's halftone ink `text` to `neutral` (the month labels were the same ink as the dots under them, ratio 1.0; read as an image, the labels were hard to read before and read clearly after; the dots are lighter). `executive-light`, `elevated-light` and `editorial`: `note-index.fill: textMuted`. Findings that went beyond the plan: a packaged preset declares no annotation roles, so it cannot draw a note index (`E_THEME_ROLE_REQUIRED`); the three note-index bindings are therefore an inherited value, checked directly against the scheme grounds, not by a render. The as-of label over a strong cone fails the gate in the synthetic cone test (the case #980 was filed for), now asserted in `test_as_of_cone_render.py`. Tests: `test_preset_label_contrast.py` (7 presets render through the draft path with no legibility error; 7 note-index inks at 4.5 on the scheme grounds).
