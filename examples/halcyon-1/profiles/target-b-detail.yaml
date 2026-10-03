@@ -3,6 +3,7 @@ id: halcyon-target-b-legend
 body:
   legend:
     - {role: planned, label: current plan}
+    - {role: snapshot, label: baseline}
     - {role: actual, label: actual}
     - {role: missing-actual, label: "in progress, not yet observed"}
     - {role: milestone, label: gate}

@@ -3,6 +3,10 @@ kind: view
 id: halcyon-21-target-b
 body:
   surface: table-timeline
+  heading:
+    title: "{project} · Programme board"
+    subtitle: "Every work package by owning team · baseline, current plan and observed · as of {asOf} · calendar: {calendar}"
+    dateForm: day-month-year
   rows:
     mode: automatic
   window:
@@ -14,7 +18,9 @@ body:
     label:
       placement: top
   comparison:
-    baseline: primary
+    baseline: snapshot
+    baselineMarks: ghost
+    missingActualScope: in-progress
     actual: required
     observationSelection: latest
     deltaUnit: calendar-days
@@ -142,8 +148,9 @@ body:
   - kind: asOf
     source: actual
     label: as of
+    placement: foot
     date:
-      form: localized-date
+      form: day-month
   shading:
     nonWorking: true
     exceptions: true
@@ -223,6 +230,6 @@ body:
     tint:
       scale: owner
   ordering:
-    by: plannedStart
+    by: source
     direction: ascending
     tieBreak: id
