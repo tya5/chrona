@@ -26,6 +26,8 @@ from chrona.presentation.layout.annotation_search import (
 from chrona.presentation.layout.annotation_artwork import place_artwork
 from chrona.presentation.layout.annotation_border import NO_BORDER, place_border, resolve_border
 from chrona.presentation.layout.annotation_inline_size import fill_note, fill_target
+from chrona.presentation.layout.viewer_fit import fit_text, require_followable_content
+from chrona.presentation.model.theme_tokens import ViewerFitToken
 from chrona.presentation.layout.annotation_kind_frame import EMPTY_FRAME, measure_kind_frame, place_kind_frame
 from chrona.presentation.layout.annotation_tilt import (
     nearest_boundary_point, polygon_commands, rotate_shape, rotate_text, rotated_corners, rotated_extent, tilt_for,
@@ -284,6 +286,11 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
             tail_tip: tuple[float, float] | None = None
             container = None
             box_border = NO_BORDER
+            # The box role's viewer-fit mode (#1050) is read outside the search below, whose handler reports a Layout
+            # pointer: a refused declaration keeps its own Theme pointer.
+            viewer_fit = (request.theme_tokens.viewer_fit(semantic_binding(presentation.box_semantic_id).theme_role)
+                          if annotation.purpose in {"callout", "highlight", "note", "explanatory-arrow"}
+                          else ViewerFitToken())
             fill_declared = used_fill = False
             filled = fill_size = None
             content_top = content_right = content_bottom = content_left = 0.0
@@ -312,6 +319,8 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                         frame=kind_theme, theme_tokens=request.theme_tokens, metric_for=metric_for,
                         outline=container.outline if container is not None else None,
                         pointer=f"/annotations/{index}", text_size=size)
+                    require_followable_content(viewer_fit, has_kind_frame=not kind_measure.empty,
+                                               has_visual=bool(annotation_visuals), pointer=f"/annotations/{index}")
                     wrap_available = max(1.0, wrap_available - kind_measure.inline_insets)
                     if plot_wrap_em is not None:
                         wrap = "allow"
@@ -596,6 +605,8 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                                              annotation_bounds,
                                              semantic_id=presentation.box_semantic_id, annotation=presentation,
                                              paint_order=ANNOTATION_PAINT_ORDER))
+            if viewer_fit.mode != "raw":
+                shapes[-1] = replace(shapes[-1], viewer_fit=viewer_fit.mode)
             register_rect(f"annotation-box:{annotation_id}", "annotation-box", "annotations", annotation_bounds)
             # Vector artwork (#848) is ink over the paper the box just painted, under the kind frame and the text.
             artwork_shape = place_artwork(
@@ -621,6 +632,8 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                                  frame_height - content_top - content_bottom),
                     theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                     annotation_slot=annotation_text_slot, paint_order=ANNOTATION_PAINT_ORDER)
+                kind_text = tuple(fit_text(item, viewer_fit, request.font_metrics, box_id=f"annotation-box:{annotation_id}")
+                                  for item in kind_text)
                 if tilt_angle:
                     kind_shapes = tuple(rotate_shape(item, tilt_center, tilt_angle) for item in kind_shapes)
                     kind_text = tuple(rotate_text(item, tilt_center, tilt_angle) for item in kind_text)
@@ -638,6 +651,8 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                                            lines=annotation_lines, semantic_id=presentation.text_semantic_id,
                                            annotation=presentation)
             placed_annotation = replace(placed_annotation, paint_order=ANNOTATION_PAINT_ORDER + 1)
+            placed_annotation = fit_text(placed_annotation, viewer_fit, request.font_metrics,
+                                         box_id=f"annotation-box:{annotation_id}", end_inset=content_right)
             if tilt_angle:
                 placed_annotation = rotate_text(placed_annotation, tilt_center, tilt_angle)
             text.append(placed_annotation)

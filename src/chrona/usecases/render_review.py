@@ -19,6 +19,7 @@ from typing import Any, Mapping
 from chrona.core.diagnostics import Diagnostic
 from chrona.usecases.diagnostic_messages import error_message
 from chrona.usecases.warning_ledger import RenderWarning, collect_render_warnings
+from chrona.presentation.scene.viewer_fit import viewer_fit_fallbacks
 from chrona.core.ports import RenderArtifact, Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
 from chrona.presentation.layout.engine import (measure_natural_normal_flow_block,
@@ -447,7 +448,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         raise RenderFailed("E_PRESENTATION_RENDER_INPUT", "completed Scene surface has no canvas bounds", "presentation")
     glyph_warnings = _font_warnings(font_metrics.warnings, artifact.target_kind)
     warning_records = collect_render_warnings(
-        surface_diagnostics=surface.diagnostics, tabular_warnings=scene.font_warnings,
+        surface_diagnostics=(*surface.diagnostics, *viewer_fit_fallbacks(surface, artifact.target_kind)),
+        tabular_warnings=scene.font_warnings,
         glyph_warnings=glyph_warnings, fit_warnings=surface.fit_warnings,
         perceptibility_warnings=perceptibility_warnings, scale_collisions=collisions,
         attachment_warnings=attachments, deadline_warnings=deadlines,

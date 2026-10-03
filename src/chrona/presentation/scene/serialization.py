@@ -43,8 +43,10 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
                    for surface in scene.surfaces for primitive in surface.primitives)
     has_scale = any(primitive.text_layout is not None and primitive.text_layout.horizontal_scale != 1
                     for surface in scene.surfaces for primitive in surface.primitives)
+    has_fit = any(primitive.viewer_fit != "raw" or (primitive.text_layout is not None and primitive.text_layout.fit is not None)
+                  for surface in scene.surfaces for primitive in surface.primitives)
     return {
-        "version": ("chrona/scene/v0.7" if has_catalog_pattern or has_v07_paint or has_tilt or has_scale
+        "version": ("chrona/scene/v0.7" if has_catalog_pattern or has_v07_paint or has_tilt or has_scale or has_fit
                     else "chrona/scene/v0.6"),
         "kind": "scene",
         "provenance": {
@@ -374,6 +376,7 @@ def _primitive(item: ScenePrimitive) -> dict[str, Any]:
         "clipSourceId": item.clip_source_id,
         "contrastTreatment": item.contrast_treatment,
         "endTreatment": item.end_treatment if item.end_treatment != "closed" else None,
+        "viewerFit": item.viewer_fit if item.viewer_fit != "raw" else None,
     }
     result.update(_omit(optional))
     return result
@@ -415,6 +418,15 @@ def _text_layout(value: TextLayout) -> dict[str, Any]:
     result["rotationDegrees"] = value.rotation_degrees
     if value.horizontal_scale != 1:
         result["horizontalScale"] = value.horizontal_scale
+    if value.fit is not None:
+        fit: dict[str, Any] = {"mode": value.fit.mode}
+        if value.fit.line_inline_sizes:
+            fit["adjust"] = value.fit.adjust
+            fit["lineInlineSizes"] = list(value.fit.line_inline_sizes)
+        else:
+            fit["boxId"] = value.fit.box_id
+            fit["endPadSpaces"] = value.fit.end_pad_spaces
+        result["fit"] = fit
     return result
 
 

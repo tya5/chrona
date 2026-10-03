@@ -6,11 +6,18 @@ from hashlib import sha256
 from base64 import b64encode
 
 from chrona.core.ports import RenderArtifact
-from chrona.presentation.scene.model import ImageFill, ScenePaint, ScenePrimitive, SceneSurface
+from chrona.presentation.scene.model import (
+    BOX_FOLLOWS_TEXT, TEXT_FOLLOWS_BOX, ImageFill, ScenePaint, ScenePrimitive, SceneSurface,
+)
 
 
-def render_v05_svg(surface: SceneSurface) -> str:
-    """Serialize completed primitives only; Theme and Scheme are not renderer inputs."""
+def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
+    """Serialize completed primitives only; Theme and Scheme are not renderer inputs.
+
+    ``viewer_fit`` writes the completed viewer-fit facts of a box role (#1050): ``textLength`` on each line of a
+    ``text-follows-box`` text and a filter group for a ``box-follows-text`` box. A fixed-font output (PNG, PDF) is
+    produced with it off, and then every Scene fact is ignored: the result is the ``raw`` serialization.
+    """
     if surface.canvas_paint is None or surface.canvas_paint.fill is None:
         raise ValueError("E_PRESENTATION_PAINT_INVALID")
     if surface.canvas_bounds is None:
@@ -68,6 +75,8 @@ def render_v05_svg(surface: SceneSurface) -> str:
     def glow_id(paint: ScenePaint) -> str:
         assert paint.glow is not None
         return "glow-" + sha256(repr(paint.glow).encode()).hexdigest()[:12]
+    def fit_filter_id(paint: ScenePaint) -> str:
+        return "fit-" + sha256(repr((paint.fill, paint.opacity)).encode()).hexdigest()[:12]
     def commands_data(commands: tuple[object, ...]) -> str:
         parts: list[str] = []
         for command in commands:
@@ -138,7 +147,14 @@ def render_v05_svg(surface: SceneSurface) -> str:
     glows = {glow_id(paint): paint.glow for paint in paints if paint.glow}
     clip_hosts = {node.scene_id: node for node in surface.primitives
                   if any(item.clip_source_id == node.scene_id for item in surface.primitives)}
-    if marker_pairs or patterns or gradients or shadows or glows or clip_hosts:
+    # A box that follows its text (#1050) is painted by one flood filter per distinct fill, over the group's
+    # bounding box; its text is serialised inside that group, in the box's own paint position.
+    followed_by = ({node.text_layout.fit.box_id: node for node in surface.primitives
+                    if node.text_layout is not None and node.text_layout.fit is not None
+                    and node.text_layout.fit.mode == BOX_FOLLOWS_TEXT} if viewer_fit else {})
+    fit_floods = {fit_filter_id(completed(node)): completed(node) for node in surface.primitives
+                  if viewer_fit and node.viewer_fit == BOX_FOLLOWS_TEXT and completed(node).fill is not None}
+    if marker_pairs or patterns or gradients or shadows or glows or clip_hosts or fit_floods:
         definitions: list[str] = []
         for color, marker in sorted(marker_pairs, key=repr):
             if color is None or marker is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
@@ -172,6 +188,11 @@ def render_v05_svg(surface: SceneSurface) -> str:
                 f'<feFlood flood-color="{escape(glow.color, quote=True)}" flood-opacity="{number(glow.opacity)}"/>'
                 '<feComposite in2="halo-blur" operator="in" result="halo"/>'
                 '<feMerge><feMergeNode in="halo"/><feMergeNode in="halo"/><feMergeNode in="SourceGraphic"/></feMerge></filter>')
+        for identifier, paint in sorted(fit_floods.items()):
+            definitions.append(
+                f'<filter id="{identifier}" x="0" y="0" width="1" height="1"><feFlood flood-color="{escape(paint.fill, quote=True)}" '
+                f'flood-opacity="{number(paint.opacity)}" result="bg"/>'
+                '<feMerge><feMergeNode in="bg"/><feMergeNode in="SourceGraphic"/></feMerge></filter>')
         for identifier, host in sorted(clip_hosts.items()):
             if host.kind not in {"Rect", "Symbol"}:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
@@ -234,10 +255,54 @@ def render_v05_svg(surface: SceneSurface) -> str:
         return (f'<g data-scene-id="{escape(node.scene_id)}-image" '
                 f'data-asset-identity="{escape(image.asset_identity, quote=True)}">' + "".join(tiles) + "</g>")
 
+    def text_markup(node: ScenePrimitive) -> str:
+        assert node.text_layout is not None and node.baseline is not None
+        paint, common = completed(node), (f'data-scene-id="{escape(node.scene_id)}" data-source-ref="{escape(node.source_ref)}" '
+                                          f'data-purpose="{escape(node.purpose)}"')
+        layout = node.text_layout
+        fit = layout.fit if viewer_fit else None
+        lines = layout.lines
+        # `textLength` lives in the text's own, pre-transform frame; the measured size already contains the compression.
+        fitted = ([f' textLength="{number(size / layout.horizontal_scale)}" lengthAdjust="{fit.adjust}"'
+                   for size in fit.line_inline_sizes]
+                  if fit is not None and fit.mode == TEXT_FOLLOWS_BOX else [""] * len(lines))
+        pad = " " * fit.end_pad_spaces if fit is not None and fit.mode == BOX_FOLLOWS_TEXT else ""
+        body = (escape(lines[0]) + pad if len(lines) == 1 else "".join(
+            f'<tspan x="{number(node.baseline[0])}" dy="{0 if index == 0 else number(layout.font_size * layout.line_height)}"'
+            f'{fitted[index]}>{escape(line)}{pad}</tspan>' for index, line in enumerate(lines)))
+        single = fitted[0] if len(lines) == 1 else ""
+        preserve = ' xml:space="preserve"' if pad else ""
+        treatment = " ".join(part for part in (
+            (f'letter-spacing="{number(layout.letter_spacing)}"' if layout.letter_spacing != 0 else ""),
+            (f'font-variant-numeric="{layout.numeric_spacing}-nums"'),
+        ) if part)
+        treatment = f" {treatment}" if treatment else ""
+        # Compression acts in the text's own frame (about the baseline start), so it is composed after the
+        # rotation in the list and applies first (#585).
+        steps = ([f"rotate({number(layout.rotation_degrees)} {number(node.baseline[0])} {number(node.baseline[1])})"]
+                 if layout.rotation_degrees else [])
+        if layout.horizontal_scale != 1:
+            scale = layout.horizontal_scale
+            steps.append(f"matrix({number(scale)} 0 0 1 {number(node.baseline[0] * (1 - scale))} 0)")
+        transform = f' transform="{" ".join(steps)}"' if steps else ""
+        return (f'<text {common} x="{number(node.baseline[0])}" y="{number(node.baseline[1])}" font-family="{escape(layout.family, quote=True)}" '
+                f'font-weight="{layout.weight}" font-size="{number(layout.font_size)}"{transform}{treatment}{single}{preserve} '
+                f'{attrs(paint, fill=True, stroke=False)}>{body}</text>')
+
     for node in (node for _, node in sorted(enumerate(surface.primitives), key=lambda item: (item[1].paint_order, item[0]))):
         common = f'data-scene-id="{escape(node.scene_id)}" data-source-ref="{escape(node.source_ref)}" data-purpose="{escape(node.purpose)}"'
         paint, (x, y, w, h) = completed(node), node.bounds
-        if node.kind == "Rect":
+        if node.kind == "Rect" and viewer_fit and node.viewer_fit == BOX_FOLLOWS_TEXT:
+            text_node = followed_by.get(node.scene_id)
+            if text_node is None or text_node.baseline is None:
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID", "a box that follows its text has no text")
+            # The invisible rect pins the start, top and bottom to the measured box; the viewer's own text advance and
+            # the trailing spaces of every line set the end edge (the filter region is the group's bounding box).
+            pin = (f'<rect data-scene-id="{escape(node.scene_id)}-extent" x="{number(x)}" y="{number(y)}" '
+                   f'width="{number(max(text_node.baseline[0] - x, 1.0))}" height="{number(h)}" fill="none"/>')
+            flood = f' filter="url(#{fit_filter_id(paint)})"' if paint.fill is not None else ""
+            append(node, f'<g {common} data-viewer-fit="{BOX_FOLLOWS_TEXT}"{flood}>{pin}{text_markup(text_node)}</g>')
+        elif node.kind == "Rect":
             if node.pattern is not None and node.pattern.primitives:
                 if (node.pattern.region_bounds != node.bounds or node.pattern.clip_bounds != node.bounds
                         or node.pattern.corner_radius != (node.corner_radius or 0.0)):
@@ -261,24 +326,9 @@ def render_v05_svg(surface: SceneSurface) -> str:
                 append(node, rect_markup)
         elif node.kind == "Text":
             if node.text is None or node.text_layout is None or node.baseline is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
-            lines = node.text_layout.lines
-            body = escape(lines[0]) if len(lines) == 1 else "".join(f'<tspan x="{number(node.baseline[0])}" dy="{0 if index == 0 else number(node.text_layout.font_size * node.text_layout.line_height)}">{escape(line)}</tspan>' for index, line in enumerate(lines))
-            treatment = " ".join(part for part in (
-                (f'letter-spacing="{number(node.text_layout.letter_spacing)}"'
-                 if node.text_layout.letter_spacing != 0 else ""),
-                (f'font-variant-numeric="{node.text_layout.numeric_spacing}-nums"'
-                 ),
-            ) if part)
-            treatment = f" {treatment}" if treatment else ""
-            # Compression acts in the text's own frame (about the baseline start), so it is composed after the
-            # rotation in the list and applies first (#585).
-            steps = ([f"rotate({number(node.text_layout.rotation_degrees)} {number(node.baseline[0])} {number(node.baseline[1])})"]
-                     if node.text_layout.rotation_degrees else [])
-            if node.text_layout.horizontal_scale != 1:
-                scale = node.text_layout.horizontal_scale
-                steps.append(f"matrix({number(scale)} 0 0 1 {number(node.baseline[0] * (1 - scale))} 0)")
-            transform = f' transform="{" ".join(steps)}"' if steps else ""
-            append(node, f'<text {common} x="{number(node.baseline[0])}" y="{number(node.baseline[1])}" font-family="{escape(node.text_layout.family, quote=True)}" font-weight="{node.text_layout.weight}" font-size="{number(node.text_layout.font_size)}"{transform}{treatment} {attrs(paint, fill=True, stroke=False)}>{body}</text>')
+            if viewer_fit and node.text_layout.fit is not None and node.text_layout.fit.mode == BOX_FOLLOWS_TEXT:
+                continue  # serialised inside its box's group, above
+            append(node, text_markup(node))
         elif node.kind == "Symbol":
             if node.symbol is None or paint.image is not None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             appearance = attrs(paint, fill=paint.fill is not None, stroke=paint.stroke is not None)
@@ -322,6 +372,11 @@ def render_v05_svg(surface: SceneSurface) -> str:
 class V05SvgRenderer:
     target_kind = "svg"
 
+    def __init__(self, *, viewer_fit: bool = True) -> None:
+        # Off for a fixed-font output that draws this SVG (PNG, PDF): it is then the `raw` serialization (#1050).
+        self._viewer_fit = viewer_fit
+
     def render(self, surface: object) -> RenderArtifact:
         if not isinstance(surface, SceneSurface): raise ValueError("E_PRESENTATION_RENDER_INPUT")
-        return RenderArtifact("svg", "image/svg+xml", render_v05_svg(surface).encode("utf-8"), "chrona-svg-v0.5")
+        return RenderArtifact("svg", "image/svg+xml", render_v05_svg(surface, viewer_fit=self._viewer_fit).encode("utf-8"),
+                              "chrona-svg-v0.5")

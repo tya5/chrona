@@ -6,11 +6,12 @@ from datetime import date
 import math
 from typing import Any
 
-from chrona.presentation.layout.surface_quality import FitWarning, MarkerGeometry, PathCommand
+from chrona.presentation.layout.surface_quality import FitWarning, MarkerGeometry, PathCommand, TextFit
 from chrona.presentation.layout.pattern_placement import PatternTilePrimitive
 from chrona.presentation.model.font_metrics import FontTabularWarning
 from chrona.presentation.model.info_diagnostics import PresentationInfo
 from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding, semantic_binding
+from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, TEXT_FOLLOWS_BOX, VIEWER_FIT_MODES
 
 
 LANE_MEMBER_BINDING_IDS = (
@@ -176,6 +177,8 @@ class TextLayout:
     # Declared horizontal compression of the painted run along its own inline axis (#585); the bounds above already
     # carry the compressed width. 1 is no compression.
     horizontal_scale: float = 1.0
+    # The completed viewer-fit facts of a box role's text (#1050); None is `raw`.
+    fit: TextFit | None = None
 
     def __post_init__(self) -> None:
         # `tilt` (#584) is a Layout-completed rigid rotation of a note by a small non-zero angle about the
@@ -190,6 +193,9 @@ class TextLayout:
         if (isinstance(self.horizontal_scale, bool) or not isinstance(self.horizontal_scale, (int, float))
                 or not 0.5 <= self.horizontal_scale <= 1):
             raise ValueError("E_PRESENTATION_TEXT_LAYOUT_INVALID: horizontal scale outside 0.5 to 1")
+        if self.fit is not None and (not isinstance(self.fit, TextFit) or (
+                self.fit.mode == TEXT_FOLLOWS_BOX and len(self.fit.line_inline_sizes) != len(self.lines))):
+            raise ValueError("E_PRESENTATION_TEXT_LAYOUT_INVALID: viewer fit lines")
 
 
 @dataclass(frozen=True)
@@ -305,8 +311,17 @@ class ScenePrimitive:
     image_fill_pending: "ImageFill | None" = None
     lane_row_id: str | None = None
     lane_member_id: str | None = None
+    # The viewer-fit mode of a text-bearing box (#1050); `raw` is today's output.
+    viewer_fit: str = "raw"
 
     def __post_init__(self) -> None:
+        if (self.viewer_fit not in VIEWER_FIT_MODES
+                or (self.viewer_fit != "raw" and self.kind not in {"Rect", "Symbol"})
+                or (self.viewer_fit == BOX_FOLLOWS_TEXT and (
+                    self.kind != "Rect" or (self.pattern is not None and self.pattern.primitives)
+                    or self.clip_source_id is not None or self.image_fill_pending is not None))):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID",
+                             "a viewer-fit mode is one of three, on a Rect or Symbol box; box-follows-text only on a plain Rect")
         if (((self.marker_start is not None or self.marker_end is not None) and self.kind != "Path")
                 or (self.pattern is not None and self.kind != "Rect")
                 or (self.image_fill_pending is not None and self.kind not in {"Rect", "Symbol"})
@@ -603,6 +618,14 @@ class SceneSurface:
             if (len(set(obstacle_facets)) != len(obstacle_facets)
                     or set(obstacle_owners) != set(expected)):
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        followers = [item for item in self.primitives if item.text_layout is not None
+                     and item.text_layout.fit is not None and item.text_layout.fit.mode == BOX_FOLLOWS_TEXT]
+        if ({item.text_layout.fit.box_id for item in followers} != {
+                item.scene_id for item in self.primitives if item.viewer_fit == BOX_FOLLOWS_TEXT}
+                or len({item.text_layout.fit.box_id for item in followers}) != len(followers)):
+            # A box that follows its text and that text name each other, one to one (#1050).
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID",
+                             "a box that follows its text and that text must name each other one to one")
         for index, item in enumerate(self.primitives):
             if item.lane_row_id is not None:
                 row = lane_rows.get(item.lane_row_id)

@@ -143,6 +143,8 @@ _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | _GROUP_TAB | frozenset((
     "stampPlacement", "coneSpread", "coneExtent",
 ))
 _LAYOUT_POLICY = frozenset(("backgroundTreatment", "backgroundPaintOrder"))
+# A box role's viewer-fit mode (#1050): Layout measures the per-line widths, the SVG adapter serialises them.
+_VIEWER_FIT = frozenset(("viewerFit", "viewerFitAdjust"))
 _CLOSURE_POLICY = frozenset(("contrastTreatment",))
 _PAINT_GEOMETRY = frozenset(("strokeWidth",))
 _ARTWORK_PAINT = frozenset(("fill", "stroke", "opacity", "artworkFidelity"))
@@ -157,6 +159,8 @@ def _property_owner(property_name: str) -> str:
         return "Layout/Scene completed geometry"
     if property_name in _LAYOUT_POLICY:
         return "Layout background policy"
+    if property_name in _VIEWER_FIT:
+        return "Layout viewer-fit measurement and SVG serialization"
     if property_name in _CLOSURE_POLICY:
         return "Theme contrast policy"
     if property_name in _PAINT_GEOMETRY:
@@ -262,7 +266,7 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              frozenset(("marker",)))
     register("annotation-callout-box annotation-highlight-box annotation-note-box annotation-arrow-box",
              "Layout annotation container and Scene Rect/Symbol",
-             _PATTERNED_RECT_PAINT | frozenset(("annotationContainer",)),
+             _PATTERNED_RECT_PAINT | frozenset(("annotationContainer",)) | _VIEWER_FIT,
              scene_kinds=frozenset(("Rect", "Symbol")))
     register("annotation-kind-bar", "Layout annotation-kind title bar and Scene Rect",
              _RECT_PAINT | frozenset(("chipPadding", "markCornerRadius")), scene_kinds=frozenset(("Rect",)))

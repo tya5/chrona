@@ -42,6 +42,7 @@ slides:
   controller-z/table-header: {axisLabels: 7, dvtHosted: true}
   controller-z/text-roles: {axisLabels: 7, dvtHosted: true}
   controller-z/value-affixes: {axisLabels: 7, dvtHosted: true}
+  controller-z/viewer-fit: {axisLabels: 7, dvtHosted: true}
   halcyon-1/dependency-network: {axisLabels: 0}
   halcyon-1/flight-readiness: {axisLabels: 3}
   halcyon-1/gallery-annotation-kinds: {axisLabels: 13, chips: ['chip:as-of-label']}

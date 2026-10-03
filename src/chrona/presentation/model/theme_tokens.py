@@ -107,6 +107,21 @@ class AnnotationContainerToken:
     border: Mapping[str, BorderSideToken] | None = None
 
 
+VIEWER_FIT_RAW = "raw"
+TEXT_FOLLOWS_BOX = "text-follows-box"
+BOX_FOLLOWS_TEXT = "box-follows-text"
+VIEWER_FIT_MODES = (VIEWER_FIT_RAW, TEXT_FOLLOWS_BOX, BOX_FOLLOWS_TEXT)
+FIT_ADJUSTS = ("spacing", "spacingAndGlyphs")
+
+
+@dataclass(frozen=True)
+class ViewerFitToken:
+    """How a box role's text and box absorb a viewer that lacks the measured font (#1050); `raw` is today's output."""
+
+    mode: str = VIEWER_FIT_RAW
+    adjust: str = "spacing"
+
+
 @dataclass(frozen=True)
 class AnnotationKindToken:
     """One Theme-declared annotation kind (#584): header text sources and the resolved kind colour."""
@@ -510,6 +525,32 @@ class ThemeTokenView:
         slice_insets = self._insets(value.get("sliceInsetsEm"), role, "annotationContainer/sliceInsetsEm")
         content_insets = self._insets(value.get("contentInsetEm"), role, "annotationContainer/contentInsetEm")
         return AnnotationContainerToken(outline, corner_radius, None, image_ref, slice_insets, content_insets, **sizing)
+
+    def viewer_fit(self, role: str) -> ViewerFitToken:
+        """Return a box role's declared viewer-fit mode (#1050); absence is `raw`, today's output.
+
+        ``box-follows-text`` paints a background that ends where the viewer's text ends, so it is valid only for a
+        plain, square, untilted, content-sized rectangle with no artwork and no end, top or bottom border: every
+        other declaration is refused at its pointer, never silently degraded.
+        """
+        mode = self.optional_choice(role, "viewerFit", VIEWER_FIT_MODES) or VIEWER_FIT_RAW
+        adjust = self.optional_choice(role, "viewerFitAdjust", FIT_ADJUSTS)
+        if adjust is not None and mode != TEXT_FOLLOWS_BOX:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/viewerFitAdjust")
+        if mode == BOX_FOLLOWS_TEXT:
+            container = self.annotation_container(role)
+            if container is not None:
+                base = f"/body/roles/{role}/annotationContainer"
+                conflicts = (("outline", container.outline != "rectangle"),
+                             ("cornerRadius", container.corner_radius != 0),
+                             ("tiltDegrees", container.tilt_degrees is not None),
+                             ("artwork", container.artwork is not None),
+                             ("inlineSize", container.inline_size != "content"),
+                             *((f"border/{side}", side in (container.border or {})) for side in ("end", "top", "bottom")))
+                for name, conflict in conflicts:
+                    if conflict:
+                        raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"{base}/{name}")
+        return ViewerFitToken(mode, adjust or "spacing")
 
     def _border(self, value: Any, role: str, outline: str, corner_radius: Decimal) -> "Mapping[str, BorderSideToken] | None":
         """Validate the optional per-side ``border`` of an annotation container (#1049): a square rectangle only."""

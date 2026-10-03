@@ -19,6 +19,14 @@ from typing import Iterable, Mapping
 # next action instead. Add one entry per code an agent reaches by an ordinary mistake;
 # a code with no entry is still safe (the derived sentence), only less helpful.
 CURATED_MESSAGES: Mapping[str, str] = {
+    "E_LAYOUT_VIEWER_FIT_STATIC_CHROME": (
+        "an annotation with a kind frame or a label visual sits in a box role whose viewerFit is box-follows-text, "
+        "but that chrome stands at fixed offsets the box cannot follow; use text-follows-box or remove the chrome"
+    ),
+    "E_PRESENTATION_VIEWER_FIT_PAINT": (
+        "a box role whose viewerFit is box-follows-text has an outline, gradient, shadow, glow, pattern, image or "
+        "wobble; give it a solid fill only, or use text-follows-box"
+    ),
     "E_SCHEME_INTENT_UNKNOWN": (
         "a Color Scheme colorBindings entry is not ROLE.PROPERTY bound to a known intent or a declared color; "
         "check every target name and value in colorBindings"
@@ -93,6 +101,7 @@ _SURFACE_CAUSES: Mapping[str, str] = {
     "W_LAYOUT_ANNOTATION_FILL_NOT_SLOT": "a note box declared inlineSize fill but was not placed in an annotations slot, so it keeps the size of its text",
     "W_LAYOUT_ANNOTATION_SUPPRESSED": "an annotation was left out because it does not fit",
     "W_LAYOUT_NOTE_INDEX_SUPPRESSED": "a note index mark was left out because it does not fit",
+    "W_VIEWER_FIT_NOT_HONOURED": "a box role declared a viewer-fit mode that the output target cannot honour, so it is drawn as raw",
 }
 _FIT_CAUSES: Mapping[str, str] = {
     "W_LAYOUT_VISIBLE_OVERFLOW": "text or content is drawn past its box",
