@@ -66,4 +66,5 @@ slides:
   halcyon-1/replan-baseline: {axisLabels: 7, chips: ['chip:as-of-label']}
   halcyon-1/target-b: {axisLabels: 13, chips: ['chip:as-of-label']}
   halcyon-1/tvac-slip: {axisLabels: 7, chips: ['chip:as-of-label']}
+  halcyon-1/yuya: {axisLabels: 13, chips: ['chip:as-of-label']}
   orion-asic/gates: {axisLabels: 18}
