@@ -2,47 +2,49 @@
 
 Generated from committed public Scene evidence by `tools/presentation_contrast.py`.
 
-| Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors |
-| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| actual | `actual` | required | 3.000 | 40 | 275 | 3.204 | 7.708 | 0 |
-| annotation-box | `annotation-note-box` | enabled | 1.100 | 9 | 25 | 1.435 | 1.435 | 0 |
-| annotation-kind-accent | `annotation-kind-accent` | enabled | 1.100 | 2 | 5 | 5.765 | 6.499 | 0 |
-| annotation-kind-bar | `annotation-kind-bar` | enabled | 1.100 | 2 | 5 | 5.765 | 6.499 | 0 |
-| annotation-kind-label | `annotation-kind-label` | required | 4.500 | 2 | 5 | 6.747 | 7.583 | 0 |
-| annotation-kind-secondary | `annotation-kind-secondary` | required | 4.500 | 2 | 5 | 6.747 | 7.583 | 0 |
-| annotation-kind-stamp | `annotation-kind-stamp` | enabled | 1.100 | 1 | 16 | 6.833 | 6.833 | 0 |
-| annotation-text | `annotation-note-text` | required | 4.500 | 9 | 25 | 13.973 | 13.973 | 0 |
-| axis-band | `axis-band-decoration` | enabled | 1.100 | 42 | 116 | 1.292 | 1.773 | 0 |
-| axis-band | `axis-band-decoration2` | enabled | 1.100 | 5 | 37 | 1.119 | 1.146 | 0 |
-| calendar-closed | `calendar-closed` | absent | 1.100 | 1 | 0 | — | — | 0 |
-| calendar-closed | `calendar-closed` | enabled | 1.100 | 41 | 1504 | 1.370 | 1.414 | 0 |
-| finish-delta | `variance-ahead` | deemphasized | 3.000 | 3 | 9 | 7.708 | 7.708 | 0 |
-| finish-delta | `variance-behind` | required | 4.500 | 27 | 64 | 4.562 | 5.571 | 0 |
-| finish-delta | `variance-on-track` | required | 4.500 | 4 | 11 | 5.692 | 5.692 | 0 |
-| group-decoration | `group-band` | absent | 1.100 | 5 | 0 | — | — | 0 |
-| group-decoration | `group-band` | enabled | 1.100 | 36 | 111 | 1.116 | 1.235 | 0 |
-| group-header | `text` | required | 4.500 | 28 | 124 | 11.935 | 16.354 | 0 |
-| group-header-band | `group-header-band` | absent | 1.100 | 5 | 0 | — | — | 0 |
-| group-tab | `group-tab` | enabled | 1.100 | 1 | 9 | 2.259 | 7.583 | 0 |
-| legend-swatch | `actual` | required | 3.000 | 33 | 33 | 6.442 | 16.268 | 0 |
-| legend-swatch | `calendar-closed` | enabled | 1.100 | 4 | 4 | 1.460 | 1.650 | 0 |
-| legend-swatch | `missing-actual` | required | 3.000 | 1 | 1 | 17.667 | 17.667 | 0 |
-| legend-swatch | `planned` | required | 3.000 | 34 | 79 | 5.284 | 16.354 | 0 |
-| legend-swatch | `snapshot` | required | 3.000 | 1 | 1 | 17.667 | 17.667 | 0 |
-| missingActual | `missing-actual` | required | 3.000 | 31 | 40 | 4.436 | 14.505 | 0 |
-| network-node | `network-node` | required | 3.000 | 2 | 32 | 16.354 | 17.050 | 0 |
-| period-band | `period-band` | enabled | 1.100 | 5 | 5 | 6.157 | 6.157 | 0 |
-| period-label | `period-label` | required | 4.500 | 5 | 5 | 13.973 | 13.973 | 0 |
-| planned | `planned` | required | 3.000 | 42 | 560 | 5.284 | 13.238 | 0 |
-| progress-fill | `progress-fill` | required | 3.000 | 30 | 89 | 3.216 | 4.789 | 0 |
-| row-decoration | `row-band` | absent | 1.100 | 5 | 0 | — | — | 0 |
-| row-decoration | `row-band` | enabled | 1.100 | 12 | 48 | 1.111 | 1.116 | 0 |
-| snapshot | `snapshot` | required | 3.000 | 2 | 10 | 13.238 | 14.512 | 0 |
-| summary-bar | `summary-bar` | required | 3.000 | 2 | 2 | 5.817 | 6.712 | 0 |
-| table-cell | `missing-actual-cell` | required | 4.500 | 3 | 3 | 5.448 | 7.032 | 0 |
-| table-cell | `variance-ahead` | deemphasized | 3.000 | 3 | 9 | 9.523 | 9.523 | 0 |
-| table-cell | `variance-behind` | required | 4.500 | 10 | 38 | 5.438 | 6.747 | 0 |
-| table-cell | `variance-on-track` | required | 4.500 | 7 | 19 | 5.448 | 7.032 | 0 |
+Marks and text below their floor are errors and fail the check. A decoration below its floor (or on a ground that cannot be read) is a warning: it is listed and counted, and fails nothing (Specification 46 section 8).
+
+| Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors | Warnings |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| actual | `actual` | required | 3.000 | 40 | 275 | 3.204 | 7.708 | 0 | 0 |
+| annotation-box | `annotation-note-box` | enabled | 1.100 | 9 | 25 | 1.435 | 1.435 | 0 | 0 |
+| annotation-kind-accent | `annotation-kind-accent` | enabled | 1.100 | 2 | 5 | 5.765 | 6.499 | 0 | 0 |
+| annotation-kind-bar | `annotation-kind-bar` | enabled | 1.100 | 2 | 5 | 5.765 | 6.499 | 0 | 0 |
+| annotation-kind-label | `annotation-kind-label` | required | 4.500 | 2 | 5 | 6.747 | 7.583 | 0 | 0 |
+| annotation-kind-secondary | `annotation-kind-secondary` | required | 4.500 | 2 | 5 | 6.747 | 7.583 | 0 | 0 |
+| annotation-kind-stamp | `annotation-kind-stamp` | enabled | 1.100 | 1 | 16 | 6.833 | 6.833 | 0 | 0 |
+| annotation-text | `annotation-note-text` | required | 4.500 | 9 | 25 | 13.973 | 13.973 | 0 | 0 |
+| axis-band | `axis-band-decoration` | enabled | 1.100 | 42 | 116 | 1.292 | 1.773 | 0 | 0 |
+| axis-band | `axis-band-decoration2` | enabled | 1.100 | 5 | 37 | 1.119 | 1.146 | 0 | 0 |
+| calendar-closed | `calendar-closed` | absent | 1.100 | 1 | 0 | — | — | 0 | 0 |
+| calendar-closed | `calendar-closed` | enabled | 1.100 | 41 | 1504 | 1.370 | 1.414 | 0 | 0 |
+| finish-delta | `variance-ahead` | deemphasized | 3.000 | 3 | 9 | 7.708 | 7.708 | 0 | 0 |
+| finish-delta | `variance-behind` | required | 4.500 | 27 | 64 | 4.562 | 5.571 | 0 | 0 |
+| finish-delta | `variance-on-track` | required | 4.500 | 4 | 11 | 5.692 | 5.692 | 0 | 0 |
+| group-decoration | `group-band` | absent | 1.100 | 5 | 0 | — | — | 0 | 0 |
+| group-decoration | `group-band` | enabled | 1.100 | 36 | 111 | 1.116 | 1.235 | 0 | 0 |
+| group-header | `text` | required | 4.500 | 28 | 124 | 11.935 | 16.354 | 0 | 0 |
+| group-header-band | `group-header-band` | absent | 1.100 | 5 | 0 | — | — | 0 | 0 |
+| group-tab | `group-tab` | enabled | 1.100 | 1 | 9 | 2.259 | 7.583 | 0 | 0 |
+| legend-swatch | `actual` | required | 3.000 | 33 | 33 | 6.442 | 16.268 | 0 | 0 |
+| legend-swatch | `calendar-closed` | enabled | 1.100 | 4 | 4 | 1.460 | 1.650 | 0 | 0 |
+| legend-swatch | `missing-actual` | required | 3.000 | 1 | 1 | 17.667 | 17.667 | 0 | 0 |
+| legend-swatch | `planned` | required | 3.000 | 34 | 79 | 5.284 | 16.354 | 0 | 0 |
+| legend-swatch | `snapshot` | required | 3.000 | 1 | 1 | 17.667 | 17.667 | 0 | 0 |
+| missingActual | `missing-actual` | required | 3.000 | 31 | 40 | 4.436 | 14.505 | 0 | 0 |
+| network-node | `network-node` | required | 3.000 | 2 | 32 | 16.354 | 17.050 | 0 | 0 |
+| period-band | `period-band` | enabled | 1.100 | 5 | 5 | 6.157 | 6.157 | 0 | 0 |
+| period-label | `period-label` | required | 4.500 | 5 | 5 | 13.973 | 13.973 | 0 | 0 |
+| planned | `planned` | required | 3.000 | 42 | 560 | 5.284 | 13.238 | 0 | 0 |
+| progress-fill | `progress-fill` | required | 3.000 | 30 | 89 | 3.216 | 4.789 | 0 | 0 |
+| row-decoration | `row-band` | absent | 1.100 | 5 | 0 | — | — | 0 | 0 |
+| row-decoration | `row-band` | enabled | 1.100 | 12 | 48 | 1.111 | 1.116 | 0 | 0 |
+| snapshot | `snapshot` | required | 3.000 | 2 | 10 | 13.238 | 14.512 | 0 | 0 |
+| summary-bar | `summary-bar` | required | 3.000 | 2 | 2 | 5.817 | 6.712 | 0 | 0 |
+| table-cell | `missing-actual-cell` | required | 4.500 | 3 | 3 | 5.448 | 7.032 | 0 | 0 |
+| table-cell | `variance-ahead` | deemphasized | 3.000 | 3 | 9 | 9.523 | 9.523 | 0 | 0 |
+| table-cell | `variance-behind` | required | 4.500 | 10 | 38 | 5.438 | 6.747 | 0 | 0 |
+| table-cell | `variance-on-track` | required | 4.500 | 7 | 19 | 5.448 | 7.032 | 0 | 0 |
 
 ## Per-primitive grounds
 
@@ -3378,4 +3380,4 @@ Generated from committed public Scene evidence by `tools/presentation_contrast.p
 Every non-exclusive decoration role is enabled in committed Scene evidence; group-band or group-header-band supplies the group concept when there are no corpus errors.
 
 
-Findings: 3340; errors: 0.
+Findings: 3340; errors: 0; warnings: 0.
