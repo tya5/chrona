@@ -17,8 +17,14 @@ def find_asof_label_candidate(
     obstacles: SurfaceObstacleIndex,
     obstacle_classes: tuple[str, ...],
     placement: str = "top",
+    rows_bottom: float | None = None,
 ) -> LabelPlacement | None:
     """Choose the first legal top-margin or rule-hosted plot position.
+
+    `below-plot` (#1063) puts the chip outside the plot, in the block Layout reserved under the last row: centred on
+    the rule with its top one gap under `rows_bottom` (the last row's bottom, where the plot ends), then beside the rule, all inside the
+    timeline slot. When none is legal the search continues with the plot-foot positions, so the caller can report
+    the fallback.
 
     Rule-hosted positions are centered on the vertical as-of rule and searched
     at the plot's top, then at finite contacts with the selected obstacle
@@ -38,6 +44,7 @@ def find_asof_label_candidate(
     selected = obstacles.select(classes=obstacle_classes)
     plot_left, plot_top = plot_bounds.x, plot_bounds.y
     plot_right, plot_bottom = plot_bounds.right, plot_bounds.bottom
+    plot_bottom_slot = plot_bottom
 
     def within_plot(box: LabelRect) -> bool:
         return (box.x >= plot_left and box.y >= plot_top
@@ -51,6 +58,21 @@ def find_asof_label_candidate(
             classes=obstacle_classes,
             rule_host_id=rule_host_id if hosted else None,
         )
+
+    if placement == "below-plot":
+        if rows_bottom is None or not isfinite(rows_bottom):
+            raise ValueError(f"E_LAYOUT_ASOF_LABEL_GEOMETRY: below-plot needs the finite bottom of the last row, got {rows_bottom!r}")
+        top = rows_bottom + gap
+        for side, left in (("plot-below-center", rule_x - width / 2), ("plot-below-end", rule_x + gap),
+                           ("plot-below-start", rule_x - gap - width)):
+            box = LabelRect(left, top, width, height)
+            if (box.x >= plot_left and box.right <= plot_right and top >= plot_top
+                    and box.bottom <= plot_bottom_slot + 1e-6
+                    and not obstacles.collisions(ObstacleRect(box.x, box.y, box.right, box.bottom),
+                                                 classes=obstacle_classes,
+                                                 rule_host_id=rule_host_id)):
+                return LabelPlacement(side, box)
+        placement = "foot"
 
     # Preferred: sit beside the rule in the top margin, end side then start.
     top_candidates = (

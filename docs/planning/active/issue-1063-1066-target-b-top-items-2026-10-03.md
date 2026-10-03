@@ -2,7 +2,7 @@
 
 Living record for [#1063](https://github.com/tya5/chrona/issues/1063) (as-of chip below the plot, space reserved) and [#1066](https://github.com/tya5/chrona/issues/1066) (a symbol mark takes its own size and offset per role). Baseline, design plan, design, architecture review and implementation plan are published together by this record before any code. Edited in place; Git keeps history. Both were found by the reviewer's tuning PR #1061 against the owner-approved mock `docs/research/presentation/halcyon-1-target-design-2026-09-21/board/02-programme-board.png` (the work record of the knob family is [issue-991-target-b-knobs-2026-10-03.md](issue-991-target-b-knobs-2026-10-03.md)).
 
-**Public base:** `d4b081cf` on `main` (before this record). **Status:** design plan, design, architecture review and implementation plan published; no code yet. Order: #1063 then #1066.
+**Public base:** `d4b081cf` on `main`; this record merged as PR #1067 (`a755cfd6`). **Status:** slice 1 (#1063) in its own PR; slice 2 (#1066) next. Order: #1063 then #1066.
 
 **Scope rule (owner):** core knobs and their own evidence only (synthetic tests and a Controller Z evidence slide). This work does **not** edit the reviewer's `examples/halcyon-1/*target-b*` files; adopting a knob there is the reviewer's step (PR #1061, #987) and not an acceptance row here. Routing/terminals (#1059, #1060, #1042, #1044, #1046) and annotation boxes (#1051, #1049) are other agents' files and are not touched.
 
@@ -92,8 +92,8 @@ One PR per slice, defaults unchanged, merged one at a time through the merge loc
 
 | # | Slice | Owners (files) | Schema / S0 | Tests | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| 0 | This record (docs PR) | this file | none | conformance | none |
-| 1 | #1063 chip below plot | new `layout/asof_foot_reserve.py`, `asof_label.py`, `surface_member_labels.py`, `surface_base.py`, `surface_composer.py`, `render_review.py`, `v05_content.py` (value passes through), `view-v0.28` enum, `diagnostic_messages.py`, `expected-deltas` entry (+ `--prune-stale`), Specification 39 | enum widening; S0 PASS recorded | solver unit; synthetic integration for A1 to A6 (content-sized, pack, fill, fixed too short, lane rows, window edge); default byte identity | Controller Z slide `as-of-below-plot` (view, context, manifest, ledger) |
+| 0 | This record (docs PR #1067, merged) | this file | none | conformance | none |
+| 1 | #1063 chip below plot (this PR) | new `layout/asof_foot_reserve.py`, `asof_label.py`, `surface_member_labels.py`, `surface_base.py`, `surface_composer.py`, `render_review.py`, `v05_content.py` (value passes through), `view-v0.28` enum, `diagnostic_messages.py`, `expected-deltas` entry (+ `--prune-stale`), Specification 39 | enum widening; S0 PASS recorded | solver unit; synthetic integration for A1 to A6 (content-sized, pack, fill, fixed too short, lane and automatic rows, window edge, out-of-window as-of); default byte identity | Controller Z slide `as-of-below-plot` (view, context, manifest, ledger) |
 | 2 | #1066 symbol size and offset | `theme_tokens.py`, `presentation.py` (`MarkGeometry`, frame, containment), `surface_marks.py`, `mark_geometry.py`, `capabilities.py`, `theme-v0.13`, `expected-deltas` entry, mark-geometry specification | two optional role properties; S0 PASS recorded | unit and synthetic integration for B1 to B3 (each role, offset only, height only, invalid), default byte identity | Controller Z slide `gate-symbols` (own Theme through YAML) |
 | 3 | Acceptance reviews | `docs/reviews/current/issue-1063-*` and `issue-1066-*` (`chrona:literal-acceptance/v1`) | none | `tools/check_issue_acceptance_reviews.py` | exact-main three-OS run |
 
@@ -101,4 +101,4 @@ Evidence slides are Controller Z Contexts only; the reviewer's `21-target-b` fil
 
 ## 8. Progress
 
-Record published; slices 1 to 3 not started.
+Slice 0 merged (PR #1067). Slice 1: implemented and verified locally (15 synthetic tests over lane and automatic rows, 9 of 9 mutations killed, corpus byte identical across all 54 existing slides, S0 PASS with `--prune-stale` retiring 12 stale entries); PR open. Slices 2 and 3 not started.

@@ -17,8 +17,9 @@ from chrona.presentation.layout.mark_aware_scale import PointMarkFootprint, inse
 from chrona.presentation.layout.obstacles import obstacle_envelope
 from chrona.presentation.layout.presentation import (
     MarkBandFrame, MarkGeometry, TrackPlacement, place_mark_tracks,
-    place_rows, required_row_block_extents, table_text_line_block,
+    place_rows, required_row_block_extents, row_block_slack, table_text_line_block,
 )
+from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, below_plot_reserve
 from chrona.presentation.layout.surface_lanes import place_lane_mark_tracks
 from chrona.presentation.layout.surface_marks import folded_instance_id, resolve_mark_geometries
 from chrona.presentation.layout.surface_lanes import review_rows
@@ -62,6 +63,10 @@ class SurfaceBaseGeometry:
     plot: Rect
     # Inline size of the vertical group tag column carved from the table's start; 0 when labels are horizontal (#585).
     group_tag_inline_size: float = 0.0
+    # An as-of chip placed `below-plot` (#1063): the block extent reserved under the last row (0 when not reserved)
+    # and whether the placement was declared but had no room, so the chip falls back inside the plot.
+    as_of_foot_reserve: float = 0.0
+    as_of_foot_fallback: bool = False
 
     def text_slot(self, item: Any) -> str:
         """Resolve a text host against the prepared base slot identities."""
@@ -203,7 +208,20 @@ def prepare_surface_base(request: SurfaceLayoutRequest) -> SurfaceBaseGeometry:
             row_padding=row_padding, mark_block_size=mark_block_size,
             role_geometries=role_geometries, text_line_block=text_line_block,
         )
-    raw_rows = place_rows(review_rows=review_row_values, timeline_bounds=timeline_bounds,
+    foot_reserve = 0.0
+    foot_fallback = False
+    content = request.surface_content
+    if (content.as_of_placement == BELOW_PLOT and content.as_of is not None and content.as_of_label
+            and start <= content.as_of < end):
+        wanted = below_plot_reserve(request.theme_tokens)
+        slack = row_block_slack(review_rows=review_row_values, timeline_block_size=timeline_bounds[3],
+                                group_header_size=group_header_size, required_block_sizes=requirements)
+        if slack >= wanted:
+            foot_reserve = wanted
+        else:
+            foot_fallback = True
+    row_bounds = (timeline_bounds[0], timeline_bounds[1], timeline_bounds[2], timeline_bounds[3] - foot_reserve)
+    raw_rows = place_rows(review_rows=review_row_values, timeline_bounds=row_bounds,
                           group_header_size=group_header_size, required_block_sizes=requirements,
                           distribution=layout_manifest.row_distribution)
     rows = tuple(
@@ -245,4 +263,5 @@ def prepare_surface_base(request: SurfaceLayoutRequest) -> SurfaceBaseGeometry:
         lane_subtracks, group_header_size, row_padding, text_line_block, table_bounds,
         plot_rect(timeline.bounds, (row.bounds for row in rows)),
         group_tag_inline_size=group_tag_column_size(request.theme_tokens) if group_tags else 0.0,
+        as_of_foot_reserve=foot_reserve, as_of_foot_fallback=foot_fallback,
     )

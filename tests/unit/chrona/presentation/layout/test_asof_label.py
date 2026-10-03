@@ -105,3 +105,38 @@ def test_foot_placement_moves_beside_the_rule_when_the_foot_is_taken_then_falls_
 
 def test_the_default_placement_is_still_the_top_margin():
     assert _candidate(_index(_rule())).side == "plot-top-end"
+
+
+# --- #1063: below the plot ---------------------------------------------------------------------------------
+
+
+def _below(index, plot=LabelRect(0, 0, 100, 100), rows_bottom=80.0, rule_x=50):
+    return find_asof_label_candidate(plot, (20, 10), rule_x=rule_x, gap=3, rule_host_id="asof-rule", obstacles=index,
+                                     obstacle_classes=CLASSES, placement="below-plot", rows_bottom=rows_bottom)
+
+
+def test_below_plot_centres_the_chip_one_gap_under_the_last_row_inside_the_slot():
+    result = _below(_index(_rule()))
+    assert result is not None and result.side == "plot-below-center"
+    assert result.bounds == LabelRect(40, 83, 20, 10)  # top = rows_bottom + gap, centred on x 50
+
+
+def test_below_plot_moves_beside_the_rule_when_the_centre_leaves_the_slot_or_is_taken():
+    edge = _below(_index(_rule()), rule_x=5)  # centred, the chip would start at x -5
+    assert edge is not None and edge.side == "plot-below-end" and edge.bounds.x == 8
+    taken = SurfaceObstacle("mark", "mark", "plot", ObstacleRect(40, 83, 49, 93))
+    beside = _below(_index(_rule(), taken))
+    assert beside is not None and beside.side == "plot-below-end"
+
+
+def test_below_plot_without_room_in_the_slot_continues_with_the_plot_foot():
+    # rows end at 95: the chip (top 98, bottom 108) does not fit in a slot that ends at 100.
+    result = _below(_index(_rule()), rows_bottom=95.0)
+    assert result is not None and result.side == "plot-bottom-center"
+
+
+def test_below_plot_requires_the_rows_bottom():
+    import pytest
+    with pytest.raises(ValueError, match="E_LAYOUT_ASOF_LABEL_GEOMETRY"):
+        find_asof_label_candidate(LabelRect(0, 0, 100, 100), (20, 10), rule_x=50, gap=3, rule_host_id="asof-rule",
+                                  obstacles=_index(), obstacle_classes=CLASSES, placement="below-plot")

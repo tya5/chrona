@@ -32,6 +32,7 @@ from chrona.presentation.layout.surface_backgrounds import (
     compose_calendar_backgrounds, compose_group_tabs, compose_row_group_backgrounds, replace_group_header_band,
 )
 from chrona.presentation.layout.surface_axis import compose_axis
+from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT_FALLBACK
 from chrona.presentation.layout.as_of_cone import complete_as_of_cone
 from chrona.presentation.layout.surface_deadlines import compose_deadline_marks
 from chrona.presentation.layout.surface_periods import compose_period_bands, period_label_requests
@@ -198,7 +199,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     member_label_context = SurfaceMemberLabelContext(
         request, projection, layout_manifest, by_source, text_slot, review_rows, tuple(rows), tuple(tracks),
         tuple(groups), scale, tuple(marks), timeline_bounds, as_of_label,
+        as_of_below_plot=base.as_of_foot_reserve > 0 and as_of_label is not None,
+        rows_bottom=float(base.plot.block + base.plot.block_size),
     )
+    if base.as_of_foot_fallback and as_of_label is not None:
+        diagnostics.append(f"{BELOW_PLOT_FALLBACK}:as-of-label")
     member_label_requests = build_member_label_requests(member_label_context)
     period_requests = period_label_requests(period_batch.extents, _bounds(base.plot))
     if period_requests:  # placed first of the pre-route labels, so routes and later labels avoid them
