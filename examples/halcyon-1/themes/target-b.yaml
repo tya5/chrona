@@ -347,13 +347,18 @@ body:
       value:
       - 3
       - 2
+    legend-swatch-inline-size:
+      type: number
+      value: 22
     legend-gap:
       type: number
-      value: 26
+      value: 14
     legend-block:
       type: number
       value: 22
   roles:
+    legend-swatch:
+      swatchInlineSize: legend-swatch-inline-size
     axis-rule:
       strokeWidth: stroke-width
     as-of-label-chip:
