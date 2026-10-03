@@ -17,6 +17,8 @@ tables:
       numeric-year-month: "{year}-{monthNumeric}"
       iso-week: "{isoYear}-W{isoWeek}"
       localized-date: "{monthShort} {day}, {year}"
+      day-month: "{day} {monthShort}"
+      day-month-year: "{day} {monthShort} {year}"
     coincidences:
       - {alias: long-month, canonical: short-month, months: [5]}
       - {alias: long-month-year, canonical: short-month-year, months: [5]}
@@ -37,6 +39,8 @@ tables:
       numeric-year-month: "{year}-{monthNumeric}"
       iso-week: "{isoYear}-W{isoWeek}"
       localized-date: "{year}/{monthNumeric}/{dayNumeric}"
+      day-month: "{monthNumber}月{day}日"
+      day-month-year: "{year}年{monthNumber}月{day}日"
     coincidences:
       - {alias: long-month, canonical: short-month, months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}
       - {alias: long-month-year, canonical: short-month-year, months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}

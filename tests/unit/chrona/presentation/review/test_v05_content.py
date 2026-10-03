@@ -647,3 +647,18 @@ def test_the_closed_day_legend_key_is_listed_only_when_a_closed_day_is_selected(
     bare = normalize_v05_surface_content(window, {"relations": (), "annotations": {}}, view, summary=EMPTY_SUMMARY, detail=detail)
     assert [role for role, _ in keyed.legend_entries] == ["planned", "calendar-closed"]
     assert [role for role, _ in bare.legend_entries] == ["planned"]
+
+
+def test_as_of_label_date_forms_day_month_and_day_month_year():
+    """#991: `20 Aug` and `20 Aug 2027` beside the localized date, in both built-in tables."""
+    from datetime import date as _date
+    from chrona.presentation.review.v05_content import _as_of_label
+    as_of = _date(2027, 8, 20)
+
+    def marker(form, table=None):
+        return {"kind": "asOf", "source": "actual", "label": "as of", "date": {"form": form, **({"nameTable": table} if table else {})}}
+    assert _as_of_label(marker("day-month"), as_of, "en-US") == "as of 20 Aug"
+    assert _as_of_label(marker("day-month-year"), as_of, "en-US") == "as of 20 Aug 2027"
+    assert _as_of_label(marker("day-month", "ja-JP"), as_of, "en-US") == "as of 8月20日"
+    assert _as_of_label(marker("day-month-year", "ja-JP"), as_of, "en-US") == "as of 2027年8月20日"
+    assert _as_of_label(marker("localized-date"), as_of, "en-US") == "as of Aug 20, 2027"  # unchanged

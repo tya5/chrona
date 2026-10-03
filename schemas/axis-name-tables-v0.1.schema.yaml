@@ -26,7 +26,7 @@ $defs:
       templates:
         description: Closed formatting templates for every axis label form.
         type: object
-        required: [year, half-year, quarter, year-quarter, quarter-year, short-month, long-month, numeric-month, short-month-year, long-month-year, numeric-year-month, iso-week, localized-date]
+        required: [year, half-year, quarter, year-quarter, quarter-year, short-month, long-month, numeric-month, short-month-year, long-month-year, numeric-year-month, iso-week, localized-date, day-month, day-month-year]
         additionalProperties: false
         properties:
           year: {$ref: '#/$defs/template'}
@@ -42,6 +42,8 @@ $defs:
           numeric-year-month: {$ref: '#/$defs/template'}
           iso-week: {$ref: '#/$defs/template'}
           localized-date: {$ref: '#/$defs/template'}
+          day-month: {$ref: '#/$defs/template'}
+          day-month-year: {$ref: '#/$defs/template'}
       coincidences:
         description: Exact reported month-specific coincidences between distinct forms.
         type: array

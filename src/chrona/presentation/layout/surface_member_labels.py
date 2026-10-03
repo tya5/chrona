@@ -131,7 +131,9 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
         x, content = context.as_of_label
         requests.append(LabelRequest("as-of-label", "actual-set", content,
             LabelRect(x, timeline_bounds[1], 0.0, 0.0),
-            ("plot-top-end", "plot-top-start", "rule-hosted"), "text", "timeline-as-of",
+            (("plot-bottom-center", "plot-bottom-end", "plot-bottom-start", "rule-hosted")
+             if request.surface_content.as_of_placement == "foot"
+             else ("plot-top-end", "plot-top-start", "rule-hosted")), "text", "timeline-as-of",
             CollisionDomain("timeline", "overlay"), "suppress", rule_host_obstacle_id="as-of",
             semantic_id="asOfLabel"))
     attached_labels = dict(request.surface_content.attached_labels)
@@ -327,7 +329,8 @@ def place_member_labels(context: SurfaceMemberLabelContext,
             from chrona.presentation.layout.asof_label import find_asof_label_candidate
             candidate = find_asof_label_candidate(timeline_rect, label_size, rule_x=label_request.anchor.x,
                 gap=label_gap, rule_host_id="as-of", obstacles=obstacles,
-                obstacle_classes=("mark", "text", "label-visual", "rule"))
+                obstacle_classes=("mark", "text", "label-visual", "rule"),
+                placement="foot" if "plot-bottom-end" in label_request.candidates else "top")
         elif associated_member:
             candidate = place_member_name(label_request.anchor, label_size, label_request.candidates,
                 bounds=placement_bounds, obstacles=obstacles, gap=label_gap, maximum_end_gap=reach,

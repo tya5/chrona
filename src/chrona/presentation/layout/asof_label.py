@@ -16,6 +16,7 @@ def find_asof_label_candidate(
     rule_host_id: str,
     obstacles: SurfaceObstacleIndex,
     obstacle_classes: tuple[str, ...],
+    placement: str = "top",
 ) -> LabelPlacement | None:
     """Choose the first legal top-margin or rule-hosted plot position.
 
@@ -56,6 +57,16 @@ def find_asof_label_candidate(
         ("plot-top-end", LabelRect(rule_x + gap, plot_top + gap, width, height)),
         ("plot-top-start", LabelRect(rule_x - gap - width, plot_top + gap, width, height)),
     )
+    if placement == "foot":
+        # The plot foot (#991): centred on the rule just above the plot's last edge, then beside it.
+        bottom = plot_bottom - gap - height
+        centred = LabelRect(rule_x - width / 2, bottom, width, height)
+        if legal(centred, hosted=True):
+            return LabelPlacement("plot-bottom-center", centred)
+        top_candidates = (
+            ("plot-bottom-end", LabelRect(rule_x + gap, bottom, width, height)),
+            ("plot-bottom-start", LabelRect(rule_x - gap - width, bottom, width, height)),
+        )
     for side, box in top_candidates:
         if legal(box, hosted=False):
             return LabelPlacement(side, box)

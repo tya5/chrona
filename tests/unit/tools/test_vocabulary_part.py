@@ -267,7 +267,7 @@ def test_axis_label_form_code_twins_equal_the_schema_vocabulary():
     assert _FORMS_BY_LEVEL["month"] == frozenset(_defs()["monthLabelForm"]["enum"])
     assert _FORMS_BY_LEVEL["quarter"] == frozenset(_defs()["quarterLabelForm"]["enum"])
     every = set().union(*_FORMS_BY_LEVEL.values())
-    assert every == set(FORMS), "the layout levels and the name-table form set cover the same 13 forms"
+    assert every == set(FORMS), "the layout levels and the name-table form set cover the same forms"
     catalog = _schema("axis-name-tables-v0.1.schema.yaml")
     assert set(catalog["$defs"]["table"]["properties"]["templates"]["required"]) == set(FORMS)
 

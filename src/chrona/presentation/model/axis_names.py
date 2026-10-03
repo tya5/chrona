@@ -16,6 +16,7 @@ FORMS = frozenset({
     "year", "half-year", "quarter", "year-quarter", "quarter-year",
     "short-month", "long-month", "numeric-month", "short-month-year",
     "long-month-year", "numeric-year-month", "iso-week", "localized-date",
+    "day-month", "day-month-year",
 })
 MONTH_FORMS = (
     "short-month", "long-month", "numeric-month", "short-month-year",

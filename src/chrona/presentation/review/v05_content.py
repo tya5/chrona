@@ -342,6 +342,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                row_decoration=view.background_decoration[0],
                                group_decoration=view.background_decoration[1],
                                group_headers=_group_headers(projection, project, view),
+                               as_of_placement=str(as_of_marker.get("placement", "top")) if as_of_marker is not None else "top",
                                group_tints=group_tints,
                                annotation_kind_paints=tuple(
                                    (item.annotation_id, annotation_kind_colors[item.kind]) for item in annotations

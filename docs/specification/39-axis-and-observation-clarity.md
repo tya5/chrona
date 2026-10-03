@@ -89,6 +89,13 @@ exactly like an axis `localized-date` label and follows the label, separated by
 a space. A View without an `asOf` marker keeps the implicit label
 `As of <localized date>`.
 
+The date form is `localized-date`, `day-month` (`20 Aug`; `8月20日` in `ja-JP`) or
+`day-month-year` (`20 Aug 2027`; `2027年8月20日`), each a template of the built-in axis name
+tables (#991; the heading's `dateForm`, Spec 06 section 7.4, takes the same three). The marker also
+declares an optional `placement`: `top` (the default) searches the plot's top margin beside the rule,
+then the rule-hosted positions; `foot` searches the plot foot, first centred on the rule, then beside
+it, then the rule-hosted positions. A marker without `placement` and `day-month` forms behaves as before.
+
 Any label whose semantic has a registered chip binding (`asOfLabelChip`,
 `memberLabelChip`, `finishDeltaChip`, `periodLabelChip`) may carry a chip. A chip is drawn when
 the Theme declares the binding's role (`as-of-label-chip`,
