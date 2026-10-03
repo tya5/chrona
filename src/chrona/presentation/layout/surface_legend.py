@@ -248,15 +248,19 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
         y = float(legend.bounds.block)
         row_height = 0.0
         slot_end = float(legend.bounds.inline) + float(legend.bounds.inline_size)
+        # Every swatch and label of the legend is centred on one row centreline (#991), the way the block
+        # direction centres each entry: the row is as tall as the tallest swatch or the label line box.
+        row_block = max([text_line_block] + [swatch_geometry(role)[1] for role, _ in request.surface_content.legend_entries])
         for role, label in request.surface_content.legend_entries:
             width, height, bucket = swatch_geometry(role)
             if item_min_inline is not None and x > float(legend.bounds.inline) and slot_end - x < item_min_inline:
                 y += row_height + gap
                 x = float(legend.bounds.inline)
                 row_height = 0.0
-            emit_swatch(role, x, y, width, height, bucket)
-            label_end = emit_label(role, label, x + width + gap, y + legend_size, max(0.0, slot_end - (x + width + gap)))
-            row_height = max(row_height, height, text_line_block)
+            emit_swatch(role, x, y + (row_block - height) / 2.0, width, height, bucket)
+            label_end = emit_label(role, label, x + width + gap, y + (row_block - text_line_block) / 2.0 + legend_size,
+                                   max(0.0, slot_end - (x + width + gap)))
+            row_height = row_block
             final_legend_end = max(final_legend_end, Decimal(str(label_end)), Decimal(str(y + row_height)))
             x += width + gap + measure_text_width(label, font_size=legend_size, font_metrics=metric_for("legend"),
                                                    letter_spacing=float(legend_treatment.letter_spacing),
