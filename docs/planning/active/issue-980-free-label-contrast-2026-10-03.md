@@ -2,7 +2,7 @@
 
 Living record for [#980](https://github.com/tya5/chrona/issues/980) (P1 on the [#454](https://github.com/tya5/chrona/issues/454) board, read only): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history. The owner-level choices are also recorded as a comment on #980 (options, choice, why, how to reverse).
 
-**Public base:** `fb191bdd` on `main`. **Status:** design plan, design, architecture review and implementation plan published together (this PR). No product code yet.
+**Public base:** `fb191bdd` on `main`. **Status:** design plan, design, architecture review and implementation plan published together (PR #1005, `b94847ed`). C980-1 is in review (section 8).
 
 ## 1. Published baseline
 
@@ -109,7 +109,7 @@ No new ground rule; the table states what the existing one gives a free label, e
 Each finding is reviewed against the general rule and fixed in the slide's own Theme YAML, never in generated output or by relaxing a floor:
 
 - **`axis-label2` on the quarter band (`axis-tiers`, `axis-cell-corners`, 3.67).** The Themes bind the band to `accent` and its label to `surface`. The scheme already names the legible ink on `accent`: `insideLabelPlanned` (`#000000`, 5.73 against `#3986E6`; the planned bar is the same fill). **Chosen:** `axis-label2.fill: insideLabelPlanned` in the two Themes. **Options:** a darker band (`text`, a look change of the band), `text` ink (4.44, still below the floor). **Reverse:** restore `surface` (the gate then fails again, so the reverse is a gate decision).
-- **`note-index` (`annotations`, 3.28).** The index digit is the note's marker; the note box stroke and leader are `warning`. **Chosen:** `note-index.fill: warning` in the Theme the slide uses (`examples/controller-z/themes/executive-light.yaml`; about 5.4 against the raised surface it lies on, confirmed by the gate in the slice), tying the index to its note. **Options:** `text` (16, loses the tie), `textMuted`. **Reverse:** restore `accent`.
+- **`note-index` (`annotations`, 3.28).** The index digit is the note's marker, and the Theme inked it `accent` on the raised surface. **Chosen:** `note-index.fill: textMuted` in the Theme the slide uses (`examples/controller-z/themes/executive-light.yaml`), a neutral secondary ink (7 against the raised surface). **Options:** `warning` (the note box stroke colour; read as an image it collides with the `variance-behind` figures, which use the same ink, so the digit reads as a state), `text` (16, loses the secondary weight). **Reverse:** restore `accent`.
 
 A finding whose fix would need a data edit or a floor change is not fixed here: it is recorded in this section and a short issue is filed (none expected).
 

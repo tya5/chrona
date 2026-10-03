@@ -235,15 +235,29 @@ Scene document remain errors; a mark or text on a translucent host remains
 `E_SCENE_CONTRAST_GROUND_UNSUPPORTED`; a mark or text on a faint decoration is judged on that decoration's colour.
 Theme resolution checks text only and has no decoration check to soften.
 
-**Ground text and pattern grounds (#884).** Group header text keeps the
-shared visual role `text` (and so the Theme `text` ink), so its contrast class
-is resolved from its purpose `group-header`, never from the role: the class
-`ground-text` is "ink of the shared text role that lies on a decoration
-ground". Its treatment is always `required` (4.5:1, paint channel `fill`,
-`E_SCENE_STATE_TEXT_CONTRAST`) and is not authored by the Theme; no other
-text in the role `text` is classified. The ground is the one above, so a group
-tint, a gradient or a flat band under the header is read as completed, and a
-header whose ink is too close to its band is a gate error. A Rect with a
+**Ground text and pattern grounds (#884, #980).** Free text, ink that lies on a ground
+the Theme chose, keeps the shared visual role `text` (and so the Theme `text` ink) or a
+role of its own, so its contrast class is resolved from its purpose, never from the role
+`text` alone: the class `ground-text` is "free ink on a ground". It covers the group
+header (#884) and every other Text a surface draws that no role-classified binding
+covers (#980): the as-of label, member labels (outside a bar, and inside it on the mark),
+axis labels (every tier), table column labels and cells, group details, the title and
+subtitle, legend labels, project notes, relation labels, milestone digest entries,
+summary text, the note index, and the callout, highlight and arrow annotation prose. A
+label whose role has its own class (a variance cell, note prose, an annotation kind
+header, a period label) keeps that class. Resolution is by the role's own binding, else
+for a Text primitive by purpose together with the shared role `text` or the role the
+purpose's binding declares; a non-Text primitive and an unregistered purpose are never
+ground text, and the semantic registry carries a guard that every `label` binding is
+classified (or named as classified by role), so a new label purpose cannot reopen the
+hole. The treatment is always `required` (4.5:1, paint channel `fill`,
+`E_SCENE_STATE_TEXT_CONTRAST`) and is not authored by the Theme: no `contrastTreatment`
+and no knob lowers it, and the decoration severity of #995 never softens it. The ground
+is the one above, so a group tint, a gradient, a row band, a region-frame fill or a flat
+band under the label is read as completed, and a label whose ink is too close to what
+lies beneath it is a gate error. A label that carries its own box (a label chip, an
+opaque Rect one paint order below it) is judged on that box; a translucent chip or host
+cannot be read and is `E_SCENE_CONTRAST_GROUND_UNSUPPORTED`. A Rect with a
 completed catalogue pattern (Scene v0.7) is ground in two colours, as a canvas
 texture is: the substrate is its fill and the ink its stroke, and every
 classified text and mark over it, except a decoration, is judged on both, the

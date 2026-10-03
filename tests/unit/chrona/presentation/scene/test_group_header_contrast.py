@@ -84,10 +84,14 @@ def test_a_gradient_band_is_sampled_under_the_header():
     assert finding.ground_kind == "gradient-sample" and finding.severity == "error"
 
 
-def test_other_text_in_the_shared_role_is_not_classified_by_the_header_rule():
-    scene = _scene(_band(INK), _text(purpose="table-cell"), _text(purpose="group-detail", identifier="detail"))
-    assert evaluate_scene_contrast(scene) and not [
-        item for item in evaluate_scene_contrast(scene) if item.visual_role == "text"]
+def test_other_text_in_the_shared_role_is_ground_text_by_its_own_purpose_too():
+    # #980: every free label is judged like the header, on the ground under it; a purpose the registry lacks is not.
+    scene = _scene(_band(INK), _text(purpose="table-cell", identifier="cell"),
+                   _text(purpose="group-detail", identifier="detail"),
+                   _text(purpose="unregistered-purpose", identifier="other"))
+    findings = {item.primitive_id: item for item in evaluate_scene_contrast(scene) if item.visual_role == "text"}
+    assert set(findings) == {"cell", "detail"}
+    assert all(item.severity == "error" and item.floor == 4.5 for item in findings.values())
 
 
 def test_only_a_text_primitive_can_be_ground_text():
@@ -154,7 +158,8 @@ def test_the_registry_resolves_ground_text_by_purpose_and_never_by_role():
     assert contrast_binding("text") is None and contrast_binding("group-header") is None
     header = contrast_binding_for("text", "group-header")
     assert header is not None and header.contrast_class == ContrastClass.GROUND_TEXT
-    assert contrast_binding_for("text", "table-cell") is None and contrast_binding_for("text", None) is None
+    assert contrast_binding_for("text", "table-cell").contrast_class == ContrastClass.GROUND_TEXT
+    assert contrast_binding_for("text", "unregistered-purpose") is None and contrast_binding_for("text", None) is None
     assert contrast_binding_for("variance-ahead", "group-header").scene_role == "variance-ahead"
     assert contrast_binding_for("planned", "group-header").contrast_class == ContrastClass.MARK
     assert contrast_binding_for("annotation-callout-text", "group-header") is None

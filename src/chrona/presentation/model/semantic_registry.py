@@ -31,8 +31,9 @@ class ContrastClass(str, Enum):
     STATE_TEXT = "state-text"
     DECORATION = "decoration"
     MARK = "mark"
-    # Ink of the shared `text` role that lies on a decoration ground (a group header on its band, #884).
-    # Resolved by purpose, never by role: the role `text` stays unclassified. The treatment is fixed `required`.
+    # Free ink that lies on a ground the Theme chose: a group header on its band (#884), the as-of label, a member
+    # label outside a bar, an axis label, table text (#980). Resolved by purpose for the shared role `text`, never by
+    # that role alone (it stays unclassified). The treatment is fixed `required`; a chip is the label's own ground.
     GROUND_TEXT = "ground-text"
 
 
@@ -86,7 +87,7 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     # Time decorations.
     # Public Scene role remains hyphenated; theme authoring resolves the canonical asOf binding.
     _binding("asOf", "line", "as-of", "as-of", "asOf"),
-    _binding("asOfLabel", "label", "as-of-label", "text", "text"),
+    _binding("asOfLabel", "label", "as-of-label", "text", "text", ContrastClass.GROUND_TEXT),
     # The as-of light cone (#890): a translucent gradient polygon from the marker, under every mark. Deliberately
     # not contrast-classified (a faint light is the point); the gates composite it as the ground of what lies on it.
     _binding("asOfCone", "decoration", "as-of-cone", "as-of-cone", "as-of-cone"),
@@ -111,9 +112,9 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     # texture and for the same reason not contrast-classified: what lies on it is gated against its fill.
     _binding("regionFrame", "decoration", "region-frame", "region-frame", "region-frame"),
     # Axis.
-    _binding("axisBand", "label", "axis-band", "axis-band", "axis"),
+    _binding("axisBand", "label", "axis-band", "axis-band", "axis", ContrastClass.GROUND_TEXT),
     _binding("axisBandDecoration", "decoration", "axis-band", "axis-band-decoration", "axis-band-decoration", ContrastClass.DECORATION),
-    _binding("axisLabel", "label", "axis-label", "text", "axis"),
+    _binding("axisLabel", "label", "axis-label", "text", "axis", ContrastClass.GROUND_TEXT),
     # Second band tier (#426): a View may declare a second band tier, each
     # in its own Layout-assigned lane; the second ordinal resolves through
     # its own semantic id so a Theme can bind it a distinct fill. Two
@@ -124,8 +125,9 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     # DECORATION-classified role to be painted somewhere in committed public
     # evidence, and no committed slide needs a third band.)
     _binding("axisBandDecoration2", "decoration", "axis-band", "axis-band-decoration2", "axis-band-decoration2", ContrastClass.DECORATION),
-    # Second and third labels tier (#426, not contrast-classified, so the
-    # decoration witness above does not constrain how many are registered):
+    # Second and third labels tier (#426; ground text since #980, and the
+    # decoration witness above counts DECORATION roles only, so it does not
+    # constrain how many are registered):
     # distinct scene roles (not the shared "text" role axisLabel uses), so a
     # Theme can bind a labels tier its own colour, not only its own font
     # (font already varies per tier through the typographyRole passed
@@ -133,8 +135,8 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     # leaves typographyRole at its default keeps the shared "axisLabel" id
     # every committed View already uses, so two fully-styled tiers (neither
     # left at the default) need both of these ordinals at once.
-    _binding("axisLabel2", "label", "axis-label", "axis-label2", "axis2"),
-    _binding("axisLabel3", "label", "axis-label", "axis-label3", "axis3"),
+    _binding("axisLabel2", "label", "axis-label", "axis-label2", "axis2", ContrastClass.GROUND_TEXT),
+    _binding("axisLabel3", "label", "axis-label", "axis-label3", "axis3", ContrastClass.GROUND_TEXT),
     _binding("axisGrid", "line", "axis-grid", "axis-major", "axis-major"),
     _binding("axisGridMinor", "line", "axis-grid", "axis-minor", "axis-minor"),
     # Axis cells and the axis/plot boundary (#426 rows 6-7).
@@ -147,34 +149,34 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     # A patterned tab on each group header (#882), a Theme role Layout completes beside the header text.
     _binding("groupTab", "decoration", "group-tab", "group-tab", "group-tab", ContrastClass.DECORATION),
     _binding("groupHeader", "decoration", "group-header", "group-header", "groupHeader", ContrastClass.GROUND_TEXT),
-    _binding("groupDetail", "label", "group-detail", "text", "text"),
+    _binding("groupDetail", "label", "group-detail", "text", "text", ContrastClass.GROUND_TEXT),
     # Table.
-    _binding("titleText", "label", "title-text", "text", "heading"),
+    _binding("titleText", "label", "title-text", "text", "heading", ContrastClass.GROUND_TEXT),
     # The subtitle line a View's `heading.subtitle` declares (#991), in the Theme's `subtitle` typography role.
-    _binding("subtitleText", "label", "subtitle-text", "text", "subtitle"),
-    _binding("tableColumnLabel", "label", "table-column-label", "text", "text"),
-    _binding("tableCell", "label", "table-cell", "text", "text"),
+    _binding("subtitleText", "label", "subtitle-text", "text", "subtitle", ContrastClass.GROUND_TEXT),
+    _binding("tableColumnLabel", "label", "table-column-label", "text", "text", ContrastClass.GROUND_TEXT),
+    _binding("tableCell", "label", "table-cell", "text", "text", ContrastClass.GROUND_TEXT),
     _binding("tableVarianceAhead", "label", "table-cell", "variance-ahead", "variance-ahead", ContrastClass.STATE_TEXT),
     _binding("tableVarianceOnTrack", "label", "table-cell", "variance-on-track", "variance-on-track", ContrastClass.STATE_TEXT),
     _binding("tableVarianceBehind", "label", "table-cell", "variance-behind", "variance-behind", ContrastClass.STATE_TEXT),
     _binding("missingActualCell", "label", "table-cell", "missing-actual-cell", "missing-actual-cell", ContrastClass.STATE_TEXT),
     # Plot labels.
-    _binding("memberLabel", "label", "member-label", "text", "text"),
-    _binding("memberLabelInsidePlanned", "label", "member-label", "member-label-inside-planned", "member-label-inside-planned"),
-    _binding("memberLabelInsideActual", "label", "member-label", "member-label-inside-actual", "member-label-inside-actual"),
-    _binding("memberLabelInsideSnapshot", "label", "member-label", "member-label-inside-snapshot", "member-label-inside-snapshot"),
-    _binding("memberLabelInsideScenario", "label", "member-label", "member-label-inside-scenario", "member-label-inside-scenario"),
+    _binding("memberLabel", "label", "member-label", "text", "text", ContrastClass.GROUND_TEXT),
+    _binding("memberLabelInsidePlanned", "label", "member-label", "member-label-inside-planned", "member-label-inside-planned", ContrastClass.GROUND_TEXT),
+    _binding("memberLabelInsideActual", "label", "member-label", "member-label-inside-actual", "member-label-inside-actual", ContrastClass.GROUND_TEXT),
+    _binding("memberLabelInsideSnapshot", "label", "member-label", "member-label-inside-snapshot", "member-label-inside-snapshot", ContrastClass.GROUND_TEXT),
+    _binding("memberLabelInsideScenario", "label", "member-label", "member-label-inside-scenario", "member-label-inside-scenario", ContrastClass.GROUND_TEXT),
     _binding("finishDelta", "label", "finish-delta", "variance-on-track", "variance-on-track"),
     _binding("varianceAhead", "label", "finish-delta", "variance-ahead", "variance-ahead"),
     _binding("varianceBehind", "label", "finish-delta", "variance-behind", "variance-behind"),
-    _binding("milestoneDigestEntry", "label", "milestone-digest-entry", "text", "text"),
+    _binding("milestoneDigestEntry", "label", "milestone-digest-entry", "text", "text", ContrastClass.GROUND_TEXT),
     # Relations.
     _binding("dependency", "line", "dependency", "dependency", "dependency"),
     _binding("dependency-critical", "line", "dependency", "dependency-critical", "dependency-critical"),
     # A relation label is label text: its ink is the text role's, like every other label (#880). Its visual role
     # used to be "annotation", whose fill every Theme binds to a ground colour (it paints annotation boxes), so the
     # label read as ghost text. Its typography is still the Theme's "annotation" role (the theme-role field).
-    _binding("relationLabel", "label", "relation-label", "text", "annotation"),
+    _binding("relationLabel", "label", "relation-label", "text", "annotation", ContrastClass.GROUND_TEXT),
     _binding("networkNode", "mark", "network-node", "network-node", "network-node", ContrastClass.MARK),
     _binding("networkEdge", "line", "network-edge", "network-edge", "network-edge"),
     _binding("criticalEdge", "line", "critical-edge", "critical-edge", "critical-edge"),
@@ -184,19 +186,19 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     # dispatched per entry role by Layout, not fixed by this binding (#427).
     _binding("legendEntry", "decoration", "legend-swatch", "legend-swatch", "legend-swatch"),
     _binding("scaleLegendEntry", "decoration", "legend-swatch", "planned", "planned"),
-    _binding("legendLabel", "label", "legend-label", "text", "legend"),
-    _binding("projectNote", "label", "project-note", "text", "annotation"),
-    _binding("noteIndex", "label", "note-index", "note-index", "note-index"),
+    _binding("legendLabel", "label", "legend-label", "text", "legend", ContrastClass.GROUND_TEXT),
+    _binding("projectNote", "label", "project-note", "text", "annotation", ContrastClass.GROUND_TEXT),
+    _binding("noteIndex", "label", "note-index", "note-index", "note-index", ContrastClass.GROUND_TEXT),
     _binding("annotationCalloutBox", "decoration", "annotation-box", "annotation-callout-box", "annotation-callout-box"),
-    _binding("annotationCalloutText", "label", "annotation-text", "annotation-callout-text", "annotation-callout-text"),
+    _binding("annotationCalloutText", "label", "annotation-text", "annotation-callout-text", "annotation-callout-text", ContrastClass.GROUND_TEXT),
     _binding("annotationCalloutLeader", "line", "annotation-leader", "annotation-callout-leader", "annotation-callout-leader"),
     _binding("annotationHighlightBox", "decoration", "annotation-box", "annotation-highlight-box", "annotation-highlight-box"),
-    _binding("annotationHighlightText", "label", "annotation-text", "annotation-highlight-text", "annotation-highlight-text"),
+    _binding("annotationHighlightText", "label", "annotation-text", "annotation-highlight-text", "annotation-highlight-text", ContrastClass.GROUND_TEXT),
     _binding("annotationNoteBox", "decoration", "annotation-box", "annotation-note-box", "annotation-note-box", ContrastClass.DECORATION),
     _binding("annotationNoteText", "label", "annotation-text", "annotation-note-text", "annotation-note-text", ContrastClass.STATE_TEXT),
     _binding("annotationNoteLeader", "line", "annotation-leader", "annotation-note-leader", "annotation-note-leader"),
     _binding("annotationArrowBox", "decoration", "annotation-box", "annotation-arrow-box", "annotation-arrow-box"),
-    _binding("annotationArrowText", "label", "annotation-text", "annotation-arrow-text", "annotation-arrow-text"),
+    _binding("annotationArrowText", "label", "annotation-text", "annotation-arrow-text", "annotation-arrow-text", ContrastClass.GROUND_TEXT),
     _binding("annotationArrowLeader", "line", "annotation-leader", "annotation-arrow-leader", "annotation-arrow-leader"),
     # Annotation kind header (#584): a title bar, the header text and an accent edge, painted from one
     # role set shared by every kind (the kind colour replaces the fill). The text is judged against the
@@ -207,10 +209,10 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("annotationKindLabel", "label", "annotation-kind-label", "annotation-kind-label", "annotation-kind-label", ContrastClass.STATE_TEXT),
     _binding("annotationKindSecondary", "label", "annotation-kind-secondary", "annotation-kind-secondary", "annotation-kind-secondary", ContrastClass.STATE_TEXT),
     # Summary panels.
-    _binding("summaryHeader", "label", "summary-header", "text", "summary"),
-    _binding("summaryMetric", "label", "summary-metric", "text", "summary"),
-    _binding("summaryFigureValue", "label", "summary-figure-value", "metric", "metric"),
-    _binding("summaryFigureCaption", "label", "summary-figure-caption", "subtitle", "subtitle"),
+    _binding("summaryHeader", "label", "summary-header", "text", "summary", ContrastClass.GROUND_TEXT),
+    _binding("summaryMetric", "label", "summary-metric", "text", "summary", ContrastClass.GROUND_TEXT),
+    _binding("summaryFigureValue", "label", "summary-figure-value", "metric", "metric", ContrastClass.GROUND_TEXT),
+    _binding("summaryFigureCaption", "label", "summary-figure-caption", "subtitle", "subtitle", ContrastClass.GROUND_TEXT),
 )}
 
 
@@ -258,14 +260,17 @@ def contrast_binding(scene_role: str) -> SemanticBinding | None:
 
 
 def contrast_binding_for(scene_role: str, purpose: str | None) -> SemanticBinding | None:
-    """Return the classified binding of a completed Text primitive: by its role, else by its purpose.
+    """Return the classified binding of a completed primitive: by its role, else (Text only) by its purpose.
 
-    Only a Text primitive in the shared role `text` can be ground text, and only for a registered purpose.
+    `purpose` is passed for a Text primitive only. Ink that lies on a ground the Theme chose is ground text
+    (#884, #980): the shared role `text` is resolved by purpose (the role itself stays unclassified), and a
+    label with a role of its own (a second axis tier, an inside label, an annotation prose) by role and purpose.
     """
     binding = contrast_binding(scene_role)
-    if binding is not None or scene_role != "text" or purpose is None:
+    if binding is not None or purpose is None:
         return binding
-    return next((item for item in contrast_bindings(ContrastClass.GROUND_TEXT) if item.purpose == purpose), None)
+    return next((item for item in contrast_bindings(ContrastClass.GROUND_TEXT)
+                 if item.purpose == purpose and scene_role in ("text", item.scene_role)), None)
 
 
 def contrast_bindings(contrast_class: ContrastClass) -> tuple[SemanticBinding, ...]:

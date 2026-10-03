@@ -261,7 +261,14 @@ def test_the_gate_judges_a_bar_in_the_cone_on_the_composited_ground(tmp_path) ->
                 if item.ground_id == "as-of-cone"]
 
     assert findings and {item.ground_kind for item in findings} == {"cone-blend"}
-    assert all(item.code == "E_SCENE_MARK_CONTRAST" for item in findings)
+    marks = [item for item in findings if item.visual_role == "planned"]
+    assert marks and all(item.code == "E_SCENE_MARK_CONTRAST" for item in marks)
+    # #980: the free labels the cone lies under are ground text, judged on the same composited ground. The as-of
+    # label sits at the apex where a strong cone is at full ink: that is the case the issue was filed for.
+    labels = {item.purpose: item for item in findings if item.visual_role == "text"}
+    assert {"as-of-label", "member-label"} <= set(labels)
+    assert all(item.code == "E_SCENE_STATE_TEXT_CONTRAST" and item.floor == 4.5 for item in labels.values())
+    assert labels["as-of-label"].severity == "error"
 
 
 def test_the_presentation_helper_does_not_alias_the_packaged_bundle() -> None:
