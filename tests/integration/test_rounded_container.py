@@ -230,6 +230,18 @@ def test_svg_draws_the_radius_and_the_quadratic_strip_and_png_pdf_follow_the_svg
     assert "Q" in svg.split('data-scene-id="annotation-border:note-0:start"', 1)[1][:600]
 
 
+def test_text_follows_box_composes_with_a_radius_and_box_follows_text_stays_refused(tmp_path):
+    def fitted(mode):
+        return lambda parts: parts["theme"]["body"]["roles"]["annotation-note-box"].update({"viewerFit": mode})
+
+    rendered = _render(tmp_path, {"start": {"width": 3}}, name="t", configure=fitted("text-follows-box"))
+    text = ab.prims(rendered, "annotation-text")["note-0"]
+    assert text.text_layout.fit is not None and ab.boxes(rendered)["note-0"].corner_radius > 0
+    with pytest.raises(Exception) as caught:
+        _render(tmp_path, None, name="b", configure=fitted("box-follows-text"))
+    assert "E_THEME_TOKEN_TYPE" in repr(caught.value) or "E_THEME_TOKEN_TYPE" in str(caught.value)
+
+
 def test_typst_draws_rounded_paper_and_refuses_a_strip_symbol_while_tikz_draws_both(tmp_path):
     # A rounded box is a Rect with a radius: Typst and TikZ both draw it. A border strip is a Symbol: TikZ draws its
     # quadratic outline, Typst draws Rects and Text only and refuses the surface (as it already did for a tilted box).
