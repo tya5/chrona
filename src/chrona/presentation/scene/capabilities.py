@@ -138,6 +138,7 @@ _PATTERNED_RECT_PAINT = _RECT_PAINT | frozenset(("pattern",))
 _LAYOUT_TYPOGRAPHY = _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("writingMode",))
 _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | _GROUP_TAB | frozenset((
     "cellGap", "cellCornerRadius", "cellCornerChamfer", "frameCornerRadius", "chipPadding", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach",
+    "symbolHeight", "symbolOffset",
     "progressInset", "summaryBarHeight", "swatchInlineSize", "annotationContainer", "marker", "symbol", "edge",
     "stampPlacement", "coneSpread", "coneExtent",
 ))
@@ -226,7 +227,8 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
     register("background", "Scene canvas", _CANVAS_PAINT, scene_kinds=frozenset(("Canvas",)))
     register("planned actual snapshot scenario",
              "Layout marks and Scene Rect/Symbol", _PATTERNED_RECT_PAINT | frozenset((
-                 "markHeight", "markOffset", "markPaintOrder", "markCornerRadius")),
+                 "markHeight", "markOffset", "markPaintOrder", "markCornerRadius",
+                 "symbolHeight", "symbolOffset")),
              scene_kinds=frozenset(("Rect", "Symbol")))
     register("missing-actual", "Layout mark and Scene Rect", _PATTERNED_RECT_PAINT | frozenset((
         "markHeight", "markOffset", "markPaintOrder", "markCornerRadius")), scene_kinds=frozenset(("Rect",)))

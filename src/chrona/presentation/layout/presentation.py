@@ -42,11 +42,24 @@ class MarkGeometry:
     offset: float
     paint_order: int
     corner_radius: float
+    # Optional size and offset of a point mark's symbol (#1066), ratios of the track like `height` and `offset`;
+    # None takes the bar band's value, so a role without the Theme properties is unchanged.
+    symbol_height: float | None = None
+    symbol_offset: float | None = None
 
     def __post_init__(self) -> None:
         if self.height <= 0 or self.offset < 0 or self.offset + self.height > 1 or not 0 <= self.corner_radius <= 0.5:
             raise LayoutError("E_LAYOUT_MARK_OVERFLOW", "/theme/markGeometry",
                               detail=f"height={self.height}; offset={self.offset}")
+        if self.symbol_extent[1] <= 0 or self.symbol_extent[0] < 0 or self.symbol_extent[0] + self.symbol_extent[1] > 1:
+            raise LayoutError("E_LAYOUT_MARK_OVERFLOW", "/theme/symbolGeometry",
+                              detail=f"symbolHeight={self.symbol_extent[1]}; symbolOffset={self.symbol_extent[0]}")
+
+    @property
+    def symbol_extent(self) -> tuple[float, float]:
+        """The symbol's (offset, height) ratios: the declared ones, else the bar band's."""
+        return (self.offset if self.symbol_offset is None else self.symbol_offset,
+                self.height if self.symbol_height is None else self.symbol_height)
 
 
 @dataclass(frozen=True)
@@ -78,6 +91,11 @@ class MarkBandFrame:
     def zero_origin(cls, inline_scale: Any, block_size: float,
                     role_geometries: Mapping[str, MarkGeometry]) -> "MarkBandFrame":
         return cls(inline_scale, 0.0, block_size, role_geometries)
+
+    def symbol_bounds(self, role: str) -> tuple[float, float]:
+        """Return a point mark's symbol block start and side (#1066); the bar band's when the role declares none."""
+        offset, height = self.role_geometries[role].symbol_extent
+        return self.block_origin + self.block_size * offset, self.block_size * height
 
     def role_bounds(self, role: str) -> tuple[float, float]:
         """Return the role's block start and extent without changing formula order."""
