@@ -168,6 +168,23 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     route_bottom = max((timeline_bounds[1] + timeline_bounds[3],
         *(float(group.header_bounds.block + group.header_bounds.block_size)
           for group in groups if group.header_bounds is not None)))
+    route_classes = ("mark", "text", "label-visual")
+
+    def entry_stub_length(semantic_id: str) -> float:
+        """Arrowhead plus clearance: the straight run a horizontal entry needs beside the port (#1030)."""
+        theme = request.theme_tokens
+        clearance = max(float(context.metric_values.get("timeline.relation.cornerRadius", 0)),
+                        float(theme.number(semantic_binding(semantic_id).theme_role, "strokeWidth")))
+        return marker_geometry(theme.marker("relationTargetTerminal")).head_length + clearance
+
+    def entry_stub_free(egress: ConnectorEgress) -> bool:
+        """The stub lies in the timeline and crosses no mark, text or label (host marks exempt)."""
+        end = egress.exposed_port[0]
+        if end < timeline_bounds[0] or end > timeline_bounds[0] + timeline_bounds[2]:
+            return False
+        return not obstacles.egress_collisions(ObstacleSegment(*egress.corridor), host_ids=egress.host_ids,
+            classes=route_classes, regions=("timeline", "group-header"))
+
     for relation in request.surface_content.relations:
         source, target, relation_id = relation.source_object_id, relation.target_object_id, relation.relation_id
         for source_id, source_anchor in relation_anchors.get(str(source), ()):
@@ -185,12 +202,14 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     (ConnectorEgress(relation.source_endpoint, source_nominal, source_nominal, ()),))
                 target_candidates = (connector_egress_candidates(target_mark, relation.target_endpoint,
                     source_nominal, comparison_clusters.get((target_mark.source_ref,
-                        instance_rows[target_id]), ())) if target_mark else
+                        instance_rows[target_id]), ()), entry=context.layout_manifest.relation_entry,
+                    stub_length=(entry_stub_length(relation.semantic_id)
+                                 if context.layout_manifest.relation_entry == "side-when-free" else 0.0),
+                    stub_free=entry_stub_free) if target_mark else
                     (ConnectorEgress(relation.target_endpoint, target_nominal, target_nominal, ()),))
                 port_pairs = tuple((left, right) for left in source_candidates for right in target_candidates)
                 selected_pair: tuple[ConnectorEgress, ConnectorEgress] | None = None
                 points: tuple[tuple[float, float], ...] = ()
-                route_classes = ("mark", "text", "label-visual")
                 lane_selection = None
                 if projection.lane_membership is not None:
                     lane_selection = select_lane_relation_route(port_pairs, obstacles=obstacles,

@@ -668,6 +668,7 @@ def solve_layout(profile: ResolvedLayoutProfile, *, viewport_inline: int | float
         tuple(arranger.decisions),
         relation_max_bends=int(relation_routing.get("maxBends", 4)),
         relation_max_detour_ratio=float(relation_routing.get("maxDetourRatio", 2.0)),
+        relation_entry=str(relation_routing.get("entry", "any")),
         annotation_max_bends=int(annotation_routing["maxBends"]),
         annotation_max_detour_ratio=float(annotation_routing["maxDetourRatio"]),
         row_distribution=str(profile.profile["reviewSurface"]["rowDistribution"]),

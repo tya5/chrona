@@ -15,7 +15,10 @@ ACTUAL = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "obse
     "asOf": AS_OF.isoformat(), "observations": [
         {"id": "run", "sequence": 1, "projectObjectId": "running", "actual": {"start": "2026-02-09", "openUntil": "asOf"}},
         {"id": "s", "sequence": 1, "projectObjectId": "started", "actual": {"start": "2026-02-20", "progress": 0.4}},
-        {"id": "z", "sequence": 1, "projectObjectId": "stalled", "actual": {"start": "2026-02-20", "openUntil": "asOf", "progress": 1}},
+        {"id": "z", "sequence": 1, "projectObjectId": "stalled", "actual": {"start": "2026-02-20", "progress": 1}},
+        {"id": "n", "sequence": 1, "projectObjectId": "noprogress", "actual": {"start": "2026-02-20"}},
+        {"id": "f", "sequence": 1, "projectObjectId": "future", "actual": {"start": "2026-03-20", "progress": 0.1}},
+        {"id": "o", "sequence": 1, "projectObjectId": "explicit", "actual": {"start": "2026-02-20", "openUntil": "asOf", "progress": 1}},
         {"id": "done", "sequence": 1, "projectObjectId": "finished", "actual": {"start": "2026-01-12", "finish": "2026-01-23"}},
     ]}}
 
@@ -25,6 +28,9 @@ def _source() -> dict:
         "running": sr.span("running", date(2026, 2, 2), 40),
         "started": sr.span("started", date(2026, 2, 16), 40),
         "stalled": sr.span("stalled", date(2026, 2, 16), 40),
+        "noprogress": sr.span("noprogress", date(2026, 2, 16), 40),
+        "future": sr.span("future", date(2026, 3, 16), 40),
+        "explicit": sr.span("explicit", date(2026, 2, 16), 40),
         "finished": sr.span("finished", date(2026, 1, 12), 11),
         "overdue": sr.span("overdue", date(2026, 1, 19), 14),
         "gate": sr.point("gate", date(2026, 2, 13)),
@@ -54,17 +60,20 @@ def test_by_default_a_due_unobserved_span_and_gate_are_marked_and_the_open_actua
     rendered = _render(tmp_path, None)
     missing, actual = _marks(rendered, "missing-actual"), _marks(rendered, "actual")
     assert set(missing) == {"overdue", "gate"}
-    assert set(actual) == {"running", "finished", "stalled"}
+    # Only an Actual that declares `openUntil: asOf` draws an open actual; the others are incomplete observations.
+    assert set(actual) == {"running", "finished", "explicit"}
 
 
 def test_in_progress_marks_only_the_started_span_from_its_actual_start_to_as_of(tmp_path):
     rendered = _render(tmp_path, "in-progress")
     missing, actual = _marks(rendered, "missing-actual"), _marks(rendered, "actual")
 
-    # The owner's rule: started, unfinished and below full progress is in progress, `openUntil` or not; one at
-    # progress 1 without a finish is not, and keeps its open actual. No mark on the overdue span or the gate.
-    assert set(missing) == {"running", "started"}
-    assert set(actual) == {"finished", "stalled"}
+    # The owner's rule: started (on or before as-of), unfinished and progress below 1 or absent is in progress,
+    # `openUntil: asOf` or not (and `openUntil` alone is enough, even at progress 1); at progress 1 without a
+    # finish or `openUntil` it is not, nor is a span that has not started. No mark on the overdue span or the gate.
+    assert set(missing) == {"running", "started", "noprogress", "explicit"}
+    assert set(actual) == {"finished"}
+    assert not {"stalled", "future", "overdue", "gate"} & set(missing)
     left, _, width, _ = missing["running"]
     planned = next(item for item in rendered.surface.primitives if item.scene_id.startswith("planned:") and item.scene_id.endswith(":running"))
     day = planned.bounds[2] / 40  # one calendar day, from the planned 40-day span

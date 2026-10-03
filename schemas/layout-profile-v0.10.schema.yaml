@@ -66,6 +66,7 @@ properties:
     properties:
       maxBends: {description: "Maximum bends allowed in one relation route.", type: integer, minimum: 0, maximum: 64}
       maxDetourRatio: {description: "Maximum route detour relative to direct distance.", type: number, minimum: 1, maximum: 100}
+      entry: {description: "Which side a relation enters a span start (or the mirrored end): side-when-free tries the horizontal entry at mid-height first when the source lies on that side and a stub of arrowhead plus clearance is free; any keeps the nearest-port order. Absent means any (#1030).", enum: [any, side-when-free]}
   root: {description: "Complete root container for a standalone Layout Profile.", $ref: "#/$defs/container"}
 description: "Choose either a standalone root or an extends-plus-overrides profile."
 examples:
