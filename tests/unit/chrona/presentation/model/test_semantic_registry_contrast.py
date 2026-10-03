@@ -65,3 +65,15 @@ def test_free_text_resolves_by_purpose_in_the_shared_role_and_by_role_and_purpos
     assert contrast_binding_for("text", "no-such-purpose") is None
     # A role classified by its own class wins over the purpose.
     assert contrast_binding_for("variance-behind", "axis-label").contrast_class == ContrastClass.STATE_TEXT
+
+
+def test_a_theme_text_paint_role_is_ground_text_by_its_purpose(tmp_path):
+    """The header role, the legend role and a View-named column role are judged like `text` (#1062)."""
+    for role, purpose in (("tableColumnLabel", "table-column-label"), ("legend", "legend-label"),
+                          ("table-cell-secondary", "table-cell")):
+        assert contrast_binding_for(role, purpose).contrast_class == ContrastClass.GROUND_TEXT, (role, purpose)
+    # The purpose still decides: a named role on a purpose no ground-text binding owns, or on no purpose, is not classified,
+    # and a registered role never borrows another purpose's class.
+    assert contrast_binding_for("table-cell-secondary", "no-such-purpose") is None
+    assert contrast_binding_for("table-cell-secondary", None) is None
+    assert contrast_binding_for("axis-label2", "member-label") is None

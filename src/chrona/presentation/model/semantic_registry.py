@@ -228,6 +228,9 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
 )}
 
 
+_SCENE_ROLES = frozenset(binding.scene_role for binding in _REGISTRY.values())
+
+
 def axis_band_semantic_ids() -> tuple[str, ...]:
     """Closed, ordinal-ordered axis band semantic ids (#426).
 
@@ -281,8 +284,11 @@ def contrast_binding_for(scene_role: str, purpose: str | None) -> SemanticBindin
     binding = contrast_binding(scene_role)
     if binding is not None or purpose is None:
         return binding
+    # A role no binding registers as its scene role is a Theme text paint role (`tableColumnLabel`, `legend`, a
+    # View-named column role, #1062): it paints the same free ink and is judged by its purpose like `text`.
+    theme_text_role = scene_role not in _SCENE_ROLES
     return next((item for item in contrast_bindings(ContrastClass.GROUND_TEXT)
-                 if item.purpose == purpose and scene_role in ("text", item.scene_role)), None)
+                 if item.purpose == purpose and (theme_text_role or scene_role in ("text", item.scene_role))), None)
 
 
 def contrast_bindings(contrast_class: ContrastClass) -> tuple[SemanticBinding, ...]:

@@ -443,6 +443,7 @@ allOf:
                     onTime: {$ref: "#/$defs/columnAffix"}
                     ahead: {$ref: "#/$defs/columnAffix"}
                     missing: {$ref: "#/$defs/columnAffix"}
+                textRole: {description: "Named Theme text role in which this column's cells are measured and set (#1062): its size, weight, letter spacing and transform, and, when the Theme binds `<role>.fill`, the colour of a plain cell. A state-coloured cell (variance, missing actual) keeps its own ink. Absent, the cells keep `text` (`numeric` for a signed format). A role the Theme does not declare is `E_THEME_ROLE_REQUIRED`.", examples: [table-cell-secondary], type: string, minLength: 1}
                 align: {description: "Inline alignment inside the measured column allocation.", enum: [start, center, end]}
                 headerOrientation: {description: "Finite orientation of this column header; table cells remain horizontal.", enum: [horizontal, rotate-cw, rotate-ccw]}
                 width:

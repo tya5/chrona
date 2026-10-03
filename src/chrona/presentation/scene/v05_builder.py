@@ -549,7 +549,11 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             row_id = row_ids.get(cell.object_id)
             if row_id is None:
                 raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", f"cell:{cell.object_id}:{cell.column_id}")
-            emit_semantic_text(f"cell:{cell.object_id}:{cell.column_id}", cell.semantic_id, href=href, link_title=link_title,
+            # A plain cell in a View-named text role (`textRole`, #1062) is painted with that role's fill when the
+            # Theme binds one; a state-coloured cell keeps its own ink and takes only the role's typography.
+            cell_paint = (cell.typography_role if cell.semantic_id == "tableCell" and cell.typography_role not in {"text", "numeric"}
+                          and value.theme_tokens.optional_color(cell.typography_role, "fill") is not None else None)
+            emit_semantic_text(f"cell:{cell.object_id}:{cell.column_id}", cell.semantic_id, cell_paint, href=href, link_title=link_title,
                                table_row_id=row_id, table_column_id=cell.column_id)
     for group in groups:
         if group.header_bounds is not None:
@@ -824,10 +828,12 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                          icon_alternative=placed.alternative, icon_decorative=placed.decorative,
                                          visual_capability_source_ref=placed.visual_capability_source_ref,
                                          slot_id=placed.slot_id, paint_order=placed.paint_order))
+    # A Theme that binds `legend.fill` paints the legend labels with it (#1062); otherwise they keep `text`.
+    legend_paint = "legend" if value.theme_tokens.optional_color("legend", "fill") is not None else None
     text_roles = tuple(
         (prefix, semantic_binding(semantic_id).purpose, role or semantic_binding(semantic_id).scene_role)
         for prefix, semantic_id, role in (
-            ("legend:", "legendLabel", None), ("note:", "projectNote", None),
+            ("legend:", "legendLabel", legend_paint), ("note:", "projectNote", None),
             ("group-detail:", "groupDetail", None), ("milestone:", "milestoneDigestEntry", None),
             ("summary:", "summaryMetric", None), ("note-index:", "noteIndex", None),
             ("relation-label:", "relationLabel", None),

@@ -63,7 +63,7 @@ The registry owns canonical primitive semantics. Its entries declare `semantic_i
 | `periodLabelChip` | Rect | `label-chip` | `period-label-chip` |
 | `axisBand` | Text | `axis-band` | `axis` |
 | `legendEntry` | dispatched by the entry's own role `primitive_kind` (Rect, Symbol, or Path) | `legend-swatch` | entry's own role, sized against `legend-swatch.swatchInlineSize` (#427) |
-| `legendLabel` | Text | `legend-label` | `legend` |
+| `legendLabel` | Text | `legend-label` | `legend` (painted in `legend` when the Theme binds `legend.fill`, else `text`; ground text, #1062) |
 | `annotation` | Rect/Text/Path | `annotation-*` | `annotation` |
 
 The renderer keeps stable primitive role strings where needed for public Scene compatibility (for example `as-of`). They are declared by the registry rather than handwritten in composition. Theme lookup accepts explicitly declared ingress aliases only and resolves to the canonical binding before Scene construction.

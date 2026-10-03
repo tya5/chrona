@@ -155,8 +155,13 @@ def test_every_public_theme_declaration_and_scene_paint_role_has_a_consumer():
         for surface in scene["surfaces"]:
             for primitive in surface["primitives"]:
                 contract = theme_role_contract(primitive["visualRole"])
-                assert contract is not None and primitive["kind"] in contract.scene_kinds, (
-                    path, primitive["visualRole"], primitive["kind"])
+                if contract is None:
+                    # The one open name: a Theme role a View's `tableColumns[].textRole` names (#1062), a Text of
+                    # purpose `table-cell` painted with the fill the capability table admits for an open name.
+                    assert (primitive["kind"], primitive["purpose"]) == ("Text", "table-cell"), (
+                        path, primitive["visualRole"], primitive["kind"])
+                else:
+                    assert primitive["kind"] in contract.scene_kinds, (path, primitive["visualRole"], primitive["kind"])
                 for property_name in ("fill", "stroke"):
                     if primitive["paint"].get(property_name) is not None:
                         assert theme_role_property_consumer(primitive["visualRole"], property_name), (
@@ -216,3 +221,12 @@ def test_every_public_authored_theme_resolves_with_its_declared_scheme():
     authored = {path.resolve() for path in (ROOT / "examples").glob("*/themes/*.yaml")}
     authored |= {path.resolve() for path in (ROOT / "src/chrona/resources/presets/bundles").glob("*/theme.yaml")}
     assert observed == authored
+
+
+def test_text_paint_is_admitted_on_the_legend_role_and_on_a_view_named_text_role():
+    """`legend.fill` (#1062) and a View-named column role's measurement and fill are consumed; stroke is not."""
+    assert theme_role_property_consumer("legend", "fill") and theme_role_property_consumer("legend", "opacity")
+    assert theme_role_property_consumer("legend", "fontSize")
+    assert theme_role_property_consumer("legend", "stroke") is None
+    assert "table column text" in theme_role_property_consumer("table-cell-secondary", "fontSize")
+    assert theme_role_property_consumer("table-cell-secondary", "fill")

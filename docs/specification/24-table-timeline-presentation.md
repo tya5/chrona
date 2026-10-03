@@ -25,6 +25,8 @@ not declared by the active profile, and a comparison facet absent from the View,
 diagnostics. Missing data uses the declared `blank`, `em-dash`, or `unknown` treatment;
 no formatter code, title parsing, or renderer field lookup is permitted.
 
+A column MAY name `textRole` (#1062), a Theme text role in which its cells are measured and set. Absent, the cells keep `text` (`numeric` for a signed format). Layout measures, wraps and places the column in that role (size, weight, letter spacing, transform and line height, through the same channel as any cell role) and the row block follows the tallest role a row holds. Scene paints a plain cell with the role's `fill` when the Theme binds `<role>.fill` and with the `text` ink otherwise; a state-coloured cell (variance, missing actual) keeps its state ink and takes only the role's typography. The header keeps its own role. A role the Theme does not declare is `E_THEME_ROLE_REQUIRED` at `/body/tableColumns/<index>/textRole`. The ink is ground text for the contrast gate (blocking at 4.5 on its ground). Work record: [issue-1062-text-roles-2026-10-04.md](../planning/active/issue-1062-text-roles-2026-10-04.md).
+
 The application normalizes every cell into `SurfaceContentInput` before Scene
 construction: `blank` becomes the empty string, `em-dash` becomes `—`, and `unknown`
 becomes the literal `unknown`. Scene emits that normalized text verbatim. Neither
