@@ -189,3 +189,24 @@ def test_two_paths_for_one_relation_are_an_error_and_one_path_each_is_not_1031()
 def test_the_legend_dependency_swatch_is_not_a_relation_path_1031():
     swatch = _relation_path("legend-swatch:dependency", "dependency")
     assert "E_SCENE_RELATION_PATH_DUPLICATE" not in _codes(_scene(swatch, _relation_path("relation:dependency", "dependency")))
+
+
+def _path_with(identifier, points):
+    return {**_relation_path(identifier, "r"), "points": [list(point) for point in points]}
+
+
+def test_a_relation_path_that_doubles_back_over_itself_is_an_error_1059():
+    reversing = _path_with("relation:r:a:b", [(467.8, 167.0), (467.8, 189.3), (461.1, 189.3), (472.1, 189.3)])
+    findings = evaluate_scene_perceptibility(_scene(reversing))
+    finding = next(item for item in findings if item.code == "E_SCENE_RELATION_PATH_REVERSES")
+    assert (finding.severity, finding.primitive_ids) == ("error", ("relation:r:a:b",))
+    assert dict(finding.measured_facts) == {"relation": "r", "overlap": 6.7}
+    # A later segment overlapping an earlier one (not only the adjacent reversal) is the same defect.
+    loop = _path_with("relation:r:a:c", [(0, 0), (10, 0), (10, 5), (5, 5), (5, 0), (8, 0)])
+    assert "E_SCENE_RELATION_PATH_REVERSES" in _codes(_scene(loop))
+
+
+def test_straight_and_stepped_relation_paths_and_the_legend_swatch_are_not_reversals_1059():
+    stepped = _path_with("relation:r:a:b", [(0, 0), (0, 10), (6, 10), (6, 4), (12, 4)])
+    swatch = {**_path_with("legend-swatch:dependency", [(0, 0), (9, 0), (3, 0)]), "sourceRef": "dependency"}
+    assert "E_SCENE_RELATION_PATH_REVERSES" not in _codes(_scene(stepped, swatch))

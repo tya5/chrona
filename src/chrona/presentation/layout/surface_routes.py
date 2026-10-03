@@ -18,7 +18,7 @@ from chrona.presentation.layout.presentation import TrackPlacement
 from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.layout.routing import (
     RouteSearchFailure, RouteSuppressionEvidence, place_relation_route,
-    relation_route_quality, select_lane_relation_route,
+    relation_route_quality, repair_self_reversal, select_lane_relation_route,
 )
 from chrona.presentation.layout.path_geometry import flatten_path, rounded_orthogonal_path
 from chrona.presentation.layout.surface_geometry import bounds_from_rect
@@ -260,6 +260,11 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         except RouteSearchFailure:
                             continue
                         candidate_points = _combined_connector_points(source_egress, middle, target_egress)
+                        repaired = repair_self_reversal(candidate_points, obstacles, classes=route_classes,
+                                                        regions=("timeline", "group-header"),
+                                                        host_ids=(*source_egress.host_ids, *target_egress.host_ids))
+                        if repaired is not None:
+                            candidate_points = repaired
                         if len(candidate_points) >= 2 and relation_route_quality(candidate_points,
                             max_bends=context.layout_manifest.relation_max_bends,
                             max_detour_ratio=context.layout_manifest.relation_max_detour_ratio):
