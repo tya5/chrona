@@ -2,7 +2,7 @@
 
 Living record for [#991](https://github.com/tya5/chrona/issues/991): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history. Found by the reviewer's YAML-only target-B reproduction ([#987](https://github.com/tya5/chrona/issues/987), PR #993). The target is the owner-approved mock `docs/research/presentation/halcyon-1-target-design-2026-09-21/board/02-programme-board.png`.
 
-**Public base:** `016a26c1` on `main`. **Status:** design plan, design, architecture review and implementation plan are published together by this record; the legend-crash bug is merged (PR #997).
+**Public base:** `016a26c1` on `main`. **Status:** design plan, design, architecture review and implementation plan are published together by this record (PR #999); every slice is merged except the relation entry side (item 15, successor #1030); the [acceptance review](../../reviews/current/issue-991-target-b-knobs-acceptance-review-2026-10-03.md) is published.
 
 **Scope rule (owner, 2026-10-03):** this work changes core knobs and their own evidence only (synthetic tests and a Controller Z evidence slide). It does **not** edit the reviewer's `21-target-b` files (`examples/halcyon-1` views, themes, layouts, schemes, profiles, contexts); adopting each knob there is the reviewer's step and not an acceptance row here.
 
@@ -102,5 +102,4 @@ Slices not reached get a short successor issue (duplicate search first). Every s
 
 ## 8. Progress
 
-- S1 (ghosts with grouped rows): `comparison.baselineMarks: ghost` in `view-v0.28` (in place; S0 gate additive=1), `projection._compose_rows`, `E_REVIEW_BASELINE_MARKS_SNAPSHOT`, spec 06 section 4.2; evidence slide `controller-z/baseline-ghosts` (executive sources plus a captured snapshot). Read: ghosts sit left of the current bars under the group bands; the 44 other slides are byte-identical. The dashed hollow look of the mock is Theme paint of the `snapshot` role, not this knob.
-- Design merged: PR #999 (`15d1edce`). S0 (legend crash): merged, PR #997 (`ca9cb595`).
+All slices below are merged; the PR and commit of each is in the acceptance review. Items 16 (`baselineMarks: ghost-when-changed`) and 17 (the owner's in-progress rule: started on or before as-of, unfinished, progress below 1 or absent, `openUntil` sufficient) were added by the reviewer and owner during the work and landed as #1029 and #1025/#1028. Not done: item 15 (#1030), the calendar title (#1026) and the in-progress hatch with lane rows (#1027). Adoption in 21-target-b is the reviewer's (#987).
