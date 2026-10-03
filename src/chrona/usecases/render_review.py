@@ -50,7 +50,7 @@ from chrona.presentation.model.projection import ReviewDeadline, ReviewPeriod, b
 from chrona.presentation.model.surface_content import SummaryContent, TableContent
 from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput, ViewRowMode
 from chrona.presentation.review.v05_content import (
-    calendar_closures, legend_entries, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content)
+    calendar_closures, compose_heading, legend_entries, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content)
 from chrona.presentation.scene.model import (
     ContentFamilyCounts, InspectionScene, SceneManifest, SceneProvenance,
     SceneSurface,
@@ -275,7 +275,10 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     source_inputs = _source_inputs(project, view, projection, summary,
                                    annotation_input=_annotation_source_input(
                                        view, visual_requests, icon_assets, theme),
-                                   table=table_content)
+                                   table=table_content,
+                                   # A dependency network draws its own title line and ignores `heading` (#991).
+                                   heading=(compose_heading(view, project, actual_observations, environment.locale)
+                                            if view.surface == "table-timeline" else None))
     required_metrics = (("timeline.groupHeader.blockSize",)
                         if view.grouping is not None and view.grouping.presentation == "header" else ())
     # The legend slot is measured as the legend Layout will draw: the same entries, the same
@@ -747,7 +750,8 @@ def _font_failure(error: FontMetricsError) -> RenderFailed:
 
 def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
                    summary: SummaryContent, annotation_input: SourceInput | None = None, *,
-                   table: TableContent | None = None) -> dict[str, SourceInput]:
+                   table: TableContent | None = None,
+                   heading: tuple[str, str | None] | None = None) -> dict[str, SourceInput]:
     """Declare what each slot will hold, for measurement before layout.
 
     The `legend` entry is a placeholder: Layout measures the legend from the entries it
@@ -765,7 +769,7 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
     network = getattr(projection, "network", None)
     notes = tuple(str(item.get("text", "")) for item in project.get("annotations", {}).values())
     sources = {
-        "title": SourceInput((project["project"].get("title", "Chrona"),), typography_role="heading"),
+        "title": _title_source(project, heading),
         "table": SourceInput(
             table_lines,
             row_count, len(view.table_columns) or 1, table=table),
@@ -785,6 +789,15 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
     if annotation_input is not None:
         sources["annotations"] = annotation_input
     return sources
+
+
+def _title_source(project: dict[str, Any], heading: tuple[str, str | None] | None) -> SourceInput:
+    """The title slot's content: one `heading` line, plus a `subtitle` line when the View declares one (#991)."""
+    title, subtitle = heading if heading is not None else (project["project"].get("title", "Chrona"), None)
+    if subtitle is None:
+        return SourceInput((title,), typography_role="heading")
+    return SourceInput((title, subtitle), typography_role="heading",
+                       runs=(SourceTextRun(title, "heading"), SourceTextRun(subtitle, "subtitle")))
 
 
 def _annotation_source_input(view: ViewInput, visual_requests: tuple[VisualRequest, ...],

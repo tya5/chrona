@@ -150,6 +150,8 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("groupDetail", "label", "group-detail", "text", "text"),
     # Table.
     _binding("titleText", "label", "title-text", "text", "heading"),
+    # The subtitle line a View's `heading.subtitle` declares (#991), in the Theme's `subtitle` typography role.
+    _binding("subtitleText", "label", "subtitle-text", "text", "subtitle"),
     _binding("tableColumnLabel", "label", "table-column-label", "text", "text"),
     _binding("tableCell", "label", "table-cell", "text", "text"),
     _binding("tableVarianceAhead", "label", "table-cell", "variance-ahead", "variance-ahead", ContrastClass.STATE_TEXT),

@@ -112,6 +112,24 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
                        collision_region="title", collision_domain=CollisionDomain("title", "content"),
                        source_content=title, available_inline_start=float(by_source["title"].bounds.inline),
                        available_inline_size=float(by_source["title"].bounds.inline_size))]
+    title_runs = measured_sources.run_measurements.get("title", ())
+    if title_input is not None and len(title_input.lines) > 1 and len(title_runs) > 1:
+        # A declared subtitle (#991) is the title source's second run: it sits under the title line, in its
+        # own typography role, from the stack measurement Layout already took.
+        text.append(place_text(placement_id="subtitle", source_ref="title", content=title_input.lines[1],
+                               inline=float(by_source["title"].bounds.inline),
+                               # Under the title's drawn box (its box hangs one font size above its baseline), at
+                               # the second run's baseline of the stack measurement, whichever is lower.
+                               baseline_block=max(
+                                   float(by_source["title"].bounds.block) + float(title_runs[0].block_size)
+                                   + float(title_runs[1].baseline),
+                                   float(text[0].bounds.block + text[0].bounds.block_size) + title_runs[1].font_size),
+                               typography_role=title_runs[1].typography_role, theme_tokens=request.theme_tokens,
+                               font_metrics=request.font_metrics, collision_region="title",
+                               collision_domain=CollisionDomain("title", "content"),
+                               source_content=title_input.lines[1],
+                               available_inline_start=float(by_source["title"].bounds.inline),
+                               available_inline_size=float(by_source["title"].bounds.inline_size)))
     footer_provisional_slots = slots
     slots, detail_panel_text, detail_panel_warnings, detail_visual_reservations = compose_detail_panel_blocks(
         slots=slots, request=request, requested_canvas=request.layout_manifest.viewport,
