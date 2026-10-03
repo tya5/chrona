@@ -303,6 +303,21 @@ one of these; and, unchanged, a decoration on a translucent host (a decoration i
 substrate, with no ink, cone or composite ground) and note prose on a note box that is not opaque, flat and
 same-source (Specification 08, C4). A translucent canvas has nothing under it and stays `E_SCENE_CONTRAST_PAINT`.
 
+**Vector artwork behind an annotation (#848).** The parts of an annotation container's artwork are sibling `Symbol`
+primitives of role `annotation-artwork` over the note box, whose bounds are the whole note. A part is never a host by
+bounds, so the frame ring around a note's paper is not the ground of the text in its hole, and the parts of one artwork
+are never each other's ground. The artwork is judged as ink on its substrate: a label of the legibility classes (state
+text, ground text, mark) whose `sourceRef` equals an earlier part's takes that part's ink as one more ground **where the
+part's painted area meets the label's bounds**, and only there. A fill part is its closed outline under the non-zero
+winding rule (a hole wound the other way is empty); a stroke part is its flattened path widened by half its stroke
+width; a quadratic is flattened to eight chords. The ink is composited at the part's opacity over every substrate
+ground already found (the note box for prose, the bar or box for a header) and the worst ratio decides, as for a
+pattern; the finding names the part as `groundId`, `groundKind` `artwork-ink` and the composited `groundColor`. A label
+that touches no ink is judged on the substrate alone. A decoration over the artwork keeps the dominant-substrate model
+(no ink ground). Fail-closed:
+a part of the label's note whose outline or opacity cannot be read is `E_SCENE_CONTRAST_GROUND_UNSUPPORTED`, never
+skipped. Note prose keeps its C4 pairing with its own opaque flat box.
+
 A dual-channel Rect or Symbol is evaluated at a separate painted sample for
 each channel: fill at bounds centre, stroke at the left-edge block midpoint.
 Either channel may carry a data mark's 3.0:1 visibility floor, and the

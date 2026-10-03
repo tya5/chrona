@@ -2,7 +2,7 @@
 
 Living record for [#848](https://github.com/tya5/chrona/issues/848) (Depth B, P4-A on the [#454](https://github.com/tya5/chrona/issues/454) board, read only; successor of #718, reopened by the reviewer because it was closed with no work done): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history. The owner-level choices are also recorded as a comment on #848 (options, choice, why, how to reverse).
 
-**Public base:** `528377f4` on `main`. **Status:** design plan, design, architecture review and implementation plan are published together in this one docs PR before any code. Slices A848-1 (gate) and A848-2 (mechanism and evidence) follow, each its own code PR (section 7).
+**Public base:** `528377f4` on `main`. **Status:** the design plan, design, architecture review and implementation plan were published together before any code (PR #1037, `494a14fd`). A848-1 (gate) is implemented (section 8); A848-2 (mechanism and evidence) follows, then the literal acceptance review.
 
 ## 1. Published baseline
 
@@ -163,4 +163,10 @@ Each code PR is `Refs #848`, leaves every committed example byte-identical for a
 
 ## 8. Progress and evidence
 
-Design plan, design, architecture review and implementation plan published together (this document). No code yet.
+### A848-1 (gate; implemented)
+
+- **Behaviour change: none by default.** No artwork primitive exists until A848-2, so no Scene, SVG or report moves; the branch is dead code for every committed slide, proven on hand-built Scenes.
+- **Where.** `scene/ink_touch.py` (pure: flatten `M L Q` with 8 chords per quadratic, non-zero winding for a fill part, rectangle against filled area and against a stroke within half its width); `scene/contrast_policy.py` (`ARTWORK_ROLE`; `_host_under` never takes a part as a host by bounds; `_with_artwork_ink` adds the touched ink as one more ground group for note prose, header text and every other legibility label of the same source; a decoration keeps the dominant-substrate model); Specification 46 section 8.
+- **Internal choice within the approved contract.** The design listed `annotation-artwork` in `_SIBLING_INK_ROLES`; it is not needed: a part is never a host by bounds, so a sibling can never be another part's ground, and the set is unchanged. The registry binding of the role moves to A848-2 with the evidence slide that the decoration witness requires.
+- **Tests (synthetic Scenes, no `examples/`).** `test_ink_touch.py` (19: hole empty, frame, solid frame with no edge crossing, containing rectangle, shared edge, flattened curve, degenerate rectangle, stroke half width, segment end, stroked curve, subpaths, malformed outlines) and `test_artwork_ink_ground.py` (19: text in the hole judged on the paper though the ring covers it by bounds, same-colour ink not failing untouched text, header with no bar, text on the ring failing on the ink, legible on both, translucent ink composited over the paper, stroke part within and beyond half width, a frame with no hole, the worst of several parts, the paper deciding when it is worse, another note's artwork, a later artwork, the bar keeping the substrate model, unreadable part, malformed outline, unreadable opacity, note prose still needing its own opaque box, determinism).
+- **Mutation checks (19 mutations, all killed; two survived the first pass and were killed by new tests: only the first ground kept, a malformed outline skipped).** Part as a host by bounds; every part touching; stroke part always touching; hole filled; stroke reach zero and doubled; ink ignored; opacity ignored; composite over the wrong ground; another note's artwork; a later part; a decoration given ink; an unreadable part skipped; an unreadable opacity skipped; note prose given no ink; only the first ground decides; a malformed outline guessed; winding sign lost; a quadratic flattened to one chord.
