@@ -25,6 +25,7 @@ slides:
   controller-z/elevated: {axisLabels: 7, dvtHosted: true}
   controller-z/executive: {axisLabels: 7, dvtHosted: true}
   controller-z/gate-paint: {axisLabels: 7, dvtHosted: true}
+  controller-z/gate-symbols: {axisLabels: 7, dvtHosted: true}
   controller-z/group-tabs: {axisLabels: 7, dvtHosted: true}
   controller-z/hand-wobble: {axisLabels: 7, dvtHosted: true}
   controller-z/heading: {axisLabels: 7, dvtHosted: true}

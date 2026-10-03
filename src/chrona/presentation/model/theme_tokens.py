@@ -371,6 +371,21 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markHeight")
         return height, offset, int(order), corner_radius
 
+    def symbol_geometry(self, role: str) -> tuple[Decimal | None, Decimal | None]:
+        """Return the optional symbol size and offset ratios of a mark role's point marks (#1066).
+
+        Both are ratios of the track block size, like ``markHeight`` and ``markOffset``; an absent one is None and
+        the symbol then takes the role's bar band value. Range checks need both values and are made by the
+        geometry that combines them.
+        """
+        height = self.optional_number(role, "symbolHeight")
+        offset = self.optional_number(role, "symbolOffset")
+        if height is not None and height <= 0:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/symbolHeight")
+        if offset is not None and offset < 0:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/symbolOffset")
+        return height, offset
+
     def deadline_mark(self, role: str) -> tuple[Decimal, int]:
         """Return the deadline tick's reach and paint order (#822).
 

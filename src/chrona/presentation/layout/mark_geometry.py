@@ -74,9 +74,11 @@ def compose_item_marks(*, item: Any, instance_id: str, source_kind: str,
         absences.append(MarkFacetAbsence("planned", "actual-only-member"))
     elif item.source_type == "point":
         x = _coordinate(planned["at"], frame.inline_scale)
-        bounds = Rect(Decimal(str(x - planned_size / 2)), Decimal(str(planned_block)),
-                      Decimal(str(planned_size)), Decimal(str(planned_size)))
-        port = (x, planned_block + planned_size / 2)
+        # A point mark's symbol takes the role's own size and offset when the Theme declares them (#1066).
+        symbol_block, symbol_size = frame.symbol_bounds(planned_semantic)
+        bounds = Rect(Decimal(str(x - symbol_size / 2)), Decimal(str(symbol_block)),
+                      Decimal(str(symbol_size)), Decimal(str(symbol_size)))
+        port = (x, symbol_block + symbol_size / 2)
         marks.append(compose_mark_placement(
             frame=frame, placement_id=f"planned:{instance_id}", source_ref=item.object_id,
             bounds=bounds, start_port=port, end_port=port, shape="point",
@@ -145,9 +147,10 @@ def compose_item_marks(*, item: Any, instance_id: str, source_kind: str,
     elif (source_kind in {"actual", "combined"} and item.source_type == "point"
           and isinstance(actual.get("at"), date)):
         x = _coordinate(actual["at"], frame.inline_scale)
-        bounds = Rect(Decimal(str(x - actual_size / 2)), Decimal(str(actual_block)),
-                      Decimal(str(actual_size)), Decimal(str(actual_size)))
-        port = (x, actual_block + actual_size / 2)
+        symbol_block, symbol_size = frame.symbol_bounds("actual")
+        bounds = Rect(Decimal(str(x - symbol_size / 2)), Decimal(str(symbol_block)),
+                      Decimal(str(symbol_size)), Decimal(str(symbol_size)))
+        port = (x, symbol_block + symbol_size / 2)
         marks.append(compose_mark_placement(
             frame=frame, placement_id=f"actual:{instance_id}", source_ref=item.object_id,
             bounds=bounds, start_port=port, end_port=port, shape="point",
