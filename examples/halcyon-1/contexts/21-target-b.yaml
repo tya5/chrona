@@ -49,6 +49,15 @@ body:
     revision:
       token: example-v1
   inputs:
+    snapshot:
+      id: halcyon-1-baseline-2027-06
+      kind: snapshot-ref
+      store:
+        provider: local
+        identity: halcyon-1-example
+      address: snapshots/baseline-2027-06.yaml
+      revision:
+        token: example-v1
     actual:
       id: halcyon-1-observed-2027-08-20
       kind: actual-set
