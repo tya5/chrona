@@ -7,7 +7,8 @@ from typing import Any, Mapping
 
 from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding, contrast_binding_for
 from chrona.presentation.scene.cone_ground import AS_OF_CONE_ROLE, ConeGround, cones_in
-from chrona.presentation.scene.paint_analysis import composited_contrast, is_hex_color, sample_linear_gradient
+from chrona.presentation.scene.paint_analysis import (
+    blend_over, composited_contrast, is_hex_color, sample_linear_gradient)
 
 
 DECORATION_FLOOR = 1.10
@@ -168,6 +169,7 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
     candidates = []
     unsupported_host: str | None = None
     unsupported_ground = False
+    decoration = binding.contrast_class == ContrastClass.DECORATION
     for channel in channels:
         if not is_hex_color(paint.get(channel)):
             continue
@@ -175,29 +177,19 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
                                     or paint["strokeWidth"] <= 0):
             continue
         sample = _sample_point(primitive, channel)
-        if role == "annotation-note-text":
-            ground_id, ground, unsupported, ground_kind = _note_box_ground(
-                primitive, primitives, index, sample)
-        else:
-            ground_id, ground, unsupported, ground_kind = _ground_under(
-                primitive, primitives, index, canvas, sample)
+        ground_id, groups, unsupported = _grounds_for(
+            primitive, primitives, index, canvas, sample, cones=cones, catalog_patterns=catalog_patterns,
+            decoration=decoration)
         if unsupported:
             unsupported_host = ground_id
             unsupported_ground = True
             continue
-        if ground is None:
+        if groups is None:
             continue
-        decoration = binding.contrast_class == ContrastClass.DECORATION
-        host_ink = _host_ink(primitives, ground_id, catalog_patterns) if not decoration else None
         # A canvas texture and a catalogue pattern are ground in two colours: a mark or a label may lie
         # on either. A decoration is a tint judged against the dominant substrate, not against thin ink lines.
-        options = [(ground, f"{host_ink[1]}-substrate" if host_ink is not None else ground_kind, ground_id)]
-        if host_ink is not None:
-            options.append((host_ink[0], f"{host_ink[1]}-ink", ground_id))
-        overlay = () if decoration else _cone_overlay(cones, primitives, index, ground_id)
-        ratio = None
-        for option_ground, option_kind, option_id in (
-                expanded for option in options for expanded in _under_cone(overlay, primitive, *option)):
+        ratio = ground = ground_kind = None
+        for option_ground, option_kind, option_id in (option for group in groups for option in group):
             option_ratio = composited_contrast(fill=paint[channel], opacity=float(opacity), ground=option_ground)
             if ratio is None or option_ratio < ratio:
                 ratio, ground, ground_kind, ground_id = option_ratio, option_ground, option_kind, option_id
@@ -257,11 +249,11 @@ def _pattern_findings(scene_path: str, primitive: Mapping[str, Any], pattern: An
                                      role, primitive_id, None, floor, disposition,
                                      density_basis_points=density, severity_class=severity_class),)
     sample = _sample_point(primitive, "fill")
-    if role == "annotation-note-text":
-        host_id, host, unsupported, host_kind = _note_box_ground(primitive, primitives, index, sample)
-    else:
-        host_id, host, unsupported, host_kind = _ground_under(primitive, primitives, index, canvas, sample)
-    if unsupported or host is None:
+    decoration = code == "E_SCENE_DECORATION_CONTRAST"
+    host_id, groups, unsupported = _grounds_for(
+        primitive, primitives, index, canvas, sample, cones=cones, catalog_patterns=catalog_patterns,
+        decoration=decoration)
+    if unsupported or groups is None:
         severity, unsupported_code = _failure("E_SCENE_CONTRAST_GROUND_UNSUPPORTED", severity_class,
                                               decoration_severity)
         return (SceneContrastFinding(unsupported_code, severity, scene_path,
@@ -269,27 +261,17 @@ def _pattern_findings(scene_path: str, primitive: Mapping[str, Any], pattern: An
                                      host_id, paint_channel="fill", ground_kind="unsupported",
                                      density_basis_points=density, severity_class=severity_class),)
     substrate, ink = str(paint["fill"]), str(paint["stroke"])
-    pairs = [("fill", host_id, host, host_kind, substrate),
-             ("stroke", primitive_id, substrate, "pattern-substrate", ink),
-             ("stroke", host_id, host, host_kind, ink)]
-    # As for a flat primitive: a mark or a label sees the ink as ground, a decoration tint does not.
-    host_ink = _host_ink(primitives, host_id, catalog_patterns) if code != "E_SCENE_DECORATION_CONTRAST" else None
-    if host_ink is not None:
-        # The host is a canvas texture or a catalogue pattern: its ink is a second ground under this primitive.
-        host_ink_color, family = host_ink
-        pairs[0] = ("fill", host_id, host, f"{family}-substrate", substrate)
-        pairs[2] = ("stroke", host_id, host, f"{family}-substrate", ink)
-        pairs += [("fill", host_id, host_ink_color, f"{family}-ink", substrate),
-                  ("stroke", host_id, host_ink_color, f"{family}-ink", ink)]
-    overlay = () if code == "E_SCENE_DECORATION_CONTRAST" else _cone_overlay(cones, primitives, index, host_id)
-    # The host's own grounds lie under the cone; a pattern's substrate under its ink is the primitive's own.
-    pairs = [(channel, cone_id, cone_ground, cone_kind, foreground)
-             for channel, pair_id, pair_ground, pair_kind, foreground in pairs
-             for cone_ground, cone_kind, cone_id in (
-                 _under_cone(overlay, primitive, pair_ground, pair_kind, pair_id) if pair_id == host_id
-                 else ((pair_ground, pair_kind, pair_id),))]
+    # As for a flat primitive: a mark or a label sees the ink as ground, a decoration tint does not. The first
+    # group is the host's substrate (its pair with the primitive's own substrate is the primitive's own); later
+    # groups are ink grounds. A pattern's substrate under its ink is the primitive's own.
+    pairs = [("fill", *host_ground, substrate) for host_ground in groups[0]]
+    pairs.append(("stroke", substrate, "pattern-substrate", primitive_id, ink))
+    pairs += [("stroke", *host_ground, ink) for host_ground in groups[0]]
+    for group in groups[1:]:
+        pairs += [("fill", *host_ground, substrate) for host_ground in group]
+        pairs += [("stroke", *host_ground, ink) for host_ground in group]
     findings = []
-    for channel, ground_id, ground, ground_kind, foreground in pairs:
+    for channel, ground, ground_kind, ground_id, foreground in pairs:
         ratio = composited_contrast(fill=foreground, opacity=1.0, ground=ground)
         severity, pair_code = "info", code
         if ratio < floor:
@@ -419,13 +401,11 @@ def _sample_point(primitive: Mapping[str, Any], channel: str) -> tuple[float | N
     return inline + width / 2, block + height / 2
 
 
-def _ground_under(primitive: Mapping[str, Any], primitives: list[Any], index: int,
-                  canvas: str | None,
-                  sample: tuple[float | None, float | None]) -> tuple[str | None, str | None, bool, str]:
-    if sample[0] is None or sample[1] is None:
-        return "canvas", canvas, False, "canvas"
+def _host_under(subject: Mapping[str, Any], primitives: list[Any], index: int,
+                sample: tuple[float, float]) -> tuple[int, Mapping[str, Any]] | None:
+    """The topmost Rect or Symbol with a fill, painted before `subject`, that covers the sample point."""
     x, y = sample
-    order = primitive.get("paintOrder", 0)
+    order = subject.get("paintOrder", 0)
     candidates: list[tuple[int, int, Mapping[str, Any]]] = []
     for prior_index, prior in enumerate(primitives):
         # A Rect is an ordinary painted ground. A Symbol is also accepted: a multi-part
@@ -437,8 +417,8 @@ def _ground_under(primitive: Mapping[str, Any], primitives: list[Any], index: in
         if prior.get("visualRole") == AS_OF_CONE_ROLE:
             # A translucent light is never an opaque host: it tints the host's ground instead (#890).
             continue
-        if (primitive.get("visualRole") in _SIBLING_INK_ROLES and prior.get("visualRole") == primitive.get("visualRole")
-                and prior.get("sourceRef") == primitive.get("sourceRef")):
+        if (subject.get("visualRole") in _SIBLING_INK_ROLES and prior.get("visualRole") == subject.get("visualRole")
+                and prior.get("sourceRef") == subject.get("sourceRef")):
             # The parts of one stamp glyph are one ink, not grounds for each other (#584).
             continue
         prior_order = prior.get("paintOrder", 0)
@@ -455,24 +435,102 @@ def _ground_under(primitive: Mapping[str, Any], primitives: list[Any], index: in
         if inside:
             candidates.append((prior_order, prior_index, prior))
     if not candidates:
-        return "canvas", canvas, False, "canvas"
-    host = max(candidates, key=lambda item: item[:2])[2]
-    paint = host["paint"]
+        return None
+    _, position, host = max(candidates, key=lambda item: item[:2])
+    return position, host
+
+
+# One ground a primitive lies on: its colour, its kind (the finding's `groundKind`) and the ground's identifier.
+_Ground = tuple[str, str, "str | None"]
+
+
+def _grounds_for(primitive: Mapping[str, Any], primitives: list[Any], index: int, canvas: str | None,
+                 sample: tuple[float | None, float | None], *, cones: tuple[ConeGround, ...],
+                 catalog_patterns: bool, decoration: bool
+                 ) -> tuple[str | None, list[list[_Ground]] | None, bool]:
+    """The grounds a primitive lies on: (ground id, groups, unsupported).
+
+    `groups` is None when no ground can be read (`unsupported` says whether that is a host the gate refuses, as
+    opposed to an absent canvas). The first group is the host's substrate, later groups are ink grounds (a canvas
+    texture or a catalogue pattern, #587); every ground already has the cones painted over its host composited
+    (#890). Note prose lies only on its own opaque note box (Specification 08, C4).
+    """
+    if primitive.get("visualRole") == "annotation-note-text":
+        host_id, ground, unsupported, kind = _note_box_ground(primitive, primitives, index, sample)
+        if unsupported or ground is None:
+            return host_id, None, unsupported
+        return host_id, _tinted([[(ground, kind, host_id)]], primitive, primitives, index, host_id, cones), False
+    # A decoration is a tint against its dominant substrate: no ink, no cone, and no composite (#995).
+    return _grounds_under(primitive, primitives, index, canvas, sample, label=primitive,
+                          cones=() if decoration else cones, catalog_patterns=catalog_patterns,
+                          ink=not decoration, composite=not decoration)
+
+
+def _grounds_under(subject: Mapping[str, Any], primitives: list[Any], index: int, canvas: str | None,
+                   sample: tuple[float | None, float | None], *, label: Mapping[str, Any],
+                   cones: tuple[ConeGround, ...], catalog_patterns: bool, ink: bool, composite: bool
+                   ) -> tuple[str | None, list[list[_Ground]] | None, bool]:
+    """The grounds under `subject` in paint order, as seen by `label` (#1013).
+
+    An opaque host is its own colour (and its ink). A translucent host, when `composite` is set, is composited
+    over every ground beneath it: the same resolution one level down, with the cones painted between the two
+    hosts applied there, and each colour of the host blended over each beneath ground, so the worst decides.
+    """
+    found = None if sample[0] is None or sample[1] is None else _host_under(subject, primitives, index, sample)
+    if found is None:
+        if canvas is None:
+            return "canvas", None, False
+        return "canvas", _tinted([[(canvas, "canvas", "canvas")]], label, primitives, index, "canvas", cones), False
+    host_index, host = found
     host_id = host.get("id") if isinstance(host.get("id"), str) else None
-    if paint.get("opacity", 1.0) != 1.0:
-        return host_id, None, True, "unsupported"
+    paint = host["paint"]
+    opacity = paint.get("opacity", 1.0)
+    if opacity != 1.0 and not (composite and _opacity(opacity)):
+        return host_id, None, True
     gradient = paint.get("gradient")
     if gradient is not None:
         if not isinstance(gradient, Mapping):
-            return host_id, None, True, "unsupported"
+            return host_id, None, True
         try:
-            sampled = sample_linear_gradient(gradient, (x, y))
+            colour = sample_linear_gradient(gradient, sample)
         except ValueError:
-            return host_id, None, True, "unsupported"
-        return host_id, sampled, False, "gradient-sample"
-    if not is_hex_color(paint.get("fill")):
-        return host_id, None, True, "unsupported"
-    return host_id, str(paint["fill"]), False, "flat"
+            return host_id, None, True
+        kind = "gradient-sample"
+    elif is_hex_color(paint.get("fill")):
+        colour, kind = str(paint["fill"]), "flat"
+    else:
+        return host_id, None, True
+    host_ink = _host_ink(primitives, host_id, catalog_patterns) if ink else None
+    own: list[_Ground] = [(colour, f"{host_ink[1]}-substrate" if host_ink is not None else kind, host_id)]
+    if host_ink is not None:
+        own.append((host_ink[0], f"{host_ink[1]}-ink", host_id))
+    if opacity == 1.0:
+        groups = [[ground] for ground in own]
+    else:
+        _, beneath, unsupported = _grounds_under(host, primitives, host_index, canvas, sample, label=label,
+                                                  cones=cones, catalog_patterns=catalog_patterns, ink=ink,
+                                                  composite=composite)
+        if beneath is None:
+            return host_id, None, unsupported
+        groups = [[(blend_over(ink=own_colour, opacity=float(opacity), ground=under), _translucent(own_kind, under_kind),
+                    host_id) for under, under_kind, _ in group]
+                  for own_colour, own_kind, _ in own for group in beneath]
+    return host_id, _tinted(groups, label, primitives, index, host_id, cones), False
+
+
+def _translucent(own_kind: str, under_kind: str) -> str:
+    """The `groundKind` of a translucent host composited over a ground of kind `under_kind`."""
+    prefix = "translucent" if own_kind in {"flat", "gradient-sample"} else f"translucent-{own_kind}"
+    return f"{prefix}-over-{under_kind}"
+
+
+def _tinted(groups: list[list[_Ground]], label: Mapping[str, Any], primitives: list[Any], index: int,
+            host_id: str | None, cones: tuple[ConeGround, ...]) -> list[list[_Ground]]:
+    """Each ground with the cones painted after its host and before the primitive composited over it (#890)."""
+    overlay = _cone_overlay(cones, primitives, index, host_id)
+    if not overlay:
+        return groups
+    return [[tinted for ground in group for tinted in _under_cone(overlay, label, *ground)] for group in groups]
 
 
 def _absence_findings(scene_path: str, raw: Any) -> tuple[SceneContrastFinding, ...]:

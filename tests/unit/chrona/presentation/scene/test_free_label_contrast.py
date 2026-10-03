@@ -124,8 +124,10 @@ def test_a_label_on_an_opaque_chip_is_judged_on_the_chip_not_the_canvas():
     assert (rescued.ground_id, rescued.severity) == ("chip", "info")
 
 
-def test_a_label_on_a_translucent_chip_cannot_be_judged_and_is_an_error():
-    chip = _rect("chip", DARK, role="as-of-label-chip", purpose="label-chip", order=299, opacity=0.8)
+def test_a_label_on_a_chip_whose_paint_cannot_be_read_cannot_be_judged_and_is_an_error():
+    # A translucent chip is composited over what lies beneath it (#1013, test_translucent_ground_contrast.py);
+    # one whose opacity is not a number in [0, 1] stays unreadable and fails closed.
+    chip = _rect("chip", DARK, role="as-of-label-chip", purpose="label-chip", order=299, opacity=1.5)
     finding = _judge(chip, _label(LIGHT))
     assert (finding.code, finding.severity, finding.ground_id) == ("E_SCENE_CONTRAST_GROUND_UNSUPPORTED", "error", "chip")
 

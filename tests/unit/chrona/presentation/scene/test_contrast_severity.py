@@ -79,8 +79,20 @@ def test_illegible_note_text_is_an_error_on_its_box_not_a_warning():
     assert findings["note-text"].ground_id == "note-box"
 
 
-def test_a_mark_on_a_translucent_ground_is_still_an_unreadable_error():
-    host = _band("#000000", opacity=0.5)
+def test_a_mark_on_a_translucent_ground_is_judged_on_the_composite_and_blocks_below_its_floor():
+    host = _band("#000000", opacity=0.5)  # over the white canvas: #808080
+    faint = _primitive("faint", "planned", "planned", "#808080")
+    bold = _primitive("bold", "planned", "planned", "#000000")
+    findings = _by_id(evaluate_scene_contrast(_scene(host, faint), decoration_severity="warning"))
+    assert (findings["faint"].code, findings["faint"].severity, findings["faint"].severity_class) == (
+        "E_SCENE_MARK_CONTRAST", "error", "legibility")
+    assert (findings["faint"].ground_color, findings["faint"].ground_kind) == ("#808080", "translucent-over-canvas")
+    findings = _by_id(evaluate_scene_contrast(_scene(host, bold)))
+    assert (findings["bold"].severity, findings["bold"].ground_id) == ("info", "band")
+
+
+def test_a_mark_on_a_host_that_cannot_be_read_is_still_an_unreadable_error():
+    host = _band("#000000", opacity=2)  # not a number in [0, 1]
     mark = _primitive("mark", "planned", "planned", "#000000")
     findings = _by_id(evaluate_scene_contrast(_scene(host, mark)))
 
