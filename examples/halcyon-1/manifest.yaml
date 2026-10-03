@@ -108,3 +108,8 @@ slides:
     context: contexts/21-target-b.yaml
     expectedSvg: generated/21-target-b.svg
     expectedScene: generated/21-target-b.scene.json
+  - id: yuya
+    evidence: "Issue #1116: YAML-only assembly of the owner-approved hand-drawn Yuya target (night-river canvas with a hinoki board, hanging-scroll notes)."
+    context: contexts/22-yuya.yaml
+    expectedSvg: generated/22-yuya.svg
+    expectedScene: generated/22-yuya.scene.json
