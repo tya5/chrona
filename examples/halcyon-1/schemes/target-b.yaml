@@ -29,6 +29,7 @@ body:
     default: "#E8EFFA"
     window: "#DDE6F7"
     exception: "#F8E4C9"
+    closed: "#F4F6F9"
     rule: "#D5DCE6"
     bus: "#E8EFFA"
     payload: "#E4F4EE"

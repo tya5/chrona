@@ -179,7 +179,7 @@ body:
       value: 1
     opacity.calendar-closed:
       type: number
-      value: 0.45
+      value: 1
     mark-height-container:
       type: number
       value: 1
@@ -619,7 +619,7 @@ body:
     variance-behind.fill: negative
     missing-actual-cell.fill: textMuted
     dependency.stroke: textMuted
-    calendar-closed.fill: surfaceRaised
+    calendar-closed.fill: category:closed
     range.fill: warning
     as-of.stroke: warning
     as-of-label-chip.fill: warning
