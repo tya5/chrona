@@ -700,9 +700,11 @@ body:
   annotationKinds:
     risk:
       label: RISK
-      title: '{label} · {subject}'
+      title: '{label} · {subjectId}'
       color: negative
+      colorAlso: [header, leader]
     note:
       label: NOTE
-      title: '{label} · {subject}'
+      title: '{label} · {subjectId}'
       color: accent
+      colorAlso: [header, leader]
