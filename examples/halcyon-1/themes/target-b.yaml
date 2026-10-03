@@ -8,7 +8,7 @@ body:
       value: 0.35
     chip-radius:
       type: number
-      value: 0.15
+      value: 0.1333
     opacity.axis-band:
       type: number
       value: 1
@@ -259,6 +259,15 @@ body:
     mark-radius-rounded:
       type: number
       value: 0.25
+    mark-radius-plan:
+      type: number
+      value: 0.1705
+    mark-radius-baseline:
+      type: number
+      value: 0.1389
+    mark-radius-actual:
+      type: number
+      value: 0.3676
     icon-mark-scale:
       type: number
       value: 0.55
@@ -547,7 +556,7 @@ body:
       markHeight: mark-height-content
       markOffset: mark-offset-nested
       markPaintOrder: mark-paint-front
-      markCornerRadius: mark-radius-rounded
+      markCornerRadius: mark-radius-plan
       strokeWidth: stroke-width
     axis-major:
       strokeWidth: stroke-width
@@ -576,7 +585,7 @@ body:
       markHeight: mark-height-ghost
       markOffset: mark-offset-ghost
       markPaintOrder: mark-paint-back
-      markCornerRadius: mark-radius-square
+      markCornerRadius: mark-radius-baseline
       dash: dash.ghost
     scenario:
       markHeight: mark-height-container
@@ -588,13 +597,13 @@ body:
       markHeight: mark-height-planned
       markOffset: mark-offset-planned
       markPaintOrder: mark-paint-middle
-      markCornerRadius: mark-radius-square
+      markCornerRadius: mark-radius-plan
     actual:
       strokeWidth: stroke-width
       markHeight: mark-height-actual
       markOffset: mark-offset-actual
       markPaintOrder: mark-paint-front
-      markCornerRadius: mark-radius-rounded
+      markCornerRadius: mark-radius-actual
       symbolHeight: symbol-height-actual
       symbolOffset: symbol-offset-actual
     network-node:
