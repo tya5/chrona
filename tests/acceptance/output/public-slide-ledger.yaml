@@ -25,6 +25,7 @@ slides:
   controller-z/hand-wobble: {axisLabels: 7, dvtHosted: true}
   controller-z/heading: {axisLabels: 7, dvtHosted: true}
   controller-z/icons: {axisLabels: 7, dvtHosted: true}
+  controller-z/in-progress: {axisLabels: 7, dvtHosted: true}
   controller-z/material-icons: {axisLabels: 7, dvtHosted: true}
   controller-z/plan-only: {axisLabels: 6}
   controller-z/progress-track: {axisLabels: 7, dvtHosted: true}

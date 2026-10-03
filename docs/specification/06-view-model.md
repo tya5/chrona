@@ -254,6 +254,13 @@ state; a future unobserved item must not be called “Recorded”. An observed b
 incomplete Actual remains recorded, not missing. A start-based obligation or
 separate not-yet-due treatment requires a future versioned View policy.
 
+`comparison.missingActualScope` (optional; omitted or `due-unobserved` is the behaviour above,
+#991) selects which work the missing-Actual **mark** covers; the projected state and every table
+and summary count stay as above. `in-progress` marks only a span with an Actual start and no
+finish (`openUntil: asOf`), drawn as a span from that start to `asOf` in place of its open
+Actual, and puts no mark on a due-unobserved span or on a gate. It is `E_REVIEW_MISSING_ACTUAL_SCOPE_LANES`
+with lane rows, whose expected-mark inventory is closed.
+
 ## 9. Annotations and Layout Intent
 
 Semantic annotations remain Project data and are selected with their anchors. Presentation annotations are View-local callouts, highlights, notes, or explanatory arrows. They MAY anchor to a selected object, relation, group, or temporal coordinate. The View owns the stable anchor and logical placement preference; Layout owns every concrete offset, coordinate, collision decision, and connector route. Scene projects completed Layout geometry and Rendering serializes it. Deleting a presentation annotation MUST NOT alter a Project object, semantic annotation, or dependency.

@@ -64,6 +64,9 @@ class ReviewItem:
     planned_progress: float | None = None
     observation_state: ObservationState = ObservationState.UNAVAILABLE
     attached_to: str | None = None
+    # How the missing-actual mark treats this item (#991): `due-end` at the planned finish of a due,
+    # unobserved item (the default), `in-progress` as a span from the actual start to as-of, `none`.
+    missing_actual_mark: str = "due-end"
 
     @property
     def at_delta(self) -> int | None:
@@ -285,6 +288,10 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
                          "and a snapshot Project in the Render Context")
     scenario_items = {scenario_id: _snapshot_items(value[0], value[1], None, source_kind="scenario")
                       for scenario_id, value in (scenarios or {}).items()}
+    if view.comparison.missing_actual_scope == "in-progress":
+        if view.rows.mode == "lanes":
+            raise ValueError("E_REVIEW_MISSING_ACTUAL_SCOPE_LANES: comparison.missingActualScope in-progress is not available with lane rows")
+        selected = [replace(item, missing_actual_mark=_in_progress_mark(item)) for item in selected]
     rows, folded_points = _compose_rows(view, selected, snapshots, scenario_items, project)
     lane_membership = _project_lane_membership(project, rows, view) if view.rows.mode == "lanes" else None
     lane_rows = _project_lane_rows(rows, lane_membership) if lane_membership is not None else ()
@@ -420,6 +427,16 @@ def _network_order_key(item: ReviewItem, view: ViewInput) -> tuple[Any, ...]:
     else:
         value = item.planned.get("start", item.planned.get("at"))
     return (value, item.object_id)
+
+
+def _in_progress_mark(item: ReviewItem) -> str:
+    """`comparison.missingActualScope: in-progress`: only a span started and not finished is marked."""
+    actual = item.actual or {}
+    if item.observation_state == ObservationState.DUE_UNOBSERVED:
+        return "none"
+    if item.source_type == "span" and actual.get("openUntil") == "asOf" and isinstance(actual.get("start"), date):
+        return "in-progress"
+    return "due-end"
 
 
 def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[str, ReviewItem],
