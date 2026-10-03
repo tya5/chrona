@@ -394,3 +394,49 @@ def test_object_type_selection_intersects_geometry_and_exclusion_before_rows():
         "phase-span": {"start": date(2026, 1, 2), "end": date(2026, 1, 3)},
     }, view, None)
     assert [item.object_id for item in projection.items] == ["task-span"]
+
+
+# --- #991: snapshot ghosts in automatic rows, also under field grouping -----------------------------------------
+
+
+def _ghost_view(*, marks: str | None, baseline: str = "snapshot", grouped: bool = True) -> ViewInput:
+    grouping = ViewGrouping("field", "owner", ("a", "b"), "ungrouped", "header", None, None) if grouped else None
+    return ViewInput(None, grouping, None, ViewWindow("selected-planned", None, None, 0),
+        ViewComparison(baseline, "optional", None, None, (), baseline_marks=marks),
+        ViewVisibility(False, "none", "none"), (), (), ViewRows("automatic", ()), None, (), None, None, None)
+
+
+_GHOST_PROJECT = {"objects": {"t1": {"title": "One", "fields": {"owner": "a"}}, "t2": {"title": "Two", "fields": {"owner": "b"}},
+                              "t3": {"title": "Three", "fields": {"owner": "b"}}}, "entities": {}}
+_GHOST_PLACED = {"t1": {"start": date(2026, 2, 1), "end": date(2026, 2, 8)}, "t2": {"start": date(2026, 3, 1), "end": date(2026, 3, 8)},
+                 "t3": {"start": date(2026, 4, 1), "end": date(2026, 4, 8)}}
+_GHOST_SNAPSHOT = {"t1": {"start": date(2026, 1, 20), "end": date(2026, 1, 27)}, "t2": {"start": date(2026, 2, 20), "end": date(2026, 2, 27)}}
+
+
+def _ghost_projection(view: ViewInput):
+    return build_review_projection(_GHOST_PROJECT, _GHOST_PLACED, view, None,
+                                   snapshot_project=_GHOST_PROJECT, snapshot_placements=_GHOST_SNAPSHOT)
+
+
+def test_a_snapshot_baseline_with_ghost_marks_adds_a_shared_ghost_per_primary_item_under_grouping():
+    projection = _ghost_projection(_ghost_view(marks="ghost"))
+    rows = {row.row_id: row for row in projection.rows}
+
+    assert [(item.item_id, item.source_kind, item.track) for item in rows["t1"].items] == [
+        ("t1", "combined", "shared"), ("snapshot:t1", "snapshot", "shared")]
+    assert [item.planned["start"] for item in rows["t2"].items] == [date(2026, 3, 1), date(2026, 2, 20)]
+    # An item the snapshot lacks keeps its single stacked member.
+    assert [(item.item_id, item.track) for item in rows["t3"].items] == [("t3", "stacked")]
+    assert {row.group_id for row in projection.rows} == {"a", "b"}
+
+
+def test_without_ghost_marks_a_snapshot_baseline_draws_no_ghost():
+    rows = _ghost_projection(_ghost_view(marks=None)).rows
+    assert all(len(row.items) == 1 and row.items[0].track == "stacked" for row in rows)
+
+
+def test_ghost_marks_need_a_snapshot_baseline_and_a_snapshot_project():
+    with pytest.raises(ValueError, match="E_REVIEW_BASELINE_MARKS_SNAPSHOT"):
+        _ghost_projection(_ghost_view(marks="ghost", baseline="primary"))
+    with pytest.raises(ValueError, match="E_REVIEW_BASELINE_MARKS_SNAPSHOT"):
+        build_review_projection(_GHOST_PROJECT, _GHOST_PLACED, _ghost_view(marks="ghost"), None)

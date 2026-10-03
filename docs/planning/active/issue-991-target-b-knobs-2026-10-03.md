@@ -102,4 +102,5 @@ Slices not reached get a short successor issue (duplicate search first). Every s
 
 ## 8. Progress
 
-- S0 (legend crash): merged, PR #997 (`ca9cb595`).
+- S1 (ghosts with grouped rows): `comparison.baselineMarks: ghost` in `view-v0.28` (in place; S0 gate additive=1), `projection._compose_rows`, `E_REVIEW_BASELINE_MARKS_SNAPSHOT`, spec 06 section 4.2; evidence slide `controller-z/baseline-ghosts` (executive sources plus a captured snapshot). Read: ghosts sit left of the current bars under the group bands; the 44 other slides are byte-identical. The dashed hollow look of the mock is Theme paint of the `snapshot` role, not this knob.
+- Design merged: PR #999 (`15d1edce`). S0 (legend crash): merged, PR #997 (`ca9cb595`).

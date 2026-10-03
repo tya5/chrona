@@ -280,6 +280,9 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     elif not explicit:
         _order(selected, view)
     snapshots = _snapshot_items(snapshot_project, snapshot_placements, snapshot_analysis)
+    if view.comparison.baseline_marks == "ghost" and not explicit and (view.comparison.baseline != "snapshot" or not snapshots):
+        raise ValueError("E_REVIEW_BASELINE_MARKS_SNAPSHOT: comparison.baselineMarks ghost needs comparison.baseline snapshot "
+                         "and a snapshot Project in the Render Context")
     scenario_items = {scenario_id: _snapshot_items(value[0], value[1], None, source_kind="scenario")
                       for scenario_id, value in (scenarios or {}).items()}
     rows, folded_points = _compose_rows(view, selected, snapshots, scenario_items, project)
@@ -422,20 +425,27 @@ def _network_order_key(item: ReviewItem, view: ViewInput) -> tuple[Any, ...]:
 def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[str, ReviewItem],
                   scenarios: dict[str, dict[str, ReviewItem]], project: dict[str, Any]) -> tuple[tuple[ReviewRowProjection, ...], tuple[FoldedPointProjection, ...]]:
     if view.rows.mode != "explicit":
+        def scenario_ghost(item: ReviewItem) -> bool:
+            return (view.comparison.baseline == "scenario" and view.comparison.scenario_id in scenarios
+                    and item.object_id in scenarios[view.comparison.scenario_id])
+
+        def snapshot_ghost(item: ReviewItem) -> bool:
+            # `comparison.baselineMarks: ghost` (#991): a snapshot baseline draws one ghost per primary item.
+            return (view.comparison.baseline == "snapshot" and view.comparison.baseline_marks == "ghost"
+                    and item.object_id in snapshots)
+
         rows = tuple(ReviewRowProjection(
             item.object_id, item.title, item.group_id, item.object_id,
             tuple(member for member in (
                 replace(item, item_id=item.object_id, source_kind="combined",
-                        track=("shared" if view.comparison.baseline == "scenario"
-                               and view.comparison.scenario_id in scenarios
-                               and item.object_id in scenarios[view.comparison.scenario_id]
-                               else item.track)),
+                        track="shared" if scenario_ghost(item) or snapshot_ghost(item) else item.track),
                 (replace(scenarios[view.comparison.scenario_id][item.object_id],
                          item_id=f"scenario:{view.comparison.scenario_id}:{item.object_id}",
                          source_kind="scenario", scenario_id=view.comparison.scenario_id, track="shared")
-                 if view.comparison.baseline == "scenario"
-                 and view.comparison.scenario_id in scenarios
-                 and item.object_id in scenarios[view.comparison.scenario_id] else None),
+                 if scenario_ghost(item) else None),
+                (replace(snapshots[item.object_id], item_id=f"snapshot:{item.object_id}",
+                         source_kind="snapshot", track="shared")
+                 if snapshot_ghost(item) else None),
             ) if member is not None),
             depth=item.hierarchy_depth if view.grouping is not None and view.grouping.by == "hierarchy" else 0,
             rollup_presentation=(view.grouping.rollup or "none"
