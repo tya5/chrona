@@ -22,7 +22,7 @@ def test_contrast_registry_classifies_only_the_finite_state_text_and_decoration_
         "annotation-note-text", "annotation-kind-label", "annotation-kind-secondary",
     ]
     assert [item.scene_role for item in contrast_bindings(ContrastClass.DECORATION)] == [
-        "calendar-closed", "period-band", "axis-band-decoration", "axis-band-decoration2",
+        "calendar-closed", "calendar-exception", "period-band", "axis-band-decoration", "axis-band-decoration2",
         "group-band", "row-band", "group-header-band", "group-tab", "annotation-note-box",
         "annotation-kind-bar", "annotation-kind-accent", "annotation-kind-stamp",
     ]

@@ -13,7 +13,7 @@ from chrona.presentation.layout.surface_quality import GroupPlacement, ShapePlac
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, semantic_binding
 
 BACKGROUND_SEMANTIC_IDS = frozenset({
-    "rowBand", "groupBand", "groupHeaderBand", "groupTab", "calendarClosed", "periodBand", *axis_band_semantic_ids(),
+    "rowBand", "groupBand", "groupHeaderBand", "groupTab", "calendarClosed", "calendarException", "periodBand", *axis_band_semantic_ids(),
 })
 
 
@@ -21,7 +21,7 @@ def _background_bounds(*, semantic_id: str, extent: str, source_bounds: Rect,
                        table_bounds: tuple[float, float, float, float],
                        timeline_bounds: tuple[float, float, float, float]) -> tuple[Rect, str]:
     """Resolve one finite source background extent without exposing coordinates to View."""
-    if semantic_id == "calendarClosed":
+    if semantic_id in {"calendarClosed", "calendarException"}:
         if extent != "timeline":
             raise LayoutError("E_LAYOUT_BACKGROUND_EXTENT", "/layoutManifest/reviewSurface/backgroundExtents")
         return source_bounds, "timeline"
@@ -41,14 +41,15 @@ def _background_bounds(*, semantic_id: str, extent: str, source_bounds: Rect,
 
 
 def _background_shape(*, base: SurfaceBaseGeometry, theme_tokens: Any, placement_id: str,
-                      source_ref: str, semantic_id: str, source_bounds: Rect) -> ShapePlacement | None:
+                      source_ref: str, semantic_id: str, source_bounds: Rect,
+                      extent_semantic: str | None = None) -> ShapePlacement | None:
     role = semantic_binding(semantic_id).scene_role
     treatment, paint_order = theme_tokens.background(role)
     if treatment == "none":
         return None
     bounds, slot_id = _background_bounds(
         semantic_id=semantic_id,
-        extent=base.layout_manifest.background_extents.get(semantic_id, ""),
+        extent=base.layout_manifest.background_extents.get(extent_semantic or semantic_id, ""),
         source_bounds=source_bounds, table_bounds=base.table_bounds,
         timeline_bounds=base.timeline_bounds)
     return ShapePlacement(placement_id, source_ref, "Rect", bounds, slot_id=slot_id,
@@ -111,10 +112,15 @@ def compose_calendar_backgrounds(*, base: SurfaceBaseGeometry, theme_tokens: Any
     for interval in intervals:
         plot = base.plot
         left, right = extend_to_plot_edges(interval.inline_start, interval.inline_end, scale=base.scale, plot=plot)
+        # An exception day takes its own role only where the Theme declares one with a background (#991); the
+        # closed-day role keeps every other day, and every day of a Theme without it.
+        own = (getattr(interval, "exception", False)
+               and theme_tokens.optional_background(semantic_binding("calendarException").scene_role) is not None)
         shape = _background_shape(
             base=base, theme_tokens=theme_tokens,
-            placement_id=f"calendar-closed:{interval.day.isoformat()}",
-            source_ref="project-calendar", semantic_id="calendarClosed",
+            placement_id=f"calendar-{'exception' if own else 'closed'}:{interval.day.isoformat()}",
+            source_ref="project-calendar", semantic_id="calendarException" if own else "calendarClosed",
+            extent_semantic="calendarClosed",
             source_bounds=Rect(Decimal(str(left)), plot.block, Decimal(str(max(0.0, right - left))),
                                plot.block_size))
         if shape is not None:
@@ -159,7 +165,7 @@ def validate_background_shapes(shapes: tuple[ShapePlacement, ...] | list[ShapePl
 # The one explicit relation under which translucent backgrounds may intersect: a later-painted overlay over an
 # earlier background of strictly lower rank. Row, group and header bands come first, a named period (#582)
 # next, the calendar closure last; nothing else is allowed by default.
-_OVERLAY_RANK = {"rowBand": 0, "groupBand": 0, "groupHeaderBand": 0, "periodBand": 1, "calendarClosed": 2}
+_OVERLAY_RANK = {"rowBand": 0, "groupBand": 0, "groupHeaderBand": 0, "periodBand": 1, "calendarClosed": 2, "calendarException": 2}
 
 
 def _is_later_overlay(upper: ShapePlacement, lower: ShapePlacement, theme_tokens: Any) -> bool:

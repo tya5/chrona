@@ -33,14 +33,16 @@ class CalendarOverlayInterval:
     day: date
     inline_start: float
     inline_end: float
+    exception: bool = False  # a day the Project calendar closes by an `exceptions` entry (#991)
 
 
 def calendar_overlay_intervals(*, closed_days: tuple[date, ...], start: date, end: date,
-                                coordinate: Callable[[date, ScalePlacement], float], scale: ScalePlacement
+                                coordinate: Callable[[date, ScalePlacement], float], scale: ScalePlacement,
+                                exceptions: frozenset[date] = frozenset()
                                 ) -> tuple[CalendarOverlayInterval, ...]:
     """Derive ordered closed-date intervals without creating Theme shapes."""
     return tuple(CalendarOverlayInterval(day, coordinate(day, scale),
-                                         coordinate(day.fromordinal(day.toordinal() + 1), scale))
+                                         coordinate(day.fromordinal(day.toordinal() + 1), scale), day in exceptions)
                  for day in closed_days if start <= day < end)
 
 
@@ -521,6 +523,7 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
     if minimum is not None and scale.unit_ratio < float(minimum):
         closed = contract.time.calendar_exceptions
     calendar = calendar_overlay_intervals(
-        closed_days=tuple(closed), start=start, end=end, coordinate=coordinate_for_date, scale=scale)
+        closed_days=tuple(closed), start=start, end=end, coordinate=coordinate_for_date, scale=scale,
+        exceptions=frozenset(contract.time.calendar_exceptions))
     return SurfaceAxisPlacements(tuple(shapes), tuple(text), tuple(outcomes), tuple(decisions),
         label_targets, band_targets, tuple(diagnostics), tuple(visible_overflows), calendar)

@@ -132,6 +132,11 @@ slides:
     context: contexts/line-colour.yaml
     expectedSvg: generated/line-colour.svg
     expectedScene: generated/line-colour.scene.json
+  - id: calendar-exception
+    evidence: "Calendar-exception days in the plot (#991): a Theme that declares the role calendar-exception with a background draws the days the Project calendar closes by an exception in their own warm fill, apart from the weekend closed days, over the executive sources."
+    context: contexts/calendar-exception.yaml
+    expectedSvg: generated/calendar-exception.svg
+    expectedScene: generated/calendar-exception.scene.json
   - id: as-of-cone
     evidence: "The as-of marker as a cone of light (Marquee spotlight): a gradient polygon from the top of the plot to its last row, fading from ink to transparent under the bars and gates, drawn under the rich SVG profile from the Theme role as-of-cone with a label chip (#890)."
     context: contexts/as-of-cone.yaml

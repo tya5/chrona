@@ -265,7 +265,7 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              _RECT_PAINT | frozenset(("edge",)), scene_kinds=frozenset(("Rect",)))
     register("annotation-kind-stamp", "Layout annotation-kind stamp glyph and Scene Symbol",
              frozenset(("fill", "stroke", "opacity", "stampPlacement")), scene_kinds=frozenset(("Symbol",)))
-    register("group-band row-band group-header-band calendar-closed", "Layout background and Scene Rect",
+    register("group-band row-band group-header-band calendar-closed calendar-exception", "Layout background and Scene Rect",
              _RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder")),
              scene_kinds=frozenset(("Rect",)))
     register("group-tab", "Layout group header tab and Scene Rect",
