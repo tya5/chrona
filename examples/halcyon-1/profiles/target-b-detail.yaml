@@ -7,5 +7,4 @@ body:
     - {role: missing-actual, label: "in progress, not yet observed"}
     - {role: milestone, label: gate}
     - {role: calendar-closed, label: non-working day}
-    - {role: calendar-exception, label: calendar exception}
     - {role: dependency, label: dependency}

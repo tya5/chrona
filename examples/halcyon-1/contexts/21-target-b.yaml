@@ -67,16 +67,6 @@ body:
       address: profiles/target-b-detail.yaml
       revision:
         token: example-v1
-    iconCatalogs:
-    - id: chrona-target-parts-v2026-10
-      kind: icon-catalog
-      store:
-        provider: package
-        identity: chrona.resources
-      address: icons/chrona-target-parts-v2026-10.yaml
-      revision:
-        token: v2026-10
-      contentIdentity: sha256:22fb3e80b35568bf3cbd55f94c0af715b8606322547b5e81a0254009ca45d1dc
   environment:
     viewport:
       inlineSize: 1600

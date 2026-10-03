@@ -620,7 +620,6 @@ body:
     missing-actual-cell.fill: textMuted
     dependency.stroke: textMuted
     calendar-closed.fill: surfaceRaised
-    calendar-exception.fill: category:exception
     range.fill: warning
     as-of.stroke: warning
     as-of-label-chip.fill: warning
