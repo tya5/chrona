@@ -120,6 +120,14 @@ observation with greatest positive `sequence` for each resolved Project object; 
 sequences for one object are invalid. Unmatched observations are never planned-comparison
 candidates, but may appear through `unmatchedActual`.
 
+`baselineMarks: ghost` (optional; omitted means none, #991) makes a `baseline: snapshot`
+comparison draw the Snapshot's placement of each selected item as a baseline ghost in
+automatic and lane rows, also under field grouping: View composition adds one
+shared-track `snapshot` member (`snapshot:<object>`) beside the primary item, and omits it
+for an object the Snapshot lacks. `baseline: snapshot` alone draws no ghost, and explicit
+rows name their snapshot items themselves. `ghost` without `baseline: snapshot` or without a
+Snapshot in the Render Context is `E_REVIEW_BASELINE_MARKS_SNAPSHOT`.
+
 `startDelta = actual.start − planned.start`, `finishDelta = actual.finish − planned.finish`,
 and `atDelta = actual.at − planned.at`, each as a signed integer in calendar days.
 Positive means later/behind; negative means earlier; zero means equal. A delta is absent,

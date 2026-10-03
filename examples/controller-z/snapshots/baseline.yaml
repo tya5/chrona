@@ -1,0 +1,13 @@
+version: chrona/snapshot-ref/v0.3
+kind: snapshot-ref
+id: controller-z-baseline
+body:
+  project:
+    id: controller-z-silicon-bringup
+    kind: project
+    store:
+      provider: local
+      identity: controller-z-example
+    address: snapshots/baseline/project.yaml
+    revision:
+      token: baseline

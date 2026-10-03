@@ -15,6 +15,7 @@ slides:
   controller-z/axis-cell-corners: {axisLabels: 7, dvtHosted: true}
   controller-z/axis-ticks: {axisLabels: 7, dvtHosted: true}
   controller-z/axis-tiers: {axisLabels: 7, dvtHosted: true}
+  controller-z/baseline-ghosts: {axisLabels: 7, dvtHosted: true}
   controller-z/capabilities: {axisLabels: 7, dvtHosted: true}
   controller-z/composition-compact: {axisLabels: 7, dvtHosted: true}
   controller-z/elevated: {axisLabels: 7, dvtHosted: true}

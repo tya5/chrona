@@ -301,6 +301,7 @@ class ViewComparison:
     delta_unit: str | None
     facets: tuple[str, ...]
     scenario_id: str | None = None
+    baseline_marks: str | None = None
 
 
 @dataclass(frozen=True)
@@ -883,7 +884,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                                 str(raw_comparison["observationSelection"]) if "observationSelection" in raw_comparison else None,
                                 str(raw_comparison["deltaUnit"]) if "deltaUnit" in raw_comparison else None,
                                 tuple(str(item) for item in raw_comparison.get("facets", ())),
-                                str(raw_comparison["scenario"]) if "scenario" in raw_comparison else None)
+                                str(raw_comparison["scenario"]) if "scenario" in raw_comparison else None,
+                                str(raw_comparison["baselineMarks"]) if "baselineMarks" in raw_comparison else None)
     raw_visibility = body["visibility"]
     _validate_view_fallback(raw_visibility.get("fallback"))
     visibility = ViewVisibility(raw_visibility["labels"], raw_visibility["relations"], raw_visibility["annotations"],

@@ -151,6 +151,7 @@ allOf:
             properties:
               baseline: {description: "Comparison baseline source.", enum: [primary, snapshot, scenario]}
               scenario: {description: "Scenario identifier when scenario is the baseline.", type: string, minLength: 1}
+              baselineMarks: {description: "With a snapshot baseline in automatic or lane rows, `ghost` draws the baseline snapshot of each selected item as a ghost mark beside the current one, also under field grouping. Omitted, no ghost is drawn; explicit rows name their snapshot items themselves.", enum: [ghost], examples: [ghost]}
               actual: {description: "Requiredness of actual observations.", enum: [forbidden, optional, required]}
               observationSelection: {description: "Only the latest observation is selected.", const: latest}
               deltaUnit: {description: "Comparison delta unit.", const: calendar-days}

@@ -102,6 +102,11 @@ slides:
     context: contexts/heading.yaml
     expectedSvg: generated/heading.svg
     expectedScene: generated/heading.scene.json
+  - id: baseline-ghosts
+    evidence: "Baseline ghosts together with field-grouped automatic rows (#991): comparison.baseline snapshot with baselineMarks ghost draws one dashed baseline ghost bar and hollow baseline gate per selected item under the group header bands, over the executive sources and a captured snapshot."
+    context: contexts/baseline-ghosts.yaml
+    expectedSvg: generated/baseline-ghosts.svg
+    expectedScene: generated/baseline-ghosts.scene.json
   - id: as-of-cone
     evidence: "The as-of marker as a cone of light (Marquee spotlight): a gradient polygon from the top of the plot to its last row, fading from ink to transparent under the bars and gates, drawn under the rich SVG profile from the Theme role as-of-cone with a label chip (#890)."
     context: contexts/as-of-cone.yaml
