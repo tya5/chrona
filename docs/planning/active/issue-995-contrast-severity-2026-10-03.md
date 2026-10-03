@@ -2,7 +2,7 @@
 
 Living record for [#995](https://github.com/tya5/chrona/issues/995) (owner decision, top of the [#454](https://github.com/tya5/chrona/issues/454) board, read only): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history. The owner-level choices are also recorded as a comment on #995 (options, choice, why, how to reverse).
 
-**Public base:** `16c9de36` on `main`. **Status:** design plan, design, architecture review and implementation plan published together (PR #996, `b2bc837b`). C995-1 (severity classes, report, render warnings) is merged (PR #1001); C995-2 (the Theme knob) is in review; then the acceptance review.
+**Public base:** `16c9de36` on `main`. **Status:** design plan, design, architecture review and implementation plan published together (PR #996, `b2bc837b`). C995-1 (severity classes, report, render warnings) is merged (PR #1001, `4c26899a`); C995-2 (the Theme knob) is merged (PR #1002, `6ea33d32`); the [acceptance review](../../reviews/current/issue-995-contrast-severity-acceptance-review-2026-10-03.md) is published.
 
 ## 1. Published baseline
 
