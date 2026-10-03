@@ -19,6 +19,8 @@ The resource is `chrona/color-scheme/v0.2`, validated by `schemas/color-scheme-v
 
 `body.colors` is a closed map of concrete CSS `#RRGGBB` values: `surface`, `surfaceRaised`, `text`, `textMuted`, `accent`, `positive`, `negative`, `warning`, and `neutral`. `body.categories` is a non-empty map from explicit stable slot ID to concrete color. `body.suitability` declares intended `background`, `colorVision`, and `print` use. `body.provenance` records `kind`, `source`, and `license`; a built-in scheme lacking all three is invalid. `license` is non-empty free text by design: a scheme whose license is not chosen yet states `project-pending`, and the `{spdx, notice}` object that asset schemas share does not apply to it (#662, B7).
 
+`body.colors` may also declare the optional `rule` (#991): the line colour of rules and separators (an axis rule, a cell separator), a concrete `#RRGGBB` bound by a Theme as the intent `rule`, for example `axis-rule.stroke: rule`. It is not required, so every existing Scheme stays valid; a Theme that binds `rule` to a Scheme that does not declare it is `E_SCHEME_INTENT_UNKNOWN` (there is no fallback to `text` or `neutral`). It is a line, not text or a ground, so no contrast floor is judged on it.
+
 The initial resource contains no external palette bytes. A future external built-in requires exact source and redistribution terms in `provenance`; a familiar palette name is insufficient evidence.
 
 ## 3. Theme v0.2 binding and literal removal

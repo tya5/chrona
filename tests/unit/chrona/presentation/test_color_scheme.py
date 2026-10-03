@@ -261,3 +261,39 @@ def test_the_policy_never_softens_a_text_check_at_theme_resolution(policy):
     with pytest.raises(ColorSchemeError) as error:
         resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)
     assert error.value.diagnostic_id == "E_SCHEME_STATE_TEXT_CONTRAST"
+
+
+# --- #991: the optional `rule` intent --------------------------------------------------------------------------
+
+
+def _line_theme(binding: str) -> dict:
+    return {"version": "chrona/theme/v0.13", "kind": "theme", "id": "lines", "body": {
+        "values": {"w": {"type": "number", "value": 1}},
+        "roles": {"axis-rule": {"strokeWidth": "w"}, "variance-ahead": {"contrastTreatment": "deemphasized"},
+                  "variance-on-track": {"contrastTreatment": "required"},
+                  "variance-behind": {"contrastTreatment": "required"},
+                  "missing-actual-cell": {"contrastTreatment": "required"}},
+        "colorBindings": {"axis-rule.stroke": binding, "variance-ahead.fill": "positive", "variance-on-track.fill": "textMuted",
+                          "variance-behind.fill": "negative", "missing-actual-cell.fill": "textMuted"},
+        "metrics": {}}}
+
+
+def test_an_optional_rule_intent_binds_a_line_colour():
+    declared = scheme()
+    declared["body"]["colors"]["rule"] = "#C9CED6"
+    resolved = resolve_theme(_line_theme("rule"), declared, scheme_content_identity="sha256:" + "a" * 64)
+    token = resolved["body"]["roles"]["axis-rule"]["stroke"]
+    assert resolved["body"]["values"][token]["value"] == "#C9CED6"
+
+
+def test_a_scheme_without_rule_still_resolves_and_binding_rule_to_it_is_a_typed_error():
+    assert "rule" not in resolve_color_scheme(scheme(), content_identity="sha256:" + "a" * 64)
+    resolve_theme(_line_theme("text"), scheme(), scheme_content_identity="sha256:" + "a" * 64)  # a Theme not using it
+    with pytest.raises(ColorSchemeError, match="E_SCHEME_INTENT_UNKNOWN"):
+        resolve_theme(_line_theme("rule"), scheme(), scheme_content_identity="sha256:" + "a" * 64)
+
+
+def test_the_rule_colour_is_not_a_contrast_surface():
+    declared = scheme()
+    declared["body"]["colors"]["rule"] = "#FFFFFF"  # as light as the canvas: a hairline, never judged as text
+    assert resolve_color_scheme(declared, content_identity="sha256:" + "a" * 64)["rule"] == "#FFFFFF"

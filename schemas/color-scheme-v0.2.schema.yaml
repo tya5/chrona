@@ -34,6 +34,7 @@ properties:
           insideLabelActual: {description: "Text color on actual marks.", $ref: "#/$defs/color"}
           insideLabelSnapshot: {description: "Text color on snapshot marks.", $ref: "#/$defs/color"}
           insideLabelScenario: {description: "Text color on scenario marks.", $ref: "#/$defs/color"}
+          rule: {description: "Optional line colour for rules and separators (an axis rule, a cell separator), bound by a Theme as the intent `rule` (#991); a Theme that binds `rule` to a Scheme without it is E_SCHEME_INTENT_UNKNOWN.", examples: ["#C9CED6"], $ref: "#/$defs/color"}
       categories:
         type: object
         description: "Explicit named concrete colors available for category roles and scales."

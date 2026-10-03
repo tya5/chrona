@@ -25,6 +25,8 @@ class ColorSchemeError(ValueError):
 
 _INTENTS = {"surface", "surfaceRaised", "text", "textMuted", "accent", "positive", "negative", "warning", "neutral",
             "insideLabelPlanned", "insideLabelActual", "insideLabelSnapshot", "insideLabelScenario"}
+# An intent a Scheme may declare and need not (#991): the line colour of rules and separators.
+_OPTIONAL_INTENTS = frozenset({"rule"})
 _INSIDE_LABEL_HOSTS = {
     "member-label-inside-planned": "planned",
     "member-label-inside-actual": "actual",
@@ -333,6 +335,7 @@ def resolve_color_scheme(scheme: Mapping[str, Any], *, content_identity: str) ->
     if any(_contrast(str(colors["text"]), str(colors[surface])) < 4.5 for surface in ("surface", "surfaceRaised")):
         raise ColorSchemeError("E_SCHEME_CONTRAST")
     result = {key: str(colors[key]) for key in _INTENTS}
+    result.update({key: str(colors[key]) for key in _OPTIONAL_INTENTS if key in colors})
     categories = body.get("categories")
     if not isinstance(categories, Mapping) or not categories or any(not isinstance(slot, str) or not isinstance(color, str)
                                                                       for slot, color in categories.items()):
