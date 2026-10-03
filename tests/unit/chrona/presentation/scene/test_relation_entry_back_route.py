@@ -89,7 +89,7 @@ def test_a_back_leg_through_a_marked_row_falls_back_with_a_diagnostic():
         assert not crosses, "no route segment crosses the blocking mark"
 
 
-@pytest.mark.parametrize("kwargs", [{"max_bends": 3}, {"max_detour": 1.0}], ids=["max-bends", "max-detour"])
+@pytest.mark.parametrize("kwargs", [{"max_bends": 3}, {"max_detour": 0.5}], ids=["max-bends", "max-detour"])
 def test_a_back_route_over_the_limits_falls_back_with_a_diagnostic(kwargs):
     points, _, diagnostics = run(A, _item("b", D(2026, 2, 8), D(2026, 2, 16)), **kwargs)
     assert not reverses(points)
@@ -102,3 +102,48 @@ def test_the_other_entry_values_never_back_route_and_never_report(entry):
     points, _, diagnostics = run(A, target, entry=entry)
     side, _, _ = run(A, target, entry="side")
     assert points != side and not fell_back(diagnostics)
+
+
+def reason(diagnostics) -> str:
+    return next(item.split("reason=", 1)[1] for item in diagnostics if item.startswith("I_LAYOUT_RELATION_ENTRY_FALLBACK"))
+
+
+@pytest.mark.parametrize("target_start", [D(2026, 2, 8), D(2026, 2, 5), D(2026, 2, 9)],
+                         ids=["abutting", "overlapping", "slightly-right"])
+def test_the_declared_detour_ratio_of_two_admits_the_back_route_1084(target_start):
+    # The two stubs and the sideways leg are mandatory for a side entry, so the detour is measured against the
+    # shortest route that keeps them; the profile's ratio 2 therefore admits the canonical shape.
+    points, _, diagnostics = run(A, _item("b", target_start, D(2026, 2, 16)), max_detour=2.0)
+    assert enters_from_side(points) and not reverses(points) and not fell_back(diagnostics)
+
+
+def test_a_source_just_left_of_the_start_is_back_routed_when_the_forward_entry_has_no_room_1084():
+    # The forward entry needs a stub between the source and the start; a gate one day before the start on a long
+    # window leaves less than a stub, and the back-route is tried after the forward entry.
+    source, target = gate("a", date(2026, 2, 8)), _item("b", D(2026, 2, 9), D(2026, 2, 16))
+    points, _, diagnostics = _route((source, target), _rows((source,), (target,)), DEP, "side", distribution="pack",
+                                    max_detour=2.0, window=(D(2026, 1, 1), D(2027, 2, 1)), diagnostics=True)
+    assert enters_from_side(points) and not reverses(points) and not fell_back(diagnostics)
+
+
+def test_the_fallback_diagnostic_names_its_reason_1084():
+    target = _item("b", D(2026, 2, 8), D(2026, 2, 16))
+    _, _, diagnostics = run(A, target, max_bends=3)
+    assert reason(diagnostics) == "bends-or-detour"
+    blocker = _item("c", D(2026, 1, 25), D(2026, 2, 20))
+    _, _, blocked = _route((A, blocker, target), _rows((A,), (blocker,), (target,)), DEP, "side", distribution="pack",
+                           max_detour=2.0, window=(D(2026, 1, 25), D(2026, 2, 25)), diagnostics=True)
+    assert reason(blocked).startswith("blocked:mark=")
+
+
+def test_a_mark_after_the_source_end_blocks_the_exit_stub_and_falls_back_with_a_reason_1084():
+    # A proxy for a delta label beside the source end: a mark in the exit stub (the stub check treats mark, text and
+    # label classes alike).
+    source = _item("a", D(2026, 2, 1), D(2026, 2, 8), "shared")
+    beside = _item("c", D(2026, 2, 8), D(2026, 2, 12), "shared")
+    target = _item("b", D(2026, 2, 8), D(2026, 2, 16))
+    points, _, diagnostics = _route((source, beside, target), _rows((source, beside), (target,)), DEP, "side",
+                                    distribution="pack", max_detour=2.0, window=(D(2026, 1, 25), D(2026, 2, 25)),
+                                    diagnostics=True)
+    assert not reverses(points)
+    assert fell_back(diagnostics) and reason(diagnostics).startswith("blocked:mark=")
