@@ -422,6 +422,20 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/symbolOffset")
         return height, offset
 
+    def legend_swatch_sizes(self) -> tuple[float | None, float | None, float | None]:
+        """Return the optional legend `swatchGap`, `swatchBlockSize` and `pointSwatchSize` in px (#1111).
+
+        Each is absent by default, which keeps today's legend. A gap below 0 or a size at or below 0 is
+        `E_THEME_TOKEN_TYPE` at the property of the `legend-swatch` role.
+        """
+        values = []
+        for name, floor_ok in (("swatchGap", True), ("swatchBlockSize", False), ("pointSwatchSize", False)):
+            value = self.optional_number("legend-swatch", name)
+            if value is not None and (value < 0 if floor_ok else value <= 0):
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/legend-swatch/{name}")
+            values.append(float(value) if value is not None else None)
+        return values[0], values[1], values[2]
+
     def deadline_mark(self, role: str) -> tuple[Decimal, int]:
         """Return the deadline tick's reach and paint order (#822).
 
