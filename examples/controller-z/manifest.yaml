@@ -127,6 +127,11 @@ slides:
     context: contexts/gate-paint.yaml
     expectedSvg: generated/gate-paint.svg
     expectedScene: generated/gate-paint.scene.json
+  - id: line-colour
+    evidence: "A named line colour in the Color Scheme (#991): the optional Scheme colour rule is bound by the Theme as the intent rule to the axis rule, so the rule under the axis is a light line colour instead of the text ink, over the executive sources."
+    context: contexts/line-colour.yaml
+    expectedSvg: generated/line-colour.svg
+    expectedScene: generated/line-colour.scene.json
   - id: as-of-cone
     evidence: "The as-of marker as a cone of light (Marquee spotlight): a gradient polygon from the top of the plot to its last row, fading from ink to transparent under the bars and gates, drawn under the rich SVG profile from the Theme role as-of-cone with a label chip (#890)."
     context: contexts/as-of-cone.yaml

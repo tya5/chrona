@@ -299,7 +299,7 @@ properties:
             examples: [accent, "category:bus"]
             anyOf:
               - description: "One closed non-category Scheme intent."
-                enum: [surface, surfaceRaised, text, textMuted, accent, positive, negative, warning, neutral, insideLabelPlanned, insideLabelActual, insideLabelSnapshot, insideLabelScenario]
+                enum: [surface, surfaceRaised, text, textMuted, accent, positive, negative, warning, neutral, insideLabelPlanned, insideLabelActual, insideLabelSnapshot, insideLabelScenario, rule]
               - description: "One explicit named category slot."
                 pattern: "^category:[A-Za-z][A-Za-z0-9_-]*$"
                 examples: ["category:bus"]
@@ -308,7 +308,7 @@ properties:
             examples: [accent, "category:bus"]
             anyOf:
               - description: "One closed non-category Scheme intent."
-                enum: [surface, surfaceRaised, text, textMuted, accent, positive, negative, warning, neutral, insideLabelPlanned, insideLabelActual, insideLabelSnapshot, insideLabelScenario]
+                enum: [surface, surfaceRaised, text, textMuted, accent, positive, negative, warning, neutral, insideLabelPlanned, insideLabelActual, insideLabelSnapshot, insideLabelScenario, rule]
               - description: "One explicit named category slot."
                 pattern: "^category:[A-Za-z][A-Za-z0-9_-]*$"
                 examples: ["category:bus"]
