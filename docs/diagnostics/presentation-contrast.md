@@ -46,7 +46,7 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | legend-swatch | `planned` | required | 3.000 | 43 | 88 | 5.284 | 16.354 | 0 | 0 |
 | legend-swatch | `snapshot` | required | 3.000 | 2 | 2 | 5.817 | 11.742 | 0 | 0 |
 | member-label | `member-label-inside-planned` | required | 4.500 | 26 | 26 | 4.651 | 5.727 | 0 | 0 |
-| member-label | `text` | required | 4.500 | 43 | 418 | 9.348 | 14.573 | 0 | 0 |
+| member-label | `text` | required | 4.500 | 43 | 420 | 9.348 | 14.573 | 0 | 0 |
 | milestone-digest-entry | `text` | required | 4.500 | 29 | 58 | 11.935 | 16.268 | 0 | 0 |
 | missingActual | `missing-actual` | required | 3.000 | 40 | 49 | 4.436 | 14.573 | 0 | 0 |
 | network-node | `network-node` | required | 3.000 | 2 | 32 | 16.354 | 17.050 | 0 | 0 |
@@ -57,7 +57,7 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | planned | `planned` | required | 3.000 | 51 | 640 | 5.284 | 13.238 | 0 | 0 |
 | progress-fill | `progress-fill` | required | 3.000 | 38 | 112 | 3.216 | 4.789 | 0 | 0 |
 | project-note | `text` | required | 4.500 | 39 | 87 | 10.019 | 16.268 | 0 | 0 |
-| relation-label | `text` | required | 4.500 | 24 | 144 | 6.663 | 14.573 | 0 | 0 |
+| relation-label | `text` | required | 4.500 | 24 | 139 | 6.663 | 14.573 | 0 | 0 |
 | row-decoration | `row-band` | absent | 1.100 | 6 | 0 | — | — | 0 | 0 |
 | row-decoration | `row-band` | enabled | 1.100 | 20 | 80 | 1.111 | 1.116 | 0 | 0 |
 | snapshot | `snapshot` | required | 3.000 | 4 | 44 | 4.636 | 5.817 | 0 | 0 |
@@ -1149,13 +1149,15 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:architecture:architecture` | `text` | 571.709, 147.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:dvt:dvt` | `text` | 1336.659, 527.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:dvt:snapshot:dvt` | `text` | 1214.437, 527.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:evb-arrival:snapshot:evb-arrival` | `text` | 936.405, 383.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:evb-arrival:snapshot:evb-arrival` | `text` | 968.405, 383.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:firmware:firmware` | `text` | 797.227, 219.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:ga:ga` | `text` | 1509.029, 691.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:performance:performance` | `text` | 1172.451, 455.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:performance:snapshot:performance` | `text` | 904.171, 455.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:pvt:snapshot:pvt` | `text` | 1176.027, 619.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:performance:snapshot:performance` | `text` | 968.171, 455.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:pvt:pvt` | `text` | 1408.821, 619.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:pvt:snapshot:pvt` | `text` | 1224.027, 619.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:silicon-bringup:silicon-bringup` | `text` | 1124.848, 291.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:silicon-bringup:snapshot:silicon-bringup` | `text` | 966.112, 291.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `milestone:evb-arrival` | `text` | 409.357, 846.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `milestone:ga` | `text` | 399.676, 876.000 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `missing-actual:architecture:architecture` | `missing-actual` | 602.048, 172.800 | `group:fw-team` | flat | `#EEF3F8` | stroke | 14.573 | 3.000 | info |
@@ -1172,17 +1174,12 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1069.083, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#269D79` | stroke | 4.789 | 3.000 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `note:evb-risk` | `text` | 1357.845, 846.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `note:pvt-exit` | `text` | 1407.559, 866.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/controller-z/generated/baseline-ghosts.scene.json` | `relation-label:architecture-unlocks-firmware:architecture:snapshot:architecture:firmware:firmware` | `text` | 661.210, 173.300 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/baseline-ghosts.scene.json` | `relation-label:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 564.486, 208.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `relation-label:bringup-to-dvt:silicon-bringup:silicon-bringup:dvt:dvt` | `text` | 1273.232, 303.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/baseline-ghosts.scene.json` | `relation-label:bringup-to-dvt:silicon-bringup:silicon-bringup:dvt:snapshot:dvt` | `text` | 1215.654, 434.800 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/baseline-ghosts.scene.json` | `relation-label:bringup-to-dvt:silicon-bringup:snapshot:silicon-bringup:dvt:dvt` | `text` | 1330.810, 428.800 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/baseline-ghosts.scene.json` | `relation-label:bringup-to-dvt:silicon-bringup:snapshot:silicon-bringup:dvt:snapshot:dvt` | `text` | 1011.817, 554.100 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1112.520, 398.800 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/baseline-ghosts.scene.json` | `relation-label:dvt-to-pvt:dvt:dvt:pvt:snapshot:pvt` | `text` | 1154.088, 645.300 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/baseline-ghosts.scene.json` | `relation-label:dvt-to-pvt:dvt:snapshot:dvt:pvt:snapshot:pvt` | `text` | 1154.088, 598.800 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/baseline-ghosts.scene.json` | `relation-label:firmware-to-evb:firmware:snapshot:firmware:evb-arrival:snapshot:evb-arrival` | `text` | 931.979, 355.800 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/baseline-ghosts.scene.json` | `relation-label:dvt-to-pvt:dvt:dvt:pvt:pvt` | `text` | 1202.883, 598.800 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/baseline-ghosts.scene.json` | `relation-label:firmware-to-evb:firmware:firmware:evb-arrival:evb-arrival` | `text` | 962.891, 355.800 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `relation-label:pvt-to-ga:pvt:pvt:ga:ga` | `text` | 1484.808, 731.100 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/baseline-ghosts.scene.json` | `relation-label:pvt-to-ga:pvt:pvt:ga:snapshot:ga` | `text` | 1395.796, 717.300 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `row-band:architecture` | `row-band` | 253.200, 172.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `row-band:performance` | `row-band` | 253.200, 480.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `row-band:pvt` | `row-band` | 253.200, 644.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.116 | 1.100 | info |
@@ -7180,4 +7177,4 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 Every non-exclusive decoration role is enabled in committed Scene evidence; group-band or group-header-band supplies the group concept when there are no corpus errors.
 
 
-Findings: 7114; errors: 0; warnings: 79.
+Findings: 7111; errors: 0; warnings: 79.
