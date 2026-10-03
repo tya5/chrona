@@ -107,6 +107,11 @@ slides:
     context: contexts/viewer-fit.yaml
     expectedSvg: generated/viewer-fit.svg
     expectedScene: generated/viewer-fit.scene.json
+  - id: annotation-rounded
+    evidence: "Rounded note boxes on a right-hand notes rail (#1087): the Theme annotationContainer cornerRadius drawn as the paper's corner radius, a 4 px kind-coloured start border and a 1 px bottom border on the note that follow the rounded outline, a 3 px ink border on all four sides of the callout with mitred corners, the boxes filling the rail (#1051), with no corpus datum edited."
+    context: contexts/annotation-rounded.yaml
+    expectedSvg: generated/annotation-rounded.svg
+    expectedScene: generated/annotation-rounded.scene.json
   - id: group-tabs
     evidence: "Group headers numbered and tabbed in the Title Card manner (#882): a zero-padded ordinal from the View header template and a 56 px hazard-stripe tab with an 8 px gap from the Theme role group-tab (catalogue pattern, size, gap), from the packaged target-parts catalogue, as a new View, Theme and Context over the executive sources."
     context: contexts/group-tabs.yaml

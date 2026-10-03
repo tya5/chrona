@@ -61,6 +61,18 @@ def test_a_theme_without_a_radius_is_byte_identical(tmp_path):
     assert all(box.corner_radius in (None, 0) for box in ab.boxes(plain).values())
 
 
+def test_a_note_with_no_container_is_a_square_box_with_no_radius(tmp_path):
+    directory = tmp_path / "n"
+    directory.mkdir()
+    parts = sr.bundle()
+    sr.with_note_rail(parts, ab.RAIL)
+    source = sr.chain_project()
+    sr.add_notes(source, parts["view"], ab.TARGETS, [ab.rail_candidate()])
+    rendered = sr.render(directory, source, presentation=parts)
+    boxes = ab.boxes(rendered)
+    assert boxes and all(box.corner_radius in (None, 0) and box.kind.value == "Rect" for box in boxes.values())
+
+
 @pytest.mark.parametrize("side", ab.SIDES)
 def test_a_single_side_follows_the_rounded_outline(tmp_path, side):
     rendered = _render(tmp_path, {side: {"width": 3}}, inset=ab.INSET)
