@@ -6,6 +6,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Any, Callable, Mapping
 
+from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, BELOW_PLOT_FALLBACK
 from chrona.presentation.layout.labels import (
     LabelPlacement, LabelRect, LabelRequest, MemberNameAssociation, place_label, place_member_name,
 )
@@ -43,6 +44,9 @@ class SurfaceMemberLabelContext:
     marks: tuple[MarkPlacement, ...]
     timeline_bounds: tuple[float, float, float, float]
     as_of_label: tuple[float, str] | None
+    # #1063: Layout reserved the block under the last row for a `below-plot` chip; `rows_bottom` is where the plot ends.
+    as_of_below_plot: bool = False
+    rows_bottom: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -131,8 +135,10 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
         x, content = context.as_of_label
         requests.append(LabelRequest("as-of-label", "actual-set", content,
             LabelRect(x, timeline_bounds[1], 0.0, 0.0),
-            (("plot-bottom-center", "plot-bottom-end", "plot-bottom-start", "rule-hosted")
-             if request.surface_content.as_of_placement == "foot"
+            (("plot-below-center", "plot-below-end", "plot-below-start", "plot-bottom-center", "plot-bottom-end",
+              "plot-bottom-start", "rule-hosted") if context.as_of_below_plot
+             else ("plot-bottom-center", "plot-bottom-end", "plot-bottom-start", "rule-hosted")
+             if request.surface_content.as_of_placement in {"foot", BELOW_PLOT}
              else ("plot-top-end", "plot-top-start", "rule-hosted")), "text", "timeline-as-of",
             CollisionDomain("timeline", "overlay"), "suppress", rule_host_obstacle_id="as-of",
             semantic_id="asOfLabel"))
@@ -330,7 +336,12 @@ def place_member_labels(context: SurfaceMemberLabelContext,
             candidate = find_asof_label_candidate(timeline_rect, label_size, rule_x=label_request.anchor.x,
                 gap=label_gap, rule_host_id="as-of", obstacles=obstacles,
                 obstacle_classes=("mark", "text", "label-visual", "rule"),
-                placement="foot" if "plot-bottom-end" in label_request.candidates else "top")
+                placement=(BELOW_PLOT if "plot-below-center" in label_request.candidates
+                           else "foot" if "plot-bottom-end" in label_request.candidates else "top"),
+                rows_bottom=context.rows_bottom)
+            if "plot-below-center" in label_request.candidates and (
+                    candidate is None or not candidate.side.startswith("plot-below")):
+                diagnostics.append(f"{BELOW_PLOT_FALLBACK}:{label_request.placement_id}")
         elif associated_member:
             candidate = place_member_name(label_request.anchor, label_size, label_request.candidates,
                 bounds=placement_bounds, obstacles=obstacles, gap=label_gap, maximum_end_gap=reach,

@@ -94,7 +94,15 @@ The date form is `localized-date`, `day-month` (`20 Aug`; `8月20日` in `ja-JP`
 tables (#991; the heading's `dateForm`, Spec 06 section 7.4, takes the same three). The marker also
 declares an optional `placement`: `top` (the default) searches the plot's top margin beside the rule,
 then the rule-hosted positions; `foot` searches the plot foot, first centred on the rule, then beside
-it, then the rule-hosted positions. A marker without `placement` and `day-month` forms behaves as before.
+it, then the rule-hosted positions; `below-plot` (#1063) puts the chip outside the plot, centred on the
+rule with its top one gap under the last row, then beside the rule. Layout reserves the block for it
+under the last row of the timeline slot: the chip's one text line plus its chip padding plus the gap
+(a quarter of the label font size, at least one unit). A content-sized surface grows by exactly that
+block, so the slots below the timeline move down by it; under `fill` row distribution the rows give it
+up; under `pack` the strip under the rows is used. When the rows and the block do not fit the timeline
+slot (a fixed-height region), or no position under the plot is legal, Layout reserves nothing and the
+chip takes the `foot` positions with the diagnostic `W_LAYOUT_ASOF_BELOW_PLOT_FALLBACK`. A marker
+without `placement` and `day-month` forms behaves as before, and so do `top` and `foot`.
 
 Any label whose semantic has a registered chip binding (`asOfLabelChip`,
 `memberLabelChip`, `finishDeltaChip`, `periodLabelChip`) may carry a chip. A chip is drawn when

@@ -49,6 +49,7 @@ from chrona.presentation.model.color_scale import ColorScaleError, resolve_color
 from chrona.presentation.model.projection import ReviewDeadline, ReviewPeriod, build_review_projection
 from chrona.presentation.model.surface_content import SummaryContent, TableContent
 from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput, ViewRowMode
+from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, below_plot_reserve
 from chrona.presentation.review.v05_content import (
     calendar_closures, compose_heading, legend_entries, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content)
 from chrona.presentation.scene.model import (
@@ -311,8 +312,11 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         resolved_layout, viewport_inline=viewport["inlineSize"], measurements=measurements
     ).to_integral_value(rounding=ROUND_CEILING))) if request.draft_auto_block else viewport["blockSize"]
     required_block = None
+    # An as-of chip placed `below-plot` (#1063) needs its block under the last row, so the timeline asks for it too.
+    foot_reserve = Decimal(str(_below_plot_reserve(view, actual_set=actual_observations, projection=projection,
+                                                   theme_tokens=ThemeTokenView(theme))))
     if view.surface == "table-timeline":
-        timeline_requirement = timeline_content_block_requirement(
+        timeline_requirement = foot_reserve + timeline_content_block_requirement(
             projection=projection,
             group_presentation=("band" if ThemeTokenView(theme).writing_mode("groupHeader") == "vertical"
                                 else view.grouping.presentation if view.grouping and view.grouping.presentation
@@ -361,7 +365,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             resolved_layout, viewport_inline=viewport["inlineSize"],
             minimum_block=natural_block_floor if request.draft_auto_block else viewport["blockSize"],
             measurements=measurements,
-            required_blocks={"timeline": fixed_lane_preflight.natural_block_requirement},
+            required_blocks={"timeline": fixed_lane_preflight.natural_block_requirement + foot_reserve},
             content_sized=request.draft_auto_block,
         )
         exact_block = exact_resolution.extent
@@ -455,6 +459,18 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     return RenderedReview(artifact, surface, scene, frozenset(ledger.read), scenario_provenance,
                           glyph_warnings, perceptibility_warnings, contrast_warnings,
                           surface.info_diagnostics, collisions, attachments, deadlines, warning_records)
+
+
+def _below_plot_reserve(view: Any, *, actual_set: Any, projection: Any, theme_tokens: Any) -> float:
+    """The block extent a `below-plot` as-of chip needs under the plot; 0 without such a marker in the window."""
+    marker = next((item for item in view.markers if item.get("kind") == "asOf" and item.get("source") == "actual"
+                   and item.get("placement") == BELOW_PLOT and item.get("label")), None)
+    body = actual_set.get("body") if actual_set is not None else None
+    as_of_value = body.get("asOf") if isinstance(body, dict) else None
+    if marker is None or not isinstance(as_of_value, str):
+        return 0.0
+    start, end = projection.window
+    return below_plot_reserve(theme_tokens) if start <= date.fromisoformat(as_of_value) < end else 0.0
 
 
 def _inspection_scene(closure: RenderClosure, surface: SceneSurface, projection: Any,

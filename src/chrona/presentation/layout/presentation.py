@@ -211,6 +211,20 @@ def required_row_block_extents(*, review_rows: tuple[Any, ...], row_minimum: flo
     ) + row_padding) for row in review_rows)
 
 
+def _group_starts(review_rows: tuple[Any, ...]) -> tuple[int, ...]:
+    return tuple(
+        index for index, row in enumerate(review_rows)
+        if row.group_id and (index == 0 or review_rows[index - 1].group_id != row.group_id)
+    )
+
+
+def row_block_slack(*, review_rows: tuple[Any, ...], timeline_block_size: float, group_header_size: float,
+                    required_block_sizes: tuple[float, ...]) -> float:
+    """The timeline block left once every row requirement and group header is closed (negative: rows overflow)."""
+    return (timeline_block_size - group_header_size * len(_group_starts(review_rows))
+            - geometry_sum(required_block_sizes))
+
+
 def place_rows(*, review_rows: tuple[Any, ...], timeline_bounds: tuple[float, float, float, float],
                group_header_size: float, required_block_sizes: tuple[float, ...],
                distribution: str) -> tuple[RowPlacement, ...]:
@@ -219,10 +233,7 @@ def place_rows(*, review_rows: tuple[Any, ...], timeline_bounds: tuple[float, fl
         raise LayoutError("E_LAYOUT_ROW_REQUIREMENT", "/layoutManifest/timeline")
     if distribution not in {"pack", "fill"}:
         raise LayoutError("E_LAYOUT_ROW_DISTRIBUTION", "/layoutManifest/reviewSurface/rowDistribution")
-    group_starts = tuple(
-        index for index, row in enumerate(review_rows)
-        if row.group_id and (index == 0 or review_rows[index - 1].group_id != row.group_id)
-    )
+    group_starts = _group_starts(review_rows)
     available = timeline_bounds[3] - group_header_size * len(group_starts)
     required = geometry_sum(required_block_sizes)
     # Requirements remain P1 geometry.  A requested timeline is a minimum

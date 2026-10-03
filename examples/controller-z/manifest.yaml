@@ -117,6 +117,11 @@ slides:
     context: contexts/as-of-foot.yaml
     expectedSvg: generated/as-of-foot.svg
     expectedScene: generated/as-of-foot.scene.json
+  - id: as-of-below-plot
+    evidence: "The as-of chip below the plot with its block reserved (#1063): the marker's placement below-plot centres the chip on the rule one gap under the last row, so it no longer covers the last row's label or marks, and the slots below the timeline sit lower by the reserved block, over the executive sources."
+    context: contexts/as-of-below-plot.yaml
+    expectedSvg: generated/as-of-below-plot.svg
+    expectedScene: generated/as-of-below-plot.scene.json
   - id: in-progress
     evidence: "Work in progress and not yet observed (#991): comparison.missingActualScope in-progress hatches a span that has an actual start and no finish from that start to the as-of date (the Theme's missing-actual hatch), and puts no mark on a due span or a gate, over the executive sources."
     context: contexts/in-progress.yaml

@@ -303,7 +303,7 @@ allOf:
                   properties:
                     form: {description: "The date form: the localized date (`Aug 20, 2027`), the day and short month (`20 Aug`) or the day, short month and year (`20 Aug 2027`).", enum: [localized-date, day-month, day-month-year]}
                     nameTable: {description: "Exact built-in axis name-table ID; defaults to Render Context locale.", enum: [en-US, ja-JP]}
-                placement: {description: "Where the label sits on the plot: the top margin (default) or the plot foot, centred on the rule above the last row.", enum: [top, foot], examples: [foot]}
+                placement: {description: "Where the label sits on the plot: the top margin (default), the plot foot (centred on the rule above the last row) or below the plot (centred on the rule under the last row, in a block Layout reserves; with no room it falls back to the foot with a diagnostic).", enum: [top, foot, below-plot], examples: [below-plot]}
           periods:
             description: "Named Project periods drawn as bands across the plot, in paint order of declaration; absent selects none."
             type: array
