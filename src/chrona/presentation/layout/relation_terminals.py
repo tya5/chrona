@@ -25,7 +25,7 @@ def marker_geometry(value: Mapping[str, object]) -> MarkerGeometry:
     outline = (PathCommand("move", ((0.0, 0.0),)),
                PathCommand("line", ((length, width / 2),)),
                PathCommand("line", ((0.0, width),)))
-    if shape == "triangle":
+    if shape in {"triangle", "open-triangle"}:  # three edges; `chevron` stays an open V (#1042)
         outline += (PathCommand("line", ((0.0, 0.0),)),)
     return MarkerGeometry(outline, length, width, offset, "fill" if shape == "triangle" else "stroke")
 
