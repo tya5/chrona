@@ -69,6 +69,21 @@ at `inlineSize: content` receives the larger of this extent and
 `column count × table.column.minInlineSize`. The metric is a per-column floor for
 a content-sized slot, not a column minimum. Any surplus goes to flexible columns.
 
+**Rows under group headers (#1065).** The View's `hierarchyColumn` names the table column that carries row
+nesting. Hierarchy grouping, a row `depth` and a `parentRow` nest rows with their own depths: a grouped row starts
+the group's inset plus `table.indent.inlineSize` times its depth after the column start. When the View groups by
+a non-hierarchy dimension (a field or the object type) with `presentation: header` and declares no other
+nesting, a group header is a parent row in reading order and every grouped row is one step below it: the row's
+label in the hierarchy column starts exactly `table.indent.inlineSize` after the header's label start. In the
+first column that is the table start, after a start-position group tab and its gap (#882) when the Theme draws one;
+in a later column the step is counted from that column's start. The header label, the bands, the tab and the tint
+do not move. Natural column width includes this indent as for any hierarchy cell, so a content-sized table is
+never narrower than its widest indented label; a flexible column cuts the label with its source kept, as for any
+cell. A Theme whose `groupHeader` role is vertical draws no header row (#585), so nothing is indented. Without
+header groups (field grouping with `presentation: band` or none) a declared `hierarchyColumn` is
+`E_VIEW_HIERARCHY_COLUMN_UNEXPECTED`, as before. The previously rejected combination becomes valid; accepted
+documents render byte for byte as before.
+
 A table slot at `inlineSize: {minmax: {min: content, …}}` uses this same measured
 content extent as its minimum (#487): the slot is never narrower than its measured
 columns and gutters, regardless of a flexible track's allocated share. See

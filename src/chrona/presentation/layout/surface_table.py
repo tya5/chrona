@@ -6,8 +6,9 @@ from decimal import Decimal
 from typing import Any
 
 from chrona.presentation.layout.presentation import (
-    TableColumnPlacement, table_cell_indent, table_text_measurer, place_table_columns,
+    TableColumnPlacement, header_group_cell_indent, table_cell_indent, table_text_measurer, place_table_columns,
 )
+from chrona.presentation.layout.group_tags import header_child_lead
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.surface_base import SurfaceBaseGeometry
 from chrona.presentation.layout.surface_quality import (
@@ -47,9 +48,16 @@ def compose_table(base: SurfaceBaseGeometry) -> SurfaceTablePlacements:
     header_metrics = metric_for_role(tokens, header_role, font_metrics)
     indent_token = base.metric_values.get("table.indent.inlineSize")
     cell_indents: dict[str, float] = {}
+    hierarchy_column = request.surface_content.table_hierarchy_column
+    header_lead = (header_child_lead(tokens, first_column=bool(columns_intent)
+                                     and columns_intent[0].column_id == hierarchy_column)
+                   if request.surface_content.table_indent_under_headers else None)
     for row in rows:
-        row_indent = table_cell_indent(grouped=bool(row.group_id), depth=row.depth, inset=body_size,
-                                       indent=float(indent_token) if indent_token is not None else None)
+        indent_step = float(indent_token) if indent_token is not None else None
+        row_indent = (header_group_cell_indent(grouped=bool(row.group_id), indent=indent_step, lead=header_lead)
+                      if request.surface_content.table_indent_under_headers
+                      else table_cell_indent(grouped=bool(row.group_id), depth=row.depth, inset=body_size,
+                                             indent=indent_step))
         cell_indents[row.row_id] = cell_indents[row.object_id] = row_indent
     layout_columns = place_table_columns(
         columns=columns_intent, cells=cells, bounds=table_bounds,

@@ -109,6 +109,9 @@ class TableContent:
     cell_objects: tuple[tuple[str, str, str, bool], ...]
     hierarchy_column: str | None
     row_levels: tuple[TableRowLevel, ...]
+    # Rows of a header group sit one declared step under their header (#1065): field grouping with header
+    # presentation, a hierarchy column, and no other nesting.
+    indent_under_headers: bool = False
 
 
 @dataclass(frozen=True)
@@ -213,6 +216,7 @@ class SurfaceContentInput:
     scale_legend_paints: tuple[tuple[str, str], ...] = ()
     progress_fill_source: str | None = None
     table_hierarchy_column: str | None = None
+    table_indent_under_headers: bool = False
     row_decoration: str = "none"
     group_decoration: str = "all"
     # Composed group-header text, (group id, text), in display order (#583); a

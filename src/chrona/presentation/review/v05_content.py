@@ -84,7 +84,20 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
         table_cell_objects = tuple((item.object_id, column.id, item.object_id, True)
                                    for item in projection.items for column in view.table_columns)
         row_levels = tuple(TableRowLevel((item.object_id,), bool(item.group_id)) for item in projection.items)
-    return TableContent(columns, cells, table_cell_objects, view.hierarchy_column, row_levels)
+    return TableContent(columns, cells, table_cell_objects, view.hierarchy_column, row_levels,
+                        indent_under_headers=_indents_under_headers(view))
+
+
+def _indents_under_headers(view: ViewInput) -> bool:
+    """True when each row of a header group sits one declared step under its header (#1065).
+
+    A hierarchy column with field (non-hierarchy) grouping shown as headers and no other nesting: hierarchy
+    grouping, a row `depth` or a `parentRow` keep their own rule, so their output does not change.
+    """
+    grouping = view.grouping
+    return (view.hierarchy_column is not None and grouping is not None and grouping.by != "hierarchy"
+            and grouping.presentation == "header"
+            and not any(row.depth > 0 or row.parent_row is not None for row in view.rows.items))
 
 
 def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput) -> TableContent:
@@ -347,6 +360,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                scale_paints=scale_paints, scale_legend_paints=scale_legend_paints,
                                progress_fill_source=view.progress_fill,
                                table_hierarchy_column=view.hierarchy_column,
+                               table_indent_under_headers=table.indent_under_headers,
                                row_decoration=view.background_decoration[0],
                                group_decoration=view.background_decoration[1],
                                group_headers=_group_headers(projection, project, view),

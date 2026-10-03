@@ -5,9 +5,10 @@ from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
 from typing import Any, Mapping
 
+from chrona.presentation.layout.group_tags import header_child_lead
 from chrona.presentation.layout.model import LayoutError, Measurement
 from chrona.presentation.layout.presentation import (
-    measure_table_columns, table_cell_indent, table_content_inline_size, table_text_measurer,
+    header_group_cell_indent, measure_table_columns, table_cell_indent, table_content_inline_size, table_text_measurer,
 )
 from chrona.presentation.layout.text import measure_text_width, metric_for_role, paint_text
 from chrona.presentation.model.surface_content import TableContent
@@ -221,9 +222,14 @@ def _table_content_inline(table: TableContent, typography: ThemeTokenView, font_
                           metric: Mapping[str, Decimal], inset: float) -> Decimal:
     """Measure the table exactly as Layout will place its columns."""
     indent = metric.get("table.indent.inlineSize")
+    header_lead = (header_child_lead(typography, first_column=bool(table.columns)
+                                     and table.columns[0].column_id == table.hierarchy_column)
+                   if table.indent_under_headers else None)
+    step = float(indent) if indent is not None else None
     cell_indents = {
-        key: table_cell_indent(grouped=level.grouped, depth=level.depth, inset=inset,
-                               indent=float(indent) if indent is not None else None)
+        key: (header_group_cell_indent(grouped=level.grouped, indent=step, lead=header_lead)
+              if table.indent_under_headers
+              else table_cell_indent(grouped=level.grouped, depth=level.depth, inset=inset, indent=step))
         for level in table.row_levels for key in level.keys
     }
     natural = measure_table_columns(columns=table.columns, cells=table.cells,

@@ -1091,9 +1091,13 @@ def _validate_view_table_intent(table_columns: tuple[TableColumn, ...], grouping
     if hierarchy_column not in column_ids:
         raise ContractError("E_VIEW_HIERARCHY_COLUMN_UNKNOWN",
                             f"hierarchyColumn {hierarchy_column!r} is not one of the tableColumns ids {list(column_ids)}")
-    if not visible_nesting:
+    # A group header is a parent row in reading order whatever produced the grouping (#1065): field (or any non-hierarchy)
+    # grouping with header presentation nests its rows one step under the header.
+    header_groups = grouping is not None and grouping.presentation == "header"
+    if not visible_nesting and not header_groups:
         raise ContractError("E_VIEW_HIERARCHY_COLUMN_UNEXPECTED",
-                            f"hierarchyColumn {hierarchy_column!r} is declared but the View shows no nesting (no hierarchy grouping, row depth or parentRow)")
+                            f"hierarchyColumn {hierarchy_column!r} is declared but the View shows no nesting "
+                            "(no hierarchy grouping, row depth, parentRow or field grouping with presentation header)")
 
 
 def _column_affixes(column_id: object, value: object) -> ColumnAffixes | None:

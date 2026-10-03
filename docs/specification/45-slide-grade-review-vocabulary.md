@@ -10,7 +10,7 @@ A ReviewRow item declares `track: stacked | shared` (default `stacked`). Members
 
 ## Group headers
 
-Consecutive rows with the same non-empty View group form a SceneGroup. Theme metric `timeline.groupHeader.blockSize` reserves an internal header band; Scene emits group-header text spanning table and timeline and indents member table labels, in the Theme's `groupHeader` typography role (Specification 49 §3). Absence of a group or a zero/omitted header metric preserves the no-header composition. Group headers are derived from View grouping, never persisted in Project. A SceneGroup's own background band, when its `all`/`alternate` decoration selects that group, geometrically includes that group's own header row (Specification 50 §3.4); it is never painted as if it belonged to an adjacent group.
+Consecutive rows with the same non-empty View group form a SceneGroup. Theme metric `timeline.groupHeader.blockSize` reserves an internal header band; Scene emits group-header text spanning table and timeline and indents member table labels, in the Theme's `groupHeader` typography role (Specification 49 §3). Under field grouping with header presentation, a View that declares `hierarchyColumn` indents each member label by exactly `table.indent.inlineSize` from its header's label start (Specification 24 §2.1, #1065). Absence of a group or a zero/omitted header metric preserves the no-header composition. Group headers are derived from View grouping, never persisted in Project. A SceneGroup's own background band, when its `all`/`alternate` decoration selects that group, geometrically includes that group's own header row (Specification 50 §3.4); it is never painted as if it belonged to an adjacent group.
 
 ## Calendar axis and as-of marker
 

@@ -112,6 +112,11 @@ slides:
     context: contexts/group-tabs.yaml
     expectedSvg: generated/group-tabs.svg
     expectedScene: generated/group-tabs.scene.json
+  - id: group-child-indent
+    evidence: "Child rows indented under field-grouping headers (#1065): the View declares hierarchyColumn Workstream over a field grouping with header presentation, and Layout starts each row's label exactly the Theme's table.indent.inlineSize after its header's label, over the executive sources."
+    context: contexts/group-child-indent.yaml
+    expectedSvg: generated/group-child-indent.svg
+    expectedScene: generated/group-child-indent.scene.json
   - id: heading
     evidence: "A declared title and subtitle (#991): the View heading templates read the Project title, the as-of date and the calendar id, and the subtitle is drawn under the title in the Theme's subtitle typography role, as a new View and Theme over the executive sources."
     context: contexts/heading.yaml
