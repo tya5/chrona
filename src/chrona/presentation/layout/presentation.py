@@ -116,6 +116,20 @@ def table_cell_indent(*, grouped: bool, depth: int, inset: float, indent: float 
     return (inset if grouped else 0.0) + float(indent or 0) * depth
 
 
+def header_group_cell_indent(*, grouped: bool, indent: float | None, lead: float | None) -> float:
+    """Return the hierarchy-column indent of a row under field-grouping headers (#1065).
+
+    A grouped row is one declared step below its header's label: `lead` is the distance of that label from the
+    column start (a start group tab and its gap), then exactly `indent`. `lead` is None when no header row is
+    drawn (a vertical group tag), and a row outside any group is not below a header: both take no indent.
+    """
+    if not grouped or lead is None:
+        return 0.0
+    if indent is None:
+        raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/metricValues/table.indent.inlineSize")
+    return lead + float(indent)
+
+
 def table_text_measurer(theme_tokens: Any, font_metrics: Any) -> Callable[[str, str, str], float]:
     """Measure table header and cell text in its own typography role."""
     def measure(content: str, typography_role: str, orientation: str = "horizontal") -> float:

@@ -16,3 +16,19 @@ def group_tag_column_size(theme_tokens: Any) -> float:
     treatment = theme_tokens.text_treatment("groupHeader")
     return float(treatment.font_size * treatment.line_height)
 
+
+
+def header_child_lead(theme_tokens: Any, *, first_column: bool) -> float | None:
+    """Where a header group's rows start relative to the header's label (#1065), or None when no header row is drawn.
+
+    A vertical `groupHeader` draws a tag column and no header row, so rows are not below a header. Otherwise the
+    header label starts at the table start, after a start group tab and its gap (#882); that distance is the lead
+    of a row's label in the first column. Another column has no header label above it, so its lead is 0.
+    """
+    if theme_tokens.writing_mode("groupHeader") == "vertical":
+        return None
+    if not first_column:
+        return 0.0
+    from chrona.presentation.layout.surface_groups import resolve_group_tab
+    tab = resolve_group_tab(theme_tokens)
+    return float(tab.reserved) if tab is not None and tab.position == "start" else 0.0
