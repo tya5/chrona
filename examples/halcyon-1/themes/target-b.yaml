@@ -91,8 +91,8 @@ body:
       type: marker
       value:
         shape: triangle
-        headLength: 10
-        headWidth: 10
+        headLength: 6
+        headWidth: 6
         attachmentOffset: 1
     milestone-symbol:
       type: symbol
@@ -133,6 +133,10 @@ body:
         cornerRadius: 0
         contentInsetEm: {top: 0.7, right: 0.7, bottom: 0.7, left: 0.7}
         inlineSize: fill
+        border:
+          start:
+            width: 3
+            paint: kind
     hatch:
       type: pattern
       value:
@@ -191,7 +195,25 @@ body:
       value: 14
     table-indent:
       type: number
-      value: 16
+      value: 8
+    timeline-relation-radius:
+      type: number
+      value: 4
+    size.secondary:
+      type: number
+      value: 11.5
+    slot-heading-size:
+      type: number
+      value: 11
+    slot-heading-spacing:
+      type: number
+      value: 0.1
+    symbol-height-actual:
+      type: number
+      value: 0.55
+    symbol-offset-actual:
+      type: number
+      value: 0.15
     table-header-height:
       type: number
       value: 44
@@ -258,11 +280,6 @@ body:
     kind-bar-padding:
       type: number
       value: 0.6
-    kind-accent-edge:
-      type: edge
-      value:
-        side: start
-        size: 5
     kind-label-spacing:
       type: number
       value: 0.08
@@ -432,6 +449,7 @@ body:
     annotation-note-box:
       strokeWidth: stroke-width
       annotationContainer: note-container
+      viewerFit: text-follows-box
     annotation-note-text:
       contrastTreatment: required
       fontFamily: editorial
@@ -440,6 +458,22 @@ body:
       lineHeight: leading.body
       letterSpacing: letter-spacing
       textTransform: text-transform
+      numericSpacing: numeric-spacing
+    table-cell-secondary:
+      fontFamily: editorial
+      fontWeight: weight.regular
+      fontSize: size.secondary
+      lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+    slot-heading:
+      fontFamily: editorial
+      fontWeight: weight.bold
+      fontSize: slot-heading-size
+      lineHeight: leading.body
+      letterSpacing: slot-heading-spacing
+      textTransform: kind-upper
       numericSpacing: numeric-spacing
     summary:
       fontFamily: editorial
@@ -553,6 +587,8 @@ body:
       markOffset: mark-offset-actual
       markPaintOrder: mark-paint-front
       markCornerRadius: mark-radius-rounded
+      symbolHeight: symbol-height-actual
+      symbolOffset: symbol-offset-actual
     network-node:
       strokeWidth: stroke-width
     progress-fill:
@@ -571,8 +607,7 @@ body:
       fontSize: kind-label-size
       lineHeight: kind-label-leading
       letterSpacing: kind-label-spacing
-    annotation-kind-accent:
-      edge: kind-accent-edge
+    annotation-kind-accent: {}
     axisQuarter:
       fontFamily: editorial
       fontWeight: weight.bold
@@ -630,6 +665,9 @@ body:
     member-label-inside-snapshot.fill: insideLabelSnapshot
     member-label-inside-scenario.fill: insideLabelScenario
     subtitle.fill: textMuted
+    table-cell-secondary.fill: textMuted
+    legend.fill: textMuted
+    slot-heading.fill: textMuted
     annotation.fill: surfaceRaised
     annotation-text.fill: text
     note-index.fill: accent
@@ -707,6 +745,7 @@ body:
     table.indent.inlineSize: table-indent
     table.header.blockSize: table-header-height
     timeline.groupHeader.blockSize: timeline-group-header-size
+    timeline.relation.cornerRadius: timeline-relation-radius
   colorScales:
     owner:
       slots:

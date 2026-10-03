@@ -4,7 +4,7 @@ flowDirection: horizontal
 dependencyNetworkFlowDirection: horizontal
 requiredThemeTokens: [legend-block, legend-item-min, note-rail-width, spacing.l, spacing.m, spacing.none]
 reviewSurface: {rowDistribution: fill, backgroundExtents: {rowBand: table, groupBand: both, groupHeaderBand: both, calendarClosed: timeline}, annotationRouting: {maxBends: 4, maxDetourRatio: 2}}
-relationRouting: {maxBends: 4, maxDetourRatio: 2}
+relationRouting: {maxBends: 4, maxDetourRatio: 4, entry: side}
 root:
   id: page
   kind: column
@@ -68,6 +68,7 @@ root:
         - id: annotations
           kind: slot
           source: annotations
+          heading: {text: Notes, align: start, block: header-row}
           inlineSize: {fixed: {token: note-rail-width}}
           blockSize: fill
           place: {inline: stretch, block: stretch, safety: strict}
