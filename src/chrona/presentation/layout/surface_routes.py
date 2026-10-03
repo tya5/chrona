@@ -15,7 +15,7 @@ from chrona.presentation.layout.ports import (
     ConnectorEgress, connector_egress_candidates,
 )
 from chrona.presentation.layout.presentation import TrackPlacement
-from chrona.presentation.layout.relation_terminals import marker_geometry
+from chrona.presentation.layout.relation_terminals import centred_on_route, marker_geometry, trim_for_centred_terminals
 from chrona.presentation.layout.routing import (
     RouteSearchFailure, RouteSuppressionEvidence, place_relation_route,
     relation_route_quality, select_lane_relation_route,
@@ -297,8 +297,9 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     if not obstacles.has(obstacle_id):
                         register_port(obstacle_id, port)
                 radius = float(context.metric_values.get("timeline.relation.cornerRadius", 0))
-                marker_start = marker_geometry(request.theme_tokens.marker("relationSourceTerminal"))
-                marker_end = marker_geometry(request.theme_tokens.marker("relationTargetTerminal"))
+                marker_start = centred_on_route(marker_geometry(request.theme_tokens.marker("relationSourceTerminal")), "source")
+                marker_end = centred_on_route(marker_geometry(request.theme_tokens.marker("relationTargetTerminal")), "target")
+                points = trim_for_centred_terminals(tuple(points), marker_start, marker_end)
                 dependency_stroke = float(request.theme_tokens.number(
                     semantic_binding(relation.semantic_id).theme_role, "strokeWidth"))
                 arc_blocked = corner_arc_blocker(obstacles, frozenset((*source_egress.host_ids, *target_egress.host_ids)),
