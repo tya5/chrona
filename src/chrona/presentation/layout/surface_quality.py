@@ -38,6 +38,8 @@ class MarkerGeometry:
     head_width: float
     attachment_offset: float
     paint_mode: str
+    # not part of repr/equality: the SVG marker id hashes repr, and this is derived from the shape
+    centred: bool = field(default=False, repr=False, compare=False)  # a round terminal centred on the endpoint, so its leg needs no straight run (#1044)
 
     def __post_init__(self) -> None:
         if (not self.outline or self.head_length <= 0 or self.head_width <= 0
