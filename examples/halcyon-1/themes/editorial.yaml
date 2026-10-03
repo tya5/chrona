@@ -207,10 +207,7 @@ body:
       value: 0.5
     opacity.period-band:
       type: number
-      value: 1
-    period-stroke-width:
-      type: number
-      value: 2
+      value: 0.14
   roles:
     group-band:
       backgroundTreatment: fill
@@ -438,9 +435,8 @@ body:
       markPaintOrder: mark-paint-front
       markCornerRadius: mark-radius-rounded
     period-band:
-      backgroundTreatment: outline
+      backgroundTreatment: fill
       backgroundPaintOrder: 11
-      strokeWidth: period-stroke-width
       opacity: opacity.period-band
     period-label:
       contrastTreatment: required
@@ -509,7 +505,7 @@ body:
     dependency.stroke: textMuted
     progress-fill.fill: accent
     progress-fill.stroke: accent
-    period-band.stroke: accent
+    period-band.fill: accent
     period-label.fill: text
     period-label-chip.fill: surface
   metrics:
