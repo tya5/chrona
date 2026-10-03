@@ -2,7 +2,7 @@
 
 Living record for [#980](https://github.com/tya5/chrona/issues/980) (P1 on the [#454](https://github.com/tya5/chrona/issues/454) board, read only): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history. The owner-level choices are also recorded as a comment on #980 (options, choice, why, how to reverse).
 
-**Public base:** `fb191bdd` on `main`. **Status:** design plan, design, architecture review and implementation plan published together (PR #1005, `b94847ed`). C980-1 is in review (section 8).
+**Public base:** `fb191bdd` on `main`. **Status:** design plan, design, architecture review and implementation plan published together (PR #1005, `b94847ed`). C980-1 and C980-2 publish as one PR with two commits (an internal sequencing choice: integration tests that render the packaged presets cannot stay green with the class alone); see section 8.
 
 ## 1. Published baseline
 
@@ -146,3 +146,5 @@ A malformed paint, an unreadable ground and a translucent host are the existing 
 ## 8. Progress and evidence
 
 Per slice: the PR, the corpus report summary, the images read, the preset sweep. (Empty until C980-1.)
+
+**C980-2 (packaged presets; Refs #980).** `executive-light` and `elevated-light`: `axis-label2.fill: insideLabelPlanned` (5.73 on the accent band). `technical-print`: the month band's halftone ink `text` to `neutral` (the month labels were the same ink as the dots under them, ratio 1.0; read as an image, the labels were hard to read before and read clearly after; the dots are lighter). `executive-light`, `elevated-light` and `editorial`: `note-index.fill: textMuted`. Findings that went beyond the plan: a packaged preset declares no annotation roles, so it cannot draw a note index (`E_THEME_ROLE_REQUIRED`); the three note-index bindings are therefore an inherited value, checked directly against the scheme grounds, not by a render. The as-of label over a strong cone fails the gate in the synthetic cone test (the case #980 was filed for), now asserted in `test_as_of_cone_render.py`. Tests: `test_preset_label_contrast.py` (7 presets render through the draft path with no legibility error; 7 note-index inks at 4.5 on the scheme grounds).

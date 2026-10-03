@@ -479,7 +479,7 @@ body:
     calendar-exception.fill: warning
     range.fill: warning
     as-of.stroke: accent
-    note-index.fill: accent
+    note-index.fill: textMuted
     planned.fill: surface
     planned.stroke: text
     network-node.fill: surfaceRaised
