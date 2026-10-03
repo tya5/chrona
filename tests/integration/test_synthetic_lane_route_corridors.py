@@ -40,16 +40,19 @@ def _project(spans, relation):
                                  "to": {"object": target, "endpoint": "start"}}])
 
 
-def _parts():
+def _parts(entry: str | None = None):
     parts = sr.bundle()
     parts["view"] = sr.lane_view(parts["view"])
+    if entry is not None:  # #1030: pin the relation entry policy where a fixture's premise depends on the order
+        routing = parts["layout"].setdefault("relationRouting", {"maxBends": 4, "maxDetourRatio": 2})
+        routing["entry"] = entry
     return parts
 
 
-def _render(tmp_path, source, monkeypatch, *, plan: bool):
+def _render(tmp_path, source, monkeypatch, *, plan: bool, entry: str | None = None):
     if not plan:
         monkeypatch.setattr(composer, "plan_lane_route_reservations", lambda context: lane_plan.LaneRoutePlan())
-    return sr.render(tmp_path, source, presentation=_parts())
+    return sr.render(tmp_path, source, presentation=_parts(entry))
 
 
 def _suppressed(rendered) -> list[str]:
@@ -164,9 +167,10 @@ def test_a_repair_that_would_suppress_a_shown_name_is_refused(tmp_path, monkeypa
     (tmp_path / "off").mkdir()
     (tmp_path / "on").mkdir()
     source = _project(COSTLY, COSTLY_RELATION)
-    off = _render(tmp_path / "off", source, monkeypatch, plan=False)
+    # The fixture is costly for the nearest-port entry order (`entry: any`); the next test covers side-when-free.
+    off = _render(tmp_path / "off", source, monkeypatch, plan=False, entry="any")
     monkeypatch.undo()
-    on = _render(tmp_path / "on", source, monkeypatch, plan=True)
+    on = _render(tmp_path / "on", source, monkeypatch, plan=True, entry="any")
 
     assert len(_suppressed(off)) == 1 and _routes(off) == []
     assert len(_names(off)) == len(COSTLY)
@@ -174,6 +178,15 @@ def test_a_repair_that_would_suppress_a_shown_name_is_refused(tmp_path, monkeypa
     assert [(item.scene_id, item.bounds) for item in off.surface.primitives] == \
            [(item.scene_id, item.bounds) for item in on.surface.primitives]
     assert off.scene.diagnostics == on.scene.diagnostics
+
+
+def test_the_side_entry_can_draw_the_costly_relation_without_suppressing_any_name(tmp_path, monkeypatch):
+    # #1030: with side-when-free (the default) the same project routes through a horizontal start entry, so the
+    # relation is drawn and every shown name stays shown; the planner still never trades a name for a route.
+    rendered = _render(tmp_path, _project(COSTLY, COSTLY_RELATION), monkeypatch, plan=True)
+
+    assert _suppressed(rendered) == [] and len(_routes(rendered)) == 1
+    assert len(_names(rendered)) == len(COSTLY)
 
 
 def test_a_project_without_relations_never_rehearses(tmp_path, monkeypatch):

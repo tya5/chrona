@@ -104,7 +104,7 @@ class LayoutManifest:
     diagnostics: tuple[str, ...] = ()
     relation_max_bends: int = 4
     relation_max_detour_ratio: float = 2.0
-    relation_entry: str = "any"
+    relation_entry: str = "side-when-free"
     annotation_max_bends: int = 4
     annotation_max_detour_ratio: float = 2.0
     row_distribution: str = "pack"
@@ -149,7 +149,7 @@ class LayoutManifest:
             "relationRouting": {
                 "maxBends": self.relation_max_bends,
                 "maxDetourRatio": self.relation_max_detour_ratio,
-                **({"entry": self.relation_entry} if self.relation_entry != "any" else {}),
+                **({"entry": self.relation_entry} if self.relation_entry != "side-when-free" else {}),
             },
             "annotationRouting": {
                 "maxBends": self.annotation_max_bends,
