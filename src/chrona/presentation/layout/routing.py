@@ -187,6 +187,27 @@ def _free(obstacles: SurfaceObstacleIndex, start: tuple[float, float], end: tupl
                 if host_ids else obstacles.collisions(segment, classes=classes, regions=regions))
 
 
+def back_route_points(source_port: tuple[float, float], exit_dx: float, gap_y: float,
+                      tip: tuple[float, float], target_port: tuple[float, float]) -> tuple[tuple[float, float], ...]:
+    """The back-route of `relationRouting.entry: side` (#1060): out, to the row gap, back, drop, in.
+
+    Leave the source port by `exit_dx` along the row, run to the gap line `gap_y`, travel to the entry tip (the
+    stub's far end), drop to the target's mid height and enter. Equal and straight-through points collapse.
+    """
+    out = (source_port[0] + exit_dx, source_port[1])
+    pieces = (source_port, out, (out[0], gap_y), (tip[0], gap_y), tip, target_port)
+    points: list[tuple[float, float]] = []
+    for point in pieces:
+        if points and points[-1] == point:
+            continue
+        if len(points) >= 2 and ((points[-2][0] == points[-1][0] == point[0] and (points[-1][1] - points[-2][1]) * (point[1] - points[-1][1]) > 0)
+                                 or (points[-2][1] == points[-1][1] == point[1] and (points[-1][0] - points[-2][0]) * (point[0] - points[-1][0]) > 0)):
+            points[-1] = point
+            continue
+        points.append(point)
+    return tuple(points)
+
+
 def _reverses(a: tuple[float, float], b: tuple[float, float], c: tuple[float, float]) -> bool:
     return ((a[1] == b[1] == c[1] and (b[0] - a[0]) * (c[0] - b[0]) < 0)
             or (a[0] == b[0] == c[0] and (b[1] - a[1]) * (c[1] - b[1]) < 0))
