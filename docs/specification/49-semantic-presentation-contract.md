@@ -63,7 +63,7 @@ The registry owns canonical primitive semantics. Its entries declare `semantic_i
 | `periodLabel` | Text | `period-label` | `period-label` (state text: the Theme declares `contrastTreatment`; the role is opt-in) |
 | `periodLabelChip` | Rect | `label-chip` | `period-label-chip` |
 | `axisBand` | Text | `axis-band` | `axis` |
-| `legendEntry` | dispatched by the entry's own role `primitive_kind` (Rect, Symbol, or Path) | `legend-swatch` | entry's own role, sized against `legend-swatch.swatchInlineSize` (#427) |
+| `legendEntry` | dispatched by the entry's own role `primitive_kind` (Rect, Symbol, or Path) | `legend-swatch` | entry's own role, sized against `legend-swatch.swatchInlineSize` (#427); `swatchGap`, `swatchBlockSize` and `pointSwatchSize` (#1111) |
 | `legendLabel` | Text | `legend-label` | `legend` (painted in `legend` when the Theme binds `legend.fill`, else `text`; ground text, #1062) |
 | `annotation` | Rect/Text/Path | `annotation-*` | `annotation` |
 
