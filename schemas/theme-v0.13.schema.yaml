@@ -52,7 +52,7 @@ properties:
                     additionalProperties: false
                     required: [shape, headLength, headWidth, attachmentOffset]
                     properties:
-                      shape: {enum: [triangle, open-triangle, chevron, circle, open-circle]}
+                      shape: {description: "Terminal head outline. `triangle` is a filled closed triangle; `open-triangle` is the same closed triangle (three edges) stroked, not filled; `chevron` is an open V of two stroked edges with no closing edge; `circle` is a filled and `open-circle` a stroked circle.", enum: [triangle, open-triangle, chevron, circle, open-circle]}
                       headLength: {type: number, exclusiveMinimum: 0}
                       headWidth: {type: number, exclusiveMinimum: 0}
                       attachmentOffset: {type: number, minimum: 0}
