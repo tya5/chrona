@@ -296,12 +296,13 @@ def select_lane_relation_route(
                                         host_ids=(*source.host_ids, *target.host_ids))
         if repaired is not None:
             points = list(repaired)
-        if route_self_overlaps(tuple(points)):  # #1059: a route never overlaps itself; the next candidate follows
+        measured = route_quality_attempt(source.side, target.side, tuple(points),
+                                         max_bends=max_bends, max_detour_ratio=max_detour_ratio)
+        if measured.outcome == "accepted" and route_self_overlaps(tuple(points)):
+            # #1059: a route never overlaps itself; an otherwise acceptable one is refused and the next candidate follows
             attempts.append(RouteAttemptEvidence(source.side, target.side, "no-route-found",
                                                  search_failure="E_LAYOUT_ROUTE_SELF_OVERLAP"))
             continue
-        measured = route_quality_attempt(source.side, target.side, tuple(points),
-                                         max_bends=max_bends, max_detour_ratio=max_detour_ratio)
         attempts.append(measured)
         if measured.outcome == "accepted":
             return LaneRouteSelection((source, target), tuple(points), tuple(attempts))
