@@ -131,4 +131,4 @@ Evidence slides are Controller Z Contexts only; the reviewer's `21-target-b` fil
 
 ## 8. Progress
 
-Design published (PR #1093). Slice 1 (#1065) implemented on its own branch: View contract, one Layout helper shared by measurement and placement, Specifications 24 and 45, synthetic tests with mutation checks, Controller Z slide `group-child-indent`; all 54 earlier slides regenerate byte identically. Next: merge, then slice 2.
+All slices merged: design PR #1093, #1065 PR #1094, #1064 PR #1098. Acceptance reviews published: [#1065](../../reviews/current/issue-1065-header-group-child-indent-acceptance-review-2026-10-04.md) (closed) and [#1064](../../reviews/current/issue-1064-slot-heading-acceptance-review-2026-10-04.md). Adoption in 21-target-b is the reviewer's (#987); #1064 follow-ups are #1100.
