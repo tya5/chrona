@@ -202,6 +202,8 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _AXIS_MEASUREMENT)
     register("annotation", "Layout annotation text and Scene Text",
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT, scene_kinds=frozenset(("Text",)))
+    register("tableColumnLabel", "Layout table header measurement and Scene Text",
+             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT, scene_kinds=frozenset(("Text",)))
     register("metric subtitle", "Layout text and Scene Text", _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT,
              scene_kinds=frozenset(("Text",)))
     register("annotation-callout-text annotation-highlight-text annotation-arrow-text",
