@@ -2,7 +2,7 @@
 
 Living record for [#1062](https://github.com/tya5/chrona/issues/1062) (target-B item: the muted, smaller Phase column and the muted legend labels of the mock). Baseline, design plan, design, architecture review and implementation plan are published together by this record before any code. Edited in place; Git keeps history. Found by the reviewer's tuning PR #1061. Knob-family record: [issue-991-target-b-knobs-2026-10-03.md](issue-991-target-b-knobs-2026-10-03.md) (item 13, the `tableColumnLabel` header role, is the precedent); sibling record [issue-1063-1066-target-b-top-items-2026-10-03.md](issue-1063-1066-target-b-top-items-2026-10-03.md).
 
-**Public base:** `4d97eccd` on `main`. **Status:** design published (docs PR #1086); slice 1 in progress.
+**Public base:** `4d97eccd` on `main`. **Status:** design merged (PR #1086, `86f85498`); slice 1 merged (PR #1091, `803fe08e`); the [acceptance review](../../reviews/current/issue-1062-text-roles-acceptance-review-2026-10-04.md) is published. Row 6 (target B adoption) is the reviewer's, #987 and PR #1061.
 
 **Scope rule (owner):** core knobs and their own evidence only (synthetic tests and a Controller Z evidence slide). This work does **not** edit the reviewer's `examples/halcyon-1/*target-b*` files; adopting the knobs there is the reviewer's step (PR #1061, #987). Routing (#1060), the annotation box border (#1049) and viewer-fit (#1050) are other agents' files and are not touched.
 
