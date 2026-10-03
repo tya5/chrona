@@ -10,6 +10,7 @@ slides:
   controller-z-ja/axis-secondary: {axisLabels: 12}
   controller-z-ja/executive: {axisLabels: 7}
   controller-z/annotation-artwork: {axisLabels: 7, dvtHosted: true}
+  controller-z/annotation-border: {axisLabels: 7, dvtHosted: true}
   controller-z/annotation-kinds: {axisLabels: 7, dvtHosted: true}
   controller-z/annotations: {axisLabels: 7, dvtHosted: true}
   controller-z/as-of-below-plot: {axisLabels: 7, dvtHosted: true}
