@@ -236,12 +236,12 @@ properties:
                           required: [outline]
                         then:
                           not: {required: [tiltDegrees]}
-                      - description: "A border belongs to a rectangle outline whose corners are square: a tail or an image frame takes none, and a rectangle's radius is not drawn (#1049)."
-                        examples: [{outline: rectangle, cornerRadius: 0, border: {start: {width: 3, paint: kind}}}]
+                      - description: "A border belongs to a rectangle outline (a tail or an image frame takes none, #1049); its strips follow a corner radius above 0 (#1087)."
+                        examples: [{outline: rectangle, cornerRadius: 0.25, border: {start: {width: 3, paint: kind}}}]
                         if:
                           required: [border]
                         then:
-                          properties: {outline: {const: rectangle}, cornerRadius: {const: 0}}
+                          properties: {outline: {const: rectangle}}
                       - description: "Artwork belongs to a rectangle outline and needs the content inset that says where its paper is (#848)."
                         examples: [{outline: rectangle, cornerRadius: 0, contentInsetEm: {top: 1, right: 1, bottom: 1, left: 1}, artwork: {glyph: "chrona-target-parts:scroll-frame", sliceInsets: {top: 0, right: 0, bottom: 0, left: 0}, unitEm: 0.1}}]
                         if:

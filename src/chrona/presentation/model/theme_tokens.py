@@ -561,10 +561,10 @@ class ThemeTokenView:
         if value is None:
             return None
         pointer = f"/body/roles/{role}/annotationContainer/border"
-        if (outline != "rectangle" or corner_radius != 0 or not isinstance(value, Mapping) or not value
+        if (outline != "rectangle" or not isinstance(value, Mapping) or not value
                 or set(value) - set(BORDER_SIDES)):
-            # A balloon's tail and an image's own frame take no border, and a rectangle's radius is not drawn, so
-            # a border around it would surround square paper: refused, never silently ignored.
+            # A balloon's tail and an image's own frame take no border: refused, never silently ignored. A rectangle
+            # follows its radius with the strips (#1087).
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer)
         sides: dict[str, BorderSideToken] = {}
         for side, entry in value.items():

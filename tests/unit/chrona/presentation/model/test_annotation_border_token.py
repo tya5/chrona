@@ -30,11 +30,15 @@ def test_a_border_reads_each_side_with_its_width_and_paint():
     assert not border.empty
 
 
+def test_a_border_is_admitted_with_a_corner_radius():
+    container = _read(cornerRadius=0.25, border={"start": {"width": 3, "paint": "kind"}})
+    assert container.corner_radius == Decimal("0.25") and container.border["start"].width == Decimal("3")
+
+
 @pytest.mark.parametrize("extra", [
     {"outline": "balloon", "cornerRadius": 0.2, "tailBaseEm": 0.6, "border": {"start": {"width": 3}}},
     {"outline": "image", "image": "chrona:frame", "sliceInsetsEm": {"top": 1, "right": 1, "bottom": 1, "left": 1},
      "contentInsetEm": {"top": 1, "right": 1, "bottom": 1, "left": 1}, "border": {"start": {"width": 3}}},
-    {"cornerRadius": 0.2, "border": {"start": {"width": 3}}},
     {"border": {}}, {"border": []}, {"border": {"middle": {"width": 1}}},
     {"border": {"start": {}}}, {"border": {"start": {"width": -1}}}, {"border": {"start": {"width": True}}},
     {"border": {"start": {"width": 1, "paint": "red"}}}, {"border": {"start": {"width": 1, "style": "dashed"}}},

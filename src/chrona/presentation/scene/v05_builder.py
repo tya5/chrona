@@ -836,7 +836,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                 primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "annotation",
                                                  annotation_box.purpose, annotation_box.scene_role,
                                                  bounds, paint_order=placed.paint_order,
-                                                 image_fill_pending=image_fill_pending, viewer_fit=placed.viewer_fit))
+                                                 image_fill_pending=image_fill_pending, viewer_fit=placed.viewer_fit,
+                                                 corner_radius=placed.corner_radius or None))
     for placed in placed_surface.icons:
         bounds = (float(placed.bounds.inline), float(placed.bounds.block),
                   float(placed.bounds.inline_size), float(placed.bounds.block_size))

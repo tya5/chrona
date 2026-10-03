@@ -18,6 +18,7 @@ from math import cos, radians, sin
 from typing import Sequence
 
 from chrona.presentation.layout.model import Rect
+from chrona.presentation.layout.rounded_outline import commands_points
 from chrona.presentation.layout.surface_quality import PathCommand, ShapePlacement, TextPlacement
 
 Point = tuple[float, float]
@@ -65,7 +66,7 @@ def bounding_rect(points: Sequence[Point]) -> Rect:
                 Decimal(str(max(xs) - min(xs))), Decimal(str(max(ys) - min(ys))))
 
 
-def _rotate_commands(commands: Sequence[PathCommand], center: Point, degrees: float) -> tuple[PathCommand, ...]:
+def rotate_commands(commands: Sequence[PathCommand], center: Point, degrees: float) -> tuple[PathCommand, ...]:
     return tuple(PathCommand(command.kind, tuple(rotate_point(point, center, degrees) for point in command.points))
                  for command in commands)
 
@@ -79,11 +80,11 @@ def rotate_shape(shape: ShapePlacement, center: Point, degrees: float) -> ShapeP
         return replace(shape, kind="Tilt", bounds=bounding_rect(corners), path_commands=polygon_commands(corners))
     if shape.kind == "Polygon":
         # A mitred border strip (#1049): its own corners rotate, not those of its bounds.
-        commands = _rotate_commands(shape.path_commands, center, degrees)
+        commands = rotate_commands(shape.path_commands, center, degrees)
         return replace(shape, kind="Tilt", path_commands=commands,
-                       bounds=bounding_rect([point for command in commands for point in command.points]))
+                       bounds=bounding_rect(commands_points(commands, samples=8)))
     if shape.kind == "Glyph":
-        parts = tuple(replace(part, commands=_rotate_commands(part.commands, center, degrees))
+        parts = tuple(replace(part, commands=rotate_commands(part.commands, center, degrees))
                       for part in shape.symbol_parts)
         return replace(shape, bounds=bounding_rect(corners), symbol_parts=parts)
     raise ValueError(f"E_LAYOUT_ANNOTATION_TILT_SHAPE:{shape.placement_id}:{shape.kind}")
