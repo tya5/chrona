@@ -210,10 +210,16 @@ body:
       value: 0.1
     symbol-height-actual:
       type: number
-      value: 0.55
+      value: 0.875
     symbol-offset-actual:
       type: number
-      value: 0.15
+      value: 0.0625
+    symbol-height-ghost:
+      type: number
+      value: 0.8125
+    symbol-offset-ghost:
+      type: number
+      value: 0.09375
     table-header-height:
       type: number
       value: 44
@@ -586,6 +592,8 @@ body:
       markOffset: mark-offset-ghost
       markPaintOrder: mark-paint-back
       markCornerRadius: mark-radius-baseline
+      symbolHeight: symbol-height-ghost
+      symbolOffset: symbol-offset-ghost
       dash: dash.ghost
     scenario:
       markHeight: mark-height-container
@@ -598,6 +606,8 @@ body:
       markOffset: mark-offset-planned
       markPaintOrder: mark-paint-middle
       markCornerRadius: mark-radius-plan
+      symbolHeight: symbol-height-actual
+      symbolOffset: symbol-offset-actual
     actual:
       strokeWidth: stroke-width
       markHeight: mark-height-actual
