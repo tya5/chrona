@@ -87,7 +87,7 @@ class KindFrameMeasure:
 EMPTY_FRAME = KindFrameMeasure((), False, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, None, None, 0.0, None)
 
 
-def measure_kind_frame(*, kind: AnnotationKindToken | None, subject: str, frame: AnnotationKindFrame,
+def measure_kind_frame(*, kind: AnnotationKindToken | None, subject: str, frame: AnnotationKindFrame, subject_id: str = "",
                        theme_tokens: ThemeTokenView, metric_for: Callable[[str], Any],
                        outline: str | None, pointer: str, text_size: float = 0.0) -> KindFrameMeasure:
     """Measure the header block, accent insets and stamp column; raise when a strip cannot sit on this outline."""
@@ -95,7 +95,7 @@ def measure_kind_frame(*, kind: AnnotationKindToken | None, subject: str, frame:
         return EMPTY_FRAME
     lines: list[KindHeaderLine] = []
     if frame.label_role is not None:
-        texts = header_lines(kind.header, subject=subject)
+        texts = header_lines(kind.header, subject=subject, subject_id=subject_id)
         for index, content in enumerate(texts):
             role = frame.label_role if index == 0 else frame.secondary_role
             if role is None:

@@ -301,7 +301,7 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                     if kind_token is not None and kind_theme is None:
                         kind_theme = request.theme_tokens.annotation_kind_frame()
                     kind_measure = measure_kind_frame(
-                        kind=kind_token, subject=annotation.subject,
+                        kind=kind_token, subject=annotation.subject, subject_id=annotation.subject_id,
                         frame=kind_theme, theme_tokens=request.theme_tokens, metric_for=metric_for,
                         outline=container.outline if container is not None else None,
                         pointer=f"/annotations/{index}", text_size=size)

@@ -129,6 +129,8 @@ class AnnotationIntent:
     kind: str | None = None
     # The title of the anchored Project object, the `{subject}` of a kind header (#584).
     subject: str = ""
+    # The id of the anchored Project object, the `{subjectId}` of a kind header (#991).
+    subject_id: str = ""
 
 
 @dataclass(frozen=True)

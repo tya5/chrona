@@ -2,7 +2,7 @@
 
 A Theme declares, per Project annotation kind, a `label`, an optional `secondary` label and
 an optional `title` template of literal text and the closed placeholders `{label}`,
-`{secondary}` and `{subject}` (the anchored object's title); `{{` and `}}` are literal
+`{secondary}`, `{subject}` (the anchored object's title) and `{subjectId}` (its id, #991); `{{` and `}}` are literal
 braces.  This module is pure: it parses and renders strings and reads no Project, Theme
 or Layout fact.  It is deliberately independent of the group-header grammar, which has
 other placeholders.
@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
-PLACEHOLDERS = ("label", "secondary", "subject")
+PLACEHOLDERS = ("label", "secondary", "subject", "subjectId")
 DEFAULT_TITLE = "{label}"
 CODE = "E_THEME_ANNOTATION_KIND_TEMPLATE"
 
@@ -93,9 +93,9 @@ def kind_header(kind_id: str, declaration: Mapping[str, object]) -> KindHeader:
     return KindHeader(label, secondary, title, parts)
 
 
-def header_lines(header: KindHeader, *, subject: str) -> tuple[str, ...]:
+def header_lines(header: KindHeader, *, subject: str, subject_id: str = "") -> tuple[str, ...]:
     """The header text: the rendered title, then the secondary label unless the title shows it."""
-    values = {"label": header.label, "secondary": header.secondary or "", "subject": subject}
+    values = {"label": header.label, "secondary": header.secondary or "", "subject": subject, "subjectId": subject_id}
     first = "".join(value if kind == "text" else values[value] for kind, value in header.parts)
     if header.secondary is not None and not header.inline_secondary:
         return (first, header.secondary)
