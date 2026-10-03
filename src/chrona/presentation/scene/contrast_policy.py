@@ -13,6 +13,19 @@ from chrona.presentation.scene.paint_analysis import composited_contrast, is_hex
 DECORATION_FLOOR = 1.10
 MARK_FLOOR = 3.0
 STATE_TEXT_FLOORS = {"required": 4.5, "deemphasized": 3.0}
+# Severity classes (#995). Text and data marks lose information when they are too faint: `legibility`, always a
+# blocking error. A decoration (a stripe, a band, a tint) is ground, never the message: `decoration`, a warning
+# unless the Theme asks for it to block. The class comes from the registry's contrast class, never from the slide.
+LEGIBILITY_CLASS = "legibility"
+DECORATION_CLASS = "decoration"
+DECORATION_SEVERITIES = ("warning", "error")
+# The warning a decoration's blocking code becomes: a floor miss, and a host whose colour cannot be read.
+_DECORATION_WARNING_CODES = {
+    "E_SCENE_DECORATION_CONTRAST": "W_SCENE_DECORATION_CONTRAST",
+    "E_SCENE_CONTRAST_GROUND_UNSUPPORTED": "W_SCENE_DECORATION_GROUND_UNSUPPORTED",
+}
+# The blocking code each decoration warning stands for (what `contrastPolicy.decoration: error` restores).
+DECORATION_WARNING_BLOCKING_CODES = {warning: blocking for blocking, warning in _DECORATION_WARNING_CODES.items()}
 # Roles whose sibling parts (one source, one role) are a single ink and never each other's ground.
 _SIBLING_INK_ROLES = frozenset({"annotation-kind-stamp"})
 
@@ -41,6 +54,7 @@ class SceneContrastFinding:
     sample_block: float | None = None
     ground_kind: str | None = None
     density_basis_points: int | None = None
+    severity_class: str | None = None
 
     def as_mapping(self) -> dict[str, Any]:
         result = {
@@ -55,11 +69,20 @@ class SceneContrastFinding:
         }
         if self.density_basis_points is not None:
             result["densityBasisPoints"] = self.density_basis_points
+        if self.severity_class is not None:
+            result["severityClass"] = self.severity_class
         return result
 
 
-def evaluate_scene_contrast(document: Mapping[str, Any]) -> tuple[SceneContrastFinding, ...]:
-    """Evaluate every finite classified role from serialized completed facts."""
+def evaluate_scene_contrast(document: Mapping[str, Any], *,
+                            decoration_severity: str = "warning") -> tuple[SceneContrastFinding, ...]:
+    """Evaluate every finite classified role from serialized completed facts.
+
+    `decoration_severity` is what a decoration below its floor, or on a ground that cannot be read, becomes:
+    `warning` (the default) or `error` (the Theme's `contrastPolicy`, #995). Marks and text are always errors.
+    """
+    if decoration_severity not in DECORATION_SEVERITIES:
+        raise ValueError(f"unsupported decoration severity {decoration_severity!r}")
     version = document.get("version")
     _require(version == "chrona/scene/v0.6" or version == "chrona/scene/v0.7",
              "unsupported scene version")
@@ -82,7 +105,8 @@ def evaluate_scene_contrast(document: Mapping[str, Any]) -> tuple[SceneContrastF
         for index, primitive in enumerate(primitives):
             _require(isinstance(primitive, Mapping), f"invalid primitive {index} at {scene_path}")
             findings.extend(_primitive_findings(scene_path, primitive, ground, primitives, index,
-                                                catalog_patterns=version == "chrona/scene/v0.7", cones=cones))
+                                                catalog_patterns=version == "chrona/scene/v0.7", cones=cones,
+                                                decoration_severity=decoration_severity))
         findings.extend(_absence_findings(scene_path, raw_surface.get("decorationDispositions", [])))
     return tuple(sorted(findings, key=lambda item: (
         item.scene_path, item.purpose, item.visual_role, item.disposition, item.primitive_id or "", item.code,
@@ -92,7 +116,8 @@ def evaluate_scene_contrast(document: Mapping[str, Any]) -> tuple[SceneContrastF
 def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: str | None,
                         primitives: list[Any], index: int, *,
                         catalog_patterns: bool = False,
-                        cones: tuple[ConeGround, ...] = ()) -> tuple[SceneContrastFinding, ...]:
+                        cones: tuple[ConeGround, ...] = (),
+                        decoration_severity: str = "warning") -> tuple[SceneContrastFinding, ...]:
     role = primitive.get("visualRole")
     if not isinstance(role, str):
         return ()
@@ -101,6 +126,7 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
         return ()
     primitive_id = _string(primitive.get("id"), f"primitive id at {scene_path}")
     purpose = _string(primitive.get("purpose"), f"primitive purpose at {scene_path}")
+    severity_class = _severity_class(binding.contrast_class)
     if binding.contrast_class == ContrastClass.DECORATION:
         floor, disposition = DECORATION_FLOOR, "enabled"
         code = "E_SCENE_DECORATION_CONTRAST"
@@ -117,24 +143,26 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
                 or (role in {"variance-behind", "annotation-note-text"} and treatment != "required")):
             pointer = f"{scene_path}/primitives/{index}/contrastTreatment"
             return (SceneContrastFinding("E_SCENE_STATE_TEXT_CONTRAST_TREATMENT", "error", pointer,
-                                         purpose, role, primitive_id, None, None, "invalid-treatment"),)
+                                         purpose, role, primitive_id, None, None, "invalid-treatment",
+                                         severity_class=severity_class),)
         floor, disposition = STATE_TEXT_FLOORS[treatment], treatment
         code = "E_SCENE_STATE_TEXT_CONTRAST"
     paint = primitive.get("paint")
     if not isinstance(paint, Mapping):
         return (SceneContrastFinding("E_SCENE_CONTRAST_PAINT", "error", scene_path, purpose, role,
-                                     primitive_id, None, floor, disposition),)
+                                     primitive_id, None, floor, disposition, severity_class=severity_class),)
     opacity = paint.get("opacity", 1.0)
     if not _opacity(opacity):
         return (SceneContrastFinding("E_SCENE_CONTRAST_PAINT", "error", scene_path, purpose, role,
-                                     primitive_id, None, floor, disposition),)
+                                     primitive_id, None, floor, disposition, severity_class=severity_class),)
     pattern = primitive.get("pattern") if catalog_patterns else None
     is_catalog_pattern = isinstance(pattern, Mapping) and any(
         key in pattern for key in ("densityBasisPoints", "primitives", "origin", "regionBounds", "clipBounds"))
     if is_catalog_pattern:
         return _pattern_findings(scene_path, primitive, pattern, paint, opacity, floor,
                                  disposition, code, purpose, role, primitive_id, canvas,
-                                 primitives, index, catalog_patterns, cones)
+                                 primitives, index, catalog_patterns, cones,
+                                 severity_class=severity_class, decoration_severity=decoration_severity)
     channels = (("fill",) if binding.contrast_class in (ContrastClass.STATE_TEXT, ContrastClass.GROUND_TEXT)
                 else ("fill", "stroke"))
     candidates = []
@@ -176,12 +204,34 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
         candidates.append((ratio, channel, ground_id, ground, sample, ground_kind))
     if not candidates:
         error_code = "E_SCENE_CONTRAST_GROUND_UNSUPPORTED" if unsupported_ground else "E_SCENE_CONTRAST_PAINT"
-        return (SceneContrastFinding(error_code, "error", scene_path, purpose, role,
-                                     primitive_id, None, floor, disposition, unsupported_host),)
+        severity, error_code = _failure(error_code, severity_class, decoration_severity)
+        return (SceneContrastFinding(error_code, severity, scene_path, purpose, role,
+                                     primitive_id, None, floor, disposition, unsupported_host,
+                                     severity_class=severity_class),)
     ratio, channel, ground_id, ground, sample, ground_kind = max(candidates, key=lambda item: item[0])
-    severity = "error" if ratio < floor else "info"
+    severity = "info"
+    if ratio < floor:
+        severity, code = _failure(code, severity_class, decoration_severity)
     return (SceneContrastFinding(code, severity, scene_path, purpose, role, primitive_id, ratio, floor,
-                                 disposition, ground_id, ground, channel, *sample, ground_kind),)
+                                 disposition, ground_id, ground, channel, *sample, ground_kind,
+                                 severity_class=severity_class),)
+
+
+def _severity_class(contrast_class: ContrastClass) -> str:
+    """The severity class of a registry contrast class: only a decoration is ground (#995)."""
+    return DECORATION_CLASS if contrast_class == ContrastClass.DECORATION else LEGIBILITY_CLASS
+
+
+def _failure(code: str, severity_class: str, decoration_severity: str) -> tuple[str, str]:
+    """The severity and code of a finding that missed its floor or could not be judged.
+
+    Only a decoration's floor miss and its unreadable host can warn; every other failure of every class,
+    and every failure of a mark or text, is a blocking error with the code it always had.
+    """
+    if (severity_class == DECORATION_CLASS and decoration_severity == "warning"
+            and code in _DECORATION_WARNING_CODES):
+        return "warning", _DECORATION_WARNING_CODES[code]
+    return "error", code
 
 
 def _pattern_findings(scene_path: str, primitive: Mapping[str, Any], pattern: Any,
@@ -189,30 +239,35 @@ def _pattern_findings(scene_path: str, primitive: Mapping[str, Any], pattern: An
                       disposition: str, code: str, purpose: str, role: str, primitive_id: str,
                       canvas: str | None, primitives: list[Any], index: int,
                       catalog_patterns: bool = True,
-                      cones: tuple[ConeGround, ...] = ()) -> tuple[SceneContrastFinding, ...]:
+                      cones: tuple[ConeGround, ...] = (),
+                      severity_class: str = LEGIBILITY_CLASS,
+                      decoration_severity: str = "warning") -> tuple[SceneContrastFinding, ...]:
     """Gate each effective pattern channel pair; neither channel can mask another."""
     if (not isinstance(pattern, Mapping)
             or not isinstance(pattern.get("densityBasisPoints"), int)
             or isinstance(pattern.get("densityBasisPoints"), bool)
             or not 1 <= pattern["densityBasisPoints"] <= 10000):
         return (SceneContrastFinding("E_SCENE_CONTRAST_PAINT", "error", scene_path, purpose,
-                                     role, primitive_id, None, floor, disposition),)
+                                     role, primitive_id, None, floor, disposition,
+                                     severity_class=severity_class),)
     density = int(pattern["densityBasisPoints"])
     if (opacity != 1.0 or not is_hex_color(paint.get("fill"))
             or not is_hex_color(paint.get("stroke"))):
         return (SceneContrastFinding("E_SCENE_CONTRAST_PAINT", "error", scene_path, purpose,
                                      role, primitive_id, None, floor, disposition,
-                                     density_basis_points=density),)
+                                     density_basis_points=density, severity_class=severity_class),)
     sample = _sample_point(primitive, "fill")
     if role == "annotation-note-text":
         host_id, host, unsupported, host_kind = _note_box_ground(primitive, primitives, index, sample)
     else:
         host_id, host, unsupported, host_kind = _ground_under(primitive, primitives, index, canvas, sample)
     if unsupported or host is None:
-        return (SceneContrastFinding("E_SCENE_CONTRAST_GROUND_UNSUPPORTED", "error", scene_path,
+        severity, unsupported_code = _failure("E_SCENE_CONTRAST_GROUND_UNSUPPORTED", severity_class,
+                                              decoration_severity)
+        return (SceneContrastFinding(unsupported_code, severity, scene_path,
                                      purpose, role, primitive_id, None, floor, disposition,
                                      host_id, paint_channel="fill", ground_kind="unsupported",
-                                     density_basis_points=density),)
+                                     density_basis_points=density, severity_class=severity_class),)
     substrate, ink = str(paint["fill"]), str(paint["stroke"])
     pairs = [("fill", host_id, host, host_kind, substrate),
              ("stroke", primitive_id, substrate, "pattern-substrate", ink),
@@ -236,10 +291,12 @@ def _pattern_findings(scene_path: str, primitive: Mapping[str, Any], pattern: An
     findings = []
     for channel, ground_id, ground, ground_kind, foreground in pairs:
         ratio = composited_contrast(fill=foreground, opacity=1.0, ground=ground)
-        severity = "error" if ratio < floor else "info"
-        findings.append(SceneContrastFinding(code, severity, scene_path, purpose, role, primitive_id,
+        severity, pair_code = "info", code
+        if ratio < floor:
+            severity, pair_code = _failure(code, severity_class, decoration_severity)
+        findings.append(SceneContrastFinding(pair_code, severity, scene_path, purpose, role, primitive_id,
                                              ratio, floor, disposition, ground_id, ground, channel,
-                                             *sample, ground_kind, density))
+                                             *sample, ground_kind, density, severity_class=severity_class))
     return tuple(findings)
 
 

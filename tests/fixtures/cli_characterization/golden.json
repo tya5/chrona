@@ -227,6 +227,23 @@
       "severity"
      ],
      "sortedKeyLines": true
+    },
+    "W_SCENE_DECORATION_CONTRAST": {
+     "count": 1,
+     "keys": [
+      "code",
+      "count",
+      "diagnostic",
+      "disposition",
+      "findingCode",
+      "measuredFacts",
+      "message",
+      "occurrences",
+      "primitiveIds",
+      "scenePath",
+      "severity"
+     ],
+     "sortedKeyLines": true
     }
    },
    "endsWithNewline": true
@@ -372,6 +389,21 @@
       "sourceRef"
      ],
      "sortedKeyLines": true
+    },
+    "W_SCENE_DECORATION_CONTRAST": {
+     "count": 1,
+     "keys": [
+      "code",
+      "diagnostic",
+      "disposition",
+      "findingCode",
+      "measuredFacts",
+      "message",
+      "primitiveIds",
+      "scenePath",
+      "severity"
+     ],
+     "sortedKeyLines": true
     }
    },
    "endsWithNewline": true
@@ -391,7 +423,28 @@
     "kind": "file"
    }
   },
-  "stderr": "",
+  "stderr": {
+   "codes": {
+    "W_SCENE_DECORATION_CONTRAST": {
+     "count": 1,
+     "keys": [
+      "code",
+      "count",
+      "diagnostic",
+      "disposition",
+      "findingCode",
+      "measuredFacts",
+      "message",
+      "occurrences",
+      "primitiveIds",
+      "scenePath",
+      "severity"
+     ],
+     "sortedKeyLines": true
+    }
+   },
+   "endsWithNewline": true
+  },
   "stdout": ""
  },
  "render-default-png": {
@@ -408,7 +461,28 @@
     "signature": true
    }
   },
-  "stderr": "",
+  "stderr": {
+   "codes": {
+    "W_SCENE_DECORATION_CONTRAST": {
+     "count": 1,
+     "keys": [
+      "code",
+      "count",
+      "diagnostic",
+      "disposition",
+      "findingCode",
+      "measuredFacts",
+      "message",
+      "occurrences",
+      "primitiveIds",
+      "scenePath",
+      "severity"
+     ],
+     "sortedKeyLines": true
+    }
+   },
+   "endsWithNewline": true
+  },
   "stdout": ""
  },
  "render-default-svg": {
@@ -425,7 +499,28 @@
     "root": "{http://www.w3.org/2000/svg}svg"
    }
   },
-  "stderr": "",
+  "stderr": {
+   "codes": {
+    "W_SCENE_DECORATION_CONTRAST": {
+     "count": 1,
+     "keys": [
+      "code",
+      "count",
+      "diagnostic",
+      "disposition",
+      "findingCode",
+      "measuredFacts",
+      "message",
+      "occurrences",
+      "primitiveIds",
+      "scenePath",
+      "severity"
+     ],
+     "sortedKeyLines": true
+    }
+   },
+   "endsWithNewline": true
+  },
   "stdout": ""
  },
  "render-emit-scene-exists": {
@@ -489,7 +584,28 @@
     "kind": "pdf"
    }
   },
-  "stderr": "",
+  "stderr": {
+   "codes": {
+    "W_SCENE_DECORATION_CONTRAST": {
+     "count": 1,
+     "keys": [
+      "code",
+      "count",
+      "diagnostic",
+      "disposition",
+      "findingCode",
+      "measuredFacts",
+      "message",
+      "occurrences",
+      "primitiveIds",
+      "scenePath",
+      "severity"
+     ],
+     "sortedKeyLines": true
+    }
+   },
+   "endsWithNewline": true
+  },
   "stdout": ""
  },
  "render-format-png-no-suffix": {
@@ -507,7 +623,28 @@
     "kind": "file"
    }
   },
-  "stderr": "",
+  "stderr": {
+   "codes": {
+    "W_SCENE_DECORATION_CONTRAST": {
+     "count": 1,
+     "keys": [
+      "code",
+      "count",
+      "diagnostic",
+      "disposition",
+      "findingCode",
+      "measuredFacts",
+      "message",
+      "occurrences",
+      "primitiveIds",
+      "scenePath",
+      "severity"
+     ],
+     "sortedKeyLines": true
+    }
+   },
+   "endsWithNewline": true
+  },
   "stdout": ""
  },
  "render-format-svg-explicit": {
@@ -526,7 +663,28 @@
     "root": "{http://www.w3.org/2000/svg}svg"
    }
   },
-  "stderr": "",
+  "stderr": {
+   "codes": {
+    "W_SCENE_DECORATION_CONTRAST": {
+     "count": 1,
+     "keys": [
+      "code",
+      "count",
+      "diagnostic",
+      "disposition",
+      "findingCode",
+      "measuredFacts",
+      "message",
+      "occurrences",
+      "primitiveIds",
+      "scenePath",
+      "severity"
+     ],
+     "sortedKeyLines": true
+    }
+   },
+   "endsWithNewline": true
+  },
   "stdout": ""
  },
  "render-halcyon-default": {
@@ -576,6 +734,23 @@
       "diagnostic",
       "message",
       "occurrences",
+      "severity"
+     ],
+     "sortedKeyLines": true
+    },
+    "W_SCENE_DECORATION_CONTRAST": {
+     "count": 1,
+     "keys": [
+      "code",
+      "count",
+      "diagnostic",
+      "disposition",
+      "findingCode",
+      "measuredFacts",
+      "message",
+      "occurrences",
+      "primitiveIds",
+      "scenePath",
       "severity"
      ],
      "sortedKeyLines": true
@@ -1214,7 +1389,28 @@
     "kind": "json"
    }
   },
-  "stderr": "",
+  "stderr": {
+   "codes": {
+    "W_SCENE_DECORATION_CONTRAST": {
+     "count": 1,
+     "keys": [
+      "code",
+      "count",
+      "diagnostic",
+      "disposition",
+      "findingCode",
+      "measuredFacts",
+      "message",
+      "occurrences",
+      "primitiveIds",
+      "scenePath",
+      "severity"
+     ],
+     "sortedKeyLines": true
+    }
+   },
+   "endsWithNewline": true
+  },
   "stdout": ""
  },
  "render-theme-is-a-view": {
@@ -1391,7 +1587,28 @@
     "root": "{http://www.w3.org/2000/svg}svg"
    }
   },
-  "stderr": "",
+  "stderr": {
+   "codes": {
+    "W_SCENE_DECORATION_CONTRAST": {
+     "count": 1,
+     "keys": [
+      "code",
+      "count",
+      "diagnostic",
+      "disposition",
+      "findingCode",
+      "measuredFacts",
+      "message",
+      "occurrences",
+      "primitiveIds",
+      "scenePath",
+      "severity"
+     ],
+     "sortedKeyLines": true
+    }
+   },
+   "endsWithNewline": true
+  },
   "stdout": ""
  },
  "render-viewport-width-only": {
@@ -1410,7 +1627,28 @@
     "root": "{http://www.w3.org/2000/svg}svg"
    }
   },
-  "stderr": "",
+  "stderr": {
+   "codes": {
+    "W_SCENE_DECORATION_CONTRAST": {
+     "count": 1,
+     "keys": [
+      "code",
+      "count",
+      "diagnostic",
+      "disposition",
+      "findingCode",
+      "measuredFacts",
+      "message",
+      "occurrences",
+      "primitiveIds",
+      "scenePath",
+      "severity"
+     ],
+     "sortedKeyLines": true
+    }
+   },
+   "endsWithNewline": true
+  },
   "stdout": ""
  },
  "render-visual-profile": {
@@ -1429,7 +1667,28 @@
     "root": "{http://www.w3.org/2000/svg}svg"
    }
   },
-  "stderr": "",
+  "stderr": {
+   "codes": {
+    "W_SCENE_DECORATION_CONTRAST": {
+     "count": 1,
+     "keys": [
+      "code",
+      "count",
+      "diagnostic",
+      "disposition",
+      "findingCode",
+      "measuredFacts",
+      "message",
+      "occurrences",
+      "primitiveIds",
+      "scenePath",
+      "severity"
+     ],
+     "sortedKeyLines": true
+    }
+   },
+   "endsWithNewline": true
+  },
   "stdout": ""
  },
  "render-workspace-bad-viewport": {

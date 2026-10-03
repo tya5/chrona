@@ -311,7 +311,10 @@ def test_the_scene_validates_and_the_contrast_gate_evaluates_the_band(tmp_path):
 
 def test_the_contrast_gate_fails_a_band_that_cannot_be_seen(tmp_path):
     document = scene_document(_render(tmp_path, parts=_parts(color="surface")).scene)
-    (finding,) = [item for item in evaluate_scene_contrast(document) if item.visual_role == "period-band"]
+    (warned,) = [item for item in evaluate_scene_contrast(document) if item.visual_role == "period-band"]
+    assert warned.severity == "warning" and warned.contrast_ratio < 1.10  # a decoration warns (#995)
+    (finding,) = [item for item in evaluate_scene_contrast(document, decoration_severity="error")
+                  if item.visual_role == "period-band"]
     assert finding.severity == "error" and finding.contrast_ratio < 1.10
 
 

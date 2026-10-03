@@ -288,6 +288,17 @@ role `calendar-closed` is listed only when the View selects at least one closed
 day: a key for a band that is not on the plot misleads. The entry is dropped where
 the legend list is derived, so the legend slot is measured and drawn without it.
 
+**Contrast severity (#995).** Perceptibility of what the surface draws splits by what the paint carries.
+*Legibility* paint (a data mark, a state or ground text) loses information when it is faint, so a miss of its
+floor (3.0:1 for marks, 4.5:1 or 3.0:1 for text) is a blocking `error`, as the Theme-resolution text checks
+are. *Decoration* paint is ground (closed-day and exception stripes, group, row and axis bands, tints, patterns,
+the note box, the kind bar and accent): a miss of its 1.10 floor, or a decoration on a ground the gate cannot
+read, is a `warning` with a stable code (`W_SCENE_DECORATION_CONTRAST`, `W_SCENE_DECORATION_GROUND_UNSUPPORTED`)
+that is reported and fails nothing. The class comes from the semantic registry, never from a slide; there is
+no per-slide exemption. The normative rule, the codes and the report are in Specification 46 section 8. A
+weekend stripe at the owner-approved faint opacity is therefore a warning, and the marks that cross it are still
+judged on its colour.
+
 **The plot (#880).** The plot is the timeline slot down to the bottom of its last row (the last group's content when groups exist), and never past the slot; with no rows it is the slot. A slot is an allocation and the rows are the content, so a surface given more block room than its rows need has an empty strip under the last row. The ground (group and row bands) stops at the last row, and every overlay that spans the height of the plot ends there too: the full-height `grid-major` and `grid-minor` lines, each closed day, the as-of line and a period band (and the anchor of a `bottom` period label). Axis ticks and the axis rule are not plot-height overlays and are unchanged. A slot the rows fill is unchanged. Inline, the plot is the timeline slot: the scale is inset by what point marks protrude (#501), so the window maps to a range narrower than the slot, and the margin that leaves at each end belongs to the plot. An axis band cell, a closed-day cell or a period band that starts or ends at the window edge reaches the plot edge there (an axis band cell takes no `cellGap` on that outer end), so band, ground and axis rule end at the same edge. Positions inside the window (interval starts, gridlines, labels, marks, the as-of line) do not move, and a scale that fills the plot is unchanged. Layout owns the extent; Scene and adapters carry the completed primitives. A region frame (#889) around the timeline slot follows the slot's allocation, not the plot: inside a panel taller
 than its rows the ground and every plot-height overlay still end at the last row and the strip below is the panel's own paper.
 
@@ -302,8 +313,13 @@ order come from Theme role `period-band` (`backgroundTreatment` and
 explicit absent disposition. A Theme that omits the role while a View selects a
 period fails with `E_THEME_ROLE_REQUIRED` at `/body/roles/period-band`; no other
 role paints it. Every packaged Theme declares `period-band`, `period-label` and `period-label-chip` (#880): the band is a 2 px outline in the scheme's `accent` (`text` in the two print Themes), so it reads as a bracketed window and, having no fill, leaves the marks, closed days and as-of line inside it the ground they had; the label sits on a `surface` chip. The packaged Themes bind these roles to the closed set of Color Scheme intents only: a binding to a scheme category would make `--preset X --scheme Y` fail for every View whose scheme lacks it, and a translucent fill cannot be the ground of the marks lying on the band, so a tinted or patterned fill is a separate preset change. The band is a background and never enters the obstacle index.
-Contrast is gated as a decoration role at the 1.10 floor over the primitive
-beneath its centre, and a translucent host beneath cannot be gated
+Contrast is measured as a decoration role at the 1.10 floor over the primitive
+beneath its centre; a band below the floor, or over a translucent host that
+cannot be measured, is a warning (`W_SCENE_DECORATION_CONTRAST`,
+`W_SCENE_DECORATION_GROUND_UNSUPPORTED`) and never fails a render, Theme
+resolution or the corpus gate (#995; Specification 46 section 8). The marks and
+text that lie on the band keep their blocking floors on the band's colour, and
+a translucent host beneath a mark or text still cannot be judged
 (`E_SCENE_CONTRAST_GROUND_UNSUPPORTED`), so a Theme paints a pattern band
 opaque or a translucent band over opaque bands only.
 
@@ -346,6 +362,9 @@ Before Scene construction, `assert_surface_placement` verifies:
 3. every accepted relation route meets its quality limits;
 4. no semantic item has duplicate finish-delta text;
 5. every present slot family has its required placements.
+
+The completed-Scene contrast policy is a separate observer (Specification 46 section 8): text and mark misses
+are errors of the corpus gate, decoration misses are warnings reported by the render and the corpus report (#995).
 
 Tests cover each invariant with synthetic fixtures independent of corpus
 projects. Corpus output demonstrates whether declared YAML reaches approved

@@ -226,8 +226,9 @@ def _document(rendered):
     return scene_document(rendered.scene)
 
 
-def _findings(document, role):
-    return [item for item in evaluate_scene_contrast(document) if item.visual_role == role]
+def _findings(document, role, decoration_severity="warning"):
+    return [item for item in evaluate_scene_contrast(document, decoration_severity=decoration_severity)
+            if item.visual_role == role]
 
 
 def test_the_scene_gate_judges_each_header_text_on_its_own_kind_bar(tmp_path):
@@ -268,9 +269,12 @@ def test_an_accent_that_vanishes_into_the_note_box_is_a_decoration_error(tmp_pat
     document = _document(rendered)
     box_fill = _by_id(rendered)["annotation-box:view-n0"].paint.fill
     _paint(document, "annotation-kind-accent:view-n0", box_fill)
-    errors = [item for item in _findings(document, "annotation-kind-accent") if item.severity == "error"]
+    errors = [item for item in _findings(document, "annotation-kind-accent", "error") if item.severity == "error"]
     assert [item.primitive_id for item in errors] == ["annotation-kind-accent:view-n0"]
     assert errors[0].code == "E_SCENE_DECORATION_CONTRAST"
+    # Without the Theme's blocking declaration (#995) the same miss is a warning.
+    (warned,) = [item for item in _findings(document, "annotation-kind-accent") if item.severity == "warning"]
+    assert warned.code == "W_SCENE_DECORATION_CONTRAST"
 
 
 def test_header_text_without_a_bar_is_judged_on_the_note_box(tmp_path):

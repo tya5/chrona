@@ -107,6 +107,8 @@ _SCENE_CAUSES: Mapping[str, str] = {
     "W_SCENE_TEXT_SLOT_ESCAPE": "text is drawn outside the slot it belongs to",
     "W_SCENE_TEXT_OCCLUDED": "text is covered by another shape",
     "W_SCENE_TEXT_INTERSECTION": "two pieces of text overlap",
+    "W_SCENE_DECORATION_CONTRAST": "a background decoration is fainter than its visibility floor against the ground it lies on",
+    "W_SCENE_DECORATION_GROUND_UNSUPPORTED": "a background decoration lies on a translucent ground, so its contrast cannot be judged",
 }
 MAX_OCCURRENCES = 20
 

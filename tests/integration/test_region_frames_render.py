@@ -212,7 +212,7 @@ def test_a_role_with_neither_fill_nor_stroke_fails_at_its_exact_pointer(tmp_path
 def test_what_lies_on_a_panel_is_gated_against_its_fill(tmp_path) -> None:
     strong = evaluate_scene_contrast(scene_document(_render(tmp_path / "strong", _presentation(role=ROLE, fill="surface")).scene))
     faint = evaluate_scene_contrast(scene_document(_render(
-        tmp_path / "faint", _presentation(role=ROLE, fill="accent")).scene))
+        tmp_path / "faint", _presentation(role=ROLE, fill="accent")).scene), decoration_severity="error")
 
     on_panel = [item for item in strong if item.ground_id == "region-frame:review"]
     assert on_panel and {item.ground_kind for item in on_panel} == {"flat"}

@@ -196,8 +196,8 @@ def test_rendering_twice_gives_the_same_bytes(tmp_path):
     assert first.artifact.content == second.artifact.content
 
 
-def _stamp_findings(document, note):
-    return [item for item in evaluate_scene_contrast(document)
+def _stamp_findings(document, note, decoration_severity="warning"):
+    return [item for item in evaluate_scene_contrast(document, decoration_severity=decoration_severity)
             if item.visual_role == "annotation-kind-stamp" and item.primitive_id.startswith(f"annotation-kind-stamp:{note}")]
 
 
@@ -224,6 +224,9 @@ def test_a_stamp_that_vanishes_into_its_ground_is_a_decoration_error(tmp_path):
     for primitive in document["surfaces"][0]["primitives"]:
         if primitive["id"].startswith("annotation-kind-stamp:view-n0"):
             primitive["paint"]["stroke"] = box_fill
-    errors = [item for item in _stamp_findings(document, "view-n0") if item.severity == "error"]
+    # The gate's blocking mode (a Theme's `contrastPolicy`, #995); by default the same miss is a warning.
+    errors = [item for item in _stamp_findings(document, "view-n0", "error") if item.severity == "error"]
     assert len(errors) == SEAL_PARTS["view-n0"]
-    assert not [item for item in _stamp_findings(document, "view-n1") if item.severity == "error"]
+    assert not [item for item in _stamp_findings(document, "view-n1", "error") if item.severity == "error"]
+    warned = [item for item in _stamp_findings(document, "view-n0") if item.severity == "warning"]
+    assert len(warned) == SEAL_PARTS["view-n0"]

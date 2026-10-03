@@ -211,7 +211,8 @@ choose clipping, recolor, or select a fallback.
 
 The contrast gate checks substrate against the actual host ground and ink
 against both substrate and host ground; the minimum pairwise ratio must meet
-the semantic floor (3.0:1 for marks, 1.10:1 for decorations). The existing
+the semantic floor (3.0:1 for marks, 1.10:1 for decorations; a mark below its
+floor is an error, a decoration below its floor is a warning, Specification 46 section 8). The existing
 opaque representative-ground rule applies to all three colors. Perceptibility
 inspection receives the same channels and geometry/density facts; it does not
 reconstruct effective paint from the catalogue.
