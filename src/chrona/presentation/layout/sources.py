@@ -229,5 +229,5 @@ def _table_content_inline(table: TableContent, typography: ThemeTokenView, font_
     natural = measure_table_columns(columns=table.columns, cells=table.cells,
                                     measure_text=table_text_measurer(typography, font_metrics),
                                     minimum_inline=inset, hierarchy_column=table.hierarchy_column,
-                                    cell_indents=cell_indents)
+                                    cell_indents=cell_indents, header_role=typography.table_header_role())
     return Decimal(str(table_content_inline_size(natural, float(metric["table.column.gutter.inlineSize"]))))

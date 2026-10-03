@@ -497,7 +497,9 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
     if "subtitle" in layout_text:
         emit_semantic_text("subtitle", "subtitleText")
     for column in value.surface_content.table_columns:
-        emit_semantic_text(f"column:{column.column_id}", "tableColumnLabel", table_column_id=column.column_id)
+        # A Theme that declares `tableColumnLabel` with a fill paints its headers with it (#991).
+        header_paint = ("tableColumnLabel" if value.theme_tokens.optional_color("tableColumnLabel", "fill") is not None else None)
+        emit_semantic_text(f"column:{column.column_id}", "tableColumnLabel", header_paint, table_column_id=column.column_id)
     row_ids = {row.object_id: row.row_id for row in rows} | {row.row_id: row.row_id for row in rows}
     for cell in value.surface_content.table_cells:
         if f"cell:{cell.object_id}:{cell.column_id}" in layout_text:

@@ -39,10 +39,12 @@ def compose_table(base: SurfaceBaseGeometry) -> SurfaceTablePlacements:
         # The vertical group tag column takes the table's start edge; columns are laid out in what remains (#585).
         tag = base.group_tag_inline_size
         table_bounds = (table_bounds[0] + tag, table_bounds[1], table_bounds[2] - tag, table_bounds[3])
-    body_treatment = tokens.text_treatment("text")
-    body_size = float(body_treatment.font_size)
-    body_metrics = metric_for_role(tokens, "text", font_metrics)
+    body_size = float(tokens.text_treatment("text").font_size)
     measure_table_text = table_text_measurer(tokens, font_metrics)
+    header_role = tokens.table_header_role()
+    header_treatment = tokens.text_treatment(header_role)
+    header_size = float(header_treatment.font_size)
+    header_metrics = metric_for_role(tokens, header_role, font_metrics)
     indent_token = base.metric_values.get("table.indent.inlineSize")
     cell_indents: dict[str, float] = {}
     for row in rows:
@@ -55,7 +57,7 @@ def compose_table(base: SurfaceBaseGeometry) -> SurfaceTablePlacements:
         overflow=table.overflow,
         gutter=float(base.metric_values.get("table.column.gutter.inlineSize", 0)),
         hierarchy_column=request.surface_content.table_hierarchy_column,
-        cell_indents=cell_indents)
+        cell_indents=cell_indents, header_role=header_role)
     positions = {item.column_id: (item.inline, item.inline_size) for item in layout_columns}
     column_widths = {item.column_id: item.inline_size for item in layout_columns}
     column_intents = {item.column_id: item for item in columns_intent}
@@ -87,23 +89,23 @@ def compose_table(base: SurfaceBaseGeometry) -> SurfaceTablePlacements:
     for column in columns_intent:
         column_id, label = column.column_id, column.header
         available = max(0.0, column_widths[column_id] - body_size)
-        resolved, overflow = table_text(label, available, "text")
+        resolved, overflow = table_text(label, available, header_role)
         header_width = measure_text_width(
-            resolved, font_size=body_size, font_metrics=body_metrics,
-            letter_spacing=float(body_treatment.letter_spacing),
-            text_transform=body_treatment.transform,
-            numeric_spacing=body_treatment.numeric_spacing)
+            resolved, font_size=header_size, font_metrics=header_metrics,
+            letter_spacing=float(header_treatment.letter_spacing),
+            text_transform=header_treatment.transform,
+            numeric_spacing=header_treatment.numeric_spacing)
         if column.header_orientation == "rotate-cw":
             baseline = table_bounds[1]
         elif column.header_orientation == "rotate-ccw":
             baseline = table_bounds[1] + header_width
         else:
-            baseline = table_bounds[1] + body_size
+            baseline = table_bounds[1] + header_size
         text.append(place_text(
             placement_id=f"column:{column_id}", source_ref="view:tableColumns", content=resolved,
-            inline=aligned_inline(resolved, column_id, positions[column_id][0], available, "text",
+            inline=aligned_inline(resolved, column_id, positions[column_id][0], available, header_role,
                                  column.header_orientation), baseline_block=baseline,
-            typography_role="text", theme_tokens=tokens, font_metrics=font_metrics,
+            typography_role=header_role, theme_tokens=tokens, font_metrics=font_metrics,
             overflow=overflow, collision_region="table", collision_domain=CollisionDomain("table", "header"),
             source_content=label, available_inline_start=positions[column_id][0],
             available_inline_size=available, orientation=column.header_orientation))

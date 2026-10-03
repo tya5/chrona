@@ -146,6 +146,10 @@ class ThemeTokenView:
         """Whether this resolved Theme declares the exact semantic role."""
         return isinstance(self._body["roles"].get(role), Mapping)
 
+    def table_header_role(self) -> str:
+        """The typography role of table column headers: `tableColumnLabel` when the Theme declares it, else `text` (#991)."""
+        return "tableColumnLabel" if self.has_role("tableColumnLabel") else "text"
+
     def token(self, role: str, property_name: str, expected_type: str) -> Any:
         roles = self._body["roles"]
         binding = roles.get(role)

@@ -116,7 +116,8 @@ def measure_table_columns(*, columns: tuple[TableColumnContent, ...],
                           cells: tuple[TableCellContent, ...],
                           measure_text: Callable[[str, str, str], float], minimum_inline: float,
                           hierarchy_column: str | None = None,
-                          cell_indents: Mapping[str, float] | None = None) -> tuple[float, ...]:
+                          cell_indents: Mapping[str, float] | None = None,
+                          header_role: str = "text") -> tuple[float, ...]:
     """Return each column's natural width; the one measure for slot and columns.
 
     A hierarchy-column cell's extent includes its row's indent, because that
@@ -124,7 +125,7 @@ def measure_table_columns(*, columns: tuple[TableColumnContent, ...],
     """
     indents = cell_indents or {}
     content_by_column: dict[str, list[tuple[str, str, str, float]]] = {
-        column.column_id: [(column.header, "text", column.header_orientation, 0.0)] for column in columns}
+        column.column_id: [(column.header, header_role, column.header_orientation, 0.0)] for column in columns}
     for cell in cells:
         indent = indents.get(cell.object_id, 0.0) if cell.column_id == hierarchy_column else 0.0
         content_by_column.setdefault(cell.column_id, []).append((cell.content, cell.typography_role, "horizontal", indent))
@@ -148,11 +149,12 @@ def place_table_columns(*, columns: tuple[TableColumnContent, ...],
                         overflow: str = "visible-overflow", gutter: float = 0.0,
                         hierarchy_column: str | None = None,
                         cell_indents: Mapping[str, float] | None = None,
+                        header_role: str = "text",
                         ) -> tuple[TableColumnPlacement, ...]:
     """Allocate only declared-flexible columns after measured minima close."""
     natural_widths = measure_table_columns(columns=columns, cells=cells, measure_text=measure_text,
                                            minimum_inline=minimum_inline, hierarchy_column=hierarchy_column,
-                                           cell_indents=cell_indents)
+                                           cell_indents=cell_indents, header_role=header_role)
     if gutter < 0:
         raise LayoutError("E_LAYOUT_TABLE_OVERFLOW", "/layoutManifest/table")
     available = bounds[2] - gutter * max(0, len(natural_widths) - 1)
