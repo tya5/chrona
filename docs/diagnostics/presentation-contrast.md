@@ -17,7 +17,7 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | annotation-text | `annotation-callout-text` | required | 4.500 | 2 | 3 | 14.191 | 15.434 | 0 | 0 |
 | annotation-text | `annotation-highlight-text` | required | 4.500 | 1 | 1 | 16.268 | 16.268 | 0 | 0 |
 | annotation-text | `annotation-note-text` | required | 4.500 | 10 | 28 | 13.973 | 13.973 | 0 | 0 |
-| as-of-label | `text` | required | 4.500 | 47 | 47 | 5.257 | 14.573 | 0 | 0 |
+| as-of-label | `text` | required | 4.500 | 47 | 47 | 4.774 | 14.573 | 0 | 0 |
 | axis-band | `axis-band-decoration` | enabled | 1.100 | 51 | 136 | 1.124 | 1.579 | 0 | 0 |
 | axis-band | `axis-band-decoration2` | absent | 1.100 | 1 | 0 | — | — | 0 | 0 |
 | axis-band | `axis-band-decoration2` | enabled | 1.100 | 5 | 37 | 1.119 | 1.146 | 0 | 0 |
@@ -43,18 +43,18 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | legend-swatch | `calendar-exception` | enabled | 1.100 | 1 | 1 | 1.240 | 1.240 | 0 | 0 |
 | legend-swatch | `gate` | required | 3.000 | 1 | 1 | 17.747 | 17.747 | 0 | 0 |
 | legend-swatch | `missing-actual` | required | 3.000 | 2 | 2 | 5.817 | 11.742 | 0 | 0 |
-| legend-swatch | `planned` | required | 3.000 | 43 | 88 | 5.284 | 16.354 | 0 | 0 |
+| legend-swatch | `planned` | required | 3.000 | 43 | 88 | 4.777 | 16.354 | 0 | 0 |
 | legend-swatch | `snapshot` | required | 3.000 | 2 | 2 | 5.817 | 11.742 | 0 | 0 |
 | member-label | `member-label-inside-planned` | required | 4.500 | 26 | 26 | 4.651 | 5.727 | 0 | 0 |
 | member-label | `text` | required | 4.500 | 43 | 420 | 9.348 | 14.573 | 0 | 0 |
 | milestone-digest-entry | `text` | required | 4.500 | 29 | 58 | 11.935 | 16.268 | 0 | 0 |
-| missingActual | `missing-actual` | required | 3.000 | 40 | 49 | 4.436 | 14.573 | 0 | 0 |
+| missingActual | `missing-actual` | required | 3.000 | 40 | 49 | 3.973 | 14.573 | 0 | 0 |
 | network-node | `network-node` | required | 3.000 | 2 | 32 | 16.354 | 17.050 | 0 | 0 |
 | note-index | `note-index` | required | 4.500 | 8 | 15 | 5.284 | 6.157 | 0 | 0 |
 | period-band | `period-band` | enabled | 1.100 | 6 | 6 | 1.255 | 6.157 | 0 | 0 |
 | period-label | `period-label` | required | 4.500 | 6 | 6 | 4.636 | 13.973 | 0 | 0 |
 | planned | `gate` | required | 3.000 | 2 | 10 | 14.143 | 17.747 | 0 | 0 |
-| planned | `planned` | required | 3.000 | 51 | 640 | 5.284 | 13.238 | 0 | 0 |
+| planned | `planned` | required | 3.000 | 51 | 640 | 4.777 | 13.238 | 0 | 0 |
 | progress-fill | `progress-fill` | required | 3.000 | 38 | 112 | 3.216 | 4.789 | 0 | 0 |
 | project-note | `text` | required | 4.500 | 39 | 87 | 10.019 | 16.268 | 0 | 0 |
 | relation-label | `text` | required | 4.500 | 24 | 139 | 6.663 | 14.573 | 0 | 0 |
@@ -6801,7 +6801,7 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `annotation-text:station-note` | `annotation-note-text` | 1424.006, 589.947 | `annotation-box:station-note` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `annotation-text:tvac-note` | `annotation-note-text` | 1424.768, 371.809 | `annotation-box:tvac-note` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `annotation-text:window-note` | `annotation-note-text` | 1428.452, 743.551 | `annotation-box:window-note` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `as-of-label` | `text` | 950.197, 820.075 | `chip:as-of-label` | flat | `#C77A12` | fill | 5.257 | 4.500 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `as-of-label` | `text` | 950.197, 821.050 | `chip:as-of-label` | flat | `#B8761F` | fill | 4.774 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 499.213, 104.050 | `canvas` | canvas | `#FFFFFF` | fill | 1.124 | 1.100 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `axis-band-rect:0:1` | `axis-band-decoration` | 680.221, 104.050 | `canvas` | canvas | `#FFFFFF` | fill | 1.124 | 1.100 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `axis-band-rect:0:2` | `axis-band-decoration` | 938.889, 104.050 | `canvas` | canvas | `#FFFFFF` | fill | 1.124 | 1.100 | info |
@@ -6926,9 +6926,9 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `legend-swatch:calendar-exception` | `calendar-exception` | 734.199, 859.425 | `canvas` | canvas | `#FFFFFF` | fill | 1.240 | 1.100 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `legend-swatch:milestone:part0` | `gate` | 527.692, 859.425 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 306.155, 859.425 | `canvas` | canvas | `#FFFFFF` | stroke | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `legend-swatch:planned` | `planned` | 33.200, 859.425 | `canvas` | canvas | `#FFFFFF` | fill | 5.817 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `legend-swatch:planned` | `planned` | 28.000, 859.425 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `legend-swatch:snapshot` | `snapshot` | 141.527, 859.425 | `canvas` | canvas | `#FFFFFF` | stroke | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `missing-actual:tvac:tvac` | `missing-actual` | 934.649, 475.391 | `planned:tvac:tvac` | flat | `#1D5FD1` | fill | 5.817 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `missing-actual:tvac:tvac` | `missing-actual` | 919.101, 475.391 | `planned:tvac:tvac` | flat | `#C7D6F3` | stroke | 3.973 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `period-band:launch-window` | `period-band` | 1149.499, 486.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.255 | 1.100 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `period-label:launch-window` | `period-label` | 1149.499, 148.750 | `period-band:launch-window` | flat | `#DDE6F7` | fill | 4.636 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:cdr:cdr:part0` | `gate` | 653.365, 278.320 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
@@ -6939,24 +6939,24 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:payload-delivery:payload-delivery:part0` | `gate` | 811.676, 387.389 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:pdr:pdr:part0` | `gate` | 475.265, 166.984 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:psr:psr:part0` | `gate` | 1009.564, 518.726 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:avionics:avionics` | `planned` | 595.412, 211.518 | `planned:avionics:snapshot:avionics` | flat | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:bus-test:bus-test` | `planned` | 650.538, 256.053 | `planned:bus-test:snapshot:bus-test` | flat | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:campaign:campaign` | `planned` | 1064.690, 692.330 | `planned:campaign:snapshot:campaign` | flat | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:comms-test:comms-test` | `planned` | 733.934, 605.528 | `planned:comms-test:snapshot:comms-test` | flat | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:detector:detector` | `planned` | 582.690, 342.855 | `planned:detector:snapshot:detector` | flat | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:emc:emc` | `planned` | 968.573, 496.459 | `canvas` | canvas | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:eps:eps` | `planned` | 547.353, 233.786 | `planned:eps:snapshot:eps` | flat | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:integration:integration` | `planned` | 852.667, 429.657 | `planned:integration:snapshot:integration` | flat | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:leop:leop` | `planned` | 1157.980, 801.399 | `planned:leop:snapshot:leop` | flat | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:mcs:mcs` | `planned` | 574.209, 560.993 | `planned:mcs:snapshot:mcs` | flat | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:optics:optics` | `planned` | 517.670, 320.587 | `planned:optics:snapshot:optics` | flat | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:payload-tvac:payload-tvac` | `planned` | 613.787, 365.122 | `planned:payload-tvac:snapshot:payload-tvac` | flat | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:rehearsals:rehearsals` | `planned` | 999.669, 779.132 | `planned:rehearsals:snapshot:rehearsals` | flat | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:shipment:shipment` | `planned` | 1029.353, 670.062 | `canvas` | canvas | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:station:station` | `planned` | 663.259, 583.261 | `planned:station:snapshot:station` | flat | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:structure:structure` | `planned` | 524.737, 189.251 | `planned:structure:snapshot:structure` | flat | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:tvac:tvac` | `planned` | 930.409, 474.191 | `canvas` | canvas | `#FFFFFF` | fill | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:vibration:vibration` | `planned` | 885.177, 451.924 | `planned:vibration:snapshot:vibration` | flat | `#FFFFFF` | stroke | 5.817 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:avionics:avionics` | `planned` | 565.729, 211.518 | `planned:avionics:snapshot:avionics` | flat | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:bus-test:bus-test` | `planned` | 630.749, 256.053 | `planned:bus-test:snapshot:bus-test` | flat | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:campaign:campaign` | `planned` | 1040.661, 692.330 | `planned:campaign:snapshot:campaign` | flat | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:comms-test:comms-test` | `planned` | 724.039, 605.528 | `planned:comms-test:snapshot:comms-test` | flat | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:detector:detector` | `planned` | 562.902, 342.855 | `planned:detector:snapshot:detector` | flat | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:emc:emc` | `planned` | 958.678, 496.459 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:eps:eps` | `planned` | 523.324, 233.786 | `planned:eps:snapshot:eps` | flat | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:integration:integration` | `planned` | 822.983, 429.657 | `planned:integration:snapshot:integration` | flat | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:leop:leop` | `planned` | 1128.297, 801.399 | `planned:leop:snapshot:leop` | flat | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:mcs:mcs` | `planned` | 483.746, 560.993 | `planned:mcs:snapshot:mcs` | flat | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:optics:optics` | `planned` | 483.746, 320.587 | `planned:optics:snapshot:optics` | flat | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:payload-tvac:payload-tvac` | `planned` | 602.479, 365.122 | `planned:payload-tvac:snapshot:payload-tvac` | flat | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:rehearsals:rehearsals` | `planned` | 978.467, 779.132 | `planned:rehearsals:snapshot:rehearsals` | flat | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:shipment:shipment` | `planned` | 1020.872, 670.062 | `planned:shipment:snapshot:shipment` | flat | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:station:station` | `planned` | 602.479, 583.261 | `planned:station:snapshot:station` | flat | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:structure:structure` | `planned` | 483.746, 189.251 | `planned:structure:snapshot:structure` | flat | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:tvac:tvac` | `planned` | 910.620, 474.191 | `planned:tvac:snapshot:tvac` | flat | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:vibration:vibration` | `planned` | 885.177, 451.924 | `planned:vibration:snapshot:vibration` | flat | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:avionics:snapshot:avionics` | `snapshot` | 565.729, 211.918 | `canvas` | canvas | `#FFFFFF` | stroke | 5.817 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:bus-test:snapshot:bus-test` | `snapshot` | 630.749, 256.453 | `canvas` | canvas | `#FFFFFF` | stroke | 5.817 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:campaign:snapshot:campaign` | `snapshot` | 1032.180, 692.730 | `calendar-closed:2027-09-18` | flat | `#F4F6F9` | stroke | 5.373 | 3.000 | info |
