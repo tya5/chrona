@@ -347,6 +347,9 @@ body:
       value:
       - 3
       - 2
+    legend-gap:
+      type: number
+      value: 26
     legend-block:
       type: number
       value: 22
