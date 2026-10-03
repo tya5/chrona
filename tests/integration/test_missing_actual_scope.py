@@ -1,0 +1,72 @@
+"""`comparison.missingActualScope: in-progress` marks the span that has started and not finished (#991).
+
+A synthetic Project through the packaged `executive-light` bundle; no test reads `examples/`.
+"""
+from __future__ import annotations
+
+from datetime import date
+
+import pytest
+
+from tests.support import synthetic_review as sr
+
+AS_OF = date(2026, 3, 2)
+ACTUAL = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "observed", "body": {
+    "asOf": AS_OF.isoformat(), "observations": [
+        {"id": "run", "sequence": 1, "projectObjectId": "running", "actual": {"start": "2026-02-09", "openUntil": "asOf"}},
+        {"id": "done", "sequence": 1, "projectObjectId": "finished", "actual": {"start": "2026-01-12", "finish": "2026-01-23"}},
+    ]}}
+
+
+def _source() -> dict:
+    return sr.project({
+        "running": sr.span("running", date(2026, 2, 2), 40),
+        "finished": sr.span("finished", date(2026, 1, 12), 11),
+        "overdue": sr.span("overdue", date(2026, 1, 19), 14),
+        "gate": sr.point("gate", date(2026, 2, 13)),
+    })
+
+
+def _render(tmp_path, scope: str | None, *, rows: str = "automatic"):
+    """The packaged bundle's own rows are lanes; `automatic` swaps in automatic rows with a title column."""
+    parts = sr.bundle("executive-light")
+    comparison = parts["view"]["body"]["comparison"]
+    comparison["facets"].append("missingActual")
+    if scope is not None:
+        comparison["missingActualScope"] = scope
+    if rows == "automatic":
+        parts["view"]["body"]["rows"] = {"mode": "automatic"}
+        parts["view"]["body"]["tableColumns"] = [{"id": "Task", "source": "title", "missing": "em-dash", "align": "start",
+                                                  "width": "content", "headerOrientation": "horizontal"}]
+    return sr.render(tmp_path, _source(), presentation=parts, actual=ACTUAL)
+
+
+def _marks(rendered, prefix: str) -> dict[str, tuple]:
+    return {item.scene_id.split(":", 1)[1].split(":")[-1]: item.bounds for item in rendered.surface.primitives
+            if item.scene_id.startswith(prefix + ":")}
+
+
+def test_by_default_a_due_unobserved_span_and_gate_are_marked_and_the_open_actual_is_drawn(tmp_path):
+    rendered = _render(tmp_path, None)
+    missing, actual = _marks(rendered, "missing-actual"), _marks(rendered, "actual")
+    assert set(missing) == {"overdue", "gate"}
+    assert set(actual) == {"running", "finished"}
+
+
+def test_in_progress_marks_only_the_started_span_from_its_actual_start_to_as_of(tmp_path):
+    rendered = _render(tmp_path, "in-progress")
+    missing, actual = _marks(rendered, "missing-actual"), _marks(rendered, "actual")
+
+    assert set(missing) == {"running"}  # no mark on the overdue span or the gate
+    assert set(actual) == {"finished"}  # the open actual is replaced by the in-progress mark
+    left, _, width, _ = missing["running"]
+    planned = next(item for item in rendered.surface.primitives if item.scene_id.startswith("planned:") and item.scene_id.endswith(":running"))
+    day = planned.bounds[2] / 40  # one calendar day, from the planned 40-day span
+    assert left == pytest.approx(planned.bounds[0] + 7 * day, abs=0.05)  # 9 Feb is 7 days after 2 Feb
+    assert width == pytest.approx(21 * day, abs=0.05)  # up to as-of, 2 Mar
+
+
+def test_the_scope_is_not_available_with_lane_rows(tmp_path):
+    with pytest.raises(Exception) as caught:
+        _render(tmp_path, "in-progress", rows="lanes")
+    assert "E_REVIEW_MISSING_ACTUAL_SCOPE_LANES" in str(caught.value)

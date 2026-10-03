@@ -440,3 +440,39 @@ def test_ghost_marks_need_a_snapshot_baseline_and_a_snapshot_project():
         _ghost_projection(_ghost_view(marks="ghost", baseline="primary"))
     with pytest.raises(ValueError, match="E_REVIEW_BASELINE_MARKS_SNAPSHOT"):
         build_review_projection(_GHOST_PROJECT, _GHOST_PLACED, _ghost_view(marks="ghost"), None)
+
+# --- #991: ordering.by source ---------------------------------------------------------------------------------
+
+
+def _ordered(by: str, direction: str = "ascending", tie_break: str = "id", grouping=None):
+    project = {"objects": {key: {"title": key.upper(), "fields": {"owner": owner}}
+                           for key, owner in (("zeta", "x"), ("alpha", "y"), ("mid", "x"))}, "entities": {}}
+    # Placements arrive in the scheduler's order, not the declaration order.
+    placed = {"mid": {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, "alpha": {"start": date(2026, 2, 1), "end": date(2026, 2, 2)},
+              "zeta": {"start": date(2026, 3, 1), "end": date(2026, 3, 2)}}
+    view = ViewInput(None, grouping, ViewOrdering(by, direction, tie_break), ViewWindow("selected-planned", None, None, 0),
+                     ViewComparison(None, "optional", None, None, ()), ViewVisibility(False, "none", "none"), (), (),
+                     ViewRows("automatic", ()), None, (), None, None, None)
+    return [row.row_id for row in build_review_projection(project, placed, view, None).rows]
+
+
+def test_source_ordering_follows_the_declaration_order_of_the_project():
+    assert _ordered("source") == ["zeta", "alpha", "mid"]
+    assert _ordered("source", "descending") == ["mid", "alpha", "zeta"]
+    assert _ordered("id") == ["alpha", "mid", "zeta"]  # the other keys are unchanged
+
+
+def test_source_ordering_is_also_a_tie_break_and_keeps_groups_together():
+    assert _ordered("plannedStart", tie_break="source") == ["mid", "alpha", "zeta"]
+    grouping = ViewGrouping("field", "owner", ("x", "y"), "ungrouped", None, None, None)
+    assert _ordered("source", grouping=grouping) == ["zeta", "mid", "alpha"]
+
+
+def test_the_network_order_key_reads_the_declaration_order_too():
+    from chrona.presentation.model.projection import _network_order_key
+    view = ViewInput(None, None, ViewOrdering("source", "ascending", "id"), ViewWindow("selected-planned", None, None, 0),
+                     ViewComparison(None, "optional", None, None, ()), ViewVisibility(False, "none", "none"), (), (),
+                     ViewRows("automatic", ()), None, (), None, None, None)
+    late = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1)}, None, None, (), source_index=5)
+    early = ReviewItem("b", "B", "span", {"start": date(2026, 9, 1)}, None, None, (), source_index=1)
+    assert sorted((late, early), key=lambda item: _network_order_key(item, view)) == [early, late]

@@ -117,15 +117,28 @@ def compose_item_marks(*, item: Any, instance_id: str, source_kind: str,
                 diagnostics.append(f"W_LAYOUT_OPEN_ACTUAL_INVALID:{item.object_id}")
             absences.append(MarkFacetAbsence("actual", "invalid-open-actual"))
         else:
-            bounds = Rect(Decimal(str(x1)), Decimal(str(actual_block)),
-                          Decimal(str(x2 - x1)), Decimal(str(actual_size)))
-            marks.append(compose_mark_placement(
-                frame=frame, placement_id=f"actual:{instance_id}", source_ref=item.object_id,
-                bounds=bounds, start_port=(x1, actual_block + actual_size / 2),
-                end_port=(x2, actual_block + actual_size / 2), shape="open-span",
-                semantic_id="actual", theme_tokens=theme_tokens, slot_id=slot_id,
-                paint_order_base=paint_order_base, end_treatment="open",
-            ))
+            if emit_missing_actual and getattr(item, "missing_actual_mark", "due-end") == "in-progress":
+                # An in-progress span (#991) is drawn as the missing-actual span from its actual start to
+                # as-of, in place of its open actual.
+                bounds = Rect(Decimal(str(x1)), Decimal(str(missing_block)),
+                              Decimal(str(x2 - x1)), Decimal(str(missing_size)))
+                marks.append(compose_mark_placement(
+                    frame=frame, placement_id=f"missing-actual:{instance_id}", source_ref=item.object_id,
+                    bounds=bounds, start_port=(x1, missing_block + missing_size / 2),
+                    end_port=(x2, missing_block + missing_size / 2), shape="span",
+                    semantic_id="missing-actual", theme_tokens=theme_tokens, slot_id=slot_id,
+                    paint_order_base=paint_order_base,
+                ))
+            else:
+                bounds = Rect(Decimal(str(x1)), Decimal(str(actual_block)),
+                              Decimal(str(x2 - x1)), Decimal(str(actual_size)))
+                marks.append(compose_mark_placement(
+                    frame=frame, placement_id=f"actual:{instance_id}", source_ref=item.object_id,
+                    bounds=bounds, start_port=(x1, actual_block + actual_size / 2),
+                    end_port=(x2, actual_block + actual_size / 2), shape="open-span",
+                    semantic_id="actual", theme_tokens=theme_tokens, slot_id=slot_id,
+                    paint_order_base=paint_order_base, end_treatment="open",
+                ))
     elif (source_kind in {"actual", "combined"} and item.source_type == "point"
           and isinstance(actual.get("at"), date)):
         x = _coordinate(actual["at"], frame.inline_scale)
@@ -149,7 +162,8 @@ def compose_item_marks(*, item: Any, instance_id: str, source_kind: str,
             if emit_diagnostics:
                 diagnostics.append(f"W_LAYOUT_ACTUAL_INCOMPLETE:{item.object_id}")
             absences.append(MarkFacetAbsence("actual", "incomplete-observation"))
-        elif (emit_missing_actual and item.observation_state == ObservationState.DUE_UNOBSERVED):
+        elif (emit_missing_actual and item.observation_state == ObservationState.DUE_UNOBSERVED
+              and getattr(item, "missing_actual_mark", "due-end") == "due-end"):
             anchor = planned.get("end", planned.get("at"))
             if isinstance(anchor, date):
                 x = _coordinate(anchor, frame.inline_scale)

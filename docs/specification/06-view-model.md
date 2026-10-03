@@ -171,7 +171,10 @@ Grouping creates presentation lanes; it is not semantic containment. v0.1 uses
 <lane-id>}`. `by: entity` without a field is invalid. `objectType` means normalized
 Core shape (`point` or `span`), not an implementation profile name. Ordering is the
 tuple `(ordering key, tieBreak, stable object ID)`; missing values sort after present
-values in ascending order and before in descending order.
+values in ascending order and before in descending order. The key `source` (also a
+`tieBreak`, #991) is the position of the object among the Project's `objects` as the Project
+document declares them, not the scheduler's order; descending reverses it, and a group still
+keeps its members together.
 
 A grouping with `presentation: header` may declare `header`, a text template for each
 group header (literal text, an ordinal in a declared form, the entity title and an entity
@@ -253,6 +256,13 @@ All table, summary and Layout missing-Actual consumers use this projected
 state; a future unobserved item must not be called “Recorded”. An observed but
 incomplete Actual remains recorded, not missing. A start-based obligation or
 separate not-yet-due treatment requires a future versioned View policy.
+
+`comparison.missingActualScope` (optional; omitted or `due-unobserved` is the behaviour above,
+#991) selects which work the missing-Actual **mark** covers; the projected state and every table
+and summary count stay as above. `in-progress` marks only a span with an Actual start and no
+finish (`openUntil: asOf`), drawn as a span from that start to `asOf` in place of its open
+Actual, and puts no mark on a due-unobserved span or on a gate. It is `E_REVIEW_MISSING_ACTUAL_SCOPE_LANES`
+with lane rows, whose expected-mark inventory is closed.
 
 ## 9. Annotations and Layout Intent
 
