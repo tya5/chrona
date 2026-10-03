@@ -370,6 +370,15 @@ properties:
             title: {description: "Optional header template of literal text and the closed placeholders {label}, {secondary} and {subject}; {{ and }} are literal braces. Default is {label}.", type: string, minLength: 1}
             color: {description: "Optional Scheme intent or explicit category slot that paints the kind's bar, accent and stamp; checked at Theme resolution.", type: string, minLength: 1}
             stamp: {description: "Optional authored `set:name` reference to a normalized catalogue glyph drawn as the kind's stamp.", examples: ["chrona-target-parts:seal-risk"], type: string, pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"}
+      contrastPolicy:
+        type: object
+        description: "Severity of the contrast findings of decoration paint (#995). Marks and text are always blocking and cannot be set here."
+        examples: [{decoration: error}]
+        additionalProperties: false
+        properties:
+          decoration:
+            description: "What a decoration below its 1.10:1 floor, or on a ground that cannot be read, becomes at render: a warning (the default when omitted) or an error that fails the render."
+            enum: [warning, error]
       metrics:
         type: object
         description: "Named source-measurement metric bindings used by Layout."

@@ -226,7 +226,10 @@ render: it is listed in the corpus contrast report (a `Warnings` column and a `w
 the render's warning records, the Scene `diagnostics`, the CLI and the MCP payloads, with the measured ratio and
 floor. The evaluator takes the decoration severity as an argument (`warning`, the default, or `error`); with
 `error` the decoration findings keep the blocking codes `E_SCENE_DECORATION_CONTRAST` and
-`E_SCENE_CONTRAST_GROUND_UNSUPPORTED`.
+`E_SCENE_CONTRAST_GROUND_UNSUPPORTED`. The render passes the Theme's `contrastPolicy.decoration`
+(Specification 07) and fails on those codes when it is `error`; the corpus tool has no Theme and always
+evaluates with `warning` (a Theme that declares `error` cannot put a failing decoration in the corpus,
+because the render that makes the Scene fails first).
 Unchanged for every class: a malformed paint (`E_SCENE_CONTRAST_PAINT`), an invalid treatment and a malformed
 Scene document remain errors; a mark or text on a translucent host remains
 `E_SCENE_CONTRAST_GROUND_UNSUPPORTED`; a mark or text on a faint decoration is judged on that decoration's colour.

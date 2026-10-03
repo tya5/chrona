@@ -421,7 +421,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                               ())
     perceptibility_warnings = (_scene_perceptibility_warnings(scene)
                                if render_closure.context.identity.revision == "draft" else ())
-    contrast_warnings = _scene_contrast_warnings(scene)
+    contrast_warnings = _scene_contrast_warnings(scene, theme)
     renderer = request.renderer or renderer_for(
         {"kind": render_closure.context.target.kind, "capabilities": list(render_closure.context.target.capabilities)},
         environment.renderer_environment(),
@@ -511,9 +511,25 @@ def _scene_perceptibility_warnings(scene: InspectionScene) -> tuple[ScenePercept
     return _warnings_from_findings(evaluate_scene_perceptibility(scene_document(scene)))
 
 
-def _scene_contrast_warnings(scene: InspectionScene) -> tuple[SceneContrastWarning, ...]:
-    """Project the decoration findings that warn (#995); marks and text are the corpus gate's, as before."""
-    return _contrast_warnings_from_findings(evaluate_scene_contrast(scene_document(scene)))
+def _scene_contrast_warnings(scene: InspectionScene, theme: Mapping[str, Any]) -> tuple[SceneContrastWarning, ...]:
+    """Project the decoration findings that warn (#995); marks and text are the corpus gate's, as before.
+
+    A Theme that declares `contrastPolicy.decoration: error` makes the decoration findings blocking: the render
+    fails with the first one's code before any adapter output. Nothing else about the render is gated here.
+    """
+    severity = theme["body"].get("contrastPolicy", {}).get("decoration", "warning")
+    findings = evaluate_scene_contrast(scene_document(scene), decoration_severity=severity)
+    # Only a decoration can block a render: a mark or text on a translucent host carries the same
+    # `E_SCENE_CONTRAST_GROUND_UNSUPPORTED` code and stays the corpus gate's, as before.
+    blocking = [item for item in findings if item.severity == "error" and item.severity_class == "decoration"
+                and item.code in DECORATION_WARNING_BLOCKING_CODES.values()]
+    if blocking:
+        first = blocking[0]
+        ratio = f", contrast {first.contrast_ratio:.3f} against {first.floor:g}" if first.contrast_ratio is not None else ""
+        more = f" and {len(blocking) - 1} more" if len(blocking) > 1 else ""
+        raise RenderFailed(first.code, f"{first.primitive_id} ({first.visual_role}){ratio}{more}; the Theme declares "
+                           "contrastPolicy.decoration: error", "presentation", "/body/contrastPolicy/decoration")
+    return _contrast_warnings_from_findings(findings)
 
 
 def _contrast_warnings_from_findings(findings: tuple[SceneContrastFinding, ...]) -> tuple[SceneContrastWarning, ...]:

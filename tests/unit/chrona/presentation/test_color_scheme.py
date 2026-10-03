@@ -226,3 +226,38 @@ def test_only_the_note_box_is_the_ground_of_note_ink():
     theme["body"]["roles"]["annotation-callout-box"] = {}
     theme["body"]["colorBindings"]["annotation-callout-box.fill"] = "surface"
     resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)
+
+
+# --- #995: the decoration severity knob --------------------------------------------------------------------
+
+
+def test_the_contrast_policy_is_carried_into_the_resolved_theme_and_absent_when_undeclared():
+    theme = _paper_note_theme()
+    assert "contrastPolicy" not in resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)["body"]
+    for severity in ("warning", "error"):
+        theme["body"]["contrastPolicy"] = {"decoration": severity}
+        resolved = resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)
+        assert resolved["body"]["contrastPolicy"] == {"decoration": severity}
+
+
+@pytest.mark.parametrize("policy,pointer", [
+    ({"decoration": "info"}, "/body/contrastPolicy/decoration"),
+    ({}, "/body/contrastPolicy/decoration"),
+    ({"decoration": "error", "marks": "warning"}, "/body/contrastPolicy/marks"),
+    ("error", "/body/contrastPolicy")])
+def test_an_undeclared_policy_value_or_member_is_refused_at_its_pointer(policy, pointer):
+    theme = _paper_note_theme()
+    theme["body"]["contrastPolicy"] = policy
+    with pytest.raises(ColorSchemeError) as error:
+        resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)
+    assert (error.value.diagnostic_id, error.value.source_ref) == ("E_THEME_CONTRAST_POLICY", pointer)
+
+
+@pytest.mark.parametrize("policy", [None, {"decoration": "warning"}, {"decoration": "error"}])
+def test_the_policy_never_softens_a_text_check_at_theme_resolution(policy):
+    theme = _paper_note_theme(box="text", ink="textMuted")  # note ink too close to its box: the state-text error
+    if policy is not None:
+        theme["body"]["contrastPolicy"] = policy
+    with pytest.raises(ColorSchemeError) as error:
+        resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)
+    assert error.value.diagnostic_id == "E_SCHEME_STATE_TEXT_CONTRAST"
