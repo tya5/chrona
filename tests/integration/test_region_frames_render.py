@@ -222,13 +222,20 @@ def test_what_lies_on_a_panel_is_gated_against_its_fill(tmp_path) -> None:
     assert all(item.ground_color == "#3986E6" for item in failed)
 
 
-def test_a_translucent_panel_fill_is_an_unsupported_ground_and_fails_closed(tmp_path) -> None:
+def test_a_translucent_panel_fill_is_composited_over_the_canvas_beneath_it(tmp_path) -> None:
     values = {"frame.opacity": {"type": "number", "value": 0.5}}
     review = _render(tmp_path, _presentation(role={**ROLE, "opacity": "frame.opacity"}, values=values))
     findings = evaluate_scene_contrast(scene_document(review.scene))
 
-    unsupported = [item for item in findings if item.ground_id == "region-frame:review" and item.severity == "error"]
-    assert unsupported and {item.ground_kind for item in unsupported} <= {"unsupported", None}
+    # Judged on the panel over its canvas (#1013), not refused: no finding is an unreadable ground.
+    # A decoration on the panel keeps its warning (decorations are not composited, #995).
+    on_panel = [item for item in findings
+                if item.ground_id == "region-frame:review" and item.severity_class == "legibility"]
+    assert on_panel and {item.ground_kind for item in on_panel} == {"translucent-over-canvas"}
+    assert not [item for item in findings if item.code == "E_SCENE_CONTRAST_GROUND_UNSUPPORTED"]
+    assert {item.code for item in findings if item.severity_class == "decoration" and item.severity == "warning"
+            and item.ground_id == "region-frame:review"} <= {"W_SCENE_DECORATION_GROUND_UNSUPPORTED"}
+    assert all(item.ground_color != "#C9CED8" for item in on_panel)  # the composite, not the panel's own fill
 
 
 def test_the_serialized_scene_stays_v06_without_a_pattern(tmp_path) -> None:
