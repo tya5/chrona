@@ -171,7 +171,10 @@ Grouping creates presentation lanes; it is not semantic containment. v0.1 uses
 <lane-id>}`. `by: entity` without a field is invalid. `objectType` means normalized
 Core shape (`point` or `span`), not an implementation profile name. Ordering is the
 tuple `(ordering key, tieBreak, stable object ID)`; missing values sort after present
-values in ascending order and before in descending order.
+values in ascending order and before in descending order. The key `source` (also a
+`tieBreak`, #991) is the position of the object among the Project's `objects` as the Project
+document declares them, not the scheduler's order; descending reverses it, and a group still
+keeps its members together.
 
 A grouping with `presentation: header` may declare `header`, a text template for each
 group header (literal text, an ordinal in a declared form, the entity title and an entity

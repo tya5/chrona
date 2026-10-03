@@ -130,9 +130,9 @@ allOf:
             required: [by, direction, tieBreak]
             additionalProperties: false
             properties:
-              by: {description: "Primary ordering key.", enum: [id, title, plannedStart, plannedEnd]}
+              by: {description: "Primary ordering key; `source` keeps the order the Project declares its objects in.", enum: [id, title, plannedStart, plannedEnd, source]}
               direction: {description: "Ordering direction.", enum: [ascending, descending]}
-              tieBreak: {description: "Stable ordering tie-breaker.", enum: [id, title, plannedStart, plannedFinish]}
+              tieBreak: {description: "Stable ordering tie-breaker.", enum: [id, title, plannedStart, plannedFinish, source]}
           window:
             description: "Temporal window selected for the surface."
             type: object
