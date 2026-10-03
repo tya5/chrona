@@ -35,22 +35,34 @@ body:
       value: '700'
     size.heading:
       type: number
-      value: 28
+      value: 22
     size.subtitle:
       type: number
-      value: 13
+      value: 12.5
     size.body:
       type: number
-      value: 13
+      value: 12.5
+    size.group:
+      type: number
+      value: 12
+    size.numeric:
+      type: number
+      value: 12
+    size.period:
+      type: number
+      value: 10.5
+    size.axis-quarter:
+      type: number
+      value: 11.5
     size.axis:
       type: number
       value: 12
     size.legend:
       type: number
-      value: 13
+      value: 12
     size.note:
       type: number
-      value: 12
+      value: 11.5
     leading.tight:
       type: number
       value: 1.15
@@ -232,7 +244,7 @@ body:
       value: 0
     kind-label-size:
       type: number
-      value: 11
+      value: 10.5
     kind-label-leading:
       type: number
       value: 1.2
@@ -276,7 +288,13 @@ body:
       value: 0
     opacity.period-band:
       type: number
-      value: 1
+      value: 0.09
+    text-transform-lower:
+      type: textTransform
+      value: lowercase
+    period-spacing:
+      type: number
+      value: 0.04
     period-stroke-width:
       type: number
       value: 1
@@ -352,8 +370,8 @@ body:
       iconGap: icon-gap
     numeric:
       fontFamily: editorial
-      fontWeight: weight.regular
-      fontSize: size.body
+      fontWeight: weight.bold
+      fontSize: size.numeric
       lineHeight: leading.body
       letterSpacing: letter-spacing
       textTransform: text-transform
@@ -444,8 +462,8 @@ body:
       iconGap: icon-gap
     groupHeader:
       fontFamily: editorial
-      fontWeight: weight.regular
-      fontSize: size.body
+      fontWeight: weight.bold
+      fontSize: size.group
       lineHeight: leading.body
       letterSpacing: letter-spacing
       textTransform: text-transform
@@ -557,7 +575,7 @@ body:
     axisQuarter:
       fontFamily: editorial
       fontWeight: weight.bold
-      fontSize: size.axis
+      fontSize: size.axis-quarter
       lineHeight: leading.body
       letterSpacing: letter-spacing
       textTransform: text-transform
@@ -594,10 +612,10 @@ body:
       contrastTreatment: required
       fontFamily: editorial
       fontWeight: weight.regular
-      fontSize: size.note
+      fontSize: size.period
       lineHeight: leading.body
-      letterSpacing: letter-spacing
-      textTransform: text-transform
+      letterSpacing: period-spacing
+      textTransform: text-transform-lower
       numericSpacing: numeric-spacing
     annotation-note-leader:
       strokeWidth: stroke-width
