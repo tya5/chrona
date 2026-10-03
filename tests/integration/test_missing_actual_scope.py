@@ -14,6 +14,8 @@ AS_OF = date(2026, 3, 2)
 ACTUAL = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "observed", "body": {
     "asOf": AS_OF.isoformat(), "observations": [
         {"id": "run", "sequence": 1, "projectObjectId": "running", "actual": {"start": "2026-02-09", "openUntil": "asOf"}},
+        {"id": "s", "sequence": 1, "projectObjectId": "started", "actual": {"start": "2026-02-20", "progress": 0.4}},
+        {"id": "z", "sequence": 1, "projectObjectId": "stalled", "actual": {"start": "2026-02-20", "openUntil": "asOf", "progress": 1}},
         {"id": "done", "sequence": 1, "projectObjectId": "finished", "actual": {"start": "2026-01-12", "finish": "2026-01-23"}},
     ]}}
 
@@ -21,6 +23,8 @@ ACTUAL = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "obse
 def _source() -> dict:
     return sr.project({
         "running": sr.span("running", date(2026, 2, 2), 40),
+        "started": sr.span("started", date(2026, 2, 16), 40),
+        "stalled": sr.span("stalled", date(2026, 2, 16), 40),
         "finished": sr.span("finished", date(2026, 1, 12), 11),
         "overdue": sr.span("overdue", date(2026, 1, 19), 14),
         "gate": sr.point("gate", date(2026, 2, 13)),
@@ -50,15 +54,17 @@ def test_by_default_a_due_unobserved_span_and_gate_are_marked_and_the_open_actua
     rendered = _render(tmp_path, None)
     missing, actual = _marks(rendered, "missing-actual"), _marks(rendered, "actual")
     assert set(missing) == {"overdue", "gate"}
-    assert set(actual) == {"running", "finished"}
+    assert set(actual) == {"running", "finished", "stalled"}
 
 
 def test_in_progress_marks_only_the_started_span_from_its_actual_start_to_as_of(tmp_path):
     rendered = _render(tmp_path, "in-progress")
     missing, actual = _marks(rendered, "missing-actual"), _marks(rendered, "actual")
 
-    assert set(missing) == {"running"}  # no mark on the overdue span or the gate
-    assert set(actual) == {"finished"}  # the open actual is replaced by the in-progress mark
+    # The owner's rule: started, unfinished and below full progress is in progress, `openUntil` or not; one at
+    # progress 1 without a finish is not, and keeps its open actual. No mark on the overdue span or the gate.
+    assert set(missing) == {"running", "started"}
+    assert set(actual) == {"finished", "stalled"}
     left, _, width, _ = missing["running"]
     planned = next(item for item in rendered.surface.primitives if item.scene_id.startswith("planned:") and item.scene_id.endswith(":running"))
     day = planned.bounds[2] / 40  # one calendar day, from the planned 40-day span
