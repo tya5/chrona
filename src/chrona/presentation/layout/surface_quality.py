@@ -12,6 +12,7 @@ from chrona.presentation.layout.obstacles import ObstacleGeometry
 from chrona.presentation.layout.lane_subtracks import FixedLanePreflight
 from chrona.presentation.model.info_diagnostics import PresentationInfo, SuppressedPlotLabels
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, axis_label_semantic_ids
+from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, FIT_ADJUSTS, TEXT_FOLLOWS_BOX
 
 
 @dataclass(frozen=True)
@@ -102,6 +103,38 @@ def annotation_presentation(purpose: str) -> AnnotationPresentation:
 
 
 @dataclass(frozen=True)
+class TextFit:
+    """The completed viewer-fit facts of one text run (#1050), measured by Layout and only serialised by adapters.
+
+    ``text-follows-box`` carries one positive measured inline size per line (``line_inline_sizes``) and the
+    ``lengthAdjust`` choice. ``box-follows-text`` carries the id of its box shape and the count of trailing spaces
+    that stand for the end inset (``end_pad_spaces``); it has no widths, the viewer decides the end edge.
+    """
+
+    mode: str
+    adjust: str = "spacing"
+    line_inline_sizes: tuple[float, ...] = ()
+    box_id: str | None = None
+    end_pad_spaces: int = 0
+
+    def __post_init__(self) -> None:
+        widths_ok = all(isinstance(item, (int, float)) and not isinstance(item, bool) and item > 0 and item == item
+                        and item != float("inf") for item in self.line_inline_sizes)
+        if self.adjust not in FIT_ADJUSTS or not widths_ok:
+            raise ValueError("E_PRESENTATION_TEXT_LAYOUT_INVALID: viewer fit")
+        if self.mode == TEXT_FOLLOWS_BOX:
+            valid = bool(self.line_inline_sizes) and self.box_id is None and self.end_pad_spaces == 0
+        elif self.mode == BOX_FOLLOWS_TEXT:
+            valid = (not self.line_inline_sizes and self.adjust == "spacing" and bool(self.box_id)
+                     and isinstance(self.end_pad_spaces, int) and not isinstance(self.end_pad_spaces, bool)
+                     and self.end_pad_spaces >= 0)
+        else:
+            valid = False
+        if not valid:
+            raise ValueError("E_PRESENTATION_TEXT_LAYOUT_INVALID: viewer fit")
+
+
+@dataclass(frozen=True)
 class TextPlacement:
     """One measured text decision made by Layout before Scene emission."""
 
@@ -140,6 +173,8 @@ class TextPlacement:
     lane_row_id: str | None = None
     lane_member_id: str | None = None
     lane_source_kind: str | None = None
+    # A viewer-fit mode's completed facts for this run (#1050); None is `raw`, today's output.
+    fit: TextFit | None = None
 
 
 @dataclass(frozen=True)
@@ -223,6 +258,8 @@ class ShapePlacement:
     lane_member_id: str | None = None
     # Completed catalogue-glyph parts of an annotation kind stamp (#584); Scene emits one Symbol per part.
     symbol_parts: tuple[Any, ...] = ()
+    # The viewer-fit mode of a text-bearing box (#1050); `raw` is today's output.
+    viewer_fit: str = "raw"
 
 
 @dataclass(frozen=True)

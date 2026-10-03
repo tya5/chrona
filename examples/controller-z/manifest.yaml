@@ -102,6 +102,11 @@ slides:
     context: contexts/annotation-border.yaml
     expectedSvg: generated/annotation-border.svg
     expectedScene: generated/annotation-border.scene.json
+  - id: viewer-fit
+    evidence: "A viewer that lacks the layout font (#1050): the same notes as the artwork slide with the Theme box roles declaring how text and box absorb the missing face, a scroll-framed callout and a clipping-edge highlight pinned line by line to the width Layout measured (text-follows-box, with spacing and with spacingAndGlyphs), and a plain note whose background follows its text (box-follows-text); the SVG still names the family and embeds nothing, and PNG output draws the packaged font from the raw SVG, with no corpus datum edited."
+    context: contexts/viewer-fit.yaml
+    expectedSvg: generated/viewer-fit.svg
+    expectedScene: generated/viewer-fit.scene.json
   - id: group-tabs
     evidence: "Group headers numbered and tabbed in the Title Card manner (#882): a zero-padded ordinal from the View header template and a 56 px hazard-stripe tab with an 8 px gap from the Theme role group-tab (catalogue pattern, size, gap), from the packaged target-parts catalogue, as a new View, Theme and Context over the executive sources."
     context: contexts/group-tabs.yaml

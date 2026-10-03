@@ -23,7 +23,7 @@ from chrona.presentation.model.semantic_registry import (
     inside_member_label_semantic, semantic_binding)
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.model.info_diagnostics import PaintOmission
-from chrona.presentation.model.theme_tokens import ThemeTokenView
+from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, ThemeTokenView
 from chrona.presentation.scene.pattern_geometry import pattern_geometry, pattern_kind, project_pattern_placement
 from chrona.presentation.scene.model import DecorationDisposition, ImageFill, ImageTile, SceneColumn, SceneGroup, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, SymbolGeometry, TextLayout
 from chrona.presentation.scene.model import (
@@ -256,6 +256,21 @@ def _complete_wobble(primitive: ScenePrimitive, paint: ScenePaint, clip_host: bo
     return replace(paint, wobble=replace(wobble, closed=closed, outline=outline))
 
 
+def _require_followable_paint(primitive: ScenePrimitive) -> None:
+    """A box that follows its text is painted by a flood: a solid or absent fill and nothing else (#1050).
+
+    An outline, gradient, shadow, glow, pattern, image or wobble would sit on the measured box edge, which is not
+    where a viewer ends the background, so the declaration is refused with its role rather than painted wrongly.
+    """
+    paint = primitive.paint
+    assert paint is not None
+    if (paint.stroke is not None or paint.gradient is not None or paint.shadow is not None or paint.glow is not None
+            or paint.wobble is not None or paint.image is not None or primitive.pattern is not None):
+        raise SceneBuildError("E_PRESENTATION_VIEWER_FIT_PAINT", f"/body/roles/{primitive.visual_role}",
+                              "a box that follows its text takes a solid fill and no outline, gradient, shadow, "
+                              "glow, pattern, image or wobble")
+
+
 def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView, visual_profile: VisualProfile | None,
                               scale_target_role: str | None, scale_paints: Mapping[str, str],
                               scale_legend_paints: Mapping[str, str],
@@ -318,6 +333,8 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
                      glyph_paint_mode=None, glyph_paint_color=None,
                      glyph_stroke_width=None, glyph_line_cap=None, glyph_line_join=None,
                      image_fill_pending=None)
+    if result.viewer_fit == BOX_FOLLOWS_TEXT:
+        _require_followable_paint(result)
     if completed.wobble is not None:
         result = replace(result, paint=_complete_wobble(result, completed, primitive.scene_id in clip_hosts))
     if result.kind == "Icon" and result.icon_kind == "vector":
@@ -499,7 +516,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                             placed.lines, placed.font_family, placed.font_weight, placed.font_size,
                             placed.line_height, placed.font_asset_identity, placed.letter_spacing,
                             placed.text_transform, placed.numeric_spacing, placed.orientation, placed.rotation_degrees,
-                            placed.horizontal_scale)
+                            placed.horizontal_scale, placed.fit)
         classification = contrast_binding(role)
         treatment = (value.theme_tokens.contrast_treatment(role)
                      if classification is not None and classification.contrast_class == ContrastClass.STATE_TEXT else None)
@@ -810,12 +827,12 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                 primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.SYMBOL, placed.source_ref, "annotation",
                                                  annotation_box.purpose, annotation_box.scene_role, bounds,
                                                  symbol=SymbolGeometry(placed.path_commands), paint_order=placed.paint_order,
-                                                 image_fill_pending=image_fill_pending))
+                                                 image_fill_pending=image_fill_pending, viewer_fit=placed.viewer_fit))
             else:
                 primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "annotation",
                                                  annotation_box.purpose, annotation_box.scene_role,
                                                  bounds, paint_order=placed.paint_order,
-                                                 image_fill_pending=image_fill_pending))
+                                                 image_fill_pending=image_fill_pending, viewer_fit=placed.viewer_fit))
     for placed in placed_surface.icons:
         bounds = (float(placed.bounds.inline), float(placed.bounds.block),
                   float(placed.bounds.inline_size), float(placed.bounds.block_size))
