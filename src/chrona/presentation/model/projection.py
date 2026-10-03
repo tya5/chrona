@@ -435,11 +435,18 @@ def _network_order_key(item: ReviewItem, view: ViewInput) -> tuple[Any, ...]:
 
 
 def _in_progress_mark(item: ReviewItem) -> str:
-    """`comparison.missingActualScope: in-progress`: only a span started and not finished is marked."""
+    """`comparison.missingActualScope: in-progress`: a span that has started, is unfinished and has progress below 1.
+
+    The owner's rule (#991): an Actual with a `start`, no `finish` and a `progress` that is absent or below 1 is in
+    progress, whether or not it declares `openUntil`; one at progress 1 without a finish is not.
+    """
     actual = item.actual or {}
     if item.observation_state == ObservationState.DUE_UNOBSERVED:
         return "none"
-    if item.source_type == "span" and actual.get("openUntil") == "asOf" and isinstance(actual.get("start"), date):
+    progress = actual.get("progress")
+    below_one = progress is None or (isinstance(progress, (int, float)) and not isinstance(progress, bool) and progress < 1)
+    if (item.source_type == "span" and isinstance(actual.get("start"), date)
+            and actual.get("finish") is None and actual.get("at") is None and below_one):
         return "in-progress"
     return "due-end"
 
