@@ -121,6 +121,9 @@ _SCENE_CAUSES: Mapping[str, str] = {
     "W_SCENE_TEXT_INTERSECTION": "two pieces of text overlap",
     "W_SCENE_RELATION_PATH_DUPLICATE": "one dependency is drawn more than once",
     "W_SCENE_RELATION_PATH_REVERSES": "a dependency line doubles back over itself",
+    "W_SCENE_RELATION_THROUGH_MARK": "a dependency line runs through the inside of a bar",
+    "W_SCENE_RELATION_SEGMENT_TOO_SHORT": "a dependency line has a segment shorter than its stroke width",
+    "W_SCENE_RELATION_EGRESS_OVERLAPS_ARRIVAL": "a dependency leaves a node along the line another dependency arrives on",
     "W_SCENE_DECORATION_CONTRAST": "a background decoration is fainter than its visibility floor against the ground it lies on",
     "W_SCENE_DECORATION_GROUND_UNSUPPORTED": "a background decoration lies on a translucent ground, so its contrast cannot be judged",
 }

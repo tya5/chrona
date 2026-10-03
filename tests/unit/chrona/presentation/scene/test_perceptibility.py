@@ -210,3 +210,26 @@ def test_straight_and_stepped_relation_paths_and_the_legend_swatch_are_not_rever
     stepped = _path_with("relation:r:a:b", [(0, 0), (0, 10), (6, 10), (6, 4), (12, 4)])
     swatch = {**_path_with("legend-swatch:dependency", [(0, 0), (9, 0), (3, 0)]), "sourceRef": "dependency"}
     assert "E_SCENE_RELATION_PATH_REVERSES" not in _codes(_scene(stepped, swatch))
+
+
+def _stroked(identifier, points, width=1.0):
+    return {**_path_with(identifier, points), "paint": {"stroke": "#000000", "strokeWidth": width}}
+
+
+def test_a_relation_segment_shorter_than_its_stroke_width_is_an_error_1108():
+    sliver = _stroked("relation:r:a:b", [(480.1, 163.6), (479.66, 163.6), (479.66, 177.3), (489.7, 181.3)])
+    finding = next(item for item in evaluate_scene_perceptibility(_scene(sliver))
+                   if item.code == "E_SCENE_RELATION_SEGMENT_TOO_SHORT")
+    assert dict(finding.measured_facts) == {"relation": "r", "segment": 0.44, "strokeWidth": 1.0}
+    ok = _stroked("relation:r:a:c", [(0, 0), (0, 10), (6, 10)])
+    assert "E_SCENE_RELATION_SEGMENT_TOO_SHORT" not in _codes(_scene(ok))
+
+
+def test_a_relation_leaving_a_node_along_the_line_another_arrives_on_is_an_error_1109():
+    arriving = _stroked("relation:in:f:g", [(0, 0), (1167.7, 724.0), (1177.7, 724.0)][:1] + [(1167.7, 724.0), (1177.7, 724.0)])
+    leaving = _stroked("relation:out:g:l", [(1175.2, 724.0), (1167.7, 724.0), (1167.7, 778.3)])
+    findings = evaluate_scene_perceptibility(_scene(arriving, leaving))
+    finding = next(item for item in findings if item.code == "E_SCENE_RELATION_EGRESS_OVERLAPS_ARRIVAL")
+    assert finding.primitive_ids == ("relation:out:g:l", "relation:in:f:g")
+    apart = _stroked("relation:out:g:l", [(1177.7, 724.0), (1177.7, 778.3)])
+    assert "E_SCENE_RELATION_EGRESS_OVERLAPS_ARRIVAL" not in _codes(_scene(arriving, apart))

@@ -45,11 +45,12 @@ def test_overlapping_comparison_sibling_exposes_temporal_endpoint_without_moving
     unrelated = MarkPlacement("planned:other", "other",
                               Rect(Decimal(30), Decimal(20), Decimal(15), Decimal(8)), (30, 24), (45, 24))
     candidates = connector_egress_candidates(current, "end", (50, 40), (scenario, unrelated))
-    assert len(candidates) == 4
+    # The far-side exit of a span ("start" for an end endpoint) would cross the bar itself: it is not offered (#1114).
+    assert len(candidates) == 3
     assert candidates[0].semantic_port == (30, 24)
     assert candidates[0].exposed_port == (35, 24)
     assert candidates[0].host_ids == ("planned:item", "planned:scenario:item")
-    assert {candidate.side for candidate in candidates} == {"end", "start", "above", "below"}
+    assert {candidate.side for candidate in candidates} == {"end", "above", "below"}
     assert all(candidate.semantic_port == (30, 24) for candidate in candidates)
 
 

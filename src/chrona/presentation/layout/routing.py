@@ -1,6 +1,7 @@
 """Deterministic renderer-neutral routing used while building a presentation Scene."""
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from heapq import heappop, heappush
 import json
@@ -41,7 +42,8 @@ class RouteAttemptEvidence:
                 raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
         elif self.outcome == "no-route-found":
             if (self.blocker_ids or self.search_failure not in {
-                    "E_PRESENTATION_ROUTE_LIMIT", "E_CONNECTOR_UNROUTABLE", "E_LAYOUT_ROUTE_SELF_OVERLAP"}
+                    "E_PRESENTATION_ROUTE_LIMIT", "E_CONNECTOR_UNROUTABLE", "E_LAYOUT_ROUTE_SELF_OVERLAP",
+                    "E_LAYOUT_ROUTE_THROUGH_MARK"}
                     or any(value is not None for value in self._quality_values())):
                 raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
         else:
@@ -109,6 +111,21 @@ def place_relation_route(*, source_port: tuple[float, float], target_port: tuple
     """Complete one dependency route before Scene projects a path primitive."""
     return route_orthogonal(source_port, target_port, obstacles, bounds=bounds,
                             port_ids=port_ids, regions=regions, classes=classes)
+
+
+def length_inside_box(points: tuple[tuple[float, float], ...], box: tuple[float, float, float, float],
+                      inset: float = 0.5) -> float:
+    """The length of an orthogonal route that runs through the interior of `box` (left, top, width, height) shrunk
+    by `inset`: the port on the boundary and the outward stub are not inside (#1114)."""
+    left, top, width, height = box
+    x0, x1, y0, y1 = left + inset, left + width - inset, top + inset, top + height - inset
+    total = 0.0
+    for (ax, ay), (bx, by) in zip(points, points[1:]):
+        if ay == by and y0 < ay < y1:
+            total += max(0.0, min(max(ax, bx), x1) - max(min(ax, bx), x0))
+        elif ax == bx and x0 < ax < x1:
+            total += max(0.0, min(max(ay, by), y1) - max(min(ay, by), y0))
+    return total
 
 
 def route_self_overlaps(points: tuple[tuple[float, float], ...]) -> bool:
@@ -185,6 +202,92 @@ def _free(obstacles: SurfaceObstacleIndex, start: tuple[float, float], end: tupl
     segment = ObstacleSegment(start, end)
     return not (obstacles.egress_collisions(segment, host_ids=host_ids, classes=classes, regions=regions)
                 if host_ids else obstacles.collisions(segment, classes=classes, regions=regions))
+
+
+def simplify_route(points: tuple[tuple[float, float], ...], obstacles: SurfaceObstacleIndex, *,
+                   classes: tuple[str, ...], regions: tuple[str, ...], host_ids: tuple[str, ...] = (),
+                   min_segment: float = 0.0) -> tuple[tuple[float, float], ...]:
+    """Remove needless bends from a completed orthogonal route (#1108, #1109).
+
+    Three rules, applied until nothing changes; every moved segment must be free of the selected obstacles (the
+    endpoints' own marks, `host_ids`, excepted) and each change keeps the route orthogonal:
+
+    1. a vertex that continues straight is dropped;
+    2. a jog (a short segment between two parallel ones, an S) is collapsed by moving the run after it onto the
+       jog's start, or, when that run ends at the route's last point, the run before it onto the jog's end. A jog
+       shorter than `min_segment` (the stroke width) may nudge a route endpoint by that sub-stroke distance; a longer
+       one never moves an endpoint;
+    3. a jog is taken only when it removes a bend.
+    """
+    current = _merge_collinear(tuple(points))
+    for _ in range(len(current) * 2):
+        candidate = _collapse_one_jog(current, obstacles, classes, regions, host_ids, min_segment)
+        if candidate is None:
+            return current
+        current = candidate
+    return current
+
+
+def _collapse_one_jog(points, obstacles, classes, regions, host_ids, min_segment):
+    last = len(points) - 1
+    for index in range(last - 1):
+        b, c = points[index], points[index + 1]
+        axis = 0 if b[1] == c[1] else 1 if b[0] == c[0] else None
+        if axis is None or index == 0 and last < 3:
+            continue
+        other = 1 - axis
+        size = abs(b[axis] - c[axis])
+        micro = size < min_segment
+        after = index + 2 <= last and points[index + 2][axis] == c[axis] and points[index + 2][other] != c[other]
+        before = index >= 1 and points[index - 1][axis] == b[axis] and points[index - 1][other] != b[other]
+        if not (after and before) and not (micro and (after or before)):
+            continue
+        options = []
+        if after and (index + 2 < last or micro):  # move the run c..d onto the jog's start
+            options.append((index + 1, index + 2, b[axis]))
+        if before and (index - 1 > 0 or micro):  # move the run a..b onto the jog's end
+            options.append((index - 1, index, c[axis]))
+        for first, second, value in options:
+            moved = list(points)
+            moved[first] = _with(moved[first], axis, value)
+            moved[second] = _with(moved[second], axis, value)
+            candidate = _merge_collinear(tuple(moved))
+            if len(candidate) >= len(points) or route_self_overlaps(candidate):
+                continue
+            if any(_leg(candidate, end) < _leg(points, end) - 1e-9 and not micro for end in (0, -1)) or any(
+                    _direction(candidate, end) != _direction(points, end) for end in (0, -1)):
+                continue  # the exit and entry legs are never shortened or turned round by a simplification
+            touched = {moved[first], moved[second]}
+            if all(_free(obstacles, p, q, classes, regions, host_ids)
+                   for p, q in zip(moved, moved[1:]) if p in touched or q in touched):
+                return candidate
+    return None
+
+
+def _leg(points: tuple[tuple[float, float], ...], end: int) -> float:
+    a, b = (points[0], points[1]) if end == 0 else (points[-2], points[-1])
+    return abs(b[0] - a[0]) + abs(b[1] - a[1])
+
+
+def _direction(points: tuple[tuple[float, float], ...], end: int) -> tuple[int, int]:
+    a, b = (points[0], points[1]) if end == 0 else (points[-2], points[-1])
+    return ((b[0] > a[0]) - (b[0] < a[0]), (b[1] > a[1]) - (b[1] < a[1]))
+
+
+def _with(point: tuple[float, float], axis: int, value: float) -> tuple[float, float]:
+    return (value, point[1]) if axis == 0 else (point[0], value)
+
+
+def _merge_collinear(points: tuple[tuple[float, float], ...]) -> tuple[tuple[float, float], ...]:
+    merged: list[tuple[float, float]] = []
+    for point in points:
+        if merged and merged[-1] == point:
+            continue
+        while len(merged) >= 2 and ((merged[-2][0] == merged[-1][0] == point[0] and (merged[-1][1] - merged[-2][1]) * (point[1] - merged[-1][1]) > 0)
+                                    or (merged[-2][1] == merged[-1][1] == point[1] and (merged[-1][0] - merged[-2][0]) * (point[0] - merged[-1][0]) > 0)):
+            merged.pop()
+        merged.append(point)
+    return tuple(merged)
 
 
 def back_route_points(source_port: tuple[float, float], exit_dx: float, gap_y: float,
@@ -270,6 +373,7 @@ def select_lane_relation_route(
     max_bends: int, max_detour_ratio: float,
     classes: tuple[str, ...] = ("mark", "text", "label-visual"),
     regions: tuple[str, ...] = ("timeline", "group-header"),
+    accept: "Callable[[tuple[tuple[float, float], ...]], bool] | None" = None,
 ) -> LaneRouteSelection:
     """Measure every attempted port pair until an accepted route is found.
 
@@ -323,6 +427,10 @@ def select_lane_relation_route(
             # #1059: a route never overlaps itself; an otherwise acceptable one is refused and the next candidate follows
             attempts.append(RouteAttemptEvidence(source.side, target.side, "no-route-found",
                                                  search_failure="E_LAYOUT_ROUTE_SELF_OVERLAP"))
+            continue
+        if measured.outcome == "accepted" and accept is not None and not accept(tuple(points)):
+            attempts.append(RouteAttemptEvidence(source.side, target.side, "no-route-found",
+                                                 search_failure="E_LAYOUT_ROUTE_THROUGH_MARK"))
             continue
         attempts.append(measured)
         if measured.outcome == "accepted":

@@ -79,6 +79,7 @@ def evaluate_scene_perceptibility(document: Mapping[str, Any]) -> tuple[ScenePer
         findings.extend(_suppressed_primitive_findings(scene_path, primitives, suppressed_ids))
         findings.extend(_relation_duplicate_findings(scene_path, surface.get("primitives")))
         findings.extend(_relation_reversal_findings(scene_path, surface.get("primitives")))
+        findings.extend(_relation_geometry_findings(scene_path, surface.get("primitives")))
         findings.extend(_slot_findings(scene_path, slots, primitives))
         findings.extend(_occlusion_findings(scene_path, primitives))
         findings.extend(_text_intersection_findings(scene_path, primitives))
@@ -134,6 +135,82 @@ def _relation_reversal_findings(scene_path: str, raw_primitives: Any) -> list[Sc
             findings.append(_finding("E_SCENE_RELATION_PATH_REVERSES", "error", scene_path, (str(raw["id"]),), None,
                                      (("relation", str(raw.get("sourceRef"))), ("overlap", round(overlap, 3)))))
     return findings
+
+
+def _relation_geometry_findings(scene_path: str, raw_primitives: Any) -> list[ScenePerceptibilityFinding]:
+    """No relation segment is shorter than its stroke width, no relation runs through a bar, and no relation leaves
+    along the line another arrives on, in the opposite direction (#1108, #1109, #1114). Two arrivals that share their
+    last approach run the same way and are not a finding."""
+    paths: list[tuple[str, str, list[tuple[float, float]], float]] = []
+    for raw in raw_primitives if isinstance(raw_primitives, list) else ():
+        if not (isinstance(raw, Mapping) and raw.get("kind") == "Path" and raw.get("sourceKind") == "relation"
+                and str(raw.get("id")).startswith("relation:") and isinstance(raw.get("points"), list)):
+            continue
+        points = [tuple(point) for point in raw["points"]
+                  if isinstance(point, (list, tuple)) and len(point) == 2
+                  and all(isinstance(value, (int, float)) for value in point)]
+        paint = raw.get("paint")
+        width = paint.get("strokeWidth") if isinstance(paint, Mapping) else None
+        paths.append((str(raw["id"]), str(raw.get("sourceRef")), points,
+                      float(width) if isinstance(width, (int, float)) and not isinstance(width, bool) else 0.0))
+    findings = []
+    for identifier, relation, points, width in paths:
+        legs = [abs(b[0] - a[0]) + abs(b[1] - a[1]) for a, b in zip(points, points[1:]) if a != b]
+        short = min(legs) if len(legs) > 1 else None  # a lone segment is the distance between two abutting ports
+        if short is not None and short < width - 1e-9:
+            findings.append(_finding("E_SCENE_RELATION_SEGMENT_TOO_SHORT", "error", scene_path, (identifier,), None,
+                                     (("relation", relation), ("segment", round(short, 3)), ("strokeWidth", width))))
+    marks = []
+    for raw in raw_primitives if isinstance(raw_primitives, list) else ():
+        identifier = raw.get("id") if isinstance(raw, Mapping) else None
+        bounds = raw.get("bounds") if isinstance(raw, Mapping) else None
+        if (isinstance(identifier, str) and identifier.startswith("planned:") and ":snapshot:" not in identifier
+                and ":scenario:" not in identifier and isinstance(bounds, Mapping)
+                and all(isinstance(bounds.get(key), (int, float)) for key in ("inline", "block", "inlineSize", "blockSize"))):
+            marks.append((identifier, bounds))
+    for identifier, relation, points, width in paths:
+        for mark_id, bounds in marks:
+            length = _length_inside(points, bounds, max(0.5, width / 2))
+            if length > 1e-6:
+                findings.append(_finding("E_SCENE_RELATION_THROUGH_MARK", "error", scene_path, (identifier, mark_id), None,
+                                         (("relation", relation), ("inside", round(length, 3)))))
+    for out_id, out_relation, out_points, _ in paths:
+        if len(out_points) < 2 or out_points[0] == out_points[1]:
+            continue
+        for in_id, in_relation, in_points, _ in paths:
+            if in_id == out_id or len(in_points) < 2 or in_points[-1] == in_points[-2]:
+                continue
+            arriving, leaving = (in_points[-2], in_points[-1]), (out_points[0], out_points[1])
+            span = _collinear_overlap(arriving, leaving)
+            opposite = ((arriving[1][0] - arriving[0][0]) * (leaving[1][0] - leaving[0][0])
+                        + (arriving[1][1] - arriving[0][1]) * (leaving[1][1] - leaving[0][1])) < 0
+            if span > 1e-6 and opposite:
+                findings.append(_finding("E_SCENE_RELATION_EGRESS_OVERLAPS_ARRIVAL", "error", scene_path,
+                                         (out_id, in_id), None, (("overlap", round(span, 3)),)))
+    return findings
+
+
+def _length_inside(points: list[tuple[float, float]], bounds: Mapping[str, Any], inset: float) -> float:
+    """The route length inside a mark's box shrunk by `inset`: the port on the boundary and the outward stub are not inside."""
+    x0, x1 = bounds["inline"] + inset, bounds["inline"] + bounds["inlineSize"] - inset
+    y0, y1 = bounds["block"] + inset, bounds["block"] + bounds["blockSize"] - inset
+    total = 0.0
+    for (ax, ay), (bx, by) in zip(points, points[1:]):
+        if ay == by and y0 < ay < y1:
+            total += max(0.0, min(max(ax, bx), x1) - max(min(ax, bx), x0))
+        elif ax == bx and x0 < ax < x1:
+            total += max(0.0, min(max(ay, by), y1) - max(min(ay, by), y0))
+    return total
+
+
+def _collinear_overlap(first: tuple[tuple[float, float], tuple[float, float]],
+                       second: tuple[tuple[float, float], tuple[float, float]]) -> float:
+    (a, b), (c, d) = first, second
+    if a[1] == b[1] == c[1] == d[1]:
+        return min(max(a[0], b[0]), max(c[0], d[0])) - max(min(a[0], b[0]), min(c[0], d[0]))
+    if a[0] == b[0] == c[0] == d[0]:
+        return min(max(a[1], b[1]), max(c[1], d[1])) - max(min(a[1], b[1]), min(c[1], d[1]))
+    return 0.0
 
 
 def _slots(raw_slots: Any, scene_path: str) -> dict[str, tuple[Rect, str]]:

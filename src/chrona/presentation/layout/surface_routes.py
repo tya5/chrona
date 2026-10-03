@@ -17,7 +17,7 @@ from chrona.presentation.layout.ports import (
 from chrona.presentation.layout.presentation import TrackPlacement
 from chrona.presentation.layout.relation_terminals import centred_on_route, marker_geometry, trim_for_centred_terminals
 from chrona.presentation.layout.routing import (
-    RouteSearchFailure, RouteSuppressionEvidence, back_route_points, place_relation_route, route_self_overlaps,
+    RouteSearchFailure, RouteSuppressionEvidence, back_route_points, place_relation_route, route_self_overlaps, simplify_route, length_inside_box,
     relation_route_quality, repair_self_reversal, select_lane_relation_route,
 )
 from chrona.presentation.layout.path_geometry import flatten_path, rounded_orthogonal_path
@@ -129,7 +129,6 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     marks = context.marks
     rows, groups = context.rows, context.groups
     diagnostics: list[str] = []
-    relations: list[RelationPlacement] = []
     route_fallbacks: list[RelationPlacement] = []
     instance_anchors: dict[str, list[tuple[str, tuple[float, float]]]] = {}
     comparison_instances: set[str] = set()
@@ -216,6 +215,18 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         return (run if starts else -run) >= 0.99 * entry_stub_length(relation.semantic_id)
 
     back_route_reason = [""]
+    # #1109: a relation does not leave a node along the line another relation arrives on. The sides arrivals use are
+    # known before routing (the natural side of each incoming endpoint) and are extended by the sides actually used;
+    # an egress pair that would leave by such a side is tried after every other pair.
+    arrival_sides: dict[str, set[str]] = {}
+    incoming_natural: dict[str, set[str]] = {}
+    for incoming in request.surface_content.relations:
+        incoming_natural.setdefault(str(incoming.target_object_id), set()).add(
+            "start" if incoming.target_endpoint in {"start", "at"} else "end")
+
+    def egress_conflicts(pair, source_mark, source_object) -> bool:
+        used = {*incoming_natural.get(source_object, ()), *arrival_sides.get(source_mark.placement_id, ())}
+        return pair[0].side in used
 
     def back_route(relation, source_mark, target_mark, source_id, target_id, source_nominal):
         """`entry: side` (#1060): a target the source does not approach from the entry side is entered through the
@@ -274,7 +285,37 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         return ((ConnectorEgress(source_side, port, port, (source_mark.placement_id,)),
                  ConnectorEgress(stub.side, stub.semantic_port, stub.semantic_port, stub.host_ids)), points)
 
-    for relation in request.surface_content.relations:
+    def routing_order(declared):
+        """Relations ordered so every arrival at a node is routed before the departures from it (#1109): by the
+        topological rank of the target (declaration order breaks ties and cycles). The output keeps declaration order."""
+        successors: dict[str, list[str]] = {}
+        indegree: dict[str, int] = {}
+        for item in declared:
+            source_key, target_key = str(item.source_object_id), str(item.target_object_id)
+            indegree.setdefault(source_key, 0)
+            indegree[target_key] = indegree.get(target_key, 0) + 1
+            successors.setdefault(source_key, []).append(target_key)
+        rank: dict[str, int] = {}
+        ready = [key for key in indegree if indegree[key] == 0]
+        while ready:
+            key = ready.pop(0)
+            rank[key] = len(rank)
+            for follower in successors.get(key, ()):
+                indegree[follower] -= 1
+                if indegree[follower] == 0:
+                    ready.append(follower)
+        for key in indegree:
+            rank.setdefault(key, len(rank))  # a cycle keeps declaration order
+        return sorted(enumerate(declared), key=lambda pair: rank[str(pair[1].target_object_id)])
+
+    emitted: list[tuple[int, RelationPlacement]] = []
+    current_index = [0]
+
+    def emit(placement: RelationPlacement) -> None:
+        emitted.append((current_index[0], placement))
+
+    for declared_index, relation in routing_order(request.surface_content.relations):
+        current_index[0] = declared_index
         source, target, relation_id = relation.source_object_id, relation.target_object_id, relation.relation_id
         for source_id, source_anchor in relation_anchors.get(str(source), ()):
             for target_id, target_anchor in relation_anchors.get(str(target), ()):
@@ -297,9 +338,19 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     stub_free=entry_stub_free) if target_mark else
                     (ConnectorEgress(relation.target_endpoint, target_nominal, target_nominal, ()),))
                 port_pairs = tuple((left, right) for left in source_candidates for right in target_candidates)
+
+                def clear_of_endpoint_marks(candidate, source_mark=source_mark, target_mark=target_mark):
+                    """#1114: no route runs through the inside of the bar or gate at either end of the relation."""
+                    return all(length_inside_box(candidate, (float(mark.bounds.inline), float(mark.bounds.block),
+                                                             float(mark.bounds.inline_size), float(mark.bounds.block_size)),
+                                                 inset=0.5) == 0.0
+                               for mark in (source_mark, target_mark) if mark is not None)
                 if context.layout_manifest.relation_entry in {"side-when-free", "side"}:
                     # #1072: every exit of the source is tried with the horizontal entry before any other entry
                     port_pairs = stub_pairs_first(port_pairs)
+                if source_mark is not None:
+                    port_pairs = (*(pair for pair in port_pairs if not egress_conflicts(pair, source_mark, str(source))),
+                                  *(pair for pair in port_pairs if egress_conflicts(pair, source_mark, str(source))))
                 selected_pair: tuple[ConnectorEgress, ConnectorEgress] | None = None
                 points: tuple[tuple[float, float], ...] = ()
                 lane_selection = None
@@ -309,7 +360,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         source_host_id=source_mark.placement_id if source_mark else None,
                         target_host_id=target_mark.placement_id if target_mark else None,
                         relation_scene_id=scene_id, max_bends=context.layout_manifest.relation_max_bends,
-                        max_detour_ratio=context.layout_manifest.relation_max_detour_ratio, classes=route_classes)
+                        max_detour_ratio=context.layout_manifest.relation_max_detour_ratio, classes=route_classes,
+                        accept=clear_of_endpoint_marks)
                     selected_pair, points = lane_selection.selected_pair, lane_selection.points
                 else:
                     for source_egress, target_egress in port_pairs:
@@ -337,7 +389,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                                                         host_ids=(*source_egress.host_ids, *target_egress.host_ids))
                         if repaired is not None:
                             candidate_points = repaired
-                        if len(candidate_points) >= 2 and relation_route_quality(candidate_points,
+                        if len(candidate_points) >= 2 and clear_of_endpoint_marks(candidate_points) and relation_route_quality(candidate_points,
                             max_bends=context.layout_manifest.relation_max_bends,
                             max_detour_ratio=context.layout_manifest.relation_max_detour_ratio):
                             selected_pair, points = (source_egress, target_egress), candidate_points
@@ -346,13 +398,18 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         and not (selected_pair is not None and enters_along(relation, points))):
                     # #1060/#1084: the forward side entry did not give a horizontal entry; try the back-route
                     backed = back_route(relation, source_mark, target_mark, source_id, target_id, source_nominal)
-                    if backed is not None:
+                    if backed is not None and clear_of_endpoint_marks(backed[1]):
                         selected_pair, points = backed
                         lane_selection = None
                 fallback = selected_pair is None
+                if not fallback:
+                    points = simplify_route(tuple(points), obstacles, classes=route_classes,
+                        regions=("timeline", "group-header"), host_ids=(*selected_pair[0].host_ids, *selected_pair[1].host_ids),
+                        min_segment=float(request.theme_tokens.number(
+                            semantic_binding(relation.semantic_id).theme_role, "strokeWidth")))
                 if fallback:
                     if request.surface_content.relation_overflow == "suppress":
-                        relations.append(RelationPlacement(scene_id,
+                        emit(RelationPlacement(scene_id,
                             f"{source_id}:{relation.source_endpoint}", f"{target_id}:{relation.target_endpoint}",
                             suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))
                         diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
@@ -366,13 +423,18 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         (first_source.semantic_port, (first_source.semantic_port[0] + 1.0,
                                                        first_source.semantic_port[1])))
                     if lane_selection is not None and not _lane_fallback_clears_required_labels(points, context.text):
-                        relations.append(RelationPlacement(scene_id,
+                        emit(RelationPlacement(scene_id,
                             f"{source_id}:{relation.source_endpoint}", f"{target_id}:{relation.target_endpoint}",
                             suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))
                         diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
                         diagnostics.append(RouteSuppressionEvidence(scene_id, lane_selection.attempts).diagnostic)
                         continue
                 source_egress, target_egress = selected_pair
+                if not fallback:
+                    if source_mark is not None and egress_conflicts((source_egress, target_egress), source_mark, str(source)):
+                        diagnostics.append(f"I_LAYOUT_RELATION_NODE_SIDE_SHARED:{scene_id};side={source_egress.side}")
+                    if target_mark is not None:
+                        arrival_sides.setdefault(target_mark.placement_id, set()).add(target_egress.side)
                 source_port_id = f"{source_id}:{relation.source_endpoint}:{source_egress.side}"
                 target_port_id = f"{target_id}:{relation.target_endpoint}:{target_egress.side}"
                 for mark, side, port in ((source_mark, source_egress.side, source_egress.exposed_port),
@@ -397,7 +459,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         if radius > 0 and not fallback else ()),
                     marker_start=marker_start, marker_end=marker_end,
                     label_content=relation_label_content(relation), source_ref=relation_id)
-                relations.append(placed)
+                emit(placed)
                 if (context.layout_manifest.relation_entry == "side" and target_mark is not None
                         and relation.target_endpoint in {"start", "at", "finish", "end"} and len(points) >= 2
                         and not enters_along(relation, points)):
@@ -409,6 +471,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 if fallback:
                     route_fallbacks.append(placed)
 
+    relations = [placement for _, placement in sorted(emitted, key=lambda pair: pair[0])]
     return SurfaceRoutesBatch(tuple(relations), tuple(route_fallbacks),
         {key: tuple(values) for key, values in instance_anchors.items()}, instance_rows,
         comparison_clusters, tuple(diagnostics))

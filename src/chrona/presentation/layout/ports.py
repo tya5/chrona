@@ -15,7 +15,6 @@ class ConnectorEgress:
     exposed_port: tuple[float, float]
     host_ids: tuple[str, ...]
     stub: bool = False  # the horizontal-entry stub candidate of `relationRouting.entry` (#1030)
-    through_body: bool = False  # a span exit on the far side of its own mark: the corridor crosses the bar (#1072)
 
     @property
     def corridor(self) -> tuple[tuple[float, float], ...]:
@@ -104,8 +103,9 @@ def connector_egress_candidates(mark: MarkPlacement, endpoint: str,
         exposed = {"end": (right, semantic[1]), "start": (left, semantic[1]),
                    "above": (semantic[0], top), "below": (semantic[0], bottom)}[side]
         natural = "start" if endpoint == "start" else "end"
-        candidates.append(ConnectorEgress(side, semantic, exposed, tuple(sorted(connected)), False,
-            mark.mark_shape != "point" and endpoint not in {"at", "body"} and side in {"start", "end"} and side != natural))
+        if mark.mark_shape != "point" and endpoint not in {"at", "body"} and side in {"start", "end"} and side != natural:
+            continue  # the far-side exit of a span crosses its own bar: no route runs through a mark (#1114)
+        candidates.append(ConnectorEgress(side, semantic, exposed, tuple(sorted(connected))))
     order = {"end": 0, "start": 1, "above": 2, "below": 3}
     ranked = tuple(sorted(candidates, key=lambda item: (
         abs(item.exposed_port[0] - toward[0]) + abs(item.exposed_port[1] - toward[1]),
@@ -127,14 +127,8 @@ def connector_egress_candidates(mark: MarkPlacement, endpoint: str,
 
 def stub_pairs_first(pairs: tuple[tuple[ConnectorEgress, ConnectorEgress], ...]
                      ) -> tuple[tuple[ConnectorEgress, ConnectorEgress], ...]:
-    """Try every source exit with the horizontal entry stub before any other pair (#1072); order inside each group kept.
-
-    An exit through the source's own bar (the far side of a span) is not promoted: its corridor crosses the mark.
-    """
-    def first(pair: tuple[ConnectorEgress, ConnectorEgress]) -> bool:
-        return pair[1].stub and not pair[0].through_body
-
-    return (*(pair for pair in pairs if first(pair)), *(pair for pair in pairs if not first(pair)))
+    """Try every source exit with the horizontal entry stub before any other pair (#1072); order inside each group kept."""
+    return (*(pair for pair in pairs if pair[1].stub), *(pair for pair in pairs if not pair[1].stub))
 
 
 def _overlaps(left: MarkPlacement, right: MarkPlacement) -> bool:
