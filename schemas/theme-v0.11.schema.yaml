@@ -152,7 +152,7 @@ properties:
                         minItems: 1
                         items: {type: number, minimum: -15, maximum: 15}
                       contentInsetEm:
-                        description: "The box Layout measures note text into (top/right/bottom/left, in em); the image is stretched to the resulting paint box (#465)."
+                        description: "The box Layout measures note text into (top/right/bottom/left, in em), so the note keeps that padding inside its edge; an image is stretched to the resulting paint box (#465). Required for an image outline; optional for a rectangle or balloon, where omitted means no padding."
                         type: object
                         additionalProperties: false
                         required: [top, right, bottom, left]

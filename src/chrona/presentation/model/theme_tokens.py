@@ -428,13 +428,16 @@ class ThemeTokenView:
             if any(angle is None or abs(angle) > 15 for angle in angles):
                 raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer)
             tilt_degrees = angles  # type: ignore[assignment]
+        # A rectangle or balloon may also declare a content inset (#991): padding between the box edge and its text.
+        padding = (self._insets(value["contentInsetEm"], role, "annotationContainer/contentInsetEm")
+                   if outline != "image" and "contentInsetEm" in value else None)
         if outline == "rectangle":
-            return AnnotationContainerToken(outline, corner_radius, None, None, None, None, tilt_degrees)
+            return AnnotationContainerToken(outline, corner_radius, None, None, None, padding, tilt_degrees)
         if outline == "balloon":
             tail_base = self._decimal(value.get("tailBaseEm"), role, "annotationContainer/tailBaseEm")
             if tail_base is None or tail_base <= 0:
                 raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/annotationContainer/tailBaseEm")
-            return AnnotationContainerToken(outline, corner_radius, tail_base, None, None, None)
+            return AnnotationContainerToken(outline, corner_radius, tail_base, None, None, padding)
         # outline == "image" (#465): a nine-slice-stretchable icon-catalog
         # raster entry bound as the container's backdrop. cornerRadius must
         # be exactly 0 -- the artwork supplies its own corner treatment.

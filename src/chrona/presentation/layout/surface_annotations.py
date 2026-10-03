@@ -316,13 +316,13 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                                                         letter_spacing=float(annotation_treatment.letter_spacing),
                                                         text_transform=annotation_treatment.transform)
                                      for line in annotation_lines)
-                    # An image-backed container (#465) declares a content
-                    # inset: Layout measures text into that smaller box, then
+                    # A container with a content inset (always an image-backed one, #465; optionally a
+                    # rectangle or balloon, #991) measures text into that smaller box, then
                     # expands it by the inset to the paint box the search and
                     # collision below actually use -- the box a rectangle or
                     # balloon container already uses today, unchanged.
                     content_top = content_right = content_bottom = content_left = 0.0
-                    if container is not None and container.outline == "image":
+                    if container is not None and container.content_insets_em is not None:
                         content_top, content_right, content_bottom, content_left = (
                             float(value) * size for value in container.content_insets_em)
                     body_inline = annotation_leading + text_width + annotation_trailing
