@@ -47,12 +47,17 @@ class HeaderTemplate:
         return frozenset(value[len(FIGURE_PREFIX):] for value in self.fields if value.startswith(FIGURE_PREFIX))
 
 
-def _is_placeholder(name: str) -> bool:
-    return name in PLACEHOLDERS or (name.startswith(FIGURE_PREFIX) and len(name) > len(FIGURE_PREFIX))
+def _is_placeholder(name: str, placeholders: tuple[str, ...] = PLACEHOLDERS, allow_figures: bool = True) -> bool:
+    return name in placeholders or (allow_figures and name.startswith(FIGURE_PREFIX) and len(name) > len(FIGURE_PREFIX))
 
 
-def parse_template(source: str) -> HeaderTemplate:
-    """Parse ``source`` or raise ``E_VIEW_GROUP_HEADER_TEMPLATE`` for any other brace use."""
+def parse_template(source: str, *, placeholders: tuple[str, ...] = PLACEHOLDERS, code: str = "E_VIEW_GROUP_HEADER_TEMPLATE",
+                   allow_figures: bool = True) -> HeaderTemplate:
+    """Parse ``source`` or raise ``code`` for any other brace use.
+
+    The grammar (literal text, closed ``{name}`` placeholders, ``{{`` and ``}}``) is shared with the
+    heading template (#991), which passes its own closed placeholder set and code.
+    """
     parts: list[tuple[str, str]] = []
     literal: list[str] = []
     index = 0
@@ -65,8 +70,8 @@ def parse_template(source: str) -> HeaderTemplate:
                 continue
             end = source.find("}", index + 1)
             name = source[index + 1:end] if end != -1 else ""
-            if not _is_placeholder(name):
-                raise GroupHeaderTextError("E_VIEW_GROUP_HEADER_TEMPLATE", f"unknown or unterminated placeholder in {source!r}")
+            if not _is_placeholder(name, placeholders, allow_figures):
+                raise GroupHeaderTextError(code, f"unknown or unterminated placeholder in {source!r}")
             if literal:
                 parts.append(("text", "".join(literal)))
                 literal = []
@@ -75,7 +80,7 @@ def parse_template(source: str) -> HeaderTemplate:
             continue
         if char == "}":
             if source[index + 1:index + 2] != "}":
-                raise GroupHeaderTextError("E_VIEW_GROUP_HEADER_TEMPLATE", f"lone closing brace in {source!r}")
+                raise GroupHeaderTextError(code, f"lone closing brace in {source!r}")
             literal.append("}")
             index += 2
             continue

@@ -494,6 +494,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                 slot_id=placed.slot_id, paint_order=placed.paint_order,
                 corner_radius=placed.corner_radius or None))
     emit_semantic_text("title", "titleText")
+    if "subtitle" in layout_text:
+        emit_semantic_text("subtitle", "subtitleText")
     for column in value.surface_content.table_columns:
         emit_semantic_text(f"column:{column.column_id}", "tableColumnLabel", table_column_id=column.column_id)
     row_ids = {row.object_id: row.row_id for row in rows} | {row.row_id: row.row_id for row in rows}

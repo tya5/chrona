@@ -15,6 +15,7 @@ from chrona.presentation.layout.model import LayoutManifest
 from chrona.presentation.model.placement_candidates import legacy_candidate_order, parse_candidates
 from chrona.presentation.contracts.resources import ReviewDetailInput, SummaryProfileInput, ViewInput
 from chrona.presentation.group_header_text import GroupHeaderTextError, compose_group_headers
+from chrona.presentation.heading_text import render_heading
 from chrona.presentation.model.color_scale import ResolvedColorScale
 from chrona.presentation.model.axis_names import axis_name_table
 
@@ -406,6 +407,35 @@ def _as_of_label(marker: Mapping[str, Any] | None, as_of: date | None, locale: s
         "monthNumeric": f"{as_of.month:02d}", "day": as_of.day, "dayNumeric": f"{as_of.day:02d}",
     })
     return f"{label} {formatted}" if label else formatted
+
+
+def compose_heading(view: ViewInput, project: Mapping[str, Any], actual_set: Mapping[str, Any] | None,
+                    locale: str) -> tuple[str, str | None]:
+    """The title and optional subtitle a table-timeline surface draws (#991).
+
+    Without a declared `heading` the title is the Project title and there is no subtitle, as before.
+    A declared template reads the Project title, the Actual Set's as-of date in the declared form and
+    the Project's default calendar id; a fact the Project lacks renders as empty text.
+    """
+    project_body = project.get("project", {})
+    project_title = str(project_body.get("title", "Chrona")) if isinstance(project_body, Mapping) else "Chrona"
+    heading = view.heading
+    if heading is None:
+        return project_title, None
+    as_of_value = _resource_body(actual_set, "ACTUAL_SET").get("asOf")
+    as_of_text = ""
+    if isinstance(as_of_value, str):
+        as_of = date.fromisoformat(as_of_value)
+        table = axis_name_table(locale)
+        as_of_text = table.format(heading.date_form, {
+            "year": as_of.year, "monthShort": table.month_short[as_of.month - 1],
+            "monthLong": table.month_long[as_of.month - 1], "monthNumber": as_of.month,
+            "monthNumeric": f"{as_of.month:02d}", "day": as_of.day, "dayNumeric": f"{as_of.day:02d}",
+        })
+    calendar_id = project_body.get("calendar") if isinstance(project_body, Mapping) else None
+    facts = {"project": project_title, "asOf": as_of_text, "calendar": str(calendar_id) if calendar_id else ""}
+    title = render_heading(heading.title, facts) if heading.title is not None else project_title
+    return title, render_heading(heading.subtitle, facts) if heading.subtitle is not None else None
 
 
 def _axis_tier(value: Mapping[str, Any], *, locale: str) -> AxisTier:

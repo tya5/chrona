@@ -97,6 +97,11 @@ slides:
     context: contexts/group-tabs.yaml
     expectedSvg: generated/group-tabs.svg
     expectedScene: generated/group-tabs.scene.json
+  - id: heading
+    evidence: "A declared title and subtitle (#991): the View heading templates read the Project title, the as-of date and the calendar id, and the subtitle is drawn under the title in the Theme's subtitle typography role, as a new View and Theme over the executive sources."
+    context: contexts/heading.yaml
+    expectedSvg: generated/heading.svg
+    expectedScene: generated/heading.scene.json
   - id: as-of-cone
     evidence: "The as-of marker as a cone of light (Marquee spotlight): a gradient polygon from the top of the plot to its last row, fading from ink to transparent under the bars and gates, drawn under the rich SVG profile from the Theme role as-of-cone with a label chip (#890)."
     context: contexts/as-of-cone.yaml

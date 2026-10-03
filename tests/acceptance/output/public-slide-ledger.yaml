@@ -21,6 +21,7 @@ slides:
   controller-z/executive: {axisLabels: 7, dvtHosted: true}
   controller-z/group-tabs: {axisLabels: 7, dvtHosted: true}
   controller-z/hand-wobble: {axisLabels: 7, dvtHosted: true}
+  controller-z/heading: {axisLabels: 7, dvtHosted: true}
   controller-z/icons: {axisLabels: 7, dvtHosted: true}
   controller-z/material-icons: {axisLabels: 7, dvtHosted: true}
   controller-z/plan-only: {axisLabels: 6}

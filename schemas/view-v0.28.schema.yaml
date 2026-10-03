@@ -329,6 +329,16 @@ allOf:
               oneOf:
                 - $ref: "#/$defs/figureDaysUntil"
                 - $ref: "#/$defs/figureDaysIn"
+          heading:
+            description: "The title and subtitle lines of a table-timeline surface (a dependency network ignores it), each a template of literal text and the placeholders {project} (the Project title), {asOf} (the Actual Set's as-of date in dateForm) and {calendar} (the Project's default calendar id); {{ and }} are literal braces. Absent, the title is the Project title and there is no subtitle."
+            examples: [{title: "{project}", subtitle: "Every work package by owning team, as of {asOf}, calendar {calendar}"}]
+            type: object
+            minProperties: 1
+            additionalProperties: false
+            properties:
+              title: {description: "The title template; a Project without a title shows `Chrona`.", type: string, minLength: 1, examples: ["{project} programme board"]}
+              subtitle: {description: "The subtitle template, drawn under the title in the Theme's `subtitle` typography role.", type: string, minLength: 1, examples: ["as of {asOf}"]}
+              dateForm: {description: "The form of {asOf}; absent is the localized date.", enum: [localized-date]}
           deadlines:
             description: "Draws each object's Project deadline as a tick at its date and, when the planned finish is later, a run from the tick to that finish; absent draws none."
             examples: [{show: slipped}]

@@ -14,6 +14,7 @@ from chrona.core.store_address import StoreAddressError, check_store_address
 from chrona.resources import schema_validator
 from chrona.schema_diagnostics import SchemaViolation, explain_all_errors, explain_errors
 from chrona.presentation.group_header_text import GroupHeaderTextError, parse_template
+from chrona.presentation.heading_text import validate_heading_template
 from chrona.presentation.table_presentation import (
     AFFIX_STATES, SIGNED_FORMATS, BooleanPresencePresentation, CellAffix, ColumnAffixes,
 )
@@ -237,6 +238,15 @@ class ViewSelection:
 
 
 @dataclass(frozen=True)
+class ViewHeading:
+    """View-declared heading templates (#991): the title and subtitle lines of a table-timeline surface."""
+
+    title: str | None = None
+    subtitle: str | None = None
+    date_form: str = "localized-date"
+
+
+@dataclass(frozen=True)
 class ViewGroupHeader:
     """View-declared group-header text template (#583); composed by content normalization."""
 
@@ -349,6 +359,7 @@ class ViewInput:
     background_decoration: tuple[str, str] = ("none", "all")
     periods: tuple[ViewPeriod, ...] = ()
     figures: tuple[FigureSpec, ...] = ()
+    heading: ViewHeading | None = None
     deadlines: str | None = None  # `slipped` or `all`: which Project deadlines the surface draws; None draws none (#822)
 
 
@@ -927,7 +938,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                                str(body.get("backgroundDecoration", FrozenDict()).get("groups", "all"))),
         periods=_view_periods(body.get("periods", ())),
         figures=figures,
-        deadlines=str(body["deadlines"]["show"]) if "deadlines" in body else None)
+        deadlines=str(body["deadlines"]["show"]) if "deadlines" in body else None,
+        heading=_view_heading(body.get("heading")))
 
 
 def _view_periods(raw: Any) -> tuple[ViewPeriod, ...]:
@@ -1000,6 +1012,22 @@ def _group_tint(raw_grouping: Any) -> ViewGroupTint | None:
         raise ContractError("E_VIEW_GROUP_TINT_UNUSABLE", "tint needs grouping by field")
     domain = raw.get("domain", "firstAppearance")
     return ViewGroupTint(str(raw["scale"]), None if domain == "firstAppearance" else tuple(str(item) for item in domain))
+
+
+def _view_heading(raw: Any) -> ViewHeading | None:
+    """Type the optional heading templates and reject any unknown placeholder (#991)."""
+    if raw is None:
+        return None
+    heading = ViewHeading(str(raw["title"]) if "title" in raw else None,
+                          str(raw["subtitle"]) if "subtitle" in raw else None,
+                          str(raw.get("dateForm", "localized-date")))
+    try:
+        for template in (heading.title, heading.subtitle):
+            if template is not None:
+                validate_heading_template(template)
+    except GroupHeaderTextError as error:
+        raise ContractError(error.code, error.detail) from error
+    return heading
 
 
 def _group_header(raw_grouping: Any) -> ViewGroupHeader | None:
