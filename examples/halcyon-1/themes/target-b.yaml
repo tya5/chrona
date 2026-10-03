@@ -667,7 +667,7 @@ body:
     variance-on-track.fill: textMuted
     variance-behind.fill: negative
     missing-actual-cell.fill: textMuted
-    dependency.stroke: textMuted
+    dependency.stroke: category:relationInk
     calendar-closed.fill: category:closed
     calendar-exception.fill: category:exception
     gate.fill: text
