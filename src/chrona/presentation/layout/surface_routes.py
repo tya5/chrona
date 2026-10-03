@@ -7,7 +7,7 @@ from collections.abc import Callable
 from typing import Any, Mapping
 
 from chrona.presentation.layout.labels import LabelRect, place_label
-from chrona.presentation.layout.model import Rect
+from chrona.presentation.layout.model import Rect, geometry_sum
 from chrona.presentation.layout.obstacles import (
     ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex, obstacles_intersect,
 )
@@ -260,7 +260,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         out_x = port[0] + exit_dx
         reference = (abs(out_x - stub.exposed_port[0]) + abs(port[1] - stub.semantic_port[1])
                      + abs(exit_dx) + abs(stub.semantic_port[0] - stub.exposed_port[0]))
-        length = sum(abs(q[0] - p[0]) + abs(q[1] - p[1]) for p, q in zip(points, points[1:]))
+        length = geometry_sum(abs(q[0] - p[0]) + abs(q[1] - p[1]) for p, q in zip(points, points[1:]))
         if (len(points) - 2 > context.layout_manifest.relation_max_bends or route_self_overlaps(points)
                 or length > reference * context.layout_manifest.relation_max_detour_ratio):
             return fail("bends-or-detour")
