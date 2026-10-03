@@ -28,7 +28,7 @@ body:
     license: MIT
   categories:
     default: "#E8EFFA"
-    window: "#DDE6F7"
+    window: "#1D5FD1"
     exception: "#F8E4C9"
     bar: "#C7D6F3"
     barEdge: "#3F6FD0"
