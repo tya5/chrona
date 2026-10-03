@@ -102,6 +102,9 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("memberLabelChip", "decoration", "label-chip", "member-label-chip", "member-label-chip"),
     _binding("finishDeltaChip", "decoration", "label-chip", "finish-delta-chip", "finish-delta-chip"),
     _binding("calendarClosed", "decoration", "calendar-closed", "calendar-closed", "calendarClosed", ContrastClass.DECORATION),
+    # A calendar-exception day drawn in its own colour when the Theme declares a `calendar-exception` background (#991).
+    _binding("calendarException", "decoration", "calendar-exception", "calendar-exception", "calendarException",
+             ContrastClass.DECORATION),
     # A named Project period (#582): a band across the plot, selected by the View and painted by the Theme.
     _binding("periodBand", "decoration", "period-band", "period-band", "period-band", ContrastClass.DECORATION),
     _binding("periodLabel", "label", "period-label", "period-label", "period-label", ContrastClass.STATE_TEXT),
