@@ -4,7 +4,7 @@ vocabularies:
     pointer: /properties/body/properties/values/additionalProperties/allOf/1/then/properties/value/properties/shape
     owner: chrona.presentation.layout.relation_terminals.marker_geometry
     disposition: finite
-    accepted: [triangle, open-triangle, chevron, circle, open-circle]
+    accepted: [triangle, open-triangle, chevron, circle, open-circle, stealth, rounded-triangle, dot, half, double-chevron]
   - schema: schemas/theme-v0.13.schema.yaml
     pointer: /properties/body/properties/values/additionalProperties/allOf/2/then/properties/value/oneOf/0/properties/kind
     owner: chrona.presentation.model.theme_tokens.ThemeTokenView
