@@ -157,6 +157,7 @@ class TableColumn:
     width: str | FrozenDict = "content"
     header_orientation: str = "horizontal"
     affixes: ColumnAffixes | None = None
+    missing_by: FrozenDict | None = None  # the `missing` text by observation state (#991)
 
 
 @dataclass(frozen=True)
@@ -905,7 +906,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
     table_columns = tuple(TableColumn(str(column["id"]), column["source"], _table_format(column.get("format", "text")),
                                       str(column["missing"]), str(column["align"]), column["width"],
                                       str(column["headerOrientation"]),
-                                      _column_affixes(column["id"], column.get("affixes")))
+                                      _column_affixes(column["id"], column.get("affixes")),
+                                      freeze(column["missingBy"]) if "missingBy" in column else None)
                           for column in body.get("tableColumns", ()))
     hierarchy_column = str(body["hierarchyColumn"]) if "hierarchyColumn" in body else None
     _validate_view_table_intent(table_columns, grouping, row_items, hierarchy_column)

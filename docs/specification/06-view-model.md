@@ -257,6 +257,8 @@ state; a future unobserved item must not be called “Recorded”. An observed b
 incomplete Actual remains recorded, not missing. A start-based obligation or
 separate not-yet-due treatment requires a future versioned View policy.
 
+A table column MAY declare `missingBy` (optional, #991): the text of an absent value by the item's observation state, each of `inProgress` (a span with an Actual start and no finish), `dueUnobserved`, `notYetDue` and `unavailable` taking `blank`, `em-dash` or `unknown`; a state not named keeps the column's `missing`. A Delta column can thereby leave unobserved items blank and show a dash for in-progress ones. It changes only the text of an absent value (affixes still wrap it); without it every absent value reads `missing` as before. It applies to automatic and explicit rows, not to the fixed lane table.
+
 `comparison.missingActualScope` (optional; omitted or `due-unobserved` is the behaviour above,
 #991) selects which work the missing-Actual **mark** covers; the projected state and every table
 and summary count stay as above. `in-progress` marks only a span with an Actual start and no
