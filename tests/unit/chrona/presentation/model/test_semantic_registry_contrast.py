@@ -25,6 +25,7 @@ def test_contrast_registry_classifies_only_the_finite_state_text_and_decoration_
         "calendar-closed", "calendar-exception", "period-band", "axis-band-decoration", "axis-band-decoration2",
         "group-band", "row-band", "group-header-band", "group-tab", "annotation-note-box",
         "annotation-kind-bar", "annotation-kind-accent", "annotation-kind-stamp", "annotation-artwork",
+        "annotation-border-start", "annotation-border-end", "annotation-border-top", "annotation-border-bottom",
     ]
     assert {item.semantic_id for item in contrast_bindings(ContrastClass.GROUND_TEXT)} == GROUND_TEXT_SEMANTICS
     assert contrast_binding("text") is None

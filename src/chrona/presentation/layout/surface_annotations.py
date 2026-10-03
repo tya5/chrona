@@ -24,6 +24,7 @@ from chrona.presentation.layout.annotation_search import (
     nearest_free_box, nearest_free_tail_box, nearest_free_routed_tail_box,
 )
 from chrona.presentation.layout.annotation_artwork import place_artwork
+from chrona.presentation.layout.annotation_border import NO_BORDER, place_border, resolve_border
 from chrona.presentation.layout.annotation_inline_size import fill_note, fill_target
 from chrona.presentation.layout.annotation_kind_frame import EMPTY_FRAME, measure_kind_frame, place_kind_frame
 from chrona.presentation.layout.annotation_tilt import (
@@ -282,6 +283,7 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
 
             tail_tip: tuple[float, float] | None = None
             container = None
+            box_border = NO_BORDER
             fill_declared = used_fill = False
             filled = fill_size = None
             content_top = content_right = content_bottom = content_left = 0.0
@@ -322,6 +324,15 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                     if container is not None and container.content_insets_em is not None:
                         content_top, content_right, content_bottom, content_left = (
                             float(value) * size for value in container.content_insets_em)
+                    # A box border (#1049) lies on the box edge and the inset is measured from inside it: the
+                    # effective insets are border + content inset, read by the text origin, the kind frame's content
+                    # box, the wrap chrome and the box size alike.
+                    box_border = resolve_border(container.border) if container is not None else NO_BORDER
+                    border_top, border_right, border_bottom, border_left = box_border.insets
+                    content_top += border_top
+                    content_right += border_right
+                    content_bottom += border_bottom
+                    content_left += border_left
 
                     def measure_note(wrap_bound: float, may_wrap: bool) -> tuple[tuple[str, ...], float, tuple[float, float]]:
                         lines = (wrap_text(content, available_inline=wrap_bound, font_size=size, font_metrics=annotation_metrics,
@@ -594,6 +605,14 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
             if artwork_shape is not None:
                 shapes.append(rotate_shape(artwork_shape, tilt_center, tilt_angle) if tilt_angle else artwork_shape)
             annotation_text_slot = "annotations" if annotation_slot is not None else timeline.slot_id
+            if not box_border.empty:
+                # Box border strips (#1049): over the artwork's rim, under the kind frame and the text.
+                border_shapes = place_border(
+                    box_border, annotation_id=annotation_id, presentation=presentation,
+                    box=(frame_x, frame_y, frame_width, frame_height), theme_tokens=request.theme_tokens,
+                    paint_order=ANNOTATION_PAINT_ORDER)
+                shapes.extend(rotate_shape(item, tilt_center, tilt_angle) if tilt_angle else item
+                              for item in border_shapes)
             if not kind_measure.empty:
                 kind_shapes, kind_text = place_kind_frame(
                     kind_measure, annotation_id=annotation_id, presentation=presentation,
@@ -634,7 +653,7 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                 for visual, icon, icon_width, gap in annotation_visuals:
                     inline = ((bounds.x if visual.side == "leading"
                                else bounds.x + annotation_leading + text_width + annotation_trailing - gap - icon_width)
-                              + kind_measure.body_inset_left)
+                              + kind_measure.body_inset_left + box_border.start)
                     icon_bounds = Rect(Decimal(str(inline)), Decimal(str(placed_annotation.baseline[1] - cap_height
                                                                           + (cap_height - size) / 2)),
                                        Decimal(str(icon_width)), Decimal(str(size)))

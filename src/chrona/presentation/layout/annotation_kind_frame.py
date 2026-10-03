@@ -14,6 +14,7 @@ from decimal import Decimal
 from typing import Any, Callable
 
 from chrona.presentation.annotation_kind_text import header_lines
+from chrona.presentation.layout.annotation_border import side_strip
 from chrona.presentation.layout.mark_geometry import symbol_parts
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
 from chrona.presentation.layout.surface_quality import (
@@ -155,10 +156,8 @@ def place_kind_frame(measure: KindFrameMeasure, *, annotation_id: str, presentat
 
     if measure.accent_role is not None:
         side, size = measure.accent_side, measure.accent_size
-        left, top, w, h = {
-            "start": (x, y, size, height), "end": (x + width - size, y, size, height),
-            "top": (x, y, width, size), "bottom": (x, y + height - size, width, size),
-        }[str(side)]
+        # The one strip geometry a box border uses too (#1049); here on the content box, inside the inset.
+        left, top, w, h = side_strip(str(side), size, (x, y, width, height))
         shapes.append(rect(f"annotation-kind-accent:{annotation_id}", "annotationKindAccent", left, top, w, h))
     inner_x = x + measure.body_inset_left
     inner_y = y + measure.inset_top
