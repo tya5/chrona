@@ -103,3 +103,8 @@ slides:
     context: contexts/20-gallery-vertical-group-tags.yaml
     expectedSvg: generated/20-gallery-vertical-group-tags.svg
     expectedScene: generated/20-gallery-vertical-group-tags.scene.json
+  - id: target-b
+    evidence: "Issue #987: YAML-only reproduction of the owner-approved hand-drawn programme-board mock (target B)."
+    context: contexts/21-target-b.yaml
+    expectedSvg: generated/21-target-b.svg
+    expectedScene: generated/21-target-b.scene.json

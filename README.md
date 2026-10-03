@@ -32,11 +32,12 @@ Date-only scheduling profile; successor DateTime, capacity, collaboration, and
 presentation capabilities are opt-in versioned profiles rather than changes to
 Date-only meaning.
 
-![Presentation slide rendered by Chrona: a 1600x900 ASTER plan-only schedule
-with calendar-aware spans, gates, milestone markers and routed dependencies](examples/aster-ssd/generated/overview.svg)
+![Programme board rendered by Chrona: HALCYON-1's 26 work packages grouped and tinted by team,
+a two-tier quarter and month axis, current plan with observed actuals, a labelled launch window,
+an as-of marker and a notes rail](examples/halcyon-1/generated/21-target-b.svg)
 
-<sup>Manifest-declared materializer evidence from [`examples/aster-ssd`](examples/aster-ssd).
-Edit the project, re-run the materializer, and this SVG follows.</sup>
+<sup>Rendered by Chrona from [`examples/halcyon-1`](examples/halcyon-1) with View, Theme and Layout
+YAML only. Edit the project, re-run the materializer, and this SVG follows.</sup>
 
 ## What is usable today
 
