@@ -12,6 +12,7 @@ slides:
   controller-z/annotation-kinds: {axisLabels: 7, dvtHosted: true}
   controller-z/annotations: {axisLabels: 7, dvtHosted: true}
   controller-z/as-of-cone: {axisLabels: 7, dvtHosted: true, chips: ['chip:as-of-label']}
+  controller-z/as-of-foot: {axisLabels: 7, dvtHosted: true}
   controller-z/axis-cell-corners: {axisLabels: 7, dvtHosted: true}
   controller-z/axis-ticks: {axisLabels: 7, dvtHosted: true}
   controller-z/axis-tiers: {axisLabels: 7, dvtHosted: true}

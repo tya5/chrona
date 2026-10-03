@@ -76,3 +76,32 @@ def test_returns_none_when_every_plot_position_is_blocked():
         SurfaceObstacle("solid", "mark", "plot", ObstacleRect(0, 0, 100, 100)),
     )
     assert _candidate(index) is None
+
+
+# --- #991: the plot foot -----------------------------------------------------------------------------------
+
+
+def _foot(index, plot=LabelRect(0, 0, 100, 100)):
+    return find_asof_label_candidate(plot, (20, 10), rule_x=50, gap=3, rule_host_id="asof-rule", obstacles=index,
+                                     obstacle_classes=CLASSES, placement="foot")
+
+
+def test_foot_placement_centres_the_chip_on_the_rule_at_the_plot_foot():
+    result = _foot(_index(_rule()))
+    assert result is not None
+    assert result.side == "plot-bottom-center"
+    assert result.bounds == LabelRect(40, 87, 20, 10)  # centred on x 50, `gap` above the plot's last edge
+
+
+def test_foot_placement_moves_beside_the_rule_when_the_foot_is_taken_then_falls_back_to_the_rule_host():
+    taken = SurfaceObstacle("mark", "mark", "plot", ObstacleRect(35, 80, 65, 100))
+    beside = _foot(_index(_rule(), taken))
+    assert beside is not None and beside.side in {"plot-bottom-end", "plot-bottom-start", "rule-hosted"}
+    assert beside.bounds.bottom <= 97 or beside.side == "rule-hosted"
+    wall = SurfaceObstacle("wall", "mark", "plot", ObstacleRect(0, 80, 100, 100))
+    hosted = _foot(_index(_rule(), wall))
+    assert hosted is not None and hosted.side == "rule-hosted" and hosted.bounds.bottom <= 80
+
+
+def test_the_default_placement_is_still_the_top_margin():
+    assert _candidate(_index(_rule())).side == "plot-top-end"

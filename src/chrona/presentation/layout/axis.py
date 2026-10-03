@@ -148,7 +148,7 @@ _FORMS_BY_LEVEL = {
     "month": frozenset({"short-month", "long-month", "numeric-month", "short-month-year",
                         "long-month-year", "numeric-year-month"}),
     "week": frozenset({"iso-week"}),
-    "day": frozenset({"localized-date"}),
+    "day": frozenset({"localized-date", "day-month", "day-month-year"}),
 }
 
 

@@ -216,6 +216,8 @@ class SurfaceContentInput:
     # Composed group-header text, (group id, text), in display order (#583); a
     # group without an entry keeps its entity title.
     group_headers: tuple[tuple[str, str], ...] = ()
+    # Where the as-of label sits on the plot: `top` margin (default) or the plot `foot` (#991).
+    as_of_placement: str = "top"
     # Completed per-group band colour, (group id, "#RRGGBB"), from the View's
     # `grouping.tint` scale (#583); Scene replaces only the band's visible channel.
     group_tints: tuple[tuple[str, str], ...] = ()

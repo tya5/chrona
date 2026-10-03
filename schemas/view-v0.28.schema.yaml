@@ -300,8 +300,9 @@ allOf:
                   required: [form]
                   additionalProperties: false
                   properties:
-                    form: {const: localized-date}
+                    form: {description: "The date form: the localized date (`Aug 20, 2027`), the day and short month (`20 Aug`) or the day, short month and year (`20 Aug 2027`).", enum: [localized-date, day-month, day-month-year]}
                     nameTable: {description: "Exact built-in axis name-table ID; defaults to Render Context locale.", enum: [en-US, ja-JP]}
+                placement: {description: "Where the label sits on the plot: the top margin (default) or the plot foot, centred on the rule above the last row.", enum: [top, foot], examples: [foot]}
           periods:
             description: "Named Project periods drawn as bands across the plot, in paint order of declaration; absent selects none."
             type: array
@@ -339,7 +340,7 @@ allOf:
             properties:
               title: {description: "The title template; a Project without a title shows `Chrona`.", type: string, minLength: 1, examples: ["{project} programme board"]}
               subtitle: {description: "The subtitle template, drawn under the title in the Theme's `subtitle` typography role.", type: string, minLength: 1, examples: ["as of {asOf}"]}
-              dateForm: {description: "The form of {asOf}; absent is the localized date.", enum: [localized-date]}
+              dateForm: {description: "The form of {asOf}; absent is the localized date.", enum: [localized-date, day-month, day-month-year]}
           deadlines:
             description: "Draws each object's Project deadline as a tick at its date and, when the planned finish is later, a run from the tick to that finish; absent draws none."
             examples: [{show: slipped}]
