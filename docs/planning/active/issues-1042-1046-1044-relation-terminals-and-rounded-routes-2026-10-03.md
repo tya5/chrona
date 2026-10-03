@@ -56,4 +56,4 @@ Each code PR runs conformance and `regenerate_public_examples --check` locally f
 
 ## 6. Progress
 
-S1 (#1042) in PR #1068. S2 (#1046) implemented: measured corpus effect and image review go in the acceptance review. S3 (#1044) not started.
+S1 (#1042) merged in PR 1068; S2 (#1046) merged in PR 1071. S3 (#1044) implemented: five shapes, centred round terminals (route end points trimmed by the radius, marker reference set per end), Spec 50 section 3.3, schema enum + one expected-delta entry, vocabulary policy and inventory. Measured effect: every slide with relations changes (a circle source terminal is in every committed Theme): paths move only at their first point by the circle radius (groups by exit direction: down, up, right, left; one short-leg case limited to half the leg). The round `circle` outline is an existing four-quadratic approximation that draws as a rounded square; a true circle is a possible successor and is not part of this issue.
