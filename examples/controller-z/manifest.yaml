@@ -112,6 +112,11 @@ slides:
     context: contexts/as-of-foot.yaml
     expectedSvg: generated/as-of-foot.svg
     expectedScene: generated/as-of-foot.scene.json
+  - id: in-progress
+    evidence: "Work in progress and not yet observed (#991): comparison.missingActualScope in-progress hatches a span that has an actual start and no finish from that start to the as-of date (the Theme's missing-actual hatch), and puts no mark on a due span or a gate, over the executive sources."
+    context: contexts/in-progress.yaml
+    expectedSvg: generated/in-progress.svg
+    expectedScene: generated/in-progress.scene.json
   - id: as-of-cone
     evidence: "The as-of marker as a cone of light (Marquee spotlight): a gradient polygon from the top of the plot to its last row, fading from ink to transparent under the bars and gates, drawn under the rich SVG profile from the Theme role as-of-cone with a label chip (#890)."
     context: contexts/as-of-cone.yaml
