@@ -132,6 +132,7 @@ body:
         outline: rectangle
         cornerRadius: 0
         contentInsetEm: {top: 0.7, right: 0.7, bottom: 0.7, left: 0.7}
+        inlineSize: fill
     hatch:
       type: pattern
       value:
@@ -270,7 +271,7 @@ body:
       value: 0.16
     note-rail-width:
       type: number
-      value: 300
+      value: 250
     kind-upper:
       type: textTransform
       value: uppercase
