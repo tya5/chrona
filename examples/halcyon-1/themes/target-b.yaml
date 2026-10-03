@@ -8,7 +8,7 @@ body:
       value: 0.35
     chip-radius:
       type: number
-      value: 0.15
+      value: 0.1333
     opacity.axis-band:
       type: number
       value: 1
@@ -35,22 +35,34 @@ body:
       value: '700'
     size.heading:
       type: number
-      value: 28
+      value: 22
     size.subtitle:
       type: number
-      value: 13
+      value: 12.5
     size.body:
       type: number
-      value: 13
+      value: 12.5
+    size.group:
+      type: number
+      value: 12
+    size.numeric:
+      type: number
+      value: 12
+    size.period:
+      type: number
+      value: 10.5
+    size.axis-quarter:
+      type: number
+      value: 11.5
     size.axis:
       type: number
       value: 12
     size.legend:
       type: number
-      value: 13
+      value: 12
     size.note:
       type: number
-      value: 12
+      value: 11.5
     leading.tight:
       type: number
       value: 1.15
@@ -79,8 +91,8 @@ body:
       type: marker
       value:
         shape: triangle
-        headLength: 10
-        headWidth: 10
+        headLength: 6
+        headWidth: 6
         attachmentOffset: 1
     milestone-symbol:
       type: symbol
@@ -120,6 +132,11 @@ body:
         outline: rectangle
         cornerRadius: 0
         contentInsetEm: {top: 0.7, right: 0.7, bottom: 0.7, left: 0.7}
+        inlineSize: fill
+        border:
+          start:
+            width: 3
+            paint: kind
     hatch:
       type: pattern
       value:
@@ -178,7 +195,31 @@ body:
       value: 14
     table-indent:
       type: number
-      value: 16
+      value: 8
+    timeline-relation-radius:
+      type: number
+      value: 4
+    size.secondary:
+      type: number
+      value: 11.5
+    slot-heading-size:
+      type: number
+      value: 11
+    slot-heading-spacing:
+      type: number
+      value: 0.1
+    symbol-height-actual:
+      type: number
+      value: 0.875
+    symbol-offset-actual:
+      type: number
+      value: 0.0625
+    symbol-height-ghost:
+      type: number
+      value: 0.8125
+    symbol-offset-ghost:
+      type: number
+      value: 0.09375
     table-header-height:
       type: number
       value: 44
@@ -224,6 +265,15 @@ body:
     mark-radius-rounded:
       type: number
       value: 0.25
+    mark-radius-plan:
+      type: number
+      value: 0.1875
+    mark-radius-baseline:
+      type: number
+      value: 0.1471
+    mark-radius-actual:
+      type: number
+      value: 0.2976
     icon-mark-scale:
       type: number
       value: 0.55
@@ -232,7 +282,7 @@ body:
       value: 0
     kind-label-size:
       type: number
-      value: 11
+      value: 10.5
     kind-label-leading:
       type: number
       value: 1.2
@@ -245,11 +295,6 @@ body:
     kind-bar-padding:
       type: number
       value: 0.6
-    kind-accent-edge:
-      type: edge
-      value:
-        side: start
-        size: 5
     kind-label-spacing:
       type: number
       value: 0.08
@@ -258,7 +303,7 @@ body:
       value: 0.16
     note-rail-width:
       type: number
-      value: 300
+      value: 250
     kind-upper:
       type: textTransform
       value: uppercase
@@ -276,7 +321,13 @@ body:
       value: 0
     opacity.period-band:
       type: number
-      value: 1
+      value: 0.09
+    text-transform-lower:
+      type: textTransform
+      value: lowercase
+    period-spacing:
+      type: number
+      value: 0.04
     period-stroke-width:
       type: number
       value: 1
@@ -290,31 +341,39 @@ body:
       value: 100
     mark-height-planned:
       type: number
-      value: 0.55
+      value: 0.5
     mark-offset-planned:
       type: number
       value: 0.15
     mark-height-ghost:
       type: number
-      value: 0.9
+      value: 0.85
     mark-offset-ghost:
       type: number
-      value: 0.0
+      value: 0.075
     mark-height-actual:
       type: number
-      value: 0.17
+      value: 0.21
     mark-offset-actual:
       type: number
-      value: 0.72
+      value: 0.7
     dash.ghost:
       type: dashPattern
       value:
       - 3
       - 2
+    legend-swatch-inline-size:
+      type: number
+      value: 22
+    legend-gap:
+      type: number
+      value: 14
     legend-block:
       type: number
       value: 22
   roles:
+    legend-swatch:
+      swatchInlineSize: legend-swatch-inline-size
     axis-rule:
       strokeWidth: stroke-width
     as-of-label-chip:
@@ -352,8 +411,8 @@ body:
       iconGap: icon-gap
     numeric:
       fontFamily: editorial
-      fontWeight: weight.regular
-      fontSize: size.body
+      fontWeight: weight.bold
+      fontSize: size.numeric
       lineHeight: leading.body
       letterSpacing: letter-spacing
       textTransform: text-transform
@@ -413,6 +472,7 @@ body:
     annotation-note-box:
       strokeWidth: stroke-width
       annotationContainer: note-container
+      viewerFit: text-follows-box
     annotation-note-text:
       contrastTreatment: required
       fontFamily: editorial
@@ -421,6 +481,22 @@ body:
       lineHeight: leading.body
       letterSpacing: letter-spacing
       textTransform: text-transform
+      numericSpacing: numeric-spacing
+    table-cell-secondary:
+      fontFamily: editorial
+      fontWeight: weight.regular
+      fontSize: size.secondary
+      lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+    slot-heading:
+      fontFamily: editorial
+      fontWeight: weight.bold
+      fontSize: slot-heading-size
+      lineHeight: leading.body
+      letterSpacing: slot-heading-spacing
+      textTransform: kind-upper
       numericSpacing: numeric-spacing
     summary:
       fontFamily: editorial
@@ -444,8 +520,8 @@ body:
       iconGap: icon-gap
     groupHeader:
       fontFamily: editorial
-      fontWeight: weight.regular
-      fontSize: size.body
+      fontWeight: weight.bold
+      fontSize: size.group
       lineHeight: leading.body
       letterSpacing: letter-spacing
       textTransform: text-transform
@@ -483,10 +559,10 @@ body:
       strokeWidth: stroke-width
     missing-actual:
       pattern: hatch
-      markHeight: mark-height-content
-      markOffset: mark-offset-nested
+      markHeight: mark-height-planned
+      markOffset: mark-offset-planned
       markPaintOrder: mark-paint-front
-      markCornerRadius: mark-radius-rounded
+      markCornerRadius: mark-radius-plan
       strokeWidth: stroke-width
     axis-major:
       strokeWidth: stroke-width
@@ -515,7 +591,9 @@ body:
       markHeight: mark-height-ghost
       markOffset: mark-offset-ghost
       markPaintOrder: mark-paint-back
-      markCornerRadius: mark-radius-square
+      markCornerRadius: mark-radius-baseline
+      symbolHeight: symbol-height-ghost
+      symbolOffset: symbol-offset-ghost
       dash: dash.ghost
     scenario:
       markHeight: mark-height-container
@@ -527,13 +605,17 @@ body:
       markHeight: mark-height-planned
       markOffset: mark-offset-planned
       markPaintOrder: mark-paint-middle
-      markCornerRadius: mark-radius-square
+      markCornerRadius: mark-radius-plan
+      symbolHeight: symbol-height-actual
+      symbolOffset: symbol-offset-actual
     actual:
       strokeWidth: stroke-width
       markHeight: mark-height-actual
       markOffset: mark-offset-actual
       markPaintOrder: mark-paint-front
-      markCornerRadius: mark-radius-rounded
+      markCornerRadius: mark-radius-actual
+      symbolHeight: symbol-height-actual
+      symbolOffset: symbol-offset-actual
     network-node:
       strokeWidth: stroke-width
     progress-fill:
@@ -552,12 +634,11 @@ body:
       fontSize: kind-label-size
       lineHeight: kind-label-leading
       letterSpacing: kind-label-spacing
-    annotation-kind-accent:
-      edge: kind-accent-edge
+    annotation-kind-accent: {}
     axisQuarter:
       fontFamily: editorial
       fontWeight: weight.bold
-      fontSize: size.axis
+      fontSize: size.axis-quarter
       lineHeight: leading.body
       letterSpacing: letter-spacing
       textTransform: text-transform
@@ -594,10 +675,10 @@ body:
       contrastTreatment: required
       fontFamily: editorial
       fontWeight: weight.regular
-      fontSize: size.note
+      fontSize: size.period
       lineHeight: leading.body
-      letterSpacing: letter-spacing
-      textTransform: text-transform
+      letterSpacing: period-spacing
+      textTransform: text-transform-lower
       numericSpacing: numeric-spacing
     annotation-note-leader:
       strokeWidth: stroke-width
@@ -611,6 +692,9 @@ body:
     member-label-inside-snapshot.fill: insideLabelSnapshot
     member-label-inside-scenario.fill: insideLabelScenario
     subtitle.fill: textMuted
+    table-cell-secondary.fill: textMuted
+    legend.fill: textMuted
+    slot-heading.fill: textMuted
     annotation.fill: surfaceRaised
     annotation-text.fill: text
     note-index.fill: accent
@@ -649,7 +733,7 @@ body:
     variance-on-track.fill: textMuted
     variance-behind.fill: negative
     missing-actual-cell.fill: textMuted
-    dependency.stroke: textMuted
+    dependency.stroke: category:relationInk
     calendar-closed.fill: category:closed
     calendar-exception.fill: category:exception
     gate.fill: text
@@ -688,6 +772,7 @@ body:
     table.indent.inlineSize: table-indent
     table.header.blockSize: table-header-height
     timeline.groupHeader.blockSize: timeline-group-header-size
+    timeline.relation.cornerRadius: timeline-relation-radius
   colorScales:
     owner:
       slots:
