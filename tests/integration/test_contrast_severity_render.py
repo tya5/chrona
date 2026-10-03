@@ -122,9 +122,9 @@ def test_a_theme_that_declares_decoration_warning_is_the_default(tmp_path):
 
 
 @pytest.mark.parametrize("policy", [None, {"decoration": "warning"}, {"decoration": "error"}])
-def test_a_mark_on_a_translucent_ground_never_fails_a_render_whatever_the_knob(tmp_path, policy):
-    # A mark on a translucent host has the code the decoration knob restores, but it is a legibility finding:
-    # the corpus gate keeps it, and the render does not start failing on it.
+def test_a_mark_on_a_translucent_ground_is_judged_on_the_composite_whatever_the_knob(tmp_path, policy):
+    # A mark or a label on a translucent host is judged on the host composited over what lies beneath it (#1013)
+    # and no longer fails closed; a legibility finding is the corpus gate's whatever the decoration knob says.
     parts = _parts("accent")
     # Translucent, but strong enough that every decoration still clears its own floor.
     parts["theme"]["body"]["values"]["opacity.axis-band"] = {"type": "number", "value": 0.9}
@@ -133,9 +133,10 @@ def test_a_mark_on_a_translucent_ground_never_fails_a_render_whatever_the_knob(t
     rendered = sr.render(tmp_path, _source(), presentation=parts)
 
     findings = evaluate_scene_contrast(scene_document(rendered.scene))
-    marks = [item for item in findings if item.severity == "error"]
-    assert marks and {(item.code, item.severity_class) for item in marks} == {
-        ("E_SCENE_CONTRAST_GROUND_UNSUPPORTED", "legibility")}
+    composites = [item for item in findings if (item.ground_kind or "").startswith("translucent-over-")]
+    assert {item.visual_role for item in composites} >= {"planned", "axis-label2", "text"}
+    assert not [item for item in findings if item.severity == "error"]
+    assert all(item.contrast_ratio >= item.floor for item in composites)
     assert rendered.artifact.content
 
 
