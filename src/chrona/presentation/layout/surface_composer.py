@@ -22,6 +22,7 @@ from chrona.presentation.layout.surface_content import (
     validate_detail_panel_placement,
 )
 from chrona.presentation.layout.surface_legend import SurfaceLegendContext, place_legend
+from chrona.presentation.layout.slot_heading import complete_slot_headings, content_slot, full_slot
 from chrona.presentation.layout.surface_completion import (
     SurfaceCompletionContext, SurfaceLayoutComposition, complete_surface_layout,
 )
@@ -137,6 +138,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     )
     by_source = {slot.source_ref: slot for slot in slots}
     text.extend(detail_panel_text)
+    # A slot's declared caption (#1064): its text is completed here and its content is placed below it.
+    headings = complete_slot_headings(request=request, slots=by_source, decisions=base.decisions)
+    heading_slot_blocks = {source: by_source[source].bounds.block for source in headings.reserve or {}}
+    text.extend(headings.text)
     table_batch = compose_table(base)
     column_placements = table_batch.columns
     text.extend(table_batch.text)
@@ -158,6 +163,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     axis_label_targets = axis_batch.label_targets
     axis_band_targets = axis_batch.band_targets
     diagnostics = list(axis_batch.diagnostics)
+    diagnostics.extend(headings.diagnostics)
     visible_label_overflows = list(axis_batch.visible_label_overflows)
     calendar_intervals = axis_batch.calendar_intervals
     contract = request.presentation_contract
@@ -283,28 +289,43 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     visible_label_overflows.extend(relation_labels.visible_label_overflows)
 
     side_content_warnings: list[FitWarning] = list(group_batch.warnings)
+    side_content_warnings.extend(headings.warnings)
     legend = by_source.get("legend")
     if legend:
-        legend_batch = place_legend(SurfaceLegendContext(request, legend, metric_values, metric_for))
+        legend_batch = place_legend(SurfaceLegendContext(
+            request, content_slot(legend, headings.reserved("legend")), metric_values, metric_for))
         marks.extend(legend_batch.marks)
         shapes.extend(legend_batch.shapes)
         relations.extend(legend_batch.relations)
         text.extend(legend_batch.text)
         side_content_warnings.extend(legend_batch.warnings)
-        slots = tuple(legend_batch.slot if slot.source_ref == "legend" else slot for slot in slots)
+        legend_slot = full_slot(legend, legend_batch.slot, headings.reserved("legend"))
+        slots = tuple(legend_slot if slot.source_ref == "legend" else slot for slot in slots)
     notes = by_source.get("notes")
     if notes:
-        notes_slot, notes_text = place_notes(request, notes, body_size)
+        notes_slot, notes_text = place_notes(request, content_slot(notes, headings.reserved("notes")), body_size)
+        notes_slot = full_slot(notes, notes_slot, headings.reserved("notes"))
         text.extend(notes_text)
         slots = tuple(notes_slot if slot.source_ref == "notes" else slot for slot in slots)
     slots = complete_footer_band(provisional_slots=footer_provisional_slots, completed_slots=slots)
     by_source = {slot.source_ref: slot for slot in slots}
+    for source, block in heading_slot_blocks.items():
+        moved = float(by_source[source].bounds.block - block)
+        if moved:  # the footer band carried the slot down: its caption goes with it
+            text = [replace(item, bounds=Rect(item.bounds.inline, item.bounds.block + Decimal(str(moved)),
+                                              item.bounds.inline_size, item.bounds.block_size),
+                            baseline=(item.baseline[0], item.baseline[1] + moved))
+                    if item.collision_domain.slot == "slot-heading" and item.source_ref == source else item
+                    for item in text]
     summary_slot = by_source.get("summary")
     if summary_slot:
-        text.extend(place_summary(request, summary_slot))
+        text.extend(place_summary(request, content_slot(summary_slot, headings.reserved("summary"))))
 
+    annotation_slot = by_source.get("annotations")
+    annotation_by_source = (by_source if annotation_slot is None or not headings.reserved("annotations")
+                            else {**by_source, "annotations": content_slot(annotation_slot, headings.reserved("annotations"))})
     annotation_batch = place_annotations(SurfaceAnnotationContext(
-        request, projection, layout_manifest, contract, review_rows, rows, by_source, scale, start, end,
+        request, projection, layout_manifest, contract, review_rows, rows, annotation_by_source, scale, start, end,
         timeline, timeline_bounds, mark_by_id, comparison_clusters, instance_rows, metric_for,
         surface_obstacles, register_rect, register_port))
     text.extend(annotation_batch.text)

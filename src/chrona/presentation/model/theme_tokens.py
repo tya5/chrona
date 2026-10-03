@@ -201,6 +201,10 @@ class ThemeTokenView:
         """The typography role of table column headers: `tableColumnLabel` when the Theme declares it, else `text` (#991)."""
         return "tableColumnLabel" if self.has_role("tableColumnLabel") else "text"
 
+    def slot_heading_role(self) -> str:
+        """The typography role of a slot heading (#1064): `slot-heading` when the Theme declares it, else `text`."""
+        return "slot-heading" if self.has_role("slot-heading") else "text"
+
     def token(self, role: str, property_name: str, expected_type: str) -> Any:
         roles = self._body["roles"]
         binding = roles.get(role)

@@ -56,6 +56,7 @@ The registry owns canonical primitive semantics. Its entries declare `semantic_i
 | `asOf` | Path/Text | `as-of`, `as-of-label` | `asOf` |
 | `deadlineMark` | Path | `deadline-mark` | `deadline-mark` (contrast class `mark`; the role is required when a View shows deadlines) |
 | `groupHeader` | Rect/Text | `group-header-band`, `group-header` | `groupHeader` |
+| `slotHeading` | Text | `slot-heading` | `slot-heading` (ground text; the role is opt-in and the `text` role applies without it, #1064) |
 | `groupTab` | Rect | `group-tab` | `group-tab` (contrast class `decoration`; the role is opt-in, #882) |
 | `calendarClosed` | Rect | `calendar-closed` | `calendarClosed` |
 | `periodBand` | Rect | `period-band` | `period-band` |

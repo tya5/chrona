@@ -6,7 +6,7 @@ from decimal import ROUND_CEILING, Decimal, getcontext
 from typing import Any, Callable, Mapping
 
 from chrona.presentation.layout.model import (
-    LayoutDecision, LayoutError, LayoutManifest, Measurement, Rect, RegionFrame, ResolvedLayoutProfile,
+    LayoutDecision, LayoutError, LayoutManifest, Measurement, Rect, RegionFrame, ResolvedLayoutProfile, SlotHeading,
 )
 from chrona.presentation.layout.surface_quality import FitWarning
 
@@ -24,6 +24,14 @@ def _distance(profile: ResolvedLayoutProfile, path: str) -> Decimal:
         return profile.distances[path]
     except KeyError as error:
         raise LayoutError("E_LAYOUT_TOKEN_UNKNOWN", path) from error
+
+
+def _slot_heading(node: Mapping[str, Any]) -> SlotHeading | None:
+    """The slot's declared caption (#1064); its shape was validated with the profile."""
+    declared = node.get("heading")
+    if declared is None:
+        return None
+    return SlotHeading(str(declared["text"]), str(declared.get("align", "start")), str(declared.get("block", "top")))
 
 
 def _padding(profile: ResolvedLayoutProfile, node: Mapping[str, Any], path: str) -> tuple[Decimal, Decimal, Decimal, Decimal]:
@@ -377,6 +385,7 @@ class _Arranger:
             node.get("direction") if is_slot else None,
             (_distance(self.profile, f"{path}/gap") if is_slot and "gap" in node else None),
             (_distance(self.profile, f"{path}/itemMinInlineSize") if is_slot and "itemMinInlineSize" in node else None),
+            heading=_slot_heading(node) if is_slot else None,
         ))
         if kind == "slot":
             measure = _slot_measurement(node, self.measurements, path)

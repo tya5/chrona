@@ -117,6 +117,11 @@ slides:
     context: contexts/group-child-indent.yaml
     expectedSvg: generated/group-child-indent.svg
     expectedScene: generated/group-child-indent.scene.json
+  - id: slot-heading
+    evidence: "A slot heading (#1064): the Layout Profile declares heading Notes on the annotations rail with block header-row, the Theme text role slot-heading (small, bold, letter-spaced capitals in a muted ink) styles it, and Layout centres it in the axis header band and starts the notes below it, over the annotation-border sources."
+    context: contexts/slot-heading.yaml
+    expectedSvg: generated/slot-heading.svg
+    expectedScene: generated/slot-heading.scene.json
   - id: heading
     evidence: "A declared title and subtitle (#991): the View heading templates read the Project title, the as-of date and the calendar id, and the subtitle is drawn under the title in the Theme's subtitle typography role, as a new View and Theme over the executive sources."
     context: contexts/heading.yaml

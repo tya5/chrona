@@ -91,6 +91,8 @@ DIFFERENT_CONCEPT: dict[tuple[str, str], str] = {
         "inline alignment of a table column's content inside its measured allocation, not an annotation's alignment along a side",
     ("layout-profile-v0.10.schema.yaml", "/$defs/guide/properties/at/oneOf/0"):
         "a named layout guide position along an axis, not an annotation's alignment along a side",
+    ("layout-profile-v0.10.schema.yaml", "/$defs/slotHeading/properties/align"):
+        "the inline position of a slot heading within its slot, not an annotation's alignment along a side",
 }
 
 

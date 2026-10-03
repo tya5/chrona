@@ -9,7 +9,9 @@ import json
 import re
 from typing import Any, Mapping
 
-from chrona.presentation.layout.model import LayoutError, ResolvedLayoutProfile
+from chrona.presentation.layout.model import (
+    SLOT_HEADING_ALIGNS, SLOT_HEADING_BLOCKS, SLOT_HEADING_SOURCES, LayoutError, ResolvedLayoutProfile,
+)
 from chrona.resources import schema_validator
 from chrona.schema_diagnostics import explain_errors
 
@@ -55,12 +57,36 @@ def _check_frame(frame: Any, pointer: str) -> None:
                           detail="expected a non-negative distance or a {token: id} reference")
 
 
+_HEADING_KEYS = frozenset({"text", "align", "block"})
+
+
+def _check_heading(heading: Any, pointer: str) -> None:
+    """Fail a malformed slot heading (#1064) at its exact pointer, for the reason `_check_frame` gives."""
+    if not isinstance(heading, Mapping):
+        raise LayoutError("E_LAYOUT_SCHEMA", pointer, detail="expected an object")
+    for key in heading:
+        if key not in _HEADING_KEYS:
+            raise LayoutError("E_LAYOUT_SCHEMA", f"{pointer}/{key}", detail=f"unexpected property '{key}'")
+    text = heading.get("text")
+    if text is None:
+        raise LayoutError("E_LAYOUT_SCHEMA", pointer, detail="missing required property 'text'")
+    if (not isinstance(text, str) or not 1 <= len(text) <= 80
+            or any(ord(char) < 32 or ord(char) == 127 for char in text)):
+        raise LayoutError("E_LAYOUT_SCHEMA", f"{pointer}/text",
+                          detail="expected one to eighty characters with no control character")
+    for key, allowed in (("align", SLOT_HEADING_ALIGNS), ("block", SLOT_HEADING_BLOCKS)):
+        if key in heading and heading[key] not in allowed:
+            raise LayoutError("E_LAYOUT_SCHEMA", f"{pointer}/{key}", detail=f"expected one of {list(allowed)}")
+
+
 def _check_frames(profile: Mapping[str, Any]) -> None:
     def visit(node: Any, path: str) -> None:
         if not isinstance(node, Mapping):
             return
         if "frame" in node:
             _check_frame(node["frame"], f"{path}/frame")
+        if "heading" in node:
+            _check_heading(node["heading"], f"{path}/heading")
         children = node.get("children")
         for index, child in enumerate(children if isinstance(children, list) else ()):
             visit(child, f"{path}/children/{index}")
@@ -210,6 +236,9 @@ def _semantic_validate(profile: dict[str, Any], available_sources: set[str], the
                 raise LayoutError("E_LAYOUT_SOURCE_UNAVAILABLE", path + "/source", node_id)
             if node["priority"] == "required" and node["overflow"] == "clip-optional":
                 raise LayoutError("E_LAYOUT_SCHEMA", path + "/overflow", node_id)
+            if "heading" in node and node["source"] not in SLOT_HEADING_SOURCES:
+                # Other sources are measured and aligned by rules a caption would break (#1064).
+                raise LayoutError("E_LAYOUT_SLOT_HEADING_SOURCE", path + "/heading", node_id)
         if "anchor" in node:
             parent = index.get(parents[node_id] or "")
             if parent is None or parent["kind"] != "overlay":
