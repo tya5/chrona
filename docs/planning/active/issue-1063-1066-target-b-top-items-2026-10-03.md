@@ -2,7 +2,7 @@
 
 Living record for [#1063](https://github.com/tya5/chrona/issues/1063) (as-of chip below the plot, space reserved) and [#1066](https://github.com/tya5/chrona/issues/1066) (a symbol mark takes its own size and offset per role). Baseline, design plan, design, architecture review and implementation plan are published together by this record before any code. Edited in place; Git keeps history. Both were found by the reviewer's tuning PR #1061 against the owner-approved mock `docs/research/presentation/halcyon-1-target-design-2026-09-21/board/02-programme-board.png` (the work record of the knob family is [issue-991-target-b-knobs-2026-10-03.md](issue-991-target-b-knobs-2026-10-03.md)).
 
-**Public base:** `d4b081cf` on `main`; this record merged as PR #1067 (`a755cfd6`). **Status:** slice 1 (#1063) merged as PR #1078 (`be1b2d92`); slice 2 (#1066) in its own PR; slice 2 (#1066) next. Order: #1063 then #1066.
+**Public base:** `d4b081cf` on `main`; this record merged as PR #1067 (`a755cfd6`). **Status:** both slices are merged (#1063: PR #1078, `be1b2d92`; #1066: PR #1082, `0ff6cc90`); the acceptance reviews are published: [#1063](../../reviews/current/issue-1063-as-of-chip-below-plot-acceptance-review-2026-10-04.md) and [#1066](../../reviews/current/issue-1066-symbol-size-acceptance-review-2026-10-04.md). Successor for the narrowed default row: #1074; adoption in target B is the reviewer's (#987).
 
 **Scope rule (owner):** core knobs and their own evidence only (synthetic tests and a Controller Z evidence slide). This work does **not** edit the reviewer's `examples/halcyon-1/*target-b*` files; adopting a knob there is the reviewer's step (PR #1061, #987) and not an acceptance row here. Routing/terminals (#1059, #1060, #1042, #1044, #1046) and annotation boxes (#1051, #1049) are other agents' files and are not touched.
 
@@ -101,4 +101,4 @@ Evidence slides are Controller Z Contexts only; the reviewer's `21-target-b` fil
 
 ## 8. Progress
 
-Slice 0 merged (PR #1067). Slice 1: implemented and verified locally (15 synthetic tests over lane and automatic rows, 9 of 9 mutations killed, corpus byte identical across all 54 existing slides, S0 PASS with `--prune-stale` retiring 12 stale entries); merged as PR #1078. Slice 2: implemented and verified locally (8 synthetic tests over lane and automatic rows, 7 of 8 mutations killed and the eighth, a redundant containment check, removed; corpus byte identical across all existing slides; S0 PASS, the two additive Theme properties need no expected-delta entry); successor #1074 holds the default row. Slice 3 not started.
+All slices merged; the PR and commit of each is in the acceptance reviews. Not done here: the default actual gate symbol size (#1074) and adoption in 21-target-b (the reviewer's, #987).
