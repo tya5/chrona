@@ -7,17 +7,17 @@ from collections.abc import Callable
 from typing import Any, Mapping
 
 from chrona.presentation.layout.labels import LabelRect, place_label
-from chrona.presentation.layout.model import Rect
+from chrona.presentation.layout.model import Rect, geometry_sum
 from chrona.presentation.layout.obstacles import (
     ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex, obstacles_intersect,
 )
 from chrona.presentation.layout.ports import (
-    ConnectorEgress, connector_egress_candidates,
+    ConnectorEgress, connector_egress_candidates, stub_pairs_first,
 )
 from chrona.presentation.layout.presentation import TrackPlacement
 from chrona.presentation.layout.relation_terminals import centred_on_route, marker_geometry, trim_for_centred_terminals
 from chrona.presentation.layout.routing import (
-    RouteSearchFailure, RouteSuppressionEvidence, back_route_points, place_relation_route,
+    RouteSearchFailure, RouteSuppressionEvidence, back_route_points, place_relation_route, route_self_overlaps,
     relation_route_quality, repair_self_reversal, select_lane_relation_route,
 )
 from chrona.presentation.layout.path_geometry import flatten_path, rounded_orthogonal_path
@@ -207,21 +207,34 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         return not obstacles.egress_collisions(ObstacleSegment(*egress.corridor), host_ids=egress.host_ids,
             classes=route_classes, regions=("timeline", "group-header"))
 
+    def enters_along(relation, points) -> bool:
+        """The route's last leg runs horizontally into the target's start (or end) for at least the entry stub."""
+        if len(points) < 2 or points[-1][1] != points[-2][1]:
+            return False
+        starts = relation.target_endpoint in {"start", "at"}
+        run = points[-1][0] - points[-2][0]
+        return (run if starts else -run) >= 0.99 * entry_stub_length(relation.semantic_id)
+
+    back_route_reason = [""]
+
     def back_route(relation, source_mark, target_mark, source_id, target_id, source_nominal):
         """`entry: side` (#1060): a target the source does not approach from the entry side is entered through the
-        gap between the rows. Returns (egress pair, points) or None when it does not fit; the order then falls back."""
+        gap between the rows. Returns (egress pair, points) or None when it does not fit; the order then falls back,
+        and `back_route_reason` names why (reported with the fallback diagnostic)."""
+        def fail(reason: str):
+            back_route_reason[0] = reason
+            return None
+
+        back_route_reason[0] = ""
         endpoint = relation.target_endpoint
         if (context.layout_manifest.relation_entry != "side" or source_mark is None or target_mark is None
                 or endpoint not in {"start", "at", "finish", "end"}):
             return None
         starts = endpoint in {"start", "at"}
         bounds = target_mark.bounds
-        left, right = float(bounds.inline), float(bounds.inline + bounds.inline_size)
-        if (source_nominal[0] < left) if starts else (source_nominal[0] > right):
-            return None  # the source lies on the approach side: the forward side entry applies
         source_edges, target_edges = row_edges.get(instance_rows.get(source_id, "")), row_edges.get(instance_rows.get(target_id, ""))
         if source_edges is None or target_edges is None or source_edges == target_edges:
-            return None
+            return fail("same-row")
         below = target_edges[0] > source_edges[0]
         gap_y = target_edges[0] if below else target_edges[1]
         far = (-1e9 if starts else 1e9, float(bounds.block))
@@ -230,7 +243,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
             stub_length=entry_stub_length(relation.semantic_id), stub_free=entry_stub_free)
             if item.exposed_port != item.semantic_port and item.side == ("start" if starts else "end")), None)
         if stub is None:
-            return None
+            return fail("entry-stub-blocked")
         if source_mark.mark_shape == "point":
             sx = float(source_mark.bounds.inline) if relation.source_endpoint in {"start", "at"} else float(
                 source_mark.bounds.inline + source_mark.bounds.inline_size)
@@ -240,12 +253,23 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         exit_dx = (-1.0 if relation.source_endpoint in {"start", "at"} else 1.0) * entry_stub_length(relation.semantic_id)
         points = back_route_points(port, exit_dx, gap_y, stub.exposed_port, stub.semantic_port)
         hosts = (*stub.host_ids, source_mark.placement_id)
-        if len(points) < 3 or not relation_route_quality(points, max_bends=context.layout_manifest.relation_max_bends,
-                max_detour_ratio=context.layout_manifest.relation_max_detour_ratio):
-            return None
-        if any(obstacles.egress_collisions(ObstacleSegment(left_, right_), host_ids=hosts, classes=route_classes,
-                regions=("timeline", "group-header")) for left_, right_ in zip(points, points[1:]) if left_ != right_):
-            return None
+        if len(points) < 3:
+            return fail("degenerate")
+        # The back-route is a minimal side-entering route by construction: its detour is measured against the
+        # shortest route that keeps both stubs (stub ends joined Manhattan), not the bare port distance (#1084).
+        out_x = port[0] + exit_dx
+        reference = (abs(out_x - stub.exposed_port[0]) + abs(port[1] - stub.semantic_port[1])
+                     + abs(exit_dx) + abs(stub.semantic_port[0] - stub.exposed_port[0]))
+        length = geometry_sum(abs(q[0] - p[0]) + abs(q[1] - p[1]) for p, q in zip(points, points[1:]))
+        if (len(points) - 2 > context.layout_manifest.relation_max_bends or route_self_overlaps(points)
+                or length > reference * context.layout_manifest.relation_max_detour_ratio):
+            return fail("bends-or-detour")
+        for left_, right_ in zip(points, points[1:]):
+            if left_ != right_:
+                hit = obstacles.egress_collisions(ObstacleSegment(left_, right_), host_ids=hosts, classes=route_classes,
+                    regions=("timeline", "group-header"))
+                if hit:
+                    return fail("blocked:" + ",".join(sorted({item.obstacle_class + "=" + item.placement_id for item in hit}))[:200])
         source_side = "start" if relation.source_endpoint in {"start", "at"} else "end"
         return ((ConnectorEgress(source_side, port, port, (source_mark.placement_id,)),
                  ConnectorEgress(stub.side, stub.semantic_port, stub.semantic_port, stub.host_ids)), points)
@@ -273,13 +297,13 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     stub_free=entry_stub_free) if target_mark else
                     (ConnectorEgress(relation.target_endpoint, target_nominal, target_nominal, ()),))
                 port_pairs = tuple((left, right) for left in source_candidates for right in target_candidates)
+                if context.layout_manifest.relation_entry in {"side-when-free", "side"}:
+                    # #1072: every exit of the source is tried with the horizontal entry before any other entry
+                    port_pairs = stub_pairs_first(port_pairs)
                 selected_pair: tuple[ConnectorEgress, ConnectorEgress] | None = None
                 points: tuple[tuple[float, float], ...] = ()
                 lane_selection = None
-                backed = back_route(relation, source_mark, target_mark, source_id, target_id, source_nominal)
-                if backed is not None:
-                    selected_pair, points = backed
-                elif projection.lane_membership is not None:
+                if projection.lane_membership is not None:
                     lane_selection = select_lane_relation_route(port_pairs, obstacles=obstacles,
                         bounds=(timeline_bounds[0], route_top, timeline_bounds[0] + timeline_bounds[2], route_bottom),
                         source_host_id=source_mark.placement_id if source_mark else None,
@@ -318,6 +342,13 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                             max_detour_ratio=context.layout_manifest.relation_max_detour_ratio):
                             selected_pair, points = (source_egress, target_egress), candidate_points
                             break
+                if (context.layout_manifest.relation_entry == "side" and target_mark is not None
+                        and not (selected_pair is not None and enters_along(relation, points))):
+                    # #1060/#1084: the forward side entry did not give a horizontal entry; try the back-route
+                    backed = back_route(relation, source_mark, target_mark, source_id, target_id, source_nominal)
+                    if backed is not None:
+                        selected_pair, points = backed
+                        lane_selection = None
                 fallback = selected_pair is None
                 if fallback:
                     if request.surface_content.relation_overflow == "suppress":
@@ -368,12 +399,10 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     label_content=relation_label_content(relation), source_ref=relation_id)
                 relations.append(placed)
                 if (context.layout_manifest.relation_entry == "side" and target_mark is not None
-                        and relation.target_endpoint in {"start", "at", "finish", "end"} and len(points) >= 2):
+                        and relation.target_endpoint in {"start", "at", "finish", "end"} and len(points) >= 2
+                        and not enters_along(relation, points)):
                     # #1060: with `entry: side` a relation that still does not enter along the bar is reported
-                    entering_start = relation.target_endpoint in {"start", "at"}
-                    if not (points[-1][1] == points[-2][1]
-                            and ((points[-2][0] < points[-1][0]) if entering_start else (points[-2][0] > points[-1][0]))):
-                        diagnostics.append(f"I_LAYOUT_RELATION_ENTRY_FALLBACK:{scene_id}")
+                    diagnostics.append(f"I_LAYOUT_RELATION_ENTRY_FALLBACK:{scene_id};reason={back_route_reason[0] or 'forward-entry-failed'}")
                 dependency_role = semantic_binding(placed.semantic_id).theme_role
                 register_path(scene_id, placed.points,
                     float(request.theme_tokens.number(dependency_role, "strokeWidth")), placed.path_commands)
