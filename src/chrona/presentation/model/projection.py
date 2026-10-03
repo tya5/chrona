@@ -286,8 +286,8 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     elif not explicit:
         _order(selected, view)
     snapshots = _snapshot_items(snapshot_project, snapshot_placements, snapshot_analysis)
-    if view.comparison.baseline_marks == "ghost" and not explicit and (view.comparison.baseline != "snapshot" or not snapshots):
-        raise ValueError("E_REVIEW_BASELINE_MARKS_SNAPSHOT: comparison.baselineMarks ghost needs comparison.baseline snapshot "
+    if view.comparison.baseline_marks in {"ghost", "ghost-when-changed"} and not explicit and (view.comparison.baseline != "snapshot" or not snapshots):
+        raise ValueError("E_REVIEW_BASELINE_MARKS_SNAPSHOT: comparison.baselineMarks needs comparison.baseline snapshot "
                          "and a snapshot Project in the Render Context")
     scenario_items = {scenario_id: _snapshot_items(value[0], value[1], None, source_kind="scenario")
                       for scenario_id, value in (scenarios or {}).items()}
@@ -461,9 +461,12 @@ def _compose_rows(view: ViewInput, selected: list[ReviewItem], snapshots: dict[s
                     and item.object_id in scenarios[view.comparison.scenario_id])
 
         def snapshot_ghost(item: ReviewItem) -> bool:
-            # `comparison.baselineMarks: ghost` (#991): a snapshot baseline draws one ghost per primary item.
-            return (view.comparison.baseline == "snapshot" and view.comparison.baseline_marks == "ghost"
-                    and item.object_id in snapshots)
+            # `comparison.baselineMarks` (#991): a snapshot baseline draws one ghost per primary item (`ghost`), or
+            # only for an item whose baseline placement differs from its current one (`ghost-when-changed`).
+            if (view.comparison.baseline != "snapshot" or view.comparison.baseline_marks not in {"ghost", "ghost-when-changed"}
+                    or item.object_id not in snapshots):
+                return False
+            return view.comparison.baseline_marks == "ghost" or snapshots[item.object_id].planned != item.planned
 
         rows = tuple(ReviewRowProjection(
             item.object_id, item.title, item.group_id, item.object_id,
