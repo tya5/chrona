@@ -349,7 +349,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             detail=render_closure.detail_profile.detail if render_closure.detail_profile else None,
             summary=summary, layout_manifest=manifest, locale=environment.locale,
             color_scale=color_scale, table=table_content, group_tints=group_tints,
-            annotation_kind_colors=_annotation_kind_colors(theme),
+            annotation_kind_colors=_annotation_kind_colors(theme), annotation_kind_also=_annotation_kind_also(theme),
         )
         fixed_lane_preflight = preflight_fixed_lane_layout(
             projection=projection, layout_manifest=manifest, surface_content=seed_content,
@@ -386,7 +386,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         color_scale=color_scale,
         table=table_content,
         group_tints=group_tints,
-        annotation_kind_colors=_annotation_kind_colors(theme),
+        annotation_kind_colors=_annotation_kind_colors(theme), annotation_kind_also=_annotation_kind_also(theme),
     )
     if render_closure.detail_profile is not None:
         ledger.detail()
@@ -563,6 +563,12 @@ def _annotation_kind_colors(theme: Mapping[str, Any]) -> dict[str, str]:
     """The resolved colour of each Theme-declared annotation kind that has one (#584)."""
     kinds = theme["body"].get("annotationKinds", {})
     return {str(kind): str(entry["color"]) for kind, entry in kinds.items() if "color" in entry}
+
+
+def _annotation_kind_also(theme: Mapping[str, Any]) -> dict[str, tuple[str, ...]]:
+    """The extra elements (header, leader) each kind colour also paints (#991)."""
+    kinds = theme["body"].get("annotationKinds", {})
+    return {str(kind): tuple(str(item) for item in entry["colorAlso"]) for kind, entry in kinds.items() if entry.get("colorAlso")}
 
 
 def _resolve_group_tints(view: Any, projection: Any, theme: Mapping[str, Any]
