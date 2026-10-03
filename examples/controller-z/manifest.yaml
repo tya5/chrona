@@ -192,3 +192,8 @@ slides:
     context: contexts/as-of-cone.yaml
     expectedSvg: generated/as-of-cone.svg
     expectedScene: generated/as-of-cone.scene.json
+  - id: terminal-none
+    evidence: "A relation terminal shape `none` (#1105): the Theme declares the source terminal `none`, so no dot is drawn at the source and the line starts at the endpoint, while the target keeps its arrowhead; the executive sources otherwise unchanged."
+    context: contexts/terminal-none.yaml
+    expectedSvg: generated/terminal-none.svg
+    expectedScene: generated/terminal-none.scene.json

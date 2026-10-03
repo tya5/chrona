@@ -44,6 +44,7 @@ slides:
   controller-z/surface-glow: {axisLabels: 7, dvtHosted: true}
   controller-z/surface-texture: {axisLabels: 7, dvtHosted: true}
   controller-z/table-header: {axisLabels: 7, dvtHosted: true}
+  controller-z/terminal-none: {axisLabels: 7, dvtHosted: true}
   controller-z/text-roles: {axisLabels: 7, dvtHosted: true}
   controller-z/value-affixes: {axisLabels: 7, dvtHosted: true}
   controller-z/viewer-fit: {axisLabels: 7, dvtHosted: true}
