@@ -97,6 +97,10 @@ def _lane_fallback_clears_required_labels(points: tuple[tuple[float, float], ...
         for start, end in zip(points, points[1:]) for label in labels)
 
 
+# Row members that are comparison marks (baseline ghosts, scenario ghosts); relations never end on them.
+COMPARISON_SOURCE_KINDS = frozenset({"snapshot", "scenario"})
+
+
 def _combined_connector_points(source: ConnectorEgress, middle: tuple[tuple[float, float], ...],
                                target: ConnectorEgress) -> tuple[tuple[float, float], ...]:
     pieces = (*source.corridor, *middle, *reversed(target.corridor))
@@ -117,6 +121,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     relations: list[RelationPlacement] = []
     route_fallbacks: list[RelationPlacement] = []
     instance_anchors: dict[str, list[tuple[str, tuple[float, float]]]] = {}
+    comparison_instances: set[str] = set()
     instance_rows: dict[str, str] = {}
     for review_row, row in zip(context.review_rows, rows, strict=True):
         fallback = (float(row.bounds.inline + row.bounds.inline_size),
@@ -126,12 +131,18 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                            if projection.rows else item.object_id)
             instance_anchors.setdefault(item.object_id, []).append((instance_id, fallback))
             instance_rows[instance_id] = review_row.row_id
+            if item.source_kind in COMPARISON_SOURCE_KINDS:
+                comparison_instances.add(instance_id)
     for folded in getattr(projection, "folded_points", ()):
         instance_id = f"group-header:{folded.group_id}:{folded.item.item_id or folded.item.object_id}"
         mark = next((item for item in marks if item.placement_id == f"planned:{instance_id}"), None)
         if mark is not None:
             instance_anchors.setdefault(folded.item.object_id, []).append((instance_id, mark.end_port))
             instance_rows[instance_id] = f"group-header:{folded.group_id}"
+    # A baseline ghost is a comparison mark, not a relation endpoint (#1031): connect the current plan marks only.
+    # An object that has no plan instance at all (a snapshot-only explicit row) keeps its comparison instances.
+    relation_anchors = {object_id: [entry for entry in entries if entry[0] not in comparison_instances] or entries
+                        for object_id, entries in instance_anchors.items()}
     relation_marks = {mark.placement_id.removeprefix("planned:"): mark
                       for mark in marks if mark.placement_id.startswith("planned:")}
     comparison_clusters: dict[tuple[str, str], tuple[MarkPlacement, ...]] = {}
@@ -159,8 +170,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
           for group in groups if group.header_bounds is not None)))
     for relation in request.surface_content.relations:
         source, target, relation_id = relation.source_object_id, relation.target_object_id, relation.relation_id
-        for source_id, source_anchor in instance_anchors.get(str(source), ()):
-            for target_id, target_anchor in instance_anchors.get(str(target), ()):
+        for source_id, source_anchor in relation_anchors.get(str(source), ()):
+            for target_id, target_anchor in relation_anchors.get(str(target), ()):
                 source_mark, target_mark = relation_marks.get(source_id), relation_marks.get(target_id)
                 source_nominal = (source_mark.start_port if relation.source_endpoint in {"start", "at"}
                                   else source_mark.end_port) if source_mark else source_anchor
