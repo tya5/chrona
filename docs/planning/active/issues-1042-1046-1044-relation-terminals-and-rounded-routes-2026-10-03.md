@@ -1,0 +1,59 @@
+# Issues #1042, #1046, #1044: relation terminals and rounded routes (work record)
+
+Living record for [#1042](https://github.com/tya5/chrona/issues/1042) (plain bug), [#1046](https://github.com/tya5/chrona/issues/1046) (rounded corners on orthogonal routes) and [#1044](https://github.com/tya5/chrona/issues/1044) (new terminal shapes, round terminals centred on the endpoint). Baseline, design plan, design, architecture review and implementation plan are published together, before any code. Edited in place; Git keeps history. Target: owner-approved mock `docs/research/presentation/halcyon-1-target-design-2026-09-21/board/02-programme-board.png`. Order: #1042, #1046, #1044.
+
+**Scope rules.** The reviewer owns `examples/halcyon-1/*target-b*` (not edited here; the reviewer adopts the knobs). Annotation artwork (#848) and note boxes (#1051) are another agent's files: `surface_annotations.py` and Theme annotation tokens are not edited (it calls `marker_geometry`, so shapes added there reach leaders unchanged). Generated Scene/SVG are produced by derived-sync, never carried by a PR.
+
+## 1. Published baseline (read on `70ea7ec6`)
+
+1. `layout/relation_terminals.py: marker_geometry` accepts `triangle, open-triangle, chevron, circle, open-circle`. `open-triangle` and `chevron` both emit `move(0,0) line(L,W/2) line(0,W)`; only `triangle` appends the closing edge (#1042 confirmed). The vocabulary is declared in `schemas/theme-v0.13.schema.yaml` (marker `shape` enum), `conformance/declared-vocabulary-policy-v0.1.yaml` (`finite`, owner `marker_geometry`), `docs/diagnostics/vocabulary-inventory.md`. The marker is a Scene `MarkerGeometry(outline, head_length, head_width, attachment_offset, paint_mode)` serialized by SVG as a `<marker orient="auto">` whose `refX = head_length - attachment_offset`; the legend (`surface_legend.py`) and annotation leaders (`surface_annotations.py`) call the same function. Typst and TikZ reject any marker (`E_VISUAL_CAPABILITY_UNSUPPORTED`, `v05_typeset.py`); PNG is the SVG through resvg.
+2. Rounded routes already exist in code. `surface_routes.compose_surface_routes` reads the optional Theme metric `timeline.relation.cornerRadius` (absent means 0) and, for a non-fallback route, sets `RelationPlacement.path_commands = rounded_orthogonal_path(points, radius)` (`layout/path_geometry.py`: per corner `min(r, half incoming, half outgoing)`, quadratic with the corner as control point, straight first and last command). `points` stay the orthogonal polyline. SVG draws `path_commands` when present.
+3. Which themes set it: `mission-light` and `control-room-dark` bundles and `examples/halcyon-1/themes/briefing.yaml` declare 3. Census of the 52 committed Scenes with relations: 4 slides have rounded routes (halcyon `01`, `08`, `09`, `06`); 48 draw square corners. `target-b` and the bundled default theme `editorial-readable-default` (an identical mirror lives in `examples/halcyon-1/themes/`; `test_public_preset_evidence.py` enforces it) declare nothing.
+4. Terminals: the arrowhead lies along the final segment; nothing keeps that segment straight for the head length, so a corner within `headLength` of the end bends under the head.
+5. Round terminals: `circle`/`open-circle` have `refX = d - offset`, so the circle lies *behind* the path end (source: outside the endpoint, target: on the line), and routes start at the semantic port. On `21-target-b` the source circle of `structure -> avionics` sits at a bar corner, not on the end edge at mid-height.
+6. Unverified before code: whether Scene gates read `points` or `path_commands`; whether a corner arc can enter an obstacle the polyline cleared (route search clearance vs `r`); the corpus effect of 4 px.
+
+## 2. Literal acceptance (copied)
+
+**#1042**: (a) `open-triangle` draws a closed outline (three edges), stroked not filled; `chevron` stays an open V. (b) A synthetic test asserts the two geometries differ (a closing segment for `open-triangle`, none for `chevron`); a rendered SVG/PNG fixture shows both. (c) The Theme schema and Spec descriptions of the terminal shapes state the difference.
+
+**#1046**: (a) The Theme knob exists; absent or `0`, every committed slide is byte-identical (#575). (b) Synthetic tests cover the clamp (long pair gets full r, short step reduced r), straight terminal segments, identical SVG and PNG geometry. (c) The contrast, crossing and obstacle gates use the rounded path. (d) Target B and the bundled default use 4 px; the reviewer reviews the rendered evidence.
+
+**#1044**: (a) The five shapes exist in the Theme marker vocabulary and schema description, with synthetic geometry tests (notch, rounded corners, single barb, two chevrons, dot diameter). (b) Each shape renders identically in SVG and PNG and the legend draws the same key. (c) Round terminals are centred on the endpoint at mid-height and touch the line; a Scene test checks centre equals endpoint (bar's vertical centre for spans), first route point on the circle's edge, for downward, upward and horizontal exits. (d) #1042 is fixed separately; no dependency.
+
+## 3. Design plan
+
+Use cases (synthetic Projects; corpus is evidence, never the oracle): U1 a two-bend route with long legs rounds at full r; U2 a short step reduces r; U3 a corner next to a terminal keeps the head's straight run; U4 an arc beside an obstacle never enters it; U5 radius 0 or absent is byte identical; U6 each terminal shape in SVG, PNG and legend; U7 a circle/dot source and target exit down, up and sideways.
+
+Open decisions: where the default 4 lives; terminal clamp; arc obstacle rule; stealth notch depth; round terminal vs `attachmentOffset`; short first leg.
+
+## 4. Design and architecture review
+
+| Topic | Decision | Alternatives, reverse |
+| --- | --- | --- |
+| #1042 | `open-triangle` appends the closing edge like `triangle` and is `stroke`; `chevron` unchanged. A Theme that used it (none committed) now draws a closed outline: documented in the schema description and Spec 08. | none |
+| #1046 knob | The existing optional metric `timeline.relation.cornerRadius` (px) is the knob; no schema change (metrics are Theme values). Absent means 0: behaviour-preserving, Spec 56 section 3.2. Profile level is not added: the radius is presentation tuning and Theme owns it. Reverse to square: set 0. | A Profile knob or a code default of 4 would change every theme silently; rejected. |
+| #1046 default (owner-level call) | The bundled default preset (`chrona-default-draft`, theme `editorial-readable-default`, plus its identical `examples/halcyon-1/themes` mirror) declares 4. `mission-light`, `control-room-dark`, `briefing` keep their tuned 3; other presets stay 0 until tuned, as the issue says. Reverse: set the value back to absent/0 in the two files. `target-b` is the reviewer's step. | Raising 3 to 4 everywhere: not requested, and these were tuned deliberately. |
+| #1046 clamp | Per corner `min(r, half incoming leg, half outgoing leg)` (existing). Additionally, a leg that meets a terminal keeps a straight run of the terminal's `headLength` (target) or source marker length: the corner on such a leg uses at most `leg - head_length`, 0 if negative. | Half-leg only leaves heads on arcs; the issue says ends keep their tangent. |
+| #1046 obstacles | The arc is inside the corner triangle, so it only leaves the polyline toward the inside of the turn. Layout verifies each arc against the same obstacle classes route search uses (inflated by stroke width); a corner whose arc hits an obstacle halves its radius until clear, down to 0 (square, as the polyline). The registered `dependency-route` obstacle segments stay the polyline (conservative). | Rejecting the route would make routable relations unroutable. |
+| #1046 gates | Scene checks that read relation geometry must read the drawn path: Scene exposes the flattened curve (quadratic sampled) where a gate measures distance, crossing or contrast. To be listed per gate in slice S2 after reading them; a gate that already uses `points` and is conservative stays and is recorded. | |
+| #1046 adapters | SVG and PNG draw `path_commands` (PNG is that SVG). TikZ and Typst: markers are already unsupported (`E_VISUAL_CAPABILITY_UNSUPPORTED`) so a relation never reaches them; quadratic commands are otherwise drawn by their path code. No change. | |
+| #1044 shapes | `stealth` (fill): `(0,0) -> (L,W/2) -> (0,W) -> (0.3L,W/2) -> close` (notch 0.7 L from the tip, the PowerPoint/TikZ proportion). `rounded-triangle` (fill): the triangle with each corner cut by the distance giving radius 0.12 W, quadratic per corner, inside the box. `dot` (fill): circle of diameter `min(L,W)`. `half` (fill): `(L,W/2) -> (0,0) -> (0,W/2) -> close`, the barb on the left of the direction (SVG y down: smaller y). `double-chevron` (stroke): two V's of length `0.6 L` offset by `0.4 L`, tip at `L`. All take `headLength`, `headWidth`, `attachmentOffset`. Added in place to the marker `shape` enum (a widening, one expected-delta entry per Spec 56 section 3.2), policy file and inventory updated. | |
+| #1044 round placement | For `circle`, `open-circle`, `dot` the marker centre is the semantic port (the span edge at the mark's vertical centre, a point mark's centre/tip) and the route's end point lies on the circle's edge: Layout moves the first (source) or last (target) route point by `d/2` along its leg, and the marker's `attachment_offset` is 0 for round shapes (`attachmentOffset` is accepted and ignored: the centre rule fixes the placement and the line must touch). A leg shorter than `d/2` limits the shift to the leg and is recorded as a limit (the circle is then centred only if the leg is at least `d/2`). Triangular heads keep their tip at the port. | |
+| Layers | Layout owns marker geometry, trimming and the arcs; Scene carries completed `points`, `path_commands`, markers; adapters serialize. No View or Project schema change; Theme schema gains enum values only. |
+| Residual risks | Existing Themes with `attachmentOffset > 0` on circles lose it (none committed). 4 px on the default theme changes the default-draft slides; images are read in groups. |
+
+## 5. Implementation plan
+
+| Slice | Content | Files | Evidence and gate |
+| --- | --- | --- | --- |
+| S1 (#1042, PR 1) | Failing test first, then fix; schema/Spec wording | `relation_terminals.py`, `schemas/theme-v0.13.schema.yaml` description, Spec 08, test `test_relation_terminals.py`, SVG/PNG fixture test | test fails before, passes after; no committed Theme uses the shape so no slide moves; conformance |
+| S2 (#1046, PR 2) | Terminal clamp, arc obstacle rule, gate reads, default 4 | `path_geometry.py`, `surface_routes.py`, Scene gate modules found in S2, the two default theme files, Spec 50 section 3.3 | synthetic tests U1-U5, SVG/PNG parity, mutation checks, corpus regeneration reviewed by identical-change group with images read |
+| S3 (#1044, PR 3) | Five shapes, round placement | `relation_terminals.py`, `surface_routes.py`, schema enum, policy and inventory, Spec 08 | synthetic geometry tests, Scene test for U7, SVG/PNG parity, legend key test, `schema_equivalence --base-rev origin/main`, mutation checks |
+| Review | Three literal acceptance reviews | `docs/reviews/current/` | exact-main three-OS run per review commit; successor issues for deferred rows |
+
+Each code PR runs conformance and `regenerate_public_examples --check` locally for the affected slides (derived-sync regenerates evidence). Issue-level decision comments are posted on #1046 and #1044.
+
+## 6. Progress
+
+Design published; no code yet.
