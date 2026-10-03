@@ -153,6 +153,12 @@ def _annotation_kinds(*, declared: Any, colors: Mapping[str, str]) -> dict[str, 
             if not isinstance(intent, str) or (intent not in _INTENTS and intent not in colors):
                 raise ColorSchemeError("E_SCHEME_INTENT_UNKNOWN", f"{pointer}/color")
             entry["color"] = colors[intent]
+        also = declaration.get("colorAlso")
+        if also is not None:
+            if (not isinstance(also, (list, tuple)) or not also or len(set(also)) != len(also)
+                    or any(item not in {"header", "leader"} for item in also) or intent is None):
+                raise ColorSchemeError("E_THEME_ANNOTATION_KIND_TEMPLATE", f"{pointer}/colorAlso")
+            entry["colorAlso"] = list(also)
         resolved[kind] = entry
     return resolved
 
@@ -209,23 +215,29 @@ def _annotation_kind_text_contrast(*, declared_roles: Mapping[str, Any], resolve
         ink = _role_color(resolved_roles, values, role)
         if ink is None:
             raise ColorSchemeError("E_SCHEME_STATE_TEXT_CONTRAST", f"{path}/fill")
-        grounds: list[tuple[str, str]] = []
+        grounds: list[tuple[str, str, str]] = []  # (name, ink, ground)
         bar_fill = _role_color(resolved_roles, values, "annotation-kind-bar")
         if "annotation-kind-bar" in resolved_roles:
             if kinds:
                 for kind, entry in kinds.items():
                     ground = entry.get("color", bar_fill)
+                    # A kind whose colour also paints its header text (`colorAlso`, #991) writes in that colour.
+                    kind_ink = entry["color"] if "header" in entry.get("colorAlso", ()) and "color" in entry else ink
                     if ground is not None:
-                        grounds.append((kind, ground))
+                        grounds.append((kind, kind_ink, ground))
             elif bar_fill is not None:
-                grounds.append(("bar", bar_fill))
+                grounds.append(("bar", ink, bar_fill))
         else:
             for box in _KIND_BOX_ROLES:
                 ground = _role_color(resolved_roles, values, box)
-                if ground is not None:
-                    grounds.append((box, ground))
-        for name, ground in grounds:
-            contrast = _contrast(ink, ground)
+                if ground is None:
+                    continue
+                grounds.append((box, ink, ground))
+                for kind, entry in kinds.items():
+                    if "header" in entry.get("colorAlso", ()) and "color" in entry:
+                        grounds.append((f"{kind}:{box}", entry["color"], ground))
+        for name, text_ink, ground in grounds:
+            contrast = _contrast(text_ink, ground)
             if contrast < _STATE_TEXT_CONTRAST_FLOORS[treatment]:
                 raise ColorSchemeError("E_SCHEME_ANNOTATION_KIND_CONTRAST", f"{path}/fill",
                                        detail=f"{role}:{name}:{contrast:.2f}")

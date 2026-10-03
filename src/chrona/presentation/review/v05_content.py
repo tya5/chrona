@@ -184,7 +184,8 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                   color_scale: ResolvedColorScale | None = None,
                                   table: TableContent | None = None,
                                   group_tints: tuple[tuple[str, str], ...] = (),
-                                  annotation_kind_colors: Mapping[str, str] | None = None) -> SurfaceContentInput:
+                                  annotation_kind_colors: Mapping[str, str] | None = None,
+                                  annotation_kind_also: Mapping[str, tuple[str, ...]] | None = None) -> SurfaceContentInput:
     """Normalize current Project/View/profile facts without legacy Settings."""
     if table is None:
         table = normalize_v05_table_content(projection, project, view, actual_set=actual_set, locale=locale)
@@ -348,9 +349,13 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                group_headers=_group_headers(projection, project, view),
                                as_of_placement=str(as_of_marker.get("placement", "top")) if as_of_marker is not None else "top",
                                group_tints=group_tints,
+                               # `<id>` paints the bar, accent and stamp; `<id>#header` and `<id>#leader` carry the
+                               # same colour to the elements a kind's `colorAlso` names (#991).
                                annotation_kind_paints=tuple(
-                                   (item.annotation_id, annotation_kind_colors[item.kind]) for item in annotations
-                                   if annotation_kind_colors and item.kind in annotation_kind_colors))
+                                   pair for item in annotations if annotation_kind_colors and item.kind in annotation_kind_colors
+                                   for pair in ((item.annotation_id, annotation_kind_colors[item.kind]),
+                                                *((f"{item.annotation_id}#{target}", annotation_kind_colors[item.kind])
+                                                  for target in (annotation_kind_also or {}).get(item.kind, ())))))
 
 
 def _group_headers(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput) -> tuple[tuple[str, str], ...]:
