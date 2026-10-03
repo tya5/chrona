@@ -29,7 +29,11 @@ def resolve_mark_geometries(theme_tokens: Any) -> dict[str, MarkGeometry]:
     result = {}
     for role in MARK_GEOMETRY_ROLES:
         height, offset, paint_order, corner_radius = theme_tokens.mark_geometry(role)
-        result[role] = MarkGeometry(float(height), float(offset), paint_order, float(corner_radius))
+        symbol_height, symbol_offset = theme_tokens.symbol_geometry(role)
+        result[role] = MarkGeometry(
+            float(height), float(offset), paint_order, float(corner_radius),
+            None if symbol_height is None else float(symbol_height),
+            None if symbol_offset is None else float(symbol_offset))
     return result
 
 
