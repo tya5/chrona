@@ -5,7 +5,7 @@ body:
   values:
     chip-padding:
       type: number
-      value: 0.5
+      value: 0.35
     chip-radius:
       type: number
       value: 0.15
@@ -631,8 +631,8 @@ body:
     group:ground.fill: category:ground
     group:launch.fill: category:launch
     group:ops.fill: category:ops
-    planned.fill: accent
-    planned.stroke: accent
+    planned.fill: category:bar
+    planned.stroke: category:barEdge
     network-node.fill: surfaceRaised
     network-node.stroke: text
     network-edge.stroke: textMuted
@@ -640,8 +640,8 @@ body:
     snapshot.fill: surface
     snapshot.stroke: accent
     summary-bar.fill: accent
-    actual.fill: text
-    actual.stroke: text
+    actual.fill: category:actualInk
+    actual.stroke: category:actualInk
     milestone.fill: text
     missing-actual.fill: surface
     missing-actual.stroke: accent
@@ -657,7 +657,7 @@ body:
     tableColumnLabel.fill: textMuted
     range.fill: warning
     as-of.stroke: warning
-    as-of-label-chip.fill: warning
+    as-of-label-chip.fill: category:asofChip
     progress-fill.fill: warning
     progress-fill.stroke: surface
     icon-mark.fill: surface
@@ -670,7 +670,7 @@ body:
     period-band.fill: category:window
     period-label.fill: accent
     annotation-note-leader.stroke: textMuted
-    as-of-label.fill: surface
+    as-of-label.fill: category:asofInk
   metrics:
     text.body.size: size.body
     text.body.lineHeight: leading.body
