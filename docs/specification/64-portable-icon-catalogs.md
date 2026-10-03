@@ -278,7 +278,8 @@ resources. An adapter may serialize periodic repetition using target-native
 syntax, but the completed tile, angle, origin, and clip bounds determine it.
 Contrast evaluates substrate against the actual host ground and ink against
 both substrate and host ground. The lowest applicable ratio must meet the
-semantic floor: 3.0:1 for mark roles, 1.10:1 for decoration roles. All
+semantic floor: 3.0:1 for mark roles (an error below it), 1.10:1 for decoration
+roles (a warning below it, Specification 46 section 8). All
 channels are opaque under the existing representative-ground contract.
 Perceptibility inspection receives the same channels and tile/density facts;
 neither gate infers color from a catalogue. SVG serializes completed geometry;

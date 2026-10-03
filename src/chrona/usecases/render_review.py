@@ -55,6 +55,8 @@ from chrona.presentation.scene.model import (
     ContentFamilyCounts, InspectionScene, SceneManifest, SceneProvenance,
     SceneSurface,
 )
+from chrona.presentation.scene.contrast_policy import (
+    DECORATION_WARNING_BLOCKING_CODES, SceneContrastFinding, evaluate_scene_contrast)
 from chrona.presentation.scene.perceptibility import ScenePerceptibilityFinding, evaluate_scene_perceptibility
 from chrona.presentation.scene.paint import ScenePaintError
 from chrona.presentation.scene.serialization import scene_document
@@ -121,6 +123,7 @@ class RenderedReview:
     scenario_provenance: tuple[ScenarioProvenance, ...] = ()
     font_warnings: tuple["FontGlyphWarning", ...] = ()
     perceptibility_warnings: tuple["ScenePerceptibilityWarning", ...] = ()
+    contrast_warnings: tuple["SceneContrastWarning", ...] = ()
     info_diagnostics: tuple[PresentationInfo, ...] = ()
     scale_collisions: tuple[ScaleCollision, ...] = ()
     attachment_warnings: tuple[AttachmentWarning, ...] = ()
@@ -149,6 +152,18 @@ class ScenePerceptibilityWarning:
     scene_path: str
     primitive_ids: tuple[str, ...]
     slot_id: str | None
+    measured_facts: tuple[tuple[str, float | str], ...]
+    disposition: str | None
+
+
+@dataclass(frozen=True)
+class SceneContrastWarning:
+    """One decoration finding that missed its floor or could not be judged, reported and never blocking (#995)."""
+
+    code: str
+    finding_code: str
+    scene_path: str
+    primitive_ids: tuple[str, ...]
     measured_facts: tuple[tuple[str, float | str], ...]
     disposition: str | None
 
@@ -406,6 +421,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                               ())
     perceptibility_warnings = (_scene_perceptibility_warnings(scene)
                                if render_closure.context.identity.revision == "draft" else ())
+    contrast_warnings = _scene_contrast_warnings(scene)
     renderer = request.renderer or renderer_for(
         {"kind": render_closure.context.target.kind, "capabilities": list(render_closure.context.target.capabilities)},
         environment.renderer_environment(),
@@ -427,13 +443,14 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         glyph_warnings=glyph_warnings, fit_warnings=surface.fit_warnings,
         perceptibility_warnings=perceptibility_warnings, scale_collisions=collisions,
         attachment_warnings=attachments, deadline_warnings=deadlines,
+        contrast_warnings=contrast_warnings,
     )
     # Surface diagnostics are already in the preliminary Scene. Append only
     # the post-composition families, preserving duplicates and their order.
     appended = warning_records[sum(item.startswith("W_") for item in surface.diagnostics):]
     scene = replace(scene, diagnostics=(*scene.diagnostics, *(item.identity for item in appended)))
     return RenderedReview(artifact, surface, scene, frozenset(ledger.read), scenario_provenance,
-                          glyph_warnings, perceptibility_warnings,
+                          glyph_warnings, perceptibility_warnings, contrast_warnings,
                           surface.info_diagnostics, collisions, attachments, deadlines, warning_records)
 
 
@@ -492,6 +509,28 @@ def _font_warnings(substitutions: tuple[FontGlyphSubstitution, ...], target_kind
 def _scene_perceptibility_warnings(scene: InspectionScene) -> tuple[ScenePerceptibilityWarning, ...]:
     """Project only evaluator errors into ordered draft feedback facts."""
     return _warnings_from_findings(evaluate_scene_perceptibility(scene_document(scene)))
+
+
+def _scene_contrast_warnings(scene: InspectionScene) -> tuple[SceneContrastWarning, ...]:
+    """Project the decoration findings that warn (#995); marks and text are the corpus gate's, as before."""
+    return _contrast_warnings_from_findings(evaluate_scene_contrast(scene_document(scene)))
+
+
+def _contrast_warnings_from_findings(findings: tuple[SceneContrastFinding, ...]) -> tuple[SceneContrastWarning, ...]:
+    warnings = []
+    for finding in findings:
+        if finding.severity != "warning":
+            continue
+        facts: list[tuple[str, float | str]] = []
+        for name, value in (("contrastRatio", finding.contrast_ratio), ("floor", finding.floor),
+                            ("groundId", finding.ground_id), ("groundKind", finding.ground_kind),
+                            ("paintChannel", finding.paint_channel)):
+            if value is not None:
+                facts.append((name, value))
+        warnings.append(SceneContrastWarning(
+            finding.code, DECORATION_WARNING_BLOCKING_CODES[finding.code], finding.scene_path,
+            (finding.primitive_id,) if finding.primitive_id is not None else (), tuple(facts), finding.disposition))
+    return tuple(warnings)
 
 
 def _warnings_from_findings(findings: tuple[ScenePerceptibilityFinding, ...]) -> tuple[ScenePerceptibilityWarning, ...]:

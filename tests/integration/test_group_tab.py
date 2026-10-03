@@ -100,8 +100,10 @@ def _png(rendered, directory) -> Image.Image:
                                                               skip_system_fonts=False)))).convert("RGB")
 
 
-def _gate(rendered, primitive_id: str):
-    return [item for item in evaluate_scene_contrast(scene_document(rendered.scene)) if item.primitive_id == primitive_id]
+def _gate(rendered, primitive_id: str, decoration_severity: str = "warning"):
+    return [item for item in evaluate_scene_contrast(scene_document(rendered.scene),
+                                                     decoration_severity=decoration_severity)
+            if item.primitive_id == primitive_id]
 
 
 # --- defaults ---------------------------------------------------------------------------------------------
@@ -376,7 +378,8 @@ def test_both_theme_schemas_accept_named_lengths_and_a_position_and_reject_liter
 
 
 def _errors(rendered, primitive_id: str) -> list:
-    return [item for item in _gate(rendered, primitive_id) if item.severity == "error"]
+    """The findings a Theme that declares decoration blocking (#995) would fail on; a warning by default."""
+    return [item for item in _gate(rendered, primitive_id, "error") if item.severity == "error"]
 
 
 def test_a_legible_tab_is_gated_on_the_band_under_it_and_raises_no_error(tmp_path):

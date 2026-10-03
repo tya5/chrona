@@ -160,8 +160,8 @@ def test_two_groups_a_reader_cannot_tell_apart_are_warned_about(tmp_path):
     assert any(item.scale_id == "groups" for item in rendered.scale_collisions)
 
 
-def _findings(rendered):
-    return evaluate_scene_contrast(scene_document(rendered.scene))
+def _findings(rendered, decoration_severity="warning"):
+    return evaluate_scene_contrast(scene_document(rendered.scene), decoration_severity=decoration_severity)
 
 
 def _with_tint_colour(colour):
@@ -183,7 +183,10 @@ def test_the_contrast_gate_reads_a_tint_as_the_ground_under_the_marks_it_carries
 
 def test_the_contrast_gate_fails_a_tinted_band_the_canvas_swallows(tmp_path):
     canvas = "#0B1220"
-    findings = _findings(_render(tmp_path, _parts({"scale": "series"}, mutate=_with_tint_colour(canvas))))
+    rendered = _render(tmp_path, _parts({"scale": "series"}, mutate=_with_tint_colour(canvas)))
+    findings = _findings(rendered, "error")  # a Theme that declares decoration blocking (#995)
+    assert [item.primitive_id for item in _findings(rendered)
+            if item.visual_role == "group-band" and item.severity == "warning"] == ["group:bus"]
     swallowed = [item for item in findings if item.visual_role == "group-band" and item.severity == "error"]
     assert [item.primitive_id for item in swallowed] == ["group:bus"]
     assert swallowed[0].contrast_ratio < swallowed[0].floor

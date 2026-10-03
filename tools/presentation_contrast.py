@@ -63,6 +63,7 @@ def report_document(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
             "minimumContrast": min(ratios) if ratios else None,
             "medianContrast": statistics.median(ratios) if ratios else None,
             "errorCount": sum(item["finding"]["severity"] == "error" for item in values),
+            "warningCount": sum(item["finding"]["severity"] == "warning" for item in values),
         })
     decoration_roles = {binding.scene_role for binding in contrast_bindings(ContrastClass.DECORATION)}
     by_scene: dict[str, set[str]] = {}
@@ -94,6 +95,8 @@ def report_document(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
             "findings": ordered,
             "witnessScenes": witnesses, "corpusErrors": corpus_errors,
             "errorCount": sum(item["finding"]["severity"] == "error" for item in ordered) + len(corpus_errors),
+            # A decoration below its floor is a warning (#995): counted and listed, never a failure.
+            "warningCount": sum(item["finding"]["severity"] == "warning" for item in ordered),
             "findingCount": len(ordered)}
 
 
@@ -102,13 +105,16 @@ def render_markdown(report: Mapping[str, Any]) -> str:
     def number(value: float | None) -> str:
         return "—" if value is None else f"{value:.3f}"
     lines = ["# Presentation Contrast", "", "Generated from committed public Scene evidence by `tools/presentation_contrast.py`.", "",
-             "| Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors |",
-             "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |"]
+             "Marks and text below their floor are errors and fail the check. A decoration below its floor "
+             "(or on a ground that cannot be read) is a warning: it is listed and counted, and fails nothing "
+             "(Specification 46 section 8).", "",
+             "| Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors | Warnings |",
+             "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"]
     for row in report["rows"]:
         display = dict(row)
         display.update(floor=number(row["floor"]), minimum=number(row["minimumContrast"]),
                        median=number(row["medianContrast"]))
-        lines.append("| {purpose} | `{visualRole}` | {disposition} | {floor} | {slideCount} | {primitiveCount} | {minimum} | {median} | {errorCount} |".format(
+        lines.append("| {purpose} | `{visualRole}` | {disposition} | {floor} | {slideCount} | {primitiveCount} | {minimum} | {median} | {errorCount} | {warningCount} |".format(
             **display))
     lines.extend(("", "## Per-primitive grounds", "",
                   "| Scene | Primitive | Role | Sample | Ground | Ground kind | Ground colour | Channel | Ratio | Floor | Severity |",
@@ -131,7 +137,8 @@ def render_markdown(report: Mapping[str, Any]) -> str:
                   "group-band or group-header-band supplies the group concept when there are no corpus errors.", "",
                   *(f"- `{scene}`" for scene in report["witnessScenes"]),
                   *(f"- ERROR `{code}`" for code in report["corpusErrors"]),
-                  "", f"Findings: {report['findingCount']}; errors: {report['errorCount']}.", ""))
+                  "", f"Findings: {report['findingCount']}; errors: {report['errorCount']}; "
+                      f"warnings: {report['warningCount']}.", ""))
     return "\n".join(lines)
 
 

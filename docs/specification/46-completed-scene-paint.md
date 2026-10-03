@@ -213,6 +213,25 @@ interpolation; the finding identifies a `gradient-sample` ground. This
 supersedes the first #459 design's exclusion of all gradient hosts. Other
 non-flat or non-opaque hosts still require an explicit contract.
 
+**Severity classes (#995).** Every finding has a severity class, fixed by the registry's contrast class of the
+role and never by a slide: `legibility` (`mark`, `state-text`, `ground-text`) and `decoration`. A legibility
+finding below its floor is an `error` with the code it always had and fails the corpus gate
+(`tools/presentation_contrast.py --check`); no Theme or caller can soften it. A decoration is ground, not the
+message: a stripe, band, tint or pattern, or the ground-vs-ground pairs of a patterned decoration (its fill on its
+host, its ink on its substrate and on its host), below the 1.10 floor is a `warning` with code
+`W_SCENE_DECORATION_CONTRAST`, and a decoration whose host cannot be read as an opaque colour is a `warning` with
+code `W_SCENE_DECORATION_GROUND_UNSUPPORTED` (a measurement that cannot be made, not an illegibility). A finding
+carries its class as `severityClass`. A warning fails neither the corpus gate nor the derived snapshot nor a
+render: it is listed in the corpus contrast report (a `Warnings` column and a `warnings: N` summary) and reaches
+the render's warning records, the Scene `diagnostics`, the CLI and the MCP payloads, with the measured ratio and
+floor. The evaluator takes the decoration severity as an argument (`warning`, the default, or `error`); with
+`error` the decoration findings keep the blocking codes `E_SCENE_DECORATION_CONTRAST` and
+`E_SCENE_CONTRAST_GROUND_UNSUPPORTED`.
+Unchanged for every class: a malformed paint (`E_SCENE_CONTRAST_PAINT`), an invalid treatment and a malformed
+Scene document remain errors; a mark or text on a translucent host remains
+`E_SCENE_CONTRAST_GROUND_UNSUPPORTED`; a mark or text on a faint decoration is judged on that decoration's colour.
+Theme resolution checks text only and has no decoration check to soften.
+
 **Ground text and pattern grounds (#884).** Group header text keeps the
 shared visual role `text` (and so the Theme `text` ink), so its contrast class
 is resolved from its purpose `group-header`, never from the role: the class

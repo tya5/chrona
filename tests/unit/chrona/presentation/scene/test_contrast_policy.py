@@ -28,7 +28,8 @@ def test_policy_reports_every_classified_flat_paint_with_its_finite_floor():
         _primitive("variance", "variance-ahead", "table-cell", "#000000", treatment="required"),
     ))
     by_id = {item.primitive_id: item for item in findings}
-    assert by_id["band"].code == "E_SCENE_DECORATION_CONTRAST"
+    # A white band on the white canvas misses the decoration floor: a warning, never an error (#995).
+    assert (by_id["band"].code, by_id["band"].severity) == ("W_SCENE_DECORATION_CONTRAST", "warning")
     assert by_id["band"].floor == 1.10
     assert by_id["variance"].code == "E_SCENE_STATE_TEXT_CONTRAST"
     assert by_id["variance"].floor == 4.5

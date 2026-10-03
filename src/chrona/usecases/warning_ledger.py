@@ -29,6 +29,7 @@ def collect_render_warnings(
     glyph_warnings: Iterable[Any], fit_warnings: Iterable[Any],
     perceptibility_warnings: Iterable[Any], scale_collisions: Iterable[Any],
     attachment_warnings: Iterable[Any], deadline_warnings: Iterable[Any] = (),
+    contrast_warnings: Iterable[Any] = (),
 ) -> tuple[RenderWarning, ...]:
     """Keep warning multiplicity and stable source identities across transports."""
     records = []
@@ -63,6 +64,12 @@ def collect_render_warnings(
                                findingCode=item.finding_code, scenePath=item.scene_path,
                                primitiveIds=list(item.primitive_ids), measuredFacts=dict(item.measured_facts),
                                **({"slotId": item.slot_id} if item.slot_id is not None else {}),
+                               **({"disposition": item.disposition} if item.disposition is not None else {})))
+    for item in contrast_warnings:
+        # A decoration below its floor (#995): a typed warning that fails nothing unless the Theme asks it to.
+        records.append(_record(item.code, {"scenePath": item.scene_path, "primitiveIds": list(item.primitive_ids)},
+                               findingCode=item.finding_code, scenePath=item.scene_path,
+                               primitiveIds=list(item.primitive_ids), measuredFacts=dict(item.measured_facts),
                                **({"disposition": item.disposition} if item.disposition is not None else {})))
     for item in scale_collisions:
         records.append(RenderWarning(item.scene_diagnostic(), {
