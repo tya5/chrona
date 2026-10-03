@@ -316,7 +316,7 @@ order come from Theme role `period-band` (`backgroundTreatment` and
 `backgroundPaintOrder`, as the axis band); `backgroundTreatment: none` is the
 explicit absent disposition. A Theme that omits the role while a View selects a
 period fails with `E_THEME_ROLE_REQUIRED` at `/body/roles/period-band`; no other
-role paints it. Every packaged Theme declares `period-band`, `period-label` and `period-label-chip` (#880): the band is a 2 px outline in the scheme's `accent` (`text` in the two print Themes), so it reads as a bracketed window and, having no fill, leaves the marks, closed days and as-of line inside it the ground they had; the label sits on a `surface` chip. The packaged Themes bind these roles to the closed set of Color Scheme intents only: a binding to a scheme category would make `--preset X --scheme Y` fail for every View whose scheme lacks it, and a translucent fill cannot be the ground of the marks lying on the band, so a tinted or patterned fill is a separate preset change. The band is a background and never enters the obstacle index.
+role paints it. Every packaged Theme declares `period-band`, `period-label` and `period-label-chip` (#880): the band is a 2 px outline in the scheme's `accent` (`text` in the two print Themes), so it reads as a bracketed window and, having no fill, leaves the marks, closed days and as-of line inside it the ground they had; the label sits on a `surface` chip. The packaged Themes bind these roles to the closed set of Color Scheme intents only: a binding to a scheme category would make `--preset X --scheme Y` fail for every View whose scheme lacks it, and a tinted or patterned fill is a separate preset change (a translucent fill is the composited ground of the marks lying on the band, #1013). The band is a background and never enters the obstacle index.
 Contrast is measured as a decoration role at the 1.10 floor over the primitive
 beneath its centre; a band below the floor, or over a translucent host that
 cannot be measured, is a warning (`W_SCENE_DECORATION_CONTRAST`,
@@ -324,9 +324,10 @@ cannot be measured, is a warning (`W_SCENE_DECORATION_CONTRAST`,
 resolution or the corpus gate unless the Theme declares
 `contrastPolicy.decoration: error` (#995; Specification 46 section 8). The marks and
 text that lie on the band keep their blocking floors on the band's colour, and
-a translucent host beneath a mark or text still cannot be judged
-(`E_SCENE_CONTRAST_GROUND_UNSUPPORTED`), so a Theme paints a pattern band
-opaque or a translucent band over opaque bands only.
+a translucent host beneath a mark or text is judged on the host composited over
+its own ground (#1013; Specification 46 section 8), so a translucent band is read
+as the colour it makes and a Theme need not paint it opaque; only a host whose
+paint cannot be read stays `E_SCENE_CONTRAST_GROUND_UNSUPPORTED`.
 
 A shown deadline (#822; Spec 06 section 7.3) completes `Path` shapes from the View-shown deadlines the use case
 carries on the projection, each with the Core's slipped verdict (`ReviewDeadline`; Layout compares no dates to judge

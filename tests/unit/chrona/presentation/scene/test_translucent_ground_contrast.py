@@ -190,6 +190,17 @@ def test_a_cone_painted_before_the_chip_tints_the_ground_the_chip_lies_over():
     assert finding.ground_kind == "translucent-over-cone-blend" and finding.ground_id == "chip"
 
 
+def test_a_label_straddling_the_cone_edge_also_lies_on_the_chip_over_the_untinted_ground():
+    # Half-width at y 105 is 26.25, so the right edge is at x 56.25 and this label crosses it.
+    straddling = {"inline": 50.0, "block": 100.0, "inlineSize": 20.0, "blockSize": 10.0}
+    chip = _rect("chip", LIGHT, order=200, opacity=0.5, bounds=straddling)
+    finding = _judge(_cone(order=50), chip, _label("#101820", bounds=straddling), canvas="#FFFFFF")
+    plain = blend_over(ink=LIGHT, opacity=0.5, ground="#FFFFFF")
+    tinted = [blend_over(ink=LIGHT, opacity=0.5, ground=blend_over(ink=INK, opacity=1 - 100 / 200, ground="#FFFFFF"))]
+    assert finding.contrast_ratio == pytest.approx(min(_ratio("#101820", ground) for ground in (plain, *tinted)))
+    assert _ratio("#101820", tinted[0]) < _ratio("#101820", plain)
+
+
 def test_a_cone_painted_after_the_chip_tints_the_composite():
     chip = _rect("chip", LIGHT, order=200, opacity=0.5, bounds=AT)
     finding = _judge(chip, _cone(order=250), _label("#3A2E00", bounds=AT), canvas="#FFFFFF")

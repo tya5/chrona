@@ -210,8 +210,8 @@ correction for the finite geometry rule.
 An earlier opaque linear-gradient Rect is also a valid ground. Its completed
 absolute gradient is sampled at the same point by clamped sRGB stop
 interpolation; the finding identifies a `gradient-sample` ground. This
-supersedes the first #459 design's exclusion of all gradient hosts. Other
-non-flat or non-opaque hosts still require an explicit contract.
+supersedes the first #459 design's exclusion of all gradient hosts. A translucent
+host is composited over its own ground (#1013, section 8); other non-flat hosts still require an explicit contract.
 
 **Severity classes (#995).** Every finding has a severity class, fixed by the registry's contrast class of the
 role and never by a slide: `legibility` (`mark`, `state-text`, `ground-text`) and `decoration`. A legibility
@@ -231,8 +231,9 @@ floor. The evaluator takes the decoration severity as an argument (`warning`, th
 evaluates with `warning` (a Theme that declares `error` cannot put a failing decoration in the corpus,
 because the render that makes the Scene fails first).
 Unchanged for every class: a malformed paint (`E_SCENE_CONTRAST_PAINT`), an invalid treatment and a malformed
-Scene document remain errors; a mark or text on a translucent host remains
-`E_SCENE_CONTRAST_GROUND_UNSUPPORTED`; a mark or text on a faint decoration is judged on that decoration's colour.
+Scene document remain errors; a mark or text on a translucent host is judged on the host composited over its own
+ground (#1013, below) and is `E_SCENE_CONTRAST_GROUND_UNSUPPORTED` only where that composite cannot be read; a
+mark or text on a faint decoration is judged on that decoration's colour.
 Theme resolution checks text only and has no decoration check to soften.
 
 **Ground text and pattern grounds (#884, #980).** Free text, ink that lies on a ground
@@ -257,7 +258,7 @@ is the one above, so a group tint, a gradient, a row band, a region-frame fill o
 band under the label is read as completed, and a label whose ink is too close to what
 lies beneath it is a gate error. A label that carries its own box (a label chip, an
 opaque Rect one paint order below it) is judged on that box; a translucent chip or host
-cannot be read and is `E_SCENE_CONTRAST_GROUND_UNSUPPORTED`. A Rect with a
+is judged on its composited ground (#1013, below). A Rect with a
 completed catalogue pattern (Scene v0.7) is ground in two colours, as a canvas
 texture is: the substrate is its fill and the ink its stroke, and every
 classified text and mark over it, except a decoration, is judged on both, the
@@ -281,6 +282,26 @@ cone's identifier as `groundId`, the blended colour as `groundColor` and `ground
 `cone-blend`; a canvas texture's or pattern's two colours are each blended. A decoration
 is not judged against the cone. No floor changes, and an unreadable cone is a malformed
 Scene document (`E_SCENE_CONTRAST_DOCUMENT`), never a silent skip.
+
+**A translucent host is composited over its own ground (#1013).** A host (a label chip, a region
+frame, a panel) whose `paint.opacity` is in [0, 1) is not refused: a mark or text (the `legibility` class) on it is
+judged on the host's colour blended over the ground beneath it, as completed. The ground beneath is resolved by the
+same rule one level down, at the same sample point, in paint order: the topmost earlier covering Rect or Symbol with a
+fill, else the canvas. Each colour of the host (its fill, or the gradient sample, and its stroke ink when it is a
+canvas texture or a catalogue pattern host) is `blend_over` every ground beneath it, the grounds of a texture or
+pattern beneath (substrate and ink) and the grounds a cone painted between the two hosts makes (the as-of cone tints
+the beneath ground, then the host is composited over it); a cone painted after the host tints the composite as it
+tints an opaque host. The label is judged on every composite and the worst ratio decides, as for patterns and cones;
+stacked translucent hosts recurse in paint order. The finding names the translucent host as `groundId`, the composite
+as `groundColor` and `groundKind` `translucent-over-<kind of the ground beneath>` (`translucent-over-canvas`,
+`translucent-over-flat`, `translucent-over-texture-ink`, `translucent-pattern-host-ink-over-canvas` for a patterned
+chip, `translucent-over-translucent-over-flat` when stacked); a cone that tints the result is `cone-blend`, as above.
+No floor, class or code changes. Still `E_SCENE_CONTRAST_GROUND_UNSUPPORTED` (an error for a mark or text; the
+decoration warning of #995 for a decoration), because no ground can be read: a translucent host whose opacity is not a
+finite number in [0, 1], whose fill is not `#RRGGBB`, whose gradient cannot be sampled, or whose ground beneath is
+one of these; and, unchanged, a decoration on a translucent host (a decoration is a tint judged against its dominant
+substrate, with no ink, cone or composite ground) and note prose on a note box that is not opaque, flat and
+same-source (Specification 08, C4). A translucent canvas has nothing under it and stays `E_SCENE_CONTRAST_PAINT`.
 
 A dual-channel Rect or Symbol is evaluated at a separate painted sample for
 each channel: fill at bounds centre, stroke at the left-edge block midpoint.
