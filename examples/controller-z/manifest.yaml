@@ -122,6 +122,11 @@ slides:
     context: contexts/table-header.yaml
     expectedSvg: generated/table-header.svg
     expectedScene: generated/table-header.scene.json
+  - id: gate-paint
+    evidence: "Gates painted apart from the bars (#991): a Theme that declares the role gate colours the primary gates with it (here the text ink, as the target's black diamonds) while the bars keep the planned paint, over the executive sources."
+    context: contexts/gate-paint.yaml
+    expectedSvg: generated/gate-paint.svg
+    expectedScene: generated/gate-paint.scene.json
   - id: as-of-cone
     evidence: "The as-of marker as a cone of light (Marquee spotlight): a gradient polygon from the top of the plot to its last row, fading from ink to transparent under the bars and gates, drawn under the rich SVG profile from the Theme role as-of-cone with a label chip (#890)."
     context: contexts/as-of-cone.yaml

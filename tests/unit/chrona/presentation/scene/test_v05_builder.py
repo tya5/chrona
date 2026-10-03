@@ -627,6 +627,7 @@ def test_legend_milestone_entry_renders_as_the_bound_symbol_at_chart_size():
     # real milestone point mark draws on this chart -- never a square.
     theme = _theme()
     theme["body"]["roles"]["milestone"] = {"fill": "ink", "stroke": "ink", "strokeWidth": "stroke-width"}
+    theme["body"]["roles"].pop("gate")  # the fixture declares a role per registered semantic; a Theme with `gate` paints the key with it (#991)
     surface = _legend_surface((("milestone", "Milestone"),), theme)
 
     swatch = next(node for node in surface.primitives if node.scene_id == "legend-swatch:milestone")

@@ -231,6 +231,7 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
         "markHeight", "markOffset", "markPaintOrder", "markCornerRadius")), scene_kinds=frozenset(("Rect",)))
     register("network-node", "Scene Rect", _PATTERNED_RECT_PAINT, scene_kinds=frozenset(("Rect",)))
     register("milestone", "Scene Symbol", _PATTERNED_RECT_PAINT, scene_kinds=frozenset(("Symbol",)))
+    register("gate", "Scene Symbol", _PATTERNED_RECT_PAINT, scene_kinds=frozenset(("Symbol",)))
     register("progress-fill", "Layout progress mark and Scene Rect", _RECT_PAINT | frozenset((
         "pattern", "progressInset", "markPaintOrder", "markCornerRadius")), scene_kinds=frozenset(("Rect",)))
     register("summary-bar", "Layout summary mark and Scene Rect", _PATTERNED_RECT_PAINT | frozenset(("markHeight",)),
