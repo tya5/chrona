@@ -131,7 +131,7 @@ def test_render_review_renders_a_closure_without_the_cli():
 def test_end_and_finish_anchor_endpoints_render_byte_identical_scenes():
     # I662 S4a: `end` is the span-end's canonical anchor spelling and `finish` its alias; the endpoint text reaches Layout ids
     # and port choice, so the two spellings must give the same Scene bytes and the same SVG. The controller-z annotations
-    # context anchors four realized annotations to a span finish (two planned, one actual, one explanatory arrow) and one to a point.
+    # context anchors four annotations to a span finish (three planned, one actual explanatory arrow, suppressed since #1074) and one to a point.
     example = ROOT / "examples/controller-z"
     with tempfile.TemporaryDirectory() as temporary:
         snapshot = Path(temporary) / "snapshot"
@@ -154,7 +154,10 @@ def test_end_and_finish_anchor_endpoints_render_byte_identical_scenes():
 
         finish, end = render("finish"), render("end")
     scene = serialize_scene(finish.scene)
-    assert b"annotation-leader:firmware-slip" in scene, "the respelled annotations are realized, not suppressed"
+    # The three planned-facet annotations are realized; the actual-facet arrow is reported as suppressed (#1074: the
+    # actual gate beside it is as large as the planned one), and the two spellings agree on that too.
+    assert b"annotation-leader:bringup-risk" in scene and b"annotation-leader:firmware-slip" not in scene
+    assert b"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:firmware-slip" in scene
     assert serialize_scene(end.scene) == scene
     assert end.artifact.content == finish.artifact.content
     assert end.artifact.content == (example / "generated/annotations.svg").read_bytes(), "v0.28 renders the committed example unchanged"
