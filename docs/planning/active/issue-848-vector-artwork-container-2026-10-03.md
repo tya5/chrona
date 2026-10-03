@@ -2,7 +2,7 @@
 
 Living record for [#848](https://github.com/tya5/chrona/issues/848) (Depth B, P4-A on the [#454](https://github.com/tya5/chrona/issues/454) board, read only; successor of #718, reopened by the reviewer because it was closed with no work done): baseline, design plan, design, architecture review, implementation plan and progress. Edited in place; Git keeps history. The owner-level choices are also recorded as a comment on #848 (options, choice, why, how to reverse).
 
-**Public base:** `528377f4` on `main`. **Status:** the design plan, design, architecture review and implementation plan were published together before any code (PR #1037, `494a14fd`). A848-1 (gate, PR #1048) and A848-2 (mechanism and evidence) are implemented (section 8); the literal acceptance review follows.
+**Public base:** `528377f4` on `main`. **Status:** the design plan, design, architecture review and implementation plan were published together before any code (PR #1037, `494a14fd`). A848-1 (gate, PR #1048) and A848-2 (mechanism and evidence, PR #1053) are implemented (section 8); the [acceptance review](../../reviews/current/issue-848-vector-artwork-acceptance-review-2026-10-03.md) is published.
 
 ## 1. Published baseline
 
