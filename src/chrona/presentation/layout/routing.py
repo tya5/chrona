@@ -41,7 +41,7 @@ class RouteAttemptEvidence:
                 raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
         elif self.outcome == "no-route-found":
             if (self.blocker_ids or self.search_failure not in {
-                    "E_PRESENTATION_ROUTE_LIMIT", "E_CONNECTOR_UNROUTABLE"}
+                    "E_PRESENTATION_ROUTE_LIMIT", "E_CONNECTOR_UNROUTABLE", "E_LAYOUT_ROUTE_SELF_OVERLAP"}
                     or any(value is not None for value in self._quality_values())):
                 raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
         else:
@@ -111,10 +111,91 @@ def place_relation_route(*, source_port: tuple[float, float], target_port: tuple
                             port_ids=port_ids, regions=regions, classes=classes)
 
 
+def route_self_overlaps(points: tuple[tuple[float, float], ...]) -> bool:
+    """Whether two segments of one route overlap along a shared line (a reversal is the adjacent case, #1059)."""
+    segments = [(a, b) for a, b in zip(points, points[1:]) if a != b]
+    for index, (a, b) in enumerate(segments):
+        for c, d in segments[index + 1:]:
+            if a[1] == b[1] == c[1] == d[1]:
+                low, high = max(min(a[0], b[0]), min(c[0], d[0])), min(max(a[0], b[0]), max(c[0], d[0]))
+            elif a[0] == b[0] == c[0] == d[0]:
+                low, high = max(min(a[1], b[1]), min(c[1], d[1])), min(max(a[1], b[1]), max(c[1], d[1]))
+            else:
+                continue
+            if high - low > 1e-6:
+                return True
+    return False
+
+
+def repair_self_reversal(points: tuple[tuple[float, float], ...], obstacles: SurfaceObstacleIndex, *,
+                         classes: tuple[str, ...], regions: tuple[str, ...],
+                         host_ids: tuple[str, ...] = ()) -> tuple[tuple[float, float], ...] | None:
+    """Replace each reversal by an honest extra bend, or None when the free corridor is not there (#1059).
+
+    A route that drops along `x`, runs to a tip on the near side of `x` and turns back over the same line becomes:
+    drop part of the way, jog sideways to the tip's coordinate, drop to the tip, then enter. The jog is tried nearest
+    the tip first (the gap before the target row), then step by step back toward where the drop began. The two new
+    segments must be free of the selected obstacles (the endpoints' own comparison marks, `host_ids`, excepted); any
+    other overlap is not repaired.
+    """
+    current = tuple(points)
+    for _ in range(len(current)):
+        index = next((i for i in range(1, len(current) - 1)
+                      if _reverses(current[i - 1], current[i], current[i + 1])), None)
+        if index is None:
+            return current if not route_self_overlaps(current) else None
+        if index < 2:
+            return None
+        before, drop, tip = current[index - 2], current[index - 1], current[index]
+        along = 0 if drop[1] == tip[1] else 1  # the axis of the reversing line; the drop runs along the other
+        across = 1 - along
+        if before[along] != drop[along]:
+            return None
+        direction = 1.0 if before[across] > drop[across] else -1.0
+        span = abs(before[across] - drop[across])
+        offsets = [min(step * JOG_STEP, span) for step in range(2, int(span // JOG_STEP) + 2)] + [span]
+        repaired = None
+        for offset in dict.fromkeys(offsets):
+            level = drop[across] + direction * offset
+            first = _point(drop[along], level, along)
+            second = _point(tip[along], level, along)
+            if not all(_free(obstacles, start, end, classes, regions, host_ids)
+                       for start, end in ((first, second), (second, tip))):
+                continue
+            path = [*current[:index - 1], first, second, *current[index:]]
+            repaired = tuple(point for number, point in enumerate(path) if number == 0 or point != path[number - 1])
+            break
+        if repaired is None:
+            return None
+        current = repaired
+    return None
+
+
+JOG_STEP = 4.0  # candidate spacing for the repair jog, in surface units
+
+
+def _point(along_value: float, across_value: float, along: int) -> tuple[float, float]:
+    return (along_value, across_value) if along == 0 else (across_value, along_value)
+
+
+def _free(obstacles: SurfaceObstacleIndex, start: tuple[float, float], end: tuple[float, float],
+          classes: tuple[str, ...], regions: tuple[str, ...], host_ids: tuple[str, ...]) -> bool:
+    if start == end:
+        return True
+    segment = ObstacleSegment(start, end)
+    return not (obstacles.egress_collisions(segment, host_ids=host_ids, classes=classes, regions=regions)
+                if host_ids else obstacles.collisions(segment, classes=classes, regions=regions))
+
+
+def _reverses(a: tuple[float, float], b: tuple[float, float], c: tuple[float, float]) -> bool:
+    return ((a[1] == b[1] == c[1] and (b[0] - a[0]) * (c[0] - b[0]) < 0)
+            or (a[0] == b[0] == c[0] and (b[1] - a[1]) * (c[1] - b[1]) < 0))
+
+
 def relation_route_quality(points: tuple[tuple[float, float], ...], *,
                            max_bends: int, max_detour_ratio: float) -> bool:
     """Evaluate a completed route against the explicit Layout Profile limits."""
-    if len(points) < 2:
+    if len(points) < 2 or route_self_overlaps(points):
         return False
     length, direct, bends = route_quality_metrics(points)
     return bends <= max_bends and (direct == 0 or length <= direct * max_detour_ratio)
@@ -210,6 +291,14 @@ def select_lane_relation_route(
         if len(points) < 2:
             attempts.append(RouteAttemptEvidence(source.side, target.side, "no-route-found",
                                                  search_failure="E_CONNECTOR_UNROUTABLE"))
+            continue
+        repaired = repair_self_reversal(tuple(points), obstacles, classes=classes, regions=regions,
+                                        host_ids=(*source.host_ids, *target.host_ids))
+        if repaired is not None:
+            points = list(repaired)
+        if route_self_overlaps(tuple(points)):  # #1059: a route never overlaps itself; the next candidate follows
+            attempts.append(RouteAttemptEvidence(source.side, target.side, "no-route-found",
+                                                 search_failure="E_LAYOUT_ROUTE_SELF_OVERLAP"))
             continue
         measured = route_quality_attempt(source.side, target.side, tuple(points),
                                          max_bends=max_bends, max_detour_ratio=max_detour_ratio)
