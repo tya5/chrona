@@ -7,7 +7,7 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors | Warnings |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | actual | `actual` | required | 3.000 | 49 | 320 | 3.204 | 7.708 | 0 | 0 |
-| annotation-box | `annotation-note-box` | enabled | 1.100 | 10 | 28 | 1.124 | 1.435 | 0 | 0 |
+| annotation-box | `annotation-note-box` | enabled | 1.100 | 10 | 28 | 1.056 | 1.435 | 0 | 1 |
 | annotation-kind-accent | `annotation-kind-accent` | enabled | 1.100 | 3 | 8 | 4.837 | 6.132 | 0 | 0 |
 | annotation-kind-bar | `annotation-kind-bar` | enabled | 1.100 | 2 | 5 | 5.765 | 6.499 | 0 | 0 |
 | annotation-kind-label | `annotation-kind-label` | required | 4.500 | 3 | 8 | 6.747 | 7.607 | 0 | 0 |
@@ -50,11 +50,11 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | milestone-digest-entry | `text` | required | 4.500 | 29 | 58 | 11.935 | 16.268 | 0 | 0 |
 | missingActual | `missing-actual` | required | 3.000 | 40 | 49 | 3.973 | 14.573 | 0 | 0 |
 | network-node | `network-node` | required | 3.000 | 2 | 32 | 16.354 | 17.050 | 0 | 0 |
-| note-index | `note-index` | required | 4.500 | 8 | 15 | 5.284 | 6.157 | 0 | 0 |
-| period-band | `period-band` | enabled | 1.100 | 6 | 6 | 1.255 | 6.157 | 0 | 0 |
+| note-index | `note-index` | required | 4.500 | 8 | 15 | 4.597 | 6.157 | 0 | 0 |
+| period-band | `period-band` | enabled | 1.100 | 6 | 6 | 1.255 | 1.337 | 0 | 0 |
 | period-label | `period-label` | required | 4.500 | 6 | 6 | 4.636 | 13.973 | 0 | 0 |
 | planned | `gate` | required | 3.000 | 2 | 10 | 14.143 | 17.747 | 0 | 0 |
-| planned | `planned` | required | 3.000 | 51 | 640 | 4.777 | 13.238 | 0 | 0 |
+| planned | `planned` | required | 3.000 | 51 | 640 | 4.597 | 13.238 | 0 | 0 |
 | progress-fill | `progress-fill` | required | 3.000 | 38 | 112 | 3.216 | 4.789 | 0 | 0 |
 | project-note | `text` | required | 4.500 | 39 | 87 | 10.019 | 16.268 | 0 | 0 |
 | relation-label | `text` | required | 4.500 | 24 | 139 | 6.663 | 14.573 | 0 | 0 |
@@ -4066,8 +4066,8 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `member-label:review-lane:["generated","payload","optics"]:payload-tvac` | `text` | 1247.776, 413.375 | `group:payload` | flat | `#142642` | fill | 13.238 | 4.500 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `missing-actual:review-lane:["generated","bus","pdr"]:pdr` | `missing-actual` | 958.241, 236.500 | `planned:review-lane:["generated","bus","pdr"]:pdr` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `missing-actual:review-lane:["generated","launch","launch-contract"]:launch-contract` | `missing-actual` | 1100.322, 854.250 | `planned:review-lane:["generated","launch","launch-contract"]:launch-contract` | flat | `#3A1A24` | stroke | 13.556 | 3.000 | info |
-| `examples/halcyon-1/generated/02-programme-board.scene.json` | `note-index:window-note` | `note-index` | 1740.185, 817.650 | `group:launch` | flat | `#142642` | fill | 6.157 | 4.500 | info |
-| `examples/halcyon-1/generated/02-programme-board.scene.json` | `period-band:launch-window` | `period-band` | 1739.685, 564.500 | `group:ait` | flat | `#142642` | stroke | 6.157 | 1.100 | info |
+| `examples/halcyon-1/generated/02-programme-board.scene.json` | `note-index:window-note` | `note-index` | 1740.185, 817.650 | `period-band:launch-window` | translucent-over-flat | `#203B60` | fill | 4.597 | 4.500 | info |
+| `examples/halcyon-1/generated/02-programme-board.scene.json` | `period-band:launch-window` | `period-band` | 1765.057, 564.500 | `group:ait` | flat | `#142642` | fill | 1.337 | 1.100 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `period-label:launch-window` | `period-label` | 1765.057, 104.375 | `chip:period-label:launch-window` | flat | `#16213A` | fill | 13.973 | 4.500 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `planned:review-lane:["generated","ait","integration"]:emc` | `planned` | 1536.713, 553.250 | `group:ait` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `planned:review-lane:["generated","ait","integration"]:integration` | `planned` | 1374.335, 553.250 | `group:ait` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
@@ -4089,7 +4089,7 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:launch-contract` | `planned` | 1095.322, 854.250 | `group:launch` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:shipment` | `planned` | 1611.136, 854.250 | `group:launch` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:first-light` | `planned` | 1829.406, 995.250 | `group:ops` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
-| `examples/halcyon-1/generated/02-programme-board.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:leop` | `planned` | 1739.685, 995.250 | `group:ops` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
+| `examples/halcyon-1/generated/02-programme-board.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:leop` | `planned` | 1739.685, 995.250 | `period-band:launch-window` | translucent-over-flat | `#203B60` | stroke | 9.884 | 3.000 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:rehearsals` | `planned` | 1560.393, 995.250 | `group:ops` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `planned:review-lane:["generated","payload","optics"]:detector` | `planned` | 1063.111, 388.500 | `group:payload` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/02-programme-board.scene.json` | `planned:review-lane:["generated","payload","optics"]:optics` | `planned` | 968.390, 388.500 | `group:payload` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
@@ -5069,7 +5069,7 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `actual:review-lane:["generated","payload","optics"]:payload-tvac` | `actual` | 1148.546, 584.500 | `group:payload` | flat | `#142642` | fill | 7.708 | 3.000 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `annotation-box:station-note` | `annotation-note-box` | 907.710, 988.750 | `group:launch` | flat | `#142642` | stroke | 1.435 | 1.100 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `annotation-box:tvac-note` | `annotation-note-box` | 1078.155, 499.375 | `group:payload` | flat | `#142642` | stroke | 1.435 | 1.100 | info |
-| `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `annotation-box:window-note` | `annotation-note-box` | 1853.265, 1086.625 | `group:launch` | flat | `#142642` | stroke | 1.435 | 1.100 | info |
+| `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `annotation-box:window-note` | `annotation-note-box` | 1926.000, 1086.625 | `group:launch` | flat | `#142642` | fill | 1.056 | 1.100 | warning |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `annotation-text:station-note` | `annotation-note-text` | 992.595, 988.750 | `annotation-box:station-note` | flat | `#16213A` | fill | 13.973 | 4.500 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `annotation-text:tvac-note` | `annotation-note-text` | 1163.378, 499.375 | `annotation-box:tvac-note` | flat | `#16213A` | fill | 13.973 | 4.500 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `annotation-text:window-note` | `annotation-note-text` | 1926.000, 1086.625 | `annotation-box:window-note` | flat | `#16213A` | fill | 13.973 | 4.500 | info |
@@ -5130,7 +5130,7 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `member-label:review-lane:["generated","payload","optics"]:payload-tvac` | `text` | 1248.880, 598.375 | `group:payload` | flat | `#142642` | fill | 13.238 | 4.500 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `missing-actual:review-lane:["generated","bus","pdr"]:pdr` | `missing-actual` | 928.565, 421.500 | `planned:review-lane:["generated","bus","pdr"]:pdr` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `missing-actual:review-lane:["generated","launch","launch-contract"]:launch-contract` | `missing-actual` | 1095.037, 1039.250 | `planned:review-lane:["generated","launch","launch-contract"]:launch-contract` | flat | `#3A1A24` | stroke | 13.556 | 3.000 | info |
-| `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `period-band:launch-window` | `period-band` | 1844.165, 728.000 | `group:ait` | flat | `#142642` | stroke | 6.157 | 1.100 | info |
+| `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `period-band:launch-window` | `period-band` | 1873.892, 728.000 | `group:ait` | flat | `#142642` | fill | 1.337 | 1.100 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `period-label:launch-window` | `period-label` | 1873.892, 289.375 | `chip:period-label:launch-window` | flat | `#16213A` | fill | 13.973 | 4.500 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `planned:review-lane:["generated","ait","integration"]:emc` | `planned` | 1606.346, 738.250 | `group:ait` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `planned:review-lane:["generated","ait","integration"]:integration` | `planned` | 1416.092, 738.250 | `group:ait` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
@@ -5152,7 +5152,7 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:launch-contract` | `planned` | 1090.037, 1039.250 | `group:launch` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:shipment` | `planned` | 1693.546, 1039.250 | `group:launch` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:first-light` | `planned` | 1950.146, 1180.250 | `group:ops` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
-| `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:leop` | `planned` | 1844.165, 1180.250 | `group:ops` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
+| `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:leop` | `planned` | 1844.165, 1180.250 | `period-band:launch-window` | translucent-over-flat | `#203B60` | stroke | 9.884 | 3.000 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:rehearsals` | `planned` | 1634.092, 1180.250 | `group:ops` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `planned:review-lane:["generated","payload","optics"]:detector` | `planned` | 1051.437, 573.500 | `group:payload` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/11-overlay-briefing.scene.json` | `planned:review-lane:["generated","payload","optics"]:optics` | `planned` | 940.455, 573.500 | `group:payload` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
@@ -5274,8 +5274,8 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `member-label:review-lane:["generated","payload","optics"]:payload-tvac` | `text` | 1247.776, 413.375 | `group:payload` | flat | `#142642` | fill | 13.238 | 4.500 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `missing-actual:review-lane:["generated","bus","pdr"]:pdr` | `missing-actual` | 958.241, 236.500 | `planned:review-lane:["generated","bus","pdr"]:pdr:part:1` | flat | `#1B1B1B` | stroke | 15.045 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `missing-actual:review-lane:["generated","launch","launch-contract"]:launch-contract` | `missing-actual` | 1100.322, 854.250 | `planned:review-lane:["generated","launch","launch-contract"]:launch-contract:part:1` | flat | `#1B1B1B` | stroke | 15.045 | 3.000 | info |
-| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `note-index:window-note` | `note-index` | 1740.185, 817.650 | `group:launch` | flat | `#142642` | fill | 6.157 | 4.500 | info |
-| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `period-band:launch-window` | `period-band` | 1739.685, 564.500 | `group:ait` | flat | `#142642` | stroke | 6.157 | 1.100 | info |
+| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `note-index:window-note` | `note-index` | 1740.185, 817.650 | `period-band:launch-window` | translucent-over-flat | `#203B60` | fill | 4.597 | 4.500 | info |
+| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `period-band:launch-window` | `period-band` | 1765.057, 564.500 | `group:ait` | flat | `#142642` | fill | 1.337 | 1.100 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `period-label:launch-window` | `period-label` | 1765.057, 104.375 | `chip:period-label:launch-window` | flat | `#16213A` | fill | 13.973 | 4.500 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ait","integration"]:emc` | `planned` | 1536.713, 553.250 | `group:ait` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ait","integration"]:integration` | `planned` | 1374.335, 553.250 | `group:ait` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
@@ -5299,12 +5299,12 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:frr:part:1` | `planned` | 1716.005, 854.250 | `planned:review-lane:["generated","launch","launch-contract"]:frr:part:0` | flat | `#5FA8FF` | fill | 6.998 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:launch-contract:part:0` | `planned` | 1100.322, 854.250 | `group:launch` | flat | `#142642` | fill | 6.157 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:launch-contract:part:1` | `planned` | 1100.322, 854.250 | `planned:review-lane:["generated","launch","launch-contract"]:launch-contract:part:0` | flat | `#5FA8FF` | fill | 6.998 | 3.000 | info |
-| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:launch:part:0` | `planned` | 1739.685, 854.250 | `group:launch` | flat | `#142642` | fill | 6.157 | 3.000 | info |
+| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:launch:part:0` | `planned` | 1739.685, 854.250 | `period-band:launch-window` | translucent-over-flat | `#203B60` | fill | 4.597 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:launch:part:1` | `planned` | 1739.685, 854.250 | `planned:review-lane:["generated","launch","launch-contract"]:launch:part:0` | flat | `#5FA8FF` | fill | 6.998 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:shipment` | `planned` | 1611.136, 854.250 | `group:launch` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:first-light:part:0` | `planned` | 1834.406, 995.250 | `group:ops` | flat | `#142642` | fill | 6.157 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:first-light:part:1` | `planned` | 1834.406, 995.250 | `planned:review-lane:["generated","ops","rehearsals"]:first-light:part:0` | flat | `#5FA8FF` | fill | 6.998 | 3.000 | info |
-| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:leop` | `planned` | 1739.685, 995.250 | `group:ops` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
+| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:leop` | `planned` | 1739.685, 995.250 | `period-band:launch-window` | translucent-over-flat | `#203B60` | stroke | 9.884 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:rehearsals` | `planned` | 1560.393, 995.250 | `group:ops` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","payload","optics"]:detector` | `planned` | 1063.111, 388.500 | `group:payload` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","payload","optics"]:optics` | `planned` | 968.390, 388.500 | `group:payload` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
@@ -6549,8 +6549,8 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `member-label:review-lane:["generated","payload","optics"]:payload-tvac` | `text` | 1246.226, 413.375 | `group:payload` | flat | `#142642` | fill | 13.238 | 4.500 | info |
 | `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `missing-actual:review-lane:["generated","bus","pdr"]:pdr` | `missing-actual` | 955.344, 236.500 | `planned:review-lane:["generated","bus","pdr"]:pdr` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `missing-actual:review-lane:["generated","launch","launch-contract"]:launch-contract` | `missing-actual` | 1097.874, 854.250 | `planned:review-lane:["generated","launch","launch-contract"]:launch-contract` | flat | `#3A1A24` | stroke | 13.556 | 3.000 | info |
-| `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `note-index:window-note` | `note-index` | 1739.757, 817.650 | `group:launch` | flat | `#142642` | fill | 6.157 | 4.500 | info |
-| `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `period-band:launch-window` | `period-band` | 1739.257, 564.500 | `group:ait` | flat | `#142642` | stroke | 6.157 | 1.100 | info |
+| `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `note-index:window-note` | `note-index` | 1739.757, 817.650 | `period-band:launch-window` | translucent-over-flat | `#203B60` | fill | 4.597 | 4.500 | info |
+| `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `period-band:launch-window` | `period-band` | 1764.709, 564.500 | `group:ait` | flat | `#142642` | fill | 1.337 | 1.100 | info |
 | `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `period-label:launch-window` | `period-label` | 1764.709, 104.375 | `chip:period-label:launch-window` | flat | `#16213A` | fill | 13.973 | 4.500 | info |
 | `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `planned:review-lane:["generated","ait","integration"]:emc` | `planned` | 1535.644, 553.250 | `group:ait` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `planned:review-lane:["generated","ait","integration"]:integration` | `planned` | 1372.753, 553.250 | `group:ait` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
@@ -6572,7 +6572,7 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:launch-contract` | `planned` | 1092.874, 854.250 | `group:launch` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:shipment` | `planned` | 1610.302, 854.250 | `group:launch` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:first-light` | `planned` | 1829.277, 995.250 | `group:ops` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
-| `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:leop` | `planned` | 1739.257, 995.250 | `group:ops` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
+| `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:leop` | `planned` | 1739.257, 995.250 | `period-band:launch-window` | translucent-over-flat | `#203B60` | stroke | 9.884 | 3.000 | info |
 | `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:rehearsals` | `planned` | 1559.399, 995.250 | `group:ops` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `planned:review-lane:["generated","payload","optics"]:detector` | `planned` | 1060.545, 388.500 | `group:payload` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/19-gallery-text-compression.scene.json` | `planned:review-lane:["generated","payload","optics"]:optics` | `planned` | 965.525, 388.500 | `group:payload` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
@@ -6718,7 +6718,7 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | `examples/halcyon-1/generated/20-gallery-vertical-group-tags.scene.json` | `member-label:review-lane:["generated","payload","optics"]:payload-tvac` | `text` | 1246.226, 409.938 | `group:payload` | flat | `#142642` | fill | 13.238 | 4.500 | info |
 | `examples/halcyon-1/generated/20-gallery-vertical-group-tags.scene.json` | `missing-actual:review-lane:["generated","bus","pdr"]:pdr` | `missing-actual` | 955.344, 238.438 | `planned:review-lane:["generated","bus","pdr"]:pdr` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/20-gallery-vertical-group-tags.scene.json` | `missing-actual:review-lane:["generated","launch","launch-contract"]:launch-contract` | `missing-actual` | 1097.874, 849.312 | `planned:review-lane:["generated","launch","launch-contract"]:launch-contract` | flat | `#3A1A24` | stroke | 13.556 | 3.000 | info |
-| `examples/halcyon-1/generated/20-gallery-vertical-group-tags.scene.json` | `period-band:launch-window` | `period-band` | 1739.257, 563.000 | `group:ait` | flat | `#142642` | stroke | 6.157 | 1.100 | info |
+| `examples/halcyon-1/generated/20-gallery-vertical-group-tags.scene.json` | `period-band:launch-window` | `period-band` | 1764.709, 563.000 | `group:ait` | flat | `#142642` | fill | 1.337 | 1.100 | info |
 | `examples/halcyon-1/generated/20-gallery-vertical-group-tags.scene.json` | `period-label:launch-window` | `period-label` | 1764.709, 104.375 | `chip:period-label:launch-window` | flat | `#16213A` | fill | 13.973 | 4.500 | info |
 | `examples/halcyon-1/generated/20-gallery-vertical-group-tags.scene.json` | `planned:review-lane:["generated","ait","integration"]:emc` | `planned` | 1535.644, 544.438 | `group:ait` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/20-gallery-vertical-group-tags.scene.json` | `planned:review-lane:["generated","ait","integration"]:integration` | `planned` | 1372.753, 544.438 | `group:ait` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
@@ -6740,7 +6740,7 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | `examples/halcyon-1/generated/20-gallery-vertical-group-tags.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:launch-contract` | `planned` | 1092.874, 849.312 | `group:launch` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/20-gallery-vertical-group-tags.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:shipment` | `planned` | 1610.302, 849.312 | `group:launch` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/20-gallery-vertical-group-tags.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:first-light` | `planned` | 1829.277, 984.938 | `group:ops` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
-| `examples/halcyon-1/generated/20-gallery-vertical-group-tags.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:leop` | `planned` | 1739.257, 984.938 | `group:ops` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
+| `examples/halcyon-1/generated/20-gallery-vertical-group-tags.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:leop` | `planned` | 1739.257, 984.938 | `period-band:launch-window` | translucent-over-flat | `#203B60` | stroke | 9.884 | 3.000 | info |
 | `examples/halcyon-1/generated/20-gallery-vertical-group-tags.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:rehearsals` | `planned` | 1559.399, 984.938 | `group:ops` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/20-gallery-vertical-group-tags.scene.json` | `planned:review-lane:["generated","payload","optics"]:detector` | `planned` | 1060.545, 385.062 | `group:payload` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/20-gallery-vertical-group-tags.scene.json` | `planned:review-lane:["generated","payload","optics"]:optics` | `planned` | 965.525, 385.062 | `group:payload` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
@@ -7177,4 +7177,4 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 Every non-exclusive decoration role is enabled in committed Scene evidence; group-band or group-header-band supplies the group concept when there are no corpus errors.
 
 
-Findings: 7111; errors: 0; warnings: 79.
+Findings: 7111; errors: 0; warnings: 80.
