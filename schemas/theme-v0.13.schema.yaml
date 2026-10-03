@@ -211,6 +211,17 @@ properties:
                         description: "With inlineSize fill: the largest outer inline size of the box, in em of the annotation text size; the box is then a start-aligned column narrower than the slot (#1051)."
                         type: number
                         exclusiveMinimum: 0
+                      border:
+                        description: "A per-side box border on a square rectangle container (#1049): each side lies on the box's outer edge at full length with mitred corners, and the content inset is measured from inside it. Rectangle outlines with cornerRadius 0 only."
+                        examples: [{start: {width: 3, paint: kind}, top: {width: 1}}]
+                        type: object
+                        additionalProperties: false
+                        minProperties: 1
+                        properties:
+                          start: {type: object, additionalProperties: false, required: [width], properties: {width: {description: "Border width in px; 0 draws nothing.", type: number, minimum: 0}, paint: {description: "kind paints from the annotation-kind-accent role with the annotation kind colour; ink (the default) from the role annotation-border-<side>.", enum: [kind, ink]}}}
+                          end: {type: object, additionalProperties: false, required: [width], properties: {width: {description: "Border width in px; 0 draws nothing.", type: number, minimum: 0}, paint: {description: "kind paints from the annotation-kind-accent role with the annotation kind colour; ink (the default) from the role annotation-border-<side>.", enum: [kind, ink]}}}
+                          top: {type: object, additionalProperties: false, required: [width], properties: {width: {description: "Border width in px; 0 draws nothing.", type: number, minimum: 0}, paint: {description: "kind paints from the annotation-kind-accent role with the annotation kind colour; ink (the default) from the role annotation-border-<side>.", enum: [kind, ink]}}}
+                          bottom: {type: object, additionalProperties: false, required: [width], properties: {width: {description: "Border width in px; 0 draws nothing.", type: number, minimum: 0}, paint: {description: "kind paints from the annotation-kind-accent role with the annotation kind colour; ink (the default) from the role annotation-border-<side>.", enum: [kind, ink]}}}
                     dependentSchemas:
                       maxInlineEm:
                         description: "A maximum inline size belongs to a filled box (#1051)."
@@ -225,6 +236,12 @@ properties:
                           required: [outline]
                         then:
                           not: {required: [tiltDegrees]}
+                      - description: "A border belongs to a rectangle outline whose corners are square: a tail or an image frame takes none, and a rectangle's radius is not drawn (#1049)."
+                        examples: [{outline: rectangle, cornerRadius: 0, border: {start: {width: 3, paint: kind}}}]
+                        if:
+                          required: [border]
+                        then:
+                          properties: {outline: {const: rectangle}, cornerRadius: {const: 0}}
                       - description: "Artwork belongs to a rectangle outline and needs the content inset that says where its paper is (#848)."
                         examples: [{outline: rectangle, cornerRadius: 0, contentInsetEm: {top: 1, right: 1, bottom: 1, left: 1}, artwork: {glyph: "chrona-target-parts:scroll-frame", sliceInsets: {top: 0, right: 0, bottom: 0, left: 0}, unitEm: 0.1}}]
                         if:

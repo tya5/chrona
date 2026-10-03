@@ -268,6 +268,9 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              _RECT_PAINT | frozenset(("edge",)), scene_kinds=frozenset(("Rect",)))
     register("annotation-kind-stamp", "Layout annotation-kind stamp glyph and Scene Symbol",
              frozenset(("fill", "stroke", "opacity", "stampPlacement")), scene_kinds=frozenset(("Symbol",)))
+    register("annotation-border-start annotation-border-end annotation-border-top annotation-border-bottom",
+             "Layout annotation-container box border strip and Scene Rect/Symbol",
+             _RECT_PAINT, scene_kinds=frozenset(("Rect", "Symbol")))
     register("annotation-artwork", "Layout annotation-container artwork glyph and Scene Symbol",
              _ARTWORK_PAINT, scene_kinds=frozenset(("Symbol",)))
     register("group-band row-band group-header-band calendar-closed calendar-exception", "Layout background and Scene Rect",

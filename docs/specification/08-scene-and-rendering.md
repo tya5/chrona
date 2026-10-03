@@ -434,6 +434,8 @@ payload, and the image's pixels do not replace the declared representative
 ground. Findings identify the selected ground primitive and color.
 A note box sized by `annotationContainer.inlineSize: fill` (#1051, Specification 07) is an ordinary completed Rect or Symbol at its final bounds; contrast and perceptibility judge it exactly as a content-sized box.
 
+A box border (#1049, Specification 07) is completed by Layout: each bordered side is a `Rect` (no bordered neighbour) or a mitred polygon `Symbol` from the `annotation-border-<side>` or `annotation-kind-accent` role, lying on the box edge at full length, painted after the box and any artwork and before the kind frame and the text. Adapters serialize it like any box primitive (SVG, PNG, PDF, Typst, TikZ, baseline profile: a flat fill, nothing to omit); none decides a mitre.
+
 For `annotation-note-text`, the generic ground search is not sufficient by
 itself: a prior Rect with no fill is skipped and generic search may then select
 a lower host or canvas. C4 therefore requires `contrastTreatment: required`

@@ -77,6 +77,11 @@ def rotate_shape(shape: ShapePlacement, center: Point, degrees: float) -> ShapeP
                               float(bounds.block_size), center, degrees)
     if shape.kind == "Rect":
         return replace(shape, kind="Tilt", bounds=bounding_rect(corners), path_commands=polygon_commands(corners))
+    if shape.kind == "Polygon":
+        # A mitred border strip (#1049): its own corners rotate, not those of its bounds.
+        commands = _rotate_commands(shape.path_commands, center, degrees)
+        return replace(shape, kind="Tilt", path_commands=commands,
+                       bounds=bounding_rect([point for command in commands for point in command.points]))
     if shape.kind == "Glyph":
         parts = tuple(replace(part, commands=_rotate_commands(part.commands, center, degrees))
                       for part in shape.symbol_parts)

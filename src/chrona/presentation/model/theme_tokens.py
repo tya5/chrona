@@ -70,6 +70,21 @@ class ArtworkToken:
 
 
 @dataclass(frozen=True)
+class BorderSideToken:
+    """One side of a box border (#1049): a width in surface units and the ink it is drawn with.
+
+    ``paint`` is ``kind`` (the annotation kind colour, through the role ``annotation-kind-accent``) or ``ink``
+    (the role ``annotation-border-<side>``).
+    """
+
+    width: Decimal
+    paint: str = "ink"
+
+
+BORDER_SIDES = ("start", "end", "top", "bottom")
+
+
+@dataclass(frozen=True)
 class AnnotationContainerToken:
     """One declared annotation-box outline (#466 rectangle/balloon, #465 image)."""
 
@@ -88,6 +103,8 @@ class AnnotationContainerToken:
     # at most `max_inline_em` text sizes when declared).
     inline_size: str = "content"
     max_inline_em: Decimal | None = None
+    # A per-side box border on a square rectangle container (#1049): side name -> width and ink; None means none.
+    border: Mapping[str, BorderSideToken] | None = None
 
 
 @dataclass(frozen=True)
@@ -473,7 +490,8 @@ class ThemeTokenView:
         if max_inline_em is not None and (inline_size != "fill" or max_inline_em <= 0
                                           or isinstance(value["maxInlineEm"], bool)):
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/annotationContainer/maxInlineEm")
-        sizing = {"inline_size": inline_size, "max_inline_em": max_inline_em}
+        border = self._border(value.get("border"), role, outline, corner_radius)
+        sizing = {"inline_size": inline_size, "max_inline_em": max_inline_em, "border": border}
         if outline == "rectangle":
             return AnnotationContainerToken(outline, corner_radius, None, None, None, padding, tilt_degrees, artwork, **sizing)
         if outline == "balloon":
@@ -492,6 +510,30 @@ class ThemeTokenView:
         slice_insets = self._insets(value.get("sliceInsetsEm"), role, "annotationContainer/sliceInsetsEm")
         content_insets = self._insets(value.get("contentInsetEm"), role, "annotationContainer/contentInsetEm")
         return AnnotationContainerToken(outline, corner_radius, None, image_ref, slice_insets, content_insets, **sizing)
+
+    def _border(self, value: Any, role: str, outline: str, corner_radius: Decimal) -> "Mapping[str, BorderSideToken] | None":
+        """Validate the optional per-side ``border`` of an annotation container (#1049): a square rectangle only."""
+        if value is None:
+            return None
+        pointer = f"/body/roles/{role}/annotationContainer/border"
+        if (outline != "rectangle" or corner_radius != 0 or not isinstance(value, Mapping) or not value
+                or set(value) - set(BORDER_SIDES)):
+            # A balloon's tail and an image's own frame take no border, and a rectangle's radius is not drawn, so
+            # a border around it would surround square paper: refused, never silently ignored.
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer)
+        sides: dict[str, BorderSideToken] = {}
+        for side, entry in value.items():
+            where = f"{pointer}/{side}"
+            if not isinstance(entry, Mapping) or "width" not in entry or set(entry) - {"width", "paint"}:
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", where)
+            raw = entry["width"]
+            width = (self._decimal(raw, role, f"annotationContainer/border/{side}/width")
+                     if isinstance(raw, (int, float)) and not isinstance(raw, bool) else None)
+            paint = entry.get("paint", "ink")
+            if width is None or width < 0 or paint not in {"kind", "ink"}:
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", where)
+            sides[side] = BorderSideToken(width, paint)
+        return sides
 
     def _artwork(self, value: Any, role: str, outline: str, padding: Any) -> "ArtworkToken | None":
         """Validate the optional ``artwork`` of an annotation container (#848): a rectangle only, with a content inset."""
@@ -553,6 +595,9 @@ class ThemeTokenView:
             if not Decimal(0) <= padding <= Decimal(2):
                 raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{bar_role}/chipPadding")
         accent_role = declared("annotation-kind-accent")
+        if accent_role is not None and "edge" not in self._body["roles"][accent_role]:
+            # A role with a fill only is the ink of a kind-painted box border (#1049), not a content-box accent.
+            accent_role = None
         side, size = None, Decimal(0)
         if accent_role is not None:
             edge = self.token(accent_role, "edge", "edge")

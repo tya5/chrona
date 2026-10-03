@@ -802,7 +802,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                             tuple(ImageTile(source, destination)
                                                   for source, destination in placed.image_fill.tiles))
                                   if placed.image_fill is not None else None)
-            if placed.kind in {"Balloon", "Tilt"}:
+            if placed.kind in {"Balloon", "Tilt", "Polygon"}:
                 primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.SYMBOL, placed.source_ref, "annotation",
                                                  annotation_box.purpose, annotation_box.scene_role, bounds,
                                                  symbol=SymbolGeometry(placed.path_commands), paint_order=placed.paint_order,

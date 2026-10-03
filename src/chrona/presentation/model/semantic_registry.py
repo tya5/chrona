@@ -213,6 +213,11 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("annotationKindStamp", "decoration", "annotation-kind-stamp", "annotation-kind-stamp", "annotation-kind-stamp", ContrastClass.DECORATION),
     # Vector artwork behind an annotation container (#848): catalogue glyph parts painted over the note box.
     _binding("annotationArtwork", "decoration", "annotation-artwork", "annotation-artwork", "annotation-artwork", ContrastClass.DECORATION),
+    # The ink of a per-side box border (#1049), one role per logical side; a kind-painted side uses annotationKindAccent.
+    _binding("annotationBorderStart", "decoration", "annotation-border-start", "annotation-border-start", "annotation-border-start", ContrastClass.DECORATION),
+    _binding("annotationBorderEnd", "decoration", "annotation-border-end", "annotation-border-end", "annotation-border-end", ContrastClass.DECORATION),
+    _binding("annotationBorderTop", "decoration", "annotation-border-top", "annotation-border-top", "annotation-border-top", ContrastClass.DECORATION),
+    _binding("annotationBorderBottom", "decoration", "annotation-border-bottom", "annotation-border-bottom", "annotation-border-bottom", ContrastClass.DECORATION),
     _binding("annotationKindLabel", "label", "annotation-kind-label", "annotation-kind-label", "annotation-kind-label", ContrastClass.STATE_TEXT),
     _binding("annotationKindSecondary", "label", "annotation-kind-secondary", "annotation-kind-secondary", "annotation-kind-secondary", ContrastClass.STATE_TEXT),
     # Summary panels.
