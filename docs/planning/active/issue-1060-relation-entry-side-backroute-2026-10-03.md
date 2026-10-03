@@ -65,3 +65,11 @@ Open decisions: how the back-route is built and ordered; what "row gap" means; t
 | Review | Literal acceptance review (`chrona:literal-acceptance/v1`), B6 shown by the reviewer's adoption or by the experiment | `docs/reviews/current/` | exact-commit three-OS run |
 
 Publication boundary: this record alone is the design PR; S1 is one code PR.
+
+## 7. Evidence (S1 and the corpus experiment)
+
+Base `09f5210c`. S1 ships `entry: side`; the default stays `side-when-free` and `regenerate_public_examples --check` passes (B5). Synthetic tests (abutting, overlapping, target row above, mirrored `end`, gate target, blocked corridor, `maxBends` and `maxDetourRatio` limits, and the unchanged other values) are in `test_relation_entry_back_route.py`; two mutations (back-route disabled, obstacle check disabled) each fail tests.
+
+Corpus experiment (`side` forced for every slide, locally, not committed; including slides that declare `side-when-free`): relation paths ending horizontally 330 to 399 of 564, total bends 1073 to 1285, 217 paths changed on 51 slides, no self-reversing path. Target B (24 relation paths, as declared `maxDetourRatio: 2`): horizontal entries 12 to 14 and 11 relations report `I_LAYOUT_RELATION_ENTRY_FALLBACK`. The same run with `maxDetourRatio` raised to 10: 17 horizontal, 8 fallbacks (avionics-bustest, integration-vibration, mcs-comms, optics-detector, shipment-campaign, tvac-emc, vibration-tvac and one more are still vertical). Reading: the mock's back-route is about three times the direct distance of an abutting pair, so the profile's `maxDetourRatio: 2` rejects most of it; target B needs a larger ratio (the reviewer's YAML, not edited here) and the remaining fallbacks are corridors the exit stub or gap leg cannot clear (delta labels and ghost marks beside the source). The back-routes that are drawn enter along the bar as the mock does (image of the forced run read: programme board).
+
+B6 (the 11 target-B paths enter from the side) is therefore not met by the code alone: it needs the profile ratio, and about seven relations fall back with a diagnostic by design.
