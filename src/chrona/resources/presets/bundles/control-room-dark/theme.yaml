@@ -226,10 +226,7 @@ body:
       value: 0.5
     opacity.period-band:
       type: number
-      value: 1
-    period-stroke-width:
-      type: number
-      value: 2
+      value: 0.16
   roles:
     group-band:
       backgroundTreatment: fill
@@ -460,9 +457,8 @@ body:
       iconScale: icon-mark-scale
       iconGap: icon-mark-gap
     period-band:
-      backgroundTreatment: outline
+      backgroundTreatment: fill
       backgroundPaintOrder: 11
-      strokeWidth: period-stroke-width
       opacity: opacity.period-band
     period-label:
       contrastTreatment: required
@@ -529,7 +525,7 @@ body:
     progress-fill.fill: warning
     progress-fill.stroke: text
     icon-mark.fill: surface
-    period-band.stroke: accent
+    period-band.fill: accent
     period-label.fill: text
     period-label-chip.fill: surface
   metrics:

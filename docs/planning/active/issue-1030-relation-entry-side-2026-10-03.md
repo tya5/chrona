@@ -38,7 +38,7 @@ Open decisions: the policy name and values; its default; what "free" means; the 
 | Decision | Choice | Why / alternatives rejected |
 | --- | --- | --- |
 | Policy | Optional `relationRouting.entry`: `any` or `side-when-free`. Absent means `any`, today's order byte for byte (Spec 56 section 3.2: an optional property is added in place, no version bump; the consumer supplies the omission behaviour and tests it; a schema `default` implements nothing). Added to the schema as a named `$defs` enum, not a repeated literal. | A boolean hides the closed vocabulary; a per-relation View property is a View schema change for a pure routing preference, and the issue asks for a Layout policy. |
-| Default (owner-level call) | `any` in slice S1, so no committed slide changes and the reviewer adopts `side-when-free` for target B on its own YAML. Flipping the default is a separate slice S2 decided only after the corpus experiment images are read. Reverse: change one `engine.py` default and regenerate. | The issue says the change moves every slide with relations; shipping the knob first keeps the first merge byte-neutral and lets the reviewer decide with images. |
+| Default (owner-level call, decided in S2) | `side-when-free`: absent means the horizontal-first order. S1 shipped the knob with default `any` (byte neutral); S2 flips it after the corpus experiment (section 7). Reverse: set the `engine.py`/`model.py` default back to `any` (and the schema/spec sentence) and let derived-sync regenerate; a Profile that declares `entry: any` is unaffected either way. | The flip moves 48 slides; the measured and read evidence is better on every axis checked and the target mock enters horizontally. |
 | Where | Entry preference is a candidate-order rule in `layout/ports.py` (`connector_egress_candidates` gains `entry` and `stub_free`), fed by `surface_routes` and the lane router. Layout owns it; Scene, View, Theme and adapters are untouched. | Reordering in the route search would duplicate the pair loop; the candidate list is the single place where order is decided today. |
 | Rule | For the **target** endpoint `start` with the source nominal port left of the mark's left edge (mirror: endpoint `end`, source right of the right edge), and a collision-free stub, the horizontal candidate (`start`, or `end` for the mirror) moves first; the other candidates keep their order after it. In every other case the order is unchanged. Source endpoints keep today's order (the issue concerns entering a start). Points and `at` endpoints (diamonds) are unchanged. | The ask names `start` and the mirrored `end` only. |
 | Free | The stub is the segment from the exposed port, away from the mark, of length `headLength + clearance` at the endpoint's mid height, where `clearance = max(timeline.relation.cornerRadius, relation stroke width)` (the straight run a rounded corner and the arrowhead need). It is free when `obstacles.egress_collisions` with the same classes the corridor check uses (`mark`, `text`, `label-visual`, regions `timeline`, `group-header`) finds nothing, host marks exempt. No new metric or knob: both numbers come from the Theme the relation already resolves. | A fixed pixel constant would not follow a Theme's terminal size. |
@@ -61,7 +61,23 @@ Diagnostics: none new. Specification 50 section 3.3 gets the policy and the rule
 | Slice | Content | Files | Evidence and gate |
 | --- | --- | --- | --- |
 | S1 | Policy, rule and tests; default `any` | `schemas/layout-profile-v0.10.schema.yaml` (+ mirrors), `layout/engine.py`, `layout/model.py` (`relation_entry`), `layout/ports.py`, `layout/surface_routes.py`, lane router call site, Spec 50 section 3.3 | Synthetic tests for U1 to U5 under both policy values, mutation-checked; `regenerate_public_examples --check` byte identical; `schema_equivalence` result in the PR; conformance |
-| S2 | Corpus experiment, default decision | none by default; a flip edits `engine.py` only | Render every relation slide with `side-when-free`, read before/after images of each changed slide, compare with the mock and #575, record the default decision and whether to flip |
+| S2 | Corpus experiment, default flip | `engine.py`, `model.py` (default and the manifest payload omits the default), schema sentence, Spec 50 sentence, profile tests | Section 7; derived-sync regenerates the slides |
 | Review | Literal acceptance review (`chrona:literal-acceptance/v1`) | `docs/reviews/current/` | Exact-main three-OS run on the review commit; successor issues for any deferred row |
 
 Publication boundary: this record alone is the design PR; S1 is one code PR; S2 evidence goes in the work record and, if the default flips, in its own PR.
+
+## 7. S2 evidence: corpus experiment (side-when-free as default, base `adc4366e`)
+
+All 53 slides regenerated locally with the default flipped (not committed; derived-sync regenerates after merge). Measured over every relation path of the 29 slides that have relations:
+
+| Measure | `any` | `side-when-free` |
+| --- | ---: | ---: |
+| relation paths | 557 | 557 |
+| paths whose last segment is horizontal (side entry) | 183 | 333 |
+| total bends | 993 | 947 |
+| fallback or suppression diagnostics | 3 | 3 (same relations, `target-b`) |
+| paths changed | | 152 on 48 slides |
+
+Images read before and after: `halcyon-1` target-b, programme board, editorial lanes, launch campaign, tvac-slip, `controller-z` annotations. Honest comparison with the mock `02-programme-board.png`: target-b and the programme board now enter bar starts horizontally at mid height as the mock does (for example Primary structure fabrication, Detector calibration, Operations rehearsals); where the source lies directly above or within the stub width the drop remains. Lane rows gain the same entry; two lane relations (Ship to range, launch-campaign) show a small hook where the stub needs a jog, which is the accepted extra bend and is bounded by `maxBends`. controller-z changes one relation per slide and nothing else moves. Not read image by image: the other 40 slides, which differ only in relation paths and were measured with the table above. Against #575: relation routing, ports and obstacle rules are unchanged; only candidate order moved and no new fallback appears.
+
+Test fallout: the #687 synthetic "costly" lane fixture (`tests/integration/test_synthetic_lane_route_corridors.py`) is costly only for the nearest-port order, so it is pinned to `entry: any`; under `side-when-free` the same project draws the relation through a horizontal start entry with every name still shown, and a new test asserts that.

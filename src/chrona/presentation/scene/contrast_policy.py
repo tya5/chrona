@@ -7,6 +7,7 @@ from typing import Any, Mapping
 
 from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding, contrast_binding_for
 from chrona.presentation.scene.cone_ground import AS_OF_CONE_ROLE, ConeGround, cones_in
+from chrona.presentation.scene.ink_touch import InkTouchError, fill_touches, stroke_touches
 from chrona.presentation.scene.paint_analysis import (
     blend_over, composited_contrast, is_hex_color, sample_linear_gradient)
 
@@ -29,6 +30,9 @@ _DECORATION_WARNING_CODES = {
 DECORATION_WARNING_BLOCKING_CODES = {warning: blocking for blocking, warning in _DECORATION_WARNING_CODES.items()}
 # Roles whose sibling parts (one source, one role) are a single ink and never each other's ground.
 _SIBLING_INK_ROLES = frozenset({"annotation-kind-stamp"})
+# The parts of a vector artwork behind an annotation (#848) are ink over the note box: never a host by bounds (their
+# bounds are the whole note), a ground only where the part's painted area meets the label.
+ARTWORK_ROLE = "annotation-artwork"
 
 
 class SceneContrastPolicyError(ValueError):
@@ -417,6 +421,9 @@ def _host_under(subject: Mapping[str, Any], primitives: list[Any], index: int,
         if prior.get("visualRole") == AS_OF_CONE_ROLE:
             # A translucent light is never an opaque host: it tints the host's ground instead (#890).
             continue
+        if prior.get("visualRole") == ARTWORK_ROLE:
+            # Artwork parts cover the whole note by bounds but paint only their ink: see `_artwork_ink`.
+            continue
         if (subject.get("visualRole") in _SIBLING_INK_ROLES and prior.get("visualRole") == subject.get("visualRole")
                 and prior.get("sourceRef") == subject.get("sourceRef")):
             # The parts of one stamp glyph are one ink, not grounds for each other (#584).
@@ -459,11 +466,88 @@ def _grounds_for(primitive: Mapping[str, Any], primitives: list[Any], index: int
         host_id, ground, unsupported, kind = _note_box_ground(primitive, primitives, index, sample)
         if unsupported or ground is None:
             return host_id, None, unsupported
-        return host_id, _tinted([[(ground, kind, host_id)]], primitive, primitives, index, host_id, cones), False
+        groups = _tinted([[(ground, kind, host_id)]], primitive, primitives, index, host_id, cones)
+        return _with_artwork_ink(host_id, groups, primitive, primitives, index)
     # A decoration is a tint against its dominant substrate: no ink, no cone, and no composite (#995).
-    return _grounds_under(primitive, primitives, index, canvas, sample, label=primitive,
-                          cones=() if decoration else cones, catalog_patterns=catalog_patterns,
-                          ink=not decoration, composite=not decoration)
+    host_id, groups, unsupported = _grounds_under(
+        primitive, primitives, index, canvas, sample, label=primitive, cones=() if decoration else cones,
+        catalog_patterns=catalog_patterns, ink=not decoration, composite=not decoration)
+    if decoration or groups is None:
+        return host_id, groups, unsupported
+    return _with_artwork_ink(host_id, groups, primitive, primitives, index)
+
+
+def _with_artwork_ink(host_id: str | None, groups: list[list[_Ground]], label: Mapping[str, Any],
+                      primitives: list[Any], index: int) -> tuple[str | None, list[list[_Ground]] | None, bool]:
+    """Add the ink of the vector artwork the label touches as one more ground (#848), or fail closed on it.
+
+    The artwork behind an annotation is a few sibling Symbol parts over the note box. A part's ink is a ground
+    for a label of the same source exactly where the part's painted area meets the label's bounds (a fill part
+    by non-zero winding, so a hole is empty; a stroke part within half its width). The ink is composited at the
+    part's opacity over every substrate ground already found, and the worst ratio decides, as for a pattern.
+    A part that touches the label but whose paint cannot be read fails closed, never skipped.
+    """
+    ink, unreadable = _artwork_ink(label, primitives, index)
+    if unreadable is not None:
+        return unreadable, None, True
+    if not ink:
+        return host_id, groups, False
+    bases = [ground for group in groups for ground, _, _ in group]
+    grounds: list[_Ground] = []
+    for part_id, colour, opacity in ink:
+        if opacity == 1.0:
+            grounds.append((colour, "artwork-ink", part_id))
+        else:
+            grounds.extend((blend_over(ink=colour, opacity=opacity, ground=base), "artwork-ink", part_id)
+                           for base in bases)
+    return host_id, [*groups, grounds], False
+
+
+def _artwork_ink(label: Mapping[str, Any], primitives: list[Any], index: int
+                 ) -> tuple[list[tuple[str, str, float]], str | None]:
+    """The (part id, ink colour, opacity) of each earlier same-source artwork part that touches the label.
+
+    Second member: the id of a touching part whose paint cannot be read, else None.
+    """
+    source_ref, box = label.get("sourceRef"), label.get("bounds")
+    if not isinstance(source_ref, str) or not isinstance(box, Mapping):
+        return [], None
+    try:
+        rect = (float(box["inline"]), float(box["block"]), float(box["inlineSize"]), float(box["blockSize"]))
+    except (KeyError, TypeError, ValueError):
+        return [], None
+    order = label.get("paintOrder", 0)
+    found: list[tuple[str, str, float]] = []
+    for prior_index, prior in enumerate(primitives):
+        if (not isinstance(prior, Mapping) or prior.get("visualRole") != ARTWORK_ROLE or prior.get("kind") != "Symbol"
+                or prior.get("sourceRef") != source_ref):
+            continue
+        prior_order = prior.get("paintOrder", 0)
+        if not isinstance(prior_order, int) or (prior_order, prior_index) >= (order, index):
+            continue
+        part_id = prior.get("id") if isinstance(prior.get("id"), str) else None
+        paint, symbol = prior.get("paint"), prior.get("symbol")
+        outline = symbol.get("outline") if isinstance(symbol, Mapping) else None
+        if not isinstance(paint, Mapping) or not isinstance(outline, list) or part_id is None:
+            return [], part_id or "annotation-artwork"
+        width, opacity = paint.get("strokeWidth"), paint.get("opacity", 1.0)
+        stroked = is_hex_color(paint.get("stroke")) and isinstance(width, (int, float)) and width > 0
+        filled = is_hex_color(paint.get("fill"))
+        try:
+            if filled:
+                touches = fill_touches(outline, rect)
+            elif stroked:
+                touches = stroke_touches(outline, rect, float(width))
+            else:
+                continue
+        except InkTouchError:
+            return [], part_id
+        if not touches:
+            continue
+        if not _opacity(opacity):
+            return [], part_id
+        found.append((part_id, str(paint["fill"] if filled else paint["stroke"]), float(opacity)))
+    return found, None
 
 
 def _grounds_under(subject: Mapping[str, Any], primitives: list[Any], index: int, canvas: str | None,

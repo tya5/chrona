@@ -174,10 +174,7 @@ body:
       value: 1
     opacity.period-band:
       type: number
-      value: 1
-    period-stroke-width:
-      type: number
-      value: 2
+      value: 0.16
     mark-height-container:
       type: number
       value: 1
@@ -239,9 +236,8 @@ body:
       strokeWidth: stroke-width
       opacity: opacity.calendar-closed
     period-band:
-      backgroundTreatment: outline
+      backgroundTreatment: fill
       backgroundPaintOrder: 11
-      strokeWidth: period-stroke-width
       opacity: opacity.period-band
     period-label:
       contrastTreatment: required
@@ -501,7 +497,7 @@ body:
     dependency.stroke: textMuted
     calendar-closed.fill: surfaceRaised
     calendar-closed.stroke: neutral
-    period-band.stroke: accent
+    period-band.fill: accent
     period-label.fill: text
     period-label-chip.fill: surfaceRaised
     calendar-exception.fill: warning
