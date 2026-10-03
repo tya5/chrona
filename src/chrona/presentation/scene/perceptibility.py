@@ -78,6 +78,7 @@ def evaluate_scene_perceptibility(document: Mapping[str, Any]) -> tuple[ScenePer
         primitives = _primitives(surface.get("primitives"), scene_path)
         findings.extend(_suppressed_primitive_findings(scene_path, primitives, suppressed_ids))
         findings.extend(_relation_duplicate_findings(scene_path, surface.get("primitives")))
+        findings.extend(_relation_reversal_findings(scene_path, surface.get("primitives")))
         findings.extend(_slot_findings(scene_path, slots, primitives))
         findings.extend(_occlusion_findings(scene_path, primitives))
         findings.extend(_text_intersection_findings(scene_path, primitives))
@@ -106,6 +107,33 @@ def _relation_duplicate_findings(scene_path: str, raw_primitives: Any) -> list[S
     return [_finding("E_SCENE_RELATION_PATH_DUPLICATE", "error", scene_path, tuple(ids), None,
                      (("relation", relation), ("paths", len(ids))))
             for relation, ids in sorted(paths.items()) if len(ids) > 1]
+
+
+def _relation_reversal_findings(scene_path: str, raw_primitives: Any) -> list[ScenePerceptibilityFinding]:
+    """A relation path never overlaps itself: a reversal leaves a tail behind the arrowhead (#1059)."""
+    findings = []
+    for raw in raw_primitives if isinstance(raw_primitives, list) else ():
+        if not (isinstance(raw, Mapping) and raw.get("kind") == "Path" and raw.get("sourceKind") == "relation"
+                and str(raw.get("id")).startswith("relation:") and isinstance(raw.get("points"), list)):
+            continue
+        points = [tuple(point) for point in raw["points"]
+                  if isinstance(point, (list, tuple)) and len(point) == 2
+                  and all(isinstance(value, (int, float)) for value in point)]
+        segments = [(a, b) for a, b in zip(points, points[1:]) if a != b]
+        overlap = 0.0
+        for index, (a, b) in enumerate(segments):
+            for c, d in segments[index + 1:]:
+                if a[1] == b[1] == c[1] == d[1]:
+                    span = min(max(a[0], b[0]), max(c[0], d[0])) - max(min(a[0], b[0]), min(c[0], d[0]))
+                elif a[0] == b[0] == c[0] == d[0]:
+                    span = min(max(a[1], b[1]), max(c[1], d[1])) - max(min(a[1], b[1]), min(c[1], d[1]))
+                else:
+                    continue
+                overlap = max(overlap, span)
+        if overlap > 1e-6:
+            findings.append(_finding("E_SCENE_RELATION_PATH_REVERSES", "error", scene_path, (str(raw["id"]),), None,
+                                     (("relation", str(raw.get("sourceRef"))), ("overlap", round(overlap, 3)))))
+    return findings
 
 
 def _slots(raw_slots: Any, scene_path: str) -> dict[str, tuple[Rect, str]]:
