@@ -95,8 +95,11 @@ def compose_item_marks(*, item: Any, instance_id: str, source_kind: str,
             paint_order_base=paint_order_base,
         ))
 
+    # An Actual that runs to as-of: declared `openUntil: asOf`, or marked in progress by the View (#991).
+    runs_to_as_of = (actual.get("openUntil") == "asOf"
+                     or (emit_missing_actual and getattr(item, "missing_actual_mark", "due-end") == "in-progress"))
     open_actual = (source_kind in {"actual", "combined"} and item.source_type == "span"
-                   and actual.get("openUntil") == "asOf" and isinstance(actual.get("start"), date)
+                   and runs_to_as_of and isinstance(actual.get("start"), date)
                    and as_of is not None)
     if (source_kind in {"actual", "combined"} and item.source_type == "span"
             and isinstance(actual.get("start"), date) and isinstance(actual.get("finish"), date)):
