@@ -186,6 +186,19 @@ properties:
                           right: {type: number, minimum: 0}
                           bottom: {type: number, minimum: 0}
                           left: {type: number, minimum: 0}
+                      inlineSize:
+                        description: "How the note box is sized along the inline axis in an annotations slot (#1051): content (the default) sizes it to its text; fill takes the slot's full inline size and wraps the body in what the box chrome leaves. Outside a slot's row-aligned placement fill acts as content and Layout reports W_LAYOUT_ANNOTATION_FILL_NOT_SLOT."
+                        enum: [content, fill]
+                      maxInlineEm:
+                        description: "With inlineSize fill: the largest outer inline size of the box, in em of the annotation text size; the box is then a start-aligned column narrower than the slot (#1051)."
+                        type: number
+                        exclusiveMinimum: 0
+                    dependentSchemas:
+                      maxInlineEm:
+                        description: "A maximum inline size belongs to a filled box (#1051)."
+                        examples: [{outline: rectangle, cornerRadius: 0, inlineSize: fill, maxInlineEm: 30}]
+                        required: [inlineSize]
+                        properties: {inlineSize: {const: fill}}
                     allOf:
                       - description: "A tilt cycle belongs to a rectangle outline: a balloon tail and an image's slice tiles do not rotate (#584)."
                         examples: [{outline: rectangle, cornerRadius: 0, tiltDegrees: [-2, 2]}]

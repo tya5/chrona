@@ -84,6 +84,10 @@ class AnnotationContainerToken:
     tilt_degrees: tuple[Decimal, ...] | None = None
     # A catalogue glyph stretched behind a rectangle container (#848); None means no artwork.
     artwork: ArtworkToken | None = None
+    # How the box is sized in an annotations slot (#1051): "content" (today) or "fill" (the slot's inline size,
+    # at most `max_inline_em` text sizes when declared).
+    inline_size: str = "content"
+    max_inline_em: Decimal | None = None
 
 
 @dataclass(frozen=True)
@@ -447,13 +451,21 @@ class ThemeTokenView:
         padding = (self._insets(value["contentInsetEm"], role, "annotationContainer/contentInsetEm")
                    if outline != "image" and "contentInsetEm" in value else None)
         artwork = self._artwork(value.get("artwork"), role, outline, padding)
+        inline_size = value.get("inlineSize", "content")
+        if inline_size not in {"content", "fill"}:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/annotationContainer/inlineSize")
+        max_inline_em = self._decimal(value.get("maxInlineEm"), role, "annotationContainer/maxInlineEm")
+        if max_inline_em is not None and (inline_size != "fill" or max_inline_em <= 0
+                                          or isinstance(value["maxInlineEm"], bool)):
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/annotationContainer/maxInlineEm")
+        sizing = {"inline_size": inline_size, "max_inline_em": max_inline_em}
         if outline == "rectangle":
-            return AnnotationContainerToken(outline, corner_radius, None, None, None, padding, tilt_degrees, artwork)
+            return AnnotationContainerToken(outline, corner_radius, None, None, None, padding, tilt_degrees, artwork, **sizing)
         if outline == "balloon":
             tail_base = self._decimal(value.get("tailBaseEm"), role, "annotationContainer/tailBaseEm")
             if tail_base is None or tail_base <= 0:
                 raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/annotationContainer/tailBaseEm")
-            return AnnotationContainerToken(outline, corner_radius, tail_base, None, None, padding)
+            return AnnotationContainerToken(outline, corner_radius, tail_base, None, None, padding, **sizing)
         # outline == "image" (#465): a nine-slice-stretchable icon-catalog
         # raster entry bound as the container's backdrop. cornerRadius must
         # be exactly 0 -- the artwork supplies its own corner treatment.
@@ -464,7 +476,7 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/annotationContainer/image")
         slice_insets = self._insets(value.get("sliceInsetsEm"), role, "annotationContainer/sliceInsetsEm")
         content_insets = self._insets(value.get("contentInsetEm"), role, "annotationContainer/contentInsetEm")
-        return AnnotationContainerToken(outline, corner_radius, None, image_ref, slice_insets, content_insets)
+        return AnnotationContainerToken(outline, corner_radius, None, image_ref, slice_insets, content_insets, **sizing)
 
     def _artwork(self, value: Any, role: str, outline: str, padding: Any) -> "ArtworkToken | None":
         """Validate the optional ``artwork`` of an annotation container (#848): a rectangle only, with a content inset."""

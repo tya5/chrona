@@ -88,6 +88,7 @@ _SURFACE_CAUSES: Mapping[str, str] = {
     "W_LAYOUT_REGION_FRAME_CORNER_REDUCED": "the corner radius of a region frame was reduced to half its shorter side because the frame is smaller than twice the declared radius",
     "W_LAYOUT_ANNOTATION_ROUTE_SEARCH_EXHAUSTED": "the search for a route for an annotation tail ran out of candidates",
     "W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK": "an annotation was placed at a later candidate than the first one declared",
+    "W_LAYOUT_ANNOTATION_FILL_NOT_SLOT": "a note box declared inlineSize fill but was not placed in an annotations slot, so it keeps the size of its text",
     "W_LAYOUT_ANNOTATION_SUPPRESSED": "an annotation was left out because it does not fit",
     "W_LAYOUT_NOTE_INDEX_SUPPRESSED": "a note index mark was left out because it does not fit",
 }
