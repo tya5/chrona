@@ -282,7 +282,7 @@ optional); a role with only a `stroke` is an outline panel; a role with neither 
 draws no frame, so a shared Layout Profile stays valid under any Theme. The role carries no contrast
 class: a frame is ground, and what lies on it (a mark, state text, a group header) is gated against its
 fill by the ground rule of Specification 46 (completed Scene paint; a frame without a fill is not ground; a translucent fill is
-an unsupported ground and fails closed). `frameCornerRadius` is added in place to the live Theme
+composited over the ground beneath it, #1013). `frameCornerRadius` is added in place to the live Theme
 schemas (Specification 56 section 3.2).
 `planned`, `actual`, `snapshot`, and `scenario` can emit either Rect or Symbol;
 `milestone` emits Symbol; callout/arrow boxes can be balloon Symbols. Catalogue
