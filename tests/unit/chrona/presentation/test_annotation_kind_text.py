@@ -56,3 +56,12 @@ def test_an_invalid_declaration_is_the_template_error(declaration):
         kind_header("risk", declaration)
     assert failure.value.code == "E_THEME_ANNOTATION_KIND_TEMPLATE"
     assert failure.value.detail
+
+
+def test_subject_id_is_the_anchored_object_id_beside_the_title():
+    """#991: the target shows the object id; `{subject}` stays the title."""
+    header = kind_header("risk", {"label": "RISK", "title": "{label} · {subjectId}"})
+    assert header_lines(header, subject="Payload thermal-vacuum", subject_id="payload-tvac") == ("RISK · payload-tvac",)
+    titled = kind_header("risk", {"label": "RISK", "title": "{label} · {subject}"})
+    assert header_lines(titled, subject="Payload thermal-vacuum", subject_id="payload-tvac") == ("RISK · Payload thermal-vacuum",)
+    assert parse_title("{subjectId}") == (("field", "subjectId"),)

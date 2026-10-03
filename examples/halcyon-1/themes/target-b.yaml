@@ -329,7 +329,7 @@ body:
       backgroundPaintOrder: 10
     group-header-band:
       backgroundTreatment: fill
-      backgroundPaintOrder: 11
+      backgroundPaintOrder: 13
       opacity: opacity.group-header-band
     calendar-closed:
       backgroundTreatment: fill
@@ -588,7 +588,7 @@ body:
       strokeWidth: stroke-width
     period-band:
       backgroundTreatment: fill
-      backgroundPaintOrder: 13
+      backgroundPaintOrder: 14
       opacity: opacity.period-band
     period-label:
       contrastTreatment: required
