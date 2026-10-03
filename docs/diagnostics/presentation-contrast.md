@@ -48,7 +48,7 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | member-label | `member-label-inside-planned` | required | 4.500 | 26 | 26 | 4.651 | 5.727 | 0 | 0 |
 | member-label | `text` | required | 4.500 | 43 | 418 | 9.348 | 14.573 | 0 | 0 |
 | milestone-digest-entry | `text` | required | 4.500 | 29 | 58 | 11.935 | 16.268 | 0 | 0 |
-| missingActual | `missing-actual` | required | 3.000 | 39 | 48 | 4.436 | 14.573 | 0 | 0 |
+| missingActual | `missing-actual` | required | 3.000 | 40 | 49 | 4.436 | 14.573 | 0 | 0 |
 | network-node | `network-node` | required | 3.000 | 2 | 32 | 16.354 | 17.050 | 0 | 0 |
 | note-index | `note-index` | required | 4.500 | 8 | 15 | 5.284 | 6.157 | 0 | 0 |
 | period-band | `period-band` | enabled | 1.100 | 6 | 6 | 1.255 | 6.157 | 0 | 0 |
@@ -6928,9 +6928,10 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `legend-swatch:calendar-closed` | `calendar-closed` | 592.605, 859.425 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `legend-swatch:calendar-exception` | `calendar-exception` | 734.199, 859.425 | `canvas` | canvas | `#FFFFFF` | fill | 1.240 | 1.100 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `legend-swatch:milestone:part0` | `gate` | 527.692, 859.425 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 311.355, 859.425 | `canvas` | canvas | `#FFFFFF` | fill | 5.817 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 306.155, 859.425 | `canvas` | canvas | `#FFFFFF` | stroke | 5.817 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `legend-swatch:planned` | `planned` | 33.200, 859.425 | `canvas` | canvas | `#FFFFFF` | fill | 5.817 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `legend-swatch:snapshot` | `snapshot` | 141.527, 859.425 | `canvas` | canvas | `#FFFFFF` | stroke | 5.817 | 3.000 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `missing-actual:tvac:tvac` | `missing-actual` | 934.649, 475.391 | `planned:tvac:tvac` | flat | `#1D5FD1` | fill | 5.817 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `period-band:launch-window` | `period-band` | 1149.499, 486.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.255 | 1.100 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `period-label:launch-window` | `period-label` | 1149.499, 148.750 | `period-band:launch-window` | flat | `#DDE6F7` | fill | 4.636 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:cdr:cdr:part0` | `gate` | 653.365, 278.320 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
@@ -7179,4 +7180,4 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 Every non-exclusive decoration role is enabled in committed Scene evidence; group-band or group-header-band supplies the group concept when there are no corpus errors.
 
 
-Findings: 7113; errors: 0; warnings: 79.
+Findings: 7114; errors: 0; warnings: 79.

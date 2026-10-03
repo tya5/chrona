@@ -476,3 +476,24 @@ def test_the_network_order_key_reads_the_declaration_order_too():
     late = ReviewItem("a", "A", "span", {"start": date(2026, 1, 1)}, None, None, (), source_index=5)
     early = ReviewItem("b", "B", "span", {"start": date(2026, 9, 1)}, None, None, (), source_index=1)
     assert sorted((late, early), key=lambda item: _network_order_key(item, view)) == [early, late]
+
+
+def test_ghost_when_changed_draws_a_ghost_only_where_the_baseline_moved():
+    """#991 item 16: an item whose baseline equals its current plan gets no dashed frame."""
+    snapshot = {"t1": {"start": date(2026, 2, 1), "end": date(2026, 2, 8)},  # equal to the current plan
+                "t2": {"start": date(2026, 2, 20), "end": date(2026, 2, 27)}}  # moved
+    view = _ghost_view(marks="ghost-when-changed")
+    projection = build_review_projection(_GHOST_PROJECT, _GHOST_PLACED, view, None,
+                                         snapshot_project=_GHOST_PROJECT, snapshot_placements=snapshot)
+    rows = {row.row_id: row for row in projection.rows}
+    assert [item.item_id for item in rows["t1"].items] == ["t1"]  # unchanged baseline: no ghost
+    assert [item.item_id for item in rows["t2"].items] == ["t2", "snapshot:t2"]  # moved baseline: a ghost
+    assert [item.item_id for item in rows["t3"].items] == ["t3"]  # not in the snapshot
+    always = build_review_projection(_GHOST_PROJECT, _GHOST_PLACED, _ghost_view(marks="ghost"), None,
+                                     snapshot_project=_GHOST_PROJECT, snapshot_placements=snapshot)
+    assert [item.item_id for item in {row.row_id: row for row in always.rows}["t1"].items] == ["t1", "snapshot:t1"]
+
+
+def test_ghost_when_changed_also_needs_a_snapshot_baseline():
+    with pytest.raises(ValueError, match="E_REVIEW_BASELINE_MARKS_SNAPSHOT"):
+        build_review_projection(_GHOST_PROJECT, _GHOST_PLACED, _ghost_view(marks="ghost-when-changed", baseline="primary"), None)
