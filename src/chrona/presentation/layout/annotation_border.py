@@ -18,6 +18,7 @@ from typing import Mapping
 
 from chrona.presentation.layout.annotation_tilt import bounding_rect, polygon_commands
 from chrona.presentation.layout.model import LayoutError, Rect
+from chrona.presentation.layout.rounded_outline import border_strip, commands_points
 from chrona.presentation.layout.surface_quality import AnnotationPresentation, ShapePlacement
 from chrona.presentation.model.theme_tokens import BORDER_SIDES, BorderSideToken, ThemeTokenView
 
@@ -89,11 +90,15 @@ def _is_rectangle(points: tuple[Point, ...]) -> bool:
 
 
 def place_border(border: BoxBorder, *, annotation_id: str, presentation: AnnotationPresentation,
-                 box: tuple[float, float, float, float], theme_tokens: ThemeTokenView, paint_order: int
-                 ) -> tuple[ShapePlacement, ...]:
-    """Complete one strip per bordered side of ``box`` (x, y, width, height), in start, end, top, bottom order."""
+                 box: tuple[float, float, float, float], theme_tokens: ThemeTokenView, paint_order: int,
+                 radius: float = 0.0) -> tuple[ShapePlacement, ...]:
+    """Complete one strip per bordered side of ``box`` (x, y, width, height), in start, end, top, bottom order.
+
+    With a corner ``radius`` above 0 (#1087) every strip follows the rounded outline as a polygon of arcs.
+    """
     shapes: list[ShapePlacement] = []
     paints = border.paints or {}
+    widths = {"start": border.start, "end": border.end, "top": border.top, "bottom": border.bottom}
     for side, points in _polygons(border, box).items():
         kind_painted = paints.get(side) == "kind"
         role = KIND_INK_ROLE if kind_painted else f"annotation-border-{side}"
@@ -102,7 +107,13 @@ def place_border(border: BoxBorder, *, annotation_id: str, presentation: Annotat
             raise LayoutError("E_THEME_ROLE_REQUIRED", f"/body/roles/{role}")
         semantic_id = "annotationKindAccent" if kind_painted else INK_SEMANTICS[side]
         placement_id = f"annotation-border:{annotation_id}:{side}"
-        if _is_rectangle(points):
+        if radius > 0:
+            commands = border_strip(side, box, radius, widths)
+            ends = commands_points(commands, samples=8)
+            shapes.append(ShapePlacement(placement_id, annotation_id, "Polygon", bounding_rect(ends),
+                                         path_commands=commands, semantic_id=semantic_id,
+                                         annotation=presentation, paint_order=paint_order))
+        elif _is_rectangle(points):
             left, top = min(p[0] for p in points), min(p[1] for p in points)
             w, h = max(p[0] for p in points) - left, max(p[1] for p in points) - top
             shapes.append(ShapePlacement(placement_id, annotation_id, "Rect",

@@ -25,12 +25,15 @@ from chrona.presentation.layout.annotation_search import (
 )
 from chrona.presentation.layout.annotation_artwork import place_artwork
 from chrona.presentation.layout.annotation_border import NO_BORDER, place_border, resolve_border
+from chrona.presentation.layout.rounded_outline import (
+    CORNER_CLEARANCE, clamp_radius, commands_points, rounded_rect_commands,
+)
 from chrona.presentation.layout.annotation_inline_size import fill_note, fill_target
 from chrona.presentation.layout.viewer_fit import fit_text, require_followable_content
 from chrona.presentation.model.theme_tokens import ViewerFitToken
 from chrona.presentation.layout.annotation_kind_frame import EMPTY_FRAME, measure_kind_frame, place_kind_frame
 from chrona.presentation.layout.annotation_tilt import (
-    nearest_boundary_point, polygon_commands, rotate_shape, rotate_text, rotated_corners, rotated_extent, tilt_for,
+    nearest_boundary_point, rotate_commands, polygon_commands, rotate_shape, rotate_text, rotated_corners, rotated_extent, tilt_for,
 )
 from chrona.presentation.layout.balloon_geometry import balloon_outline
 from chrona.presentation.layout.labels import LabelPlacement
@@ -342,6 +345,11 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                     content_right += border_right
                     content_bottom += border_bottom
                     content_left += border_left
+                    if container is not None and container.outline == "rectangle" and container.corner_radius > 0:
+                        # A rounded corner removes paper (#1087): every inset keeps the text and the kind frame on it.
+                        clearance = float(container.corner_radius) * size * CORNER_CLEARANCE
+                        content_top, content_right, content_bottom, content_left = (
+                            max(value, clearance) for value in (content_top, content_right, content_bottom, content_left))
 
                     def measure_note(wrap_bound: float, may_wrap: bool) -> tuple[tuple[str, ...], float, tuple[float, float]]:
                         lines = (wrap_text(content, available_inline=wrap_bound, font_size=size, font_metrics=annotation_metrics,
@@ -573,6 +581,14 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                 tilt_polygon = rotated_corners(frame_x, frame_y, frame_width, frame_height, tilt_center, tilt_angle)
             else:
                 frame_x, frame_y, frame_width, frame_height = bounds.x, bounds.y, bounds.width, bounds.height
+            # The radius a rectangle container draws (#1087): its declared em, clamped to what the paint box can carry.
+            box_radius = (clamp_radius(float(container.corner_radius) * size, frame_width, frame_height)
+                          if container is not None and container.outline == "rectangle" and tail_tip is None else 0.0)
+            tilt_commands = None
+            if tilt_angle and box_radius > 0:
+                tilt_commands = rotate_commands(rounded_rect_commands(
+                    (frame_x, frame_y, frame_width, frame_height), box_radius), tilt_center, tilt_angle)
+                tilt_polygon = tuple(commands_points(tilt_commands))
             if tail_tip is not None:
                 container = request.theme_tokens.annotation_container(
                     semantic_binding(presentation.box_semantic_id).theme_role)
@@ -584,7 +600,8 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                                              paint_order=ANNOTATION_PAINT_ORDER))
             elif tilt_angle:
                 shapes.append(ShapePlacement(f"annotation-box:{annotation_id}", annotation_id, "Tilt",
-                                             annotation_bounds, path_commands=polygon_commands(tilt_polygon),
+                                             annotation_bounds,
+                                             path_commands=tilt_commands or polygon_commands(tilt_polygon),
                                              semantic_id=presentation.box_semantic_id, annotation=presentation,
                                              paint_order=ANNOTATION_PAINT_ORDER))
             elif container is not None and container.outline == "image":
@@ -604,7 +621,7 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                 shapes.append(ShapePlacement(f"annotation-box:{annotation_id}", annotation_id, "Rect",
                                              annotation_bounds,
                                              semantic_id=presentation.box_semantic_id, annotation=presentation,
-                                             paint_order=ANNOTATION_PAINT_ORDER))
+                                             paint_order=ANNOTATION_PAINT_ORDER, corner_radius=box_radius))
             if viewer_fit.mode != "raw":
                 shapes[-1] = replace(shapes[-1], viewer_fit=viewer_fit.mode)
             register_rect(f"annotation-box:{annotation_id}", "annotation-box", "annotations", annotation_bounds)
@@ -621,7 +638,7 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                 border_shapes = place_border(
                     box_border, annotation_id=annotation_id, presentation=presentation,
                     box=(frame_x, frame_y, frame_width, frame_height), theme_tokens=request.theme_tokens,
-                    paint_order=ANNOTATION_PAINT_ORDER)
+                    paint_order=ANNOTATION_PAINT_ORDER, radius=box_radius)
                 shapes.extend(rotate_shape(item, tilt_center, tilt_angle) if tilt_angle else item
                               for item in border_shapes)
             if not kind_measure.empty:

@@ -4,7 +4,7 @@ Synthetic notes through the packaged `executive-light` bundle with a 300 px note
 checked on the published Scene: every bordered side lies on the box's outer edge at its full length with mitred
 corners, a width-0 side draws nothing, the content inset is measured from inside the border (text, wrap, `fill`),
 nothing stands between a border and the box edge, a border composes with tilt, artwork and leaders, and `balloon`,
-`image` and a rounded rectangle are refused, not ignored.
+`image` are refused, not ignored (a rounded rectangle follows its radius, #1087).
 """
 from __future__ import annotations
 
@@ -126,11 +126,10 @@ def test_a_declared_side_with_no_ink_role_is_a_theme_error(tmp_path):
 
 
 @pytest.mark.parametrize("kwargs,code", [
-    ({"outline": "balloon", "radius": 0.2}, "E_PRESENTATION_REJECTED"),
-    ({"radius": 0.3}, "E_THEME_SCHEMA"),
+    ({"outline": "balloon", "radius": 0.2}, "E_THEME_SCHEMA"),
     ({"border": {}}, "E_THEME_SCHEMA"),
 ])
-def test_balloon_and_a_rounded_rectangle_are_refused_by_the_schema_not_ignored(tmp_path, kwargs, code):
+def test_balloon_and_an_empty_border_are_refused_by_the_schema_not_ignored(tmp_path, kwargs, code):
     border = kwargs.pop("border", {"start": {"width": 3}})
     with pytest.raises(Exception) as caught:
         _render(tmp_path, border, **kwargs)
