@@ -77,6 +77,20 @@ class RegionFrame:
     populated: bool
 
 
+SLOT_HEADING_SOURCES = frozenset({"annotations", "notes", "legend", "summary"})
+SLOT_HEADING_ALIGNS = ("start", "center", "end")
+SLOT_HEADING_BLOCKS = ("top", "header-row")
+
+
+@dataclass(frozen=True)
+class SlotHeading:
+    """A slot's declared caption (#1064): copy and placement intent; Layout completes the text and the reserve."""
+
+    text: str
+    align: str = "start"
+    block: str = "top"
+
+
 @dataclass(frozen=True)
 class LayoutDecision:
     node_id: str
@@ -91,6 +105,7 @@ class LayoutDecision:
     gap: Decimal | None = None
     item_min_inline_size: Decimal | None = None
     frame: RegionFrame | None = None
+    heading: SlotHeading | None = None
 
 
 @dataclass(frozen=True)
@@ -139,6 +154,8 @@ class LayoutManifest:
             }
             if item.frame is not None:
                 value["frame"] = {"inset": number(item.frame.inset), "populated": item.frame.populated}
+            if item.heading is not None:
+                value["heading"] = {"align": item.heading.align, "block": item.heading.block, "text": item.heading.text}
             return value
 
         payload = {

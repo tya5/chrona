@@ -579,6 +579,10 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         while f"group-tag:{group.group_id}:{segment}" in layout_text:  # the segments of a vertical label (#585)
             emit_semantic_text(f"group-tag:{group.group_id}:{segment}", "groupHeader", "text")
             segment += 1
+    # A slot's caption (#1064): painted by the Theme's `slot-heading` role when it declares a fill, else as body text.
+    heading_paint = "slot-heading" if value.theme_tokens.optional_color("slot-heading", "fill") is not None else "text"
+    for heading_id in [scene_id for scene_id in layout_text if scene_id.startswith("slot-heading:")]:
+        emit_semantic_text(heading_id, "slotHeading", heading_paint)
     for period in projection.periods:
         if f"period-label:{period.period_id}" in layout_text:
             emit_semantic_text(f"period-label:{period.period_id}", "periodLabel")

@@ -27,6 +27,7 @@ from chrona.presentation.layout.engine import (measure_natural_normal_flow_block
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.presentation import table_text_line_block, validate_table_text_roles
 from chrona.presentation.layout.profile import resolve_layout_profile
+from chrona.presentation.layout.slot_heading import reserve_slot_heading_blocks
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources, resolve_theme_metrics
 from chrona.presentation.layout.surface_legend import LegendArrangement, legend_arrangement, legend_source_input
 from chrona.presentation.layout.label_visual_measurement import resolve_label_visual_advances
@@ -308,6 +309,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         raise _font_failure(error) from error
     if layout_error is not None:
         raise layout_error
+    # A declared slot heading is part of its content-sized slot's measurement (#1064).
+    measured = reserve_slot_heading_blocks(measured, resolved_layout, ThemeTokenView(theme))
     viewport = {"inlineSize": environment.viewport_inline, "blockSize": environment.viewport_block}
     measurements = _slot_measurements(resolved_layout.profile["root"], measured)
     natural_block_floor = max(1, int(measure_natural_normal_flow_block(

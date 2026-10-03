@@ -38,6 +38,7 @@ slides:
   controller-z/plan-only: {axisLabels: 6}
   controller-z/progress-track: {axisLabels: 7, dvtHosted: true}
   controller-z/region-frames: {axisLabels: 7, dvtHosted: true}
+  controller-z/slot-heading: {axisLabels: 7, dvtHosted: true}
   controller-z/surface-glow: {axisLabels: 7, dvtHosted: true}
   controller-z/surface-texture: {axisLabels: 7, dvtHosted: true}
   controller-z/table-header: {axisLabels: 7, dvtHosted: true}
