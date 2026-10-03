@@ -24,6 +24,7 @@ from chrona.presentation.layout.annotation_search import (
     nearest_free_box, nearest_free_tail_box, nearest_free_routed_tail_box,
 )
 from chrona.presentation.layout.annotation_artwork import place_artwork
+from chrona.presentation.layout.annotation_inline_size import fill_note, fill_target
 from chrona.presentation.layout.annotation_kind_frame import EMPTY_FRAME, measure_kind_frame, place_kind_frame
 from chrona.presentation.layout.annotation_tilt import (
     nearest_boundary_point, polygon_commands, rotate_shape, rotate_text, rotated_corners, rotated_extent, tilt_for,
@@ -281,12 +282,15 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
 
             tail_tip: tuple[float, float] | None = None
             container = None
+            fill_declared = used_fill = False
+            filled = fill_size = None
             content_top = content_right = content_bottom = content_left = 0.0
             try:
                 if annotation.purpose in {"callout", "highlight", "note", "explanatory-arrow"}:
                     intent = selected_items[0].presentation if selected_items else None
                     preferred = ((intent or {}).get("callout") or {}).get("placement") if isinstance(intent, dict) else None
-                    wrap = ((intent or {}).get("text") or {}).get("wrap", "forbid") if isinstance(intent, dict) else "forbid"
+                    wrap_declared = ((intent or {}).get("text") or {}).get("wrap") if isinstance(intent, dict) else None
+                    wrap = wrap_declared or "forbid"
                     # A declared candidate's maxInlineEm is a text-width bound
                     # for a plot/content search (#466): it forces wrapping so
                     # a long note becomes a narrow, tall box rather than one
@@ -309,14 +313,6 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                     wrap_available = max(1.0, wrap_available - kind_measure.inline_insets)
                     if plot_wrap_em is not None:
                         wrap = "allow"
-                    annotation_lines = (wrap_text(content, available_inline=wrap_available, font_size=size, font_metrics=annotation_metrics,
-                                                  letter_spacing=float(annotation_treatment.letter_spacing),
-                                                  text_transform=annotation_treatment.transform)
-                                        if wrap == "allow" else (content,))
-                    text_width = max(measure_text_width(line, font_size=size, font_metrics=annotation_metrics,
-                                                        letter_spacing=float(annotation_treatment.letter_spacing),
-                                                        text_transform=annotation_treatment.transform)
-                                     for line in annotation_lines)
                     # A container with a content inset (always an image-backed one, #465; optionally a
                     # rectangle or balloon, #991) measures text into that smaller box, then
                     # expands it by the inset to the paint box the search and
@@ -326,12 +322,24 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                     if container is not None and container.content_insets_em is not None:
                         content_top, content_right, content_bottom, content_left = (
                             float(value) * size for value in container.content_insets_em)
-                    body_inline = annotation_leading + text_width + annotation_trailing
-                    annotation_size = (max(body_inline, kind_measure.header_inline) + kind_measure.inline_insets
-                                       + content_left + content_right,
-                                       max(size * line_height * len(annotation_lines) + kind_measure.header_block,
-                                           kind_measure.stamp_block)
-                                       + kind_measure.block_insets + content_top + content_bottom)
+
+                    def measure_note(wrap_bound: float, may_wrap: bool) -> tuple[tuple[str, ...], float, tuple[float, float]]:
+                        lines = (wrap_text(content, available_inline=wrap_bound, font_size=size, font_metrics=annotation_metrics,
+                                           letter_spacing=float(annotation_treatment.letter_spacing),
+                                           text_transform=annotation_treatment.transform)
+                                 if may_wrap else (content,))
+                        widest = max(measure_text_width(line, font_size=size, font_metrics=annotation_metrics,
+                                                        letter_spacing=float(annotation_treatment.letter_spacing),
+                                                        text_transform=annotation_treatment.transform)
+                                     for line in lines)
+                        body_inline = annotation_leading + widest + annotation_trailing
+                        return lines, widest, (
+                            max(body_inline, kind_measure.header_inline) + kind_measure.inline_insets
+                            + content_left + content_right,
+                            max(size * line_height * len(lines) + kind_measure.header_block, kind_measure.stamp_block)
+                            + kind_measure.block_insets + content_top + content_bottom)
+
+                    annotation_lines, text_width, annotation_size = measure_note(wrap_available, wrap == "allow")
                     # A tilted note is searched and registered through the axis-aligned bounds of its rotated
                     # frame; once a position is chosen the whole frame is rotated about their centre (#584).
                     frame_width, frame_height = annotation_size
@@ -340,6 +348,23 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                         if annotation_visuals:
                             raise LayoutError("E_LAYOUT_ANNOTATION_TILT_VISUAL", f"/annotations/{index}")
                         annotation_size = rotated_extent(frame_width, frame_height, tilt_angle)
+                    # `inlineSize: fill` (#1051): on a row-aligned rung of an annotations slot the note takes the slot's
+                    # inline size and wraps in what its chrome leaves; any other rung keeps the content size above.
+                    fill_declared = container is not None and container.inline_size == "fill"
+                    filled = None
+                    if fill_declared and annotation_slot is not None:
+                        filled = fill_note(
+                            lambda bound: measure_note(bound, wrap_declared != "forbid" or plot_wrap_em is not None),
+                            target=fill_target(float(annotation_slot.bounds.inline_size),
+                                               max_inline_em=(float(container.max_inline_em)
+                                                              if container.max_inline_em is not None else None),
+                                               text_size=size),
+                            chrome=(annotation_leading + annotation_trailing + kind_measure.inline_insets
+                                    + content_left + content_right),
+                            tilt_degrees=tilt_angle)
+                    fill_size = (rotated_extent(filled.frame_inline, filled.frame_block, tilt_angle) if filled is not None and tilt_angle
+                                 else (filled.frame_inline, filled.frame_block) if filled is not None else None)
+                    used_fill = False
                     candidates, ladder = candidate_order(annotation.candidates, annotation.purpose,
                                                           annotation.fallback_ladder, preferred)
                     box, selected_rung, tail_tip = None, None, None
@@ -348,7 +373,7 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                         if candidate.search.kind == "row-aligned":
                             candidate_boxes = annotation_rail_candidates(
                                 annotation, resolved, anchor_y=anchor_bounds.y + anchor_bounds.height / 2,
-                                text_size=annotation_size, rail=LabelRect(*_bounds(annotation_slot.bounds)),
+                                text_size=fill_size or annotation_size, rail=LabelRect(*_bounds(annotation_slot.bounds)),
                                 obstacles=surface_obstacles)
                             for candidate_box in candidate_boxes:
                                 annotation_search_count += 1
@@ -356,6 +381,7 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                                 if candidate_box.leader_required and presentation.leader_semantic_id is not None and leader_trial is None:
                                     continue
                                 box, selected_rung, selected_leader = candidate_box, rung, leader_trial
+                                used_fill = filled is not None
                                 break
                         elif candidate.search.kind == "nearest-free":
                             region_bounds = LabelRect(*_bounds(timeline.bounds))
@@ -462,9 +488,10 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                         selected_rung = next(rung for rung in ladder if rung != "suppress")
                         first_candidate = next((item for item in candidates if item.candidate_id == selected_rung), None)
                         if selected_rung == "rail":
+                            used_fill = filled is not None
                             box = place_annotation_rail(
                                 annotation, resolved, anchor_y=anchor_bounds.y + anchor_bounds.height / 2,
-                                text_size=annotation_size, rail=LabelRect(*_bounds(annotation_slot.bounds)),
+                                text_size=fill_size or annotation_size, rail=LabelRect(*_bounds(annotation_slot.bounds)),
                                 obstacles=surface_obstacles, overflow="visible-overflow", required=True)
                         elif first_candidate is not None and first_candidate.search.kind == "nearest-free":
                             # #449 never refuses: complete the first declared
@@ -499,6 +526,14 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                                                                  route_state_limit=tail_route_state_limit,
                                                                  route_states_examined=tail_route_states_examined,
                                                                  route_search_exhausted=tail_route_search_exhausted))
+                    if used_fill:
+                        # The note sits in its slot at the slot's width (#1051): the wrapped lines and frame are the
+                        # filled ones, and a trailing visual stands at the box's end edge.
+                        annotation_lines, frame_width, frame_height = filled.lines, filled.frame_inline, filled.frame_block
+                        text_width = (frame_width - annotation_leading - annotation_trailing - kind_measure.inline_insets
+                                      - content_left - content_right)
+                    elif fill_declared:
+                        diagnostics.append(f"W_LAYOUT_ANNOTATION_FILL_NOT_SLOT:{annotation_id}:{selected_rung or 'none'}")
                 else:
                     box = project_annotation_box(annotation, resolved, anchor_bounds=anchor_bounds, text_size=(width, size * line_height),
                                                  candidate_sides=(annotation.side,),

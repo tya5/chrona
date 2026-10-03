@@ -432,6 +432,7 @@ the [#465 image-container design](../design/issue-465-image-annotation-container
 Perceptibility consumes the same completed fill. It does not sample the image
 payload, and the image's pixels do not replace the declared representative
 ground. Findings identify the selected ground primitive and color.
+A note box sized by `annotationContainer.inlineSize: fill` (#1051, Specification 07) is an ordinary completed Rect or Symbol at its final bounds; contrast and perceptibility judge it exactly as a content-sized box.
 
 For `annotation-note-text`, the generic ground search is not sufficient by
 itself: a prior Rect with no fill is skipped and generic search may then select
