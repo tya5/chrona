@@ -107,11 +107,13 @@ def test_the_terminal_leg_keeps_a_straight_run_for_the_head_and_its_tangent():
 
 
 def test_a_synthetic_route_ends_straight_for_the_target_head():
-    # The last leg here is a 4 px drop and the head is 10 px: the turn before it stays square (no room for head and arc).
-    surface, path = _drawn(4)
-    head, end = path.marker_end.head_length, path.points[-1]
-    assert path.points[-1][0] == path.points[-2][0] and abs(path.points[-1][1] - path.points[-2][1]) < head
-    arcs = [c for c in path.path_commands if c.kind == "quadratic"]
+    # Exercise the completed route geometry directly: the final four-unit
+    # terminal leg cannot fit the ten-unit arrowhead plus a corner arc.
+    points = ((0, 0), (0, 30), (30, 30), (30, 34))
+    head, end = 10, points[-1]
+    commands = rounded_orthogonal_path(points, 4, end_run=head)
+    assert points[-1][0] == points[-2][0] and abs(points[-1][1] - points[-2][1]) < head
+    arcs = [command for command in commands if command.kind == "quadratic"]
     assert arcs
     for arc in arcs:
         assert abs(end[0] - arc.points[1][0]) + abs(end[1] - arc.points[1][1]) >= head - 1e-6

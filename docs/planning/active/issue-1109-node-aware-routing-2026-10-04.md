@@ -99,6 +99,12 @@ tests cover reverse declarations, multiple arrivals, mirrored endpoints, cycles
 with diagnosed residual overlaps, ranking ties, mark safety and unchanged SVG
 serialization when only metadata changes.
 
+Verification: Layout/Scene focused suite 1,401 passed; after terminal-trimmed
+ranking, 44 terminal/corner/node/mark tests passed. CLI aggregation test passes.
+Import-direction and Scene delivery-owner gates pass. Schema-equivalence L1
+passes with four reviewed additive deltas; L2/L3 pass against their recorded
+baseline. Full code/release CI on the implementation commit remains pending.
+
 Fresh copied-tree corpus against immutable `23bc8a57`: 63/63 materializers
 complete, primary-mark crossings zero, unresolved same-node overlaps zero and
 five diagnosed overlaps. Target B `launch-leop` is a straight vertical departure

@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 from math import isfinite
 from typing import Any, Mapping, Sequence
 
-from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, segment_length_inside_rect
+from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, segment_length_inside_rect, segment_overlap_length
 from chrona.presentation.layout.path_geometry import flatten_corner
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, semantic_binding
 from chrona.presentation.scene.paint_analysis import composited_contrast, is_hex_color
@@ -82,6 +83,7 @@ def evaluate_scene_perceptibility(document: Mapping[str, Any]) -> tuple[ScenePer
         findings.extend(_relation_duplicate_findings(scene_path, surface.get("primitives")))
         findings.extend(_relation_reversal_findings(scene_path, surface.get("primitives")))
         findings.extend(_relation_mark_findings(scene_path, surface.get("primitives")))
+        findings.extend(_relation_node_findings(scene_path, surface.get("primitives"), diagnostics))
         findings.extend(_slot_findings(scene_path, slots, primitives))
         findings.extend(_occlusion_findings(scene_path, primitives))
         findings.extend(_text_intersection_findings(scene_path, primitives))
@@ -211,6 +213,50 @@ def _observed_relation_points(raw: Mapping[str, Any]) -> list[tuple[float, float
         elif points[-1] != start:
             points.append(start)
     return points
+
+
+def _relation_node_findings(scene_path: str, raw_primitives: Any,
+                            diagnostics: list[str]) -> list[ScenePerceptibilityFinding]:
+    """Shared approaches are a node-identity observation, not arbitrary path crossings."""
+    paths = []
+    for raw in raw_primitives if isinstance(raw_primitives, list) else ():
+        if not (isinstance(raw, Mapping) and raw.get("kind") == "Path" and raw.get("sourceKind") == "relation"
+                and str(raw.get("id", "")).startswith("relation:")):
+            continue
+        source, target = raw.get("fromInstanceId"), raw.get("toInstanceId")
+        if source is None and target is None:
+            continue  # Older Scenes do not supply node identity; no proximity inference.
+        _require(isinstance(source, str) and bool(source) and isinstance(target, str) and bool(target),
+                 "invalid relation endpoint identity")
+        points = _observed_relation_points(raw)
+        if len(points) >= 2:
+            paths.append((raw, points))
+    findings = []
+    for outgoing, out_points in paths:
+        for incoming, in_points in paths:
+            if incoming is outgoing or outgoing["fromInstanceId"] != incoming["toInstanceId"]:
+                continue
+            overlap = segment_overlap_length((out_points[0], out_points[1]), (in_points[-2], in_points[-1]))
+            if overlap <= 1e-9:
+                continue
+            prefix = f"I_LAYOUT_RELATION_NODE_APPROACH_SHARED:{outgoing['id']};incoming="
+            explained = False
+            for line in diagnostics:
+                if not line.startswith(prefix):
+                    continue
+                try:
+                    identifiers = json.loads(line.removeprefix(prefix))
+                except json.JSONDecodeError:
+                    continue
+                if isinstance(identifiers, list) and incoming["id"] in identifiers:
+                    explained = True
+                    break
+            findings.append(_finding("I_SCENE_RELATION_NODE_APPROACH_SHARED" if explained else
+                "E_SCENE_RELATION_NODE_APPROACH_SHARED", "info" if explained else "error", scene_path,
+                (str(outgoing["id"]), str(incoming["id"])), None,
+                (("node", outgoing["fromInstanceId"]), ("overlap", round(overlap, 3))),
+                "diagnosed" if explained else None))
+    return findings
 
 
 def _slots(raw_slots: Any, scene_path: str) -> dict[str, tuple[Rect, str]]:

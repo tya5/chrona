@@ -4,7 +4,7 @@ import pytest
 
 from chrona.presentation.layout.routing import (
     RouteAttemptEvidence, RouteSuppressionEvidence, place_relation_route,
-    relation_route_quality, route_quality_attempt, select_lane_relation_route,
+    relation_route_quality, route_quality_attempt, select_relation_route,
 )
 from chrona.presentation.layout.obstacles import SurfaceObstacleIndex
 from chrona.presentation.layout.ports import ConnectorEgress
@@ -60,11 +60,11 @@ def test_lane_port_pair_search_retains_rejected_and_accepted_measured_attempts()
     inputs = dict(port_pairs=((source, target),), obstacles=SurfaceObstacleIndex(),
                   bounds=(-1, -1, 11, 11), source_host_id=None, target_host_id=None,
                   relation_scene_id="relation:r1", max_detour_ratio=1.0)
-    rejected = select_lane_relation_route(**inputs, max_bends=0)
+    rejected = select_relation_route(**inputs, max_bends=0)
     assert rejected.selected_pair is None
     assert rejected.attempts[0].outcome == "quality-rejected"
     assert RouteSuppressionEvidence("r1", rejected.attempts).primary_cause == "quality-rejected"
-    accepted = select_lane_relation_route(**inputs, max_bends=1)
+    accepted = select_relation_route(**inputs, max_bends=1)
     assert accepted.selected_pair == (source, target)
     assert accepted.points[0] == (0, 0) and accepted.points[-1] == (10, 10)
     assert accepted.attempts[0].outcome == "accepted"
@@ -74,10 +74,75 @@ def test_lane_selection_retains_primary_mark_rejection_and_tries_the_next_pair()
     source = ConnectorEgress("end", (0, 0), (0, 0), ())
     blocked = ConnectorEgress("start", (10, 0), (10, 0), ())
     safe = ConnectorEgress("above", (10, 10), (10, 10), ())
-    selection = select_lane_relation_route(((source, blocked), (source, safe)),
+    selection = select_relation_route(((source, blocked), (source, safe)),
         obstacles=SurfaceObstacleIndex(), bounds=(-1, -1, 11, 11), source_host_id=None, target_host_id=None,
         relation_scene_id="relation:dep", max_bends=4, max_detour_ratio=2,
         accept=lambda points: points[-1] != blocked.semantic_port)
     assert selection.selected_pair == (source, safe)
+    assert selection.attempts[0].search_failure == "E_LAYOUT_ROUTE_THROUGH_MARK"
+    assert selection.attempts[1].outcome == "accepted"
+
+
+def _pair(name, start, end):
+    source = ConnectorEgress(f"{name}-source", start, start, ())
+    target = ConnectorEgress(f"{name}-target", end, end, ())
+    return source, target
+
+
+def _select_ranked(pairs, rank, **kwargs):
+    return select_relation_route(
+        pairs,
+        obstacles=SurfaceObstacleIndex(),
+        bounds=(-1, -1, 11, 11),
+        source_host_id=None,
+        target_host_id=None,
+        relation_scene_id="relation:ranked",
+        max_bends=4,
+        max_detour_ratio=2,
+        rank=rank,
+        **kwargs,
+    )
+
+
+def test_ranked_selection_chooses_the_best_eligible_pair_even_when_declared_later():
+    first = _pair("first", (0, 0), (10, 0))
+    best = _pair("best", (0, 2), (10, 2))
+    last = _pair("last", (0, 4), (10, 4))
+
+    selection = _select_ranked(
+        (first, best, last),
+        rank=lambda _points, source, _target: (0 if source.side == "best-source" else 1,),
+    )
+
+    assert selection.selected_pair == best
+    assert [attempt.outcome for attempt in selection.attempts] == [
+        "eligible-not-selected", "accepted", "eligible-not-selected",
+    ]
+    assert sum(attempt.outcome == "accepted" for attempt in selection.attempts) == 1
+    assert sum(attempt.outcome == "eligible-not-selected" for attempt in selection.attempts) == 2
+
+
+def test_ranked_selection_keeps_the_first_declared_pair_for_stable_ties():
+    first = _pair("first", (0, 0), (10, 0))
+    second = _pair("second", (0, 2), (10, 2))
+
+    selection = _select_ranked((first, second), rank=lambda _points, _source, _target: (1,))
+
+    assert selection.selected_pair == first
+    assert [attempt.outcome for attempt in selection.attempts] == ["accepted", "eligible-not-selected"]
+
+
+def test_primary_mark_guard_rejects_a_higher_ranked_candidate_before_ranking():
+    unsafe = _pair("unsafe", (0, 0), (10, 0))
+    safe = _pair("safe", (0, 2), (10, 2))
+
+    selection = _select_ranked(
+        (unsafe, safe),
+        rank=lambda _points, source, _target: (0 if source.side == "unsafe-source" else 1,),
+        accept=lambda points: points[-1] != unsafe[1].semantic_port,
+    )
+
+    assert selection.selected_pair == safe
+    assert selection.attempts[0].outcome == "no-route-found"
     assert selection.attempts[0].search_failure == "E_LAYOUT_ROUTE_THROUGH_MARK"
     assert selection.attempts[1].outcome == "accepted"

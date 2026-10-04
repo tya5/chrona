@@ -778,7 +778,9 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         primitives.append(ScenePrimitive(relation.relation_id, PrimitiveKind.PATH, source, "relation", dependency.purpose, dependency.scene_role,
                                          (0, 0, 0, 0), marker_start=relation.marker_start, marker_end=relation.marker_end,
                                          points=relation.points, path_commands=relation.path_commands,
-                                         paint_order=relation.paint_order, slot_id=relation.slot_id))
+                                         paint_order=relation.paint_order, slot_id=relation.slot_id,
+                                         from_instance_id=relation.from_instance_id,
+                                         to_instance_id=relation.to_instance_id))
     for placed in placed_surface.shapes:
         bounds = (float(placed.bounds.inline), float(placed.bounds.block),
                   float(placed.bounds.inline_size), float(placed.bounds.block_size))

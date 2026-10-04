@@ -235,6 +235,23 @@ def test_crossing_drawn_quadratic_is_checked_even_when_polyline_is_clear():
     assert "E_SCENE_RELATION_THROUGH_MARK" in _codes(_scene(path, mark))
 
 
+def test_shared_approach_checks_node_identity_and_honest_diagnostics():
+    incoming = _primitive("relation:in", "Path")
+    incoming.update(sourceKind="relation", sourceRef="in", points=[[0, 5], [10, 5]],
+                    fromInstanceId="upstream", toInstanceId="node")
+    outgoing = _primitive("relation:out", "Path")
+    outgoing.update(sourceKind="relation", sourceRef="out", points=[[10, 5], [0, 5], [0, 10]],
+                    fromInstanceId="node", toInstanceId="downstream")
+    scene = _scene(incoming, outgoing)
+    assert "E_SCENE_RELATION_NODE_APPROACH_SHARED" in _codes(scene)
+    scene["diagnostics"] = ['I_LAYOUT_RELATION_NODE_APPROACH_SHARED:relation:out;incoming=["relation:in"]']
+    assert "I_SCENE_RELATION_NODE_APPROACH_SHARED" in _codes(scene)
+    scene["diagnostics"] = ['I_LAYOUT_RELATION_NODE_APPROACH_SHARED:relation:out;incoming=["relation:another"]']
+    assert "E_SCENE_RELATION_NODE_APPROACH_SHARED" in _codes(scene)
+    outgoing["fromInstanceId"] = "unrelated"
+    assert not any(code.endswith("NODE_APPROACH_SHARED") for code in _codes(scene))
+
+
 @pytest.mark.parametrize("changes", [{"points": [[0, 0], ["x", 5]]}, {"paint": {"strokeWidth": "x"}},
                                      {"points": [[0, 0], [float("nan"), 5]]}])
 def test_malformed_relation_geometry_has_a_typed_observation_error(changes):

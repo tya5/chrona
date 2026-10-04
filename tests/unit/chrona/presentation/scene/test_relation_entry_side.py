@@ -74,11 +74,12 @@ def test_a_source_on_the_left_with_free_space_enters_the_start_horizontally_at_m
     assert points[-1][1] == pytest.approx(mark.bounds[1] + mark.bounds[3] / 2)
 
 
-def test_any_and_absent_keep_the_nearest_port_order_and_differ_from_side_when_free():
+def test_any_minimizes_bends_and_side_when_free_preserves_the_declared_entry_stub():
     any_points, _ = _route((A, B), _rows((A,), (B,)), DEP, "any")
     side_points, _ = _route((A, B), _rows((A,), (B,)), DEP, "side-when-free")
-    assert not _horizontal_last(any_points)  # today: drops onto the corner
-    assert any_points != side_points
+    assert _bends(any_points) <= _bends(side_points)
+    assert _horizontal_last(side_points)
+    assert abs(side_points[-1][0] - side_points[-2][0]) >= 11
 
 
 def test_a_source_on_the_right_of_a_finish_endpoint_enters_the_end_horizontally_mirrored():
@@ -127,8 +128,8 @@ def test_a_narrow_gap_may_need_one_more_bend_and_is_bounded_by_max_bends():
     window = (D(2026, 1, 1), D(2027, 2, 1))
     drop, _ = _route((A, near), _rows((A,), (near,)), DEP, "any", window=window)
     side, _ = _route((A, near), _rows((A,), (near,)), DEP, "side-when-free", window=window)
-    assert _horizontal_last(side) and not _horizontal_last(drop)
-    assert _bends(side) == _bends(drop) + 1
+    assert _horizontal_last(side) and _bends(drop) < _bends(side)
+    assert _bends(side) == _bends(drop) + 2
     # Below the bends the stub route needs it is not taken: the relation is still routed, by the remaining order.
     limited, _ = _route((A, near), _rows((A,), (near,)), DEP, "side-when-free", max_bends=_bends(side) - 1, window=window)
     assert _bends(limited) < _bends(side)

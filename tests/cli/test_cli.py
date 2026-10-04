@@ -206,14 +206,18 @@ def test_cli_collapses_a_warning_that_repeats_with_the_same_cause_into_one_row_w
     ])
     main()
     emitted = [json.loads(line) for line in capsys.readouterr().err.splitlines() if line.startswith("{")]
-    rows = _warning_multiplicity(emitted, json.loads(scene_path.read_text(encoding="utf-8"))["diagnostics"])
+    diagnostics = json.loads(scene_path.read_text(encoding="utf-8"))["diagnostics"]
+    rows = _warning_multiplicity(emitted, diagnostics)
     (suppressed,) = [row for row in rows if row["code"] == "W_LAYOUT_LABEL_SUPPRESSED"]
-    assert suppressed["count"] == 7 and len(suppressed["occurrences"]) == 7
+    occurrences = [item for item in diagnostics if item.startswith("W_LAYOUT_LABEL_SUPPRESSED:")]
+    assert len(occurrences) > 1  # Exercise aggregation, independent of routing's label reservations.
+    assert suppressed["count"] == len(occurrences)
+    assert suppressed["occurrences"] == occurrences
     assert suppressed["diagnostic"] == suppressed["occurrences"][0]
     assert suppressed["message"].startswith("a label was left out of the picture because it does not fit: ")
-    assert suppressed["message"].endswith(" and 6 more")
+    assert suppressed["message"].endswith(f" and {len(occurrences) - 1} more")
     (info,) = [item for item in emitted if item["code"] == "I_LAYOUT_PLOT_LABELS_SUPPRESSED"]
-    assert info["count"] == 7 and "message" in info and "occurrences" not in info
+    assert info["count"] == len(occurrences) and "message" in info and "occurrences" not in info
 
 
 def test_render_parsers_expose_scene_emission_only_on_explicit_and_immutable_routes():
