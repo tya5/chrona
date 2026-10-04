@@ -47,6 +47,41 @@ change, combine steps 1–4 in the one concise issue work record, then keep the
 literal acceptance review. Land an agreed independent slice when possible;
 an unresolved contract or layer gap still requires design correction first.
 
+### Fast path for fixes and attribute knobs
+
+Most board items are defect fixes or attribute-level knobs on an existing
+mechanism (board depth B or C, or `fix`). They take the fast path unless they
+introduce a new layer, ownership boundary, public schema version or
+compatibility promise:
+
+- **Plan in the issue, not in `docs/`.** Steps 1–4 are one Status comment on
+  the issue of about 20 lines: baseline commit, the literal acceptance rows,
+  the rule to implement, the files touched and the tests. Do not add design,
+  architecture-review or implementation-plan files under `docs/planning/` or
+  `docs/design/` for these items, and do not publish them as separate PRs.
+- **One PR per item.** Code, synthetic tests and the specification lines the
+  behaviour needs land together. A changed public output is not a reason to
+  pre-publish a design: disclose it in the PR body as a short count table
+  (per slide: routes, labels or primitives changed, removed or added, and new
+  diagnostics). The reviewer or owner accepts or rejects it there.
+- **Never absorb a side effect by editing `examples/**`.** Report it with
+  counts; the corpus is not an oracle.
+- **One active item per session.** Merge, or park with a Status comment,
+  before opening the next item's PR.
+- **Acceptance stays literal but short.** The acceptance review file keeps one
+  row per literal criterion with evidence links; it needs no narrative beyond
+  that.
+
+### Merge coordination
+
+There is no repository merge lock. Before the final push, the base must be the
+`origin/main` tip whose `derived-main` check run is `completed`/`success`
+(`gh api --method GET repos/tya5/chrona/commits/<sha>/check-runs -f check_name=derived-main -f filter=all`).
+If `main` advances while checks run, rebase onto the new ready tip and re-run;
+never patch generated output. When two sessions are about to merge, the one
+merging posts a one-line "Merging #N now" on its issue, and a fix that turns a
+red `main` green goes first.
+
 1. **Establish the baseline.** Read the issue body and later comments, current
    `main`, active plans, relevant specifications/ADRs, code, tests, and public
    artifacts. Record what is published, what is inferred, and what remains
