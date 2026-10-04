@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import replace
-from math import atan2, cos, hypot, isfinite, pi, sin, tan
+from math import atan2, cos, degrees, hypot, isfinite, pi, sin, tan
 
 from chrona.presentation.layout.surface_quality import MarkerGeometry, PathCommand
 
@@ -66,6 +66,56 @@ def terminal_run(marker: MarkerGeometry | None) -> float:
 def terminal_length(marker: MarkerGeometry | None) -> float:
     """How far a terminal reaches back from its port along the route (0 for none)."""
     return 0.0 if marker is None else marker.head_length
+
+
+def orient_terminal(marker: MarkerGeometry | None, points: tuple[tuple[float, float], ...],
+                    side: str, *, source: bool) -> MarkerGeometry | None:
+    """Complete a short-tangent marker's axis in Layout, leaving honest tangents unchanged."""
+    if marker is None or len(points) < 2:
+        return marker
+    segments = list(zip(points, points[1:]))
+    if not source:
+        segments.reverse()
+    a, b = segments[0]
+    if hypot(b[0] - a[0], b[1] - a[1]) + 1e-6 >= marker.head_length:
+        return marker
+    direction = {"start": (-1, 0), "end": (1, 0), "above": (0, -1), "below": (0, 1)}.get(side)
+    if direction is not None and not source:
+        direction = (-direction[0], -direction[1])
+    if direction is None:
+        direction = next(((b[0] - a[0], b[1] - a[1]) for a, b in segments
+                          if hypot(b[0] - a[0], b[1] - a[1]) + 1e-6 >= marker.head_length),
+                         (b[0] - a[0], b[1] - a[1]))
+    angle = degrees(atan2(direction[1], direction[0]))
+    # An equivalent auto tangent retains the established public bytes.
+    tangent = degrees(atan2(segments[0][1][1] - segments[0][0][1],
+                           segments[0][1][0] - segments[0][0][0]))
+    return marker if abs(angle - tangent) < 1e-6 else replace(marker, angle_degrees=angle)
+
+
+def complete_centred_terminals(points: tuple[tuple[float, float], ...], start: MarkerGeometry | None,
+                              end: MarkerGeometry | None, minimum: float
+                              ) -> tuple[tuple[tuple[float, float], ...], MarkerGeometry | None, MarkerGeometry | None]:
+    """Keep a stroke-width run between nearby round terminals, centred on the original ports.
+
+    When the clear gap is narrower than the stroke, the stroke extends slightly
+    under the round heads. Their reference offsets change, never their centres.
+    """
+    if len(points) == 2:
+        leg = hypot(points[1][0] - points[0][0], points[1][1] - points[0][1])
+        first = start.head_length / 2 if start is not None and start.centred else 0.0
+        last = end.head_length / 2 if end is not None and end.centred else 0.0
+        total = first + last
+        if total and leg < total + minimum:
+            factor = max(0.0, leg - minimum) / total
+            first *= factor; last *= factor
+            if start is not None and start.centred:
+                start = replace(start, attachment_offset=start.head_length / 2 - first)
+            if end is not None and end.centred:
+                end = replace(end, attachment_offset=end.head_length / 2 + last)
+            return ((_along(points[0], points[1], first, last),
+                     _along(points[1], points[0], last, first)), start, end)
+    return trim_for_centred_terminals(points, start, end), start, end
 
 
 def centred_on_route(marker: MarkerGeometry | None, role: str) -> MarkerGeometry | None:

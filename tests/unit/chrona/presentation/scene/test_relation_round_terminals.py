@@ -28,14 +28,16 @@ def _item(oid, start, end, track="stacked"):
                       source_kind="primary", track=track)
 
 
-def _compose(items, rows, relation, source_shape, target_shape, *, head=6, entry="any", radius=None):
+def _compose(items, rows, relation, source_shape, target_shape, *, head=6, entry="any", radius=None, window=None):
     theme = _theme()
     for name, shape in (("src", source_shape), ("dst", target_shape)):
         theme["body"]["values"][name] = {"type": "marker", "value": {"shape": shape, "headLength": head,
                                                                      "headWidth": head, "attachmentOffset": 0}}
     theme["body"]["roles"]["relationSourceTerminal"] = {"marker": "src"}
     theme["body"]["roles"]["relationTargetTerminal"] = {"marker": "dst"}
-    projection = ReviewProjection(tuple(items), (min(i.planned["start"] for i in items), max(i.planned["end"] for i in items)),
+    extent = window or (min(i.planned.get("start", i.planned.get("at")) for i in items),
+                        max(i.planned.get("end", i.planned.get("at")) for i in items))
+    projection = ReviewProjection(tuple(items), extent,
                                   (), (), tuple(rows))
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
@@ -134,3 +136,20 @@ def test_a_triangular_head_keeps_its_tip_at_the_port_and_the_route_is_untrimmed(
     assert path.points[0] == pytest.approx(_end_port(marks["planned:a:a"]))
     assert path.points[-1] == pytest.approx(_start_port(marks["planned:b:b"]))
     assert path.marker_end.attachment_offset == 0.0 and not path.marker_end.centred
+
+
+def test_gate_to_bar_near_drop_has_a_vertical_start_and_centred_source_circle():
+    from datetime import timedelta
+    from tests.unit.chrona.presentation.scene.test_relation_route_invariant import gate
+    source = gate("a", D(2026, 2, 8))
+    target = _item("b", D(2026, 2, 16), D(2026, 2, 26))
+    relation = {"id": "dep", "from": {"object": "a", "endpoint": "at"},
+                "to": {"object": "b", "endpoint": "start"}}
+    path, marks = _compose((source, target), _rows((source,), (target,)), relation,
+                          "circle", "triangle", entry="side", radius=4,
+                          window=(D(2026, 1, 1), D(2026, 1, 1) + timedelta(days=600)))
+    assert path.points[0][0] == pytest.approx(path.points[1][0])
+    mark = _mark(marks, "a")
+    x, y, width, height = mark.bounds
+    assert _centre(path, "source") == pytest.approx((x + width, y + height / 2))
+    assert all(hypot(b[0] - a[0], b[1] - a[1]) >= 1 - 1e-6 for a, b in zip(path.points, path.points[1:]))

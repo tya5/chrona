@@ -5,7 +5,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from heapq import heappop, heappush
 import json
-from math import isfinite
+from math import hypot, isfinite
 
 from chrona.presentation.layout.model import geometry_sum
 from chrona.presentation.layout.obstacles import ObstacleSegment, SurfaceObstacleIndex, obstacle_envelope
@@ -13,6 +13,56 @@ from chrona.presentation.layout.ports import ConnectorEgress
 
 
 ROUTE_GRID_OFFSET = 2.0  # how far a route runs from the edge of an obstacle
+
+
+def remove_substroke_jogs(points: tuple[tuple[float, float], ...], minimum: float, *,
+                         accept: Callable[[tuple[tuple[float, float], ...]], bool],
+                         start_minimum: float = 0.0, end_minimum: float = 0.0,
+                         ) -> tuple[tuple[float, float], ...]:
+    """Collapse only sub-stroke jogs, never moving either boundary port.
+
+    Try moving either adjoining run onto the other; obstacle and mark clearance
+    are supplied by the route owner. Wider bend minimisation is a separate rule.
+    """
+    current = tuple(points)
+    def limit(index, size):
+        return max(minimum, start_minimum if index == 0 else 0.0,
+                   end_minimum if index == size - 2 else 0.0)
+    if not any(hypot(b[0] - a[0], b[1] - a[1]) + 1e-6 < limit(i, len(current))
+               for i, (a, b) in enumerate(zip(current, current[1:]))):
+        return current
+    while True:
+        clean = [current[0]]
+        for point in current[1:]:
+            if point == clean[-1]:
+                continue
+            if len(clean) > 1 and not _reverses(clean[-2], clean[-1], point) and (
+                    clean[-2][0] == clean[-1][0] == point[0]
+                    or clean[-2][1] == clean[-1][1] == point[1]):
+                clean.pop()
+            clean.append(point)
+        current = tuple(clean)
+        replacement = None
+        for i, (a, b) in enumerate(zip(current, current[1:])):
+            if hypot(b[0] - a[0], b[1] - a[1]) + 1e-6 >= limit(i, len(current)):
+                continue
+            axis = 0 if a[1] == b[1] else 1
+            candidates = []
+            if i + 2 < len(current):
+                moved = list(current[i + 2]); moved[axis] = a[axis]
+                candidates.append((*current[:i + 1], tuple(moved), *current[i + 3:]))
+            if i > 0:
+                moved = list(current[i - 1]); moved[axis] = b[axis]
+                candidates.append((*current[:i - 1], tuple(moved), *current[i + 1:]))
+            replacement = next((path for path in candidates
+                if path[0] == current[0] and path[-1] == current[-1]
+                and all(p[0] == q[0] or p[1] == q[1] for p, q in zip(path, path[1:]))
+                and not route_self_overlaps(path) and accept(path)), None)
+            if replacement is not None:
+                break
+        if replacement is None:
+            return current
+        current = replacement
 
 
 class RouteSearchFailure(ValueError):
@@ -277,6 +327,8 @@ def select_lane_relation_route(
     classes: tuple[str, ...] = ("mark", "text", "label-visual"),
     regions: tuple[str, ...] = ("timeline", "group-header"),
     accept: Callable[[tuple[tuple[float, float], ...]], bool] | None = None,
+    prepare: Callable[[tuple[tuple[float, float], ...], ConnectorEgress, ConnectorEgress],
+                      tuple[tuple[float, float], ...] | None] | None = None,
 ) -> LaneRouteSelection:
     """Measure every attempted port pair until an accepted route is found.
 
@@ -324,6 +376,13 @@ def select_lane_relation_route(
                                         host_ids=(*source.host_ids, *target.host_ids), accept=accept)
         if repaired is not None:
             points = list(repaired)
+        if prepare is not None:
+            prepared = prepare(tuple(points), source, target)
+            if prepared is None:
+                attempts.append(RouteAttemptEvidence(source.side, target.side, "no-route-found",
+                                                     search_failure="E_CONNECTOR_UNROUTABLE"))
+                continue
+            points = list(prepared)
         measured = route_quality_attempt(source.side, target.side, tuple(points),
                                          max_bends=max_bends, max_detour_ratio=max_detour_ratio)
         if measured.outcome == "accepted" and route_self_overlaps(tuple(points)):

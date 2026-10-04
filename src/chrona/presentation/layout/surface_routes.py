@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from math import hypot
 import re
 from collections.abc import Callable
 from typing import Any, Mapping
@@ -17,11 +18,11 @@ from chrona.presentation.layout.ports import (
 )
 from chrona.presentation.layout.presentation import TrackPlacement
 from chrona.presentation.layout.relation_terminals import (
-    centred_on_route, marker_geometry, terminal_length, terminal_run, trim_for_centred_terminals,
+    centred_on_route, complete_centred_terminals, marker_geometry, orient_terminal, terminal_length, terminal_run,
 )
 from chrona.presentation.layout.routing import (
     RouteSearchFailure, RouteSuppressionEvidence, back_route_points, place_relation_route, route_self_overlaps,
-    relation_route_quality, repair_self_reversal, select_lane_relation_route,
+    relation_route_quality, repair_self_reversal, remove_substroke_jogs, select_lane_relation_route,
 )
 from chrona.presentation.layout.path_geometry import flatten_path, rounded_orthogonal_path
 from chrona.presentation.layout.surface_geometry import bounds_from_rect
@@ -238,6 +239,41 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         run = points[-1][0] - points[-2][0]
         return (run if starts else -run) >= 0.99 * entry_stub_length(relation.semantic_id)
 
+    marker_start = centred_on_route(marker_geometry(request.theme_tokens.marker("relationSourceTerminal")), "source")
+    marker_end = centred_on_route(marker_geometry(request.theme_tokens.marker("relationTargetTerminal")), "target")
+
+    def prepare_route(points, width, hosts, source_side, target_side):
+        def clear(path):
+            return clears_primary_marks(path, width) and all(not obstacles.egress_collisions(
+                ObstacleSegment(a, b), host_ids=hosts, classes=route_classes,
+                regions=("timeline", "group-header")) for a, b in zip(path, path[1:]) if a != b)
+        reduced = remove_substroke_jogs(tuple(points), width, accept=clear)
+        drawn, start, end = complete_centred_terminals(reduced, marker_start, marker_end, width)
+        # A round head's reference offset makes its centre axis-sensitive too.
+        # If a short tangent disagrees with its port normal, try removing just
+        # that terminal jog, then try another port instead of detaching the head.
+        first = orient_terminal(start, drawn, source_side, source=True)
+        last = orient_terminal(end, drawn, target_side, source=False)
+        start_limit = (start.head_length * 1.5 if start is not None and start.centred
+                       and first.angle_degrees is not None else 0.0)
+        end_limit = (end.head_length * 1.5 if end is not None and end.centred
+                     and last.angle_degrees is not None else 0.0)
+        if start_limit or end_limit:
+            reduced = remove_substroke_jogs(reduced, width, accept=clear,
+                start_minimum=start_limit, end_minimum=end_limit)
+            drawn, start, end = complete_centred_terminals(reduced, marker_start, marker_end, width)
+            first = orient_terminal(start, drawn, source_side, source=True)
+            last = orient_terminal(end, drawn, target_side, source=False)
+            if any(marker is not None and marker.centred and marker.angle_degrees is not None
+                   for marker in (first, last)):
+                return None
+        return reduced
+
+    def terminal_segments_fit(points, width):
+        drawn, _, _ = complete_centred_terminals(tuple(points), marker_start, marker_end, width)
+        return len(drawn) >= 2 and all(hypot(b[0] - a[0], b[1] - a[1]) + 1e-6 >= width
+                                      for a, b in zip(drawn, drawn[1:]))
+
     back_route_reason = [""]
 
     def back_route(relation, source_mark, target_mark, source_id, target_id, source_nominal):
@@ -276,6 +312,12 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         exit_dx = (-1.0 if relation.source_endpoint in {"start", "at"} else 1.0) * entry_stub_length(relation.semantic_id)
         points = back_route_points(port, exit_dx, gap_y, stub.exposed_port, stub.semantic_port)
         hosts = (*stub.host_ids, source_mark.placement_id)
+        source_side = "start" if relation.source_endpoint in {"start", "at"} else "end"
+        points = prepare_route(points, relation_stroke(relation), hosts, source_side, stub.side)
+        if points is None:
+            return fail("terminal-axis-blocked")
+        if not terminal_segments_fit(points, relation_stroke(relation)):
+            return fail("sub-stroke-segment")
         if len(points) < 3:
             return fail("degenerate")
         # The back-route is a minimal side-entering route by construction: its detour is measured against the
@@ -336,7 +378,10 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         target_host_id=target_mark.placement_id if target_mark else None,
                         relation_scene_id=scene_id, max_bends=context.layout_manifest.relation_max_bends,
                         max_detour_ratio=context.layout_manifest.relation_max_detour_ratio, classes=route_classes,
-                        accept=lambda candidate: clears_primary_marks(candidate, dependency_stroke))
+                        prepare=lambda candidate, source_exit, target_entry: prepare_route(candidate, dependency_stroke,
+                            (*source_exit.host_ids, *target_entry.host_ids), source_exit.side, target_entry.side),
+                        accept=lambda candidate: clears_primary_marks(candidate, dependency_stroke)
+                            and terminal_segments_fit(candidate, dependency_stroke))
                     selected_pair, points = lane_selection.selected_pair, lane_selection.points
                 else:
                     for source_egress, target_egress in port_pairs:
@@ -366,7 +411,12 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                                                             replacement, dependency_stroke))
                         if repaired is not None:
                             candidate_points = repaired
+                        candidate_points = prepare_route(candidate_points, dependency_stroke,
+                            (*source_egress.host_ids, *target_egress.host_ids), source_egress.side, target_egress.side)
+                        if candidate_points is None:
+                            continue
                         if (len(candidate_points) >= 2 and clears_primary_marks(candidate_points, dependency_stroke)
+                                and terminal_segments_fit(candidate_points, dependency_stroke)
                                 and relation_route_quality(candidate_points,
                             max_bends=context.layout_manifest.relation_max_bends,
                             max_detour_ratio=context.layout_manifest.relation_max_detour_ratio)):
@@ -395,12 +445,14 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         if first_source.semantic_port != first_target.semantic_port else
                         (first_source.semantic_port, (first_source.semantic_port[0] + 1.0,
                                                        first_source.semantic_port[1])))
-                    if not clears_primary_marks(points, dependency_stroke):
+                    if (not clears_primary_marks(points, dependency_stroke)
+                            or not terminal_segments_fit(points, dependency_stroke)):
                         relations.append(RelationPlacement(scene_id,
                             f"{source_id}:{relation.source_endpoint}", f"{target_id}:{relation.target_endpoint}",
                             suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))
-                        diagnostics.extend((f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}",
-                                            f"I_LAYOUT_RELATION_MARK_BLOCKED:{scene_id}"))
+                        cause = ("I_LAYOUT_RELATION_MARK_BLOCKED" if not clears_primary_marks(points, dependency_stroke)
+                                 else "I_LAYOUT_RELATION_SEGMENT_TOO_SHORT")
+                        diagnostics.extend((f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}", f"{cause}:{scene_id}"))
                         if lane_selection is not None:
                             diagnostics.append(RouteSuppressionEvidence(scene_id, lane_selection.attempts).diagnostic)
                         continue
@@ -420,9 +472,10 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     if not obstacles.has(obstacle_id):
                         register_port(obstacle_id, port)
                 radius = float(context.metric_values.get("timeline.relation.cornerRadius", 0))
-                marker_start = centred_on_route(marker_geometry(request.theme_tokens.marker("relationSourceTerminal")), "source")
-                marker_end = centred_on_route(marker_geometry(request.theme_tokens.marker("relationTargetTerminal")), "target")
-                points = trim_for_centred_terminals(tuple(points), marker_start, marker_end)
+                points, completed_start, completed_end = complete_centred_terminals(
+                    tuple(points), marker_start, marker_end, dependency_stroke)
+                completed_start = orient_terminal(completed_start, points, source_egress.side, source=True)
+                completed_end = orient_terminal(completed_end, points, target_egress.side, source=False)
                 arc_blocked = corner_arc_blocker(obstacles, frozenset((*source_egress.host_ids, *target_egress.host_ids)),
                                                  dependency_stroke, route_classes)
 
@@ -433,7 +486,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         end_run=terminal_run(marker_end),
                         blocked=lambda arc: arc_blocked(arc) or not clears_primary_marks(arc, dependency_stroke))
                         if radius > 0 and not fallback else ()),
-                    marker_start=marker_start, marker_end=marker_end,
+                    marker_start=completed_start, marker_end=completed_end,
                     label_content=relation_label_content(relation), source_ref=relation_id)
                 relations.append(placed)
                 if (context.layout_manifest.relation_entry == "side" and target_mark is not None

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import isfinite
+from math import hypot, isfinite
 from typing import Any, Mapping, Sequence
 
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, segment_length_inside_rect
@@ -82,6 +82,7 @@ def evaluate_scene_perceptibility(document: Mapping[str, Any]) -> tuple[ScenePer
         findings.extend(_relation_duplicate_findings(scene_path, surface.get("primitives")))
         findings.extend(_relation_reversal_findings(scene_path, surface.get("primitives")))
         findings.extend(_relation_mark_findings(scene_path, surface.get("primitives")))
+        findings.extend(_relation_segment_findings(scene_path, surface.get("primitives")))
         findings.extend(_slot_findings(scene_path, slots, primitives))
         findings.extend(_occlusion_findings(scene_path, primitives))
         findings.extend(_text_intersection_findings(scene_path, primitives))
@@ -136,6 +137,23 @@ def _relation_reversal_findings(scene_path: str, raw_primitives: Any) -> list[Sc
         if overlap > 1e-6:
             findings.append(_finding("E_SCENE_RELATION_PATH_REVERSES", "error", scene_path, (str(raw["id"]),), None,
                                      (("relation", str(raw.get("sourceRef"))), ("overlap", round(overlap, 3)))))
+    return findings
+
+
+def _relation_segment_findings(scene_path: str, raw_primitives: Any) -> list[ScenePerceptibilityFinding]:
+    """Observe the completed route skeleton, not arc tessellation or marker outlines."""
+    findings = []
+    for raw in raw_primitives if isinstance(raw_primitives, list) else ():
+        if not (isinstance(raw, Mapping) and raw.get("kind") == "Path"
+                and raw.get("sourceKind") == "relation" and str(raw.get("id", "")).startswith("relation:")):
+            continue
+        width = raw.get("paint", {}).get("strokeWidth", 0)
+        points = raw.get("points", ())
+        for index, (a, b) in enumerate(zip(points, points[1:])):
+            length = hypot(b[0] - a[0], b[1] - a[1])
+            if length + 1e-6 < width:
+                findings.append(_finding("E_SCENE_RELATION_SEGMENT_TOO_SHORT", "error", scene_path,
+                    (str(raw["id"]),), None, (("segment", index), ("length", length), ("strokeWidth", width))))
     return findings
 
 

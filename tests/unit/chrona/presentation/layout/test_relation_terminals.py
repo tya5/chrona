@@ -56,6 +56,18 @@ def test_rendered_svg_and_png_show_the_two_shapes_differently():
     assert ink[1] > ink[0]
 
 
+def test_svg_serializes_completed_marker_axis_and_distinguishes_its_identity():
+    from dataclasses import replace
+    original = _surface("triangle")
+    path = original.primitives[0]
+    marker = replace(path.marker_end, angle_degrees=90)
+    oriented = replace(original, primitives=(replace(path, marker_end=marker),))
+    auto = render_v05_svg(original)
+    explicit = render_v05_svg(oriented)
+    assert 'orient="auto"' in auto and 'orient="90"' in explicit
+    assert auto.split('marker id="')[1].split('"')[0] != explicit.split('marker id="')[1].split('"')[0]
+
+
 # --- #1044: five new terminal shapes -------------------------------------------------------------------------
 
 NEW_SHAPES = ["stealth", "rounded-triangle", "dot", "half", "double-chevron"]
