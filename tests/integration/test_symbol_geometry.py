@@ -48,16 +48,33 @@ def _render(tmp_path, tokens=None, rows="lanes"):
     return found
 
 
-def test_without_the_tokens_the_actual_gate_is_the_bar_band_as_before(tmp_path):
-    marks = _render(tmp_path)
-    assert marks["actual-gate"][2:] == pytest.approx((9.6, 9.6))
-    assert marks["actual-gate"][1] == pytest.approx(marks["planned-gate"][1] + 0.2 * 16)
-
-
 def _gate_track(tmp_path, rows="lanes"):
     """The gate row's track (top, size): the planned gate fills it when no token is declared."""
     planned = _render(tmp_path / "plain", None, rows)["planned-gate"]
     return planned[1], planned[3]
+
+
+@ROW_MODES
+def test_without_the_tokens_the_actual_gate_is_as_large_as_the_planned_gate_and_on_it(tmp_path, rows):
+    marks = _render(tmp_path, None, rows)  # the default rule (#1074): max(markHeight, planned symbol), centred
+    planned, actual = marks["planned-gate"], marks["actual-gate"]
+    assert actual[2:] == pytest.approx(planned[2:])  # A1: no smaller than the planned gate (here 16 px, not 9.6)
+    assert actual[1] == pytest.approx(planned[1])  # centred on the planned symbol
+    bar = marks["actual-bar"]  # A2: the actual bar keeps markHeight 0.6 at markOffset 0.2
+    assert bar[3] == pytest.approx(0.6 * planned[3]) and bar[1] == pytest.approx(marks["planned-bar"][1] + 0.2 * planned[3])
+
+
+def test_declaring_the_band_values_restores_the_old_actual_gate_exactly(tmp_path):
+    marks = _render(tmp_path, {"actual": (0.6, 0.2)})  # symbolHeight = markHeight, symbolOffset = markOffset
+    track_top, track = _gate_track(tmp_path)
+    assert marks["actual-gate"][2:] == pytest.approx((9.6, 9.6))
+    assert marks["actual-gate"][1] == pytest.approx(track_top + 0.2 * track)
+
+
+def test_the_default_follows_a_planned_role_that_declares_its_own_symbol(tmp_path):
+    marks = _render(tmp_path, {"planned": (0.8, 0.1)})  # planned gate 12.8 px at 0.1; the actual follows it
+    assert marks["actual-gate"][3] == pytest.approx(marks["planned-gate"][3])
+    assert marks["actual-gate"][1] == pytest.approx(marks["planned-gate"][1])
 
 
 @ROW_MODES
@@ -82,12 +99,21 @@ def test_the_planned_role_honours_the_tokens_too(tmp_path):
     assert marks["planned-bar"][3] == pytest.approx(16.0)  # the planned bar keeps markHeight 1
 
 
-def test_a_height_alone_keeps_the_roles_offset_and_an_offset_alone_keeps_its_height(tmp_path):
-    height_only = _render(tmp_path / "h", {"actual": (0.4, None)})
-    offset_only = _render(tmp_path / "o", {"actual": (None, 0.1)})
-    top, _ = _gate_track(tmp_path)
-    assert height_only["actual-gate"][3] == pytest.approx(0.4 * 16) and height_only["actual-gate"][1] == pytest.approx(top + 3.2)
-    assert offset_only["actual-gate"][3] == pytest.approx(0.6 * 16) and offset_only["actual-gate"][1] == pytest.approx(top + 1.6)
+def test_a_declared_height_and_an_absent_offset_follow_the_default_rule(tmp_path):
+    smaller = _render(tmp_path / "s", {"actual": (0.4, None)})  # not taller than the band: markOffset stays
+    larger = _render(tmp_path / "l", {"actual": (0.8, None)})  # taller than the band: centred on the planned symbol
+    top, track = _gate_track(tmp_path)
+    assert smaller["actual-gate"][3] == pytest.approx(0.4 * track)
+    assert smaller["actual-gate"][1] == pytest.approx(top + 0.2 * track)
+    assert larger["actual-gate"][3] == pytest.approx(0.8 * track)
+    assert larger["actual-gate"][1] == pytest.approx(top + 0.1 * track)
+
+
+def test_a_declared_offset_with_an_absent_height_takes_the_default_height(tmp_path):
+    marks = _render(tmp_path, {"planned": (0.8, 0.0), "actual": (None, 0.15)})
+    top, track = _gate_track(tmp_path / "base")
+    assert marks["actual-gate"][3] == pytest.approx(0.8 * track)  # the planned symbol's height, the declared offset
+    assert marks["actual-gate"][1] == pytest.approx(top + 0.15 * track)
 
 
 def _tokens(role_bindings, values):
@@ -133,3 +159,24 @@ def test_an_out_of_range_symbol_is_refused():
     roles["actual"] = _role(symbolHeight="zero")
     with pytest.raises(ThemeTokenError):
         resolve_mark_geometries(_tokens(roles, values))
+
+
+def test_a_band_taller_than_the_planned_symbol_is_kept():
+    roles = {name: _role() for name in ("planned", "actual", "snapshot", "scenario", "missing-actual")}
+    values = {**VALUES, "tall": {"type": "number", "value": 0.9}, "short": {"type": "number", "value": 0.3}}
+    roles["actual"]["markHeight"] = "tall"
+    roles["planned"]["markHeight"] = "short"
+    geometry = resolve_mark_geometries(_tokens(roles, values))["actual"]
+    assert geometry.symbol_extent == (0.1, 0.9)  # the band's own values: nothing enlarged, nothing moved
+
+
+def test_the_default_applies_to_the_actual_role_only():
+    roles = {name: _role() for name in ("planned", "actual", "snapshot", "scenario", "missing-actual")}
+    values = {**VALUES, "big": {"type": "number", "value": 0.8}, "small": {"type": "number", "value": 0.3}}
+    roles["planned"]["markHeight"] = "big"
+    roles["actual"]["markHeight"] = "small"
+    roles["snapshot"]["markHeight"] = "small"
+    geometries = resolve_mark_geometries(_tokens(roles, values))
+    assert geometries["actual"].symbol_height == 0.8  # enlarged to the planned symbol
+    assert geometries["snapshot"].symbol_extent == (0.1, 0.3)  # baseline ghosts keep their band
+    assert geometries["scenario"].symbol_extent == (0.1, 0.5)

@@ -2,7 +2,7 @@
 
 ## Published baseline and design plan
 
-Public main tracked: `a130c74e` (2026-10-04); comparison baseline: `23bc8a57`.
+Public main tracked: `ba90f480` (2026-10-04); comparison baseline: `23bc8a57`.
 #1114's primary-mark safety
 is the preceding lane-R slice in PR #1122 (acceptance pending).
 Authority: [#1109](https://github.com/tya5/chrona/issues/1109), Spec 50 §3.3,
@@ -362,4 +362,9 @@ and diagnostics are empty. Inventory/gallery guards: seven passed; the real
 inventory tool validates 64 slides and 13 gallery links. Station-note text/box
 and its single tail remain; its existing optional index suppression is unchanged.
 No repository-derived outputs, Project facts, Theme or reviewer resources edited.
-PR-head CI and #1114's literal compliant-route preservation are still required.
+PR CI at `89dacde6` passes all three pytest shards, conformance and public
+materializer reproduction ([run](https://github.com/tya5/chrona/actions/runs/37178299268)).
+Main's published #1074 actual-gate default is reconciled without changing its
+contract; mark-safety, entry and symbol-geometry tests pass (34 tests). Because
+enlarged actual symbols can change comparison-host corridors and nearby labels,
+new public-head CI and #1114's literal compliant-route preservation remain required.
