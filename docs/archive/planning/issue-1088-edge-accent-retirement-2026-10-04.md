@@ -1,7 +1,7 @@
 # Issue #1088 — retire the content-box edge accent
 
-Phase: implementation and grouped 64-context artifact review complete; S0 and
-focused tests pass. Release gate remains. Baseline: ready main `28d7f664`.
+Phase: closed and archived. Published main `35fde2fcae43e5ac8dc2b945c715a8e1064ece40`;
+[exact-main three-OS release gate](https://github.com/tya5/chrona/actions/runs/37207799086) passed.
 Source: [#1088](https://github.com/tya5/chrona/issues/1088). Predecessor: #1049.
 
 ## Published baseline and literal acceptance

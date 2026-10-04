@@ -490,7 +490,7 @@ Layout outputs. If the index cannot fit, Layout diagnoses and omits only the
 index; the accepted annotation box/text and purpose-required leader remain.
 See the [#466 index/leader correction](../design/issue-466-general-placement-note-index-leader-correction-2026-09-26.md).
 
-**Numbered annotation list status (#1130, [work record](../planning/active/issue-1130-note-index-suppression-2026-10-04.md)).**
+**Numbered annotation list status (#1130, [archived work record](../archive/planning/issue-1130-note-index-suppression-2026-10-04.md)).**
 When the Layout declares an `annotations` slot, its ordered note list is a
 separate output from each annotation's plot index and callout box. Every numbered View annotation retains its View-order
 ordinal and visible content. When an optional plot index is
