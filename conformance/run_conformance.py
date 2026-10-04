@@ -70,6 +70,7 @@ CHECKS = (
     CheckSpec("presentation-font-identity", _command("tools/presentation_font_identity.py", "--check")),
     CheckSpec("diagnostic-inventory", _command("tools/diagnostic_inventory.py", "--check")),
     CheckSpec("layout-float-accumulation", _command("tools/check_layout_float_accumulation.py")),
+    CheckSpec("theme-role-consumers", _command("tools/check_theme_role_consumers.py")),
     CheckSpec("declared-value-inventory", _command("tools/declared_value_inventory.py", "--check")),
     CheckSpec("vocabulary-inventory", _command("tools/vocabulary_inventory.py", "--check")),
     CheckSpec("documented-commands", _command("tools/check_documented_commands.py", "--check", "--execute")),
