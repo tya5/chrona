@@ -15,7 +15,7 @@ Publication and grouped evidence: [PR #1144](https://github.com/tya5/chrona/pull
 | --- | --- | --- | --- | --- |
 | 1 | no corpus Theme declares edge | met | [All first-party Theme and derived-base contract checks](../../../tests/unit/chrona/presentation/contracts/test_contract_resources.py); unused edge values removed too | — |
 | 2 | the accent branch of the kind frame is gone | met | [Header/bar/stamp-only kind frame](../../../src/chrona/presentation/layout/annotation_kind_frame.py), [outer-border coverage](../../../tests/integration/test_annotation_border.py), [four-side header coverage](../../../tests/integration/test_annotation_kind_header.py) | — |
-| 3 | S0 gate and corpus diff reviewed | not met | [PR #1144](https://github.com/tya5/chrona/pull/1144): S0 and grouped Scene/SVG/image evidence remain required before merge | — |
+| 3 | S0 gate and corpus diff reviewed | met | [S0 and 64-pair CI snapshot](https://github.com/tya5/chrona/actions/runs/37206049416), [grouped count/image review](https://github.com/tya5/chrona/pull/1144): only two SVGs and non-provenance Scenes change; 62 unaffected pairs identical; diagnostics unchanged, contrast errors 0 | — |
 
 ## Programme-level criteria (optional)
 
