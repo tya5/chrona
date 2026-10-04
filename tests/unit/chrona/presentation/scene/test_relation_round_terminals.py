@@ -147,6 +147,7 @@ def test_gate_to_bar_near_drop_has_a_vertical_start_and_centred_source_circle(mo
     relation = {"id": "dep", "from": {"object": "a", "endpoint": "at"},
                 "to": {"object": "b", "endpoint": "start"}}
     import chrona.presentation.layout.surface_routes as routes
+    import chrona.presentation.layout.routing as routing
     boundary_candidates = routes.connector_egress_candidates
     def below_gate(mark, *args, **kwargs):
         candidates = boundary_candidates(mark, *args, **kwargs)
@@ -157,7 +158,7 @@ def test_gate_to_bar_near_drop_has_a_vertical_start_and_centred_source_circle(mo
         x = source_port[0] - 0.44
         return (source_port, (x, source_port[1]), (x, target_port[1]), target_port)
     monkeypatch.setattr(routes, "connector_egress_candidates", below_gate)
-    monkeypatch.setattr(routes, "place_relation_route", near_drop)
+    monkeypatch.setattr(routing, "place_relation_route", near_drop)
     path, marks = _compose((source, target), _rows((source,), (target,)), relation,
                           "circle", "triangle", entry="any", radius=4, mark_size=24,
                           window=(D(2026, 1, 1), D(2026, 1, 1) + timedelta(days=600)))

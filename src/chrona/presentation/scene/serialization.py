@@ -48,8 +48,12 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
     has_marker_axis = any(marker is not None and marker.angle_degrees is not None
                          for surface in scene.surfaces for primitive in surface.primitives
                          for marker in (primitive.marker_start, primitive.marker_end))
+    has_relation_endpoint_identity = any(
+        primitive.from_instance_id is not None or primitive.to_instance_id is not None
+        for surface in scene.surfaces for primitive in surface.primitives)
     return {
         "version": ("chrona/scene/v0.7" if has_catalog_pattern or has_v07_paint or has_tilt or has_scale or has_fit or has_marker_axis
+                    or has_relation_endpoint_identity
                     else "chrona/scene/v0.6"),
         "kind": "scene",
         "provenance": {
@@ -377,6 +381,8 @@ def _primitive(item: ScenePrimitive) -> dict[str, Any]:
         "paintOrder": item.paint_order,
         "hostPlacementId": item.host_placement_id,
         "clipSourceId": item.clip_source_id,
+        "fromInstanceId": item.from_instance_id,
+        "toInstanceId": item.to_instance_id,
         "contrastTreatment": item.contrast_treatment,
         "endTreatment": item.end_treatment if item.end_treatment != "closed" else None,
         "viewerFit": item.viewer_fit if item.viewer_fit != "raw" else None,

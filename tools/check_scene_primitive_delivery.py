@@ -48,6 +48,7 @@ OWNERS = {
         _owner("derived", "scene/v05_builder.py", "icon_path_geometry glyph_paint_mode glyph_paint_color glyph_stroke_width glyph_line_cap glyph_line_join"),
         _owner("adapter", "renderers/v05_svg.py", "icon_raster"),
         _owner("inspection", "scene/serialization.py", "viewer_fit"),
+        _owner("inspection", "scene/serialization.py", "from_instance_id to_instance_id"),
         _owner("adapter", "renderers/v05_svg.py", "viewer_fit"),
         _owner("derived", "scene/visual_capabilities.py", "visual_capability_source_ref"),
         _owner("derived", "scene/v05_builder.py", "image_fill_pending"),

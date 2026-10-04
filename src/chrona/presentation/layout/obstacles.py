@@ -131,6 +131,20 @@ def segment_length_inside_rect(segment: ObstacleSegment, rect: ObstacleRect) -> 
     return max(0.0, high - low) * hypot(x2 - x1, y2 - y1)
 
 
+def segment_overlap_length(first: tuple[tuple[float, float], tuple[float, float]],
+                           second: tuple[tuple[float, float], tuple[float, float]]) -> float:
+    """Shared orthogonal collinear length, excluding crossings and point contacts."""
+    (a, b), (c, d) = first, second
+    if a[1] == b[1] == c[1] == d[1]:
+        axis = 0
+    elif a[0] == b[0] == c[0] == d[0]:
+        axis = 1
+    else:
+        return 0.0
+    return max(0.0, min(max(a[axis], b[axis]), max(c[axis], d[axis]))
+               - max(min(a[axis], b[axis]), min(c[axis], d[axis])))
+
+
 def _segment_crosses_rect_interior(segment: ObstacleSegment, rect: ObstacleRect) -> bool:
     return segment_length_inside_rect(segment, rect) > BOUNDARY_CONTACT_TOLERANCE
 

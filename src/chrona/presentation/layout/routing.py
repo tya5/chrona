@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from heapq import heappop, heappush
 import json
 from math import hypot, isfinite
@@ -83,7 +83,7 @@ class RouteAttemptEvidence:
     max_detour_ratio: float | None = None
 
     def __post_init__(self) -> None:
-        if (self.outcome not in {"egress-collision", "no-route-found", "quality-rejected", "accepted"}
+        if (self.outcome not in {"egress-collision", "no-route-found", "quality-rejected", "accepted", "eligible-not-selected"}
                 or not self.source_side or not self.target_side):
             raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
         if self.outcome == "egress-collision":
@@ -106,7 +106,7 @@ class RouteAttemptEvidence:
                 raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
             within = self.bends <= self.max_bends and (
                 self.direct_length == 0 or self.length <= self.direct_length * self.max_detour_ratio)
-            if within != (self.outcome == "accepted"):
+            if within != (self.outcome in {"accepted", "eligible-not-selected"}):
                 raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
 
     def _quality_values(self) -> tuple[float | int | None, ...]:
@@ -303,8 +303,8 @@ def route_quality_attempt(
 
 
 @dataclass(frozen=True)
-class LaneRouteSelection:
-    """One deterministic lane-only port-pair search and its complete evidence."""
+class RelationRouteSelection:
+    """One deterministic port-pair search and its complete eligibility evidence."""
 
     selected_pair: tuple[ConnectorEgress, ConnectorEgress] | None
     points: tuple[tuple[float, float], ...]
@@ -319,7 +319,7 @@ class LaneRouteSelection:
             raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
 
 
-def select_lane_relation_route(
+def select_relation_route(
     port_pairs: tuple[tuple[ConnectorEgress, ConnectorEgress], ...], *,
     obstacles: SurfaceObstacleIndex, bounds: tuple[float, float, float, float],
     source_host_id: str | None, target_host_id: str | None, relation_scene_id: str,
@@ -329,16 +329,25 @@ def select_lane_relation_route(
     accept: Callable[[tuple[tuple[float, float], ...]], bool] | None = None,
     prepare: Callable[[tuple[tuple[float, float], ...], ConnectorEgress, ConnectorEgress],
                       tuple[tuple[float, float], ...] | None] | None = None,
-) -> LaneRouteSelection:
-    """Measure every attempted port pair until an accepted route is found.
+    rank: Callable[[tuple[tuple[float, float], ...], ConnectorEgress, ConnectorEgress], tuple] | None = None,
+    rank_floor: tuple | None = None,
+) -> RelationRouteSelection:
+    """Measure eligibility, then select by the caller's stable rank when supplied.
 
     The order is the caller's declared deterministic candidate order. A
-    search failure is distinguished from unrelated invalid input; endpoint
+    Without a rank, the first accepted pair wins. With a rank, all eligible
+    pairs are compared and exact ties keep the first. A declared lower bound
+    permits early return when no later pair can improve the winner. A search failure is
+    distinguished from unrelated invalid input; endpoint
     labels are never exempted from either corridor or body collisions.
     """
     if not port_pairs or not relation_scene_id:
         raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
     attempts: list[RouteAttemptEvidence] = []
+    best = None
+    chosen = None
+    chosen_points = ()
+    chosen_attempt = -1
     for source, target in port_pairs:
         blockers = tuple(sorted({item.placement_id for egress in (source, target)
                                  if egress.corridor
@@ -396,8 +405,18 @@ def select_lane_relation_route(
             continue
         attempts.append(measured)
         if measured.outcome == "accepted":
-            return LaneRouteSelection((source, target), tuple(points), tuple(attempts))
-    return LaneRouteSelection(None, (), tuple(attempts))
+            if rank is None:
+                return RelationRouteSelection((source, target), tuple(points), tuple(attempts))
+            score = rank(tuple(points), source, target)
+            if best is None or score < best:
+                if chosen_attempt >= 0:
+                    attempts[chosen_attempt] = replace(attempts[chosen_attempt], outcome="eligible-not-selected")
+                best, chosen, chosen_points, chosen_attempt = score, (source, target), tuple(points), len(attempts) - 1
+                if rank_floor is not None and score == rank_floor:
+                    return RelationRouteSelection(chosen, chosen_points, tuple(attempts))
+            else:
+                attempts[-1] = replace(measured, outcome="eligible-not-selected")
+    return RelationRouteSelection(chosen, chosen_points, tuple(attempts))
 
 
 def _route_memo_key(content_id: int, start: tuple[float, float], end: tuple[float, float],

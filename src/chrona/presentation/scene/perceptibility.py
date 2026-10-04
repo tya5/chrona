@@ -1,11 +1,14 @@
 """Pure perceptibility observations over serialized completed Scene mappings."""
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from math import hypot, isfinite
 from typing import Any, Mapping, Sequence
 
-from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, segment_length_inside_rect
+from chrona.presentation.layout.obstacles import (
+    ObstacleRect, ObstacleSegment, segment_length_inside_rect, segment_overlap_length,
+)
 from chrona.presentation.layout.path_geometry import flatten_corner
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, semantic_binding
 from chrona.presentation.scene.paint_analysis import composited_contrast, is_hex_color
@@ -83,6 +86,7 @@ def evaluate_scene_perceptibility(document: Mapping[str, Any]) -> tuple[ScenePer
         findings.extend(_relation_reversal_findings(scene_path, surface.get("primitives")))
         findings.extend(_relation_mark_findings(scene_path, surface.get("primitives")))
         findings.extend(_relation_segment_findings(scene_path, surface.get("primitives")))
+        findings.extend(_relation_node_approach_findings(scene_path, surface.get("primitives"), diagnostics))
         findings.extend(_slot_findings(scene_path, slots, primitives))
         findings.extend(_occlusion_findings(scene_path, primitives))
         findings.extend(_text_intersection_findings(scene_path, primitives))
@@ -154,6 +158,89 @@ def _relation_segment_findings(scene_path: str, raw_primitives: Any) -> list[Sce
             if length + 1e-6 < width:
                 findings.append(_finding("E_SCENE_RELATION_SEGMENT_TOO_SHORT", "error", scene_path,
                     (str(raw["id"]),), None, (("segment", index), ("length", length), ("strokeWidth", width))))
+    return findings
+
+
+_LANE_NODE_CAUSE_PREFIX = "I_LAYOUT_RELATION_NODE_APPROACH_SHARED:"
+
+
+def _relation_node_approach_findings(scene_path: str, raw_primitives: Any,
+                                     diagnostics: Sequence[str]) -> list[ScenePerceptibilityFinding]:
+    """Check shared endpoint approaches, requiring Layout to explain each positive overlap."""
+    routes: list[tuple[str, str, str, tuple[float, float], tuple[float, float],
+                       tuple[float, float], tuple[float, float]]] = []
+    for raw in raw_primitives if isinstance(raw_primitives, list) else ():
+        if not (isinstance(raw, Mapping) and raw.get("kind") == "Path"
+                and raw.get("sourceKind") == "relation" and str(raw.get("id", "")).startswith("relation:")):
+            continue
+        from_id, to_id = raw.get("fromInstanceId"), raw.get("toInstanceId")
+        # Old Scenes have no resolved endpoint identity; never infer it from route geometry or the id spelling.
+        if not isinstance(from_id, str) or not from_id or not isinstance(to_id, str) or not to_id:
+            continue
+        raw_points = raw.get("points")
+        _require(isinstance(raw_points, list) and len(raw_points) >= 2, "invalid relation points for endpoint observation")
+        points = []
+        for point in raw_points:
+            _require(isinstance(point, (list, tuple)) and len(point) == 2
+                     and all(_finite(value) for value in point), "invalid relation point for endpoint observation")
+            points.append((float(point[0]), float(point[1])))
+        first = next(((a, b) for a, b in zip(points, points[1:]) if a != b), None)
+        last = next(((b, a) for a, b in zip(reversed(points), reversed(points[:-1])) if a != b), None)
+        if first is None or last is None:
+            continue
+        routes.append((str(raw["id"]), from_id, to_id, first[0], first[1], last[0], last[1]))
+
+    observed: dict[tuple[str, tuple[str, str]], float] = {}
+    for index, first_route in enumerate(routes):
+        first_id, first_from, first_to, first_start, first_next, first_prev, first_end = first_route
+        for second_route in routes[index + 1:]:
+            second_id, second_from, second_to, second_start, second_next, second_prev, second_end = second_route
+            if first_id == second_id:
+                continue
+            pair = tuple(sorted((first_id, second_id)))
+            endpoint_pairs = (
+                (first_from, (first_start, first_next), second_from, (second_start, second_next)),
+                (first_to, (first_prev, first_end), second_to, (second_prev, second_end)),
+                (first_from, (first_start, first_next), second_to, (second_prev, second_end)),
+                (first_to, (first_prev, first_end), second_from, (second_start, second_next)),
+            )
+            for first_node, first_segment, second_node, second_segment in endpoint_pairs:
+                if first_node != second_node:
+                    continue
+                overlap = segment_overlap_length(first_segment, second_segment)
+                if overlap > 1e-9:
+                    key = (first_node, pair)
+                    observed[key] = observed.get(key, 0.0) + overlap
+
+    explanations: dict[tuple[str, tuple[str, str]], str] = {}
+    for diagnostic in diagnostics:
+        if not diagnostic.startswith(_LANE_NODE_CAUSE_PREFIX):
+            continue
+        try:
+            payload = json.loads(diagnostic.removeprefix(_LANE_NODE_CAUSE_PREFIX))
+        except (TypeError, ValueError):
+            continue
+        node_id, relation_ids, reason = (payload.get("nodeInstanceId"), payload.get("relationIds"), payload.get("reason")) \
+            if isinstance(payload, Mapping) else (None, None, None)
+        if (not isinstance(node_id, str) or not node_id
+                or not isinstance(relation_ids, list) or len(relation_ids) != 2
+                or any(not isinstance(item, str) or not item for item in relation_ids)
+                or relation_ids != sorted(set(relation_ids))
+                or not isinstance(reason, str) or not reason.strip()):
+            continue
+        explanations[(node_id, (relation_ids[0], relation_ids[1]))] = reason
+
+    findings: list[ScenePerceptibilityFinding] = []
+    for key, overlap in sorted(observed.items()):
+        node_id, relation_ids = key
+        reason = explanations.get(key)
+        if reason is None:
+            findings.append(_finding("E_SCENE_RELATION_NODE_APPROACH_SHARED", "error", scene_path,
+                relation_ids, None, (("nodeInstanceId", node_id), ("overlapLength", overlap),
+                                     ("reason", "unexplained endpoint approach overlap"))))
+        else:
+            findings.append(_finding("I_SCENE_RELATION_NODE_APPROACH_SHARED", "info", scene_path,
+                relation_ids, None, (("nodeInstanceId", node_id), ("overlapLength", overlap), ("reason", reason))))
     return findings
 
 

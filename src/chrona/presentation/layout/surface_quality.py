@@ -365,6 +365,8 @@ class RelationPlacement:
     annotation: AnnotationPresentation | None = None
     source_ref: str = ""
     paint_order: int = 250
+    from_instance_id: str | None = None
+    to_instance_id: str | None = None
 
 
 @dataclass(frozen=True)
