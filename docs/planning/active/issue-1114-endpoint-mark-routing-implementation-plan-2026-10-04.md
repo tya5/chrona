@@ -27,7 +27,7 @@ and Scene run: 1378 passed; subsequent observer/guard-focused run: 49 passed.
 
 Disposable 63-slide batch: primary-mark crossings 19 → 0; target B
 `avionics-cdr` exits below the Avionics bar, confirmed in rendered SVG/PNG.
-There are 32 changed paths, including 14 previously non-crossing paths, and
+There are 32 changed geometries, including 14 previously non-crossing paths, and
 7 new suppressions (four `launch-leop` instances; editorial-lanes
 `detector-tvac`, `shipment-campaign`, `structure-avionics`). These are **not
 accepted**: investigate candidate/port and lane-label rehearsal interactions
@@ -35,5 +35,27 @@ before claiming unchanged compliant routes or release readiness. Count baseline
 from immutable Git objects, not mutable generated files. No derived output
 belongs in the source PR; regeneration is owned by derived-sync.
 
+The isolated #1114 snapshot from [CI 37165378326](https://github.com/tya5/chrona/actions/runs/37165378326)
+(`d6bf9bb4`; product/tests/resources identical to `3f726c6c`) reproduces this
+inventory without rerendering. All 135 before files equal immutable `23bc8a57`;
+63 Scenes contain 627 → 620 dependency paths: 18 unsafe and 14 compliant
+geometry changes, one unsafe and six compliant removals. The 14 compliant
+changes are `comms-rehearsals`/`rehearsals-launch` on 02/12/19/20, and six
+Editorial paths (`emc-psr`, `mcs-comms`, `station-comms`, `comms-rehearsals`,
+`psr-shipment`, `rehearsals-launch`). Raw and drawn geometry were both clear;
+this is not a rounded-path false positive. Mark bounds are unchanged, while
+member-label geometry changes in all five contexts. A lane-reservation cascade
+is a hypothesis until a targeted before/after trace establishes its cause.
+
+Explicit above/below-blocked synthetic Scenes now assert physically adjacent
+foreign/target bars, an emitted path through the open side, non-inward first
+leg and zero stroke-inset interior penetration. Mark-safety and entry suites:
+20 passed. [PR CI 37178299268](https://github.com/tya5/chrona/actions/runs/37178299268)
+at `89dacde6` passes all three pytest shards, conformance and public-materializer
+reproduction; this is not the later exact-main release gate.
+
 Current status: implementation in review; corpus zero established, preservation
-criterion and release CI pending. Continue in this record without new phase files.
+criterion and release CI pending. The seven lost paths are recovered by the
+subsequent [#1109 resource adaptations](issue-1109-node-aware-routing-2026-10-04.md),
+not retroactively accepted as #1114-only evidence. Continue in this record
+without new phase files.
