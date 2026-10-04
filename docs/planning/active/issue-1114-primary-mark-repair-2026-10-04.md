@@ -66,3 +66,20 @@ routes and changes member names. Therefore the issue is **not accepted**:
 the narrow repair gap is fixed, but the coupled corridor/name plan still needs
 design correction. The committed old Editorial fixture is not evidence for
 this new render. No generated repository files were changed.
+
+## Remaining design plan
+
+The reference-corridor union cannot be repaired by reordering names: all 20
+legal PDR end-side candidates intersect only structure-avionics' reserved
+vertical segment; all 110 start-side candidates are outside timeline bounds.
+Therefore that corridor is incompatible with the existing label domain.
+Separately, a neutral obstacle fixture proves the router can quality-reject its
+first 3-bend path while a clear 2-bend path passes the same maxBends=2 and
+maxDetour=1.3. The search currently considers one path per port pair; this is
+a general search/acceptance mismatch, not yet attribution for every lost route.
+Review quality-aware alternative generation against Specs 33/50 before code:
+keep already accepted paths exact, honor declared budgets and primary-mark
+safety, keep bounded search/memo ownership explicit, and do not force an
+infeasible name corridor. Then publish the selected design and amended
+implementation plan. No label suppression waiver, budget increase, corpus
+coordinate rule or joint solver is selected by these diagnostic findings.
