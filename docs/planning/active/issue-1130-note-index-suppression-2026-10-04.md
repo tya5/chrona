@@ -1,7 +1,7 @@
 # Issue #1130: complete numbered annotation list (work record)
 
 **Public base:** `cc6baa905325620cb0f47761e0717c7b0a252f2a` (`origin/main`).
-**Status:** implementation correction in progress; release acceptance pending.
+**Status:** implementation complete; final-head artifact/CI and release acceptance pending.
 This record selects issue option (a). It supersedes no other issue and changes
 normative behavior in Specifications 33 and 46. Pre-code publication: PR #1143,
 commit `4349fa51`.
