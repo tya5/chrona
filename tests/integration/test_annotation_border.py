@@ -215,10 +215,19 @@ def test_a_leader_still_ends_on_the_outer_edge_of_the_bordered_box(tmp_path):
         assert ab.boxes(plain)[note].bounds[0] == pytest.approx(x, abs=TOL)  # the start edge does not move
 
 
-def test_kind_paint_has_one_outer_border_path_not_a_content_box_accent(tmp_path):
+@pytest.mark.parametrize("purpose", ["note", "callout", "highlight", "explanatory-arrow"])
+def test_kind_paint_has_one_outer_border_path_not_a_content_box_accent(tmp_path, purpose):
     def configure(parts):
         ak.with_kind_theme(parts, bar=False, border_side="start", border_width=6, label_fill="text")
-    rendered = ab.render_notes(tmp_path, None, inset=ab.INSET, configure=configure, ink_roles=())
+    source = ak.project(("note",))
+    parts = sr.bundle()
+    ak.with_view_notes(parts, source, purpose=purpose)
+    ab.with_border(parts, None, inset=ab.INSET, ink_roles=())
+    for role in ("annotation-note-box", "annotation-callout-box", "annotation-highlight-box", "annotation-arrow-box"):
+        parts["theme"]["body"]["roles"][role]["annotationContainer"] = "border-container"
+    configure(parts)
+    rendered = ak.render(tmp_path, source, parts)
+    assert ab.boxes(rendered)
     for note, box in ab.boxes(rendered).items():
         border = next(item for item in rendered.surface.primitives
                       if item.scene_id == f"annotation-border:{note}:start")

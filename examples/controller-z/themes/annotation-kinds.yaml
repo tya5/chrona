@@ -336,6 +336,7 @@ body:
       iconGap: icon-gap
     annotation-callout-box:
       strokeWidth: stroke-width
+      annotationContainer: note-container
     annotation-callout-text:
       fontFamily: editorial
       fontWeight: text-weight
@@ -349,6 +350,7 @@ body:
       dash: dash.leader
     annotation-highlight-box:
       strokeWidth: stroke-width
+      annotationContainer: note-container
     annotation-highlight-text:
       fontFamily: editorial
       fontWeight: text-weight
@@ -373,6 +375,7 @@ body:
       strokeWidth: stroke-width
     annotation-arrow-box:
       strokeWidth: stroke-width
+      annotationContainer: note-container
     annotation-arrow-text:
       fontFamily: editorial
       fontWeight: text-weight
