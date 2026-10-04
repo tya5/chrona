@@ -15,7 +15,7 @@ body:
     relation-source-terminal:
       type: marker
       value:
-        shape: circle
+        shape: none
         headLength: 5
         headWidth: 5
         attachmentOffset: 0
