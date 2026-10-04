@@ -60,6 +60,9 @@ body:
     size.legend:
       type: number
       value: 12
+    size.asof:
+      type: number
+      value: 10.5
     size.note:
       type: number
       value: 11.5
@@ -461,6 +464,14 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+    as-of-label:
+      fontFamily: editorial
+      fontWeight: weight.bold
+      fontSize: size.asof
+      lineHeight: leading.tight
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
     legend:
       fontFamily: editorial
       fontWeight: weight.regular
