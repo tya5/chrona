@@ -34,6 +34,7 @@ body:
     barEdge: "#3F6FD0"
     actualInk: "#101828"
     asofChip: "#B8761F"
+    asofInk: "#FFFFFF"
     relationInk: "#7C8999"
     closed: "#F4F6F9"
     bus: "#E8EFFA"

@@ -696,7 +696,6 @@ body:
     legend.fill: textMuted
     slot-heading.fill: textMuted
     annotation.fill: surfaceRaised
-    annotation-text.fill: text
     note-index.fill: accent
     annotation-note-box.fill: surfaceRaised
     annotation-note-box.stroke: surfaceRaised
@@ -739,9 +738,9 @@ body:
     gate.fill: text
     gate.stroke: text
     tableColumnLabel.fill: textMuted
-    range.fill: warning
     as-of.stroke: warning
     as-of-label-chip.fill: category:asofChip
+    as-of-label.fill: category:asofInk
     progress-fill.fill: warning
     progress-fill.stroke: surface
     icon-mark.fill: surface
