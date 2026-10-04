@@ -216,6 +216,21 @@ Relation terminals are Theme `marker` tokens resolved by Layout (`relation_termi
 
 `timeline.relation.cornerRadius` (a Theme metric in px; absent or `0` keeps square corners) rounds the turns of an orthogonal relation route when Layout completes the path: each turn becomes a quadratic arc whose radius is `min(r, half the incoming leg, half the outgoing leg)`; a leg that meets a terminal keeps a straight run of the terminal's `headLength` (a round terminal centred on the endpoint needs none); a point that is not a turn is not rounded; an arc whose chords meet a mark, text or label the polyline cleared halves its radius until clear, down to square. Scene `points` stay the orthogonal polyline and `pathCommands` carry the arcs; SVG and PNG draw the same commands, and the arcs are registered as route obstacles beside the polyline. The bundled default Theme (`editorial-readable-default`) declares 4 px; other presets declare their own value or none (#1046).
 
+**Node approaches (#1109 R2).** Layout routes arrivals before departures in
+stable topological order; the cyclic remainder keeps declaration order. Public
+primitive order remains the declared relation order. Among candidates that
+pass safety, terminal completion and quality limits, prefer no overlap with
+completed endpoint-adjacent segments at either resolved node instance, then
+the declared entry preference, then stable port-pair order. Bend minimisation
+is a separate policy. A final pass lists every remaining positive-length
+collinear overlap between two relations at the same node, including two
+arrivals or departures, as `I_LAYOUT_RELATION_NODE_APPROACH_SHARED:` followed
+by JSON containing `nodeInstanceId`, sorted full `relationIds` and `reason`.
+Scene independently reports `E_SCENE_RELATION_NODE_APPROACH_SHARED`, or
+informational `I_SCENE_RELATION_NODE_APPROACH_SHARED` only for an exact
+diagnosed pair/node. Point contacts and unrelated instances do not count;
+Scenes without endpoint identity are not inferred from coordinates.
+
 **Primary-mark safety (#1114).** In every row mode and entry policy, completed
 relation paths MUST NOT traverse primary planned-mark interiors, including
 their own endpoint marks. Interior bounds are inset by half the relation stroke

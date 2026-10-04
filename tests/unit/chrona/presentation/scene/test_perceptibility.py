@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from chrona.presentation.scene.perceptibility import ScenePerceptibilityError, evaluate_scene_perceptibility
@@ -25,6 +27,29 @@ def _scene(*primitives, overflow="fit", canvas_paint="#FFFFFF", version="chrona/
     ], "canvasPaint": {"fill": canvas_paint, "opacity": 1}, "primitives": list(primitives)}]}
 
 
+def _node_relation_path(identifier, points, *, start_node=None, end_node=None):
+    path = _primitive(identifier, "Path", paint={"stroke": "#000000", "strokeWidth": 1, "opacity": 1})
+    path.update(sourceKind="relation", sourceRef=identifier, points=points)
+    if start_node is not None:
+        path["fromInstanceId"] = start_node
+    if end_node is not None:
+        path["toInstanceId"] = end_node
+    return path
+
+
+def _node_overlap_cause(node, relation_ids, reason="distinct declared route approaches share a segment"):
+    return "I_LAYOUT_RELATION_NODE_APPROACH_SHARED:" + json.dumps({
+        "nodeInstanceId": node, "relationIds": sorted(relation_ids), "reason": reason,
+    }, separators=(",", ":"))
+
+
+@pytest.mark.parametrize("start,end", [("node", None), (None, "node"), ("", "node"), (7, "node")])
+def test_endpoint_observation_rejects_partial_or_invalid_identity(start, end):
+    path = _node_relation_path("relation:bad", [[0, 0], [10, 0]], start_node=start, end_node=end)
+    with pytest.raises(ScenePerceptibilityError, match="paired set of nonempty strings"):
+        evaluate_scene_perceptibility(_scene(path))
+
+
 def _codes(document):
     return [item.code for item in evaluate_scene_perceptibility(document)]
 
@@ -43,6 +68,122 @@ def test_stroke_width_relation_run_is_not_a_substroke_violation():
     path = _primitive("relation:dep", "Path", paint={"stroke": "#000000", "strokeWidth": 1, "opacity": 1})
     path.update(sourceKind="relation", sourceRef="dep", points=[[0, 0], [1, 0]])
     assert "E_SCENE_RELATION_SEGMENT_TOO_SHORT" not in _codes(_scene(path))
+
+
+@pytest.mark.parametrize(("first", "second", "start_a", "end_a", "start_b", "end_b", "overlap"), [
+    ([[0, 0], [10, 0], [10, 10]], [[4, 0], [10, 0], [10, -5]], "shared", "a", "shared", "b", 6.0),
+    ([[-10, 0], [0, 0]], [[-5, 0], [0, 0]], "a", "shared", "b", "shared", 5.0),
+    ([[0, 0], [10, 0]], [[5, 0], [0, 0]], "shared", "a", "b", "shared", 5.0),
+])
+def test_shared_node_approach_overlap_is_explained_for_each_endpoint_pair(
+        first, second, start_a, end_a, start_b, end_b, overlap):
+    pair = ("relation:a", "relation:b")
+    document = _scene(
+        _node_relation_path(pair[0], first, start_node=start_a, end_node=end_a),
+        _node_relation_path(pair[1], second, start_node=start_b, end_node=end_b),
+    )
+    document["diagnostics"] = [_node_overlap_cause("shared", pair, "approaches meet on a shared node")]
+    findings = evaluate_scene_perceptibility(document)
+    shared = [item for item in findings if item.code == "I_SCENE_RELATION_NODE_APPROACH_SHARED"]
+    assert len(shared) == 1
+    assert shared[0].primitive_ids == pair
+    assert dict(shared[0].measured_facts) == {
+        "nodeInstanceId": "shared", "overlapLength": overlap,
+        "reason": "approaches meet on a shared node",
+    }
+    assert "E_SCENE_RELATION_NODE_APPROACH_SHARED" not in _codes(document)
+
+
+def test_multiple_relation_pairs_are_reported_once_and_distinct_instance_ids_do_not_match():
+    a = _node_relation_path("relation:a", [[0, 0], [10, 0], [10, 10]], start_node="node", end_node="a")
+    b = _node_relation_path("relation:b", [[5, 0], [10, 0], [10, -5]], start_node="node", end_node="b")
+    c = _node_relation_path("relation:c", [[8, 0], [12, 0], [12, 5]], start_node="node", end_node="c")
+    document = _scene(a, b, c)
+    document["diagnostics"] = [_node_overlap_cause("node", ("relation:a", "relation:b"))]
+    findings = [item for item in evaluate_scene_perceptibility(document)
+                if item.code.endswith("RELATION_NODE_APPROACH_SHARED")]
+    assert [(item.code, item.primitive_ids) for item in findings] == [
+        ("E_SCENE_RELATION_NODE_APPROACH_SHARED", ("relation:a", "relation:c")),
+        ("E_SCENE_RELATION_NODE_APPROACH_SHARED", ("relation:b", "relation:c")),
+        ("I_SCENE_RELATION_NODE_APPROACH_SHARED", ("relation:a", "relation:b")),
+    ]
+
+
+def test_repeated_endpoint_pair_at_one_node_emits_only_one_finding():
+    document = _scene(
+        _node_relation_path("relation:a", [[0, 0], [10, 0], [0, 0]], start_node="node", end_node="node"),
+        _node_relation_path("relation:b", [[0, 0], [5, 0], [0, 0]], start_node="node", end_node="node"),
+    )
+    document["diagnostics"] = [_node_overlap_cause("node", ("relation:a", "relation:b"))]
+    findings = [item for item in evaluate_scene_perceptibility(document)
+                if item.code == "I_SCENE_RELATION_NODE_APPROACH_SHARED"]
+    assert len(findings) == 1 and findings[0].primitive_ids == ("relation:a", "relation:b")
+
+
+def test_unexplained_overlap_is_an_error_and_legacy_missing_identity_is_not_inferred():
+    overlap = _scene(
+        _node_relation_path("relation:a", [[0, 0], [10, 0]], start_node="node", end_node="a"),
+        _node_relation_path("relation:b", [[5, 0], [15, 0]], start_node="node", end_node="b"),
+    )
+    findings = [item for item in evaluate_scene_perceptibility(overlap)
+                if item.code == "E_SCENE_RELATION_NODE_APPROACH_SHARED"]
+    assert len(findings) == 1 and findings[0].primitive_ids == ("relation:a", "relation:b")
+    legacy = _scene(
+        _node_relation_path("relation:a", [[0, 0], [10, 0]]),
+        _node_relation_path("relation:b", [[5, 0], [15, 0]]),
+    )
+    assert not any(item.code.endswith("RELATION_NODE_APPROACH_SHARED")
+                   for item in evaluate_scene_perceptibility(legacy))
+
+
+@pytest.mark.parametrize("paths", [
+    ([[0, 0], [5, 0]], [[5, 0], [10, 0]]),  # point contact only
+    ([[0, 0], [10, 0]], [[5, -5], [5, 0]]),  # transverse approach
+])
+def test_point_contacts_and_transverse_segments_are_not_shared_approaches(paths):
+    document = _scene(
+        _node_relation_path("relation:a", paths[0], start_node="node", end_node="a"),
+        _node_relation_path("relation:b", paths[1], start_node="node", end_node="b"),
+    )
+    assert not any(item.code.endswith("RELATION_NODE_APPROACH_SHARED")
+                   for item in evaluate_scene_perceptibility(document))
+
+
+@pytest.mark.parametrize("payload", [
+    {"nodeInstanceId": "node", "relationIds": ["relation:a"], "reason": "why"},
+    {"nodeInstanceId": "node", "relationIds": ["relation:b", "relation:a"], "reason": "why"},
+    {"nodeInstanceId": "node", "relationIds": ["relation:a", "relation:b"], "reason": "  "},
+])
+def test_malformed_layout_node_overlap_explanation_is_an_error(payload):
+    document = _scene(
+        _node_relation_path("relation:a", [[0, 0], [10, 0]], start_node="node", end_node="a"),
+        _node_relation_path("relation:b", [[5, 0], [15, 0]], start_node="node", end_node="b"),
+    )
+    document["diagnostics"] = ["I_LAYOUT_RELATION_NODE_APPROACH_SHARED:" + json.dumps(payload)]
+    findings = [item for item in evaluate_scene_perceptibility(document)
+                if item.code == "E_SCENE_RELATION_NODE_APPROACH_SHARED"]
+    assert len(findings) == 1
+
+
+def test_valid_explanation_for_wrong_relation_pair_is_unmatched():
+    document = _scene(
+        _node_relation_path("relation:a", [[0, 0], [10, 0]], start_node="node", end_node="a"),
+        _node_relation_path("relation:b", [[5, 0], [15, 0]], start_node="node", end_node="b"),
+    )
+    document["diagnostics"] = [_node_overlap_cause("node", ("relation:a", "relation:wrong"))]
+    findings = [item for item in evaluate_scene_perceptibility(document)
+                if item.code == "E_SCENE_RELATION_NODE_APPROACH_SHARED"]
+    assert len(findings) == 1  # the actual overlap is unexplained; extra layout claims are ignored
+
+
+def test_stale_valid_explanation_without_an_observed_overlap_is_ignored():
+    document = _scene(
+        _node_relation_path("relation:a", [[0, 0], [10, 0]], start_node="a", end_node="a-end"),
+        _node_relation_path("relation:b", [[0, 5], [10, 5]], start_node="b", end_node="b-end"),
+    )
+    document["diagnostics"] = [_node_overlap_cause("missing-node", ("relation:a", "relation:b"))]
+    assert not any(item.code.endswith("RELATION_NODE_APPROACH_SHARED")
+                   for item in evaluate_scene_perceptibility(document))
 
 
 def test_reports_later_opaque_rect_occlusion_and_preserves_measured_identity():

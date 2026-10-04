@@ -4,7 +4,7 @@ import pytest
 
 from chrona.presentation.layout.routing import (
     RouteAttemptEvidence, RouteSuppressionEvidence, place_relation_route,
-    relation_route_quality, repair_self_reversal, route_quality_attempt, select_lane_relation_route,
+    relation_route_quality, repair_self_reversal, route_quality_attempt, select_relation_route,
 )
 from chrona.presentation.layout.obstacles import (
     ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex, segment_length_inside_rect,
@@ -62,11 +62,11 @@ def test_lane_port_pair_search_retains_rejected_and_accepted_measured_attempts()
     inputs = dict(port_pairs=((source, target),), obstacles=SurfaceObstacleIndex(),
                   bounds=(-1, -1, 11, 11), source_host_id=None, target_host_id=None,
                   relation_scene_id="relation:r1", max_detour_ratio=1.0)
-    rejected = select_lane_relation_route(**inputs, max_bends=0)
+    rejected = select_relation_route(**inputs, max_bends=0)
     assert rejected.selected_pair is None
     assert rejected.attempts[0].outcome == "quality-rejected"
     assert RouteSuppressionEvidence("r1", rejected.attempts).primary_cause == "quality-rejected"
-    accepted = select_lane_relation_route(**inputs, max_bends=1)
+    accepted = select_relation_route(**inputs, max_bends=1)
     assert accepted.selected_pair == (source, target)
     assert accepted.points[0] == (0, 0) and accepted.points[-1] == (10, 10)
     assert accepted.attempts[0].outcome == "accepted"
@@ -76,13 +76,57 @@ def test_lane_selection_retains_primary_mark_rejection_and_tries_the_next_pair()
     source = ConnectorEgress("end", (0, 0), (0, 0), ())
     blocked = ConnectorEgress("start", (10, 0), (10, 0), ())
     safe = ConnectorEgress("above", (10, 10), (10, 10), ())
-    selection = select_lane_relation_route(((source, blocked), (source, safe)),
+    selection = select_relation_route(((source, blocked), (source, safe)),
         obstacles=SurfaceObstacleIndex(), bounds=(-1, -1, 11, 11), source_host_id=None, target_host_id=None,
         relation_scene_id="relation:dep", max_bends=4, max_detour_ratio=2,
         accept=lambda points: points[-1] != blocked.semantic_port)
     assert selection.selected_pair == (source, safe)
     assert selection.attempts[0].search_failure == "E_LAYOUT_ROUTE_THROUGH_MARK"
     assert selection.attempts[1].outcome == "accepted"
+
+
+@pytest.mark.parametrize("ranked", [True, False])
+def test_ranked_selection_retains_one_winner_and_stable_eligible_ties(ranked):
+    source = ConnectorEgress("end", (0, 0), (0, 0), ())
+    first = ConnectorEgress("start", (10, 0), (10, 0), ())
+    second = ConnectorEgress("above", (10, 10), (10, 10), ())
+    selection = select_relation_route(((source, first), (source, second)),
+        obstacles=SurfaceObstacleIndex(), bounds=(-1, -1, 11, 11), source_host_id=None, target_host_id=None,
+        relation_scene_id="relation:dep", max_bends=4, max_detour_ratio=2,
+        rank=lambda points, left, right: (int(ranked and right is first),))
+    assert selection.selected_pair == (source, second if ranked else first)
+    assert [item.outcome for item in selection.attempts] == (
+        ["eligible-not-selected", "accepted"] if ranked else ["accepted", "eligible-not-selected"])
+
+
+def test_node_preference_cannot_admit_a_high_ranked_unsafe_or_over_budget_route():
+    source = ConnectorEgress("end", (0, 0), (0, 0), ())
+    over_budget = ConnectorEgress("above", (10, 10), (10, 10), ())
+    unsafe = ConnectorEgress("below", (9, 0), (9, 0), ())
+    safe = ConnectorEgress("start", (10, 0), (10, 0), ())
+    ranked = []
+    def score(points, left, right):
+        ranked.append(right)
+        return (int(right is safe),)
+    selection = select_relation_route(tuple((source, target) for target in (over_budget, unsafe, safe)),
+        obstacles=SurfaceObstacleIndex(), bounds=(-1, -1, 11, 11), source_host_id=None, target_host_id=None,
+        relation_scene_id="relation:dep", max_bends=0, max_detour_ratio=2,
+        accept=lambda points: points[-1] != unsafe.semantic_port, rank=score)
+    assert selection.selected_pair == (source, safe)
+    assert ranked == [safe]
+    assert selection.attempts[0].outcome == "quality-rejected"
+    assert selection.attempts[1].search_failure == "E_LAYOUT_ROUTE_THROUGH_MARK"
+
+
+def test_rank_floor_skips_only_candidates_that_cannot_improve_the_selected_route():
+    source = ConnectorEgress("end", (0, 0), (0, 0), ())
+    target = ConnectorEgress("start", (10, 0), (10, 0), ())
+    selection = select_relation_route(((source, target), (source, target)),
+        obstacles=SurfaceObstacleIndex(), bounds=(-1, -1, 11, 11), source_host_id=None, target_host_id=None,
+        relation_scene_id="relation:dep", max_bends=0, max_detour_ratio=1,
+        rank=lambda *args: (False, 0), rank_floor=(False, 0))
+    assert selection.selected_pair == (source, target)
+    assert len(selection.attempts) == 1
 
 
 REVERSING_TARGET_APPROACH = ((20.0, 110.0), (0.0, 110.0), (0.0, 90.0), (0.0, 95.0))
@@ -136,7 +180,7 @@ def test_lane_selection_recovers_the_same_port_pair_with_its_next_safe_repair(mo
     monkeypatch.setattr(routing, "place_relation_route", body_route)
     source = ConnectorEgress("end", (20.0, 110.0), (20.0, 110.0), ())
     target = ConnectorEgress("above", (0.0, 95.0), (0.0, 90.0), ("target",))
-    selected = select_lane_relation_route(((source, target),), obstacles=obstacles,
+    selected = select_relation_route(((source, target),), obstacles=obstacles,
         bounds=(-10.0, 80.0, 30.0, 120.0), source_host_id=None, target_host_id="target",
         relation_scene_id="relation:neutral", max_bends=4, max_detour_ratio=2,
         classes=("mark",), regions=("timeline",), accept=clear)

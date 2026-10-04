@@ -311,6 +311,8 @@ class ScenePrimitive:
     image_fill_pending: "ImageFill | None" = None
     lane_row_id: str | None = None
     lane_member_id: str | None = None
+    from_instance_id: str | None = None
+    to_instance_id: str | None = None
     # The viewer-fit mode of a text-bearing box (#1050); `raw` is today's output.
     viewer_fit: str = "raw"
 
@@ -344,6 +346,11 @@ class ScenePrimitive:
                 or ((self.lane_row_id is None) != (self.lane_member_id is None))
                 or (self.lane_row_id is not None and not self.lane_row_id)
                 or (self.lane_member_id is not None and not self.lane_member_id)
+                or ((self.from_instance_id is None) != (self.to_instance_id is None))
+                or (self.from_instance_id is not None and
+                    (not isinstance(self.from_instance_id, str) or not self.from_instance_id or self.kind != "Path"))
+                or (self.to_instance_id is not None and
+                    (not isinstance(self.to_instance_id, str) or not self.to_instance_id or self.kind != "Path"))
                 or (self.kind == "Icon" and (self.icon_kind not in {"vector", "raster"}
                                                or self.icon_viewport is None
                                                or any(item <= 0 for item in self.icon_viewport)))

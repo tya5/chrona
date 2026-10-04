@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from chrona.usecases.diagnostic_messages import CURATED_MESSAGES, derived_message, error_message, is_bare
+from chrona.usecases.diagnostic_messages import CURATED_MESSAGES, describe_warning, derived_message, error_message, is_bare
 from chrona.usecases.failure_report import StableFailure, diagnostic_record, report_failure
 from tools.diagnostic_inventory import discover
 
@@ -52,6 +52,13 @@ def test_a_message_that_names_something_passes_through_unchanged():
 ])
 def test_what_counts_as_bare(message, bare):
     assert is_bare("E_X", message) is bare
+
+
+def test_shared_relation_node_approach_has_a_curated_warning_cause():
+    text = describe_warning({"code": "W_SCENE_RELATION_NODE_APPROACH_SHARED",
+                            "primitiveIds": ["relation:a", "relation:b"]})
+    assert text.cause == "two dependency lines share a positive-length approach segment at the same node"
+    assert text.subject == "relation:a, relation:b"
 
 
 def test_the_derived_sentence_is_honest_and_never_the_code():

@@ -134,6 +134,13 @@ Actual point remains `actual` even when they share geometry or paint.  `sceneId`
 derived from `projectionInstanceId` plus the primitive-purpose suffix.  Array order,
 coordinates, renderer element IDs, and display text are not identity inputs.
 
+A semantic relation Path MAY carry paired `fromInstanceId` and `toInstanceId`
+in Scene v0.7. These non-empty opaque IDs are Layout's resolved endpoint
+instances, not port names or coordinates; Scene and adapters MUST NOT infer
+them from primitive identifiers or proximity. They are optional inspection
+metadata, require both endpoints and a Path, and do not alter adapter geometry.
+Scene v0.6 is unchanged. Layout's node-approach policy is owned by Spec 50.
+
 `ResolvedPresentationInput` also contains one immutable `SurfaceContentInput` derived
 before Scene construction. It contains only selected, normalized presentation facts:
 ordered table-column IDs and per-object display strings; selected relation IDs with

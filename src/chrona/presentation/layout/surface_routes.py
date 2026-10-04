@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from math import hypot
+import json
 import re
 from collections.abc import Callable
 from typing import Any, Mapping
@@ -11,7 +12,7 @@ from chrona.presentation.layout.labels import LabelRect, place_label
 from chrona.presentation.layout.model import Rect, geometry_sum
 from chrona.presentation.layout.obstacles import (
     ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex, obstacles_intersect,
-    segment_length_inside_rect,
+    segment_length_inside_rect, segment_overlap_length,
 )
 from chrona.presentation.layout.ports import (
     ConnectorEgress, connector_egress_candidates, stub_pairs_first,
@@ -21,8 +22,8 @@ from chrona.presentation.layout.relation_terminals import (
     centred_on_route, complete_centred_terminals, marker_geometry, orient_terminal, terminal_length, terminal_run,
 )
 from chrona.presentation.layout.routing import (
-    RouteSearchFailure, RouteSuppressionEvidence, back_route_points, place_relation_route, route_self_overlaps,
-    relation_route_quality, repair_self_reversal, remove_substroke_jogs, select_lane_relation_route,
+    RouteSuppressionEvidence, back_route_points, route_self_overlaps,
+    remove_substroke_jogs, select_relation_route,
 )
 from chrona.presentation.layout.path_geometry import flatten_path, rounded_orthogonal_path
 from chrona.presentation.layout.surface_geometry import bounds_from_rect
@@ -106,16 +107,6 @@ def _lane_fallback_clears_required_labels(points: tuple[tuple[float, float], ...
 COMPARISON_SOURCE_KINDS = frozenset({"snapshot", "scenario"})
 
 
-def _combined_connector_points(source: ConnectorEgress, middle: tuple[tuple[float, float], ...],
-                               target: ConnectorEgress) -> tuple[tuple[float, float], ...]:
-    pieces = (*source.corridor, *middle, *reversed(target.corridor))
-    completed: list[tuple[float, float]] = []
-    for point in pieces:
-        if not completed or completed[-1] != point:
-            completed.append(point)
-    return tuple(completed)
-
-
 def corner_arc_blocker(obstacles: SurfaceObstacleIndex, hosts: frozenset[str], width: float,
                        classes: tuple[str, ...]) -> Callable[[tuple[tuple[float, float], ...]], bool]:
     """A corner arc must clear what the polyline cleared; the route's own host marks are exempt (#1046)."""
@@ -135,6 +126,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     diagnostics: list[str] = []
     relations: list[RelationPlacement] = []
     route_fallbacks: list[RelationPlacement] = []
+    declared_order: dict[str, int] = {}
+    node_segments: dict[str, list[tuple[str, tuple[tuple[float, float], tuple[float, float]]]]] = {}
     instance_anchors: dict[str, list[tuple[str, tuple[float, float]]]] = {}
     comparison_instances: set[str] = set()
     instance_rows: dict[str, str] = {}
@@ -274,6 +267,31 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         return len(drawn) >= 2 and all(hypot(b[0] - a[0], b[1] - a[1]) + 1e-6 >= width
                                       for a, b in zip(drawn, drawn[1:]))
 
+    def shared_approach(source_id, target_id, points):
+        return any(segment_overlap_length(segment, previous) > 1e-9
+                   for node, segment in ((source_id, (points[0], points[1])),
+                                         (target_id, (points[-2], points[-1])))
+                   for _, previous in node_segments.get(node, ()))
+
+    def routing_order(declared):
+        """Stable arrivals-before-departures; cyclic remainder keeps declaration order."""
+        indegree, followers = {}, {}
+        for item in declared:
+            source, target = str(item.source_object_id), str(item.target_object_id)
+            indegree.setdefault(source, 0)
+            indegree[target] = indegree.get(target, 0) + 1
+            followers.setdefault(source, []).append(target)
+        ready = [node for node in indegree if not indegree[node]]
+        rank = {}
+        for node in ready:
+            rank[node] = len(rank)
+            for target in followers.get(node, ()):
+                indegree[target] -= 1
+                if not indegree[target]:
+                    ready.append(target)
+        return sorted(enumerate(declared), key=lambda pair:
+                      rank.get(str(pair[1].target_object_id), len(rank)))
+
     back_route_reason = [""]
 
     def back_route(relation, source_mark, target_mark, source_id, target_id, source_nominal):
@@ -341,7 +359,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         return ((ConnectorEgress(source_side, port, port, (source_mark.placement_id,)),
                  ConnectorEgress(stub.side, stub.semantic_port, stub.semantic_port, stub.host_ids)), points)
 
-    for relation in request.surface_content.relations:
+    for declared_index, relation in routing_order(request.surface_content.relations):
         source, target, relation_id = relation.source_object_id, relation.target_object_id, relation.relation_id
         dependency_stroke = relation_stroke(relation)
         for source_id, source_anchor in relation_anchors.get(str(source), ()):
@@ -353,6 +371,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                                   else target_mark.end_port) if target_mark else target_anchor
                 scene_id = (f"relation:{relation_id}:{source_id}:{target_id}"
                             if projection.rows else f"relation:{relation_id}")
+                declared_order[scene_id] = declared_index
                 source_candidates = (connector_egress_candidates(source_mark, relation.source_endpoint,
                     target_nominal, comparison_clusters.get((source_mark.source_ref,
                         instance_rows[source_id]), ())) if source_mark else
@@ -371,8 +390,14 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 selected_pair: tuple[ConnectorEgress, ConnectorEgress] | None = None
                 points: tuple[tuple[float, float], ...] = ()
                 lane_selection = None
-                if projection.lane_membership is not None:
-                    lane_selection = select_lane_relation_route(port_pairs, obstacles=obstacles,
+                def candidate_rank(candidate, source_exit, target_entry):
+                    completed, _, _ = complete_centred_terminals(candidate, marker_start, marker_end, dependency_stroke)
+                    policy = context.layout_manifest.relation_entry
+                    entry_penalty = int((policy == "side-when-free" and not target_entry.stub)
+                                        or (policy == "side" and not enters_along(relation, candidate)))
+                    return (shared_approach(source_id, target_id, completed), entry_penalty)
+
+                selection = select_relation_route(port_pairs, obstacles=obstacles,
                         bounds=(timeline_bounds[0], route_top, timeline_bounds[0] + timeline_bounds[2], route_bottom),
                         source_host_id=source_mark.placement_id if source_mark else None,
                         target_host_id=target_mark.placement_id if target_mark else None,
@@ -381,52 +406,18 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         prepare=lambda candidate, source_exit, target_entry: prepare_route(candidate, dependency_stroke,
                             (*source_exit.host_ids, *target_entry.host_ids), source_exit.side, target_entry.side),
                         accept=lambda candidate: clears_primary_marks(candidate, dependency_stroke)
-                            and terminal_segments_fit(candidate, dependency_stroke))
-                    selected_pair, points = lane_selection.selected_pair, lane_selection.points
-                else:
-                    for source_egress, target_egress in port_pairs:
-                        if any(obstacles.egress_collisions(ObstacleSegment(*egress.corridor),
-                            host_ids=egress.host_ids, classes=route_classes,
-                            regions=("timeline", "group-header")) for egress in
-                            (source_egress, target_egress) if egress.corridor):
-                            continue
-                        source_port, target_port = source_egress.exposed_port, target_egress.exposed_port
-                        source_obstacle_id = f"port:{source_mark.placement_id if source_mark else scene_id}:{source_egress.side}"
-                        target_obstacle_id = f"port:{target_mark.placement_id if target_mark else scene_id}:{target_egress.side}"
-                        existing_ports = tuple(port_id for port_id in
-                            (source_obstacle_id, target_obstacle_id) if obstacles.has(port_id))
-                        try:
-                            middle = ((source_port,) if source_port == target_port else place_relation_route(
-                                source_port=source_port, target_port=target_port, obstacles=obstacles,
-                                regions=("timeline", "group-header"), classes=route_classes,
-                                port_ids=existing_ports, bounds=(timeline_bounds[0], route_top,
-                                    timeline_bounds[0] + timeline_bounds[2], route_bottom)))
-                        except RouteSearchFailure:
-                            continue
-                        candidate_points = _combined_connector_points(source_egress, middle, target_egress)
-                        repaired = repair_self_reversal(candidate_points, obstacles, classes=route_classes,
-                                                        regions=("timeline", "group-header"),
-                                                        host_ids=(*source_egress.host_ids, *target_egress.host_ids),
-                                                        accept=lambda replacement: clears_primary_marks(
-                                                            replacement, dependency_stroke))
-                        if repaired is not None:
-                            candidate_points = repaired
-                        candidate_points = prepare_route(candidate_points, dependency_stroke,
-                            (*source_egress.host_ids, *target_egress.host_ids), source_egress.side, target_egress.side)
-                        if candidate_points is None:
-                            continue
-                        if (len(candidate_points) >= 2 and clears_primary_marks(candidate_points, dependency_stroke)
-                                and terminal_segments_fit(candidate_points, dependency_stroke)
-                                and relation_route_quality(candidate_points,
-                            max_bends=context.layout_manifest.relation_max_bends,
-                            max_detour_ratio=context.layout_manifest.relation_max_detour_ratio)):
-                            selected_pair, points = (source_egress, target_egress), candidate_points
-                            break
+                            and terminal_segments_fit(candidate, dependency_stroke), rank=candidate_rank,
+                        rank_floor=(False, int(context.layout_manifest.relation_entry == "side-when-free"
+                                               and not any(entry.stub for _, entry in port_pairs))))
+                selected_pair, points = selection.selected_pair, selection.points
+                if projection.lane_membership is not None:
+                    lane_selection = selection
                 if (context.layout_manifest.relation_entry == "side" and target_mark is not None
                         and not (selected_pair is not None and enters_along(relation, points))):
                     # #1060/#1084: the forward side entry did not give a horizontal entry; try the back-route
                     backed = back_route(relation, source_mark, target_mark, source_id, target_id, source_nominal)
-                    if backed is not None:
+                    if backed is not None and (selected_pair is None or
+                            candidate_rank(backed[1], *backed[0]) < candidate_rank(points, *selected_pair)):
                         selected_pair, points = backed
                         lane_selection = None
                 fallback = selected_pair is None
@@ -487,8 +478,11 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         blocked=lambda arc: arc_blocked(arc) or not clears_primary_marks(arc, dependency_stroke))
                         if radius > 0 and not fallback else ()),
                     marker_start=completed_start, marker_end=completed_end,
-                    label_content=relation_label_content(relation), source_ref=relation_id)
+                    label_content=relation_label_content(relation), source_ref=relation_id,
+                    from_instance_id=source_id, to_instance_id=target_id)
                 relations.append(placed)
+                node_segments.setdefault(source_id, []).append((scene_id, (points[0], points[1])))
+                node_segments.setdefault(target_id, []).append((scene_id, (points[-2], points[-1])))
                 if (context.layout_manifest.relation_entry == "side" and target_mark is not None
                         and relation.target_endpoint in {"start", "at", "finish", "end"} and len(points) >= 2
                         and not enters_along(relation, points)):
@@ -500,6 +494,18 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 if fallback:
                     route_fallbacks.append(placed)
 
+    for node, segments in node_segments.items():
+        explained = set()
+        for index, (first_id, first) in enumerate(segments):
+            for second_id, second in segments[index + 1:]:
+                pair = tuple(sorted((first_id, second_id)))
+                if first_id != second_id and pair not in explained and segment_overlap_length(first, second) > 1e-9:
+                    diagnostics.append("I_LAYOUT_RELATION_NODE_APPROACH_SHARED:" + json.dumps({
+                        "nodeInstanceId": node, "relationIds": pair, "reason": "terminal-corridor-shared"},
+                        sort_keys=True, separators=(",", ":")))
+                    explained.add(pair)
+    relations.sort(key=lambda item: declared_order[item.relation_id])
+    route_fallbacks.sort(key=lambda item: declared_order[item.relation_id])
     return SurfaceRoutesBatch(tuple(relations), tuple(route_fallbacks),
         {key: tuple(values) for key, values in instance_anchors.items()}, instance_rows,
         comparison_clusters, tuple(diagnostics))
