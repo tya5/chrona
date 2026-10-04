@@ -130,7 +130,7 @@ body:
       type: annotationContainer
       value:
         outline: rectangle
-        cornerRadius: 0
+        cornerRadius: 0.26
         contentInsetEm: {top: 0.7, right: 0.7, bottom: 0.7, left: 0.7}
         inlineSize: fill
         border:
@@ -367,13 +367,25 @@ body:
       value: 22
     legend-gap:
       type: number
-      value: 14
+      value: 26
+    legend-swatch-gap:
+      type: number
+      value: 6
+    legend-swatch-block-size:
+      type: number
+      value: 12
+    legend-point-swatch-size:
+      type: number
+      value: 12
     legend-block:
       type: number
       value: 22
   roles:
     legend-swatch:
       swatchInlineSize: legend-swatch-inline-size
+      swatchGap: legend-swatch-gap
+      swatchBlockSize: legend-swatch-block-size
+      pointSwatchSize: legend-point-swatch-size
     axis-rule:
       strokeWidth: stroke-width
     as-of-label-chip:
