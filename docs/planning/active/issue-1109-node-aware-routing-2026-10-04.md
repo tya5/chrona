@@ -41,4 +41,48 @@ cycles and blocked alternatives. Batch corpus Scene/SVG evidence once per
 completed behavior; full release tests remain in CI. #1108's endpoint nudging
 and dev B's #1105 terminal module are excluded.
 
-Current status: design plan published; selected design/implementation pending.
+## Selected design and whole-architecture review
+
+- Route arrivals before departures in stable topological order; cyclic
+  remainder keeps declaration order. Emit placements in declaration order.
+  Compare actual completed incoming approach segments at the resolved source
+  instance, not guessed natural sides or arbitrary overlapping paths.
+- Select eligible paths in tiers: no incoming-approach reuse first, declared
+  side entry next, fewer bends then length then stable candidate order. If only
+  a conflicting eligible route exists, retain it with a relation-keyed
+  `I_LAYOUT_RELATION_NODE_APPROACH_SHARED` diagnostic; final pair inspection
+  also diagnoses unresolved cyclic ordering. No mark/label safety exemption.
+- Collapse obstacle-free interior S-jogs before quality evaluation. Preserve
+  semantic endpoints, entry/exit directions and terminal runs. Never nudge a
+  route endpoint (#1108 remains separate). Recheck self-overlap and mark safety.
+- Transport resolved node identity as optional `fromInstanceId` and
+  `toInstanceId` on dependency Paths in live Scene v0.7 (added in place).
+  Layout supplies opaque identities; Scene copies them; the observer compares
+  identities and segments. Do not parse primitive/port IDs or infer identity
+  from proximity. Serialize such Scenes as v0.7. Scene v0.6 is unchanged.
+
+Architecture review: Specs 09/33 keep routing and measurement in Layout;
+Spec 08 carries completed identity, not routing intent; adapters ignore the
+identity metadata and draw unchanged geometry. Spec 56 permits additive live
+schema fields in place. This corrects Spec 08's unimplemented public-port-ID
+promise with the identity actually needed by consumers. Spec 50's bounds,
+#1114 mark safety and #1059 non-reversal remain mandatory. Side-entry preference
+does not justify sharing an arrival segment. Cycles are diagnosed, not treated
+as a scheduling error. No Theme, View, Project or Layout Profile change.
+
+## Implementation plan
+
+One coherent implementation unit in PR #1122: Layout routing/selection and
+resolved endpoint identity; Scene model/projection/serialization and live
+schema; observer and diagnostic sentences; synthetic tests. Keep one current
+record. Use grouped corpus evidence and the existing PR/release pipeline.
+
+Acceptance evidence: incoming/outgoing chain in both declaration orders;
+multiple arrivals; mirrored endpoints; blocked egress and cyclic residual
+diagnostics; S-jog free/blocked and fixed endpoints; serialized identity/schema
+and same-node versus different-node observations; all existing entry, mark and
+label guards. Batch regeneration reports each residual overlap with its
+diagnostic and rendered target B. Any broader regression returns to this
+design before acceptance. CI runs full tests and schema-equivalence; no manual
+generated mirrors/artifacts. Current status: design and implementation plan
+published; code and acceptance pending.

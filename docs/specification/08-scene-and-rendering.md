@@ -399,8 +399,16 @@ paints. Contrast and perceptibility evaluation treat a prior `Symbol` primitive 
 the same bounds as possible ground for a later primitive's paint, exactly as they
 already do for a `Rect`, so a glyph part painted over another part is checked
 against that part's colour rather than against the canvas. `Path` carries at least two ordered logical
-`points`; connector-like paths additionally carry `fromPortId` and `toPortId`, while a
-tick may omit both port identifiers. `Path.bounds` is the exact union of its points,
+`points`; semantic dependency paths additionally carry opaque resolved node
+identities `fromInstanceId` and `toInstanceId` (#1109). Layout supplies them,
+Scene projects them without parsing port/primitive IDs, and observers use them
+to distinguish shared-node approaches from unrelated path overlaps. Both
+optional properties are added to live Scene v0.7 in place (Spec 56 §3.2), and
+their presence selects v0.7 serialization; v0.6 is unchanged. This replaces
+the earlier, unimplemented public `fromPortId`/`toPortId` promise: completed
+endpoint coordinates remain in the path/terminal geometry, while port IDs
+remain Layout-internal. Non-dependency paths may omit both identities.
+`Path.bounds` is the exact union of its points,
 and `Icon` carries exactly one completed normalized vector payload or immutable raster
 payload/identity, concrete bounds, resolved paint where applicable, decorative flag, and
 accessible alternative. Icon has no authoring asset path, catalog lookup, Theme, text
