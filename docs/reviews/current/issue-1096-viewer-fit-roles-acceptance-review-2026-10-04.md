@@ -35,7 +35,7 @@ The #1050 declaration is the only mechanism; the new code is one Layout pass ove
 Disclosures:
 
 - A role shared by several families (`text`: table cells, bar labels, member labels, the as-of label) pins all of them; a View-named role (#1062) or the chip role separates them.
-- **Row 3 is narrowed** to #1141 (a chip under `box-follows-text`); **row 6** to #1141 for the separate bar-label role.
+- **Row 3 is narrowed** to #1141 (a chip under `box-follows-text`); #1141 also tracks the separate bar-label role noted in row 6.
 - A viewer-side limit stays as in #1050: a line is condensed or spaced to its measured width.
 
 Exact review-bearing-main three-OS CI must pass before closing #1096; that run is recorded in the closing comment.
