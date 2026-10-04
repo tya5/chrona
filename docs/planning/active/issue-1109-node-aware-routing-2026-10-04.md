@@ -102,23 +102,29 @@ serialization when only metadata changes.
 Verification: Layout/Scene focused suite 1,401 passed; after terminal-trimmed
 ranking, 44 terminal/corner/node/mark tests passed. CLI aggregation test passes.
 Import-direction and Scene delivery-owner gates pass. Schema-equivalence L1
-passes with four reviewed additive deltas; L2/L3 pass against their recorded
-baseline. Full code/release CI on the implementation commit remains pending.
+passes with four reviewed additive deltas. With all 63 freshly rendered Scenes
+overlaid in memory and 27 declared v0.6-to-v0.7 mapping deltas, L2/L3 have no
+failures (28.43 s / 7.50 s); both versions remain validated. Schema annotation
+lint passes, as do 49 identifier/viewer-fit tests. Full release acceptance still
+depends on resolving the rendering gates below and a green public-head CI run.
 
 Fresh copied-tree corpus against immutable `23bc8a57`: 63/63 materializers
 complete, primary-mark crossings zero, unresolved same-node overlaps zero and
 five diagnosed overlaps. Target B `launch-leop` is a straight vertical departure
 with no `frr-launch` overlap or S-jog, checked in SVG/PNG. However 495/627 route
-geometries change, seven paths disappear and member labels decrease 809 → 782
-(suppression diagnostics 75 → 102). The seven missing paths match #1114's
+geometries change (including normalization, not 495 proven visual changes),
+seven paths disappear and member labels decrease 809 → 782. Member suppression
+occurrences increase 44 → 70 (35 new, nine removed); relation-label suppressions
+increase by one. The seven missing paths match #1114's
 unresolved inventory. This is not release acceptance.
 
-Public-head CI `37165378326` fails CLI aggregation's corpus-specific count and
-editorial-lanes' missing `shipment-campaign`; `derived-ready` fails downstream.
-The aggregation test now checks exact emitted occurrences rather than a routing-
-dependent number. Do not weaken the gallery's no-loss test: all twelve shipment
-candidates exceed four bends. Resolve route/label planning and search regression
-with a reviewed design correction before further implementation or merge.
+Public-head CI `37166951283` is red. Migration housekeeping: Scene conditional
+annotations, opaque-identity schema-site inventory, raw viewer-fit Scene version,
+legacy/live Scene mapping coverage, and 27 valid-to-valid L2 artifact schema
+transitions. Rendering gates remain unresolved: three CLI goldens, editorial
+shipment preservation, Controller member names, routed-note topology, and a
+suppression aggregate fixture. `derived-ready` fails downstream. Keep real
+route/name preservation gates; do not turn their failures into expected loss.
 
 Bounded read-only probes locate a coupled route/name planning problem. Reserving
 all three rescue corridors replaces the lost set with `tvac-emc` and suppresses
@@ -128,5 +134,39 @@ acceptance is therefore **not a demonstrated fix**. Raising search bend penalty
 to 1000 does not rescue shipment and introduces further losses. No such policy
 change is selected or implemented. Next design question: preserve feasible
 routes and names under coupled reservation/replacement, without allowing a new
-loss or adding project-specific core exceptions. The exact `tvac-emc` collision
-and the separate flat-row `launch-leop` failures remain to be isolated.
+loss or adding project-specific core exceptions. The old editorial `tvac-emc`
+route crossed its own primary mark; its replacement is safe but changes the
+joint name/corridor plan. All four missing `launch-leop` cases are lanes:
+campaign/rehearsals names now obstruct the formerly safe direct route, and all
+twelve alternatives exceed declared quality caps. These are coupled planning
+failures, not evidence that caps should be relaxed.
+
+## Resource adaptation design and implementation amendment
+
+A temporary Controller executive render with existing declared fallback
+`[inside, above, end, start, suppress]` restores all eight names and all seven
+routes without foreign-mark crossings. Fresh corpus bindings locate 31 lost
+`evb-arrival` names in 18 Views, not 31 separate declarations. Select that ladder
+for those owning sources, preserving the original first two rungs. No Project
+dates, relation identities, selection, core exception or quality cap changes.
+
+Architecture review: View owns the permitted member-name fallback ladder;
+Layout still measures and checks each candidate, including lane row/reach and
+own-mark association (Spec 50 §§3.2–3.3). Scene/adapters remain projections.
+This allows author-controlled presentation tuning rather than changing general
+routing to satisfy one example. No public grammar or normative rule changes.
+Different accepted boxes can affect routes, so name recovery alone is not
+acceptance. Snapshot-label suppression in `baseline-ghosts` is separate and is
+not addressed by this primary-name adaptation.
+
+Implementation unit: `examples/controller-z/views/` sources `annotation-artwork`,
+`annotation-kinds`, `annotations`, `as-of-below-plot`, `as-of-foot`,
+`axis-cell-corners`, `axis-ticks`, `axis-tiers`, `capabilities`, `executive`,
+`group-child-indent`, `group-tabs`, `heading`, `icons`, `in-progress`,
+`text-roles`, `value-affixes`, and `viewer-fit`. Each retains its current
+selection/intent; only the declared fallback ladder changes. No packaged mirror
+is present. Publish this amendment before edits, then batch the 31 affected
+contexts and focused Controller render/materializer tests. Require recovered
+member names, no new route loss or foreign-primary crossings, and the existing
+association/overlap guards. CI supplies derived artifacts and the full release
+gate. Keep the seven HALCYON route losses and separate label findings open.
