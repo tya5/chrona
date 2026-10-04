@@ -34,7 +34,29 @@ def resolve_mark_geometries(theme_tokens: Any) -> dict[str, MarkGeometry]:
             float(height), float(offset), paint_order, float(corner_radius),
             None if symbol_height is None else float(symbol_height),
             None if symbol_offset is None else float(symbol_offset))
+    result["actual"] = _default_actual_symbol(result["actual"], result["planned"])
     return result
+
+
+def _default_actual_symbol(actual: MarkGeometry, planned: MarkGeometry) -> MarkGeometry:
+    """An actual gate is no smaller than the planned gate unless the Theme says otherwise (#1074).
+
+    The actual band is a thin bar, so a point mark sized from it is a speck beside the planned gate. An absent
+    `symbolHeight` is the larger of the band and the planned symbol; an absent `symbolOffset`, once the symbol is
+    taller than the band, centres it on the planned symbol (else it stays the band's offset). A declared value
+    is kept as declared: `symbolHeight` and `symbolOffset` equal to `markHeight` and `markOffset` restore the band.
+    """
+    planned_offset, planned_height = planned.symbol_extent
+    height = actual.symbol_height if actual.symbol_height is not None else max(actual.height, planned_height)
+    offset = actual.symbol_offset
+    if offset is None:
+        if height <= actual.height:
+            offset = actual.offset
+        elif height == planned_height:
+            offset = planned_offset
+        else:
+            offset = min(max(planned_offset + planned_height / 2 - height / 2, 0.0), 1.0 - height)
+    return replace(actual, symbol_height=height, symbol_offset=offset)
 
 
 def folded_instance_id(folded: Any, item: Any) -> str:
