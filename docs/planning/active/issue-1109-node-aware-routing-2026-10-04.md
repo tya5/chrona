@@ -245,9 +245,9 @@ Main reconciliation `8ebed2a0` preserves #1105's terminal-run resolver and
 final leg, avoiding an assumption about the old short-stub routing order;
 68 terminal/node/mark/routing tests pass. Exact editorial materializer bytes
 remain identical after reconciliation. `29efd023` additionally tracks main's
-bot-derived terminal-none evidence. Required release CI remains pending; four
-HALCYON route losses and TVAC remain unresolved. The CLI expectation correction
-is verified; it changes no product code or diagnostic contract.
+bot-derived terminal-none evidence. Required release CI remains pending. The
+CLI correction is verified; the lane resource slice below recovers the four
+remaining HALCYON paths. TVAC and literal route preservation remain open.
 
 ## HALCYON lane resource adaptation: design and implementation plan
 
@@ -290,3 +290,14 @@ bindings, verify inventories and geometry guards, run focused View/Context and
 lane/name tests, and compare intended source changes. CI owns generated mirrors
 and release tests. Accept this slice only with no new user-content loss; keep
 the exact 2100px TVAC integration test and literal issue release gates open.
+
+Implementation follows published design `84aed166` (public base `80c05ecb`).
+All seven source files match the verified materializer inputs byte-for-byte;
+no core change occurred between that batch and implementation. Reuse those
+fresh outputs rather than duplicate the SVG batch. The new five-binding Scene
+and SVG regression checks pass: declared dependency inventory, actual name
+strings, two-em own-mark reach, existing note indices and perceptibility gates.
+View schema, exact Context references, lane subtracks and label tests: 104 passed.
+The unchanged 2100px TVAC test still fails with no routed tail; it is not weakened.
+Implementation review found no Project, Theme, core, generated or reviewer-resource
+edits. Public-head CI and the separate literal preservation review remain pending.

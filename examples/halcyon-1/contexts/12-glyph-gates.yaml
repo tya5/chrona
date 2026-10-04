@@ -78,7 +78,7 @@ body:
         token: example-v1
   environment:
     viewport:
-      inlineSize: 1920
+      inlineSize: 3200
       blockSize: 1080
     locale: en-US
     fontMetrics:

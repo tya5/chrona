@@ -95,8 +95,10 @@ body:
       content:
       - title
       - finishDelta
-      side: auto
+      side: start
       overflow: suppress
+    fallback:
+      labels: [start, end, above, below, suppress]
     relations:
       mode: semantic
       overflow: suppress
