@@ -1,7 +1,7 @@
 # Issue #1130: complete numbered annotation list (work record)
 
 **Public base:** `cc6baa905325620cb0f47761e0717c7b0a252f2a` (`origin/main`).
-**Status:** implementation published; CI exposed a list/plot ownership gap.
+**Status:** implementation correction in progress; release acceptance pending.
 This record selects issue option (a). It supersedes no other issue and changes
 normative behavior in Specifications 33 and 46. Pre-code publication: PR #1143,
 commit `4349fa51`.
@@ -146,3 +146,13 @@ Required status/summary overflow follows Spec 33: stack after preceding rail
 records and explicitly mark overflow, not overlapping fallback clamps. Use
 adequately declared synthetic rail capacity for the in-slot acceptance test;
 retain a separate insufficient-capacity test for diagnostics and no omission.
+
+Independent list statuses/summaries are free rail text, not note-box prose.
+Use a distinct `annotationListText` semantic (purpose `annotation-list-text`,
+shared `text` paint, existing annotation typography, `GROUND_TEXT` contrast).
+Scene projects that identity; the contrast gate evaluates the actual rail
+ground, while original `annotationNoteText` still requires its own opaque box
+under Spec 08 C4. No prefix-based contrast exception or fabricated box. This
+closes the architecture review against Specs 08/33 and the semantic registry.
+Publish this contract before adding the registry binding and wiring list
+records; retain rotated-note host/error assertions and test rail contrast.

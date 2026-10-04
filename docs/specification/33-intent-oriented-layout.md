@@ -502,6 +502,9 @@ plot-located callout, keep the original body, kind frame, box and leader
 geometry; place a separately measured, ordinal-keyed status in the declared
 annotations slot. Do not resize a plot callout to display list bookkeeping,
 or suppress its required leader because that status enlarged its body.
+Independent status and summary records use `annotationListText` semantics:
+free rail text on its actual ground, not boxed `annotationNoteText` prose
+(Specification 08). Original note prose retains its required box contract.
 When the annotation callout box/leader is suppressed,
 Layout retains a compact numbered summary entry visibly saying `callout not
 shown on plot`; the existing callout-suppression diagnostic remains, and no
