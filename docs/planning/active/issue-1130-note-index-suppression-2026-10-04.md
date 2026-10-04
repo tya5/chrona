@@ -1,7 +1,7 @@
 # Issue #1130: complete numbered annotation list (work record)
 
 **Public base:** `cc6baa905325620cb0f47761e0717c7b0a252f2a` (`origin/main`).
-**Status:** design published; Layout implementation under focused verification.
+**Status:** implementation published; CI exposed a list/plot ownership gap.
 This record selects issue option (a). It supersedes no other issue and changes
 normative behavior in Specifications 33 and 46. Pre-code publication: PR #1143,
 commit `4349fa51`.
@@ -35,10 +35,14 @@ Literal #1130 acceptance:
 
 ## Selected design
 
-In a declared `annotations` slot, each numbered View annotation contributes exactly one ordered list entry with
-its original number. When only the plot index is suppressed, retain the
-accepted annotation note text and append a visible `index not shown on plot`
-status; keep its required leader connected and the existing index-suppression diagnostic.
+Each numbered View annotation keeps its original number and visible content.
+When only the plot index is suppressed, retain the accepted annotation note
+text and show `index not shown on plot` in the declared annotations rail.
+For rail-located notes, append that status to their list entry and recomplete
+rail geometry. For plot-located callouts, keep their original text, kind frame,
+box and mandatory leader, and place a separate ordinal-keyed rail status;
+never enlarge or suppress the plot callout to display list bookkeeping.
+Keep the required leader connected and the existing index-suppression diagnostic.
 When the callout box/leader is suppressed, retain a compact numbered summary
 entry with distinct `callout not shown on plot` status; keep the existing
 whole-callout diagnostic and do not invent a box, plot index, or leader. Thus
@@ -119,3 +123,19 @@ viewer-fit and render-review suites pass: 113 tests. Local conformance passed
 all checks except the source-location diagnostic inventory; regeneration and
 its check passed separately. That inventory is CI-owned and not committed.
 Corpus snapshot, PR CI, and exact-main release acceptance remain unverified.
+
+## Current design correction and implementation gate
+
+CI run [37194332115](https://github.com/tya5/chrona/actions/runs/37194332115)
+on `a6b6f494` failed three tests: guided annotation content, tall-stamp box
+height, and a tilted mandatory leader. The initial implementation appended
+list status to plot callout bodies, mixing independent Layout outputs.
+The correction above preserves plot callout content/geometry and measures
+its status separately in the rail; existing rail notes still reflow normally.
+This respects Spec 33 ownership and the kind-frame/tilt contracts (Specs 07/08)
+without a Theme knob, schema change or adapter repair. Keep all three existing
+test assertions; add a synthetic plot-callout suppression test proving body,
+box, stamp and required leader preservation plus visible rail status.
+Publish this correction before updating `surface_annotations.py` and its
+synthetic tests. Re-run the failed tests and affected annotation suites, then
+review one new CI-owned Scene/SVG batch before acceptance. Do not merge red CI.

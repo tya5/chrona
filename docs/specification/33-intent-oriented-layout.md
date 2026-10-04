@@ -493,10 +493,16 @@ See the [#466 index/leader correction](../design/issue-466-general-placement-not
 **Numbered annotation list status (#1130, [work record](../planning/active/issue-1130-note-index-suppression-2026-10-04.md)).**
 When the Layout declares an `annotations` slot, its ordered note list is a
 separate output from each annotation's plot index and callout box. Every numbered View annotation retains its View-order
-ordinal and exactly one visible list entry. When an optional plot index is
-suppressed, the accepted note text remains and the entry visibly says `index
+ordinal and visible content. When an optional plot index is
+suppressed, the accepted note text remains and the rail visibly says `index
 not shown on plot`; the index-suppression diagnostic remains, and any required
-leader remains connected to the finalized entry. When the annotation callout box/leader is suppressed,
+leader remains connected to its accepted box. For a rail-located note, include
+the status in its list entry and recomplete its rail geometry. For a
+plot-located callout, keep the original body, kind frame, box and leader
+geometry; place a separately measured, ordinal-keyed status in the declared
+annotations slot. Do not resize a plot callout to display list bookkeeping,
+or suppress its required leader because that status enlarged its body.
+When the annotation callout box/leader is suppressed,
 Layout retains a compact numbered summary entry visibly saying `callout not
 shown on plot`; the existing callout-suppression diagnostic remains, and no
 plot index, box, or leader is fabricated. These statuses are Layout-derived,
