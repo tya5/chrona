@@ -10,6 +10,7 @@ from chrona.presentation.layout.labels import LabelRect, place_label
 from chrona.presentation.layout.model import Rect, geometry_sum
 from chrona.presentation.layout.obstacles import (
     ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex, obstacles_intersect,
+    segment_length_inside_rect,
 )
 from chrona.presentation.layout.ports import (
     ConnectorEgress, connector_egress_candidates, stub_pairs_first,
@@ -193,6 +194,26 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         *(float(group.header_bounds.block + group.header_bounds.block_size)
           for group in groups if group.header_bounds is not None)))
     route_classes = ("mark", "text", "label-visual")
+    primary_marks = tuple(mark for mark in marks if mark.placement_id.startswith("planned:")
+                          and ":snapshot:" not in mark.placement_id and ":scenario:" not in mark.placement_id)
+    primary_interiors: dict[float, tuple[ObstacleRect, ...]] = {}
+
+    def clears_primary_marks(points: tuple[tuple[float, float], ...], width: float) -> bool:
+        """Reject positive-length crossings of any planned mark's stroked interior."""
+        if width not in primary_interiors:
+            inset = width / 2
+            primary_interiors[width] = tuple(ObstacleRect(
+                float(mark.bounds.inline) + inset, float(mark.bounds.block) + inset,
+                float(mark.bounds.inline + mark.bounds.inline_size) - inset,
+                float(mark.bounds.block + mark.bounds.block_size) - inset)
+                for mark in primary_marks if float(mark.bounds.inline_size) > width
+                and float(mark.bounds.block_size) > width)
+        return all(segment_length_inside_rect(ObstacleSegment(left, right), rect) <= 1e-9
+                   for left, right in zip(points, points[1:]) if left != right
+                   for rect in primary_interiors[width])
+
+    def relation_stroke(relation) -> float:
+        return float(request.theme_tokens.number(semantic_binding(relation.semantic_id).theme_role, "strokeWidth"))
 
     def entry_stub_length(semantic_id: str) -> float:
         """Arrowhead plus clearance: the straight run a horizontal entry needs beside the port (#1030)."""
@@ -272,12 +293,15 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     regions=("timeline", "group-header"))
                 if hit:
                     return fail("blocked:" + ",".join(sorted({item.obstacle_class + "=" + item.placement_id for item in hit}))[:200])
+        if not clears_primary_marks(points, relation_stroke(relation)):
+            return fail("primary-mark-blocked")
         source_side = "start" if relation.source_endpoint in {"start", "at"} else "end"
         return ((ConnectorEgress(source_side, port, port, (source_mark.placement_id,)),
                  ConnectorEgress(stub.side, stub.semantic_port, stub.semantic_port, stub.host_ids)), points)
 
     for relation in request.surface_content.relations:
         source, target, relation_id = relation.source_object_id, relation.target_object_id, relation.relation_id
+        dependency_stroke = relation_stroke(relation)
         for source_id, source_anchor in relation_anchors.get(str(source), ()):
             for target_id, target_anchor in relation_anchors.get(str(target), ()):
                 source_mark, target_mark = relation_marks.get(source_id), relation_marks.get(target_id)
@@ -311,7 +335,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         source_host_id=source_mark.placement_id if source_mark else None,
                         target_host_id=target_mark.placement_id if target_mark else None,
                         relation_scene_id=scene_id, max_bends=context.layout_manifest.relation_max_bends,
-                        max_detour_ratio=context.layout_manifest.relation_max_detour_ratio, classes=route_classes)
+                        max_detour_ratio=context.layout_manifest.relation_max_detour_ratio, classes=route_classes,
+                        accept=lambda candidate: clears_primary_marks(candidate, dependency_stroke))
                     selected_pair, points = lane_selection.selected_pair, lane_selection.points
                 else:
                     for source_egress, target_egress in port_pairs:
@@ -336,12 +361,15 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         candidate_points = _combined_connector_points(source_egress, middle, target_egress)
                         repaired = repair_self_reversal(candidate_points, obstacles, classes=route_classes,
                                                         regions=("timeline", "group-header"),
-                                                        host_ids=(*source_egress.host_ids, *target_egress.host_ids))
+                                                        host_ids=(*source_egress.host_ids, *target_egress.host_ids),
+                                                        accept=lambda replacement: clears_primary_marks(
+                                                            replacement, dependency_stroke))
                         if repaired is not None:
                             candidate_points = repaired
-                        if len(candidate_points) >= 2 and relation_route_quality(candidate_points,
+                        if (len(candidate_points) >= 2 and clears_primary_marks(candidate_points, dependency_stroke)
+                                and relation_route_quality(candidate_points,
                             max_bends=context.layout_manifest.relation_max_bends,
-                            max_detour_ratio=context.layout_manifest.relation_max_detour_ratio):
+                            max_detour_ratio=context.layout_manifest.relation_max_detour_ratio)):
                             selected_pair, points = (source_egress, target_egress), candidate_points
                             break
                 if (context.layout_manifest.relation_entry == "side" and target_mark is not None
@@ -367,6 +395,15 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         if first_source.semantic_port != first_target.semantic_port else
                         (first_source.semantic_port, (first_source.semantic_port[0] + 1.0,
                                                        first_source.semantic_port[1])))
+                    if not clears_primary_marks(points, dependency_stroke):
+                        relations.append(RelationPlacement(scene_id,
+                            f"{source_id}:{relation.source_endpoint}", f"{target_id}:{relation.target_endpoint}",
+                            suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED"))
+                        diagnostics.extend((f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}",
+                                            f"I_LAYOUT_RELATION_MARK_BLOCKED:{scene_id}"))
+                        if lane_selection is not None:
+                            diagnostics.append(RouteSuppressionEvidence(scene_id, lane_selection.attempts).diagnostic)
+                        continue
                     if lane_selection is not None and not _lane_fallback_clears_required_labels(points, context.text):
                         relations.append(RelationPlacement(scene_id,
                             f"{source_id}:{relation.source_endpoint}", f"{target_id}:{relation.target_endpoint}",
@@ -386,8 +423,6 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 marker_start = centred_on_route(marker_geometry(request.theme_tokens.marker("relationSourceTerminal")), "source")
                 marker_end = centred_on_route(marker_geometry(request.theme_tokens.marker("relationTargetTerminal")), "target")
                 points = trim_for_centred_terminals(tuple(points), marker_start, marker_end)
-                dependency_stroke = float(request.theme_tokens.number(
-                    semantic_binding(relation.semantic_id).theme_role, "strokeWidth"))
                 arc_blocked = corner_arc_blocker(obstacles, frozenset((*source_egress.host_ids, *target_egress.host_ids)),
                                                  dependency_stroke, route_classes)
 
@@ -395,7 +430,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     semantic_id=relation.semantic_id, corner_radius=radius,
                     path_commands=(rounded_orthogonal_path(tuple(points), radius,
                         start_run=terminal_run(marker_start),
-                        end_run=terminal_run(marker_end), blocked=arc_blocked)
+                        end_run=terminal_run(marker_end),
+                        blocked=lambda arc: arc_blocked(arc) or not clears_primary_marks(arc, dependency_stroke))
                         if radius > 0 and not fallback else ()),
                     marker_start=marker_start, marker_end=marker_end,
                     label_content=relation_label_content(relation), source_ref=relation_id)
