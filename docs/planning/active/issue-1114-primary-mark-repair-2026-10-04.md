@@ -1,110 +1,60 @@
 # Issue #1114: primary-mark-safe route completion
 
-Public baseline: `cc6baa90`; safety-only PR #1138 (`2609e72e`) is not accepted.
-Owner retained compliant-route preservation. Current evidence and the published
-[design plan](https://github.com/tya5/chrona/issues/1114#issuecomment-5976935111)
-are consolidated in the [status](https://github.com/tya5/chrona/issues/1114#issuecomment-5977055640).
+Public baseline: `345e5773`; safety-only PR #1138 includes the replacement-jog
+correction `775661f0`. This is the current design/review/implementation record.
 
-## Design plan and selected correction
+## Scope and owner disposition
 
-The visibility-grid body search already respects mark obstacles. The reversal
-repair subsequently exempts endpoint hosts from its new jog segments, selects
-the first jog, and only then encounters the primary-mark safety guard. It can
-discard a pair although a later existing jog is safe. A neutral witness uses
-target rectangle `(0,90,10,100)` and points
-`((20,110),(0,110),(0,90),(0,95))`: the first jog at x=8 crosses 10 units of the
-host interior; the next existing jog at x=12 is clear. The authorized terminal
-corridor lies on the target boundary. No corpus coordinates enter runtime.
+The [owner decision](https://github.com/tya5/chrona/pull/1138#issuecomment-5979291459)
+withdraws exact preservation of existing compliant routes. Changed routes and
+displaced/suppressed labels are accepted costs of the safety fix, disclosed
+per slide in the PR. All other literal safety acceptance stands. Do not
+mitigate these costs here: corridor admission, alternative path search,
+node-aware ordering and route simplification belong to consolidated #1109.
+No examples edits, new routing budget, or project-specific geometry rule.
+The superseded partial-corridor proposal is not part of this release.
 
-Apply primary-mark validation while enumerating replacement jogs, before
-committing the first repair. Validate the two new segments, not an incomplete
-whole path that may still contain another reversal. Keep the final completed
-path guard. Preserve existing jog order, body search, quality budgets, port
-order and comparison-host authorization; do not introduce a joint solver.
-An already compliant first repair remains identical. Back-route and rounded
-corner completion already have primary-mark guards; this slice does not add
-new back-route templates, node-aware ordering or S-jog policies (#1109).
+## Selected design and whole-architecture review
 
-Architecture review: Specifications 33/50 assign search and completed geometry
-to Layout. The existing primary-mark contract applies to repair candidates
-as well as final paths; this closes an implementation gap without changing
-that contract. Scene observes completed paths; adapters serialize. No new
-schema, diagnostics, resource migration, threshold or compatibility mode.
+Layout excludes temporal egress through a mark and validates primary-mark
+interiors after lane/non-lane repair, back-route completion, rounded paths and
+diagonal fallback. Endpoint authorization covers only the outward terminal
+stub, not a body route through its host. Scene observes completed paths;
+adapters serialize them. Specifications 33/50 remain the geometry authority.
+No schema, Theme, View, resource identity or adapter behavior changes.
 
-## Implementation plan and gates
+Replacement-jog validation occurs before accepting a repair, not only after
+choosing its first candidate. A neutral target rectangle `(0,90,10,100)` with
+points `((20,110),(0,110),(0,90),(0,95))` rejects the existing x=8 jog and accepts
+the existing x=12 jog. Validate newly replaced segments, retain the final
+whole-path guard and existing jog/port order, bounds and quality budgets.
+An already compliant first repair remains identical. No joint solver.
 
-1. Publish this correction/review/plan before product changes.
-2. Add an optional replacement-segment validator to `repair_self_reversal`
-   in `layout/routing.py`; wire the existing primary-mark validator from lane
-   selection and non-lane completion in `layout/surface_routes.py`. Add neutral
-   unsafe-first/safe-later and compliant-first preservation tests in
-   `tests/unit/chrona/presentation/layout/test_routing_placement.py`.
-3. Run focused routing/ports/Scene tests. CI owns one complete public
-   Scene/SVG snapshot; compare every previously compliant route and visible
-   name, not merely counts. A remaining preservation failure returns to design,
-   not resource edits, suppression waivers or weakened tests.
-4. Accept only after literal acceptance and exact-main release evidence.
+## Implementation and release plan
 
-| Literal acceptance | Required evidence |
+1. Publish this narrowed design/review/plan and remove the unimplemented
+   partial-corridor rule from Spec 50. Preserve its WIP separately for #1109.
+2. Align the Editorial generated-Scene test with owner-approved safety rather
+   than obsolete no-loss acceptance. Keep name association/reach assertions;
+   assert no through-mark finding and an exact suppression diagnostic for
+   every omitted declared dependency. Do not edit generated examples.
+3. Run focused safety/ports/repair/Editorial tests locally. CI supplies one
+   public Scene/SVG snapshot, full PR shards and reproduction. Review its
+   per-slide route, label/name/index and new fallback counts in the PR body.
+4. Merge the exact green head under publication coordination, then publish
+   the literal acceptance review and cite exact-main three-OS release evidence
+   before closing. Finish this issue before resuming #1130 or #1088.
+
+| Literal acceptance | Evidence required |
 | --- | --- |
-| start-to-at, and start-to-start, with the target to the right; | Neutral fixtures. |
-| the mirrored end-to-end case with the target to the left; | Neutral fixture. |
-| a bar with no free gap above, and one with no free gap below. | Neutral fixtures. |
-| For each, no relation segment overlaps the interior of any bar by more than the stroke width, and the first segment leaves the port outward. | Completed geometry and Scene checks. |
-| A Scene check counts own- and foreign-bar crossings corpus-wide; it must be 0 after regeneration. | CI snapshot, all public Scenes. |
-| Existing compliant routes are unchanged. | Exact before/after route points; still unverified. |
-| On target B, `avionics-cdr` no longer crosses the Avionics bar. | Actual Scene and SVG. |
+| start-to-at, and start-to-start, with the target to the right; | Neutral Scene safety fixtures. |
+| the mirrored end-to-end case with the target to the left; | Neutral Scene safety fixture. |
+| a bar with no free gap above, and one with no free gap below. | Neutral blocked-side fixtures. |
+| For each, no relation segment overlaps the interior of any bar by more than the stroke width, and the first segment leaves the port outward. | Completed-path interior/outward assertions. |
+| A Scene check counts own- and foreign-bar crossings corpus-wide; it must be 0 after regeneration. | All public Scene snapshot findings. |
+| On target B, `avionics-cdr` no longer crosses the Avionics bar. | Current target-B Scene and actual SVG. |
 
-## Current verification
-
-The replacement-segment correction is implemented; 59 focused routing,
-ports, back-route and Scene safety tests pass, including the neutral witness
-and exact preservation of a compliant first repair. A fresh public
-`gallery-editorial-lanes` materialization in a temporary directory still has
-zero crossings but loses detector-tvac/shipment-campaign, changes six compliant
-routes and changes member names. Therefore the issue is **not accepted**:
-the narrow repair gap is fixed, but the coupled corridor/name plan still needs
-design correction. The committed old Editorial fixture is not evidence for
-this new render. No generated repository files were changed.
-
-## Remaining design plan
-
-The reference-corridor union cannot be repaired by reordering names: all 20
-legal PDR end-side candidates intersect only structure-avionics' reserved
-vertical segment; all 110 start-side candidates are outside timeline bounds.
-Therefore that corridor is incompatible with the existing label domain.
-Separately, a neutral obstacle fixture proves the router can quality-reject its
-first 3-bend path while a clear 2-bend path passes the same maxBends=2 and
-maxDetour=1.3. The search currently considers one path per port pair; this is
-a general search/acceptance mismatch, not yet attribution for every lost route.
-Review quality-aware alternative generation against Specs 33/50 before code:
-keep already accepted paths exact, honor declared budgets and primary-mark
-safety, keep bounded search/memo ownership explicit, and do not force an
-infeasible name corridor. Then publish the selected design and amended
-implementation plan. No label suppression waiver, budget increase, corpus
-coordinate rule or joint solver is selected by these diagnostic findings.
-
-### Selected bounded corridor admission
-
-Keep the existing union rehearsal and return it unchanged when accepted. If
-the union fails, try each rescued relation's whole corridor packet in stable
-reference/View order. Rehearse the accepted packets plus that packet privately;
-retain it only when degraded identities strictly shrink from the last accepted
-trial and no name newly suppresses against the original baseline. Skip rejected
-packets without discarding previously accepted improvements. Never split one
-route's corridor or change routing quality/port policy. At most one additional
-rehearsal per rescued relation; no combinatorial solver or new search budget.
-
-Architecture review: this refines Spec 50's pre-name Layout feasibility plan;
-View still owns order, Layout owns private search/geometry, Scene/adapters stay
-passive. Reservations remain input-derived, not stored geometry or corpus IDs.
-The order-dependent greedy fallback is not a claim of globally optimal routing
-or proof of compliant-route preservation; full before/after acceptance remains.
-
-Implementation plan: update only `surface_lane_route_plan.py`, plus neutral
-planner tests covering rejected whole union with partial gains, two admissions,
-rejection of a packet that suppresses a name or degrades an accepted route,
-stable ordering and exact accepted-union preservation. Run those tests and
-`test_synthetic_lane_route_corridors.py`; publish in PR #1138, then review one
-fresh Editorial result. The separate quality-aware search is still a design
-question and must not be implemented in this slice.
+Withdrawn row: “Existing compliant routes are unchanged.” Side effects are
+disclosed, not silently waived or repaired by corpus edits. The last CI
+`37197403151` failed only the superseded Editorial no-loss assertion; its
+derived-ready failure is downstream. Fresh-head CI/review remains required.
