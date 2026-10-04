@@ -42,14 +42,12 @@ def test_target_b_optics_detector_enters_the_start_horizontally(tmp_path):
 
 @pytest.mark.corpus
 def test_target_b_with_entry_side_enters_from_the_side_or_says_why(tmp_path):
-    # Target B declares `side-when-free` (the reviewer's YAML, not edited): the test renders a copy whose Layout
-    # declares `entry: side` and the same maxBends 4 and maxDetourRatio 2 (#1084).
+    # Target B (the reviewer's YAML, not edited) declares `entry: side` itself since #1061; the test renders a copy of
+    # the corpus as committed and checks the same property (#1084).
     copy = tmp_path / "halcyon-1"
     shutil.copytree(ROOT / "examples/halcyon-1", copy)
     layout = copy / "layouts/target-b.yaml"
-    text = layout.read_text(encoding="utf-8")
-    assert "entry: side-when-free" in text
-    layout.write_text(text.replace("entry: side-when-free", "entry: side"), encoding="utf-8")
+    assert "entry: side}" in layout.read_text(encoding="utf-8")
     materialize(copy / "manifest.yaml", "target-b", tmp_path / "out", write=True)
     scene = json.loads((tmp_path / "out/review.scene.json").read_text(encoding="utf-8"))
     paths = {path["sourceRef"]: path["points"] for path in _relation_paths(scene)}
