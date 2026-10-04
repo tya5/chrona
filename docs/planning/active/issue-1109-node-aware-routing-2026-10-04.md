@@ -140,7 +140,13 @@ route crossed its own primary mark; its replacement is safe but changes the
 joint name/corridor plan. All four missing `launch-leop` cases are lanes:
 campaign/rehearsals names now obstruct the formerly safe direct route, and all
 twelve alternatives exceed declared quality caps. These are coupled planning
-failures, not evidence that caps should be relaxed.
+failures, not evidence that caps should be relaxed. Programme-board's single
+launch corridor can recover `launch-leop` and the `frr` name, but newly pushes
+`psr-shipment` to visible fallback, so the preservation gate correctly rejects
+it. Treating fallback as distinct from suppression would describe the result
+more precisely but would not repair that worsened relation. A corrected
+editorial trial reserving only 21 existing good corridors plus shipment
+recovers detector/shipment but suppresses five names; it also remains rejected.
 
 ## Resource adaptation design and implementation amendment
 
