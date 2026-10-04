@@ -344,7 +344,7 @@ ADOPTERS = frozenset({
     "layout-profile-v0.10.schema.yaml", "presentation-materialization-receipt-v0.1.schema.yaml", "presentation-preset-v0.1.schema.yaml",
     "preset-library-v0.2.schema.yaml", "profile-v0.3.schema.yaml", "project-v0.7.schema.yaml",
     "render-context-v0.17.schema.yaml", "scene-v0.7.schema.yaml", "theme-asset-source-v0.1.schema.yaml",
-    "theme-v0.14.schema.yaml", "view-v0.28.schema.yaml",
+    "theme-v0.16.schema.yaml", "view-v0.28.schema.yaml",
 })
 
 

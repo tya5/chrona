@@ -1,4 +1,4 @@
-version: chrona/theme/v0.13
+version: chrona/theme/v0.15
 kind: theme
 id: annotation-artwork
 body:
@@ -229,11 +229,6 @@ body:
     kind-upper:
       type: textTransform
       value: uppercase
-    kind-accent-edge:
-      type: edge
-      value:
-        side: start
-        size: 5
     kind-stamp-placement:
       type: stampPlacement
       value:

@@ -108,15 +108,16 @@ def test_no_body_line_is_wider_than_the_box_inner_width(tmp_path, inset):
         assert box.bounds[2] == pytest.approx(RAIL, abs=0.01)
 
 
-def test_the_kind_accent_is_part_of_the_chrome_the_body_wraps_inside(tmp_path):
+def test_the_kind_border_is_part_of_the_chrome_the_body_wraps_inside(tmp_path):
     source = ak.project(("note",), text="i " * 160)
     parts = sr.bundle()
     ak.with_view_notes(parts, source)
     sr.with_note_rail(parts, RAIL)
-    ak.with_kind_theme(parts, accent="start", accent_size=20, bar=False, label_fill="text")
+    ak.with_kind_theme(parts, border_side="start", border_width=20, bar=False, label_fill="text")
     for annotation in parts["view"]["body"]["annotations"]:
         annotation["candidates"] = [_rail_candidate()]
-    parts["theme"]["body"]["values"]["note-container"] = {"type": "annotationContainer", "value": dict(FILL)}
+    parts["theme"]["body"]["values"]["note-container"] = {
+        "type": "annotationContainer", "value": dict(FILL, border={"start": {"width": 20, "paint": "kind"}})}
     parts["theme"]["body"]["roles"]["annotation-note-box"]["annotationContainer"] = "note-container"
     directory = tmp_path / "k"
     directory.mkdir()

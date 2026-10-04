@@ -186,7 +186,7 @@ def test_every_header_line_of_a_note_kind_is_pinned_too(tmp_path):
     source = ak.project(("risk", "note"), text="A note with a few words in it.")
     parts = sr.bundle()
     ak.with_view_notes(parts, source)
-    ak.with_kind_theme(parts, accent="start", accent_size=5)
+    ak.with_kind_theme(parts, border_side="start", border_width=5)
     parts["theme"]["body"]["roles"][BOX_ROLE]["viewerFit"] = "text-follows-box"
     directory = tmp_path / "k"
     directory.mkdir()
@@ -357,7 +357,7 @@ def test_a_kind_frame_is_refused_with_a_box_that_follows_its_text(tmp_path):
     source = ak.project(("risk", "note"))
     parts = sr.bundle()
     ak.with_view_notes(parts, source)
-    ak.with_kind_theme(parts, accent="start", accent_size=5)
+    ak.with_kind_theme(parts, border_side="start", border_width=5)
     role = parts["theme"]["body"]["roles"][BOX_ROLE]
     role["viewerFit"] = "box-follows-text"
     parts["theme"]["body"]["colorBindings"].pop(f"{BOX_ROLE}.stroke", None)

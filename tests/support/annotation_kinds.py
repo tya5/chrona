@@ -77,10 +77,10 @@ def _role(prefix: str, size: str, line: str, treatment: bool = True) -> dict[str
 
 
 def with_kind_theme(parts: dict[str, dict[str, Any]], *, kinds: Mapping[str, Mapping[str, Any]] | None = None,
-                    bar: bool = True, accent: str | None = None, accent_size: float = 6, secondary: bool = True,
+                    bar: bool = True, border_side: str | None = None, border_width: float = 6, secondary: bool = True,
                     label_fill: str = "surface", padding: float = 0.6, stamp: str | None = None,
                     stamp_size: float = 2.0, stamps: Mapping[str, str] | None = None) -> None:
-    """Declare `annotationKinds` and the roles that draw the header, bar, accent and (with `stamp`, a corner) stamp."""
+    """Declare the header, bar, kind-painted border and optional stamp."""
     scheme, theme = parts["scheme"]["body"], parts["theme"]["body"]
     scheme["categories"].update(KIND_COLORS)
     theme["annotationKinds"] = deepcopy(dict(KINDS if kinds is None else kinds))
@@ -97,9 +97,19 @@ def with_kind_theme(parts: dict[str, dict[str, Any]], *, kinds: Mapping[str, Map
     if bar:
         roles["annotation-kind-bar"] = {"chipPadding": "kind-bar-padding"}
         bindings["annotation-kind-bar.fill"] = "category:kind-alert"
-    if accent is not None:
-        values["kind-accent-edge"] = {"type": "edge", "value": {"side": accent, "size": accent_size}}
-        roles["annotation-kind-accent"] = {"edge": "kind-accent-edge"}
+    if border_side is not None:
+        for box_role in ("annotation-note-box", "annotation-callout-box",
+                         "annotation-highlight-box", "annotation-arrow-box"):
+            if box_role not in roles:
+                continue
+            container_ref = roles[box_role].get("annotationContainer")
+            container = deepcopy(values[container_ref]["value"]) if container_ref else {
+                "outline": "rectangle", "cornerRadius": 0}
+            container.setdefault("border", {})[border_side] = {"width": border_width, "paint": "kind"}
+            token_id = f"kind-border-container:{box_role}"
+            values[token_id] = {"type": "annotationContainer", "value": container}
+            roles[box_role]["annotationContainer"] = token_id
+        roles["annotation-kind-accent"] = {}
         bindings["annotation-kind-accent.fill"] = "accent"
     if stamp is not None:
         for kind, glyph in (STAMPS if stamps is None else stamps).items():
@@ -115,9 +125,13 @@ def with_tilt(parts: dict[str, dict[str, Any]], degrees: Any, *,
               roles: Iterable[str] = ("annotation-note-box",), outline: str = "rectangle") -> None:
     """Give the note box role(s) an `annotationContainer` token that declares a tilt cycle."""
     theme = parts["theme"]["body"]
-    theme["values"]["tilt-container"] = {
-        "type": "annotationContainer",
-        "value": {"outline": outline, "cornerRadius": 0,
-                  "tiltDegrees": list(degrees) if isinstance(degrees, (list, tuple)) else degrees}}
     for role in roles:
-        theme["roles"].setdefault(role, {})["annotationContainer"] = "tilt-container"
+        binding = theme["roles"].setdefault(role, {})
+        previous = binding.get("annotationContainer")
+        container = deepcopy(theme["values"][previous]["value"]) if previous else {
+            "outline": outline, "cornerRadius": 0}
+        container["outline"] = outline
+        container["tiltDegrees"] = list(degrees) if isinstance(degrees, (list, tuple)) else degrees
+        token_id = f"tilt-container:{role}"
+        theme["values"][token_id] = {"type": "annotationContainer", "value": container}
+        binding["annotationContainer"] = token_id

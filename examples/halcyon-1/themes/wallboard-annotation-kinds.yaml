@@ -1,4 +1,4 @@
-version: chrona/theme/v0.13
+version: chrona/theme/v0.15
 kind: theme
 id: wallboard-annotation-kinds
 body:
@@ -218,11 +218,13 @@ body:
     kind-bar-padding:
       type: number
       value: 0.6
-    kind-accent-edge:
-      type: edge
+    note-container:
+      type: annotationContainer
       value:
-        side: start
-        size: 5
+        outline: rectangle
+        cornerRadius: 0
+        border:
+          start: {width: 5, paint: kind}
     kind-label-spacing:
       type: number
       value: 0.08
@@ -332,6 +334,7 @@ body:
       iconGap: icon-gap
     annotation-note-box:
       strokeWidth: stroke-width
+      annotationContainer: note-container
     annotation-note-text:
       contrastTreatment: required
       fontFamily: editorial
@@ -465,8 +468,7 @@ body:
       letterSpacing: kind-secondary-spacing
     annotation-kind-bar:
       chipPadding: kind-bar-padding
-    annotation-kind-accent:
-      edge: kind-accent-edge
+    annotation-kind-accent: {}
   colorBindings:
     axis-rule.stroke: text
     background.fill: surface

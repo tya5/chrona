@@ -41,8 +41,8 @@ record.
 | snapshot-ref | snapshot-ref-v0.3.schema.yaml |
 | store-config | store-config-v0.1.schema.yaml |
 | summary-profile | summary-profile-v0.2.schema.yaml |
-| theme | theme-v0.13.schema.yaml |
-| derived-theme | theme-v0.14.schema.yaml |
+| theme | theme-v0.15.schema.yaml |
+| derived-theme | theme-v0.16.schema.yaml |
 | view | view-v0.28.schema.yaml |
 | schema-part-vocabulary | vocabulary-v0.1.schema.yaml |
 
@@ -65,9 +65,9 @@ reinterpreted. New Theme asset imports emit v0.4 catalogs; the importer
 normalizes glyph paths and pattern tiles, verifies density, and preserves the
 source SPDX license and complete notice.
 
-Theme v0.11/v0.12 remain readable during the v0.13/v0.14 migration. The
-successor pair adds Theme glyph and pattern catalogue references while keeping
-the referenced geometry in the pinned catalogue closure.
+Theme v0.15 is the authored contract and v0.16 its derived inheritance form.
+Theme v0.11/v0.12/v0.13/v0.14 are archived after migration; copied or standalone
+resources using those versions receive the unsupported-version diagnostic.
 
 Scene v0.6 remains readable during the v0.7 migration. The successor records
 Layout-completed pattern tile geometry and paint without resolving Theme or

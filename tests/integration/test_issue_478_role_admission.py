@@ -92,7 +92,7 @@ def test_draft_closure_checks_inherited_effective_theme_role(tmp_path: Path):
     base_path = tmp_path / "base-theme.yaml"
     base_bytes = _write_yaml(base_path, base)
     derived = {
-        "version": "chrona/theme/v0.12",
+        "version": "chrona/theme/v0.16",
         "kind": "theme",
         "id": base["id"],
         "body": {

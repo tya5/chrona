@@ -448,8 +448,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                     wrap_available = float(plot_wrap_em) * size if plot_wrap_em is not None else text_available
                     annotation_box_role = semantic_binding(presentation.box_semantic_id).theme_role
                     container = request.theme_tokens.annotation_container(annotation_box_role)
-                    # A Theme-dressed Project kind (#584) adds a header block and an accent edge to the
-                    # note; the body text wraps in what they leave.
+                    # A Theme-dressed Project kind adds a header and optional stamp column.
+                    # Content sizing keeps a text-width bound; fill sizing subtracts all chrome below.
                     kind_token = request.theme_tokens.annotation_kind(annotation.kind)
                     if kind_token is not None and kind_theme is None:
                         kind_theme = request.theme_tokens.annotation_kind_frame()
@@ -502,7 +502,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                             max(body_inline, kind_measure.header_inline) + kind_measure.inline_insets
                             + content_left + content_right,
                             max(size * line_height * len(lines) + kind_measure.header_block, kind_measure.stamp_block)
-                            + kind_measure.block_insets + content_top + content_bottom)
+                            + content_top + content_bottom)
 
                     # A tilted note is searched and registered through the axis-aligned bounds of its rotated
                     # frame; once a position is chosen the whole frame is rotated about their centre (#584).
@@ -874,7 +874,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                     register_rect(kind_line.placement_id, "text", "annotations", kind_line.bounds)
             placed_annotation = place_text(placement_id=f"annotation-text:{annotation_id}", source_ref=annotation_id, content=content,
                                            inline=frame_x + annotation_leading + content_left + kind_measure.body_inset_left,
-                                           baseline_block=(frame_y + content_top + kind_measure.inset_top
+                                           baseline_block=(frame_y + content_top
                                                            + kind_measure.header_block + size),
                                            typography_role=annotation_text_role,
                                            theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,

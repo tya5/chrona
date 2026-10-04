@@ -139,9 +139,6 @@ class AnnotationKindFrame:
     secondary_role: str | None
     bar_role: str | None
     bar_padding_em: Decimal
-    accent_role: str | None
-    accent_side: str | None
-    accent_size: Decimal
     stamp_role: str | None = None
     stamp_corner: str | None = None
     stamp_size: Decimal = Decimal(0)
@@ -662,17 +659,6 @@ class ThemeTokenView:
             padding = self.optional_number(bar_role, "chipPadding") or Decimal(0)
             if not Decimal(0) <= padding <= Decimal(2):
                 raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{bar_role}/chipPadding")
-        accent_role = declared("annotation-kind-accent")
-        if accent_role is not None and "edge" not in self._body["roles"][accent_role]:
-            # A role with a fill only is the ink of a kind-painted box border (#1049), not a content-box accent.
-            accent_role = None
-        side, size = None, Decimal(0)
-        if accent_role is not None:
-            edge = self.token(accent_role, "edge", "edge")
-            side = edge.get("side") if isinstance(edge, Mapping) else None
-            size = self._decimal(edge.get("size") if isinstance(edge, Mapping) else None, accent_role, "edge/size") or Decimal(0)
-            if side not in {"start", "end", "top", "bottom"} or size <= 0:
-                raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{accent_role}/edge")
         stamp_role = declared("annotation-kind-stamp")
         corner, stamp_size = None, Decimal(0)
         if stamp_role is not None:
@@ -683,7 +669,7 @@ class ThemeTokenView:
             if corner not in {"start-top", "end-top", "start-bottom", "end-bottom"} or stamp_size <= 0:
                 raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{stamp_role}/stampPlacement")
         return AnnotationKindFrame(declared("annotation-kind-label"), declared("annotation-kind-secondary"),
-                                   bar_role, padding, accent_role, side, size, stamp_role, corner, stamp_size)
+                                   bar_role, padding, stamp_role, corner, stamp_size)
 
     def _insets(self, value: Any, role: str, property_name: str) -> tuple[Decimal, Decimal, Decimal, Decimal]:
         """Return a validated (top, right, bottom, left) em-relative inset quadruple."""

@@ -1150,7 +1150,7 @@ INLINE_DOCUMENTS: dict[str, Callable[[], dict[str, Any]]] = {
                              "viewport": {"inlineSize": 24, "blockSize": 24}, "alternative": "ok"}},
             "entryAliases": {}, "glyphs": {}, "patterns": {}}},
     "derived-theme": lambda: {
-        "version": "chrona/theme/v0.14", "kind": "theme", "id": "variation", "body": {
+        "version": "chrona/theme/v0.16", "kind": "theme", "id": "variation", "body": {
             "extends": {"id": "base", "path": "base.yaml", "sourceContentIdentity": _REVISION,
                         "contentIdentity": _REVISION},
             "values": {"text-size": {"type": "number", "value": 16}}}},

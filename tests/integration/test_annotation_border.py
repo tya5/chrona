@@ -81,6 +81,9 @@ def test_the_inset_is_measured_from_inside_the_border(tmp_path):
         assert text.bounds[1] + text.bounds[3] <= y + h - ONE["bottom"]["width"] - ab.INSET["bottom"] * size + TOL
         # outer size = content + inset + border
         base = ab.boxes(plain)[note].bounds
+        plain_text = ab.prims(plain, "annotation-text")[note]
+        assert text.text_layout.lines == plain_text.text_layout.lines
+        assert _close(text.bounds[2], plain_text.bounds[2])
         assert _close(w, base[2] + ONE["start"]["width"] + ONE["end"]["width"])
         assert _close(h, base[3] + ONE["top"]["width"] + ONE["bottom"]["width"])
 
@@ -212,15 +215,29 @@ def test_a_leader_still_ends_on_the_outer_edge_of_the_bordered_box(tmp_path):
         assert ab.boxes(plain)[note].bounds[0] == pytest.approx(x, abs=TOL)  # the start edge does not move
 
 
-def test_the_legacy_edge_accent_is_unchanged_and_still_inside_the_inset(tmp_path):
+@pytest.mark.parametrize("purpose", ["note", "callout", "highlight", "explanatory-arrow"])
+def test_kind_paint_has_one_outer_border_path_not_a_content_box_accent(tmp_path, purpose):
     def configure(parts):
-        ak.with_kind_theme(parts, bar=False, accent="start", accent_size=6, label_fill="text")
-    rendered = ab.render_notes(tmp_path, None, inset=ab.INSET, configure=configure, ink_roles=())
+        ak.with_kind_theme(parts, bar=False, border_side="start", border_width=6, label_fill="text")
+    source = ak.project(("note",))
+    parts = sr.bundle()
+    ak.with_view_notes(parts, source, purpose=purpose)
+    ab.with_border(parts, None, inset=ab.INSET, ink_roles=())
+    for role in ("annotation-note-box", "annotation-callout-box", "annotation-highlight-box", "annotation-arrow-box"):
+        parts["theme"]["body"]["roles"][role]["annotationContainer"] = "border-container"
+    configure(parts)
+    rendered = ak.render(tmp_path, source, parts)
+    assert ab.boxes(rendered)
     for note, box in ab.boxes(rendered).items():
-        accent = ab.prims(rendered, "annotation-kind-accent")[note]
+        border = next(item for item in rendered.surface.primitives
+                      if item.scene_id == f"annotation-border:{note}:start")
         size = ab.prims(rendered, "annotation-text")[note].text_layout.font_size
-        assert accent.bounds[0] == pytest.approx(box.bounds[0] + ab.INSET["left"] * size, abs=TOL)  # today's look
-        assert not ab.prims(rendered, "annotation-border")
+        assert border.bounds[0] == pytest.approx(box.bounds[0], abs=TOL)
+        assert border.bounds[2] == pytest.approx(6, abs=TOL)
+        assert border.bounds[3] == pytest.approx(box.bounds[3], abs=TOL)
+        assert ab.prims(rendered, "annotation-text")[note].bounds[0] >= (
+            box.bounds[0] + 6 + ab.INSET["left"] * size - TOL)
+        assert not ab.prims(rendered, "annotation-kind-accent")
 
 
 @pytest.mark.parametrize("side", ["leading", "trailing"])

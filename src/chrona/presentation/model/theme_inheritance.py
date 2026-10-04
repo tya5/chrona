@@ -24,7 +24,7 @@ class ThemeInheritanceError(ValueError):
 def is_derived_theme(value: object) -> bool:
     """Recognize derived Theme source forms before ordinary contract parsing."""
     return (isinstance(value, dict)
-            and value.get("version") in {"chrona/theme/v0.12", "chrona/theme/v0.14"})
+            and value.get("version") == "chrona/theme/v0.16")
 
 
 def _safe_relative(address: object) -> PurePosixPath:
@@ -39,11 +39,10 @@ def _safe_relative(address: object) -> PurePosixPath:
 
 def _validated_derived(value: dict[str, Any]) -> Mapping[str, Any]:
     version = value.get("version")
-    schema_name = {"chrona/theme/v0.12": "theme-v0.12.schema.yaml",
-                   "chrona/theme/v0.14": "theme-v0.14.schema.yaml"}.get(version)
+    schema_name = {"chrona/theme/v0.16": "theme-v0.16.schema.yaml"}.get(version)
     if schema_name is None:
         raise ThemeInheritanceError("E_THEME_INHERITANCE_SCHEMA",
-                                    f"Theme version {version!r} is not a derived Theme version (chrona/theme/v0.12 or v0.14)")
+                                    f"Theme version {version!r} is not a derived Theme version (chrona/theme/v0.16)")
     problems = tuple(schema_validator(schema_name).iter_errors(value))
     if problems:
         raise ThemeInheritanceError("E_THEME_INHERITANCE_SCHEMA",
@@ -105,9 +104,7 @@ def _resolve(value: dict[str, Any], key: str, load_base: BaseLoader,
                                     f"base Theme {Path(child_key).name} has source identity {source_identity}, "
                                     f"the derived Theme declares {declaration['sourceContentIdentity']}")
     base = _resolve(base_value, child_key, load_base, (*stack, key))
-    derived_version = str(value.get("version"))
-    expected_base_version = ("chrona/theme/v0.11" if derived_version == "chrona/theme/v0.12"
-                             else "chrona/theme/v0.13")
+    expected_base_version = "chrona/theme/v0.15"
     if (base.get("kind") != "theme" or base.get("version") != expected_base_version
             or base.get("id") != declaration["id"]):
         raise ThemeInheritanceError("E_THEME_INHERITANCE_BASE_KIND",
@@ -131,8 +128,7 @@ def _resolve(value: dict[str, Any], key: str, load_base: BaseLoader,
             raise ThemeInheritanceError("E_THEME_INHERITANCE_OVERRIDE_UNKNOWN",
                                         f"body.{name} overrides entries the base Theme does not declare: {unknown}")
         target.update(deepcopy(replacement))
-    effective_schema = {"chrona/theme/v0.12": "theme-v0.11.schema.yaml",
-                        "chrona/theme/v0.14": "theme-v0.13.schema.yaml"}[derived_version]
+    effective_schema = "theme-v0.15.schema.yaml"
     problems = tuple(schema_validator(effective_schema).iter_errors(effective))
     if problems:
         raise ThemeInheritanceError("E_THEME_INHERITANCE_EFFECTIVE_SCHEMA",

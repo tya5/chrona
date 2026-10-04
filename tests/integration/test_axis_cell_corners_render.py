@@ -145,7 +145,7 @@ def test_a_label_keeps_a_chamfered_cell_as_its_host(tmp_path):
 
 @pytest.mark.parametrize("name", ["cellCornerRadius", "cellCornerChamfer"])
 def test_the_theme_schemas_accept_a_named_number_and_reject_a_literal(name):
-    for schema in ("theme-v0.11.schema.yaml", "theme-v0.13.schema.yaml"):
+    for schema in ("theme-v0.15.schema.yaml", "theme-v0.15.schema.yaml"):
         validator = schema_validator(schema)
         theme = deepcopy(sr.bundle("executive-light")["theme"])
         theme["version"] = "chrona/theme/" + schema.split("-")[1].split(".schema")[0]

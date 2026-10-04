@@ -102,7 +102,7 @@ def test_a_start_group_tab_leads_the_header_label_and_the_children_follow_it(tmp
     theme["roles"]["group-tab"] = {"backgroundTreatment": "fill", "backgroundPaintOrder": 20, "opacity": "tab.opacity",
                                    "tabInlineSize": "tab.size", "tabGap": "tab.gap"}
     theme["colorBindings"]["group-tab.fill"] = "accent"
-    parts["theme"]["version"] = "chrona/theme/v0.13"
+    parts["theme"]["version"] = "chrona/theme/v0.15"
     starts = _starts(_render(tmp_path, parts))
     header_start = next(iter(_headers(starts).values()))
     plain_header = next(iter(_headers(_starts(_render(tmp_path / "plain", _parts(indent=False, preset="control-room-dark")))).values()))
@@ -121,7 +121,7 @@ def test_a_later_hierarchy_column_is_indented_from_its_own_start_even_beside_a_t
     theme["roles"]["group-tab"] = {"backgroundTreatment": "fill", "backgroundPaintOrder": 20, "opacity": "tab.opacity",
                                    "tabInlineSize": "tab.size"}
     theme["colorBindings"]["group-tab.fill"] = "accent"
-    parts["theme"]["version"] = "chrona/theme/v0.13"
+    parts["theme"]["version"] = "chrona/theme/v0.15"
     rendered = _render(tmp_path, parts)
     column_start = next(item.bounds[0] for item in rendered.surface.primitives if item.scene_id == f"column:{COLUMN}")
     cells = [item.bounds[0] for item in rendered.surface.primitives if item.scene_id.endswith(f":{COLUMN}")

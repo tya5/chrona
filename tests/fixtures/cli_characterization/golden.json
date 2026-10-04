@@ -1001,7 +1001,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_VIEW_SCHEMA\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/body/surface\", \"revisionRefs\": [], \"message\": \"expected one of 'table-timeline', 'dependency-network'\", \"resourceKind\": \"view\", \"resourceIdentity\": \"halcyon-01-mission-brief\", \"phase\": \"schema\", \"rule\": \"enum\"}, {\"code\": \"E_THEME_SCHEMA\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/body/values/opacity.axis-band/type\", \"revisionRefs\": [], \"message\": \"expected one of 'number', 'fontFamily', 'fontWeight', 'dashPattern', 'marker', 'pattern', 'symbol', 'textAlternative', 'lineCap', 'lineJoin', 'fidelity', 'textTransform', 'numericSpacing', 'annotationContainer', 'edge', 'stampPlacement', 'writingMode'\", \"resourceKind\": \"theme\", \"resourceIdentity\": \"briefing\", \"phase\": \"schema\", \"rule\": \"enum\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_VIEW_SCHEMA\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/body/surface\", \"revisionRefs\": [], \"message\": \"expected one of 'table-timeline', 'dependency-network'\", \"resourceKind\": \"view\", \"resourceIdentity\": \"halcyon-01-mission-brief\", \"phase\": \"schema\", \"rule\": \"enum\"}, {\"code\": \"E_THEME_SCHEMA\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/body/values/opacity.axis-band/type\", \"revisionRefs\": [], \"message\": \"expected one of 'number', 'fontFamily', 'fontWeight', 'dashPattern', 'marker', 'pattern', 'symbol', 'textAlternative', 'lineCap', 'lineJoin', 'fidelity', 'textTransform', 'numericSpacing', 'annotationContainer', 'stampPlacement', 'writingMode'\", \"resourceKind\": \"theme\", \"resourceIdentity\": \"briefing\", \"phase\": \"schema\", \"rule\": \"enum\"}]}\n"
  },
  "render-ingress-one-finding": {
   "argv": [
@@ -1237,7 +1237,7 @@
    }
   },
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_RESOURCE_VERSION_UNSUPPORTED\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/version\", \"revisionRefs\": [], \"message\": \"theme id=chrona-builtin-editorial declares version chrona/theme/v0.0; supported: chrona/theme/v0.11, chrona/theme/v0.13, chrona/theme/v0.14; run chrona preset copy editorial --output <new-dir> and re-apply your edits\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_RESOURCE_VERSION_UNSUPPORTED\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/version\", \"revisionRefs\": [], \"message\": \"theme id=chrona-builtin-editorial declares version chrona/theme/v0.0; supported: chrona/theme/v0.15, chrona/theme/v0.16; run chrona preset copy editorial --output <new-dir> and re-apply your edits\"}]}\n"
  },
  "render-preset-unknown": {
   "argv": [
@@ -1425,7 +1425,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_RESOURCE_VERSION_UNSUPPORTED\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/version\", \"revisionRefs\": [], \"message\": \"theme id=halcyon-01-mission-brief declares version chrona/view/v0.27; supported: chrona/theme/v0.11, chrona/theme/v0.13, chrona/theme/v0.14; see the current resource schema and migration notes before re-applying edits\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_RESOURCE_VERSION_UNSUPPORTED\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/version\", \"revisionRefs\": [], \"message\": \"theme id=halcyon-01-mission-brief declares version chrona/view/v0.27; supported: chrona/theme/v0.15, chrona/theme/v0.16; see the current resource schema and migration notes before re-applying edits\"}]}\n"
  },
  "render-theme-missing-file": {
   "argv": [
@@ -1467,7 +1467,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_RESOURCE_VERSION_UNSUPPORTED\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/version\", \"revisionRefs\": [], \"message\": \"theme id=nope declares version chrona/theme/v0.1; supported: chrona/theme/v0.11, chrona/theme/v0.13, chrona/theme/v0.14; see the current resource schema and migration notes before re-applying edits\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_RESOURCE_VERSION_UNSUPPORTED\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/version\", \"revisionRefs\": [], \"message\": \"theme id=nope declares version chrona/theme/v0.1; supported: chrona/theme/v0.15, chrona/theme/v0.16; see the current resource schema and migration notes before re-applying edits\"}]}\n"
  },
  "render-typesetter-descriptor-missing": {
   "argv": [
@@ -1541,7 +1541,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_RESOURCE_VERSION_UNSUPPORTED\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/version\", \"revisionRefs\": [], \"message\": \"view id=briefing declares version chrona/theme/v0.11; supported: chrona/view/v0.26, chrona/view/v0.27, chrona/view/v0.28; see the current resource schema and migration notes before re-applying edits\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_RESOURCE_VERSION_UNSUPPORTED\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/version\", \"revisionRefs\": [], \"message\": \"view id=briefing declares version chrona/theme/v0.15; supported: chrona/view/v0.26, chrona/view/v0.27, chrona/view/v0.28; see the current resource schema and migration notes before re-applying edits\"}]}\n"
  },
  "render-view-missing-file": {
   "argv": [

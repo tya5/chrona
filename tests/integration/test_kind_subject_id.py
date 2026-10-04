@@ -16,7 +16,7 @@ def _header_texts(tmp_path, title: str) -> list[str]:
     source = ak.project(("risk",))
     parts = sr.bundle()
     ak.with_view_notes(parts, source)
-    ak.with_kind_theme(parts, kinds=kinds, bar=False, accent="start", label_fill="text")
+    ak.with_kind_theme(parts, kinds=kinds, bar=False, border_side="start", label_fill="text")
     rendered = sr.render(tmp_path, source, presentation=parts)
     return [item.text for item in rendered.surface.primitives if item.scene_id.startswith("annotation-kind-text:")]
 

@@ -20,7 +20,7 @@ def _render(tmp_path, *, also: dict | None = None):
     source = ak.project(("risk", "note"))
     parts = sr.bundle()
     ak.with_view_notes(parts, source, connector="leader")
-    ak.with_kind_theme(parts, kinds=kinds, bar=False, accent="start", label_fill="text")
+    ak.with_kind_theme(parts, kinds=kinds, bar=False, border_side="start", label_fill="text")
     return ak.render(tmp_path, source, parts) if hasattr(ak, "render") else sr.render(tmp_path, source, presentation=parts)
 
 
@@ -36,7 +36,7 @@ def _sub(tmp_path, name):
 
 def test_without_color_also_the_header_and_leader_keep_their_own_paint(tmp_path):
     plain = _render(_sub(tmp_path, "a"))
-    accents = _by_prefix(plain, "annotation-kind-accent:")
+    accents = _by_prefix(plain, "annotation-border:")
     labels = _by_prefix(plain, "annotation-kind-text:")
     assert accents and labels
     kind_colours = {item.paint.fill for item in accents.values()}
@@ -45,16 +45,16 @@ def test_without_color_also_the_header_and_leader_keep_their_own_paint(tmp_path)
 
 def test_color_also_paints_the_header_text_and_the_leader_in_the_kind_colour_for_that_kind_only(tmp_path):
     rendered = _render(_sub(tmp_path, "b"), also={"risk": ["header", "leader"]})
-    accent = next(item for key, item in _by_prefix(rendered, "annotation-kind-accent:").items() if key.endswith("n0"))
-    other_accent = next(item for key, item in _by_prefix(rendered, "annotation-kind-accent:").items() if key.endswith("n1"))
+    accent = next(item for key, item in _by_prefix(rendered, "annotation-border:").items() if key.split(":")[1] == "view-n0")
+    other_accent = next(item for key, item in _by_prefix(rendered, "annotation-border:").items() if key.split(":")[1] == "view-n1")
     risk_text = [item for key, item in _by_prefix(rendered, "annotation-kind-text:").items() if ":view-n0" in key or "n0" in key.split(":")[1]]
     note_text = [item for key, item in _by_prefix(rendered, "annotation-kind-text:").items() if "n1" in key.split(":")[1]]
     assert risk_text and note_text
     assert all(item.paint.fill == accent.paint.fill for item in risk_text)
     assert all(item.paint.fill != other_accent.paint.fill for item in note_text)  # the unlisted kind is unchanged
     leaders = {key: item for key, item in _by_prefix(rendered, "annotation-leader:").items()}
-    risk_leader = next(item for key, item in leaders.items() if key.endswith("n0"))
-    note_leader = next(item for key, item in leaders.items() if key.endswith("n1"))
+    risk_leader = next(item for key, item in leaders.items() if key.split(":")[1] == "view-n0")
+    note_leader = next(item for key, item in leaders.items() if key.split(":")[1] == "view-n1")
     assert risk_leader.paint.stroke == accent.paint.fill
     assert note_leader.paint.stroke != other_accent.paint.fill
 
@@ -62,8 +62,8 @@ def test_color_also_paints_the_header_text_and_the_leader_in_the_kind_colour_for
 def test_header_alone_leaves_the_leader_alone(tmp_path):
     plain = _render(_sub(tmp_path, "p"))
     rendered = _render(_sub(tmp_path, "h"), also={"risk": ["header"]})
-    plain_leader = next(item for key, item in _by_prefix(plain, "annotation-leader:").items() if key.endswith("n0"))
-    leader = next(item for key, item in _by_prefix(rendered, "annotation-leader:").items() if key.endswith("n0"))
+    plain_leader = next(item for key, item in _by_prefix(plain, "annotation-leader:").items() if key.split(":")[1] == "view-n0")
+    leader = next(item for key, item in _by_prefix(rendered, "annotation-leader:").items() if key.split(":")[1] == "view-n0")
     assert leader.paint.stroke == plain_leader.paint.stroke
 
 
@@ -81,7 +81,7 @@ def test_a_header_colour_too_close_to_the_note_box_fails_the_kind_contrast_gate(
     source = ak.project(("risk", "note"))
     parts = sr.bundle()
     ak.with_view_notes(parts, source, connector="leader")
-    ak.with_kind_theme(parts, kinds=kinds, bar=False, accent="start", label_fill="text")
+    ak.with_kind_theme(parts, kinds=kinds, bar=False, border_side="start", label_fill="text")
     parts["scheme"]["body"]["categories"]["kind-alert"] = "#F4F7FB"  # nearly the note box fill
     with pytest.raises(Exception) as caught:
         sr.render(_sub(tmp_path, "gate"), source, presentation=parts)

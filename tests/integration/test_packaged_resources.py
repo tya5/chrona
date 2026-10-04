@@ -43,10 +43,8 @@ SCHEMAS = (
     "snapshot-ref-v0.2.schema.yaml",
     "snapshot-ref-v0.3.schema.yaml",
     "store-config-v0.1.schema.yaml",
-    "theme-v0.11.schema.yaml",
-    "theme-v0.12.schema.yaml",
-    "theme-v0.13.schema.yaml",
-    "theme-v0.14.schema.yaml",
+    "theme-v0.15.schema.yaml",
+    "theme-v0.16.schema.yaml",
     "preset-library-v0.2.schema.yaml",
     "example-registry-v0.1.schema.yaml",
 )

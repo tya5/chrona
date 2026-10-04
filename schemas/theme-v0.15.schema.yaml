@@ -1,0 +1,450 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:theme-v0.15"
+title: "Chrona Theme v0.15"
+description: "Semantic appearance tokens and bindings; concrete colors remain in a Color Scheme."
+type: object
+required: [version, kind, id, body]
+additionalProperties: false
+properties:
+  version: {description: "This Theme contract version.", const: "chrona/theme/v0.15"}
+  kind: {description: "The resource kind for semantic appearance bindings.", const: theme}
+  id: {description: "Stable Theme identifier.", type: string, minLength: 1}
+  body:
+    type: object
+    description: "Non-color values, semantic role bindings, and Color Scheme intents."
+    required: [values, roles, colorBindings]
+    additionalProperties: false
+    properties:
+      values:
+        type: object
+        description: "Named non-color tokens such as typography, marker, and paint values."
+        additionalProperties:
+          type: object
+          description: "One named non-color token with its declared value type."
+          required: [type, value]
+          additionalProperties: false
+          properties:
+            type: {description: "Kind of non-color token value.", enum: [number, fontFamily, fontWeight, dashPattern, marker, pattern, symbol, textAlternative, lineCap, lineJoin, fidelity, textTransform, numericSpacing, annotationContainer, stampPlacement, writingMode]}
+            value: {}
+          allOf:
+            - description: "Dash-pattern tokens use a positive numeric sequence; other tokens use scalar values."
+              examples: [{type: dashPattern, value: [1]}]
+              if:
+                properties: {type: {const: dashPattern}}
+              required: [type]
+              then:
+                properties:
+                  value:
+                    type: array
+                    items: {type: number, exclusiveMinimum: 0}
+              else:
+                properties:
+                  value: {type: [string, number, object]}
+            - description: "Marker geometry is finite structured Theme data resolved before adapter invocation."
+              examples: [{type: marker, value: {shape: triangle, headLength: 10, headWidth: 10, attachmentOffset: 1}}]
+              if:
+                properties: {type: {const: marker}}
+                required: [type]
+              then:
+                properties:
+                  value:
+                    type: object
+                    additionalProperties: false
+                    required: [shape, headLength, headWidth, attachmentOffset]
+                    properties:
+                      shape: {description: "Terminal head outline. `triangle` is a filled closed triangle; `open-triangle` is the same closed triangle (three edges) stroked, not filled; `chevron` is an open V of two stroked edges with no closing edge; `circle` is a filled and `open-circle` a stroked circle; `stealth` is a filled notched triangle (tip, two barbs, a notch 0.7 of the length from the tip); `rounded-triangle` a filled triangle with corners rounded to about 0.12 of the head width; `dot` a filled circle (a separate name from `circle` so a Theme can declare a smaller default); `half` a filled half arrowhead with one barb on the left of the line direction; `double-chevron` two stroked chevrons, one behind the other. A round terminal (`circle`, `open-circle`, `dot`) is centred on the endpoint and the line touches it; its `attachmentOffset` is superseded. `none` draws no terminal: the line starts or ends exactly at the endpoint with no setback (its three numbers are validated and ignored).", enum: [triangle, open-triangle, chevron, circle, open-circle, stealth, rounded-triangle, dot, half, double-chevron, none]}
+                      headLength: {type: number, exclusiveMinimum: 0}
+                      headWidth: {type: number, exclusiveMinimum: 0}
+                      attachmentOffset: {type: number, minimum: 0}
+            - description: "Pattern geometry is finite structured Theme data resolved before adapter invocation."
+              examples: [{type: pattern, value: {kind: diagonal-hatch, tileInlineSize: 6, tileBlockSize: 6, angle: 45, strokeWidth: 1}}]
+              if:
+                properties: {type: {const: pattern}}
+                required: [type]
+              then:
+                properties:
+                  value:
+                    oneOf:
+                      - {type: object, additionalProperties: false, required: [kind], properties: {kind: {const: outline}}}
+                      - {type: object, additionalProperties: false, required: [kind, tileInlineSize, tileBlockSize, angle, strokeWidth], properties: {kind: {const: diagonal-hatch}, tileInlineSize: {type: number, exclusiveMinimum: 0}, tileBlockSize: {type: number, exclusiveMinimum: 0}, angle: {$ref: "urn:chrona:graphics-v0.1#/$defs/tileAngle"}, strokeWidth: {type: number, exclusiveMinimum: 0}}}
+                      - description: "A catalogue-resolved pattern reference; exact role/property applicability is enforced by the Theme capability registry."
+                        type: object
+                        additionalProperties: false
+                        required: [kind, ref]
+                        properties:
+                          kind: {const: catalog}
+                          ref: {description: "Authored `set:name` reference to a normalized catalogue pattern.", type: string, pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"}
+            - description: "Point-symbol selection is finite Theme data resolved into a Scene outline: a built-in shape, or a multi-part glyph fitted contain/centred into the mark's bounds. Each glyph part paints from the milestone role's own colour unless it declares a fixed color; an outline-treatment role overrides every part to stroke regardless."
+              examples: [{type: symbol, value: {shape: diamond}}, {type: symbol, value: {shape: glyph, viewBox: [100, 100], parts: [{d: "M0 0L100 0L100 100L0 100Z", paint: fill}]}}]
+              if:
+                properties: {type: {const: symbol}}
+              required: [type]
+              then:
+                properties:
+                  value:
+                    oneOf:
+                      - type: object
+                        additionalProperties: false
+                        required: [shape]
+                        properties: {shape: {enum: [diamond, circle, square, chevron]}}
+                      - type: object
+                        additionalProperties: false
+                        required: [shape, viewBox, parts]
+                        properties:
+                          shape: {const: glyph}
+                          viewBox: {type: array, minItems: 2, maxItems: 2, items: {type: number, exclusiveMinimum: 0}}
+                          parts:
+                            type: array
+                            minItems: 1
+                            items:
+                              type: object
+                              additionalProperties: false
+                              required: [d, paint]
+                              properties:
+                                d: {type: string, minLength: 1}
+                                paint: {enum: [fill, stroke, none]}
+                                color: {type: string, pattern: "^#[0-9A-Fa-f]{6}$"}
+                      - description: "A catalogue glyph reference resolved through the pinned Context before Layout."
+                        type: object
+                        additionalProperties: false
+                        required: [shape]
+                        properties:
+                          shape:
+                            type: object
+                            additionalProperties: false
+                            required: [catalog]
+                            properties:
+                              catalog: {description: "Authored `set:name` reference to a normalized catalogue glyph.", type: string, pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"}
+            - description: "Text transforms are finite so Layout measures the painted form."
+              examples: [{type: textTransform, value: uppercase}]
+              if:
+                properties: {type: {const: textTransform}}
+              required: [type]
+              then:
+                properties:
+                  value: {enum: [none, uppercase, lowercase, capitalize]}
+            - description: "Numeric spacing is finite so Layout can select tabular figures."
+              examples: [{type: numericSpacing, value: tabular}]
+              if:
+                properties: {type: {const: numericSpacing}}
+              required: [type]
+              then:
+                properties:
+                  value: {enum: [proportional, tabular]}
+            - description: "Annotation-container geometry is finite structured Theme data resolved before adapter invocation (#466, #465)."
+              examples: [{type: annotationContainer, value: {outline: balloon, cornerRadius: 0.2, tailBaseEm: 0.6}},
+                        {type: annotationContainer, value: {outline: image, image: "chrona:frame", cornerRadius: 0,
+                                                             sliceInsetsEm: {top: 0.6, right: 0.6, bottom: 0.6, left: 0.6},
+                                                             contentInsetEm: {top: 0.8, right: 0.8, bottom: 0.8, left: 0.8}}}]
+              if:
+                properties: {type: {const: annotationContainer}}
+              required: [type]
+              then:
+                properties:
+                  value:
+                    type: object
+                    additionalProperties: false
+                    required: [outline, cornerRadius]
+                    properties:
+                      outline: {enum: [rectangle, balloon, image]}
+                      cornerRadius: {type: number, minimum: 0}
+                      tailBaseEm: {type: number, exclusiveMinimum: 0}
+                      image:
+                        description: "An icon-catalog raster entry bound as this container's backdrop artwork (#465); a View's visuals grammar can never select this use."
+                        type: string
+                        pattern: "^[A-Za-z][A-Za-z0-9-]*:[A-Za-z][A-Za-z0-9._-]*$"
+                      sliceInsetsEm:
+                        description: "The nine-slice fixed border (top/right/bottom/left, in em): each corner tile keeps this size while the middle stretches (#465)."
+                        type: object
+                        additionalProperties: false
+                        required: [top, right, bottom, left]
+                        properties:
+                          top: {type: number, minimum: 0}
+                          right: {type: number, minimum: 0}
+                          bottom: {type: number, minimum: 0}
+                          left: {type: number, minimum: 0}
+                      tiltDegrees:
+                        description: "A deterministic tilt cycle in degrees, clockwise: the annotation at position i of the View's order takes tiltDegrees[i mod length]. Rectangle outlines only (#584)."
+                        examples: [[-2, 1.5, -1]]
+                        type: array
+                        minItems: 1
+                        items: {type: number, minimum: -15, maximum: 15}
+                      artwork:
+                        description: "A catalogue glyph stretched behind a rectangle container as vector artwork (#848): nine-slice with fixed borders in the glyph's viewport units. The box keeps painting the paper; the parts paint from the annotation-artwork role. Rectangle outlines with contentInsetEm only."
+                        examples: [{glyph: "chrona-target-parts:scroll-frame", sliceInsets: {top: 16.3, right: 8.2, bottom: 11.5, left: 8.2}, unitEm: 0.09}]
+                        type: object
+                        additionalProperties: false
+                        required: [glyph, sliceInsets, unitEm]
+                        properties:
+                          glyph:
+                            description: "Authored `set:name` reference to a normalized catalogue glyph."
+                            type: string
+                            pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"
+                          sliceInsets:
+                            description: "The fixed borders (top/right/bottom/left) in the glyph's viewport units: each keeps its authored size while the middle stretches."
+                            type: object
+                            additionalProperties: false
+                            required: [top, right, bottom, left]
+                            properties:
+                              top: {type: number, minimum: 0}
+                              right: {type: number, minimum: 0}
+                              bottom: {type: number, minimum: 0}
+                              left: {type: number, minimum: 0}
+                          unitEm:
+                            description: "The size of one glyph viewport unit, in em of the annotation text size."
+                            type: number
+                            exclusiveMinimum: 0
+                      contentInsetEm:
+                        description: "The box Layout measures note text into (top/right/bottom/left, in em), so the note keeps that padding inside its edge; an image is stretched to the resulting paint box (#465). Required for an image outline; optional for a rectangle or balloon, where omitted means no padding."
+                        type: object
+                        additionalProperties: false
+                        required: [top, right, bottom, left]
+                        properties:
+                          top: {type: number, minimum: 0}
+                          right: {type: number, minimum: 0}
+                          bottom: {type: number, minimum: 0}
+                          left: {type: number, minimum: 0}
+                      inlineSize:
+                        description: "How the note box is sized along the inline axis in an annotations slot (#1051): content (the default) sizes it to its text; fill takes the slot's full inline size and wraps the body in what the box chrome leaves. Outside a slot's row-aligned placement fill acts as content and Layout reports W_LAYOUT_ANNOTATION_FILL_NOT_SLOT."
+                        enum: [content, fill]
+                      maxInlineEm:
+                        description: "With inlineSize fill: the largest outer inline size of the box, in em of the annotation text size; the box is then a start-aligned column narrower than the slot (#1051)."
+                        type: number
+                        exclusiveMinimum: 0
+                      border:
+                        description: "A per-side box border on a square rectangle container (#1049): each side lies on the box's outer edge at full length with mitred corners, and the content inset is measured from inside it. Rectangle outlines with cornerRadius 0 only."
+                        examples: [{start: {width: 3, paint: kind}, top: {width: 1}}]
+                        type: object
+                        additionalProperties: false
+                        minProperties: 1
+                        properties:
+                          start: {type: object, additionalProperties: false, required: [width], properties: {width: {description: "Border width in px; 0 draws nothing.", type: number, minimum: 0}, paint: {description: "kind paints from the annotation-kind-accent role with the annotation kind colour; ink (the default) from the role annotation-border-<side>.", enum: [kind, ink]}}}
+                          end: {type: object, additionalProperties: false, required: [width], properties: {width: {description: "Border width in px; 0 draws nothing.", type: number, minimum: 0}, paint: {description: "kind paints from the annotation-kind-accent role with the annotation kind colour; ink (the default) from the role annotation-border-<side>.", enum: [kind, ink]}}}
+                          top: {type: object, additionalProperties: false, required: [width], properties: {width: {description: "Border width in px; 0 draws nothing.", type: number, minimum: 0}, paint: {description: "kind paints from the annotation-kind-accent role with the annotation kind colour; ink (the default) from the role annotation-border-<side>.", enum: [kind, ink]}}}
+                          bottom: {type: object, additionalProperties: false, required: [width], properties: {width: {description: "Border width in px; 0 draws nothing.", type: number, minimum: 0}, paint: {description: "kind paints from the annotation-kind-accent role with the annotation kind colour; ink (the default) from the role annotation-border-<side>.", enum: [kind, ink]}}}
+                    dependentSchemas:
+                      maxInlineEm:
+                        description: "A maximum inline size belongs to a filled box (#1051)."
+                        examples: [{outline: rectangle, cornerRadius: 0, inlineSize: fill, maxInlineEm: 30}]
+                        required: [inlineSize]
+                        properties: {inlineSize: {const: fill}}
+                    allOf:
+                      - description: "A tilt cycle belongs to a rectangle outline: a balloon tail and an image's slice tiles do not rotate (#584)."
+                        examples: [{outline: rectangle, cornerRadius: 0, tiltDegrees: [-2, 2]}]
+                        if:
+                          properties: {outline: {enum: [balloon, image]}}
+                          required: [outline]
+                        then:
+                          not: {required: [tiltDegrees]}
+                      - description: "A border belongs to a rectangle outline (a tail or an image frame takes none, #1049); its strips follow a corner radius above 0 (#1087)."
+                        examples: [{outline: rectangle, cornerRadius: 0.25, border: {start: {width: 3, paint: kind}}}]
+                        if:
+                          required: [border]
+                        then:
+                          properties: {outline: {const: rectangle}}
+                      - description: "Artwork belongs to a rectangle outline and needs the content inset that says where its paper is (#848)."
+                        examples: [{outline: rectangle, cornerRadius: 0, contentInsetEm: {top: 1, right: 1, bottom: 1, left: 1}, artwork: {glyph: "chrona-target-parts:scroll-frame", sliceInsets: {top: 0, right: 0, bottom: 0, left: 0}, unitEm: 0.1}}]
+                        if:
+                          required: [artwork]
+                        then:
+                          required: [contentInsetEm]
+                          properties: {outline: {const: rectangle}}
+                      - if:
+                          properties: {outline: {const: balloon}}
+                          required: [outline]
+                        then:
+                          required: [outline, cornerRadius, tailBaseEm]
+                      - if:
+                          properties: {outline: {const: image}}
+                          required: [outline]
+                        then:
+                          required: [outline, cornerRadius, image, sliceInsetsEm, contentInsetEm]
+                          properties:
+                            cornerRadius: {const: 0}
+            - description: "An annotation-kind stamp: the note corner it stands at and its square size as a ratio of the note text size (#584)."
+              examples: [{type: stampPlacement, value: {corner: end-top, size: 2}}]
+              if:
+                properties: {type: {const: stampPlacement}}
+              required: [type]
+              then:
+                properties:
+                  value:
+                    type: object
+                    additionalProperties: false
+                    required: [corner, size]
+                    properties:
+                      corner: {description: "The note corner the stamp stands at.", enum: [start-top, end-top, start-bottom, end-bottom]}
+                      size: {description: "Stamp block size as a ratio of the note text size.", type: number, exclusiveMinimum: 0}
+            - description: "Writing mode is finite so Layout measures the block/inline swap of a vertical label (#585)."
+              examples: [{type: writingMode, value: vertical}]
+              if:
+                properties: {type: {const: writingMode}}
+              required: [type]
+              then:
+                properties:
+                  value: {enum: [horizontal, vertical]}
+      roles:
+        type: object
+        description: "Semantic role bindings to named non-color tokens."
+        additionalProperties:
+          type: object
+          description: "One semantic role bound to named token values."
+          additionalProperties: false
+          properties:
+            marker: {description: "Named marker token for the role.", type: string, minLength: 1}
+            pattern: {description: "Named pattern token for the role.", type: string, minLength: 1}
+            symbol: {description: "Named point-symbol token for the role.", type: string, minLength: 1}
+            fontFamily: {description: "Named font-family token for the role.", type: string, minLength: 1}
+            fontWeight: {description: "Named font-weight token for the role.", type: string, minLength: 1}
+            fontSize: {description: "Named font-size token for the role.", type: string, minLength: 1}
+            lineHeight: {description: "Named line-height token for the role.", type: string, minLength: 1}
+            letterSpacing: {description: "Named em-based letter-spacing number token measured by Layout.", type: string, minLength: 1}
+            horizontalScale: {description: "Named number token, 0.5 to 1, compressing the role's text along its own inline axis; Layout measures the compressed width (#585). Absent is 1.", type: string, minLength: 1}
+            textTransform: {description: "Named finite transform token applied before Layout measurement.", type: string, minLength: 1}
+            numericSpacing: {description: "Named finite numeric-spacing token selected before Layout measurement.", type: string, minLength: 1}
+            writingMode: {description: "Named writingMode token: horizontal (absent) or vertical, a single column read top to bottom with upright CJK and sideways Latin; admitted on the group-label role only (#585).", type: string, minLength: 1}
+            iconScale: {description: "Named typography-relative icon block-size ratio for the role.", type: string, minLength: 1}
+            iconGap: {description: "Named typography-relative icon inline-gap ratio for the role.", type: string, minLength: 1}
+            markHeight: {description: "Named lane-slot-relative mark block-size ratio for this semantic role.", type: string, minLength: 1}
+            markOffset: {description: "Named lane-slot-relative mark block-start ratio for this semantic role.", type: string, minLength: 1}
+            markPaintOrder: {description: "Named completed mark paint-order value for this semantic role.", type: string, minLength: 1}
+            markCornerRadius: {description: "Named mark corner-radius ratio for this semantic role.", type: string, minLength: 1}
+            symbolHeight: {description: "Named lane-slot-relative block-size ratio of this role's point-mark symbol (a gate or milestone), separate from the role's bar band (#1066). Absent, the symbol takes markHeight.", type: string, minLength: 1}
+            symbolOffset: {description: "Named lane-slot-relative block offset ratio of this role's point-mark symbol, separate from markOffset (#1066). Absent, the symbol takes markOffset.", type: string, minLength: 1}
+            markReach: {description: "Named ratio of the planned mark's block size that a deadline tick spans, centred on that mark (0 < ratio <= 4); above 1 the tick stands above and below the bar (#822).", type: string, minLength: 1}
+            laneBlockSize: {description: "Named axis-lane block size in px for a labels tier's typography role; the tier becomes a declared lane with vertically centred labels (#426).", type: string, minLength: 1}
+            cellGap: {description: "Named gap in px between adjacent cells of an axis band tier (#426).", type: string, minLength: 1}
+            cellCornerRadius: {description: "Named ratio, of the cell block size (0 < ratio <= 0.5), of the arc radius of the corners of every cell of an axis band tier; absent keeps square corners (#491).", type: string, minLength: 1}
+            cellCornerChamfer: {description: "Named ratio, of the cell block size (0 < ratio <= 0.5), of the cut at each corner of every cell of an axis band tier; excludes cellCornerRadius and a pattern; absent keeps square corners (#491).", type: string, minLength: 1}
+            labelInset: {description: "Named inset, as a ratio of the role's font size, of a start-aligned axis label from its cell edge (#426).", type: string, minLength: 1}
+            labelGap: {description: "Named gap, as a ratio of the role's font size, between an axis label and its secondary label: below it when stacked, after it when inline; absent, 0 when stacked and one measured space when inline (#493).", type: string, minLength: 1}
+            tickLength: {description: "Named length in px of the tick a grid-major or grid-minor tier draws at each interval start, standing on the axis rule; absent keeps the full-height line (#492).", type: string, minLength: 1}
+            tabInlineSize: {description: "Named length in px of the group-tab role's inline extent, standing on the inline start (or end) edge of a group header; required when the role's backgroundTreatment is not none (#882).", type: string, minLength: 1}
+            tabBlockSize: {description: "Named length in px of the group-tab role's block extent from the header's block start; absent means the full header block size (#882).", type: string, minLength: 1}
+            tabGap: {description: "Named length in px between the group tab and the header text; absent means 0 (#882).", type: string, minLength: 1}
+            tabPosition: {description: "Inline edge of the group header the tab stands on; absent means start (#882).", enum: [start, end]}
+            chipPadding: {description: "Named label-chip padding ratio of the label's font size (inline; half on the block axis) for a <purpose>-chip role.", type: string, minLength: 1}
+            progressInset: {description: "Named progress-track inset ratio of the host mark's block size; the fill sits inside the track with this gap (0 <= ratio < 0.5).", type: string, minLength: 1}
+            annotationContainer: {description: "Named outline/tail-geometry token for an annotation-box role (#466); absent keeps today's plain rectangle.", type: string, minLength: 1}
+            viewerFit: {description: "How an annotation box role and its text absorb a viewer that lacks the measured font (#1050): raw (the default, today's output); text-follows-box pins every text line of the box to the width Layout measured; box-follows-text paints the box background to end where the viewer's text ends (a plain square, untilted, content-sized rectangle with no artwork and no end, top or bottom border).", enum: [raw, text-follows-box, box-follows-text]}
+            viewerFitAdjust: {description: "With viewerFit text-follows-box: how the viewer stretches a line to its measured width, spacing (the default; inter-glyph gaps only) or spacingAndGlyphs (glyph outlines too) (#1050).", enum: [spacing, spacingAndGlyphs]}
+            stampPlacement: {description: "Named stampPlacement token (corner and size) for the annotation-kind stamp role (#584).", type: string, minLength: 1}
+            swatchInlineSize: {description: "Named absolute inline length for a legend swatch whose on-chart length has no single value (a span, line, or decoration key); absent means Layout falls back to the legend label's own font size (#427).", type: string, minLength: 1}
+            swatchGap: {description: "Named absolute distance from a legend swatch to its label (#1111); the legend slot gap stays the distance between entries. Absent, the slot gap is both.", type: string, minLength: 1}
+            swatchBlockSize: {description: "Named absolute block length of an area (background) legend swatch (#1111); declaring it makes the area swatch a rectangle of swatchInlineSize (else the legacy side) by this size. Absent, the legacy square.", type: string, minLength: 1}
+            pointSwatchSize: {description: "Named absolute side of the point (gate, milestone) legend swatch (#1111). Absent, the on-chart gate size.", type: string, minLength: 1}
+            backgroundTreatment: {description: "Finite treatment for a completed review-surface background role; none is an explicit non-drawable disposition.", enum: [fill, outline, none]}
+            contrastTreatment: {description: "Finite contrast-floor treatment for a classified state-text role.", enum: [required, deemphasized]}
+            backgroundPaintOrder: {description: "Finite completed ordering key for a review-surface background role.", type: integer, minimum: 0, maximum: 1000}
+            opacity: {description: "Named opacity token for the role.", type: string, minLength: 1}
+            strokeWidth: {description: "Named stroke-width token for the role.", type: string, minLength: 1}
+            dash: {description: "Named dash-pattern token for the role.", type: string, minLength: 1}
+            textAlternative: {description: "Named text-alternative token for the role.", type: string, minLength: 1}
+            gradientAngle: {description: "Named linear-gradient angle token.", type: string, minLength: 1}
+            shadowOffsetX: {description: "Named shadow horizontal-offset token.", type: string, minLength: 1}
+            shadowOffsetY: {description: "Named shadow vertical-offset token.", type: string, minLength: 1}
+            shadowBlur: {description: "Named shadow blur token.", type: string, minLength: 1}
+            shadowOpacity: {description: "Named shadow opacity token.", type: string, minLength: 1}
+            strokeLineCap: {description: "Named stroke-cap token.", type: string, minLength: 1}
+            strokeLineJoin: {description: "Named stroke-join token.", type: string, minLength: 1}
+            artworkFidelity: {description: "Named fidelity token (required or decorative-optional) for the annotation-artwork role: whether a profile that cannot paint the artwork's stroked parts fails or omits it whole (#848).", type: string, minLength: 1}
+            gradientFidelity: {description: "Named gradient fidelity token.", type: string, minLength: 1}
+            shadowFidelity: {description: "Named shadow fidelity token.", type: string, minLength: 1}
+            glowBlur: {description: "Named glow blur token (standard deviation in px, at most 64).", type: string, minLength: 1}
+            glowOpacity: {description: "Named glow opacity token.", type: string, minLength: 1}
+            glowFidelity: {description: "Named glow fidelity token.", type: string, minLength: 1}
+            coneSpread: {description: "Named as-of cone spread token: half-width gained per unit of depth, 0 < spread <= 4 (#890).", type: string, minLength: 1}
+            coneExtent: {description: "Named as-of cone extent token: depth of the foot as a fraction of the plot height, 0 < extent <= 1 (#890).", type: string, minLength: 1}
+            wobbleAmplitude: {description: "Named hand-wobble amplitude token (px, in (0, 16]).", type: string, minLength: 1}
+            wobbleWavelength: {description: "Named hand-wobble wavelength token (px, in [4, 1000]).", type: string, minLength: 1}
+            wobbleSeed: {description: "Named hand-wobble seed token (an integer in [0, 2^32)).", type: string, minLength: 1}
+            wobbleFidelity: {description: "Named hand-wobble fidelity token.", type: string, minLength: 1}
+            frameCornerRadius: {description: "Named corner-radius token (px, at least 0) of a region frame; reduced to half the shorter side when larger. Admitted on the role region-frame (#889).", type: string, minLength: 1}
+            strokeFinishFidelity: {description: "Named stroke-finish fidelity token.", type: string, minLength: 1}
+          dependentSchemas:
+            viewerFitAdjust:
+              description: "A lengthAdjust choice belongs to the text-follows-box mode (#1050)."
+              examples: [{viewerFit: text-follows-box, viewerFitAdjust: spacingAndGlyphs}]
+              required: [viewerFit]
+              properties: {viewerFit: {description: "The mode a lengthAdjust choice belongs to.", const: text-follows-box}}
+      colorBindings:
+        type: object
+        description: "Semantic fill or stroke roles bound to Color Scheme intents."
+        minProperties: 1
+        additionalProperties: false
+        patternProperties:
+          "^[A-Za-z][A-Za-z0-9._:-]*\\.(fill|stroke|gradientStart|gradientEnd|shadowColor)$":
+            description: "Color Scheme intent selected for one fill or stroke role."
+            examples: [accent, "category:bus"]
+            anyOf:
+              - description: "One closed non-category Scheme intent."
+                enum: [surface, surfaceRaised, text, textMuted, accent, positive, negative, warning, neutral, insideLabelPlanned, insideLabelActual, insideLabelSnapshot, insideLabelScenario, rule]
+              - description: "One explicit named category slot."
+                pattern: "^category:[A-Za-z][A-Za-z0-9_-]*$"
+                examples: ["category:bus"]
+          "^[A-Za-z][A-Za-z0-9._:-]*\\.glowColor$":
+            description: "Color Scheme intent selected for a glow colour (#587)."
+            examples: [accent, "category:bus"]
+            anyOf:
+              - description: "One closed non-category Scheme intent."
+                enum: [surface, surfaceRaised, text, textMuted, accent, positive, negative, warning, neutral, insideLabelPlanned, insideLabelActual, insideLabelSnapshot, insideLabelScenario, rule]
+              - description: "One explicit named category slot."
+                pattern: "^category:[A-Za-z][A-Za-z0-9_-]*$"
+                examples: ["category:bus"]
+      colorScales:
+        type: object
+        description: "Named explicit value-to-Scheme-slot maps consumed by View colour encodings."
+        additionalProperties:
+          type: object
+          description: "One scale's declared slot map, or an ordered palette for a data-derived domain."
+          oneOf: [{description: "An explicit value-to-slot map.", required: [slots]}, {description: "A cyclic palette for a derived domain.", required: [palette]}]
+          examples: [{slots: {fw-team: fw-team}}, {palette: [series-1, series-2, series-3]}]
+          additionalProperties: false
+          properties:
+            palette:
+              type: array
+              description: "Ordered Scheme category slots; the n-th derived domain value takes palette[n mod length]."
+              minItems: 1
+              items: {description: "One named Scheme category slot identifier.", type: string, minLength: 1}
+            slots:
+              type: object
+              description: "Exact domain-value to named Scheme category slot mapping."
+              minProperties: 1
+              additionalProperties:
+                description: "One named Scheme category slot identifier."
+                type: string
+                pattern: "^[A-Za-z][A-Za-z0-9_-]*$"
+                examples: [bus]
+      annotationKinds:
+        type: object
+        description: "Header of each Project annotation kind a Theme dresses: label, optional secondary-script label, title template and kind colour (#584). A kind not declared here renders as a plain annotation."
+        propertyNames: {minLength: 1}
+        additionalProperties:
+          type: object
+          description: "One annotation kind's header declaration."
+          examples: [{label: RISK, secondary: WARNING, title: "{label} · {subject}", color: "category:alert"}]
+          required: [label]
+          additionalProperties: false
+          properties:
+            label: {description: "Primary label of the kind; the first header line unless the title template changes it.", type: string, minLength: 1}
+            secondary: {description: "Optional second-script label, set as a second header line unless the title template shows it.", type: string, minLength: 1}
+            title: {description: "Optional header template of literal text and the closed placeholders {label}, {secondary}, {subject} (the anchored object's title) and {subjectId} (its id); {{ and }} are literal braces. Default is {label}.", type: string, minLength: 1}
+            color: {description: "Optional Scheme intent or explicit category slot that paints the kind's bar, accent and stamp; checked at Theme resolution.", type: string, minLength: 1}
+            colorAlso: {description: "Optional extra elements the kind colour also paints: the header text (label and secondary) and the leader line, beside the bar, accent and stamp it always paints (#991). Absent paints none of them.", examples: [[header, leader]], type: array, minItems: 1, uniqueItems: true, items: {description: "One element the kind colour also paints.", enum: [header, leader]}}
+            stamp: {description: "Optional authored `set:name` reference to a normalized catalogue glyph drawn as the kind's stamp.", examples: ["chrona-target-parts:seal-risk"], type: string, pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"}
+      contrastPolicy:
+        type: object
+        description: "Which contrast constraints this Theme opts into (#995, #1126). Contrast is an opt-in design option: a class the Theme omits is a warning, reported and never blocking; error fails the render; none reports nothing. Structural checks are not contrast constraints and are not set here."
+        examples: [{mark: error, stateText: error, groundText: error}]
+        additionalProperties: false
+        properties:
+          mark: {description: "A data mark below its 3:1 floor.", enum: [none, warning, error]}
+          stateText: {description: "A state text (variance cell, note, period label) below its treatment floor.", enum: [none, warning, error]}
+          groundText: {description: "Ink that shares the text role on a ground (a group header, the as-of label) below 4.5:1.", enum: [none, warning, error]}
+          decoration: {description: "A decoration below its 1.10:1 floor, or on a ground that cannot be read.", enum: [none, warning, error]}
+          unsupportedGround: {description: "A mark or text on a ground whose colour cannot be computed.", enum: [none, warning, error]}
+      metrics:
+        type: object
+        description: "Named source-measurement metric bindings used by Layout."
+        propertyNames: {pattern: "^[A-Za-z][A-Za-z0-9._-]*$"}
+        additionalProperties: {description: "Named source-measurement metric.", type: string, minLength: 1}

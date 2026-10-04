@@ -125,7 +125,7 @@ def test_a_stamp_taller_than_the_note_sets_the_box_height(tmp_path):
 
 
 def test_the_stamp_sits_inside_the_accent_edge(tmp_path):
-    rendered = _render(tmp_path, bar=False, accent="end", accent_size=6, label_fill="text", stamp="end-bottom")
+    rendered = _render(tmp_path, bar=False, border_side="end", border_width=6, label_fill="text", stamp="end-bottom")
     box = _by_id(rendered)["annotation-box:view-n0"]
     x, y, w, h = box.bounds
     stamp = _stamp(rendered, "view-n0")[0]
@@ -134,14 +134,14 @@ def test_the_stamp_sits_inside_the_accent_edge(tmp_path):
 
 
 def test_a_bottom_stamp_stands_above_an_accent_edge_on_the_bottom(tmp_path):
-    rendered = _render(tmp_path, bar=False, accent="bottom", accent_size=6, label_fill="text", stamp="end-bottom")
+    rendered = _render(tmp_path, bar=False, border_side="bottom", border_width=6, label_fill="text", stamp="end-bottom")
     box = _by_id(rendered)["annotation-box:view-n0"]
     stamp = _stamp(rendered, "view-n0")[0]
     assert stamp.bounds[1] + stamp.bounds[3] == pytest.approx(box.bounds[1] + box.bounds[3] - 6)
 
 
 def test_a_top_stamp_stands_below_an_accent_edge_on_the_top(tmp_path):
-    rendered = _render(tmp_path, bar=False, accent="top", accent_size=6, label_fill="text", stamp="start-top")
+    rendered = _render(tmp_path, bar=False, border_side="top", border_width=6, label_fill="text", stamp="start-top")
     box = _by_id(rendered)["annotation-box:view-n0"]
     assert _stamp(rendered, "view-n0")[0].bounds[1] == pytest.approx(box.bounds[1] + 6)
 
