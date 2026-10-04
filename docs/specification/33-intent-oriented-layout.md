@@ -456,7 +456,9 @@ routing. See the [#466 point-relation-port correction](../design/issue-466-gener
 
 When a point/body tip is blocked by a comparison sibling or another required
 obstacle, Layout tries the remaining finite ports in stable distance/side
-order and accepts the first bounded quality route. Failed port candidates do
+order and selects an eligible route using the relation ranking in
+[Spec 50](50-constraint-driven-gantt-surface-quality.md#33-relations).
+Failed port candidates do
 not suppress the relation or enter the obstacle inventory. See the [#466
 point-port-candidate correction](../design/issue-466-general-placement-point-port-candidate-correction-2026-09-26.md).
 

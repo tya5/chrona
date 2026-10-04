@@ -6,9 +6,11 @@ from dataclasses import replace
 
 import pytest
 
-from chrona.presentation.layout.relation_terminals import SHAPES, centred_on_route, marker_geometry
+from chrona.presentation.layout.path_geometry import rounded_orthogonal_path
+from chrona.presentation.layout.relation_terminals import SHAPES, centred_on_route, marker_geometry, terminal_run
 from chrona.presentation.renderers.v05_svg import render_v05_svg
 from chrona.presentation.renderers.v05_typeset import render_v05_tikz, render_v05_typst
+from chrona.presentation.scene.model import ScenePaint, ScenePrimitive
 
 from tests.unit.chrona.presentation.scene.test_relation_round_terminals import (
     A, B, DEP, _compose, _end_port, _mark, _rows, _start_port,
@@ -49,12 +51,25 @@ def test_none_with_a_corner_radius_keeps_the_ends_at_the_ports_and_rounds_the_tu
     assert any(c.kind == "quadratic" for c in path.path_commands)
 
 
-def test_none_reserves_no_head_run_so_the_last_corner_may_round_up_to_the_leg():
-    plain, _ = _path("none", "none", radius=4)
-    headed, _ = _path("none", "triangle", radius=4)
-    assert plain.points == headed.points  # the route itself is the same; only the drawn corner differs
-    arcs = lambda p: sum(c.kind == "quadratic" for c in p.path_commands)
-    assert arcs(plain) > arcs(headed)  # the last corner rounds only when no head run is reserved
+def test_none_reserves_no_head_run_on_an_explicit_short_leg_and_svg_keeps_layout_commands():
+    points = ((0, 0), (0, 20), (4, 20))
+    plain_commands = rounded_orthogonal_path(points, 4, end_run=terminal_run(None))
+    headed_marker = marker_geometry({"shape": "triangle", "headLength": 10,
+                                     "headWidth": 8, "attachmentOffset": 1})
+    headed_commands = rounded_orthogonal_path(points, 4, end_run=terminal_run(headed_marker))
+    assert [item.kind for item in plain_commands] == ["move", "line", "quadratic", "line"]
+    assert plain_commands[2].points == ((0, 20), (2.0, 20.0))
+    assert [item.kind for item in headed_commands] == ["move", "line", "line"]
+    assert headed_commands[1].points == ((0, 20),)
+
+    paint = ScenePaint(None, "#000000", 1, (), 1)
+    plain = ScenePrimitive("plain", "Path", "plain", "relation", "dependency-connector", "dependency",
+                           (0, 0, 4, 20), slot_id="s", paint=paint, points=points,
+                           path_commands=plain_commands)
+    headed = replace(plain, scene_id="headed", marker_end=headed_marker, path_commands=headed_commands)
+    svg = render_v05_svg(_surface_with(plain, headed))
+    assert 'd="M0 0L0 18Q0 20 2 20L4 20"' in svg
+    assert 'd="M0 0L0 20L4 20"' in svg
 
 
 def test_the_legend_key_of_a_none_terminal_is_the_plain_stroke():
@@ -77,11 +92,12 @@ def test_svg_emits_no_marker_and_typst_and_tikz_draw_the_plain_path_but_still_re
             render(_surface_with(headed))
 
 
-def _surface_with(path):
+def _surface_with(*paths):
     from datetime import date
     from chrona.presentation.scene.model import ScenePaint, SceneSurface, SurfaceScaleManifest
     scale = SurfaceScaleManifest("s", "primary", date(2026, 1, 1), date(2026, 1, 2), 0, 100, 0, 100)
-    return SceneSurface("s", (), (), (), scale, (replace(path, paint=ScenePaint(None, "#000000", 1, (), 1)),),
+    return SceneSurface("s", (), (), (), scale, tuple(replace(path, paint=path.paint or ScenePaint(None, "#000000", 1, (), 1))
+                                                       for path in paths),
                         ScenePaint("#ffffff", None, None, (), 1), canvas_bounds=(0, 0, 1000, 1000))
 
 

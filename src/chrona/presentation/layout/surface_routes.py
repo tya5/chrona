@@ -23,8 +23,9 @@ from chrona.presentation.layout.relation_terminals import (
 )
 from chrona.presentation.layout.routing import (
     RouteSuppressionEvidence, back_route_points, route_self_overlaps,
-    remove_substroke_jogs, select_relation_route,
+    remove_substroke_jogs, route_quality_metrics, select_relation_route,
 )
+from chrona.presentation.layout.route_reduction import simplify_relation_route, terminal_runs_preserved
 from chrona.presentation.layout.path_geometry import flatten_path, rounded_orthogonal_path
 from chrona.presentation.layout.surface_geometry import bounds_from_rect
 from chrona.presentation.layout.surface_quality import (
@@ -235,12 +236,33 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     marker_start = centred_on_route(marker_geometry(request.theme_tokens.marker("relationSourceTerminal")), "source")
     marker_end = centred_on_route(marker_geometry(request.theme_tokens.marker("relationTargetTerminal")), "target")
 
-    def prepare_route(points, width, hosts, source_side, target_side):
+    def prepare_route(points, width, hosts, source_side, target_side, *,
+                      start_minimum=0.0, end_minimum=0.0):
         def clear(path):
-            return clears_primary_marks(path, width) and all(not obstacles.egress_collisions(
+            return terminal_runs_preserved(tuple(points), path,
+                start_minimum=start_minimum or None, end_minimum=end_minimum or None
+                ) and clears_primary_marks(path, width) and all(not obstacles.egress_collisions(
                 ObstacleSegment(a, b), host_ids=hosts, classes=route_classes,
                 regions=("timeline", "group-header")) for a, b in zip(path, path[1:]) if a != b)
         reduced = remove_substroke_jogs(tuple(points), width, accept=clear)
+        def clear_reduction(path):
+            if route_self_overlaps(path) or not clear(path):
+                return False
+            drawn, start, end = complete_centred_terminals(path, marker_start, marker_end, width)
+            if any(hypot(b[0] - a[0], b[1] - a[1]) + 1e-6 < width
+                   for a, b in zip(drawn, drawn[1:])):
+                return False
+            return not any(marker is not None and marker.centred and marker.angle_degrees is not None
+                for marker in (orient_terminal(start, drawn, source_side, source=True),
+                               orient_terminal(end, drawn, target_side, source=False)))
+
+        # Retain declared corridors and enough free stroke beyond round-head
+        # setbacks, not the arbitrary length of the search's original legs.
+        reduced = simplify_relation_route(reduced, clears=clear_reduction,
+            start_minimum=max(start_minimum, width + (marker_start.head_length / 2
+                if marker_start is not None and marker_start.centred else 0.0)),
+            end_minimum=max(end_minimum, width + (marker_end.head_length / 2
+                if marker_end is not None and marker_end.centred else 0.0)))
         drawn, start, end = complete_centred_terminals(reduced, marker_start, marker_end, width)
         # A round head's reference offset makes its centre axis-sensitive too.
         # If a short tangent disagrees with its port normal, try removing just
@@ -331,7 +353,10 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         points = back_route_points(port, exit_dx, gap_y, stub.exposed_port, stub.semantic_port)
         hosts = (*stub.host_ids, source_mark.placement_id)
         source_side = "start" if relation.source_endpoint in {"start", "at"} else "end"
-        points = prepare_route(points, relation_stroke(relation), hosts, source_side, stub.side)
+        points = prepare_route(points, relation_stroke(relation), hosts, source_side, stub.side,
+            start_minimum=abs(exit_dx),
+            end_minimum=hypot(stub.exposed_port[0] - stub.semantic_port[0],
+                              stub.exposed_port[1] - stub.semantic_port[1]))
         if points is None:
             return fail("terminal-axis-blocked")
         if not terminal_segments_fit(points, relation_stroke(relation)):
@@ -395,7 +420,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     policy = context.layout_manifest.relation_entry
                     entry_penalty = int((policy == "side-when-free" and not target_entry.stub)
                                         or (policy == "side" and not enters_along(relation, candidate)))
-                    return (shared_approach(source_id, target_id, completed), entry_penalty)
+                    length, _, bends = route_quality_metrics(candidate)
+                    return (shared_approach(source_id, target_id, completed), entry_penalty, bends, length)
 
                 selection = select_relation_route(port_pairs, obstacles=obstacles,
                         bounds=(timeline_bounds[0], route_top, timeline_bounds[0] + timeline_bounds[2], route_bottom),
@@ -404,11 +430,13 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         relation_scene_id=scene_id, max_bends=context.layout_manifest.relation_max_bends,
                         max_detour_ratio=context.layout_manifest.relation_max_detour_ratio, classes=route_classes,
                         prepare=lambda candidate, source_exit, target_entry: prepare_route(candidate, dependency_stroke,
-                            (*source_exit.host_ids, *target_entry.host_ids), source_exit.side, target_entry.side),
+                            (*source_exit.host_ids, *target_entry.host_ids), source_exit.side, target_entry.side,
+                            start_minimum=hypot(source_exit.exposed_port[0] - source_exit.semantic_port[0],
+                                                source_exit.exposed_port[1] - source_exit.semantic_port[1]),
+                            end_minimum=hypot(target_entry.exposed_port[0] - target_entry.semantic_port[0],
+                                              target_entry.exposed_port[1] - target_entry.semantic_port[1])),
                         accept=lambda candidate: clears_primary_marks(candidate, dependency_stroke)
-                            and terminal_segments_fit(candidate, dependency_stroke), rank=candidate_rank,
-                        rank_floor=(False, int(context.layout_manifest.relation_entry == "side-when-free"
-                                               and not any(entry.stub for _, entry in port_pairs))))
+                            and terminal_segments_fit(candidate, dependency_stroke), rank=candidate_rank)
                 selected_pair, points = selection.selected_pair, selection.points
                 if projection.lane_membership is not None:
                     lane_selection = selection

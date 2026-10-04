@@ -107,10 +107,11 @@ def test_the_terminal_leg_keeps_a_straight_run_for_the_head_and_its_tangent():
 
 
 def test_a_synthetic_route_ends_straight_for_the_target_head():
-    # The last leg here is a 4 px drop and the head is 10 px: the turn before it stays square (no room for head and arc).
     surface, path = _drawn(4)
+    target = next(item for item in surface.primitives if item.scene_id == "planned:b:b")
     head, end = path.marker_end.head_length, path.points[-1]
-    assert path.points[-1][0] == path.points[-2][0] and abs(path.points[-1][1] - path.points[-2][1]) < head
+    assert end == pytest.approx((target.bounds[0], target.bounds[1] + target.bounds[3] / 2))
+    assert abs(end[0] - path.points[-2][0]) + abs(end[1] - path.points[-2][1]) >= head
     arcs = [c for c in path.path_commands if c.kind == "quadratic"]
     assert arcs
     for arc in arcs:

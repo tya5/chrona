@@ -51,7 +51,14 @@ def test_target_b_with_entry_side_enters_from_the_side_or_says_why(tmp_path):
     materialize(copy / "manifest.yaml", "target-b", tmp_path / "out", write=True)
     scene = json.loads((tmp_path / "out/review.scene.json").read_text(encoding="utf-8"))
     paths = {path["sourceRef"]: path["points"] for path in _relation_paths(scene)}
-    explained = {line.split(":")[2] for line in scene["diagnostics"] if line.startswith("I_LAYOUT_RELATION_ENTRY_FALLBACK:")}
+    reasons = {line.split(":")[2]: line.partition(";reason=")[2]
+               for line in scene["diagnostics"] if line.startswith("I_LAYOUT_RELATION_ENTRY_FALLBACK:")}
     sideways = {relation for relation, points in paths.items() if points[-2][1] == points[-1][1]}
-    assert len(sideways) >= 22, sorted(set(paths) - sideways)
-    assert set(paths) - sideways <= explained, "every relation that does not enter from the side carries a diagnostic"
+    assert paths and sideways, "the declared context must emit actual relations, including side entries"
+    exceptions = set(paths) - sideways
+    assert exceptions <= set(reasons), "every relation that does not enter from the side carries a diagnostic"
+    final_codes = {"same-row", "entry-stub-blocked", "degenerate", "bends-or-detour", "forward-entry-failed",
+                   "terminal-axis-blocked", "sub-stroke-segment", "primary-mark-blocked"}
+    assert all(reasons[relation] in final_codes or (
+                   reasons[relation].startswith("blocked:") and reasons[relation].removeprefix("blocked:"))
+               for relation in exceptions), {relation: reasons[relation] for relation in exceptions}

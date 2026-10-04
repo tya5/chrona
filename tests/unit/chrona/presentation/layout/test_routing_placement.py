@@ -10,6 +10,7 @@ from chrona.presentation.layout.obstacles import (
     ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex, segment_length_inside_rect,
 )
 from chrona.presentation.layout.ports import ConnectorEgress
+from chrona.presentation.layout.route_reduction import simplify_relation_route
 
 
 def test_place_relation_route_returns_completed_orthogonal_points():
@@ -118,17 +119,6 @@ def test_node_preference_cannot_admit_a_high_ranked_unsafe_or_over_budget_route(
     assert selection.attempts[1].search_failure == "E_LAYOUT_ROUTE_THROUGH_MARK"
 
 
-def test_rank_floor_skips_only_candidates_that_cannot_improve_the_selected_route():
-    source = ConnectorEgress("end", (0, 0), (0, 0), ())
-    target = ConnectorEgress("start", (10, 0), (10, 0), ())
-    selection = select_relation_route(((source, target), (source, target)),
-        obstacles=SurfaceObstacleIndex(), bounds=(-1, -1, 11, 11), source_host_id=None, target_host_id=None,
-        relation_scene_id="relation:dep", max_bends=0, max_detour_ratio=1,
-        rank=lambda *args: (False, 0), rank_floor=(False, 0))
-    assert selection.selected_pair == (source, target)
-    assert len(selection.attempts) == 1
-
-
 REVERSING_TARGET_APPROACH = ((20.0, 110.0), (0.0, 110.0), (0.0, 90.0), (0.0, 95.0))
 
 
@@ -189,3 +179,65 @@ def test_lane_selection_recovers_the_same_port_pair_with_its_next_safe_repair(mo
     assert selected.selected_pair == (source, target)
     assert selected.points == ((20.0, 110.0), (12.0, 110.0), (12.0, 90.0), (0.0, 90.0), (0.0, 95.0))
     assert [item.outcome for item in selected.attempts] == ["accepted"]
+
+
+def _s_jog_selector_fixture():
+    obstacles = SurfaceObstacleIndex()
+    obstacles.add(SurfaceObstacle("src", "mark", "timeline", ObstacleRect(-0.2, 2, 0.2, 2.2)))
+    obstacles.add(SurfaceObstacle("tgt", "mark", "timeline", ObstacleRect(5.2, 3.4, 5.4, 3.6)))
+    source = ConnectorEgress("end", (0, 0), (2, 0), ("src",))
+    target = ConnectorEgress("above", (5, 3), (5, 1), ("tgt",))
+    return obstacles, source, target
+
+
+def test_selector_reduces_a_corridor_safe_s_jog_before_quality_eligibility():
+    obstacles, source, target = _s_jog_selector_fixture()
+    inputs = dict(port_pairs=((source, target),), obstacles=obstacles,
+        bounds=(-1, -1, 6, 4), source_host_id=None, target_host_id=None,
+        relation_scene_id="relation:s-jog", max_bends=1, max_detour_ratio=1.0)
+
+    unprepared = select_relation_route(**inputs)
+    assert unprepared.selected_pair is None
+    assert unprepared.attempts[0].outcome == "quality-rejected"
+    assert (unprepared.attempts[0].length, unprepared.attempts[0].bends) == (8, 3)
+
+    def prepare(points, left, right):
+        return simplify_relation_route(points, clears=lambda _: True,
+            start_minimum=2, end_minimum=2)
+
+    selected = select_relation_route(**inputs, prepare=prepare)
+    assert selected.selected_pair == (source, target)
+    assert selected.points == ((0, 0), (5, 0), (5, 3))
+    assert selected.attempts[0].outcome == "accepted"
+    assert selected.attempts[0].bends == 1
+    assert selected.attempts[0].length == 8
+
+
+def test_rank_compares_prepared_routes_and_prefers_later_fewer_bend_candidate():
+    obstacles, source, s_target = _s_jog_selector_fixture()
+    straight_target = ConnectorEgress("start", (5, 0), (5, 0), ())
+    prepared = []
+    ranked = []
+
+    def prepare(points, left, right):
+        result = simplify_relation_route(points, clears=lambda _: True,
+            start_minimum=2, end_minimum=2 if right is s_target else 0)
+        prepared.append(result)
+        return result
+
+    def rank(points, left, right):
+        assert points in prepared, "ranking must see completed/reduced geometry"
+        ranked.append((right, points))
+        bends = sum((a[0] == b[0]) != (b[0] == c[0])
+                    for a, b, c in zip(points, points[1:], points[2:]))
+        return bends
+
+    selection = select_relation_route(((source, s_target), (source, straight_target)),
+        obstacles=obstacles, bounds=(-1, -1, 6, 4), source_host_id=None, target_host_id=None,
+        relation_scene_id="relation:ranked-s-jog", max_bends=3, max_detour_ratio=2,
+        prepare=prepare, rank=rank)
+    assert selection.selected_pair == (source, straight_target)
+    assert selection.points == ((0, 0), (5, 0))
+    assert [right for right, _ in ranked] == [s_target, straight_target]
+    assert [attempt.outcome for attempt in selection.attempts] == [
+        "eligible-not-selected", "accepted"]

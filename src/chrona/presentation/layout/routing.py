@@ -330,14 +330,12 @@ def select_relation_route(
     prepare: Callable[[tuple[tuple[float, float], ...], ConnectorEgress, ConnectorEgress],
                       tuple[tuple[float, float], ...] | None] | None = None,
     rank: Callable[[tuple[tuple[float, float], ...], ConnectorEgress, ConnectorEgress], tuple] | None = None,
-    rank_floor: tuple | None = None,
 ) -> RelationRouteSelection:
     """Measure eligibility, then select by the caller's stable rank when supplied.
 
-    The order is the caller's declared deterministic candidate order. A
+    The order is the caller's declared deterministic candidate order.
     Without a rank, the first accepted pair wins. With a rank, all eligible
-    pairs are compared and exact ties keep the first. A declared lower bound
-    permits early return when no later pair can improve the winner. A search failure is
+    pairs are compared and exact ties keep the first. A search failure is
     distinguished from unrelated invalid input; endpoint
     labels are never exempted from either corridor or body collisions.
     """
@@ -412,8 +410,6 @@ def select_relation_route(
                 if chosen_attempt >= 0:
                     attempts[chosen_attempt] = replace(attempts[chosen_attempt], outcome="eligible-not-selected")
                 best, chosen, chosen_points, chosen_attempt = score, (source, target), tuple(points), len(attempts) - 1
-                if rank_floor is not None and score == rank_floor:
-                    return RelationRouteSelection(chosen, chosen_points, tuple(attempts))
             else:
                 attempts[-1] = replace(measured, outcome="eligible-not-selected")
     return RelationRouteSelection(chosen, chosen_points, tuple(attempts))
