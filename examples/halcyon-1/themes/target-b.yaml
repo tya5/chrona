@@ -395,6 +395,7 @@ body:
       backgroundTreatment: fill
       chipPadding: chip-padding
       markCornerRadius: chip-radius
+      viewerFit: text-follows-box
     group-band:
       backgroundTreatment: none
       backgroundPaintOrder: 10
@@ -424,6 +425,7 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+      viewerFit: text-follows-box
     numeric:
       fontFamily: editorial
       fontWeight: weight.bold
@@ -434,6 +436,7 @@ body:
       numericSpacing: tabular-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+      viewerFit: text-follows-box
     heading:
       fontFamily: editorial
       fontWeight: weight.bold
@@ -444,6 +447,7 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+      viewerFit: text-follows-box
     subtitle:
       fontFamily: editorial
       fontWeight: weight.regular
@@ -454,6 +458,7 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+      viewerFit: text-follows-box
     axis:
       fontFamily: editorial
       fontWeight: weight.bold
@@ -464,6 +469,7 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+      viewerFit: text-follows-box
     as-of-label:
       fontFamily: editorial
       fontWeight: weight.bold
@@ -482,6 +488,7 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+      viewerFit: text-follows-box
     annotation:
       fontFamily: editorial
       fontWeight: weight.regular
@@ -513,6 +520,7 @@ body:
       letterSpacing: letter-spacing
       textTransform: text-transform
       numericSpacing: numeric-spacing
+      viewerFit: text-follows-box
     slot-heading:
       fontFamily: editorial
       fontWeight: weight.bold
@@ -531,6 +539,7 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+      viewerFit: text-follows-box
     metric:
       fontFamily: editorial
       fontWeight: weight.bold
@@ -541,6 +550,7 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+      viewerFit: text-follows-box
     groupHeader:
       fontFamily: editorial
       fontWeight: weight.bold
@@ -551,6 +561,7 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+      viewerFit: text-follows-box
     gate:
       strokeWidth: stroke-width
     tableColumnLabel:
@@ -563,6 +574,7 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+      viewerFit: text-follows-box
     calendar-exception:
       backgroundTreatment: fill
       backgroundPaintOrder: 12
@@ -669,6 +681,7 @@ body:
       iconScale: icon-scale
       iconGap: icon-gap
       laneBlockSize: axis-lane-quarter
+      viewerFit: text-follows-box
     axisMonth:
       fontFamily: editorial
       fontWeight: weight.regular
@@ -681,6 +694,7 @@ body:
       iconGap: icon-gap
       laneBlockSize: axis-lane-month
       labelInset: axis-label-inset
+      viewerFit: text-follows-box
     axis-band-decoration2:
       backgroundTreatment: none
       backgroundPaintOrder: 10
