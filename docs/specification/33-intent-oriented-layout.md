@@ -490,6 +490,25 @@ Layout outputs. If the index cannot fit, Layout diagnoses and omits only the
 index; the accepted annotation box/text and purpose-required leader remain.
 See the [#466 index/leader correction](../design/issue-466-general-placement-note-index-leader-correction-2026-09-26.md).
 
+**Numbered annotation list status (#1130, [work record](../planning/active/issue-1130-note-index-suppression-2026-10-04.md)).**
+When the Layout declares an `annotations` slot, its ordered note list is a
+separate output from each annotation's plot index and callout box. Every numbered View annotation retains its View-order
+ordinal and exactly one visible list entry. When an optional plot index is
+suppressed, the accepted note text remains and the entry visibly says `index
+not shown on plot`; the index-suppression diagnostic remains, and any required
+leader is unchanged. When the annotation callout box/leader is suppressed,
+Layout retains a compact numbered summary entry visibly saying `callout not
+shown on plot`; the existing callout-suppression diagnostic remains, and no
+plot index, box, or leader is fabricated. These statuses are Layout-derived,
+not View/Project facts or adapter decisions. Layout measures and places the
+final list entries after resolving plot visibility; it may not renumber them
+or repair a completed Scene in an adapter. In the no-suppression case, the
+existing Scene and adapter output remain byte-identical. This preserves
+intentional callout suppression while preventing a silent numbering gap.
+Without that slot, Layout does not fabricate a list or change the existing
+plot-only annotation behavior. List overflow must remain explicitly diagnosed,
+never silently omit an entry.
+
 Segment/rectangle obstacle tests treat a `1e-9` layout-unit boundary contact
 as contact, not interior penetration; a longer positive interior crossing
 remains blocked. This handles floating representations of the same completed
