@@ -701,7 +701,6 @@ body:
     annotation-note-box.stroke: surfaceRaised
     annotation-note-text.fill: text
     metric.fill: text
-    table-header.fill: surfaceRaised
     axis-major.stroke: neutral
     axis-minor.stroke: surfaceRaised
     axis-band-decoration.fill: surfaceRaised
