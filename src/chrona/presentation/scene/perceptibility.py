@@ -175,8 +175,10 @@ def _relation_node_approach_findings(scene_path: str, raw_primitives: Any,
             continue
         from_id, to_id = raw.get("fromInstanceId"), raw.get("toInstanceId")
         # Old Scenes have no resolved endpoint identity; never infer it from route geometry or the id spelling.
-        if not isinstance(from_id, str) or not from_id or not isinstance(to_id, str) or not to_id:
+        if from_id is None and to_id is None:
             continue
+        _require(isinstance(from_id, str) and bool(from_id) and isinstance(to_id, str) and bool(to_id),
+                 "relation endpoint identity must be a paired set of nonempty strings")
         raw_points = raw.get("points")
         _require(isinstance(raw_points, list) and len(raw_points) >= 2, "invalid relation points for endpoint observation")
         points = []

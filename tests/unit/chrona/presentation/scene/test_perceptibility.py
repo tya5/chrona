@@ -43,6 +43,13 @@ def _node_overlap_cause(node, relation_ids, reason="distinct declared route appr
     }, separators=(",", ":"))
 
 
+@pytest.mark.parametrize("start,end", [("node", None), (None, "node"), ("", "node"), (7, "node")])
+def test_endpoint_observation_rejects_partial_or_invalid_identity(start, end):
+    path = _node_relation_path("relation:bad", [[0, 0], [10, 0]], start_node=start, end_node=end)
+    with pytest.raises(ScenePerceptibilityError, match="paired set of nonempty strings"):
+        evaluate_scene_perceptibility(_scene(path))
+
+
 def _codes(document):
     return [item.code for item in evaluate_scene_perceptibility(document)]
 
