@@ -4,9 +4,11 @@ import pytest
 
 from chrona.presentation.layout.routing import (
     RouteAttemptEvidence, RouteSuppressionEvidence, place_relation_route,
-    relation_route_quality, route_quality_attempt, select_lane_relation_route,
+    relation_route_quality, repair_self_reversal, route_quality_attempt, select_lane_relation_route,
 )
-from chrona.presentation.layout.obstacles import SurfaceObstacleIndex
+from chrona.presentation.layout.obstacles import (
+    ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex, segment_length_inside_rect,
+)
 from chrona.presentation.layout.ports import ConnectorEgress
 
 
@@ -68,3 +70,78 @@ def test_lane_port_pair_search_retains_rejected_and_accepted_measured_attempts()
     assert accepted.selected_pair == (source, target)
     assert accepted.points[0] == (0, 0) and accepted.points[-1] == (10, 10)
     assert accepted.attempts[0].outcome == "accepted"
+
+
+def test_lane_selection_retains_primary_mark_rejection_and_tries_the_next_pair():
+    source = ConnectorEgress("end", (0, 0), (0, 0), ())
+    blocked = ConnectorEgress("start", (10, 0), (10, 0), ())
+    safe = ConnectorEgress("above", (10, 10), (10, 10), ())
+    selection = select_lane_relation_route(((source, blocked), (source, safe)),
+        obstacles=SurfaceObstacleIndex(), bounds=(-1, -1, 11, 11), source_host_id=None, target_host_id=None,
+        relation_scene_id="relation:dep", max_bends=4, max_detour_ratio=2,
+        accept=lambda points: points[-1] != blocked.semantic_port)
+    assert selection.selected_pair == (source, safe)
+    assert selection.attempts[0].search_failure == "E_LAYOUT_ROUTE_THROUGH_MARK"
+    assert selection.attempts[1].outcome == "accepted"
+
+
+REVERSING_TARGET_APPROACH = ((20.0, 110.0), (0.0, 110.0), (0.0, 90.0), (0.0, 95.0))
+
+
+def _repair_target(right=10.0):
+    bounds = ObstacleRect(0.0, 90.0, right, 100.0)
+    obstacles = SurfaceObstacleIndex()
+    obstacles.add(SurfaceObstacle("target", "mark", "timeline", bounds))
+
+    def clear(points):
+        return all(segment_length_inside_rect(ObstacleSegment(a, b), bounds) == 0
+                   for a, b in zip(points, points[1:]))
+
+    return obstacles, clear
+
+
+def test_reversal_repair_skips_an_unsafe_first_jog_before_committing_a_later_safe_one():
+    obstacles, clear = _repair_target()
+    inputs = dict(classes=("mark",), regions=("timeline",), host_ids=("target",))
+    unvalidated = repair_self_reversal(REVERSING_TARGET_APPROACH, obstacles, **inputs)
+    assert unvalidated == ((20.0, 110.0), (8.0, 110.0), (8.0, 90.0), (0.0, 90.0), (0.0, 95.0))
+    assert not clear(unvalidated), "the blanket host exemption admits the unsafe first jog"
+
+    repaired = repair_self_reversal(REVERSING_TARGET_APPROACH, obstacles, **inputs, accept=clear)
+    assert repaired == ((20.0, 110.0), (12.0, 110.0), (12.0, 90.0), (0.0, 90.0), (0.0, 95.0))
+    assert clear(repaired)
+    assert repaired[-2:] == REVERSING_TARGET_APPROACH[-2:], "the authorized terminal corridor stays exact"
+    assert len(obstacles.all()) == 1, "private candidate checks do not add geometry"
+
+
+def test_an_already_compliant_first_repair_keeps_its_exact_geometry():
+    obstacles, clear = _repair_target(right=6.0)
+    inputs = dict(classes=("mark",), regions=("timeline",), host_ids=("target",))
+    before = repair_self_reversal(REVERSING_TARGET_APPROACH, obstacles, **inputs)
+    after = repair_self_reversal(REVERSING_TARGET_APPROACH, obstacles, **inputs, accept=clear)
+    assert clear(before)
+    assert after == before
+
+
+def test_lane_selection_recovers_the_same_port_pair_with_its_next_safe_repair(monkeypatch):
+    import chrona.presentation.layout.routing as routing
+
+    obstacles, clear = _repair_target()
+    calls = []
+
+    def body_route(**kwargs):
+        calls.append(kwargs)
+        return REVERSING_TARGET_APPROACH[:-1]
+
+    monkeypatch.setattr(routing, "place_relation_route", body_route)
+    source = ConnectorEgress("end", (20.0, 110.0), (20.0, 110.0), ())
+    target = ConnectorEgress("above", (0.0, 95.0), (0.0, 90.0), ("target",))
+    selected = select_lane_relation_route(((source, target),), obstacles=obstacles,
+        bounds=(-10.0, 80.0, 30.0, 120.0), source_host_id=None, target_host_id="target",
+        relation_scene_id="relation:neutral", max_bends=4, max_detour_ratio=2,
+        classes=("mark",), regions=("timeline",), accept=clear)
+
+    assert len(calls) == 1
+    assert selected.selected_pair == (source, target)
+    assert selected.points == ((20.0, 110.0), (12.0, 110.0), (12.0, 90.0), (0.0, 90.0), (0.0, 95.0))
+    assert [item.outcome for item in selected.attempts] == ["accepted"]

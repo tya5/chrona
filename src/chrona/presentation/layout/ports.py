@@ -104,8 +104,13 @@ def connector_egress_candidates(mark: MarkPlacement, endpoint: str,
         exposed = {"end": (right, semantic[1]), "start": (left, semantic[1]),
                    "above": (semantic[0], top), "below": (semantic[0], bottom)}[side]
         natural = "start" if endpoint == "start" else "end"
+        through_body = (mark.mark_shape != "point" and endpoint not in {"at", "body"}
+                        and side in {"start", "end"} and side != natural)
+        if through_body:
+            # A temporal endpoint cannot egress through the opposite side of its own bar.
+            continue
         candidates.append(ConnectorEgress(side, semantic, exposed, tuple(sorted(connected)), False,
-            mark.mark_shape != "point" and endpoint not in {"at", "body"} and side in {"start", "end"} and side != natural))
+            through_body))
     order = {"end": 0, "start": 1, "above": 2, "below": 3}
     ranked = tuple(sorted(candidates, key=lambda item: (
         abs(item.exposed_port[0] - toward[0]) + abs(item.exposed_port[1] - toward[1]),

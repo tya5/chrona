@@ -3,8 +3,12 @@ from __future__ import annotations
 
 from decimal import Decimal
 
+import pytest
+
 from chrona.presentation.layout.model import Rect
-from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacle, SurfaceObstacleIndex
+from chrona.presentation.layout.obstacles import (
+    ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex,
+)
 from chrona.presentation.layout.ports import (
     coincident_endpoint_port_ids, connector_boundary_ports, connector_egress_candidates,
 )
@@ -45,12 +49,44 @@ def test_overlapping_comparison_sibling_exposes_temporal_endpoint_without_moving
     unrelated = MarkPlacement("planned:other", "other",
                               Rect(Decimal(30), Decimal(20), Decimal(15), Decimal(8)), (30, 24), (45, 24))
     candidates = connector_egress_candidates(current, "end", (50, 40), (scenario, unrelated))
-    assert len(candidates) == 4
+    assert len(candidates) == 3
     assert candidates[0].semantic_port == (30, 24)
     assert candidates[0].exposed_port == (35, 24)
     assert candidates[0].host_ids == ("planned:item", "planned:scenario:item")
-    assert {candidate.side for candidate in candidates} == {"end", "start", "above", "below"}
+    assert {candidate.side for candidate in candidates} == {"end", "above", "below"}
     assert all(candidate.semantic_port == (30, 24) for candidate in candidates)
+
+
+def test_span_start_candidates_mirror_the_finish_and_keep_the_temporal_port() -> None:
+    mark = _mark("span")
+    candidates = connector_egress_candidates(mark, "start", (-20, 24), ())
+    assert {candidate.side for candidate in candidates} == {"start", "above", "below"}
+    assert all(candidate.semantic_port == (10, 24) for candidate in candidates)
+    assert next(candidate for candidate in candidates if candidate.side == "start").exposed_port == (10, 24)
+
+
+@pytest.mark.parametrize(("endpoint", "side", "semantic", "exposed", "blocker"), (
+    ("start", "above", (10, 24), (10, 20), (9.5, 21.5, 10.5, 22.5)),
+    ("start", "below", (10, 24), (10, 28), (9.5, 25.5, 10.5, 26.5)),
+    ("end", "above", (18, 24), (18, 20), (17.5, 21.5, 18.5, 22.5)),
+    ("end", "below", (18, 24), (18, 28), (17.5, 25.5, 18.5, 26.5)),
+))
+def test_span_above_and_below_corridors_are_checked_against_shared_obstacle_index(
+        endpoint, side, semantic, exposed, blocker) -> None:
+    mark = _mark("span")
+    candidates = connector_egress_candidates(mark, endpoint, (50, 40), ())
+    candidate = next(item for item in candidates if item.side == side)
+    assert candidate.semantic_port == semantic
+    assert candidate.exposed_port == exposed
+
+    index = SurfaceObstacleIndex()
+    index.add(SurfaceObstacle(mark.placement_id, "mark", "timeline",
+                              ObstacleRect(10, 20, 18, 28)))
+    index.add(SurfaceObstacle("blocking-label", "label", "timeline", ObstacleRect(*blocker)))
+    assert index.egress_collisions(ObstacleSegment(candidate.semantic_port, candidate.exposed_port),
+                                   host_ids=(mark.placement_id,),
+                                   classes=("mark", "label")) == (
+        index.select(classes=("label",))[0],)
 
 
 def test_coincident_port_aliases_are_exact_and_host_scoped() -> None:

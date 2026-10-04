@@ -2,9 +2,9 @@ version: chrona/layout-profile/v0.10
 id: target-b
 flowDirection: horizontal
 dependencyNetworkFlowDirection: horizontal
-requiredThemeTokens: [legend-block, legend-item-min, note-rail-width, spacing.l, spacing.m, spacing.none]
+requiredThemeTokens: [legend-block, legend-gap, legend-item-min, note-rail-width, spacing.l, spacing.m, spacing.none]
 reviewSurface: {rowDistribution: fill, backgroundExtents: {rowBand: table, groupBand: both, groupHeaderBand: both, calendarClosed: timeline}, annotationRouting: {maxBends: 4, maxDetourRatio: 2}}
-relationRouting: {maxBends: 4, maxDetourRatio: 2, entry: side-when-free}
+relationRouting: {maxBends: 4, maxDetourRatio: 4, entry: side}
 root:
   id: page
   kind: column
@@ -68,6 +68,7 @@ root:
         - id: annotations
           kind: slot
           source: annotations
+          heading: {text: Notes, align: start, block: header-row}
           inlineSize: {fixed: {token: note-rail-width}}
           blockSize: fill
           place: {inline: stretch, block: stretch, safety: strict}
@@ -83,4 +84,4 @@ root:
       overflow: ellipsize-with-source
       direction: inline
       itemMinInlineSize: {token: legend-item-min}
-      gap: {token: spacing.m}
+      gap: {token: legend-gap}

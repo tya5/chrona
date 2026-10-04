@@ -72,6 +72,13 @@ def test_scene_perceptibility_runs_once_after_generated_evidence_integrity():
             < ids.index("diagnostic-inventory"))
 
 
+def test_the_theme_role_consumer_check_is_a_conformance_gate():
+    runner = _runner()
+    ids = [item.check_id for item in runner.CHECKS]
+
+    assert ids.count("theme-role-consumers") == 1  # #1117: a declared Theme role no closure reads fails conformance
+
+
 def test_literal_issue_acceptance_gate_runs_once_after_documented_commands():
     runner = _runner()
     ids = [item.check_id for item in runner.CHECKS]
