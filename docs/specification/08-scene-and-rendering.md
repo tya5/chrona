@@ -399,7 +399,7 @@ paints. Contrast and perceptibility evaluation treat a prior `Symbol` primitive 
 the same bounds as possible ground for a later primitive's paint, exactly as they
 already do for a `Rect`, so a glyph part painted over another part is checked
 against that part's colour rather than against the canvas. `Path` carries at least two ordered logical
-`points`; semantic dependency paths additionally carry opaque resolved node
+`points`; table-timeline dependency paths additionally carry opaque resolved node
 identities `fromInstanceId` and `toInstanceId` (#1109). Layout supplies them,
 Scene projects them without parsing port/primitive IDs, and observers use them
 to distinguish shared-node approaches from unrelated path overlaps. Both
@@ -407,7 +407,8 @@ optional properties are added to live Scene v0.7 in place (Spec 56 §3.2), and
 their presence selects v0.7 serialization; v0.6 is unchanged. This replaces
 the earlier, unimplemented public `fromPortId`/`toPortId` promise: completed
 endpoint coordinates remain in the path/terminal geometry, while port IDs
-remain Layout-internal. Non-dependency paths may omit both identities.
+remain Layout-internal. Identities are paired and belong only to `Path`.
+Other paths, including dependency-network edges, may omit both identities.
 `Path.bounds` is the exact union of its points,
 and `Icon` carries exactly one completed normalized vector payload or immutable raster
 payload/identity, concrete bounds, resolved paint where applicable, decorative flag, and
@@ -619,7 +620,8 @@ construction, never adapter fallback.
 Family presence is conditional only on an explicit resolved slot, visibility policy,
 and authorized source.  Absence of an authorized required member is
 `E_PRESENTATION_PRIMITIVE_MISSING`; an absent optional source emits no substitute.
-Paths contain ordered Scene-owned points and endpoint port identifiers.  Text always
+Paths contain ordered Scene-owned points and, for table-timeline dependencies,
+resolved endpoint instance identities; port identifiers remain Layout-internal. Text always
 contains its one `TextLayout`; Rect/Symbol/Path bounds are the union of their emitted
 geometry.  The deterministic z-order is: background/frame, bands/group/row surfaces,
 rules and ticks, marks, table/axis/item labels, connectors, annotation boxes/text/leaders,

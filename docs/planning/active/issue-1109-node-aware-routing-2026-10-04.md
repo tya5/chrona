@@ -3,7 +3,7 @@
 ## Published baseline and design plan
 
 Public main: `23bc8a57` (read 2026-10-04). #1114's primary-mark safety
-is the preceding lane-R slice, published as PR #1122 (implementation pending).
+is the preceding lane-R slice in PR #1122 (acceptance pending).
 Authority: [#1109](https://github.com/tya5/chrona/issues/1109), Spec 50 §3.3,
 #1084/#1072's side-entry rules, #1059's non-reversal invariant. WIP `e2529728`
 is reference only: side deprioritization is not proof of actual-segment clearance.
@@ -25,7 +25,7 @@ S-jogs with and without a free collapse; fixed semantic endpoints and terminal
 stubs. Decide whether to reserve natural incoming sides or use completed
 approach segments, how to resolve cyclic placement deterministically, and how
 bend preference interacts with side-entry and safety. No new Project data,
-schema, Theme knob, terminal geometry or reviewer YAML change is intended.
+authoring schema, Theme knob, terminal geometry or reviewer YAML change is intended.
 
 ## Publication and implementation boundaries
 
@@ -67,7 +67,10 @@ identity metadata and draw unchanged geometry. Spec 56 permits additive live
 schema fields in place. This corrects Spec 08's unimplemented public-port-ID
 promise with the identity actually needed by consumers. Spec 50's bounds,
 #1114 mark safety and #1059 non-reversal remain mandatory. Side-entry preference
-does not justify sharing an arrival segment. Cycles are diagnosed, not treated
+does not justify sharing an arrival segment. The endpoint-identity requirement
+and shared-approach observer cover table-timeline dependencies; dependency-network
+edges retain their separate contract. Candidate comparison uses completed,
+terminal-trimmed approaches. Cycles are diagnosed, not treated
 as a scheduling error. No Theme, View, Project or Layout Profile change.
 
 ## Implementation plan
@@ -84,5 +87,29 @@ and same-node versus different-node observations; all existing entry, mark and
 label guards. Batch regeneration reports each residual overlap with its
 diagnostic and rendered target B. Any broader regression returns to this
 design before acceptance. CI runs full tests and schema-equivalence; no manual
-generated mirrors/artifacts. Current status: design and implementation plan
-published; code and acceptance pending.
+generated mirrors/artifacts.
+
+## Current implementation and acceptance
+
+Implementation: shared ranked candidate selection; endpoint-preserving S-jog
+reduction; stable routing order; paired Scene endpoint identity and delivery
+ownership; exact-pair diagnostic observation. Incoming IDs use a compact JSON
+array so opaque lane identities containing commas remain unambiguous. Synthetic
+tests cover reverse declarations, multiple arrivals, mirrored endpoints, cycles
+with diagnosed residual overlaps, ranking ties, mark safety and unchanged SVG
+serialization when only metadata changes.
+
+Fresh copied-tree corpus against immutable `23bc8a57`: 63/63 materializers
+complete, primary-mark crossings zero, unresolved same-node overlaps zero and
+five diagnosed overlaps. Target B `launch-leop` is a straight vertical departure
+with no `frr-launch` overlap or S-jog, checked in SVG/PNG. However 495/627 route
+geometries change, seven paths disappear and member labels decrease 809 → 782
+(suppression diagnostics 75 → 102). The seven missing paths match #1114's
+unresolved inventory. This is not release acceptance.
+
+Public-head CI `37165378326` fails CLI aggregation's corpus-specific count and
+editorial-lanes' missing `shipment-campaign`; `derived-ready` fails downstream.
+The aggregation test now checks exact emitted occurrences rather than a routing-
+dependent number. Do not weaken the gallery's no-loss test: all twelve shipment
+candidates exceed four bends. Resolve route/label planning and search regression
+with a reviewed design correction before further implementation or merge.
