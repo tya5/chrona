@@ -45,7 +45,7 @@ from chrona.presentation.layout.labels import (
     LabelRect, place_label,
 )
 from chrona.presentation.layout.obstacles import (
-    ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex,
+    ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex,
 )
 from chrona.presentation.layout.ports import ConnectorEgress, coincident_endpoint_port_ids, connector_egress_candidates
 from chrona.presentation.model.placement_candidates import candidate_order
@@ -102,9 +102,66 @@ class SurfaceAnnotationBatch:
     visible_label_overflows: tuple[Any, ...]
     visible_route_fallbacks: tuple[RelationPlacement, ...]
     handled_visual_sources: frozenset[str]
+    suppressed_index_ids: frozenset[str]
+    suppressed_callout_ids: frozenset[str]
 
 
 def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBatch:
+    """Place annotations, reflowing a declared note list after monotone suppressions."""
+    annotations = context.request.surface_content.annotations
+    if context.by_source.get("annotations") is None or not annotations:
+        return _place_annotations_once(context, frozenset(), frozenset())
+
+    suppressed_indexes: frozenset[str] = frozenset()
+    suppressed_callouts: frozenset[str] = frozenset()
+    limit = 2 * len(annotations) + 1
+    original_index = context.surface_obstacles
+    original_ids = {item.placement_id for item in original_index.all()}
+    final_index: SurfaceObstacleIndex | None = None
+    batch: SurfaceAnnotationBatch | None = None
+
+    for _ in range(limit):
+        working_index = original_index.copy()
+
+        def register_rect(placement_id: str, obstacle_class: str, region_id: str, bounds: Rect) -> None:
+            inline, block, inline_size, block_size = _bounds(bounds)
+            if inline_size > 0 and block_size > 0:
+                working_index.add(SurfaceObstacle(
+                    placement_id, obstacle_class, region_id,
+                    ObstacleRect(inline, block, inline + inline_size, block + block_size)))
+
+        def register_port(placement_id: str, point: tuple[float, float], region_id: str) -> None:
+            working_index.add(SurfaceObstacle(
+                placement_id, "port", region_id,
+                ObstacleRect(point[0] - 0.01, point[1] - 0.01,
+                             point[0] + 0.01, point[1] + 0.01)))
+
+        working_context = replace(context, surface_obstacles=working_index,
+                                   register_rect=register_rect, register_port=register_port)
+        batch = _place_annotations_once(working_context, suppressed_indexes, suppressed_callouts)
+        discovered_indexes = suppressed_indexes | batch.suppressed_index_ids
+        discovered_callouts = suppressed_callouts | batch.suppressed_callout_ids
+        if discovered_indexes == suppressed_indexes and discovered_callouts == suppressed_callouts:
+            final_index = working_index
+            break
+        # Union with the current sets makes every retry a strict, finite growth
+        # step; each identity can be added only once per suppression class.
+        assert (len(discovered_indexes) + len(discovered_callouts)
+                > len(suppressed_indexes) + len(suppressed_callouts))
+        suppressed_indexes, suppressed_callouts = discovered_indexes, discovered_callouts
+    else:
+        raise AssertionError("annotation list reflow exceeded its finite suppression bound")
+
+    assert batch is not None and final_index is not None
+    for obstacle in final_index.all():
+        if obstacle.placement_id not in original_ids:
+            original_index.add(obstacle)
+    return batch
+
+
+def _place_annotations_once(context: SurfaceAnnotationContext,
+                            suppressed_index_ids: frozenset[str],
+                            suppressed_callout_ids: frozenset[str]) -> SurfaceAnnotationBatch:
     """Place every annotation box, its text, visuals and connector; the obstacle index is the only shared state."""
     request, projection, layout_manifest, contract = context.request, context.projection, context.layout_manifest, context.contract
     review_rows, rows, by_source, scale = context.review_rows, context.rows, context.by_source, context.scale
@@ -121,6 +178,8 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
     visible_label_overflows: list[Any] = []
     visible_route_fallbacks: list[RelationPlacement] = []
     handled_candidate_visuals: set[str] = set()
+    discovered_index_suppressions = set(suppressed_index_ids)
+    discovered_callout_suppressions = set(suppressed_callout_ids)
     annotation_slot = by_source.get("annotations")
     annotation_slot_id = annotation_slot.slot_id if annotation_slot is not None else ""
     if annotation_slot or request.surface_content.annotations:
@@ -130,6 +189,9 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
             presentation = annotation_presentation(annotation.purpose)
             annotation_id, content = annotation.annotation_id, annotation.content
             content = f"{annotation.number}. {content}" if annotation.number is not None else content
+            has_index_suppression = annotation_id in suppressed_index_ids
+            if has_index_suppression:
+                content = f"{content} (index not shown on plot)"
             annotation_visuals = measure_candidate_visuals(
                 f"annotation-text:{annotation_id}", "annotation", request).visuals
             handled_candidate_visuals.update(visual.source_ref for visual, _, _, _ in annotation_visuals)
@@ -303,6 +365,10 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                     preferred = ((intent or {}).get("callout") or {}).get("placement") if isinstance(intent, dict) else None
                     wrap_declared = ((intent or {}).get("text") or {}).get("wrap") if isinstance(intent, dict) else None
                     wrap = wrap_declared or "forbid"
+                    if has_index_suppression:
+                        # The status is required information, so it must not be
+                        # the portion clipped by an otherwise forbidden wrap.
+                        wrap = "allow"
                     # A declared candidate's maxInlineEm is a text-width bound
                     # for a plot/content search (#466): it forces wrapping so
                     # a long note becomes a narrow, tall box rather than one
@@ -382,7 +448,9 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                     filled = None
                     if fill_declared and annotation_slot is not None:
                         filled = fill_note(
-                            lambda bound: measure_note(bound, wrap_declared != "forbid" or plot_wrap_em is not None),
+                            lambda bound: measure_note(
+                                bound, wrap_declared != "forbid" or plot_wrap_em is not None
+                                or has_index_suppression),
                             target=fill_target(float(annotation_slot.bounds.inline_size),
                                                max_inline_em=(float(container.max_inline_em)
                                                               if container.max_inline_em is not None else None),
@@ -396,7 +464,7 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                     candidates, ladder = candidate_order(annotation.candidates, annotation.purpose,
                                                           annotation.fallback_ladder, preferred)
                     box, selected_rung, tail_tip = None, None, None
-                    for candidate in candidates:
+                    for candidate in (() if annotation_id in suppressed_callout_ids else candidates):
                         rung = candidate.candidate_id
                         if candidate.search.kind == "row-aligned":
                             candidate_boxes = annotation_rail_candidates(
@@ -503,11 +571,64 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                         diagnostics.append(
                             f"W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK:{annotation_id}:{selected_rung}")
                     if box is None:
+                        if annotation_id in suppressed_callout_ids:
+                            placement_decisions.append(PlacementDecision(
+                                f"annotation:{annotation_id}", annotation_id, tuple(ladder),
+                                "suppress", "suppressed", search_count=annotation_search_count))
+                            diagnostics.append(f"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:{annotation_id}")
+                            discovered_callout_suppressions.add(annotation_id)
+                            if annotation_slot is not None and annotation.number is not None:
+                                summary_content = (f"{annotation.number}. {annotation.content} "
+                                                   "(callout not shown on plot)")
+                                summary_lines = wrap_text(
+                                    summary_content, available_inline=max(1.0, text_available),
+                                    font_size=size, font_metrics=annotation_metrics,
+                                    letter_spacing=float(annotation_treatment.letter_spacing),
+                                    text_transform=annotation_treatment.transform)
+                                summary_width = max(
+                                    measure_text_width(
+                                        line, font_size=size, font_metrics=annotation_metrics,
+                                        letter_spacing=float(annotation_treatment.letter_spacing),
+                                        text_transform=annotation_treatment.transform)
+                                    for line in summary_lines)
+                                summary_height = size * line_height * len(summary_lines)
+                                rail = LabelRect(*_bounds(annotation_slot.bounds))
+                                summary_candidates = annotation_rail_candidates(
+                                    annotation, resolved,
+                                    anchor_y=anchor_bounds.y + anchor_bounds.height / 2,
+                                    text_size=(summary_width, summary_height), rail=rail,
+                                    obstacles=surface_obstacles)
+                                if summary_candidates:
+                                    summary_bounds = summary_candidates[0].placement.bounds
+                                    summary_overflow = False
+                                else:
+                                    summary_bounds = LabelRect(
+                                        rail.x,
+                                        min(max(anchor_bounds.y + anchor_bounds.height / 2 - summary_height / 2,
+                                                rail.y), max(rail.y, rail.bottom - summary_height)),
+                                        summary_width, summary_height)
+                                    summary_overflow = True
+                                summary = place_text(
+                                    placement_id=f"annotation-summary:{annotation_id}",
+                                    source_ref=annotation_id, content=summary_content,
+                                    inline=summary_bounds.x, baseline_block=summary_bounds.y + size,
+                                    typography_role=annotation_text_role,
+                                    theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+                                    collision_region="annotations",
+                                    collision_domain=CollisionDomain(annotation_slot_id, "content"),
+                                    lines=summary_lines, semantic_id=presentation.text_semantic_id,
+                                    annotation=presentation)
+                                text.append(summary)
+                                register_rect(summary.placement_id, "text", "annotations", summary.bounds)
+                                if summary_overflow:
+                                    visible_label_overflows.append((summary, rail))
+                            continue
                         if "suppress" in ladder:
                             placement_decisions.append(PlacementDecision(f"annotation:{annotation_id}", annotation_id,
                                                                          tuple(ladder), "suppress", "suppressed",
                                                                          search_count=annotation_search_count))
                             diagnostics.append(f"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:{annotation_id}")
+                            discovered_callout_suppressions.add(annotation_id)
                             continue
                         # A normal annotation is never silently suppressed or
                         # rejected.  Complete its first declared placement in
@@ -708,13 +829,14 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                                                       letter_spacing=float(annotation_treatment.letter_spacing),
                                                       text_transform=annotation_treatment.transform)
                 note_index_size = (note_index_leading + note_index_width + note_index_trailing, size * line_height)
-                note_index = place_label(
+                note_index = (None if annotation_id in suppressed_index_ids else place_label(
                     anchor_bounds, note_index_size, ("end", "start", "above", "below"),
                     bounds=LabelRect(*timeline_bounds), obstacles=surface_obstacles,
                     gap=max(1.0, size * 0.25), required=False, overflow="suppress",
-                )
+                ))
                 if note_index is None:
                     diagnostics.append(f"W_LAYOUT_NOTE_INDEX_SUPPRESSED:{annotation_id}")
+                    discovered_index_suppressions.add(annotation_id)
                 else:
                     note_index_inline = note_index.bounds.x
                     note_index_text = place_text(placement_id=f"note-index:{annotation_id}", source_ref=annotation_id,
@@ -804,7 +926,8 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
     return SurfaceAnnotationBatch(
         tuple(text), tuple(shapes), tuple(relations), tuple(candidate_icons), tuple(placement_decisions),
         tuple(diagnostics), tuple(visible_label_overflows), tuple(visible_route_fallbacks),
-        frozenset(handled_candidate_visuals))
+        frozenset(handled_candidate_visuals), frozenset(discovered_index_suppressions),
+        frozenset(discovered_callout_suppressions))
 
 
 def comparison_marks(projection: Any) -> tuple[ComparisonMark, ...]:

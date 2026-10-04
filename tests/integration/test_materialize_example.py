@@ -190,6 +190,8 @@ def test_controller_annotation_evidence_realizes_each_purpose_through_layout_com
     # #1074: the actual EVB gate is as large as the planned one, which re-routes the relation beside the
     # firmware-slip leader's corridor; the arrow is then left out and reported, never drawn over the relation.
     assert 'data-scene-id="annotation-box:firmware-slip"' not in artifact
+    assert 'data-scene-id="annotation-summary:firmware-slip"' in artifact
+    assert "callout not shown on plot" in artifact
     scene_text = (tmp_path / "annotations/review.scene.json").read_text(encoding="utf-8")
     assert "W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:firmware-slip" in scene_text
     assert 'data-scene-id="annotation-leader:evb-highlight"' not in artifact

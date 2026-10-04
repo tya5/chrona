@@ -1,9 +1,10 @@
 # Issue #1130: complete numbered annotation list (work record)
 
 **Public base:** `cc6baa905325620cb0f47761e0717c7b0a252f2a` (`origin/main`).
-**Status:** design and architecture reviewed; implementation not started.
+**Status:** design published; Layout implementation under focused verification.
 This record selects issue option (a). It supersedes no other issue and changes
-normative behavior in Specifications 33 and 46; implementation waits for publication.
+normative behavior in Specifications 33 and 46. Pre-code publication: PR #1143,
+commit `4349fa51`.
 
 ## Baseline and literal acceptance
 
@@ -89,7 +90,7 @@ callout-suppression diagnostic and do not edit reviewer-owned resources.
    review contract and sequencing before product changes.
 2. **Layout implementation:** `src/chrona/presentation/layout/surface_annotations.py`
    plus the smallest needed Layout result/model owner. Add a bounded synthetic
-   integration test, preferably `tests/integration/test_annotation_index_suppression.py`;
+   integration test, `tests/integration/test_annotation_list_status.py`;
    retain relevant `tests/unit/chrona/usecases/test_render_review.py` coverage
    for #1074's whole-callout diagnostic. No `examples/` or generated output.
 3. **Verification:** focused synthetic tests assert ordered numbers, visible
@@ -101,3 +102,20 @@ callout-suppression diagnostic and do not edit reviewer-owned resources.
 4. **Acceptance review:** record every literal criterion above with exact
    commands, public commit/CI, and actual rendered output. Keep #1130 open
    until exact-main release evidence passes.
+
+## Implementation evidence
+
+Layout rehearses against a copied obstacle inventory until the finite sets of
+suppressed indexes/callouts stop growing, then commits only the final geometry.
+The four synthetic list-status tests pass: exact pre-change Scene/SVG hashes,
+one missing index with three retained indexes and visible SVG status, and
+combined suppression with a summary and correctly connected surviving leader.
+The rail-specific case verifies all four entries in View order and inside the
+declared annotations slot after status reflow.
+SVG status is checked as XML text across wrapped `tspan` lines, not as a raw
+contiguous byte substring. Import direction passes (11 packages, 37 edges).
+Focused annotation-list, phase-wiring, kind-header, candidate-placement,
+viewer-fit and render-review suites pass: 113 tests. Local conformance passed
+all checks except the source-location diagnostic inventory; regeneration and
+its check passed separately. That inventory is CI-owned and not committed.
+Corpus snapshot, PR CI, and exact-main release acceptance remain unverified.
