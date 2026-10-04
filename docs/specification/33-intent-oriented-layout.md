@@ -506,6 +506,10 @@ or repair a completed Scene in an adapter. When suppression adds a summary or
 status, entries may reflow in View order within the declared slot; Layout
 must recomplete affected boxes and required leaders against the obstacle
 inventory, never move text alone or revive a suppressed plot callout.
+Reflow may additionally suppress an index or callout that no longer fits,
+but never restores either once suppressed in that composition. Repeat only
+when the suppressed identity set strictly grows; this bounds visibility
+transitions by the finite annotation/index inventory and prevents stale status.
 In the no-suppression case, the
 existing Scene and adapter output remain byte-identical. This preserves
 intentional callout suppression while preventing a silent numbering gap.

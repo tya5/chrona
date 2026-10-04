@@ -60,6 +60,9 @@ Without that slot, preserve plot-only behavior: Layout cannot invent a slot.
 Suppression-only summaries/status may reflow the rail in View order. Recomplete
 affected boxes and required leaders atomically; never move only their text.
 No-suppression geometry stays exact; suppressed plot callouts stay suppressed.
+Reflow suppression is monotone for both indexes and callouts; retry only on
+strict growth of suppressed identities. Revalidate still-visible outputs;
+never restore a suppressed index or leave its status stale.
 
 ## Architecture and migration
 
