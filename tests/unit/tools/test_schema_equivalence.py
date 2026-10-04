@@ -135,10 +135,16 @@ def test_mapping_is_derived_from_version_constants_and_the_overrides_agree(base_
         assert derived.get(version) == [name], f"the override for {version} contradicts the derivation"
 
 
-def test_scene_v06_documents_are_mapped(committed):
-    scenes = [record for record in committed.corpus.records if record["schema"] == "scene-v0.6.schema.yaml"]
+@pytest.mark.parametrize("schema,anchor", [
+    ("scene-v0.6.schema.yaml", "examples/halcyon-1/generated/10-gallery-network-wallboard.scene.json"),
+    ("scene-v0.7.schema.yaml", "examples/controller-z/generated/annotation-artwork.scene.json"),
+])
+def test_scene_documents_keep_legacy_and_live_schema_coverage(committed, schema, anchor):
+    # Surface/feature coverage is stable across regeneration; corpus-copy counts are not.
+    # Network output retains its contract while table-timeline endpoint identity uses v0.7.
+    scenes = [record for record in committed.corpus.records if record["schema"] == schema]
 
-    assert len(scenes) >= 29
+    assert any(record["path"] == anchor for record in scenes)
     assert all(record["valid"] for record in scenes)
 
 

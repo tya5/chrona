@@ -101,7 +101,8 @@ def test_a_theme_without_the_property_or_with_raw_is_byte_identical(tmp_path):
     plain = _render(tmp_path, "a")
     raw = _render(tmp_path, "b", fit="raw")
     assert raw.artifact.content == plain.artifact.content
-    assert scene_document(plain.scene)["version"] == "chrona/scene/v0.6"
+    assert scene_document(plain.scene)["version"] == "chrona/scene/v0.7"
+    assert scene_document(raw.scene)["version"] == scene_document(plain.scene)["version"]
     assert b"textLength" not in plain.artifact.content and b"filter=" not in plain.artifact.content
     assert all(item.viewer_fit == "raw" for item in plain.surface.primitives)
     assert all(item.text_layout is None or item.text_layout.fit is None for item in plain.surface.primitives)
