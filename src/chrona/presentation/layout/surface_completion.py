@@ -23,6 +23,7 @@ from chrona.presentation.layout.surface_quality import (
 from chrona.presentation.layout.canvas_texture import complete_canvas_texture
 from chrona.presentation.layout.region_frame import complete_region_frames
 from chrona.presentation.layout.surface_visuals import place_axis_band_visuals
+from chrona.presentation.layout.viewer_fit import stamp_text_fits
 from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids
 
@@ -339,6 +340,7 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
     # Abstract mark IDs remain Layout anchors; hosted text needs the actual
     # Scene primitive ID completed by this typed lane-emission closure.
     completed_text = complete_hosted_text_identity(tuple(text), tuple(marks), lane_emissions)
+    completed_text = stamp_text_fits(completed_text, request.theme_tokens, request.font_metrics)  # #1096
     patterns = complete_catalog_patterns(tuple(marks), tuple(shapes), request.theme_tokens)
     # The canvas texture is ground: completed over the final canvas; Scene emits it first.
     texture = complete_canvas_texture(request.theme_tokens, canvas)

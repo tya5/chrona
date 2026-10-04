@@ -549,14 +549,18 @@ class ThemeTokenView:
         content_insets = self._insets(value.get("contentInsetEm"), role, "annotationContainer/contentInsetEm")
         return AnnotationContainerToken(outline, corner_radius, None, image_ref, slice_insets, content_insets, **sizing)
 
-    def viewer_fit(self, role: str) -> ViewerFitToken:
+    def viewer_fit(self, role: str, *, box_follows: bool = True) -> ViewerFitToken:
         """Return a box role's declared viewer-fit mode (#1050); absence is `raw`, today's output.
 
         ``box-follows-text`` paints a background that ends where the viewer's text ends, so it is valid only for a
         plain, square, untilted, content-sized rectangle with no artwork and no end, top or bottom border: every
-        other declaration is refused at its pointer, never silently degraded.
+        other declaration is refused at its pointer, never silently degraded. A role whose text has no box of its own
+        to follow (``box_follows`` false: a chip, a legend, a table cell, a title, a group tag) admits no
+        ``box-follows-text`` (#1096).
         """
         mode = self.optional_choice(role, "viewerFit", VIEWER_FIT_MODES) or VIEWER_FIT_RAW
+        if mode == BOX_FOLLOWS_TEXT and not box_follows:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/viewerFit")
         adjust = self.optional_choice(role, "viewerFitAdjust", FIT_ADJUSTS)
         if adjust is not None and mode != TEXT_FOLLOWS_BOX:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/viewerFitAdjust")

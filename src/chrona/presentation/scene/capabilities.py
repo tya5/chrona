@@ -196,25 +196,28 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
                 tuple((property_name, _property_owner(property_name)) for property_name in sorted(properties)),
             )
 
-    register("text", "Layout text and Scene Text/Icon", _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _SHARED_TEXT_ICON_PAINT,
+    register("text", "Layout text and Scene Text/Icon",
+             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _SHARED_TEXT_ICON_PAINT | _VIEWER_FIT,
              scene_kinds=frozenset(("Text", "Icon")))
     register("heading numeric summary", "Layout text measurement",
-             _TEXT_MEASUREMENT | _ICON_MEASUREMENT)
+             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _VIEWER_FIT)
     register("legend", "Layout legend label measurement and Scene Text",
-             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _SHARED_TEXT_ICON_PAINT, scene_kinds=frozenset(("Text",)))
+             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _SHARED_TEXT_ICON_PAINT | _VIEWER_FIT,
+             scene_kinds=frozenset(("Text",)))
     register("groupHeader", "Layout text measurement and group tag column",
-             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("writingMode",)))
+             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("writingMode",)) | _VIEWER_FIT)
     register("axis", "Layout axis-tier measurement and inline visual reservation",
-             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _AXIS_MEASUREMENT)
+             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _AXIS_MEASUREMENT | _VIEWER_FIT)
     register("axisMonth axisQuarter axisSecondary axis2 axis3", "Layout axis-tier measurement",
-             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _AXIS_MEASUREMENT)
+             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _AXIS_MEASUREMENT | _VIEWER_FIT)
     register("annotation", "Layout annotation text and Scene Text",
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT, scene_kinds=frozenset(("Text",)))
     register("slot-heading", "Layout slot-heading measurement and Scene Text",
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT, scene_kinds=frozenset(("Text",)))
     register("tableColumnLabel", "Layout table header measurement and Scene Text",
-             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT, scene_kinds=frozenset(("Text",)))
-    register("metric subtitle", "Layout text and Scene Text", _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT,
+             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT | _VIEWER_FIT, scene_kinds=frozenset(("Text",)))
+    register("metric subtitle", "Layout text and Scene Text",
+             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT | _VIEWER_FIT,
              scene_kinds=frozenset(("Text",)))
     register("annotation-callout-text annotation-highlight-text annotation-arrow-text",
              "Layout annotation text and Scene Text", _TEXT_MEASUREMENT | _TEXT_PAINT,
@@ -300,7 +303,7 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
     register("as-of-label", "Layout as-of label text measurement and Scene Text ink", _TEXT_MEASUREMENT | _SHARED_TEXT_ICON_PAINT,
              scene_kinds=frozenset(("Text",)))
     register("as-of-label-chip member-label-chip finish-delta-chip period-label-chip", "Layout label chip and Scene Rect",
-             _PATTERNED_RECT_PAINT | frozenset(("backgroundTreatment", "chipPadding", "markCornerRadius")),
+             _PATTERNED_RECT_PAINT | frozenset(("backgroundTreatment", "chipPadding", "markCornerRadius")) | _VIEWER_FIT,
              scene_kinds=frozenset(("Rect",)))
     register("as-of-cone", "Layout as-of cone and Scene Symbol",
              frozenset(("fill", "opacity", "coneSpread", "coneExtent", "gradientFidelity")),
@@ -316,7 +319,7 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
 
 
 _ROLE_PROPERTY_CONTRACTS = _role_contracts()
-_OPEN_AXIS_PROPERTIES = _TEXT_MEASUREMENT | _AXIS_MEASUREMENT
+_OPEN_AXIS_PROPERTIES = _TEXT_MEASUREMENT | _AXIS_MEASUREMENT | _VIEWER_FIT  # a View-named text role may fit too (#1096)
 _OPEN_LEGEND_PROPERTIES = _RECT_PAINT
 _CATALOG_PATTERN_ROLES = frozenset((
     "missing-actual", "network-node", "progress-fill", "summary-bar",
