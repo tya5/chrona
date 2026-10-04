@@ -128,14 +128,21 @@ Corpus snapshot, PR CI, and exact-main release acceptance remain unverified.
 
 CI run [37194332115](https://github.com/tya5/chrona/actions/runs/37194332115)
 on `a6b6f494` failed three tests: guided annotation content, tall-stamp box
-height, and a tilted mandatory leader. The initial implementation appended
-list status to plot callout bodies, mixing independent Layout outputs.
+height, and a tilted mandatory leader. Stamp/tilt failures mix independent
+list status into plot bodies. The guided note actually selects the declared
+rail fallback: its inline status is intentional, so update its exact content
+assertion and require the matching suppression diagnostic. Do not add a
+legacy-syntax ownership exception.
 The correction above preserves plot callout content/geometry and measures
 its status separately in the rail; existing rail notes still reflow normally.
 This respects Spec 33 ownership and the kind-frame/tilt contracts (Specs 07/08)
-without a Theme knob, schema change or adapter repair. Keep all three existing
-test assertions; add a synthetic plot-callout suppression test proving body,
+without a Theme knob, schema change or adapter repair. Keep the existing stamp
+height and tilted-leader assertions; add a synthetic plot-callout test proving body,
 box, stamp and required leader preservation plus visible rail status.
 Publish this correction before updating `surface_annotations.py` and its
 synthetic tests. Re-run the failed tests and affected annotation suites, then
 review one new CI-owned Scene/SVG batch before acceptance. Do not merge red CI.
+Required status/summary overflow follows Spec 33: stack after preceding rail
+records and explicitly mark overflow, not overlapping fallback clamps. Use
+adequately declared synthetic rail capacity for the in-slot acceptance test;
+retain a separate insufficient-capacity test for diagnostics and no omission.

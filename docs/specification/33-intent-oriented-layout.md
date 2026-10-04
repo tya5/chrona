@@ -522,6 +522,11 @@ intentional callout suppression while preventing a silent numbering gap.
 Without that slot, Layout does not fabricate a list or change the existing
 plot-only annotation behavior. List overflow must remain explicitly diagnosed,
 never silently omit an entry.
+If a new status or summary has no non-overlapping position in the declared
+slot, place it after preceding rail records in View order and mark its text
+as `visible-overflow`, with the existing label-overflow diagnostic. Do not
+clamp multiple required records onto the same fallback position or silently
+grow the canvas. The author controls sufficient slot capacity.
 
 Segment/rectangle obstacle tests treat a `1e-9` layout-unit boundary contact
 as contact, not interior penetration; a longer positive interior crossing
