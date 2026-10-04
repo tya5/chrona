@@ -153,6 +153,16 @@ resource invalid or changes its behavior. When a bump is required, batch the
 pending incompatible changes into that version. Do not silently upgrade a
 stale resource; the unsupported-version behavior in §3.1 remains in force.
 
+Theme v0.15/v0.16 (#1088) retires the content-box `edge` token and role member.
+v0.15 is the complete authored contract; v0.16 resolves a pinned v0.15 base
+and validates the effective body against v0.15. First-party Themes, derived
+pins and fixtures migrate atomically before v0.11/v0.12/v0.13/v0.14 readers
+are retired and their schemas archived. Old versions are unsupported, not
+silently converted. Kind-painted box borders retain `annotation-kind-accent`
+ink; migrate `{side, size}` to `annotationContainer.border.<side>` with
+`{width: size, paint: kind}`, removing unused edge values too. This knowingly
+moves the strip from the inset content box to the full outer border.
+
 Conformance compares newly introduced schema-inventory predecessor/successor
 pairs for View, Layout Profile, and Project. Transitions already published when
 this rule was adopted (through View v0.28, Layout Profile v0.9, and Project
