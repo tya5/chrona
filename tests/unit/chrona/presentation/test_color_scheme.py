@@ -242,8 +242,9 @@ def test_the_contrast_policy_is_carried_into_the_resolved_theme_and_absent_when_
 
 @pytest.mark.parametrize("policy,pointer", [
     ({"decoration": "info"}, "/body/contrastPolicy/decoration"),
-    ({}, "/body/contrastPolicy/decoration"),
+    ({"mark": False}, "/body/contrastPolicy/mark"),  # YAML 1.1 reads an unquoted `off` as false
     ({"decoration": "error", "marks": "warning"}, "/body/contrastPolicy/marks"),
+    ({"stateText": "strict"}, "/body/contrastPolicy/stateText"),
     ("error", "/body/contrastPolicy")])
 def test_an_undeclared_policy_value_or_member_is_refused_at_its_pointer(policy, pointer):
     theme = _paper_note_theme()
@@ -253,8 +254,25 @@ def test_an_undeclared_policy_value_or_member_is_refused_at_its_pointer(policy, 
     assert (error.value.diagnostic_id, error.value.source_ref) == ("E_THEME_CONTRAST_POLICY", pointer)
 
 
-@pytest.mark.parametrize("policy", [None, {"decoration": "warning"}, {"decoration": "error"}])
+@pytest.mark.parametrize("member", ["mark", "stateText", "groundText", "decoration", "unsupportedGround"])
+@pytest.mark.parametrize("severity", ["none", "warning", "error"])
+def test_every_policy_member_accepts_none_warning_and_error(member, severity):
+    theme = _paper_note_theme()
+    theme["body"]["contrastPolicy"] = {member: severity}
+    resolved = resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)
+    assert resolved["body"]["contrastPolicy"] == {member: severity}
+
+
+def test_an_empty_policy_declares_nothing():
+    theme = _paper_note_theme()
+    theme["body"]["contrastPolicy"] = {}
+    assert "contrastPolicy" not in resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)["body"]
+
+
+@pytest.mark.parametrize("policy", [None, {"decoration": "warning"}, {"decoration": "error"},
+                                    {"stateText": "none"}, {"stateText": "warning"}])
 def test_the_policy_never_softens_a_text_check_at_theme_resolution(policy):
+    # Theme resolution holds the Theme's own static text checks; they are not contrast constraints of the gate.
     theme = _paper_note_theme(box="text", ink="textMuted")  # note ink too close to its box: the state-text error
     if policy is not None:
         theme["body"]["contrastPolicy"] = policy

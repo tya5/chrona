@@ -57,8 +57,11 @@ def test_report_names_measured_primitive_ground_and_channel(tmp_path):
 # --- #995: a decoration warns, text and marks fail --------------------------------------------------------
 
 
-def _corpus(tmp_path, monkeypatch, *extra):
-    """A committed Scene that paints every decoration role (the first one faint) plus `extra` primitives."""
+def _corpus(tmp_path, monkeypatch, *extra, listed=True):
+    """A committed Scene that paints every decoration role (the first one faint) plus `extra` primitives.
+
+    Its Theme is `demo`; the repository's opt-in registry (#1126) lists it unless `listed` is false.
+    """
     from chrona.presentation.model.semantic_registry import ContrastClass, contrast_bindings
     from tools import presentation_contrast
 
@@ -71,7 +74,13 @@ def _corpus(tmp_path, monkeypatch, *extra):
                             "paint": {"fill": fill, "opacity": 1}})
     path = tmp_path / "examples/demo/generated/slide.scene.json"
     path.parent.mkdir(parents=True)
-    path.write_text(json.dumps(_scene(*decorations, *extra)), encoding="utf-8")
+    document = _scene(*decorations, *extra)
+    document["provenance"] = {"resources": [{"kind": "theme", "id": "demo", "revision": "r", "contentIdentity": "x"}]}
+    path.write_text(json.dumps(document), encoding="utf-8")
+    registry = tmp_path / "conformance/contrast-opt-in.yaml"
+    registry.parent.mkdir(parents=True)
+    registry.write_text("version: chrona/contrast-opt-in/v0.1\nthemes:\n" + ("  - demo\n" if listed else "  - other\n"),
+                        encoding="utf-8")
     monkeypatch.setattr(presentation_contrast, "committed_scene_paths", lambda root: (path,))
     return presentation_contrast
 
@@ -95,6 +104,44 @@ def test_a_corpus_with_an_illegible_mark_still_fails_the_check(tmp_path, monkeyp
     assert tool.main(("--root", str(tmp_path), "--output", str(output))) == 1
     assert tool.main(("--root", str(tmp_path), "--output", str(output), "--check")) == 1
     assert "errors: 1;" in output.read_text(encoding="utf-8")
+
+
+_ILLEGIBLE_MARK = {"id": "planned", "kind": "Rect", "visualRole": "planned", "purpose": "planned", "paintOrder": 100,
+                   "bounds": {"inline": 10, "block": 5, "inlineSize": 30, "blockSize": 10},
+                   "paint": {"fill": "#FFFFFF", "opacity": 1}}
+_ILLEGIBLE_TEXT = {"id": "cell", "kind": "Text", "visualRole": "variance-ahead", "purpose": "table-cell",
+                   "paintOrder": 300, "contrastTreatment": "required",
+                   "bounds": {"inline": 10, "block": 5, "inlineSize": 30, "blockSize": 10},
+                   "paint": {"fill": "#FFFFFF", "opacity": 1}}
+
+
+def test_a_theme_the_repository_has_not_opted_in_only_warns_on_a_mark_and_on_text(tmp_path, monkeypatch):
+    tool = _corpus(tmp_path, monkeypatch, _ILLEGIBLE_MARK, _ILLEGIBLE_TEXT, listed=False)
+    output = tmp_path / "report.md"
+    assert tool.main(("--root", str(tmp_path), "--output", str(output))) == 0
+    assert tool.main(("--root", str(tmp_path), "--output", str(output), "--check")) == 0
+    text = output.read_text(encoding="utf-8")
+    assert "errors: 0;" in text and "warnings: 3." in text
+    assert "## Themes not opted in" in text and "| `demo` | 1 | 3 | 0 |" in text
+
+
+def test_the_opt_in_registry_is_what_holds_a_theme_to_the_floors(tmp_path, monkeypatch):
+    # The same Scene, the same findings: only the registry decides whether they are errors.
+    tool = _corpus(tmp_path, monkeypatch, _ILLEGIBLE_MARK, _ILLEGIBLE_TEXT, listed=True)
+    assert tool.main(("--root", str(tmp_path), "--output", str(tmp_path / "report.md"))) == 1
+    assert "| Themes not opted in" not in (tmp_path / "report.md").read_text(encoding="utf-8")
+    (tmp_path / "conformance/contrast-opt-in.yaml").unlink()
+    assert tool.main(("--root", str(tmp_path), "--output", str(tmp_path / "report.md"))) == 0
+
+
+def test_a_scene_without_a_theme_in_its_provenance_is_not_opted_in(tmp_path, monkeypatch):
+    tool = _corpus(tmp_path, monkeypatch, _ILLEGIBLE_MARK)
+    path = tmp_path / "examples/demo/generated/slide.scene.json"
+    document = json.loads(path.read_text(encoding="utf-8"))
+    del document["provenance"]
+    path.write_text(json.dumps(document), encoding="utf-8")
+    assert tool.main(("--root", str(tmp_path), "--output", str(tmp_path / "report.md"))) == 0
+    assert "(no Theme in provenance)" in (tmp_path / "report.md").read_text(encoding="utf-8")
 
 
 def test_a_corpus_with_illegible_text_still_fails_the_check(tmp_path, monkeypatch):

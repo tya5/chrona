@@ -297,14 +297,16 @@ day: a key for a band that is not on the plot misleads. The entry is dropped whe
 the legend list is derived, so the legend slot is measured and drawn without it.
 
 **Contrast severity (#995).** Perceptibility of what the surface draws splits by what the paint carries.
-*Legibility* paint (a data mark, a state or ground text) loses information when it is faint, so a miss of its
-floor (3.0:1 for marks, 4.5:1 or 3.0:1 for text) is a blocking `error`, as the Theme-resolution text checks
-are. *Decoration* paint is ground (closed-day and exception stripes, group, row and axis bands, tints, patterns,
-the note box, the kind bar and accent): a miss of its 1.10 floor, or a decoration on a ground the gate cannot
-read, is a `warning` with a stable code (`W_SCENE_DECORATION_CONTRAST`, `W_SCENE_DECORATION_GROUND_UNSUPPORTED`)
-that is reported and fails nothing. The class comes from the semantic registry, never from a slide; there is
-no per-slide exemption. A Theme that wants a faint decoration to block declares `contrastPolicy.decoration:
-error` (Specification 07). The normative rule, the codes and the report are in Specification 46 section 8. A
+*Legibility* paint (a data mark, a state or ground text) loses information when it is faint, and *decoration*
+paint is ground (closed-day and exception stripes, group, row and axis bands, tints, patterns, the note box, the
+kind bar and accent). The floors that measure them (3.0:1 for marks, 4.5:1 or 3.0:1 for text, 1.10:1 for a
+decoration) are **opt-in design constraints** (#1126): a Theme that declares nothing is only told, with a typed
+warning (`W_SCENE_MARK_CONTRAST`, `W_SCENE_STATE_TEXT_CONTRAST`, `W_SCENE_DECORATION_CONTRAST` and the
+ground-unsupported twins), and a Theme that wants a class held to its floor declares it in `contrastPolicy`
+(`mark`, `stateText`, `groundText`, `decoration`, `unsupportedGround`: `none`, `warning` or `error`;
+Specification 07) so the render fails on a miss. The class comes from the semantic registry, never from a slide;
+there is no per-slide exemption. The repository holds the Themes it ships to the floors through
+`conformance/contrast-opt-in.yaml`. The normative rule, the codes and the report are in Specification 46 section 8. A
 weekend stripe at the owner-approved faint opacity is therefore a warning, and the marks that cross it are still
 judged on its colour. Every free label is legibility paint (#980): the as-of label, member, axis, table, legend and
 annotation text and the rest of the Text a surface draws are *ground text* judged at the required 4.5:1 on what truly
