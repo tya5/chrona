@@ -2,7 +2,7 @@
 
 ## Published baseline and design plan
 
-Public main tracked: `6b795c88` (2026-10-04); comparison baseline: `23bc8a57`.
+Public main tracked: `a130c74e` (2026-10-04); comparison baseline: `23bc8a57`.
 #1114's primary-mark safety
 is the preceding lane-R slice in PR #1122 (acceptance pending).
 Authority: [#1109](https://github.com/tya5/chrona/issues/1109), Spec 50 §3.3,
@@ -120,38 +120,15 @@ relation-label suppressions
 increase by one. The seven missing paths match #1114's
 unresolved inventory. This is not release acceptance.
 
-Public-head [CI 37173787787](https://github.com/tya5/chrona/actions/runs/37173787787)
-at `33c14527` passes conformance, derived preview, MCP floor and newest-Python
-reproduction of all public materializers. Pytest reports 6,872 passed, 65 skipped
-and one failure: `test_halcyon_02_routed_note_trial_is_bounded_clear_and_deterministic`.
-Controller name recovery, suppression aggregation and editorial acceptance pass.
-`derived-ready` fails downstream of pytest. Preserve the real route/name gates.
 The three CLI cases differ only by the absence of the now-unnecessary
 `I_LAYOUT_PLOT_LABELS_SUPPRESSED` and `W_LAYOUT_LABEL_SUPPRESSED` records;
 arguments, exit status, stdout, artifact descriptors and the remaining warning
 are unchanged. `8623fb06` removes only those six obsolete records, not a bulk
-re-recording. Six focused checks and the public-head CI confirm the correction.
+re-recording. Six focused checks and CI confirm the correction; current CI is below.
 
-Bounded read-only probes locate a coupled route/name planning problem. Reserving
-all three rescue corridors replaces the lost set with `tvac-emc` and suppresses
-the previously shown `pdr` name, failing both preservation gates. Reserving only
-shipment's corridor also introduces lost `tvac-emc`; simple incremental corridor
-acceptance is therefore **not a demonstrated fix**. Raising search bend penalty
-to 1000 does not rescue shipment and introduces further losses. No such policy
-change is selected or implemented. Next design question: preserve feasible
-routes and names under coupled reservation/replacement, without allowing a new
-loss or adding project-specific core exceptions. The old editorial `tvac-emc`
-route crossed its own primary mark; its replacement is safe but changes the
-joint name/corridor plan. All four missing `launch-leop` cases are lanes:
-campaign/rehearsals names now obstruct the formerly safe direct route, and all
-twelve alternatives exceed declared quality caps. These are coupled planning
-failures, not evidence that caps should be relaxed. Programme-board's single
-launch corridor can recover `launch-leop` and the `frr` name, but newly pushes
-`psr-shipment` to visible fallback, so the preservation gate correctly rejects
-it. Treating fallback as distinct from suppression would describe the result
-more precisely but would not repair that worsened relation. A corrected
-editorial trial reserving only 21 existing good corridors plus shipment
-recovers detector/shipment but suppresses five names; it also remains rejected.
+Selective rescue-corridor and bend-penalty probes introduced other path/name
+losses and are rejected. The declared resource adaptations below recover the
+seven losses without a project-specific core exception or relaxed quality cap.
 
 ## Resource adaptation design and implementation amendment
 
@@ -349,7 +326,7 @@ fresh outputs rather than duplicate the SVG batch. The new five-binding Scene
 and SVG regression checks pass: declared dependency inventory, actual name
 strings, two-em own-mark reach, existing note indices and perceptibility gates.
 View schema, exact Context references, lane subtracks and label tests: 104 passed.
-The unchanged 2100px TVAC test still fails with no routed tail; it is not weakened.
+The unchanged 2100px TVAC test passes with the corridor correction above.
 Implementation review found no Project, Theme, core, generated or reviewer-resource
 edits. [CI 37175354474](https://github.com/tya5/chrona/actions/runs/37175354474)
 has 6,875 passed, 65 skipped and three failures: strict TVAC, stale station-note
@@ -357,3 +334,32 @@ fallback expectation and the gallery-pair environment mismatch (also conformance
 All three belong to this PR and are addressed by the corrections above; no release
 acceptance or closure. Main `6b795c88` is reconciled without conflicts in `116c790e`.
 Public-head CI and the separate literal preservation review remain pending.
+
+Corridor implementation `352e7878` follows pre-code publication `ce3b9766`: one shared
+descriptor engine, charged on pop; exact whole-route guards; required leader
+registration before optional index placement. Disjoint direct/elbow/two-/three-
+bend families prevent zero legs and duplicate paths. Neutral evidence covers
+198 exhaustive cases, epsilon contacts, both orientations, fractional/large
+coordinates, global rank and a real 17-candidate prefix, non-rectangles/ports,
+exact-last fit and true exhaustion. Focused annotation/balloon/inventory/gallery
+tests: 72 passed; node/port/search set: 35 passed; unchanged strict TVAC: passed.
+Review retains the finite two-unit envelope-offset grammar and exact validation
+of declared clearance; it does not promise every continuously feasible route is
+in that finite family. Setup cost depends on pairs, axes and obstacles, not just
+the path cap; no global feasibility or constant-work claim is made.
+
+All six affected timeline materializers succeed; five lane Scene/SVG guards pass.
+Compared with the prior reviewed resource batch, the four widened SVGs and
+Editorial SVG are byte-identical. Overlay's only primitive changes are the
+window-note rectangle becoming a balloon and its added strict leader; all
+existing dependency paths, names, relation labels and note indices remain.
+Declared-font PNGs inspected for programme-board and overlay; the unchanged
+SVG groups reuse their previous visual review. No perceptibility or contrast
+errors; the four decoration observations per widened context remain visible.
+The corrected network Context materializes with unchanged inventory (16 nodes,
+11 rendered edges, 17 text primitives); every primitive/edge source is in SVG,
+and diagnostics are empty. Inventory/gallery guards: seven passed; the real
+inventory tool validates 64 slides and 13 gallery links. Station-note text/box
+and its single tail remain; its existing optional index suppression is unchanged.
+No repository-derived outputs, Project facts, Theme or reviewer resources edited.
+PR-head CI and #1114's literal compliant-route preservation are still required.
