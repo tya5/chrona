@@ -148,7 +148,7 @@ body:
   - kind: asOf
     source: actual
     label: as of
-    placement: foot
+    placement: below-plot
     date:
       form: day-month
   shading:
@@ -157,6 +157,7 @@ body:
   backgroundDecoration:
     rows: none
     groups: all
+  hierarchyColumn: Work package
   tableColumns:
   - id: Work package
     source: title
@@ -171,6 +172,7 @@ body:
   - id: Phase
     source:
       field: phase
+    textRole: table-cell-secondary
     missing: em-dash
     align: start
     width: content

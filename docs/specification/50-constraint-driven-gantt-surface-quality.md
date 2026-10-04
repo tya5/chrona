@@ -216,6 +216,21 @@ Relation terminals are Theme `marker` tokens resolved by Layout (`relation_termi
 
 `timeline.relation.cornerRadius` (a Theme metric in px; absent or `0` keeps square corners) rounds the turns of an orthogonal relation route when Layout completes the path: each turn becomes a quadratic arc whose radius is `min(r, half the incoming leg, half the outgoing leg)`; a leg that meets a terminal keeps a straight run of the terminal's `headLength` (a round terminal centred on the endpoint needs none); a point that is not a turn is not rounded; an arc whose chords meet a mark, text or label the polyline cleared halves its radius until clear, down to square. Scene `points` stay the orthogonal polyline and `pathCommands` carry the arcs; SVG and PNG draw the same commands, and the arcs are registered as route obstacles beside the polyline. The bundled default Theme (`editorial-readable-default`) declares 4 px; other presets declare their own value or none (#1046).
 
+**Primary-mark safety (#1114).** In every row mode and entry policy, completed
+relation paths MUST NOT traverse primary planned-mark interiors, including
+their own endpoint marks. Interior bounds are inset by half the relation stroke
+width to allow boundary ink contact. The exemption is terminal contact on the
+outward side, never permission to route through the primary mark. A span's
+far-side exit is not a candidate; start/end retain their temporal ports with
+outward or above/below egress. Spec 33's named comparison-host corridor
+exemption remains scoped to that corridor. This applies after repair, to
+back-routes, rounded paths and diagonal visible-overflow fallbacks, superseding
+the broad own-mark exemptions above. An unsafe direct fallback is suppressed
+with `W_LAYOUT_RELATION_SUPPRESSED` and `I_LAYOUT_RELATION_MARK_BLOCKED:<relation id>`.
+Lane attempts retain `E_LAYOUT_ROUTE_THROUGH_MARK` evidence. Scene observes
+completed crossings as `E_SCENE_RELATION_THROUGH_MARK`; it does not repair routes.
+Remaining candidate order, bounds and comparison semantics are unchanged.
+
 Required, route-independent lane item names and deltas are measured and
 registered as obstacles before semantic routes. A route body or endpoint
 egress MUST NOT cross any required lane/member label; the named host-mark

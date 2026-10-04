@@ -1,13 +1,15 @@
-"""Slide 16 declares a viewport wide enough for every relation and name (#760 item 1).
+"""Published Editorial Scene safety and name association.
 
-Owner decision: widen the declared viewport instead of detaching names. The slide is accepted only while
-`shipment-campaign` is drawn, no name or relation is suppressed, and every name stays within the default
-reach (2 em) of its own mark. The checks decide from the generated Scene only.
+The #1114 owner decision accepts route suppression caused by primary-mark
+safety; all omitted dependencies must remain diagnosed. Visible names retain
+the default 2 em reach of their own mark (#760). No generated resource edits.
 """
 from __future__ import annotations
 
 import json
 from pathlib import Path
+
+from chrona.presentation.scene.perceptibility import evaluate_scene_perceptibility
 
 ROOT = Path(__file__).resolve().parents[2]
 SCENE = ROOT / "examples/halcyon-1/generated/16-gallery-editorial-lanes.scene.json"
@@ -30,16 +32,20 @@ def _gap(a: tuple[float, ...], b: tuple[float, ...]) -> float:
     return (dx * dx + dy * dy) ** 0.5
 
 
-def test_slide_16_draws_shipment_campaign_without_losing_anything() -> None:
+def test_slide_16_routes_are_mark_safe_and_every_omission_is_diagnosed() -> None:
     scene, surface = _surface()
     primitives = {item["id"]: item for item in surface["primitives"]}
-    dependencies = [item for item in primitives.values() if item.get("purpose") == "dependency"]
-    assert any(item["sourceRef"] == "shipment-campaign" for item in dependencies)
-    lost = [item for item in scene["diagnostics"]
-            if item.startswith(("W_LAYOUT_RELATION_SUPPRESSED:", "W_LAYOUT_LABEL_SUPPRESSED:"))]
-    assert lost == []
-    labels = [item for item in primitives.values() if item.get("purpose") == "member-label"]
-    assert len(labels) == len(surface["laneMembers"])
+    dependencies = {item["id"] for item in primitives.values()
+                    if item.get("purpose") == "dependency" and item.get("sourceKind") == "relation"
+                    and item["id"].startswith("relation:")}
+    suppressed = [item.removeprefix("W_LAYOUT_RELATION_SUPPRESSED:") for item in scene["diagnostics"]
+                  if item.startswith("W_LAYOUT_RELATION_SUPPRESSED:")]
+    assert len(suppressed) == len(set(suppressed)), "each omitted relation is diagnosed once"
+    assert dependencies.isdisjoint(suppressed), "a suppressed relation must not be drawn"
+    assert len(dependencies) + len(suppressed) == scene["manifest"]["contentFamilyCounts"]["relations"]
+    assert dependencies, "safety cannot pass by suppressing every dependency"
+    assert not [item for item in evaluate_scene_perceptibility(scene)
+                if item.code == "E_SCENE_RELATION_THROUGH_MARK"]
 
 
 def test_slide_16_names_stay_within_the_default_reach_of_their_marks() -> None:

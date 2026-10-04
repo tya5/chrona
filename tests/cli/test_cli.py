@@ -15,6 +15,7 @@ import chrona.app.cli as cli
 from chrona.app.cli import CliFailure, main
 from chrona.presentation.fonts.importer import import_font
 from chrona.presentation.model.font_metrics import FontTabularWarning
+from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
 from chrona.usecases.render_review import FontGlyphWarning, ScenePerceptibilityWarning
 from chrona.usecases.warning_ledger import collect_render_warnings
 from chrona.presentation.layout.surface_quality import FitWarning
@@ -197,18 +198,20 @@ def test_cli_warning_rows_account_for_every_scene_diagnostic_for_attached_milest
     assert all(row["message"] for row in emitted)
 
 
-def test_cli_collapses_a_warning_that_repeats_with_the_same_cause_into_one_row_with_a_count(tmp_path, monkeypatch, capsys):
-    scene_path = tmp_path / "halcyon.scene.json"
-    monkeypatch.setattr(sys, "argv", [
-        "chrona", "render", "tests/fixtures/cli_characterization/halcyon-1/project.yaml", "--actual",
-        "tests/fixtures/cli_characterization/halcyon-1/actual.yaml", "--output", str(tmp_path / "h.svg"),
-        "--emit-scene", str(scene_path),
-    ])
-    main()
+def test_cli_collapses_a_warning_that_repeats_with_the_same_cause_into_one_row_with_a_count(capsys):
+    scene_diagnostics = tuple(f"W_LAYOUT_LABEL_SUPPRESSED:member-label:synthetic:{index}" for index in range(7))
+    records = collect_render_warnings(
+        surface_diagnostics=scene_diagnostics, tabular_warnings=(), glyph_warnings=(), fit_warnings=(),
+        perceptibility_warnings=(), scale_collisions=(), attachment_warnings=(),
+    )
+    cli._emit_render_warnings(SimpleNamespace(
+        warning_records=records, info_diagnostics=(SuppressedPlotLabels("table-timeline", 7),),
+    ))
     emitted = [json.loads(line) for line in capsys.readouterr().err.splitlines() if line.startswith("{")]
-    rows = _warning_multiplicity(emitted, json.loads(scene_path.read_text(encoding="utf-8"))["diagnostics"])
+    rows = _warning_multiplicity(emitted, scene_diagnostics)
     (suppressed,) = [row for row in rows if row["code"] == "W_LAYOUT_LABEL_SUPPRESSED"]
     assert suppressed["count"] == 7 and len(suppressed["occurrences"]) == 7
+    assert suppressed["occurrences"] == list(scene_diagnostics)
     assert suppressed["diagnostic"] == suppressed["occurrences"][0]
     assert suppressed["message"].startswith("a label was left out of the picture because it does not fit: ")
     assert suppressed["message"].endswith(" and 6 more")
