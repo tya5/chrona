@@ -28,7 +28,7 @@ A v0.5 Summary Profile panel has `presentation: lines | figures`. `metrics` acce
 
 ## Numbered annotations
 
-`visibility.annotations` accepts the legacy enum or `{mode, marker}`. `marker: numbered` creates the deterministic circled index at the resolved anchor and the same prefix in the note slot; board rails retain leaders. Annotation semantics remain Project/View facts and never become renderer-specific text.
+`visibility.annotations` accepts the legacy enum or `{mode, marker}`. `marker: numbered` creates the deterministic circled index at the resolved anchor and the same prefix in a declared `annotations` slot's ordered note list; board rails retain leaders. Each list entry keeps its View-order number and Layout adds a visible `index not shown on plot` status when that optional index is suppressed. If the callout itself is suppressed, Layout keeps a compact numbered summary with `callout not shown on plot`; its callout-suppression diagnostic remains and no plot mark or leader is fabricated. These statuses and summaries follow the [Specification 33 Layout contract](33-intent-oriented-layout.md). Annotation semantics remain Project/View facts and never become renderer-specific text.
 
 ## Theme roles
 

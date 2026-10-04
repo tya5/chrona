@@ -155,4 +155,7 @@ def test_a_guided_annotation_renders_end_to_end_into_the_scene(tmp_path):
     primitives = [primitive for surface in rendered.scene.surfaces for primitive in surface.primitives]
     mine = {primitive.visual_role: primitive for primitive in primitives if primitive.source_ref == "note-1"}
     assert set(mine) == {"annotation-note-box", "annotation-note-text", "annotation-note-leader"}
-    assert mine["annotation-note-text"].text.endswith("Watch this")
+    # The preferred above-side callout falls back to the declared annotation
+    # rail; #1130 makes its missing plot index explicit in that list entry.
+    assert mine["annotation-note-text"].text == "1. Watch this (index not shown on plot)"
+    assert "W_LAYOUT_NOTE_INDEX_SUPPRESSED:note-1" in rendered.scene.diagnostics

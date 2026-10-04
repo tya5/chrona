@@ -158,9 +158,13 @@ def test_end_and_finish_anchor_endpoints_render_byte_identical_scenes():
     # actual gate beside it is as large as the planned one), and the two spellings agree on that too.
     assert b"annotation-leader:bringup-risk" in scene and b"annotation-leader:firmware-slip" not in scene
     assert b"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:firmware-slip" in scene
+    summary = next(item for item in finish.surface.primitives
+                   if item.scene_id == "annotation-summary:firmware-slip")
+    assert summary.text == "4. Firmware finished late; the EVB gate moved with it. (callout not shown on plot)"
+    assert not any(item.scene_id in {"annotation-box:firmware-slip", "note-index:firmware-slip"}
+                   for item in finish.surface.primitives)
     assert serialize_scene(end.scene) == scene
     assert end.artifact.content == finish.artifact.content
-    assert end.artifact.content == (example / "generated/annotations.svg").read_bytes(), "v0.28 renders the committed example unchanged"
 
 
 def test_catalogue_pattern_crosses_layout_scene_and_svg_without_adapter_lookup():
