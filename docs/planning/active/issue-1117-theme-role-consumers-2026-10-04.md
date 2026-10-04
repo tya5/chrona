@@ -65,3 +65,7 @@ The tool is registered in conformance only in slice 2, and only once the reviewe
 - Corpus regenerated (`regenerate_public_examples --write`, 64 slides): every SVG is byte identical; 63 Scenes change in exactly one field, `provenance.resources[].contentIdentity` of the Theme (a grouped diff of one identical change, so no image reading applies: no drawn pixel moves); `21-target-b` changes only by its diagnostics, now four `W_THEME_ROLE_UNREAD` warnings for the unedited target-B Theme (`annotation-text`, `table-header`, `range`, and `as-of-label` until #1110 registers the role).
 - Tests: `tests/integration/test_theme_role_consumers.py` (misspelt and unknown roles reported at the pointer, registered roles, `group:` names and roles a column `textRole` names not reported, surfaced as a render warning) and `tests/unit/tools/test_check_theme_role_consumers.py` (the corpus tool on synthetic trees); 9 of 9 mutations killed. Full local suite: green except the schema-equivalence runtime-budget tests under load, which pass alone.
 - The tool run by hand on this branch reports only `examples/halcyon-1/themes/target-b.yaml` (the reviewer's file). Registration in `conformance/` follows that Theme dropping its dead lines.
+
+## 8. Registration
+
+Reviewer PR #1061 (`c8ab6d9a`) dropped target B's dead lines; `tools/check_theme_role_consumers.py` prints PASS on the repository and is registered as the conformance check `theme-role-consumers` (after `layout-float-accumulation`), with a registration test in `tests/unit/tools/test_run_conformance.py`.
