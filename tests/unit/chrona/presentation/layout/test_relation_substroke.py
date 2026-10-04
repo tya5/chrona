@@ -1,4 +1,7 @@
 from math import isclose
+from dataclasses import replace
+
+import pytest
 
 from chrona.presentation.layout.relation_terminals import (
     complete_centred_terminals,
@@ -59,6 +62,12 @@ def test_collinear_and_straight_routes_keep_their_exact_coordinates():
 def _marker(head_length=4.0):
     return marker_geometry({"shape": "triangle", "headLength": head_length,
                             "headWidth": 3.0, "attachmentOffset": 0.0})
+
+
+@pytest.mark.parametrize("angle", [float("nan"), float("inf"), True, "90"])
+def test_completed_marker_axis_rejects_nonfinite_or_nonnumeric_values(angle):
+    with pytest.raises(ValueError, match="E_PRESENTATION_PRIMITIVE_INVALID"):
+        replace(_marker(), angle_degrees=angle)
 
 
 def test_marker_uses_first_sufficient_source_leg_and_last_sufficient_target_leg():

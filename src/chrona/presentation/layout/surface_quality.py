@@ -47,9 +47,9 @@ class MarkerGeometry:
     def __post_init__(self) -> None:
         if (not self.outline or self.head_length <= 0 or self.head_width <= 0
                 or not 0 <= self.attachment_offset <= self.head_length
-                or self.paint_mode not in {"fill", "stroke"}):
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
-        if self.angle_degrees is not None and not isfinite(self.angle_degrees):
+                or self.paint_mode not in {"fill", "stroke"}
+                or (self.angle_degrees is not None and (not isinstance(self.angle_degrees, (int, float))
+                    or isinstance(self.angle_degrees, bool) or not isfinite(self.angle_degrees)))):
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
 
 
