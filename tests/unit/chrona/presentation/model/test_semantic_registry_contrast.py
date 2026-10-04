@@ -11,7 +11,7 @@ GROUND_TEXT_SEMANTICS = {
     "memberLabelInsideActual", "memberLabelInsideSnapshot", "memberLabelInsideScenario", "milestoneDigestEntry",
     "relationLabel", "legendLabel", "projectNote", "noteIndex", "annotationCalloutText", "annotationHighlightText",
     "annotationArrowText", "summaryHeader", "summaryMetric", "summaryFigureValue", "summaryFigureCaption",
-    "slotHeading",
+    "slotHeading", "annotationListText",
 }
 # Labels painted in the role of a classified state text: the classification is by that role, not by their own.
 LABELS_CLASSIFIED_BY_ROLE = {"finishDelta", "varianceAhead", "varianceBehind"}
@@ -54,7 +54,8 @@ def test_every_label_semantic_is_classified_so_a_new_label_cannot_reopen_the_hol
 
 
 def test_free_text_resolves_by_purpose_in_the_shared_role_and_by_role_and_purpose_in_its_own():
-    for purpose in ("as-of-label", "member-label", "axis-label", "table-cell", "legend-label", "group-detail"):
+    for purpose in ("as-of-label", "member-label", "axis-label", "table-cell", "legend-label", "group-detail",
+                    "annotation-list-text"):
         assert contrast_binding_for("text", purpose).contrast_class == ContrastClass.GROUND_TEXT, purpose
     for role, purpose in (("axis-label2", "axis-label"), ("axis-label3", "axis-label"),
                           ("member-label-inside-planned", "member-label"), ("note-index", "note-index"),

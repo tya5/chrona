@@ -490,6 +490,47 @@ Layout outputs. If the index cannot fit, Layout diagnoses and omits only the
 index; the accepted annotation box/text and purpose-required leader remain.
 See the [#466 index/leader correction](../design/issue-466-general-placement-note-index-leader-correction-2026-09-26.md).
 
+**Numbered annotation list status (#1130, [work record](../planning/active/issue-1130-note-index-suppression-2026-10-04.md)).**
+When the Layout declares an `annotations` slot, its ordered note list is a
+separate output from each annotation's plot index and callout box. Every numbered View annotation retains its View-order
+ordinal and visible content. When an optional plot index is
+suppressed, the accepted note text remains and the rail visibly says `index
+not shown on plot`; the index-suppression diagnostic remains, and any required
+leader remains connected to its accepted box. For a rail-located note, include
+the status in its list entry and recomplete its rail geometry. For a
+plot-located callout, keep the original body, kind frame, box and leader
+geometry; place a separately measured, ordinal-keyed status in the declared
+annotations slot. Do not resize a plot callout to display list bookkeeping,
+or suppress its required leader because that status enlarged its body.
+Independent status and summary records use `annotationListText` semantics:
+free rail text on its actual ground, not boxed `annotationNoteText` prose
+(Specification 08). Original note prose retains its required box contract.
+When the annotation callout box/leader is suppressed,
+Layout retains a compact numbered summary entry visibly saying `callout not
+shown on plot`; the existing callout-suppression diagnostic remains, and no
+plot index, box, or leader is fabricated. These statuses are Layout-derived,
+not View/Project facts or adapter decisions. Layout measures and places the
+final list entries after resolving plot visibility; it may not renumber them
+or repair a completed Scene in an adapter. When suppression adds a summary or
+status, entries may reflow in View order within the declared slot; Layout
+must recomplete affected boxes and required leaders against the obstacle
+inventory, never move text alone or revive a suppressed plot callout.
+Reflow may additionally suppress an index or callout that no longer fits,
+but never restores either once suppressed in that composition. Repeat only
+when the suppressed identity set strictly grows; this bounds visibility
+transitions by the finite annotation/index inventory and prevents stale status.
+In the no-suppression case, the
+existing Scene and adapter output remain byte-identical. This preserves
+intentional callout suppression while preventing a silent numbering gap.
+Without that slot, Layout does not fabricate a list or change the existing
+plot-only annotation behavior. List overflow must remain explicitly diagnosed,
+never silently omit an entry.
+If a new status or summary has no non-overlapping position in the declared
+slot, place it after preceding rail records in View order and mark its text
+as `visible-overflow`, with the existing label-overflow diagnostic. Do not
+clamp multiple required records onto the same fallback position or silently
+grow the canvas. The author controls sufficient slot capacity.
+
 Segment/rectangle obstacle tests treat a `1e-9` layout-unit boundary contact
 as contact, not interior penetration; a longer positive interior crossing
 remains blocked. This handles floating representations of the same completed

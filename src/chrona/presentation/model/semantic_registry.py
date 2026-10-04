@@ -195,6 +195,7 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("scaleLegendEntry", "decoration", "legend-swatch", "planned", "planned"),
     _binding("legendLabel", "label", "legend-label", "text", "legend", ContrastClass.GROUND_TEXT),
     _binding("projectNote", "label", "project-note", "text", "annotation", ContrastClass.GROUND_TEXT),
+    _binding("annotationListText", "label", "annotation-list-text", "text", "annotation", ContrastClass.GROUND_TEXT),
     _binding("noteIndex", "label", "note-index", "note-index", "note-index", ContrastClass.GROUND_TEXT),
     _binding("annotationCalloutBox", "decoration", "annotation-box", "annotation-callout-box", "annotation-callout-box"),
     _binding("annotationCalloutText", "label", "annotation-text", "annotation-callout-text", "annotation-callout-text", ContrastClass.GROUND_TEXT),

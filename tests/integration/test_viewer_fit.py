@@ -263,7 +263,9 @@ def test_a_box_that_follows_its_text_is_one_filter_group_with_a_pinned_extent_an
         x, y, w, h = box.bounds
         extent = re.search(rf'<rect data-scene-id="{re.escape(scene_id)}-extent" x="([^"]+)" y="([^"]+)" width="([^"]+)" '
                            rf'height="([^"]+)" fill="none"/>', group.group(1))
-        assert extent and float(extent.group(1)) == x and float(extent.group(2)) == y
+        assert extent
+        assert float(extent.group(1)) == pytest.approx(x, abs=1e-6)
+        assert float(extent.group(2)) == pytest.approx(y, abs=1e-6)
         assert isclose(float(extent.group(1)) + float(extent.group(3)), text.baseline[0], abs_tol=0.001)  # start inset
         assert float(extent.group(4)) == pytest.approx(h, abs=0.001)  # top and bottom
         spaces = text.text_layout.fit.end_pad_spaces
