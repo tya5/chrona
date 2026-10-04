@@ -82,6 +82,7 @@ def error_message(code: str, message: str | None) -> str:
 
 _SURFACE_CAUSES: Mapping[str, str] = {
     "W_LAYOUT_LABEL_SUPPRESSED": "a label was left out of the picture because it does not fit",
+    "W_THEME_ROLE_UNREAD": "a Theme role or colour binding is declared but no registered role, group colour or document of the render reads it",
     "W_LAYOUT_ASOF_BELOW_PLOT_FALLBACK": (
         "the as-of chip could not be placed below the plot, so it sits inside the plot foot instead"),
     "W_LAYOUT_RELATION_SUPPRESSED": "a relation line was left out of the picture because no route fits",

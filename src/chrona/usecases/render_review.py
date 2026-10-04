@@ -41,6 +41,7 @@ from chrona.presentation.model.font_resources import FontAssetResolver
 from chrona.presentation.model.color_separability import ScaleCollision
 from chrona.presentation.model.info_diagnostics import PresentationInfo
 from chrona.presentation.fonts.system import DraftFontResolution
+from chrona.presentation.model.theme_role_consumers import unread_diagnostics as unread_theme_diagnostics
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView, effective_draft_numeric_theme
 from chrona.core.attachments import AttachmentWarning, attachment_warnings
 from chrona.core.deadlines import deadline_statuses, deadline_warnings
@@ -422,6 +423,12 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         detail = error.detail or visual_capability_message(error.diagnostic_id)
         raise RenderFailed(error.diagnostic_id, detail,
                            "presentation", error.path) from error
+    # A Theme role or binding no document of this closure reads is reported, not silently accepted (#1117).
+    unread_roles = unread_theme_diagnostics(
+        theme["body"], (view, layout, render_closure.detail_profile.detail if render_closure.detail_profile else None,
+                        render_closure.summary_profile.summary if render_closure.summary_profile else None))
+    if unread_roles:
+        surface = replace(surface, diagnostics=(*surface.diagnostics, *unread_roles))
     try:
         validate_surface_visual_profile(surface, visual_profile)
     except VisualCapabilityError as error:

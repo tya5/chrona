@@ -2,7 +2,7 @@
 
 Living record for [#1117](https://github.com/tya5/chrona/issues/1117), the successor of [#1110](https://github.com/tya5/chrona/issues/1110) (work record [issue-1110-asof-label-ink-2026-10-04.md](issue-1110-asof-label-ink-2026-10-04.md)). Baseline, literal acceptance, design plan, design, architecture review and implementation plan are published together before code. Edited in place; Git keeps history.
 
-**Public base:** `23bc8a57` on `main`. **Status:** design published; no code yet. Implementation waits for PR #1118 (#1110) to merge. Scope rule (owner): the reviewer's `examples/halcyon-1/*target-b*` files are the reviewer's to edit; their change is listed here and done by them (PR #1061 or a successor), never by this work.
+**Public base:** `23bc8a57` on `main`. **Status:** design merged (PR #1128); slices 1 and 2 (the check, its twin, the tool and the removal of the dead lines with the two re-pins) in one PR, because the render-time warning on the unedited corpus fails the characterization and warning tests; registering the tool in conformance waits for the reviewer's target-B change. Scope rule (owner): the reviewer's `examples/halcyon-1/*target-b*` files are the reviewer's to edit; their change is listed here and done by them (PR #1061 or a successor), never by this work.
 
 ## 1. Published baseline
 
@@ -58,3 +58,10 @@ Use cases: **U1** an author misspells a role (`as-of-lable.fill`) and is told at
 | 3 | Acceptance review | `docs/reviews/current/issue-1117-*` | checker | exact-main three-OS run |
 
 The tool is registered in conformance only in slice 2, and only once the reviewer's target-B Theme has dropped its three lines (their own change); until then the tool run by hand reports exactly that file as the one remaining dead declaration, so the registration is the last step and waits for it.
+
+## 7. Result of slices 1 and 2
+
+- Removed: 127 lines in 55 Theme files (the bundled presets, `examples/controller-z`, `controller-z-ja`, `halcyon-1` except `target-b.yaml`, `aster-ssd`, `orion-asic`, `tests/fixtures`); `table-header.fill`, `annotation-text.fill` and `range.fill` were each read by nothing. Re-pinned: `examples/aster-ssd/themes/onboarding-variation.yaml` and `examples/halcyon-1/themes/12-glyph-gates.yaml` (base source and content identity). Contexts and the preset library needed no change.
+- Corpus regenerated (`regenerate_public_examples --write`, 64 slides): every SVG is byte identical; 63 Scenes change in exactly one field, `provenance.resources[].contentIdentity` of the Theme (a grouped diff of one identical change, so no image reading applies: no drawn pixel moves); `21-target-b` changes only by its diagnostics, now four `W_THEME_ROLE_UNREAD` warnings for the unedited target-B Theme (`annotation-text`, `table-header`, `range`, and `as-of-label` until #1110 registers the role).
+- Tests: `tests/integration/test_theme_role_consumers.py` (misspelt and unknown roles reported at the pointer, registered roles, `group:` names and roles a column `textRole` names not reported, surfaced as a render warning) and `tests/unit/tools/test_check_theme_role_consumers.py` (the corpus tool on synthetic trees); 9 of 9 mutations killed. Full local suite: green except the schema-equivalence runtime-budget tests under load, which pass alone.
+- The tool run by hand on this branch reports only `examples/halcyon-1/themes/target-b.yaml` (the reviewer's file). Registration in `conformance/` follows that Theme dropping its dead lines.

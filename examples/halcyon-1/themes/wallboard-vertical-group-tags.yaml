@@ -456,14 +456,12 @@ body:
     member-label-inside-scenario.fill: insideLabelScenario
     subtitle.fill: textMuted
     annotation.fill: surfaceRaised
-    annotation-text.fill: text
     annotation-note-box.fill: surfaceRaised
     annotation-note-box.stroke: neutral
     annotation-note-text.fill: text
     annotation-note-leader.stroke: neutral
     note-index.fill: accent
     metric.fill: text
-    table-header.fill: surfaceRaised
     axis-major.stroke: neutral
     axis-minor.stroke: surfaceRaised
     axis-band-decoration.fill: neutral
@@ -501,7 +499,6 @@ body:
     period-label.fill: text
     period-label-chip.fill: surfaceRaised
     calendar-exception.fill: warning
-    range.fill: warning
     as-of.stroke: warning
     as-of-label-chip.fill: neutral
     progress-fill.fill: warning
