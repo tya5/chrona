@@ -86,7 +86,9 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
             else: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         return "".join(parts)
     def marker_id(color: str, geometry: object) -> str:
-        return "marker-" + sha256(repr((color, geometry)).encode()).hexdigest()[:12]
+        identity = ((color, geometry) if geometry.angle_degrees is None
+                    else (color, geometry, geometry.angle_degrees))
+        return "marker-" + sha256(repr(identity).encode()).hexdigest()[:12]
     def pattern_id(geometry: object, paint: ScenePaint) -> str:
         if geometry.primitives:
             payload = repr((geometry, paint.stroke, paint.fill, paint.opacity))
@@ -156,11 +158,13 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
                   if viewer_fit and node.viewer_fit == BOX_FOLLOWS_TEXT and completed(node).fill is not None}
     if marker_pairs or patterns or gradients or shadows or glows or clip_hosts or fit_floods:
         definitions: list[str] = []
-        for color, marker in sorted(marker_pairs, key=repr):
+        for color, marker in sorted(marker_pairs, key=lambda pair: (
+                repr(pair), pair[1].angle_degrees is not None, pair[1].angle_degrees or 0.0)):
             if color is None or marker is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             appearance = (f'fill="{escape(color, quote=True)}"' if marker.paint_mode == "fill"
                           else f'fill="none" stroke="{escape(color, quote=True)}"')
-            definitions.append(f'<marker id="{marker_id(color, marker)}" viewBox="0 0 {number(marker.head_length)} {number(marker.head_width)}" refX="{number(marker.head_length - marker.attachment_offset)}" refY="{number(marker.head_width / 2)}" markerWidth="{number(marker.head_length)}" markerHeight="{number(marker.head_width)}" orient="auto"><path d="{commands_data(marker.outline)}" {appearance}/></marker>')
+            axis_value = "auto" if marker.angle_degrees is None else number(marker.angle_degrees)
+            definitions.append(f'<marker id="{marker_id(color, marker)}" viewBox="0 0 {number(marker.head_length)} {number(marker.head_width)}" refX="{number(marker.head_length - marker.attachment_offset)}" refY="{number(marker.head_width / 2)}" markerWidth="{number(marker.head_length)}" markerHeight="{number(marker.head_width)}" orient="{axis_value}"><path d="{commands_data(marker.outline)}" {appearance}/></marker>')
         for pattern, paint in sorted(patterns, key=repr):
             if pattern.primitives:
                 if pattern.origin is None or pattern.clip_bounds is None:

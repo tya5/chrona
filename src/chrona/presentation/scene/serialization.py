@@ -45,8 +45,11 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
                     for surface in scene.surfaces for primitive in surface.primitives)
     has_fit = any(primitive.viewer_fit != "raw" or (primitive.text_layout is not None and primitive.text_layout.fit is not None)
                   for surface in scene.surfaces for primitive in surface.primitives)
+    has_marker_axis = any(marker is not None and marker.angle_degrees is not None
+                         for surface in scene.surfaces for primitive in surface.primitives
+                         for marker in (primitive.marker_start, primitive.marker_end))
     return {
-        "version": ("chrona/scene/v0.7" if has_catalog_pattern or has_v07_paint or has_tilt or has_scale or has_fit
+        "version": ("chrona/scene/v0.7" if has_catalog_pattern or has_v07_paint or has_tilt or has_scale or has_fit or has_marker_axis
                     else "chrona/scene/v0.6"),
         "kind": "scene",
         "provenance": {
@@ -478,9 +481,12 @@ def _finish(value: StrokeFinish) -> dict[str, Any]:
 
 
 def _marker(value: Any) -> dict[str, Any]:
-    return {"outline": [_path(item) for item in value.outline], "headLength": value.head_length,
+    result = {"outline": [_path(item) for item in value.outline], "headLength": value.head_length,
             "headWidth": value.head_width, "attachmentOffset": value.attachment_offset,
             "paintMode": value.paint_mode}
+    if value.angle_degrees is not None:
+        result["angleDegrees"] = value.angle_degrees
+    return result
 
 
 def _pattern(value: PatternGeometry) -> dict[str, Any]:

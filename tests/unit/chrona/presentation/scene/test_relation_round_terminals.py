@@ -28,19 +28,22 @@ def _item(oid, start, end, track="stacked"):
                       source_kind="primary", track=track)
 
 
-def _compose(items, rows, relation, source_shape, target_shape, *, head=6, entry="any", radius=None):
+def _compose(items, rows, relation, source_shape, target_shape, *, head=6, entry="any", radius=None, window=None,
+             mark_size=8):
     theme = _theme()
     for name, shape in (("src", source_shape), ("dst", target_shape)):
         theme["body"]["values"][name] = {"type": "marker", "value": {"shape": shape, "headLength": head,
                                                                      "headWidth": head, "attachmentOffset": 0}}
     theme["body"]["roles"]["relationSourceTerminal"] = {"marker": "src"}
     theme["body"]["roles"]["relationTargetTerminal"] = {"marker": "dst"}
-    projection = ReviewProjection(tuple(items), (min(i.planned["start"] for i in items), max(i.planned["end"] for i in items)),
+    extent = window or (min(i.planned.get("start", i.planned.get("at")) for i in items),
+                        max(i.planned.get("end", i.planned.get("at")) for i in items))
+    projection = ReviewProjection(tuple(items), extent,
                                   (), (), tuple(rows))
     measurement = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))},
                                   {"text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
                                    "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8),
-                                   "timeline.mark.blockSize": Decimal(8),
+                                   "timeline.mark.blockSize": Decimal(mark_size),
                                    **({"timeline.relation.cornerRadius": Decimal(radius)} if radius else {})})
     manifest = replace(_manifest("title", "table", "timeline", "timeline-axis"), relation_entry=entry)
     value = build_scene_input(projection=projection, surface_content=surface_content(relations=(relation,)),
@@ -134,3 +137,32 @@ def test_a_triangular_head_keeps_its_tip_at_the_port_and_the_route_is_untrimmed(
     assert path.points[0] == pytest.approx(_end_port(marks["planned:a:a"]))
     assert path.points[-1] == pytest.approx(_start_port(marks["planned:b:b"]))
     assert path.marker_end.attachment_offset == 0.0 and not path.marker_end.centred
+
+
+def test_gate_to_bar_near_drop_has_a_vertical_start_and_centred_source_circle(monkeypatch):
+    from datetime import timedelta
+    from tests.unit.chrona.presentation.scene.test_relation_route_invariant import gate
+    source = gate("a", D(2026, 2, 8))
+    target = _item("b", D(2026, 2, 20), D(2026, 2, 26))
+    relation = {"id": "dep", "from": {"object": "a", "endpoint": "at"},
+                "to": {"object": "b", "endpoint": "start"}}
+    import chrona.presentation.layout.surface_routes as routes
+    boundary_candidates = routes.connector_egress_candidates
+    def below_gate(mark, *args, **kwargs):
+        candidates = boundary_candidates(mark, *args, **kwargs)
+        return tuple(c for c in candidates if c.side == "below") if mark.mark_shape == "point" else candidates
+    def near_drop(*, source_port, target_port, **kwargs):
+        # A controlled orthogonal-search result isolates the sub-stroke failure:
+        # the exact gate port differs from the free drop corridor by 0.44 px.
+        x = source_port[0] - 0.44
+        return (source_port, (x, source_port[1]), (x, target_port[1]), target_port)
+    monkeypatch.setattr(routes, "connector_egress_candidates", below_gate)
+    monkeypatch.setattr(routes, "place_relation_route", near_drop)
+    path, marks = _compose((source, target), _rows((source,), (target,)), relation,
+                          "circle", "triangle", entry="any", radius=4, mark_size=24,
+                          window=(D(2026, 1, 1), D(2026, 1, 1) + timedelta(days=600)))
+    assert path.points[0][0] == pytest.approx(path.points[1][0])
+    mark = _mark(marks, "a")
+    x, y, width, height = mark.bounds
+    assert _centre(path, "source") == pytest.approx((x + width / 2, y + height))
+    assert all(hypot(b[0] - a[0], b[1] - a[1]) >= 1 - 1e-6 for a, b in zip(path.points, path.points[1:]))

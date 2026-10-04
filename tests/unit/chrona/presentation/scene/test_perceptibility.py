@@ -29,6 +29,22 @@ def _codes(document):
     return [item.code for item in evaluate_scene_perceptibility(document)]
 
 
+@pytest.mark.parametrize("points", [[[0, 0], [0.4, 0]], [[0, 0], [4, 0], [4, 0.4], [8, 0.4]]])
+def test_substroke_relation_segments_are_observed_including_a_whole_short_path(points):
+    path = _primitive("relation:dep", "Path", paint={"stroke": "#000000", "strokeWidth": 1, "opacity": 1})
+    path.update(sourceKind="relation", sourceRef="dep", points=points)
+    findings = evaluate_scene_perceptibility(_scene(path))
+    short = [f for f in findings if f.code == "E_SCENE_RELATION_SEGMENT_TOO_SHORT"]
+    assert len(short) == 1
+    assert dict(short[0].measured_facts)["length"] == pytest.approx(0.4)
+
+
+def test_stroke_width_relation_run_is_not_a_substroke_violation():
+    path = _primitive("relation:dep", "Path", paint={"stroke": "#000000", "strokeWidth": 1, "opacity": 1})
+    path.update(sourceKind="relation", sourceRef="dep", points=[[0, 0], [1, 0]])
+    assert "E_SCENE_RELATION_SEGMENT_TOO_SHORT" not in _codes(_scene(path))
+
+
 def test_reports_later_opaque_rect_occlusion_and_preserves_measured_identity():
     findings = evaluate_scene_perceptibility(_scene(
         _primitive("text"), _primitive("cover", "Rect", order=1, paint={"fill": "#000000", "opacity": 1}),

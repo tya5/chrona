@@ -190,6 +190,28 @@ without copying their authoring content. Diagnostics are an ordered immutable Sc
 collection separate from the manifest; the initial successful profile emits an empty
 collection. Manifest fields and diagnostics are never cache or semantic authorities.
 
+### Relation terminal axes and sub-stroke jogs (#1109 R1)
+
+Layout removes sub-stroke jogs without moving boundary ports, rechecks mark and
+obstacle clearance and route budgets, and rejects candidates whose completed
+terminal-trimmed polyline still has a segment shorter than its stroke width.
+This concerns the route skeleton, not rounded-corner tessellation or terminal
+outlines. Scene observation reports `E_SCENE_RELATION_SEGMENT_TOO_SHORT` for
+violations, including a short whole path. Existing declared overflow and
+suppression rules remain; corpus resources are not tuned to conceal failures.
+For a short endpoint tangent, Layout completes the marker axis from the first
+(source) or last (target) segment at least `headLength` long, or the selected
+port normal (preferred when available). A round head's short terminal jog
+must follow that normal or be removed with the same safety checks; otherwise
+Layout tries another port. For nearby round heads on a straight route, Layout
+may reduce setbacks and adjust their reference offsets to reserve a stroke-width
+run under the heads while keeping both centres at their original ports.
+The optional finite marker `angleDegrees` is Scene v0.7 data;
+SVG serializes it as marker `orient`, without choosing geometry. Its absence
+retains `orient="auto"`, also when the completed axis equals that tangent,
+and existing marker identity and bytes. Scene v0.6 is
+unchanged; v0.7 is extended in place under Specification 56 §3.2.
+
 ## 4. Coordinate system and temporal scale
 
 ### 4.0.1 Theme catalogue patterns (#496)

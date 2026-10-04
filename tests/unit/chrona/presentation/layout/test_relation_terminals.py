@@ -1,6 +1,10 @@
 """Relation terminal geometry (#1042): open-triangle is a closed stroked outline, chevron an open V."""
 from datetime import date
 from io import BytesIO
+import os
+from pathlib import Path
+import subprocess
+import sys
 
 import pytest
 from PIL import Image
@@ -54,6 +58,45 @@ def test_rendered_svg_and_png_show_the_two_shapes_differently():
     column = 8 * 17
     ink = [sum(1 for y in range(image.height) if image.getpixel((column, y)) < 128) for image in images]
     assert ink[1] > ink[0]
+
+
+def test_svg_serializes_completed_marker_axis_and_distinguishes_its_identity():
+    from dataclasses import replace
+    original = _surface("triangle")
+    path = original.primitives[0]
+    marker = replace(path.marker_end, angle_degrees=90)
+    oriented = replace(original, primitives=(replace(path, marker_end=marker),))
+    auto = render_v05_svg(original)
+    explicit = render_v05_svg(oriented)
+    assert 'orient="auto"' in auto and 'orient="90"' in explicit
+    assert auto.split('marker id="')[1].split('"')[0] != explicit.split('marker id="')[1].split('"')[0]
+
+
+def test_svg_marker_definition_order_is_stable_across_hash_seeds():
+    script = '''
+from dataclasses import replace
+from datetime import date
+from chrona.presentation.layout.relation_terminals import marker_geometry
+from chrona.presentation.scene.model import ScenePaint, ScenePrimitive, SceneSurface, SurfaceScaleManifest
+from chrona.presentation.renderers.v05_svg import render_v05_svg
+
+scale = SurfaceScaleManifest("s", "primary", date(2026, 1, 1), date(2026, 1, 2), 0, 40, 0, 20)
+marker = marker_geometry({"shape": "triangle", "headLength": 12, "headWidth": 10, "attachmentOffset": 1})
+paint = ScenePaint(None, "#000000", 1, (), 1)
+paths = tuple(ScenePrimitive(f"p{i}", "Path", "a", "relation", "dependency", "dependency", (0, 0, 0, 0),
+                             marker_end=marker if i == 0 else replace(marker, angle_degrees=90),
+                             paint=paint, points=((2, 5 + i * 5), (28, 5 + i * 5)))
+              for i in range(2))
+surface = SceneSurface("s", (), (), (), scale, paths, ScenePaint("#ffffff", None, None, (), 1),
+                       canvas_bounds=(0, 0, 40, 20))
+print(render_v05_svg(surface), end="")
+'''
+    repository = Path(__file__).resolve().parents[5]
+    outputs = []
+    for seed in ("0", "1", "17", "2718"):
+        environment = os.environ | {"PYTHONHASHSEED": seed}
+        outputs.append(subprocess.check_output([sys.executable, "-c", script], cwd=repository, env=environment))
+    assert len(set(outputs)) == 1
 
 
 # --- #1044: five new terminal shapes -------------------------------------------------------------------------

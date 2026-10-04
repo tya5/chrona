@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
+from math import isfinite
 from typing import Any
 
 from chrona.presentation.layout.model import Rect
@@ -41,11 +42,14 @@ class MarkerGeometry:
     paint_mode: str
     # not part of repr/equality: the SVG marker id hashes repr, and this is derived from the shape
     centred: bool = field(default=False, repr=False, compare=False)  # a round terminal centred on the endpoint, so its leg needs no straight run (#1044)
+    angle_degrees: float | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         if (not self.outline or self.head_length <= 0 or self.head_width <= 0
                 or not 0 <= self.attachment_offset <= self.head_length
-                or self.paint_mode not in {"fill", "stroke"}):
+                or self.paint_mode not in {"fill", "stroke"}
+                or (self.angle_degrees is not None and (not isinstance(self.angle_degrees, (int, float))
+                    or isinstance(self.angle_degrees, bool) or not isfinite(self.angle_degrees)))):
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
 
 
