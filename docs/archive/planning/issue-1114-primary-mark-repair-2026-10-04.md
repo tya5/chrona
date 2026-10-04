@@ -1,7 +1,7 @@
 # Issue #1114: primary-mark-safe route completion
 
 Public baseline: `345e5773`; safety-only PR #1138 includes the replacement-jog
-correction `775661f0`. This is the current design/review/implementation record.
+correction `775661f0`. This is the archived design/review/implementation record.
 
 ## Scope and owner disposition
 
@@ -55,6 +55,6 @@ An already compliant first repair remains identical. No joint solver.
 | On target B, `avionics-cdr` no longer crosses the Avionics bar. | Current target-B Scene and actual SVG. |
 
 Withdrawn row: “Existing compliant routes are unchanged.” Side effects are
-disclosed, not silently waived or repaired by corpus edits. The last CI
-`37197403151` failed only the superseded Editorial no-loss assertion; its
-derived-ready failure is downstream. Fresh-head CI/review remains required.
+disclosed, not silently waived or repaired by corpus edits.
+
+Closed with main commit [8420d007e5d0881bb3ac6e97f5a1cf9203e00f58](https://github.com/tya5/chrona/commit/8420d007e5d0881bb3ac6e97f5a1cf9203e00f58), exact-SHA [derived-main/ready](https://github.com/tya5/chrona/actions/runs/37202949335), and [three-OS release gate](https://github.com/tya5/chrona/actions/runs/37203065647).
