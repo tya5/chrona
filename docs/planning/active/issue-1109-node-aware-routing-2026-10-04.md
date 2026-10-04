@@ -199,12 +199,32 @@ CI-owned. The separate routed-note test is a genuine failure: TVAC exhausts
 the 1,024-state route search and produces no leader, so its safety/association
 assertions remain unchanged pending correction.
 
-Read-only annotation diagnosis: a finite expanded-budget trial finds a strict
-route for the same box at trial 10 after 32,371 states, identically in two
-renders. This is a feasibility lead, not acceptance: it exceeds the declared
-1,024-state cap and fails placement-decision validation. Quality-ranked paths
-alone still exhaust the cap; they do not solve endpoint-stream starvation.
+Read-only annotation diagnosis: an expanded-budget trial finds a strict route
+for the same box at trial 10, identically in two renders. This is a feasibility
+lead, not acceptance: it exceeds the declared 1,024-state cap and fails
+placement-decision validation. Neither per-pair nor globally ranked canonical
+path prefixes fit within that cap; an endpoint-interior precheck rejects no
+pairs. No tested bounded search correction is selected.
 Next: establish a bounded, deterministically counted connector search with a
 neutral witness and exact TVAC safety checks, then publish any changed search
 contract and architecture review here and in Spec 33 before product edits.
 No higher production cap, obstacle waiver or selected search change exists.
+
+## Editorial context adaptation: design and implementation plan
+
+Select a 3200 × 900 viewport for only
+`examples/halcyon-1/contexts/16-gallery-editorial-lanes.yaml` (currently 2400 × 900).
+The existing slide acceptance explicitly chooses widening rather than detaching
+names. A resource-equivalent Draft probe recovers all three missing editorial
+relations (22 → 25 dependency primitives) with zero name/relation suppressions.
+Architecture review: Specs 13 §4 and 33 §1 assign viewport to the independent
+Render Context; Spec 08 §4.1 permits the resulting global reflow. Project facts,
+View semantics, Theme typography, default name reach and route quality/safety
+remain unchanged. No core exception, normative amendment or shared preset edit.
+
+Implementation unit in PR #1122: change this one viewport, materialize the exact
+public context in a copied tree, run both editorial slide acceptance tests and
+context/schema gates, check intended relation inventory, crossings, label reach,
+and SVG/PNG boundaries. CI owns derived mirrors and the full release gate.
+All coordinates may change intentionally; the wider canvas is the migration.
+The four other HALCYON route losses and TVAC search remain separate open gates.
