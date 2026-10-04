@@ -327,6 +327,9 @@ properties:
             edge: {description: "Named edge token (side and thickness) for the annotation-kind accent role (#584).", type: string, minLength: 1}
             stampPlacement: {description: "Named stampPlacement token (corner and size) for the annotation-kind stamp role (#584).", type: string, minLength: 1}
             swatchInlineSize: {description: "Named absolute inline length for a legend swatch whose on-chart length has no single value (a span, line, or decoration key); absent means Layout falls back to the legend label's own font size (#427).", type: string, minLength: 1}
+            swatchGap: {description: "Named absolute distance from a legend swatch to its label (#1111); the legend slot gap stays the distance between entries. Absent, the slot gap is both.", type: string, minLength: 1}
+            swatchBlockSize: {description: "Named absolute block length of an area (background) legend swatch (#1111); declaring it makes the area swatch a rectangle of swatchInlineSize (else the legacy side) by this size. Absent, the legacy square.", type: string, minLength: 1}
+            pointSwatchSize: {description: "Named absolute side of the point (gate, milestone) legend swatch (#1111). Absent, the on-chart gate size.", type: string, minLength: 1}
             backgroundTreatment: {description: "Finite treatment for a completed review-surface background role; none is an explicit non-drawable disposition.", enum: [fill, outline, none]}
             contrastTreatment: {description: "Finite contrast-floor treatment for a classified state-text role.", enum: [required, deemphasized]}
             backgroundPaintOrder: {description: "Finite completed ordering key for a review-surface background role.", type: integer, minimum: 0, maximum: 1000}

@@ -162,6 +162,11 @@ slides:
     context: contexts/text-roles.yaml
     expectedSvg: generated/text-roles.svg
     expectedScene: generated/text-roles.scene.json
+  - id: legend-swatches
+    evidence: "Legend keys sized as the target mock draws them (#1111): a Theme that declares swatchInlineSize, swatchBlockSize, pointSwatchSize and swatchGap on the legend-swatch role gives the non-working-day key a 22 x 12 rectangle, the gate key a 12 px diamond and a 6 px distance to each label, while the slot gap (26 px) stays the distance between entries, over the executive sources."
+    context: contexts/legend-swatches.yaml
+    expectedSvg: generated/legend-swatches.svg
+    expectedScene: generated/legend-swatches.scene.json
   - id: gate-paint
     evidence: "Gates painted apart from the bars (#991): a Theme that declares the role gate colours the primary gates with it (here the text ink, as the target's black diamonds) while the bars keep the planned paint, over the executive sources."
     context: contexts/gate-paint.yaml

@@ -139,7 +139,7 @@ _LAYOUT_TYPOGRAPHY = _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("writing
 _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | _GROUP_TAB | frozenset((
     "cellGap", "cellCornerRadius", "cellCornerChamfer", "frameCornerRadius", "chipPadding", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach",
     "symbolHeight", "symbolOffset",
-    "progressInset", "summaryBarHeight", "swatchInlineSize", "annotationContainer", "marker", "symbol", "edge",
+    "progressInset", "summaryBarHeight", "swatchInlineSize", "swatchGap", "swatchBlockSize", "pointSwatchSize", "annotationContainer", "marker", "symbol", "edge",
     "stampPlacement", "coneSpread", "coneExtent",
 ))
 _LAYOUT_POLICY = frozenset(("backgroundTreatment", "backgroundPaintOrder"))
@@ -307,7 +307,8 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              scene_kinds=frozenset(("Rect",)))
     register("region-frame", "Layout region frame and Scene Rect", _PATTERNED_RECT_PAINT | frozenset(("frameCornerRadius",)),
              scene_kinds=frozenset(("Rect",)))
-    register("legend-swatch", "Layout legend swatch size", frozenset(("swatchInlineSize",)))
+    register("legend-swatch", "Layout legend swatch size and gap",
+             frozenset(("swatchInlineSize", "swatchGap", "swatchBlockSize", "pointSwatchSize")))
     register("baseline", "Retired Theme paint alias", frozenset())
     return roles
 
