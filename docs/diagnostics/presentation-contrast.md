@@ -2,7 +2,7 @@
 
 Generated from committed public Scene evidence by `tools/presentation_contrast.py`.
 
-Marks and text below their floor are errors and fail the check. A decoration below its floor (or on a ground that cannot be read) is a warning: it is listed and counted, and fails nothing (Specification 46 section 8).
+Contrast constraints are an opt-in design option (Specification 46 section 8). For a Theme listed in `conformance/contrast-opt-in.yaml`, a mark or text below its floor is an error and fails the check; a decoration below its floor (or on a ground that cannot be read) is a warning. For any other Theme every miss is a warning: it is listed and counted, and fails nothing.
 
 | Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors | Warnings |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -8566,6 +8566,14 @@ Marks and text below their floor are errors and fail the check. A decoration bel
 | `examples/orion-asic/generated/gates.scene.json` | `column:Work package` | `text` | 70.704, 78.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/orion-asic/generated/gates.scene.json` | `column:Δ` | `text` | 463.927, 78.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/orion-asic/generated/gates.scene.json` | `title` | `text` | 800.000, 42.456 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+
+## Themes not opted in
+
+Contrast constraints are an opt-in design option (Specification 46 section 8): a Theme listed in `conformance/contrast-opt-in.yaml` is held to the floors above, any other Theme only warns.
+
+| Theme | Scenes | Warnings | Errors |
+| --- | ---: | ---: | ---: |
+| `target-b` | 1 | 79 | 0 |
 
 ## Decoration corpus witness
 

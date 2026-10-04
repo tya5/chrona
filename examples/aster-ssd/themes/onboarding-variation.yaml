@@ -1,5 +1,5 @@
 version: chrona/theme/v0.12
 kind: theme
 id: executive-light
-body: {extends: {id: executive-light, path: executive-light.yaml, sourceContentIdentity: 'sha256:3f9947845b4c39d4eceefcfe474e34421edb4ac6869fd76c587ea2baed62708a', contentIdentity: 'sha256:496f560a321e72b2d3c26fd07e83fd2f84fb90e1cfd5194be5424fd0bf0db009'},
+body: {extends: {id: executive-light, path: executive-light.yaml, sourceContentIdentity: 'sha256:d6655c0b204959d18f855025de5ee4707ce0b26b8f99a295938f91c5e7d5f1c2', contentIdentity: 'sha256:b4b557a8011b5159724cfe6e649e6581218062459e41fac998303e44a316eab2'},
   values: {text-size: {type: number, value: 16}, heading-size: {type: number, value: 30}}}

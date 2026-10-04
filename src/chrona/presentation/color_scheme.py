@@ -9,7 +9,7 @@ from chrona.presentation.annotation_kind_text import AnnotationKindTextError, ki
 from chrona.presentation.model.semantic_registry import ContrastClass, contrast_bindings
 from chrona.presentation.model.theme_tokens import ThemeTokenError, checked_horizontal_scale
 from chrona.presentation.scene.capabilities import theme_role_property_consumer
-from chrona.presentation.scene.contrast_policy import DECORATION_SEVERITIES
+from chrona.presentation.scene.contrast_policy import POLICY_MEMBERS, POLICY_SEVERITIES
 from chrona.presentation.scene.paint_analysis import composited_contrast
 
 
@@ -302,23 +302,23 @@ def _canvas_texture(*, roles: Mapping[str, Any], values: Mapping[str, Any]) -> N
 
 
 def _contrast_policy(declared: Any) -> dict[str, str]:
-    """Validate the Theme's `contrastPolicy` (#995) and return it, empty when it declares nothing.
+    """Validate the Theme's `contrastPolicy` (#995, #1126) and return it, empty when it declares nothing.
 
-    The only member is `decoration`: what a decoration below its floor becomes at render, `warning` (the
-    default) or `error`. Marks and text have no member because nothing about them may be softened.
+    Contrast constraints are an opt-in design option: each member (`mark`, `stateText`, `groundText`,
+    `decoration`, `unsupportedGround`) is `none`, `warning` or `error`; a member the Theme omits is `warning`
+    at render. A structural gate is not a contrast constraint and has no member.
     """
     if declared is None:
         return {}
     if not isinstance(declared, Mapping):
         raise ColorSchemeError("E_THEME_CONTRAST_POLICY", "/body/contrastPolicy")
-    for member in declared:
-        if member != "decoration":
+    for member, severity in declared.items():
+        if member not in POLICY_MEMBERS:
             raise ColorSchemeError("E_THEME_CONTRAST_POLICY", f"/body/contrastPolicy/{member}")
-    severity = declared.get("decoration")
-    if severity not in DECORATION_SEVERITIES:
-        raise ColorSchemeError("E_THEME_CONTRAST_POLICY", "/body/contrastPolicy/decoration",
-                               detail=f"expected one of {', '.join(DECORATION_SEVERITIES)}")
-    return {"decoration": severity}
+        if severity not in POLICY_SEVERITIES:
+            raise ColorSchemeError("E_THEME_CONTRAST_POLICY", f"/body/contrastPolicy/{member}",
+                                   detail=f"expected one of {', '.join(POLICY_SEVERITIES)}")
+    return dict(declared)
 
 
 def _as_of_cone(*, roles: Mapping[str, Any]) -> None:

@@ -82,6 +82,7 @@ def error_message(code: str, message: str | None) -> str:
 
 _SURFACE_CAUSES: Mapping[str, str] = {
     "W_LAYOUT_LABEL_SUPPRESSED": "a label was left out of the picture because it does not fit",
+    "W_THEME_ROLE_UNREAD": "a Theme role or colour binding is declared but no registered role, group colour or document of the render reads it",
     "W_LAYOUT_ASOF_BELOW_PLOT_FALLBACK": (
         "the as-of chip could not be placed below the plot, so it sits inside the plot foot instead"),
     "W_LAYOUT_RELATION_SUPPRESSED": "a relation line was left out of the picture because no route fits",
@@ -128,6 +129,9 @@ _SCENE_CAUSES: Mapping[str, str] = {
     "W_SCENE_RELATION_PATH_DUPLICATE": "one dependency is drawn more than once",
     "W_SCENE_RELATION_PATH_REVERSES": "a dependency line doubles back over itself",
     "W_SCENE_DECORATION_CONTRAST": "a background decoration is fainter than its visibility floor against the ground it lies on",
+    "W_SCENE_MARK_CONTRAST": "a mark is fainter than its 3:1 visibility floor against the ground it lies on",
+    "W_SCENE_STATE_TEXT_CONTRAST": "text is fainter than its contrast floor against the ground it lies on",
+    "W_SCENE_CONTRAST_GROUND_UNSUPPORTED": "a mark or text lies on a ground whose colour cannot be computed, so its contrast cannot be judged",
     "W_SCENE_DECORATION_GROUND_UNSUPPORTED": "a background decoration lies on a translucent ground, so its contrast cannot be judged",
 }
 MAX_OCCURRENCES = 20

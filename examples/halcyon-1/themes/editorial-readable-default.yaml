@@ -467,8 +467,6 @@ body:
     text.fill: text
     subtitle.fill: textMuted
     annotation.fill: surfaceRaised
-    annotation-text.fill: text
-    table-header.fill: surfaceRaised
     axis-major.stroke: neutral
     axis-minor.stroke: surfaceRaised
     group-band.fill: surfaceRaised
@@ -477,7 +475,6 @@ body:
     metric.fill: text
     calendar-closed.fill: text
     calendar-exception.fill: warning
-    range.fill: warning
     as-of.stroke: accent
     note-index.fill: accent
     planned.fill: surface

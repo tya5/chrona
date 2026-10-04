@@ -213,28 +213,43 @@ interpolation; the finding identifies a `gradient-sample` ground. This
 supersedes the first #459 design's exclusion of all gradient hosts. A translucent
 host is composited over its own ground (#1013, section 8); other non-flat hosts still require an explicit contract.
 
-**Severity classes (#995).** Every finding has a severity class, fixed by the registry's contrast class of the
-role and never by a slide: `legibility` (`mark`, `state-text`, `ground-text`) and `decoration`. A legibility
-finding below its floor is an `error` with the code it always had and fails the corpus gate
-(`tools/presentation_contrast.py --check`); no Theme or caller can soften it. A decoration is ground, not the
-message: a stripe, band, tint or pattern, or the ground-vs-ground pairs of a patterned decoration (its fill on its
-host, its ink on its substrate and on its host), below the 1.10 floor is a `warning` with code
-`W_SCENE_DECORATION_CONTRAST`, and a decoration whose host cannot be read as an opaque colour is a `warning` with
-code `W_SCENE_DECORATION_GROUND_UNSUPPORTED` (a measurement that cannot be made, not an illegibility). A finding
-carries its class as `severityClass`. A warning fails neither the corpus gate nor the derived snapshot nor a
-render: it is listed in the corpus contrast report (a `Warnings` column and a `warnings: N` summary) and reaches
-the render's warning records, the Scene `diagnostics`, the CLI and the MCP payloads, with the measured ratio and
-floor. The evaluator takes the decoration severity as an argument (`warning`, the default, or `error`); with
-`error` the decoration findings keep the blocking codes `E_SCENE_DECORATION_CONTRAST` and
-`E_SCENE_CONTRAST_GROUND_UNSUPPORTED`. The render passes the Theme's `contrastPolicy.decoration`
-(Specification 07) and fails on those codes when it is `error`; the corpus tool has no Theme and always
-evaluates with `warning` (a Theme that declares `error` cannot put a failing decoration in the corpus,
-because the render that makes the Scene fails first).
-Unchanged for every class: a malformed paint (`E_SCENE_CONTRAST_PAINT`), an invalid treatment and a malformed
-Scene document remain errors; a mark or text on a translucent host is judged on the host composited over its own
-ground (#1013, below) and is `E_SCENE_CONTRAST_GROUND_UNSUPPORTED` only where that composite cannot be read; a
-mark or text on a faint decoration is judged on that decoration's colour.
-Theme resolution checks text only and has no decoration check to soften.
+**Contrast constraints are an opt-in design option (#995, #1126).** The floors of this section (3.0:1 for a
+mark, 4.5:1 or 3.0:1 for a state text, 4.5:1 for ground text, 1.10:1 for a decoration) are design constraints a
+Theme chooses; they do not bind a Theme that does not ask. Every finding belongs to a *class*, fixed by the
+registry's contrast class of the role and never by a slide: `mark`, `stateText`, `groundText` and `decoration`,
+plus `unsupportedGround` for a mark or text whose ground cannot be computed (a decoration on such a ground follows
+`decoration`: a measurement that cannot be made, not an illegibility). A finding carries `severityClass`
+(`legibility` or `decoration`). The Theme's `contrastPolicy` (Specification 07) sets each class `none`,
+`warning` or `error`:
+
+- `error` is the blocking finding with the code it always had (`E_SCENE_MARK_CONTRAST`,
+  `E_SCENE_STATE_TEXT_CONTRAST`, `E_SCENE_DECORATION_CONTRAST`, `E_SCENE_CONTRAST_GROUND_UNSUPPORTED`). The render
+  fails with it, at `/body/contrastPolicy/<member>`, before any adapter output.
+- `warning` is the same finding with its warning code (`W_SCENE_MARK_CONTRAST`, `W_SCENE_STATE_TEXT_CONTRAST`,
+  `W_SCENE_CONTRAST_GROUND_UNSUPPORTED`, `W_SCENE_DECORATION_CONTRAST`, `W_SCENE_DECORATION_GROUND_UNSUPPORTED`),
+  the measured ratio and the floor. It reaches the render's warning records, the Scene `diagnostics`, the CLI and the MCP
+  payloads and the corpus contrast report (`Warnings`), and fails neither render, Theme resolution nor the corpus
+  gate.
+- `none` is an `info` row: the measured ratio stays in the evidence and nothing is reported.
+
+**A Theme that declares nothing is not opted in: every class is `warning`.** The evaluator itself takes the
+policy as an argument and, given none, keeps the strict gate (legibility `error`, decoration `warning`) so that the
+geometry of every grounded finding is tested unchanged; the Theme default is applied by the render. A floor is
+switched, never retuned: a Theme cannot change a number.
+
+The corpus tool reads Scenes only. The repository keeps its own guarantee for the Themes it ships with the registry
+`conformance/contrast-opt-in.yaml`: it reads each committed Scene's Theme id from the Scene's provenance and
+evaluates a listed Theme with `mark`, `stateText`, `groundText` and `unsupportedGround` at `error` (and
+`decoration` at `warning`) and an unlisted Theme with every class at `warning`; the report lists the unlisted Themes
+and their warnings. A Theme that declares `error` itself needs no entry, because the render that makes its Scene
+fails first. Listing a Theme is the repository's explicit choice; nothing is listed by default.
+
+Never governed by the policy, whatever its value: a malformed paint (`E_SCENE_CONTRAST_PAINT`), an invalid
+treatment (`E_SCENE_STATE_TEXT_CONTRAST_TREATMENT`) and a malformed Scene document: they are structural, not
+contrast constraints. A mark or text on a translucent host is judged on the host composited over its own ground
+(#1013, below) and is `unsupportedGround` only where that composite cannot be read; a mark or text on a faint
+decoration is judged on that decoration's colour. Theme resolution checks text only against its own canvas or box
+(the Theme's static checks, `E_SCHEME_STATE_TEXT_CONTRAST` and kin) and is not governed either.
 
 **Ground text and pattern grounds (#884, #980).** Free text, ink that lies on a ground
 the Theme chose, keeps the shared visual role `text` (and so the Theme `text` ink) or a

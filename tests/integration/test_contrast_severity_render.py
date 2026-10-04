@@ -81,7 +81,7 @@ def test_a_legible_band_carries_no_contrast_warning(tmp_path):
     rendered = _render(tmp_path, "accent")
 
     assert _contrast_records(rendered) == []
-    assert rendered.contrast_warnings == ()
+    assert not [item for item in rendered.contrast_warnings if "DECORATION" in item.code]
     # The subject is the decoration class: a legibility finding (a label on an accent band, #980) is not a warning.
     assert not [item for item in evaluate_scene_contrast(scene_document(rendered.scene))
                 if item.severity_class == "decoration" and item.severity != "info"]

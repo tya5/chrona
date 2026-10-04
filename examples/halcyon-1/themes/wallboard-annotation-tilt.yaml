@@ -436,13 +436,11 @@ body:
     member-label-inside-scenario.fill: insideLabelScenario
     subtitle.fill: textMuted
     annotation.fill: surfaceRaised
-    annotation-text.fill: text
     note-index.fill: accent
     annotation-note-box.fill: surfaceRaised
     annotation-note-box.stroke: warning
     annotation-note-text.fill: text
     metric.fill: text
-    table-header.fill: surfaceRaised
     axis-major.stroke: neutral
     axis-minor.stroke: surfaceRaised
     axis-band-decoration.fill: neutral
@@ -477,7 +475,6 @@ body:
     calendar-closed.fill: surfaceRaised
     calendar-closed.stroke: neutral
     calendar-exception.fill: warning
-    range.fill: warning
     as-of.stroke: warning
     as-of-label-chip.fill: neutral
     progress-fill.fill: warning
