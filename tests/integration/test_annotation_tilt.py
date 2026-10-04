@@ -238,6 +238,12 @@ def test_the_contrast_gate_judges_the_rotated_text_on_its_box(tmp_path):
     findings = {item.primitive_id: item for item in evaluate_scene_contrast(document) if item.visual_role == "annotation-note-text"}
     assert set(findings) == {"annotation-text:view-n0", "annotation-text:view-n1"}
     assert all(item.severity == "info" and item.ground_id.startswith("annotation-box:") for item in findings.values())
+    # Independent rail statuses are free text, not prose on a rotated box.
+    statuses = {item.primitive_id: item for item in evaluate_scene_contrast(document)
+                if item.purpose == "annotation-list-text"}
+    assert set(statuses) == {"annotation-status:view-n0", "annotation-status:view-n1"}
+    assert all(item.severity == "info" and not item.ground_id.startswith("annotation-box:")
+               for item in statuses.values())
     for primitive in document["surfaces"][0]["primitives"]:
         if primitive["id"] == "annotation-box:view-n0":
             primitive["paint"]["fill"] = "#1B2536"  # as dark as the note ink

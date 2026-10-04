@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 import hashlib
+from pathlib import Path
 from xml.etree import ElementTree
 
 from chrona.presentation.layout import surface_annotations
@@ -35,6 +36,12 @@ def _fixture():
 def _rail_fixture():
     source, parts = _fixture()
     sr.with_note_rail(parts, width=300)
+    theme = parts["theme"]["body"]
+    for key, value in tuple(theme.get("values", {}).items()):
+        if value.get("type") == "annotationContainer":
+            del theme["values"][key]
+    for role in theme.get("roles", {}).values():
+        role.pop("annotationContainer", None)
     for annotation in parts["view"]["body"]["annotations"]:
         annotation.pop("candidates")
         annotation["placement"] = {"side": "end", "alignment": "center"}
@@ -43,6 +50,11 @@ def _rail_fixture():
 
 def _by_id(rendered):
     return {item.scene_id: item for item in rendered.surface.primitives}
+
+
+def _render_at(directory: Path, source, parts, *, viewport=(2400, 1400)):
+    directory.mkdir()
+    return sr.render(directory, source, presentation=parts, viewport=viewport)
 
 
 def _svg_text(rendered, scene_id):
@@ -65,6 +77,8 @@ def test_unsuppressed_scene_and_svg_match_the_published_base_bytes(tmp_path):
 
 def test_one_index_only_suppression_keeps_the_other_three_indexes_and_svg_status(tmp_path, monkeypatch):
     source, parts = _fixture()
+    sr.with_note_rail(parts, width=300)
+    baseline = _render_at(tmp_path / "before", source, parts)
     real_place_label = surface_annotations.place_label
     index_calls = 0
 
@@ -76,20 +90,34 @@ def test_one_index_only_suppression_keeps_the_other_three_indexes_and_svg_status
         return real_place_label(*args, **kwargs)
 
     monkeypatch.setattr(surface_annotations, "place_label", suppress_second_index)
-    rendered = sr.render(tmp_path, source, presentation=parts, viewport=(2400, 1400))
+    rendered = _render_at(tmp_path / "after", source, parts)
 
     assert "W_LAYOUT_NOTE_INDEX_SUPPRESSED:note-1" in rendered.scene.diagnostics
     ids = _by_id(rendered)
+    baseline_ids = _by_id(baseline)
     assert "annotation-text:note-1" in ids and "annotation-box:note-1" in ids
     assert "annotation-leader:note-1" in ids and "note-index:note-1" not in ids
+    assert ids["annotation-text:note-1"] == baseline_ids["annotation-text:note-1"]
+    assert ids["annotation-box:note-1"] == baseline_ids["annotation-box:note-1"]
+    assert ids["annotation-leader:note-1"] == baseline_ids["annotation-leader:note-1"]
+    status = ids["annotation-status:note-1"]
+    assert status.text == "2. index not shown on plot"
+    assert status.slot_id == "annotations"
+    slot = next(item for item in rendered.surface.slots if item.source == "annotations")
+    sx, sy, sw, sh = slot.bounds
+    x, y, width, height = status.bounds
+    assert sx <= x and x + width <= sx + sw and sy <= y and y + height <= sy + sh
     assert {"note-index:note-0", "note-index:note-2", "note-index:note-3"} <= ids.keys()
     assert sum(item.startswith("W_LAYOUT_NOTE_INDEX_SUPPRESSED:")
                for item in rendered.scene.diagnostics) == 1
-    assert _svg_text(rendered, "annotation-text:note-1").endswith("(index not shown on plot)")
+    assert _svg_text(rendered, "annotation-text:note-1").endswith("Synthetic note 1 on gate-1.")
+    assert _svg_text(rendered, "annotation-status:note-1") == "2. index not shown on plot"
 
 
 def test_index_status_reflows_the_ordered_rail_entries_inside_the_declared_slot(tmp_path, monkeypatch):
     source, parts = _rail_fixture()
+    assert not any(value.get("type") == "annotationContainer"
+                   for value in parts["theme"]["body"]["values"].values())
     real_place_label = surface_annotations.place_label
     index_calls = 0
 
@@ -101,7 +129,7 @@ def test_index_status_reflows_the_ordered_rail_entries_inside_the_declared_slot(
         return real_place_label(*args, **kwargs)
 
     monkeypatch.setattr(surface_annotations, "place_label", suppress_second_index)
-    rendered = sr.render(tmp_path, source, presentation=parts, viewport=(2400, 1400))
+    rendered = _render_at(tmp_path / "after", source, parts)
     ids = _by_id(rendered)
     slot = next(item for item in rendered.surface.slots if item.source == "annotations")
     x, y, width, height = slot.bounds
@@ -123,6 +151,7 @@ def test_index_status_reflows_the_ordered_rail_entries_inside_the_declared_slot(
 
 def test_index_and_whole_callout_suppression_keep_four_ordered_list_entries(tmp_path, monkeypatch):
     source, parts = _fixture()
+    sr.with_note_rail(parts, width=300)
     view = parts["view"]["body"]
     # The third note uses the legacy candidate ladder so this test can force
     # the explicit whole-callout suppress outcome without changing Layout APIs.
@@ -161,7 +190,8 @@ def test_index_and_whole_callout_suppression_keep_four_ordered_list_entries(tmp_
     ids = _by_id(rendered)
 
     # The index-only failure keeps the accepted note, box, and mandatory leader.
-    assert ids["annotation-text:note-1"].text.endswith("(index not shown on plot)")
+    assert "(index not shown on plot)" not in ids["annotation-text:note-1"].text
+    assert ids["annotation-status:note-1"].text == "2. index not shown on plot"
     assert "annotation-box:note-1" in ids
     assert "annotation-leader:note-1" in ids
     assert "note-index:note-1" not in ids
@@ -196,4 +226,53 @@ def test_index_and_whole_callout_suppression_keep_four_ordered_list_entries(tmp_
         or (abs(tip_x - (left + width)) < epsilon and top - epsilon <= tip_y <= top + height + epsilon)
         or (abs(tip_y - top) < epsilon and left - epsilon <= tip_x <= left + width + epsilon)
         or (abs(tip_y - (top + height)) < epsilon and left - epsilon <= tip_x <= left + width + epsilon)
+    )
+
+
+def test_insufficient_rail_retains_status_and_summary_with_explicit_overflow(tmp_path, monkeypatch):
+    source, parts = _fixture()
+    sr.with_note_rail(parts, width=1)
+    view = parts["view"]["body"]
+    view["visibility"].setdefault("fallback", {})["annotations"] = ["end", "suppress"]
+    whole_callout = view["annotations"][2]
+    whole_callout.pop("candidates")
+    whole_callout["placement"] = {"side": "end", "alignment": "center"}
+    baseline = _render_at(tmp_path / "before", source, parts)
+
+    real_place_label = surface_annotations.place_label
+    index_calls = 0
+
+    def suppress_second_index(*args, **kwargs):
+        nonlocal index_calls
+        index_calls += 1
+        if index_calls == 2:
+            return None
+        return real_place_label(*args, **kwargs)
+
+    real_project_box = surface_annotations.project_annotation_box
+
+    def suppress_note_two(annotation, *args, **kwargs):
+        if annotation.annotation_id == "note-2":
+            return None
+        return real_project_box(annotation, *args, **kwargs)
+
+    monkeypatch.setattr(surface_annotations, "place_label", suppress_second_index)
+    monkeypatch.setattr(surface_annotations, "project_annotation_box", suppress_note_two)
+    rendered = sr.render(tmp_path, source, presentation=parts, viewport=(2400, 1400))
+    ids = _by_id(rendered)
+
+    assert "W_LAYOUT_NOTE_INDEX_SUPPRESSED:note-1" in rendered.scene.diagnostics
+    assert "W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:note-2" in rendered.scene.diagnostics
+    assert ids["annotation-status:note-1"].text == "2. index not shown on plot"
+    assert ids["annotation-summary:note-2"].text == "3. Synthetic note 2 on gate-2. (callout not shown on plot)"
+    assert ids["annotation-status:note-1"].slot_id == ids["annotation-summary:note-2"].slot_id == "annotations"
+    status_warning = next(item for item in rendered.surface.fit_warnings
+                          if item.placement_id == "annotation-status:note-1")
+    summary_warning = next(item for item in rendered.surface.fit_warnings
+                           if item.placement_id == "annotation-summary:note-2")
+    assert status_warning.failure_kind == summary_warning.failure_kind == "label-collision"
+    assert status_warning.behaviour == summary_warning.behaviour == "visible-overflow"
+    assert rendered.surface.canvas_bounds == baseline.surface.canvas_bounds
+    assert ids["annotation-status:note-1"].bounds[1] + ids["annotation-status:note-1"].bounds[3] <= (
+        ids["annotation-summary:note-2"].bounds[1] + 1e-6
     )

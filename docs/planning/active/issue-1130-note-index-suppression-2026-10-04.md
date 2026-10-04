@@ -111,18 +111,16 @@ callout-suppression diagnostic and do not edit reviewer-owned resources.
 
 Layout rehearses against a copied obstacle inventory until the finite sets of
 suppressed indexes/callouts stop growing, then commits only the final geometry.
-The four synthetic list-status tests pass: exact pre-change Scene/SVG hashes,
-one missing index with three retained indexes and visible SVG status, and
-combined suppression with a summary and correctly connected surviving leader.
-The rail-specific case verifies all four entries in View order and inside the
-declared annotations slot after status reflow.
-SVG status is checked as XML text across wrapped `tspan` lines, not as a raw
-contiguous byte substring. Import direction passes (11 packages, 37 edges).
-Focused annotation-list, phase-wiring, kind-header, candidate-placement,
-viewer-fit and render-review suites pass: 113 tests. Local conformance passed
-all checks except the source-location diagnostic inventory; regeneration and
-its check passed separately. That inventory is CI-owned and not committed.
-Corpus snapshot, PR CI, and exact-main release acceptance remain unverified.
+The corrected focused batch passes **68 tests**: annotation-list status,
+kind stamp, tilt, guided annotations, semantic-registry contrast and annotation/
+surface phase wiring. All five synthetic status tests pass: exact unsuppressed
+Scene/SVG hashes, plot body/box/leader preservation with separate SVG status,
+text-only rail reflow, combined suppression and explicit insufficient-capacity
+overflow. Original stamp height, tilted leader and note-box contrast/error
+assertions remain; independent list text passes contrast on its actual ground.
+SVG status is checked across XML `tspan` lines. Render-review tests also passed
+before the free-text semantic correction. Generated evidence is CI-owned;
+the new corpus snapshot, PR CI and exact-main acceptance remain unverified.
 
 ## Current design correction and implementation gate
 
@@ -139,8 +137,8 @@ This respects Spec 33 ownership and the kind-frame/tilt contracts (Specs 07/08)
 without a Theme knob, schema change or adapter repair. Keep the existing stamp
 height and tilted-leader assertions; add a synthetic plot-callout test proving body,
 box, stamp and required leader preservation plus visible rail status.
-Publish this correction before updating `surface_annotations.py` and its
-synthetic tests. Re-run the failed tests and affected annotation suites, then
+The correction was published before the corresponding source changes.
+Re-run the failed tests and affected annotation suites, then
 review one new CI-owned Scene/SVG batch before acceptance. Do not merge red CI.
 Required status/summary overflow follows Spec 33: stack after preceding rail
 records and explicitly mark overflow, not overlapping fallback clamps. Use
@@ -154,5 +152,6 @@ Scene projects that identity; the contrast gate evaluates the actual rail
 ground, while original `annotationNoteText` still requires its own opaque box
 under Spec 08 C4. No prefix-based contrast exception or fabricated box. This
 closes the architecture review against Specs 08/33 and the semantic registry.
-Publish this contract before adding the registry binding and wiring list
-records; retain rotated-note host/error assertions and test rail contrast.
+The free-text contract was published in `151813b2` before adding the binding
+and wiring list records. Rotated-note host/error assertions and rail contrast
+are covered by the passing focused batch.
