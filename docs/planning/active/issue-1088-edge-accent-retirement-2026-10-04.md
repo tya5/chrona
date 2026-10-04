@@ -1,7 +1,7 @@
 # Issue #1088 — retire the content-box edge accent
 
 Phase: design and whole-architecture review complete; implementation follows
-this publication. Baseline: ready main `8420d007`; #1130 lands before code.
+this publication. Baseline: ready main `28d7f664`; #1130 is merged before code.
 Source: [#1088](https://github.com/tya5/chrona/issues/1088). Predecessor: #1049.
 
 ## Published baseline and literal acceptance
