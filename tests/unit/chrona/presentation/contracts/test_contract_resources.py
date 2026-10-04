@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[5]
 
 def _theme():
     return {
-        "version": "chrona/theme/v0.11", "kind": "theme", "id": "theme",
+        "version": "chrona/theme/v0.15", "kind": "theme", "id": "theme",
         "body": {"values": {}, "roles": {}, "colorBindings": {"text.fill": "text"}},
     }
 
@@ -62,9 +62,49 @@ def test_stale_string_version_has_a_typed_resource_local_diagnostic():
     assert diagnostic.resource_kind == "theme"
     assert diagnostic.resource_id == "theme"
     assert diagnostic.found_version == "chrona/theme/v0.10"
-    assert diagnostic.supported_versions == (
-        "chrona/theme/v0.11", "chrona/theme/v0.13", "chrona/theme/v0.14")
+    assert diagnostic.supported_versions == ("chrona/theme/v0.15", "chrona/theme/v0.16")
     assert diagnostic.source_ref == "/version"
+
+
+@pytest.mark.parametrize("version", (
+    "chrona/theme/v0.11", "chrona/theme/v0.12", "chrona/theme/v0.13", "chrona/theme/v0.14",
+))
+def test_retired_theme_versions_are_unsupported(version):
+    value = _theme()
+    value["version"] = version
+    with pytest.raises(UnsupportedResourceVersionError) as error:
+        parse_contract(ClosureIdentity("theme", "theme", "r", "sha256:" + "a" * 64), value)
+    assert error.value.found_version == version
+    assert error.value.supported_versions == ("chrona/theme/v0.15", "chrona/theme/v0.16")
+
+
+def test_first_party_themes_and_derived_bases_use_the_current_contracts():
+    from chrona.presentation.model.theme_inheritance import resolve_draft_theme
+    from chrona.resources import safe_load
+
+    paths = sorted((ROOT / "examples").glob("*/themes/*.yaml"))
+    paths.extend(sorted((ROOT / "src/chrona/resources/presets/bundles").glob("*/theme.yaml")))
+    assert paths
+    for path in paths:
+        source = safe_load(path.read_bytes())
+        assert source["version"] in {"chrona/theme/v0.15", "chrona/theme/v0.16"}, path
+        resolved = resolve_draft_theme(path) if source["version"] == "chrona/theme/v0.16" else source
+        parse_contract(ClosureIdentity("theme", resolved["id"], "r", "sha256:" + "a" * 64), resolved)
+        assert all(not isinstance(token, dict) or token.get("type") != "edge"
+                   for token in source.get("body", {}).get("values", {}).values()), path
+        assert all(not isinstance(role, dict) or "edge" not in role
+                   for role in source.get("body", {}).get("roles", {}).values()), path
+
+
+@pytest.mark.parametrize("target", ("value", "role"))
+def test_current_theme_contract_rejects_the_retired_edge_declaration(target):
+    value = _theme()
+    if target == "value":
+        value["body"]["values"]["legacy-edge"] = {"type": "edge", "value": {"side": "start", "size": 4}}
+    else:
+        value["body"]["roles"]["annotation-kind-accent"] = {"edge": "legacy-edge"}
+    with pytest.raises(SchemaContractError):
+        parse_contract(ClosureIdentity("theme", "theme", "r", "sha256:" + "a" * 64), value)
 
 
 @pytest.mark.parametrize("kind", sorted({kind for kind, _version in _SCHEMAS}))
@@ -114,7 +154,7 @@ def test_presentation_collector_continues_after_unsupported_version_to_report_si
     ]
     assert result.diagnostics[0].phase == "version"
     assert "chrona/theme/v0.10" in result.diagnostics[0].message
-    assert "chrona/theme/v0.11" in result.diagnostics[0].message
+    assert "chrona/theme/v0.15" in result.diagnostics[0].message
     assert result.contracts == ()
 
 

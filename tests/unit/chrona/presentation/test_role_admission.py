@@ -30,7 +30,7 @@ def _scheme():
 
 
 def _theme():
-    return {"version": "chrona/theme/v0.11", "kind": "theme", "id": "test", "body": {
+    return {"version": "chrona/theme/v0.15", "kind": "theme", "id": "test", "body": {
         "values": {}, "roles": {
             "variance-ahead": {"contrastTreatment": "deemphasized"},
             "variance-on-track": {"contrastTreatment": "required"},
@@ -180,14 +180,14 @@ def test_every_public_authored_theme_resolves_with_its_declared_scheme():
         scheme_path = context_path.parent.parent / scheme_ref["address"]
         scheme_by_theme[theme_path.resolve()] = scheme_path
         theme = safe_load(theme_path.read_bytes())
-        if theme["version"] not in {"chrona/theme/v0.11", "chrona/theme/v0.13"}:
+        if theme["version"] not in {"chrona/theme/v0.15"}:
             continue
         resolve_theme(theme, safe_load(scheme_path.read_bytes()), scheme_content_identity="test")
         observed.add(theme_path.resolve())
 
     for theme_path in sorted((ROOT / "examples").glob("*/themes/*.yaml")):
         theme = safe_load(theme_path.read_bytes())
-        if theme["version"] != "chrona/theme/v0.12":
+        if theme["version"] != "chrona/theme/v0.16":
             continue
         base_path = (theme_path.parent / theme["body"]["extends"]["path"]).resolve()
         scheme_path = scheme_by_theme.get(theme_path.resolve(), scheme_by_theme[base_path])

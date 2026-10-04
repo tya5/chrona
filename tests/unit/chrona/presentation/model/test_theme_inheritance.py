@@ -10,7 +10,7 @@ from chrona.storage.snapshot_paths import snapshot_directory
 
 
 def _base() -> dict:
-    return {"version": "chrona/theme/v0.11", "kind": "theme", "id": "base",
+    return {"version": "chrona/theme/v0.15", "kind": "theme", "id": "base",
             "body": {"values": {"spacing.m": {"type": "number", "value": 12}},
                      "roles": {"title": {"fontSize": "spacing.m"}},
                      "colorBindings": {"title.fill": "text"}}}
@@ -21,7 +21,7 @@ def _pin(payload: bytes) -> str:
 
 
 def _derived(base: dict, source: bytes, *, path: str = "base.yaml") -> dict:
-    return {"version": "chrona/theme/v0.12", "kind": "theme", "id": "derived",
+    return {"version": "chrona/theme/v0.16", "kind": "theme", "id": "derived",
             "body": {"extends": {"id": "base", "path": path,
                                  "sourceContentIdentity": _pin(source), "contentIdentity": content_identity(base)},
                      "values": {"spacing.m": {"type": "number", "value": 24}}}}
@@ -32,7 +32,7 @@ def test_derived_theme_replaces_existing_whole_entries_and_has_canonical_base_pi
     derived = _derived(base, source)
     path = tmp_path / "derived.yaml"; path.write_text(yaml.safe_dump(derived), encoding="utf-8")
     effective = resolve_draft_theme(path)
-    assert effective["version"] == "chrona/theme/v0.11"
+    assert effective["version"] == "chrona/theme/v0.15"
     assert effective["id"] == "derived"
     assert effective["body"]["values"]["spacing.m"]["value"] == 24
 

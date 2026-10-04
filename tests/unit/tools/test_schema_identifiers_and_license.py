@@ -78,8 +78,8 @@ ID_SITES: dict[tuple[str, str], int] = {
     ("snapshot-ref-v0.3.schema.yaml", "non-empty-string"): 1,
     ("summary-profile-v0.2.schema.yaml", "non-empty-string"): 3,
     ("theme-asset-source-v0.1.schema.yaml", "portable-name"): 1,
-    ("theme-v0.13.schema.yaml", "non-empty-string"): 1,
-    ("theme-v0.14.schema.yaml", "non-empty-string"): 2,
+    ("theme-v0.15.schema.yaml", "non-empty-string"): 1,
+    ("theme-v0.16.schema.yaml", "non-empty-string"): 2,
     ("view-v0.28.schema.yaml", "non-empty-string"): 19,
 }
 

@@ -44,7 +44,7 @@ def test_presentation_coverage_accepts_a_live_derived_theme_resource():
     root = _root()
     glyph_gates = next(slide for slide in discover(root) if slide.identifier == "halcyon-1/glyph-gates")
     kind, path, document = next(item for item in glyph_gates.resources if item[0] == "theme")
-    assert document.get("version") == "chrona/theme/v0.12"
+    assert document.get("version") == "chrona/theme/v0.16"
     _validate_resource_versions((glyph_gates,), live_schemas(root), root)
 
 

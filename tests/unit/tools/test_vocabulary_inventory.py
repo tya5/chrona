@@ -42,7 +42,7 @@ def test_the_theme_marker_shape_policy_names_the_function_that_accepts_exactly_t
 
     root = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
     (entry,) = [item for item in load_policy(root / "conformance/declared-vocabulary-policy-v0.1.yaml")
-                if item.schema == "schemas/theme-v0.13.schema.yaml" and item.pointer.endswith("/allOf/1/then/properties/value/properties/shape")]
+                if item.schema == "schemas/theme-v0.15.schema.yaml" and item.pointer.endswith("/allOf/1/then/properties/value/properties/shape")]
     assert entry.owner == "chrona.presentation.layout.relation_terminals.marker_geometry"
     token = {"headLength": 8.0, "headWidth": 6.0, "attachmentOffset": 0.0}
     for shape in entry.accepted:

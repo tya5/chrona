@@ -13,7 +13,7 @@ def _write(path: Path, value) -> None:
     path.write_text(yaml.safe_dump(value, sort_keys=False), encoding="utf-8")
 
 
-def _example(root: Path, *, theme_roles, bindings, views, name="demo", version="chrona/theme/v0.13"):
+def _example(root: Path, *, theme_roles, bindings, views, name="demo", version="chrona/theme/v0.15"):
     """One example with a shared Theme and one Render Context per View in `views` (name -> View body)."""
     base = root / "examples" / name
     _write(base / "themes/t.yaml", {"version": version, "kind": "theme", "id": "t",
@@ -42,7 +42,7 @@ def test_registered_roles_group_names_and_derived_themes_are_not_reported(tmp_pa
     _example(tmp_path, theme_roles={"planned": {}}, bindings={"planned.fill": "accent", "group:team-a.fill": "accent"},
              views={"a": {"surface": "table-timeline"}})
     _example(tmp_path, theme_roles={"ghost": {}}, bindings={}, views={"a": {"surface": "table-timeline"}},
-             name="derived", version="chrona/theme/v0.14")
+             name="derived", version="chrona/theme/v0.16")
     assert dead_declarations(tmp_path) == ()
 
 

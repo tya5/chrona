@@ -275,8 +275,8 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              scene_kinds=frozenset(("Rect", "Symbol")))
     register("annotation-kind-bar", "Layout annotation-kind title bar and Scene Rect",
              _RECT_PAINT | frozenset(("chipPadding", "markCornerRadius")), scene_kinds=frozenset(("Rect",)))
-    register("annotation-kind-accent", "Layout annotation-kind accent edge, kind-painted box border strip and Scene Rect/Symbol",
-             _RECT_PAINT | frozenset(("edge",)), scene_kinds=frozenset(("Rect", "Symbol")))
+    register("annotation-kind-accent", "Layout kind-painted box border ink and Scene Rect/Symbol",
+             _RECT_PAINT, scene_kinds=frozenset(("Rect", "Symbol")))
     register("annotation-kind-stamp", "Layout annotation-kind stamp glyph and Scene Symbol",
              frozenset(("fill", "stroke", "opacity", "stampPlacement")), scene_kinds=frozenset(("Symbol",)))
     register("annotation-border-start annotation-border-end annotation-border-top annotation-border-bottom",

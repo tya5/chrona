@@ -23,7 +23,7 @@ def test_scheme_rejects_insufficient_text_contrast():
 
 
 def test_theme_validates_each_inside_label_role_against_its_host_mark():
-    theme = {"version": "chrona/theme/v0.11", "kind": "theme", "id": "inside", "body": {
+    theme = {"version": "chrona/theme/v0.15", "kind": "theme", "id": "inside", "body": {
         "values": {}, "roles": {
             "variance-ahead": {"contrastTreatment": "deemphasized"},
             "variance-on-track": {"contrastTreatment": "required"},
@@ -47,7 +47,7 @@ def test_theme_validates_each_inside_label_role_against_its_host_mark():
 
 
 def test_theme_state_text_requires_declared_treatment_and_composited_floor():
-    theme = {"version": "chrona/theme/v0.11", "kind": "theme", "id": "state", "body": {
+    theme = {"version": "chrona/theme/v0.15", "kind": "theme", "id": "state", "body": {
         "values": {}, "roles": {
             "variance-ahead": {"contrastTreatment": "deemphasized"},
             "variance-on-track": {"contrastTreatment": "required"},
@@ -71,7 +71,7 @@ def test_theme_state_text_requires_declared_treatment_and_composited_floor():
 
 
 def _note_theme():
-    theme = {"version": "chrona/theme/v0.11", "kind": "theme", "id": "note", "body": {
+    theme = {"version": "chrona/theme/v0.15", "kind": "theme", "id": "note", "body": {
         "values": {}, "roles": {
             "variance-ahead": {"contrastTreatment": "deemphasized"},
             "variance-on-track": {"contrastTreatment": "required"},
@@ -285,7 +285,7 @@ def test_the_policy_never_softens_a_text_check_at_theme_resolution(policy):
 
 
 def _line_theme(binding: str) -> dict:
-    return {"version": "chrona/theme/v0.13", "kind": "theme", "id": "lines", "body": {
+    return {"version": "chrona/theme/v0.15", "kind": "theme", "id": "lines", "body": {
         "values": {"w": {"type": "number", "value": 1}},
         "roles": {"axis-rule": {"strokeWidth": "w"}, "variance-ahead": {"contrastTreatment": "deemphasized"},
                   "variance-on-track": {"contrastTreatment": "required"},

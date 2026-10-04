@@ -7,8 +7,7 @@ content insets, so the text origin, the kind frame's content box, the wrap bound
 ``chrome``) all read one sum.  Corners are mitred as in CSS: each side is the trapezoid between the outer edge and
 the padding edge; a side whose mitres are square (no bordered neighbour) is an axis-aligned ``Rect``, so a single bar
 is one plain rectangle.  A ``paint: kind`` side is drawn from the kind accent role (the kind colour replaces its fill);
-an ``ink`` side from the role ``annotation-border-<side>``.  ``side_strip`` is also the one strip geometry the
-content-box kind accent uses.
+an ``ink`` side from the role ``annotation-border-<side>``. Kind-frame composition never emits a second strip.
 """
 from __future__ import annotations
 
@@ -26,15 +25,6 @@ KIND_INK_ROLE = "annotation-kind-accent"
 INK_SEMANTICS = {"start": "annotationBorderStart", "end": "annotationBorderEnd",
                  "top": "annotationBorderTop", "bottom": "annotationBorderBottom"}
 Point = tuple[float, float]
-
-
-def side_strip(side: str, size: float, box: tuple[float, float, float, float]) -> tuple[float, float, float, float]:
-    """The (x, y, width, height) of the full-length strip of ``size`` standing on ``side`` of ``box``."""
-    x, y, width, height = box
-    return {
-        "start": (x, y, size, height), "end": (x + width - size, y, size, height),
-        "top": (x, y, width, size), "bottom": (x, y + height - size, width, size),
-    }[side]
 
 
 @dataclass(frozen=True)

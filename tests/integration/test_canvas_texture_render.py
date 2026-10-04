@@ -42,7 +42,7 @@ def _presentation(role: dict | None = None, *, extra_bindings: dict | None = Non
     """The packaged flat-canvas bundle, with a `canvas-texture` role when `role` is given (Theme v0.13 admits catalogue patterns)."""
     parts = sr.bundle("executive-light")
     if role is not None:
-        parts["theme"]["version"] = "chrona/theme/v0.13"
+        parts["theme"]["version"] = "chrona/theme/v0.15"
         body = parts["theme"]["body"]
         body["values"]["canvas-texture.lattice"] = {"type": "pattern", "value": {"kind": "catalog", "ref": LATTICE}}
         body["values"]["canvas-texture.hatch"] = {"type": "pattern", "value": {

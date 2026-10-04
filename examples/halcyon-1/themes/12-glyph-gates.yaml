@@ -1,12 +1,12 @@
-version: chrona/theme/v0.12
+version: chrona/theme/v0.16
 kind: theme
 id: glyph-gates
 body:
   extends:
     id: wallboard
     path: wallboard.yaml
-    sourceContentIdentity: 'sha256:fe9a6686238d2ab050430dd6528aa97ae0cb601e3583a13cc0c5eef049cc0cfd'
-    contentIdentity: 'sha256:0dcdcca7bdf3df2ebb31b5aac7bceb2de617cb82b1e6521119bc282447571897'
+    sourceContentIdentity: 'sha256:66aab4fdc70bf44249e94b6f89e464224df17b37cb15d53297b972fd9f0420fc'
+    contentIdentity: 'sha256:f66ede8612ba4842eaed8d0a390cd9f2c64bcc24ecf217be5c0123f2bf1c1cdd'
   values:
     milestone-symbol:
       type: symbol

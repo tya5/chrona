@@ -23,7 +23,7 @@ DETAIL = {"version": "chrona/review-detail-profile/v0.1", "id": "legend-detail",
 
 def _parts(ref: str) -> dict:
     parts = sr.bundle("executive-light")
-    parts["theme"]["version"] = "chrona/theme/v0.13"
+    parts["theme"]["version"] = "chrona/theme/v0.15"
     comparison = parts["view"]["body"]["comparison"]
     comparison["actual"] = "required"
     comparison["facets"].append("missingActual")

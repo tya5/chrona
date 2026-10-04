@@ -362,7 +362,7 @@ def test_typst_and_tikz_draw_a_plain_frame_with_its_radius(tmp_path) -> None:
 
 
 def _patterned(directory: Path):
-    parts = _presentation(version="chrona/theme/v0.13", role={"frameCornerRadius": "frame.radius", "pattern": "frame.dots"},
+    parts = _presentation(version="chrona/theme/v0.15", role={"frameCornerRadius": "frame.radius", "pattern": "frame.dots"},
                           values={"frame.dots": {"type": "pattern", "value": {"kind": "catalog", "ref": DOTS}}},
                           fill="surface", bindings={"region-frame.stroke": "neutral"})
     return _render(directory, parts, icon_catalogs=(CATALOGUE,))
@@ -383,7 +383,7 @@ def test_a_halftone_panel_carries_a_catalogue_pattern_and_typst_and_tikz_reject_
 
 
 def test_a_panel_below_a_canvas_texture_keeps_the_texture_first(tmp_path) -> None:
-    parts = _presentation(version="chrona/theme/v0.13", role=ROLE, values={
+    parts = _presentation(version="chrona/theme/v0.15", role=ROLE, values={
         "canvas-texture.lattice": {"type": "pattern", "value": {"kind": "catalog", "ref": "chrona-target-parts:hexagon-lattice"}}},
                           bindings={"canvas-texture.fill": "surface", "canvas-texture.stroke": "surfaceRaised"})
     parts["theme"]["body"]["roles"]["canvas-texture"] = {"pattern": "canvas-texture.lattice"}

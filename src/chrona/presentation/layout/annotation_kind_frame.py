@@ -1,8 +1,8 @@
-"""Annotation kind frame geometry: header block, accent edge, title bar and stamp (#584).
+"""Annotation kind frame geometry: header block, title bar and stamp (#584).
 
 Pure Layout composition for one annotation whose Project kind the Theme dresses.  `measure_kind_frame`
-sizes the frame (the header block, the accent insets and the stamp column that grow the note box)
-before the annotation search runs; `place_kind_frame` completes the accent Rect, the bar Rect, the stamp
+sizes the frame (the header block and the stamp column that grow the note box)
+before the annotation search runs; `place_kind_frame` completes the bar Rect, the stamp
 glyph and the header text inside the box that search chose.  A Theme that declares nothing for the
 kind measures to the empty frame, so the note's size, position and primitives are exactly what they
 were without #584.
@@ -14,7 +14,6 @@ from decimal import Decimal
 from typing import Any, Callable
 
 from chrona.presentation.annotation_kind_text import header_lines
-from chrona.presentation.layout.annotation_border import side_strip
 from chrona.presentation.layout.mark_geometry import symbol_parts
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
 from chrona.presentation.layout.surface_quality import (
@@ -49,13 +48,6 @@ class KindFrameMeasure:
     bar_padding_block: float
     header_block: float
     header_inline: float
-    inset_top: float
-    inset_right: float
-    inset_bottom: float
-    inset_left: float
-    accent_role: str | None
-    accent_side: str | None
-    accent_size: float
     bar_role: str | None
     stamp_ref: str | None = None
     stamp_corner: str | None = None
@@ -69,29 +61,25 @@ class KindFrameMeasure:
 
     @property
     def inline_insets(self) -> float:
-        return self.inset_left + self.inset_right + self.stamp_column
+        return self.stamp_column
 
     @property
     def body_inset_left(self) -> float:
-        """The inline start of the body text and the bar: past the accent and a start-side stamp column."""
-        return self.inset_left + (self.stamp_column if self.stamp_at_start else 0.0)
-
-    @property
-    def block_insets(self) -> float:
-        return self.inset_top + self.inset_bottom
+        """The body and bar start after a start-side stamp column."""
+        return self.stamp_column if self.stamp_at_start else 0.0
 
     @property
     def empty(self) -> bool:
-        return not self.lines and self.accent_role is None and self.stamp_ref is None
+        return not self.lines and self.stamp_ref is None
 
 
-EMPTY_FRAME = KindFrameMeasure((), False, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, None, None, 0.0, None)
+EMPTY_FRAME = KindFrameMeasure((), False, 0.0, 0.0, 0.0, 0.0, None)
 
 
 def measure_kind_frame(*, kind: AnnotationKindToken | None, subject: str, frame: AnnotationKindFrame, subject_id: str = "",
                        theme_tokens: ThemeTokenView, metric_for: Callable[[str], Any],
                        outline: str | None, pointer: str, text_size: float = 0.0) -> KindFrameMeasure:
-    """Measure the header block, accent insets and stamp column; raise when a strip cannot sit on this outline."""
+    """Measure the header and stamp; reject a title bar on an unsupported outline."""
     if kind is None:
         return EMPTY_FRAME
     lines: list[KindHeaderLine] = []
@@ -108,8 +96,7 @@ def measure_kind_frame(*, kind: AnnotationKindToken | None, subject: str, frame:
                                        text_transform=treatment.transform)
             lines.append(KindHeaderLine(content, role, size, float(treatment.line_height), width))
     bar = bool(lines) and frame.bar_role is not None
-    has_accent = frame.accent_role is not None
-    if (bar or has_accent) and outline in {"balloon", "image"}:
+    if bar and outline in {"balloon", "image"}:
         # A straight strip at the box edge cannot follow a balloon or an image outline: a declaration
         # conflict, never a strip silently dropped.
         raise LayoutError("E_LAYOUT_ANNOTATION_KIND_FRAME_OUTLINE", pointer)
@@ -124,19 +111,15 @@ def measure_kind_frame(*, kind: AnnotationKindToken | None, subject: str, frame:
         stamp_block = float(frame.stamp_size) * text_size
         stamp_inline = stamp_block * aspect
         stamp_column = stamp_inline + STAMP_GAP_EM * text_size
-    if not lines and not has_accent and stamp_ref is None:
+    if not lines and stamp_ref is None:
         return EMPTY_FRAME
     padding_inline = float(frame.bar_padding_em) * lines[0].font_size if bar else 0.0
     padding_block = padding_inline / 2
     header_block = (geometry_sum(line.font_size * line.leading for line in lines) + 2 * padding_block) if lines else 0.0
     header_inline = (max(line.width for line in lines) + 2 * padding_inline) if lines else 0.0
-    size = float(frame.accent_size) if has_accent else 0.0
-    side = frame.accent_side
     return KindFrameMeasure(
         tuple(lines), bar, padding_inline, padding_block, header_block, header_inline,
-        size if side == "top" else 0.0, size if side == "end" else 0.0,
-        size if side == "bottom" else 0.0, size if side == "start" else 0.0,
-        frame.accent_role, side, size, frame.bar_role if bar else None,
+        frame.bar_role if bar else None,
         stamp_ref, frame.stamp_corner if stamp_ref is not None else None, stamp_inline, stamp_block, stamp_column)
 
 
@@ -144,7 +127,7 @@ def place_kind_frame(measure: KindFrameMeasure, *, annotation_id: str, presentat
                      content_box: tuple[float, float, float, float], theme_tokens: ThemeTokenView,
                      font_metrics: Any, annotation_slot: str, paint_order: int
                      ) -> tuple[tuple[ShapePlacement, ...], tuple[TextPlacement, ...]]:
-    """Complete the accent Rect, bar Rect, stamp glyph and header text inside ``content_box`` (x, y, width, height)."""
+    """Complete the bar, stamp and header text inside ``content_box`` (x, y, width, height)."""
     x, y, width, height = content_box
     shapes: list[ShapePlacement] = []
     text: list[TextPlacement] = []
@@ -154,23 +137,18 @@ def place_kind_frame(measure: KindFrameMeasure, *, annotation_id: str, presentat
                               Rect(Decimal(str(left)), Decimal(str(top)), Decimal(str(w)), Decimal(str(h))),
                               semantic_id=semantic_id, annotation=presentation, paint_order=paint_order)
 
-    if measure.accent_role is not None:
-        side, size = measure.accent_side, measure.accent_size
-        # The one strip geometry a box border uses too (#1049); here on the content box, inside the inset.
-        left, top, w, h = side_strip(str(side), size, (x, y, width, height))
-        shapes.append(rect(f"annotation-kind-accent:{annotation_id}", "annotationKindAccent", left, top, w, h))
     inner_x = x + measure.body_inset_left
-    inner_y = y + measure.inset_top
+    inner_y = y
     inner_width = width - measure.inline_insets
     if measure.bar:
         shapes.append(rect(f"annotation-kind-bar:{annotation_id}", "annotationKindBar",
                            inner_x, inner_y, inner_width, measure.header_block))
     if measure.stamp_ref is not None:
         gap = measure.stamp_column - measure.stamp_inline
-        stamp_x = (x + measure.inset_left if measure.stamp_at_start
-                   else x + width - measure.inset_right - measure.stamp_column + gap)
-        stamp_y = (y + measure.inset_top if str(measure.stamp_corner).endswith("top")
-                   else y + height - measure.inset_bottom - measure.stamp_block)
+        stamp_x = (x if measure.stamp_at_start
+                   else x + width - measure.stamp_column + gap)
+        stamp_y = (y if str(measure.stamp_corner).endswith("top")
+                   else y + height - measure.stamp_block)
         bounds = (stamp_x, stamp_y, measure.stamp_inline, measure.stamp_block)
         try:
             parts = symbol_parts({"shape": {"catalog": measure.stamp_ref}}, bounds,

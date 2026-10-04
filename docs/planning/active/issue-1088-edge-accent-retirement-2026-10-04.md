@@ -1,7 +1,7 @@
 # Issue #1088 — retire the content-box edge accent
 
-Phase: design and whole-architecture review complete; implementation follows
-this publication. Baseline: ready main `28d7f664`; #1130 is merged before code.
+Phase: implementation complete; S0 and focused tests pass. Grouped public
+artifact review and release gate remain. Baseline: ready main `28d7f664`.
 Source: [#1088](https://github.com/tya5/chrona/issues/1088). Predecessor: #1049.
 
 ## Published baseline and literal acceptance
@@ -26,7 +26,8 @@ Layout owns the full outer edge, mitres/rounded outlines, border-plus-inset
 measurement and tilt. Kind-frame Layout owns header/bar/stamp only; remove
 its accent fields/insets/import/placement rather than retaining zero-valued
 compatibility members. Scene/adapters continue serializing completed geometry.
-Shared `side_strip` stays where borders consume it.
+Keep the border polygon/rounded-strip owner; remove the now-unconsumed
+`side_strip` helper with the legacy content-accent path.
 
 Migration is intentionally not byte-equivalent on the two active accent
 Themes: the strip moves from inside the content inset to the full outer edge.

@@ -137,7 +137,7 @@ def test_derived_theme_materializer_copies_pinned_base_and_rejects_tampering(tmp
     base_path = example / "themes/executive-light.yaml"
     base_source = base_path.read_bytes()
     base = yaml.safe_load(base_source)
-    derived = {"version": "chrona/theme/v0.12", "kind": "theme", "id": "executive-light",
+    derived = {"version": "chrona/theme/v0.16", "kind": "theme", "id": "executive-light",
                "body": {"extends": {"id": "executive-light", "path": "executive-light.yaml",
                                     "sourceContentIdentity": "sha256:" + sha256(base_source).hexdigest(),
                                     "contentIdentity": content_identity(base)},
@@ -159,7 +159,7 @@ def test_derived_theme_materializer_copies_pinned_base_and_rejects_tampering(tmp
     assert closure.resolved_theme is not None
     theme_resource = closure.resource("theme")
     assert theme_resource is not None
-    assert theme_resource.contract.version == "chrona/theme/v0.11"
+    assert theme_resource.contract.version == "chrona/theme/v0.15"
     assert theme_resource.content_identity != context["body"]["theme"]["contentIdentity"]
     materialize(example / "manifest.yaml", "overview", tmp_path / "derived-output", write=True)
     base_path.write_bytes(base_source + b"\n# tampered\n")

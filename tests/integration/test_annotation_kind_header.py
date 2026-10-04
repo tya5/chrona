@@ -170,12 +170,13 @@ def test_the_bar_is_emitted_after_the_box_and_before_the_header_text_in_paint_or
 
 
 @pytest.mark.parametrize("side", ["start", "end", "top", "bottom"])
-def test_the_accent_edge_stands_on_its_side_and_grows_the_box_by_its_size(tmp_path, side):
+def test_the_kind_border_stands_on_its_side_and_grows_the_box_by_its_width(tmp_path, side):
     source = ak.project()
     plain = _by_id(_render(_sub(tmp_path, "plain"), source))["annotation-box:view-n0"]
-    ids = _by_id(_render(_sub(tmp_path, "accent"), source, theme={"bar": False, "accent": side, "accent_size": 6,
+    ids = _by_id(_render(_sub(tmp_path, "accent"), source, theme={"bar": False, "border_side": side, "border_width": 6,
                                                                    "label_fill": "text"}))
-    box, accent = ids["annotation-box:view-n0"], ids["annotation-kind-accent:view-n0"]
+    box, accent = ids["annotation-box:view-n0"], ids[f"annotation-border:view-n0:{side}"]
+    assert not any(key.startswith("annotation-kind-accent:") for key in ids)
     x, y, w, h = box.bounds
     expected = {"start": (x, y, 6, h), "end": (x + w - 6, y, 6, h), "top": (x, y, w, 6), "bottom": (x, y + h - 6, w, 6)}[side]
     assert accent.bounds == pytest.approx(expected)
@@ -191,14 +192,14 @@ def test_the_accent_edge_stands_on_its_side_and_grows_the_box_by_its_size(tmp_pa
     assert accent.paint.fill == ak.KIND_COLORS["kind-alert"]
 
 
-def test_the_bar_leaves_the_accent_strip_its_own_edge(tmp_path):
-    ids = _by_id(_render(tmp_path, theme={"accent": "start", "accent_size": 6}))
+def test_the_bar_leaves_the_kind_border_its_own_edge(tmp_path):
+    ids = _by_id(_render(tmp_path, theme={"border_side": "start", "border_width": 6}))
     box, bar = ids["annotation-box:view-n0"], ids["annotation-kind-bar:view-n0"]
     assert bar.bounds[0] == pytest.approx(box.bounds[0] + 6)
     assert bar.bounds[2] == pytest.approx(box.bounds[2] - 6)
 
 
-def test_a_bar_or_an_accent_on_a_balloon_box_is_a_declaration_conflict(tmp_path):
+def test_a_bar_on_a_balloon_box_is_a_declaration_conflict(tmp_path):
     source = ak.project()
     with pytest.raises(Exception) as failure:
         _render(tmp_path, source, theme={}, mutate=sr.with_balloon_notes)
@@ -217,8 +218,8 @@ def test_a_balloon_box_may_carry_header_text_alone(tmp_path):
 
 
 def test_rendering_twice_gives_the_same_bytes(tmp_path):
-    first = _render(_sub(tmp_path, "a"), theme={"accent": "end"})
-    second = _render(_sub(tmp_path, "b"), theme={"accent": "end"})
+    first = _render(_sub(tmp_path, "a"), theme={"border_side": "end"})
+    second = _render(_sub(tmp_path, "b"), theme={"border_side": "end"})
     assert first.artifact.content == second.artifact.content
 
 
@@ -232,7 +233,7 @@ def _findings(document, role, decoration_severity="warning"):
 
 
 def test_the_scene_gate_judges_each_header_text_on_its_own_kind_bar(tmp_path):
-    rendered = _render(tmp_path, theme={"accent": "start"})
+    rendered = _render(tmp_path, theme={"border_side": "start"})
     document = _document(rendered)
     labels = _findings(document, "annotation-kind-label")
     assert {item.primitive_id for item in labels} == {"annotation-kind-text:view-n0:0", "annotation-kind-text:view-n1:0"}
@@ -265,12 +266,12 @@ def test_a_bar_too_close_to_the_label_is_a_gate_error_on_that_annotation_only(tm
 
 
 def test_an_accent_that_vanishes_into_the_note_box_is_a_decoration_error(tmp_path):
-    rendered = _render(tmp_path, theme={"bar": False, "accent": "start", "label_fill": "text"})
+    rendered = _render(tmp_path, theme={"bar": False, "border_side": "start", "label_fill": "text"})
     document = _document(rendered)
     box_fill = _by_id(rendered)["annotation-box:view-n0"].paint.fill
-    _paint(document, "annotation-kind-accent:view-n0", box_fill)
+    _paint(document, "annotation-border:view-n0:start", box_fill)
     errors = [item for item in _findings(document, "annotation-kind-accent", "error") if item.severity == "error"]
-    assert [item.primitive_id for item in errors] == ["annotation-kind-accent:view-n0"]
+    assert [item.primitive_id for item in errors] == ["annotation-border:view-n0:start"]
     assert errors[0].code == "E_SCENE_DECORATION_CONTRAST"
     # Without the Theme's blocking declaration (#995) the same miss is a warning.
     (warned,) = [item for item in _findings(document, "annotation-kind-accent") if item.severity == "warning"]

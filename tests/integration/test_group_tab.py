@@ -46,7 +46,7 @@ def _parts(*, inline: float | None = 40, block: float | None = None, gap: float 
            stroke: str = "surface", band_opacity: float | None = None, order: int = 20, declare: bool = True) -> dict:
     """The bundle, with a `group-tab` role when `declare` (Theme v0.13 admits a catalogue pattern on it)."""
     parts = sr.bundle("control-room-dark")
-    parts["theme"]["version"] = "chrona/theme/v0.13"
+    parts["theme"]["version"] = "chrona/theme/v0.15"
     body = parts["theme"]["body"]
     if band_opacity is not None:  # the group band alone, so no two row stripes overlap each other
         body["values"]["opacity.band"] = {"type": "number", "value": band_opacity}
@@ -357,7 +357,7 @@ def test_typst_and_tikz_reject_a_patterned_tab_with_the_existing_capability_erro
 # --- the Theme schemas -------------------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("schema", ["theme-v0.11.schema.yaml", "theme-v0.13.schema.yaml"])
+@pytest.mark.parametrize("schema", ["theme-v0.15.schema.yaml", "theme-v0.15.schema.yaml"])
 def test_both_theme_schemas_accept_named_lengths_and_a_position_and_reject_literals(schema):
     validator = schema_validator(schema)
 

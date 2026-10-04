@@ -18,7 +18,7 @@ from chrona.presentation.model.theme_role_consumers import declared_role_pointer
 from chrona.resources import safe_load
 
 ROOT = Path(__file__).resolve().parents[1]
-_THEME_KINDS = ("chrona/theme/v0.11", "chrona/theme/v0.13")
+_THEME_KINDS = ("chrona/theme/v0.15",)
 _DOCUMENT_KEYS = ("view", "layout", "detailProfile", "summaryProfile")
 
 

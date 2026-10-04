@@ -5,7 +5,7 @@ from decimal import Decimal
 
 import pytest
 
-from chrona.presentation.layout.annotation_border import NO_BORDER, resolve_border, side_strip
+from chrona.presentation.layout.annotation_border import NO_BORDER, resolve_border
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
 from tests.unit.chrona.presentation.model.test_theme_tokens import _theme_with_annotation_container
 
@@ -49,10 +49,3 @@ def test_an_unsupported_or_malformed_border_names_its_property(extra):
         ThemeTokenView(_theme_with_annotation_container(value)).annotation_container("annotation")
     assert raised.value.diagnostic_id == "E_THEME_TOKEN_TYPE"
     assert "/annotationContainer/border" in raised.value.path
-
-
-@pytest.mark.parametrize("side,expected", [
-    ("start", (10, 20, 4, 50)), ("end", (106, 20, 4, 50)), ("top", (10, 20, 100, 4)), ("bottom", (10, 66, 100, 4)),
-])
-def test_a_strip_stands_on_its_side_at_full_length(side, expected):
-    assert side_strip(side, 4, (10, 20, 100, 50)) == expected

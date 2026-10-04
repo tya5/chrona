@@ -11,8 +11,9 @@ from chrona.presentation.scene.serialization import serialize_scene
 from tests.support import synthetic_review as sr
 
 
-# Captured from the unchanged implementation at published base cc6baa90.
-NO_SUPPRESSION_SCENE_SHA256 = "7c4303f5db50f83270c45fe1f4f16ec4a365ea78c0c7b9bbc0804af204e6a30e"
+# SVG bytes remain those captured at published base cc6baa90. The #1088
+# Theme v0.15 migration changes only the Scene's Theme provenance identity.
+NO_SUPPRESSION_SCENE_SHA256 = "45b7c21b73c0f08008f9b6e012226ea963130e08759d9179116facd9ee5fb1c6"
 NO_SUPPRESSION_SVG_SHA256 = "6be1fa03bd77c3ba28a069a1378bd1d0c24379be5bb02477afc4c93107b305c6"
 
 
@@ -63,7 +64,7 @@ def _svg_text(rendered, scene_id):
     return " ".join(" ".join(element.itertext()).split())
 
 
-def test_unsuppressed_scene_and_svg_match_the_published_base_bytes(tmp_path):
+def test_unsuppressed_scene_and_svg_match_the_characterized_bytes(tmp_path):
     source, parts = _fixture()
     rendered = sr.render(tmp_path, source, presentation=parts, viewport=(2400, 1400))
 

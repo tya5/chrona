@@ -17,7 +17,7 @@ nothing to the package.
   commit before it was archived. Git history is the record; this folder only keeps
   the files reachable for reading.
 - Files that are still accepted at runtime or still have committed documents
-  (for example View v0.26 and v0.27, Theme v0.11 and v0.12, icon-catalog v0.3, Scene v0.6)
+  (for example View v0.26 and v0.27, icon-catalog v0.3, Scene v0.6)
   remain in `schemas/` until their own migration issues retire them.
 
 A test (`tests/unit/tools/test_schema_archive.py`) fails if a file here is still

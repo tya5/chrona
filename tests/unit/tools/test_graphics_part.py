@@ -99,7 +99,7 @@ def test_the_shared_defs_carry_the_asset_bounds_that_scene_leaves_open():
 # Adopted sites
 # --------------------------------------------------------------------------------------------
 
-THEME = "theme-v0.13.schema.yaml"
+THEME = "theme-v0.15.schema.yaml"
 # definition -> {file: number of sites}
 ADOPTION: dict[str, dict[str, int]] = {
     "viewport": {CATALOG: 2, SOURCE: 1},

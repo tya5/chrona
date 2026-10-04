@@ -97,26 +97,26 @@ def test_the_token_view_returns_the_declaration_of_a_kind_and_nothing_for_anothe
 
 
 def test_the_frame_reads_which_elements_the_theme_declares_and_their_geometry():
-    _, resolved = _resolve(accent="end", accent_size=5, padding=0.5)
+    _, resolved = _resolve(border_side="end", border_width=5, padding=0.5)
     frame = ThemeTokenView(resolved).annotation_kind_frame()
     assert (frame.label_role, frame.secondary_role, frame.bar_role) == (
         "annotation-kind-label", "annotation-kind-secondary", "annotation-kind-bar")
-    assert (frame.accent_role, frame.accent_side, float(frame.accent_size), float(frame.bar_padding_em)) == (
-        "annotation-kind-accent", "end", 5.0, 0.5)
+    assert float(frame.bar_padding_em) == 0.5
+    assert not hasattr(frame, "accent_role")
+    border = ThemeTokenView(resolved).annotation_container("annotation-note-box").border
+    assert border["end"].width == 5 and border["end"].paint == "kind"
     _, plain = _resolve(bar=False, secondary=False, label_fill="text")
     assert ThemeTokenView(plain).annotation_kind_frame().bar_role is None
     assert ThemeTokenView(plain).annotation_kind_frame().secondary_role is None
 
 
-@pytest.mark.parametrize("edge", [{"side": "diagonal", "size": 4}, {"side": "start", "size": 0}, {"side": "start", "size": -1}])
-def test_an_invalid_edge_token_is_a_token_type_error(edge):
+def test_the_retired_edge_role_member_is_rejected_not_ignored():
     parts = sr.bundle()
-    ak.with_kind_theme(parts, accent="start")
-    parts["theme"]["body"]["values"]["kind-accent-edge"] = {"type": "edge", "value": edge}
-    resolved = resolve_theme(parts["theme"], parts["scheme"], scheme_content_identity="sha256:test")
-    with pytest.raises(ThemeTokenError) as failure:
-        ThemeTokenView(resolved).annotation_kind_frame()
-    assert failure.value.diagnostic_id == "E_THEME_TOKEN_TYPE"
+    ak.with_kind_theme(parts, border_side="start")
+    parts["theme"]["body"]["roles"]["annotation-kind-accent"]["edge"] = "removed-edge"
+    with pytest.raises(ColorSchemeError) as failure:
+        resolve_theme(parts["theme"], parts["scheme"], scheme_content_identity="sha256:test")
+    assert failure.value.diagnostic_id == "E_THEME_ROLE_PROPERTY_UNSUPPORTED"
 
 
 def test_a_kind_stamp_reference_is_carried_into_the_resolved_theme_and_the_token_view():

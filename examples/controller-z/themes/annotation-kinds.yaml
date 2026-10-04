@@ -1,4 +1,4 @@
-version: chrona/theme/v0.13
+version: chrona/theme/v0.15
 kind: theme
 id: annotation-kinds
 body:
@@ -229,11 +229,13 @@ body:
     kind-upper:
       type: textTransform
       value: uppercase
-    kind-accent-edge:
-      type: edge
+    note-container:
+      type: annotationContainer
       value:
-        side: start
-        size: 5
+        outline: rectangle
+        cornerRadius: 0
+        border:
+          start: {width: 5, paint: kind}
     kind-stamp-placement:
       type: stampPlacement
       value:
@@ -357,6 +359,7 @@ body:
       numericSpacing: numeric-spacing
     annotation-note-box:
       strokeWidth: stroke-width
+      annotationContainer: note-container
     annotation-note-text:
       contrastTreatment: required
       fontFamily: editorial
@@ -467,8 +470,7 @@ body:
       letterSpacing: kind-secondary-spacing
     annotation-kind-bar:
       chipPadding: kind-bar-padding
-    annotation-kind-accent:
-      edge: kind-accent-edge
+    annotation-kind-accent: {}
     annotation-kind-stamp:
       stampPlacement: kind-stamp-placement
   colorBindings:
