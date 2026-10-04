@@ -132,8 +132,10 @@ def test_the_fallback_diagnostic_names_its_reason_1084():
     assert reason(diagnostics) == "bends-or-detour"
     blocker = _item("c", D(2026, 1, 25), D(2026, 2, 20))
     _, _, blocked = _route((A, blocker, target), _rows((A,), (blocker,), (target,)), DEP, "side", distribution="pack",
-                           max_detour=2.0, window=(D(2026, 1, 25), D(2026, 2, 25)), diagnostics=True)
-    assert reason(blocked).startswith("blocked:mark=")
+                           max_detour=2.0, window=(D(2026, 1, 25), D(2026, 2, 25)), diagnostics=True,
+                           allow_suppressed=True)
+    assert any(item.startswith("I_LAYOUT_RELATION_MARK_BLOCKED:") for item in blocked)
+    assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in blocked)
 
 
 def test_a_mark_after_the_source_end_blocks_the_exit_stub_and_falls_back_with_a_reason_1084():

@@ -18,4 +18,22 @@ simplification changes; those belong to #1109/#1108. Leave lane L, terminal
 geometry and reviewer YAML untouched. Fetch current main before publication;
 if a dev B update conflicts, reconcile without reset/force-push.
 
-Current status: pre-code documents published; implementation and acceptance pending.
+## Current evidence and unresolved acceptance
+
+S1 implemented on public baseline `23bc8a57`: shared segment/rectangle clipping
+(including diagonals), far-side exclusion, lane attempt evidence, all-producer
+mark safety and Scene observation (including drawn commands). Focused Layout
+and Scene run: 1378 passed; subsequent observer/guard-focused run: 49 passed.
+
+Disposable 63-slide batch: primary-mark crossings 19 → 0; target B
+`avionics-cdr` exits below the Avionics bar, confirmed in rendered SVG/PNG.
+There are 32 changed paths, including 14 previously non-crossing paths, and
+7 new suppressions (four `launch-leop` instances; editorial-lanes
+`detector-tvac`, `shipment-campaign`, `structure-avionics`). These are **not
+accepted**: investigate candidate/port and lane-label rehearsal interactions
+before claiming unchanged compliant routes or release readiness. Count baseline
+from immutable Git objects, not mutable generated files. No derived output
+belongs in the source PR; regeneration is owned by derived-sync.
+
+Current status: implementation in review; corpus zero established, preservation
+criterion and release CI pending. Continue in this record without new phase files.

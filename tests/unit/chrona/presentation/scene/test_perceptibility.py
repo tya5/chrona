@@ -206,6 +206,45 @@ def test_a_relation_path_that_doubles_back_over_itself_is_an_error_1059():
     assert "E_SCENE_RELATION_PATH_REVERSES" in _codes(_scene(loop))
 
 
+@pytest.mark.parametrize("points", [[[0, 5], [20, 5]], [[0, 0], [20, 20]]])
+def test_relation_mark_crossings_include_own_foreign_and_diagonal_paths(points):
+    path = _primitive("relation:dep", "Path", paint={"strokeWidth": 1})
+    path.update(sourceKind="relation", sourceRef="dep", points=points)
+    own = _primitive("planned:a", "Rect", bounds=_bounds(5, 2, 5, 8))
+    foreign = _primitive("planned:c", "Rect", bounds=_bounds(12, 2, 5, 15))
+    findings = [f for f in evaluate_scene_perceptibility(_scene(path, own, foreign))
+                if f.code == "E_SCENE_RELATION_THROUGH_MARK"]
+    assert {f.primitive_ids[1] for f in findings} == {"planned:a", "planned:c"}
+
+
+def test_boundary_contact_ghost_and_legend_swatch_are_not_primary_crossings():
+    path = _primitive("relation:dep", "Path", paint={"strokeWidth": 1})
+    path.update(sourceKind="relation", sourceRef="dep", points=[[0, 2], [20, 2]])
+    own = _primitive("planned:a", "Rect", bounds=_bounds(5, 2, 5, 8))
+    ghost = _primitive("planned:snapshot:a", "Rect", bounds=_bounds(5, 0, 5, 8))
+    swatch = dict(path, id="legend:dependency", points=[[0, 5], [20, 5]])
+    assert "E_SCENE_RELATION_THROUGH_MARK" not in _codes(_scene(path, own, ghost, swatch))
+
+
+def test_crossing_drawn_quadratic_is_checked_even_when_polyline_is_clear():
+    path = _primitive("relation:dep", "Path", paint={"strokeWidth": 1})
+    path.update(sourceKind="relation", sourceRef="dep", points=[[0, 0], [20, 0]], pathCommands=[
+        {"kind": "move", "points": [[0, 0]]},
+        {"kind": "quadratic", "points": [[10, 20], [20, 0]]}])
+    mark = _primitive("planned:a", "Rect", bounds=_bounds(8, 8, 4, 4))
+    assert "E_SCENE_RELATION_THROUGH_MARK" in _codes(_scene(path, mark))
+
+
+@pytest.mark.parametrize("changes", [{"points": [[0, 0], ["x", 5]]}, {"paint": {"strokeWidth": "x"}},
+                                     {"points": [[0, 0], [float("nan"), 5]]}])
+def test_malformed_relation_geometry_has_a_typed_observation_error(changes):
+    path = _primitive("relation:dep", "Path", paint={"strokeWidth": 1})
+    path.update(sourceKind="relation", sourceRef="dep", points=[[0, 0], [20, 0]])
+    path.update(changes)
+    with pytest.raises(ScenePerceptibilityError):
+        evaluate_scene_perceptibility(_scene(path))
+
+
 def test_straight_and_stepped_relation_paths_and_the_legend_swatch_are_not_reversals_1059():
     stepped = _path_with("relation:r:a:b", [(0, 0), (0, 10), (6, 10), (6, 4), (12, 4)])
     swatch = {**_path_with("legend-swatch:dependency", [(0, 0), (9, 0), (3, 0)]), "sourceRef": "dependency"}

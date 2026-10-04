@@ -25,7 +25,8 @@ def _item(oid, start, end, track="stacked"):
                       source_kind="primary", track=track)
 
 
-def _route(items, rows, relation, entry, *, max_bends=4, window=None, distribution="fill", max_detour=2.0, diagnostics=False):
+def _route(items, rows, relation, entry, *, max_bends=4, window=None, distribution="fill", max_detour=2.0, diagnostics=False,
+           allow_suppressed=False):
     """Return (points, plan marks) of the single relation path for one declared entry policy."""
     all_items = tuple(items)
     window = window or (min(i.planned["start"] for i in all_items), max(i.planned["end"] for i in all_items))
@@ -41,10 +42,10 @@ def _route(items, rows, relation, entry, *, max_bends=4, window=None, distributi
                               measured_sources=measurement, capabilities={"svg": True})
     surface = compose_review_surface(value)
     paths = [p for p in surface.primitives if p.scene_id.startswith("relation:") and not p.scene_id.startswith("relation-label")]
-    assert len(paths) == 1
+    assert len(paths) <= 1 if allow_suppressed else len(paths) == 1
     marks = {p.scene_id: p for p in surface.primitives if p.scene_id.startswith("planned:")}
     if diagnostics:
-        return paths[0].points, marks, surface.diagnostics
+        return paths[0].points if paths else (), marks, surface.diagnostics
     return paths[0].points, marks
 
 

@@ -85,6 +85,9 @@ _SURFACE_CAUSES: Mapping[str, str] = {
     "W_LAYOUT_ASOF_BELOW_PLOT_FALLBACK": (
         "the as-of chip could not be placed below the plot, so it sits inside the plot foot instead"),
     "W_LAYOUT_RELATION_SUPPRESSED": "a relation line was left out of the picture because no route fits",
+    "I_LAYOUT_RELATION_MARK_BLOCKED": "a relation was left out because its fallback would cross a primary mark",
+    "E_LAYOUT_ROUTE_THROUGH_MARK": "a relation route crosses a primary mark interior",
+    "W_SCENE_RELATION_THROUGH_MARK": "a dependency line runs through a primary mark",
     "W_LAYOUT_RELATION_LABEL_SUPPRESSED": "a relation label was left out of the picture because it does not fit",
     "W_LAYOUT_ACTUAL_INCOMPLETE": "an actual observation is incomplete, so its actual bar is not drawn",
     "W_LAYOUT_OPEN_ACTUAL_INVALID": "an open actual does not start before the as-of date, so its bar is not drawn",
