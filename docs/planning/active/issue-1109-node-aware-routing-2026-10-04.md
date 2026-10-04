@@ -144,8 +144,11 @@ failures, not evidence that caps should be relaxed.
 ## Resource adaptation design and implementation amendment
 
 A temporary Controller executive render with existing declared fallback
-`[inside, above, end, start, suppress]` restores all eight names and all seven
-routes without foreign-mark crossings. Fresh corpus bindings locate 31 lost
+`[inside, above, start, end, suppress]` restores all eight names and all seven
+routes without primary-mark crossings, retaining the previously visible
+`bringup-to-performance` relation label. An end-first trial recovered names
+but lost that label in 26 of 32 affected contexts; it is not selected.
+Fresh corpus bindings locate 31 lost
 `evb-arrival` names in 18 Views, not 31 separate declarations. Select that ladder
 for those owning sources, preserving the original first two rungs. No Project
 dates, relation identities, selection, core exception or quality cap changes.
@@ -166,7 +169,8 @@ Implementation unit: `examples/controller-z/views/` sources `annotation-artwork`
 `text-roles`, `value-affixes`, and `viewer-fit`. Each retains its current
 selection/intent; only the declared fallback ladder changes. No packaged mirror
 is present. Publish this amendment before edits, then batch the 31 affected
-contexts and focused Controller render/materializer tests. Require recovered
-member names, no new route loss or foreign-primary crossings, and the existing
+contexts (32 total bindings) and focused Controller render/materializer tests.
+Require recovered member names, no new relation-label or route loss or
+primary-mark crossings, and the existing
 association/overlap guards. CI supplies derived artifacts and the full release
 gate. Keep the seven HALCYON route losses and separate label findings open.
