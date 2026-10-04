@@ -119,13 +119,16 @@ relation-label suppressions
 increase by one. The seven missing paths match #1114's
 unresolved inventory. This is not release acceptance.
 
-Public-head CI `37166951283` is red. Migration housekeeping: Scene conditional
-annotations, opaque-identity schema-site inventory, raw viewer-fit Scene version,
-legacy/live Scene mapping coverage, and 27 valid-to-valid L2 artifact schema
-transitions. Rendering gates remain unresolved: three CLI goldens, editorial
-shipment preservation, Controller member names, routed-note topology, and a
-suppression aggregate fixture. `derived-ready` fails downstream. Keep real
-route/name preservation gates; do not turn their failures into expected loss.
+Public-head [CI 37169754275](https://github.com/tya5/chrona/actions/runs/37169754275)
+at `6fd5ce49` passes conformance, derived preview, MCP floor and newest-Python
+reproduction of all public materializers. Pytest reports 6,841 passed, 64 skipped
+and five failures: `test_halcyon_02_routed_note_trial_is_bounded_clear_and_deterministic`,
+`test_slide_16_draws_shipment_campaign_without_losing_anything`, and
+`test_cli_output_is_unchanged` for `render-halcyon-view-theme-scheme-layout`,
+`render-halcyon-resources-png`, and `render-halcyon-emit-scene`.
+Controller name recovery and suppression aggregation no longer fail.
+`derived-ready` fails downstream of pytest. Preserve the real route/name gates;
+review CLI golden changes only after geometry and warning counts stabilize.
 
 Bounded read-only probes locate a coupled route/name planning problem. Reserving
 all three rescue corridors replaces the lost set with `tvac-emc` and suppresses
@@ -195,3 +198,13 @@ it no longer requires a corpus example to lose a name. Generated files remain
 CI-owned. The separate routed-note test is a genuine failure: TVAC exhausts
 the 1,024-state route search and produces no leader, so its safety/association
 assertions remain unchanged pending correction.
+
+Read-only annotation diagnosis: a finite expanded-budget trial finds a strict
+route for the same box at trial 10 after 32,371 states, identically in two
+renders. This is a feasibility lead, not acceptance: it exceeds the declared
+1,024-state cap and fails placement-decision validation. Quality-ranked paths
+alone still exhaust the cap; they do not solve endpoint-stream starvation.
+Next: establish a bounded, deterministically counted connector search with a
+neutral witness and exact TVAC safety checks, then publish any changed search
+contract and architecture review here and in Spec 33 before product edits.
+No higher production cap, obstacle waiver or selected search change exists.
