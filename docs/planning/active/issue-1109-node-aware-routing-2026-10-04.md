@@ -2,13 +2,14 @@
 
 ## Published baseline and design plan
 
-Public main: `23bc8a57` (read 2026-10-04). #1114's primary-mark safety
+Public main tracked: `a2c2596b` (2026-10-04); comparison baseline: `23bc8a57`.
+#1114's primary-mark safety
 is the preceding lane-R slice in PR #1122 (acceptance pending).
 Authority: [#1109](https://github.com/tya5/chrona/issues/1109), Spec 50 §3.3,
 #1084/#1072's side-entry rules, #1059's non-reversal invariant. WIP `e2529728`
 is reference only: side deprioritization is not proof of actual-segment clearance.
 
-Current routing evaluates relations in declaration order and accepts the first
+Baseline routing evaluates relations in declaration order and accepts the first
 eligible port pair. It has no node-level incoming-approach check or S-jog
 simplification. Published target B's reported geometry remains to be remeasured.
 
@@ -228,3 +229,20 @@ context/schema gates, check intended relation inventory, crossings, label reach,
 and SVG/PNG boundaries. CI owns derived mirrors and the full release gate.
 All coordinates may change intentionally; the wider canvas is the migration.
 The four other HALCYON route losses and TVAC search remain separate open gates.
+
+Implementation `2ba83810`; exact copied-tree public materializer succeeds.
+Both slide acceptance tests pass on that fresh Scene: 25 dependency primitives,
+all names present, no name/relation suppression and every name within default
+reach. Every dependency source appears in SVG; perceptibility reports no errors
+or warnings. Declared-font PNG/SVG inspected, including shipment and the recovered
+structure/detector connections. The requested 3200 × 900 viewport produces the
+declared overflow canvas 3200 × 2140, without cropping required rows. Schema and
+Render Context focused tests: 61 passed. Generated evidence remains CI-owned.
+
+Main reconciliation `8ebed2a0` preserves #1105's terminal-run resolver and
+#1114's primary-mark arc guard. The terminal-run test now reserves its actual
+final leg, avoiding an assumption about the old short-stub routing order;
+68 terminal/node/mark/routing tests pass. Exact editorial materializer bytes
+remain identical after reconciliation. `29efd023` additionally tracks main's
+bot-derived terminal-none evidence. Required release CI remains pending; four
+HALCYON route losses, TVAC and three CLI goldens still prevent issue acceptance.
