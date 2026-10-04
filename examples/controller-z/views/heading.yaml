@@ -54,6 +54,8 @@ body:
       labels:
       - inside
       - above
+      - start
+      - end
       - suppress
     relations:
       mode: semantic

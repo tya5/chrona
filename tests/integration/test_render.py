@@ -392,9 +392,6 @@ def test_suppression_count_excludes_other_plot_text_and_absent_count(tmp_path):
     tuned = render_review(_draft_request(**inputs, view_path=legacy_view_path,
                                          theme_path=preset / "theme.yaml", layout_path=preset / "layout.yaml"))
     assert "W_LAYOUT_LABEL_SUPPRESSED:variance:detector:detector" in tuned.scene.diagnostics
-    member_suppressed = sum(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:") for item in tuned.scene.diagnostics)
-    assert member_suppressed >= 1  # the variance suppression above is not counted
-    assert f"I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count={member_suppressed}" in tuned.scene.diagnostics
     # HALCYON is evidence here, not the rule: which names the placement policy suppresses depends
     # on the corpus data (#575), so no name is pinned. The aggregate must still count members
     # only; the synthetic proof is test_fill_lanes_count_every_packed_name_as_shown_or_suppressed.
@@ -402,10 +399,13 @@ def test_suppression_count_excludes_other_plot_text_and_absent_count(tmp_path):
                                            theme_path=example / "themes/briefing.yaml",
                                            layout_path=example / "layouts/briefing.yaml",
                                            summary_path=example / "profiles/summary.yaml"))
-    halcyon_members = sum(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")
-                          for item in halcyon.scene.diagnostics)
-    assert halcyon_members >= 1
-    assert f"I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count={halcyon_members}" in halcyon.scene.diagnostics
+    for rendered in (tuned, halcyon):
+        member_suppressed = sum(item.startswith("W_LAYOUT_LABEL_SUPPRESSED:member-label:")
+                                for item in rendered.scene.diagnostics)
+        aggregates = [item for item in rendered.scene.diagnostics
+                      if item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:")]
+        assert aggregates == ([f"I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count={member_suppressed}"]
+                              if member_suppressed else [])
     ordinary = render_review(_draft_request())
     assert not ordinary.info_diagnostics
     assert not any(item.startswith("I_LAYOUT_PLOT_LABELS_SUPPRESSED:") for item in ordinary.scene.diagnostics)
