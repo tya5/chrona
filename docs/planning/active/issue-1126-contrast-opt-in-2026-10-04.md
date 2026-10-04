@@ -4,7 +4,7 @@ Living record for [#1126](https://github.com/tya5/chrona/issues/1126) (owner-app
 
 **Owner directive (2026-10-04, in Japanese on the board; paraphrase):** contrast constraints must not bind design freedom; it is enough that they can be chosen as an opt-in design option. This **supersedes the issue body's "acceptance with a reason against an always-on floor"**: the floors become something a Theme opts into, not something every Theme must argue its way out of.
 
-**Public base:** `a2bfc892` on `main`. **Status:** design plan, design, architecture review and implementation plan published together (PR #1131, `f5081df0`); the code slice O1126 is in review; then the acceptance review.
+**Public base:** `a2bfc892` on `main`. **Status:** design plan, design, architecture review and implementation plan published together (PR #1131, `f5081df0`); the code slice O1126 is merged (PR #1133, `1cddee3e`); the [acceptance review](../../reviews/current/issue-1126-contrast-opt-in-acceptance-review-2026-10-04.md) is published.
 
 ## 1. Published baseline
 
