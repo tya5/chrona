@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import date
+from pathlib import Path
 
 import pytest
 
@@ -43,6 +44,24 @@ def test_bundle_returns_fresh_copies_of_the_four_packaged_resources():
     assert set(first) == {"view", "theme", "scheme", "layout"}
     first["view"]["body"]["surface"] = "changed"
     assert second["view"]["body"]["surface"] != "changed"
+
+
+def test_write_uses_literal_lf_newlines_even_with_windows_translation(tmp_path, monkeypatch):
+    real_write_text = Path.write_text
+    newline_arguments = []
+
+    def windows_write_text(path, data, *, encoding=None, errors=None, newline=None):
+        newline_arguments.append(newline)
+        if newline is None:
+            data = data.replace("\n", "\r\n")
+        return real_write_text(path, data, encoding=encoding, errors=errors, newline="\n")
+
+    monkeypatch.setattr(Path, "write_text", windows_write_text)
+    path = sr._write(tmp_path / "resource.yaml", {"first": "one", "second": "two"})
+
+    assert newline_arguments == ["\n"]
+    assert b"\r\n" not in path.read_bytes()
+    assert path.read_bytes().endswith(b"\n")
 
 
 def test_a_synthetic_project_renders_one_lane_row_per_overlapping_task(tmp_path, no_examples):
