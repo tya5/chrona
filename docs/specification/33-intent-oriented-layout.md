@@ -496,13 +496,17 @@ separate output from each annotation's plot index and callout box. Every numbere
 ordinal and exactly one visible list entry. When an optional plot index is
 suppressed, the accepted note text remains and the entry visibly says `index
 not shown on plot`; the index-suppression diagnostic remains, and any required
-leader is unchanged. When the annotation callout box/leader is suppressed,
+leader remains connected to the finalized entry. When the annotation callout box/leader is suppressed,
 Layout retains a compact numbered summary entry visibly saying `callout not
 shown on plot`; the existing callout-suppression diagnostic remains, and no
 plot index, box, or leader is fabricated. These statuses are Layout-derived,
 not View/Project facts or adapter decisions. Layout measures and places the
 final list entries after resolving plot visibility; it may not renumber them
-or repair a completed Scene in an adapter. In the no-suppression case, the
+or repair a completed Scene in an adapter. When suppression adds a summary or
+status, entries may reflow in View order within the declared slot; Layout
+must recomplete affected boxes and required leaders against the obstacle
+inventory, never move text alone or revive a suppressed plot callout.
+In the no-suppression case, the
 existing Scene and adapter output remain byte-identical. This preserves
 intentional callout suppression while preventing a silent numbering gap.
 Without that slot, Layout does not fabricate a list or change the existing

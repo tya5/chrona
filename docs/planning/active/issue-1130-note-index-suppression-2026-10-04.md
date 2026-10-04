@@ -37,7 +37,7 @@ Literal #1130 acceptance:
 In a declared `annotations` slot, each numbered View annotation contributes exactly one ordered list entry with
 its original number. When only the plot index is suppressed, retain the
 accepted annotation note text and append a visible `index not shown on plot`
-status; keep its required leader and the existing index-suppression diagnostic.
+status; keep its required leader connected and the existing index-suppression diagnostic.
 When the callout box/leader is suppressed, retain a compact numbered summary
 entry with distinct `callout not shown on plot` status; keep the existing
 whole-callout diagnostic and do not invent a box, plot index, or leader. Thus
@@ -57,6 +57,9 @@ remains explicit and must be included in review. Number renumbering (option b)
 is rejected: it changes stable View numbering and requires remeasurement after
 a Layout decision.
 Without that slot, preserve plot-only behavior: Layout cannot invent a slot.
+Suppression-only summaries/status may reflow the rail in View order. Recomplete
+affected boxes and required leaders atomically; never move only their text.
+No-suppression geometry stays exact; suppressed plot callouts stay suppressed.
 
 ## Architecture and migration
 
