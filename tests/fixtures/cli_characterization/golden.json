@@ -801,35 +801,12 @@
   },
   "stderr": {
    "codes": {
-    "I_LAYOUT_PLOT_LABELS_SUPPRESSED": {
-     "count": 1,
-     "keys": [
-      "code",
-      "count",
-      "message",
-      "severity",
-      "surfaceId"
-     ],
-     "sortedKeyLines": true
-    },
     "W_LAYOUT_ACTUAL_INCOMPLETE": {
      "count": 1,
      "keys": [
       "code",
       "diagnostic",
       "message",
-      "severity"
-     ],
-     "sortedKeyLines": true
-    },
-    "W_LAYOUT_LABEL_SUPPRESSED": {
-     "count": 1,
-     "keys": [
-      "code",
-      "count",
-      "diagnostic",
-      "message",
-      "occurrences",
       "severity"
      ],
      "sortedKeyLines": true
@@ -865,35 +842,12 @@
   },
   "stderr": {
    "codes": {
-    "I_LAYOUT_PLOT_LABELS_SUPPRESSED": {
-     "count": 1,
-     "keys": [
-      "code",
-      "count",
-      "message",
-      "severity",
-      "surfaceId"
-     ],
-     "sortedKeyLines": true
-    },
     "W_LAYOUT_ACTUAL_INCOMPLETE": {
      "count": 1,
      "keys": [
       "code",
       "diagnostic",
       "message",
-      "severity"
-     ],
-     "sortedKeyLines": true
-    },
-    "W_LAYOUT_LABEL_SUPPRESSED": {
-     "count": 1,
-     "keys": [
-      "code",
-      "count",
-      "diagnostic",
-      "message",
-      "occurrences",
       "severity"
      ],
      "sortedKeyLines": true
@@ -929,35 +883,12 @@
   },
   "stderr": {
    "codes": {
-    "I_LAYOUT_PLOT_LABELS_SUPPRESSED": {
-     "count": 1,
-     "keys": [
-      "code",
-      "count",
-      "message",
-      "severity",
-      "surfaceId"
-     ],
-     "sortedKeyLines": true
-    },
     "W_LAYOUT_ACTUAL_INCOMPLETE": {
      "count": 1,
      "keys": [
       "code",
       "diagnostic",
       "message",
-      "severity"
-     ],
-     "sortedKeyLines": true
-    },
-    "W_LAYOUT_LABEL_SUPPRESSED": {
-     "count": 1,
-     "keys": [
-      "code",
-      "count",
-      "diagnostic",
-      "message",
-      "occurrences",
       "severity"
      ],
      "sortedKeyLines": true

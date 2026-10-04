@@ -120,16 +120,19 @@ relation-label suppressions
 increase by one. The seven missing paths match #1114's
 unresolved inventory. This is not release acceptance.
 
-Public-head [CI 37169754275](https://github.com/tya5/chrona/actions/runs/37169754275)
-at `6fd5ce49` passes conformance, derived preview, MCP floor and newest-Python
-reproduction of all public materializers. Pytest reports 6,841 passed, 64 skipped
-and five failures: `test_halcyon_02_routed_note_trial_is_bounded_clear_and_deterministic`,
-`test_slide_16_draws_shipment_campaign_without_losing_anything`, and
+Public-head [CI 37172156424](https://github.com/tya5/chrona/actions/runs/37172156424)
+at `5f72c67b` passes conformance, derived preview, MCP floor and newest-Python
+reproduction of all public materializers. Pytest reports 6,869 passed, 65 skipped
+and four failures: `test_halcyon_02_routed_note_trial_is_bounded_clear_and_deterministic`, and
 `test_cli_output_is_unchanged` for `render-halcyon-view-theme-scheme-layout`,
 `render-halcyon-resources-png`, and `render-halcyon-emit-scene`.
-Controller name recovery and suppression aggregation no longer fail.
-`derived-ready` fails downstream of pytest. Preserve the real route/name gates;
-review CLI golden changes only after geometry and warning counts stabilize.
+Controller name recovery, suppression aggregation and editorial acceptance pass.
+`derived-ready` fails downstream of pytest. Preserve the real route/name gates.
+The three CLI cases differ only by the absence of the now-unnecessary
+`I_LAYOUT_PLOT_LABELS_SUPPRESSED` and `W_LAYOUT_LABEL_SUPPRESSED` records;
+arguments, exit status, stdout, artifact descriptors and the remaining warning
+are unchanged. Remove only those six obsolete records, not a bulk re-recording.
+Focused CLI characterization and fixture-integrity checks: six passed.
 
 Bounded read-only probes locate a coupled route/name planning problem. Reserving
 all three rescue corridors replaces the lost set with `tvac-emc` and suppresses
@@ -245,4 +248,6 @@ final leg, avoiding an assumption about the old short-stub routing order;
 68 terminal/node/mark/routing tests pass. Exact editorial materializer bytes
 remain identical after reconciliation. `29efd023` additionally tracks main's
 bot-derived terminal-none evidence. Required release CI remains pending; four
-HALCYON route losses, TVAC and three CLI goldens still prevent issue acceptance.
+HALCYON route losses and TVAC remain unresolved. The CLI expectation correction
+still needs public-head CI confirmation; it changes no product code or diagnostic
+contract.
