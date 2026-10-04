@@ -83,3 +83,28 @@ safety, keep bounded search/memo ownership explicit, and do not force an
 infeasible name corridor. Then publish the selected design and amended
 implementation plan. No label suppression waiver, budget increase, corpus
 coordinate rule or joint solver is selected by these diagnostic findings.
+
+### Selected bounded corridor admission
+
+Keep the existing union rehearsal and return it unchanged when accepted. If
+the union fails, try each rescued relation's whole corridor packet in stable
+reference/View order. Rehearse the accepted packets plus that packet privately;
+retain it only when degraded identities strictly shrink from the last accepted
+trial and no name newly suppresses against the original baseline. Skip rejected
+packets without discarding previously accepted improvements. Never split one
+route's corridor or change routing quality/port policy. At most one additional
+rehearsal per rescued relation; no combinatorial solver or new search budget.
+
+Architecture review: this refines Spec 50's pre-name Layout feasibility plan;
+View still owns order, Layout owns private search/geometry, Scene/adapters stay
+passive. Reservations remain input-derived, not stored geometry or corpus IDs.
+The order-dependent greedy fallback is not a claim of globally optimal routing
+or proof of compliant-route preservation; full before/after acceptance remains.
+
+Implementation plan: update only `surface_lane_route_plan.py`, plus neutral
+planner tests covering rejected whole union with partial gains, two admissions,
+rejection of a packet that suppresses a name or degrades an accepted route,
+stable ordering and exact accepted-union preservation. Run those tests and
+`test_synthetic_lane_route_corridors.py`; publish in PR #1138, then review one
+fresh Editorial result. The separate quality-aware search is still a design
+question and must not be implemented in this slice.

@@ -251,8 +251,15 @@ corridor (obstacle class `route-reserve`, one stroke width plus the router's
 grid offset on each side) which member names avoid and routes, relation labels
 and annotations ignore. The corridors are kept only if a second rehearsal
 leaves a strict subset of those relations lost and suppresses no name that is
-shown without them; otherwise nothing is reserved and the order is exactly as
-before. A name that yields takes the next legal candidate of its declared
+shown without them. If this union fails, Layout considers each rescued
+relation's complete corridor packet in stable reference/View order. It keeps
+a packet only when adding it to accepted packets strictly reduces the current
+degraded relation set and suppresses no additional name against the original
+baseline. A rejected packet does not discard earlier accepted improvements.
+Each packet is tried at most once, on a private obstacle copy; no partial
+route corridor or combinatorial subset search is used. If no packet improves
+the result, nothing is reserved and the order is exactly as before.
+A name that yields takes the next legal candidate of its declared
 ladder under the unchanged association, host and reach rules, or is suppressed
 with its typed fact; the declared ladder is never extended. A route still never
 crosses a required label and a name never crosses a corridor. Reserving every
