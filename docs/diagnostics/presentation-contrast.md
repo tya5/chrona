@@ -18,6 +18,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | annotation-kind-label | `annotation-kind-label` | required | 4.500 | 6 | 14 | 4.837 | 7.583 | 0 | 0 |
 | annotation-kind-secondary | `annotation-kind-secondary` | required | 4.500 | 5 | 11 | 6.747 | 7.583 | 0 | 0 |
 | annotation-kind-stamp | `annotation-kind-stamp` | enabled | 1.100 | 4 | 64 | 6.833 | 6.833 | 0 | 0 |
+| annotation-list-text | `text` | required | 4.500 | 4 | 9 | 11.935 | 11.935 | 0 | 0 |
 | annotation-text | `annotation-arrow-text` | required | 4.500 | 1 | 1 | 14.191 | 14.191 | 0 | 0 |
 | annotation-text | `annotation-callout-text` | required | 4.500 | 7 | 9 | 14.191 | 15.434 | 0 | 0 |
 | annotation-text | `annotation-highlight-text` | required | 4.500 | 3 | 3 | 16.268 | 17.128 | 0 | 0 |
@@ -234,6 +235,9 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/annotation-artwork.scene.json` | `annotation-artwork:pvt-note:part3` | `annotation-artwork` | 1484.153, 553.600 | `annotation-box:pvt-note` | flat | `#F3EEE6` | fill | 17.128 | 1.100 | info |
 | `examples/controller-z/generated/annotation-artwork.scene.json` | `annotation-artwork:pvt-note:part4` | `annotation-artwork` | 1484.153, 553.600 | `annotation-box:pvt-note` | flat | `#F3EEE6` | fill | 17.128 | 1.100 | info |
 | `examples/controller-z/generated/annotation-artwork.scene.json` | `annotation-artwork:pvt-note:part5` | `annotation-artwork` | 1484.153, 553.600 | `annotation-box:pvt-note` | flat | `#F3EEE6` | fill | 17.128 | 1.100 | info |
+| `examples/controller-z/generated/annotation-artwork.scene.json` | `annotation-status:bulletin` | `text` | 111.332, 1030.000 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
+| `examples/controller-z/generated/annotation-artwork.scene.json` | `annotation-status:evb-note` | `text` | 110.415, 990.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
+| `examples/controller-z/generated/annotation-artwork.scene.json` | `annotation-status:pvt-note` | `text` | 111.213, 1010.400 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
 | `examples/controller-z/generated/annotation-artwork.scene.json` | `annotation-text:evb-note` | `annotation-callout-text` | 1010.400, 567.600 | `annotation-box:evb-note` | flat | `#F3EEE6` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/annotation-artwork.scene.json` | `annotation-text:pvt-note` | `annotation-callout-text` | 1484.153, 556.400 | `annotation-box:pvt-note` | flat | `#F3EEE6` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/annotation-artwork.scene.json` | `annotation-text:bulletin` | `annotation-highlight-text` | 794.793, 377.200 | `annotation-box:bulletin` | flat | `#F3EEE6` | fill | 17.128 | 4.500 | info |
@@ -503,6 +507,8 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:pvt-note:part5` | `annotation-kind-stamp` | 1551.500, 469.800 | `annotation-box:pvt-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:pvt-note:part6` | `annotation-kind-stamp` | 1551.500, 469.800 | `annotation-box:pvt-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:pvt-note:part7` | `annotation-kind-stamp` | 1551.500, 469.800 | `annotation-box:pvt-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-status:evb-note` | `text` | 45.742, 1052.400 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-status:pvt-note` | `text` | 45.742, 1170.000 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-text:evb-note` | `annotation-callout-text` | 1039.605, 576.400 | `annotation-box:evb-note` | flat | `#18171C` | fill | 15.434 | 4.500 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-text:pvt-note` | `annotation-callout-text` | 1470.692, 547.300 | `annotation-box:pvt-note` | flat | `#18171C` | fill | 15.434 | 4.500 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `as-of-label` | `text` | 1336.038, 130.100 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
@@ -749,9 +755,10 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/annotations.scene.json` | `actual:performance:performance` | `actual` | 1110.907, 480.800 | `planned:performance:performance` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `actual:silicon-bringup:silicon-bringup` | `actual` | 1069.083, 316.800 | `planned:silicon-bringup:silicon-bringup` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `annotation-box:performance-note` | `annotation-note-box` | 24.000, 1101.800 | `canvas` | canvas | `#FFFFFF` | stroke | 6.219 | 1.100 | info |
-| `examples/controller-z/generated/annotations.scene.json` | `annotation-text:bringup-risk` | `annotation-arrow-text` | 179.855, 1121.400 | `annotation-box:bringup-risk` | flat | `#EAF0F8` | fill | 14.191 | 4.500 | info |
-| `examples/controller-z/generated/annotations.scene.json` | `annotation-text:architecture-callout` | `annotation-callout-text` | 135.573, 1062.600 | `annotation-box:architecture-callout` | flat | `#EAF0F8` | fill | 14.191 | 4.500 | info |
-| `examples/controller-z/generated/annotations.scene.json` | `annotation-text:evb-highlight` | `annotation-highlight-text` | 104.948, 1082.200 | `annotation-box:evb-highlight` | flat | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/annotations.scene.json` | `annotation-summary:firmware-slip` | `text` | 288.425, 1121.400 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/annotations.scene.json` | `annotation-text:bringup-risk` | `annotation-arrow-text` | 179.855, 1141.000 | `annotation-box:bringup-risk` | flat | `#EAF0F8` | fill | 14.191 | 4.500 | info |
+| `examples/controller-z/generated/annotations.scene.json` | `annotation-text:architecture-callout` | `annotation-callout-text` | 221.225, 1062.600 | `annotation-box:architecture-callout` | flat | `#EAF0F8` | fill | 14.191 | 4.500 | info |
+| `examples/controller-z/generated/annotations.scene.json` | `annotation-text:evb-highlight` | `annotation-highlight-text` | 190.600, 1082.200 | `annotation-box:evb-highlight` | flat | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `annotation-text:performance-note` | `annotation-note-text` | 181.010, 1101.800 | `annotation-box:performance-note` | flat | `#EAF0F8` | fill | 14.191 | 4.500 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `as-of-label` | `text` | 1336.038, 130.100 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/annotations.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 718.035, 92.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.579 | 1.100 | info |
@@ -4813,6 +4820,9 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/viewer-fit.scene.json` | `annotation-artwork:evb-note:part4` | `annotation-artwork` | 1010.400, 564.800 | `annotation-box:evb-note` | flat | `#F3EEE6` | fill | 17.128 | 1.100 | info |
 | `examples/controller-z/generated/viewer-fit.scene.json` | `annotation-artwork:evb-note:part5` | `annotation-artwork` | 1010.400, 564.800 | `annotation-box:evb-note` | flat | `#F3EEE6` | fill | 17.128 | 1.100 | info |
 | `examples/controller-z/generated/viewer-fit.scene.json` | `annotation-box:pvt-note` | `annotation-note-box` | 1500.953, 557.800 | `canvas-texture` | flat | `#0A0A0C` | fill | 1.110 | 1.100 | info |
+| `examples/controller-z/generated/viewer-fit.scene.json` | `annotation-status:bulletin` | `text` | 111.332, 1030.000 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
+| `examples/controller-z/generated/viewer-fit.scene.json` | `annotation-status:evb-note` | `text` | 110.415, 990.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
+| `examples/controller-z/generated/viewer-fit.scene.json` | `annotation-status:pvt-note` | `text` | 111.213, 1010.400 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
 | `examples/controller-z/generated/viewer-fit.scene.json` | `annotation-text:evb-note` | `annotation-callout-text` | 1010.400, 567.600 | `annotation-box:evb-note` | flat | `#F3EEE6` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/viewer-fit.scene.json` | `annotation-text:bulletin` | `annotation-highlight-text` | 794.793, 377.200 | `annotation-box:bulletin` | flat | `#F3EEE6` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/viewer-fit.scene.json` | `annotation-text:pvt-note` | `annotation-note-text` | 1500.953, 557.800 | `annotation-box:pvt-note` | flat | `#18171C` | fill | 15.434 | 4.500 | info |
@@ -8573,4 +8583,4 @@ Contrast constraints are an opt-in design option (Specification 46 section 8): a
 Every non-exclusive decoration role is enabled in committed Scene evidence; group-band or group-header-band supplies the group concept when there are no corpus errors.
 
 
-Findings: 8504; errors: 0; warnings: 91.
+Findings: 8513; errors: 0; warnings: 91.

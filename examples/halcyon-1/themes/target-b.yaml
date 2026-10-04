@@ -8,7 +8,7 @@ body:
       value: 0.35
     chip-radius:
       type: number
-      value: 0.1333
+      value: 0.1899
     opacity.axis-band:
       type: number
       value: 1
