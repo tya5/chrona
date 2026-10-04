@@ -350,6 +350,19 @@ the anchor's as-of side. Layout records `direct-tail` or `routed-tail` and
 commits box, outline and route atomically. Scene/adapters only project the
 completed geometry. See the
 [#466 C3 correction](../design/issue-466-c3-routed-tail-correction-2026-09-29.md).
+For strict local corridor search, Layout MAY compile rectangle-interior forbidden
+intervals before generating complete paths, using the exact collision tolerance
+and the same explicit endpoint exemptions. Every emitted candidate still passes
+the full obstacle and route-quality validators. Finite interval/axis/row setup is
+input preparation, not a connector trial; the separate 1,024 connector budget
+counts each materialized complete candidate once (including duplicates), shared
+across all egress/edge pairs and box trials. Validation does not charge it again.
+Candidate order is deterministic by bends, length, source/target order and
+original-coordinate ties. A charged-prefix fit is not exhaustion; no fit at the
+cap is exhaustion only if unproduced candidates remain. Already charged frontier
+candidates MUST be checked before reporting exhaustion. Layout MUST commit a
+selected required leader and its ports before querying optional annotation-number
+placement; an optional index cannot invalidate that completed leader.
 The local search corridor, route quality, crossing count,
 and exhaustion are bounded and recorded in the placement decision. If all
 declared candidates fail, an explicit suppress outcome or the visible

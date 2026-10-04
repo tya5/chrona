@@ -2,7 +2,7 @@
 
 ## Published baseline and design plan
 
-Public main tracked: `a2c2596b` (2026-10-04); comparison baseline: `23bc8a57`.
+Public main tracked: `6b795c88` (2026-10-04); comparison baseline: `23bc8a57`.
 #1114's primary-mark safety
 is the preceding lane-R slice in PR #1122 (acceptance pending).
 Authority: [#1109](https://github.com/tya5/chrona/issues/1109), Spec 50 §3.3,
@@ -201,16 +201,59 @@ CI-owned. The separate routed-note test is a genuine failure: TVAC exhausts
 the 1,024-state route search and produces no leader, so its safety/association
 assertions remain unchanged pending correction.
 
-Read-only annotation diagnosis: an expanded-budget trial finds a strict route
-for the same box at trial 10, identically in two renders. This is a feasibility
-lead, not acceptance: it exceeds the declared 1,024-state cap and fails
-placement-decision validation. Neither per-pair nor globally ranked canonical
-path prefixes fit within that cap; an endpoint-interior precheck rejects no
-pairs. No tested bounded search correction is selected.
-Next: establish a bounded, deterministically counted connector search with a
-neutral witness and exact TVAC safety checks, then publish any changed search
-contract and architecture review here and in Spec 33 before product edits.
-No higher production cap, obstacle waiver or selected search change exists.
+## Annotation search correction: design, architecture review and implementation plan
+
+Use cases: a strict local route hidden behind many rectangle-blocked candidates;
+an optional note index competing with its own already-selected required leader;
+multiple eligible egress/box-edge pairs sharing one connector budget.
+Select interval compilation of the existing finite orthogonal corridor families,
+not a higher cap or a second fallback router. Omit a candidate only when a
+rectangle-interior collision is proven using the exact obstacle tolerance and
+named-port exemptions. Non-rectangles, stroke clearance, pending box/tail,
+complete source egress, route quality and as-of partition still require exact
+validation. Boundary contact and sub-tolerance penetration are not collisions.
+
+Layout prepares finite row descriptors from eligible pairs and local envelope
+axes, ordered analytically by actual compact route rank. Merge descriptors by
+bends, length, source/target order and original-coordinate ties; materialize only
+the popped completed candidate. Charge every materialized path once, including
+duplicates, against the shared 1,024 connector budget across pairs and box trials.
+Do not charge validation again or reset per pair. Input-derived interval/row
+preparation is separately observable finite setup work, not covered by that cap;
+do not describe it as 1,024 primitive operations. If a frontier implementation
+prefetches charged paths, drain them before reporting exhaustion. A valid charged
+prefix is a fit; no fit is exhaustion only when candidates remain unproduced.
+
+Commit the selected required leader and ports into the monotone inventory before
+placing its optional note index. Rejected provisional candidates leave no residue;
+the index may move or suppress independently, never invalidate a required leader.
+Do not relabel visible index text as non-required to evade intersection tests.
+
+Architecture review: Spec 33 §§8.1a–8.2 and #466 C3 own these decisions in Layout;
+Scene and adapters remain completed projections. Single-pair and multi-port
+consumers share one private corridor engine and the existing exact obstacle and
+quality validators. No Project/date, View/Theme grammar, cap, safety or fallback
+waiver. Current main's #1117 role diagnostics and #1126 contrast opt-in alter no
+geometry rule here; repository contrast evidence still uses its explicit registry.
+Migration: candidate order/count and optional index placement may change; retain
+all required content and publish intended Scene/SVG changes, not byte identity.
+
+Implementation unit in PR #1122: private `annotation_corridors.py` engine;
+`annotation_topology.py` single-pair wrapper; `annotation_search.py` merged-pair
+consumer; `surface_annotations.py` leader-before-index ordering. Neutral tests
+must cover exact-clear family preservation, epsilon contacts, transposed and
+degenerate rank order, non-rectangles, explicit ports, cap draining/exact-last
+candidate, and a global multi-pair budget. Keep the original strict TVAC test.
+Run annotation focused tests, then batch affected public materializers and inspect
+required content, decisions, Scene/SVG/declared-font PNG and intended differences.
+CI supplies full release gates. Publish this correction and Spec 33 before code.
+
+Disposable proof, not implemented acceptance: 205 exhaustive neutral cases keep
+every exact-clear candidate, including half-tolerance rectangle-edge anchors.
+The unchanged 2,100px TVAC test passes twice after interval pruning and atomic
+leader-before-index registration: box trial 10, 766 paths materialized, 763 unique
+frontier entries and 748 exact checks. The production rank/accounting boundary
+tests and public artifact review remain mandatory before accepting the correction.
 
 ## Editorial context adaptation: design and implementation plan
 
@@ -285,7 +328,15 @@ measurements unsupported over the existing translucent launch-window band
 (October 23/24/30/31); Spec 46 §8 classifies these as decoration observations,
 not legibility failures. Keep these warnings visible; do not weaken paint gates.
 
-Publish this design before the seven resource edits. Then reproduce all five
+The controlled `halcyon-two-surfaces` gallery pair must keep identical declared
+environments (#354): also widen `10-gallery-network-wallboard` to 3200 × 1080.
+This is a Render Context resource correction, not a gallery-validator exception.
+Verify the network public materializer and comparison inventory/determinism guard.
+The station-note regression must assert retained text/box and valid chosen-tail
+evidence; a now-successful earlier candidate must not require the old fallback
+warning. Keep fallback warning behavior covered by synthetic blocked fixtures.
+
+Publish this design before the source edits. Then reproduce all five lane
 bindings, verify inventories and geometry guards, run focused View/Context and
 lane/name tests, and compare intended source changes. CI owns generated mirrors
 and release tests. Accept this slice only with no new user-content loss; keep
@@ -300,4 +351,9 @@ strings, two-em own-mark reach, existing note indices and perceptibility gates.
 View schema, exact Context references, lane subtracks and label tests: 104 passed.
 The unchanged 2100px TVAC test still fails with no routed tail; it is not weakened.
 Implementation review found no Project, Theme, core, generated or reviewer-resource
-edits. Public-head CI and the separate literal preservation review remain pending.
+edits. [CI 37175354474](https://github.com/tya5/chrona/actions/runs/37175354474)
+has 6,875 passed, 65 skipped and three failures: strict TVAC, stale station-note
+fallback expectation and the gallery-pair environment mismatch (also conformance).
+All three belong to this PR and are addressed by the corrections above; no release
+acceptance or closure. Main `6b795c88` is reconciled without conflicts in `116c790e`.
+Public-head CI and the separate literal preservation review remain pending.
