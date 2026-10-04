@@ -2,7 +2,7 @@
 
 Living record for [#1111](https://github.com/tya5/chrona/issues/1111): a swatch-to-label gap apart from the entry gap, a declarable size for area (background) swatches, and a point swatch size. Baseline, design plan, design, architecture review and implementation plan are published together before code. Edited in place. Found by the reviewer's tuning PR #1061 against `docs/research/presentation/halcyon-1-target-design-2026-09-21/board/02-programme-board.png` (22 x 12 swatch, 6 px to the label, 26 px to the next entry). Siblings: [#427 swatches](issue-427-legend-swatches-design-plan-2026-09-26.md), #497 (content sizing), #1009 (centring), #1062 (legend colour, [record](issue-1062-text-roles-2026-10-04.md)).
 
-**Public base:** `d93c3687`. **Status:** design published, no code yet. **Scope rule (owner):** core knobs and their own evidence only; the reviewer's `examples/halcyon-1/*target-b*` files are not edited (PR #1061, #987 adopt the knobs).
+**Public base:** `d93c3687`. **Status:** design merged (PR #1112, `798dfb0c`); code merged (PR #1125, `23ae8322`); the [acceptance review](../../reviews/current/issue-1111-legend-swatch-sizing-acceptance-review-2026-10-04.md) is published. Row 5 (target B adoption) is the reviewer's, #987 and PR #1061. **Scope rule (owner):** core knobs and their own evidence only; the reviewer's `examples/halcyon-1/*target-b*` files are not edited (PR #1061, #987 adopt the knobs).
 
 ## 1. Published baseline
 
