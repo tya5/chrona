@@ -120,19 +120,17 @@ relation-label suppressions
 increase by one. The seven missing paths match #1114's
 unresolved inventory. This is not release acceptance.
 
-Public-head [CI 37172156424](https://github.com/tya5/chrona/actions/runs/37172156424)
-at `5f72c67b` passes conformance, derived preview, MCP floor and newest-Python
-reproduction of all public materializers. Pytest reports 6,869 passed, 65 skipped
-and four failures: `test_halcyon_02_routed_note_trial_is_bounded_clear_and_deterministic`, and
-`test_cli_output_is_unchanged` for `render-halcyon-view-theme-scheme-layout`,
-`render-halcyon-resources-png`, and `render-halcyon-emit-scene`.
+Public-head [CI 37173787787](https://github.com/tya5/chrona/actions/runs/37173787787)
+at `33c14527` passes conformance, derived preview, MCP floor and newest-Python
+reproduction of all public materializers. Pytest reports 6,872 passed, 65 skipped
+and one failure: `test_halcyon_02_routed_note_trial_is_bounded_clear_and_deterministic`.
 Controller name recovery, suppression aggregation and editorial acceptance pass.
 `derived-ready` fails downstream of pytest. Preserve the real route/name gates.
 The three CLI cases differ only by the absence of the now-unnecessary
 `I_LAYOUT_PLOT_LABELS_SUPPRESSED` and `W_LAYOUT_LABEL_SUPPRESSED` records;
 arguments, exit status, stdout, artifact descriptors and the remaining warning
-are unchanged. Remove only those six obsolete records, not a bulk re-recording.
-Focused CLI characterization and fixture-integrity checks: six passed.
+are unchanged. `8623fb06` removes only those six obsolete records, not a bulk
+re-recording. Six focused checks and the public-head CI confirm the correction.
 
 Bounded read-only probes locate a coupled route/name planning problem. Reserving
 all three rescue corridors replaces the lost set with `tvac-emc` and suppresses
@@ -249,5 +247,46 @@ final leg, avoiding an assumption about the old short-stub routing order;
 remain identical after reconciliation. `29efd023` additionally tracks main's
 bot-derived terminal-none evidence. Required release CI remains pending; four
 HALCYON route losses and TVAC remain unresolved. The CLI expectation correction
-still needs public-head CI confirmation; it changes no product code or diagnostic
-contract.
+is verified; it changes no product code or diagnostic contract.
+
+## HALCYON lane resource adaptation: design and implementation plan
+
+Use case: retain all selected names and semantic paths under mark-safe routing.
+Select a 3200 × 1080 viewport for Contexts `02-programme-board`, `12-glyph-gates`,
+`19-gallery-text-compression` and `20-gallery-vertical-group-tags`. In the three
+owning Views (`02-programme-board`, `19-gallery-text-compression`,
+`20-gallery-vertical-group-tags`), select label side `start` and the existing
+fallback ladder `[start, end, above, below, suppress]`. Both changes form one
+resource unit: width alone lost names, and fallback alone did not recover paths.
+The shared `02` View also serves `11-overlay-briefing`; retain that Context's
+2560 × 1560 viewport and include it in verification.
+
+Architecture review: Specs 13 §4 and 33 §1 assign viewport to Render Context;
+Spec 50 assigns the finite name-side ladder to View and geometry, row/reach,
+association and collision checks to Layout. No Project/date, Theme, core rule,
+quality cap, annotation search budget, grammar or reviewer resource changes.
+The published #1126 opt-in contrast design changes no selection here; verify
+these outputs with the current explicit legibility floors, not relaxed defaults.
+The migration intentionally reflows paths and names; do not claim byte identity
+or completion of #1114's separate compliant-route preservation criterion.
+
+Disposable public materializers for all five bindings succeed: each has all 24
+dependency paths and all 26 names, with no new route/name/relation-label/index
+loss against immutable main `06603a02` or the earlier fresh corpus. Four missing
+`launch-leop` paths are recovered; the four widened contexts also recover the
+TVAC note index. All four widened SVG/declared-font PNGs were inspected.
+The perceptibility check has no errors or warnings (contrast warnings below are
+separate). Even at unchanged width, `11-overlay-briefing` intentionally changes
+16 of 24 route point tuples through the shared View migration while preserving
+all 24 routes and 26 names. The diagnosed Avionics shared approach
+remains informational, as permitted by the literal diagnostic alternative.
+Each widened context additionally reports four calendar-decoration contrast
+measurements unsupported over the existing translucent launch-window band
+(October 23/24/30/31); Spec 46 §8 classifies these as decoration observations,
+not legibility failures. Keep these warnings visible; do not weaken paint gates.
+
+Publish this design before the seven resource edits. Then reproduce all five
+bindings, verify inventories and geometry guards, run focused View/Context and
+lane/name tests, and compare intended source changes. CI owns generated mirrors
+and release tests. Accept this slice only with no new user-content loss; keep
+the exact 2100px TVAC integration test and literal issue release gates open.
