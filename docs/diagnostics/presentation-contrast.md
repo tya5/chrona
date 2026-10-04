@@ -22,7 +22,8 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | annotation-text | `annotation-callout-text` | required | 4.500 | 7 | 9 | 14.191 | 15.434 | 0 | 0 |
 | annotation-text | `annotation-highlight-text` | required | 4.500 | 3 | 3 | 16.268 | 17.128 | 0 | 0 |
 | annotation-text | `annotation-note-text` | required | 4.500 | 14 | 32 | 13.973 | 13.973 | 0 | 0 |
-| as-of-label | `text` | required | 4.500 | 58 | 58 | 4.774 | 14.573 | 0 | 0 |
+| as-of-label | `as-of-label` | required | 4.500 | 1 | 1 | 3.717 | 3.717 | 0 | 1 |
+| as-of-label | `text` | required | 4.500 | 57 | 57 | 9.223 | 14.573 | 0 | 0 |
 | axis-band | `axis-band-decoration` | enabled | 1.100 | 62 | 158 | 1.124 | 1.579 | 0 | 0 |
 | axis-band | `axis-band-decoration2` | absent | 1.100 | 1 | 0 | — | — | 0 | 0 |
 | axis-band | `axis-band-decoration2` | enabled | 1.100 | 5 | 37 | 1.119 | 1.146 | 0 | 0 |
@@ -8213,7 +8214,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `annotation-text:station-note` | `annotation-note-text` | 1424.006, 589.947 | `annotation-box:station-note` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `annotation-text:tvac-note` | `annotation-note-text` | 1424.768, 371.809 | `annotation-box:tvac-note` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `annotation-text:window-note` | `annotation-note-text` | 1428.452, 743.551 | `annotation-box:window-note` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `as-of-label` | `text` | 953.264, 821.050 | `chip:as-of-label` | flat | `#B8761F` | fill | 4.774 | 4.500 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `as-of-label` | `as-of-label` | 953.264, 821.050 | `chip:as-of-label` | flat | `#B8761F` | fill | 3.717 | 4.500 | warning |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 494.479, 104.050 | `canvas` | canvas | `#FFFFFF` | fill | 1.124 | 1.100 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `axis-band-rect:0:1` | `axis-band-decoration` | 674.798, 104.050 | `canvas` | canvas | `#FFFFFF` | fill | 1.124 | 1.100 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `axis-band-rect:0:2` | `axis-band-decoration` | 941.601, 104.050 | `canvas` | canvas | `#FFFFFF` | fill | 1.124 | 1.100 | info |
@@ -8573,11 +8574,11 @@ Contrast constraints are an opt-in design option (Specification 46 section 8): a
 
 | Theme | Scenes | Warnings | Errors |
 | --- | ---: | ---: | ---: |
-| `target-b` | 1 | 79 | 0 |
+| `target-b` | 1 | 80 | 0 |
 
 ## Decoration corpus witness
 
 Every non-exclusive decoration role is enabled in committed Scene evidence; group-band or group-header-band supplies the group concept when there are no corpus errors.
 
 
-Findings: 8512; errors: 0; warnings: 88.
+Findings: 8512; errors: 0; warnings: 89.
