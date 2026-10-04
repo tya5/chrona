@@ -432,7 +432,6 @@ body:
     axis-major.stroke: neutral
     axis-minor.stroke: surfaceRaised
     axis-band-decoration.fill: neutral
-    table-header.fill: surfaceRaised
     group-band.fill: category:default
     row-band.fill: category:default
     group-header-band.fill: surfaceRaised
@@ -461,7 +460,6 @@ body:
     missing-actual-cell.fill: textMuted
     dependency.stroke: textMuted
     annotation.fill: surfaceRaised
-    annotation-text.fill: text
     annotation-callout-box.fill: surfaceRaised
     annotation-callout-box.stroke: neutral
     annotation-callout-text.fill: text

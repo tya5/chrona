@@ -347,7 +347,6 @@ body:
     axis-major.stroke: neutral
     axis-minor.stroke: surfaceRaised
     axis-band-decoration.fill: neutral
-    table-header.fill: surfaceRaised
     group-band.fill: category:default
     row-band.fill: category:default
     group-header-band.fill: surfaceRaised
