@@ -68,3 +68,16 @@ def test_lane_port_pair_search_retains_rejected_and_accepted_measured_attempts()
     assert accepted.selected_pair == (source, target)
     assert accepted.points[0] == (0, 0) and accepted.points[-1] == (10, 10)
     assert accepted.attempts[0].outcome == "accepted"
+
+
+def test_lane_selection_retains_primary_mark_rejection_and_tries_the_next_pair():
+    source = ConnectorEgress("end", (0, 0), (0, 0), ())
+    blocked = ConnectorEgress("start", (10, 0), (10, 0), ())
+    safe = ConnectorEgress("above", (10, 10), (10, 10), ())
+    selection = select_lane_relation_route(((source, blocked), (source, safe)),
+        obstacles=SurfaceObstacleIndex(), bounds=(-1, -1, 11, 11), source_host_id=None, target_host_id=None,
+        relation_scene_id="relation:dep", max_bends=4, max_detour_ratio=2,
+        accept=lambda points: points[-1] != blocked.semantic_port)
+    assert selection.selected_pair == (source, safe)
+    assert selection.attempts[0].search_failure == "E_LAYOUT_ROUTE_THROUGH_MARK"
+    assert selection.attempts[1].outcome == "accepted"

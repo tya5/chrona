@@ -115,7 +115,8 @@ def _segments_intersect(left: ObstacleSegment, right: ObstacleSegment, clearance
                                   + (other_left[1] - point[1]) * (other_right[1] - point[1])) > 0
 
 
-def _segment_crosses_rect_interior(segment: ObstacleSegment, rect: ObstacleRect) -> bool:
+def segment_length_inside_rect(segment: ObstacleSegment, rect: ObstacleRect) -> float:
+    """Length of a straight segment inside a rectangle; boundary contact is zero."""
     x1, y1 = segment.start
     x2, y2 = segment.end
     low, high = 0.0, 1.0
@@ -123,11 +124,15 @@ def _segment_crosses_rect_interior(segment: ObstacleSegment, rect: ObstacleRect)
                                      (y1, y2 - y1, rect.top, rect.bottom)):
         if delta == 0:
             if not start + BOUNDARY_CONTACT_TOLERANCE < value < end - BOUNDARY_CONTACT_TOLERANCE:
-                return False
+                return 0.0
             continue
         a, b = sorted(((start - value) / delta, (end - value) / delta))
         low, high = max(low, a), min(high, b)
-    return low < high and hypot(x2 - x1, y2 - y1) * (high - low) > BOUNDARY_CONTACT_TOLERANCE
+    return max(0.0, high - low) * hypot(x2 - x1, y2 - y1)
+
+
+def _segment_crosses_rect_interior(segment: ObstacleSegment, rect: ObstacleRect) -> bool:
+    return segment_length_inside_rect(segment, rect) > BOUNDARY_CONTACT_TOLERANCE
 
 
 def _cross(a: tuple[float, float], b: tuple[float, float], c: tuple[float, float]) -> float:

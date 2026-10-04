@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from math import isfinite
 from typing import Any, Mapping, Sequence
 
+from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, segment_length_inside_rect
+from chrona.presentation.layout.path_geometry import flatten_corner
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, semantic_binding
 from chrona.presentation.scene.paint_analysis import composited_contrast, is_hex_color
 
@@ -79,6 +81,7 @@ def evaluate_scene_perceptibility(document: Mapping[str, Any]) -> tuple[ScenePer
         findings.extend(_suppressed_primitive_findings(scene_path, primitives, suppressed_ids))
         findings.extend(_relation_duplicate_findings(scene_path, surface.get("primitives")))
         findings.extend(_relation_reversal_findings(scene_path, surface.get("primitives")))
+        findings.extend(_relation_mark_findings(scene_path, surface.get("primitives")))
         findings.extend(_slot_findings(scene_path, slots, primitives))
         findings.extend(_occlusion_findings(scene_path, primitives))
         findings.extend(_text_intersection_findings(scene_path, primitives))
@@ -134,6 +137,80 @@ def _relation_reversal_findings(scene_path: str, raw_primitives: Any) -> list[Sc
             findings.append(_finding("E_SCENE_RELATION_PATH_REVERSES", "error", scene_path, (str(raw["id"]),), None,
                                      (("relation", str(raw.get("sourceRef"))), ("overlap", round(overlap, 3)))))
     return findings
+
+
+def _relation_mark_findings(scene_path: str, raw_primitives: Any) -> list[ScenePerceptibilityFinding]:
+    """Observe completed relation strokes crossing planned primary-mark interiors."""
+    primitives = raw_primitives if isinstance(raw_primitives, list) else ()
+    marks = [raw for raw in primitives if isinstance(raw, Mapping)
+             and str(raw.get("id", "")).startswith("planned:")
+             and ":snapshot:" not in str(raw["id"]) and ":scenario:" not in str(raw["id"])
+             and isinstance(raw.get("bounds"), Mapping)]
+    findings = []
+    for raw in primitives:
+        if not (isinstance(raw, Mapping) and raw.get("kind") == "Path" and raw.get("sourceKind") == "relation"
+                and str(raw.get("id", "")).startswith("relation:") and isinstance(raw.get("points"), list)):
+            continue
+        paint = raw.get("paint", {})
+        width = paint.get("strokeWidth", 0) if isinstance(paint, Mapping) else 0.0
+        _require(isinstance(width, (int, float)) and not isinstance(width, bool) and isfinite(width) and width >= 0,
+                 "invalid relation stroke width")
+        inset = width / 2
+        points = _observed_relation_points(raw)
+        for mark in marks:
+            bounds = mark["bounds"]
+            if bounds["inlineSize"] <= width or bounds["blockSize"] <= width:
+                continue
+            rect = ObstacleRect(bounds["inline"] + inset, bounds["block"] + inset,
+                                bounds["inline"] + bounds["inlineSize"] - inset,
+                                bounds["block"] + bounds["blockSize"] - inset)
+            length = sum(segment_length_inside_rect(ObstacleSegment(tuple(a), tuple(b)), rect)
+                         for a, b in zip(points, points[1:]) if a != b)
+            if length > 1e-9:
+                findings.append(_finding("E_SCENE_RELATION_THROUGH_MARK", "error", scene_path,
+                    (str(raw["id"]), str(mark["id"])), None,
+                    (("relation", str(raw.get("sourceRef"))), ("inside", round(length, 3)))))
+    return findings
+
+
+def _observed_relation_points(raw: Mapping[str, Any]) -> list[tuple[float, float]]:
+    """Use drawn path commands when present, not only the orthogonal control polyline."""
+    def point(value: Any) -> tuple[float, float]:
+        _require(isinstance(value, (list, tuple)) and len(value) == 2 and all(
+            isinstance(x, (int, float)) and not isinstance(x, bool) and isfinite(x) for x in value),
+            "invalid relation point")
+        return tuple(value)
+
+    commands = raw.get("pathCommands")
+    if not commands:
+        return [point(p) for p in raw["points"]]
+    _require(isinstance(commands, list), "invalid relation commands")
+    points: list[tuple[float, float]] = []
+    start = None
+    for raw_command in commands:
+        command = _mapping(raw_command, "relation command")
+        kind = command.get("kind")
+        values = [point(p) for p in _list(command.get("points"), "relation command points")]
+        count = {"move": 1, "line": 1, "quadratic": 2, "cubic": 3, "close": 0}.get(kind)
+        _require(count is not None and len(values) == count and (kind == "move" or bool(points)),
+                 "invalid relation command")
+        if kind == "move":
+            _require(not points, "a relation must have one continuous path")
+            start = values[0]
+            points.append(start)
+        elif kind == "line":
+            points.append(values[0])
+        elif kind == "quadratic":
+            points.extend(flatten_corner(points[-1], *values)[1:])
+        elif kind == "cubic":
+            a, b, c, d = points[-1], *values
+            for step in range(1, 5):
+                t = step / 4
+                points.append(tuple((1-t)**3*a[i] + 3*(1-t)**2*t*b[i]
+                                    + 3*(1-t)*t*t*c[i] + t**3*d[i] for i in (0, 1)))
+        elif points[-1] != start:
+            points.append(start)
+    return points
 
 
 def _slots(raw_slots: Any, scene_path: str) -> dict[str, tuple[Rect, str]]:
