@@ -6,7 +6,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Any, Callable, Mapping
 
-from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, BELOW_PLOT_FALLBACK
+from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, BELOW_PLOT_FALLBACK, as_of_label_typography_role
 from chrona.presentation.layout.labels import (
     LabelPlacement, LabelRect, LabelRequest, MemberNameAssociation, place_label, place_member_name,
 )
@@ -139,7 +139,8 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
               "plot-bottom-start", "rule-hosted") if context.as_of_below_plot
              else ("plot-bottom-center", "plot-bottom-end", "plot-bottom-start", "rule-hosted")
              if request.surface_content.as_of_placement in {"foot", BELOW_PLOT}
-             else ("plot-top-end", "plot-top-start", "rule-hosted")), "text", "timeline-as-of",
+             else ("plot-top-end", "plot-top-start", "rule-hosted")),
+            as_of_label_typography_role(request.theme_tokens), "timeline-as-of",
             CollisionDomain("timeline", "overlay"), "suppress", rule_host_obstacle_id="as-of",
             semantic_id="asOfLabel"))
     attached_labels = dict(request.surface_content.attached_labels)
