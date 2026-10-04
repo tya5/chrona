@@ -21,13 +21,30 @@ STATE_TEXT_FLOORS = {"required": 4.5, "deemphasized": 3.0}
 LEGIBILITY_CLASS = "legibility"
 DECORATION_CLASS = "decoration"
 DECORATION_SEVERITIES = ("warning", "error")
-# The warning a decoration's blocking code becomes: a floor miss, and a host whose colour cannot be read.
-_DECORATION_WARNING_CODES = {
-    "E_SCENE_DECORATION_CONTRAST": "W_SCENE_DECORATION_CONTRAST",
-    "E_SCENE_CONTRAST_GROUND_UNSUPPORTED": "W_SCENE_DECORATION_GROUND_UNSUPPORTED",
+# Contrast constraints are an opt-in design option (#1126): a Theme sets each class `off`, `warning` or `error`.
+POLICY_SEVERITIES = ("none", "warning", "error")
+POLICY_MEMBERS = ("mark", "stateText", "groundText", "decoration", "unsupportedGround")
+# What a Theme that declares nothing gets: not opted in, never blocking.
+DEFAULT_POLICY = {member: "warning" for member in POLICY_MEMBERS}
+# Today's gate, the repository's: every legibility class blocks, a decoration warns (#995).
+STRICT_SEVERITIES = {"mark": "error", "stateText": "error", "groundText": "error", "unsupportedGround": "error",
+                     "decoration": "warning"}
+_FLOOR_CODES = frozenset({"E_SCENE_MARK_CONTRAST", "E_SCENE_STATE_TEXT_CONTRAST", "E_SCENE_DECORATION_CONTRAST"})
+# The warning twin of each blocking code, by (is a decoration, blocking code).
+_WARNING_CODES = {
+    (True, "E_SCENE_DECORATION_CONTRAST"): "W_SCENE_DECORATION_CONTRAST",
+    (True, "E_SCENE_CONTRAST_GROUND_UNSUPPORTED"): "W_SCENE_DECORATION_GROUND_UNSUPPORTED",
+    (False, "E_SCENE_MARK_CONTRAST"): "W_SCENE_MARK_CONTRAST",
+    (False, "E_SCENE_STATE_TEXT_CONTRAST"): "W_SCENE_STATE_TEXT_CONTRAST",
+    (False, "E_SCENE_CONTRAST_GROUND_UNSUPPORTED"): "W_SCENE_CONTRAST_GROUND_UNSUPPORTED",
 }
-# The blocking code each decoration warning stands for (what `contrastPolicy.decoration: error` restores).
-DECORATION_WARNING_BLOCKING_CODES = {warning: blocking for blocking, warning in _DECORATION_WARNING_CODES.items()}
+# The blocking code each contrast warning stands for (what `contrastPolicy: error` restores).
+WARNING_BLOCKING_CODES = {warning: blocking for (_, blocking), warning in _WARNING_CODES.items()}
+# The blocking codes a Theme that sets a class to `error` makes a render fail on.
+BLOCKING_CODES = frozenset(WARNING_BLOCKING_CODES.values())
+# Kept for #995's callers and tests: the decoration subset.
+DECORATION_WARNING_BLOCKING_CODES = {warning: blocking for (is_decoration, blocking), warning in _WARNING_CODES.items()
+                                     if is_decoration}
 # Roles whose sibling parts (one source, one role) are a single ink and never each other's ground.
 _SIBLING_INK_ROLES = frozenset({"annotation-kind-stamp"})
 # The parts of a vector artwork behind an annotation (#848) are ink over the note box: never a host by bounds (their
@@ -79,15 +96,17 @@ class SceneContrastFinding:
         return result
 
 
-def evaluate_scene_contrast(document: Mapping[str, Any], *,
-                            decoration_severity: str = "warning") -> tuple[SceneContrastFinding, ...]:
+def evaluate_scene_contrast(document: Mapping[str, Any], *, decoration_severity: str = "warning",
+                            policy: Mapping[str, str] | None = None) -> tuple[SceneContrastFinding, ...]:
     """Evaluate every finite classified role from serialized completed facts.
 
-    `decoration_severity` is what a decoration below its floor, or on a ground that cannot be read, becomes:
-    `warning` (the default) or `error` (the Theme's `contrastPolicy`, #995). Marks and text are always errors.
+    `policy` maps each class (`mark`, `stateText`, `groundText`, `decoration`, `unsupportedGround`) to `none`,
+    `warning` or `error` (a Theme's `contrastPolicy`, #1126); a class it omits keeps the evaluator's own default:
+    a legibility finding is an `error`, a decoration is `decoration_severity` (`warning` or `error`, #995).
     """
     if decoration_severity not in DECORATION_SEVERITIES:
         raise ValueError(f"unsupported decoration severity {decoration_severity!r}")
+    severities = _resolve_severities(policy, decoration_severity)
     version = document.get("version")
     _require(version == "chrona/scene/v0.6" or version == "chrona/scene/v0.7",
              "unsupported scene version")
@@ -111,7 +130,7 @@ def evaluate_scene_contrast(document: Mapping[str, Any], *,
             _require(isinstance(primitive, Mapping), f"invalid primitive {index} at {scene_path}")
             findings.extend(_primitive_findings(scene_path, primitive, ground, primitives, index,
                                                 catalog_patterns=version == "chrona/scene/v0.7", cones=cones,
-                                                decoration_severity=decoration_severity))
+                                                severities=severities))
         findings.extend(_absence_findings(scene_path, raw_surface.get("decorationDispositions", [])))
     return tuple(sorted(findings, key=lambda item: (
         item.scene_path, item.purpose, item.visual_role, item.disposition, item.primitive_id or "", item.code,
@@ -122,7 +141,8 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
                         primitives: list[Any], index: int, *,
                         catalog_patterns: bool = False,
                         cones: tuple[ConeGround, ...] = (),
-                        decoration_severity: str = "warning") -> tuple[SceneContrastFinding, ...]:
+                        severities: Mapping[str, str] = None) -> tuple[SceneContrastFinding, ...]:
+    severities = severities or _resolve_severities(None, "warning")
     role = primitive.get("visualRole")
     if not isinstance(role, str):
         return ()
@@ -132,6 +152,7 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
     primitive_id = _string(primitive.get("id"), f"primitive id at {scene_path}")
     purpose = _string(primitive.get("purpose"), f"primitive purpose at {scene_path}")
     severity_class = _severity_class(binding.contrast_class)
+    policy_class = _policy_class(binding.contrast_class)
     if binding.contrast_class == ContrastClass.DECORATION:
         floor, disposition = DECORATION_FLOOR, "enabled"
         code = "E_SCENE_DECORATION_CONTRAST"
@@ -167,7 +188,7 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
         return _pattern_findings(scene_path, primitive, pattern, paint, opacity, floor,
                                  disposition, code, purpose, role, primitive_id, canvas,
                                  primitives, index, catalog_patterns, cones,
-                                 severity_class=severity_class, decoration_severity=decoration_severity)
+                                 severity_class=severity_class, severities=severities, policy_class=policy_class)
     channels = (("fill",) if binding.contrast_class in (ContrastClass.STATE_TEXT, ContrastClass.GROUND_TEXT)
                 else ("fill", "stroke"))
     candidates = []
@@ -200,14 +221,14 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
         candidates.append((ratio, channel, ground_id, ground, sample, ground_kind))
     if not candidates:
         error_code = "E_SCENE_CONTRAST_GROUND_UNSUPPORTED" if unsupported_ground else "E_SCENE_CONTRAST_PAINT"
-        severity, error_code = _failure(error_code, severity_class, decoration_severity)
+        severity, error_code = _failure(error_code, severity_class, policy_class, severities)
         return (SceneContrastFinding(error_code, severity, scene_path, purpose, role,
                                      primitive_id, None, floor, disposition, unsupported_host,
                                      severity_class=severity_class),)
     ratio, channel, ground_id, ground, sample, ground_kind = max(candidates, key=lambda item: item[0])
     severity = "info"
     if ratio < floor:
-        severity, code = _failure(code, severity_class, decoration_severity)
+        severity, code = _failure(code, severity_class, policy_class, severities)
     return (SceneContrastFinding(code, severity, scene_path, purpose, role, primitive_id, ratio, floor,
                                  disposition, ground_id, ground, channel, *sample, ground_kind,
                                  severity_class=severity_class),)
@@ -218,16 +239,57 @@ def _severity_class(contrast_class: ContrastClass) -> str:
     return DECORATION_CLASS if contrast_class == ContrastClass.DECORATION else LEGIBILITY_CLASS
 
 
-def _failure(code: str, severity_class: str, decoration_severity: str) -> tuple[str, str]:
+def _policy_class(contrast_class: ContrastClass) -> str:
+    """The Theme `contrastPolicy` member that governs a registry contrast class (#1126)."""
+    return {ContrastClass.MARK: "mark", ContrastClass.STATE_TEXT: "stateText",
+            ContrastClass.GROUND_TEXT: "groundText", ContrastClass.DECORATION: "decoration"}[contrast_class]
+
+
+def policy_member_of(finding: SceneContrastFinding) -> str | None:
+    """The `contrastPolicy` member that governed a floor or ground finding, else nothing (a structural finding)."""
+    code = WARNING_BLOCKING_CODES.get(finding.code, finding.code)
+    if code == "E_SCENE_CONTRAST_GROUND_UNSUPPORTED":
+        return "decoration" if finding.severity_class == DECORATION_CLASS else "unsupportedGround"
+    if code not in _FLOOR_CODES:
+        return None
+    binding = contrast_binding_for(finding.visual_role, finding.purpose)
+    return _policy_class(binding.contrast_class) if binding is not None else None
+
+
+def _resolve_severities(policy: Mapping[str, str] | None, decoration_severity: str) -> dict[str, str]:
+    """The severity of every class: the explicit policy over today's defaults.
+
+    Without a policy a legibility finding is a blocking `error` and a decoration is `decoration_severity` (the
+    evaluator's own default, kept so every geometry test of the gate keeps its meaning); the Theme default
+    (`warning`, #1126) is applied by the callers that know a Theme.
+    """
+    resolved = dict(STRICT_SEVERITIES, decoration=decoration_severity)
+    for member, value in (policy or {}).items():
+        if member not in resolved or value not in POLICY_SEVERITIES:
+            raise ValueError(f"unsupported contrast policy {member!r}: {value!r}")
+        resolved[member] = value
+    return resolved
+
+
+def _failure(code: str, severity_class: str, policy_class: str, severities: Mapping[str, str]) -> tuple[str, str]:
     """The severity and code of a finding that missed its floor or could not be judged.
 
-    Only a decoration's floor miss and its unreadable host can warn; every other failure of every class,
-    and every failure of a mark or text, is a blocking error with the code it always had.
+    The policy member of the finding's class decides: `error` is the blocking finding with its code, `warning`
+    the same finding with its `W_` twin, `none` an `info` row. A structural failure (a malformed paint) is not a
+    contrast constraint and stays an error whatever the policy says.
     """
-    if (severity_class == DECORATION_CLASS and decoration_severity == "warning"
-            and code in _DECORATION_WARNING_CODES):
-        return "warning", _DECORATION_WARNING_CODES[code]
-    return "error", code
+    if code in _FLOOR_CODES:
+        member = policy_class
+    elif code == "E_SCENE_CONTRAST_GROUND_UNSUPPORTED":
+        member = "decoration" if severity_class == DECORATION_CLASS else "unsupportedGround"
+    else:
+        return "error", code
+    setting = severities[member]
+    if setting == "error":
+        return "error", code
+    if setting == "none":
+        return "info", code
+    return "warning", _WARNING_CODES[(severity_class == DECORATION_CLASS, code)]
 
 
 def _pattern_findings(scene_path: str, primitive: Mapping[str, Any], pattern: Any,
@@ -237,8 +299,10 @@ def _pattern_findings(scene_path: str, primitive: Mapping[str, Any], pattern: An
                       catalog_patterns: bool = True,
                       cones: tuple[ConeGround, ...] = (),
                       severity_class: str = LEGIBILITY_CLASS,
-                      decoration_severity: str = "warning") -> tuple[SceneContrastFinding, ...]:
+                      severities: Mapping[str, str] = None,
+                      policy_class: str = "mark") -> tuple[SceneContrastFinding, ...]:
     """Gate each effective pattern channel pair; neither channel can mask another."""
+    severities = severities or _resolve_severities(None, "warning")
     if (not isinstance(pattern, Mapping)
             or not isinstance(pattern.get("densityBasisPoints"), int)
             or isinstance(pattern.get("densityBasisPoints"), bool)
@@ -259,7 +323,7 @@ def _pattern_findings(scene_path: str, primitive: Mapping[str, Any], pattern: An
         decoration=decoration)
     if unsupported or groups is None:
         severity, unsupported_code = _failure("E_SCENE_CONTRAST_GROUND_UNSUPPORTED", severity_class,
-                                              decoration_severity)
+                                              policy_class, severities)
         return (SceneContrastFinding(unsupported_code, severity, scene_path,
                                      purpose, role, primitive_id, None, floor, disposition,
                                      host_id, paint_channel="fill", ground_kind="unsupported",
@@ -279,7 +343,7 @@ def _pattern_findings(scene_path: str, primitive: Mapping[str, Any], pattern: An
         ratio = composited_contrast(fill=foreground, opacity=1.0, ground=ground)
         severity, pair_code = "info", code
         if ratio < floor:
-            severity, pair_code = _failure(code, severity_class, decoration_severity)
+            severity, pair_code = _failure(code, severity_class, policy_class, severities)
         findings.append(SceneContrastFinding(pair_code, severity, scene_path, purpose, role, primitive_id,
                                              ratio, floor, disposition, ground_id, ground, channel,
                                              *sample, ground_kind, density, severity_class=severity_class))

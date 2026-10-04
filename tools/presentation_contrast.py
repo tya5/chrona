@@ -9,7 +9,10 @@ import statistics
 import sys
 from typing import Any, Iterable, Mapping
 
+from chrona.resources import safe_load
+
 from chrona.presentation.scene.contrast_policy import (
+    DEFAULT_POLICY,
     SceneContrastFinding,
     SceneContrastPolicyError,
     evaluate_scene_contrast,
@@ -22,16 +25,50 @@ ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = Path("docs/diagnostics/presentation-contrast.md")
 
 
+OPT_IN = Path("conformance/contrast-opt-in.yaml")
+
+
+def load_opt_in(root: Path = ROOT) -> frozenset[str]:
+    """The Theme ids the repository holds to the contrast floors (#1126); none when the registry is absent."""
+    path = root / OPT_IN
+    if not path.is_file():
+        return frozenset()
+    document = safe_load(path.read_bytes()) or {}
+    themes = document.get("themes", [])
+    if not isinstance(themes, list) or not all(isinstance(item, str) and item for item in themes):
+        raise ValueError("E_CONTRAST_OPT_IN_REGISTRY")
+    return frozenset(themes)
+
+
+def scene_theme_id(document: Mapping[str, Any]) -> str | None:
+    """The Theme resource id a committed Scene names in its provenance, else nothing."""
+    provenance = document.get("provenance")
+    resources = provenance.get("resources") if isinstance(provenance, Mapping) else None
+    for resource in resources if isinstance(resources, list) else ():
+        if isinstance(resource, Mapping) and resource.get("kind") == "theme" and isinstance(resource.get("id"), str):
+            return str(resource["id"])
+    return None
+
+
 def evaluate_committed_scenes(paths: Iterable[Path], *, root: Path = ROOT) -> tuple[dict[str, Any], ...]:
-    """Collect every classified finding without early exit or baseline suppression."""
+    """Collect every classified finding without early exit or baseline suppression.
+
+    A Scene whose Theme the repository has opted in (`conformance/contrast-opt-in.yaml`) is held to the floors:
+    marks, state text, ground text and ground that cannot be computed are errors. Any other Scene is evaluated with
+    every class at `warning`: contrast constraints are an opt-in design option (#1126).
+    """
     records: list[dict[str, Any]] = []
+    opted_in = load_opt_in(root)
     for path in sorted(paths):
         relative = path.resolve().relative_to(root.resolve()).as_posix()
+        theme = None
         try:
             document = json.loads(path.read_text(encoding="utf-8"))
-            findings = evaluate_scene_contrast(document)
+            theme = scene_theme_id(document)
+            held = theme in opted_in
+            findings = evaluate_scene_contrast(document, policy=None if held else DEFAULT_POLICY)
         except (OSError, ValueError, SceneContrastPolicyError) as error:
-            records.append({"scene": relative, "finding": {
+            records.append({"scene": relative, "theme": theme, "optedIn": False, "finding": {
                 "code": "E_SCENE_CONTRAST_DOCUMENT", "severity": "error", "scenePath": "/",
                 "purpose": "-", "visualRole": "-", "primitiveId": None,
                 "contrastRatio": None, "floor": None, "disposition": str(error),
@@ -40,7 +77,8 @@ def evaluate_committed_scenes(paths: Iterable[Path], *, root: Path = ROOT) -> tu
                 "groundKind": None,
             }})
             continue
-        records.extend({"scene": relative, "finding": finding.as_mapping()} for finding in findings)
+        records.extend({"scene": relative, "theme": theme, "optedIn": held, "finding": finding.as_mapping()}
+                       for finding in findings)
     return tuple(records)
 
 
@@ -91,7 +129,18 @@ def report_document(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
     corpus_errors = [] if (required_singly <= corpus_roles
                           and all(group & corpus_roles for group in mutually_exclusive_groups)) else [
         "E_PRESENTATION_CONTRAST_DECORATION_WITNESS"]
-    return {"version": "chrona/presentation-contrast/v1", "rows": rows,
+    free: dict[str, dict[str, Any]] = {}
+    for record in ordered:
+        if record.get("optedIn", True):
+            continue
+        entry = free.setdefault(record.get("theme") or "(no Theme in provenance)",
+                                {"scenes": set(), "warnings": 0, "errors": 0})
+        entry["scenes"].add(record["scene"])
+        entry["warnings"] += record["finding"]["severity"] == "warning"
+        entry["errors"] += record["finding"]["severity"] == "error"
+    not_opted_in = [{"theme": theme, "sceneCount": len(entry["scenes"]), "warningCount": entry["warnings"],
+                     "errorCount": entry["errors"]} for theme, entry in sorted(free.items())]
+    return {"version": "chrona/presentation-contrast/v1", "rows": rows, "notOptedIn": not_opted_in,
             "findings": ordered,
             "witnessScenes": witnesses, "corpusErrors": corpus_errors,
             "errorCount": sum(item["finding"]["severity"] == "error" for item in ordered) + len(corpus_errors),
@@ -105,9 +154,10 @@ def render_markdown(report: Mapping[str, Any]) -> str:
     def number(value: float | None) -> str:
         return "—" if value is None else f"{value:.3f}"
     lines = ["# Presentation Contrast", "", "Generated from committed public Scene evidence by `tools/presentation_contrast.py`.", "",
-             "Marks and text below their floor are errors and fail the check. A decoration below its floor "
-             "(or on a ground that cannot be read) is a warning: it is listed and counted, and fails nothing "
-             "(Specification 46 section 8).", "",
+             "Contrast constraints are an opt-in design option (Specification 46 section 8). For a Theme listed in "
+             "`conformance/contrast-opt-in.yaml`, a mark or text below its floor is an error and fails the check; a "
+             "decoration below its floor (or on a ground that cannot be read) is a warning. For any other Theme every "
+             "miss is a warning: it is listed and counted, and fails nothing.", "",
              "| Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors | Warnings |",
              "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"]
     for row in report["rows"]:
@@ -132,6 +182,12 @@ def render_markdown(report: Mapping[str, Any]) -> str:
             ground_kind=finding.get("groundKind") or "—",
             channel=finding.get("paintChannel") or "—", ratio=number(finding["contrastRatio"]),
             floor=number(finding["floor"]), severity=finding["severity"]))
+    lines.extend(("", "## Themes not opted in", "",
+                  "Contrast constraints are an opt-in design option (Specification 46 section 8): a Theme listed in "
+                  "`conformance/contrast-opt-in.yaml` is held to the floors above, any other Theme only warns.", "",
+                  "| Theme | Scenes | Warnings | Errors |", "| --- | ---: | ---: | ---: |",
+                  *(f"| `{row['theme']}` | {row['sceneCount']} | {row['warningCount']} | {row['errorCount']} |"
+                    for row in report.get("notOptedIn", ()))))
     lines.extend(("", "## Decoration corpus witness", "",
                   "Every non-exclusive decoration role is enabled in committed Scene evidence; "
                   "group-band or group-header-band supplies the group concept when there are no corpus errors.", "",
