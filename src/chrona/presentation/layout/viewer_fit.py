@@ -12,6 +12,7 @@ from typing import Any
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.surface_quality import TextFit, TextPlacement
 from chrona.presentation.layout.text import measure_text_width, metric_for_family
+from chrona.presentation.model.semantic_registry import label_chip_semantic, semantic_binding
 from chrona.presentation.model.theme_tokens import (
     BOX_FOLLOWS_TEXT, TEXT_FOLLOWS_BOX, VIEWER_FIT_RAW, ViewerFitToken,
 )
@@ -67,3 +68,33 @@ def require_followable_content(token: ViewerFitToken, *, has_kind_frame: bool, h
         raise LayoutError("E_LAYOUT_VIEWER_FIT_STATIC_CHROME", pointer)
     if has_visual:
         raise LayoutError("E_LAYOUT_VIEWER_FIT_STATIC_CHROME", pointer)
+
+
+def stamp_text_fits(texts: tuple[TextPlacement, ...], theme_tokens: Any, font_metrics: Any) -> tuple[TextPlacement, ...]:
+    """Complete the viewer fit of every other text of the surface, once, after all of Layout's geometry (#1096).
+
+    A label that carries a chip takes its chip role's mode; any other text takes the mode of its own typography role
+    (a legend, a table cell, a bar label, a title, a vertical group tag). These runs have no box of their own that
+    follows them, so only ``text-follows-box`` applies: each line is pinned to the width Layout finally measured for
+    it. A run that already has its fit (an annotation) and a suppressed run are left alone; ``raw`` is the default and
+    returns the very same placements.
+    """
+    cache: dict[tuple[str, str], ViewerFitToken] = {}
+
+    def token_for(text: TextPlacement) -> ViewerFitToken:
+        key = (text.semantic_id, text.typography_role)
+        if key not in cache:
+            chip_semantic = label_chip_semantic(text.semantic_id)
+            chip_role = semantic_binding(chip_semantic).theme_role if chip_semantic else None
+            chip = chip_role is not None and theme_tokens.label_chip(chip_role) is not None
+            cache[key] = theme_tokens.viewer_fit(chip_role if chip else text.typography_role, box_follows=False)
+        return cache[key]
+
+    result: list[TextPlacement] = []
+    for text in texts:
+        token = token_for(text) if text.fit is None and text.overflow != "suppressed" else ViewerFitToken()
+        if token.mode == VIEWER_FIT_RAW or not text.lines or any(not line for line in text.lines):
+            result.append(text)
+            continue
+        result.append(fit_text(text, token, font_metrics, box_id=text.placement_id))
+    return tuple(result)

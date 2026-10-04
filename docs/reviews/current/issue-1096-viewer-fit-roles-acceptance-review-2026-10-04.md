@@ -1,0 +1,41 @@
+<!-- chrona:literal-acceptance/v1 -->
+
+# Issue #1096: viewer-fit for chips, legend items, table cells, bar labels, titles and vertical tags, acceptance review
+
+Source: [Issue #1096](https://github.com/tya5/chrona/issues/1096), re-fetched 2026-10-04 after the code merge (body unchanged since filing; the one comment is this work's design note; no new rows). The rows are the three literal acceptance bullets (the first split by its parts) and the proposal's five families. Design record: the [design note](https://github.com/tya5/chrona/issues/1096#issuecomment-5978071824) on the issue (the lane brief asked for one note, not a document set); rules inherited from the [#1050 work record](../../planning/active/issue-1050-viewer-fit-2026-10-04.md); living contract [Specification 07](../../specification/07-style-and-theme.md) and [Specification 08](../../specification/08-scene-and-rendering.md).
+
+Slice: [PR #1140](https://github.com/tya5/chrona/pull/1140) (`52145fd2`), CI green before merge (conformance, three pytest shards, newest-Python reproduction, derived-ready). Local gates: `python -m tools.schema_equivalence --base-rev origin/main` PASS (no schema change), `tools/regenerate_public_examples.py --check` PASS for 64 slides (byte identity), full pytest 6913 passed, 63 skipped.
+
+## Literal issue acceptance
+
+### Issue #1096
+
+- Source: [Issue #1096](https://github.com/tya5/chrona/issues/1096)
+- Observed: 2026-10-04
+
+| # | Literal acceptance criterion | Disposition | Evidence | Successor |
+| ---: | --- | --- | --- | --- |
+| 1 | Per family: `raw` byte-identical. | met | [`test_viewer_fit_roles.py`](../../../tests/integration/test_viewer_fit_roles.py) `test_the_default_and_an_explicit_raw_are_byte_identical_for_every_family` (absent and explicit `raw` on `text`, `legend`, `heading`, `groupHeader`, `numeric` and the chip role give the same artifact, Scene v0.6); `regenerate_public_examples.py --check` PASS for 64 public slides. | none |
+| 2 | Per family: `text-follows-box` writes `textLength` equal to each line's measured inline size and the declared `lengthAdjust`. | met | In [`test_viewer_fit_roles.py`](../../../tests/integration/test_viewer_fit_roles.py): table cells (`test_a_table_cell_is_pinned_through_its_text_role_and_the_other_column_is_not`, a View-named role pins one column only), bar and member labels with cells (`test_the_shared_text_role_pins_cells_and_bar_labels_alike`), legend items with `spacingAndGlyphs` (`test_legend_items_are_pinned_with_the_declared_adjust`), the title plate (`test_the_title_plate_is_pinned_through_the_heading_role`), chips (`test_a_chip_role_pins_the_label_that_carries_the_chip_and_nothing_else`, `test_a_chip_role_without_a_chip_does_not_pin_the_label`) and vertical group tags in their rotated frame (`test_a_vertical_group_tag_is_pinned_in_its_rotated_frame`); each checks the SVG `textLength` against the Scene's measured sizes. The as-of chip mapping and the skipped cases are in [`test_viewer_fit_stamp.py`](../../../tests/unit/chrona/presentation/layout/test_viewer_fit_stamp.py). | none |
+| 3 | Per family: `box-follows-text` (where the family is a plain rectangle) writes the filter group, with every rejected combination failing at its declaration. | narrowed | In [`test_viewer_fit_roles.py`](../../../tests/integration/test_viewer_fit_roles.py): the legend, table cells, bar labels, titles and vertical tags have no box to follow, so the mode is refused at its declaration: `test_a_box_that_follows_its_text_is_refused_where_there_is_no_box_to_follow` (`E_THEME_TOKEN_TYPE` at `/body/roles/<role>/viewerFit` for `legend`, `text`, `heading`, `groupHeader`, and the chip role). A chip is a rectangle drawn separately from its text by the label placer and is usually rounded; linking the two and deriving the end inset is not done here and is refused rather than degraded. Searched `box-follows-text chip`: no other issue. | [#1141](https://github.com/tya5/chrona/issues/1141) |
+| 4 | A table-cell fixture, a chip fixture and a legend fixture. | met | The three tests named in row 2, all in [`test_viewer_fit_roles.py`](../../../tests/integration/test_viewer_fit_roles.py); none reads `examples/`. | none |
+| 5 | Contrast gates unchanged; PNG and PDF equal `raw`. | met | In [`test_viewer_fit_roles.py`](../../../tests/integration/test_viewer_fit_roles.py): `test_pinning_changes_no_geometry_paint_or_finding` (bounds, paint, contrast and perceptibility findings equal to raw, Scene v0.7, schema-validated, two renders byte-identical); PNG and PDF draw the raw SVG (the #1050 test `test_png_and_pdf_are_drawn_from_the_raw_svg_so_a_fixed_font_output_is_the_raw_one` covers the serializer switch both modes share); a scratch render of the Controller Z executive slide with the declarations gives a PNG byte-identical to the raw theme's. | none |
+| 6 | (Proposal) The five families: chips; legend items; table cells and column labels; bar and mark labels and title plates; vertical group tags. | met | Rows 2 and 4, with `tableColumnLabel`, `subtitle`, `summary`, `metric`, `numeric`, the axis roles and View-named text roles admitted by the same registry entries ([`capabilities.py`](../../../src/chrona/presentation/scene/capabilities.py)); one pass in [`viewer_fit.py`](../../../src/chrona/presentation/layout/viewer_fit.py) called once from `surface_completion.py`. A role that is neither a text nor a chip role keeps `E_THEME_ROLE_PROPERTY_UNSUPPORTED` (`test_a_role_with_no_text_to_fit_still_cannot_declare_the_property`). Bar labels and table cells share the `text` role; a separate bar-label role is not designed here and is in #1141. | [#1141](https://github.com/tya5/chrona/issues/1141) |
+| 7 | (Assignment) Synthetic tests with no `examples/` input, mutation-checked. | met | 20 new tests in three files ([`test_viewer_fit_roles.py`](../../../tests/integration/test_viewer_fit_roles.py), [`test_viewer_fit_stamp.py`](../../../tests/unit/chrona/presentation/layout/test_viewer_fit_stamp.py), [`test_viewer_fit_svg.py`](../../../tests/unit/chrona/presentation/renderers/test_viewer_fit_svg.py)); none reads `examples/`; 13 mutations (pass not called, chip role ignored, chip applied without a drawn chip, box-follows allowed on text roles, annotation fit overwritten, suppressed run stamped, empty-line guard, refusal removed, four registry entries removed, text-only fallback report removed) were each killed. | none |
+| 8 | (Assignment) Evidence through a Controller Z slide via YAML (no `examples/**` edit), images read with the packaged font and in a fallback-font Chrome. | met | Recorded in the [PR](https://github.com/tya5/chrona/pull/1140): a scratch Theme and render of the Controller Z `executive` slide through `chrona render` (nothing under `examples/` edited; `git diff --stat` of the PR lists none). Headless Google Chrome with Verdana forced: raw, the title, the as-of label and the right-hand note text run wider than measured (the note reaches the canvas edge); fitted they end at their measured widths. The packaged-font PNG is byte-identical to raw (image read). Not verified: Firefox, Safari, GitHub's image proxy, PowerPoint or Keynote imports; the Chrome check is local and manual; the as-of and member chips with a drawn chip, the legend and a vertical tag are not in the Chrome crop (synthetic tests only). | none |
+
+## Programme-level criteria (optional)
+
+None.
+
+## Architecture and release conclusion
+
+The #1050 declaration is the only mechanism; the new code is one Layout pass over the completed text list (after every other decision, so a width cannot go stale), registry entries and one refusal. No Scene field, no Theme schema change, and no adapter change except that the Typst and TikZ fallback warning also names text-only runs by Scene role.
+
+Disclosures:
+
+- A role shared by several families (`text`: table cells, bar labels, member labels, the as-of label) pins all of them; a View-named role (#1062) or the chip role separates them.
+- **Row 3 is narrowed** to #1141 (a chip under `box-follows-text`); #1141 also tracks the separate bar-label role noted in row 6.
+- A viewer-side limit stays as in #1050: a line is condensed or spaced to its measured width.
+
+Exact review-bearing-main three-OS CI must pass before closing #1096; that run is recorded in the closing comment.

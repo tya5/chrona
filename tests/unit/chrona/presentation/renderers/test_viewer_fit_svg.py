@@ -160,8 +160,17 @@ def test_a_box_that_follows_its_text_must_be_a_plain_rect():
 
 def test_a_target_that_cannot_honour_a_mode_names_the_box_role():
     surface = _surface(fit=_follow(), box_fit="text-follows-box")
-    assert viewer_fit_fallbacks(surface, "typst") == ("W_VIEWER_FIT_NOT_HONOURED:annotation-note-box:typst",)
-    assert viewer_fit_fallbacks(surface, "tikz") == ("W_VIEWER_FIT_NOT_HONOURED:annotation-note-box:tikz",)
+    assert viewer_fit_fallbacks(surface, "typst") == ("W_VIEWER_FIT_NOT_HONOURED:annotation-note-box:typst",
+                                                      "W_VIEWER_FIT_NOT_HONOURED:annotation-note-text:typst")
+    assert viewer_fit_fallbacks(surface, "tikz")[0] == "W_VIEWER_FIT_NOT_HONOURED:annotation-note-box:tikz"
     assert viewer_fit_fallbacks(surface, "svg") == () and viewer_fit_fallbacks(surface, "png") == ()
     assert viewer_fit_fallbacks(surface, "pdf") == ()
     assert viewer_fit_fallbacks(_surface(), "typst") == ()
+
+
+def test_a_text_run_that_carries_a_fit_without_a_box_member_also_names_its_role_for_a_typeset_target():
+    """#1096: a legend, cell or chip label has `fit` on the text and no `viewerFit` on any box."""
+    surface = _surface(fit=_follow())
+    assert all(item.viewer_fit == "raw" for item in surface.primitives)
+    assert viewer_fit_fallbacks(surface, "typst") == ("W_VIEWER_FIT_NOT_HONOURED:annotation-note-text:typst",)
+    assert viewer_fit_fallbacks(surface, "svg") == ()
