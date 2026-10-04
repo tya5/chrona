@@ -114,7 +114,8 @@ five diagnosed overlaps. Target B `launch-leop` is a straight vertical departure
 with no `frr-launch` overlap or S-jog, checked in SVG/PNG. However 495/627 route
 geometries change (including normalization, not 495 proven visual changes),
 seven paths disappear and member labels decrease 809 → 782. Member suppression
-occurrences increase 44 → 70 (35 new, nine removed); relation-label suppressions
+occurrences increase 44 → 70 (36 new, ten removed, compared per context);
+relation-label suppressions
 increase by one. The seven missing paths match #1114's
 unresolved inventory. This is not release acceptance.
 
@@ -174,3 +175,17 @@ Require recovered member names, no new relation-label or route loss or
 primary-mark crossings, and the existing
 association/overlap guards. CI supplies derived artifacts and the full release
 gate. Keep the seven HALCYON route losses and separate label findings open.
+
+Resource implementation `ec386226`; verification: all 32 affected materializers
+succeed; all 225 dependency
+path identities and point tuples match the prior fresh batch. Member-name
+suppression occurrences fall 31 → 0, while all relation-label suppression sets
+remain unchanged (28 occurrences). Primary-mark crossings, host-association
+errors and row escapes are zero. Executive SVG/PNG inspected; 24 focused
+Controller/label tests pass, and the public-materializer acceptance passes
+against the fresh copied snapshot. The aggregation fixture also passes with
+exact emitted member counts, including no aggregate when the count is zero;
+it no longer requires a corpus example to lose a name. Generated files remain
+CI-owned. The separate routed-note test is a genuine failure: TVAC exhausts
+the 1,024-state route search and produces no leader, so its safety/association
+assertions remain unchanged pending correction.
