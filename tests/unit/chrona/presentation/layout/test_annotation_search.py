@@ -155,6 +155,13 @@ def test_routed_tail_distinguishes_no_box_from_connector_budget_exhaustion() -> 
     no_box = nearest_free_routed_tail_box(region=LabelRect(0, 0, 20, 20),
                                           route_state_limit=1, **common)
     assert no_box.box is None and no_box.box_trials == 0 and not no_box.exhausted
+    last_fit = nearest_free_routed_tail_box(region=LabelRect(0, 0, 120, 100),
+                                           route_state_limit=1, **common)
+    assert last_fit.box is not None and not last_fit.exhausted and last_fit.route_states == 1
+    # The canonical first route fits at the last permitted state. Force
+    # that route to collide with a stroke, which interval setup cannot prune.
+    index.add(SurfaceObstacle("stroke:below", "dependency-route", "plot",
+                              ObstacleSegment((0, 51), (120, 51))))
     capped = nearest_free_routed_tail_box(region=LabelRect(0, 0, 120, 100),
                                           route_state_limit=1, **common)
     assert capped.box is None and capped.exhausted and capped.route_states == 1

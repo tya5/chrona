@@ -302,9 +302,40 @@ def test_wallboard_lane_table_keeps_the_bus_test_relation(slide: str) -> None:
 def test_public_wallboard_keeps_station_note_when_title_width_changes() -> None:
     scene = json.loads((ROOT / "examples/halcyon-1/generated/02-programme-board.scene.json").read_text(encoding="utf-8"))
     primitives = _primitives(scene)
-    assert any(item.get("id") == "annotation-text:station-note" for item in primitives)
-    assert any(item.get("id") == "annotation-box:station-note" for item in primitives)
-    assert "W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK:station-note:plot-no-tail" in scene["diagnostics"]
+    note = next(item for item in primitives if item.get("id") == "annotation-text:station-note")
+    box = next(item for item in primitives if item.get("id") == "annotation-box:station-note")
+    assert note["text"] == "3. Ground station done early; link test can move up."
+    assert note["bounds"] == box["bounds"]
+
+    # The Scene records the selected tail as a point in the balloon outline.
+    # It must reach the planned station mark's finish, not merely produce a box.
+    bounds = box["bounds"]
+    left, top = bounds["inline"], bounds["block"]
+    right, bottom = left + bounds["inlineSize"], top + bounds["blockSize"]
+    points = [command["points"][0] for command in box["symbol"]["outline"]]
+
+    def on_edge(point, edge):
+        return {
+            "top": point[1] == top,
+            "bottom": point[1] == bottom,
+            "left": point[0] == left,
+            "right": point[0] == right,
+        }[edge]
+
+    tail_tips = []
+    for index, point in enumerate(points):
+        previous, following = points[index - 1], points[(index + 1) % len(points)]
+        for edge in ("top", "bottom", "left", "right"):
+            if on_edge(previous, edge) and on_edge(following, edge) and not on_edge(point, edge):
+                tail_tips.append(point)
+                break
+    assert len(tail_tips) == 1
+    station = next(item for item in primitives
+                   if item.get("purpose") == "planned" and item.get("sourceRef") == "station")
+    mark = station["bounds"]
+    finish = [mark["inline"] + mark["inlineSize"], mark["block"] + mark["blockSize"] / 2]
+    tip = tail_tips[0]
+    assert ((tip[0] - finish[0]) ** 2 + (tip[1] - finish[1]) ** 2) ** 0.5 <= 3
 
 
 @pytest.mark.parametrize("slide", ("02-programme-board", "11-overlay-briefing", "12-glyph-gates"))

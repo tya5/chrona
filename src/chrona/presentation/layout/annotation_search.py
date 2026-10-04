@@ -10,14 +10,17 @@ measures text, reads a Theme or serializes a primitive.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import fsum
+
+from chrona.presentation.layout.annotation_corridors import (
+    StrictCorridorRequest, StrictCorridorSearch, strict_route_is_valid,
+)
 
 from chrona.presentation.layout.annotations import nearest_box_port
 from chrona.presentation.layout.balloon_geometry import nearest_eligible_edge, tail_base_points
 from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex
 from chrona.presentation.layout.annotation_topology import (
-    AnnotationRouteTrial, route_strict_bounded,
+    AnnotationRouteTrial,
 )
 from chrona.presentation.layout.ports import (
     ConnectorEgress, coincident_endpoint_port_ids, connector_egress_candidates,
@@ -189,15 +192,10 @@ def nearest_free_routed_tail_box(*, region: LabelRect, anchor: MarkPlacement, en
                                 classes=obstacle_classes, host_id=host_id):
             continue
         target = (box.x + box.width / 2, box.y + box.height / 2)
-        box_best = None
+        pairs = []
+        requests = []
         for egress in connector_egress_candidates(anchor, endpoint, target, siblings):
-            if route_states >= route_state_limit:
-                return RoutedTailSearchResult(None, None, None, None, (), box_trials,
-                                              route_states, True)
             for edge_order, edge in enumerate(("top", "right", "bottom", "left")):
-                if route_states >= route_state_limit:
-                    return RoutedTailSearchResult(None, None, None, None, (), box_trials,
-                                                  route_states, True)
                 clearance = 2.0
                 if edge == "top":
                     tip = (box.x + box.width / 2, box.y - clearance)
@@ -244,40 +242,32 @@ def nearest_free_routed_tail_box(*, region: LabelRect, anchor: MarkPlacement, en
                           min(bottom, max(egress.exposed_port[1], tip[1]) + box.height / 2))
                 if bounds[2] <= bounds[0] or bounds[3] <= bounds[1]:
                     continue
-                route, count, exhausted = route_strict_bounded(
-                    egress.exposed_port, tip, candidate_index, bounds=bounds,
-                    port_ids=endpoint_ports,
-                    limit=route_state_limit - route_states, max_bends=max_bends,
-                    max_detour_ratio=max_detour_ratio)
-                route_states += count
-                if exhausted and route is None:
-                    return RoutedTailSearchResult(None, None, None, None, (), box_trials,
-                                                  route_states, True)
-                if route is None:
-                    continue
-                points = (*source_points, *route.points[1:])
-                if not relation_route_quality(points, max_bends=max_bends,
-                                              max_detour_ratio=max_detour_ratio):
-                    continue
-                if side_of_as_of is not None:
-                    x, side = side_of_as_of
-                    all_x = tuple(point[0] for point in (*points, base_a, base_b))
-                    if ((side == "start" and max(all_x) > x)
-                            or (side == "end" and min(all_x) < x)):
-                        continue
-                route_length = fsum(abs(b[0] - a[0]) + abs(b[1] - a[1])
-                                    for a, b in zip(route.points, route.points[1:]))
                 source_order = {"end": 0, "start": 1, "above": 2, "below": 3}[egress.side]
-                rank = (len(route.points) - 2, route_length, source_order, edge_order,
-                        egress.exposed_port, tip, route.points)
-                if box_best is None or rank < box_best[0]:
-                    # A valid bounded-prefix route is a fit, not a failed
-                    # search. Exhaustion means no fit before the state cap.
-                    box_best = (rank, RoutedTailSearchResult(
-                        box, tip, egress, route, points, box_trials, route_states, False))
-                if exhausted:
-                    return box_best[1]
-        if box_best is not None:
-            # Egress and target order are ranked only after route shape and length.
-            return box_best[1]
+                pairs.append((egress, tip, source_points, base_a, base_b))
+                requests.append(StrictCorridorRequest(
+                    egress.exposed_port, tip, candidate_index, bounds, endpoint_ports,
+                    (source_order, edge_order, *egress.exposed_port, *tip)))
+        search = StrictCorridorSearch(tuple(requests))
+        while search.has_candidates and route_states < route_state_limit:
+            pair_id, route_points = search.pop()
+            route_states += 1
+            egress, tip, source_points, base_a, base_b = pairs[pair_id]
+            points = (*source_points, *route_points[1:])
+            if not relation_route_quality(points, max_bends=max_bends,
+                                          max_detour_ratio=max_detour_ratio):
+                continue
+            if side_of_as_of is not None:
+                x, side = side_of_as_of
+                all_x = tuple(point[0] for point in (*points, base_a, base_b))
+                if ((side == "start" and max(all_x) > x)
+                        or (side == "end" and min(all_x) < x)):
+                    continue
+            if strict_route_is_valid(route_points, requests[pair_id], max_bends=max_bends,
+                                     max_detour_ratio=max_detour_ratio):
+                route = AnnotationRouteTrial(route_points, (), "strict")
+                return RoutedTailSearchResult(box, tip, egress, route, points,
+                                              box_trials, route_states, False)
+        if search.has_candidates:
+            return RoutedTailSearchResult(None, None, None, None, (),
+                                          box_trials, route_states, True)
     return RoutedTailSearchResult(None, None, None, None, (), box_trials, route_states, False)

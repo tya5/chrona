@@ -695,6 +695,63 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                                                          visual.decorative, icon_bounds, "labelVisual",
                                                          icon_width / icon.viewport[0], annotation_slot_id,
                                                          paint_order=placed_annotation.paint_order))
+            # Required connector inventory is complete before optional indices.
+            if (box.leader_required or routed_tail_tip is not None) and presentation.leader_semantic_id is not None:
+                target = (routed_tail_tip if routed_tail_tip is not None else nearest_box_port(
+                    bounds, (anchor_bounds.x + anchor_bounds.width / 2,
+                             anchor_bounds.y + anchor_bounds.height / 2)))
+                if anchor_host is None:
+                    raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
+                target_port_obstacle_id = f"port:annotation:{annotation_id}:target"
+                leader_fallback = selected_leader is None
+                if leader_fallback:
+                    anchor_instance_id = anchor_host.placement_id.split(":", 1)[1]
+                    anchor_row_id = instance_rows.get(anchor_instance_id)
+                    selected_source = connector_egress_candidates(
+                        anchor_host, resolved.endpoint, target,
+                        comparison_clusters.get((anchor_host.source_ref, anchor_row_id), (anchor_host,)))[0]
+                    points = (selected_source.semantic_port, target)
+                    path_commands = ()
+                    visible_route_segments = tuple(zip(points, points[1:]))
+                else:
+                    selected_source, route_trial, points, prefix = selected_leader
+                    path_commands = ((PathCommand("move", (prefix[0],)),
+                                      *(PathCommand("line", (point,)) for point in prefix[1:]),
+                                      *route_trial.commands[1:])
+                                     if route_trial.commands else ())
+                    visible_route_segments = tuple(zip(prefix, prefix[1:])) + visible_segments(route_trial)
+                if tilt_angle:
+                    # Complete the leader to the rotated paper's edge.
+                    tip = nearest_boundary_point(tilt_polygon, target)
+                    if tip != target:
+                        points = (*points, tip)
+                        if path_commands:
+                            path_commands = (*path_commands, PathCommand("line", (tip,)))
+                source_side = selected_source.side
+                source_port_obstacle_id = f"port:{anchor_host.placement_id}:{source_side}"
+                if not surface_obstacles.has(source_port_obstacle_id):
+                    register_port(source_port_obstacle_id, selected_source.exposed_port, "timeline")
+                if not surface_obstacles.has(target_port_obstacle_id):
+                    register_port(target_port_obstacle_id, target, "annotations")
+                leader_semantic_id = presentation.leader_semantic_id
+                leader_stroke_width = float(request.theme_tokens.number(
+                    semantic_binding(leader_semantic_id).theme_role, "strokeWidth"))
+                marker_end = (marker_geometry(request.theme_tokens.marker(semantic_binding(leader_semantic_id).theme_role))
+                              if presentation.purpose == "explanatory-arrow" else None)
+                placed_leader = RelationPlacement(f"annotation-leader:{annotation_id}",
+                                                  f"{resolved.object_id}:{resolved.facet}:{resolved.endpoint}:{source_side}",
+                                                  f"annotation-box:{annotation_id}", tuple(points),
+                                                  semantic_id=leader_semantic_id, marker_end=marker_end,
+                                                  path_commands=path_commands,
+                                                  annotation=presentation, source_ref=annotation_id)
+                relations.append(placed_leader)
+                for segment_index, (segment_start, segment_end) in enumerate(visible_route_segments):
+                    if segment_start != segment_end:
+                        surface_obstacles.add(SurfaceObstacle(
+                            f"{placed_leader.relation_id}:segment:{segment_index}", "leader-route", "annotations",
+                            ObstacleSegment(segment_start, segment_end, leader_stroke_width)))
+                if leader_fallback:
+                    visible_route_fallbacks.append(placed_leader)
             if annotation.number is not None:
                 note_index_visuals = measure_candidate_visuals(
                     f"note-index:{annotation_id}", "annotation", request).visuals
@@ -745,62 +802,6 @@ def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBat
                                                                  visual.decorative, icon_bounds, "labelVisual",
                                                                  icon_width / icon.viewport[0], annotation_slot_id,
                                                                  paint_order=note_index_text.paint_order))
-            if (box.leader_required or routed_tail_tip is not None) and presentation.leader_semantic_id is not None:
-                target = (routed_tail_tip if routed_tail_tip is not None else nearest_box_port(
-                    bounds, (anchor_bounds.x + anchor_bounds.width / 2,
-                             anchor_bounds.y + anchor_bounds.height / 2)))
-                if anchor_host is None:
-                    raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
-                target_port_obstacle_id = f"port:annotation:{annotation_id}:target"
-                leader_fallback = selected_leader is None
-                if leader_fallback:
-                    anchor_instance_id = anchor_host.placement_id.split(":", 1)[1]
-                    anchor_row_id = instance_rows.get(anchor_instance_id)
-                    selected_source = connector_egress_candidates(
-                        anchor_host, resolved.endpoint, target,
-                        comparison_clusters.get((anchor_host.source_ref, anchor_row_id), (anchor_host,)))[0]
-                    points = (selected_source.semantic_port, target)
-                    path_commands = ()
-                    visible_route_segments = tuple(zip(points, points[1:]))
-                else:
-                    selected_source, route_trial, points, prefix = selected_leader
-                    path_commands = ((PathCommand("move", (prefix[0],)),
-                                      *(PathCommand("line", (point,)) for point in prefix[1:]),
-                                      *route_trial.commands[1:])
-                                     if route_trial.commands else ())
-                    visible_route_segments = tuple(zip(prefix, prefix[1:])) + visible_segments(route_trial)
-                if tilt_angle:
-                    # The route ends at the bounds of the rotated frame; the leader goes on to the paper's edge.
-                    tip = nearest_boundary_point(tilt_polygon, target)
-                    if tip != target:
-                        points = (*points, tip)
-                        if path_commands:
-                            path_commands = (*path_commands, PathCommand("line", (tip,)))
-                source_side = selected_source.side
-                source_port_obstacle_id = f"port:{anchor_host.placement_id}:{source_side}"
-                if not surface_obstacles.has(source_port_obstacle_id):
-                    register_port(source_port_obstacle_id, selected_source.exposed_port, "timeline")
-                if not surface_obstacles.has(target_port_obstacle_id):
-                    register_port(target_port_obstacle_id, target, "annotations")
-                leader_semantic_id = presentation.leader_semantic_id
-                leader_stroke_width = float(request.theme_tokens.number(
-                    semantic_binding(leader_semantic_id).theme_role, "strokeWidth"))
-                marker_end = (marker_geometry(request.theme_tokens.marker(semantic_binding(leader_semantic_id).theme_role))
-                              if presentation.purpose == "explanatory-arrow" else None)
-                placed_leader = RelationPlacement(f"annotation-leader:{annotation_id}",
-                                                  f"{resolved.object_id}:{resolved.facet}:{resolved.endpoint}:{source_side}",
-                                                  f"annotation-box:{annotation_id}", tuple(points),
-                                                  semantic_id=leader_semantic_id, marker_end=marker_end,
-                                                  path_commands=path_commands,
-                                                  annotation=presentation, source_ref=annotation_id)
-                relations.append(placed_leader)
-                for segment_index, (segment_start, segment_end) in enumerate(visible_route_segments):
-                    if segment_start != segment_end:
-                        surface_obstacles.add(SurfaceObstacle(
-                            f"{placed_leader.relation_id}:segment:{segment_index}", "leader-route", "annotations",
-                            ObstacleSegment(segment_start, segment_end, leader_stroke_width)))
-                if leader_fallback:
-                    visible_route_fallbacks.append(placed_leader)
     return SurfaceAnnotationBatch(
         tuple(text), tuple(shapes), tuple(relations), tuple(candidate_icons), tuple(placement_decisions),
         tuple(diagnostics), tuple(visible_label_overflows), tuple(visible_route_fallbacks),
