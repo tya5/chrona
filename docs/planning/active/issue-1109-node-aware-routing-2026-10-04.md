@@ -119,3 +119,14 @@ The aggregation test now checks exact emitted occurrences rather than a routing-
 dependent number. Do not weaken the gallery's no-loss test: all twelve shipment
 candidates exceed four bends. Resolve route/label planning and search regression
 with a reviewed design correction before further implementation or merge.
+
+Bounded read-only probes locate a coupled route/name planning problem. Reserving
+all three rescue corridors replaces the lost set with `tvac-emc` and suppresses
+the previously shown `pdr` name, failing both preservation gates. Reserving only
+shipment's corridor also introduces lost `tvac-emc`; simple incremental corridor
+acceptance is therefore **not a demonstrated fix**. Raising search bend penalty
+to 1000 does not rescue shipment and introduces further losses. No such policy
+change is selected or implemented. Next design question: preserve feasible
+routes and names under coupled reservation/replacement, without allowing a new
+loss or adding project-specific core exceptions. The exact `tvac-emc` collision
+and the separate flat-row `launch-leop` failures remain to be isolated.
