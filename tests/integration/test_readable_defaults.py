@@ -103,7 +103,7 @@ def _source_terminal_shape(theme_path: Path) -> str | None:
 
 @pytest.mark.parametrize("theme_path", SHIPPED_THEMES, ids=lambda path: f"{path.parent.parent.name}/{path.parent.name}/{path.stem}")
 def test_every_shipped_theme_starts_relations_with_a_circle_or_no_mark(theme_path: Path) -> None:
-    assert _source_terminal_shape(theme_path) in {"circle", None}
+    assert _source_terminal_shape(theme_path) in {"circle", "none", None}  # `none` (#1105) is no mark
 
 
 def test_public_relations_do_not_start_with_their_target_arrowhead() -> None:

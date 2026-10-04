@@ -17,7 +17,9 @@ from chrona.presentation.layout.ports import (
     ConnectorEgress, connector_egress_candidates, stub_pairs_first,
 )
 from chrona.presentation.layout.presentation import TrackPlacement
-from chrona.presentation.layout.relation_terminals import centred_on_route, marker_geometry, trim_for_centred_terminals
+from chrona.presentation.layout.relation_terminals import (
+    centred_on_route, marker_geometry, terminal_length, terminal_run, trim_for_centred_terminals,
+)
 from chrona.presentation.layout.routing import (
     RouteSuppressionEvidence, back_route_points, route_self_overlaps,
     select_relation_route, route_quality_metrics,
@@ -210,7 +212,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         theme = request.theme_tokens
         clearance = max(float(context.metric_values.get("timeline.relation.cornerRadius", 0)),
                         float(theme.number(semantic_binding(semantic_id).theme_role, "strokeWidth")))
-        return marker_geometry(theme.marker("relationTargetTerminal")).head_length + clearance
+        return terminal_length(marker_geometry(theme.marker("relationTargetTerminal"))) + clearance
 
     def entry_stub_free(egress: ConnectorEgress) -> bool:
         """The stub lies in the timeline and crosses no mark, text or label (host marks exempt)."""
@@ -430,8 +432,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 placed = RelationPlacement(scene_id, source_port_id, target_port_id, tuple(points),
                     semantic_id=relation.semantic_id, corner_radius=radius,
                     path_commands=(rounded_orthogonal_path(tuple(points), radius,
-                        start_run=0.0 if marker_start.centred else marker_start.head_length,
-                        end_run=0.0 if marker_end.centred else marker_end.head_length,
+                        start_run=terminal_run(marker_start),
+                        end_run=terminal_run(marker_end),
                         blocked=lambda arc: arc_blocked(arc) or not clears_primary_marks(arc, dependency_stroke))
                         if radius > 0 and not fallback else ()),
                     marker_start=marker_start, marker_end=marker_end,
