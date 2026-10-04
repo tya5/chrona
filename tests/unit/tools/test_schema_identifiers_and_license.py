@@ -74,7 +74,7 @@ ID_SITES: dict[tuple[str, str], int] = {
     ("project-v0.7.schema.yaml", "unconstrained-string"): 1,
     ("render-context-v0.17.schema.yaml", "non-empty-string"): 2,
     ("review-detail-profile-v0.1.schema.yaml", "bounded-non-empty-string"): 4,
-    ("scene-v0.7.schema.yaml", "scene-text"): 27,
+    ("scene-v0.7.schema.yaml", "scene-text"): 29,
     ("snapshot-ref-v0.3.schema.yaml", "non-empty-string"): 1,
     ("summary-profile-v0.2.schema.yaml", "non-empty-string"): 3,
     ("theme-asset-source-v0.1.schema.yaml", "portable-name"): 1,

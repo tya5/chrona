@@ -135,10 +135,13 @@ def test_mapping_is_derived_from_version_constants_and_the_overrides_agree(base_
         assert derived.get(version) == [name], f"the override for {version} contradicts the derivation"
 
 
-def test_scene_v06_documents_are_mapped(committed):
-    scenes = [record for record in committed.corpus.records if record["schema"] == "scene-v0.6.schema.yaml"]
+def test_scene_documents_are_mapped_to_their_declared_versions(committed):
+    # Completed endpoint identities select v0.7; legacy Scenes still select v0.6.
+    schemas = {"scene-v0.6.schema.yaml", "scene-v0.7.schema.yaml"}
+    scenes = [record for record in committed.corpus.records if record["schema"] in schemas]
 
     assert len(scenes) >= 29
+    assert {record["schema"] for record in scenes} == schemas
     assert all(record["valid"] for record in scenes)
 
 
