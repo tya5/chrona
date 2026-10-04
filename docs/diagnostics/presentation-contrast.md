@@ -54,7 +54,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | legend-swatch | `planned` | required | 3.000 | 54 | 99 | 4.777 | 16.354 | 0 | 0 |
 | legend-swatch | `snapshot` | required | 3.000 | 2 | 2 | 5.817 | 11.742 | 0 | 0 |
 | member-label | `member-label-inside-planned` | required | 4.500 | 34 | 34 | 4.651 | 5.727 | 0 | 0 |
-| member-label | `text` | required | 4.500 | 54 | 489 | 9.348 | 14.573 | 0 | 0 |
+| member-label | `text` | required | 4.500 | 54 | 491 | 9.348 | 14.573 | 0 | 0 |
 | milestone-digest-entry | `text` | required | 4.500 | 40 | 80 | 11.935 | 16.268 | 0 | 0 |
 | missingActual | `missing-actual` | required | 3.000 | 51 | 60 | 3.973 | 14.573 | 0 | 0 |
 | network-node | `network-node` | required | 3.000 | 2 | 32 | 16.354 | 17.050 | 0 | 0 |
@@ -65,7 +65,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | planned | `planned` | required | 3.000 | 62 | 728 | 4.210 | 13.238 | 0 | 0 |
 | progress-fill | `progress-fill` | required | 3.000 | 49 | 145 | 3.216 | 4.789 | 0 | 0 |
 | project-note | `text` | required | 4.500 | 45 | 99 | 10.019 | 16.268 | 0 | 0 |
-| relation-label | `text` | required | 4.500 | 30 | 176 | 6.663 | 14.573 | 0 | 0 |
+| relation-label | `text` | required | 4.500 | 30 | 175 | 6.663 | 14.573 | 0 | 0 |
 | row-decoration | `row-band` | absent | 1.100 | 11 | 0 | — | — | 0 | 0 |
 | row-decoration | `row-band` | enabled | 1.100 | 26 | 104 | 1.000 | 1.116 | 0 | 8 |
 | slot-heading | `slot-heading` | required | 4.500 | 2 | 2 | 5.448 | 6.000 | 0 | 0 |
@@ -1680,10 +1680,12 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:architecture:architecture` | `text` | 571.709, 147.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:dvt:dvt` | `text` | 1336.659, 527.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:dvt:snapshot:dvt` | `text` | 1214.437, 527.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:evb-arrival:evb-arrival` | `text` | 1081.200, 383.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:evb-arrival:snapshot:evb-arrival` | `text` | 968.405, 383.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:firmware:firmware` | `text` | 797.227, 219.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:ga:ga` | `text` | 1509.029, 691.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:performance:performance` | `text` | 972.451, 455.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:performance:performance` | `text` | 1116.451, 455.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
+| `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:performance:snapshot:performance` | `text` | 904.171, 455.500 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:pvt:pvt` | `text` | 1408.821, 619.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:pvt:snapshot:pvt` | `text` | 1224.027, 619.500 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `member-label:silicon-bringup:silicon-bringup` | `text` | 1124.848, 291.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
@@ -1706,7 +1708,6 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `note:pvt-exit` | `text` | 1407.559, 866.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `relation-label:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 564.486, 208.800 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `relation-label:bringup-to-dvt:silicon-bringup:silicon-bringup:dvt:dvt` | `text` | 1273.232, 303.500 | `group:fw-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
-| `examples/controller-z/generated/baseline-ghosts.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1117.320, 398.800 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `relation-label:dvt-to-pvt:dvt:dvt:pvt:pvt` | `text` | 1202.883, 598.800 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `relation-label:firmware-to-evb:firmware:firmware:evb-arrival:evb-arrival` | `text` | 962.891, 355.800 | `group:validation-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/baseline-ghosts.scene.json` | `relation-label:pvt-to-ga:pvt:pvt:ga:ga` | `text` | 1484.808, 731.100 | `group:factory-team` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
@@ -8583,4 +8584,4 @@ Contrast constraints are an opt-in design option (Specification 46 section 8): a
 Every non-exclusive decoration role is enabled in committed Scene evidence; group-band or group-header-band supplies the group concept when there are no corpus errors.
 
 
-Findings: 8513; errors: 0; warnings: 91.
+Findings: 8514; errors: 0; warnings: 91.
