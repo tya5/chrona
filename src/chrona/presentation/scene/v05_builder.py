@@ -740,7 +740,9 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             primitives.append(ScenePrimitive("as-of", PrimitiveKind.PATH, "actual-set", "actual", as_of_binding.purpose, as_of_binding.scene_role,
                                              (float(placed.bounds.inline), float(placed.bounds.block), float(placed.bounds.inline_size), float(placed.bounds.block_size)),
                                              points=placed.points, paint_order=placed.paint_order))
-            emit_semantic_text("as-of-label", "asOfLabel")
+            # A Theme that binds `as-of-label.fill` paints the label with it, on its chip (#1110); else it keeps `text`.
+            emit_semantic_text("as-of-label", "asOfLabel",
+                               "as-of-label" if value.theme_tokens.optional_color("as-of-label", "fill") is not None else None)
         elif placed.semantic_id == "asOfCone":
             # The marker's light (#890): a closed polygon Symbol; its gradient is completed with its paint.
             cone_binding = semantic_binding("asOfCone")
