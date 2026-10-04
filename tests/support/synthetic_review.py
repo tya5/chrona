@@ -101,7 +101,7 @@ def lane_view(view: Mapping[str, Any], *, packing: Iterable[str] = ("explicit", 
 
 
 def _write(path: Path, value: Mapping[str, Any]) -> Path:
-    path.write_text(yaml.safe_dump(dict(value), sort_keys=False, allow_unicode=True), encoding="utf-8")
+    path.write_text(yaml.safe_dump(dict(value), sort_keys=False, allow_unicode=True), encoding="utf-8", newline="\n")
     return path
 
 
