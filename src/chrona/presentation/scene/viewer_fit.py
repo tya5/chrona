@@ -13,5 +13,6 @@ def viewer_fit_fallbacks(surface: SceneSurface, target_kind: str) -> tuple[str, 
     """One ``W_VIEWER_FIT_NOT_HONOURED:<box role>:<target>`` per distinct non-raw box role, in Scene order."""
     if target_kind not in UNHONOURED_TARGETS:
         return ()
-    roles = dict.fromkeys(item.visual_role for item in surface.primitives if item.viewer_fit != "raw")
+    roles = dict.fromkeys(item.visual_role for item in surface.primitives
+                          if item.viewer_fit != "raw" or (item.text_layout is not None and item.text_layout.fit is not None))
     return tuple(f"W_VIEWER_FIT_NOT_HONOURED:{role}:{target_kind}" for role in roles)
