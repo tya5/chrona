@@ -35,3 +35,7 @@ Short work record for [#1110](https://github.com/tya5/chrona/issues/1110) (a loc
 | --- | --- | --- | --- | --- |
 | 1 | Honour and admit | `scene/v05_builder.py`, `scene/capabilities.py`, Specification 07 | `tests/integration/test_as_of_label_ink.py` (declared ink on the chip, gated; unreadable ink reported; byte identity; unread bindings fail at the pointer); mutation check | corpus regenerated: only `21-target-b` changes (the label ink), reported above |
 | 2 | Acceptance review | `docs/reviews/current/issue-1110-*` | checker | exact-main three-OS run |
+
+## 5. Addendum (reviewer, 2026-10-04): the label's own typography
+
+The mock chip is 68 x 16 px with 10.5 px weight-600 text; target B's chip is 81 x 22.5 because the label takes `text` (12.5). Decision: the `as-of-label` role also admits the text measurement properties; with a `fontSize` it is the typography role of the as-of label (`as_of_label_typography_role`, one function read by the label request, the chip padding, the gap and the `below-plot` reservation), else `text` as before; a role that binds only a colour keeps `text`. Tests: the chip's block size and padding follow the role, a colour-only role changes no size, the space reserved below the plot equals the placed gap plus chip from the role's size; 5 of 5 mutations killed.
