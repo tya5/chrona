@@ -361,7 +361,9 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         candidate_points = _combined_connector_points(source_egress, middle, target_egress)
                         repaired = repair_self_reversal(candidate_points, obstacles, classes=route_classes,
                                                         regions=("timeline", "group-header"),
-                                                        host_ids=(*source_egress.host_ids, *target_egress.host_ids))
+                                                        host_ids=(*source_egress.host_ids, *target_egress.host_ids),
+                                                        accept=lambda replacement: clears_primary_marks(
+                                                            replacement, dependency_stroke))
                         if repaired is not None:
                             candidate_points = repaired
                         if (len(candidate_points) >= 2 and clears_primary_marks(candidate_points, dependency_stroke)

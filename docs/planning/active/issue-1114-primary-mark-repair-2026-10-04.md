@@ -54,3 +54,15 @@ schema, diagnostics, resource migration, threshold or compatibility mode.
 | A Scene check counts own- and foreign-bar crossings corpus-wide; it must be 0 after regeneration. | CI snapshot, all public Scenes. |
 | Existing compliant routes are unchanged. | Exact before/after route points; still unverified. |
 | On target B, `avionics-cdr` no longer crosses the Avionics bar. | Actual Scene and SVG. |
+
+## Current verification
+
+The replacement-segment correction is implemented; 59 focused routing,
+ports, back-route and Scene safety tests pass, including the neutral witness
+and exact preservation of a compliant first repair. A fresh public
+`gallery-editorial-lanes` materialization in a temporary directory still has
+zero crossings but loses detector-tvac/shipment-campaign, changes six compliant
+routes and changes member names. Therefore the issue is **not accepted**:
+the narrow repair gap is fixed, but the coupled corridor/name plan still needs
+design correction. The committed old Editorial fixture is not evidence for
+this new render. No generated repository files were changed.

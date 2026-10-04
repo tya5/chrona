@@ -131,14 +131,16 @@ def route_self_overlaps(points: tuple[tuple[float, float], ...]) -> bool:
 
 def repair_self_reversal(points: tuple[tuple[float, float], ...], obstacles: SurfaceObstacleIndex, *,
                          classes: tuple[str, ...], regions: tuple[str, ...],
-                         host_ids: tuple[str, ...] = ()) -> tuple[tuple[float, float], ...] | None:
+                         host_ids: tuple[str, ...] = (),
+                         accept: Callable[[tuple[tuple[float, float], ...]], bool] | None = None,
+                         ) -> tuple[tuple[float, float], ...] | None:
     """Replace each reversal by an honest extra bend, or None when the free corridor is not there (#1059).
 
     A route that drops along `x`, runs to a tip on the near side of `x` and turns back over the same line becomes:
     drop part of the way, jog sideways to the tip's coordinate, drop to the tip, then enter. The jog is tried nearest
     the tip first (the gap before the target row), then step by step back toward where the drop began. The two new
-    segments must be free of the selected obstacles (the endpoints' own comparison marks, `host_ids`, excepted); any
-    other overlap is not repaired.
+    segments must be free of the selected obstacles (the endpoints' own comparison marks, `host_ids`, excepted) and
+    pass `accept` when supplied; any other overlap is not repaired.
     """
     current = tuple(points)
     for _ in range(len(current)):
@@ -163,6 +165,8 @@ def repair_self_reversal(points: tuple[tuple[float, float], ...], obstacles: Sur
             second = _point(tip[along], level, along)
             if not all(_free(obstacles, start, end, classes, regions, host_ids)
                        for start, end in ((first, second), (second, tip))):
+                continue
+            if accept is not None and not accept((first, second, tip)):
                 continue
             path = [*current[:index - 1], first, second, *current[index:]]
             repaired = tuple(point for number, point in enumerate(path) if number == 0 or point != path[number - 1])
@@ -317,7 +321,7 @@ def select_lane_relation_route(
                                                  search_failure="E_CONNECTOR_UNROUTABLE"))
             continue
         repaired = repair_self_reversal(tuple(points), obstacles, classes=classes, regions=regions,
-                                        host_ids=(*source.host_ids, *target.host_ids))
+                                        host_ids=(*source.host_ids, *target.host_ids), accept=accept)
         if repaired is not None:
             points = list(repaired)
         measured = route_quality_attempt(source.side, target.side, tuple(points),
