@@ -548,13 +548,13 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             frame = semantic_binding("regionFrame")
             primitives.append(ScenePrimitive(
                 placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "decoration", frame.purpose,
-                frame.scene_role, (float(placed.bounds.inline), float(placed.bounds.block),
+                placed.visual_role or frame.scene_role, (float(placed.bounds.inline), float(placed.bounds.block),
                                    float(placed.bounds.inline_size), float(placed.bounds.block_size)),
                 slot_id=placed.slot_id, paint_order=placed.paint_order,
                 corner_radius=placed.corner_radius or None))
-    emit_semantic_text("title", "titleText")
+    emit_semantic_text("title", "titleText", value.theme_tokens.title_paint_role())
     if "subtitle" in layout_text:
-        emit_semantic_text("subtitle", "subtitleText")
+        emit_semantic_text("subtitle", "subtitleText", value.theme_tokens.title_paint_role(subtitle=True))
     for column in value.surface_content.table_columns:
         # A Theme that declares `tableColumnLabel` with a fill paints its headers with it (#991).
         header_paint = ("tableColumnLabel" if value.theme_tokens.optional_color("tableColumnLabel", "fill") is not None else None)

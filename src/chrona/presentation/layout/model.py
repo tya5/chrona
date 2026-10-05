@@ -75,6 +75,7 @@ class RegionFrame:
 
     inset: Decimal
     populated: bool
+    paint: str | None = None
 
 
 SLOT_HEADING_SOURCES = frozenset({"annotations", "notes", "legend", "summary"})
@@ -153,7 +154,10 @@ class LayoutManifest:
                 "source": item.source,
             }
             if item.frame is not None:
-                value["frame"] = {"inset": number(item.frame.inset), "populated": item.frame.populated}
+                frame = {"inset": number(item.frame.inset), "populated": item.frame.populated}
+                if item.frame.paint is not None:
+                    frame["paint"] = item.frame.paint
+                value["frame"] = frame
             if item.heading is not None:
                 value["heading"] = {"align": item.heading.align, "block": item.heading.block, "text": item.heading.text}
             return value

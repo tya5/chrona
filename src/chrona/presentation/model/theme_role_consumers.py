@@ -22,6 +22,9 @@ def _strings(value: Any) -> Iterable[str]:
     if isinstance(value, str):
         yield value
     elif isinstance(value, Mapping):
+        frame = value.get("frame")
+        if isinstance(frame, Mapping) and isinstance(frame.get("paint"), str):
+            yield f"region-frame-{frame['paint']}"
         for key, item in value.items():
             yield from _strings(key)
             yield from _strings(item)
@@ -49,7 +52,8 @@ def unread_roles(theme_body: Mapping[str, Any], documents: Iterable[Any]) -> fro
     """The role names the Theme declares that no registered contract, group name or document reads."""
     named = frozenset(string for document in documents for string in _strings(document))
     return frozenset(role for role in declared_role_pointers(theme_body)
-                     if theme_role_contract(role) is None and not role.startswith("group:") and role not in named)
+                     if (theme_role_contract(role) is None or role.startswith("region-frame-"))
+                     and not role.startswith("group:") and role not in named)
 
 
 def unread_role_pointers(theme_body: Mapping[str, Any], documents: Iterable[Any]) -> tuple[str, ...]:

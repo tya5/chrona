@@ -199,7 +199,10 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
     register("text", "Layout text and Scene Text/Icon",
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _SHARED_TEXT_ICON_PAINT | _VIEWER_FIT,
              scene_kinds=frozenset(("Text", "Icon")))
-    register("heading numeric summary", "Layout text measurement",
+    register("heading", "Layout title measurement and Scene Text",
+             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT | _VIEWER_FIT,
+             scene_kinds=frozenset(("Text",)))
+    register("numeric summary", "Layout text measurement",
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _VIEWER_FIT)
     register("legend", "Layout legend label measurement and Scene Text",
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _SHARED_TEXT_ICON_PAINT | _VIEWER_FIT,
@@ -330,6 +333,9 @@ _CATALOG_PATTERN_ROLES = frozenset((
 
 def theme_role_contract(role: str) -> RolePropertyContract | None:
     """Expose the finite known-role entry for structural consumer checks."""
+    # The suffix is the shared common-v0.1 slug lexeme selected by frame.paint.
+    if fullmatch(r"region-frame-[a-z][a-z0-9-]*", role):
+        return _ROLE_PROPERTY_CONTRACTS["region-frame"]
     return _ROLE_PROPERTY_CONTRACTS.get(role)
 
 
@@ -339,7 +345,7 @@ def theme_role_property_consumer(role: str, property_name: str) -> str | None:
     An unknown name may be produced by either an axis tier or the #427
     fixed-square legend fallback. Known names never inherit that fallback.
     """
-    contract = _ROLE_PROPERTY_CONTRACTS.get(role)
+    contract = theme_role_contract(role)
     if contract is not None:
         return contract.consumer if property_name in contract.properties else None
     # The registered group colour namespace takes precedence over both
@@ -362,6 +368,7 @@ def theme_catalog_pattern_consumer(role: str, property_name: str) -> str | None:
     narrower check applies only to typed `{kind: catalog}` values because the
     current completed pattern clip contract covers Rect primitives only.
     """
-    if property_name == "pattern" and role in _CATALOG_PATTERN_ROLES:
+    if property_name == "pattern" and (role in _CATALOG_PATTERN_ROLES or
+                                      (role.startswith("region-frame-") and theme_role_contract(role) is not None)):
         return "Layout-completed Rect pattern geometry"
     return None

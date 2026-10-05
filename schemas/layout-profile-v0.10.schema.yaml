@@ -253,7 +253,7 @@ $defs:
       padding: {description: "Space around linear children.", $ref: "#/$defs/padding"}
       alignItems: {description: "Cross-axis child alignment.", $ref: "#/$defs/alignment"}
       justifyContent: {description: "Main-axis free-space distribution.", $ref: "#/$defs/distribution"}
-      frame: {description: "Optional region frame: Layout completes one panel Rect behind this node, painted by the Theme role region-frame (#889).", $ref: "#/$defs/frame"}
+      frame: {description: "Optional region frame: Layout completes one panel Rect behind this node; absent paint uses Theme role region-frame, otherwise region-frame-<paint> (#889, #1165).", $ref: "#/$defs/frame"}
       children: {description: "Child containers or slots in layout order.", type: array, minItems: 1, items: {$ref: "#/$defs/node"}}
   grid:
     type: object
@@ -274,7 +274,7 @@ $defs:
       alignItems: {description: "Cross-axis child alignment.", $ref: "#/$defs/alignment"}
       justifyContent: {description: "Free-space distribution for grid content.", $ref: "#/$defs/distribution"}
       cell: {description: "Optional parent grid cell.", $ref: "#/$defs/cell"}
-      frame: {description: "Optional region frame: Layout completes one panel Rect behind this node, painted by the Theme role region-frame (#889).", $ref: "#/$defs/frame"}
+      frame: {description: "Optional region frame: Layout completes one panel Rect behind this node; absent paint uses Theme role region-frame, otherwise region-frame-<paint> (#889, #1165).", $ref: "#/$defs/frame"}
       children: {description: "Grid child containers or slots.", type: array, minItems: 1, items: {$ref: "#/$defs/node"}}
   cell:
     type: object
@@ -304,7 +304,7 @@ $defs:
       padding: {$ref: "#/$defs/padding"}
       alignItems: {$ref: "#/$defs/alignment"}
       justifyContent: {$ref: "#/$defs/distribution"}
-      frame: {description: "Optional region frame: Layout completes one panel Rect behind this node, painted by the Theme role region-frame (#889).", $ref: "#/$defs/frame"}
+      frame: {description: "Optional region frame: Layout completes one panel Rect behind this node; absent paint uses Theme role region-frame, otherwise region-frame-<paint> (#889, #1165).", $ref: "#/$defs/frame"}
       children: {description: "Flow child containers or slots.", type: array, minItems: 1, items: {$ref: "#/$defs/node"}}
   overlay:
     type: object
@@ -330,7 +330,7 @@ $defs:
         description: "Named barriers that constrain relation routing or placement."
         propertyNames: {$ref: "#/$defs/id"}
         additionalProperties: {$ref: "#/$defs/barrier"}
-      frame: {description: "Optional region frame: Layout completes one panel Rect behind this node, painted by the Theme role region-frame (#889).", $ref: "#/$defs/frame"}
+      frame: {description: "Optional region frame: Layout completes one panel Rect behind this node; absent paint uses Theme role region-frame, otherwise region-frame-<paint> (#889, #1165).", $ref: "#/$defs/frame"}
       children: {description: "Overlay child containers or slots.", type: array, minItems: 1, items: {$ref: "#/$defs/node"}}
   guide:
     type: object
@@ -375,7 +375,7 @@ $defs:
       direction: {description: "Entry-flow direction for a legend slot's own content; meaningful only when source is legend. Absent means block, today's stacked order (#427).", enum: [block, inline]}
       gap: {description: "Space between a legend slot's own entries, and between a swatch and its label; meaningful only when source is legend. Absent means today's fixed label-derived spacing (#427).", $ref: "#/$defs/distance"}
       itemMinInlineSize: {description: "Wrap threshold for a legend slot's own entries when direction is inline, reusing the flow container's wrapping semantics; meaningless and ignored otherwise (#427).", $ref: "#/$defs/distance"}
-      frame: {description: "Optional region frame: Layout completes one panel Rect behind this node, painted by the Theme role region-frame (#889).", $ref: "#/$defs/frame"}
+      frame: {description: "Optional region frame: Layout completes one panel Rect behind this node; absent paint uses Theme role region-frame, otherwise region-frame-<paint> (#889, #1165).", $ref: "#/$defs/frame"}
       heading: {description: "Optional caption of this slot (#1064); allowed on the annotations, notes, legend and summary sources.", $ref: "#/$defs/slotHeading"}
   slotHeading:
     description: "A slot's caption: literal presentation copy and where it sits. Layout completes one Text in the Theme text role slot-heading (the text role when the Theme declares none) and starts the slot's content below it."
@@ -389,10 +389,11 @@ $defs:
       block: {description: "Block position: top of the slot, or centred in the timeline axis header band when that band lies beside the slot (otherwise top); absent means top.", enum: [top, header-row]}
   frame:
     type: object
-    description: "Region frame declaration. The panel is drawn at the node's completed bounds deflated by inset and half the stroke; it never moves or clips content."
+    description: "Region frame declaration. The panel is drawn at the node's completed bounds deflated by inset and half the stroke; it never moves or clips content. Optional paint selects region-frame-<paint>; absent paint selects region-frame."
     additionalProperties: false
     properties:
       inset: {description: "Distance kept clear between the node's allocated bounds and the frame's outer edge on every side; absent means 0.", $ref: "#/$defs/distance"}
+      paint: {description: "Optional shared Theme role suffix; absent selects region-frame.", $ref: "urn:chrona:common-v0.1#/$defs/slug"}
   override:
     type: object
     description: "Partial replacement of a named node's layout settings."
@@ -410,5 +411,5 @@ $defs:
       itemMinInlineSize: {$ref: "#/$defs/distance"}
       priority: {description: "Replacement allocation priority.", enum: [required, preferred, optional]}
       overflow: {description: "Replacement overflow behavior.", enum: [visible-overflow, ellipsize-with-source, clip-optional]}
-      frame: {description: "Replacement region frame (replaces the whole declaration): Layout completes one panel Rect behind this node, painted by the Theme role region-frame (#889).", $ref: "#/$defs/frame"}
+      frame: {description: "Replacement region frame (replaces the whole declaration): Layout completes one panel Rect behind this node; absent paint uses Theme role region-frame, otherwise region-frame-<paint> (#889, #1165).", $ref: "#/$defs/frame"}
       heading: {description: "Replacement slot caption (replaces the whole declaration; #1064).", $ref: "#/$defs/slotHeading"}

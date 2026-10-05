@@ -12,7 +12,7 @@ from typing import Any, Mapping
 from chrona.presentation.layout.model import (
     SLOT_HEADING_ALIGNS, SLOT_HEADING_BLOCKS, SLOT_HEADING_SOURCES, LayoutError, ResolvedLayoutProfile,
 )
-from chrona.resources import schema_validator
+from chrona.resources import schema_validator, validator_for_schema
 from chrona.schema_diagnostics import explain_errors
 
 
@@ -30,8 +30,16 @@ class LayoutBase:
     content_identity: str
 
 
-_FRAME_KEYS = frozenset({"inset"})
+_FRAME_KEYS = frozenset({"inset", "paint"})
 _ID = re.compile(r"^[A-Za-z][A-Za-z0-9._-]*$")
+_FRAME_PAINT_VALIDATOR = validator_for_schema({"$ref": "urn:chrona:common-v0.1#/$defs/slug"})
+
+
+def _check_frame_paint(paint: Any, pointer: str) -> None:
+    errors = tuple(_FRAME_PAINT_VALIDATOR.iter_errors(paint))
+    if errors:
+        violation = explain_errors(errors)
+        raise LayoutError("E_LAYOUT_SCHEMA", pointer, detail=violation.message)
 
 
 def _check_frame(frame: Any, pointer: str) -> None:
@@ -46,6 +54,8 @@ def _check_frame(frame: Any, pointer: str) -> None:
     for key in frame:
         if key not in _FRAME_KEYS:
             raise LayoutError("E_LAYOUT_SCHEMA", f"{pointer}/{key}", detail=f"unexpected property '{key}'")
+    if "paint" in frame:
+        _check_frame_paint(frame["paint"], f"{pointer}/paint")
     if "inset" not in frame:
         return
     inset = frame["inset"]
@@ -92,6 +102,12 @@ def _check_frames(profile: Mapping[str, Any]) -> None:
             visit(child, f"{path}/children/{index}")
 
     visit(profile.get("root"), "/root")
+    overrides = profile.get("overrides")
+    if isinstance(overrides, Mapping):
+        for node_id, override in overrides.items():
+            frame = override.get("frame") if isinstance(override, Mapping) else None
+            if isinstance(frame, Mapping) and "paint" in frame:
+                _check_frame_paint(frame["paint"], f"/overrides/{node_id}/frame/paint")
 
 
 def _validate_schema(profile: Mapping[str, Any]) -> None:

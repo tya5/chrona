@@ -86,22 +86,24 @@ therefore admits only portable Rect paint for an otherwise unregistered
 legend-only name; it cannot make an unsupported property on a known text or
 relation role valid.
 
-**Region frames (#889).** Any container, any slot and any override may declare `frame`, an object with one
-optional property, `inset` (a `distance`, default 0). A frame is a request to draw a panel behind the node;
+**Region frames (#889, #1165).** Any container, any slot and any override may declare `frame`, with
+optional `inset` (a `distance`, default 0) and `paint` (the shared `common-v0.1` slug).
+Absent `paint` selects `region-frame`; a name selects `region-frame-<paint>` without fallback.
+A frame is a request to draw a panel behind the node;
 it adds no space and moves nothing. The engine arranges the whole profile first and records the frame
 with the node's completed bounds and whether the node holds a slot of positive area (`populated`); Layout
 then completes one Rect per drawable frame from those facts. The Rect is the node's bounds deflated on
-every side by `inset` plus half the stroke width of the Theme role `region-frame` (Specification 07), so
+every side by `inset` plus half the selected Theme role's stroke width (Specification 07), so
 the outer edge of the stroke stands `inset` inside the node and never spills into the gap or past the
 canvas. The space *between* two panels is what a profile already declares: the parent's `gap`, plus both
 insets (between outer stroke edges); the space *inside* a panel is the framed container's `padding`. A
 frame whose node holds no slot of positive area (a panel around only absent optional sources) or whose
 deflated Rect has no area is not drawn, and Layout records `I_LAYOUT_REGION_FRAME_OMITTED:<node>:<no-content|too-small>`;
-a Theme that declares no `region-frame` role draws no frame and fails nothing. Layout completes frames in
+a Theme that does not declare the selected role omits only that frame and fails nothing. Layout completes frames in
 the profile's pre-order (a container's panel before its children's), and the canvas grows to contain each
 frame's whole stroke. An override replaces a node's `frame` wholesale and cannot remove one. The
 declaration is checked before the schema so an error is named at its exact pointer (`E_LAYOUT_SCHEMA` at
-`/root/children/0/frame` or `.../frame/inset`, `/overrides/<id>/frame/...`); an `inset` token follows the
+`/root/children/0/frame` or `.../frame/inset` or `.../frame/paint`, `/overrides/<id>/frame/...`); an `inset` token follows the
 distance-token rules of section 5. Only the table-timeline surface draws frames; the dependency-network
 surface ignores the declaration.
 

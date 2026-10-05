@@ -60,7 +60,8 @@ def test_free_text_resolves_by_purpose_in_the_shared_role_and_by_role_and_purpos
     for role, purpose in (("axis-label2", "axis-label"), ("axis-label3", "axis-label"),
                           ("member-label-inside-planned", "member-label"), ("note-index", "note-index"),
                           ("annotation-callout-text", "annotation-text"), ("metric", "summary-figure-value"),
-                          ("slot-heading", "slot-heading")):
+                          ("slot-heading", "slot-heading"), ("heading", "title-text"),
+                          ("subtitle", "subtitle-text"), ("text", "title-text"), ("text", "subtitle-text")):
         assert contrast_binding_for(role, purpose).contrast_class == ContrastClass.GROUND_TEXT, (role, purpose)
     # A role of its own never borrows another purpose's class, and only a Text primitive (a purpose) can be ground text.
     assert contrast_binding_for("axis-label2", "member-label") is None

@@ -382,7 +382,8 @@ class _Arranger:
         populated = node["kind"] == "slot" or any(
             item.kind == "slot" and item.bounds.inline_size > ZERO and item.bounds.block_size > ZERO
             for item in self.decisions[position + 1:])
-        self.decisions[position] = replace(self.decisions[position], frame=RegionFrame(inset, populated))
+        paint = declared.get("paint")
+        self.decisions[position] = replace(self.decisions[position], frame=RegionFrame(inset, populated, paint))
 
     def _arrange_node(self, node: Mapping[str, Any], path: str, rect: Rect, references: tuple[str, ...] = ()) -> None:
         kind, node_id = str(node["kind"]), str(node["id"])
