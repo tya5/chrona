@@ -31,7 +31,7 @@ from chrona.presentation.scene.model import (
     requires_lane_member_provenance,
 )
 from chrona.presentation.scene.paint import (
-    ARTWORK_ROLE, AS_OF_CONE_ROLE, PaintFamily, ScenePaintError, complete_icon_path_paints, resolve_artwork_admission,
+    AS_OF_CONE_ROLE, PaintFamily, ScenePaintError, complete_icon_path_paints, resolve_artwork_admission,
     resolve_cone_paint, resolve_scene_paint,
 )
 from chrona.presentation.scene.stroke_wobble import (
@@ -151,7 +151,12 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
                             group_tints: Mapping[str, str] | None = None,
                             annotation_kind_paints: Mapping[str, str] | None = None) -> SceneSurface:
     """Attach the sole adapter-ready paint payload to every completed primitive."""
-    surface, artwork_omissions = _admit_artworks(surface, tokens, visual_profile)
+    # Layer admission has already happened at the typed placement boundary.
+    # Keep the existing canvas/artwork/part omission order and deduplication.
+    artwork_omissions = tuple(item for item in surface.info_diagnostics
+                             if isinstance(item, PaintOmission) and item.treatment == "annotation-artwork")
+    base_info = tuple(item for item in surface.info_diagnostics
+                      if not (isinstance(item, PaintOmission) and item.treatment == "annotation-artwork"))
     clip_hosts = frozenset(item.clip_source_id for item in surface.primitives if item.clip_source_id)
     try:
         resolved = tuple(_complete_primitive_paint(
@@ -182,37 +187,7 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
             unique_omissions.append(omission)
     return replace(surface, primitives=tuple(item for item, _ in completed), canvas_paint=canvas.paint,
                    decoration_dispositions=absent_decorations,
-                   info_diagnostics=(*surface.info_diagnostics, *unique_omissions))
-
-
-def _admit_artworks(surface: SceneSurface, tokens: ThemeTokenView,
-                    visual_profile: VisualProfile | None) -> tuple[SceneSurface, tuple[PaintOmission, ...]]:
-    """Drop the whole artwork of each annotation the selected profile cannot paint, and report it (#848).
-
-    The decision is per annotation and reads only the completed parts (a stroke part carries a line finish), so
-    a frame is never painted with some of its parts missing and Layout's geometry never depends on the profile.
-    """
-    sources: dict[str, bool] = {}
-    for primitive in surface.primitives:
-        if primitive.visual_role == ARTWORK_ROLE:
-            sources[primitive.source_ref] = sources.get(primitive.source_ref, False) or primitive.glyph_paint_mode == "stroke"
-    if not sources:
-        return surface, ()
-    omitted: set[str] = set()
-    omissions: list[PaintOmission] = []
-    try:
-        for source_ref, needs_finish in sources.items():
-            admission = resolve_artwork_admission(tokens, needs_finish=needs_finish, visual_profile=visual_profile)
-            if not admission.admitted:
-                omitted.add(source_ref)
-                omissions.extend(admission.omissions)
-    except ScenePaintError as error:
-        raise SceneBuildError(error.diagnostic_id, error.path, error.detail) from error
-    if not omitted:
-        return surface, ()
-    kept = tuple(item for item in surface.primitives
-                 if not (item.visual_role == ARTWORK_ROLE and item.source_ref in omitted))
-    return replace(surface, primitives=kept), tuple(omissions)
+                   info_diagnostics=(*base_info, *unique_omissions))
 
 
 def _visible_extent(primitive: ScenePrimitive) -> tuple[float, float, float, float]:
@@ -459,6 +434,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                  placed_surface.scale.range_start, placed_surface.scale.range_end,
                                  placed_surface.scale.origin, placed_surface.scale.unit_ratio)
     primitives: list[ScenePrimitive] = []
+    artwork_omissions: list[PaintOmission] = []
     layout_text = {item.placement_id: item for item in placed_surface.text}
     lane_emissions_by_placement = {
         (item.placement_type, item.placement_id): item for item in placed_surface.lane_emissions
@@ -817,8 +793,18 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                              paint_order=placed.paint_order))
         elif placed.semantic_id == "annotationArtwork":
             artwork = semantic_binding("annotationArtwork")
+            role = placed.visual_role or artwork.scene_role
+            try:
+                admission = resolve_artwork_admission(
+                    value.theme_tokens, needs_finish=any(part.paint_mode == "stroke" for part in placed.symbol_parts),
+                    visual_profile=value.visual_profile, role=role)
+            except ScenePaintError as error:
+                raise SceneBuildError(error.diagnostic_id, error.path, error.detail) from error
+            artwork_omissions.extend(admission.omissions)
+            if not admission.admitted:
+                continue
             primitives.extend(_symbol_primitives(placed.placement_id, placed.source_ref, "annotation", artwork.purpose,
-                                                 artwork.scene_role, bounds, placed.symbol_parts,
+                                                 role, bounds, placed.symbol_parts,
                                                  paint_order=placed.paint_order, part_order_step=0))
         elif placed.semantic_id == "annotationKindStamp":
             stamp = semantic_binding("annotationKindStamp")
@@ -998,7 +984,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                         canvas_bounds=(float(canvas.inline), float(canvas.block), float(canvas.inline_size),
                                        float(canvas.block_size)) if canvas is not None else None,
                         fit_warnings=placed_surface.fit_warnings,
-                        info_diagnostics=placed_surface.info_diagnostics,
+                        info_diagnostics=(*placed_surface.info_diagnostics, *artwork_omissions),
                         lane_mode=lane_mode, lane_members=lane_members,
                         lane_obstacles=lane_obstacles, lane_clearance=lane_clearance)
 

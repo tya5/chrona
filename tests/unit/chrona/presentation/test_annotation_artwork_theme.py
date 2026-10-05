@@ -22,19 +22,19 @@ def _tokens(*, glyphs=None, **options):
 
 
 def test_a_rectangle_container_may_declare_artwork():
-    artwork = _tokens().annotation_container(ROLE).artwork
+    (artwork,) = _tokens().annotation_container(ROLE).artwork
     assert artwork.glyph == aw.SCROLL
     assert artwork.slice_insets == (Decimal("16.3"), Decimal("8.2"), Decimal("11.5"), Decimal("8.2"))
     assert artwork.unit_em == Decimal("0.09")
 
 
 def test_a_container_without_artwork_has_none():
-    assert _tokens(artwork_declared=False).annotation_container(ROLE).artwork is None
+    assert _tokens(artwork_declared=False).annotation_container(ROLE).artwork == ()
 
 
 def test_artwork_composes_with_a_tilt_cycle():
     container = _tokens(extra={"tiltDegrees": [3, -3]}).annotation_container(ROLE)
-    assert container.artwork is not None and container.tilt_degrees == (Decimal("3"), Decimal("-3"))
+    assert container.artwork and container.tilt_degrees == (Decimal("3"), Decimal("-3"))
 
 
 @pytest.mark.parametrize("options", [
@@ -97,7 +97,7 @@ def test_insets_larger_than_the_pinned_glyphs_viewport_are_rejected(insets):
 
 
 def test_insets_that_exactly_fill_the_viewport_are_admitted():
-    artwork = _tokens(glyphs=GLYPHS, insets={"top": 32, "right": 24, "bottom": 32, "left": 24}).annotation_container(ROLE).artwork
+    (artwork,) = _tokens(glyphs=GLYPHS, insets={"top": 32, "right": 24, "bottom": 32, "left": 24}).annotation_container(ROLE).artwork
     assert artwork is not None
 
 
@@ -107,3 +107,43 @@ def test_the_ink_role_admits_only_its_paint_and_the_fidelity_property():
     contract = theme_role_contract("annotation-artwork")
     assert set(contract.properties) == {"fill", "stroke", "opacity", "artworkFidelity"}
     assert set(contract.scene_kinds) == {"Symbol"}
+
+
+def _list_tokens(artwork):
+    parts = sr.bundle()
+    aw.with_artwork(parts)
+    parts["theme"]["body"]["values"]["artwork-container"]["value"]["artwork"] = artwork
+    resolved = resolve_theme(parts["theme"], parts["scheme"], scheme_content_identity="sha256:test")
+    return ThemeTokenView(resolved).annotation_container(ROLE).artwork
+
+
+def test_list_layers_normalize_order_identity_and_default_role():
+    geometry = {"glyph": aw.SCROLL, "sliceInsets": aw.SCROLL_INSETS, "unitEm": 0.09}
+    layers = _list_tokens([geometry, {**geometry, "role": "annotation-artwork-rods"}])
+    assert [layer.role for layer in layers] == ["annotation-artwork", "annotation-artwork-rods"]
+    assert [layer.layer_index for layer in layers] == [0, 1]
+    assert [layer.declaration_pointer for layer in layers] == [
+        f"/body/roles/{ROLE}/annotationContainer/artwork/{index}" for index in range(2)]
+
+
+@pytest.mark.parametrize("value,suffix", [
+    ([], ""),
+    ([None], "/0"),
+    ([{"glyph": aw.SCROLL, "sliceInsets": aw.SCROLL_INSETS, "unitEm": 0}], "/0/unitEm"),
+    ([{"glyph": aw.SCROLL, "sliceInsets": aw.SCROLL_INSETS, "unitEm": 0.09,
+       "role": "annotation-artwork-not a slug"}], "/0/role"),
+    ([{"glyph": aw.SCROLL, "sliceInsets": aw.SCROLL_INSETS, "unitEm": 0.09,
+       "role": "region-frame-rods"}], "/0/role"),
+])
+def test_malformed_list_layer_has_indexed_token_diagnostic(value, suffix):
+    with pytest.raises(ThemeTokenError) as failure:
+        _list_tokens(value)
+    assert failure.value.diagnostic_id == "E_THEME_TOKEN_TYPE"
+    assert failure.value.path == f"/body/roles/{ROLE}/annotationContainer/artwork{suffix}"
+
+
+def test_named_artwork_role_keeps_the_closed_base_capability_contract():
+    from chrona.presentation.scene.capabilities import theme_role_contract
+
+    assert theme_role_contract("annotation-artwork-rods") == theme_role_contract("annotation-artwork")
+    assert theme_role_contract("annotation-artwork-not a slug") is None

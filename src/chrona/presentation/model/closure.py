@@ -876,6 +876,10 @@ def _resolve_theme_catalog_assets(theme: Mapping[str, Any],
         artwork = token_value.get("artwork") if isinstance(token_value, Mapping) else None
         if isinstance(artwork, Mapping) and artwork.get("glyph") is not None:
             resolve(artwork["glyph"], "glyph", f"/body/values/{token_id}/value/artwork/glyph")
+        elif isinstance(artwork, list):
+            for index, layer in enumerate(artwork):
+                if isinstance(layer, Mapping) and layer.get("glyph") is not None:
+                    resolve(layer["glyph"], "glyph", f"/body/values/{token_id}/value/artwork/{index}/glyph")
     declared_kinds = body.get("annotationKinds") if isinstance(body, Mapping) else None
     if isinstance(declared_kinds, Mapping):
         # A kind's stamp (#584) is a catalogue glyph the Theme names, resolved with the other glyphs.

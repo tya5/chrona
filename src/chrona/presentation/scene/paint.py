@@ -142,8 +142,8 @@ class ArtworkAdmission:
 
 
 def resolve_artwork_admission(tokens: ThemeTokenView, *, needs_finish: bool,
-                              visual_profile: VisualProfile | None) -> ArtworkAdmission:
-    """Decide, for the whole artwork of one annotation, whether the profile paints it.
+                              visual_profile: VisualProfile | None, role: str = ARTWORK_ROLE) -> ArtworkAdmission:
+    """Decide whether the profile paints one completed artwork layer.
 
     A fill part needs only the symbol outline every profile admits. A stroke part carries a required line cap and
     join, so an artwork with one needs `stroke.line-cap` and `stroke.line-join`. Where the profile has neither, the
@@ -155,13 +155,13 @@ def resolve_artwork_admission(tokens: ThemeTokenView, *, needs_finish: bool,
     if not needs_finish or visual_profile is None or required.issubset(visual_profile.capabilities):
         return ArtworkAdmission(True)
     try:
-        fidelity = _fidelity(tokens, ARTWORK_ROLE, "artworkFidelity")
-        admitted = _admit(visual_profile, required, fidelity, f"/body/roles/{ARTWORK_ROLE}/artworkFidelity")
+        fidelity = _fidelity(tokens, role, "artworkFidelity")
+        admitted = _admit(visual_profile, required, fidelity, f"/body/roles/{role}/artworkFidelity")
     except ThemeTokenError as error:
         raise ScenePaintError(error.diagnostic_id, error.path) from error
     if admitted:
         return ArtworkAdmission(True)
-    return ArtworkAdmission(False, (_omission(ARTWORK_ROLE, "annotation-artwork", "artworkFidelity",
+    return ArtworkAdmission(False, (_omission(role, "annotation-artwork", "artworkFidelity",
                                               visual_profile, required),))
 
 

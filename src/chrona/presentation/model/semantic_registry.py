@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+from re import fullmatch
 
 
 class PrimitiveKind(str, Enum):
@@ -270,8 +271,16 @@ def semantic_binding(semantic_id: str) -> SemanticBinding:
         raise ValueError(f"E_PRESENTATION_SEMANTIC_UNKNOWN:{semantic_id}") from error
 
 
+def is_annotation_artwork_role(role: object) -> bool:
+    """The closed artwork paint family; its suffix is the common slug lexeme."""
+    return isinstance(role, str) and (role == "annotation-artwork" or
+                                     fullmatch(r"annotation-artwork-[a-z][a-z0-9-]*", role) is not None)
+
+
 def contrast_binding(scene_role: str) -> SemanticBinding | None:
     """Return the unique classified binding for one completed Scene role (a ground-text binding is not by role)."""
+    if is_annotation_artwork_role(scene_role):
+        return _REGISTRY["annotationArtwork"]
     matches = tuple(binding for binding in _REGISTRY.values()
                     if binding.scene_role == scene_role and binding.contrast_class not in (None, ContrastClass.GROUND_TEXT))
     if len(matches) > 1:
