@@ -208,6 +208,16 @@ View relation intent becomes `none` or an object with `mode: semantic` and `over
 
 Layout routes between completed ports through deterministic orthogonal candidates. A route is acceptable when it stays in the timeline, avoids required obstacles, has at most `maxBends`, and its Manhattan length is at most `maxDetourRatio × directDistance`. Eligible candidates use the ranking below. With `visible-overflow`, no acceptable route completes as the deterministic direct path plus `W_LAYOUT_ROUTE_FALLBACK`; explicit suppression creates `W_LAYOUT_RELATION_SUPPRESSED`.
 
+**Candidate search (#1109 R5).** One bounded sparse
+visibility search supplies alternatives for each endpoint pair, rather than
+post-filtering only a single length-plus-bend-penalty winner. Obstacle-offset
+corners and endpoint projections seed the finite graph; exact inventory
+queries determine clear edges. Constrained labels retain distinct canonical
+prefix histories: a cheaper different path cannot erase an alternative before
+path-dependent final validation. Cyclic prefixes are rejected. The deterministic expansion limit
+is shared across a pair's candidate enumeration. Rehearsals and final Layout
+use the same search and completed-route validation.
+
 `relationRouting.entry` is an optional Layout Profile policy for the side a relation enters a span `start` (or the mirrored `end`): `any` has no entry preference and may naturally select a horizontal route; `side-when-free` (the default when absent) prefers a horizontal entry at the endpoint's mid height when the source lies on that side of the mark (left of a `start`, right of an `end`) and a straight stub of at least the target terminal's `headLength` plus `max(timeline.relation.cornerRadius, relation strokeWidth)` lies inside the timeline and crosses no mark, text or label (the host's own comparison marks excepted). The horizontal candidate is offered ahead of the others and, when it is blocked, does not fit or its route fails `maxBends` or `maxDetourRatio`, the remaining candidates stay eligible under the common ranking, so a relation that routes without the policy still routes. With `side-when-free` and `side` every candidate pair whose target is the horizontal stub candidate is tried, across all source exits, before any other pair (#1072). Point marks and `at` endpoints are unaffected (#1030).
 
 `relationRouting.entry: side` (#1060) adds two rules; `any` and `side-when-free` do not change. (1) When the selected route does not enter along the bar (its last leg is not horizontal into the start, or the end, for at least the entry stub) and the target is in a different row, Layout tries a back-route (#1084): from the source's endpoint port out by the exit stub (the same arrowhead-plus-clearance length), to the gap line (the edge of the target row on the source's side, between the row mark bands), along it to the entry stub tip, down to the target's mid height and in. The path is built, not searched; it must have at most `maxBends` bends, not overlap itself, stay within `maxDetourRatio` measured against the shortest route that keeps both stubs (the stub ends joined Manhattan plus the two stubs; the canonical shape equals it, so a mandatory stub is never counted as detour), and cross no mark, text or label (the endpoints' own marks excepted). Otherwise the candidate order is unchanged. (2) A point (gate or milestone) target with a `start` or `at` endpoint is given the same horizontal stub candidate at its left vertex (right vertex for `end`). With `side`, a relation that still does not enter horizontally along the bar adds the info diagnostic `I_LAYOUT_RELATION_ENTRY_FALLBACK:<scene relation id>;reason=<code>` (`same-row`, `entry-stub-blocked`, `degenerate`, `bends-or-detour`, `blocked:<class>=<placement ids>`, `node-approach-conflict` or `forward-entry-failed`).
@@ -306,7 +316,8 @@ port pair in deterministic order: `egress-collision` with blocker identities,
 with measured length/direct length/bends and the declared limits. A generic
 `ValueError` is not a no-route result. The primary cause is the furthest stage
 reached by any pair (`quality-rejected`, then `no-route-found`, otherwise
-`egress-collision`); all mixed attempts remain inspectable. A suppressed
+`egress-collision`); all mixed attempts remain inspectable. A rejected measured
+attempt may also retain the bounded search disposition. A suppressed
 placement has no path or accepted attempt; an accepted route has a completed
 path and no suppression evidence. Layout retains the existing generic
 suppression diagnostic and emits lane-specific, stable cause evidence; Scene

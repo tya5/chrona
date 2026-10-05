@@ -36,11 +36,13 @@ def outcome(call) -> tuple:
 
 
 def fresh(index, start, end, **kwargs) -> tuple:
-    """The pre-memo search: same arguments, no memo involved."""
+    """Same search on an independent inventory: neither graph nor path cache is shared."""
+    independent = SurfaceObstacleIndex()
+    independent.extend(index.all())
     arguments = dict(grid_offset=routing.ROUTE_GRID_OFFSET, bend_penalty=12.0, limit=4096, bounds=None,
                      port_ids=(), classes=None, regions=None)
     arguments.update(kwargs)
-    return outcome(lambda: routing._search_orthogonal(start, end, index, **arguments))
+    return outcome(lambda: routing._search_orthogonal(start, end, independent, **arguments))
 
 
 def memoised(index, start, end, **kwargs) -> tuple:
@@ -95,11 +97,11 @@ def test_memoised_equals_fresh_on_first_and_repeated_calls(count: int) -> None:
             search = random_search(rng)
             expected = fresh(index, start, end, **search)
             memo = index._route_memo
-            stored = len(memo.results)
             first = memoised(index, start, end, **search)
+            after_first = len(memo.results)
             second = memoised(index, start, end, **search)
             assert first == second == expected, (case, start, end, search)
-            hits += len(memo.results) == stored + 1 or len(memo.results) == stored  # stored once, or already known
+            hits += len(memo.results) == after_first  # repeated lookup adds neither a graph nor a path
             compared += 1
             failures += expected[0] == "failure"
     assert compared >= 80 and hits == compared
@@ -118,8 +120,10 @@ def test_a_hit_is_actually_served_from_the_memo(monkeypatch) -> None:
 def test_failures_are_replayed_with_the_same_message() -> None:
     index = SurfaceObstacleIndex()
     index.add(SurfaceObstacle("wall", "mark", "timeline", ObstacleRect(-100.0, 5.0, 100.0, 6.0)))
-    for limit, message in ((4096, "E_CONNECTOR_UNROUTABLE"), (3, "E_PRESENTATION_ROUTE_LIMIT")):
-        search = dict(bounds=(-1.0, -1.0, 1.0, 10.0), limit=limit, classes=ROUTE_CLASSES)
+    for limit, bounds, message in (
+            (4096, (-1.0, -1.0, 1.0, 10.0), "E_CONNECTOR_UNROUTABLE"),
+            (1, (-110.0, -1.0, 110.0, 10.0), "E_PRESENTATION_ROUTE_LIMIT")):
+        search = dict(bounds=bounds, limit=limit, classes=ROUTE_CLASSES)
         expected = fresh(index, (0.0, 0.0), (0.0, 9.0), **search)
         assert expected == ("failure", message)
         assert memoised(index, (0.0, 0.0), (0.0, 9.0), **search) == expected
@@ -308,26 +312,49 @@ def test_mutation_check_a_broken_key_is_caught(monkeypatch, component: int) -> N
     assert wrong, f"mutating key component {component} was not detected"
 
 
+@pytest.mark.corpus
 def test_every_real_search_of_a_public_slide_matches_a_fresh_search(monkeypatch, tmp_path: Path) -> None:
     """Corpus-derived inputs: each search the programme-board render makes is re-run unmemoised."""
     from chrona.usecases.materialize import materialize
+    import chrona.presentation.layout.route_search as route_search
 
     root = Path(__file__).resolve().parents[5]
     compared = hits = 0
-    original = routing.route_orthogonal
+    original = route_search.orthogonal_route_candidates
+
+    def advance(iterator):
+        try:
+            return ("path", next(iterator))
+        except StopIteration:
+            return ("finished", None)
+        except RouteSearchFailure as error:
+            return ("failure", str(error))
 
     def checking(start, end, obstacles, **kwargs):
         nonlocal compared, hits
-        if isinstance(obstacles, SurfaceObstacleIndex):
-            reference = fresh(obstacles, start, end, **kwargs)
-            before = len(obstacles._route_memo.results)
-            got = outcome(lambda: original(start, end, obstacles, **kwargs))
-            assert got == reference
-            hits += len(obstacles._route_memo.results) == before
-            compared += 1
-        return original(start, end, obstacles, **kwargs)
+        if not isinstance(obstacles, SurfaceObstacleIndex):
+            yield from original(start, end, obstacles, **kwargs)
+            return
+        independent = SurfaceObstacleIndex()
+        independent.extend(obstacles.all())
+        reference = original(start, end, independent, **kwargs)
+        actual = original(start, end, obstacles, **kwargs)
+        before = len(obstacles._route_memo.results)
+        first = True
+        while True:
+            got = advance(actual)
+            assert got == advance(reference)
+            if first:
+                hits += len(obstacles._route_memo.results) == before
+                compared += 1
+                first = False
+            if got[0] == "finished":
+                return
+            if got[0] == "failure":
+                raise RouteSearchFailure(got[1])
+            yield got[1]
 
-    monkeypatch.setattr(routing, "route_orthogonal", checking)
+    monkeypatch.setattr(route_search, "orthogonal_route_candidates", checking)
     materialize(root / "examples" / "halcyon-1" / "manifest.yaml", "programme-board", tmp_path / "out", write=True)
     assert compared >= 100
     assert hits >= 30  # the real pass repeats the accepted rehearsal's searches
