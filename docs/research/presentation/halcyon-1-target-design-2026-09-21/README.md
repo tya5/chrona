@@ -46,3 +46,31 @@ The reusable parts of this target are extracted as monochrome assets in the pack
 | Hatch for in-progress work | `chrona-target-parts:hatch-wide` | in the catalogue; bindable as a pattern on the Rect roles today |
 
 Still needed before this target's preset can be assembled: #582 (the labelled launch-window band), #583 (per-group tint), #584 (kind header and accent bar on a note). The per-target gap map is in #453.
+
+## Target B reproduction (#987)
+
+![Target B mock (top) and chrona output (bottom)](target-b-reproduction-2026-10-06.png)
+
+The top image is the approved target B mock. Its plan bars and as-of chip are redrawn in palette C, which the owner chose on 2026-10-03; everything else is as approved. The bottom image is `examples/halcyon-1/generated/21-target-b.svg` on main (2026-10-06). It is rendered from the HALCYON-1 project with YAML only: View `views/21-target-b.yaml`, Theme `themes/target-b.yaml`, scheme `schemes/target-b.yaml`, Layout and profile `layouts/target-b.yaml` and `profiles/target-b-detail.yaml`, and Context `contexts/21-target-b.yaml`. It is also the README hero image.
+
+### Gap table
+
+Classification: (a) tuned in YAML; (b) a missing general knob, filed and delivered; (c) a deliberate difference.
+
+| Element | Result | Class | Through |
+|---|---|---|---|
+| Title, subtitle, column headers, row and group text sizes; muted Phase column and legend | matches | a, b | #1061, #1062 |
+| Group header bands tinted per team; weekend stripes and calendar exceptions under the bands | matches | a, b | #583, #1019, #1034 |
+| Two-tier axis; faint launch-window band with a lowercase label | matches | a, b | #426, #582, #1061 |
+| Baseline ghost, plan bar, actual line and in-progress hatch: heights, offsets and radii from the mock | matches | a, b | #1061, #1147, #1066 |
+| Gates as 14 px diamonds; actual gate legible | matches | a, b | #1066, #1074 |
+| As-of line, and a 68 × 16 chip below the plot with white 10.5 px bold text | matches | a, b | #1063, #1110, #1126 |
+| Notes rail: NOTES heading, 250 px aligned boxes, kind accent flush at full height, 3 px radius, kind-coloured header, wrapped body | matches | a, b | #1049, #1051, #1064, #1087 |
+| Note text stays inside its box in any viewer font | matches | b | #1050, #1096 |
+| Legend: 22 × 12 keys, 6 px key gap, 26 px entry gap, mock order | matches | a, b | #1061, #1111 |
+| Child rows indented under group headers | matches | b | #1065 |
+| Dependencies: muted 1 px lines with 4 px rounded elbows, triangle heads and no source dot. All 24 enter their target from the side at mid-height, abutting chains back-route, and arrivals at one start share one head | matches | b | #1030, #1044, #1046, #1059, #1060, #1105, #1109, #1114 |
+| Plan-bar and as-of colours | palette C instead of the original mock blue | c | owner decision, 2026-10-03 |
+| Subtitle "(range for launch campaign)" | absent: the heading shows the slide calendar only | c | #1026 tracks calendar titles |
+| `avionics → CDR` and the actual gates on CDR and Payload delivered | drawn (the mock's data has neither) | c | project data |
+| Face | Noto Sans (packaged) instead of the mock's system UI face | c | packaged fonts |
