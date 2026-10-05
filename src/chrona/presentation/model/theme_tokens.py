@@ -6,6 +6,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Any, Mapping
 
 from chrona.presentation.annotation_kind_text import AnnotationKindTextError, KindHeader, kind_header
+from chrona.presentation.model.semantic_registry import is_annotation_artwork_role
 
 
 class ThemeTokenError(ValueError):
@@ -58,7 +59,7 @@ class TextTreatment:
 
 @dataclass(frozen=True)
 class ArtworkToken:
-    """A vector artwork behind a rectangle annotation container (#848).
+    """One normalized vector artwork layer behind a rectangle annotation container.
 
     ``glyph`` is a catalogue ``set:name``; ``slice_insets`` are the fixed borders (top, right, bottom, left) in the
     glyph's viewport units; ``unit_em`` is the size of one viewport unit in em of the annotation text size.
@@ -67,6 +68,9 @@ class ArtworkToken:
     glyph: str
     slice_insets: tuple[Decimal, Decimal, Decimal, Decimal]
     unit_em: Decimal
+    role: str
+    declaration_pointer: str
+    layer_index: int | None
 
 
 @dataclass(frozen=True)
@@ -97,8 +101,8 @@ class AnnotationContainerToken:
     # The declared tilt cycle in degrees, rectangle outlines only (#584): the annotation at position i of the
     # View's order takes tilt_degrees[i mod len]; None means no tilt.
     tilt_degrees: tuple[Decimal, ...] | None = None
-    # A catalogue glyph stretched behind a rectangle container (#848); None means no artwork.
-    artwork: ArtworkToken | None = None
+    # Ordered normalized layers; an empty tuple means no artwork.
+    artwork: tuple[ArtworkToken, ...] = ()
     # How the box is sized in an annotations slot (#1051): "content" (today) or "fill" (the slot's inline size,
     # at most `max_inline_em` text sizes when declared).
     inline_size: str = "content"
@@ -577,7 +581,7 @@ class ThemeTokenView:
                 conflicts = (("outline", container.outline != "rectangle"),
                              ("cornerRadius", container.corner_radius != 0),
                              ("tiltDegrees", container.tilt_degrees is not None),
-                             ("artwork", container.artwork is not None),
+                             ("artwork", bool(container.artwork)),
                              ("inlineSize", container.inline_size != "content"),
                              *((f"border/{side}", side in (container.border or {})) for side in ("end", "top", "bottom")))
                 for name, conflict in conflicts:
@@ -609,16 +613,30 @@ class ThemeTokenView:
             sides[side] = BorderSideToken(width, paint)
         return sides
 
-    def _artwork(self, value: Any, role: str, outline: str, padding: Any) -> "ArtworkToken | None":
-        """Validate the optional ``artwork`` of an annotation container (#848): a rectangle only, with a content inset."""
+    def _artwork(self, value: Any, role: str, outline: str, padding: Any) -> tuple[ArtworkToken, ...]:
+        """Normalize the legacy object or ordered list once, before Layout."""
         if value is None:
-            return None
+            return ()
         base = "annotationContainer/artwork"
         pointer = "/body/roles/" + role + "/" + base
-        if (outline != "rectangle" or padding is None or not isinstance(value, Mapping)
-                or set(value) != {"glyph", "sliceInsets", "unitEm"}):
-            # A balloon's tail and an image's own artwork do not take one; a framed note must say where its paper is.
+        if outline != "rectangle" or padding is None:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer)
+        if isinstance(value, Mapping):
+            return (self._artwork_layer(value, role, base, None),)
+        if not isinstance(value, list) or not value:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer)
+        return tuple(self._artwork_layer(layer, role, f"{base}/{index}", index)
+                     for index, layer in enumerate(value))
+
+    def _artwork_layer(self, value: Any, role: str, base: str, index: int | None) -> ArtworkToken:
+        pointer = f"/body/roles/{role}/{base}"
+        required = {"glyph", "sliceInsets", "unitEm"}
+        allowed = required | ({"role"} if index is not None else set())
+        if not isinstance(value, Mapping) or not required <= set(value) or not set(value) <= allowed:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer)
+        paint_role = value.get("role", "annotation-artwork")
+        if not is_annotation_artwork_role(paint_role):
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer + "/role")
         glyph = value["glyph"]
         if not isinstance(glyph, str) or glyph.count(":") != 1 or not all(glyph.split(":")):
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer + "/glyph")
@@ -638,7 +656,7 @@ class ThemeTokenView:
                 raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer + "/glyph") from error
             if insets[1] + insets[3] > width or insets[0] + insets[2] > height:
                 raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer + "/sliceInsets")
-        return ArtworkToken(glyph, insets, unit_em)
+        return ArtworkToken(glyph, insets, unit_em, paint_role, pointer, index)
 
     def annotation_kind(self, kind: str | None) -> "AnnotationKindToken | None":
         """Return the Theme's declaration for one Project annotation kind (#584).

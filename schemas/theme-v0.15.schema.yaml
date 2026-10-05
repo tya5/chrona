@@ -170,30 +170,14 @@ properties:
                         minItems: 1
                         items: {type: number, minimum: -15, maximum: 15}
                       artwork:
-                        description: "A catalogue glyph stretched behind a rectangle container as vector artwork (#848): nine-slice with fixed borders in the glyph's viewport units. The box keeps painting the paper; the parts paint from the annotation-artwork role. Rectangle outlines with contentInsetEm only."
+                        description: "Vector artwork behind a rectangle with contentInsetEm: the legacy object or a non-empty ordered layer list. Each layer nine-slices its glyph over the unchanged paper box and selects its own artwork ink role (#848, #1167)."
                         examples: [{glyph: "chrona-target-parts:scroll-frame", sliceInsets: {top: 16.3, right: 8.2, bottom: 11.5, left: 8.2}, unitEm: 0.09}]
-                        type: object
-                        additionalProperties: false
-                        required: [glyph, sliceInsets, unitEm]
-                        properties:
-                          glyph:
-                            description: "Authored `set:name` reference to a normalized catalogue glyph."
-                            type: string
-                            pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"
-                          sliceInsets:
-                            description: "The fixed borders (top/right/bottom/left) in the glyph's viewport units: each keeps its authored size while the middle stretches."
-                            type: object
-                            additionalProperties: false
-                            required: [top, right, bottom, left]
-                            properties:
-                              top: {type: number, minimum: 0}
-                              right: {type: number, minimum: 0}
-                              bottom: {type: number, minimum: 0}
-                              left: {type: number, minimum: 0}
-                          unitEm:
-                            description: "The size of one glyph viewport unit, in em of the annotation text size."
-                            type: number
-                            exclusiveMinimum: 0
+                        oneOf:
+                          - {$ref: "#/$defs/artworkObject"}
+                          - type: array
+                            description: "Ordered independently painted layers over one annotation paper box."
+                            minItems: 1
+                            items: {$ref: "#/$defs/artworkLayer"}
                       contentInsetEm:
                         description: "The box Layout measures note text into (top/right/bottom/left, in em), so the note keeps that padding inside its edge; an image is stretched to the resulting paint box (#465). Required for an image outline; optional for a rectangle or balloon, where omitted means no padding."
                         type: object
@@ -449,3 +433,44 @@ properties:
         description: "Named source-measurement metric bindings used by Layout."
         propertyNames: {pattern: "^[A-Za-z][A-Za-z0-9._-]*$"}
         additionalProperties: {description: "Named source-measurement metric.", type: string, minLength: 1}
+$defs:
+  artworkGeometry:
+    description: "One catalogue glyph and its nine-slice geometry, shared by both artwork forms."
+    type: object
+    required: [glyph, sliceInsets, unitEm]
+    properties:
+      glyph:
+        description: "Authored set:name reference to a normalized catalogue glyph."
+        examples: ["chrona-annotation-parts:scroll-rods"]
+        type: string
+        pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"
+      sliceInsets:
+        description: "Fixed top/right/bottom/left borders in glyph viewport units."
+        type: object
+        additionalProperties: false
+        required: [top, right, bottom, left]
+        properties:
+          top: {description: "Fixed top border in glyph viewport units.", type: number, minimum: 0}
+          right: {description: "Fixed right border in glyph viewport units.", type: number, minimum: 0}
+          bottom: {description: "Fixed bottom border in glyph viewport units.", type: number, minimum: 0}
+          left: {description: "Fixed left border in glyph viewport units.", type: number, minimum: 0}
+      unitEm:
+        description: "Positive size of one glyph viewport unit in annotation text em."
+        type: number
+        exclusiveMinimum: 0
+  artworkObject:
+    description: "The unchanged legacy single-glyph declaration."
+    $ref: "#/$defs/artworkGeometry"
+    unevaluatedProperties: false
+  artworkLayer:
+    description: "One ordered artwork layer and its optional selected Theme role."
+    allOf:
+      - {$ref: "#/$defs/artworkGeometry"}
+      - description: "An optional closed artwork ink role for this layer."
+        properties:
+          role:
+            description: "Artwork ink role; absent means annotation-artwork. The suffix follows the common slug lexeme."
+            examples: [annotation-artwork, annotation-artwork-rods]
+            type: string
+            pattern: "^annotation-artwork(?:-[a-z][a-z0-9-]*)?$"
+    unevaluatedProperties: false

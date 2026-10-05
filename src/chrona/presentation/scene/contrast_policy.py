@@ -5,7 +5,8 @@ from dataclasses import dataclass
 from math import isfinite
 from typing import Any, Mapping
 
-from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding, contrast_binding_for
+from chrona.presentation.model.semantic_registry import (
+    ContrastClass, contrast_binding, contrast_binding_for, is_annotation_artwork_role)
 from chrona.presentation.scene.cone_ground import AS_OF_CONE_ROLE, ConeGround, cones_in
 from chrona.presentation.scene.ink_touch import InkTouchError, fill_touches, stroke_touches
 from chrona.presentation.scene.paint_analysis import (
@@ -49,7 +50,6 @@ DECORATION_WARNING_BLOCKING_CODES = {warning: blocking for (is_decoration, block
 _SIBLING_INK_ROLES = frozenset({"annotation-kind-stamp"})
 # The parts of a vector artwork behind an annotation (#848) are ink over the note box: never a host by bounds (their
 # bounds are the whole note), a ground only where the part's painted area meets the label.
-ARTWORK_ROLE = "annotation-artwork"
 
 
 class SceneContrastPolicyError(ValueError):
@@ -485,7 +485,7 @@ def _host_under(subject: Mapping[str, Any], primitives: list[Any], index: int,
         if prior.get("visualRole") == AS_OF_CONE_ROLE:
             # A translucent light is never an opaque host: it tints the host's ground instead (#890).
             continue
-        if prior.get("visualRole") == ARTWORK_ROLE:
+        if is_annotation_artwork_role(prior.get("visualRole")):
             # Artwork parts cover the whole note by bounds but paint only their ink: see `_artwork_ink`.
             continue
         if (subject.get("visualRole") in _SIBLING_INK_ROLES and prior.get("visualRole") == subject.get("visualRole")
@@ -583,7 +583,7 @@ def _artwork_ink(label: Mapping[str, Any], primitives: list[Any], index: int
     order = label.get("paintOrder", 0)
     found: list[tuple[str, str, float]] = []
     for prior_index, prior in enumerate(primitives):
-        if (not isinstance(prior, Mapping) or prior.get("visualRole") != ARTWORK_ROLE or prior.get("kind") != "Symbol"
+        if (not isinstance(prior, Mapping) or not is_annotation_artwork_role(prior.get("visualRole")) or prior.get("kind") != "Symbol"
                 or prior.get("sourceRef") != source_ref):
             continue
         prior_order = prior.get("paintOrder", 0)

@@ -50,10 +50,25 @@ def declared_role_pointers(theme_body: Mapping[str, Any]) -> dict[str, tuple[str
 
 def unread_roles(theme_body: Mapping[str, Any], documents: Iterable[Any]) -> frozenset[str]:
     """The role names the Theme declares that no registered contract, group name or document reads."""
-    named = frozenset(string for document in documents for string in _strings(document))
+    named = frozenset(string for document in documents for string in _strings(document)) | _artwork_roles(theme_body)
     return frozenset(role for role in declared_role_pointers(theme_body)
-                     if (theme_role_contract(role) is None or role.startswith("region-frame-"))
+                     if (theme_role_contract(role) is None or role.startswith(("region-frame-", "annotation-artwork-")))
                      and not role.startswith("group:") and role not in named)
+
+
+def _artwork_roles(theme_body: Mapping[str, Any]) -> frozenset[str]:
+    """Only layers of actually bound container tokens consume named artwork roles."""
+    values = theme_body.get("values") or {}
+    found = set()
+    for binding in (theme_body.get("roles") or {}).values():
+        token_id = binding.get("annotationContainer") if isinstance(binding, Mapping) else None
+        token = values.get(token_id) if isinstance(token_id, str) else None
+        container = token.get("value") if isinstance(token, Mapping) else None
+        layers = container.get("artwork") if isinstance(container, Mapping) else None
+        if isinstance(layers, list):
+            found.update(layer["role"] for layer in layers
+                         if isinstance(layer, Mapping) and isinstance(layer.get("role"), str))
+    return frozenset(found)
 
 
 def unread_role_pointers(theme_body: Mapping[str, Any], documents: Iterable[Any]) -> tuple[str, ...]:

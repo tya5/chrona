@@ -862,12 +862,12 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                 shapes[-1] = replace(shapes[-1], viewer_fit=viewer_fit.mode)
             register_rect(f"annotation-box:{annotation_id}", "annotation-box", "annotations", annotation_bounds)
             # Vector artwork (#848) is ink over the paper the box just painted, under the kind frame and the text.
-            artwork_shape = place_artwork(
-                container.artwork if container is not None else None, annotation_id=annotation_id,
+            artwork_shapes = place_artwork(
+                container.artwork if container is not None else (), annotation_id=annotation_id,
                 presentation=presentation, box=(frame_x, frame_y, frame_width, frame_height), text_size=size,
                 theme_tokens=request.theme_tokens, paint_order=ANNOTATION_PAINT_ORDER, pointer=f"/annotations/{index}")
-            if artwork_shape is not None:
-                shapes.append(rotate_shape(artwork_shape, tilt_center, tilt_angle) if tilt_angle else artwork_shape)
+            shapes.extend(rotate_shape(item, tilt_center, tilt_angle) if tilt_angle else item
+                          for item in artwork_shapes)
             annotation_text_slot = "annotations" if annotation_slot is not None else timeline.slot_id
             if not box_border.empty:
                 # Box border strips (#1049): over the artwork's rim, under the kind frame and the text.
