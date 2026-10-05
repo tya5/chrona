@@ -319,7 +319,10 @@ substrate, with no ink, cone or composite ground) and note prose on a note box t
 same-source (Specification 08, C4). A translucent canvas has nothing under it and stays `E_SCENE_CONTRAST_PAINT`.
 
 **Vector artwork behind an annotation (#848).** The parts of an annotation container's artwork are sibling `Symbol`
-primitives of role `annotation-artwork` over the note box, whose bounds are the whole note. A part is never a host by
+primitives with purpose `annotation-artwork` and the selected `annotation-artwork` or
+`annotation-artwork-<slug>` role over the note box, whose bounds are the whole note.
+The named role family retains the same decoration classification. Every prior same-source
+layer participates in the touched-ink rule below; declaration order is preserved. A part is never a host by
 bounds, so the frame ring around a note's paper is not the ground of the text in its hole, and the parts of one artwork
 are never each other's ground. The artwork is judged as ink on its substrate: a label of the legibility classes (state
 text, ground text, mark) whose `sourceRef` equals an earlier part's takes that part's ink as one more ground **where the
