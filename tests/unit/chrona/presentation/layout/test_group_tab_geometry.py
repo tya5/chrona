@@ -9,7 +9,7 @@ from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.surface_backgrounds import compose_group_tabs
 from chrona.presentation.layout.surface_groups import (
     GroupHeaderExtentUpdate, GroupTabSpec, check_group_tab_inline, group_tab_bounds, replace_group_header_extent,
-    resolve_group_tab,
+    resolve_group_tab, group_tag_bounds,
 )
 from chrona.presentation.layout.surface_quality import GroupPlacement
 from chrona.presentation.model.theme_tokens import ThemeTokenError
@@ -21,8 +21,13 @@ HEADER = Rect(Decimal(36), Decimal(100), Decimal(400), Decimal(20))
 class _Tokens:
     """The four Theme reads the declaration uses, over one role binding."""
 
-    def __init__(self, role: dict | None, **numbers: float) -> None:
+    def __init__(self, role: dict | None, *, mode: str = "horizontal", **numbers: float) -> None:
         self.role, self.numbers = role, {name: Decimal(str(value)) for name, value in numbers.items()}
+        self.mode = mode
+
+    def writing_mode(self, role: str):
+        assert role == "groupHeader"
+        return self.mode
 
     def optional_background(self, role: str):
         assert role == "group-tab"
@@ -196,4 +201,34 @@ def test_no_other_role_admits_a_tab_property(role, prop):
 def test_only_the_tab_among_the_group_roles_admits_a_catalogue_pattern():
     assert theme_catalog_pattern_consumer("group-tab", "pattern") is not None
     assert theme_catalog_pattern_consumer("group-band", "pattern") is None
+
+
+def _tag_tokens(**numbers):
+    return _Tokens({"tabTarget": "tag", "backgroundTreatment": "fill", "backgroundPaintOrder": 20},
+                   mode="vertical", **numbers)
+
+
+def test_tag_cell_is_shared_gap_inset_of_allocated_column_and_group_rows():
+    tab = resolve_group_tab(_tag_tokens(tabGap=3))
+    assert tab.target == "tag"
+    assert group_tag_bounds(tab, (36, 22), HEADER) == Rect(Decimal(39), Decimal(103), Decimal(16), Decimal(14))
+
+
+@pytest.mark.parametrize("column, rows", [((36, 6), HEADER), ((36, 22), Rect(Decimal(0), Decimal(0), Decimal(20), Decimal(6)))])
+def test_nonpositive_tag_cell_reports_the_gap(column, rows):
+    with pytest.raises(LayoutError) as caught:
+        group_tag_bounds(resolve_group_tab(_tag_tokens(tabGap=3)), column, rows)
+    assert caught.value.diagnostic_id == "E_LAYOUT_GROUP_TAB_SIZE"
+    assert caught.value.path == "/body/roles/group-tab/tabGap"
+
+
+def test_tag_without_a_displayed_column_or_groups_emits_no_plate():
+    assert compose_group_tabs(groups=(), theme_tokens=_tag_tokens(), tag_column=(36, 16)) == ()
+    assert compose_group_tabs(groups=(), theme_tokens=_tag_tokens(), tag_column=None) == ()
+
+
+def test_negative_tag_gap_remains_a_layout_size_error():
+    with pytest.raises(LayoutError) as caught:
+        resolve_group_tab(_tag_tokens(tabGap=-1))
+    assert caught.value.diagnostic_id == "E_LAYOUT_GROUP_TAB_SIZE"
     assert theme_catalog_pattern_consumer("group-header-band", "pattern") is None

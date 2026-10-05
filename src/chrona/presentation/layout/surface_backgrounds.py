@@ -8,7 +8,7 @@ from typing import Any
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.surface_base import SurfaceBaseGeometry
 from chrona.presentation.layout.surface_geometry import extend_to_plot_edges
-from chrona.presentation.layout.surface_groups import GroupHeaderExtentUpdate, group_tab_bounds, resolve_group_tab
+from chrona.presentation.layout.surface_groups import GroupHeaderExtentUpdate, group_tab_bounds, group_tag_bounds, resolve_group_tab
 from chrona.presentation.layout.surface_quality import GroupPlacement, ShapePlacement, intersects
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, semantic_binding
 
@@ -92,12 +92,20 @@ def compose_row_group_backgrounds(*, base: SurfaceBaseGeometry, rows: tuple[Any,
     return tuple(shapes)
 
 
-def compose_group_tabs(*, groups: tuple[GroupPlacement, ...], theme_tokens: Any) -> tuple[ShapePlacement, ...]:
+def compose_group_tabs(*, groups: tuple[GroupPlacement, ...], theme_tokens: Any,
+                       tag_column: tuple[float, float] | None = None) -> tuple[ShapePlacement, ...]:
     """Complete one tab Rect per group header from the Theme `group-tab` role (#882); none without the role."""
     tab = resolve_group_tab(theme_tokens)
     if tab is None:
         return ()
     _, paint_order = theme_tokens.background(semantic_binding("groupTab").scene_role)
+    if tab.target == "tag":
+        if tag_column is None:
+            return ()
+        return tuple(ShapePlacement(f"group-tab:{group.group_id}", group.group_id, "Rect",
+                                    group_tag_bounds(tab, tag_column, group.content_bounds),
+                                    slot_id="review-surface", paint_order=paint_order, semantic_id="groupTab")
+                     for group in groups if group.group_id)
     # The header spans table and timeline, so the tab shares the review-surface slot of a `both` band.
     return tuple(ShapePlacement(f"group-tab:{group.group_id}", group.group_id, "Rect",
                                 group_tab_bounds(tab, group.header_bounds), slot_id="review-surface",

@@ -196,7 +196,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     groups = list(mark_batch.groups)
     for update in mark_batch.group_header_updates:
         shapes = list(replace_group_header_band(tuple(shapes), update))
-    shapes.extend(compose_group_tabs(groups=tuple(groups), theme_tokens=request.theme_tokens))
+    shapes.extend(compose_group_tabs(
+        groups=tuple(groups), theme_tokens=request.theme_tokens,
+        tag_column=(base.table_bounds[0], base.group_tag_inline_size) if base.group_tag_inline_size else None))
     shapes.extend(mark_batch.progress_shapes)
     shapes.extend(mark_batch.summary_shapes)
     deadline_batch = compose_deadline_marks(

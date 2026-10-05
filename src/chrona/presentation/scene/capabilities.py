@@ -115,7 +115,7 @@ _TEXT_MEASUREMENT = frozenset(("fontFamily", "fontWeight", "fontSize", "lineHeig
 _ICON_MEASUREMENT = frozenset(("iconScale", "iconGap"))
 _AXIS_MEASUREMENT = frozenset(("laneBlockSize", "labelInset", "labelGap"))
 _AXIS_TICK = frozenset(("tickLength",))
-_GROUP_TAB = frozenset(("tabInlineSize", "tabBlockSize", "tabGap", "tabPosition"))
+_GROUP_TAB = frozenset(("tabInlineSize", "tabBlockSize", "tabGap", "tabPosition", "tabTarget"))
 _RECT_PAINT = frozenset(("fill", "stroke", "strokeWidth", "dash", "opacity",
                          "gradientStart", "gradientEnd", "gradientAngle", "gradientFidelity",
                          "shadowColor", "shadowOffsetX", "shadowOffsetY", "shadowBlur",
