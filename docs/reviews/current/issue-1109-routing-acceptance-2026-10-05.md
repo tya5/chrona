@@ -27,17 +27,18 @@ identical; only the four target-B reasons and diagnostic source line numbers cha
 
 ## Literal issue acceptance
 
-R5 candidate in [#1162](https://github.com/tya5/chrona/pull/1162), not accepted:
-the [first full batch](https://github.com/tya5/chrona/actions/runs/37256103593)
-restores all seven routes (627→634; no routing suppression or safety errors),
-but loses 36 Controller member names. Merge is held. Corrections retain the
-declared label ladders and quality limits through one private Layout recovery
-trial, preserve ordered annotation-rail geometry, and add diagnostic details.
-The four failed tests (two Controller, ordered rail, diagnostic inventory)
-and conformance require a new green exact-head batch. Synthetic recovery,
-retry-rejection and intersection-equivalence tests cover the general rules;
-no corpus/Theme adaptation or quality exception is added. Whole-corpus output
-review and exact-main release remain required.
+R5 candidate in [#1162](https://github.com/tya5/chrona/pull/1162), not release-accepted:
+the [corrected exact-head batch](https://github.com/tya5/chrona/pull/1162#issuecomment-5987677842)
+has 64 contexts, 627→634 paths, routing suppressions 7→0, names 526→542
+(zero lost), unchanged 257 annotation identities and zero Scene safety errors.
+All seven restored paths meet max4 bends/ratio2. Paired rendered output was
+inspected. Seven optional note indices disappear with explicit diagnostics;
+four note bodies show the declared status; two new overflow warnings leave
+existing status paint unchanged. Conformance and newest-Python reproduction
+pass; seven CLI/ownership/wiring expectation failures still require a green
+exact-head run. One bounded Layout recovery preserves names, relation status
+and relation labels without replay or relaxed quality/safety. No corpus/Theme
+adaptation. Merge and exact-main three-OS release remain required.
 
 ### Issue #1109
 

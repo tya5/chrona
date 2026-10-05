@@ -1,4 +1,4 @@
-"""Coordinate one bounded recovery of post-route member labels."""
+"""Coordinates one bounded route/name recovery; reads completed marks, label requests and a clean obstacle index."""
 from __future__ import annotations
 
 from dataclasses import dataclass, fields
