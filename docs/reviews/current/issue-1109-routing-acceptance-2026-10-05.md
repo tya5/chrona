@@ -27,6 +27,13 @@ identical; only the four target-B reasons and diagnostic source line numbers cha
 
 ## Literal issue acceptance
 
+R5 candidate (not release acceptance): 93 focused tests pass. Actual paired
+SVG renders were inspected for 02/12/19/20; six-context strict evidence has
+137→144 dependency paths, no lost path/member-name/annotation identities,
+four recovered FRR labels, and three removed optional window-note indices.
+All seven recovered paths satisfy the unchanged quality limits; no quality
+exception mechanism is added. Whole-corpus CI and exact-main release remain.
+
 ### Issue #1109
 
 - Source: [body](https://github.com/tya5/chrona/issues/1109), [R1–R5](https://github.com/tya5/chrona/issues/1109#issuecomment-5984583052)

@@ -42,12 +42,33 @@ A = _item("a", D(2026, 2, 1), D(2026, 2, 8))
 @pytest.mark.parametrize("target_start", [D(2026, 2, 8), D(2026, 2, 5)], ids=["abutting", "overlapping"])
 def test_an_abutting_or_overlapping_chain_enters_the_start_from_the_side_through_the_row_gap(target_start):
     target = _item("b", target_start, D(2026, 2, 16))
-    points, marks, diagnostics = run(A, target)
+    # A generous detour allowance admits a shorter-bend searched side entry.
+    # The strict allowance rejects it and exercises the canonical gap route.
+    points, marks, diagnostics = run(A, target, max_detour=2.0)
     assert enters_from_side(points) and not reverses(points) and _bends(points) <= 4
     leg = gap_leg(points)
     _, source_bottom = band(marks, "planned:a:a")
     target_top, _ = band(marks, "planned:b:b")
     assert source_bottom < leg[0][1] < target_top, "the back leg lies in the gap between the row mark bands"
+    assert not fell_back(diagnostics)
+
+
+def test_a_safe_lower_bend_searched_side_entry_precedes_the_canonical_back_route():
+    from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, segment_length_inside_rect
+
+    target = _item("b", D(2026, 2, 5), D(2026, 2, 16))
+    points, marks, diagnostics = run(A, target, max_detour=6.0)
+    canonical, _, _ = run(A, target, max_detour=2.0)
+    assert enters_from_side(points) and not reverses(points)
+    assert _bends(points) == 3 < _bends(canonical)
+    length = sum(abs(a[0] - b[0]) + abs(a[1] - b[1]) for a, b in zip(points, points[1:]))
+    direct = abs(points[-1][0] - points[0][0]) + abs(points[-1][1] - points[0][1])
+    assert length <= 6.0 * direct
+    for mark in marks.values():
+        x, y, width, height = mark.bounds
+        interior = ObstacleRect(x + 0.5, y + 0.5, x + width - 0.5, y + height - 0.5)
+        for a, b in zip(points, points[1:]):
+            assert segment_length_inside_rect(ObstacleSegment(a, b), interior) == 0
     assert not fell_back(diagnostics)
 
 
