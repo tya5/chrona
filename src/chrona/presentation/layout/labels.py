@@ -215,12 +215,15 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
     index = obstacles if isinstance(obstacles, SurfaceObstacleIndex) else None
     blocked = () if index is not None else tuple(obstacles)
 
-    def legal(candidate: LabelRect, side: str) -> bool:
+    def admissible(candidate: LabelRect) -> bool:
         if (candidate.x < bounds.x or candidate.y < bounds.y
                 or candidate.right > bounds.right or candidate.bottom > bounds.bottom):
             return False
         if candidate_filter is not None and not candidate_filter(candidate):
             return False
+        return True
+
+    def clear(candidate: LabelRect, side: str) -> bool:
         if index is not None:
             return not index.collisions(
                 ObstacleRect(candidate.x, candidate.y, candidate.right, candidate.bottom),
@@ -242,7 +245,7 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
             if str(exc) == "E_PRESENTATION_LABEL_UNPLACEABLE":
                 continue
             raise
-        if legal(candidate, side):
+        if admissible(candidate) and clear(candidate, side):
             return LabelPlacement(side, candidate)
     if search_side_neighborhood:
         lattice = 8.0
@@ -318,9 +321,10 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
                              LabelRect(base.x - outward, base.y + tangent, base.width, base.height)
                              if side == "start" else
                              LabelRect(base.x + outward, base.y + tangent, base.width, base.height))
-                count += 1
-                if legal(candidate, side):
-                    return LabelPlacement(side, candidate, search_count=count)
+                if admissible(candidate):
+                    count += 1
+                    if clear(candidate, side):
+                        return LabelPlacement(side, candidate, search_count=count)
             next_index = tangent_index + 1
             if next_index < len(tangents):
                 next_tangent = tangents[next_index]

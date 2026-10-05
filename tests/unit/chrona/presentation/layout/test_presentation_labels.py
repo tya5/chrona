@@ -314,6 +314,26 @@ def test_optional_side_search_has_a_finite_512_candidate_cap(monkeypatch):
     assert count == 4 + 512
 
 
+def test_side_search_rejected_associations_do_not_spend_collision_budget(monkeypatch):
+    index = SurfaceObstacleIndex()
+    count = 0
+    original = index.collisions
+
+    def counted(*args, **kwargs):
+        nonlocal count
+        count += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(index, "collisions", counted)
+    result = place_label(LabelRect(1000, 1000, 10, 10), (600, 80), ("above",),
+                         bounds=LabelRect(0, 0, 3000, 3000), obstacles=index,
+                         candidate_filter=lambda rect: rect.x >= 1305,
+                         overflow="suppress", required=False, search_side_neighborhood=True)
+    assert result is not None
+    assert result.bounds.x == 1305
+    assert result.search_count == count == 1
+
+
 def test_wrap_uses_measured_words_and_never_splits_a_token():
     assert wrap_text("alpha beta gamma", available_inline=10, font_size=1, font_metrics=_Metrics()) == ("alpha beta", "gamma")
 
