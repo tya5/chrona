@@ -498,6 +498,12 @@ ignores accepted route strokes, and leaves required and annotation placement
 unchanged. Relation labels retain their completed longest-segment anchor and
 canonical side order before this bounded fallback. See the [#466 side-search correction](../design/issue-466-general-placement-side-search-correction-2026-09-26.md).
 
+Member-label collision queries use completed span paint footprints, including
+half the resolved stroke width outside semantic bounds. This reuses the lane
+facet footprint without changing relation ports or body obstacles. Query
+snapshots do not own accepted placements: every accepted label enters the
+single shared inventory before the next request is queried.
+
 An annotation's optional note-number index and required leader are separate
 Layout outputs. If the index cannot fit, Layout diagnoses and omits only the
 index; the accepted annotation box/text and purpose-required leader remain.

@@ -25,7 +25,8 @@ entries. R3 replaces that incidental count with a documented reason check for
 every non-horizontal entry; release acceptance remains pending.
 
 R3 remains unmerged in [#1160](https://github.com/tya5/chrona/pull/1160);
-its [old-head CI](https://github.com/tya5/chrona/actions/runs/37244756487) is red.
+its [latest published CI](https://github.com/tya5/chrona/actions/runs/37248262224)
+failed only the Editorial-lanes SVG text/mark overlap test (and dependent gate).
 Corrections pass 1565 Layout/Scene/usecase tests, 34 neutral label tests,
 17 annotation tests and both public executive/annotation materializers.
 Contact events and actual-query accounting retain the 512-query cap; member
@@ -33,8 +34,11 @@ names use the existing own-mark reach without a redundant width cutoff, while
 fill-lane stagger limits remain. Stroke-envelope corridor priority recovers
 both Controller arrows without dropping either; alias and SVG assertions now
 require both. Exact renders restore the EVB material-icons name and snapshot
-Silicon Bring-up name without suppression/overflow. The 64-context batch is
-regenerated; final CI must confirm its bytes after the fill-stagger guard.
+Silicon Bring-up name without suppression/overflow. Label queries now reuse
+completed span paint footprints; semantic ports and the accepted inventory
+remain unchanged. The exact failed SVG test passes after scoped regeneration;
+neutral tests cover query isolation, memo identity and stroke-edge rejection.
+The 64-context batch must be regenerated and reviewed on the new exact-head CI.
 R3 is not released. R4/R5 and the literal PDR disposition remain open.
 
 ## Literal issue acceptance
