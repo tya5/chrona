@@ -32,6 +32,11 @@ Schema equivalence passed against ready-main
 mapped documents and L3 739 probes with no new invalid verdicts/diagnostics.
 Theme-consumer and literal-review gates passed. Final
 shared corpus deltas and required CI receipts belong in the linked Status.
+The first CI conformance run found missing author-facing annotations on the
+new schema definitions. Descriptions/examples were completed; annotation
+lint and 38 annotation/Theme unit tests pass, and every schema validation
+fingerprint is unchanged from the first implementation head. All other
+conformance checks passed; final corrected-head CI remains required.
 
 ## Literal issue acceptance
 

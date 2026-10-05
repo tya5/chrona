@@ -175,6 +175,7 @@ properties:
                         oneOf:
                           - {$ref: "#/$defs/artworkObject"}
                           - type: array
+                            description: "Ordered independently painted layers over one annotation paper box."
                             minItems: 1
                             items: {$ref: "#/$defs/artworkLayer"}
                       contentInsetEm:
@@ -440,6 +441,7 @@ $defs:
     properties:
       glyph:
         description: "Authored set:name reference to a normalized catalogue glyph."
+        examples: ["chrona-annotation-parts:scroll-rods"]
         type: string
         pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"
       sliceInsets:
@@ -448,10 +450,10 @@ $defs:
         additionalProperties: false
         required: [top, right, bottom, left]
         properties:
-          top: {type: number, minimum: 0}
-          right: {type: number, minimum: 0}
-          bottom: {type: number, minimum: 0}
-          left: {type: number, minimum: 0}
+          top: {description: "Fixed top border in glyph viewport units.", type: number, minimum: 0}
+          right: {description: "Fixed right border in glyph viewport units.", type: number, minimum: 0}
+          bottom: {description: "Fixed bottom border in glyph viewport units.", type: number, minimum: 0}
+          left: {description: "Fixed left border in glyph viewport units.", type: number, minimum: 0}
       unitEm:
         description: "Positive size of one glyph viewport unit in annotation text em."
         type: number
@@ -464,9 +466,11 @@ $defs:
     description: "One ordered artwork layer and its optional selected Theme role."
     allOf:
       - {$ref: "#/$defs/artworkGeometry"}
-      - properties:
+      - description: "An optional closed artwork ink role for this layer."
+        properties:
           role:
             description: "Artwork ink role; absent means annotation-artwork. The suffix follows the common slug lexeme."
+            examples: [annotation-artwork, annotation-artwork-rods]
             type: string
             pattern: "^annotation-artwork(?:-[a-z][a-z0-9-]*)?$"
     unevaluatedProperties: false
