@@ -25,7 +25,7 @@ def simplify_relation_route(
     """
     if (not isfinite(start_minimum) or not isfinite(end_minimum)
             or start_minimum < 0 or end_minimum < 0):
-        raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+        raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID:terminal-run minimum must be finite and nonnegative")
     current = _collapse_collinear(tuple(points))
     while True:
         replacement = _collapse_one_jog(current, clears, start_minimum, end_minimum)
@@ -130,7 +130,7 @@ def terminal_runs_preserved(
     """
     for minimum in (start_minimum, end_minimum):
         if minimum is not None and (not isfinite(minimum) or minimum < 0):
-            raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+            raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID:terminal-run minimum must be finite and nonnegative")
     if len(original) < 2 or len(candidate) < 2:
         return False
     for start, end, new_start, new_end, minimum in (

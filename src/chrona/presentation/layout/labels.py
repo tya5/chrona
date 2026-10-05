@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from heapq import heappop, heappush
 from math import ceil, isfinite
 from math import hypot
 from typing import Callable, Iterable
@@ -245,36 +246,86 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
             return LabelPlacement(side, candidate)
     if search_side_neighborhood:
         lattice = 8.0
-        nearby: list[tuple[float, int, float, float, str, LabelRect]] = []
+        nearby: list[tuple[float, int, float, float, str, LabelRect, tuple[float, ...], int]] = []
         for rank, side in enumerate(sides):
             if side == "inside":
                 continue
             base = _candidate(anchor, size, side, gap)
             tangent_bound = size[0] if side in {"above", "below"} else size[1]
             outward_bound = size[1] if side in {"above", "below"} else size[0]
-            for outward_step in range(ceil(outward_bound / lattice) + 1):
-                outward = outward_step * lattice
-                if outward > outward_bound:
-                    continue
+            tangent_offsets = {step * lattice for step in range(-ceil(tangent_bound / lattice),
+                                                                ceil(tangent_bound / lattice) + 1)
+                               if abs(step * lattice) <= tangent_bound}
+            tangent_offsets.update((-tangent_bound, tangent_bound))
+            outward_offsets = {step * lattice for step in range(ceil(outward_bound / lattice) + 1)
+                               if step * lattice <= outward_bound}
+            outward_offsets.add(outward_bound)
+
+            if side in {"above", "below"}:
+                tangent_offsets.update((bounds.x - base.x, bounds.right - base.right))
+                outward_offsets.update((base.y - bounds.y, base.bottom - bounds.bottom)
+                    if side == "above" else (bounds.y - base.y, bounds.bottom - base.bottom))
+            else:
+                tangent_offsets.update((bounds.y - base.y, bounds.bottom - base.bottom))
+                outward_offsets.update((base.x - bounds.x, base.right - bounds.right)
+                    if side == "start" else (bounds.x - base.x, bounds.right - base.right))
+
+            if index is not None:
+                event_obstacles = tuple(item for item in index.select(classes=classes)
+                    if item.placement_id != rule_host_obstacle_id)
+                envelopes = []
+                for obstacle in event_obstacles:
+                    left, top, right, bottom = obstacle_envelope(obstacle.geometry)
+                    envelopes.append((left - obstacle.clearance, top - obstacle.clearance,
+                                      right + obstacle.clearance, bottom + obstacle.clearance))
+            else:
+                envelopes = []
+                for obstacle in blocked:
+                    rect = obstacle.bounds if isinstance(obstacle, LabelObstacle) else obstacle
+                    envelopes.append((rect.x, rect.y, rect.right, rect.bottom))
+
+            # Include exact translations at which the candidate rectangle
+            # touches an obstacle envelope, plus both footprint-boundary
+            # offsets. The canonical collision query remains the authority.
+            for left, top, right, bottom in envelopes:
+                if side in {"above", "below"}:
+                    tangent_offsets.update((left - base.right, right - base.x))
+                    outward_offsets.update((base.bottom - top, base.y - bottom)
+                        if side == "above" else (bottom - base.y, top - base.bottom))
+                else:
+                    tangent_offsets.update((top - base.bottom, bottom - base.y))
+                    outward_offsets.update((base.right - left, base.x - right)
+                        if side == "start" else (right - base.x, left - base.right))
+            tangent_offsets = {value for value in tangent_offsets
+                               if isfinite(value) and abs(value) <= tangent_bound}
+            outward_offsets = {value for value in outward_offsets
+                               if isfinite(value) and 0 <= value <= outward_bound}
+            tangents = tuple(sorted(tangent_offsets, key=lambda value: (abs(value), value)))
+            for outward in sorted(outward_offsets):
                 if (maximum_side_gap is not None and side in {"end", "start"}
                         and gap + outward > maximum_side_gap):
                     continue
-                for tangent_step in range(-ceil(tangent_bound / lattice), ceil(tangent_bound / lattice) + 1):
-                    tangent = tangent_step * lattice
-                    if abs(tangent) > tangent_bound or (outward == 0 and tangent == 0):
-                        continue
-                    displaced = (LabelRect(base.x + tangent, base.y - outward, base.width, base.height)
-                                 if side == "above" else
-                                 LabelRect(base.x + tangent, base.y + outward, base.width, base.height)
-                                 if side == "below" else
-                                 LabelRect(base.x - outward, base.y + tangent, base.width, base.height)
-                                 if side == "start" else
-                                 LabelRect(base.x + outward, base.y + tangent, base.width, base.height))
-                    nearby.append((abs(tangent) + outward, rank, outward, tangent, side, displaced))
-        nearby.sort(key=lambda item: item[:4])
-        for count, (_, _, _, _, side, candidate) in enumerate(nearby[:512], start=1):
-            if legal(candidate, side):
-                return LabelPlacement(side, candidate, search_count=count)
+                heappush(nearby, (abs(tangents[0]) + outward, rank, outward,
+                                  tangents[0], side, base, tangents, 0))
+        count = 0
+        while nearby and count < 512:
+            _, rank, outward, tangent, side, base, tangents, tangent_index = heappop(nearby)
+            if outward != 0 or tangent != 0:
+                candidate = (LabelRect(base.x + tangent, base.y - outward, base.width, base.height)
+                             if side == "above" else
+                             LabelRect(base.x + tangent, base.y + outward, base.width, base.height)
+                             if side == "below" else
+                             LabelRect(base.x - outward, base.y + tangent, base.width, base.height)
+                             if side == "start" else
+                             LabelRect(base.x + outward, base.y + tangent, base.width, base.height))
+                count += 1
+                if legal(candidate, side):
+                    return LabelPlacement(side, candidate, search_count=count)
+            next_index = tangent_index + 1
+            if next_index < len(tangents):
+                next_tangent = tangents[next_index]
+                heappush(nearby, (abs(next_tangent) + outward, rank, outward,
+                                  next_tangent, side, base, tangents, next_index))
     if overflow == "visible-overflow":
         # Ordinary requests retain their first ranked side. A separately
         # declared terminal side is used only after all ranked candidates fail.

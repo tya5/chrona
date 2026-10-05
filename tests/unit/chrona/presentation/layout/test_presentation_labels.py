@@ -263,6 +263,38 @@ def test_optional_side_search_preserves_canonical_first_and_avoids_route_stroke(
     assert canonical is not None and canonical.search_count == 0
 
 
+def test_optional_side_search_finds_narrow_exact_contact_interval_deterministically():
+    index = SurfaceObstacleIndex()
+    # The legal x interval is only 1.4px wide: a 20px label must clear the
+    # first route at x=71.5 and stay left of the second at x=71.9. Neither
+    # adjacent 8px lattice point is legal.
+    index.add(SurfaceObstacle("route:left", "dependency-route", "timeline",
+                              ObstacleSegment((71, 0), (71, 60), stroke_width=1)))
+    index.add(SurfaceObstacle("route:right", "dependency-route", "timeline",
+                              ObstacleSegment((92.4, 0), (92.4, 60), stroke_width=1)))
+    args = (LabelRect(58, 50, 10, 10), (20, 8), ("above",))
+    kwargs = dict(bounds=LabelRect(53, 0, 120, 100), obstacles=index,
+                  classes=("dependency-route",), overflow="suppress", required=False,
+                  search_side_neighborhood=True)
+    first = place_label(*args, **kwargs)
+    second = place_label(*args, **kwargs)
+    assert first is not None and first.side == "above"
+    assert first == second
+    assert first.bounds.x == pytest.approx(71.5)
+    assert first.bounds.right <= 91.9
+    assert not index.collisions(ObstacleRect(first.bounds.x, first.bounds.y,
+                                             first.bounds.right, first.bounds.bottom),
+                                classes=("dependency-route",))
+
+
+def test_optional_side_search_finds_a_narrow_row_edge_interval():
+    result = place_label(LabelRect(2, 10, 5, 5), (5, 2), ("above",),
+                         bounds=LabelRect(4.5, 7, 5.2, 2), gap=1,
+                         required=False, overflow="suppress", search_side_neighborhood=True)
+    assert result is not None
+    assert result.bounds == LabelRect(4.5, 7, 5, 2)
+
+
 def test_optional_side_search_has_a_finite_512_candidate_cap(monkeypatch):
     index = SurfaceObstacleIndex()
     index.add(SurfaceObstacle("blocked", "mark", "timeline", ObstacleRect(0, 0, 3000, 3000)))

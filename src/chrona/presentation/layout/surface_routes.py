@@ -564,6 +564,7 @@ def place_relation_labels(context: SurfaceRoutesContext,
             ("above", "below", "start", "end"), bounds=timeline_rect, obstacles=obstacles,
             gap=max(1.0, float(font_size) * 0.25), required=False,
             overflow=request.surface_content.relation_overflow,
+            search_side_neighborhood=True,
             classes=("mark", "text", "label-visual", "dependency-route"))
         if candidate is None:
             diagnostics.append(f"W_LAYOUT_RELATION_LABEL_SUPPRESSED:{placed_relation.relation_id}")

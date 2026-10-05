@@ -32,9 +32,13 @@ read: launch→LEOP remains straight and all 24 dependency paths remain present.
 62 SVGs and 477 relation geometries change. Text changes/additions/removals are
 101/4/45: removals include the optional EVB Arrival name in 38 Controller
 contexts, three note indexes, two relation labels and two annotation texts.
-The new minimal-bend route intersects the former name box; existing post-route
-label priority suppresses it. This side effect requires owner disposition before
-merge, not a corpus/Theme workaround. R3 is not released; R4 and R5 remain open.
+The new minimal-bend route intersects the former name box. Exact replay proves
+a legal displacement inside existing footprint/association bounds which the
+8px sampling lattice misses. The published correction adds obstacle contacts,
+not route rollback or a corpus/Theme workaround. [Candidate CI](https://github.com/tya5/chrona/actions/runs/37244756487)
+finds seven failing tests: diagnostic detail (1), member labels (3), annotation
+leaders (3), plus the conformance ratchet. Corrections and renewed batch/CI are
+required before acceptance. R3 is not released; R4 and R5 remain open.
 
 ## Literal issue acceptance
 
@@ -53,7 +57,7 @@ merge, not a corpus/Theme workaround. R3 is not released; R4 and R5 remain open.
 | 6 | The source terminal's centre lies on the line. | met | [Synthetic centre fixtures](../../../tests/unit/chrona/presentation/scene/test_relation_round_terminals.py) and [short-gap offsets](../../../tests/unit/chrona/presentation/layout/test_relation_substroke.py) | — |
 | 7 | A Scene check finds no relation segment shorter than its stroke width, corpus-wide, after regeneration. | met | [Scene observer](../../../src/chrona/presentation/scene/perceptibility.py); 64-context batch: 0 | — |
 | 8 | Existing straight-start fixtures are unchanged. | met | [Straight-start tests](../../../tests/unit/chrona/presentation/scene/test_relation_terminal_none.py) and [geometry identity](../../../tests/unit/chrona/presentation/layout/test_relation_substroke.py) | — |
-| 9 | Target B: the PDR source terminal sits on the line. | met | Target-B Scene/SVG unchanged; current Theme declares no source terminal. [Circle case](../../../tests/unit/chrona/presentation/scene/test_relation_round_terminals.py) independently covers the original shape | — |
+| 9 | Target B: the PDR source terminal sits on the line. | not met | [Target-B Theme](../../../examples/halcyon-1/themes/target-b.yaml) declares `none`, so no rendered terminal exists to assess. [Circle case](../../../tests/unit/chrona/presentation/scene/test_relation_round_terminals.py) proves the general fix, not this literal criterion; owner disposition required | — |
 | 10 | synthetic fixtures for 1, 2 and 4 that fail on the previous order or rule and pass now; `tvac-emc` either enters from the side or the diagnostic names a reason that is documented as final; corpus before/after with images read. | not met | [R4](https://github.com/tya5/chrona/issues/1109#issuecomment-5984583052) remains | — |
 | 11 | This issue must bring the count of relations suppressed for routing reasons back to **0** across the corpus. Every dependency must be drawn, with no route through any mark, within the existing `maxBends` and `maxDetourRatio` or with a reported, reasoned exception. | not met | [Owner R5 requirement](https://github.com/tya5/chrona/issues/1109#issuecomment-5979830960) remains | — |
 | 12 | No relation segment shorter than its stroke width, corpus-wide, after regeneration. The terminal marker's axis follows the first or last segment that is at least `headLength` long, or the port normal | met | [Axis/reduction tests](../../../tests/unit/chrona/presentation/layout/test_relation_substroke.py), observer and 64-context batch | — |

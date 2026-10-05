@@ -481,11 +481,17 @@ semantic relations, and only accepted labels enter the route obstacle set.
 Their terminal suppression is counted without altering membership (Specs 38
 and 50). Relation labels still follow their completed routes.
 
-After canonical side candidates fail, optional plot/item/delta labels may use
+After canonical side candidates fail, optional plot/item/delta and relation labels may use
 a finite side-relative displacement bounded by their measured footprint and
-512 collision queries. This fallback never changes the declared side, never
+512 collision queries. After canonical positions fail, displacement candidates
+include obstacle-contact coordinates and exact footprint/row edges as well as
+the regular lattice, so a narrow legal interval is not skipped solely by an
+8px sampling step. Rank candidates deterministically by displacement and side
+order; all still satisfy the original footprint and association bounds.
+This fallback never changes the declared side, never
 ignores accepted route strokes, and leaves required and annotation placement
-unchanged. See the [#466 side-search correction](../design/issue-466-general-placement-side-search-correction-2026-09-26.md).
+unchanged. Relation labels retain their completed longest-segment anchor and
+canonical side order before this bounded fallback. See the [#466 side-search correction](../design/issue-466-general-placement-side-search-correction-2026-09-26.md).
 
 An annotation's optional note-number index and required leader are separate
 Layout outputs. If the index cannot fit, Layout diagnoses and omits only the
