@@ -58,6 +58,7 @@ The registry owns canonical primitive semantics. Its entries declare `semantic_i
 | `groupHeader` | Rect/Text | `group-header-band`, `group-header` | `groupHeader` |
 | `slotHeading` | Text | `slot-heading` | `slot-heading` (ground text; the role is opt-in and the `text` role applies without it, #1064) |
 | `titleText` / `subtitleText` | Text | `title-text` / `subtitle-text` | `heading` / `subtitle` when the respective role binds `fill`, otherwise the explicit registered `text` alternative; ground text (#1164) |
+| `networkLabel` | Text | `title-text` (existing public network-label purpose) | `text`; Layout distinguishes node labels from `titleText`, so title ink never repaints them (#1164) |
 | `regionFrame` | Rect | `region-frame` | Layout completes `region-frame` or the declared `region-frame-<paint>`; an absent selected role omits only that frame (#1165) |
 | `groupTab` | Rect | `group-tab` | `group-tab` (contrast class `decoration`; the role is opt-in, #882) |
 | `calendarClosed` | Rect | `calendar-closed` | `calendarClosed` |

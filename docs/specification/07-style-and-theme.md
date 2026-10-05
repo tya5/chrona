@@ -431,6 +431,8 @@ and font asset identities are independent of this ink choice. `heading.stroke`
 is `E_THEME_ROLE_PROPERTY_UNSUPPORTED` at its binding pointer. Both lines are
 ground text and use the declared `contrastPolicy.groundText` on their completed
 ground. Adapters serialize completed paint and do not resolve these roles.
+This addition admits only `fill` and `opacity` on `heading`; it does not enable
+the shadow, glow, or gradient effect families on that measurement role.
 
 The next specification resolves styled semantic objects into a renderer-neutral Scene. Scene may choose a rectangle, path, marker, text run, or group and assign concrete coordinates; it must preserve the object's identity, relationship kind, resolved visual roles, and token references. It must not decide whether something is `behind`, a dependency, or an explanatory arrow.
 

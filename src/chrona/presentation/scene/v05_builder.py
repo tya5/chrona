@@ -1045,12 +1045,13 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
                                  float(shape.bounds.inline_size), float(shape.bounds.block_size)),
             paint_order=shape.paint_order))
         texture_slot[shape.placement_id] = shape.slot_id
-    title_binding = semantic_binding("titleText")
     node_binding = semantic_binding("networkNode")
     edge_bindings = {"dependency": semantic_binding("networkEdge"),
                      "dependency-critical": semantic_binding("criticalEdge")}
     def emit_text(text: Any) -> None:
-        binding = title_binding
+        binding = semantic_binding(text.semantic_id)
+        paint_role = (value.theme_tokens.title_paint_role()
+                      if text.semantic_id == "titleText" else binding.scene_role)
         layout = TextLayout((float(text.bounds.inline), float(text.bounds.block),
                              float(text.bounds.inline_size), float(text.bounds.block_size)),
                             text.baseline or (float(text.bounds.inline), float(text.bounds.block)),
@@ -1059,7 +1060,7 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
                             text.text_transform, text.numeric_spacing, text.orientation, text.rotation_degrees,
                             text.horizontal_scale)
         primitives.append(ScenePrimitive(text.placement_id, PrimitiveKind.TEXT, text.source_ref, "network",
-                                         binding.purpose, value.theme_tokens.title_paint_role(), layout.bounds, text=text.content,
+                                         binding.purpose, paint_role, layout.bounds, text=text.content,
                                          baseline=layout.baseline, text_layout=layout,
                                          paint_order=text.paint_order, host_placement_id=text.host_placement_id))
     title_text = next(item for item in placed.text if item.placement_id == "title")

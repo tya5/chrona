@@ -185,6 +185,8 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     # label read as ghost text. Its typography is still the Theme's "annotation" role (the theme-role field).
     _binding("relationLabel", "label", "relation-label", "text", "annotation", ContrastClass.GROUND_TEXT),
     _binding("networkNode", "mark", "network-node", "network-node", "network-node", ContrastClass.MARK),
+    # Preserve the public network-label purpose while separating its shared ink from title ink.
+    _binding("networkLabel", "label", "title-text", "text", "text", ContrastClass.GROUND_TEXT),
     _binding("networkEdge", "line", "network-edge", "network-edge", "network-edge"),
     _binding("criticalEdge", "line", "critical-edge", "critical-edge", "critical-edge"),
     # Legend, notes and annotations.

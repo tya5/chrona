@@ -24,7 +24,23 @@ to ready main. Registering title
 roles also preserves their purpose-based ground gate when used as View cell inks.
 Correction verification: 27 title/frame/semantic/network tests pass, including
 actual View cells on row-band grounds and the synthetic network title.
-Full latest-head CI and actual corpus batch remain required.
+CI37341090774 additionally exposed two failures: shard1 applied title ink to
+network node labels; shard2 admitted heading glow beyond this slice. Shard3
+passed and derived-ready propagated the pytest failures. Layout now completes
+distinct title/node-label semantic bindings, preserving node labels' public
+purpose and shared ink; heading admits only fill/opacity beyond its prior
+measurement/viewer-fit fields. The actual title expectation changes only when
+the fixture binds heading.fill. These corrections pass 140 focused tests;
+registry reachability/realization and literal review checks pass. Both actual
+public network materializers pass and their four Scene/SVG files remain
+byte-identical to the validated ready-main renders. Independent architecture
+review finds the typed semantic separation consistent with existing ownership.
+The 6dca9767 snapshot [batch receipt](https://github.com/tya5/chrona/pull/1172#issuecomment-5998998175)
+retains 137 paths:133 byte-identical, one Target B subtitle paint change and
+corresponding reports; no geometry/route/wording/ID change or new rendering
+diagnostic. Actual SVG/raster review confirms legibility (contrast5.448) and
+no clipping/overlap. This is not final-head evidence for the subsequent correction;
+latest-head CI and its shared batch remain required.
 
 ## Literal issue acceptance
 

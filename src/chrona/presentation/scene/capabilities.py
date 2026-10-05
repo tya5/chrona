@@ -200,7 +200,7 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _SHARED_TEXT_ICON_PAINT | _VIEWER_FIT,
              scene_kinds=frozenset(("Text", "Icon")))
     register("heading", "Layout title measurement and Scene Text",
-             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT | _VIEWER_FIT,
+             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("fill", "opacity")) | _VIEWER_FIT,
              scene_kinds=frozenset(("Text",)))
     register("numeric summary", "Layout text measurement",
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _VIEWER_FIT)

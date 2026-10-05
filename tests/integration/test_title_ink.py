@@ -206,3 +206,10 @@ def test_dependency_network_title_uses_shared_fill_opt_in_and_opacity_fallback(t
     assert _texts(explicitly_painted)["title"].visual_role == "heading"
     assert _texts(explicitly_painted)["title"].paint.fill != _texts(plain)["title"].paint.fill
     assert _geometry_signature(_texts(explicitly_painted)["title"]) == _geometry_signature(_texts(plain)["title"])
+    plain_labels = {item.scene_id: item for item in plain.surface.primitives
+                    if item.source_kind == "network" and item.scene_id != "title" and item.kind == "Text"}
+    painted_labels = {item.scene_id: item for item in explicitly_painted.surface.primitives
+                      if item.source_kind == "network" and item.scene_id != "title" and item.kind == "Text"}
+    assert plain_labels
+    assert painted_labels == plain_labels
+    assert all(item.visual_role == "text" for item in painted_labels.values())
