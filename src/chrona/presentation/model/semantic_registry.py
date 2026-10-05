@@ -156,9 +156,9 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("groupHeader", "decoration", "group-header", "group-header", "groupHeader", ContrastClass.GROUND_TEXT),
     _binding("groupDetail", "label", "group-detail", "text", "text", ContrastClass.GROUND_TEXT),
     # Table.
-    _binding("titleText", "label", "title-text", "text", "heading", ContrastClass.GROUND_TEXT),
+    _binding("titleText", "label", "title-text", "heading", "heading", ContrastClass.GROUND_TEXT),
     # The subtitle line a View's `heading.subtitle` declares (#991), in the Theme's `subtitle` typography role.
-    _binding("subtitleText", "label", "subtitle-text", "text", "subtitle", ContrastClass.GROUND_TEXT),
+    _binding("subtitleText", "label", "subtitle-text", "subtitle", "subtitle", ContrastClass.GROUND_TEXT),
     # The caption a Layout Profile slot declares (#1064), in the Theme's `slot-heading` text role (`text` when absent).
     _binding("slotHeading", "label", "slot-heading", "slot-heading", "slot-heading", ContrastClass.GROUND_TEXT),
     _binding("tableColumnLabel", "label", "table-column-label", "text", "text", ContrastClass.GROUND_TEXT),
@@ -185,6 +185,8 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     # label read as ghost text. Its typography is still the Theme's "annotation" role (the theme-role field).
     _binding("relationLabel", "label", "relation-label", "text", "annotation", ContrastClass.GROUND_TEXT),
     _binding("networkNode", "mark", "network-node", "network-node", "network-node", ContrastClass.MARK),
+    # Preserve the public network-label purpose while separating its shared ink from title ink.
+    _binding("networkLabel", "label", "title-text", "text", "text", ContrastClass.GROUND_TEXT),
     _binding("networkEdge", "line", "network-edge", "network-edge", "network-edge"),
     _binding("criticalEdge", "line", "critical-edge", "critical-edge", "critical-edge"),
     # Legend, notes and annotations.
@@ -289,7 +291,10 @@ def contrast_binding_for(scene_role: str, purpose: str | None) -> SemanticBindin
         return binding
     # A role no binding registers as its scene role is a Theme text paint role (`tableColumnLabel`, `legend`, a
     # View-named column role, #1062): it paints the same free ink and is judged by its purpose like `text`.
-    theme_text_role = scene_role not in _SCENE_ROLES
+    # Title inks are general Theme typography roles too: a View may name them
+    # for a table cell. Registering their title semantics must not disable the
+    # purpose-based ground gate for those other text uses (#1164).
+    theme_text_role = scene_role not in _SCENE_ROLES or scene_role in {"heading", "subtitle"}
     return next((item for item in contrast_bindings(ContrastClass.GROUND_TEXT)
                  if item.purpose == purpose and (theme_text_role or scene_role in ("text", item.scene_role))), None)
 

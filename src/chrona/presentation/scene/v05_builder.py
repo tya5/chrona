@@ -548,13 +548,13 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             frame = semantic_binding("regionFrame")
             primitives.append(ScenePrimitive(
                 placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "decoration", frame.purpose,
-                frame.scene_role, (float(placed.bounds.inline), float(placed.bounds.block),
+                placed.visual_role or frame.scene_role, (float(placed.bounds.inline), float(placed.bounds.block),
                                    float(placed.bounds.inline_size), float(placed.bounds.block_size)),
                 slot_id=placed.slot_id, paint_order=placed.paint_order,
                 corner_radius=placed.corner_radius or None))
-    emit_semantic_text("title", "titleText")
+    emit_semantic_text("title", "titleText", value.theme_tokens.title_paint_role())
     if "subtitle" in layout_text:
-        emit_semantic_text("subtitle", "subtitleText")
+        emit_semantic_text("subtitle", "subtitleText", value.theme_tokens.title_paint_role(subtitle=True))
     for column in value.surface_content.table_columns:
         # A Theme that declares `tableColumnLabel` with a fill paints its headers with it (#991).
         header_paint = ("tableColumnLabel" if value.theme_tokens.optional_color("tableColumnLabel", "fill") is not None else None)
@@ -1045,12 +1045,13 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
                                  float(shape.bounds.inline_size), float(shape.bounds.block_size)),
             paint_order=shape.paint_order))
         texture_slot[shape.placement_id] = shape.slot_id
-    title_binding = semantic_binding("titleText")
     node_binding = semantic_binding("networkNode")
     edge_bindings = {"dependency": semantic_binding("networkEdge"),
                      "dependency-critical": semantic_binding("criticalEdge")}
     def emit_text(text: Any) -> None:
-        binding = title_binding
+        binding = semantic_binding(text.semantic_id)
+        paint_role = (value.theme_tokens.title_paint_role()
+                      if text.semantic_id == "titleText" else binding.scene_role)
         layout = TextLayout((float(text.bounds.inline), float(text.bounds.block),
                              float(text.bounds.inline_size), float(text.bounds.block_size)),
                             text.baseline or (float(text.bounds.inline), float(text.bounds.block)),
@@ -1059,7 +1060,7 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
                             text.text_transform, text.numeric_spacing, text.orientation, text.rotation_degrees,
                             text.horizontal_scale)
         primitives.append(ScenePrimitive(text.placement_id, PrimitiveKind.TEXT, text.source_ref, "network",
-                                         binding.purpose, binding.scene_role, layout.bounds, text=text.content,
+                                         binding.purpose, paint_role, layout.bounds, text=text.content,
                                          baseline=layout.baseline, text_layout=layout,
                                          paint_order=text.paint_order, host_placement_id=text.host_placement_id))
     title_text = next(item for item in placed.text if item.placement_id == "title")

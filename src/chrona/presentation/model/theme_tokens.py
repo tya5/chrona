@@ -203,6 +203,15 @@ class ThemeTokenView:
         """The typography role of table column headers: `tableColumnLabel` when the Theme declares it, else `text` (#991)."""
         return "tableColumnLabel" if self.has_role("tableColumnLabel") else "text"
 
+    def title_paint_role(self, *, subtitle: bool = False) -> str:
+        """The registered title ink choice (#1164); typography remains independent.
+
+        A fill activates the line's own paint role, including its opacity. An
+        opacity alone does not activate an ink; the shared text paint is unchanged.
+        """
+        role = "subtitle" if subtitle else "heading"
+        return role if self.optional_color(role, "fill") is not None else "text"
+
     def slot_heading_role(self) -> str:
         """The typography role of a slot heading (#1064): `slot-heading` when the Theme declares it, else `text`."""
         return "slot-heading" if self.has_role("slot-heading") else "text"

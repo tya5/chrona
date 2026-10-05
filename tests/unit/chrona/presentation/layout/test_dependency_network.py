@@ -41,6 +41,7 @@ def test_network_layout_uses_longest_path_rank_measured_labels_and_stable_order(
                                                measured_sources=_measured("a", "b", "c"), flow_direction="horizontal")
     assert [(item.object_id, item.rank) for item in layout.nodes] == [("a", 0), ("b", 1), ("c", 2)]
     assert [item.placement_id for item in layout.text] == ["title", "network-label:a", "network-label:b", "network-label:c"]
+    assert [item.semantic_id for item in layout.text] == ["titleText", "networkLabel", "networkLabel", "networkLabel"]
     assert all(len(item.points) >= 2 for item in layout.relations)
 
 

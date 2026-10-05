@@ -264,6 +264,8 @@ class ShapePlacement:
     symbol_parts: tuple[Any, ...] = ()
     # The viewer-fit mode of a text-bearing box (#1050); `raw` is today's output.
     viewer_fit: str = "raw"
+    # Selected Theme role for completed named region frames; absent keeps the legacy Scene role.
+    visual_role: str | None = None
 
 
 @dataclass(frozen=True)

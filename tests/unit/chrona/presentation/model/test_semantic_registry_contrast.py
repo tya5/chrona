@@ -11,7 +11,7 @@ GROUND_TEXT_SEMANTICS = {
     "memberLabelInsideActual", "memberLabelInsideSnapshot", "memberLabelInsideScenario", "milestoneDigestEntry",
     "relationLabel", "legendLabel", "projectNote", "noteIndex", "annotationCalloutText", "annotationHighlightText",
     "annotationArrowText", "summaryHeader", "summaryMetric", "summaryFigureValue", "summaryFigureCaption",
-    "slotHeading", "annotationListText",
+    "slotHeading", "annotationListText", "networkLabel",
 }
 # Labels painted in the role of a classified state text: the classification is by that role, not by their own.
 LABELS_CLASSIFIED_BY_ROLE = {"finishDelta", "varianceAhead", "varianceBehind"}
@@ -41,6 +41,15 @@ def test_member_label_is_retained_as_text_and_member_leader_semantic_is_retired(
         semantic_binding("memberLabelLeader")
 
 
+def test_network_node_labels_keep_shared_ink_and_existing_public_purpose():
+    label = semantic_binding("networkLabel")
+    title = semantic_binding("titleText")
+    assert label.purpose == title.purpose == "title-text"
+    assert label.scene_role == label.theme_role == "text"
+    assert title.scene_role == "heading"
+    assert contrast_binding_for(label.scene_role, label.purpose).contrast_class == ContrastClass.GROUND_TEXT
+
+
 def test_every_label_semantic_is_classified_so_a_new_label_cannot_reopen_the_hole():
     unclassified = {
         item.semantic_id for item in (semantic_binding(name) for name in semantic_ids())
@@ -60,7 +69,8 @@ def test_free_text_resolves_by_purpose_in_the_shared_role_and_by_role_and_purpos
     for role, purpose in (("axis-label2", "axis-label"), ("axis-label3", "axis-label"),
                           ("member-label-inside-planned", "member-label"), ("note-index", "note-index"),
                           ("annotation-callout-text", "annotation-text"), ("metric", "summary-figure-value"),
-                          ("slot-heading", "slot-heading")):
+                          ("slot-heading", "slot-heading"), ("heading", "title-text"),
+                          ("subtitle", "subtitle-text"), ("text", "title-text"), ("text", "subtitle-text")):
         assert contrast_binding_for(role, purpose).contrast_class == ContrastClass.GROUND_TEXT, (role, purpose)
     # A role of its own never borrows another purpose's class, and only a Text primitive (a purpose) can be ground text.
     assert contrast_binding_for("axis-label2", "member-label") is None
@@ -73,7 +83,8 @@ def test_free_text_resolves_by_purpose_in_the_shared_role_and_by_role_and_purpos
 def test_a_theme_text_paint_role_is_ground_text_by_its_purpose(tmp_path):
     """The header role, the legend role and a View-named column role are judged like `text` (#1062)."""
     for role, purpose in (("tableColumnLabel", "table-column-label"), ("legend", "legend-label"),
-                          ("table-cell-secondary", "table-cell")):
+                          ("table-cell-secondary", "table-cell"), ("heading", "table-cell"),
+                          ("subtitle", "table-cell")):
         assert contrast_binding_for(role, purpose).contrast_class == ContrastClass.GROUND_TEXT, (role, purpose)
     # The purpose still decides: a named role on a purpose no ground-text binding owns, or on no purpose, is not classified,
     # and a registered role never borrows another purpose's class.

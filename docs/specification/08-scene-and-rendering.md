@@ -303,11 +303,12 @@ that carries stop opacities (the gradient identity includes them; any other grad
 byte-identical); PNG is that SVG through resvg. A Scene that carries stop opacities is
 written as `chrona/scene/v0.7` (optional `opacity` on a gradient stop).
 
-**Region frames (#889).** A Theme that declares the role `region-frame` adds one Rect primitive per
-drawable frame of the table-timeline surface. Layout completes it (Specification 33 section 3): the Rect,
+**Region frames (#889, #1165).** Each declared frame whose selected Theme role exists adds one Rect
+primitive to the table-timeline surface. Layout completes it (Specification 33 section 3): the Rect,
 its corner radius, and the pseudo-slot `frame:<node id>` (source `frame:<node id>`, bounds the Rect) that
 owns it, which exist in the Scene only for such a Theme. Its identity is `region-frame:<node id>`,
-its purpose and visual role are `region-frame`, its paint order 0, and Scene emits the frames right after
+its purpose is `region-frame`, its completed visual role is `region-frame` or `region-frame-<paint>`,
+its paint order 0, and Scene emits the frames right after
 the canvas texture, a container's frame before its children's, and before every other primitive, so a
 panel paints below bands, rows, gridlines, marks and text whatever paint order those declare. It is an
 ordinary Rect (a catalogue pattern makes the Scene v0.7, as for any patterned Rect): SVG and PNG paint it,
@@ -635,7 +636,9 @@ the entire surface complete.
 
 The heading and subtitle payloads are formatted by the Scene Builder from the resolved
 Detail templates and permitted values. Their primitive purposes are `title-text` and
-`subtitle-text`; both carry a measured `TextLayout`. The adapter must not format the
+`subtitle-text`; both carry a measured `TextLayout`. Their ink role is the explicit
+registered `heading` or `subtitle` choice when that role binds `fill`, otherwise `text`
+(#1164); this choice changes neither geometry nor typography. The adapter must not format the
 Project title, View window, selection count, or subtitle wording. A group surface keeps
 its group-derived `visualRole`; the resolved Theme token supplies both color and opacity,
 and an adapter serializes both token values without choosing a fallback opacity.

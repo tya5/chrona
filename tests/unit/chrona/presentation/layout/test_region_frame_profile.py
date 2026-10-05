@@ -107,6 +107,16 @@ def test_a_frame_on_a_slot_records_the_slot_as_populated() -> None:
     assert bounds(manifest) == bounds(solved(profile(slot("title", "title"))))
 
 
+def test_a_named_frame_paint_is_recorded_without_changing_layout_geometry() -> None:
+    plain = solved(profile(panel("row", frame={})))
+    named = solved(profile(panel("row", frame={"paint": "lacquer-plaque"})))
+
+    assert bounds(named) == bounds(plain)
+    assert named.decisions[1].frame == RegionFrame(Decimal(0), True, "lacquer-plaque")
+    assert b'"paint":"lacquer-plaque"' in named.canonical_bytes()
+    assert b'"paint"' not in plain.canonical_bytes()
+
+
 def test_frames_nest_and_each_node_records_its_own_inset() -> None:
     inner = container("row", "inner", [slot("a", "title")], frame={"inset": 2})
     outer = container("column", "outer", [inner, slot("b", "legend")], frame={"inset": 6})
@@ -186,12 +196,33 @@ def test_the_inset_is_a_collected_distance_and_a_token_resolves_through_the_them
     ({"inset": 1000001}, "/root/children/0/frame/inset"),
     ({"inset": {"token": "9bad"}}, "/root/children/0/frame/inset"),
     ({"inset": {"token": "spacing.s", "extra": 1}}, "/root/children/0/frame/inset"),
+    ({"paint": "Uppercase"}, "/root/children/0/frame/paint"),
+    ({"paint": "not/a-slug"}, "/root/children/0/frame/paint"),
+    ({"paint": 7}, "/root/children/0/frame/paint"),
 ])
 def test_a_malformed_frame_fails_at_its_exact_pointer(frame, pointer) -> None:
     with pytest.raises(LayoutError) as error:
         resolve_layout_profile(profile(panel("row", frame=frame)), available_sources=SOURCES, theme=THEME)
 
     assert (error.value.diagnostic_id, error.value.path) == ("E_LAYOUT_SCHEMA", pointer)
+
+
+def test_a_malformed_named_frame_paint_in_an_override_has_its_exact_pointer() -> None:
+    value = profile(panel("row", frame=None))
+    value.pop("root")
+    value["extends"] = {
+        "id": "base", "kind": "layout-profile",
+        "store": {"provider": "local", "identity": "local"},
+        "address": "layouts/base.yaml", "revision": {"token": "main"},
+        "contentIdentity": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    }
+    value["overrides"] = {"panel": {"frame": {"paint": "not/a-slug"}}}
+
+    with pytest.raises(LayoutError) as error:
+        resolve_layout_profile(value, available_sources=SOURCES, theme=THEME)
+
+    assert (error.value.diagnostic_id, error.value.path) == (
+        "E_LAYOUT_SCHEMA", "/overrides/panel/frame/paint")
 
 
 def test_a_malformed_frame_deep_in_the_tree_and_on_a_slot_is_named_by_its_own_path() -> None:

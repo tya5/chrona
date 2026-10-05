@@ -269,8 +269,9 @@ state text that lie on it are gated on the ground it makes (Specification 46 sec
 A profile that cannot paint a gradient omits a `decorative-optional` cone whole and
 fails a `required` one (Specification 63 section 9). See Specification 08.
 
-**Region frame (#889).** The Theme role `region-frame` paints every panel a Layout Profile
-`frame` declaration asks for (Specification 33 section 3). It admits the Rect paint set (`fill`,
+**Region frame (#889, #1165).** A Layout Profile `frame` declaration selects `region-frame`
+by default, or `region-frame-<paint>` when its optional `paint` names a shared slug
+(Specification 33 section 3). Each selected role independently admits the Rect paint set (`fill`,
 `stroke`, `strokeWidth`, `dash`, `opacity`, gradient, shadow, glow and wobble properties), a
 catalogue `pattern` (the halftone panel; the pattern closure rule applies, so a patterned role
 declares no `strokeWidth`, `dash` or gradient and its `stroke` is the ink), and one Layout
@@ -278,8 +279,8 @@ property, `frameCornerRadius` (a named number token, pixels, at least 0). The ra
 of the stroke's centre line and is reduced to half the shorter side when larger
 (`W_LAYOUT_REGION_FRAME_CORNER_REDUCED:<node>`). A role with a `fill` is a solid panel (the stroke is
 optional); a role with only a `stroke` is an outline panel; a role with neither is
-`E_THEME_ROLE_REQUIRED` at `/body/roles/region-frame/stroke`. A Theme that does not declare the role
-draws no frame, so a shared Layout Profile stays valid under any Theme. The role carries no contrast
+`E_THEME_ROLE_REQUIRED` at `/body/roles/<selected-role>/stroke`. A missing selected role
+omits only that frame; it does not fall back to the base role. The role carries no contrast
 class: a frame is ground, and what lies on it (a mark, state text, a group header) is gated against its
 fill by the ground rule of Specification 46 (completed Scene paint; a frame without a fill is not ground; a translucent fill is
 composited over the ground beneath it, #1013). `frameCornerRadius` is added in place to the live Theme
@@ -421,6 +422,17 @@ This document does not define:
 - arbitrary script execution inside selectors.
 
 ## 9. Boundary to Scene and Rendering
+
+**Title and subtitle ink (#1164).** The `heading` and `subtitle` typography roles
+MAY bind `fill` and optional `opacity` for their own title line. A fill activates
+that line's paint role; without a fill, even an opacity-only declaration keeps
+the shared `text` paint unchanged. Layout's measured bounds, lines, baselines,
+and font asset identities are independent of this ink choice. `heading.stroke`
+is `E_THEME_ROLE_PROPERTY_UNSUPPORTED` at its binding pointer. Both lines are
+ground text and use the declared `contrastPolicy.groundText` on their completed
+ground. Adapters serialize completed paint and do not resolve these roles.
+This addition admits only `fill` and `opacity` on `heading`; it does not enable
+the shadow, glow, or gradient effect families on that measurement role.
 
 The next specification resolves styled semantic objects into a renderer-neutral Scene. Scene may choose a rectangle, path, marker, text run, or group and assign concrete coordinates; it must preserve the object's identity, relationship kind, resolved visual roles, and token references. It must not decide whether something is `behind`, a dependency, or an explanatory arrow.
 
