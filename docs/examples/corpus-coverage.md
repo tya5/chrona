@@ -161,10 +161,10 @@ Distinct members in `laneMembers` are packed; a member is shown only when its co
 
 | Project | Slide | Shown | Packed | Shown/packed |
 | --- | --- | ---: | ---: | ---: |
-| halcyon-1 | programme-board | 20 | 26 | 20/26 |
+| halcyon-1 | programme-board | 21 | 26 | 21/26 |
 | halcyon-1 | launch-campaign | 12 | 12 | 12/12 |
 | halcyon-1 | overlay-briefing | 21 | 26 | 21/26 |
-| halcyon-1 | glyph-gates | 20 | 26 | 20/26 |
+| halcyon-1 | glyph-gates | 21 | 26 | 21/26 |
 | halcyon-1 | gallery-editorial-lanes | 26 | 26 | 26/26 |
-| halcyon-1 | gallery-text-compression | 20 | 26 | 20/26 |
-| halcyon-1 | gallery-vertical-group-tags | 20 | 26 | 20/26 |
+| halcyon-1 | gallery-text-compression | 21 | 26 | 21/26 |
+| halcyon-1 | gallery-vertical-group-tags | 21 | 26 | 21/26 |
