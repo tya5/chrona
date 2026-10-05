@@ -218,9 +218,9 @@ path-dependent final validation. Cyclic prefixes are rejected. The deterministic
 is shared across a pair's candidate enumeration. Rehearsals and final Layout
 use the same search and completed-route validation.
 
-`relationRouting.entry` is an optional Layout Profile policy for the side a relation enters a span `start` (or the mirrored `end`): `any` has no entry preference and may naturally select a horizontal route; `side-when-free` (the default when absent) prefers a horizontal entry at the endpoint's mid height when the source lies on that side of the mark (left of a `start`, right of an `end`) and a straight stub of at least the target terminal's `headLength` plus `max(timeline.relation.cornerRadius, relation strokeWidth)` lies inside the timeline and crosses no mark, text or label (the host's own comparison marks excepted). The horizontal candidate is offered ahead of the others and, when it is blocked, does not fit or its route fails `maxBends` or `maxDetourRatio`, the remaining candidates stay eligible under the common ranking, so a relation that routes without the policy still routes. With `side-when-free` and `side` every candidate pair whose target is the horizontal stub candidate is tried, across all source exits, before any other pair (#1072). Point marks and `at` endpoints are unaffected (#1030).
+`relationRouting.entry` is an optional Layout Profile policy: `any` has no entry preference; absent or `side-when-free` prefers a horizontal span-start entry when the source is to its left (mirrored for span end). The full-radius corridor is offered first and a blocked corridor may use the head-plus-stroke minimum defined below. All horizontal stub pairs are tried across source exits before the other pairs (#1072). Every candidate retains normal bounds, mark/text/label, terminal and quality checks; remaining candidates stay eligible. Point targets and `at` endpoints are unchanged by `side-when-free` (#1030).
 
-`relationRouting.entry: side` (#1060) adds two rules; `any` and `side-when-free` do not change. (1) When the selected route does not enter along the bar (its last leg is not horizontal into the start, or the end, for at least the entry stub) and the target is in a different row, Layout tries a back-route (#1084): from the source's endpoint port out by the exit stub (the same arrowhead-plus-clearance length), to the gap line (the edge of the target row on the source's side, between the row mark bands), along it to the entry stub tip, down to the target's mid height and in. The path is built, not searched; it must have at most `maxBends` bends, not overlap itself, stay within `maxDetourRatio` measured against the shortest route that keeps both stubs (the stub ends joined Manhattan plus the two stubs; the canonical shape equals it, so a mandatory stub is never counted as detour), and cross no mark, text or label (the endpoints' own marks excepted). Otherwise the candidate order is unchanged. (2) A point (gate or milestone) target with a `start` or `at` endpoint is given the same horizontal stub candidate at its left vertex (right vertex for `end`). With `side`, a relation that still does not enter horizontally along the bar adds the info diagnostic `I_LAYOUT_RELATION_ENTRY_FALLBACK:<scene relation id>;reason=<code>` (`same-row`, `entry-stub-blocked`, `degenerate`, `bends-or-detour`, `blocked:<class>=<placement ids>`, `node-approach-conflict` or `forward-entry-failed`).
+`relationRouting.entry: side` also offers horizontal point-target stubs at the left vertex for `start`/`at` (right for `end`). When ordinary selection does not side-enter a different-row target, Layout tries row-gap back-routes from each legal source egress: complete the source corridor and its own terminal reserve, reach the target row edge on the source side, cross to the entry tip, then enter the target horizontally. Each candidate must clear primary marks and other obstacles, avoid self-overlap, and satisfy the unchanged `maxBends` and `maxDetourRatio` against the shortest path retaining both corridors. Common node-clearance/entry/bend/length ranking still applies. A final non-side entry emits `I_LAYOUT_RELATION_ENTRY_FALLBACK:<scene relation id>;reason=<code>` (`same-row`, `entry-stub-blocked`, `degenerate`, `bends-or-detour`, `blocked:<class>=<placement ids>`, `node-approach-conflict` or `forward-entry-failed`).
 
 Relation terminals are Theme `marker` tokens resolved by Layout (`relation_terminals.marker_geometry`) into completed outlines. `triangle` is a filled closed triangle; `open-triangle` is the same three-edge outline stroked, not filled; `chevron` is an open V with no closing edge (#1042). `stealth` is a filled notched triangle (notch 0.7 of the length from the tip); `rounded-triangle` a filled triangle with corners rounded to about 0.12 of the head width; `dot` a filled circle (a separate name from `circle` so a Theme can declare a smaller default); `half` a filled half arrowhead with one barb on the left of the line direction; `double-chevron` two stroked chevrons, one behind the other (#1044). Each takes `headLength`, `headWidth` and `attachmentOffset`. A round terminal (`circle`, `open-circle`, `dot`) is centred on the endpoint's semantic position (the start or end edge at the mark's vertical centre, a point mark's centre or tip) and the line touches its edge: Layout moves the first (source) or last (target) route point by the radius along its leg and sets the marker's reference so the circle lies behind the source's first point and ahead of the target's last point; a declared `attachmentOffset` is superseded for these shapes, and a leg shorter than the radius limits the shift to half the leg. Triangular heads keep their tip at the port. `none` draws no terminal (#1105): `marker_geometry` resolves it to no marker, the line starts or ends exactly at the endpoint with no setback and no straight run is reserved for a head, and a legend key of that role is the plain stroke; the three marker numbers are validated and ignored. Typst and TikZ reject a primitive that carries a marker with `E_VISUAL_CAPABILITY_UNSUPPORTED` (a relation whose terminals are both `none` carries none and is drawn there as a plain path); SVG draws it, PNG is that SVG and PDF is that SVG through ReportLab.
 
@@ -253,13 +253,31 @@ the first declared pair. Scene and adapters do not simplify geometry.
 **Entry obstacles (#1109 R4).** A comparison-host corridor exempts only named,
 physically connected marks of that endpoint. A detached snapshot or actual
 mark remains an obstacle even when it belongs to the same object. Entry stubs
-retain their declared head-plus-clearance length; `entry-stub-blocked` is a
+retain the whole target head plus at least one relation stroke width of clearance.
+A legal full-radius stub (`headLength + max(cornerRadius, strokeWidth)`) remains
+preferred; if that corridor is blocked, Layout offers the head-plus-stroke
+minimum through the same collision checks. Rounded completion clips the turn
+radius to the available pre-head run, counting that effective radius once and
+never shortening the straight head tangent. Semantic side-entry recognition
+uses the mandatory head-plus-stroke minimum. `entry-stub-blocked` is a
 final reason when that complete corridor leaves the plot or intersects a
-non-host mark, text or label. Layout does not shorten the stub to fit a gap.
+non-host mark, text or label. Layout never shortens the mandatory head-plus-stroke run.
 When a legal side candidate loses to a clear node approach under the common
 ranking, the final reason is `node-approach-conflict`, not search failure.
 Entry success is determined on the accepted semantic corridor before round
 terminals shorten the painted line; the head-occupied part still counts.
+
+**Back-route source candidates (#1109 R4b).** The row-gap construction uses
+the same finite, completed source egresses as ordinary routing, including
+top/bottom exits for points and temporal-edge top/bottom exits for spans.
+Each preserves its semantic port and connected comparison-host corridor;
+its reserve is sized from the source terminal, not the target head. Layout
+checks every completed candidate against plot bounds, primary-mark and text
+safety, terminal/stroke fit, self-overlap and the unchanged quality limits.
+Detour reference length joins the two mandatory corridor tips by Manhattan
+distance and includes both corridor lengths. Rank by clear node approach,
+then bends and length, preserving stable egress order for ties. A blocked
+horizontal exit is not proof that the other legal egresses are blocked.
 
 **Primary-mark safety (#1114).** In every row mode and entry policy, completed
 relation paths MUST NOT traverse primary planned-mark interiors, including

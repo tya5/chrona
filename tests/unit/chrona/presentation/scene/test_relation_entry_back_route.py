@@ -53,14 +53,14 @@ def test_an_abutting_or_overlapping_chain_enters_the_start_from_the_side_through
     assert not fell_back(diagnostics)
 
 
-def test_a_safe_lower_bend_searched_side_entry_precedes_the_canonical_back_route():
+def test_searched_and_back_route_candidates_both_keep_the_minimal_legal_bends():
     from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, segment_length_inside_rect
 
     target = _item("b", D(2026, 2, 5), D(2026, 2, 16))
     points, marks, diagnostics = run(A, target, max_detour=6.0)
     canonical, _, _ = run(A, target, max_detour=2.0)
     assert enters_from_side(points) and not reverses(points)
-    assert _bends(points) == 3 < _bends(canonical)
+    assert _bends(points) == _bends(canonical) == 3
     length = sum(abs(a[0] - b[0]) + abs(a[1] - b[1]) for a, b in zip(points, points[1:]))
     direct = abs(points[-1][0] - points[0][0]) + abs(points[-1][1] - points[0][1])
     assert length <= 6.0 * direct
@@ -110,7 +110,7 @@ def test_a_back_leg_through_a_marked_row_falls_back_with_a_diagnostic():
         assert not crosses, "no route segment crosses the blocking mark"
 
 
-@pytest.mark.parametrize("kwargs", [{"max_bends": 3}, {"max_detour": 0.5}], ids=["max-bends", "max-detour"])
+@pytest.mark.parametrize("kwargs", [{"max_bends": 2}, {"max_detour": 0.5}], ids=["max-bends", "max-detour"])
 def test_a_back_route_over_the_limits_falls_back_with_a_diagnostic(kwargs):
     points, _, diagnostics = run(A, _item("b", D(2026, 2, 8), D(2026, 2, 16)), **kwargs)
     assert not reverses(points)
@@ -149,7 +149,7 @@ def test_a_source_just_left_of_the_start_is_back_routed_when_the_forward_entry_h
 
 def test_the_fallback_diagnostic_names_its_reason_1084():
     target = _item("b", D(2026, 2, 8), D(2026, 2, 16))
-    _, _, diagnostics = run(A, target, max_bends=3)
+    _, _, diagnostics = run(A, target, max_bends=2)
     assert reason(diagnostics) == "bends-or-detour"
     blocker = _item("c", D(2026, 1, 25), D(2026, 2, 20))
     _, _, blocked = _route((A, blocker, target), _rows((A,), (blocker,), (target,)), DEP, "side", distribution="pack",
@@ -159,14 +159,20 @@ def test_the_fallback_diagnostic_names_its_reason_1084():
     assert any(item.startswith("W_LAYOUT_RELATION_SUPPRESSED:") for item in blocked)
 
 
-def test_a_mark_after_the_source_end_blocks_the_exit_stub_and_falls_back_with_a_reason_1084():
+def test_a_mark_after_the_source_end_uses_a_clear_vertical_egress_instead_of_crossing_it():
     # A proxy for a delta label beside the source end: a mark in the exit stub (the stub check treats mark, text and
     # label classes alike).
     source = _item("a", D(2026, 2, 1), D(2026, 2, 8), "shared")
     beside = _item("c", D(2026, 2, 8), D(2026, 2, 12), "shared")
     target = _item("b", D(2026, 2, 8), D(2026, 2, 16))
-    points, _, diagnostics = _route((source, beside, target), _rows((source, beside), (target,)), DEP, "side",
+    points, marks, diagnostics = _route((source, beside, target), _rows((source, beside), (target,)), DEP, "side",
                                     distribution="pack", max_detour=2.0, window=(D(2026, 1, 25), D(2026, 2, 25)),
                                     diagnostics=True)
     assert not reverses(points)
-    assert fell_back(diagnostics) and reason(diagnostics).startswith("blocked:mark=")
+    assert enters_from_side(points) and not fell_back(diagnostics)
+    assert points[0][0] == points[1][0]
+    from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, segment_length_inside_rect
+    x, y, width, height = next(mark.bounds for mark in marks.values() if mark.source_ref == "c")
+    interior = ObstacleRect(x + 0.5, y + 0.5, x + width - 0.5, y + height - 0.5)
+    assert all(segment_length_inside_rect(ObstacleSegment(a, b), interior) == 0
+               for a, b in zip(points, points[1:]))
