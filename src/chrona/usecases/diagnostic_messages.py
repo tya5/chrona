@@ -128,6 +128,7 @@ _SCENE_CAUSES: Mapping[str, str] = {
     "W_SCENE_RELATION_PATH_REVERSES": "a dependency line doubles back over itself",
     "W_SCENE_RELATION_SEGMENT_TOO_SHORT": "a dependency line has a segment shorter than its stroke width",
     "W_SCENE_RELATION_NODE_APPROACH_SHARED": "two dependency lines share a positive-length approach segment at the same node",
+    "W_SCENE_RELATION_FAN_IN_INVALID": "shared dependency arrivals do not agree on their target port, terminal owner, paint, or approach direction",
     "W_SCENE_DECORATION_CONTRAST": "a background decoration is fainter than its visibility floor against the ground it lies on",
     "W_SCENE_MARK_CONTRAST": "a mark is fainter than its 3:1 visibility floor against the ground it lies on",
     "W_SCENE_STATE_TEXT_CONTRAST": "text is fainter than its contrast floor against the ground it lies on",
