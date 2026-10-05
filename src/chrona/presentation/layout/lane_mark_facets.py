@@ -397,12 +397,17 @@ def _compose_progress(closure: LaneProjectionClosure, items: Mapping[LaneProject
     return {key: tuple(values) for key, values in result.items()}
 
 
+def span_mark_footprint(mark: MarkPlacement, theme: Any) -> ObstacleRect:
+    """Complete a span's visible paint bounds without changing semantic ports."""
+    width = _stroke_width(theme, mark.semantic_id)
+    return _expanded_rect(_bounds(mark.bounds), width / 2 if width is not None else 0.0, mark.placement_id)
+
+
 def _mark_facets(item: Any, instance: LaneProjectionInstance, mark: MarkPlacement,
                  theme: Any) -> tuple[LaneMarkFacet, ...]:
     if mark.mark_shape == "span":
         bounds = _bounds(mark.bounds)
-        width = _stroke_width(theme, mark.semantic_id)
-        footprint = _expanded_rect(bounds, width / 2 if width is not None else 0.0, mark.placement_id)
+        footprint = span_mark_footprint(mark, theme)
         payload = LanePlainMarkProjection(mark.mark_shape, mark.semantic_id, mark.paint_order,
                                           mark.corner_radius, mark.end_treatment)
         return (_facet(instance, item, mark, mark.placement_id, "Rect",

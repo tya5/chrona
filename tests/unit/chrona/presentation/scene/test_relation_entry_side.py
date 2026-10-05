@@ -74,11 +74,12 @@ def test_a_source_on_the_left_with_free_space_enters_the_start_horizontally_at_m
     assert points[-1][1] == pytest.approx(mark.bounds[1] + mark.bounds[3] / 2)
 
 
-def test_any_and_absent_keep_the_nearest_port_order_and_differ_from_side_when_free():
+def test_any_can_choose_the_same_minimal_bend_side_route_without_entry_preference():
     any_points, _ = _route((A, B), _rows((A,), (B,)), DEP, "any")
     side_points, _ = _route((A, B), _rows((A,), (B,)), DEP, "side-when-free")
-    assert not _horizontal_last(any_points)  # today: drops onto the corner
-    assert any_points != side_points
+    assert _horizontal_last(any_points)
+    assert _bends(any_points) == 1
+    assert any_points == side_points
 
 
 def test_a_source_on_the_right_of_a_finish_endpoint_enters_the_end_horizontally_mirrored():
@@ -120,15 +121,18 @@ def test_no_room_between_the_start_and_the_timeline_edge_keeps_the_order():
     assert first == second
 
 
-def test_a_narrow_gap_may_need_one_more_bend_and_is_bounded_by_max_bends():
+def test_a_narrow_gap_requires_extra_bends_for_the_declared_stub_and_obeys_max_bends():
     # One day between the source end and the target start on a long window: the stub is wider than the gap, so the
-    # horizontal entry must come round the stub start and costs a bend more than the drop.
+    # declared stub must come round its tip; an unconstrained horizontal last leg may be shorter than the stub.
     near = _item("b", D(2026, 2, 9), D(2026, 2, 20))
     window = (D(2026, 1, 1), D(2027, 2, 1))
     drop, _ = _route((A, near), _rows((A,), (near,)), DEP, "any", window=window)
     side, _ = _route((A, near), _rows((A,), (near,)), DEP, "side-when-free", window=window)
-    assert _horizontal_last(side) and not _horizontal_last(drop)
-    assert _bends(side) == _bends(drop) + 1
+    assert _horizontal_last(side) and _horizontal_last(drop)
+    assert abs(side[-1][0] - side[-2][0]) >= 11  # head 10 + clearance 1
+    assert abs(drop[-1][0] - drop[-2][0]) < 11
+    assert _bends(side) == 3 and _bends(drop) == 1
     # Below the bends the stub route needs it is not taken: the relation is still routed, by the remaining order.
     limited, _ = _route((A, near), _rows((A,), (near,)), DEP, "side-when-free", max_bends=_bends(side) - 1, window=window)
     assert _bends(limited) < _bends(side)
+    assert limited == drop

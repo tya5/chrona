@@ -456,7 +456,9 @@ routing. See the [#466 point-relation-port correction](../design/issue-466-gener
 
 When a point/body tip is blocked by a comparison sibling or another required
 obstacle, Layout tries the remaining finite ports in stable distance/side
-order and accepts the first bounded quality route. Failed port candidates do
+order and selects an eligible route using the relation ranking in
+[Spec 50](50-constraint-driven-gantt-surface-quality.md#33-relations).
+Failed port candidates do
 not suppress the relation or enter the obstacle inventory. See the [#466
 point-port-candidate correction](../design/issue-466-general-placement-point-port-candidate-correction-2026-09-26.md).
 
@@ -479,11 +481,28 @@ semantic relations, and only accepted labels enter the route obstacle set.
 Their terminal suppression is counted without altering membership (Specs 38
 and 50). Relation labels still follow their completed routes.
 
-After canonical side candidates fail, optional plot/item/delta labels may use
-a finite side-relative displacement bounded by their measured footprint and
-512 collision queries. This fallback never changes the declared side, never
+After canonical side candidates fail, optional plot/item/delta and relation labels may use
+a finite side-relative displacement with at most 512 actual collision queries.
+Member-name candidates are bounded by the row and the completed own marks'
+existing association reach, accounting for measured Text dimensions and insets;
+the exact nearest-perimeter association check remains mandatory. A redundant
+one-label-width displacement limit must not exclude an otherwise associated
+name. Other labels retain their measured-footprint displacement bounds.
+After canonical positions fail, displacement candidates
+include obstacle-contact coordinates and exact footprint/row edges as well as
+the regular lattice, so a narrow legal interval is not skipped solely by an
+8px sampling step. Rank candidates deterministically by displacement and side
+order; all still satisfy their placement and association bounds.
+This fallback never changes the declared side, never
 ignores accepted route strokes, and leaves required and annotation placement
-unchanged. See the [#466 side-search correction](../design/issue-466-general-placement-side-search-correction-2026-09-26.md).
+unchanged. Relation labels retain their completed longest-segment anchor and
+canonical side order before this bounded fallback. See the [#466 side-search correction](../design/issue-466-general-placement-side-search-correction-2026-09-26.md).
+
+Member-label collision queries use completed span paint footprints, including
+half the resolved stroke width outside semantic bounds. This reuses the lane
+facet footprint without changing relation ports or body obstacles. Query
+snapshots do not own accepted placements: every accepted label enters the
+single shared inventory before the next request is queried.
 
 An annotation's optional note-number index and required leader are separate
 Layout outputs. If the index cannot fit, Layout diagnoses and omits only the

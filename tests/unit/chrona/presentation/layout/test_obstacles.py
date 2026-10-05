@@ -43,6 +43,50 @@ def test_query_filters_and_named_exemptions_are_explicit() -> None:
         index.collisions(box, port_ids=("mark:a",))
 
 
+def test_paint_geometry_query_copy_preserves_logical_inventory_and_memo_scope() -> None:
+    """Label paint queries can widen a mark without changing route/port geometry."""
+    index = SurfaceObstacleIndex()
+    logical = SurfaceObstacle("mark:a", "mark", "timeline", ObstacleRect(0, 0, 10, 10))
+    index.add(logical)
+    logical_scope = index.route_memo_scope(("mark",), ("timeline",), ())
+
+    painted = index.copy(geometry_overrides={"mark:a": ObstacleRect(-0.5, -0.5, 10.5, 10.5)})
+
+    assert index.all() == (logical,)
+    assert index.select(classes=("mark",)) == (logical,)
+    assert painted.all()[0].geometry == ObstacleRect(-0.5, -0.5, 10.5, 10.5)
+    assert index.collisions(ObstacleRect(10.1, 2, 11, 3), classes=("mark",)) == ()
+    assert [item.placement_id for item in painted.collisions(
+        ObstacleRect(10.1, 2, 11, 3), classes=("mark",))] == ["mark:a"]
+
+    # Copies share the bounded memo lineage, but an override changes the exact
+    # selected content id and therefore cannot replay a result for logical bounds.
+    painted_scope = painted.route_memo_scope(("mark",), ("timeline",), ())
+    assert logical_scope is not None and painted_scope is not None
+    assert logical_scope[0] is painted_scope[0]
+    assert logical_scope[1] != painted_scope[1]
+
+
+def test_label_query_uses_visible_mark_footprint_to_reject_stroke_overlap() -> None:
+    """A candidate outside logical bounds can still collide with the painted stroke."""
+    logical = SurfaceObstacleIndex()
+    logical.add(SurfaceObstacle("mark:a", "mark", "timeline", ObstacleRect(0, 0, 10, 10)))
+    painted = logical.copy(geometry_overrides={
+        "mark:a": ObstacleRect(-0.5, -0.5, 10.5, 10.5),
+    })
+    bounds = LabelRect(0, 0, 40, 30)
+    anchor = LabelRect(5, 10, 5, 5)
+
+    logical_choice = place_label(anchor, (5, 5), ("end", "below"), bounds=bounds,
+                                 obstacles=logical, gap=0, overflow="suppress")
+    painted_choice = place_label(anchor, (5, 5), ("end", "below"), bounds=bounds,
+                                 obstacles=painted, gap=0, overflow="suppress")
+
+    assert logical_choice is not None and logical_choice.side == "end"
+    assert painted_choice is not None and painted_choice.side == "below"
+    assert logical.all()[0].geometry == ObstacleRect(0, 0, 10, 10)
+
+
 def test_rule_label_can_exempt_only_its_named_rule() -> None:
     index = SurfaceObstacleIndex()
     index.add(SurfaceObstacle("as-of", "rule", "timeline", ObstacleSegment((20, 0), (20, 40))))

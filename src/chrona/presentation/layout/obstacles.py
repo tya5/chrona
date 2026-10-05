@@ -1,9 +1,9 @@
 """One typed, renderer-neutral inventory of completed surface obstacles."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from math import ceil, floor, hypot, isfinite, sqrt
-from typing import Iterable
+from typing import Iterable, Mapping
 
 
 @dataclass(frozen=True)
@@ -293,10 +293,18 @@ class SurfaceObstacleIndex:
         self._ordered = None
         self._prepared = {}
 
-    def copy(self) -> "SurfaceObstacleIndex":
-        """An independent index holding the same (immutable) obstacles, for a planning dry run."""
+    def copy(self, *, geometry_overrides: Mapping[str, ObstacleGeometry] | None = None) -> "SurfaceObstacleIndex":
+        """An independent query snapshot, optionally using completed paint footprints.
+
+        Accepted placements remain in the original inventory. Memoization reads
+        exact obstacle content, including any substituted geometry.
+        """
+        if geometry_overrides is not None and any(key not in self._by_id for key in geometry_overrides):
+            raise ValueError("E_LAYOUT_OBSTACLE_INPUT: geometry override must name a registered obstacle")
         clone = SurfaceObstacleIndex()
-        clone._by_id = dict(self._by_id)
+        clone._by_id = (dict(self._by_id) if not geometry_overrides else
+                        {key: replace(item, geometry=geometry_overrides[key])
+                         if key in geometry_overrides else item for key, item in self._by_id.items()})
         clone._route_memo = self._route_memo  # value-keyed results of pure searches, valid for any lineage member
         return clone
 

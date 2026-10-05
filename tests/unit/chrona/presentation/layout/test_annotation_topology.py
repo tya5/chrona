@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from chrona.presentation.layout.annotation_topology import (
-    local_route_bounds, route_annotation_candidate, visible_segments,
+    _sparse_elbows, local_route_bounds, route_annotation_candidate, visible_segments,
 )
 from chrona.presentation.layout.obstacles import (
     ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex,
@@ -52,3 +52,20 @@ def test_bridge_never_exempts_text_or_rule() -> None:
 def test_local_corridor_excludes_slide_perimeter() -> None:
     assert local_route_bounds((1200, 300, 20, 20), (24, 1130, 312, 20),
                               (336, 1140), (0, 0, 1600, 1200)) == (180.0, 144.0, 1376.0, 1200)
+
+
+def test_sparse_priority_uses_the_completed_stroke_envelope() -> None:
+    for horizontal in (False, True):
+        for mirrored in (False, True):
+            start, end = ((90, 90), (10, 10)) if mirrored else ((10, 10), (90, 90))
+            index = SurfaceObstacleIndex()
+            endpoints = ((20, 50), (80, 50)) if horizontal else ((50, 20), (50, 80))
+            index.add(SurfaceObstacle("accepted", "leader-route", "annotations",
+                                      ObstacleSegment(*endpoints, stroke_width=4)))
+            paths = _sparse_elbows(start, end, index, bounds=(0, 0, 100, 100))
+            axis = (54 if mirrored else 46) if horizontal else (46 if mirrored else 54)
+            expected = ((start, (start[0], axis), (end[0], axis), end) if horizontal
+                        else (start, (axis, start[1]), (axis, end[1]), end))
+            assert paths[0] == expected
+            assert not any(index.collisions(ObstacleSegment(a, b))
+                           for a, b in zip(expected, expected[1:]))

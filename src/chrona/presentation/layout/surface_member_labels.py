@@ -26,6 +26,7 @@ from chrona.presentation.layout.surface_geometry import (
     HOSTED_TEXT_PAINT_ORDER, bounds_from_rect, coordinate_for_date,
 )
 from chrona.presentation.layout.surface_lanes import lane_owner
+from chrona.presentation.layout.lane_mark_facets import span_mark_footprint
 from chrona.presentation.layout.text import metric_for_role, measure_text_width, place_text, wrap_text
 
 
@@ -256,6 +257,8 @@ def place_member_labels(context: SurfaceMemberLabelContext,
     timeline_rect = LabelRect(*context.timeline_bounds)
     rows = {row.row_id: row for row in context.rows}
     marks = {mark.placement_id: mark for mark in context.marks}
+    paint_footprints = {mark.placement_id: span_mark_footprint(mark, request.theme_tokens)
+                        for mark in context.marks if mark.mark_shape == "span" and obstacles.has(mark.placement_id)}
     measured_lane = {item.placement_id: item for item in
         (request.fixed_lane_preflight.measured_labels if request.fixed_lane_preflight else ())}
     row_requirements = (dict(request.fixed_lane_preflight.row_requirements)
@@ -276,6 +279,7 @@ def place_member_labels(context: SurfaceMemberLabelContext,
                 ObstacleRect(inline, block, inline + inline_size, block + block_size)))
 
     for label_request in requests:
+        placement_obstacles = obstacles.copy(geometry_overrides=paint_footprints)
         label_treatment = request.theme_tokens.text_treatment(label_request.typography_role)
         label_metrics = metric_for_role(request.theme_tokens, label_request.typography_role, request.font_metrics)
         font_size, line_height = label_treatment.font_size, label_treatment.line_height
@@ -335,7 +339,7 @@ def place_member_labels(context: SurfaceMemberLabelContext,
         if label_request.semantic_id == "asOfLabel":
             from chrona.presentation.layout.asof_label import find_asof_label_candidate
             candidate = find_asof_label_candidate(timeline_rect, label_size, rule_x=label_request.anchor.x,
-                gap=label_gap, rule_host_id="as-of", obstacles=obstacles,
+                gap=label_gap, rule_host_id="as-of", obstacles=placement_obstacles,
                 obstacle_classes=("mark", "text", "label-visual", "rule"),
                 placement=(BELOW_PLOT if "plot-below-center" in label_request.candidates
                            else "foot" if "plot-bottom-end" in label_request.candidates else "top"),
@@ -345,7 +349,7 @@ def place_member_labels(context: SurfaceMemberLabelContext,
                 diagnostics.append(f"{BELOW_PLOT_FALLBACK}:{label_request.placement_id}")
         elif associated_member:
             candidate = place_member_name(label_request.anchor, label_size, label_request.candidates,
-                bounds=placement_bounds, obstacles=obstacles, gap=label_gap, maximum_end_gap=reach,
+                bounds=placement_bounds, obstacles=placement_obstacles, gap=label_gap, maximum_end_gap=reach,
                 text_inline_inset=leading + chip_pad[0], inside_host_obstacle_id=label_request.inside_host_obstacle_id,
                 classes=label_classes,
                 full_band=full_band,
@@ -355,7 +359,7 @@ def place_member_labels(context: SurfaceMemberLabelContext,
                 own_mark_right=own_mark_right, final_association=final_association)
         else:
             candidate = (place_label(label_request.anchor, label_size, label_request.candidates,
-                bounds=placement_bounds, obstacles=obstacles, gap=label_gap,
+                bounds=placement_bounds, obstacles=placement_obstacles, gap=label_gap,
                 inside_host_obstacle_id=label_request.inside_host_obstacle_id,
                 required=label_request.overflow == "diagnose", overflow=label_request.overflow,
                 visible_fallback_side=label_request.visible_fallback_side,
