@@ -24,21 +24,18 @@ fails on all three OS only at the stale corpus assertion requiring 22 horizontal
 entries. R3 replaces that incidental count with a documented reason check for
 every non-horizontal entry; release acceptance remains pending.
 
-R3 candidate: 1511 Layout/Scene and entry-corpus tests pass; the final corridor
-guard has 60 focused passing tests. The verified 64-context batch has zero Scene
-errors, new lost routes, sub-stroke segments or primary-mark crossings. Five
-node-overlap pairs remain precisely diagnosed. Target-B SVG before/after was
-read: launch→LEOP remains straight and all 24 dependency paths remain present.
-62 SVGs and 477 relation geometries change. Text changes/additions/removals are
-101/4/45: removals include the optional EVB Arrival name in 38 Controller
-contexts, three note indexes, two relation labels and two annotation texts.
-The new minimal-bend route intersects the former name box. Exact replay proves
-a legal displacement inside existing footprint/association bounds which the
-8px sampling lattice misses. The published correction adds obstacle contacts,
-not route rollback or a corpus/Theme workaround. [Candidate CI](https://github.com/tya5/chrona/actions/runs/37244756487)
-finds seven failing tests: diagnostic detail (1), member labels (3), annotation
-leaders (3), plus the conformance ratchet. Corrections and renewed batch/CI are
-required before acceptance. R3 is not released; R4 and R5 remain open.
+R3 remains unmerged in [#1160](https://github.com/tya5/chrona/pull/1160);
+its [old-head CI](https://github.com/tya5/chrona/actions/runs/37244756487) is red.
+Corrected WIP `8100e096` passes 1516 Layout/Scene tests, 55 focused label/reducer/
+diagnostic tests and three executive/TVAC regressions. Contact-event placement
+and admissible collision-budget accounting retain the declared bounds and cap.
+The preceding `197751ff` 64-context batch has no lost relation paths, Scene
+errors, sub-stroke segments or mark crossings; five node pairs are diagnosed.
+It restores 36 of 37 lost EVB names and gains 32 relation labels over the base.
+One EVB name and one snapshot name remain suppressed; Controller annotation
+suppression changes from firmware-slip to bringup-risk. These are not accepted
+as unavoidable. Existing annotation assertions remain intact. The latest budget
+correction needs renewed public evidence and CI. R4/R5 remain open.
 
 ## Literal issue acceptance
 
