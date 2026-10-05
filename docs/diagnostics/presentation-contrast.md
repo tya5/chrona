@@ -70,7 +70,8 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | row-decoration | `row-band` | enabled | 1.100 | 26 | 104 | 1.000 | 1.116 | 0 | 8 |
 | slot-heading | `slot-heading` | required | 4.500 | 2 | 2 | 5.448 | 6.000 | 0 | 0 |
 | snapshot | `snapshot` | required | 3.000 | 4 | 24 | 5.373 | 14.573 | 0 | 0 |
-| subtitle-text | `text` | required | 4.500 | 4 | 4 | 16.268 | 16.268 | 0 | 0 |
+| subtitle-text | `subtitle` | required | 4.500 | 1 | 1 | 5.448 | 5.448 | 0 | 0 |
+| subtitle-text | `text` | required | 4.500 | 3 | 3 | 16.268 | 16.268 | 0 | 0 |
 | summary-bar | `summary-bar` | required | 3.000 | 2 | 2 | 5.817 | 6.712 | 0 | 0 |
 | summary-figure-caption | `subtitle` | required | 4.500 | 7 | 24 | 7.032 | 7.032 | 0 | 0 |
 | summary-figure-value | `metric` | required | 4.500 | 7 | 24 | 16.354 | 16.354 | 0 | 0 |
@@ -8420,7 +8421,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:shipment:snapshot:shipment` | `snapshot` | 1065.582, 658.575 | `canvas` | canvas | `#FFFFFF` | stroke | 5.817 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:tvac:snapshot:tvac` | `snapshot` | 938.818, 464.521 | `canvas` | canvas | `#FFFFFF` | stroke | 5.817 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:vibration:snapshot:vibration` | `snapshot` | 905.618, 442.513 | `canvas` | canvas | `#FFFFFF` | stroke | 5.817 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `subtitle` | `text` | 371.613, 66.037 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `subtitle` | `subtitle` | 371.613, 66.037 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `cell:avionics:Phase` | `table-cell-secondary` | 325.278, 204.444 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `cell:bus-test:Phase` | `table-cell-secondary` | 330.631, 248.460 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `cell:campaign:Phase` | `table-cell-secondary` | 339.055, 680.583 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
