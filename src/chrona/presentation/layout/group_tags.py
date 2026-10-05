@@ -14,7 +14,10 @@ def vertical_group_tags(request: Any) -> bool:
 def group_tag_column_size(theme_tokens: Any) -> float:
     """The column's inline size: the role's line box, the block extent of a vertical line."""
     treatment = theme_tokens.text_treatment("groupHeader")
-    return float(treatment.font_size * treatment.line_height)
+    from chrona.presentation.layout.surface_groups import resolve_group_tab
+    tab = resolve_group_tab(theme_tokens)
+    padding = 2 * tab.gap if tab is not None and tab.target == "tag" else 0
+    return float(treatment.font_size * treatment.line_height + padding)
 
 
 

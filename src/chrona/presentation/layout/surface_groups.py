@@ -9,6 +9,7 @@ from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, GroupPlacement, TextPlacement
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_role, place_text
 from chrona.presentation.layout.vertical_text import place_vertical_label
+from chrona.presentation.model.theme_tokens import ThemeTokenError
 
 
 @dataclass(frozen=True)
@@ -32,6 +33,7 @@ class GroupTabSpec:
     block_size: Decimal | None
     gap: Decimal
     position: str
+    target: str = "header"
 
     @property
     def reserved(self) -> Decimal:
@@ -51,9 +53,23 @@ def resolve_group_tab(theme_tokens: Any) -> GroupTabSpec | None:
     """Return the declared group tab, or None when the Theme declares no `group-tab` role or draws none."""
     # A role that declares neither a treatment nor a paint order declares no tab (every Theme without the role
     # draws today's header); one declaring only half of the pair is the Theme token error of every background.
+    target = theme_tokens.optional_choice(_TAB_ROLE, "tabTarget", ("header", "tag")) or "header"
+    if target == "tag":
+        if theme_tokens.writing_mode("groupHeader") != "vertical":
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{_TAB_ROLE}/tabTarget")
+        for prop in ("tabInlineSize", "tabBlockSize", "tabPosition"):
+            value = (theme_tokens.optional_choice(_TAB_ROLE, prop, ("start", "end"))
+                     if prop == "tabPosition" else theme_tokens.optional_number(_TAB_ROLE, prop))
+            if value is not None:
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{_TAB_ROLE}/{prop}")
     declared = theme_tokens.optional_background(_TAB_ROLE)
     if declared is None or declared[0] == "none":
         return None
+    if target == "tag":
+        gap = theme_tokens.optional_number(_TAB_ROLE, "tabGap") or Decimal(0)
+        if gap < 0:
+            raise _tab_error("tabGap", gap)
+        return GroupTabSpec(Decimal(0), None, gap, "start", target)
     inline = theme_tokens.optional_number(_TAB_ROLE, "tabInlineSize")
     if inline is None or inline <= 0:
         raise _tab_error("tabInlineSize", "missing" if inline is None else inline)
@@ -83,6 +99,15 @@ def group_tab_bounds(tab: GroupTabSpec, header: Rect) -> Rect:
     return Rect(inline, header.block, tab.inline_size, block)
 
 
+def group_tag_bounds(tab: GroupTabSpec, column: tuple[float, float], rows: Rect) -> Rect:
+    """One gap-inset tag cell shared by its completed text and plate."""
+    start, size = (Decimal(str(value)) for value in column)
+    inline, block = size - 2 * tab.gap, rows.block_size - 2 * tab.gap
+    if inline <= 0 or block <= 0:
+        raise _tab_error("tabGap", tab.gap, min(size, rows.block_size))
+    return Rect(start + tab.gap, rows.block + tab.gap, inline, block)
+
+
 def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
                                review_rows: tuple[Any, ...], groups: tuple[GroupPlacement, ...],
                                body_size: float,
@@ -95,13 +120,18 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
     if tag_column is not None:
         # A vertical label spans the group's rows in the column carved from the table's start (#585).
         text = []
+        tab = resolve_group_tab(request.theme_tokens)
         for group in groups:
             if group.group_id and group.group_id in labels:
+                cell = (group_tag_bounds(tab, tag_column, group.content_bounds)
+                        if tab is not None and tab.target == "tag" else
+                        Rect(Decimal(str(tag_column[0])), group.content_bounds.block,
+                             Decimal(str(tag_column[1])), group.content_bounds.block_size))
                 text.extend(place_vertical_label(
                     label=labels[group.group_id], placement_prefix=f"group-tag:{group.group_id}",
-                    source_ref=group.group_id, column_inline=tag_column[0], column_size=tag_column[1],
-                    block_start=float(group.content_bounds.block),
-                    available_block=float(group.content_bounds.block_size), typography_role="groupHeader",
+                    source_ref=group.group_id, column_inline=float(cell.inline), column_size=float(cell.inline_size),
+                    block_start=float(cell.block),
+                    available_block=float(cell.block_size), typography_role="groupHeader",
                     theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                     collision_region=f"group:{group.group_id}",
                     collision_domain=CollisionDomain("group-header", group.group_id), semantic_id="groupHeader"))
