@@ -444,10 +444,15 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         and not (selected_pair is not None and enters_along(relation, points))):
                     # #1060/#1084: the forward side entry did not give a horizontal entry; try the back-route
                     backed = back_route(relation, source_mark, target_mark, source_id, target_id, source_nominal)
-                    if backed is not None and (selected_pair is None or
-                            candidate_rank(backed[1], *backed[0]) < candidate_rank(points, *selected_pair)):
-                        selected_pair, points = backed
-                        lane_selection = None
+                    if backed is not None:
+                        back_rank = candidate_rank(backed[1], *backed[0])
+                        forward_rank = (candidate_rank(points, *selected_pair)
+                                        if selected_pair is not None else None)
+                        if forward_rank is None or back_rank < forward_rank:
+                            selected_pair, points = backed
+                            lane_selection = None
+                        elif back_rank[0] and not forward_rank[0]:
+                            back_route_reason[0] = "node-approach-conflict"
                 fallback = selected_pair is None
                 if fallback:
                     if request.surface_content.relation_overflow == "suppress":
@@ -491,6 +496,9 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     if not obstacles.has(obstacle_id):
                         register_port(obstacle_id, port)
                 radius = float(context.metric_values.get("timeline.relation.cornerRadius", 0))
+                # Entry eligibility concerns the complete semantic corridor,
+                # including the part subsequently occupied by a round head.
+                side_entry_satisfied = enters_along(relation, points)
                 points, completed_start, completed_end = complete_centred_terminals(
                     tuple(points), marker_start, marker_end, dependency_stroke)
                 completed_start = orient_terminal(completed_start, points, source_egress.side, source=True)
@@ -513,7 +521,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 node_segments.setdefault(target_id, []).append((scene_id, (points[-2], points[-1])))
                 if (context.layout_manifest.relation_entry == "side" and target_mark is not None
                         and relation.target_endpoint in {"start", "at", "finish", "end"} and len(points) >= 2
-                        and not enters_along(relation, points)):
+                        and not side_entry_satisfied):
                     # #1060: with `entry: side` a relation that still does not enter along the bar is reported
                     diagnostics.append(f"I_LAYOUT_RELATION_ENTRY_FALLBACK:{scene_id};reason={back_route_reason[0] or 'forward-entry-failed'}")
                 dependency_role = semantic_binding(placed.semantic_id).theme_role
