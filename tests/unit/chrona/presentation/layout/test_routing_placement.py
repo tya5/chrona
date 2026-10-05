@@ -158,16 +158,16 @@ def test_an_already_compliant_first_repair_keeps_its_exact_geometry():
 
 
 def test_lane_selection_recovers_the_same_port_pair_with_its_next_safe_repair(monkeypatch):
-    import chrona.presentation.layout.routing as routing
+    import chrona.presentation.layout.route_search as route_search
 
     obstacles, clear = _repair_target()
     calls = []
 
-    def body_route(**kwargs):
+    def body_route(*args, **kwargs):
         calls.append(kwargs)
-        return REVERSING_TARGET_APPROACH[:-1]
+        yield REVERSING_TARGET_APPROACH[:-1]
 
-    monkeypatch.setattr(routing, "place_relation_route", body_route)
+    monkeypatch.setattr(route_search, "orthogonal_route_candidates", body_route)
     source = ConnectorEgress("end", (20.0, 110.0), (20.0, 110.0), ())
     target = ConnectorEgress("above", (0.0, 95.0), (0.0, 90.0), ("target",))
     selected = select_relation_route(((source, target),), obstacles=obstacles,

@@ -5,14 +5,18 @@ from pathlib import Path
 import pytest
 
 from chrona.app.cli import main
-from chrona.presentation.layout import surface_annotations, surface_composer
+from chrona.presentation.layout import surface_annotations, surface_composer, surface_route_label_plan
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
 
 
-def test_annotations_follow_source_content_and_extend_the_same_obstacle_index(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_annotations_follow_selected_route_trial_and_extend_its_obstacle_index(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
     events: list[str] = []
-    seen: dict[str, tuple[int, int]] = {}
+    trial_events: list[tuple[str, int, int]] = []
+    member_requests: dict[int, list[str]] = {}
+    trial_initial_ids: dict[int, set[str]] = {}
+    trial_final_ids: dict[int, set[str]] = {}
+    seen: dict[str, object] = {}
     call: dict[str, object] = {}
 
     def spy(name: str, original):
@@ -21,16 +25,57 @@ def test_annotations_follow_source_content_and_extend_the_same_obstacle_index(tm
             return original(*args, **kwargs)
         return wrapper
 
-    for attribute, name in (("compose_surface_routes", "routes"), ("place_relation_labels", "relation-labels"),
-                            ("place_legend", "legend"), ("place_notes", "notes"), ("place_summary", "summary")):
+    for attribute, name in (("place_legend", "legend"), ("place_notes", "notes"), ("place_summary", "summary")):
         monkeypatch.setattr(surface_composer, attribute, spy(name, getattr(surface_composer, attribute)))
-    routes = surface_composer.compose_surface_routes
+    for attribute, name in (("compose_surface_routes", "routes"), ("place_relation_labels", "relation-labels")):
+        original = getattr(surface_route_label_plan, attribute)
 
-    def routes_spy(context):
-        seen["routes"] = (id(context.obstacles), len(context.obstacles.all()))
-        return routes(context)
+        def owner_spy(*args, _original=original, _name=name, **kwargs):
+            obstacles = args[0].obstacles
+            identity = id(obstacles)
+            ids = {item.placement_id for item in obstacles.all()}
+            trial_initial_ids.setdefault(identity, ids)
+            trial_events.append((_name, identity, len(ids)))
+            result = _original(*args, **kwargs)
+            trial_final_ids[identity] = {item.placement_id for item in obstacles.all()}
+            return result
 
-    monkeypatch.setattr(surface_composer, "compose_surface_routes", routes_spy)
+        monkeypatch.setattr(surface_route_label_plan, attribute, owner_spy)
+    original_labels = surface_route_label_plan.place_member_labels
+
+    def trial_labels(context, requests, obstacles):
+        identity = id(obstacles)
+        ids = {item.placement_id for item in obstacles.all()}
+        trial_initial_ids.setdefault(identity, ids)
+        trial_events.append(("member-labels", identity, len(ids)))
+        member_requests.setdefault(identity, []).extend(item.placement_id for item in requests)
+        result = original_labels(context, requests, obstacles)
+        trial_final_ids[identity] = {item.placement_id for item in obstacles.all()}
+        return result
+
+    monkeypatch.setattr(surface_route_label_plan, "place_member_labels", trial_labels)
+    original_plan = surface_composer.compose_routes_and_member_labels
+
+    def plan_spy(context):
+        seen["clean_id"] = id(context.clean_obstacles)
+        seen["clean_ids"] = {item.placement_id for item in context.clean_obstacles.all()}
+        result = original_plan(context)
+        seen["selected_index"] = result.obstacles
+        seen["selected_routes"] = {item.relation_id: item.points for item in result.routes.relations}
+        return result
+
+    monkeypatch.setattr(surface_composer, "compose_routes_and_member_labels", plan_spy)
+    original_complete = surface_composer.complete_surface_layout
+
+    def completion_spy(context):
+        selected = seen["selected_routes"]
+        completed = {item.relation_id: item.points for item in context.relations
+                     if item.relation_id in selected}
+        assert completed == selected
+        call["completed_routes"] = completed
+        return original_complete(context)
+
+    monkeypatch.setattr(surface_composer, "complete_surface_layout", completion_spy)
     original = surface_composer.place_annotations
 
     def annotations_spy(context):
@@ -53,9 +98,24 @@ def test_annotations_follow_source_content_and_extend_the_same_obstacle_index(tm
     ])
     main()
 
-    assert events == ["routes", "relation-labels", "legend", "notes", "summary", "annotations"]
-    assert seen["routes"][0] == seen["annotations-before"][0] == seen["annotations-after"][0]  # one index object
-    assert seen["annotations-before"][1] >= seen["routes"][1]  # nothing was removed before annotations ran
+    assert events == ["legend", "notes", "summary", "annotations"]
+    trial_ids = {identity for _, identity, _ in trial_events}
+    assert len(trial_ids) in {1, 2}
+    for identity in trial_ids:
+        phases = [name for name, index_id, _ in trial_events if index_id == identity]
+        assert phases in (["routes", "relation-labels"],
+                         ["routes", "member-labels", "relation-labels"],
+                         ["member-labels", "routes", "relation-labels"],
+                         ["member-labels", "routes", "member-labels", "relation-labels"])
+        counts = [count for _, index_id, count in trial_events if index_id == identity]
+        assert counts == sorted(counts)
+        assert len(member_requests.get(identity, ())) == len(set(member_requests.get(identity, ())))
+        assert seen["clean_ids"] <= trial_initial_ids[identity]
+        assert trial_initial_ids[identity] <= trial_final_ids[identity]
+    assert id(seen["selected_index"]) == seen["annotations-before"][0] == seen["annotations-after"][0]
+    assert seen["clean_id"] not in trial_ids
+    assert id(seen["selected_index"]) in trial_ids
+    assert call["completed_routes"] == seen["selected_routes"]
     batch = call["batch"]
     assert batch.text and batch.relations  # this slide has annotation text and leaders
     assert seen["annotations-after"][1] > seen["annotations-before"][1]  # annotations registered their own geometry

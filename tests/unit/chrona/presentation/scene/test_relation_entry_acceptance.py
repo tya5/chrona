@@ -7,6 +7,7 @@ from decimal import Decimal
 import pytest
 
 import chrona.presentation.layout.surface_routes as surface_routes
+import chrona.presentation.layout.routing as routing
 import chrona.presentation.layout.ports as route_ports
 import tests.unit.chrona.presentation.scene.test_relation_node_approach as node_approach
 from chrona.presentation.contracts.resources import ViewWindow
@@ -130,7 +131,22 @@ def _prior_source_first(monkeypatch):
 
 def test_nearest_stub_exit_can_be_rejected_before_the_other_exit_enters_horizontally(monkeypatch):
     attempts = []
+    nearest_candidates = []
     original = surface_routes.select_relation_route
+    original_pair = routing._select_pair_candidate
+    original_measure = routing.route_quality_attempt
+
+    def measure(*args, **kwargs):
+        result = original_measure(*args, **kwargs)
+        nearest_candidates.append(result)
+        return result
+
+    def capture_nearest(source, target, **kwargs):
+        if source.side == "below" and target.stub:
+            with monkeypatch.context() as local:
+                local.setattr(routing, "route_quality_attempt", measure)
+                return original_pair(source, target, **kwargs)
+        return original_pair(source, target, **kwargs)
 
     def capture(pairs, **kwargs):
         result = original(pairs, **kwargs)
@@ -138,13 +154,17 @@ def test_nearest_stub_exit_can_be_rejected_before_the_other_exit_enters_horizont
         return result
 
     monkeypatch.setattr(surface_routes, "select_relation_route", capture)
+    monkeypatch.setattr(routing, "_select_pair_candidate", capture_nearest)
     current = _compose()
     points = _relation_path(current).points
     assert _bends(points) == 4
     assert points[-2][1] == points[-1][1] and points[-2][0] < points[-1][0]
     assert points[-1][0] - points[-2][0] >= 11
-    assert [(a.source_side, a.target_side, a.outcome, a.bends) for a in attempts[:2]] == [
-        ("below", "start", "quality-rejected", 5), ("end", "start", "accepted", 4)]
+    assert nearest_candidates[0].bends == 5
+    assert min(item.bends for item in nearest_candidates
+               if item.length <= item.direct_length * item.max_detour_ratio) == 5
+    assert attempts[0].source_side == "below" and attempts[0].outcome == "quality-rejected"
+    assert (attempts[1].source_side, attempts[1].outcome, attempts[1].bends) == ("end", "accepted", 4)
 
     with monkeypatch.context() as old:
         _prior_source_first(old)
