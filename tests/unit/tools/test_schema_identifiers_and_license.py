@@ -74,7 +74,8 @@ ID_SITES: dict[tuple[str, str], int] = {
     ("project-v0.7.schema.yaml", "unconstrained-string"): 1,
     ("render-context-v0.17.schema.yaml", "non-empty-string"): 2,
     ("review-detail-profile-v0.1.schema.yaml", "bounded-non-empty-string"): 4,
-    ("scene-v0.7.schema.yaml", "scene-text"): 29,
+    # R6 adds Layout-generated target-port and terminal-owner identities, not authored IDs.
+    ("scene-v0.7.schema.yaml", "scene-text"): 31,
     ("snapshot-ref-v0.3.schema.yaml", "non-empty-string"): 1,
     ("summary-profile-v0.2.schema.yaml", "non-empty-string"): 3,
     ("theme-asset-source-v0.1.schema.yaml", "portable-name"): 1,
@@ -133,6 +134,15 @@ def test_every_allowlisted_category_has_a_recorded_reason_and_no_entry_is_stale(
     assert {category for _, category in ID_SITES} <= set(ALLOWED_SHAPES)
     assert set(ALLOWED_SHAPES) == {category for _, category in ID_SITES}, "a reason without a site is stale"
     assert all(len(reason) > 40 for reason in ALLOWED_SHAPES.values())
+
+
+def test_scene_fan_in_uses_the_existing_opaque_generated_identity_contract():
+    fan_in = _schema("scene-v0.7.schema.yaml")["$defs"]["relationFanIn"]
+    assert fan_in["required"] == ["targetPortId", "terminalOwnerId"]
+    assert fan_in["properties"] == {
+        "targetPortId": {"$ref": "#/$defs/string"},
+        "terminalOwnerId": {"$ref": "#/$defs/string"},
+    }
 
 
 def test_the_resource_envelope_id_of_a_part_consumer_is_the_part_not_an_inline_copy():

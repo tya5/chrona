@@ -33,7 +33,7 @@ ACTUAL = {"observations": [{"id": "a-observation", "sequence": 1, "projectObject
                             "actual": {"start": "2026-02-01", "finish": "2026-02-09"}}]}
 
 
-def _project(*, mirrored=False, baseline_ghost=False):
+def _project(*, mirrored=False, baseline_ghost=False, ghost_finish=11):
     project = {**PROJECT_BASE, "relations": [deepcopy(RELATION)]}
     placed = dict(PLACED)
     actual = {"observations": [dict(ACTUAL["observations"][0])]}
@@ -55,7 +55,8 @@ def _project(*, mirrored=False, baseline_ghost=False):
     if baseline_ghost:
         snapshot = project
         # A real baseline instance of b, detached from both relation endpoints, sits inside the temporal gap.
-        snapshot_placements = {"b": {"start": date(2026, 2, 10), "end": date(2026, 2, 11)}}
+        snapshot_placements = {"b": {"start": date(2026, 2, ghost_finish - 1),
+                                      "end": date(2026, 2, ghost_finish)}}
     projection = build_review_projection(project, placed, view, actual,
         snapshot_project=snapshot, snapshot_placements=snapshot_placements)
     return project, placed, actual, view, projection
@@ -75,23 +76,51 @@ def _theme_with_route_fixture_geometry(*, target_marker="triangle"):
     return theme
 
 
-def _compose(*, mirrored=False, baseline_ghost=False, entry="side-when-free", target_marker="triangle"):
-    project, placed, actual, view, projection = _project(mirrored=mirrored, baseline_ghost=baseline_ghost)
+def _compose(*, mirrored=False, baseline_ghost=False, entry="side-when-free", target_marker="triangle",
+             ghost_finish=11, corner_radius=0, head_length=10):
+    project, placed, actual, view, projection = _project(mirrored=mirrored, baseline_ghost=baseline_ghost,
+                                                     ghost_finish=ghost_finish)
     metrics = {
         "text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4"),
         "timeline.row.minBlockSize": Decimal(22), "timeline.row.paddingBlock": Decimal(0),
         "timeline.mark.blockSize": Decimal(20),
+        "timeline.relation.cornerRadius": Decimal(corner_radius),
     }
     measured = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))}, metrics)
     manifest = replace(_manifest("title", "table", "timeline", "timeline-axis"),
         relation_entry=entry, row_distribution="pack", relation_max_bends=4, relation_max_detour_ratio=2)
     content = surface_content(relations=project["relations"], show_member_labels=True, label_placement="plot",
         label_content=("title",), label_side="end", label_overflow="visible-overflow")
+    theme = _theme_with_route_fixture_geometry(target_marker=target_marker)
+    theme["body"]["values"]["dependency-marker"]["value"]["headLength"] = head_length
     value = build_scene_input(projection=projection, surface_content=content, layout_manifest=manifest,
-        resolved_theme=_theme_with_route_fixture_geometry(target_marker=target_marker),
+        resolved_theme=theme,
         font_metrics=_Font(), measured_sources=measured,
         capabilities={"svg": True})
     return compose_review_surface(value)
+
+
+@pytest.mark.parametrize("radius", range(7))
+def test_clipped_corner_preserves_head_and_side_entry_beside_detached_ghost(radius):
+    surface = _compose(baseline_ghost=True, ghost_finish=9, entry="side",
+                       corner_radius=radius, head_length=6)
+    path = _relation_path(surface)
+    assert path.points[-2][1] == path.points[-1][1]
+    assert path.points[-1][0] - path.points[-2][0] >= 7 - 1e-6
+    ghost = next(p for p in surface.primitives if p.scene_id == "planned:b:snapshot:b")
+    assert path.points[-2][0] >= ghost.bounds[0] + ghost.bounds[2]
+    assert not any("ENTRY_FALLBACK" in diagnostic for diagnostic in surface.diagnostics)
+    # The adapter receives a full straight head tangent after the completed turn.
+    assert not radius or path.path_commands[-1].kind == "line"
+    previous = path.path_commands[-2].points[-1] if path.path_commands else path.points[-2]
+    endpoint = path.path_commands[-1].points[-1] if path.path_commands else path.points[-1]
+    assert endpoint[0] - previous[0] >= 6 - 1e-6
+
+
+def test_radius_clipping_does_not_shorten_a_head_to_cross_a_detached_ghost():
+    surface = _compose(baseline_ghost=True, ghost_finish=11, entry="side",
+                       corner_radius=4, head_length=6)
+    assert any("reason=entry-stub-blocked" in diagnostic for diagnostic in surface.diagnostics)
 
 
 def _relation_path(surface):
@@ -230,16 +259,31 @@ def test_round_target_terminal_keeps_semantic_entry_stub_after_paint_trimming():
     assert semantic_stub >= marker.head_length + 1
 
 
-def test_a_legal_side_route_losing_node_clearance_reports_its_actual_reason(monkeypatch):
+@pytest.mark.parametrize("radius", range(7))
+def test_gate_bottom_back_route_avoids_arrival_without_false_node_conflict(monkeypatch, radius):
     original = node_approach.build_scene_input
 
     def side_entry(*args, **kwargs):
         kwargs["layout_manifest"] = replace(kwargs["layout_manifest"], relation_entry="side")
+        theme = deepcopy(kwargs["resolved_theme"])
+        theme["body"]["values"]["dependency-marker"]["value"].update(headLength=6, headWidth=6)
+        theme["body"]["values"]["no-source"] = {"type": "marker", "value": {
+            "shape": "none", "headLength": 6, "headWidth": 6, "attachmentOffset": 0}}
+        theme["body"]["roles"]["relationSourceTerminal"] = {"marker": "no-source"}
+        kwargs["resolved_theme"] = theme
+        measured = kwargs["measured_sources"]
+        kwargs["measured_sources"] = replace(measured, metric_values={**measured.metric_values,
+            "timeline.relation.cornerRadius": Decimal(radius)})
         return original(*args, **kwargs)
 
     monkeypatch.setattr(node_approach, "build_scene_input", side_entry)
-    paths, _marks, diagnostics = node_approach._gate_chain(
-        (node_approach.INCOMING, node_approach.OUTGOING), gap=-1)
+    incoming = {**node_approach.INCOMING, "to": {"object": "g", "endpoint": "start"}}
+    paths, marks, diagnostics = node_approach._gate_chain(
+        (incoming, node_approach.OUTGOING), gap=-1)
     assert node_approach._terminal_segment_residuals(paths) == set()
-    assert ("I_LAYOUT_RELATION_ENTRY_FALLBACK:relation:g-l:g:g:l:l;"
-            "reason=node-approach-conflict") in diagnostics
+    outgoing = next(path for path in paths if path.source_ref == "g-l")
+    assert outgoing.points[0][0] == outgoing.points[1][0]
+    assert outgoing.points[0][1] == pytest.approx(marks["g:g"].bounds[1] + marks["g:g"].bounds[3])
+    assert outgoing.points[-1][1] == outgoing.points[-2][1]
+    assert outgoing.points[-1][0] - outgoing.points[-2][0] >= 7 - 1e-6
+    assert not any("ENTRY_FALLBACK" in diagnostic for diagnostic in diagnostics)

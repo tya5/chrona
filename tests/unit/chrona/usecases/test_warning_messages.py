@@ -53,6 +53,13 @@ def test_every_warning_code_a_render_can_emit_has_a_curated_sentence():
         "family put its own `message` in the ledger record")
 
 
+def test_invalid_fan_in_warning_explains_the_group_failure_and_names_its_relations():
+    text = describe_warning({"code": "W_SCENE_RELATION_FAN_IN_INVALID",
+                             "primitiveIds": ["relation:one", "relation:two"]})
+    assert text.cause == "shared dependency arrivals do not agree on their target port, terminal owner, paint, or approach direction"
+    assert text.subject == "relation:one, relation:two"
+
+
 def test_a_family_that_carries_its_own_message_keeps_it_and_only_equal_messages_merge():
     one = {"code": "W_NEW_FAMILY", "severity": "warning", "diagnostic": "W_NEW_FAMILY:a", "message": "a is late by 2 days"}
     other = dict(one, diagnostic="W_NEW_FAMILY:b", message="b is late by 5 days")

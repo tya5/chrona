@@ -6,7 +6,7 @@ from datetime import date
 import math
 from typing import Any
 
-from chrona.presentation.layout.surface_quality import FitWarning, MarkerGeometry, PathCommand, TextFit
+from chrona.presentation.layout.surface_quality import FitWarning, MarkerGeometry, PathCommand, RelationFanIn, TextFit
 from chrona.presentation.layout.pattern_placement import PatternTilePrimitive
 from chrona.presentation.model.font_metrics import FontTabularWarning
 from chrona.presentation.model.info_diagnostics import PresentationInfo
@@ -313,6 +313,7 @@ class ScenePrimitive:
     lane_member_id: str | None = None
     from_instance_id: str | None = None
     to_instance_id: str | None = None
+    fan_in: RelationFanIn | None = None
     # The viewer-fit mode of a text-bearing box (#1050); `raw` is today's output.
     viewer_fit: str = "raw"
 
@@ -351,6 +352,9 @@ class ScenePrimitive:
                     (not isinstance(self.from_instance_id, str) or not self.from_instance_id or self.kind != "Path"))
                 or (self.to_instance_id is not None and
                     (not isinstance(self.to_instance_id, str) or not self.to_instance_id or self.kind != "Path"))
+                or (self.fan_in is not None and
+                    (self.kind != "Path" or self.source_kind != "relation" or self.to_instance_id is None
+                     or not isinstance(self.fan_in, RelationFanIn)))
                 or (self.kind == "Icon" and (self.icon_kind not in {"vector", "raster"}
                                                or self.icon_viewport is None
                                                or any(item <= 0 for item in self.icon_viewport)))

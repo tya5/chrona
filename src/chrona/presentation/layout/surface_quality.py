@@ -346,6 +346,20 @@ class PrimitivePlacement:
 
 
 @dataclass(frozen=True)
+class RelationFanIn:
+    """Layout-authorized same-port arrivals with one stable terminal paint owner."""
+
+    target_port_id: str
+    terminal_owner_id: str
+
+    def __post_init__(self) -> None:
+        for name, value in (("target_port_id", self.target_port_id),
+                            ("terminal_owner_id", self.terminal_owner_id)):
+            if not isinstance(value, str) or not value:
+                raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: fan_in.{name} must be a non-empty string")
+
+
+@dataclass(frozen=True)
 class RelationPlacement:
     """A completed relation path or an explicit, provenance-preserving suppression."""
 
@@ -367,6 +381,7 @@ class RelationPlacement:
     paint_order: int = 250
     from_instance_id: str | None = None
     to_instance_id: str | None = None
+    fan_in: RelationFanIn | None = None
 
 
 @dataclass(frozen=True)
