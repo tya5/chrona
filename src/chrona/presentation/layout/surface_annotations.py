@@ -17,7 +17,7 @@ from chrona.presentation.model.semantic_registry import (
     semantic_binding)
 from chrona.presentation.layout.text import measure_text_width, place_text, wrap_text
 from chrona.presentation.layout.annotations import (
-    AnnotationBox, annotation_rail_candidates, nearest_box_port, place_annotation_rail, project_annotation_box,
+    AnnotationBox, annotation_rail_candidates, nearest_box_port, project_annotation_box,
     resolve_annotation_anchor,
 )
 from chrona.presentation.layout.annotation_search import (
@@ -197,6 +197,19 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
     annotation_slot_id = annotation_slot.slot_id if annotation_slot is not None else ""
     rail_records: list[TextPlacement] = []
 
+    def ordered_rail_candidates(annotation: Any, resolved: Any, *, anchor_y: float,
+                                text_size: tuple[float, float], rail: LabelRect) -> tuple[AnnotationBox, ...]:
+        """Enumerate free rail boxes at or below the preceding completed list entry."""
+        previous_bottom = max(
+            (float(item.bounds.block + item.bounds.block_size) for item in rail_records),
+            default=rail.y)
+        height = text_size[1]
+        candidates = annotation_rail_candidates(
+            annotation, resolved, anchor_y=max(anchor_y, previous_bottom + height / 2),
+            text_size=text_size, rail=rail, obstacles=surface_obstacles)
+        return tuple(candidate for candidate in candidates
+                     if candidate.placement.bounds.y >= previous_bottom)
+
     def complete_list_record(*, annotation: Any, resolved: Any, placement_id: str,
                              content: str, lines: tuple[str, ...], text_size: tuple[float, float],
                              font_size: float, typography_role: str,
@@ -204,9 +217,12 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
         """Place a finalized list record, stacking explicitly when the slot cannot fit it."""
         assert annotation_slot is not None
         rail = LabelRect(*_bounds(annotation_slot.bounds))
-        candidates = annotation_rail_candidates(
+        previous_bottom = max(
+            (float(item.bounds.block + item.bounds.block_size) for item in rail_records),
+            default=rail.y)
+        candidates = ordered_rail_candidates(
             annotation, resolved, anchor_y=anchor_y, text_size=text_size,
-            rail=rail, obstacles=surface_obstacles)
+            rail=rail)
         placed: TextPlacement | None = None
         for candidate_box in candidates:
             bounds = candidate_box.placement.bounds
@@ -231,9 +247,6 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                 break
         overflow = placed is None
         if placed is None:
-            previous_bottom = max(
-                (float(item.bounds.block + item.bounds.block_size) for item in rail_records),
-                default=rail.y)
             bounds = LabelRect(rail.x, previous_bottom, text_size[0], text_size[1])
             placed = place_text(
                 placement_id=placement_id, source_ref=annotation.annotation_id,
@@ -562,10 +575,10 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                         used_fill = False
                         rung = candidate.candidate_id
                         if candidate.search.kind == "row-aligned":
-                            candidate_boxes = annotation_rail_candidates(
+                            candidate_boxes = ordered_rail_candidates(
                                 annotation, resolved, anchor_y=anchor_bounds.y + anchor_bounds.height / 2,
-                                text_size=fill_size or annotation_size, rail=LabelRect(*_bounds(annotation_slot.bounds)),
-                                obstacles=surface_obstacles)
+                                text_size=fill_size or annotation_size,
+                                rail=LabelRect(*_bounds(annotation_slot.bounds)))
                             for candidate_box in candidate_boxes:
                                 annotation_search_count += 1
                                 leader_trial = trial_leader(candidate_box, rung)
@@ -715,10 +728,19 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                         use_variant(first_candidate)
                         if selected_rung == "rail":
                             used_fill = filled is not None
-                            box = place_annotation_rail(
-                                annotation, resolved, anchor_y=anchor_bounds.y + anchor_bounds.height / 2,
-                                text_size=fill_size or annotation_size, rail=LabelRect(*_bounds(annotation_slot.bounds)),
-                                obstacles=surface_obstacles, overflow="visible-overflow", required=True)
+                            rail = LabelRect(*_bounds(annotation_slot.bounds))
+                            text_size = fill_size or annotation_size
+                            rail_candidates = ordered_rail_candidates(
+                                annotation, resolved,
+                                anchor_y=anchor_bounds.y + anchor_bounds.height / 2,
+                                text_size=text_size, rail=rail)
+                            previous_bottom = max(
+                                (float(item.bounds.block + item.bounds.block_size)
+                                 for item in rail_records), default=rail.y)
+                            fallback_bounds = LabelRect(
+                                rail.x, max(rail.y, previous_bottom), text_size[0], text_size[1])
+                            box = rail_candidates[0] if rail_candidates else AnnotationBox(
+                                resolved, LabelPlacement("rail", fallback_bounds, True), True)
                         elif first_candidate is not None and first_candidate.search.kind == "nearest-free":
                             # #449 never refuses: complete the first declared
                             # candidate's own region at its nearest lattice

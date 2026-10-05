@@ -85,9 +85,15 @@ class RouteAttemptEvidence:
             raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
         if self.search_disposition is not None and self.search_disposition not in {
                 "bounded-candidates-exhausted", "expansion-limit"}:
-            raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+            raise ValueError(
+                "E_LAYOUT_ROUTE_ATTEMPT_INVALID: search_disposition must be "
+                "bounded-candidates-exhausted or expansion-limit."
+            )
         if self.search_disposition is not None and self.outcome != "quality-rejected":
-            raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+            raise ValueError(
+                "E_LAYOUT_ROUTE_ATTEMPT_INVALID: search_disposition is valid only "
+                "for a quality-rejected attempt."
+            )
         if self.outcome == "egress-collision":
             if (not self.blocker_ids or self.search_failure is not None
                     or any(value is not None for value in self._quality_values())):

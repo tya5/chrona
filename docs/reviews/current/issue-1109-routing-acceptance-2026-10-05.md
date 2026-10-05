@@ -27,12 +27,17 @@ identical; only the four target-B reasons and diagnostic source line numbers cha
 
 ## Literal issue acceptance
 
-R5 candidate (not release acceptance): 93 focused tests pass. Actual paired
-SVG renders were inspected for 02/12/19/20; six-context strict evidence has
-137→144 dependency paths, no lost path/member-name/annotation identities,
-four recovered FRR labels, and three removed optional window-note indices.
-All seven recovered paths satisfy the unchanged quality limits; no quality
-exception mechanism is added. Whole-corpus CI and exact-main release remain.
+R5 candidate in [#1162](https://github.com/tya5/chrona/pull/1162), not accepted:
+the [first full batch](https://github.com/tya5/chrona/actions/runs/37256103593)
+restores all seven routes (627→634; no routing suppression or safety errors),
+but loses 36 Controller member names. Merge is held. Corrections retain the
+declared label ladders and quality limits through one private Layout recovery
+trial, preserve ordered annotation-rail geometry, and add diagnostic details.
+The four failed tests (two Controller, ordered rail, diagnostic inventory)
+and conformance require a new green exact-head batch. Synthetic recovery,
+retry-rejection and intersection-equivalence tests cover the general rules;
+no corpus/Theme adaptation or quality exception is added. Whole-corpus output
+review and exact-main release remain required.
 
 ### Issue #1109
 

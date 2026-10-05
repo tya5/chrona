@@ -10,10 +10,13 @@ from chrona.presentation.layout.surface_lanes import lane_owner as _lane_owner, 
 from chrona.presentation.layout.surface_marks import (MARK_PAINT_ORDER_BASE, compose_surface_marks)
 from chrona.presentation.layout.surface_visuals import (place_mark_visuals, place_text_visuals)
 from chrona.presentation.layout.surface_member_labels import (
-    SurfaceMemberLabelContext, build_member_label_requests, place_member_labels,
+    SurfaceMemberLabelContext, SurfaceMemberLabelsBatch, build_member_label_requests, place_member_labels,
 )
 from chrona.presentation.layout.surface_routes import (
-    SurfaceRoutesContext, compose_surface_routes, place_relation_labels,
+    SurfaceRoutesContext,
+)
+from chrona.presentation.layout.surface_route_label_plan import (
+    RouteLabelPlanContext, compose_routes_and_member_labels,
 )
 from chrona.presentation.layout.surface_lane_route_plan import LaneRoutePlanContext, plan_lane_route_reservations
 from chrona.presentation.layout.surface_base import prepare_surface_base
@@ -254,8 +257,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
 
     timeline_rect = LabelRect(*timeline_bounds)
 
-    def place_label_phase(requests: tuple[LabelRequest, ...]) -> None:
-        batch = place_member_labels(member_label_context, requests, surface_obstacles)
+    def accept_member_label_batch(batch: SurfaceMemberLabelsBatch) -> None:
         text.extend(batch.text)
         shapes.extend(batch.shapes)
         candidate_icons.extend(batch.icons)
@@ -265,6 +267,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         lane_label_suppressions.extend(batch.lane_label_suppressions)
         handled_candidate_visuals.update(batch.handled_visual_sources)
 
+    def place_label_phase(requests: tuple[LabelRequest, ...]) -> None:
+        accept_member_label_batch(place_member_labels(member_label_context, requests, surface_obstacles))
+
     lane_route_plan = plan_lane_route_reservations(LaneRoutePlanContext(
         member_label_context, member_label_requests.pre_route, tuple(text), surface_obstacles,
         lambda index, texts: SurfaceRoutesContext(request, projection, review_rows, tuple(rows), tuple(groups),
@@ -272,9 +277,12 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     surface_obstacles.extend(lane_route_plan.reservations)
     place_label_phase(member_label_requests.pre_route)
 
-    routes_context = SurfaceRoutesContext(request, projection, review_rows, tuple(rows), tuple(groups),
-        tuple(marks), timeline_bounds, layout_manifest, metric_values, tuple(text), surface_obstacles)
-    routes_batch = compose_surface_routes(routes_context)
+    route_label_plan = compose_routes_and_member_labels(RouteLabelPlanContext(
+        member_label_context, member_label_requests.post_route, tuple(text), surface_obstacles,
+        lambda index, texts: SurfaceRoutesContext(request, projection, review_rows, tuple(rows), tuple(groups),
+            tuple(marks), timeline_bounds, layout_manifest, metric_values, texts, index)))
+    surface_obstacles = route_label_plan.obstacles
+    routes_batch = route_label_plan.routes
     relations = list(routes_batch.relations)
     visible_route_fallbacks = list(routes_batch.visible_route_fallbacks)
     instance_anchors = dict(routes_batch.instance_anchors)
@@ -282,8 +290,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     comparison_clusters = dict(routes_batch.comparison_clusters)
     diagnostics.extend(routes_batch.diagnostics)
 
-    place_label_phase(member_label_requests.post_route)
-    relation_labels = place_relation_labels(routes_context, routes_batch)
+    accept_member_label_batch(route_label_plan.members)
+    relation_labels = route_label_plan.relation_labels
     text.extend(relation_labels.text)
     diagnostics.extend(relation_labels.diagnostics)
     visible_label_overflows.extend(relation_labels.visible_label_overflows)

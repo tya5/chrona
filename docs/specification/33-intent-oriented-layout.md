@@ -475,6 +475,15 @@ annotations. This finite monotone phase order prioritizes visible semantic
 connections without allowing label/route overlap or changing declared route
 quality and overflow limits. See the [#466 route-priority correction](../design/issue-466-general-placement-route-priority-correction-2026-09-26.md).
 
+If this order suppresses a post-route member name, Layout may make one private
+feasibility retry: place only the lost-name requests using their unchanged
+declared ladders, then route and place the remaining labels. Select that
+completed trial only if it strictly reduces the lost-name set, preserves every
+relation identity without degrading its status, and loses no relation-label
+identity. Otherwise retain the normal route-first result and its diagnostics.
+Reuse the chosen completed batches and inventory; do not replay or iterate the
+winning branch. This recovery does not waive safety or route-quality limits.
+
 Fixed-lane member names and selected deltas are the route-independent
 exception: their finite candidates resolve after lane geometry but before
 semantic relations, and only accepted labels enter the route obstacle set.

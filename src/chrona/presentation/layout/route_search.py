@@ -4,19 +4,23 @@ from __future__ import annotations
 from collections.abc import Iterable, Iterator
 from heapq import heappop, heappush
 from itertools import count
-from math import isfinite
+from math import hypot, isfinite
 
 from chrona.presentation.layout.obstacles import (
     ObstacleRect,
     ObstacleSegment,
     SurfaceObstacleIndex,
     obstacle_envelope,
-    obstacles_intersect,
 )
 
 
 class RouteSearchFailure(ValueError):
     """A bounded orthogonal search found no route; unrelated ValueErrors propagate."""
+
+    def __init__(self, code: str, *, detail: str | None = None) -> None:
+        # Keep the stable error string used by typed transport and route memoization.
+        super().__init__(code)
+        self.detail = detail
 
 
 Point = tuple[float, float]
@@ -27,6 +31,45 @@ SparseGraph = tuple[
     tuple[tuple[Edge, ...], ...],
     tuple[tuple[tuple[int, int], tuple[int, float]], ...],
 ]
+
+
+def _history_segments_intersect(
+    first: tuple[Point, Point], second: tuple[Point, Point],
+) -> bool:
+    """Fast equivalent of Layout's collision predicate for zero-stroke orthogonal segments."""
+    (a, b), (c, d) = first, second
+    if a == b or c == d:
+        raise ValueError("E_LAYOUT_OBSTACLE_GEOMETRY: history segments must have positive length.")
+    first_horizontal, second_horizontal = a[1] == b[1], c[1] == d[1]
+
+    def interval_gap(a0: float, a1: float, b0: float, b1: float) -> float:
+        return max(0.0, max(min(a0, a1), min(b0, b1)) - min(max(a0, a1), max(b0, b1)))
+
+    if first_horizontal and second_horizontal:
+        dx = interval_gap(a[0], b[0], c[0], d[0])
+        dy = abs(a[1] - c[1])
+    elif not first_horizontal and not second_horizontal:
+        dx = abs(a[0] - c[0])
+        dy = interval_gap(a[1], b[1], c[1], d[1])
+    else:
+        dx = interval_gap(a[0], b[0], c[0], d[0])
+        dy = interval_gap(a[1], b[1], c[1], d[1])
+    if hypot(dx, dy) > 1e-9:
+        return False
+
+    shared = set((a, b)).intersection((c, d))
+    if not shared:
+        return True
+    if len(shared) == 2:
+        return True
+    point = next(iter(shared))
+    other_first = b if a == point else a
+    other_second = d if c == point else c
+    cross = ((other_first[0] - point[0]) * (other_second[1] - point[1])
+             - (other_first[1] - point[1]) * (other_second[0] - point[0]))
+    dot = ((other_first[0] - point[0]) * (other_second[0] - point[0])
+           + (other_first[1] - point[1]) * (other_second[1] - point[1]))
+    return abs(cross) < 1e-9 and dot > 0
 
 
 def _build_sparse_graph(
@@ -152,16 +195,23 @@ def orthogonal_route_candidates(
             or (bend_penalty is not None and (not isfinite(bend_penalty) or bend_penalty < 0))
             or isinstance(limit, bool) or not isinstance(limit, int) or limit < 1
             or initial_direction not in {-1, 0, 1}):
-        raise ValueError("E_LAYOUT_ROUTE_SEARCH_INPUT")
+        raise ValueError(
+            "E_LAYOUT_ROUTE_SEARCH_INPUT: start/end must be finite 2D points; grid_offset and bend_penalty "
+            "must be finite and non-negative; limit must be a positive integer; initial_direction must be -1, 0, or 1."
+        )
     if bounds is not None:
         if (len(bounds) != 4 or not all(isfinite(value) for value in bounds)
                 or bounds[0] > bounds[2] or bounds[1] > bounds[3]):
-            raise ValueError("E_LAYOUT_ROUTE_SEARCH_INPUT")
+            raise ValueError(
+                "E_LAYOUT_ROUTE_SEARCH_INPUT: bounds must be finite ordered "
+                "(left, top, right, bottom) coordinates."
+            )
         if not (bounds[0] <= start[0] <= bounds[2]
                 and bounds[1] <= start[1] <= bounds[3]
                 and bounds[0] <= end[0] <= bounds[2]
                 and bounds[1] <= end[1] <= bounds[3]):
-            raise RouteSearchFailure("E_CONNECTOR_UNROUTABLE")
+            raise RouteSearchFailure(
+                "E_CONNECTOR_UNROUTABLE", detail="The supplied bounds exclude the start or end point.")
 
     index = obstacles if isinstance(obstacles, SurfaceObstacleIndex) else None
     rects: tuple[tuple[float, float, float, float], ...]
@@ -169,7 +219,10 @@ def orthogonal_route_candidates(
         rects = tuple(tuple(box) for box in obstacles)
         if any(len(box) != 4 or not all(isfinite(value) for value in box)
                or box[0] > box[2] or box[1] > box[3] for box in rects):
-            raise ValueError("E_LAYOUT_ROUTE_SEARCH_INPUT")
+            raise ValueError(
+                "E_LAYOUT_ROUTE_SEARCH_INPUT: each obstacle must be a finite ordered "
+                "(left, top, right, bottom) rectangle."
+            )
         items = ()
     else:
         items = index.select(classes=classes, regions=regions)
@@ -177,7 +230,10 @@ def orthogonal_route_candidates(
         all_by_id = {item.placement_id: item for item in index.all()}
         if any(not isinstance(port_id, str) or port_id not in all_by_id
                or all_by_id[port_id].obstacle_class != "port" for port_id in port_ids):
-            raise ValueError("E_LAYOUT_OBSTACLE_EXEMPTION_INVALID")
+            raise ValueError(
+                "E_LAYOUT_OBSTACLE_EXEMPTION_INVALID: port_ids must identify existing port obstacles "
+                "in this surface index."
+            )
 
     def clear(a: Point, b: Point) -> bool:
         if a == b:
@@ -205,7 +261,10 @@ def orthogonal_route_candidates(
             candidate = tuple(path)
             if candidate not in seeded and all(clear(a, b) for a, b in zip(candidate, candidate[1:])):
                 if len(seeded) >= limit:
-                    raise RouteSearchFailure("E_PRESENTATION_ROUTE_LIMIT")
+                    raise RouteSearchFailure(
+                        "E_PRESENTATION_ROUTE_LIMIT",
+                        detail="The candidate limit was reached while yielding clear Manhattan seed routes.",
+                    )
                 seeded.add(candidate)
                 yield candidate
         if start == end:
@@ -277,7 +336,10 @@ def orthogonal_route_candidates(
         return (cost + heuristic, heuristic, cost, bends, length, next(serial), state)
 
     if lower_bound(source, initial_direction)[0] == float("inf"):
-        raise RouteSearchFailure("E_CONNECTOR_UNROUTABLE")
+        raise RouteSearchFailure(
+            "E_CONNECTOR_UNROUTABLE",
+            detail="No sparse-graph route connects the requested endpoints within the supplied obstacles and bounds.",
+        )
     heappush(queue, priority(initial))
     expanded = len(seeded)
     yielded: set[tuple[Point, ...]] = set(seeded)
@@ -293,7 +355,10 @@ def orthogonal_route_candidates(
             continue
         expanded += 1
         if expanded > limit:
-            raise RouteSearchFailure("E_PRESENTATION_ROUTE_LIMIT")
+            raise RouteSearchFailure(
+                "E_PRESENTATION_ROUTE_LIMIT",
+                detail="The route-search expansion limit was reached before the candidate frontier was exhausted.",
+            )
         if node == target:
             points: list[Point] = []
             for point in (ordered[index_] for index_ in path):
@@ -317,9 +382,9 @@ def orthogonal_route_candidates(
                 continue
             if bend_penalty is None and (neighbor, next_direction) not in remaining:
                 continue
-            segment = ObstacleSegment(ordered[node], ordered[neighbor])
-            if any(obstacles_intersect(segment,
-                    ObstacleSegment(ordered[path[index_]], ordered[path[index_ + 1]]))
+            segment = (ordered[node], ordered[neighbor])
+            if any(_history_segments_intersect(segment,
+                    (ordered[path[index_]], ordered[path[index_ + 1]]))
                     for index_ in range(len(path) - 2)):
                 continue
             next_bends = bends + int(direction not in (-1, next_direction))
@@ -344,4 +409,5 @@ def orthogonal_route_candidates(
             child = (neighbor, next_direction, next_bends, next_length, next_path)
             heappush(queue, priority(child))
     if not yielded:
-        raise RouteSearchFailure("E_CONNECTOR_UNROUTABLE")
+        raise RouteSearchFailure(
+            "E_CONNECTOR_UNROUTABLE", detail="No clear route candidate connects the requested endpoints.")
