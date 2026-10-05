@@ -15,7 +15,16 @@ L2 511 tracked/411 mapped with four existing invalid fixtures, L3 739 probes;
 no new invalid document. Local conformance has one failure:
 `E_DIAGNOSTIC_INVENTORY_STALE` from changed source locations/new validation sites;
 all other checks pass. CI regenerates that report in its shared snapshot; it is
-not hand-edited in this PR. Full CI and actual corpus batch remain required.
+not hand-edited in this PR. Initial CI37339895377 exposed a network-title paint
+projection omission; preview failed with `E_THEME_ROLE_REQUIRED`, reproduction
+failed for the absent snapshot, and derived-ready propagated the failure.
+The network projection now uses the same Theme ink selection; both unmodified
+HALCYON network materializers pass and all four Scene/SVG files are byte-identical
+to ready main. Registering title
+roles also preserves their purpose-based ground gate when used as View cell inks.
+Correction verification: 27 title/frame/semantic/network tests pass, including
+actual View cells on row-band grounds and the synthetic network title.
+Full latest-head CI and actual corpus batch remain required.
 
 ## Literal issue acceptance
 

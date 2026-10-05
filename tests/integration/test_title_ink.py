@@ -52,6 +52,27 @@ def _render(directory, **options):
     return sr.render(directory, _source(), presentation=_parts(**options), actual=ACTUAL)
 
 
+def _network_parts(**options):
+    parts = _parts(**options)
+    layout = parts["layout"]
+    layout["requiredThemeTokens"] = ["spacing.l", "spacing.m"]
+    title_slot = sr.find_node(layout, "title")
+    layout["root"]["children"] = [title_slot, {
+        "id": "network", "kind": "slot", "source": "network", "inlineSize": "fill", "blockSize": "fill",
+        "place": {"inline": "stretch", "block": "stretch", "safety": "strict"},
+        "priority": "required", "overflow": "visible-overflow",
+    }]
+    body = parts["view"]["body"]
+    body["surface"] = "dependency-network"
+    for key in ("tableColumns", "hierarchyColumn", "backgroundDecoration", "axis", "markers", "shading",
+                "timePresentation", "annotations", "annotationPresentation"):
+        body.pop(key, None)
+    body["rows"] = {"mode": "automatic"}
+    body["grouping"] = {"by": "none", "missing": "ungrouped"}
+    body["visibility"] = {"labels": False, "relations": "semantic", "annotations": "none"}
+    return parts
+
+
 def _texts(rendered):
     return {item.scene_id: item for item in rendered.surface.primitives
             if item.scene_id in {"title", "subtitle"}}
@@ -142,3 +163,46 @@ def test_low_contrast_heading_and_subtitle_can_be_made_blocking(tmp_path):
 
     assert caught.value.code == "E_SCENE_STATE_TEXT_CONTRAST"
     assert caught.value.source_ref == "/body/contrastPolicy/groundText"
+
+
+@pytest.mark.parametrize("role", ["heading", "subtitle"])
+def test_view_text_role_keeps_heading_roles_in_ground_text_policy(tmp_path, role):
+    parts = _parts(fills={role: "surface"}, policy="warning")
+    parts["view"]["body"]["rows"] = {"mode": "automatic"}
+    parts["view"]["body"]["tableColumns"] = [{
+        "id": "Task", "source": "title", "missing": "em-dash", "align": "start",
+        "width": "content", "headerOrientation": "horizontal", "textRole": role,
+    }]
+    rendered = sr.render(tmp_path, _source(), presentation=parts, actual=ACTUAL)
+
+    cell = next(item for item in rendered.surface.primitives
+                if item.purpose == "table-cell" and item.source_ref == "alpha")
+    assert cell.visual_role == role
+    findings = [item for item in evaluate_scene_contrast(
+        scene_document(rendered.scene), policy={"groundText": "warning"})
+        if item.primitive_id == cell.scene_id]
+    assert len(findings) == 1
+    (finding,) = findings
+    assert (finding.severity, finding.severity_class, policy_member_of(finding), finding.ground_id) == (
+        "warning", "legibility", "groundText", "row-band:alpha")
+    assert any(record.payload["code"] == "W_SCENE_STATE_TEXT_CONTRAST"
+               and cell.scene_id in record.payload["primitiveIds"]
+               for record in rendered.warning_records)
+
+
+def test_dependency_network_title_uses_shared_fill_opt_in_and_opacity_fallback(tmp_path):
+    def render(name, **options):
+        directory = tmp_path / name
+        directory.mkdir()
+        return sr.render(directory, _source(), presentation=_network_parts(**options), actual=ACTUAL)
+
+    plain = render("plain")
+    opacity_only = render("opacity-only", opacities={"heading": 0.4, "subtitle": 0.7})
+    explicitly_painted = render("painted", fills={"heading": "accent"})
+
+    assert _texts(plain)
+    assert _texts(opacity_only) == _texts(plain)
+    assert opacity_only.artifact.content == plain.artifact.content
+    assert _texts(explicitly_painted)["title"].visual_role == "heading"
+    assert _texts(explicitly_painted)["title"].paint.fill != _texts(plain)["title"].paint.fill
+    assert _geometry_signature(_texts(explicitly_painted)["title"]) == _geometry_signature(_texts(plain)["title"])

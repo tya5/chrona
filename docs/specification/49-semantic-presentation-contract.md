@@ -71,6 +71,11 @@ The registry owns canonical primitive semantics. Its entries declare `semantic_i
 
 The renderer keeps stable primitive role strings where needed for public Scene compatibility (for example `as-of`). They are declared by the registry rather than handwritten in composition. Theme lookup accepts explicitly declared ingress aliases only and resolves to the canonical binding before Scene construction.
 
+The registered `heading` and `subtitle` inks are general Theme text roles, not
+title-only contrast classes: a View using either for a table cell retains
+purpose-based ground-text classification. State-text role precedence and the
+purpose restrictions of other registered Scene roles remain unchanged.
+
 ## 4. LayoutPlacement handoff
 
 Layout owns measurement and geometry. It produces immutable `LayoutPlacement` records:

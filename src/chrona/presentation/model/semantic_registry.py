@@ -289,7 +289,10 @@ def contrast_binding_for(scene_role: str, purpose: str | None) -> SemanticBindin
         return binding
     # A role no binding registers as its scene role is a Theme text paint role (`tableColumnLabel`, `legend`, a
     # View-named column role, #1062): it paints the same free ink and is judged by its purpose like `text`.
-    theme_text_role = scene_role not in _SCENE_ROLES
+    # Title inks are general Theme typography roles too: a View may name them
+    # for a table cell. Registering their title semantics must not disable the
+    # purpose-based ground gate for those other text uses (#1164).
+    theme_text_role = scene_role not in _SCENE_ROLES or scene_role in {"heading", "subtitle"}
     return next((item for item in contrast_bindings(ContrastClass.GROUND_TEXT)
                  if item.purpose == purpose and (theme_text_role or scene_role in ("text", item.scene_role))), None)
 

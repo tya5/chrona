@@ -1059,7 +1059,7 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
                             text.text_transform, text.numeric_spacing, text.orientation, text.rotation_degrees,
                             text.horizontal_scale)
         primitives.append(ScenePrimitive(text.placement_id, PrimitiveKind.TEXT, text.source_ref, "network",
-                                         binding.purpose, binding.scene_role, layout.bounds, text=text.content,
+                                         binding.purpose, value.theme_tokens.title_paint_role(), layout.bounds, text=text.content,
                                          baseline=layout.baseline, text_layout=layout,
                                          paint_order=text.paint_order, host_placement_id=text.host_placement_id))
     title_text = next(item for item in placed.text if item.placement_id == "title")
