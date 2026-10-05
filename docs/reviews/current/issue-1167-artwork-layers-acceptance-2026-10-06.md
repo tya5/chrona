@@ -36,7 +36,14 @@ The first CI conformance run found missing author-facing annotations on the
 new schema definitions. Descriptions/examples were completed; annotation
 lint and 38 annotation/Theme unit tests pass, and every schema validation
 fingerprint is unchanged from the first implementation head. All other
-conformance checks passed; final corrected-head CI remains required.
+conformance checks passed. All three pytest shards also reported the same
+collection error: the new consumer test basename collided with an existing
+integration module. The new file now has an artwork-specific basename, without
+changing import mode or package boundaries. Their executed tests all passed
+(2422/2415/2421). Corrected-head collection succeeds for all 7,322 tests;
+the formerly conflicting unit/integration pair passes all 10 focused tests.
+The downstream derived-ready failure reflects those upstream failures;
+corrected-head CI remains a release requirement.
 
 ## Literal issue acceptance
 

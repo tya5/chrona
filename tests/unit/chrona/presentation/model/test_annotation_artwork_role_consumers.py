@@ -1,4 +1,4 @@
-"""Only a live annotation-container binding consumes its artwork paint roles."""
+"""Annotation artwork roles are consumed only by live container bindings (#1167)."""
 
 from chrona.presentation.model.theme_role_consumers import unread_diagnostics, unread_roles
 from chrona.presentation.scene.capabilities import theme_role_contract, theme_role_property_consumer
