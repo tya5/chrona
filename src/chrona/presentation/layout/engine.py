@@ -336,8 +336,17 @@ def _distributed_start(kind: str, extra: Decimal, count: int, gap: Decimal) -> t
     return ZERO, gap
 
 
+def _cross_size(base: tuple[Decimal, Decimal | None, Decimal], available: Decimal,
+                *, stretch: bool) -> Decimal:
+    _, target, weight = base
+    if weight > ZERO:
+        return _resolve_flexible_tracks([base], available)[0] if stretch else available
+    return target if target is not None else available
+
+
 def _cross_position(align: str, start: Decimal, available: Decimal, size: Decimal, safety: str = "strict") -> tuple[Decimal, Decimal]:
-    if align == "stretch": return start, available
+    # Sizing is already complete. Alignment must not replace fixed, intrinsic,
+    # bounded or aspect-derived dimensions with the container's extent.
     if size > available:
         return start, size
     if align == "center": return start + (available - size) / 2, size
@@ -441,16 +450,16 @@ class _Arranger:
             child_path = f"{path}/children/{index}"
             cross_spec = child["blockSize" if row else "inlineSize"]
             cross_path = child_path + ("/blockSize" if row else "/inlineSize")
+            align = child.get("place", {}).get("block" if row else "inline", node["alignItems"])
             if isinstance(cross_spec, dict) and "aspectRatio" in cross_spec:
                 ratio = _d(cross_spec["aspectRatio"]); cross_used = main_size / ratio if row else main_size * ratio
             else:
-                _, target, weight = _spec_base(cross_spec, axis="block" if row else "inline", measurement=child_measure, profile=self.profile, path=cross_path)
-                cross_used = cross if weight else (target if target is not None else cross)
+                minimum, target, weight = _spec_base(cross_spec, axis="block" if row else "inline", measurement=child_measure, profile=self.profile, path=cross_path)
+                cross_used = _cross_size((minimum, target, weight), cross, stretch=align == "stretch")
                 if (not row and not weight and cross_spec == "content" and child.get("kind") == "slot"
                         and child.get("source") in _SHRINKING_SOURCES
                         and child.get("overflow") == "ellipsize-with-source"):
                     cross_used = min(cross_used, cross)
-            align = child.get("place", {}).get("block" if row else "inline", node["alignItems"])
             safety = child.get("place", {}).get("safety", "strict")
             cross_start, cross_used = _cross_position(align, block if row else inline, cross, cross_used, safety)
             if cross_used > cross:
@@ -522,6 +531,11 @@ class _Arranger:
                 baseline=max(value for value in values if value is not None)
             for i,child,measure,width,height in line:
                 child_path=f"{path}/children/{i}"; align=child.get("place",{}).get("block",node["alignItems"]); safety=child.get("place",{}).get("safety","strict")
+                if align == "stretch":
+                    base = _spec_base(child["blockSize"], axis="block", measurement=measure,
+                                      profile=self.profile, path=child_path + "/blockSize")
+                    if base[2] > ZERO:
+                        height = _cross_size(base, line_height, stretch=True)
                 child_block,height=_cross_position(align,cursor_b,line_height,height,safety)
                 if height > line_height:
                     self._warn(child, child_path, required_inline=width,
@@ -541,10 +555,11 @@ class _Arranger:
 
         def child_size(child: Mapping[str, Any], child_path: str) -> tuple[Decimal, Decimal]:
             measure = _measure_node(child, child_path, self.measurements, self.profile)
-            _, iw, inline_flex = _spec_base(child["inlineSize"], axis="inline", measurement=measure, profile=self.profile, path=child_path + "/inlineSize")
-            _, bh, block_flex = _spec_base(child["blockSize"], axis="block", measurement=measure, profile=self.profile, path=child_path + "/blockSize")
-            used_inline = inline_size if inline_flex else (iw if iw is not None else inline_size)
-            used_block = block_size if block_flex else (bh if bh is not None else block_size)
+            inline_base = _spec_base(child["inlineSize"], axis="inline", measurement=measure, profile=self.profile, path=child_path + "/inlineSize")
+            block_base = _spec_base(child["blockSize"], axis="block", measurement=measure, profile=self.profile, path=child_path + "/blockSize")
+            place = child.get("place", {})
+            used_inline = _cross_size(inline_base, inline_size, stretch=place.get("inline") == "stretch")
+            used_block = _cross_size(block_base, block_size, stretch=place.get("block") == "stretch")
             if isinstance(child["inlineSize"], dict) and "aspectRatio" in child["inlineSize"]:
                 used_inline = used_block * _d(child["inlineSize"]["aspectRatio"])
             if isinstance(child["blockSize"], dict) and "aspectRatio" in child["blockSize"]:
