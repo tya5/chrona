@@ -482,12 +482,17 @@ Their terminal suppression is counted without altering membership (Specs 38
 and 50). Relation labels still follow their completed routes.
 
 After canonical side candidates fail, optional plot/item/delta and relation labels may use
-a finite side-relative displacement bounded by their measured footprint and
-512 collision queries. After canonical positions fail, displacement candidates
+a finite side-relative displacement with at most 512 actual collision queries.
+Member-name candidates are bounded by the row and the completed own marks'
+existing association reach, accounting for measured Text dimensions and insets;
+the exact nearest-perimeter association check remains mandatory. A redundant
+one-label-width displacement limit must not exclude an otherwise associated
+name. Other labels retain their measured-footprint displacement bounds.
+After canonical positions fail, displacement candidates
 include obstacle-contact coordinates and exact footprint/row edges as well as
 the regular lattice, so a narrow legal interval is not skipped solely by an
 8px sampling step. Rank candidates deterministically by displacement and side
-order; all still satisfy the original footprint and association bounds.
+order; all still satisfy their placement and association bounds.
 This fallback never changes the declared side, never
 ignores accepted route strokes, and leaves required and annotation placement
 unchanged. Relation labels retain their completed longest-segment anchor and

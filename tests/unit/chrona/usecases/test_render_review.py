@@ -154,15 +154,16 @@ def test_end_and_finish_anchor_endpoints_render_byte_identical_scenes():
 
         finish, end = render("finish"), render("end")
     scene = serialize_scene(finish.scene)
-    # The three planned-facet annotations are realized; the actual-facet arrow is reported as suppressed (#1074: the
-    # actual gate beside it is as large as the planned one), and the two spellings agree on that too.
-    assert b"annotation-leader:bringup-risk" in scene and b"annotation-leader:firmware-slip" not in scene
-    assert b"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:firmware-slip" in scene
-    summary = next(item for item in finish.surface.primitives
-                   if item.scene_id == "annotation-summary:firmware-slip")
-    assert summary.text == "4. Firmware finished late; the EVB gate moved with it. (callout not shown on plot)"
-    assert not any(item.scene_id in {"annotation-box:firmware-slip", "note-index:firmware-slip"}
-                   for item in finish.surface.primitives)
+    # Stroke-aware corridor candidates preserve the planned arrow and recover
+    # the actual arrow without changing endpoint-alias identity.
+    for identifier in ("bringup-risk", "firmware-slip"):
+        assert f"annotation-leader:{identifier}".encode() in scene
+        assert not any(item.scene_id == f"annotation-summary:{identifier}"
+                       for item in finish.surface.primitives)
+        for prefix in ("annotation-box", "annotation-text", "note-index"):
+            assert any(item.scene_id == f"{prefix}:{identifier}"
+                       for item in finish.surface.primitives)
+    assert b"W_LAYOUT_ANNOTATION_SUPPRESSED" not in scene
     assert serialize_scene(end.scene) == scene
     assert end.artifact.content == finish.artifact.content
 

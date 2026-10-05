@@ -182,18 +182,17 @@ def test_controller_annotation_evidence_realizes_each_purpose_through_layout_com
     example = ROOT / "examples/controller-z"
     materialize(example / "manifest.yaml", "annotations", tmp_path / "annotations", write=False)
     artifact = (tmp_path / "annotations/review.svg").read_text(encoding="utf-8")
-    for identifier in ("architecture-callout", "evb-highlight", "performance-note", "bringup-risk"):
+    for identifier in ("architecture-callout", "evb-highlight", "performance-note", "bringup-risk", "firmware-slip"):
         assert f'data-scene-id="annotation-box:{identifier}"' in artifact
         assert f'data-scene-id="annotation-text:{identifier}"' in artifact
-    for identifier in ("architecture-callout", "performance-note", "bringup-risk"):
+    for identifier in ("architecture-callout", "performance-note", "bringup-risk", "firmware-slip"):
         assert f'data-scene-id="annotation-leader:{identifier}"' in artifact
-    # #1074: the actual EVB gate is as large as the planned one, which re-routes the relation beside the
-    # firmware-slip leader's corridor; the arrow is then left out and reported, never drawn over the relation.
-    assert 'data-scene-id="annotation-box:firmware-slip"' not in artifact
-    assert 'data-scene-id="annotation-summary:firmware-slip"' in artifact
-    assert "callout not shown on plot" in artifact
+    # Completed stroke envelopes provide safe corridors for both arrows.
+    assert 'data-scene-id="annotation-summary:firmware-slip"' not in artifact
+    assert 'data-scene-id="annotation-summary:bringup-risk"' not in artifact
+    assert "callout not shown on plot" not in artifact
     scene_text = (tmp_path / "annotations/review.scene.json").read_text(encoding="utf-8")
-    assert "W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:firmware-slip" in scene_text
+    assert "W_LAYOUT_ANNOTATION_SUPPRESSED" not in scene_text
     assert 'data-scene-id="annotation-leader:evb-highlight"' not in artifact
     leader = re.search(r'data-scene-id="annotation-leader:bringup-risk"[^>]* d="([^"]+)"', artifact)
     assert leader is not None and leader.group(1).count("L") >= 5

@@ -26,16 +26,16 @@ every non-horizontal entry; release acceptance remains pending.
 
 R3 remains unmerged in [#1160](https://github.com/tya5/chrona/pull/1160);
 its [old-head CI](https://github.com/tya5/chrona/actions/runs/37244756487) is red.
-Corrected WIP `8100e096` passes 1516 Layout/Scene tests, 55 focused label/reducer/
-diagnostic tests and three executive/TVAC regressions. Contact-event placement
-and admissible collision-budget accounting retain the declared bounds and cap.
-The preceding `197751ff` 64-context batch has no lost relation paths, Scene
-errors, sub-stroke segments or mark crossings; five node pairs are diagnosed.
-It restores 36 of 37 lost EVB names and gains 32 relation labels over the base.
-One EVB name and one snapshot name remain suppressed; Controller annotation
-suppression changes from firmware-slip to bringup-risk. These are not accepted
-as unavoidable. Existing annotation assertions remain intact. The latest budget
-correction needs renewed public evidence and CI. R4/R5 remain open.
+Corrections pass 1565 Layout/Scene/usecase tests, 34 neutral label tests,
+17 annotation tests and both public executive/annotation materializers.
+Contact events and actual-query accounting retain the 512-query cap; member
+names use the existing own-mark reach without a redundant width cutoff, while
+fill-lane stagger limits remain. Stroke-envelope corridor priority recovers
+both Controller arrows without dropping either; alias and SVG assertions now
+require both. Exact renders restore the EVB material-icons name and snapshot
+Silicon Bring-up name without suppression/overflow. The 64-context batch is
+regenerated; final CI must confirm its bytes after the fill-stagger guard.
+R3 is not released. R4/R5 and the literal PDR disposition remain open.
 
 ## Literal issue acceptance
 

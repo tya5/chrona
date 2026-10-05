@@ -226,10 +226,11 @@ def _sparse_elbows(start: tuple[float, float], end: tuple[float, float],
         geometry = item.geometry
         if not isinstance(geometry, ObstacleSegment):
             continue
+        envelope = obstacle_envelope(geometry)
         if geometry.start[0] == geometry.end[0]:
-            route_x.update((geometry.start[0] - 2.0, geometry.start[0] + 2.0))
+            route_x.update((envelope[0] - 2.0, envelope[2] + 2.0))
         if geometry.start[1] == geometry.end[1]:
-            route_y.update((geometry.start[1] - 2.0, geometry.start[1] + 2.0))
+            route_y.update((envelope[1] - 2.0, envelope[3] + 2.0))
     for x in sorted((x for x in route_x if x in xs), key=lambda value: (abs(value - end[0]), value)):
         include((start, (x, start[1]), (x, end[1]), end))
     for y in sorted((y for y in route_y if y in ys), key=lambda value: (abs(value - start[1]), value)):

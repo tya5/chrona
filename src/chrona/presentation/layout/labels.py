@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from heapq import heappop, heappush
-from math import ceil, isfinite
+from math import ceil, floor, isfinite
 from math import hypot
 from typing import Callable, Iterable
 
@@ -132,6 +132,22 @@ class MemberNameAssociation:
     def allows(self, footprint: LabelRect) -> bool:
         return min(self.distances(footprint)) <= self.maximum_distance + 1e-9
 
+    def position_envelope(self) -> tuple[float, float, float, float]:
+        """Conservative top-left position bounds; ``allows`` remains exact.
+
+        The completed Text must approach at least one own mark. Its inset,
+        dimensions and declared reach bound a finite footprint-position domain.
+        """
+        marks = (self.mark, *self.also_marks)
+        return (
+            min(mark.x for mark in marks) - self.maximum_distance
+            - self.text_inline_inset - self.text_width,
+            min(mark.y for mark in marks) - self.maximum_distance
+            - self.text_block_inset - self.text_height,
+            max(mark.right for mark in marks) + self.maximum_distance - self.text_inline_inset,
+            max(mark.bottom for mark in marks) + self.maximum_distance - self.text_block_inset,
+        )
+
 
 @dataclass(frozen=True)
 class LabelRequest:
@@ -200,6 +216,7 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
                 classes: tuple[str, ...] | None = None,
                 search_side_neighborhood: bool = False,
                 maximum_side_gap: float | None = None,
+                search_association: MemberNameAssociation | None = None,
                 candidate_filter: Callable[[LabelRect], bool] | None = None) -> LabelPlacement | None:
     """Choose the first legal candidate in declared order; never search indefinitely."""
     sides = tuple(candidates)
@@ -220,6 +237,8 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
                 or candidate.right > bounds.right or candidate.bottom > bounds.bottom):
             return False
         if candidate_filter is not None and not candidate_filter(candidate):
+            return False
+        if search_association is not None and not search_association.allows(candidate):
             return False
         return True
 
@@ -249,17 +268,31 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
             return LabelPlacement(side, candidate)
     if search_side_neighborhood:
         lattice = 8.0
+        position_bounds = search_association.position_envelope() if search_association is not None else None
         nearby: list[tuple[float, int, float, float, str, LabelRect, tuple[float, ...], int]] = []
         for rank, side in enumerate(sides):
             if side == "inside":
                 continue
             base = _candidate(anchor, size, side, gap)
             tangent_bound = size[0] if side in {"above", "below"} else size[1]
+            tangent_min, tangent_max = -tangent_bound, tangent_bound
             outward_bound = size[1] if side in {"above", "below"} else size[0]
-            tangent_offsets = {step * lattice for step in range(-ceil(tangent_bound / lattice),
-                                                                ceil(tangent_bound / lattice) + 1)
-                               if abs(step * lattice) <= tangent_bound}
-            tangent_offsets.update((-tangent_bound, tangent_bound))
+            if position_bounds is not None:
+                left = max(bounds.x, position_bounds[0])
+                top = max(bounds.y, position_bounds[1])
+                right = min(bounds.right - base.width, position_bounds[2])
+                bottom = min(bounds.bottom - base.height, position_bounds[3])
+                if side in {"above", "below"}:
+                    tangent_min, tangent_max = left - base.x, right - base.x
+                    outward_bound = base.y - top if side == "above" else bottom - base.y
+                else:
+                    tangent_min, tangent_max = top - base.y, bottom - base.y
+                    outward_bound = base.x - left if side == "start" else right - base.x
+                if tangent_min > tangent_max or outward_bound < 0:
+                    continue
+            tangent_offsets = {step * lattice for step in range(ceil(tangent_min / lattice),
+                                                                floor(tangent_max / lattice) + 1)}
+            tangent_offsets.update((tangent_min, tangent_max))
             outward_offsets = {step * lattice for step in range(ceil(outward_bound / lattice) + 1)
                                if step * lattice <= outward_bound}
             outward_offsets.add(outward_bound)
@@ -300,7 +333,7 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
                     outward_offsets.update((base.right - left, base.x - right)
                         if side == "start" else (right - base.x, left - base.right))
             tangent_offsets = {value for value in tangent_offsets
-                               if isfinite(value) and abs(value) <= tangent_bound}
+                               if isfinite(value) and tangent_min <= value <= tangent_max}
             outward_offsets = {value for value in outward_offsets
                                if isfinite(value) and 0 <= value <= outward_bound}
             tangents = tuple(sorted(tangent_offsets, key=lambda value: (abs(value), value)))
@@ -390,14 +423,22 @@ def _place_member_name_ladder(
         if side == "end" and maximum_side_gap < gap:
             continue
         if not full_band or side not in {"end", "start"}:
-            # Full-band contacts apply only to lane names. Other labels retain
-            # their established side-neighborhood policy and public bytes.
+            side_bounds = bounds
+            if full_band and maximum_stagger is not None and side in {"above", "below"}:
+                preferred = _candidate(anchor, size, side, gap)
+                top = max(bounds.y, preferred.y - maximum_stagger)
+                bottom = min(bounds.bottom, preferred.bottom + maximum_stagger)
+                if bottom - top < size[1]:
+                    continue
+                side_bounds = LabelRect(bounds.x, top, bounds.width, bottom - top)
+            # Association governs member-name reach; fill lanes additionally
+            # retain their single measured block-stagger constraint.
             placed = place_label(
-                anchor, size, (side,), bounds=bounds, obstacles=available_obstacles, gap=gap,
+                anchor, size, (side,), bounds=side_bounds, obstacles=available_obstacles, gap=gap,
                 inside_host_obstacle_id=inside_host_obstacle_id,
                 required=False, overflow="suppress", classes=classes,
                 search_side_neighborhood=True, maximum_side_gap=maximum_side_gap,
-                candidate_filter=association.allows if association is not None else None,
+                search_association=association,
             )
             if placed is not None:
                 return placed

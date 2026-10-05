@@ -334,6 +334,138 @@ def test_side_search_rejected_associations_do_not_spend_collision_budget(monkeyp
     assert result.search_count == count == 1
 
 
+@pytest.mark.parametrize("side", ("above", "below", "start", "end"))
+def test_association_bounded_search_reaches_clear_name_beyond_one_footprint(side):
+    """Route barriers can require more tangential travel than the text footprint."""
+    mark = LabelRect(50, 50, 10, 10)
+    association = MemberNameAssociation(mark, 0, 0, 8 if side in {"above", "below"} else 6,
+                                        6 if side in {"above", "below"} else 8, 5)
+    obstacles = SurfaceObstacleIndex()
+    if side in {"above", "below"}:
+        size = (8, 6)
+        anchor = mark
+        preferred_x = mark.x + (mark.width - size[0]) / 2
+        preferred_y = (mark.y - size[1] - 2 if side == "above" else mark.bottom + 2)
+        if side == "above":
+            bounds = LabelRect(0, preferred_y, 150, 100)
+            obstacles.add(SurfaceObstacle("barrier", "dependency-route", "timeline",
+                ObstacleRect(43, 36, 60.5, 54)))
+        else:
+            bounds = LabelRect(0, 0, 150, preferred_y + size[1])
+            obstacles.add(SurfaceObstacle("barrier", "dependency-route", "timeline",
+                ObstacleRect(43, 54, 60.5, 72)))
+        preferred_tangent = preferred_x
+        expected_tangent = 60.5
+        tangent_extent = size[0]
+    else:
+        size = (6, 8)
+        anchor = mark
+        preferred_y = mark.y + (mark.height - size[1]) / 2
+        if side == "end":
+            preferred_x = mark.right + 2
+            bounds = LabelRect(0, 0, preferred_x + size[0], 120)
+            obstacles.add(SurfaceObstacle("barrier", "dependency-route", "timeline",
+                ObstacleRect(60, 43, 70, 59.5)))
+        else:
+            preferred_x = mark.x - 2 - size[0]
+            bounds = LabelRect(preferred_x, 0, 100, 120)
+            obstacles.add(SurfaceObstacle("barrier", "dependency-route", "timeline",
+                ObstacleRect(40, 43, 50, 59.5)))
+        preferred_tangent = preferred_y
+        expected_tangent = 59.5
+        tangent_extent = size[1]
+
+    result = place_label(
+        anchor, size, (side,), bounds=bounds, obstacles=obstacles,
+        classes=("dependency-route",), gap=2, required=False, overflow="suppress",
+        search_side_neighborhood=True, search_association=association)
+    again = place_label(
+        anchor, size, (side,), bounds=bounds, obstacles=obstacles,
+        classes=("dependency-route",), gap=2, required=False, overflow="suppress",
+        search_side_neighborhood=True, search_association=association)
+
+    assert result is not None and result == again
+    assert result.side == side and association.allows(result.bounds)
+    actual_tangent = result.bounds.x if side in {"above", "below"} else result.bounds.y
+    assert actual_tangent == pytest.approx(expected_tangent)
+    assert abs(actual_tangent - preferred_tangent) > tangent_extent
+    assert not obstacles.collisions(ObstacleRect(result.bounds.x, result.bounds.y,
+                                                  result.bounds.right, result.bounds.bottom),
+                                    classes=("dependency-route",))
+
+
+def test_association_bounded_search_includes_alternate_own_mark():
+    primary = LabelRect(10, 40, 10, 10)
+    alternate = LabelRect(22, 80, 10, 10)
+    association = MemberNameAssociation(primary, 0, 0, 6, 8, 10, (alternate,))
+    obstacles = SurfaceObstacleIndex()
+    obstacles.add(SurfaceObstacle("barrier", "dependency-route", "timeline",
+                                  ObstacleRect(22, 40, 28, 70)))
+
+    result = place_label(
+        primary, (6, 8), ("end",), bounds=LabelRect(0, 41, 28, 59),
+        obstacles=obstacles, classes=("dependency-route",), gap=2,
+        required=False, overflow="suppress", search_side_neighborhood=True,
+        search_association=association)
+
+    assert result is not None and result.bounds == LabelRect(22, 70, 6, 8)
+    assert association.distances(result.bounds)[0] > association.maximum_distance
+    assert association.distances(result.bounds)[1] <= association.maximum_distance
+
+
+def test_association_bounded_search_never_places_outside_reach_and_proves_no_space():
+    mark = LabelRect(50, 50, 10, 10)
+    too_far = MemberNameAssociation(mark, 0, 0, 10, 8, 1)
+    assert place_label(
+        mark, (10, 8), ("end",), bounds=LabelRect(0, 0, 150, 120),
+        obstacles=(), gap=2, required=False, overflow="suppress",
+        search_side_neighborhood=True, search_association=too_far) is None
+
+    associated = MemberNameAssociation(mark, 0, 0, 10, 8, 20)
+    blocked = SurfaceObstacleIndex()
+    blocked.add(SurfaceObstacle("wall", "mark", "timeline", ObstacleRect(0, 0, 150, 120)))
+    args = (mark, (10, 8), ("above", "below", "start", "end"))
+    kwargs = dict(bounds=LabelRect(0, 0, 150, 120), obstacles=blocked,
+                  classes=("mark",), gap=2, required=False, overflow="suppress",
+                  search_side_neighborhood=True, search_association=associated)
+    assert place_label(*args, **kwargs) is None
+    assert place_label(*args, **kwargs) is None
+
+
+@pytest.mark.parametrize("side", ("above", "below"))
+def test_full_band_association_search_preserves_one_stagger_block_bound(side):
+    mark = LabelRect(50, 50, 10, 10)
+    size = (8, 6)
+    association = MemberNameAssociation(mark, 0, 0, *size, 25)
+    obstacles = SurfaceObstacleIndex()
+    if side == "above":
+        bounds = LabelRect(0, 0, 150, 100)
+        preferred = LabelRect(51, 42, *size)
+        beyond_stagger = LabelRect(51, 24, *size)
+        wall = ObstacleRect(0, 30, 150, 54)
+    else:
+        bounds = LabelRect(0, 0, 150, 100)
+        preferred = LabelRect(51, 62, *size)
+        beyond_stagger = LabelRect(51, 80, *size)
+        wall = ObstacleRect(0, 54, 150, 80)
+    obstacles.add(SurfaceObstacle("wall", "dependency-route", "timeline", wall))
+
+    # A clear, associated name exists, but only after more than one permitted
+    # fill-lane stagger step. That association envelope must not waive #50.
+    assert association.allows(beyond_stagger)
+    assert abs(beyond_stagger.y - preferred.y) > 4
+    assert not obstacles.collisions(ObstacleRect(
+        beyond_stagger.x, beyond_stagger.y, beyond_stagger.right, beyond_stagger.bottom),
+        classes=("dependency-route",))
+
+    result = place_member_name(
+        mark, size, (side,), bounds=bounds, obstacles=obstacles, gap=2,
+        maximum_end_gap=26, classes=("dependency-route",), full_band=True,
+        association=association, maximum_stagger=4, overflow="suppress")
+
+    assert result is None
+
+
 def test_wrap_uses_measured_words_and_never_splits_a_token():
     assert wrap_text("alpha beta gamma", available_inline=10, font_size=1, font_metrics=_Metrics()) == ("alpha beta", "gamma")
 
