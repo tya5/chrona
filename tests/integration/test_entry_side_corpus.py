@@ -57,8 +57,13 @@ def test_target_b_with_entry_side_enters_from_the_side_or_says_why(tmp_path):
     assert paths and sideways, "the declared context must emit actual relations, including side entries"
     exceptions = set(paths) - sideways
     assert exceptions <= set(reasons), "every relation that does not enter from the side carries a diagnostic"
-    final_codes = {"same-row", "entry-stub-blocked", "degenerate", "bends-or-detour", "forward-entry-failed",
+    final_codes = {"same-row", "entry-stub-blocked", "node-approach-conflict", "degenerate", "bends-or-detour", "forward-entry-failed",
                    "terminal-axis-blocked", "sub-stroke-segment", "primary-mark-blocked"}
     assert all(reasons[relation] in final_codes or (
                    reasons[relation].startswith("blocked:") and reasons[relation].removeprefix("blocked:"))
                for relation in exceptions), {relation: reasons[relation] for relation in exceptions}
+    assert {relation: reasons[relation] for relation in
+            ("station-comms", "avionics-bustest", "delivery-integration", "launch-leop")} == {
+                relation: "node-approach-conflict" for relation in
+                ("station-comms", "avionics-bustest", "delivery-integration", "launch-leop")}
+    assert reasons["tvac-emc"] == "entry-stub-blocked"
