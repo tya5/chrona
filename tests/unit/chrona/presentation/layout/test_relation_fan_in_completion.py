@@ -6,11 +6,21 @@ from chrona.presentation.layout.relation_fan_in import (
     NodeApproach, complete_fan_in, same_port_arrivals, target_port_identity, terminal_style,
 )
 from chrona.presentation.layout.relation_terminals import marker_geometry
-from chrona.presentation.layout.surface_quality import RelationPlacement
+from chrona.presentation.layout.surface_quality import RelationFanIn, RelationPlacement
 
 
 def _head(shape="triangle"):
     return marker_geometry({"shape": shape, "headLength": 6, "headWidth": 6, "attachmentOffset": 0})
+
+
+@pytest.mark.parametrize("field", ("target_port_id", "terminal_owner_id"))
+@pytest.mark.parametrize("invalid", ("", None, 123))
+def test_invalid_fan_in_identity_names_the_field_and_required_value(field, invalid):
+    values = {"target_port_id": "target:start", "terminal_owner_id": "relation:one"}
+    values[field] = invalid
+    with pytest.raises(ValueError) as error:
+        RelationFanIn(**values)
+    assert str(error.value) == f"E_PRESENTATION_PRIMITIVE_INVALID: fan_in.{field} must be a non-empty string"
 
 
 def _route(name, *, node="target", port="target:start", marker=None):

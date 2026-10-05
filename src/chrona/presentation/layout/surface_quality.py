@@ -353,9 +353,10 @@ class RelationFanIn:
     terminal_owner_id: str
 
     def __post_init__(self) -> None:
-        if any(not isinstance(value, str) or not value for value in
-               (self.target_port_id, self.terminal_owner_id)):
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        for name, value in (("target_port_id", self.target_port_id),
+                            ("terminal_owner_id", self.terminal_owner_id)):
+            if not isinstance(value, str) or not value:
+                raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: fan_in.{name} must be a non-empty string")
 
 
 @dataclass(frozen=True)
