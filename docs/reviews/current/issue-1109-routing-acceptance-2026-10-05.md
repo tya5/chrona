@@ -63,14 +63,6 @@ No Project/View/Theme edits; Layout owns completed geometry, Scene projects it a
 Full-radius clearance remains preferred; blocked corridors may clip the turn, never the head or mandatory clearance.
 The finite source-egress back-route candidates use the unchanged safety and quality gates.
 
-R4b focused entry/back-route/node/port/terminal/rounding/invariant tests: 93 passed;
-related mark/ghost/identity/entry-policy tests: 56 passed. Target-B public materializer
-produces the intentional evidence mismatch: 5 changed relation geometries,
-0 primitive additions/removals, both required side entries, 0 Scene relation safety
-errors or route suppressions, 3 remaining entry fallbacks (R6). Actual SVG inspected.
-Local conformance passes every check except diagnostic-inventory source line numbers;
-CI owns regeneration of that report and the shared public Scene/SVG snapshot.
-
 R6 [pre-code plan and architecture review](https://github.com/tya5/chrona/issues/1109#issuecomment-5994954912)
 completes R4a/R4b in the same PR. Layout alone groups compatible resolved-port
 arrivals and chooses the first declared head owner; optional Scene-v0.7 metadata
@@ -78,18 +70,28 @@ records the decision. Scene validates references and independently observes
 arrival geometry; no adapter infers ports or recomputes placement. Spec08/50
 are updated. Negative tests retain arrival/departure and other-port safety.
 Focused combined tests: 169 passed; entry/endpoint/terminal/SVG tests: 55 passed.
-Schema-equivalence L1/L2/L3 passes; 31 gate tests pass. Local conformance's
-new schema-example and Scene-delivery manifest omissions were corrected and
-their checks pass. Remaining local failures are CI-owned diagnostic inventory
-line numbers and the README's copied mission-brief evidence mismatch; the
-shared snapshot must regenerate both before final conformance acceptance.
-Local Target-B CLI produces the intended evidence mismatch; actual SVG was
-rendered and inspected: 324 primitives unchanged in identity, 9 route geometries
-changed, 8 fan-in records added, 4 duplicate target markers removed, no text,
-label or annotation changes, 24/24 horizontal arrivals, zero entry fallbacks,
-route suppressions or Scene relation safety errors. Each of four groups paints
-exactly one SVG target marker. The final shared corpus and release gate remain
-pending; previous green runs are not acceptance for this combined head.
+Schema-equivalence L1/L2/L3 and 31 gate tests pass.
+R4a/R4b/R6 are published through [#1168](https://github.com/tya5/chrona/pull/1168),
+source `c07e4dc2`, generated main `e5b3691f`. [All required final-head checks](https://github.com/tya5/chrona/actions/runs/37321570670)
+and [generated-main gate](https://github.com/tya5/chrona/actions/runs/37326035866) passed.
+The [full actual-SVG batch audit](https://github.com/tya5/chrona/pull/1168#issuecomment-5995552142)
+retains 10,496 primitive identities, 634 dependencies and 542 member names across 64 contexts;
+33 relation routes change and 28 duplicate heads disappear, with no nonrelation changes,
+route suppressions or relation safety errors. Every fan-in group retains its SVG paths
+and exactly one head; all 15 changed-context renders were inspected. Target B has 24/24
+horizontal arrivals and zero fallbacks. [All 137 published files](https://github.com/tya5/chrona/issues/1109#issuecomment-5987113298)
+match the audited final snapshot byte-for-byte.
+
+[Exact-main release 37327000794](https://github.com/tya5/chrona/actions/runs/37327000794)
+exposes an obsolete corpus test requiring the five pre-R4b/R6 fallbacks, not a routing regression.
+The correction in [#1171](https://github.com/tya5/chrona/pull/1171) requires all 24 rendered
+dependencies to side-enter, including the restored named paths, and zero fallback diagnostics.
+Focused verification: `.venv/bin/python -m pytest -q tests/integration/test_entry_side_corpus.py`
+— **2 passed**, rendering the unmodified actual Target B twice. It changes no product or corpus resources.
+The [current Status](https://github.com/tya5/chrona/issues/1109#issuecomment-5987113298)
+records focused verification, each failed OS check and replacement release evidence.
+Do not accept the pending rows until that exact-main release passes; PDR row 9 still
+requires explicit owner disposition independently of CI.
 
 ## Programme-level criteria (optional)
 
