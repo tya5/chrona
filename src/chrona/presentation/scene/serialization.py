@@ -141,6 +141,7 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
                  if isinstance(item, Mapping)}
         if len(by_id) != len(primitives):
             return False
+        fan_in_counts: dict[str, int] = {}
         lane_mode = surface.get("laneMode")
         lane_members = surface.get("laneMembers", ())
         if lane_mode is None:
@@ -238,6 +239,33 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
                 return False
             if primitive.get("slotId") not in slots:
                 return False
+            fan_in = primitive.get("fanIn")
+            if fan_in is not None:
+                if (primitive.get("kind") != "Path" or primitive.get("sourceKind") != "relation"
+                        or not isinstance(primitive.get("fromInstanceId"), str)
+                        or not isinstance(primitive.get("toInstanceId"), str)):
+                    return False
+                target_port, owner_id = fan_in.get("targetPortId"), fan_in.get("terminalOwnerId")
+                if (not isinstance(target_port, str) or not target_port
+                        or not isinstance(owner_id, str) or not owner_id):
+                    return False
+                owner_entry = by_id.get(owner_id)
+                if owner_entry is None:
+                    return False
+                owner = owner_entry[1]
+                owner_fan = owner.get("fanIn")
+                if (owner.get("kind") != "Path" or owner.get("sourceKind") != "relation"
+                        or owner.get("toInstanceId") != primitive.get("toInstanceId")
+                        or not isinstance(owner_fan, Mapping)
+                        or owner_fan.get("targetPortId") != target_port
+                        or owner_fan.get("terminalOwnerId") != owner_id):
+                    return False
+                if primitive.get("id") == owner_id:
+                    if owner_fan != fan_in:
+                        return False
+                elif primitive.get("markerEnd") is not None:
+                    return False
+                fan_in_counts[owner_id] = fan_in_counts.get(owner_id, 0) + 1
             if purpose == "table-cell":
                 if row not in rows or column not in columns:
                     return False
@@ -262,6 +290,8 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
                         or (source[1].get("kind") == "Symbol" and not source[1].get("symbol"))
                         or source[1].get("slotId") != primitive.get("slotId")):
                     return False
+        if any(count < 2 for count in fan_in_counts.values()):
+            return False
     return True
 
 
@@ -383,6 +413,9 @@ def _primitive(item: ScenePrimitive) -> dict[str, Any]:
         "clipSourceId": item.clip_source_id,
         "fromInstanceId": item.from_instance_id,
         "toInstanceId": item.to_instance_id,
+        "fanIn": ({"targetPortId": item.fan_in.target_port_id,
+                   "terminalOwnerId": item.fan_in.terminal_owner_id}
+                  if item.fan_in is not None else None),
         "contrastTreatment": item.contrast_treatment,
         "endTreatment": item.end_treatment if item.end_treatment != "closed" else None,
         "viewerFit": item.viewer_fit if item.viewer_fit != "raw" else None,

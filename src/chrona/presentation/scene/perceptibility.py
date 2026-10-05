@@ -81,12 +81,15 @@ def evaluate_scene_perceptibility(document: Mapping[str, Any]) -> tuple[ScenePer
         scene_path = f"/surfaces/{surface_index}:{surface_id}"
         slots = _slots(surface.get("slots"), scene_path)
         primitives = _primitives(surface.get("primitives"), scene_path)
+        fan_in_members, fan_in_findings = _relation_fan_in_groups(scene_path, surface.get("primitives"))
+        findings.extend(fan_in_findings)
         findings.extend(_suppressed_primitive_findings(scene_path, primitives, suppressed_ids))
         findings.extend(_relation_duplicate_findings(scene_path, surface.get("primitives")))
         findings.extend(_relation_reversal_findings(scene_path, surface.get("primitives")))
         findings.extend(_relation_mark_findings(scene_path, surface.get("primitives")))
         findings.extend(_relation_segment_findings(scene_path, surface.get("primitives")))
-        findings.extend(_relation_node_approach_findings(scene_path, surface.get("primitives"), diagnostics))
+        findings.extend(_relation_node_approach_findings(
+            scene_path, surface.get("primitives"), diagnostics, fan_in_members))
         findings.extend(_slot_findings(scene_path, slots, primitives))
         findings.extend(_occlusion_findings(scene_path, primitives))
         findings.extend(_text_intersection_findings(scene_path, primitives))
@@ -164,8 +167,91 @@ def _relation_segment_findings(scene_path: str, raw_primitives: Any) -> list[Sce
 _LANE_NODE_CAUSE_PREFIX = "I_LAYOUT_RELATION_NODE_APPROACH_SHARED:"
 
 
+def _relation_fan_in_groups(scene_path: str, raw_primitives: Any
+                            ) -> tuple[dict[str, tuple[str, str, str]], list[ScenePerceptibilityFinding]]:
+    """Validate explicit Layout fan-in claims; never infer a group from route geometry."""
+    groups: dict[tuple[str, str, str], list[Mapping[str, Any]]] = {}
+    findings: list[ScenePerceptibilityFinding] = []
+    for raw in raw_primitives if isinstance(raw_primitives, list) else ():
+        if not isinstance(raw, Mapping) or "fanIn" not in raw:
+            continue
+        fan = raw.get("fanIn")
+        primitive_id = raw.get("id") if isinstance(raw.get("id"), str) else "<unknown>"
+        if (not isinstance(fan, Mapping) or set(fan) != {"targetPortId", "terminalOwnerId"}
+                or not isinstance(fan.get("targetPortId"), str) or not fan["targetPortId"]
+                or not isinstance(fan.get("terminalOwnerId"), str) or not fan["terminalOwnerId"]):
+            findings.append(_finding("E_SCENE_RELATION_FAN_IN_INVALID", "error", scene_path,
+                (primitive_id,), None, (("reason", "invalid-fan-in-metadata"),)))
+            continue
+        target, owner = raw.get("toInstanceId"), fan["terminalOwnerId"]
+        if (raw.get("kind") != "Path" or raw.get("sourceKind") != "relation"
+                or not isinstance(target, str) or not target):
+            findings.append(_finding("E_SCENE_RELATION_FAN_IN_INVALID", "error", scene_path,
+                (primitive_id,), None, (("reason", "unresolved-arrival"),)))
+            continue
+        groups.setdefault((target, fan["targetPortId"], owner), []).append(raw)
+
+    valid: dict[str, tuple[str, str, str]] = {}
+    for key, members in groups.items():
+        target, _, owner_id = key
+        ids = tuple(sorted(item["id"] for item in members if isinstance(item.get("id"), str)))
+        owner = next((item for item in members if item.get("id") == owner_id), None)
+        reason = None
+        if len(members) < 2:
+            reason = "fan-in-needs-multiple-arrivals"
+        elif owner is None:
+            reason = "terminal-owner-not-a-member"
+        elif any(item.get("fromInstanceId") == target for item in members):
+            reason = "fan-in-contains-departure"
+        elif any(item.get("markerEnd") is not None for item in members if item is not owner):
+            reason = "multiple-terminal-markers"
+        else:
+            directions = []
+            for item in members:
+                points = item.get("points")
+                if (not isinstance(points, list) or len(points) < 2
+                        or any(not isinstance(point, (list, tuple)) or len(point) != 2
+                               or any(not _finite(value) for value in point) for point in points)):
+                    reason = "invalid-arrival-geometry"
+                    break
+                direction = _terminal_direction(points, entering=True)
+                if direction is None:
+                    reason = "invalid-arrival-geometry"
+                    break
+                directions.append(direction)
+            if reason is None and len(set(directions)) != 1:
+                reason = "incompatible-final-approach-direction"
+            if reason is None and owner is not None:
+                owner_paint = owner.get("paint")
+                if (not isinstance(owner_paint, Mapping)
+                        or any(not isinstance(item.get("paint"), Mapping)
+                               or item["paint"] != owner_paint for item in members)):
+                    reason = "incompatible-terminal-paint"
+        if reason is not None:
+            findings.append(_finding("E_SCENE_RELATION_FAN_IN_INVALID", "error", scene_path,
+                ids, None, (("reason", reason),)))
+            continue
+        for item in members:
+            valid[item["id"]] = key
+    return valid, findings
+
+
+def _terminal_direction(points: Sequence[Any], *, entering: bool) -> tuple[float, float] | None:
+    pairs = tuple(zip(points, points[1:]))
+    if entering:
+        pairs = tuple(reversed(pairs))
+    for left, right in pairs:
+        dx, dy = float(right[0]) - float(left[0]), float(right[1]) - float(left[1])
+        length = hypot(dx, dy)
+        if length > 1e-9:
+            return round(dx / length, 9), round(dy / length, 9)
+    return None
+
+
 def _relation_node_approach_findings(scene_path: str, raw_primitives: Any,
-                                     diagnostics: Sequence[str]) -> list[ScenePerceptibilityFinding]:
+                                     diagnostics: Sequence[str],
+                                     fan_in_members: Mapping[str, tuple[str, str, str]] | None = None
+                                     ) -> list[ScenePerceptibilityFinding]:
     """Check shared endpoint approaches, requiring Layout to explain each positive overlap."""
     routes: list[tuple[str, str, str, tuple[float, float], tuple[float, float],
                        tuple[float, float], tuple[float, float]]] = []
@@ -201,16 +287,20 @@ def _relation_node_approach_findings(scene_path: str, raw_primitives: Any,
                 continue
             pair = tuple(sorted((first_id, second_id)))
             endpoint_pairs = (
-                (first_from, (first_start, first_next), second_from, (second_start, second_next)),
-                (first_to, (first_prev, first_end), second_to, (second_prev, second_end)),
-                (first_from, (first_start, first_next), second_to, (second_prev, second_end)),
-                (first_to, (first_prev, first_end), second_from, (second_start, second_next)),
+                ("from", first_from, (first_start, first_next), "from", second_from, (second_start, second_next)),
+                ("to", first_to, (first_prev, first_end), "to", second_to, (second_prev, second_end)),
+                ("from", first_from, (first_start, first_next), "to", second_to, (second_prev, second_end)),
+                ("to", first_to, (first_prev, first_end), "from", second_from, (second_start, second_next)),
             )
-            for first_node, first_segment, second_node, second_segment in endpoint_pairs:
+            for first_role, first_node, first_segment, second_role, second_node, second_segment in endpoint_pairs:
                 if first_node != second_node:
                     continue
                 overlap = segment_overlap_length(first_segment, second_segment)
                 if overlap > 1e-9:
+                    first_fan, second_fan = (fan_in_members or {}).get(first_id), (fan_in_members or {}).get(second_id)
+                    if (first_role == second_role == "to" and first_fan is not None
+                            and first_fan == second_fan and first_fan[0] == first_node):
+                        continue
                     key = (first_node, pair)
                     observed[key] = observed.get(key, 0.0) + overlap
 
@@ -236,6 +326,10 @@ def _relation_node_approach_findings(scene_path: str, raw_primitives: Any,
     for key, overlap in sorted(observed.items()):
         node_id, relation_ids = key
         reason = explanations.get(key)
+        # A generic claim is not authorization. Only the independently validated typed fan-in above
+        # can exempt an arrival-arrival overlap.
+        if reason == "same-port-fan-in":
+            reason = None
         if reason is None:
             findings.append(_finding("E_SCENE_RELATION_NODE_APPROACH_SHARED", "error", scene_path,
                 relation_ids, None, (("nodeInstanceId", node_id), ("overlapLength", overlap),

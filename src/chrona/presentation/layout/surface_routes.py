@@ -26,6 +26,9 @@ from chrona.presentation.layout.routing import (
     remove_substroke_jogs, route_quality_metrics, select_relation_route,
 )
 from chrona.presentation.layout.route_reduction import simplify_relation_route, terminal_runs_preserved
+from chrona.presentation.layout.relation_fan_in import (
+    NodeApproach, complete_fan_in, same_port_arrivals, target_port_identity, terminal_style,
+)
 from chrona.presentation.layout.path_geometry import flatten_path, rounded_orthogonal_path
 from chrona.presentation.layout.surface_geometry import bounds_from_rect
 from chrona.presentation.layout.surface_quality import (
@@ -128,7 +131,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     relations: list[RelationPlacement] = []
     route_fallbacks: list[RelationPlacement] = []
     declared_order: dict[str, int] = {}
-    node_segments: dict[str, list[tuple[str, tuple[tuple[float, float], tuple[float, float]]]]] = {}
+    node_segments: dict[str, list[NodeApproach]] = {}
     instance_anchors: dict[str, list[tuple[str, tuple[float, float]]]] = {}
     comparison_instances: set[str] = set()
     instance_rows: dict[str, str] = {}
@@ -307,11 +310,18 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         return len(drawn) >= 2 and all(hypot(b[0] - a[0], b[1] - a[1]) + 1e-6 >= width
                                       for a, b in zip(drawn, drawn[1:]))
 
-    def shared_approach(source_id, target_id, points):
-        return any(segment_overlap_length(segment, previous) > 1e-9
-                   for node, segment in ((source_id, (points[0], points[1])),
-                                         (target_id, (points[-2], points[-1])))
-                   for _, previous in node_segments.get(node, ()))
+    def target_port(relation, target_id, mark, egress):
+        return target_port_identity(target_id, relation.target_endpoint, egress.side,
+                                    point=mark is not None and mark.mark_shape == "point")
+
+    def shared_approach(source_id, target_id, points, *, port_id=None, paint_id="", terminal=None):
+        return any(segment_overlap_length(candidate.segment, previous.segment) > 1e-9
+                   and not same_port_arrivals(candidate, previous)
+                   for node, candidate in (
+                       (source_id, NodeApproach("", (points[0], points[1]))),
+                       (target_id, NodeApproach("", (points[-2], points[-1]), port_id,
+                                                paint_id, terminal_style(terminal))))
+                   for previous in node_segments.get(node, ()))
 
     def routing_order(declared):
         """Stable arrivals-before-departures; cyclic remainder keeps declaration order."""
@@ -410,8 +420,10 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
             if not clears_primary_marks(points, width):
                 fail("primary-mark-blocked")
                 continue
-            completed, _, _ = complete_centred_terminals(points, marker_start, marker_end, width)
-            score = (shared_approach(source_id, target_id, completed), bends, length)
+            completed, _, completed_end = complete_centred_terminals(points, marker_start, marker_end, width)
+            score = (shared_approach(source_id, target_id, completed,
+                port_id=target_port(relation, target_id, target_mark, stub),
+                paint_id=relation.semantic_id, terminal=completed_end), bends, length)
             if best is None or score < best:
                 best = score
                 chosen = ((source_exit, stub), points)
@@ -448,12 +460,14 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                 points: tuple[tuple[float, float], ...] = ()
                 lane_selection = None
                 def candidate_rank(candidate, source_exit, target_entry):
-                    completed, _, _ = complete_centred_terminals(candidate, marker_start, marker_end, dependency_stroke)
+                    completed, _, completed_end = complete_centred_terminals(candidate, marker_start, marker_end, dependency_stroke)
                     policy = context.layout_manifest.relation_entry
                     entry_penalty = int((policy == "side-when-free" and not target_entry.stub)
                                         or (policy == "side" and not enters_along(relation, candidate)))
                     length, _, bends = route_quality_metrics(candidate)
-                    return (shared_approach(source_id, target_id, completed), entry_penalty, bends, length)
+                    return (shared_approach(source_id, target_id, completed,
+                        port_id=target_port(relation, target_id, target_mark, target_entry),
+                        paint_id=relation.semantic_id, terminal=completed_end), entry_penalty, bends, length)
 
                 selection = select_relation_route(port_pairs, obstacles=obstacles,
                         bounds=(timeline_bounds[0], route_top, timeline_bounds[0] + timeline_bounds[2], route_bottom),
@@ -521,7 +535,7 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                         continue
                 source_egress, target_egress = selected_pair
                 source_port_id = f"{source_id}:{relation.source_endpoint}:{source_egress.side}"
-                target_port_id = f"{target_id}:{relation.target_endpoint}:{target_egress.side}"
+                target_port_id = target_port(relation, target_id, target_mark, target_egress)
                 for mark, side, port in ((source_mark, source_egress.side, source_egress.exposed_port),
                                           (target_mark, target_egress.side, target_egress.exposed_port)):
                     obstacle_id = f"port:{mark.placement_id if mark else scene_id}:{side}"
@@ -549,8 +563,9 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                     label_content=relation_label_content(relation), source_ref=relation_id,
                     from_instance_id=source_id, to_instance_id=target_id)
                 relations.append(placed)
-                node_segments.setdefault(source_id, []).append((scene_id, (points[0], points[1])))
-                node_segments.setdefault(target_id, []).append((scene_id, (points[-2], points[-1])))
+                node_segments.setdefault(source_id, []).append(NodeApproach(scene_id, (points[0], points[1])))
+                node_segments.setdefault(target_id, []).append(NodeApproach(scene_id, (points[-2], points[-1]),
+                    target_port_id, relation.semantic_id, terminal_style(completed_end)))
                 if (context.layout_manifest.relation_entry == "side" and target_mark is not None
                         and relation.target_endpoint in {"start", "at", "finish", "end"} and len(points) >= 2
                         and not side_entry_satisfied):
@@ -564,17 +579,22 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
 
     for node, segments in node_segments.items():
         explained = set()
-        for index, (first_id, first) in enumerate(segments):
-            for second_id, second in segments[index + 1:]:
+        for index, first in enumerate(segments):
+            for second in segments[index + 1:]:
+                first_id, second_id = first.relation_id, second.relation_id
                 pair = tuple(sorted((first_id, second_id)))
-                if first_id != second_id and pair not in explained and segment_overlap_length(first, second) > 1e-9:
+                if (first_id != second_id and pair not in explained
+                        and not same_port_arrivals(first, second)
+                        and segment_overlap_length(first.segment, second.segment) > 1e-9):
                     diagnostics.append("I_LAYOUT_RELATION_NODE_APPROACH_SHARED:" + json.dumps({
                         "nodeInstanceId": node, "relationIds": pair, "reason": "terminal-corridor-shared"},
                         sort_keys=True, separators=(",", ":")))
                     explained.add(pair)
     relations.sort(key=lambda item: declared_order[item.relation_id])
-    route_fallbacks.sort(key=lambda item: declared_order[item.relation_id])
-    return SurfaceRoutesBatch(tuple(relations), tuple(route_fallbacks),
+    completed_relations = complete_fan_in(tuple(relations))
+    fallback_ids = {item.relation_id for item in route_fallbacks}
+    return SurfaceRoutesBatch(completed_relations,
+        tuple(item for item in completed_relations if item.relation_id in fallback_ids),
         {key: tuple(values) for key, values in instance_anchors.items()}, instance_rows,
         comparison_clusters, tuple(diagnostics))
 

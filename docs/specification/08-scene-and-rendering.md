@@ -141,6 +141,17 @@ them from primitive identifiers or proximity. They are optional inspection
 metadata, require both endpoints and a Path, and do not alter adapter geometry.
 Scene v0.6 is unchanged. Layout's node-approach policy is owned by Spec 50.
 
+For approved same-port arrivals, a semantic relation Path MAY additionally
+carry `fanIn: {targetPortId, terminalOwnerId}` in v0.7. Both identifiers are
+non-empty and opaque. Layout completes the group and chooses its first declared
+arrival as terminal owner; Scene MUST NOT infer ports or choose that owner.
+The owner is a member on the same surface with the same target instance and
+port. Only it may carry `markerEnd`; a headless group has none. All relation
+IDs and completed paths remain present. Serialization validates references;
+the Scene observer rejects invalid groups or incompatible approach directions
+and paint with `E_SCENE_RELATION_FAN_IN_INVALID`. Only validated arrival pairs
+are exempt from the node-approach overlap finding; departures never are.
+
 `ResolvedPresentationInput` also contains one immutable `SurfaceContentInput` derived
 before Scene construction. It contains only selected, normalized presentation facts:
 ordered table-column IDs and per-object display strings; selected relation IDs with

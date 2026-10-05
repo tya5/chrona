@@ -69,17 +69,32 @@ def _overlap(first, second) -> float:
 
 
 def _terminal_segment_residuals(paths):
-    """Independent all-endpoint oracle: shared instance plus positive-length terminal overlap."""
+    """Independent endpoint oracle, excluding only explicit compatible R6 arrivals."""
     incidents = {}
     for path in paths:
-        incidents.setdefault(path.from_instance_id, []).append((path.scene_id, (path.points[0], path.points[1])))
-        incidents.setdefault(path.to_instance_id, []).append((path.scene_id, (path.points[-2], path.points[-1])))
+        incidents.setdefault(path.from_instance_id, []).append((path, "from", (path.points[0], path.points[1])))
+        incidents.setdefault(path.to_instance_id, []).append((path, "to", (path.points[-2], path.points[-1])))
     residuals = set()
     for node_id, segments in incidents.items():
-        for index, (first_id, first) in enumerate(segments):
-            for second_id, second in segments[index + 1:]:
-                if first_id != second_id and _overlap(first, second) > 1e-9:
-                    residuals.add((node_id, tuple(sorted((first_id, second_id)))))
+        for index, (first_path, first_role, first) in enumerate(segments):
+            for second_path, second_role, second in segments[index + 1:]:
+                if first_path.scene_id == second_path.scene_id or _overlap(first, second) <= 1e-9:
+                    continue
+                first_direction = tuple(b - a for a, b in zip(*first))
+                second_direction = tuple(b - a for a, b in zip(*second))
+                same_direction = (first_direction[0] * second_direction[0] > 0
+                                  or first_direction[1] * second_direction[1] > 0)
+                if (first_role == second_role == "to" and same_direction
+                        and first_path.fan_in is not None
+                        and first_path.fan_in == second_path.fan_in
+                        and first_path.paint == second_path.paint):
+                    owner = next(path for path in paths
+                                 if path.scene_id == first_path.fan_in.terminal_owner_id)
+                    assert owner.to_instance_id == node_id and owner.fan_in == first_path.fan_in
+                    assert all(path.marker_end is None for path in paths
+                               if path.fan_in == owner.fan_in and path is not owner)
+                    continue
+                residuals.add((node_id, tuple(sorted((first_path.scene_id, second_path.scene_id)))))
     return residuals
 
 

@@ -241,6 +241,18 @@ informational `I_SCENE_RELATION_NODE_APPROACH_SHARED` only for an exact
 diagnosed pair/node. Point contacts and unrelated instances do not count;
 Scenes without endpoint identity are not inferred from coordinates.
 
+**Same-port fan-in (#1109 R6).** Compatible arrivals at the exact same resolved
+target port may share their final positive-length run and one target terminal.
+Layout canonicalizes span `finish`/`end` aliases, distinguishes point cardinal
+ports, and requires identical paint, terminal style and final approach direction.
+It preserves every route and relation ID, assigns the first declared compatible
+arrival as terminal owner, and removes only the other target markers. Headless
+declarations remain headless; round terminals retain their semantic centres.
+Completed `fanIn` identity is projected to Scene as specified in Spec 08.
+Only these arrival pairs are excluded from node-conflict ranking and residual
+diagnostics. Other ports, instances, incompatible heads, departures, mark/text
+collisions and quality-limit violations gain no exemption.
+
 **Bend reduction (#1109 R3).** Before quality limits and ranking, Layout
 collapses monotonic collinear vertices and obstacle-free interior S-jogs.
 Every reduction preserves exact endpoints, terminal entry/exit directions,
