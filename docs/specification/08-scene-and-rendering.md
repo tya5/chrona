@@ -33,6 +33,12 @@ Scene is a derived artifact. It is not the source of truth for dates, dependenci
 
 ### 2.2 Layout, Scene, and renderer seam
 
+Track alignment and comparison stacks (#1149, Specification 07) are completed
+Layout geometry. A shared immutable band allocation supplies ordinary/folded
+marks, row requirements and provisional/final lane footprints. Span-frame bounds
+are distinct from point-symbol bounds; Scene emits their existing role identities
+and completed ports without choosing alignment or recomputing stack gaps.
+
 Layout is the sole authority for measured geometry. It turns normalized content,
 declared slots, Theme metrics, and View intent into completed placements: bounds,
 baselines, marks, ports, label positions, route paths, and feasibility diagnostics.
