@@ -26,13 +26,14 @@ adaptation. Generated main `7d2b41a2` matches all 137 audited snapshot files byt
 [derived gate](https://github.com/tya5/chrona/actions/runs/37263751733) passed.
 [Exact-main three-OS release](https://github.com/tya5/chrona/actions/runs/37264464241)
 passed, including full pytest, conformance, wheel/smoke, MCP floor and newest-Python reproduction.
-R4a/R4b/R6 passed their final release; literal row9 still needs the owner's
-terminal disposition and keeps this issue open.
+R4a/R4b/R6 passed their final release. The [reviewer disposition](https://github.com/tya5/chrona/issues/1109#issuecomment-6005940739)
+accepts row9's general synthetic evidence; its actual Target B marker check is
+not applicable because the approved target declares no source terminal.
 
 ### Issue #1109
 
 - Source: [body](https://github.com/tya5/chrona/issues/1109), [R1–R5](https://github.com/tya5/chrona/issues/1109#issuecomment-5984583052)
-- Observed: 2026-10-05
+- Observed: 2026-10-06
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | --- | --- | --- | --- | --- |
@@ -44,7 +45,7 @@ terminal disposition and keeps this issue open.
 | 6 | The source terminal's centre lies on the line. | met | [Synthetic centre fixtures](../../../tests/unit/chrona/presentation/scene/test_relation_round_terminals.py) and [short-gap offsets](../../../tests/unit/chrona/presentation/layout/test_relation_substroke.py) | — |
 | 7 | A Scene check finds no relation segment shorter than its stroke width, corpus-wide, after regeneration. | met | [Scene observer](../../../src/chrona/presentation/scene/perceptibility.py); 64-context batch: 0 | — |
 | 8 | Existing straight-start fixtures are unchanged. | met | [Straight-start tests](../../../tests/unit/chrona/presentation/scene/test_relation_terminal_none.py) and [geometry identity](../../../tests/unit/chrona/presentation/layout/test_relation_substroke.py) | — |
-| 9 | Target B: the PDR source terminal sits on the line. | not met | [Target-B Theme](../../../examples/halcyon-1/themes/target-b.yaml) declares `none`, so no rendered terminal exists to assess. [Circle case](../../../tests/unit/chrona/presentation/scene/test_relation_round_terminals.py) proves the general fix, not this literal criterion; owner disposition required | — |
+| 9 | Target B: the PDR source terminal sits on the line. | met | [Explicit reviewer disposition](https://github.com/tya5/chrona/issues/1109#issuecomment-6005940739): the approved no-source-terminal Target B makes the target-specific check not applicable; [round-terminal fixtures](../../../tests/unit/chrona/presentation/scene/test_relation_round_terminals.py) and [non-degenerate axis tests](../../../tests/unit/chrona/presentation/layout/test_relation_substroke.py) meet the retained general rule | — |
 | 10 | synthetic fixtures for 1, 2 and 4 that fail on the previous order or rule and pass now; `tvac-emc` either enters from the side or the diagnostic names a reason that is documented as final; corpus before/after with images read. | met | [Synthetic regressions](../../../tests/unit/chrona/presentation/scene/test_relation_entry_acceptance.py) pass; local actual SVG has TVAC side entry. [Final corpus](https://github.com/tya5/chrona/pull/1168#issuecomment-5995552142) and [exact-main release](https://github.com/tya5/chrona/actions/runs/37338249489) passed | — |
 | 11 | This issue must bring the count of relations suppressed for routing reasons back to **0** across the corpus. Every dependency must be drawn, with no route through any mark, within the existing `maxBends` and `maxDetourRatio` or with a reported, reasoned exception. | met | [64-context actual artifact audit](https://github.com/tya5/chrona/pull/1162#issuecomment-5987677842): 634 dependency paths, 0 routing suppressions/Scene safety errors; seven restorations meet max4 bends/ratio2, no exceptions or budget changes. All 137 published files match audited bytes; [exact-main release](https://github.com/tya5/chrona/actions/runs/37264464241) passed | — |
 | 12 | No relation segment shorter than its stroke width, corpus-wide, after regeneration. The terminal marker's axis follows the first or last segment that is at least `headLength` long, or the port normal | met | [Axis/reduction tests](../../../tests/unit/chrona/presentation/layout/test_relation_substroke.py), observer and 64-context batch | — |
@@ -90,17 +91,18 @@ Focused verification: `.venv/bin/python -m pytest -q tests/integration/test_entr
 — **2 passed**, rendering the unmodified actual Target B twice. It changes no product or corpus resources.
 The [current Status](https://github.com/tya5/chrona/issues/1109#issuecomment-5987113298)
 records focused verification, each failed OS check and replacement release evidence.
-Do not accept the pending rows until that exact-main release passes; PDR row 9 still
-requires explicit owner disposition independently of CI.
+That failed run is superseded by the successful replacement release below.
 
 Replacement [exact-main release37338249489](https://github.com/tya5/chrona/actions/runs/37338249489)
 passed on published `8f5de096e3601507639a9ec3b3a145656159b7c5`, including
 three-OS full pytest/conformance/wheel-smoke, MCP floor and newest-Python
 materializers. All137 public files match the final reviewed snapshot. This
-supersedes the pending-release notes above: rows10/15/17/18/19 are met. PDR
-row9 remains not met and requires explicit owner disposition. This update
-is batched into the existing #1172 correction, not a separate docs-only PR.
+proves rows10/15/17/18/19. The [later exact-main release](https://github.com/tya5/chrona/actions/runs/37386692014)
+also passed on `82e74cae250a9ed7fe31bce8b45da7a597f8dde4` with all routing
+changes and this review present. Row9 is accepted under the explicit disposition
+linked above; no target YAML or general terminal contract changes.
 
 ## Programme-level criteria (optional)
 
-Keep this issue open until all rows and the exact-main release gate are met.
+All literal rows are met under the linked dispositions. The closing receipt
+must cite the successful exact-main release containing this review update.
