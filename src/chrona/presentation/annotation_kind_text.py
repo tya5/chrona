@@ -34,6 +34,8 @@ class KindHeader:
     secondary: str | None
     title: str
     parts: tuple[tuple[str, str], ...]  # ("text", literal) or ("field", placeholder)
+    heading: str | None = None
+    heading_parts: tuple[tuple[str, str], ...] = ()
 
     @property
     def inline_secondary(self) -> bool:
@@ -90,7 +92,21 @@ def kind_header(kind_id: str, declaration: Mapping[str, object]) -> KindHeader:
     parts = parse_title(title)
     if ("field", "secondary") in parts and secondary is None:
         raise AnnotationKindTextError(CODE, f"{kind_id}: title uses {{secondary}} without a secondary label")
-    return KindHeader(label, secondary, title, parts)
+    heading = declaration.get("heading")
+    if "heading" in declaration and (not isinstance(heading, str) or not heading.strip()):
+        raise AnnotationKindTextError(CODE, f"{kind_id}: heading must be a non-empty template")
+    heading_parts = parse_title(heading) if heading is not None else ()
+    if ("field", "secondary") in heading_parts and secondary is None:
+        raise AnnotationKindTextError(CODE, f"{kind_id}: heading uses {{secondary}} without a secondary label")
+    return KindHeader(label, secondary, title, parts, heading, heading_parts)
+
+
+def heading_text(header: KindHeader, *, subject: str, subject_id: str = "") -> str | None:
+    """Render the optional separate heading with the same closed grammar as the title."""
+    if header.heading is None:
+        return None
+    values = {"label": header.label, "secondary": header.secondary or "", "subject": subject, "subjectId": subject_id}
+    return "".join(value if kind == "text" else values[value] for kind, value in header.heading_parts)
 
 
 def header_lines(header: KindHeader, *, subject: str, subject_id: str = "") -> tuple[str, ...]:

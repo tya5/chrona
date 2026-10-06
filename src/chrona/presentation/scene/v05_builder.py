@@ -290,7 +290,7 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
                                            "annotation-kind-stamp"} else None)
     # `colorAlso` (#991): the same colour also paints the header text and the leader line of the note.
     also_paint = (annotation_kind_paints.get(f"{primitive.source_ref}#header")
-                  if primitive.purpose in {"annotation-kind-label", "annotation-kind-secondary"}
+                  if primitive.purpose in {"annotation-kind-label", "annotation-kind-secondary", "annotation-heading"}
                   else annotation_kind_paints.get(f"{primitive.source_ref}#leader")
                   if primitive.purpose == "annotation-leader" else None)
     if also_paint is not None:

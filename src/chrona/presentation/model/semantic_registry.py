@@ -226,6 +226,7 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("annotationBorderBottom", "decoration", "annotation-border-bottom", "annotation-border-bottom", "annotation-border-bottom", ContrastClass.DECORATION),
     _binding("annotationKindLabel", "label", "annotation-kind-label", "annotation-kind-label", "annotation-kind-label", ContrastClass.STATE_TEXT),
     _binding("annotationKindSecondary", "label", "annotation-kind-secondary", "annotation-kind-secondary", "annotation-kind-secondary", ContrastClass.STATE_TEXT),
+    _binding("annotationHeading", "label", "annotation-heading", "annotation-heading", "annotation-heading", ContrastClass.STATE_TEXT),
     # Summary panels.
     _binding("summaryHeader", "label", "summary-header", "text", "summary", ContrastClass.GROUND_TEXT),
     _binding("summaryMetric", "label", "summary-metric", "text", "summary", ContrastClass.GROUND_TEXT),
