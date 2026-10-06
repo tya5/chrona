@@ -188,3 +188,30 @@ def test_inline_gap_is_not_admitted_on_other_roles(tmp_path):
     parts["theme"]["body"]["roles"]["summary"]["inlineGap"] = "test-metric-inlineGap"
     with pytest.raises(ClosureError, match="E_THEME_ROLE_PROPERTY_UNSUPPORTED"):
         _render(tmp_path, parts, _inline())
+
+
+def test_a_narrow_fixed_slot_does_not_silently_wrap_or_suppress_inline_runs(tmp_path):
+    parts = _parts(COUNTDOWN)
+    _theme(parts)
+    sr.fix_inline(parts, "summary", 40)
+    result = _render(tmp_path, parts, _inline())
+    texts = list(_texts(result).values())
+    assert [t.text for t in texts] == ["Until launch", "28", "DAYS"]
+    assert len({t.text_layout.baseline[1] for t in texts}) == 1
+    slot = next(s for s in result.surface.slots if s.source == "summary")
+    assert slot.bounds[2] == 40
+    assert texts[-1].bounds[0] + texts[-1].bounds[2] > slot.bounds[0] + slot.bounds[2]
+    assert all(t.text in result.artifact.content.decode() for t in texts)
+
+
+def test_inline_content_consumes_the_slot_caption_reservation(tmp_path):
+    parts = _parts(COUNTDOWN)
+    _theme(parts)
+    sr.find_node(parts["layout"], "summary")["heading"] = {"text": "KPIs"}
+    result = _render(tmp_path, parts, _inline())
+    caption = next(p for p in result.surface.primitives if p.scene_id == "slot-heading:summary")
+    texts = list(_texts(result).values())
+    assert min(t.bounds[1] for t in texts) >= caption.bounds[1] + caption.bounds[3] - 0.001
+    assert len({t.text_layout.baseline[1] for t in texts}) == 1
+    slot = next(s for s in result.surface.slots if s.source == "summary")
+    assert max(t.bounds[1] + t.bounds[3] for t in texts) <= slot.bounds[1] + slot.bounds[3] + 0.001
