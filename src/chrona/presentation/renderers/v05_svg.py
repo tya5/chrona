@@ -364,14 +364,6 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
                     source_data = commands_data(node.symbol.outline)
                 else:
                     source_data = path_data(node)
-                    if (node.kind == "Path" and paint.fill is not None
-                            and (not node.path_commands and (len(node.points) < 3 or node.points[0] != node.points[-1]))):
-                        raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
-                    if (node.kind == "Path" and paint.fill is not None and node.path_commands
-                            and (not node.path_commands[0].points
-                                 or node.path_commands[0].kind != "move"
-                                 or node.path_commands[0].points[0] != node.path_commands[-1].points[-1])):
-                        raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
                 if paint.fill is not None:
                     fill_attrs = attrs(paint, fill=True, stroke=False, opacity=False, effects=False)
                     content += f'<path d="{source_data}" {fill_attrs}/>'

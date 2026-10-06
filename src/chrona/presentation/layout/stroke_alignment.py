@@ -2,36 +2,14 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from math import hypot, isfinite
+from math import isfinite
 from typing import Any
 
 from chrona.presentation.layout.model import LayoutError
-from chrona.presentation.layout.surface_quality import AlignedStrokePlacement, PathCommand, StrokeClip
+from chrona.presentation.layout.surface_quality import (
+    AlignedStrokePlacement, PathCommand, StrokeClip, is_closed_stroke_contour,
+)
 from chrona.presentation.model.semantic_registry import semantic_binding
-
-
-def _closed_contour(commands: tuple[PathCommand, ...]) -> bool:
-    """Every nondegenerate subpath is explicitly closed; holes retain their winding."""
-    contours: list[list[tuple[float, float]]] = []
-    for command in commands:
-        if command.kind == "move":
-            contours.append([command.points[0]])
-        elif not contours:
-            return False
-        else:
-            contours[-1].extend(command.points)
-    if not contours:
-        return False
-    for points in contours:
-        if (len(points) < 4 or not all(isfinite(value) for point in points for value in point)
-                or hypot(points[-1][0] - points[0][0], points[-1][1] - points[0][1]) > 1e-6):
-            return False
-        x, y = points[0]
-        nonzero = next(((px - x, py - y) for px, py in points[1:] if (px, py) != (x, y)), None)
-        if nonzero is None or not any(abs(nonzero[0] * (py - y) - nonzero[1] * (px - x)) > 1e-12
-                                     for px, py in points[1:]):
-            return False
-    return True
 
 
 def complete_stroke_clip(*, alignment: str, bounds: tuple[float, float, float, float],
@@ -45,7 +23,7 @@ def complete_stroke_clip(*, alignment: str, bounds: tuple[float, float, float, f
     if (isinstance(stroke_width, bool) or not isfinite(stroke_width) or stroke_width <= 0
             or not all(isfinite(value) for value in bounds) or min(bounds[2:]) <= 0):
         raise LayoutError("E_LAYOUT_STROKE_ALIGNMENT_INVALID", source, "nonpositive stroke or bounds")
-    if not rectangle and not _closed_contour(outline):
+    if not rectangle and not is_closed_stroke_contour(outline):
         raise LayoutError("E_LAYOUT_STROKE_ALIGNMENT_INVALID", source, "requires a closed nondegenerate contour")
     x, y, width, height = bounds
     # Miter limit 4 bounds a doubled stroke's join by four logical widths.

@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
-from math import isfinite
+from math import hypot, isfinite
 from typing import Any
 
 from chrona.presentation.layout.model import Rect
@@ -31,6 +31,30 @@ class PathCommand:
             raise ValueError("E_LAYOUT_PATH_COMMAND_INVALID")
 
 
+def is_closed_stroke_contour(commands: tuple[PathCommand, ...]) -> bool:
+    """Validate each finite nondegenerate subpath without flattening curves or holes."""
+    contours: list[list[tuple[float, float]]] = []
+    for command in commands:
+        if command.kind == "move":
+            contours.append([command.points[0]])
+        elif not contours:
+            return False
+        else:
+            contours[-1].extend(command.points)
+    if not contours:
+        return False
+    for points in contours:
+        if (len(points) < 4 or not all(isfinite(value) for point in points for value in point)
+                or hypot(points[-1][0] - points[0][0], points[-1][1] - points[0][1]) > 1e-6):
+            return False
+        x, y = points[0]
+        nonzero = next(((px - x, py - y) for px, py in points[1:] if (px, py) != (x, y)), None)
+        if nonzero is None or not any(abs(nonzero[0] * (py - y) - nonzero[1] * (px - x)) > 1e-12
+                                     for px, py in points[1:]):
+            return False
+    return True
+
+
 @dataclass(frozen=True)
 class StrokeClip:
     """Completed contour and finite clip region, never inferred by an adapter."""
@@ -42,6 +66,7 @@ class StrokeClip:
 
     def __post_init__(self) -> None:
         if (not isinstance(self.outside, bool)
+                or (self.outline and not is_closed_stroke_contour(self.outline))
                 or len(self.region) != 4 or not all(isfinite(value) for value in self.region)
                 or self.region[2] <= 0 or self.region[3] <= 0
                 or isinstance(self.stroke_width, bool) or not isfinite(self.stroke_width) or self.stroke_width <= 0):

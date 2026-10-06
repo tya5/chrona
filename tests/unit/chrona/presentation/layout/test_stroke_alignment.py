@@ -6,7 +6,7 @@ import pytest
 from chrona.presentation.layout.mark_geometry import SymbolPartPlacement
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.stroke_alignment import complete_aligned_strokes, complete_stroke_clip
-from chrona.presentation.layout.surface_quality import MarkPlacement, PathCommand
+from chrona.presentation.layout.surface_quality import MarkPlacement, PathCommand, StrokeClip
 
 
 def contour():
@@ -38,6 +38,9 @@ def test_native_rect_keeps_its_native_contour_and_center_is_exact_noop():
 def test_open_and_degenerate_contours_are_refused(outline):
     with pytest.raises(LayoutError, match="E_LAYOUT_STROKE_ALIGNMENT_INVALID"):
         complete_stroke_clip(alignment="inside", bounds=(0, 0, 20, 10), outline=outline, stroke_width=1)
+    if outline:
+        with pytest.raises(ValueError, match="E_LAYOUT_STROKE_CLIP_INVALID"):
+            StrokeClip(outline, False, (-4, -4, 28, 18), 2)
 
 
 def test_compound_curves_and_holes_are_not_flattened_or_reoriented():
@@ -86,3 +89,12 @@ def test_exact_lane_and_multipart_primitive_ids_are_completed_by_layout():
     outlined = complete_aligned_strokes((mark,), (), (emission,), Tokens(pattern=MappingProxyType({"kind": "outline"})))
     assert [item.primitive_id for item in outlined] == ["lane:a:fill", "lane:a:stroke"]
     assert [item.clip.stroke_width for item in outlined] == [2, 2]
+
+
+def test_missing_actual_uses_the_completed_mark_role_and_preserves_ports():
+    mark = MarkPlacement("missing-actual:a", "a", Rect(Decimal(0), Decimal(0), Decimal(20), Decimal(10)),
+                         (0, 5), (20, 5), semantic_id="missing-actual")
+    original_ports = mark.start_port, mark.end_port
+    strokes = complete_aligned_strokes((mark,), (), (), Tokens())
+    assert [item.primitive_id for item in strokes] == ["missing-actual:a"]
+    assert (mark.start_port, mark.end_port) == original_ports

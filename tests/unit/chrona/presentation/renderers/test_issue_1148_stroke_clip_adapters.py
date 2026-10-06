@@ -129,6 +129,59 @@ def test_svg_stroke_clip_preserves_fill_for_closed_path_container():
     assert stroke is not None and stroke.get("fill") == "none"
 
 
+@pytest.mark.parametrize("kind", ["Symbol", "Path"])
+@pytest.mark.parametrize("outside", [False, True])
+def test_svg_renders_curved_compound_contour_stroke_on_correct_side_of_outer_and_hole(kind, outside):
+    resvg = pytest.importorskip("resvg_py")
+    commands = (
+        # Clockwise curved outer contour. At (13, 4) the true quadratic lies
+        # inside the straight chord from (10, 2) to (18, 10).
+        PathCommand("move", ((10, 2),)),
+        PathCommand("quadratic", ((18, 2), (18, 10))),
+        PathCommand("quadratic", ((18, 18), (10, 18))),
+        PathCommand("quadratic", ((2, 18), (2, 10))),
+        PathCommand("quadratic", ((2, 2), (10, 2))),
+        # Counter-clockwise rectangular hole, so nonzero fill preserves it.
+        PathCommand("move", ((8, 8),)),
+        PathCommand("line", ((8, 12),)),
+        PathCommand("line", ((12, 12),)),
+        PathCommand("line", ((12, 8),)),
+        PathCommand("line", ((8, 8),)),
+    )
+    from chrona.presentation.scene.model import SymbolGeometry
+    shared = {"paint": ScenePaint("#224466", "#112233", 4, (), 1),
+              "stroke_clip": StrokeClip(commands, outside, (0, 0, 20, 20), 4)}
+    if kind == "Symbol":
+        primitive = ScenePrimitive("compound-symbol", kind, "a", "object", "planned", "planned", (2, 2, 16, 16),
+                                   symbol=SymbolGeometry(commands), **shared)
+    else:
+        points = tuple(command.points[-1] for command in commands)
+        primitive = ScenePrimitive("compound-path", kind, "a", "annotation", "annotation-box",
+                                   "annotation-note-box", (2, 2, 16, 16), points=points,
+                                   path_commands=commands, **shared)
+    svg = render_v05_svg(_surface(primitive))
+    assert "Q18 2 18 10" in svg
+    assert "M8 8L8 12L12 12L12 8L8 8" in svg
+    pixels = Image.open(BytesIO(bytes(resvg.svg_to_bytes(svg_string=svg, zoom=16)))).convert("RGB")
+    stroke = (17, 34, 51)
+
+    def near_color(point):
+        px, py = (round(point[0] * 16), round(point[1] * 16))
+        return any(pixels.getpixel((px + dx, py + dy)) == stroke
+                   for dx in (-1, 0, 1) for dy in (-1, 0, 1))
+
+    # This point is 1.6 px inside the actual quadratic but outside its chord;
+    # it guards against flattening the completed contour in either mask or stroke.
+    assert near_color((13, 4)) is (not outside)
+    # The smooth top of the outer curve has horizontal tangent at (10, 2).
+    assert near_color((10, 3)) is (not outside)
+    assert near_color((10, 1)) is outside
+    # At the hole's left edge, inside alignment paints the solid-shape side;
+    # outside alignment paints into the hole instead.
+    assert near_color((7, 10)) is (not outside)
+    assert near_color((9, 10)) is outside
+
+
 def test_svg_keeps_pattern_and_image_fill_before_the_independently_masked_stroke():
     primitive = _box(outside=False)
     pattern = PatternGeometry(4, 4, 45, (PatternStroke((0, 0), (4, 4), 1),))
