@@ -101,11 +101,11 @@ def test_insets_that_exactly_fill_the_viewport_are_admitted():
     assert artwork is not None
 
 
-def test_the_ink_role_admits_only_its_paint_and_the_fidelity_property():
+def test_the_ink_role_admits_paint_fidelity_and_closed_contour_alignment():
     from chrona.presentation.scene.capabilities import theme_role_contract
 
     contract = theme_role_contract("annotation-artwork")
-    assert set(contract.properties) == {"fill", "stroke", "opacity", "artworkFidelity"}
+    assert set(contract.properties) == {"fill", "stroke", "opacity", "artworkFidelity", "strokeAlign"}
     assert set(contract.scene_kinds) == {"Symbol"}
 
 
