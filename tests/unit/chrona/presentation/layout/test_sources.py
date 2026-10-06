@@ -5,6 +5,7 @@ import pytest
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.presentation import place_table_columns, table_text_measurer
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources, resolve_theme_metrics
+from chrona.presentation.layout.text import place_text
 from chrona.presentation.model.surface_content import (
     TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel,
 )
@@ -116,6 +117,29 @@ def test_heading_source_uses_heading_extent_and_baseline():
     assert title.preferred_inline == Decimal(204)
     assert title.preferred_block == Decimal("40.8")
     assert title.first_baseline == Decimal(34)
+
+
+def test_measured_block_width_uses_the_runs_declared_numeric_spacing():
+    class Metrics:
+        content_identity = "sha256:test"
+        def ensure_numeric_spacing(self, mode):
+            assert mode in {"proportional", "tabular"}
+        def width(self, value, size, letter_spacing=0, numeric_spacing="proportional"):
+            return len(value) * size / (1 if numeric_spacing == "tabular" else 2)
+        def baseline(self, top, size, line_height): return top + size
+
+    resolved = theme()
+    resolved["body"]["values"]["numeric-spacing"]["value"] = "tabular"
+    source = SourceInput(runs=(SourceTextRun("11", "heading", "title"),), run_flow="block")
+    measured = measure_sources({"title": source}, resolved, font_metrics=Metrics())
+    assert measured.run_measurements["title"][0].numeric_spacing == "tabular"
+    assert measured.run_measurements["title"][0].inline_size == Decimal(68)
+    assert measured.measurements["title"].preferred_inline == Decimal(68)
+    placed = place_text(placement_id="title", source_ref="title", content="11", inline=0,
+                        baseline_block=float(measured.block_stacks["title"].baselines[0]),
+                        typography_role="heading", theme_tokens=ThemeTokenView(resolved), font_metrics=Metrics())
+    assert placed.numeric_spacing == "tabular"
+    assert placed.bounds.inline_size == measured.run_measurements["title"][0].inline_size
 
 
 def test_mixed_typography_runs_measure_their_actual_cumulative_height():

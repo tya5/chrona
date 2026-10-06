@@ -176,7 +176,9 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
         text_line = font_size * line_height
         average_advance = Decimal(str(measure_text_width(
             "M", font_size=float(font_size), font_metrics=first_metrics,
-            letter_spacing=float(first_treatment.letter_spacing), text_transform=first_treatment.transform)))
+            letter_spacing=float(first_treatment.letter_spacing), text_transform=first_treatment.transform,
+            numeric_spacing=(first_treatment.numeric_spacing if value.run_flow == "block"
+                             else "proportional"))))
         measured_runs = []
         for run in runs:
             treatment = typography.text_treatment(run.typography_role)
@@ -185,7 +187,9 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
                                                          treatment.font_size, treatment.line_height)
             width = Decimal(str(measure_text_width(
                 run.content, font_size=float(run_size), font_metrics=run_metrics,
-                letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform))) + run.inline_advance
+                letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
+                numeric_spacing=(treatment.numeric_spacing if value.run_flow == "block"
+                                 else "proportional")))) + run.inline_advance
             baseline = Decimal(str(run_metrics.baseline(0, float(run_size), float(run_line_height))))
             measured_runs.append(MeasuredTextRun(
                 run.source_ref, paint_text(run.content, text_transform=treatment.transform), run.typography_role, width,
