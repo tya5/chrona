@@ -15,7 +15,7 @@ Structural and unsupported-ground failures remain fail-closed. Pattern pairs
 retain their worst-pair obligation before figure-level visibility selection.
 Independent Luna review found no remaining contract mismatch.
 
-Focused tests: 162 existing contrast/artwork/severity/render tests and 15 new
+Focused tests: 162 existing contrast/artwork/severity/render tests and 17 new
 [multipart fixtures](../../../tests/unit/chrona/presentation/scene/test_multipart_mark_contrast.py)
 passed in the worktree venv. Full pytest and generated release evidence belong
 to CI, not a duplicate local suite.

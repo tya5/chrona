@@ -48,9 +48,10 @@ def _mark_findings(findings):
     (":part0", ":part1", ":part2"),
     (":part:0", ":part:1", ":part:2"),
 ])
-def test_similarly_inked_parts_have_no_sibling_contrast_findings(suffixes):
+@pytest.mark.parametrize("inks", [(BLACK, BLACK, BLACK), (BLACK, "#111111", "#222222")])
+def test_similarly_inked_parts_have_no_sibling_contrast_findings(suffixes, inks):
     findings = _mark_findings(evaluate_scene_contrast(_scene(*(
-        _mark(f"planned:object-1:instance-1{suffix}", BLACK, order=100 + index)
+        _mark(f"planned:object-1:instance-1{suffix}", inks[index], order=100 + index)
         for index, suffix in enumerate(suffixes)
     ))))
 
