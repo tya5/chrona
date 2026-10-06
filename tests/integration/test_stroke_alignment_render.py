@@ -1,6 +1,9 @@
 from datetime import date
+from io import BytesIO
+from xml.etree import ElementTree as ET
 
 import pytest
+from PIL import Image, ImageColor
 
 from chrona.presentation.scene.serialization import scene_document, validate_scene_document
 from tests.support import synthetic_review as sr
@@ -48,3 +51,25 @@ def test_center_declaration_is_byte_identical_and_inside_keeps_declared_bounds(t
     assert [node.scene_id for node in aligned.surface.primitives] == list(old)
     for node in aligned.surface.primitives:
         assert node.bounds == old[node.scene_id].bounds
+
+
+def test_authored_inside_stroke_paints_up_to_but_not_beyond_declared_mark_edge(tmp_path):
+    resvg = pytest.importorskip("resvg_py")
+    parts = sr.bundle()
+    body = parts["theme"]["body"]
+    body["values"]["opaque-stroke"] = {"type": "number", "value": 1}
+    body["roles"]["planned"].update(strokeAlign="inside", opacity="opaque-stroke")
+    rendered = sr.render(tmp_path, sr.project({"a": sr.span("a", date(2026, 2, 2), 30)}),
+                         presentation=parts)
+    mark = next(node for node in rendered.surface.primitives if node.scene_id.startswith("planned:"))
+    x, y, _, height = mark.bounds
+    # Crop only the viewport, retaining the actual authored SVG geometry and paint.
+    svg = ET.fromstring(rendered.artifact.content)
+    svg.set("viewBox", f"{x - 2} {y + height / 2 - 1} 4 2")
+    svg.set("width", "4")
+    svg.set("height", "2")
+    pixels = Image.open(BytesIO(bytes(resvg.svg_to_bytes(
+        svg_string=ET.tostring(svg, encoding="unicode"), zoom=8)))).convert("RGB")
+    stroke = ImageColor.getrgb(mark.paint.stroke)
+    assert pixels.getpixel((20, 8)) == stroke
+    assert pixels.getpixel((12, 8)) != stroke
