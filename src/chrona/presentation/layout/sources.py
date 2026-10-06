@@ -89,6 +89,9 @@ REQUIRED_METRICS = (
     "network.node.minInlineSize", "network.node.minBlockSize", "network.rank.gap",
 )
 
+# A metric a Theme may leave unbound: Layout derives it from other sizes (#1150). A bound value always wins.
+DERIVED_METRICS = ("timeline.mark.blockSize",)
+
 OPTIONAL_METRICS = (
     "timeline.groupHeader.blockSize", "timeline.calendarClosed.minimumDayWidth",
     "timeline.mark.cornerRadius", "timeline.point.cornerRadius", "timeline.relation.cornerRadius",
@@ -112,7 +115,7 @@ def resolve_theme_metrics(theme: Mapping[str, Any], *, required_metrics: tuple[s
     for name in REQUIRED_METRICS + OPTIONAL_METRICS:
         token = bindings.get(name)
         if not isinstance(token, str):
-            if name not in required:
+            if name not in required or name in DERIVED_METRICS:
                 continue
             diagnostic = "E_THEME_METRIC_REQUIRED" if name in required_metrics else "E_LAYOUT_METRIC_REQUIRED"
             raise LayoutError(diagnostic, "/body/metrics/" + name)
@@ -127,7 +130,24 @@ def resolve_theme_metrics(theme: Mapping[str, Any], *, required_metrics: tuple[s
                 or (value == 0 and name not in _NON_NEGATIVE_METRICS)):
             raise LayoutError("E_LAYOUT_TOKEN_TYPE", "/body/metrics/" + name)
         resolved[name] = value
+    if not isinstance(bindings.get("timeline.mark.blockSize"), str):
+        resolved_track = derived_track_block_size(resolved)
+        if resolved_track is None:
+            raise LayoutError("E_LAYOUT_METRIC_REQUIRED", "/body/metrics/timeline.mark.blockSize")
+        resolved["timeline.mark.blockSize"] = resolved_track
     return resolved
+
+
+def derived_track_block_size(metrics: Mapping[str, Decimal]) -> Decimal | None:
+    """The mark track's default block size: the row block size less the row's total block padding (#1150).
+
+    `timeline.row.paddingBlock` is the row's total padding, added once (Specification 24 section 2), so the
+    track is what the row leaves inside it. None when the row, its padding or a positive remainder is missing.
+    """
+    row, padding = metrics.get("timeline.row.minBlockSize"), metrics.get("timeline.row.paddingBlock")
+    if row is None or padding is None or row - padding <= 0:
+        return None
+    return row - padding
 
 
 def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any], *, font_metrics: Any,
