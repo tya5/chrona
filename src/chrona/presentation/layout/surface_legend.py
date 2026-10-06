@@ -213,7 +213,9 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
                                                f"legend-swatch:{role}:end",
                                                points=((x, y + height / 2), (x + width, y + height / 2)),
                                                semantic_id=role, slot_id=legend.slot_id, source_ref=role,
-                                               marker_end=marker_geometry(marker_token) if marker_token else None))
+                                               marker_end=marker_geometry(marker_token, stroke_width=float(
+                                                   request.theme_tokens.number(role, "strokeWidth")))
+                                               if marker_token else None))
         else:
             shapes.append(ShapePlacement(f"legend-swatch:{role}", role, "Rect",
                                          Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height))),

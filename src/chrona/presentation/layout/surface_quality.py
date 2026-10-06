@@ -43,10 +43,22 @@ class MarkerGeometry:
     # not part of repr/equality: the SVG marker id hashes repr, and this is derived from the shape
     centred: bool = field(default=False, repr=False, compare=False)  # a round terminal centred on the endpoint, so its leg needs no straight run (#1044)
     angle_degrees: float | None = field(default=None, repr=False)
+    physical_units: bool = field(default=False, repr=False)
+    stroke_width: float | None = field(default=None, repr=False)
+    # Layout routing extent, not an adapter input; legacy heads keep the nominal run.
+    painted_run: float | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         if (not self.outline or self.head_length <= 0 or self.head_width <= 0
-                or not 0 <= self.attachment_offset <= self.head_length
+                or not isfinite(self.attachment_offset)
+                or (not self.physical_units and not 0 <= self.attachment_offset <= self.head_length)
+                or (self.stroke_width is not None and (not self.physical_units
+                    or isinstance(self.stroke_width, bool) or not isinstance(self.stroke_width, (int, float))
+                    or not isfinite(self.stroke_width) or self.stroke_width < 0))
+                or (self.physical_units and self.paint_mode == "stroke" and self.stroke_width is None)
+                or (self.painted_run is not None and (not self.physical_units
+                    or not isfinite(self.painted_run) or self.painted_run < 0))
+                or (self.physical_units and self.paint_mode == "fill" and self.stroke_width is not None)
                 or self.paint_mode not in {"fill", "stroke"}
                 or (self.angle_degrees is not None and (not isinstance(self.angle_degrees, (int, float))
                     or isinstance(self.angle_degrees, bool) or not isfinite(self.angle_degrees)))):

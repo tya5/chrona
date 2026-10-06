@@ -16,15 +16,20 @@ ROUNDED_CORNER = 0.12        # corner radius of `rounded-triangle`, as a fractio
 CHEVRON_STEP = 0.4           # `double-chevron`: the back chevron is offset by this fraction of the length
 
 
-def marker_geometry(value: Mapping[str, object]) -> MarkerGeometry | None:
+def marker_geometry(value: Mapping[str, object], *, stroke_width: float = 1.0) -> MarkerGeometry | None:
     """Resolve a closed terminal token before Scene receives the relation.
 
     ``none`` (#1105) resolves to ``None``, the existing "no marker" value: no primitive, no setback. Its numbers
     are validated like any other shape and ignored.
     """
     shape = _choice(value, "shape", SHAPES)
-    length, width, offset = (_number(value, name) for name in ("headLength", "headWidth", "attachmentOffset"))
+    length, width = (_number(value, name) for name in ("headLength", "headWidth"))
+    derived = "attachmentOffset" not in value
+    offset = 0.0 if derived else _number(value, "attachmentOffset")
     if length <= 0 or width <= 0 or not 0 <= offset <= length:
+        raise ValueError("E_THEME_TOKEN_TYPE")
+    if derived and (isinstance(stroke_width, bool) or not isinstance(stroke_width, (int, float))
+                    or not isfinite(stroke_width) or stroke_width < 0):
         raise ValueError("E_THEME_TOKEN_TYPE")
     if shape == "none":
         return None
@@ -36,7 +41,9 @@ def marker_geometry(value: Mapping[str, object]) -> MarkerGeometry | None:
                    PathCommand("quadratic", ((0.0, diameter), (0.0, diameter / 2))),
                    PathCommand("quadratic", ((0.0, 0.0), (diameter / 2, 0.0))))
         return MarkerGeometry(outline, diameter, diameter, min(offset, diameter),
-                              "stroke" if shape == "open-circle" else "fill", centred=True)
+                              "stroke" if shape == "open-circle" else "fill", centred=True,
+                              physical_units=derived,
+                              stroke_width=float(stroke_width) if derived and shape == "open-circle" else None)
     mode = "fill" if shape in FILLED_SHAPES else "stroke"
     if shape == "rounded-triangle":
         outline = _rounded_polygon(((0.0, 0.0), (length, width / 2), (0.0, width)), ROUNDED_CORNER * width)
@@ -55,17 +62,58 @@ def marker_geometry(value: Mapping[str, object]) -> MarkerGeometry | None:
                    PathCommand("line", ((0.0, width),)))
         if shape in {"triangle", "open-triangle"}:
             outline += (PathCommand("line", ((0.0, 0.0),)),)
-    return MarkerGeometry(outline, length, width, offset, mode)
+    painted_run = None
+    if derived:
+        tip = _outline_tip(outline)
+        back = -_outline_tip(tuple(PathCommand(command.kind, tuple((-x, y) for x, y in command.points))
+                                  for command in outline))
+        if mode == "stroke":
+            # SVG's established butt-cap/miter-join treatment, completed here
+            # in physical units. A sharp join beyond the miter limit is beveled.
+            run = length * (1 - CHEVRON_STEP) if shape == "double-chevron" else length
+            miter_ratio = hypot(run, width / 2) / (width / 2)
+            tip += stroke_width / 2 * (miter_ratio if miter_ratio <= 4 else 1 / miter_ratio)
+            # The closed triangle's rear vertical edge reaches half a stroke
+            # behind x=0; open Vs have butt caps with only their normal's x reach.
+            back -= stroke_width / 2 * (1 if shape == "open-triangle" else 1 / miter_ratio)
+        offset = length - tip
+        painted_run = tip - back
+    return MarkerGeometry(outline, length, width, offset, mode,
+                          physical_units=derived,
+                          stroke_width=float(stroke_width) if derived and mode == "stroke" else None,
+                          painted_run=painted_run)
+
+
+def _outline_tip(outline: tuple[PathCommand, ...]) -> float:
+    """Exact forward extent, including interior extrema of quadratic curves."""
+    extent = float("-inf")
+    previous = None
+    for command in outline:
+        end = command.points[-1]
+        extent = max(extent, end[0])
+        if command.kind == "quadratic":
+            if previous is None:
+                raise ValueError("E_LAYOUT_PATH_COMMAND_INVALID")
+            start_x, control_x, end_x = previous[0], command.points[0][0], end[0]
+            denominator = start_x - 2 * control_x + end_x
+            if denominator:
+                t = (start_x - control_x) / denominator
+                if 0 < t < 1:
+                    extent = max(extent, (1 - t)**2 * start_x + 2 * (1 - t) * t * control_x + t*t * end_x)
+        previous = end
+    return extent
 
 
 def terminal_run(marker: MarkerGeometry | None) -> float:
     """The straight run a terminal needs on its leg: none for no terminal or a centred round one."""
-    return 0.0 if marker is None or marker.centred else marker.head_length
+    return 0.0 if marker is None or marker.centred else terminal_length(marker)
 
 
 def terminal_length(marker: MarkerGeometry | None) -> float:
     """How far a terminal reaches back from its port along the route (0 for none)."""
-    return 0.0 if marker is None else marker.head_length
+    if marker is None:
+        return 0.0
+    return marker.painted_run if marker.painted_run is not None and not marker.centred else marker.head_length
 
 
 def orient_terminal(marker: MarkerGeometry | None, points: tuple[tuple[float, float], ...],
@@ -77,14 +125,15 @@ def orient_terminal(marker: MarkerGeometry | None, points: tuple[tuple[float, fl
     if not source:
         segments.reverse()
     a, b = segments[0]
-    if hypot(b[0] - a[0], b[1] - a[1]) + 1e-6 >= marker.head_length:
+    required = terminal_length(marker)
+    if hypot(b[0] - a[0], b[1] - a[1]) + 1e-6 >= required:
         return marker
     direction = {"start": (-1, 0), "end": (1, 0), "above": (0, -1), "below": (0, 1)}.get(side)
     if direction is not None and not source:
         direction = (-direction[0], -direction[1])
     if direction is None:
         direction = next(((b[0] - a[0], b[1] - a[1]) for a, b in segments
-                          if hypot(b[0] - a[0], b[1] - a[1]) + 1e-6 >= marker.head_length),
+                          if hypot(b[0] - a[0], b[1] - a[1]) + 1e-6 >= required),
                          (b[0] - a[0], b[1] - a[1]))
     angle = degrees(atan2(direction[1], direction[0]))
     # An equivalent auto tangent retains the established public bytes.

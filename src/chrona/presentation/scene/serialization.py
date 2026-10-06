@@ -45,7 +45,7 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
                     for surface in scene.surfaces for primitive in surface.primitives)
     has_fit = any(primitive.viewer_fit != "raw" or (primitive.text_layout is not None and primitive.text_layout.fit is not None)
                   for surface in scene.surfaces for primitive in surface.primitives)
-    has_marker_axis = any(marker is not None and marker.angle_degrees is not None
+    has_marker_axis = any(marker is not None and (marker.angle_degrees is not None or marker.physical_units)
                          for surface in scene.surfaces for primitive in surface.primitives
                          for marker in (primitive.marker_start, primitive.marker_end))
     has_relation_endpoint_identity = any(
@@ -525,6 +525,10 @@ def _marker(value: Any) -> dict[str, Any]:
             "paintMode": value.paint_mode}
     if value.angle_degrees is not None:
         result["angleDegrees"] = value.angle_degrees
+    if value.physical_units:
+        result["units"] = "userSpaceOnUse"
+        if value.stroke_width is not None:
+            result["strokeWidth"] = value.stroke_width
     return result
 
 

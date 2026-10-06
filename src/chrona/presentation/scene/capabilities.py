@@ -275,7 +275,7 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              frozenset(("marker",)))
     register("annotation-callout-box annotation-highlight-box annotation-note-box annotation-arrow-box",
              "Layout annotation container and Scene Rect/Symbol",
-             _PATTERNED_RECT_PAINT | frozenset(("annotationContainer",)) | _VIEWER_FIT,
+             _PATTERNED_RECT_PAINT | frozenset(("annotationContainer", "cornerRadius")) | _VIEWER_FIT,
              scene_kinds=frozenset(("Rect", "Symbol")))
     register("annotation-kind-bar", "Layout annotation-kind title bar and Scene Rect",
              _RECT_PAINT | frozenset(("chipPadding", "markCornerRadius")), scene_kinds=frozenset(("Rect",)))
@@ -299,7 +299,7 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              scene_kinds=frozenset(("Rect",)))
     register("axis-band-decoration axis-band-decoration2", "Layout axis band and Scene Rect",
              _PATTERNED_RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder", "cellGap",
-                                                "cellCornerRadius", "cellCornerChamfer")),
+                                                "cellCornerRadius", "cellCornerChamfer", "cornerRadius")),
              scene_kinds=frozenset(("Rect", "Symbol")))
     register("period-label", "Scene state Text and contrast policy",
              _TEXT_MEASUREMENT | _TEXT_PAINT | frozenset(("contrastTreatment",)),

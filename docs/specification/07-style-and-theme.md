@@ -119,6 +119,20 @@ This preserves the scheduling model's separation between planned constraints and
 
 ## 5. Theme model
 
+### Derived terminal attachment (#1148)
+
+Omitting a marker token's `attachmentOffset` selects physical-px head dimensions
+and a Layout-derived reference at the visible forward tip. Filled heads use their
+actual outline extent (including quadratic extrema); stroked heads use the
+relation's physical stroke width with butt caps and miter joins, miter limit 4
+(bevel fallback). Rounded heads keep their centre on the semantic port and their
+existing route-setback rule. Explicit offsets retain legacy units and output.
+The completed offset can be negative when stroke protrudes past the head box.
+Layout reserves the completed painted backward reach, including rear stroke
+overhang, for entry stubs and straight terminal runs, using that relation's width.
+Scene carries the completed units and stroke width; an adapter must not derive
+attachment. Adapters without terminal support continue to refuse terminals.
+
 ### Physical corner radii (#1148)
 
 A role's optional `cornerRadius` binding names a `radius` token. Its value is

@@ -88,6 +88,8 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
     def marker_id(color: str, geometry: object) -> str:
         identity = ((color, geometry) if geometry.angle_degrees is None
                     else (color, geometry, geometry.angle_degrees))
+        if geometry.physical_units:
+            identity = (*identity, "userSpaceOnUse", geometry.stroke_width)
         return "marker-" + sha256(repr(identity).encode()).hexdigest()[:12]
     def pattern_id(geometry: object, paint: ScenePaint) -> str:
         if geometry.primitives:
@@ -159,12 +161,19 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
     if marker_pairs or patterns or gradients or shadows or glows or clip_hosts or fit_floods:
         definitions: list[str] = []
         for color, marker in sorted(marker_pairs, key=lambda pair: (
-                repr(pair), pair[1].angle_degrees is not None, pair[1].angle_degrees or 0.0)):
+                repr(pair), pair[1].angle_degrees is not None, pair[1].angle_degrees or 0.0,
+                pair[1].physical_units, pair[1].stroke_width or 0.0)):
             if color is None or marker is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             appearance = (f'fill="{escape(color, quote=True)}"' if marker.paint_mode == "fill"
                           else f'fill="none" stroke="{escape(color, quote=True)}"')
+            units = ''
+            if marker.physical_units:
+                units = ' markerUnits="userSpaceOnUse" overflow="visible"'
+                if marker.paint_mode == "stroke":
+                    appearance += (f' stroke-width="{number(marker.stroke_width)}"'
+                                   ' stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4"')
             axis_value = "auto" if marker.angle_degrees is None else number(marker.angle_degrees)
-            definitions.append(f'<marker id="{marker_id(color, marker)}" viewBox="0 0 {number(marker.head_length)} {number(marker.head_width)}" refX="{number(marker.head_length - marker.attachment_offset)}" refY="{number(marker.head_width / 2)}" markerWidth="{number(marker.head_length)}" markerHeight="{number(marker.head_width)}" orient="{axis_value}"><path d="{commands_data(marker.outline)}" {appearance}/></marker>')
+            definitions.append(f'<marker id="{marker_id(color, marker)}" viewBox="0 0 {number(marker.head_length)} {number(marker.head_width)}" refX="{number(marker.head_length - marker.attachment_offset)}" refY="{number(marker.head_width / 2)}" markerWidth="{number(marker.head_length)}" markerHeight="{number(marker.head_width)}" orient="{axis_value}"{units}><path d="{commands_data(marker.outline)}" {appearance}/></marker>')
         for pattern, paint in sorted(patterns, key=repr):
             if pattern.primitives:
                 if pattern.origin is None or pattern.clip_bounds is None:

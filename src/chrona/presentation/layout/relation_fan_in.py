@@ -20,8 +20,9 @@ def terminal_style(marker: MarkerGeometry | None) -> tuple | None:
         return None
     # Centred markers retain the same semantic centre even when a tight route
     # completes a different stroke setback/reference offset.
-    return (marker.outline, marker.head_length, marker.head_width, marker.paint_mode,
-            marker.centred, marker.angle_degrees, 0.0 if marker.centred else marker.attachment_offset)
+    style = (marker.outline, marker.head_length, marker.head_width, marker.paint_mode,
+             marker.centred, marker.angle_degrees, 0.0 if marker.centred else marker.attachment_offset)
+    return (*style, "userSpaceOnUse", marker.stroke_width) if marker.physical_units else style
 
 
 def approach_direction(segment: tuple[Point, Point]) -> tuple[int, int] | None:

@@ -4,6 +4,7 @@ from dataclasses import dataclass, replace
 from datetime import date
 from decimal import Decimal
 from collections.abc import Mapping
+from math import isfinite
 from typing import Any, Callable
 
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
@@ -26,7 +27,7 @@ from chrona.presentation.layout.annotation_search import (
 from chrona.presentation.layout.annotation_artwork import place_artwork
 from chrona.presentation.layout.annotation_border import NO_BORDER, place_border, resolve_border
 from chrona.presentation.layout.rounded_outline import (
-    CORNER_CLEARANCE, clamp_radius, commands_points, rounded_rect_commands,
+    CORNER_CLEARANCE, clamp_radius, commands_points, resolve_corner_radius, rounded_rect_commands,
 )
 from chrona.presentation.layout.annotation_inline_size import fill_note, fill_target
 from chrona.presentation.layout.viewer_fit import fit_text, require_followable_content
@@ -66,6 +67,60 @@ from chrona.presentation.layout.surface_geometry import (
 
 
 ANNOTATION_PAINT_ORDER = 400
+
+
+def _container_radius(value: Any, container: Any, text_size: float,
+                      width: float, height: float) -> float:
+    """Resolve a Theme role's physical radius, preserving the container's old em rule when absent."""
+    legacy = (clamp_radius(float(container.corner_radius) * text_size, width, height)
+              if container is not None else 0.0)
+    return resolve_corner_radius(value, width=width, height=height, legacy_radius=legacy)
+
+
+def _radius_aware_box_port(box: LabelRect, target: tuple[float, float], radius: float) -> tuple[float, float]:
+    """Choose the nearest point on a straight edge run of a rounded rectangle."""
+    if radius <= 0:
+        return nearest_box_port(box, target)
+    x, y = target
+    r = min(radius, box.width / 2, box.height / 2)
+    ports = ((min(max(x, box.x + r), box.right - r), box.y),
+             (min(max(x, box.x + r), box.right - r), box.bottom),
+             (box.right, min(max(y, box.y + r), box.bottom - r)),
+             (box.x, min(max(y, box.y + r), box.bottom - r)))
+    return min(ports, key=lambda port: (abs(port[0] - x) + abs(port[1] - y), ports.index(port)))
+
+
+def _capsule_axis_radius(size: float, before: float, after: float) -> float:
+    """Solve ``r = (content + max(before, kr) + max(after, kr)) / 2`` by its three linear regions."""
+    k = CORNER_CLEARANCE
+    content = max(0.0, size - before - after)
+    low, high = sorted((before, after))
+    candidates = (
+        ((content + before + after) / 2, low / k),
+        ((content + high) / (2 - k), high / k),
+        (content / (2 - 2 * k), float("inf")),
+    )
+    lower = 0.0
+    for radius, upper in candidates:
+        if lower - 1e-9 <= radius <= upper + 1e-9:
+            return max(0.0, radius)
+        lower = upper
+    return max(0.0, candidates[-1][0])
+
+
+def _physical_radius_clearance(value: Any, width: float, height: float,
+                               insets: tuple[float, float, float, float]) -> float:
+    """A finite text inset that keeps content on paper for the completed physical radius."""
+    if value == "capsule":
+        top, right, bottom, left = insets
+        radius = min(_capsule_axis_radius(width, left, right),
+                     _capsule_axis_radius(height, top, bottom))
+        return CORNER_CLEARANCE * radius
+    # The actual radius can only be clamped below the declared px value, so this
+    # requested-radius clearance is conservative for every eventual box size.
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not isfinite(float(value)) or value < 0:
+        raise ValueError("Corner radius requires finite nonnegative px or capsule")
+    return CORNER_CLEARANCE * float(value)
 
 
 def _is_annotation_list_candidate(candidate: Any) -> bool:
@@ -366,9 +421,13 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                 if anchor_host is None:
                     raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
                 candidate_bounds = candidate_box.placement.bounds
-                target = nearest_box_port(candidate_bounds,
-                                          (anchor_bounds.x + anchor_bounds.width / 2,
-                                           anchor_bounds.y + anchor_bounds.height / 2))
+                anchor_center = (anchor_bounds.x + anchor_bounds.width / 2,
+                                 anchor_bounds.y + anchor_bounds.height / 2)
+                candidate_radius = (_container_radius(
+                    role_corner_radius, container, size, candidate_bounds.width, candidate_bounds.height)
+                    if role_corner_radius is not None
+                    and (container is None or container.outline == "rectangle") and not tilt_angle else 0.0)
+                target = _radius_aware_box_port(candidate_bounds, anchor_center, candidate_radius)
                 anchor_instance = anchor_host.placement_id.split(":", 1)[1]
                 anchor_row = instance_rows.get(anchor_instance)
                 source_candidates = connector_egress_candidates(
@@ -437,6 +496,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
 
             tail_tip: tuple[float, float] | None = None
             container = None
+            role_corner_radius = None
             box_border = NO_BORDER
             # The box role's viewer-fit mode (#1050) is read outside the search below, whose handler reports a Layout
             # pointer: a refused declaration keeps its own Theme pointer.
@@ -461,6 +521,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                     wrap_available = float(plot_wrap_em) * size if plot_wrap_em is not None else text_available
                     annotation_box_role = semantic_binding(presentation.box_semantic_id).theme_role
                     container = request.theme_tokens.annotation_container(annotation_box_role)
+                    role_corner_radius = request.theme_tokens.optional_token(
+                        annotation_box_role, "cornerRadius", "radius")
                     # A Theme-dressed Project kind adds a header and optional stamp column.
                     # Content sizing keeps a text-width bound; fill sizing subtracts all chrome below.
                     kind_token = request.theme_tokens.annotation_kind(annotation.kind)
@@ -494,7 +556,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                     content_right += border_right
                     content_bottom += border_bottom
                     content_left += border_left
-                    if container is not None and container.outline == "rectangle" and container.corner_radius > 0:
+                    if (container is not None and container.outline == "rectangle"
+                            and role_corner_radius is None and container.corner_radius > 0):
                         # A rounded corner removes paper (#1087): every inset keeps the text and the kind frame on it.
                         clearance = float(container.corner_radius) * size * CORNER_CLEARANCE
                         content_top, content_right, content_bottom, content_left = (
@@ -554,6 +617,36 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                     plot_variant = measure_variant(body_content, list_entry=False)
                     list_variant = (measure_variant(list_content, list_entry=True)
                                     if has_index_suppression else plot_variant)
+                    if (role_corner_radius is not None
+                            and (container is None or container.outline in {"rectangle", "balloon"})):
+                        # Insets enlarge content-sized boxes, so avoid a radius/inset loop: a physical px value
+                        # uses its requested radius as a finite conservative bound; capsule computes its exact
+                        # shorter-side radius from the three piecewise-linear inset regions. Re-measure once.
+                        variants = (plot_variant,) if list_variant is plot_variant else (plot_variant, list_variant)
+                        base_insets = (content_top, content_right, content_bottom, content_left)
+                        required = 0.0
+                        for variant in variants:
+                            dimensions = [(*variant[3], False)]
+                            if variant[5] is not None:
+                                dimensions.append((variant[5].frame_inline, variant[5].frame_block, True))
+                            for dimension in dimensions:
+                                measured_width, measured_height = dimension[:2]
+                                filled_width = len(dimension) == 3 and dimension[2]
+                                if role_corner_radius == "capsule" and filled_width:
+                                    # Fill width can exceed its slot when wrapping leaves an unbreakable word.
+                                    # Re-insetting can add at most 2c to that measured width; solve c >= k(W+2c)/2.
+                                    clearance = (CORNER_CLEARANCE * measured_width
+                                                / (2 * (1 - CORNER_CLEARANCE)))
+                                else:
+                                    clearance = _physical_radius_clearance(
+                                        role_corner_radius, measured_width, measured_height, base_insets)
+                                required = max(required, clearance)
+                        content_top, content_right, content_bottom, content_left = (
+                            max(value, required) for value in base_insets)
+                        if base_insets != (content_top, content_right, content_bottom, content_left):
+                            plot_variant = measure_variant(body_content, list_entry=False)
+                            list_variant = (measure_variant(list_content, list_entry=True)
+                                            if has_index_suppression else plot_variant)
                     (content, annotation_lines, text_width, frame_size, annotation_size,
                      filled, fill_size) = plot_variant
 
@@ -593,7 +686,10 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                             if candidate.connector.kind == "tail":
                                 if container is None or container.outline != "balloon":
                                     raise LayoutError("E_LAYOUT_ANNOTATION_TAIL_REQUIRES_BALLOON", f"/annotations/{index}")
-                                corner_radius, tail_base = float(container.corner_radius) * size, float(container.tail_base) * size
+                                corner_radius = (_container_radius(
+                                    role_corner_radius, container, size, annotation_size[0], annotation_size[1])
+                                    if role_corner_radius is not None else float(container.corner_radius) * size)
+                                tail_base = float(container.tail_base) * size
                                 free_box, trial_tip, trials = nearest_free_tail_box(
                                     region=region_bounds, anchor=anchor_bounds, box_size=annotation_size,
                                     max_positions=candidate.search.max_positions, obstacles=surface_obstacles,
@@ -818,8 +914,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             else:
                 frame_x, frame_y, frame_width, frame_height = bounds.x, bounds.y, bounds.width, bounds.height
             # The radius a rectangle container draws (#1087): its declared em, clamped to what the paint box can carry.
-            box_radius = (clamp_radius(float(container.corner_radius) * size, frame_width, frame_height)
-                          if container is not None and container.outline == "rectangle" and tail_tip is None else 0.0)
+            box_radius = (_container_radius(role_corner_radius, container, size, frame_width, frame_height)
+                          if (container is None or container.outline == "rectangle") and tail_tip is None else 0.0)
             tilt_commands = None
             if tilt_angle and box_radius > 0:
                 tilt_commands = rotate_commands(rounded_rect_commands(
@@ -828,7 +924,9 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             if tail_tip is not None:
                 container = request.theme_tokens.annotation_container(
                     semantic_binding(presentation.box_semantic_id).theme_role)
-                corner_radius, tail_base = float(container.corner_radius) * size, float(container.tail_base) * size
+                corner_radius = (_container_radius(role_corner_radius, container, size, bounds.width, bounds.height)
+                                 if role_corner_radius is not None else float(container.corner_radius) * size)
+                tail_base = float(container.tail_base) * size
                 outline = balloon_outline(bounds, tail_tip, corner_radius=corner_radius, tail_base=tail_base)
                 shapes.append(ShapePlacement(f"annotation-box:{annotation_id}", annotation_id, "Balloon",
                                              annotation_bounds, path_commands=outline,
@@ -1007,9 +1105,13 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                         presentation=presentation,
                         anchor_y=anchor_bounds.y + anchor_bounds.height / 2)
             if (box.leader_required or routed_tail_tip is not None) and presentation.leader_semantic_id is not None:
-                target = (routed_tail_tip if routed_tail_tip is not None else nearest_box_port(
-                    bounds, (anchor_bounds.x + anchor_bounds.width / 2,
-                             anchor_bounds.y + anchor_bounds.height / 2)))
+                anchor_center = (anchor_bounds.x + anchor_bounds.width / 2,
+                                 anchor_bounds.y + anchor_bounds.height / 2)
+                leader_radius = (box_radius if role_corner_radius is not None
+                                 and (container is None or container.outline == "rectangle")
+                                 and not tilt_angle else 0.0)
+                target = (routed_tail_tip if routed_tail_tip is not None else
+                          _radius_aware_box_port(bounds, anchor_center, leader_radius))
                 if anchor_host is None:
                     raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
                 target_port_obstacle_id = f"port:annotation:{annotation_id}:target"
@@ -1046,7 +1148,9 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                 leader_semantic_id = presentation.leader_semantic_id
                 leader_stroke_width = float(request.theme_tokens.number(
                     semantic_binding(leader_semantic_id).theme_role, "strokeWidth"))
-                marker_end = (marker_geometry(request.theme_tokens.marker(semantic_binding(leader_semantic_id).theme_role))
+                marker_end = (marker_geometry(
+                    request.theme_tokens.marker(semantic_binding(leader_semantic_id).theme_role),
+                    stroke_width=leader_stroke_width)
                               if presentation.purpose == "explanatory-arrow" else None)
                 placed_leader = RelationPlacement(f"annotation-leader:{annotation_id}",
                                                   f"{resolved.object_id}:{resolved.facet}:{resolved.endpoint}:{source_side}",
