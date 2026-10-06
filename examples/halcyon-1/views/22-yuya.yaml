@@ -240,10 +240,8 @@ body:
     - launch
     - ops
     presentation: header
-    tint:
-      scale: owner
     header:
-      text: '{ordinal}・{title}'
+      text: '{ordinal}'
       ordinal: kanji-formal
   ordering:
     by: source

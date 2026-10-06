@@ -443,7 +443,7 @@ body:
       markCornerRadius: chip-radius
       viewerFit: text-follows-box
     group-band:
-      backgroundTreatment: fill
+      backgroundTreatment: none
       backgroundPaintOrder: 10
       opacity: opacity.group-band
     row-band:
@@ -799,13 +799,11 @@ body:
     legend.fill: text
     slot-heading.fill: text
     annotation.fill: category:paper
-    annotation-text.fill: text
     note-index.fill: accent
     annotation-note-box.fill: category:paper
     annotation-note-box.stroke: category:paper
     annotation-note-text.fill: textMuted
     metric.fill: text
-    table-header.fill: surfaceRaised
     axis-major.stroke: category:ghost
     axis-minor.stroke: category:grid
     axis-band-decoration.fill: category:tierDark
@@ -842,7 +840,6 @@ body:
     gate.fill: category:lantern
     gate.stroke: category:lanternEdge
     tableColumnLabel.fill: textMuted
-    range.fill: warning
     as-of.stroke: accent
     as-of-label-chip.fill: category:asofChip
     progress-fill.fill: warning
