@@ -31,6 +31,7 @@ from chrona.presentation.layout.surface_completion import (
 )
 from chrona.presentation.layout.surface_annotations import SurfaceAnnotationContext, place_annotations
 from chrona.presentation.layout.surface_table import compose_table
+from chrona.presentation.layout.surface_heading import place_heading
 from chrona.presentation.layout.surface_groups import (compose_group_presentation)
 from chrona.presentation.layout.surface_backgrounds import (
     compose_calendar_backgrounds, compose_group_tabs, compose_row_group_backgrounds, replace_group_header_band,
@@ -41,7 +42,7 @@ from chrona.presentation.layout.as_of_cone import complete_as_of_cone
 from chrona.presentation.layout.surface_deadlines import compose_deadline_marks
 from chrona.presentation.layout.surface_periods import compose_period_bands, period_label_requests
 from chrona.presentation.layout.presentation import (MarkGeometry, required_row_block_extents)
-from chrona.presentation.layout.text import metric_for_role, place_text
+from chrona.presentation.layout.text import metric_for_role
 from chrona.presentation.layout.labels import (LabelRect, LabelRequest)
 from chrona.presentation.layout.obstacles import (
     ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex,
@@ -108,36 +109,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     def metric_for(typography_role: str) -> Any:
         return metric_for_role(request.theme_tokens, typography_role, request.font_metrics)
     body_size = float(request.theme_tokens.text_treatment("text").font_size)
-    title_input = measured_sources.inputs.get("title")
-    title_measurement = measured_sources.measurements.get("title")
-    if title_measurement is None:
-        raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/measurements/title")
-    title = title_input.lines[0] if title_input and title_input.lines else ""
-    text = [place_text(placement_id="title", source_ref="title", content=title,
-                       inline=float(by_source["title"].bounds.inline),
-                       baseline_block=float(by_source["title"].bounds.block) + float(title_measurement.first_baseline or 0),
-                       typography_role="heading", theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
-                       collision_region="title", collision_domain=CollisionDomain("title", "content"),
-                       source_content=title, available_inline_start=float(by_source["title"].bounds.inline),
-                       available_inline_size=float(by_source["title"].bounds.inline_size))]
-    title_runs = measured_sources.run_measurements.get("title", ())
-    if title_input is not None and len(title_input.lines) > 1 and len(title_runs) > 1:
-        # A declared subtitle (#991) is the title source's second run: it sits under the title line, in its
-        # own typography role, from the stack measurement Layout already took.
-        text.append(place_text(placement_id="subtitle", source_ref="title", content=title_input.lines[1],
-                               inline=float(by_source["title"].bounds.inline),
-                               # Under the title's drawn box (its box hangs one font size above its baseline), at
-                               # the second run's baseline of the stack measurement, whichever is lower.
-                               baseline_block=max(
-                                   float(by_source["title"].bounds.block) + float(title_runs[0].block_size)
-                                   + float(title_runs[1].baseline),
-                                   float(text[0].bounds.block + text[0].bounds.block_size) + title_runs[1].font_size),
-                               typography_role=title_runs[1].typography_role, theme_tokens=request.theme_tokens,
-                               font_metrics=request.font_metrics, collision_region="title",
-                               collision_domain=CollisionDomain("title", "content"),
-                               source_content=title_input.lines[1],
-                               available_inline_start=float(by_source["title"].bounds.inline),
-                               available_inline_size=float(by_source["title"].bounds.inline_size)))
+    text = list(place_heading(request, by_source["title"], measured_sources))
     footer_provisional_slots = slots
     slots, detail_panel_text, detail_panel_warnings, detail_visual_reservations = compose_detail_panel_blocks(
         slots=slots, request=request, requested_canvas=request.layout_manifest.viewport,

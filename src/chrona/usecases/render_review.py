@@ -50,7 +50,7 @@ from chrona.core.periods import period_range_diagnostics, resolve_periods
 from chrona.core.temporal import Calendar
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
 from chrona.presentation.model.projection import ReviewDeadline, ReviewPeriod, build_review_projection
-from chrona.presentation.model.surface_content import SummaryContent, TableContent
+from chrona.presentation.model.surface_content import HeadingContent, SummaryContent, TableContent
 from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput, ViewRowMode
 from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, below_plot_reserve
 from chrona.presentation.review.v05_content import (
@@ -791,7 +791,7 @@ def _font_failure(error: FontMetricsError) -> RenderFailed:
 def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
                    summary: SummaryContent, annotation_input: SourceInput | None = None, *,
                    table: TableContent | None = None,
-                   heading: tuple[str, str | None] | None = None) -> dict[str, SourceInput]:
+                   heading: HeadingContent | None = None) -> dict[str, SourceInput]:
     """Declare what each slot will hold, for measurement before layout.
 
     The `legend` entry is a placeholder: Layout measures the legend from the entries it
@@ -831,9 +831,16 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
     return sources
 
 
-def _title_source(project: dict[str, Any], heading: tuple[str, str | None] | None) -> SourceInput:
+def _title_source(project: dict[str, Any], heading: HeadingContent | None) -> SourceInput:
     """The title slot's content: one `heading` line, plus a `subtitle` line when the View declares one (#991)."""
-    title, subtitle = heading if heading is not None else (project["project"].get("title", "Chrona"), None)
+    title = heading.title if heading is not None else project["project"].get("title", "Chrona")
+    subtitle = heading.subtitle if heading is not None else None
+    if heading is not None and heading.kicker is not None:
+        runs = (SourceTextRun(heading.kicker, "kicker", "kicker"), SourceTextRun(title, "heading", "title"))
+        if subtitle is not None:
+            runs += (SourceTextRun(subtitle, "subtitle", "subtitle"),)
+        return SourceInput(tuple(run.content for run in runs), typography_role="heading", runs=runs,
+                           run_flow="block")
     if subtitle is None:
         return SourceInput((title,), typography_role="heading")
     return SourceInput((title, subtitle), typography_role="heading",

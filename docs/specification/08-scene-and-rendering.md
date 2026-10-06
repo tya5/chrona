@@ -658,14 +658,18 @@ an adapter may not retain them as a private geometry exception.  This separation
 allows the core axis/mark/text migration to be verified without falsely declaring
 the entire surface complete.
 
-The heading and subtitle payloads are formatted by the Scene Builder from the resolved
-Detail templates and permitted values. Their primitive purposes are `title-text` and
-`subtitle-text`; both carry a measured `TextLayout`. Their ink role is the explicit
+Heading payloads are formatted by content normalization from the resolved
+View templates and permitted values; Layout completes their coordinates.
+Their primitive purposes are `title-text` and `subtitle-text`; both carry a measured `TextLayout`. Their ink role is the explicit
 registered `heading` or `subtitle` choice when that role binds `fill`, otherwise `text`
 (#1164); this choice changes neither geometry nor typography. The adapter must not format the
 Project title, View window, selection count, or subtitle wording. A group surface keeps
 its group-derived `visualRole`; the resolved Theme token supplies both color and opacity,
 and an adapter serializes both token values without choosing a fallback opacity.
+
+An optional kicker is projected before the title as `kicker-text`, with its
+Layout-completed baseline/bounds and `kicker` typography. Its own fill activates
+the kicker paint role; otherwise the existing `text` ink rule applies (#1189).
 
 The remaining I3 families are closed as follows.  `table-timeline` owns table frame,
 header band, column-label Text, group surface/header, alternating row surface, row

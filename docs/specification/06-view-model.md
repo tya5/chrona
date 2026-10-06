@@ -212,6 +212,15 @@ A deadline outside the View window draws nothing and is recorded as the Scene di
 
 A `table-timeline` View MAY declare `heading: {title?, subtitle?, dateForm?}`. Each of `title` and `subtitle` is a template of literal text and the closed placeholders `{project}` (the Project title), `{asOf}` (the Actual Set's as-of date, formatted in `dateForm`, today `localized-date` in the context locale) and `{calendar}` (the Project's default calendar **id**; a Project calendar has no title). `{{` and `}}` are literal braces; any other brace use is `E_VIEW_HEADING_TEMPLATE`. The grammar is the group-header template's (section 6, #583) with this placeholder set. A fact the Project lacks (no as-of date, no default calendar) renders as empty text. Without `title` the title is the Project title; without `subtitle` there is no subtitle line, and a View without `heading` renders as before. The content layer composes the text; the title slot measures it as a stack of a `heading` run and a `subtitle` run, so the slot grows by the subtitle line; Layout places the subtitle under the title and Scene emits it as `subtitle-text` in the Theme's `subtitle` typography role (a Theme without that role fails with `E_THEME_ROLE_REQUIRED`). A `dependency-network` View draws its own title and ignores `heading`. The member is optional and additive in `chrona/view/v0.28`.
 
+A heading MAY also declare `kicker` (#1189), a template using the same facts,
+grammar and `dateForm`, above the title in the Theme's required `kicker`
+typography role. Content normalization retains named kicker/title/subtitle
+runs. Layout measures and places them as one completed block: the measured
+envelope contains every text bound, including actual font-baseline offsets
+and the Theme's declared kicker gap. Without `kicker`, existing title/deck
+measurement, coordinates and output remain unchanged. This is an optional
+addition to `chrona/view/v0.28`, not a new schema version.
+
 ### 7.2 Derived figures (#586)
 
 A View MAY declare `figures`, an array of derived figures that the Core computes (Spec 05 §12.2) and a consumer shows by name. Each has a unique `id` (no braces, whitespace or control characters: `E_VIEW_FIGURE_INVALID`; a repeat is `E_VIEW_FIGURE_DUPLICATE`) and one closed `kind`: `daysUntil {from?, to, days?, calendar?}` or `daysIn {period, days?, calendar?}`. A fact (`from`, `to`) is exactly one of `asOf`, `{period, side: start | end}` or `{object, endpoint: at | start | end}`; `from` defaults to `asOf`. `days` is `calendar` (the default) or `working`; `calendar` names the Project calendar a working count uses (the Project default when omitted) and is a dead declaration, `E_VIEW_FIGURE_INVALID`, with calendar days. Nothing else is accepted: no expression, no operator, no field name, no other kind or fact.

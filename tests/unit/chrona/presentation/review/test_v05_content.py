@@ -7,19 +7,41 @@ from chrona.presentation.model.color_scale import ResolvedColorScale
 from chrona.presentation.model.projection import (
     ObservationState, ReviewItem, ReviewProjection, ReviewRowProjection, ReviewLaneRowProjection,
 )
-from chrona.presentation.model.surface_content import SummaryContent, TableCellContent, TableContent
+from chrona.presentation.model.surface_content import HeadingContent, SummaryContent, TableCellContent, TableContent
 from chrona.presentation.review.lane_membership import Lane, LaneAssignment, LaneMembership
 from chrona.presentation.table_presentation import BooleanPresencePresentation
 from chrona.presentation.review.v05_content import (
-    legend_entries, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content,
+    compose_heading, legend_entries, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content,
 )
 from chrona.presentation.contracts.resources import (
     LegendEntry, ReviewDetailInput, SummaryMetric, SummaryPanelInput, SummaryProfileInput, TableColumn, ViewComparison, ViewGrouping, ViewInput,
-    ViewLaneLabel, ViewLaneTable, ViewRows, ViewVisibility, ViewWindow, freeze,
+    ViewHeading, ViewLaneLabel, ViewLaneTable, ViewRows, ViewVisibility, ViewWindow, freeze,
 )
 
 
 EMPTY_SUMMARY = SummaryContent(())
+
+
+def test_compose_heading_returns_immutable_named_content_and_keeps_project_title_default():
+    view = typed_view({"body": {"tableColumns": (), "visibility": {}}})
+    assert compose_heading(view, {"project": {"title": "HALCYON"}}, None, "en-US") == HeadingContent("HALCYON")
+
+
+def test_compose_heading_formats_kicker_title_and_subtitle_from_the_same_closed_facts():
+    view = replace(
+        typed_view({"body": {"tableColumns": (), "visibility": {}}}),
+        heading=ViewHeading(title="{project} board", subtitle="Calendar {calendar}",
+                            date_form="day-month-year", kicker="Episode {asOf} · {project}"),
+    )
+
+    content = compose_heading(
+        view,
+        {"project": {"title": "HALCYON", "calendar": "engineering"}},
+        {"kind": "actual-set", "body": {"asOf": "2026-08-20"}},
+        "en-US",
+    )
+
+    assert content == HeadingContent("HALCYON board", "Calendar engineering", "Episode 20 Aug 2026 · HALCYON")
 
 
 def test_lane_plot_label_defaults_preserve_authored_content_and_side():

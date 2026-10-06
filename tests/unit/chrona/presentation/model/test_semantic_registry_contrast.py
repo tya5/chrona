@@ -7,7 +7,7 @@ from chrona.presentation.model.semantic_registry import (
 # Free ink on a ground the Theme chose (#884, #980): every Text a surface draws that no role-classified binding covers.
 GROUND_TEXT_SEMANTICS = {
     "groupHeader", "asOfLabel", "axisBand", "axisLabel", "axisLabel2", "axisLabel3", "groupDetail", "titleText",
-    "subtitleText", "tableColumnLabel", "tableCell", "memberLabel", "memberLabelInsidePlanned",
+    "subtitleText", "kickerText", "tableColumnLabel", "tableCell", "memberLabel", "memberLabelInsidePlanned",
     "memberLabelInsideActual", "memberLabelInsideSnapshot", "memberLabelInsideScenario", "milestoneDigestEntry",
     "relationLabel", "legendLabel", "projectNote", "noteIndex", "annotationCalloutText", "annotationHighlightText",
     "annotationArrowText", "summaryHeader", "summaryMetric", "summaryFigureValue", "summaryFigureCaption",
@@ -70,7 +70,8 @@ def test_free_text_resolves_by_purpose_in_the_shared_role_and_by_role_and_purpos
                           ("member-label-inside-planned", "member-label"), ("note-index", "note-index"),
                           ("annotation-callout-text", "annotation-text"), ("metric", "summary-figure-value"),
                           ("slot-heading", "slot-heading"), ("heading", "title-text"),
-                          ("subtitle", "subtitle-text"), ("text", "title-text"), ("text", "subtitle-text")):
+                          ("subtitle", "subtitle-text"), ("kicker", "kicker-text"),
+                          ("text", "title-text"), ("text", "subtitle-text"), ("text", "kicker-text")):
         assert contrast_binding_for(role, purpose).contrast_class == ContrastClass.GROUND_TEXT, (role, purpose)
     # A role of its own never borrows another purpose's class, and only a Text primitive (a purpose) can be ground text.
     assert contrast_binding_for("axis-label2", "member-label") is None
@@ -84,7 +85,7 @@ def test_a_theme_text_paint_role_is_ground_text_by_its_purpose(tmp_path):
     """The header role, the legend role and a View-named column role are judged like `text` (#1062)."""
     for role, purpose in (("tableColumnLabel", "table-column-label"), ("legend", "legend-label"),
                           ("table-cell-secondary", "table-cell"), ("heading", "table-cell"),
-                          ("subtitle", "table-cell")):
+                          ("subtitle", "table-cell"), ("kicker", "table-cell")):
         assert contrast_binding_for(role, purpose).contrast_class == ContrastClass.GROUND_TEXT, (role, purpose)
     # The purpose still decides: a named role on a purpose no ground-text binding owns, or on no purpose, is not classified,
     # and a registered role never borrows another purpose's class.

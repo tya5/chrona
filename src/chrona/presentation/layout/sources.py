@@ -11,6 +11,7 @@ from chrona.presentation.layout.presentation import (
     header_group_cell_indent, measure_table_columns, table_cell_indent, table_content_inline_size, table_text_measurer,
 )
 from chrona.presentation.layout.text import measure_text_width, metric_for_role, paint_text
+from chrona.presentation.layout.text_stack import MeasuredTextStack, measure_text_stack
 from chrona.presentation.model.surface_content import TableContent
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 
@@ -59,6 +60,7 @@ class SourceInput:
     table: TableContent | None = None
     # How the runs lie in the slot: `stack` is one run per line (the widest run
     # sizes the slot), `line` is every run on one line, `run_gap` apart (#497).
+    # `block` closes the stack's actual placement envelope and baselines.
     run_flow: str = "stack"
     run_gap: Decimal = Decimal(0)
     # A producer-declared smallest inline size the content can shrink to; when
@@ -79,6 +81,7 @@ class MeasuredSources:
     inputs: Mapping[str, SourceInput]
     metric_values: Mapping[str, Decimal]
     run_measurements: Mapping[str, tuple[MeasuredTextRun, ...]] = field(default_factory=dict)
+    block_stacks: Mapping[str, MeasuredTextStack] = field(default_factory=dict)
 
 
 REQUIRED_METRICS = (
@@ -163,6 +166,7 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
         letter_spacing=float(body_treatment.letter_spacing), text_transform=body_treatment.transform)))
     result: dict[str, Measurement] = {}
     run_measurements: dict[str, tuple[MeasuredTextRun, ...]] = {}
+    block_stacks: dict[str, MeasuredTextStack] = {}
     for source, value in sorted(inputs.items()):
         runs = value.text_runs()
         first_role = runs[0].typography_role if runs else value.typography_role
@@ -202,6 +206,12 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
                           * typography.text_treatment(run.typography_role).line_height for run in runs), Decimal(0))
         if not runs:
             text_block = text_line
+        stack = None
+        if value.run_flow == "block" and measured_runs:
+            stack = measure_text_stack(measured_runs, tuple(
+                typography.text_block_gap(run.typography_role) for run in runs))
+            block_stacks[source] = stack
+            text_block = stack.block_size
         text_inline = max(average_advance, measured_width)
         if source == "table":
             # One measure sizes the slot and places its columns (Specification 24 section 2.1).
@@ -232,10 +242,10 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
         result[source] = Measurement(
             minimum_inline, preferred_inline, preferred_inline * 2,
             min(preferred_block, text_block), preferred_block, preferred_block * 2,
-            Decimal(str(first_metrics.baseline(0, float(font_size), float(line_height)))),
-            Decimal(str(first_metrics.baseline(0, float(font_size), float(line_height)))),
+            stack.baselines[0] if stack else Decimal(str(first_metrics.baseline(0, float(font_size), float(line_height)))),
+            stack.baselines[-1] if stack else Decimal(str(first_metrics.baseline(0, float(font_size), float(line_height)))),
         )
-    return MeasuredSources(result, dict(inputs), metric, run_measurements)
+    return MeasuredSources(result, dict(inputs), metric, run_measurements, block_stacks)
 
 
 def _table_content_inline(table: TableContent, typography: ThemeTokenView, font_metrics: Any,
