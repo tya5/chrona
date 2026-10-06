@@ -2,6 +2,7 @@ import pytest
 from decimal import Decimal
 
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView, effective_draft_numeric_theme
+from chrona.presentation.color_scheme import resolve_theme
 
 
 def _theme():
@@ -176,6 +177,104 @@ def test_progress_track_is_optional_and_range_checked(inset, radius, expected):
         assert raised.value.path.endswith(expected)
     else:
         assert view.progress_track("progress-fill") == expected
+
+
+def _mark_theme(*, offset="offset", align=None, stack=None):
+    values = {"height": {"type": "number", "value": "0.25"},
+              "order": {"type": "number", "value": 10},
+              "radius": {"type": "number", "value": 0},
+              "gap": {"type": "number", "value": 4},
+              "padding": {"type": "number", "value": 2}}
+    if offset is not None:
+        values["offset"] = {"type": "number", "value": "0.125"}
+    roles = {}
+    for role in ("planned", "actual", "snapshot", "scenario", "missing-actual"):
+        roles[role] = {"markHeight": "height", "markPaintOrder": "order", "markCornerRadius": "radius"}
+        if offset is not None:
+            roles[role]["markOffset"] = offset
+        if align is not None:
+            roles[role]["align"] = align
+    body = {"values": values, "roles": roles}
+    if stack is not None:
+        body["markStack"] = stack
+    return {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme", "body": body}
+
+
+def test_mark_geometry_preserves_declared_offset_and_allows_omission():
+    explicit = ThemeTokenView(_mark_theme()).mark_geometry("planned")
+    omitted = ThemeTokenView(_mark_theme(offset=None)).mark_geometry("planned")
+    assert explicit == (Decimal("0.25"), Decimal("0.125"), 10, Decimal(0))
+    assert omitted == (Decimal("0.25"), None, 10, Decimal(0))
+    assert ThemeTokenView(_mark_theme(offset=None)).mark_alignment("planned") == "center"
+
+
+@pytest.mark.parametrize("alignment", ["start", "center", "end"])
+def test_mark_alignment_reads_declared_alignment(alignment):
+    assert ThemeTokenView(_mark_theme(offset=None, align=alignment)).mark_alignment("planned") == alignment
+
+
+@pytest.mark.parametrize("height", [0, -0.1, 1.01, "NaN", "Infinity"])
+def test_offset_free_mark_geometry_still_requires_finite_height_within_track(height):
+    theme = _mark_theme(offset=None)
+    theme["body"]["values"]["height"]["value"] = height
+    with pytest.raises(ThemeTokenError, match="E_THEME_TOKEN_TYPE"):
+        ThemeTokenView(theme).mark_geometry("planned")
+
+
+def test_mark_stack_resolves_order_groups_frame_and_nonnegative_px_tokens():
+    intent = ThemeTokenView(_mark_theme(offset=None, stack={
+        "members": [["planned", "missing-actual"], ["actual"]], "gap": "gap",
+        "frame": {"roles": ["snapshot", "scenario"], "padding": "padding"},
+    })).mark_stack()
+    assert intent.members == (("planned", "missing-actual"), ("actual",))
+    assert intent.gap == Decimal(4)
+    assert intent.frame_roles == ("snapshot", "scenario")
+    assert intent.frame_padding == Decimal(2)
+    assert ThemeTokenView(_mark_theme()).mark_stack() is None
+
+
+def test_theme_resolution_preserves_optional_stack_and_keeps_absence_absent():
+    from tests.support import synthetic_review as sr
+
+    parts = sr.bundle()
+    theme, scheme = parts["theme"], parts["scheme"]
+    theme["body"]["markStack"] = {"members": [["planned"]], "gap": "markstack-gap"}
+    theme["body"]["values"]["markstack-gap"] = {"type": "number", "value": 3}
+    resolved = resolve_theme(theme, scheme, scheme_content_identity="sha256:test")
+    assert resolved["body"]["markStack"] == theme["body"]["markStack"]
+    del theme["body"]["markStack"]
+    resolved_without_stack = resolve_theme(theme, scheme, scheme_content_identity="sha256:test")
+    assert "markStack" not in resolved_without_stack["body"]
+
+
+@pytest.mark.parametrize("stack", [
+    {"members": [["planned"], ["planned"]], "gap": "gap"},
+    {"members": [["planned", "planned"]], "gap": "gap"},
+    {"members": [["unknown"]], "gap": "gap"},
+    {"members": [["planned"]], "gap": "missing"},
+    {"members": [["planned"]], "gap": "negative"},
+    {"members": [["planned"]], "gap": "gap", "frame": {"roles": ["planned"], "padding": "padding"}},
+])
+def test_mark_stack_rejects_bad_roles_references_and_negative_lengths(stack):
+    theme = _mark_theme(offset=None, stack=stack)
+    theme["body"]["values"]["negative"] = {"type": "number", "value": -1}
+    with pytest.raises(ThemeTokenError, match="E_THEME_TOKEN_TYPE"):
+        ThemeTokenView(theme).mark_stack()
+
+
+def test_mark_stack_rejects_explicit_offsets_on_any_participating_role():
+    with pytest.raises(ThemeTokenError) as error:
+        ThemeTokenView(_mark_theme(stack={"members": [["planned"]], "gap": "gap"})).mark_stack()
+    assert error.value.path == "/body/roles/planned/markOffset"
+
+
+def test_mark_stack_rejects_lengths_that_cannot_be_completed_as_finite_layout_values():
+    theme = _mark_theme(offset=None, stack={"members": [["planned"]], "gap": "huge"})
+    theme["body"]["values"]["huge"] = {"type": "number", "value": "1e999"}
+    with pytest.raises(ThemeTokenError) as error:
+        ThemeTokenView(theme).mark_stack()
+    assert error.value.path == "/body/markStack/gap"
+    assert "representable" in error.value.detail
 
 
 def _theme_with_annotation_container(value):

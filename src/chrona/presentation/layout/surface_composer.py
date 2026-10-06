@@ -50,6 +50,7 @@ from chrona.presentation.layout.surface_quality import (
     CollisionDomain, FitWarning, PlacementDecision, IconPlacement, ShapePlacement, SurfaceLayoutRequest,
     LaneLabelSuppression,
 )
+from chrona.presentation.layout.mark_band_allocation import MarkBandAllocation
 from chrona.presentation.layout.surface_geometry import (
     bounds_from_rect as _bounds, coordinate_for_date as _coordinate,
 )
@@ -57,6 +58,7 @@ from chrona.presentation.layout.surface_geometry import (
 
 def timeline_content_block_requirement(*, projection: Any, group_presentation: str,
                                        metric_values: dict[str, Decimal], role_geometries: dict[str, MarkGeometry] | None = None,
+                                       mark_band_allocation: MarkBandAllocation | None = None,
                                        text_line_block: float = 0.0) -> Decimal:
     """Return the minimum timeline block extent for explicit review rows."""
     rows = _review_rows(projection) or tuple(
@@ -72,6 +74,7 @@ def timeline_content_block_requirement(*, projection: Any, group_presentation: s
         review_rows=tuple(rows), row_minimum=float(metric_values["timeline.row.minBlockSize"]),
         row_padding=float(metric_values["timeline.row.paddingBlock"]),
         mark_block_size=float(metric_values["timeline.mark.blockSize"]), role_geometries=role_geometries,
+        mark_band_allocation=mark_band_allocation,
         text_line_block=text_line_block,
     )
     headers = 0

@@ -15,6 +15,40 @@ properties:
     required: [values, roles, colorBindings]
     additionalProperties: false
     properties:
+      markStack:
+        description: "Optional ordered mark-band stack. Each group shares a block centre; groups stack in declared order and are centred on the resolved track. The optional frame wraps the completed span stack without changing point-symbol or temporal geometry (#1149)."
+        examples: [{members: [[planned, missing-actual], [actual]], gap: mark-stack-gap, frame: {roles: [snapshot, scenario], padding: mark-frame-padding}}]
+        type: object
+        additionalProperties: false
+        required: [members, gap]
+        properties:
+          members:
+            description: "Ordered, nonempty groups of distinct span-mark roles; each group's height is the maximum member markHeight."
+            examples: [[[planned, missing-actual], [actual]]]
+            type: array
+            minItems: 1
+            items:
+              description: "One nonempty group of roles sharing the same completed block centre."
+              examples: [[planned, actual]]
+              type: array
+              minItems: 1
+              uniqueItems: true
+              items: {description: "A span-mark role in this stack group.", enum: [planned, actual, snapshot, scenario, missing-actual]}
+          gap: {description: "Named finite nonnegative number token giving the physical-pixel gap between stack groups.", type: string, minLength: 1}
+          frame:
+            description: "Optional span-only block frame around the full stack; frame roles remain independently sized for point marks."
+            type: object
+            additionalProperties: false
+            required: [roles, padding]
+            properties:
+              roles:
+                description: "Distinct roles whose span bounds are completed to the padded outer stack frame."
+                examples: [[snapshot, scenario]]
+                type: array
+                minItems: 1
+                uniqueItems: true
+                items: {description: "A role whose span bounds use the outer frame.", enum: [planned, actual, snapshot, scenario, missing-actual]}
+              padding: {description: "Named finite nonnegative number token giving physical-pixel frame padding at both block ends.", type: string, minLength: 1}
       values:
         type: object
         description: "Named non-color tokens such as typography, marker, and paint values."
@@ -299,6 +333,7 @@ properties:
             iconGap: {description: "Named typography-relative icon inline-gap ratio for the role.", type: string, minLength: 1}
             markHeight: {description: "Named lane-slot-relative mark block-size ratio for this semantic role.", type: string, minLength: 1}
             markOffset: {description: "Named lane-slot-relative mark block-start ratio for this semantic role.", type: string, minLength: 1}
+            align: {description: "Block alignment for offset-free role geometry: start, center (the default), or end. An explicit markOffset retains precedence (#1149).", enum: [start, center, end]}
             markPaintOrder: {description: "Named completed mark paint-order value for this semantic role.", type: string, minLength: 1}
             markCornerRadius: {description: "Named mark corner-radius ratio for this semantic role.", type: string, minLength: 1}
             cornerRadius: {description: "Named radius token overriding this role's legacy radius with physical px or capsule.", type: string, minLength: 1}

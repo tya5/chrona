@@ -23,6 +23,7 @@ from chrona.presentation.review.lane_membership import (
 )
 
 if TYPE_CHECKING:
+    from chrona.presentation.layout.mark_band_allocation import MarkBandAllocation
     from chrona.presentation.layout.lane_label_intent import MeasuredLaneMemberLabel
     from chrona.presentation.layout.surface_quality import ScalePlacement
 
@@ -114,6 +115,7 @@ class FixedLanePreflight:
     measured_labels: tuple[MeasuredLaneMemberLabel, ...] = ()
     resolved_visual_requests: tuple[object, ...] = ()
     row_requirements: tuple[tuple[str, float], ...] = ()
+    mark_band_allocation: MarkBandAllocation | None = None
 
     def __post_init__(self) -> None:
         if (not self.natural_block_requirement.is_finite()
@@ -134,6 +136,7 @@ def assign_lane_subtracks(
     *,
     mark_band_size: float,
     clearance: float = 0.0,
+    reserved_band_bounds: tuple[float, float] | None = None,
 ) -> LaneSubtrackPlan:
     """Place projection instances inside immutable data-only lanes.
 
@@ -143,6 +146,11 @@ def assign_lane_subtracks(
     is never changed.
     """
     _validate_metrics(mark_band_size, clearance)
+    if (reserved_band_bounds is not None
+            and (len(reserved_band_bounds) != 2
+                 or any(not isfinite(value) for value in reserved_band_bounds)
+                 or reserved_band_bounds[1] <= reserved_band_bounds[0])):
+        raise ValueError("E_LAYOUT_LANE_SUBTRACK_INPUT:reserved band bounds must be a finite positive interval")
     lane_members, assignments = _validate_membership(membership)
     units, overlay_pairs = _validate_footprints(item_footprints, set(assignments), assignments)
     ordered_units = [unit for lane in membership.lanes for item_id in lane_members[lane.lane_id]
@@ -161,8 +169,8 @@ def assign_lane_subtracks(
                 raise ValueError("E_LAYOUT_LANE_SUBTRACK_INPUT")
         lane_units = [unit for item_id in (*roots, *children) for unit in units[item_id]]
         _validate_intra_instance_collisions(lane_units, overlay_pairs, clearance)
-        min_top = 0.0
-        max_bottom = mark_band_size
+        min_top = min(0.0, reserved_band_bounds[0]) if reserved_band_bounds is not None else 0.0
+        max_bottom = max(mark_band_size, reserved_band_bounds[1]) if reserved_band_bounds is not None else mark_band_size
         for unit in lane_units:
             for facet in unit.facets:
                 _, top, _, bottom = obstacle_envelope(facet.footprint)

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
+import math
 from typing import Any, Mapping
 
 from chrona.presentation.annotation_kind_text import AnnotationKindTextError, KindHeader, kind_header
@@ -12,10 +13,11 @@ from chrona.presentation.model.semantic_registry import is_annotation_artwork_ro
 class ThemeTokenError(ValueError):
     """Stable diagnostic for a missing or mistyped resolved Theme token."""
 
-    def __init__(self, diagnostic_id: str, path: str):
+    def __init__(self, diagnostic_id: str, path: str, detail: str | None = None):
         super().__init__(diagnostic_id)
         self.diagnostic_id = diagnostic_id
         self.path = path
+        self.detail = detail
 
 
 # A role's declared horizontal compression (#585): the painted run is scaled along its own inline axis. The floor keeps
@@ -83,6 +85,16 @@ class BorderSideToken:
 
     width: Decimal
     paint: str = "ink"
+
+
+@dataclass(frozen=True)
+class MarkStackIntent:
+    """Theme-owned ordered mark groups and an optional span-frame declaration (#1149)."""
+
+    members: tuple[tuple[str, ...], ...]
+    gap: Decimal
+    frame_roles: tuple[str, ...] = ()
+    frame_padding: Decimal = Decimal(0)
 
 
 BORDER_SIDES = ("start", "end", "top", "bottom")
@@ -412,15 +424,87 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}")
         return scale, gap
 
-    def mark_geometry(self, role: str) -> tuple[Decimal, Decimal, int, Decimal]:
+    def mark_geometry(self, role: str) -> tuple[Decimal, Decimal | None, int, Decimal]:
         """Return the closed lane-relative geometry for one mark semantic role."""
         height = self.number(role, "markHeight")
-        offset = self.number(role, "markOffset")
+        offset = self.optional_number(role, "markOffset")
         order = self.number(role, "markPaintOrder")
         corner_radius = self.number(role, "markCornerRadius")
-        if height <= 0 or offset < 0 or offset + height > 1 or corner_radius < 0 or corner_radius > Decimal("0.5") or order != order.to_integral_value():
+        if (height <= 0 or height > 1 or (offset is not None and (offset < 0 or offset + height > 1))
+                or corner_radius < 0 or corner_radius > Decimal("0.5") or order != order.to_integral_value()):
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markHeight")
         return height, offset, int(order), corner_radius
+
+    def mark_alignment(self, role: str) -> str:
+        """Return a mark's block alignment; offset-free declarations default to center (#1149)."""
+        value = self.optional_choice(role, "align", ("start", "center", "end"))
+        return "center" if value is None else value
+
+    def mark_stack(self) -> MarkStackIntent | None:
+        """Resolve the optional ordered mark-stack intent and its referenced physical lengths."""
+        if "markStack" not in self._body:
+            return None
+        raw = self._body.get("markStack")
+        pointer = "/body/markStack"
+        if not isinstance(raw, Mapping) or set(raw) - {"members", "gap", "frame"}:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer, "markStack must contain only members, gap, and optional frame")
+        members_raw = raw.get("members")
+        if (not isinstance(members_raw, (list, tuple)) or not members_raw
+                or any(not isinstance(group, (list, tuple)) or not group for group in members_raw)):
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"{pointer}/members", "expected nonempty ordered role groups")
+        allowed = {"planned", "actual", "snapshot", "scenario", "missing-actual"}
+        members: list[tuple[str, ...]] = []
+        seen: set[str] = set()
+        ordered_seen: list[str] = []
+        for index, group in enumerate(members_raw):
+            if (any(not isinstance(role, str) or role not in allowed for role in group)
+                    or len(set(group)) != len(group) or any(role in seen for role in group)):
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"{pointer}/members/{index}",
+                                      "roles must be known and unique across stack groups")
+            seen.update(group)
+            ordered_seen.extend(group)
+            members.append(tuple(group))
+        gap = self._stack_number(raw.get("gap"), f"{pointer}/gap")
+        frame = raw.get("frame")
+        frame_roles: tuple[str, ...] = ()
+        padding = Decimal(0)
+        if "frame" in raw:
+            if not isinstance(frame, Mapping) or set(frame) != {"roles", "padding"}:
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"{pointer}/frame",
+                                      "frame requires only roles and padding")
+            roles = frame.get("roles")
+            if (not isinstance(roles, (list, tuple)) or not roles
+                    or any(not isinstance(role, str) or role not in allowed or role in seen for role in roles)):
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"{pointer}/frame/roles",
+                                      "frame roles must be known and distinct from stack members")
+            if len(set(roles)) != len(roles):
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"{pointer}/frame/roles", "frame roles must be unique")
+            frame_roles = tuple(roles)
+            padding = self._stack_number(frame.get("padding"), f"{pointer}/frame/padding")
+        for role in (*ordered_seen, *frame_roles):
+            if self.optional_number(role, "markOffset") is not None:
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markOffset",
+                                      "explicit markOffset conflicts with stack allocation")
+        return MarkStackIntent(tuple(members), gap, frame_roles, padding)
+
+    def _stack_number(self, token_id: Any, pointer: str) -> Decimal:
+        if not isinstance(token_id, str) or not token_id:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer, "expected a number-token name")
+        declared = self._body["values"].get(token_id)
+        if not isinstance(declared, Mapping) or declared.get("type") != "number" or "value" not in declared:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer, f"{token_id!r} must name a number token")
+        try:
+            value = Decimal(str(declared["value"]))
+        except (InvalidOperation, ValueError) as error:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer, f"{token_id!r} has a nonnumeric value") from error
+        try:
+            representable = math.isfinite(float(value))
+        except (OverflowError, ValueError):
+            representable = False
+        if not value.is_finite() or not representable or value < 0:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer,
+                                  f"{token_id!r} must be finite, nonnegative, and representable in Layout")
+        return value
 
     def symbol_geometry(self, role: str) -> tuple[Decimal | None, Decimal | None]:
         """Return the optional symbol size and offset ratios of a mark role's point marks (#1066).

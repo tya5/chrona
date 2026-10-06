@@ -33,7 +33,7 @@ from chrona.presentation.layout.surface_legend import LegendArrangement, legend_
 from chrona.presentation.layout.label_visual_measurement import resolve_label_visual_advances
 from chrona.presentation.layout.surface_composer import timeline_content_block_requirement
 from chrona.presentation.layout.surface_lanes import preflight_fixed_lane_layout
-from chrona.presentation.layout.surface_marks import resolve_mark_geometries
+from chrona.presentation.layout.surface_marks import resolve_mark_geometries, resolve_mark_band
 from chrona.presentation.layout.surface_quality import CapacitySourceEvidence, VisualRequest
 from chrona.presentation.model.closure import ClosureError, RenderClosure
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, FontTabularWarning, resolve_font_metrics_catalog
@@ -323,13 +323,18 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     foot_reserve = Decimal(str(_below_plot_reserve(view, actual_set=actual_observations, projection=projection,
                                                    theme_tokens=ThemeTokenView(theme))))
     if view.surface == "table-timeline":
+        mark_tokens = ThemeTokenView(theme)
+        mark_geometries = resolve_mark_geometries(mark_tokens)
+        mark_band = resolve_mark_band(mark_tokens, float(measured.metric_values["timeline.mark.blockSize"]),
+                                      role_geometries=mark_geometries)
         timeline_requirement = foot_reserve + timeline_content_block_requirement(
             projection=projection,
             group_presentation=("band" if ThemeTokenView(theme).writing_mode("groupHeader") == "vertical"
                                 else view.grouping.presentation if view.grouping and view.grouping.presentation
                                 else "band"),
             metric_values=measured.metric_values,
-            role_geometries=resolve_mark_geometries(ThemeTokenView(theme)),
+            role_geometries=mark_geometries,
+            mark_band_allocation=mark_band,
             text_line_block=table_text_line_block(
                 ThemeTokenView(theme), (cell.typography_role for cell in table_content.cells)),
         )
