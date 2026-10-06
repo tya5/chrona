@@ -34,6 +34,34 @@ def test_network_layout_does_not_reopen_common_projection_or_view_authoring():
     ))
 
 
+def test_network_nodes_complete_inside_strokes_without_changing_ports():
+    class Theme:
+        def optional_choice(self, role, prop, allowed):
+            return "inside" if prop == "strokeAlign" else None
+
+        def optional_number(self, role, prop):
+            return Decimal(2) if prop == "strokeWidth" else None
+
+        def optional_color(self, role, prop):
+            return "#000000"
+
+        def optional_pattern(self, role):
+            return None
+
+    kwargs = dict(title_bounds=Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(40)),
+                  bounds=Rect(Decimal(0), Decimal(40), Decimal(400), Decimal(160)),
+                  measured_sources=_measured("a"), flow_direction="horizontal")
+    network = _network(("a",), ())
+    baseline = compose_dependency_network_layout(network, **kwargs)
+    aligned = compose_dependency_network_layout(network, theme_tokens=Theme(), **kwargs)
+    assert aligned.nodes == baseline.nodes
+    assert len(aligned.aligned_strokes) == 1
+    stroke = aligned.aligned_strokes[0]
+    assert stroke.primitive_id == "network-node:a"
+    assert stroke.clip.stroke_width == 4
+    assert stroke.clip.outline == () and not stroke.clip.outside
+
+
 def test_network_layout_uses_longest_path_rank_measured_labels_and_stable_order():
     layout = compose_dependency_network_layout(_network(("b", "a", "c"), (("ab", "a", "b"), ("bc", "b", "c"))),
                                                title_bounds=Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(40)),

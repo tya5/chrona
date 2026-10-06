@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
-from math import isfinite
+from math import hypot, isfinite
 from typing import Any
 
 from chrona.presentation.layout.model import Rect
@@ -31,6 +31,54 @@ class PathCommand:
             raise ValueError("E_LAYOUT_PATH_COMMAND_INVALID")
 
 
+def is_closed_stroke_contour(commands: tuple[PathCommand, ...]) -> bool:
+    """Validate each finite nondegenerate subpath without flattening curves or holes."""
+    contours: list[list[tuple[float, float]]] = []
+    for command in commands:
+        if command.kind == "move":
+            contours.append([command.points[0]])
+        elif not contours:
+            return False
+        else:
+            contours[-1].extend(command.points)
+    if not contours:
+        return False
+    for points in contours:
+        if (len(points) < 4 or not all(isfinite(value) for point in points for value in point)
+                or hypot(points[-1][0] - points[0][0], points[-1][1] - points[0][1]) > 1e-6):
+            return False
+        x, y = points[0]
+        nonzero = next(((px - x, py - y) for px, py in points[1:] if (px, py) != (x, y)), None)
+        if nonzero is None or not any(abs(nonzero[0] * (py - y) - nonzero[1] * (px - x)) > 1e-12
+                                     for px, py in points[1:]):
+            return False
+    return True
+
+
+@dataclass(frozen=True)
+class StrokeClip:
+    """Completed contour and finite clip region, never inferred by an adapter."""
+
+    outline: tuple[PathCommand, ...]
+    outside: bool
+    region: tuple[float, float, float, float]
+    stroke_width: float
+
+    def __post_init__(self) -> None:
+        if (not isinstance(self.outside, bool)
+                or (self.outline and not is_closed_stroke_contour(self.outline))
+                or len(self.region) != 4 or not all(isfinite(value) for value in self.region)
+                or self.region[2] <= 0 or self.region[3] <= 0
+                or isinstance(self.stroke_width, bool) or not isfinite(self.stroke_width) or self.stroke_width <= 0):
+            raise ValueError("E_LAYOUT_STROKE_CLIP_INVALID: expected a closed nondegenerate contour (or native rectangle), boolean outside, finite positive region and stroke width")
+
+
+@dataclass(frozen=True)
+class AlignedStrokePlacement:
+    primitive_id: str
+    clip: StrokeClip
+
+
 @dataclass(frozen=True)
 class MarkerGeometry:
     """Completed terminal geometry selected by Theme and owned by Layout."""
@@ -43,10 +91,22 @@ class MarkerGeometry:
     # not part of repr/equality: the SVG marker id hashes repr, and this is derived from the shape
     centred: bool = field(default=False, repr=False, compare=False)  # a round terminal centred on the endpoint, so its leg needs no straight run (#1044)
     angle_degrees: float | None = field(default=None, repr=False)
+    physical_units: bool = field(default=False, repr=False)
+    stroke_width: float | None = field(default=None, repr=False)
+    # Layout routing extent, not an adapter input; legacy heads keep the nominal run.
+    painted_run: float | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         if (not self.outline or self.head_length <= 0 or self.head_width <= 0
-                or not 0 <= self.attachment_offset <= self.head_length
+                or not isfinite(self.attachment_offset)
+                or (not self.physical_units and not 0 <= self.attachment_offset <= self.head_length)
+                or (self.stroke_width is not None and (not self.physical_units
+                    or isinstance(self.stroke_width, bool) or not isinstance(self.stroke_width, (int, float))
+                    or not isfinite(self.stroke_width) or self.stroke_width < 0))
+                or (self.physical_units and self.paint_mode == "stroke" and self.stroke_width is None)
+                or (self.painted_run is not None and (not self.physical_units
+                    or not isfinite(self.painted_run) or self.painted_run < 0))
+                or (self.physical_units and self.paint_mode == "fill" and self.stroke_width is not None)
                 or self.paint_mode not in {"fill", "stroke"}
                 or (self.angle_degrees is not None and (not isinstance(self.angle_degrees, (int, float))
                     or isinstance(self.angle_degrees, bool) or not isfinite(self.angle_degrees)))):
@@ -620,6 +680,7 @@ class SurfacePlacement:
     lane_emissions: tuple[LaneEmissionPlacement, ...] = ()
     patterns: tuple[PatternedPlacement, ...] = ()
     lane_label_suppressions: tuple[LaneLabelSuppression, ...] = ()
+    aligned_strokes: tuple[AlignedStrokePlacement, ...] = ()
 
     def assert_valid(self) -> None:
         """Reject invalid required geometry before a renderer receives it."""

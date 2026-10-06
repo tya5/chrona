@@ -21,11 +21,19 @@ properties:
         additionalProperties:
           type: object
           description: "One named non-color token with its declared value type."
+          examples: [{type: radius, value: 3}, {type: radius, value: capsule}]
           required: [type, value]
           additionalProperties: false
           properties:
-            type: {description: "Kind of non-color token value.", enum: [number, fontFamily, fontWeight, dashPattern, marker, pattern, symbol, textAlternative, lineCap, lineJoin, fidelity, textTransform, numericSpacing, annotationContainer, stampPlacement, writingMode]}
+            type: {description: "Kind of non-color token value.", enum: [number, radius, fontFamily, fontWeight, dashPattern, marker, pattern, symbol, textAlternative, lineCap, lineJoin, fidelity, textTransform, numericSpacing, annotationContainer, stampPlacement, writingMode]}
             value: {}
+          if:
+            properties: {type: {const: radius}}
+            required: [type]
+          then:
+            properties:
+              value:
+                oneOf: [{type: number, minimum: 0}, {const: capsule}]
           allOf:
             - description: "Dash-pattern tokens use a positive numeric sequence; other tokens use scalar values."
               examples: [{type: dashPattern, value: [1]}]
@@ -50,12 +58,12 @@ properties:
                   value:
                     type: object
                     additionalProperties: false
-                    required: [shape, headLength, headWidth, attachmentOffset]
+                    required: [shape, headLength, headWidth]
                     properties:
                       shape: {description: "Terminal head outline. `triangle` is a filled closed triangle; `open-triangle` is the same closed triangle (three edges) stroked, not filled; `chevron` is an open V of two stroked edges with no closing edge; `circle` is a filled and `open-circle` a stroked circle; `stealth` is a filled notched triangle (tip, two barbs, a notch 0.7 of the length from the tip); `rounded-triangle` a filled triangle with corners rounded to about 0.12 of the head width; `dot` a filled circle (a separate name from `circle` so a Theme can declare a smaller default); `half` a filled half arrowhead with one barb on the left of the line direction; `double-chevron` two stroked chevrons, one behind the other. A round terminal (`circle`, `open-circle`, `dot`) is centred on the endpoint and the line touches it; its `attachmentOffset` is superseded. `none` draws no terminal: the line starts or ends exactly at the endpoint with no setback (its three numbers are validated and ignored).", enum: [triangle, open-triangle, chevron, circle, open-circle, stealth, rounded-triangle, dot, half, double-chevron, none]}
                       headLength: {type: number, exclusiveMinimum: 0}
                       headWidth: {type: number, exclusiveMinimum: 0}
-                      attachmentOffset: {type: number, minimum: 0}
+                      attachmentOffset: {description: "Explicit legacy reference offset. Omission derives physical-px attachment from the head and relation stroke geometry.", type: number, minimum: 0}
             - description: "Pattern geometry is finite structured Theme data resolved before adapter invocation."
               examples: [{type: pattern, value: {kind: diagonal-hatch, tileInlineSize: 6, tileBlockSize: 6, angle: 45, strokeWidth: 1}}]
               if:
@@ -293,6 +301,8 @@ properties:
             markOffset: {description: "Named lane-slot-relative mark block-start ratio for this semantic role.", type: string, minLength: 1}
             markPaintOrder: {description: "Named completed mark paint-order value for this semantic role.", type: string, minLength: 1}
             markCornerRadius: {description: "Named mark corner-radius ratio for this semantic role.", type: string, minLength: 1}
+            cornerRadius: {description: "Named radius token overriding this role's legacy radius with physical px or capsule.", type: string, minLength: 1}
+            strokeAlign: {description: "Position of the stroke relative to a closed symbol or box contour. Absent/center retains the legacy centered stroke.", enum: [inside, center, outside]}
             symbolHeight: {description: "Named lane-slot-relative block-size ratio of this role's point-mark symbol (a gate or milestone), separate from the role's bar band (#1066). Absent, the symbol takes markHeight.", type: string, minLength: 1}
             symbolOffset: {description: "Named lane-slot-relative block offset ratio of this role's point-mark symbol, separate from markOffset (#1066). Absent, the symbol takes markOffset.", type: string, minLength: 1}
             markReach: {description: "Named ratio of the planned mark's block size that a deadline tick spans, centred on that mark (0 < ratio <= 4); above 1 the tick stands above and below the bar (#822).", type: string, minLength: 1}

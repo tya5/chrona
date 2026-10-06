@@ -16,6 +16,7 @@ from chrona.presentation.layout.surface_geometry import (
     BACKGROUND_PAINT_ORDER, GEOMETRY_TOLERANCE, HOSTED_TEXT_PAINT_ORDER,
     bounds_from_rect, coordinate_for_date, extend_to_plot_edges,
 )
+from chrona.presentation.layout.rounded_outline import resolve_corner_radius
 from chrona.presentation.layout.surface_quality import (
     AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, PathCommand, PlacementDecision, ScalePlacement,
     ShapePlacement, SurfaceLayoutRequest, TextPlacement,
@@ -156,11 +157,16 @@ def _secondary_outcomes(*, tier_index: int, plan: _SecondaryPlan, intervals: Any
     return tuple(updated), diagnostics, decisions
 
 
-def _cell_corner(theme_tokens: Any, role: str, tier_index: int) -> tuple[str, Decimal] | None:
-    """The Theme-declared corner shape of a band role's cells (#491): ("radius" | "chamfer", ratio), or None."""
+def _cell_corner(theme_tokens: Any, role: str, tier_index: int) -> tuple[str, Any, Any | None] | None:
+    """The Theme-declared band-cell corner, with a physical radius overriding its legacy ratio."""
     radius = theme_tokens.optional_number(role, "cellCornerRadius")
     chamfer = theme_tokens.optional_number(role, "cellCornerChamfer")
+    physical_radius = theme_tokens.optional_token(role, "cornerRadius", "radius")
     source = f"/view/body/axis/tiers/{tier_index}"
+    if physical_radius is not None:
+        if chamfer is not None:
+            raise LayoutError("E_PRESENTATION_AXIS_INVALID", source, detail=f"cell-corner-both:{tier_index}")
+        return "radius", None, physical_radius
     if radius is None and chamfer is None:
         return None
     if radius is not None and chamfer is not None:
@@ -170,7 +176,7 @@ def _cell_corner(theme_tokens: Any, role: str, tier_index: int) -> tuple[str, De
         raise LayoutError("E_PRESENTATION_AXIS_INVALID", source, detail=f"cell-corner:{tier_index}")
     if shape == "chamfer" and theme_tokens.optional_pattern(role) is not None:
         raise LayoutError("E_PRESENTATION_AXIS_INVALID", source, detail=f"cell-chamfer-pattern:{tier_index}")
-    return shape, ratio
+    return shape, ratio, None
 
 
 def _band_cell(placement_id: str, x: float, x2: float, block: Decimal, block_size: Decimal, *, semantic_id: str,
@@ -180,9 +186,14 @@ def _band_cell(placement_id: str, x: float, x2: float, block: Decimal, block_siz
     bounds = Rect(Decimal(str(x)), block, Decimal(str(width)), block_size)
     if corner is None:
         return ShapePlacement(placement_id, "timeline-axis", "Rect", bounds, semantic_id=semantic_id, paint_order=paint_order)
-    shape, ratio = corner
-    requested = float(ratio * block_size)
-    applied = min(requested, width / 2)
+    shape, ratio, physical_radius = corner
+    if physical_radius is not None:
+        requested = (float(physical_radius) if isinstance(physical_radius, (int, float))
+                     and not isinstance(physical_radius, bool) else min(width, float(block_size)) / 2)
+        applied = resolve_corner_radius(physical_radius, width=width, height=float(block_size), legacy_radius=0.0)
+    else:
+        requested = float(ratio * block_size)
+        applied = min(requested, width / 2)
     if applied < requested:
         diagnostics.append(f"W_LAYOUT_AXIS_CELL_CORNER_REDUCED:{placement_id}")
     if shape == "radius":

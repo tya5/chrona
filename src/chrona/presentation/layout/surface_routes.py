@@ -218,12 +218,14 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         theme = request.theme_tokens
         clearance = max(float(context.metric_values.get("timeline.relation.cornerRadius", 0)),
                         float(theme.number(semantic_binding(semantic_id).theme_role, "strokeWidth")))
-        return terminal_length(marker_geometry(theme.marker("relationTargetTerminal"))) + clearance
+        return terminal_length(marker_geometry(theme.marker("relationTargetTerminal"), stroke_width=float(
+            theme.number(semantic_binding(semantic_id).theme_role, "strokeWidth")))) + clearance
 
     def entry_minimum(semantic_id: str) -> float:
         """The head is mandatory; a completed turn may clip its configured radius."""
         theme = request.theme_tokens
-        return (terminal_length(marker_geometry(theme.marker("relationTargetTerminal")))
+        return (terminal_length(marker_geometry(theme.marker("relationTargetTerminal"), stroke_width=float(
+                theme.number(semantic_binding(semantic_id).theme_role, "strokeWidth"))))
                 + float(theme.number(semantic_binding(semantic_id).theme_role, "strokeWidth")))
 
     def entry_stub_free(egress: ConnectorEgress) -> bool:
@@ -434,6 +436,10 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     for declared_index, relation in routing_order(request.surface_content.relations):
         source, target, relation_id = relation.source_object_id, relation.target_object_id, relation.relation_id
         dependency_stroke = relation_stroke(relation)
+        marker_start = centred_on_route(marker_geometry(
+            request.theme_tokens.marker("relationSourceTerminal"), stroke_width=dependency_stroke), "source")
+        marker_end = centred_on_route(marker_geometry(
+            request.theme_tokens.marker("relationTargetTerminal"), stroke_width=dependency_stroke), "target")
         for source_id, source_anchor in relation_anchors.get(str(source), ()):
             for target_id, target_anchor in relation_anchors.get(str(target), ()):
                 source_mark, target_mark = relation_marks.get(source_id), relation_marks.get(target_id)

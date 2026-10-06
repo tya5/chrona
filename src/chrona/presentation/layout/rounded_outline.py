@@ -11,8 +11,8 @@ are in degrees in the surface frame (block axis down): the arc of corner ``k`` s
 """
 from __future__ import annotations
 
-from math import atan2, ceil, cos, degrees, radians, sin, sqrt
-from typing import Mapping, Sequence
+from math import atan2, ceil, cos, degrees, isfinite, radians, sin, sqrt
+from typing import Literal, Mapping, Sequence
 
 from chrona.presentation.layout.surface_quality import PathCommand
 
@@ -29,6 +29,26 @@ SIDE_CORNERS = {"top": (0, 1), "end": (1, 2), "bottom": (2, 3), "start": (3, 0)}
 def clamp_radius(radius: float, width: float, height: float) -> float:
     """The radius a ``width`` x ``height`` box can carry: at most half its shorter side."""
     return max(0.0, min(radius, width / 2, height / 2))
+
+
+def resolve_corner_radius(value: float | Literal["capsule"] | None, *,
+                          width: float, height: float, legacy_radius: float) -> float:
+    """Complete an opt-in physical radius; absence keeps the caller's exact old result.
+
+    Theme resolves references and units before this Layout boundary. A physical
+    radius does not scale with typography or the track, but is limited by the
+    placed box. The legacy result is already completed by its existing caller;
+    do not introduce a new clamp or reorder that caller's arithmetic.
+    """
+    if value is None:
+        return legacy_radius
+    if any(not isfinite(size) or size < 0 for size in (width, height)):
+        raise ValueError("Corner radius requires finite nonnegative box sizes")
+    if value == "capsule":
+        return min(width, height) / 2
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not isfinite(value) or value < 0:
+        raise ValueError("Corner radius requires finite nonnegative px or capsule")
+    return clamp_radius(float(value), width, height)
 
 
 class _Corner:

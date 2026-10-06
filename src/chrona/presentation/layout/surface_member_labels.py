@@ -15,6 +15,7 @@ from chrona.presentation.layout.obstacles import (
     ROUTE_RESERVE_CLASS, ObstacleRect, SurfaceObstacle, SurfaceObstacleIndex,
 )
 from chrona.presentation.layout.presentation import TrackPlacement
+from chrona.presentation.layout.rounded_outline import resolve_corner_radius
 from chrona.presentation.model.semantic_registry import label_chip_semantic, semantic_binding
 from chrona.presentation.layout.surface_quality import (
     CollisionDomain, GroupPlacement, IconPlacement, LaneLabelSuppression,
@@ -428,7 +429,9 @@ def place_member_labels(context: SurfaceMemberLabelContext,
                 Rect(Decimal(str(chip_box.x)), Decimal(str(chip_box.y)), Decimal(str(chip_box.width)),
                      Decimal(str(chip_box.height))), required=False, slot_id=context.text_slot(placed_text),
                 paint_order=placed_text.paint_order - 1, semantic_id=chip_semantic,
-                corner_radius=float(chip[1]) * chip_box.height,
+                corner_radius=resolve_corner_radius(request.theme_tokens.optional_token(
+                    semantic_binding(chip_semantic).theme_role, "cornerRadius", "radius"),
+                    width=chip_box.width, height=chip_box.height, legacy_radius=float(chip[1]) * chip_box.height),
                 lane_row_id=placed_text.lane_row_id, lane_member_id=placed_text.lane_member_id))
         if visible_overflow:
             overflows.append((placed_text, slot_bounds))

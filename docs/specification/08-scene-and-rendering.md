@@ -230,6 +230,22 @@ retains `orient="auto"`, also when the completed axis equals that tangent,
 and existing marker identity and bytes. Scene v0.6 is
 unchanged; v0.7 is extended in place under Specification 56 §3.2.
 
+For derived terminal attachment (#1148), Scene v0.7 additionally carries optional
+marker `units: userSpaceOnUse` and, for a stroked head, `strokeWidth`. Layout has
+already placed the visible tip (or round centre) at its port; `attachmentOffset`
+may be negative only in this physical-unit mode. SVG serializes these completed
+values with visible marker overflow and the fixed butt/miter/limit-4 treatment.
+Without `units`, the existing marker serialization and rendering remain unchanged.
+
+Optional Scene v0.7 `strokeClip` (#1148) carries a completed finite `region`,
+`outside` boolean and, except for native Rects, the exact closed `outline`.
+Its `paint.strokeWidth` is already the doubled render width; adapters never
+derive it. For a Rect without an outline, the clip uses that primitive's existing
+bounds/radius. The clip applies only to stroke, not fill; any host clip applies to
+both. Primitive opacity and shadow/glow apply once to the composed fill/stroke.
+SVG serializes nonzero-winding luminance masks; unsupported adapters refuse the
+feature explicitly. Absence preserves existing Scene fields and rendering bytes.
+
 ## 4. Coordinate system and temporal scale
 
 ### 4.0.1 Theme catalogue patterns (#496)

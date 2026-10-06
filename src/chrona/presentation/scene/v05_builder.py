@@ -13,7 +13,7 @@ from chrona.presentation.layout.model import LayoutError, LayoutManifest
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
 from chrona.presentation.layout.lane_subtracks import FixedLanePreflight
 from chrona.presentation.layout.surface_composer import compose_surface_layout
-from chrona.presentation.layout.surface_quality import CapacitySourceEvidence, SurfaceLayoutRequest
+from chrona.presentation.layout.surface_quality import AlignedStrokePlacement, CapacitySourceEvidence, SurfaceLayoutRequest
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.layout.pattern_placement import PatternedPlacement
 from chrona.presentation.model.surface_content import SurfaceContentInput
@@ -192,6 +192,8 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
 
 def _visible_extent(primitive: ScenePrimitive) -> tuple[float, float, float, float]:
     """The box a primitive paints in: its bounds, or for a Path (whose bounds are zero) its points."""
+    if primitive.stroke_clip is not None:
+        return primitive.stroke_clip.region
     points = [point for command in primitive.path_commands for point in command.points] or list(primitive.points)
     if primitive.kind != "Path" or not points:
         return primitive.bounds
@@ -301,6 +303,8 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
                      else replace(completed, fill=kind_paint))
     if primitive.image_fill_pending is not None:
         completed = replace(completed, image=primitive.image_fill_pending)
+    if primitive.stroke_clip is not None:
+        completed = replace(completed, stroke_width=primitive.stroke_clip.stroke_width)
     treatment = tokens.optional_pattern(primitive.visual_role)
     result = replace(primitive, paint=completed,
                      pattern=(primitive.pattern if primitive.pattern is not None and primitive.pattern.primitives
@@ -979,6 +983,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         lane_obstacles = tuple(obstacle_values)
     canvas = placed_surface.canvas_bounds
     completed_primitives = _attach_completed_patterns(completed_primitives, placed_surface.patterns)
+    completed_primitives = _attach_completed_strokes(completed_primitives, placed_surface.aligned_strokes)
     return SceneSurface("table-timeline", slots, rows, groups, scale, completed_primitives, columns=columns,
                         diagnostics=placed_surface.diagnostics,
                         canvas_bounds=(float(canvas.inline), float(canvas.block), float(canvas.inline_size),
@@ -987,6 +992,16 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                         info_diagnostics=(*placed_surface.info_diagnostics, *artwork_omissions),
                         lane_mode=lane_mode, lane_members=lane_members,
                         lane_obstacles=lane_obstacles, lane_clearance=lane_clearance)
+
+
+def _attach_completed_strokes(primitives: tuple[ScenePrimitive, ...],
+                              placements: tuple[AlignedStrokePlacement, ...]) -> tuple[ScenePrimitive, ...]:
+    clips = {item.primitive_id: item.clip for item in placements}
+    if len(clips) != len(placements) or clips.keys() - {item.scene_id for item in primitives}:
+        raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", "/layout/strokes",
+                              "completed stroke identity differs from projected primitives")
+    return tuple(replace(item, stroke_clip=clips[item.scene_id])
+                 if item.scene_id in clips else item for item in primitives)
 
 
 def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
@@ -1076,6 +1091,7 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
     except KeyError as error:
         raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", str(error)) from error
     completed_primitives = _attach_completed_patterns(completed_primitives, placed.patterns)
+    completed_primitives = _attach_completed_strokes(completed_primitives, placed.aligned_strokes)
     return SceneSurface("dependency-network", slots, (), (), None, completed_primitives,
                         canvas_bounds=(float(placed.canvas_bounds.inline), float(placed.canvas_bounds.block),
                                        float(placed.canvas_bounds.inline_size), float(placed.canvas_bounds.block_size)),

@@ -119,6 +119,43 @@ This preserves the scheduling model's separation between planned constraints and
 
 ## 5. Theme model
 
+### Contour-relative strokes (#1148)
+
+Box and symbol paint roles may declare `strokeAlign: inside | center | outside`.
+Omission and `center` preserve the existing output. Layout completes twice the
+declared stroke width and a finite clip to the original contour's interior or
+complement; fill is independent. Native Rect bounds/radius are preserved, and
+closed curved/multipart paths retain their nonzero winding, including holes.
+Open or degenerate contours, open-ended spans, wobble and viewer-followed boxes
+fail with `E_LAYOUT_STROKE_ALIGNMENT_INVALID` when opted in; no affine scaling
+stands in for a contour offset. Fill-only contours have no stroke to align.
+Semantic ports and placement identities do not move. SVG paints the exact clip;
+Typst/TikZ explicitly refuse this feature until they support that operation.
+
+### Derived terminal attachment (#1148)
+
+Omitting a marker token's `attachmentOffset` selects physical-px head dimensions
+and a Layout-derived reference at the visible forward tip. Filled heads use their
+actual outline extent (including quadratic extrema); stroked heads use the
+relation's physical stroke width with butt caps and miter joins, miter limit 4
+(bevel fallback). Rounded heads keep their centre on the semantic port and their
+existing route-setback rule. Explicit offsets retain legacy units and output.
+The completed offset can be negative when stroke protrudes past the head box.
+Layout reserves the completed painted backward reach, including rear stroke
+overhang, for entry stubs and straight terminal runs, using that relation's width.
+Scene carries the completed units and stroke width; an adapter must not derive
+attachment. Adapters without terminal support continue to refuse terminals.
+
+### Physical corner radii (#1148)
+
+A role's optional `cornerRadius` binding names a `radius` token. Its value is
+a nonnegative physical-px number or `capsule`. This binding overrides the role's
+legacy ratio/em radius; absence retains that calculation exactly. Layout resolves
+the value against the final box: a physical value is independent of font and track
+size but bounded by half the shorter side; `capsule` is exactly half that side.
+Scene carries the completed radius and adapters do not resolve units or references.
+This declaration does not change the box allocation or its semantic ports.
+
 ### 5.1 v0.1 persistent Theme body
 
 A Theme maps the roles resolved by Style to named, concrete tokens. It has no semantic

@@ -39,8 +39,9 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
     def polyline_data(points: tuple[tuple[float, float], ...]) -> str:
         return "M" + "L".join(f"{number(px)} {number(py)}" for px, py in points)
     def attrs(paint: ScenePaint, *, fill: bool, stroke: bool,
-              fill_override: str | None = None) -> str:
-        result = [f'opacity="{number(paint.opacity)}"']
+              fill_override: str | None = None, opacity: bool = True,
+              effects: bool = True) -> str:
+        result = [f'opacity="{number(paint.opacity)}"'] if opacity else []
         if fill:
             if paint.fill is None: raise ValueError("E_PRESENTATION_PAINT_INVALID")
             value = paint.fill
@@ -55,9 +56,9 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
             if paint.dash: result.append(f'stroke-dasharray="{" ".join(number(value) for value in paint.dash)}"')
             if paint.stroke_finish is not None:
                 result.extend((f'stroke-linecap="{paint.stroke_finish.line_cap}"', f'stroke-linejoin="{paint.stroke_finish.line_join}"'))
-        if paint.shadow is not None:
+        if effects and paint.shadow is not None:
             result.append(f'filter="url(#{shadow_id(paint)})"')
-        if paint.glow is not None:
+        if effects and paint.glow is not None:
             result.append(f'filter="url(#{glow_id(paint)})"')
         return " ".join(result)
     def stop_opacity(gradient: object, index: int) -> str:
@@ -77,6 +78,8 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
         return "glow-" + sha256(repr(paint.glow).encode()).hexdigest()[:12]
     def fit_filter_id(paint: ScenePaint) -> str:
         return "fit-" + sha256(repr((paint.fill, paint.opacity)).encode()).hexdigest()[:12]
+    def stroke_clip_id(node: ScenePrimitive) -> str:
+        return "stroke-clip-" + sha256(repr((node.scene_id, node.stroke_clip)).encode()).hexdigest()[:12]
     def commands_data(commands: tuple[object, ...]) -> str:
         parts: list[str] = []
         for command in commands:
@@ -88,6 +91,8 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
     def marker_id(color: str, geometry: object) -> str:
         identity = ((color, geometry) if geometry.angle_degrees is None
                     else (color, geometry, geometry.angle_degrees))
+        if geometry.physical_units:
+            identity = (*identity, "userSpaceOnUse", geometry.stroke_width)
         return "marker-" + sha256(repr(identity).encode()).hexdigest()[:12]
     def pattern_id(geometry: object, paint: ScenePaint) -> str:
         if geometry.primitives:
@@ -147,6 +152,7 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
     gradients = {gradient_id(paint): paint.gradient for paint in paints if paint.gradient}
     shadows = {shadow_id(paint): paint.shadow for paint in paints if paint.shadow}
     glows = {glow_id(paint): paint.glow for paint in paints if paint.glow}
+    stroke_clip_nodes = {stroke_clip_id(node): node for node in surface.primitives if node.stroke_clip is not None}
     clip_hosts = {node.scene_id: node for node in surface.primitives
                   if any(item.clip_source_id == node.scene_id for item in surface.primitives)}
     # A box that follows its text (#1050) is painted by one flood filter per distinct fill, over the group's
@@ -156,15 +162,22 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
                     and node.text_layout.fit.mode == BOX_FOLLOWS_TEXT} if viewer_fit else {})
     fit_floods = {fit_filter_id(completed(node)): completed(node) for node in surface.primitives
                   if viewer_fit and node.viewer_fit == BOX_FOLLOWS_TEXT and completed(node).fill is not None}
-    if marker_pairs or patterns or gradients or shadows or glows or clip_hosts or fit_floods:
+    if marker_pairs or patterns or gradients or shadows or glows or clip_hosts or fit_floods or stroke_clip_nodes:
         definitions: list[str] = []
         for color, marker in sorted(marker_pairs, key=lambda pair: (
-                repr(pair), pair[1].angle_degrees is not None, pair[1].angle_degrees or 0.0)):
+                repr(pair), pair[1].angle_degrees is not None, pair[1].angle_degrees or 0.0,
+                pair[1].physical_units, pair[1].stroke_width or 0.0)):
             if color is None or marker is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             appearance = (f'fill="{escape(color, quote=True)}"' if marker.paint_mode == "fill"
                           else f'fill="none" stroke="{escape(color, quote=True)}"')
+            units = ''
+            if marker.physical_units:
+                units = ' markerUnits="userSpaceOnUse" overflow="visible"'
+                if marker.paint_mode == "stroke":
+                    appearance += (f' stroke-width="{number(marker.stroke_width)}"'
+                                   ' stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4"')
             axis_value = "auto" if marker.angle_degrees is None else number(marker.angle_degrees)
-            definitions.append(f'<marker id="{marker_id(color, marker)}" viewBox="0 0 {number(marker.head_length)} {number(marker.head_width)}" refX="{number(marker.head_length - marker.attachment_offset)}" refY="{number(marker.head_width / 2)}" markerWidth="{number(marker.head_length)}" markerHeight="{number(marker.head_width)}" orient="{axis_value}"><path d="{commands_data(marker.outline)}" {appearance}/></marker>')
+            definitions.append(f'<marker id="{marker_id(color, marker)}" viewBox="0 0 {number(marker.head_length)} {number(marker.head_width)}" refX="{number(marker.head_length - marker.attachment_offset)}" refY="{number(marker.head_width / 2)}" markerWidth="{number(marker.head_length)}" markerHeight="{number(marker.head_width)}" orient="{axis_value}"{units}><path d="{commands_data(marker.outline)}" {appearance}/></marker>')
         for pattern, paint in sorted(patterns, key=repr):
             if pattern.primitives:
                 if pattern.origin is None or pattern.clip_bounds is None:
@@ -192,6 +205,25 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
                 f'<feFlood flood-color="{escape(glow.color, quote=True)}" flood-opacity="{number(glow.opacity)}"/>'
                 '<feComposite in2="halo-blur" operator="in" result="halo"/>'
                 '<feMerge><feMergeNode in="halo"/><feMergeNode in="halo"/><feMergeNode in="SourceGraphic"/></feMerge></filter>')
+        for identifier, node in sorted(stroke_clip_nodes.items()):
+            clip = node.stroke_clip
+            assert clip is not None
+            rx = f' rx="{number(node.corner_radius)}" ry="{number(node.corner_radius)}"' if node.corner_radius else ""
+            if node.kind == "Rect":
+                x, y, w, h = node.bounds
+                contour = f'<rect x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}"{rx}/>'
+            else:
+                if not clip.outline:
+                    raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: aligned {node.kind} {node.scene_id!r} requires a completed contour")
+                contour = f'<path d="{commands_data(clip.outline)}"/>'
+            background = "black" if not clip.outside else "white"
+            foreground = "white" if not clip.outside else "black"
+            x, y, w, h = clip.region
+            definitions.append(
+                f'<mask id="{identifier}" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse" '
+                f'x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}" mask-type="luminance">'
+                f'<rect x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}" fill="{background}"/>'
+                f'{contour[:-2]} fill="{foreground}"/></mask>')
         for identifier, paint in sorted(fit_floods.items()):
             definitions.append(
                 f'<filter id="{identifier}" x="0" y="0" width="1" height="1"><feFlood flood-color="{escape(paint.fill, quote=True)}" '
@@ -296,7 +328,56 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
     for node in (node for _, node in sorted(enumerate(surface.primitives), key=lambda item: (item[1].paint_order, item[0]))):
         common = f'data-scene-id="{escape(node.scene_id)}" data-source-ref="{escape(node.source_ref)}" data-purpose="{escape(node.purpose)}"'
         paint, (x, y, w, h) = completed(node), node.bounds
-        if node.kind == "Rect" and viewer_fit and node.viewer_fit == BOX_FOLLOWS_TEXT:
+        if node.stroke_clip is not None:
+            if (node.kind not in {"Rect", "Symbol", "Path"} or node.viewer_fit == BOX_FOLLOWS_TEXT
+                    or paint.wobble is not None or paint.stroke is None or paint.stroke_width is None
+                    or paint.stroke_width != node.stroke_clip.stroke_width
+                    or node.marker_start is not None or node.marker_end is not None):
+                raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: aligned {node.scene_id!r} requires Rect/Symbol/Path, matching completed stroke width, and no wobble, box-follows-text or markers")
+            clip_attr = (f' clip-path="url(#clip-{escape(node.clip_source_id, quote=True)})"'
+                         if node.clip_source_id else "")
+            common_group = f'<g {common} opacity="{number(paint.opacity)}"{clip_attr}>'
+            content = ""
+            if node.kind == "Rect":
+                radius = f' rx="{number(node.corner_radius)}" ry="{number(node.corner_radius)}"' if node.corner_radius else ""
+                fill_override = f"url(#{pattern_id(node.pattern, paint)})" if node.pattern is not None else None
+                if node.pattern is not None and node.pattern.primitives:
+                    if (node.pattern.region_bounds != node.bounds or node.pattern.clip_bounds != node.bounds
+                            or node.pattern.corner_radius != (node.corner_radius or 0.0)):
+                        raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: aligned rectangle {node.scene_id!r} pattern bounds/radius must match the completed contour")
+                    fill_override = f"url(#{pattern_id(node.pattern, paint)})"
+                fill_attr = attrs(paint, fill=paint.fill is not None and fill_override is None,
+                                  stroke=False, fill_override=fill_override, opacity=False, effects=False)
+                if paint.fill is not None or fill_override is not None:
+                    content += (f'<rect x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}"'
+                                f'{radius} {fill_attr}/>' )
+                if paint.image is not None:
+                    content += image_tiles_markup(node, paint.image)
+                stroke_attrs = attrs(paint, fill=False, stroke=True, opacity=False, effects=False)
+                stroke_mask = stroke_clip_id(node)
+                content += (f'<rect x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}"'
+                            f'{radius} mask="url(#{stroke_mask})" {stroke_attrs}/>' )
+            else:
+                if node.kind == "Symbol":
+                    if node.symbol is None or paint.image is not None:
+                        raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: aligned symbol {node.scene_id!r} requires completed symbol geometry and no image paint")
+                    source_data = commands_data(node.symbol.outline)
+                else:
+                    source_data = path_data(node)
+                if paint.fill is not None:
+                    fill_attrs = attrs(paint, fill=True, stroke=False, opacity=False, effects=False)
+                    content += f'<path d="{source_data}" {fill_attrs}/>'
+                stroke_attrs = attrs(paint, fill=False, stroke=True, opacity=False, effects=False)
+                contour_data = commands_data(node.stroke_clip.outline) if node.stroke_clip.outline else source_data
+                content += (f'<path d="{contour_data}" mask="url(#{stroke_clip_id(node)})" '
+                            f'{stroke_attrs}/>' )
+            # Keep paint effects on the complete primitive, so fill and stroke receive them once.
+            if paint.shadow is not None:
+                content = f'<g filter="url(#{shadow_id(paint)})">{content}</g>'
+            if paint.glow is not None:
+                content = f'<g filter="url(#{glow_id(paint)})">{content}</g>'
+            append(node, common_group + content + '</g>')
+        elif node.kind == "Rect" and viewer_fit and node.viewer_fit == BOX_FOLLOWS_TEXT:
             text_node = followed_by.get(node.scene_id)
             if text_node is None or text_node.baseline is None:
                 raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID", "a box that follows its text has no text")

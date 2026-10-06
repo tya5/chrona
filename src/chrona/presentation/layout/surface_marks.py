@@ -33,7 +33,8 @@ def resolve_mark_geometries(theme_tokens: Any) -> dict[str, MarkGeometry]:
         result[role] = MarkGeometry(
             float(height), float(offset), paint_order, float(corner_radius),
             None if symbol_height is None else float(symbol_height),
-            None if symbol_offset is None else float(symbol_offset))
+            None if symbol_offset is None else float(symbol_offset),
+            physical_corner_radius=theme_tokens.optional_token(role, "cornerRadius", "radius"))
     result["actual"] = _default_actual_symbol(result["actual"], result["planned"])
     return result
 

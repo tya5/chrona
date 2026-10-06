@@ -13,6 +13,7 @@ from chrona.presentation.layout.sources import SourceInput, SourceTextRun
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_role, place_text
 from chrona.presentation.layout.relation_terminals import marker_geometry
 from chrona.presentation.layout.mark_geometry import symbol_parts
+from chrona.presentation.layout.rounded_outline import resolve_corner_radius
 from chrona.presentation.layout.surface_quality import (
     CollisionDomain, FitWarning, MarkPlacement, RelationPlacement, ShapePlacement, SlotPlacement, SurfaceLayoutRequest,
     TextPlacement,
@@ -201,6 +202,8 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
         elif bucket == "mark":
             height_ratio, offset_ratio, paint_order, corner_ratio = request.theme_tokens.mark_geometry(role)
             corner_radius = min(float(corner_ratio) * min(width, height), min(width, height) / 2)
+            corner_radius = resolve_corner_radius(request.theme_tokens.optional_token(role, "cornerRadius", "radius"),
+                                                  width=width, height=height, legacy_radius=corner_radius)
             shapes.append(ShapePlacement(f"legend-swatch:{role}", role, "Rect",
                                          Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height))),
                                          slot_id=legend.slot_id, corner_radius=corner_radius, paint_order=paint_order))
@@ -210,7 +213,9 @@ def place_legend(context: SurfaceLegendContext) -> SurfaceLegendBatch:
                                                f"legend-swatch:{role}:end",
                                                points=((x, y + height / 2), (x + width, y + height / 2)),
                                                semantic_id=role, slot_id=legend.slot_id, source_ref=role,
-                                               marker_end=marker_geometry(marker_token) if marker_token else None))
+                                               marker_end=marker_geometry(marker_token, stroke_width=float(
+                                                   request.theme_tokens.number(role, "strokeWidth")))
+                                               if marker_token else None))
         else:
             shapes.append(ShapePlacement(f"legend-swatch:{role}", role, "Rect",
                                          Rect(Decimal(str(x)), Decimal(str(y)), Decimal(str(width)), Decimal(str(height))),
