@@ -214,7 +214,7 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
                 contour = f'<rect x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}"{rx}/>'
             else:
                 if not clip.outline:
-                    raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                    raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: aligned {node.kind} {node.scene_id!r} requires a completed contour")
                 contour = f'<path d="{commands_data(clip.outline)}"/>'
             background = "black" if not clip.outside else "white"
             foreground = "white" if not clip.outside else "black"
@@ -333,7 +333,7 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
                     or paint.wobble is not None or paint.stroke is None or paint.stroke_width is None
                     or paint.stroke_width != node.stroke_clip.stroke_width
                     or node.marker_start is not None or node.marker_end is not None):
-                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: aligned {node.scene_id!r} requires Rect/Symbol/Path, matching completed stroke width, and no wobble, box-follows-text or markers")
             clip_attr = (f' clip-path="url(#clip-{escape(node.clip_source_id, quote=True)})"'
                          if node.clip_source_id else "")
             common_group = f'<g {common} opacity="{number(paint.opacity)}"{clip_attr}>'
@@ -344,7 +344,7 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
                 if node.pattern is not None and node.pattern.primitives:
                     if (node.pattern.region_bounds != node.bounds or node.pattern.clip_bounds != node.bounds
                             or node.pattern.corner_radius != (node.corner_radius or 0.0)):
-                        raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                        raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: aligned rectangle {node.scene_id!r} pattern bounds/radius must match the completed contour")
                     fill_override = f"url(#{pattern_id(node.pattern, paint)})"
                 fill_attr = attrs(paint, fill=paint.fill is not None and fill_override is None,
                                   stroke=False, fill_override=fill_override, opacity=False, effects=False)
@@ -360,7 +360,7 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
             else:
                 if node.kind == "Symbol":
                     if node.symbol is None or paint.image is not None:
-                        raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                        raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: aligned symbol {node.scene_id!r} requires completed symbol geometry and no image paint")
                     source_data = commands_data(node.symbol.outline)
                 else:
                     source_data = path_data(node)

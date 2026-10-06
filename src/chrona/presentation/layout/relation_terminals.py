@@ -30,7 +30,7 @@ def marker_geometry(value: Mapping[str, object], *, stroke_width: float = 1.0) -
         raise ValueError("E_THEME_TOKEN_TYPE")
     if derived and (isinstance(stroke_width, bool) or not isinstance(stroke_width, (int, float))
                     or not isfinite(stroke_width) or stroke_width < 0):
-        raise ValueError("E_THEME_TOKEN_TYPE")
+        raise ValueError(f"E_THEME_TOKEN_TYPE: derived terminal stroke width must be finite and nonnegative, got {stroke_width!r}")
     if shape == "none":
         return None
     if shape in ROUND_SHAPES:
@@ -93,7 +93,7 @@ def _outline_tip(outline: tuple[PathCommand, ...]) -> float:
         extent = max(extent, end[0])
         if command.kind == "quadratic":
             if previous is None:
-                raise ValueError("E_LAYOUT_PATH_COMMAND_INVALID")
+                raise ValueError("E_LAYOUT_PATH_COMMAND_INVALID: terminal quadratic contour requires a preceding move or line endpoint")
             start_x, control_x, end_x = previous[0], command.points[0][0], end[0]
             denominator = start_x - 2 * control_x + end_x
             if denominator:

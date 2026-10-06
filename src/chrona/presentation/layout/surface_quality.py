@@ -70,7 +70,7 @@ class StrokeClip:
                 or len(self.region) != 4 or not all(isfinite(value) for value in self.region)
                 or self.region[2] <= 0 or self.region[3] <= 0
                 or isinstance(self.stroke_width, bool) or not isfinite(self.stroke_width) or self.stroke_width <= 0):
-            raise ValueError("E_LAYOUT_STROKE_CLIP_INVALID")
+            raise ValueError("E_LAYOUT_STROKE_CLIP_INVALID: expected a closed nondegenerate contour (or native rectangle), boolean outside, finite positive region and stroke width")
 
 
 @dataclass(frozen=True)

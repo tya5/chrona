@@ -21,6 +21,7 @@ properties:
         additionalProperties:
           type: object
           description: "One named non-color token with its declared value type."
+          examples: [{type: radius, value: 3}, {type: radius, value: capsule}]
           required: [type, value]
           additionalProperties: false
           properties:

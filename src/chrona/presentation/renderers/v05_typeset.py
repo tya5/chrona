@@ -124,7 +124,7 @@ def _requires_wobble(surface: SceneSurface) -> bool:
 
 def render_v05_typst(surface: SceneSurface) -> str:
     if any(node.stroke_clip is not None for node in surface.primitives):
-        raise ValueError("E_VISUAL_CAPABILITY_UNSUPPORTED")
+        raise ValueError("E_VISUAL_CAPABILITY_UNSUPPORTED: Typst cannot serialize aligned contour strokes; use SVG or strokeAlign center")
     if _requires_wobble(surface) or any(node.marker_start is not None or node.marker_end is not None or node.pattern is not None or node.symbol is not None for node in surface.primitives):
         raise ValueError("E_VISUAL_CAPABILITY_UNSUPPORTED")
     if surface.canvas_bounds is None:
@@ -175,7 +175,7 @@ def render_v05_typst(surface: SceneSurface) -> str:
 
 def render_v05_tikz(surface: SceneSurface) -> str:
     if any(node.stroke_clip is not None for node in surface.primitives):
-        raise ValueError("E_VISUAL_CAPABILITY_UNSUPPORTED")
+        raise ValueError("E_VISUAL_CAPABILITY_UNSUPPORTED: TikZ cannot serialize aligned contour strokes; use SVG or strokeAlign center")
     if _requires_wobble(surface) or any(node.marker_start is not None or node.marker_end is not None or node.pattern is not None for node in surface.primitives):
         raise ValueError("E_VISUAL_CAPABILITY_UNSUPPORTED")
     if surface.canvas_bounds is None:
