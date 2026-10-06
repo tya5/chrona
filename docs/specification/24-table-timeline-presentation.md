@@ -98,6 +98,11 @@ added once. The pre-layout content requirement and row placement use this one
 rule. A table cell's line box is centred in its row using the cell's own role.
 Plot labels are not row-held text under this rule.
 
+Derived sizes (#1150). A Theme that leaves `timeline.mark.blockSize` unbound gets the track
+`timeline.row.minBlockSize` less `timeline.row.paddingBlock`, so changing the row moves the
+track with no other edit; a bound value is used as declared, and a row that leaves no positive
+remainder is `E_LAYOUT_METRIC_REQUIRED`. Every bundled Theme binds it, so nothing they render changes.
+
 Axis intervals are natural calendar intervals from the resolved View window. The
 declared axis formatting and explicit Render Context locale determine each label. Scene
 measures labels before emission; if a required label does not fit its resolved axis
