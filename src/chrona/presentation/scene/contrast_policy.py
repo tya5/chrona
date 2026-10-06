@@ -126,8 +126,17 @@ def evaluate_scene_contrast(document: Mapping[str, Any], *, decoration_severity:
             cones = cones_in(primitives)
         except ValueError as error:
             raise SceneContrastPolicyError(f"E_SCENE_CONTRAST_DOCUMENT: invalid as-of cone at {scene_path}") from error
+        figures = _mark_figures(primitives)
+        sibling_indices = {position for parts in figures.values() for position, _ in parts[1:]}
         for index, primitive in enumerate(primitives):
             _require(isinstance(primitive, Mapping), f"invalid primitive {index} at {scene_path}")
+            if index in sibling_indices:
+                continue
+            if index in figures:
+                findings.extend(_figure_findings(scene_path, figures[index], ground, primitives,
+                                                catalog_patterns=version == "chrona/scene/v0.7",
+                                                cones=cones, severities=severities))
+                continue
             findings.extend(_primitive_findings(scene_path, primitive, ground, primitives, index,
                                                 catalog_patterns=version == "chrona/scene/v0.7", cones=cones,
                                                 severities=severities))
@@ -135,6 +144,76 @@ def evaluate_scene_contrast(document: Mapping[str, Any], *, decoration_severity:
     return tuple(sorted(findings, key=lambda item: (
         item.scene_path, item.purpose, item.visual_role, item.disposition, item.primitive_id or "", item.code,
     )))
+
+
+def _mark_figures(primitives: list[Any]) -> dict[int, tuple[tuple[int, Mapping[str, Any]], ...]]:
+    """Recognize completed mark placements, not arbitrary same-source paint layers."""
+    groups: dict[str, list[tuple[int, int, Mapping[str, Any]]]] = {}
+    for index, primitive in enumerate(primitives):
+        if not isinstance(primitive, Mapping) or primitive.get("kind") != "Symbol":
+            continue
+        identifier, role = primitive.get("id"), primitive.get("visualRole")
+        if not isinstance(identifier, str) or not isinstance(role, str):
+            continue
+        binding = contrast_binding_for(role, None)
+        if binding is None or binding.contrast_class != ContrastClass.MARK:
+            continue
+        base, separator, part = identifier.rpartition(":part")
+        part = part.removeprefix(":")
+        if not base or not separator or not part or not part.isascii() or not part.isdecimal():
+            continue
+        if not isinstance(primitive.get("sourceRef"), str) or not primitive["sourceRef"]:
+            continue
+        groups.setdefault(base, []).append((index, int(part), primitive))
+    figures = {}
+    common = ("sourceRef", "sourceKind", "purpose", "visualRole", "bounds", "slotId")
+    for parts in groups.values():
+        if len(parts) < 2 or len({number for _, number, _ in parts}) != len(parts):
+            continue
+        first = parts[0][2]
+        if any(any(item.get(field) != first.get(field) for field in common) for _, _, item in parts[1:]):
+            continue
+        # Retain document order: the first part owns the observation's position;
+        # equal visibility candidates keep the same deterministic paint order.
+        figures[parts[0][0]] = tuple((position, item) for position, _, item in parts)
+    return figures
+
+
+def _figure_findings(scene_path: str, parts: tuple[tuple[int, Mapping[str, Any]], ...],
+                     canvas: str | None, primitives: list[Any], *, catalog_patterns: bool,
+                     cones: tuple[ConeGround, ...], severities: Mapping[str, str]
+                     ) -> tuple[SceneContrastFinding, ...]:
+    """Observe one mark's visible ink against external grounds, never its siblings."""
+    indices = {position for position, _ in parts}
+    observations = []
+    candidates = []
+    for index, primitive in parts:
+        # Keep indices and paint order intact, including through recursive
+        # translucent-host resolution. No sibling is an external substrate.
+        external = [item if position not in indices or position == index else {}
+                    for position, item in enumerate(primitives)]
+        part_findings = _primitive_findings(scene_path, primitive, canvas, external, index,
+                                           catalog_patterns=catalog_patterns, cones=cones,
+                                           severities=severities)
+        observations.extend(part_findings)
+        if part_findings:
+            # A catalogue pattern has several mandatory effective pairs;
+            # preserve its worst-pair obligation before choosing figure ink.
+            candidates.append(min(part_findings, key=lambda item: (
+                item.contrast_ratio if item.contrast_ratio is not None else -1)))
+    for item in observations:
+        blocking = WARNING_BLOCKING_CODES.get(item.code, item.code)
+        if blocking not in _FLOOR_CODES and blocking != "E_SCENE_CONTRAST_GROUND_UNSUPPORTED":
+            return (item,)
+    for item in observations:
+        if WARNING_BLOCKING_CODES.get(item.code, item.code) == "E_SCENE_CONTRAST_GROUND_UNSUPPORTED":
+            return (item,)
+    if not candidates:
+        return ()
+    # The existing dual-channel rule lets either fill or outline carry the
+    # figure's visibility floor; a multipart figure has the same rule. Retain
+    # the actual winning part ID/channel/sample, not an invented primitive.
+    return (max(candidates, key=lambda item: item.contrast_ratio if item.contrast_ratio is not None else -1),)
 
 
 def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: str | None,

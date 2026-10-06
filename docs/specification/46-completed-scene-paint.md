@@ -343,3 +343,19 @@ finding records the winning channel and its own ground. Theme-supplied mark
 outlines may therefore preserve a category-coloured fill when the same
 category also colours its background. No outline is inferred by Scene or an
 adapter (#459).
+
+**Multipart mark figures (#1178).** MARK-classified `Symbol` parts of one
+completed placement are one contrast figure, not substrates for each other.
+The existing terminal identity forms `:partN` and `:part:N` identify that
+placement within one surface; source, purpose, role, bounds and slot metadata
+must agree. A source or role alone never groups distinct placements. All sibling
+parts are excluded throughout external-ground resolution, including translucent
+host recursion. Each part keeps the completed painted-sample, pattern and cone
+rules above. As with a dual-channel mark, any readable part/channel may carry
+the figure's visibility floor; one observation records the best ratio and its
+actual part identity, channel and ground, with document-order ties. Malformed
+paint and unsupported external grounds remain one reasoned failure rather than
+being hidden by a visible sibling. A part with several effective pattern-pair
+obligations contributes its worst pair; figure selection must not allow a good
+pair to mask another required pair of that part. Singleton marks are unchanged. This does not
+group annotation artwork layers or change their touched-ink contract.
