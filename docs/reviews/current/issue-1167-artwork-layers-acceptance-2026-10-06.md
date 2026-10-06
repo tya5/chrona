@@ -43,7 +43,13 @@ changing import mode or package boundaries. Their executed tests all passed
 (2422/2415/2421). Corrected-head collection succeeds for all 7,322 tests;
 the formerly conflicting unit/integration pair passes all 10 focused tests.
 The downstream derived-ready failure reflects those upstream failures;
-corrected-head CI remains a release requirement.
+[Corrected-head CI](https://github.com/tya5/chrona/actions/runs/37361076550)
+passed every required check. [Final snapshot receipt](https://github.com/tya5/chrona/pull/1174#issuecomment-6001424916)
+proves all128 public SVG/Scene files unchanged; only two source-inventory reports
+change. [Exact-main release](https://github.com/tya5/chrona/actions/runs/37386692014)
+passed on `82e74cae250a9ed7fe31bce8b45da7a597f8dde4`: Ubuntu7294,
+macOS7298 and Windows7293 pytest passes, three-OS conformance/wheel, MCP floor
+and newest-Python public materializers.
 
 ## Literal issue acceptance
 
@@ -59,10 +65,11 @@ corrected-head CI remains a release requirement.
 | 3 | A missing layer role is `E_THEME_ROLE_REQUIRED` at the layer pointer. | met | [Layer integration](../../../tests/integration/test_annotation_artwork_layers.py): exact indexed pointer; malformed ingress/schema and internal token diagnostics are tested separately | — |
 | 4 | Text contrast considers every layer it touches. | met | [Layer integration](../../../tests/integration/test_annotation_artwork_layers.py): swap each touched layer into the worst-ground position; existing hole, opacity, stroke and fail-closed ink-ground regressions pass | — |
 | 5 | A tilt rotates all layers rigidly. | met | [Layer integration](../../../tests/integration/test_annotation_artwork_layers.py): every path point matches the shared rigid transform, preserving authored identities and order | — |
-| 6 | Yuya adopts it, with a `scroll-rods` catalogue glyph. | not met | Catalogue support alone is not adoption; [reviewer-owned #1116](https://github.com/tya5/chrona/issues/1116)/[PR #1123](https://github.com/tya5/chrona/pull/1123) must supply actual YAML and rendered output | — |
+| 6 | Yuya adopts it, with a `scroll-rods` catalogue glyph. | deferred | [Explicit reviewer disposition](https://github.com/tya5/chrona/issues/1167#issuecomment-6005941924): actual YAML/rendered adoption belongs to the reviewer and is not a dev closing condition; catalogue support alone is not adoption | [#1116](https://github.com/tya5/chrona/issues/1116), [PR #1123](https://github.com/tya5/chrona/pull/1123) |
 
 ## Programme-level criteria (optional)
 
-Keep open until required release evidence and actual Yuya adoption are verified.
-No examples are adapted to conceal output changes; inspect the shared CI
-materializer snapshot as one batch and disclose its exact delta counts.
+All synthetic rows are met; actual adoption is explicitly deferred to the
+reviewer in #1116. Close after the exact-main release containing this review
+update; the closure receipt records that run. No examples or generated files
+are changed by this acceptance disposition.

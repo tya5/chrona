@@ -39,8 +39,11 @@ The 6dca9767 snapshot [batch receipt](https://github.com/tya5/chrona/pull/1172#i
 retains 137 paths:133 byte-identical, one Target B subtitle paint change and
 corresponding reports; no geometry/route/wording/ID change or new rendering
 diagnostic. Actual SVG/raster review confirms legibility (contrast5.448) and
-no clipping/overlap. This is not final-head evidence for the subsequent correction;
-latest-head CI and its shared batch remain required.
+no clipping/overlap.
+The [final-head batch](https://github.com/tya5/chrona/pull/1172#issuecomment-5999396090)
+confirms the same visible delta. [Exact-main release](https://github.com/tya5/chrona/actions/runs/37350627813)
+passed on `c917b718d883b20774dcefbfafe4760b1a677da6`: three-OS full
+pytest/conformance/wheel, MCP floor and newest-Python public materializers.
 
 ## Literal issue acceptance
 
@@ -55,7 +58,7 @@ latest-head CI and its shared batch remain required.
 | 2 | Layout bounds and lines are identical with or without the fill. | met | [Title integration](../../../tests/integration/test_title_ink.py): bounds, lines, font size/family/asset identity unchanged | — |
 | 3 | `heading.stroke` is `E_THEME_ROLE_PROPERTY_UNSUPPORTED` at its pointer. | met | [Title integration](../../../tests/integration/test_title_ink.py): exact `/body/colorBindings/heading.stroke` | — |
 | 4 | A low-contrast title is reported per the contrast policy. | met | [Title integration](../../../tests/integration/test_title_ink.py): title/subtitle warning records, disabled warnings, blocking error and policy pointer on actual rendered grounds | — |
-| 5 | Yuya adopts it: gold title. | not met | [Reviewer-owned target #1116](https://github.com/tya5/chrona/issues/1116) / [PR #1123](https://github.com/tya5/chrona/pull/1123); synthetic support does not prove adoption | — |
+| 5 | Yuya adopts it: gold title. | deferred | [Explicit reviewer disposition](https://github.com/tya5/chrona/issues/1164#issuecomment-6005941155): reviewer-owned actual adoption is not a dev closing condition; synthetic support is not claimed as adoption | [#1116](https://github.com/tya5/chrona/issues/1116), [PR #1123](https://github.com/tya5/chrona/pull/1123) |
 
 ### Issue #1165
 
@@ -70,11 +73,12 @@ latest-head CI and its shared batch remain required.
 | 4 | A missing named role omits only that frame. | met | [Named-frame integration](../../../tests/integration/test_named_region_frames.py): missing role and absent base role preserve the other named frame | — |
 | 5 | Text on a named frame is gated on that frame's fill. | met | [Named-frame integration](../../../tests/integration/test_named_region_frames.py): title ground is the selected frame; selected/unselected named role warning checks | — |
 | 6 | A malformed token is a schema error. | met | [Integration](../../../tests/integration/test_named_region_frames.py) and [profile tests](../../../tests/unit/chrona/presentation/layout/test_region_frame_profile.py): shared slug validation and exact root/override paint pointers | — |
-| 7 | Yuya adopts it. | not met | [Reviewer-owned target #1116](https://github.com/tya5/chrona/issues/1116) / [PR #1123](https://github.com/tya5/chrona/pull/1123); actual plaque/rule/board adoption remains unverified | — |
+| 7 | Yuya adopts it. | deferred | [Explicit reviewer disposition](https://github.com/tya5/chrona/issues/1165#issuecomment-6005941432): actual plaque/rule/board adoption remains reviewer work, not a dev closing condition | [#1116](https://github.com/tya5/chrona/issues/1116), [PR #1123](https://github.com/tya5/chrona/pull/1123) |
 
 ## Programme-level criteria (optional)
 
-Keep both issues open until actual Yuya adoption, the reviewed CI Scene/SVG
-side-effect batch, required PR checks, and three-OS release on the exact published
-main containing this review are verified. Existing explicit subtitle fills may
-intentionally repaint subtitles; disclose counts instead of adapting the corpus.
+All synthetic rows are met; the reviewer explicitly owns both deferred adoption
+rows in #1116. Close after the exact-main release containing this review update;
+the closure receipt records that run. Existing explicit subtitle fills may
+intentionally repaint subtitles; the reviewed batch discloses that change
+without adapting corpus resources.
