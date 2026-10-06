@@ -6,7 +6,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 
 | Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors | Warnings |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| actual | `actual` | required | 3.000 | 60 | 364 | 1.000 | 7.583 | 0 | 1 |
+| actual | `actual` | required | 3.000 | 60 | 362 | 1.000 | 7.583 | 0 | 1 |
 | annotation-artwork | `annotation-artwork` | enabled | 1.100 | 2 | 20 | 17.128 | 17.128 | 0 | 0 |
 | annotation-border-bottom | `annotation-border-bottom` | enabled | 1.100 | 3 | 4 | 15.434 | 15.434 | 0 | 0 |
 | annotation-border-end | `annotation-border-end` | enabled | 1.100 | 3 | 3 | 15.434 | 15.434 | 0 | 0 |
@@ -62,7 +62,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | period-band | `period-band` | enabled | 1.100 | 6 | 6 | 1.138 | 1.337 | 0 | 0 |
 | period-label | `period-label` | required | 4.500 | 6 | 6 | 4.451 | 13.973 | 0 | 1 |
 | planned | `gate` | required | 3.000 | 2 | 10 | 14.573 | 17.747 | 0 | 0 |
-| planned | `planned` | required | 3.000 | 62 | 728 | 4.210 | 13.238 | 0 | 0 |
+| planned | `planned` | required | 3.000 | 62 | 720 | 4.210 | 13.238 | 0 | 0 |
 | progress-fill | `progress-fill` | required | 3.000 | 49 | 145 | 3.216 | 4.789 | 0 | 0 |
 | project-note | `text` | required | 4.500 | 45 | 99 | 10.019 | 16.268 | 0 | 0 |
 | relation-label | `text` | required | 4.500 | 30 | 207 | 6.663 | 14.573 | 0 | 0 |
@@ -6642,7 +6642,6 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","ait","integration"]:integration` | `actual` | 1409.855, 553.250 | `planned:review-lane:["generated","ait","integration"]:integration` | flat | `#2C2138` | fill | 7.730 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","ait","integration"]:vibration` | `actual` | 1460.598, 553.250 | `planned:review-lane:["generated","ait","integration"]:vibration` | flat | `#2C2138` | fill | 7.730 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","bus","eps"]:cdr:part:0` | `actual` | 1171.362, 141.000 | `planned:review-lane:["generated","bus","eps"]:cdr:part:1` | flat | `#1B1B1B` | fill | 8.761 | 3.000 | info |
-| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","bus","eps"]:cdr:part:1` | `actual` | 1171.362, 141.000 | `actual:review-lane:["generated","bus","eps"]:cdr:part:0` | flat | `#35D0A0` | fill | 8.761 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","bus","eps"]:eps` | `actual` | 1039.430, 141.000 | `planned:review-lane:["generated","bus","eps"]:eps` | flat | `#142642` | fill | 7.708 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","bus","pdr"]:avionics` | `actual` | 1108.779, 247.500 | `planned:review-lane:["generated","bus","pdr"]:avionics` | flat | `#142642` | fill | 7.708 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","bus","pdr"]:bus-test` | `actual` | 1223.797, 236.500 | `group:bus` | flat | `#142642` | fill | 7.708 | 3.000 | info |
@@ -6653,7 +6652,6 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","payload","optics"]:detector` | `actual` | 1102.014, 388.500 | `planned:review-lane:["generated","payload","optics"]:detector` | flat | `#12302B` | fill | 7.201 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","payload","optics"]:optics` | `actual` | 1010.676, 388.500 | `planned:review-lane:["generated","payload","optics"]:optics` | flat | `#12302B` | fill | 7.201 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","payload","optics"]:payload-delivery:part:0` | `actual` | 1374.335, 388.500 | `group:payload` | flat | `#142642` | fill | 7.708 | 3.000 | info |
-| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","payload","optics"]:payload-delivery:part:1` | `actual` | 1374.335, 388.500 | `actual:review-lane:["generated","payload","optics"]:payload-delivery:part:0` | flat | `#35D0A0` | fill | 8.761 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `actual:review-lane:["generated","payload","optics"]:payload-tvac` | `actual` | 1145.991, 399.500 | `group:payload` | flat | `#142642` | fill | 7.708 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `annotation-box:station-note` | `annotation-note-box` | 1194.365, 901.625 | `group:launch` | flat | `#142642` | stroke | 1.435 | 1.100 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `annotation-box:tvac-note` | `annotation-note-box` | 1024.933, 314.375 | `group:payload` | flat | `#142642` | stroke | 1.435 | 1.100 | info |
@@ -6740,36 +6738,28 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ait","integration"]:emc` | `planned` | 1536.713, 553.250 | `group:ait` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ait","integration"]:integration` | `planned` | 1374.335, 553.250 | `group:ait` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ait","integration"]:psr:part:0` | `planned` | 1597.604, 553.250 | `group:ait` | flat | `#142642` | fill | 6.157 | 3.000 | info |
-| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ait","integration"]:psr:part:1` | `planned` | 1597.604, 553.250 | `planned:review-lane:["generated","ait","integration"]:psr:part:0` | flat | `#5FA8FF` | fill | 6.998 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ait","integration"]:tvac` | `planned` | 1479.204, 553.250 | `group:ait` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ait","integration"]:vibration` | `planned` | 1448.758, 553.250 | `group:ait` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","bus","eps"]:cdr:part:0` | `planned` | 1171.362, 141.000 | `group:bus` | flat | `#142642` | fill | 6.157 | 3.000 | info |
-| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","bus","eps"]:cdr:part:1` | `planned` | 1171.362, 141.000 | `planned:review-lane:["generated","bus","eps"]:cdr:part:0` | flat | `#5FA8FF` | fill | 6.998 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","bus","eps"]:eps` | `planned` | 1015.750, 141.000 | `group:bus` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","bus","pdr"]:avionics` | `planned` | 1066.493, 247.500 | `group:bus` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","bus","pdr"]:bus-test` | `planned` | 1144.299, 236.500 | `group:bus` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","bus","pdr"]:pdr:part:0` | `planned` | 958.241, 236.500 | `group:bus` | flat | `#142642` | fill | 6.157 | 3.000 | info |
-| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","bus","pdr"]:pdr:part:1` | `planned` | 958.241, 236.500 | `planned:review-lane:["generated","bus","pdr"]:pdr:part:0` | flat | `#5FA8FF` | fill | 6.998 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","bus","pdr"]:structure` | `planned` | 968.390, 236.500 | `group:bus` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ground","mcs"]:comms-test` | `planned` | 1255.934, 681.500 | `group:ground` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ground","mcs"]:mcs` | `planned` | 968.390, 681.500 | `group:ground` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ground","station"]:station` | `planned` | 1110.471, 738.750 | `group:ground` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:campaign` | `planned` | 1634.816, 854.250 | `group:launch` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:frr:part:0` | `planned` | 1716.005, 854.250 | `group:launch` | flat | `#142642` | fill | 6.157 | 3.000 | info |
-| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:frr:part:1` | `planned` | 1716.005, 854.250 | `planned:review-lane:["generated","launch","launch-contract"]:frr:part:0` | flat | `#5FA8FF` | fill | 6.998 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:launch-contract:part:0` | `planned` | 1100.322, 854.250 | `group:launch` | flat | `#142642` | fill | 6.157 | 3.000 | info |
-| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:launch-contract:part:1` | `planned` | 1100.322, 854.250 | `planned:review-lane:["generated","launch","launch-contract"]:launch-contract:part:0` | flat | `#5FA8FF` | fill | 6.998 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:launch:part:0` | `planned` | 1739.685, 854.250 | `period-band:launch-window` | translucent-over-flat | `#203B60` | fill | 4.597 | 3.000 | info |
-| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:launch:part:1` | `planned` | 1739.685, 854.250 | `planned:review-lane:["generated","launch","launch-contract"]:launch:part:0` | flat | `#5FA8FF` | fill | 6.998 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","launch","launch-contract"]:shipment` | `planned` | 1611.136, 854.250 | `group:launch` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:first-light:part:0` | `planned` | 1834.406, 995.250 | `group:ops` | flat | `#142642` | fill | 6.157 | 3.000 | info |
-| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:first-light:part:1` | `planned` | 1834.406, 995.250 | `planned:review-lane:["generated","ops","rehearsals"]:first-light:part:0` | flat | `#5FA8FF` | fill | 6.998 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:leop` | `planned` | 1739.685, 995.250 | `period-band:launch-window` | translucent-over-flat | `#203B60` | stroke | 9.884 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","ops","rehearsals"]:rehearsals` | `planned` | 1560.393, 995.250 | `group:ops` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","payload","optics"]:detector` | `planned` | 1063.111, 388.500 | `group:payload` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","payload","optics"]:optics` | `planned` | 968.390, 388.500 | `group:payload` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","payload","optics"]:payload-delivery:part:0` | `planned` | 1360.803, 388.500 | `group:payload` | flat | `#142642` | fill | 6.157 | 3.000 | info |
-| `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","payload","optics"]:payload-delivery:part:1` | `planned` | 1360.803, 388.500 | `planned:review-lane:["generated","payload","optics"]:payload-delivery:part:0` | flat | `#5FA8FF` | fill | 6.998 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `planned:review-lane:["generated","payload","optics"]:payload-tvac` | `planned` | 1110.471, 399.500 | `group:payload` | flat | `#142642` | stroke | 13.238 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `progress-fill:planned:review-lane:["generated","launch","launch-contract"]:campaign` | `progress-fill` | 1652.069, 854.250 | `planned:review-lane:["generated","launch","launch-contract"]:campaign` | flat | `#3A1A24` | fill | 10.089 | 3.000 | info |
 | `examples/halcyon-1/generated/12-glyph-gates.scene.json` | `summary:key-figures:as-of:caption` | `subtitle` | 55.743, 186.450 | `canvas` | canvas | `#0B1220` | fill | 7.032 | 4.500 | info |
@@ -8626,4 +8616,4 @@ Contrast constraints are an opt-in design option (Specification 46 section 8): a
 Every non-exclusive decoration role is enabled in committed Scene evidence; group-band or group-header-band supplies the group concept when there are no corpus errors.
 
 
-Findings: 8555; errors: 0; warnings: 90.
+Findings: 8545; errors: 0; warnings: 90.
