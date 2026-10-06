@@ -406,7 +406,7 @@ def minimum_track_block_extent(*, review_row: Any, mark_block_size: float,
 
     if mark_block_size <= 0:
         raise LayoutError("E_LAYOUT_MARK_OVERFLOW", "/measuredSources/metricValues/timeline.mark.blockSize")
-    upper = mark_block_size
+    upper = float(mark_block_size)
     while not fits(upper):
         upper *= 2
     lower = 0.0
