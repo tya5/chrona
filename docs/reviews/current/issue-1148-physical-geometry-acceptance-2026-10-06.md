@@ -4,7 +4,7 @@
 
 Source: [#1148](https://github.com/tya5/chrona/issues/1148), observed 2026-10-06.
 Design/plan authority: the issue's [living Status](https://github.com/tya5/chrona/issues/1148#issuecomment-6010708341), Spec 07 and Spec 08.
-Candidate: `4851fdb6`, including main source `9e117b73`; published WIP before reconciliation: `6f2f4a4d`.
+Product implementation tested: `4851fdb6`, including main source `9e117b73`. Ready PR base: `cd7c8161` ([derived-main success](https://github.com/tya5/chrona/actions/runs/37433986108)); its additional changes are generated diagnostic inventories only.
 **Not release-accepted.** Implementation PR, corpus byte comparison, Target B adoption and exact-main three-OS evidence are pending.
 
 ## Literal issue acceptance
