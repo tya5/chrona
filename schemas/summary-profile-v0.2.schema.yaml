@@ -28,6 +28,10 @@ allOf:
                 id: {description: "Stable panel identifier.", type: string, minLength: 1}
                 title: {description: "Optional human-readable panel title.", type: string}
                 presentation: {description: "Preferred panel presentation style.", enum: [lines, figures]}
+                arrangement:
+                  description: "How this panel's ordered text runs are arranged; omission keeps the existing stacked arrangement."
+                  examples: [inline]
+                  $ref: "urn:chrona:vocabulary-v0.1#/$defs/summaryArrangement"
                 metrics:
                   description: "Named metric map or ordered metric list."
                   examples: [{finishVariance: "count.knownFinishVariance"}, [{id: as-of, source: actual.asOf, format: date}]]

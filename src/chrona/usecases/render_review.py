@@ -819,7 +819,7 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
             runs=tuple(SourceTextRun(node.title, "text", node.object_id)
                        for node in network.nodes) if network is not None else (),
             typography_role="text"),
-        "summary": SourceInput(runs=tuple(SourceTextRun(run.content, run.typography_role) for run in summary.runs)),
+        "summary": _summary_source(summary),
         "legend": SourceInput(("legend",), typography_role="legend"),
         "group-details": SourceInput(("group details",)),
         "observations": SourceInput(("observations",)),
@@ -829,6 +829,14 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
     if annotation_input is not None:
         sources["annotations"] = annotation_input
     return sources
+
+
+def _summary_source(summary: SummaryContent) -> SourceInput:
+    """Retain panel grouping only when an arrangement opts into grouped flow."""
+    if not any(panel.arrangement == "inline" for panel in summary.panels):
+        return SourceInput(runs=tuple(SourceTextRun(run.content, run.typography_role) for run in summary.runs))
+    return SourceInput(runs=tuple(SourceTextRun(run.content, run.typography_role, run.placement_id)
+                                  for run in summary.runs), summary=summary)
 
 
 def _title_source(project: dict[str, Any], heading: HeadingContent | None) -> SourceInput:

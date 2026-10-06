@@ -619,7 +619,11 @@ def normalize_summary_content(summary: SummaryProfileInput | None, projection: R
     }
     panels: list[SummaryPanel] = []
     for panel in summary.panels if summary is not None else ():
-        runs = [SummaryTextRun(f"summary:{panel.id}", panel.id, panel.title or panel.id, "summary")]
+        inline = panel.arrangement == "inline"
+        caption_role = "summary-caption" if inline else "summary"
+        caption_semantic = "summaryCaption" if inline else ""
+        runs = [SummaryTextRun(f"summary:{panel.id}", panel.id, panel.title or panel.id,
+                               caption_role, caption_semantic)]
         for definition in panel.metrics:
             if not isinstance(definition, tuple):
                 metric_id, source, formatter = definition.id, definition.source, definition.format
@@ -659,18 +663,26 @@ def normalize_summary_content(summary: SummaryProfileInput | None, projection: R
                 )
                 label = definition.label
                 if panel.presentation == "figures":
-                    runs.extend((
-                        SummaryTextRun(f"summary:{panel.id}:{metric_id}:value", panel.id, rendered, "metric"),
-                        SummaryTextRun(f"summary:{panel.id}:{metric_id}:caption", panel.id, label, "summary"),
-                    ))
+                    if inline:
+                        runs.extend((
+                            SummaryTextRun(f"summary:{panel.id}:{metric_id}:value", panel.id, rendered,
+                                            "metric", "summaryFigureValue"),
+                            SummaryTextRun(f"summary:{panel.id}:{metric_id}:caption", panel.id, label,
+                                            "summary-unit", "summaryUnit"),
+                        ))
+                    else:
+                        runs.extend((
+                            SummaryTextRun(f"summary:{panel.id}:{metric_id}:value", panel.id, rendered, "metric"),
+                            SummaryTextRun(f"summary:{panel.id}:{metric_id}:caption", panel.id, label, "summary"),
+                        ))
                 else:
                     runs.append(SummaryTextRun(f"summary:{panel.id}:{metric_id}", panel.id,
-                                                f"{label}: {rendered}", "summary"))
+                                                f"{label}: {rendered}", caption_role, caption_semantic))
             else:
                 metric_id, literal = definition
                 runs.append(SummaryTextRun(f"summary:{panel.id}:{metric_id}", panel.id,
-                                            f"{metric_id}: {literal}", "summary"))
-        panels.append(SummaryPanel(panel.id, tuple(runs)))
+                                            f"{metric_id}: {literal}", caption_role, caption_semantic))
+        panels.append(SummaryPanel(panel.id, tuple(runs), panel.arrangement))
     return SummaryContent(tuple(panels))
 
 

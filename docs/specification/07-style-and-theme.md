@@ -556,6 +556,14 @@ The role supports horizontalScale and text-follows-box as other heading text;
 it is classified as ground text. Its gap is not a View coordinate or a Scene
 placement decision.
 
+Inline summary panels (#1190) require their own `summary-caption` and
+`summary-unit` typography/ink roles; the figure keeps `metric`. These three
+ground-text roles MAY bind `inlineGap`, a named finite nonnegative number
+token in pixels (absent: zero). It separates that run from the next run;
+the last run contributes no trailing gap. Layout uses each role's effective
+font, scale, spacing and transformed text to close the shared baseline and
+row envelope. Scene only projects the completed placements and role paint.
+
 The next specification resolves styled semantic objects into a renderer-neutral Scene. Scene may choose a rectangle, path, marker, text run, or group and assign concrete coordinates; it must preserve the object's identity, relationship kind, resolved visual roles, and token references. It must not decide whether something is `behind`, a dependency, or an explanatory arrow.
 
 The resulting Scene can be rendered to SVG or used by an interactive editor, but neither output becomes the source of Chrona semantics.

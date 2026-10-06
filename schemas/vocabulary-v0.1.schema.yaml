@@ -78,6 +78,10 @@ $defs:
     description: "The subset of `valueFormat` a summary-profile metric may apply to its value."
     examples: [count]
     enum: [text, date, count, signedDays]
+  summaryArrangement:
+    description: "Arrangement of a summary panel's ordered text runs."
+    examples: [inline]
+    enum: [stack, inline]
   dateEndpoint:
     description: "Completed-date endpoint of a Project object: the point `at`, or the `start` or `end` of a span."
     examples: [end]

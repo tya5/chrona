@@ -220,7 +220,8 @@ def typed_summary(value):
             if isinstance(definition, dict) else (metric_id, definition)
             for metric_id, definition in entries
         )
-        panels.append(SummaryPanelInput(panel["id"], panel.get("title"), panel.get("presentation", "lines"), metrics))
+        panels.append(SummaryPanelInput(panel["id"], panel.get("title"), panel.get("presentation", "lines"),
+                                        metrics, panel.get("arrangement", "stack")))
     return SummaryProfileInput(tuple(panels))
 
 
@@ -510,6 +511,48 @@ def test_target_summary_figure_list_form_is_resolved_without_copied_values():
     assert tuple((run.content, run.typography_role) for run in value.summary.runs) == (
         ("figures", "summary"), ("2026-03-04", "metric"), ("as of", "summary"),
         ("2026-03-08", "metric"), ("launch", "summary"), ("1 / 0", "metric"), ("behind / ahead", "summary"),
+    )
+
+
+def test_inline_summary_figures_retain_panel_and_metric_order_with_explicit_semantics():
+    projection = ReviewProjection((), (date(2026, 3, 1), date(2026, 3, 9)), (), ())
+    summary = {"body": {"panels": [{
+        "id": "countdown", "title": "発射まで", "presentation": "figures", "arrangement": "inline",
+        "metrics": [
+            {"id": "days", "label": "DAYS", "source": "count.selected", "format": "count"},
+            {"id": "variance", "label": "DELTA", "source": "count.knownFinishVariance", "format": "count"},
+        ],
+    }]}}
+
+    content = normalize_summary_content(typed_summary(summary), projection, None)
+
+    panel, = content.panels
+    assert panel.arrangement == "inline"
+    assert tuple((run.placement_id, run.content, run.typography_role, run.semantic_id) for run in panel.runs) == (
+        ("summary:countdown", "発射まで", "summary-caption", "summaryCaption"),
+        ("summary:countdown:days:value", "0", "metric", "summaryFigureValue"),
+        ("summary:countdown:days:caption", "DAYS", "summary-unit", "summaryUnit"),
+        ("summary:countdown:variance:value", "0", "metric", "summaryFigureValue"),
+        ("summary:countdown:variance:caption", "DELTA", "summary-unit", "summaryUnit"),
+    )
+
+
+def test_inline_lines_and_shorthand_keep_combined_content_without_unit_inference():
+    projection = ReviewProjection((), (date(2026, 3, 1), date(2026, 3, 9)), (), ())
+    summary = {"body": {"panels": [
+        {"id": "lines", "title": "Current", "presentation": "lines", "arrangement": "inline",
+         "metrics": {"days": {"label": "DAYS", "source": "count.selected", "format": "count"}}},
+        {"id": "raw", "title": "Literal", "arrangement": "inline", "metrics": {"note": "DAY: 0"}},
+    ]}}
+
+    content = normalize_summary_content(typed_summary(summary), projection, None)
+
+    assert tuple((panel.arrangement, tuple((run.content, run.typography_role, run.semantic_id)
+                                           for run in panel.runs)) for panel in content.panels) == (
+        ("inline", (("Current", "summary-caption", "summaryCaption"),
+                    ("DAYS: 0", "summary-caption", "summaryCaption"))),
+        ("inline", (("Literal", "summary-caption", "summaryCaption"),
+                    ("note: DAY: 0", "summary-caption", "summaryCaption"))),
     )
 
 

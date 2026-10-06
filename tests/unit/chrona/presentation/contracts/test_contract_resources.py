@@ -402,6 +402,25 @@ def test_summary_scenario_source_is_closed_to_id_or_title():
         parse_contract(identity, value)
 
 
+def test_summary_panel_arrangement_defaults_to_stack_and_accepts_inline():
+    identity = ClosureIdentity("summary-profile", "summary", "r", "sha256:" + "a" * 64)
+    value = {
+        "version": "chrona/summary-profile/v0.1", "kind": "summary-profile", "id": "summary",
+        "body": {"panels": [{"id": "countdown", "metrics": {"days": "count.selected"}}]},
+    }
+
+    contract = parse_contract(identity, value)
+    assert contract.summary.panels[0].arrangement == "stack"
+
+    value["body"]["panels"][0]["arrangement"] = "inline"
+    contract = parse_contract(identity, value)
+    assert contract.summary.panels[0].arrangement == "inline"
+
+    value["body"]["panels"][0]["arrangement"] = "diagonal"
+    with pytest.raises(SchemaContractError, match="E_RESOURCE_SCHEMA"):
+        parse_contract(identity, value)
+
+
 def test_resource_contracts_have_no_generic_document_or_body_escape_hatch():
     contracts = (
         ActualSetContract, ColorSchemeContract, LayoutProfileContract, ProfilePackageContract,
