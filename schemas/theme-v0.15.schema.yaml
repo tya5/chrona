@@ -46,7 +46,7 @@ properties:
                     items: {type: number, exclusiveMinimum: 0}
               else:
                 properties:
-                  value: {type: [string, number, object]}
+                  value: {description: "A scalar token value. A number token may instead be written as the source form {ref: <token>} or {expr: '2 * {spacing.m} + 1'} over number tokens (+ - * / and parentheses, no functions): the Theme loader resolves it once to a plain number before the Theme is validated as a contract, so the resolved Theme carries no reference (#1151).", type: [string, number, object]}
             - description: "Marker geometry is finite structured Theme data resolved before adapter invocation."
               examples: [{type: marker, value: {shape: triangle, headLength: 10, headWidth: 10, attachmentOffset: 1}}]
               if:

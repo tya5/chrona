@@ -30,6 +30,7 @@ from chrona.presentation.model.authoring import AuthoringError, normalize_author
 from chrona.presentation.model.theme_inheritance import (
     ThemeInheritanceError, is_derived_theme, resolve_draft_theme, resolve_snapshot_theme,
 )
+from chrona.presentation.model.theme_references import ThemeReferenceError, resolve_references, uses_references
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
 from chrona.presentation.fonts.system import DraftFontResolution, SystemFontError, SystemFontResolver, resolve_draft_fonts, resolve_system_font
 from chrona.presentation.model.font_metrics import FontMetricsCatalog, FontMetricsError, FontTabularWarning, resolve_font_files, resolve_font_metrics
@@ -603,14 +604,20 @@ def _load_draft_source(kind: str, path: Path) -> PresentationResourceSource:
         source = safe_load(payload)
         derived = kind == "theme" and is_derived_theme(source)
         value = resolve_draft_theme(path, payload=payload) if derived else source
+        referenced = kind == "theme" and isinstance(value, dict) and uses_references(value)
+        if referenced:
+            value = resolve_references(value)
     except ThemeInheritanceError as error:
         raise ClosureError(error.code, detail=error.detail or None) from error
+    except ThemeReferenceError as error:
+        raise ClosureError(error.code, error.pointer, error.detail) from error
     if not isinstance(value, dict):
         raise _draft_shape_error(kind, value)
     identifier = _resource_id(kind, value)
     if not isinstance(identifier, str) or not identifier:
         raise _draft_shape_error(kind, value)
-    identity = ClosureIdentity(kind, identifier, "draft", content_identity(value) if derived else "sha256:" + sha256(payload).hexdigest())
+    identity = ClosureIdentity(kind, identifier, "draft",
+                               content_identity(value) if derived or referenced else "sha256:" + sha256(payload).hexdigest())
     return PresentationResourceSource(identity, value)
 
 
@@ -1110,13 +1117,19 @@ def _load_reference_source(reference: dict[str, Any], reader: SnapshotReader, ex
     if actual_id != reference.get("id"):
         raise ClosureError("E_CLOSURE_ID", detail=f"reference id {reference.get('id')!r} names a {expected_kind} whose own id is {actual_id!r}")
     derived = expected_kind == "theme" and is_derived_theme(value)
-    if derived:
-        try:
+    referenced = False
+    try:
+        if derived:
             value = resolve_snapshot_theme(value, reference, reader)
-        except ThemeInheritanceError as error:
-            raise ClosureError(error.code, detail=error.detail or None) from error
+        referenced = expected_kind == "theme" and uses_references(value)
+        if referenced:
+            value = resolve_references(value)
+    except ThemeInheritanceError as error:
+        raise ClosureError(error.code, detail=error.detail or None) from error
+    except ThemeReferenceError as error:
+        raise ClosureError(error.code, error.pointer, error.detail) from error
     identity = ClosureIdentity(expected_kind, actual_id, reference["revision"]["token"],
-                               content_identity(value) if derived else reference.get("contentIdentity", computed_identity))
+                               content_identity(value) if derived or referenced else reference.get("contentIdentity", computed_identity))
     return PresentationResourceSource(identity, value)
 
 

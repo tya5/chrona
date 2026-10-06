@@ -430,6 +430,37 @@ paint`. The v0.1 Theme is a legacy authoring resource; it is never supplied alon
 v0.2 resolved Theme. Scene stores the selected concrete paint and an adapter only
 serializes it.
 
+### 5.4 Token references and expressions (#1151)
+
+A `number` token of `body.values` MAY be written as a source form instead of a literal:
+
+- `value: {ref: <token>}` takes the value of another `number` token, in that token's own number form;
+- `value: {expr: "<expression>"}` evaluates a closed arithmetic expression. The grammar is
+  `expr := term (("+"|"-") term)*`, `term := unary (("*"|"/") unary)*`, `unary := "-" unary | primary`,
+  `primary := NUMBER | "{" token "}" | "(" expr ")"`; a token is named in braces, a number is a decimal literal
+  without sign, exponent or unit. There are no functions, no units and no other evaluation.
+
+Only `number` tokens are written this way and only `number` tokens are referenced; roles keep binding tokens by
+name. Resolution happens once, at Theme load, after Theme inheritance and before the Theme is validated as a
+contract: a derived Theme (v0.16) resolves against the merged result, so an override of a token also moves every
+alias of it that the base declares, and a child token may reference a base token. The resolved Theme carries plain
+numbers only, so Layout, Scene and adapters never see a reference.
+
+Arithmetic is exact `Decimal` arithmetic over the decimal text of each number (the rule Layout applies to every Theme
+number), with a fixed context of 28 significant digits and half-even rounding, independent of the platform. An
+integral result is written as an integer and any other as the shortest round-trip float; a bare `{ref}` keeps its
+target's number form.
+
+The resolved values, not the expressions, enter the Theme's content identity: a Theme that uses a reference has the
+canonical identity of its resolved value, so two spellings of the same values share it. A Theme that uses no
+reference is untouched, keeps its source-byte identity and renders byte-identically.
+
+Failures are typed and carry a pointer into the source Theme: `E_THEME_REF_CYCLE` (at the token that starts the
+loop), `E_THEME_REF_UNKNOWN` (at the referring `ref` or `expr`), `E_THEME_REF_TYPE` (a reference from or to a
+non-`number` token, or a non-number value), `E_THEME_REF_SYNTAX` (an expression outside the grammar, longer than
+256 characters or nested deeper than 16 levels) and `E_THEME_REF_VALUE` (division by zero). The declared base identity
+of a derived Theme is that of the resolved base.
+
 ## 6. Accessibility and reviewability
 
 Meaningful distinctions must not rely on colour alone. A standard Theme must differentiate at least planned versus actual, semantic dependency versus explanatory arrow, and exceptional comparison states by a combination of stroke, marker, shape, label, or pattern where colour is insufficient.
