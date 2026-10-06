@@ -76,3 +76,29 @@ The reusable parts of this target are extracted as monochrome assets in the pack
 | Hanging-scroll mounting | `chrona-target-parts:scroll-frame` | in the catalogue; not yet placeable by any Theme role (#848); the PNG container of #465 exists, but a bundled catalogue is vector-only |
 
 Still needed before this target's preset can be assembled: #582 (the launch window as a named, patterned range), #583 (decorated group tags), #585 (vertical group labels), #584 (a stamp per annotation kind). #848 for the scroll as vector container artwork.
+
+## Reproduction (#1116)
+
+![Yuya mock (top) and chrona output (bottom)](yuya-reproduction-2026-10-06.png)
+
+The bottom image is the HALCYON-1 slide `yuya` (`examples/halcyon-1`, PR #1123), rendered from YAML alone: View `views/22-yuya.yaml`, Theme `themes/yuya.yaml`, scheme `schemes/yuya.yaml`, Layout and profile `layouts/yuya.yaml` and `profiles/yuya-detail.yaml`, and Context `contexts/22-yuya.yaml`. The owner signed it off visually on 2026-10-06.
+
+### Gap table
+
+Classification: (a) tuned in YAML; (b) a missing general knob, filed and delivered; (c) a deliberate difference.
+
+| Element | Result | Class | Through |
+|---|---|---|---|
+| Two grounds: night-river canvas around a hinoki board, red board frame | matches | b | #1165, #1163 |
+| Lacquer title plaque with gold lettering and a gold inner rule | matches | b | #1164, #1165 |
+| Palette with one job per colour (plan green, actual lacquer red, gates vermilion, as-of indigo, launch window sea) | matches | a | scheme `yuya` |
+| Hanging scroll behind each note: two-tone mounting and rods, text laid in the paper | matches | b | #848, #1167 |
+| Note heading over a muted body; 危 / 記 seals | matches | a | #584 |
+| Vertical group tags 壱 to 陸 on wood plates | matches (ordinal only; the group titles are English data) | b, a | #585, #1166 |
+| Group rows untinted, so the grouping is carried by the plates | owner choice B | a | owner, 2026-10-06 |
+| Lantern gates and the seigaiha launch window | matches | a, b | #464, #582, #1178 |
+| Finish deltas in days (+3日) | matches | a | #588 |
+| Dependencies entering from the side, with fan-in sharing a head | matches | b | #1109 |
+| Kanji month and quarter names (三月, 第一四半期) | `3月` and `Q1 2027年` | c | needs a View enum |
+| Mincho / serif faces | Noto Sans JP | c | #983 |
+| Lantern string, wood grain, glow behind lanterns | absent | c | ornament, low priority |
