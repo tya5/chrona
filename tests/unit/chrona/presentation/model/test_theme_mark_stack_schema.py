@@ -1,15 +1,15 @@
 """#1149 Theme syntax: alignment is role-local; stacks are closed ordered role groups."""
 from pathlib import Path
 
-import jsonschema
 import pytest
 import yaml
 
 from chrona.presentation.scene.capabilities import theme_role_property_consumer
+from chrona.resources import validator_for_schema
 
 
 SCHEMA = yaml.safe_load((Path(__file__).resolve().parents[5] / "schemas/theme-v0.15.schema.yaml").read_text())
-VALIDATOR = jsonschema.Draft202012Validator(SCHEMA)
+VALIDATOR = validator_for_schema(SCHEMA)
 
 
 def _theme(*, stack=None, role_align=None):

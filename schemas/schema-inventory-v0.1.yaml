@@ -104,6 +104,7 @@ schemas:
       annotationPurpose: "sha256:6334d4284f2d7977d981b54609eb2eebdcd0cc24f3e2a490d6aa428391c7cccf"
       annotationSide: "sha256:8b7453e1c16755eed298aa09fc8d5702fb7a24359f4f90e5063d240725606ca9"
       annotationAlignment: "sha256:78e88eae1e0678883bce8130ce34bc068d2ec435da9e905ba651c4345078f058"
+      logicalAlignment: "sha256:78e88eae1e0678883bce8130ce34bc068d2ec435da9e905ba651c4345078f058"
       annotationVisibilityMode: "sha256:19352aaa20995ae124cff52b81c6bdb9054034cff7bff959c8e100c8351f37c0"
       guidedAnnotationVisibilityMode: "sha256:e3405342f3007fb0d66af174b0c6690667708dee2162e0f06b3ec7c5f3cd4e73"
       relationVisibilityMode: "sha256:42c8144412856f47ec7ad8af2bf6c365c8f21f8f03917f60910c6e11072b160a"
