@@ -3,6 +3,7 @@ from datetime import date
 
 import pytest
 
+from chrona.presentation.scene.serialization import scene_document, validate_scene_document
 from tests.support import synthetic_review as sr
 
 
@@ -30,6 +31,11 @@ def test_radius_token_is_completed_in_scene_for_different_mark_heights(tmp_path,
         mark = marks[0]
         expected = min(mark.bounds[2:]) / 2 if radius == "capsule" else radius
         assert mark.corner_radius == expected
+        document = scene_document(rendered.scene)
+        validate_scene_document(document)
+        public_mark = next(node for surface in document["surfaces"] for node in surface["primitives"]
+                           if node["id"] == mark.scene_id)
+        assert public_mark["cornerRadius"] == expected
         observed.append(mark.bounds[3])
     assert observed[0] != observed[1]
 
@@ -63,5 +69,10 @@ def test_physical_chip_radius_does_not_scale_with_text_height(tmp_path):
         chips = [p for p in rendered.surface.primitives if p.scene_id == "chip:as-of-label"]
         assert len(chips) == 1
         assert chips[0].corner_radius == 3.0
+        document = scene_document(rendered.scene)
+        validate_scene_document(document)
+        public_chip = next(node for surface in document["surfaces"] for node in surface["primitives"]
+                           if node["id"] == chips[0].scene_id)
+        assert public_chip["cornerRadius"] == 3.0
         heights.append(chips[0].bounds[3])
     assert heights[0] != heights[1]
