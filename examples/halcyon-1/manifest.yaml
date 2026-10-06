@@ -113,3 +113,8 @@ slides:
     context: contexts/22-yuya.yaml
     expectedSvg: generated/22-yuya.svg
     expectedScene: generated/22-yuya.scene.json
+  - id: titlecard
+    evidence: "Issue #1182: YAML-only assembly of the owner-approved hand-drawn Title Card target (black ground, compressed heavy title, hazard-stripe group tabs, hexagon gates and lattice, warning and report panels)."
+    context: contexts/23-titlecard.yaml
+    expectedSvg: generated/23-titlecard.svg
+    expectedScene: generated/23-titlecard.scene.json

@@ -1,0 +1,10 @@
+version: chrona/summary-profile/v0.1
+kind: summary-profile
+id: halcyon-titlecard-countdown
+body:
+  panels:
+    - id: countdown
+      title: 発射まで
+      presentation: figures
+      metrics:
+        - {id: countdown, source: {figure: launch-countdown}, label: "DAYS · LAUNCH WINDOW OPENS IN", format: count}
