@@ -16,8 +16,12 @@ Authority: [living design/implementation plan](https://github.com/tya5/chrona/is
 | 1 | For any track size, a centred symbol's centre equals the track centre within 0.01 px. | met | [Public Scene synthetic tests](../../../tests/integration/test_mark_alignment_stack.py): 10/16/30px, automatic/lane rows, default and explicit alignment, folded points and explicit offset precedence. | — |
 | 2 | With a declared stack, the members' order and gaps are as declared, and the stack is centred. | met | [Completed Layout closure](../../../tests/unit/chrona/presentation/layout/test_mark_band_allocation.py), 10/16/30/100px; [public Scene and actual SVG](../../../tests/integration/test_mark_alignment_stack.py), automatic/lane rows, missing observations, independent point/frame bounds and oversized stacks. | — |
 | 3 | Changing one member's height re-centres the stack with no other edit. | met | [Layout and public Scene height-change assertions](../../../tests/integration/test_mark_alignment_stack.py); [closure invariants](../../../tests/unit/chrona/presentation/layout/test_mark_band_allocation.py). | — |
-| 4 | Absent declarations give byte-identical output. | not met | Synthetic explicit-offset/ignored-align Scene surface and SVG identity pass; complete public corpus byte comparison awaits the final PR snapshot. | — |
-| 5 | Target B migrates to `align` and a stack. | not met | Reviewer-owned YAML adoption and rendered acceptance are not yet published. | — |
+| 4 | Absent declarations give byte-identical output. | not met | [Synthetic explicit-offset/ignored-align Scene surface and SVG identity](../../../tests/integration/test_mark_alignment_stack.py) pass; complete public corpus byte comparison awaits the final PR snapshot. | — |
+| 5 | Target B migrates to `align` and a stack. | not met | [Current work record](https://github.com/tya5/chrona/issues/1149#issuecomment-6011834979): reviewer-owned YAML adoption and rendered acceptance are not yet published. | — |
+
+## Programme-level criteria (optional)
+
+No additional programme criteria.
 
 ## Verification and architecture
 
