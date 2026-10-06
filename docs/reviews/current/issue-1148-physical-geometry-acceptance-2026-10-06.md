@@ -5,7 +5,7 @@
 Source: [#1148](https://github.com/tya5/chrona/issues/1148), observed 2026-10-06.
 Design/plan authority: the issue's [living Status](https://github.com/tya5/chrona/issues/1148#issuecomment-6010708341), Spec 07 and Spec 08.
 Product implementation tested: `4851fdb6`, including main source `9e117b73`. Ready PR base: `cd7c8161` ([derived-main success](https://github.com/tya5/chrona/actions/runs/37433986108)); its additional changes are generated diagnostic inventories only.
-**Not release-accepted.** Implementation PR, corpus byte comparison, Target B adoption and exact-main three-OS evidence are pending.
+**Not release-accepted.** [Implementation PR #1185](https://github.com/tya5/chrona/pull/1185) is open; Target B adoption and exact-main three-OS evidence are pending.
 
 ## Literal issue acceptance
 
@@ -20,7 +20,7 @@ Product implementation tested: `4851fdb6`, including main source `9e117b73`. Rea
 | 2 | `capsule` gives exactly half the shorter side. | met | [Public Scene assertion](../../../tests/integration/test_physical_corner_radius_render.py); [geometry invariants](../../../tests/unit/chrona/presentation/layout/test_issue_1148_physical_radius_geometry.py). | — |
 | 3 | `strokeAlign: inside` keeps the stroke's outer edge on the declared bounds. | met | [Authored Theme → Layout → Scene → actual SVG pixels](../../../tests/integration/test_stroke_alignment_render.py); [curved compound contours and holes](../../../tests/unit/chrona/presentation/renderers/test_issue_1148_stroke_clip_adapters.py). | — |
 | 4 | A derived attachment puts the terminal tip on the port. | met | [Completed reference and actual head-only SVG pixels](../../../tests/unit/chrona/presentation/layout/test_derived_terminal_attachment.py); [public Scene schema](../../../tests/integration/test_derived_terminal_render.py). | — |
-| 5 | Absent declarations give byte-identical output. | not met | [Synthetic absent/center SVG and Scene surfaces](../../../tests/integration/test_stroke_alignment_render.py) match; full public materializer byte comparison awaits the single implementation-PR snapshot. | — |
+| 5 | Absent declarations give byte-identical output. | met | [CI snapshot](https://github.com/tya5/chrona/actions/runs/37435219807), artifact11399321032, head4c7909c0/basecd7c8161: all65 SVG and65 Scene files byte-identical;139 paths, no additions/retirements. Before bytes independently checked against base Git blobs. Only diagnostic inventory and optional vocabulary coverage change. [Synthetic absent/center](../../../tests/integration/test_stroke_alignment_render.py) also matches. | — |
 | 6 | Target B migrates to px radii. | not met | Reviewer adoption [requested](https://github.com/tya5/chrona/issues/1148#issuecomment-6011662434); current Target B still uses hand-converted ratios/em. | — |
 
 ## Programme-level criteria (optional)
@@ -38,4 +38,5 @@ On candidate `4851fdb6`: the following post-#1184 batch passed **150 tests**; fi
 ```
 
 Schema equivalence passed against `9e117b73`: 523 tracked documents, 423 mapped, 739 probes; four pre-existing invalid fixtures unchanged. No generated files or reviewer YAML were authored.
-Theme references resolve before Layout. Layout completes radii, text clearance, terminal attachment/run and closed contour clips, including lane/multipart identities and network nodes. Scene projects the typed closure; SVG serializes it without contour scaling or closure inference, and unsupported typeset adapters explicitly refuse aligned strokes. Synthetic center output remains unchanged. Release remains open until rows 5–6 and exact published-main CI are verified.
+CI37435219807 found three conformance omissions: conditional schema examples, actionable new error details, and the Scene stroke-clip delivery registry. These were corrected without changing geometry/contracts; schema annotations, diagnostic actionability and delivery checks passed locally, alongside82 focused tests. The final-head CI must verify the correction and regenerate the same public bytes.
+Theme references resolve before Layout. Layout completes radii, text clearance, terminal attachment/run and closed contour clips, including lane/multipart identities and network nodes. Scene projects the typed closure; SVG serializes it without contour scaling or closure inference, and unsupported typeset adapters explicitly refuse aligned strokes. Release remains open until row6 and exact published-main CI are verified.
