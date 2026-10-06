@@ -29,6 +29,7 @@ from chrona.presentation.layout.mark_geometry import compose_item_marks
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
 from chrona.presentation.layout.presentation import MarkBandFrame
+from chrona.presentation.layout.mark_band_allocation import MarkBandAllocation
 from chrona.presentation.layout.surface_quality import ScalePlacement, VisualRequest
 from chrona.presentation.model.projection import ReviewProjection
 
@@ -43,6 +44,7 @@ def compose_lane_item_footprints(
     role_geometries: Mapping[str, Any],
     slot_id: str,
     icon_assets: Mapping[str, Any],
+    mark_band_allocation: MarkBandAllocation | None = None,
     visual_requests: Sequence[VisualRequest] = (),
     progress_fill_source: str | None = None,
 ) -> tuple[LaneItemFootprints, ...]:
@@ -88,7 +90,7 @@ def compose_lane_item_footprints(
     if seen_instances != set(closure.instances) or set(owner_for_instance.values()) != set(member_order):
         raise LayoutError("E_LAYOUT_LANE_FOOTPRINT_MEMBERSHIP_MISMATCH", "/projection/laneRows")
 
-    frame = MarkBandFrame.zero_origin(scale, float(mark_band_size), role_geometries)
+    frame = MarkBandFrame.zero_origin(scale, float(mark_band_size), role_geometries, mark_band_allocation)
     marks_by_instance = {}
     for instance in closure.instances:
         composition = compose_item_marks(

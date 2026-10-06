@@ -38,6 +38,10 @@ $defs:
     description: "Alignment of an annotation along its chosen side."
     examples: [center]
     enum: [start, center, end]
+  logicalAlignment:
+    description: "Logical-axis alignment of content within its completed allocation."
+    examples: [center]
+    enum: [start, center, end]
   annotationVisibilityMode:
     description: "Which annotations a View shows: none, the semantic ones, the presentation ones, or all."
     examples: [presentation]

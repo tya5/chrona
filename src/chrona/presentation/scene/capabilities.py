@@ -139,7 +139,7 @@ _PATTERNED_RECT_PAINT = _RECT_PAINT | frozenset(("pattern",))
 _LAYOUT_TYPOGRAPHY = _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("writingMode",))
 _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | _GROUP_TAB | frozenset((
     "cellGap", "cellCornerRadius", "cellCornerChamfer", "frameCornerRadius", "chipPadding", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach",
-    "symbolHeight", "symbolOffset", "cornerRadius", "strokeAlign",
+    "symbolHeight", "symbolOffset", "cornerRadius", "strokeAlign", "align",
     "progressInset", "summaryBarHeight", "swatchInlineSize", "swatchGap", "swatchBlockSize", "pointSwatchSize", "annotationContainer", "marker", "symbol", "edge",
     "stampPlacement", "coneSpread", "coneExtent",
 ))
@@ -247,11 +247,11 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
     register("background", "Scene canvas", _CANVAS_PAINT, scene_kinds=frozenset(("Canvas",)))
     register("planned actual snapshot scenario",
              "Layout marks and Scene Rect/Symbol", _PATTERNED_RECT_PAINT | frozenset((
-                 "markHeight", "markOffset", "markPaintOrder", "markCornerRadius",
+                 "markHeight", "markOffset", "align", "markPaintOrder", "markCornerRadius",
                  "symbolHeight", "symbolOffset", "cornerRadius")),
              scene_kinds=frozenset(("Rect", "Symbol")))
     register("missing-actual", "Layout mark and Scene Rect", _PATTERNED_RECT_PAINT | frozenset((
-        "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "cornerRadius")), scene_kinds=frozenset(("Rect",)))
+        "markHeight", "markOffset", "align", "markPaintOrder", "markCornerRadius", "cornerRadius")), scene_kinds=frozenset(("Rect",)))
     register("network-node", "Scene Rect", _PATTERNED_RECT_PAINT, scene_kinds=frozenset(("Rect",)))
     register("milestone", "Scene Symbol", _PATTERNED_RECT_PAINT, scene_kinds=frozenset(("Symbol",)))
     register("gate", "Scene Symbol", _PATTERNED_RECT_PAINT, scene_kinds=frozenset(("Symbol",)))

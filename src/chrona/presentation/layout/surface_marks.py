@@ -2,12 +2,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from collections.abc import Mapping
 from datetime import date
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any, Callable
 
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.presentation import MarkBandFrame, MarkGeometry
+from chrona.presentation.layout.mark_band_allocation import MarkBandAllocation, compose_mark_band
 from chrona.presentation.layout.surface_groups import (
     GroupHeaderExtentUpdate, replace_group_header_extent,
 )
@@ -26,17 +28,43 @@ MARK_PAINT_ORDER_BASE = 100
 
 def resolve_mark_geometries(theme_tokens: Any) -> dict[str, MarkGeometry]:
     """Close each Theme mark role to lane-relative Layout geometry."""
+    def aligned_offset(height: float, alignment: str) -> float:
+        return 0.0 if alignment == "start" else 1.0 - height if alignment == "end" else (1.0 - height) / 2
+
     result = {}
+    actual_explicit_offset = False
     for role in MARK_GEOMETRY_ROLES:
         height, offset, paint_order, corner_radius = theme_tokens.mark_geometry(role)
         symbol_height, symbol_offset = theme_tokens.symbol_geometry(role)
+        if role == "actual":
+            actual_explicit_offset = offset is not None
+        alignment_reader = getattr(theme_tokens, "mark_alignment", None)
+        alignment = alignment_reader(role) if alignment_reader is not None else "center"
+        completed_offset = float(offset) if offset is not None else aligned_offset(float(height), alignment)
+        if offset is None:
+            if symbol_height is None:
+                symbol_height = (max(float(height), result["planned"].symbol_extent[1])
+                                 if role == "actual" else height)
+            if symbol_offset is None:
+                symbol_offset = aligned_offset(float(symbol_height), alignment)
         result[role] = MarkGeometry(
-            float(height), float(offset), paint_order, float(corner_radius),
+            float(height), completed_offset, paint_order, float(corner_radius),
             None if symbol_height is None else float(symbol_height),
             None if symbol_offset is None else float(symbol_offset),
             physical_corner_radius=theme_tokens.optional_token(role, "cornerRadius", "radius"))
-    result["actual"] = _default_actual_symbol(result["actual"], result["planned"])
+    if actual_explicit_offset:
+        result["actual"] = _default_actual_symbol(result["actual"], result["planned"])
     return result
+
+
+def resolve_mark_band(theme_tokens: Any, track_size: float, *,
+                      role_geometries: Mapping[str, MarkGeometry] | None = None) -> MarkBandAllocation:
+    """The shared closure for natural requirements, provisional and final marks."""
+    stack_reader = getattr(theme_tokens, "mark_stack", None)
+    return compose_mark_band(track_size=track_size,
+                             role_geometries=(role_geometries if role_geometries is not None
+                                              else resolve_mark_geometries(theme_tokens)),
+                             stack=stack_reader() if stack_reader is not None else None)
 
 
 def _default_actual_symbol(actual: MarkGeometry, planned: MarkGeometry) -> MarkGeometry:
@@ -109,6 +137,9 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
     absences: list[MarkFacetAbsence] = []
     marks: list[MarkPlacement] = []
     track_by_id = {item.instance_id: item for item in tracks}
+    allocation = getattr(base, "mark_band_allocation", None)
+    if allocation is not None:
+        diagnostics.extend(allocation.diagnostics)
     for review_row in review_rows:
         members = sorted(enumerate(review_row.items),
                          key=lambda pair: shared_track_member_key(pair[1], pair[0]))
@@ -117,7 +148,7 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
             owner = lane_owner(review_row, item) if projection.lane_membership is not None else None
             instance_id = layout_id if projection.rows else item.object_id
             track = track_by_id[layout_id]
-            frame = MarkBandFrame.from_track(track, scale, role_geometries)
+            frame = MarkBandFrame.from_track(track, scale, role_geometries, allocation)
             source_kind = item.source_kind if projection.rows else "combined"
             composition = compose_item_marks(
                 item=item, instance_id=instance_id, source_kind=source_kind, frame=frame,
@@ -145,7 +176,9 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
             folded = folded_points[0]
             raise LayoutError("E_REVIEW_POINT_GROUP_HEADER_UNAVAILABLE",
                               f"/projection/foldedPoints/{folded.item.object_id}")
-        occupied = len(folded_points) * mark_block_size
+        pitch = allocation.outer_extent if allocation is not None else mark_block_size
+        track_inset = -allocation.outer_bounds[0] if allocation is not None else 0.0
+        occupied = len(folded_points) * pitch
         if occupied > float(group.header_bounds.block_size):
             expanded = Rect(group.header_bounds.inline, group.header_bounds.block,
                             group.header_bounds.inline_size, Decimal(str(occupied)))
@@ -160,12 +193,12 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
             0.0, (float(group.header_bounds.block_size) - occupied) / 2)
         for track_index, folded in enumerate(sorted(
             folded_points, key=lambda point: (point.item.planned.get("at"), point.item.object_id))):
-            block = first_block + track_index * mark_block_size
+            block = first_block + track_index * pitch + track_inset
             members = sorted(enumerate(folded.all_items),
                              key=lambda pair: shared_track_member_key(pair[1], pair[0]))
             for _, item in members:
                 instance_id = folded_instance_id(folded, item)
-                frame = MarkBandFrame(scale, block, mark_block_size, role_geometries)
+                frame = MarkBandFrame(scale, block, mark_block_size, role_geometries, allocation)
                 composition = compose_item_marks(
                     item=item, instance_id=instance_id, source_kind=item.source_kind, frame=frame,
                     as_of=contract.time.as_of, theme_tokens=request.theme_tokens,

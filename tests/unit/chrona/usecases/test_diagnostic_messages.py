@@ -6,6 +6,13 @@ from pathlib import Path
 import pytest
 
 from chrona.usecases.diagnostic_messages import CURATED_MESSAGES, describe_warning, derived_message, error_message, is_bare
+
+
+def test_stack_overflow_warning_explains_completed_row_expansion():
+    text = describe_warning({"code": "W_LAYOUT_MARK_STACK_OVERFLOW",
+                             "diagnostic": "W_LAYOUT_MARK_STACK_OVERFLOW:extent=24; track=16"})
+    assert "comparison stack" in text.cause
+    assert "row space was expanded" in text.cause
 from chrona.usecases.failure_report import StableFailure, diagnostic_record, report_failure
 from tools.diagnostic_inventory import discover
 

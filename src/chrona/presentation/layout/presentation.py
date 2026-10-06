@@ -3,12 +3,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import math
-from typing import Any, Callable, Literal, Mapping
+from typing import TYPE_CHECKING, Any, Callable, Literal, Mapping
 
 from chrona.presentation.layout.model import LayoutError, geometry_sum
 from chrona.presentation.layout.text import measure_text_width, metric_for_role
 from chrona.presentation.model.projection import ObservationState, shared_track_member_key
 from chrona.presentation.model.surface_content import TableCellContent, TableColumnContent
+
+if TYPE_CHECKING:
+    from chrona.presentation.layout.mark_band_allocation import MarkBandAllocation
 
 
 @dataclass(frozen=True)
@@ -77,29 +80,41 @@ class MarkBandFrame:
     block_origin: float
     block_size: float
     role_geometries: Mapping[str, MarkGeometry]
+    allocation: MarkBandAllocation | None = None
 
     def __post_init__(self) -> None:
         if (not math.isfinite(self.block_origin) or not math.isfinite(self.block_size)
                 or self.block_size <= 0):
             raise LayoutError("E_LAYOUT_MARK_OVERFLOW", "/layout/markBandFrame")
+        if self.allocation is not None and self.allocation.track_size != self.block_size:
+            raise LayoutError("E_LAYOUT_MARK_OVERFLOW", "/layout/markBandFrame/allocation",
+                              detail="allocation track size must equal the frame's resolved track size")
 
     @classmethod
     def from_track(cls, track: TrackPlacement, inline_scale: Any,
-                   role_geometries: Mapping[str, MarkGeometry]) -> "MarkBandFrame":
-        return cls(inline_scale, track.block, track.block_size, role_geometries)
+                   role_geometries: Mapping[str, MarkGeometry],
+                   allocation: MarkBandAllocation | None = None) -> "MarkBandFrame":
+        return cls(inline_scale, track.block, track.block_size, role_geometries, allocation)
 
     @classmethod
     def zero_origin(cls, inline_scale: Any, block_size: float,
-                    role_geometries: Mapping[str, MarkGeometry]) -> "MarkBandFrame":
-        return cls(inline_scale, 0.0, block_size, role_geometries)
+                    role_geometries: Mapping[str, MarkGeometry],
+                    allocation: MarkBandAllocation | None = None) -> "MarkBandFrame":
+        return cls(inline_scale, 0.0, block_size, role_geometries, allocation)
 
     def symbol_bounds(self, role: str) -> tuple[float, float]:
         """Return a point mark's symbol block start and side (#1066); the bar band's when the role declares none."""
+        if self.allocation is not None:
+            block, size = self.allocation.symbol_bounds(role)
+            return self.block_origin + block, size
         offset, height = self.role_geometries[role].symbol_extent
         return self.block_origin + self.block_size * offset, self.block_size * height
 
     def role_bounds(self, role: str) -> tuple[float, float]:
         """Return the role's block start and extent without changing formula order."""
+        if self.allocation is not None:
+            block, size = self.allocation.span_bounds(role)
+            return self.block_origin + block, size
         geometry = self.role_geometries[role]
         return (self.block_origin + self.block_size * geometry.offset,
                 self.block_size * geometry.height)
@@ -241,6 +256,7 @@ def table_text_line_block(theme_tokens: Any, typography_roles: Any) -> float:
 def required_row_block_extents(*, review_rows: tuple[Any, ...], row_minimum: float,
                                row_padding: float, mark_block_size: float,
                                role_geometries: Mapping[str, MarkGeometry] | None = None,
+                               mark_band_allocation: MarkBandAllocation | None = None,
                                text_line_block: float = 0.0) -> tuple[float, ...]:
     """Close each row's minimum before any surplus distribution occurs.
 
@@ -253,6 +269,7 @@ def required_row_block_extents(*, review_rows: tuple[Any, ...], row_minimum: flo
     text_requirement = text_line_block + row_padding if text_line_block else 0.0
     return tuple(max(row_minimum, text_requirement, minimum_track_block_extent(
         review_row=row, mark_block_size=mark_block_size, role_geometries=role_geometries,
+        mark_band_allocation=mark_band_allocation,
     ) + row_padding) for row in review_rows)
 
 
@@ -299,7 +316,8 @@ def place_rows(*, review_rows: tuple[Any, ...], timeline_bounds: tuple[float, fl
 
 
 def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[RowPlacement, ...],
-                      mark_block_size: float, role_geometries: Mapping[str, MarkGeometry] | None = None) -> tuple[TrackPlacement, ...]:
+                      mark_block_size: float, role_geometries: Mapping[str, MarkGeometry] | None = None,
+                      mark_band_allocation: MarkBandAllocation | None = None) -> tuple[TrackPlacement, ...]:
     """Allocate member tracks whose completed marks are contained by their row."""
     geometries = role_geometries or {
         "planned": MarkGeometry(1.0, 0.0, 0, 0.0),
@@ -322,12 +340,14 @@ def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[Row
                     or actual.get("at") is not None)
 
     placements: list[TrackPlacement] = []
+    pitch = mark_band_allocation.outer_extent if mark_band_allocation is not None else mark_block_size
+    track_inset = -mark_band_allocation.outer_bounds[0] if mark_band_allocation is not None else 0.0
     for review_row, row in zip(review_rows, row_placements, strict=True):
         stacked_total = max(1, sum(item.track != "shared" for item in review_row.items))
-        if row.bounds[3] < stacked_total * mark_block_size:
+        if row.bounds[3] < stacked_total * pitch:
             raise LayoutError("E_LAYOUT_MARK_OVERFLOW", "/measuredSources/metricValues/timeline.mark.blockSize",
-                              detail=f"lanes={stacked_total}; extent={stacked_total * mark_block_size}")
-        lane_origin = row.bounds[1] + (row.bounds[3] - stacked_total * mark_block_size) / 2
+                              detail=f"lanes={stacked_total}; extent={stacked_total * pitch}")
+        lane_origin = row.bounds[1] + (row.bounds[3] - stacked_total * pitch) / 2
         stacked_index = 0
         members = sorted(
             enumerate(review_row.items),
@@ -335,14 +355,14 @@ def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[Row
         )
         for _, item in members:
             if item.track == "shared":
-                block = lane_origin
+                block = lane_origin + track_inset
                 actual_block = block
             else:
                 # A lane has a fixed base mark extent.  Role geometry is
                 # relative to this lane slot, never to the spare row space:
                 # rows may be taller for labels, group treatment, or viewport
                 # allocation without silently stretching marks.
-                block = lane_origin + stacked_index * mark_block_size
+                block = lane_origin + stacked_index * pitch + track_inset
                 actual_block = block
                 stacked_index += 1
             instance_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
@@ -356,14 +376,16 @@ def place_mark_tracks(*, review_rows: tuple[Any, ...], row_placements: tuple[Row
             slot_size = mark_block_size
             for role in roles:
                 geometry = geometries[role]
-                role_block = block + slot_size * geometry.offset
-                require_contained(row, role_block, slot_size * geometry.height, instance_id=instance_id, role=role)
+                local_block, local_size = (mark_band_allocation.span_bounds(role) if mark_band_allocation is not None
+                                          else (slot_size * geometry.offset, slot_size * geometry.height))
+                require_contained(row, block + local_block, local_size, instance_id=instance_id, role=role)
             placements.append(TrackPlacement(instance_id, block, actual_block, slot_size))
     return tuple(placements)
 
 
 def minimum_track_block_extent(*, review_row: Any, mark_block_size: float,
-                               role_geometries: Mapping[str, MarkGeometry] | None = None) -> float:
+                               role_geometries: Mapping[str, MarkGeometry] | None = None,
+                               mark_band_allocation: MarkBandAllocation | None = None) -> float:
     """Find the smallest integral row block accepted by the track planner.
 
     This deliberately invokes ``place_mark_tracks`` rather than re-encoding
@@ -374,7 +396,8 @@ def minimum_track_block_extent(*, review_row: Any, mark_block_size: float,
             place_mark_tracks(review_rows=(review_row,), row_placements=(
                 RowPlacement(str(review_row.row_id), getattr(review_row, "group_id", None),
                              (0.0, 0.0, 1.0, block_size)),
-            ), mark_block_size=mark_block_size, role_geometries=role_geometries)
+            ), mark_block_size=mark_block_size, role_geometries=role_geometries,
+                mark_band_allocation=mark_band_allocation)
         except LayoutError as error:
             if error.diagnostic_id != "E_LAYOUT_MARK_OVERFLOW":
                 raise
@@ -383,7 +406,7 @@ def minimum_track_block_extent(*, review_row: Any, mark_block_size: float,
 
     if mark_block_size <= 0:
         raise LayoutError("E_LAYOUT_MARK_OVERFLOW", "/measuredSources/metricValues/timeline.mark.blockSize")
-    upper = mark_block_size
+    upper = float(mark_block_size)
     while not fits(upper):
         upper *= 2
     lower = 0.0

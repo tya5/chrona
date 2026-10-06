@@ -14,7 +14,7 @@ from chrona.presentation.layout.mark_aware_scale import PointMarkFootprint, inse
 from chrona.presentation.layout.obstacles import obstacle_envelope
 from chrona.presentation.layout.model import geometry_sum
 from chrona.presentation.layout.presentation import TrackPlacement, table_text_line_block
-from chrona.presentation.layout.surface_marks import resolve_mark_geometries
+from chrona.presentation.layout.surface_marks import resolve_mark_geometries, resolve_mark_band
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.lane_projection import (
     LaneProjectionClosure, LaneProjectionInstance, close_lane_projection,
@@ -165,10 +165,13 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
                                        float(frame.timeline_inline + frame.timeline_inline_size),
                                        float(frame.timeline_inline), float(frame.temporal_scale))
     mark_band_size = float(metric_values["timeline.mark.blockSize"])
+    role_geometries = resolve_mark_geometries(theme_tokens)
+    mark_band_allocation = resolve_mark_band(theme_tokens, mark_band_size, role_geometries=role_geometries)
     footprint_inputs = dict(
         projection=projection, as_of=surface_content.as_of,
         theme_tokens=theme_tokens, mark_band_size=mark_band_size,
-        role_geometries=resolve_mark_geometries(theme_tokens), slot_id=timeline.source,
+        role_geometries=role_geometries, slot_id=timeline.source,
+        mark_band_allocation=mark_band_allocation,
         icon_assets=icon_assets, visual_requests=visual_requests,
         progress_fill_source=surface_content.progress_fill_source,
     )
@@ -182,7 +185,8 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
     scale = inset_scale_for_point_facets(provisional_scale, point_facets)
     footprints = (provisional_footprints if scale is provisional_scale else
                   compose_lane_item_footprints(scale=scale, **footprint_inputs))
-    subtracks = assign_lane_subtracks(membership, footprints, mark_band_size=mark_band_size)
+    subtracks = assign_lane_subtracks(membership, footprints, mark_band_size=mark_band_size,
+                                     reserved_band_bounds=mark_band_allocation.outer_bounds)
     resolved_visuals = resolved_lane_visual_requests(
         projection, visual_requests, as_of=surface_content.as_of)
     measured_labels = measure_lane_member_labels(
@@ -210,7 +214,8 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
                 + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0))
     return FixedLanePreflight(subtracks, frame, required, surface_content.as_of, scale,
                               measured_labels, resolved_visuals,
-                              tuple(zip((row.row_id for row in rows), requirements, strict=True)))
+                              tuple(zip((row.row_id for row in rows), requirements, strict=True)),
+                              mark_band_allocation)
 
 
 def build_lane_emissions(projection: Any, review_rows: tuple[Any, ...], marks: list[MarkPlacement],

@@ -21,7 +21,8 @@ from chrona.presentation.layout.presentation import (
 )
 from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, below_plot_reserve
 from chrona.presentation.layout.surface_lanes import place_lane_mark_tracks
-from chrona.presentation.layout.surface_marks import folded_instance_id, resolve_mark_geometries
+from chrona.presentation.layout.surface_marks import folded_instance_id, resolve_mark_geometries, resolve_mark_band
+from chrona.presentation.layout.mark_band_allocation import MarkBandAllocation
 from chrona.presentation.layout.surface_lanes import review_rows
 from chrona.presentation.layout.surface_geometry import bounds_from_rect, plot_rect, rect_from_bounds
 from chrona.presentation.layout.surface_quality import (
@@ -67,6 +68,7 @@ class SurfaceBaseGeometry:
     # and whether the placement was declared but had no room, so the chip falls back inside the plot.
     as_of_foot_reserve: float = 0.0
     as_of_foot_fallback: bool = False
+    mark_band_allocation: MarkBandAllocation | None = None
 
     def text_slot(self, item: Any) -> str:
         """Resolve a text host against the prepared base slot identities."""
@@ -80,9 +82,10 @@ class SurfaceBaseGeometry:
 def _provisional_point_facets(*, projection: Any, rows: tuple[Any, ...], scale: ScalePlacement,
                               as_of: date | None, theme_tokens: Any, slot_id: str,
                               mark_block_size: float,
-                              role_geometries: Mapping[str, MarkGeometry]) -> tuple[PointMarkFootprint, ...]:
+                              role_geometries: Mapping[str, MarkGeometry],
+                              mark_band_allocation: MarkBandAllocation | None = None) -> tuple[PointMarkFootprint, ...]:
     """Measure visible point-mark horizontal footprints for completed base scale."""
-    frame = MarkBandFrame.zero_origin(scale, mark_block_size, role_geometries)
+    frame = MarkBandFrame.zero_origin(scale, mark_block_size, role_geometries, mark_band_allocation)
     result: list[PointMarkFootprint] = []
 
     def include(item: Any, instance_id: str, source_kind: str, row_id: str,
@@ -182,6 +185,10 @@ def prepare_surface_base(request: SurfaceLayoutRequest) -> SurfaceBaseGeometry:
                          if request.surface_content.group_presentation == "header" and not group_tags else 0.0)
     role_geometries = resolve_mark_geometries(request.theme_tokens)
     mark_block_size = float(metric_values["timeline.mark.blockSize"])
+    mark_band_allocation = (request.fixed_lane_preflight.mark_band_allocation
+                            if projection.lane_membership is not None and request.fixed_lane_preflight is not None
+                            else resolve_mark_band(request.theme_tokens, mark_block_size,
+                                                   role_geometries=role_geometries))
     if projection.lane_membership is not None:
         assert request.fixed_lane_preflight is not None
         scale = request.fixed_lane_preflight.scale
@@ -191,6 +198,7 @@ def prepare_surface_base(request: SurfaceLayoutRequest) -> SurfaceBaseGeometry:
             as_of=request.surface_content.as_of, theme_tokens=request.theme_tokens,
             slot_id=timeline.slot_id, mark_block_size=mark_block_size,
             role_geometries=role_geometries,
+            mark_band_allocation=mark_band_allocation,
         )
         scale = inset_scale_for_point_facets(provisional_scale, point_facets)
     row_padding = float(metric_values["timeline.row.paddingBlock"])
@@ -207,6 +215,7 @@ def prepare_surface_base(request: SurfaceLayoutRequest) -> SurfaceBaseGeometry:
             review_rows=review_row_values, row_minimum=float(metric_values["timeline.row.minBlockSize"]),
             row_padding=row_padding, mark_block_size=mark_block_size,
             role_geometries=role_geometries, text_line_block=text_line_block,
+            mark_band_allocation=mark_band_allocation,
         )
     foot_reserve = 0.0
     foot_fallback = False
@@ -253,7 +262,8 @@ def prepare_surface_base(request: SurfaceLayoutRequest) -> SurfaceBaseGeometry:
                                      plan=lane_subtracks, mark_block_size=mark_block_size)
               if lane_subtracks is not None else
               place_mark_tracks(review_rows=review_row_values, row_placements=raw_rows,
-                                mark_block_size=mark_block_size, role_geometries=role_geometries))
+                                mark_block_size=mark_block_size, role_geometries=role_geometries,
+                                mark_band_allocation=mark_band_allocation))
     return SurfaceBaseGeometry(
         request, projection, layout_manifest, measured_sources, metric_values, decisions,
         slots, {slot.source_ref: slot for slot in slots}, table, timeline,
@@ -264,4 +274,5 @@ def prepare_surface_base(request: SurfaceLayoutRequest) -> SurfaceBaseGeometry:
         plot_rect(timeline.bounds, (row.bounds for row in rows)),
         group_tag_inline_size=group_tag_column_size(request.theme_tokens) if group_tags else 0.0,
         as_of_foot_reserve=foot_reserve, as_of_foot_fallback=foot_fallback,
+        mark_band_allocation=mark_band_allocation,
     )

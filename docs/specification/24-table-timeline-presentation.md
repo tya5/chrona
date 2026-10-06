@@ -98,6 +98,11 @@ added once. The pre-layout content requirement and row placement use this one
 rule. A table cell's line box is centred in its row using the cell's own role.
 Plot labels are not row-held text under this rule.
 
+A declared comparison stack (#1149) reserves its completed outer block extent,
+including span-frame padding, for row requirements and inter-track pitch. An
+oversized stack grows that reservation without resizing its nominal track;
+ordinary, folded-header and lane placements use the same Layout allocation.
+
 Derived sizes (#1150). A Theme that leaves `timeline.mark.blockSize` unbound gets the track
 `timeline.row.minBlockSize` less `timeline.row.paddingBlock`, so changing the row moves the
 track with no other edit; a bound value is used as declared, and a row that leaves no positive
