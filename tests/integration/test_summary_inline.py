@@ -215,3 +215,13 @@ def test_inline_content_consumes_the_slot_caption_reservation(tmp_path):
     assert len({t.text_layout.baseline[1] for t in texts}) == 1
     slot = next(s for s in result.surface.slots if s.source == "summary")
     assert max(t.bounds[1] + t.bounds[3] for t in texts) <= slot.bounds[1] + slot.bounds[3] + 0.001
+
+
+def test_omitted_inline_gaps_are_zero_at_runtime(tmp_path):
+    parts = _parts(COUNTDOWN)
+    _theme(parts)
+    for role in ("summary-caption", "metric", "summary-unit"):
+        del parts["theme"]["body"]["roles"][role]["inlineGap"]
+    texts = list(_texts(_render(tmp_path, parts, _inline())).values())
+    for first, second in zip(texts, texts[1:]):
+        assert second.bounds[0] == pytest.approx(first.bounds[0] + first.bounds[2], abs=0.001)
