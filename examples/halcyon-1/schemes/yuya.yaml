@@ -1,0 +1,70 @@
+version: chrona/color-scheme/v0.2
+kind: color-scheme
+id: yuya
+body:
+  colors:
+    surface: '#EFE3C8'
+    surfaceRaised: '#F8F1DF'
+    text: '#231A14'
+    textMuted: '#6B5A48'
+    accent: '#203A6B'
+    positive: '#2F6F5E'
+    negative: '#B22D1B'
+    warning: '#D6A444'
+    neutral: '#9C8B74'
+    rule: '#9C8B74'
+    insideLabelPlanned: '#FFFFFF'
+    insideLabelActual: '#FFFFFF'
+    insideLabelSnapshot: '#231A14'
+    insideLabelScenario: '#231A14'
+  suitability:
+    background: dark
+    colorVision:
+    - none-claimed
+    print: not-claimed
+  provenance:
+    kind: chrona-authored
+    source: Chrona HALCYON-1 example, Yuya target (docs/research/presentation/yuya-target-2026-09-26)
+    license: MIT
+  categories:
+    default: '#D4D3B9'
+    window: '#3E7F86'
+    exception: '#E6CD9A'
+    bar: '#2F6F5E'
+    barEdge: '#2F6F5E'
+    actualInk: '#B22D1B'
+    asofChip: '#203A6B'
+    asofInk: '#F8F1DF'
+    relationInk: '#9C8B74'
+    closed: '#E9DEC3'
+    bus: '#DBD7BD'
+    payload: '#D0D8C8'
+    ait: '#E1D2B4'
+    ground: '#D0D4D0'
+    launch: '#E2CDBA'
+    ops: '#D7D0C0'
+    series-1: '#D4D3B9'
+    series-2: '#D4D3B9'
+    series-3: '#D4D3B9'
+    series-4: '#D4D3B9'
+    series-5: '#D4D3B9'
+    series-6: '#D4D3B9'
+    factory-team: '#D4D3B9'
+    fw-team: '#D4D3B9'
+    validation-team: '#D4D3B9'
+    night: '#0E2B31'
+    gold: '#D6A444'
+    washi: '#EFE3C8'
+    paper: '#F8F1DF'
+    tierDark: '#1B1512'
+    lantern: '#E0512F'
+    lanternEdge: '#8E2414'
+    roof: '#2F6F5E'
+    lacquer: '#B22D1B'
+    indigo: '#203A6B'
+    sea: '#3E7F86'
+    seaInk: '#245A61'
+    ghost: '#9C8B74'
+    grid: '#C6BBA4'
+    wood: '#C89A5E'
+    woodEdge: '#8A5A2B'
