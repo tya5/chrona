@@ -139,7 +139,7 @@ _PATTERNED_RECT_PAINT = _RECT_PAINT | frozenset(("pattern",))
 _LAYOUT_TYPOGRAPHY = _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("writingMode",))
 _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | _GROUP_TAB | frozenset((
     "cellGap", "cellCornerRadius", "cellCornerChamfer", "frameCornerRadius", "chipPadding", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach",
-    "symbolHeight", "symbolOffset",
+    "symbolHeight", "symbolOffset", "cornerRadius",
     "progressInset", "summaryBarHeight", "swatchInlineSize", "swatchGap", "swatchBlockSize", "pointSwatchSize", "annotationContainer", "marker", "symbol", "edge",
     "stampPlacement", "coneSpread", "coneExtent",
 ))
@@ -243,10 +243,10 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
     register("planned actual snapshot scenario",
              "Layout marks and Scene Rect/Symbol", _PATTERNED_RECT_PAINT | frozenset((
                  "markHeight", "markOffset", "markPaintOrder", "markCornerRadius",
-                 "symbolHeight", "symbolOffset")),
+                 "symbolHeight", "symbolOffset", "cornerRadius")),
              scene_kinds=frozenset(("Rect", "Symbol")))
     register("missing-actual", "Layout mark and Scene Rect", _PATTERNED_RECT_PAINT | frozenset((
-        "markHeight", "markOffset", "markPaintOrder", "markCornerRadius")), scene_kinds=frozenset(("Rect",)))
+        "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "cornerRadius")), scene_kinds=frozenset(("Rect",)))
     register("network-node", "Scene Rect", _PATTERNED_RECT_PAINT, scene_kinds=frozenset(("Rect",)))
     register("milestone", "Scene Symbol", _PATTERNED_RECT_PAINT, scene_kinds=frozenset(("Symbol",)))
     register("gate", "Scene Symbol", _PATTERNED_RECT_PAINT, scene_kinds=frozenset(("Symbol",)))
@@ -307,7 +307,7 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
     register("as-of-label", "Layout as-of label text measurement and Scene Text ink", _TEXT_MEASUREMENT | _SHARED_TEXT_ICON_PAINT,
              scene_kinds=frozenset(("Text",)))
     register("as-of-label-chip member-label-chip finish-delta-chip period-label-chip", "Layout label chip and Scene Rect",
-             _PATTERNED_RECT_PAINT | frozenset(("backgroundTreatment", "chipPadding", "markCornerRadius")) | _VIEWER_FIT,
+             _PATTERNED_RECT_PAINT | frozenset(("backgroundTreatment", "chipPadding", "markCornerRadius", "cornerRadius")) | _VIEWER_FIT,
              scene_kinds=frozenset(("Rect",)))
     register("as-of-cone", "Layout as-of cone and Scene Symbol",
              frozenset(("fill", "opacity", "coneSpread", "coneExtent", "gradientFidelity")),

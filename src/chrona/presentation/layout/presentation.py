@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import math
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Literal, Mapping
 
 from chrona.presentation.layout.model import LayoutError, geometry_sum
 from chrona.presentation.layout.text import measure_text_width, metric_for_role
@@ -46,6 +46,7 @@ class MarkGeometry:
     # None takes the bar band's value, so a role without the Theme properties is unchanged.
     symbol_height: float | None = None
     symbol_offset: float | None = None
+    physical_corner_radius: float | Literal["capsule"] | None = None
 
     def __post_init__(self) -> None:
         if self.height <= 0 or self.offset < 0 or self.offset + self.height > 1 or not 0 <= self.corner_radius <= 0.5:

@@ -119,6 +119,16 @@ This preserves the scheduling model's separation between planned constraints and
 
 ## 5. Theme model
 
+### Physical corner radii (#1148)
+
+A role's optional `cornerRadius` binding names a `radius` token. Its value is
+a nonnegative physical-px number or `capsule`. This binding overrides the role's
+legacy ratio/em radius; absence retains that calculation exactly. Layout resolves
+the value against the final box: a physical value is independent of font and track
+size but bounded by half the shorter side; `capsule` is exactly half that side.
+Scene carries the completed radius and adapters do not resolve units or references.
+This declaration does not change the box allocation or its semantic ports.
+
 ### 5.1 v0.1 persistent Theme body
 
 A Theme maps the roles resolved by Style to named, concrete tokens. It has no semantic

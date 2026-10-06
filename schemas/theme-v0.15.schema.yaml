@@ -24,8 +24,15 @@ properties:
           required: [type, value]
           additionalProperties: false
           properties:
-            type: {description: "Kind of non-color token value.", enum: [number, fontFamily, fontWeight, dashPattern, marker, pattern, symbol, textAlternative, lineCap, lineJoin, fidelity, textTransform, numericSpacing, annotationContainer, stampPlacement, writingMode]}
+            type: {description: "Kind of non-color token value.", enum: [number, radius, fontFamily, fontWeight, dashPattern, marker, pattern, symbol, textAlternative, lineCap, lineJoin, fidelity, textTransform, numericSpacing, annotationContainer, stampPlacement, writingMode]}
             value: {}
+          if:
+            properties: {type: {const: radius}}
+            required: [type]
+          then:
+            properties:
+              value:
+                oneOf: [{type: number, minimum: 0}, {const: capsule}]
           allOf:
             - description: "Dash-pattern tokens use a positive numeric sequence; other tokens use scalar values."
               examples: [{type: dashPattern, value: [1]}]
@@ -293,6 +300,7 @@ properties:
             markOffset: {description: "Named lane-slot-relative mark block-start ratio for this semantic role.", type: string, minLength: 1}
             markPaintOrder: {description: "Named completed mark paint-order value for this semantic role.", type: string, minLength: 1}
             markCornerRadius: {description: "Named mark corner-radius ratio for this semantic role.", type: string, minLength: 1}
+            cornerRadius: {description: "Named radius token overriding this role's legacy radius with physical px or capsule.", type: string, minLength: 1}
             symbolHeight: {description: "Named lane-slot-relative block-size ratio of this role's point-mark symbol (a gate or milestone), separate from the role's bar band (#1066). Absent, the symbol takes markHeight.", type: string, minLength: 1}
             symbolOffset: {description: "Named lane-slot-relative block offset ratio of this role's point-mark symbol, separate from markOffset (#1066). Absent, the symbol takes markOffset.", type: string, minLength: 1}
             markReach: {description: "Named ratio of the planned mark's block size that a deadline tick spans, centred on that mark (0 < ratio <= 4); above 1 the tick stands above and below the bar (#822).", type: string, minLength: 1}

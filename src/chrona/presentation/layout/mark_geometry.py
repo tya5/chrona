@@ -13,6 +13,7 @@ from chrona.presentation.layout.surface_quality import PathCommand, ScalePlaceme
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.presentation import MarkBandFrame
 from chrona.presentation.layout.path_geometry import open_span_path, rounded_diamond_path
+from chrona.presentation.layout.rounded_outline import resolve_corner_radius
 from chrona.presentation.layout.surface_quality import MarkPlacement
 from chrona.presentation.model.projection import ObservationState
 
@@ -243,6 +244,9 @@ def compose_mark_placement(*, frame: MarkBandFrame, placement_id: str, source_re
     geometry = frame.role_geometries[semantic_id]
     radius = min(geometry.corner_radius * float(min(bounds.inline_size, bounds.block_size)),
                  float(min(bounds.inline_size, bounds.block_size)) / 2)
+    radius = resolve_corner_radius(geometry.physical_corner_radius,
+                                  width=float(bounds.inline_size), height=float(bounds.block_size),
+                                  legacy_radius=radius)
     commands = (open_span_path(inline=float(bounds.inline), block=float(bounds.block),
                                inline_size=float(bounds.inline_size), block_size=float(bounds.block_size), radius=radius)
                 if shape == "open-span" else
