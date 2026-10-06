@@ -1,4 +1,4 @@
-version: chrona/theme/v0.13
+version: chrona/theme/v0.15
 kind: theme
 id: yuya
 body:
@@ -8,7 +8,7 @@ body:
       value: 0.35
     chip-radius:
       type: number
-      value: 0.1333
+      value: 0.1899
     opacity.axis-band:
       type: number
       value: 1
@@ -62,7 +62,7 @@ body:
       value: 12
     size.note:
       type: number
-      value: 13.5
+      value: 12.5
     leading.tight:
       type: number
       value: 1.15
@@ -128,13 +128,21 @@ body:
           left: 1.2
         inlineSize: fill
         artwork:
-          glyph: chrona-target-parts:scroll-frame
+        - glyph: chrona-annotation-parts:scroll-mounting
           sliceInsets:
             top: 16.3
             right: 8.2
             bottom: 11.5
             left: 8.2
           unitEm: 0.1
+        - glyph: chrona-annotation-parts:scroll-rods
+          sliceInsets:
+            top: 16.3
+            right: 8.2
+            bottom: 11.5
+            left: 8.2
+          unitEm: 0.1
+          role: annotation-artwork-rods
     hatch:
       type: pattern
       value:
@@ -385,24 +393,59 @@ body:
       value:
         corner: end-top
         size: 1.7
-    frame.width:
-      type: number
-      value: 8
     frame.radius:
       type: number
       value: 0
+    size.asof:
+      type: number
+      value: 10.5
+    legend-swatch-gap:
+      type: number
+      value: 6
+    legend-swatch-block-size:
+      type: number
+      value: 12
+    legend-point-swatch-size:
+      type: number
+      value: 12
+    plaque.width:
+      type: number
+      value: 500
+    tag-plate-inset:
+      type: number
+      value: 3
+    frame.plaque.width:
+      type: number
+      value: 5
+    frame.rule.width:
+      type: number
+      value: 1.5
+    frame.board.width:
+      type: number
+      value: 8
+    size.note-heading:
+      type: number
+      value: 16
+    spacing.s:
+      type: number
+      value: 8
   roles:
     legend-swatch:
       swatchInlineSize: legend-swatch-inline-size
+      swatchGap: legend-swatch-gap
+      swatchBlockSize: legend-swatch-block-size
+      pointSwatchSize: legend-point-swatch-size
     axis-rule:
       strokeWidth: stroke-width
     as-of-label-chip:
       backgroundTreatment: fill
       chipPadding: chip-padding
       markCornerRadius: chip-radius
+      viewerFit: text-follows-box
     group-band:
-      backgroundTreatment: none
+      backgroundTreatment: fill
       backgroundPaintOrder: 10
+      opacity: opacity.group-band
     row-band:
       backgroundTreatment: none
       backgroundPaintOrder: 10
@@ -429,6 +472,7 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+      viewerFit: text-follows-box
     numeric:
       fontFamily: editorial
       fontWeight: weight.bold
@@ -439,6 +483,7 @@ body:
       numericSpacing: tabular-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+      viewerFit: text-follows-box
     heading:
       fontFamily: editorial
       fontWeight: weight.bold
@@ -449,6 +494,7 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+      viewerFit: text-follows-box
     subtitle:
       fontFamily: editorial
       fontWeight: weight.regular
@@ -459,6 +505,7 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+      viewerFit: text-follows-box
     axis:
       fontFamily: editorial
       fontWeight: weight.bold
@@ -469,6 +516,7 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+      viewerFit: text-follows-box
     legend:
       fontFamily: editorial
       fontWeight: weight.regular
@@ -479,6 +527,7 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+      viewerFit: text-follows-box
     annotation:
       fontFamily: editorial
       fontWeight: weight.regular
@@ -510,6 +559,7 @@ body:
       letterSpacing: letter-spacing
       textTransform: text-transform
       numericSpacing: numeric-spacing
+      viewerFit: text-follows-box
     slot-heading:
       fontFamily: editorial
       fontWeight: weight.bold
@@ -528,6 +578,7 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+      viewerFit: text-follows-box
     metric:
       fontFamily: editorial
       fontWeight: weight.bold
@@ -538,16 +589,18 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+      viewerFit: text-follows-box
     groupHeader:
       fontFamily: editorial
       fontWeight: weight.bold
-      fontSize: size.group
+      fontSize: size.tag
       lineHeight: leading.body
       letterSpacing: letter-spacing
       textTransform: text-transform
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+      writingMode: tag-writing-mode
     gate:
       strokeWidth: stroke-width
     tableColumnLabel:
@@ -560,6 +613,7 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+      viewerFit: text-follows-box
     calendar-exception:
       backgroundTreatment: fill
       backgroundPaintOrder: 12
@@ -656,6 +710,7 @@ body:
       iconScale: icon-scale
       iconGap: icon-gap
       laneBlockSize: axis-lane-quarter
+      viewerFit: text-follows-box
     axisMonth:
       fontFamily: editorial
       fontWeight: weight.regular
@@ -668,6 +723,7 @@ body:
       iconGap: icon-gap
       laneBlockSize: axis-lane-month
       labelInset: axis-label-inset
+      viewerFit: text-follows-box
     axis-band-decoration2:
       backgroundTreatment: none
       backgroundPaintOrder: 10
@@ -697,9 +753,39 @@ body:
     annotation-artwork: {}
     annotation-kind-stamp:
       stampPlacement: kind-stamp-placement
-    region-frame:
-      strokeWidth: frame.width
+    as-of-label:
+      fontFamily: editorial
+      fontWeight: weight.bold
+      fontSize: size.asof
+      lineHeight: leading.tight
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+    annotation-kind-label:
+      contrastTreatment: required
+      fontFamily: editorial
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      fontWeight: weight.bold
+      fontSize: size.note-heading
+      lineHeight: leading.tight
+      letterSpacing: letter-spacing
+    annotation-artwork-rods: {}
+    region-frame-plaque:
+      strokeWidth: frame.plaque.width
       frameCornerRadius: frame.radius
+    region-frame-rule:
+      strokeWidth: frame.rule.width
+      frameCornerRadius: frame.radius
+    region-frame-board:
+      strokeWidth: frame.board.width
+      frameCornerRadius: frame.radius
+    group-tab:
+      backgroundTreatment: fill
+      backgroundPaintOrder: 11
+      tabTarget: tag
+      opacity: opacity.group-band
+      tabGap: tag-plate-inset
   colorBindings:
     axis-rule.stroke: text
     background.fill: category:night
@@ -708,7 +794,7 @@ body:
     member-label-inside-actual.fill: insideLabelActual
     member-label-inside-snapshot.fill: insideLabelSnapshot
     member-label-inside-scenario.fill: insideLabelScenario
-    subtitle.fill: textMuted
+    subtitle.fill: category:gold
     table-cell-secondary.fill: textMuted
     legend.fill: text
     slot-heading.fill: text
@@ -717,7 +803,7 @@ body:
     note-index.fill: accent
     annotation-note-box.fill: category:paper
     annotation-note-box.stroke: category:paper
-    annotation-note-text.fill: text
+    annotation-note-text.fill: textMuted
     metric.fill: text
     table-header.fill: surfaceRaised
     axis-major.stroke: category:ghost
@@ -774,9 +860,16 @@ body:
     annotation-artwork.stroke: category:roof
     annotation-kind-stamp.fill: accent
     annotation-kind-stamp.stroke: accent
-    region-frame.fill: surface
-    region-frame.stroke: category:lacquer
     period-band.stroke: category:sea
+    heading.fill: category:gold
+    annotation-kind-label.fill: text
+    annotation-artwork-rods.fill: category:wood
+    group-tab.fill: category:wood
+    region-frame-plaque.fill: category:tierDark
+    region-frame-plaque.stroke: category:lacquer
+    region-frame-rule.stroke: category:gold
+    region-frame-board.fill: surface
+    region-frame-board.stroke: category:lacquer
   metrics:
     text.body.size: size.body
     text.body.lineHeight: leading.body
@@ -807,15 +900,15 @@ body:
   annotationKinds:
     risk:
       label: RISK
-      title: '{label}'
+      title: '{subject}'
       color: negative
+      stamp: chrona-target-parts:seal-risk
       colorAlso:
       - leader
-      stamp: chrona-target-parts:seal-risk
     note:
       label: NOTE
-      title: '{label}'
+      title: '{subject}'
       color: accent
+      stamp: chrona-target-parts:seal-note
       colorAlso:
       - leader
-      stamp: chrona-target-parts:seal-note

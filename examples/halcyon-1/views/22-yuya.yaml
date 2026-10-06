@@ -180,7 +180,14 @@ body:
   - id: Δ finish
     source:
       facet: finishDelta
-    format: signedDays
+    format: signedNumber
+    affixes:
+      slip:
+        suffix: 日
+      onTime:
+        suffix: 日
+      ahead:
+        suffix: 日
     missing: blank
     missingBy:
       inProgress: em-dash

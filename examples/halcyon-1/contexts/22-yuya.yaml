@@ -86,6 +86,15 @@ body:
       revision:
         token: example-v1
       contentIdentity: sha256:22fb3e80b35568bf3cbd55f94c0af715b8606322547b5e81a0254009ca45d1dc
+    - id: chrona-annotation-parts-v2026-10
+      kind: icon-catalog
+      store:
+        provider: local
+        identity: halcyon-1-example
+      address: catalogs/chrona-annotation-parts-v2026-10.yaml
+      revision:
+        token: example-v1
+      contentIdentity: sha256:c92700cdd10b4d2f1096ded9853fdd1d0d14123526e91b4c2fe9b2ba11d7ac9d
     - id: chrona-theme-starter-v2026-09-29
       kind: icon-catalog
       store:

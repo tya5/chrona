@@ -7,10 +7,11 @@ requiredThemeTokens:
 - legend-gap
 - legend-item-min
 - note-rail-width
-- panel.side
+- plaque.width
 - spacing.l
 - spacing.m
 - spacing.none
+- spacing.s
 reviewSurface:
   rowDistribution: fill
   backgroundExtents:
@@ -41,27 +42,41 @@ root:
     kind: column
     inlineSize:
       fixed:
-        token: panel.side
+        token: plaque.width
     blockSize: content
     gap:
       token: spacing.none
     padding:
-      token: spacing.m
-    alignItems: start
+      token: spacing.s
+    alignItems: stretch
     justifyContent: start
-    frame: {}
+    frame:
+      paint: plaque
     children:
-    - id: title
-      kind: slot
-      source: title
-      inlineSize: content
+    - id: plaque-rule
+      kind: column
+      inlineSize: fill
       blockSize: content
-      place:
-        inline: start
-        block: start
-        safety: safe
-      priority: required
-      overflow: visible-overflow
+      gap:
+        token: spacing.none
+      padding:
+        token: spacing.m
+      alignItems: start
+      justifyContent: start
+      frame:
+        paint: rule
+      children:
+      - id: title
+        kind: slot
+        source: title
+        inlineSize: content
+        blockSize: content
+        place:
+          inline: start
+          block: start
+          safety: safe
+        priority: required
+        overflow: visible-overflow
   - id: board
     kind: column
     inlineSize: fill
@@ -72,7 +87,8 @@ root:
       token: spacing.m
     alignItems: stretch
     justifyContent: start
-    frame: {}
+    frame:
+      paint: board
     children:
     - id: review
       kind: row
