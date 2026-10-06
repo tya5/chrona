@@ -11,6 +11,7 @@ import yaml
 from chrona.core.identity import content_identity
 from chrona.core.ports import SnapshotReadError, SnapshotReader
 from chrona.core.store_address import StoreAddressError, check_store_address, resolve_store_address
+from chrona.presentation.model.theme_references import resolve_references
 from chrona.resources import safe_load, schema_validator
 
 
@@ -110,9 +111,12 @@ def _resolve(value: dict[str, Any], key: str, load_base: BaseLoader,
         raise ThemeInheritanceError("E_THEME_INHERITANCE_BASE_KIND",
                                     f"base {Path(child_key).name} is {base.get('kind')} {base.get('version')} {base.get('id')!r}; "
                                     f"expected a theme {expected_base_version} with id {declaration['id']!r}")
-    if content_identity(base) != declaration["contentIdentity"]:
+    # The declared base identity is that of the resolved base (#1151); the effective Theme below keeps the base's
+    # references unresolved, so a child override of a token also moves every alias of it in the base.
+    base_identity = content_identity(resolve_references(base))
+    if base_identity != declaration["contentIdentity"]:
         raise ThemeInheritanceError("E_THEME_INHERITANCE_BASE_IDENTITY",
-                                    f"base Theme {declaration['id']!r} has content identity {content_identity(base)}, "
+                                    f"base Theme {declaration['id']!r} has content identity {base_identity}, "
                                     f"the derived Theme declares {declaration['contentIdentity']}")
     effective = deepcopy(base)
     effective["id"] = value["id"]
