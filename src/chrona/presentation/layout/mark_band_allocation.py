@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from math import isfinite
 from typing import TYPE_CHECKING, Mapping
 
-from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.model import LayoutError, geometry_sum
 from chrona.presentation.layout.presentation import MarkGeometry
 
 if TYPE_CHECKING:
@@ -86,7 +86,7 @@ def compose_mark_band(*, track_size: float, role_geometries: Mapping[str, MarkGe
     if stack is not None:
         gap, padding = float(stack.gap), float(stack.frame_padding)
         heights = tuple(max(spans[role].block_size for role in members) for members in stack.members)
-        stack_extent = sum(heights) + gap * (len(heights) - 1)
+        stack_extent = geometry_sum(heights) + gap * (len(heights) - 1)
         start = (track_size - stack_extent) / 2
         cursor = start
         for members, height in zip(stack.members, heights, strict=True):
