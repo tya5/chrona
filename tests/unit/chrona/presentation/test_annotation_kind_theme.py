@@ -110,6 +110,24 @@ def test_the_frame_reads_which_elements_the_theme_declares_and_their_geometry():
     assert ThemeTokenView(plain).annotation_kind_frame().secondary_role is None
 
 
+@pytest.mark.parametrize("width", ["fill", "hug"])
+def test_bar_width_is_typed_intent_with_fill_as_absent_default(width):
+    parts, resolved = _resolve()
+    assert ThemeTokenView(resolved).annotation_kind_frame().bar_width == "fill"
+    parts["theme"]["body"]["roles"]["annotation-kind-bar"]["barWidth"] = width
+    resolved = resolve_theme(parts["theme"], parts["scheme"], scheme_content_identity="sha256:test")
+    assert ThemeTokenView(resolved).annotation_kind_frame().bar_width == width
+
+
+@pytest.mark.parametrize("width", ["auto", 3, None])
+def test_invalid_bar_width_is_rejected_at_the_role_pointer(width):
+    parts, _ = _resolve()
+    parts["theme"]["body"]["roles"]["annotation-kind-bar"]["barWidth"] = width
+    resolved = resolve_theme(parts["theme"], parts["scheme"], scheme_content_identity="sha256:test")
+    with pytest.raises(ThemeTokenError, match="E_THEME_TOKEN_TYPE"):
+        ThemeTokenView(resolved).annotation_kind_frame()
+
+
 def test_the_retired_edge_role_member_is_rejected_not_ignored():
     parts = sr.bundle()
     ak.with_kind_theme(parts, border_side="start")

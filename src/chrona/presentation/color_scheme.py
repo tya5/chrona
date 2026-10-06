@@ -53,7 +53,7 @@ _STATE_TEXT_CONTRAST_FLOORS = {"required": 4.5, "deemphasized": 3.0}
 _OPTIONAL_STATE_TEXT_ROLES = frozenset({"annotation-note-text", "period-label"})
 # The annotation kind header text (#584) lies on a per-kind bar, not on the canvas surface, so it is judged
 # against its real grounds by `_annotation_kind_text_contrast` instead of by `_state_text_contrast`.
-_KIND_TEXT_ROLES = ("annotation-kind-label", "annotation-kind-secondary")
+_KIND_TEXT_ROLES = ("annotation-kind-label", "annotation-kind-secondary", "annotation-heading")
 _KIND_BOX_ROLES = ("annotation-callout-box", "annotation-highlight-box", "annotation-note-box", "annotation-arrow-box")
 # Note prose lies on its own note box (the Scene gate pairs them, #466), never on the canvas it floats above (#950).
 _NOTE_TEXT_ROLE = "annotation-note-text"
@@ -147,7 +147,7 @@ def _annotation_kinds(*, declared: Any, colors: Mapping[str, str]) -> dict[str, 
             kind_header(kind, declaration)
         except AnnotationKindTextError as error:
             raise ColorSchemeError(error.code, pointer, error.detail) from error
-        entry = {name: str(declaration[name]) for name in ("label", "secondary", "title", "stamp") if name in declaration}
+        entry = {name: str(declaration[name]) for name in ("label", "secondary", "title", "heading", "stamp") if name in declaration}
         intent = declaration.get("color")
         if intent is not None:
             if not isinstance(intent, str) or (intent not in _INTENTS and intent not in colors):
@@ -217,7 +217,7 @@ def _annotation_kind_text_contrast(*, declared_roles: Mapping[str, Any], resolve
             raise ColorSchemeError("E_SCHEME_STATE_TEXT_CONTRAST", f"{path}/fill")
         grounds: list[tuple[str, str, str]] = []  # (name, ink, ground)
         bar_fill = _role_color(resolved_roles, values, "annotation-kind-bar")
-        if "annotation-kind-bar" in resolved_roles:
+        if "annotation-kind-bar" in resolved_roles and role != "annotation-heading":
             if kinds:
                 for kind, entry in kinds.items():
                     ground = entry.get("color", bar_fill)
@@ -389,6 +389,8 @@ def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme
     _state_text_contrast(declared_roles=body.get("roles", {}), resolved_roles=roles,
                          values=values, surface=colors["surface"])
     annotation_kinds = _annotation_kinds(declared=body.get("annotationKinds"), colors=colors)
+    if any("heading" in entry for entry in annotation_kinds.values()) and "annotation-heading" not in roles:
+        raise ColorSchemeError("E_THEME_ROLE_REQUIRED", "/body/roles/annotation-heading")
     _annotation_kind_text_contrast(declared_roles=body.get("roles", {}), resolved_roles=roles,
                                    values=values, kinds=annotation_kinds)
     _annotation_note_ground(declared_roles=body.get("roles", {}), resolved_roles=roles,

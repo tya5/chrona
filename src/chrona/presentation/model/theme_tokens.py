@@ -158,6 +158,8 @@ class AnnotationKindFrame:
     stamp_role: str | None = None
     stamp_corner: str | None = None
     stamp_size: Decimal = Decimal(0)
+    heading_role: str | None = None
+    bar_width: str = "fill"
 
 
 @dataclass(frozen=True)
@@ -780,7 +782,9 @@ class ThemeTokenView:
             if corner not in {"start-top", "end-top", "start-bottom", "end-bottom"} or stamp_size <= 0:
                 raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{stamp_role}/stampPlacement")
         return AnnotationKindFrame(declared("annotation-kind-label"), declared("annotation-kind-secondary"),
-                                   bar_role, padding, stamp_role, corner, stamp_size)
+                                   bar_role, padding, stamp_role, corner, stamp_size,
+                                   declared("annotation-heading"),
+                                   self.optional_choice("annotation-kind-bar", "barWidth", ("fill", "hug")) or "fill")
 
     def _insets(self, value: Any, role: str, property_name: str) -> tuple[Decimal, Decimal, Decimal, Decimal]:
         """Return a validated (top, right, bottom, left) em-relative inset quadruple."""

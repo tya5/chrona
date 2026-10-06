@@ -127,6 +127,100 @@ def test_the_bar_covers_the_header_block_across_the_box_width(tmp_path):
         assert bar.bounds[3] == pytest.approx(LABEL + SECONDARY + 2 * PAD_BLOCK)
 
 
+def _separate_heading(parts):
+    theme = parts["theme"]["body"]
+    for kind in theme["annotationKinds"].values():
+        kind["title"] = "{label} {secondary}"
+        kind["heading"] = "{subject}"
+    theme["roles"]["annotation-heading"] = {
+        **deepcopy(theme["roles"]["annotation-kind-label"]),
+        "fontSize": "kind-heading-size", "lineHeight": "kind-heading-line"}
+    theme["values"].update({"kind-heading-size": {"type": "number", "value": 24},
+                             "kind-heading-line": {"type": "number", "value": 1.3}})
+    theme["colorBindings"]["annotation-heading.fill"] = "text"
+
+
+def test_explicit_fill_preserves_default_scene_and_svg_bytes(tmp_path):
+    plain = _render(_sub(tmp_path, "default"), theme={})
+    explicit = _render(_sub(tmp_path, "fill"), theme={},
+                       mutate=lambda parts: parts["theme"]["body"]["roles"]["annotation-kind-bar"].update(barWidth="fill"))
+    assert list(plain.surface.primitives) == list(explicit.surface.primitives)
+    assert plain.artifact.content == explicit.artifact.content
+
+
+def test_separate_heading_grows_box_not_bar_and_uses_its_own_role_and_ground(tmp_path):
+    rendered = _render(tmp_path, theme={}, mutate=_separate_heading)
+    ids = _by_id(rendered)
+    for note in ("view-n0", "view-n1"):
+        bar, heading, body = (ids[f"annotation-kind-bar:{note}"], ids[f"annotation-heading:{note}"],
+                              ids[f"annotation-text:{note}"])
+        assert bar.bounds[3] == pytest.approx(LABEL + 2 * PAD_BLOCK)
+        assert heading.visual_role == "annotation-heading"
+        assert heading.baseline[1] == pytest.approx(bar.bounds[1] + bar.bounds[3] + 24)
+        assert body.bounds[1] == pytest.approx(bar.bounds[1] + bar.bounds[3] + 24 * 1.3)
+        assert heading.paint.fill != ids[f"annotation-kind-text:{note}:0"].paint.fill
+        assert heading.bounds[1] >= bar.bounds[1] + bar.bounds[3] - 0.01
+        box = ids[f"annotation-box:{note}"]
+        assert heading.bounds[0] + heading.bounds[2] <= box.bounds[0] + box.bounds[2] + 0.01
+        assert body.bounds[1] + body.bounds[3] <= box.bounds[1] + box.bounds[3] + 0.01
+    findings = _findings(_document(rendered), "annotation-heading")
+    assert {item.ground_id for item in findings} == {"annotation-box:view-n0", "annotation-box:view-n1"}
+    assert all(item.severity == "info" for item in findings)
+    assert b"annotation-heading:view-n0" in rendered.artifact.content
+
+
+@pytest.mark.parametrize("corner", ["start-top", "end-top", "start-bottom", "end-bottom"])
+def test_fill_and_heading_respect_stamp_and_border_insets(tmp_path, corner):
+    source = ak.project()
+    rendered = ak.render(tmp_path, source,
+                         _parts(source, theme={"stamp": corner, "border_side": "start", "border_width": 6},
+                                mutate=_separate_heading))
+    ids = _by_id(rendered)
+    box, bar, heading = (ids["annotation-box:view-n0"], ids["annotation-kind-bar:view-n0"],
+                         ids["annotation-heading:view-n0"])
+    # The stamp is 2 note-text sizes wide; its column adds half a text size.
+    stamp_column = 2.5 * ids["annotation-text:view-n0"].text_layout.font_size
+    assert bar.bounds[2] == pytest.approx(box.bounds[2] - 6 - stamp_column)
+    assert heading.baseline[0] == pytest.approx(bar.bounds[0])
+    expected_start = box.bounds[0] + 6 + (stamp_column if corner.startswith("start") else 0)
+    assert bar.bounds[0] == pytest.approx(expected_start)
+
+
+def test_kind_color_also_header_paints_separate_heading_on_box_ground(tmp_path):
+    def mutate(parts):
+        _separate_heading(parts)
+        theme = parts["theme"]["body"]
+        del theme["roles"]["annotation-kind-bar"]
+        del theme["colorBindings"]["annotation-kind-bar.fill"]
+        for role in ("annotation-kind-label", "annotation-kind-secondary"):
+            theme["colorBindings"][f"{role}.fill"] = "text"
+        for kind in theme["annotationKinds"].values():
+            kind["colorAlso"] = ["header"]
+    rendered = _render(tmp_path, theme={}, mutate=mutate)
+    assert _by_id(rendered)["annotation-heading:view-n0"].paint.fill == ak.KIND_COLORS["kind-alert"]
+    assert all(item.ground_id.startswith("annotation-box:") for item in _findings(_document(rendered), "annotation-heading"))
+
+
+def test_hug_sizes_only_bar_text_not_separate_heading_or_body(tmp_path):
+    def mutate(parts):
+        _separate_heading(parts)
+        theme = parts["theme"]["body"]
+        theme["annotationKinds"]["risk"]["heading"] = "A much longer separate heading for {subject}"
+        theme["roles"]["annotation-kind-bar"]["barWidth"] = "hug"
+    ids = _by_id(_render(tmp_path, theme={}, mutate=mutate))
+    bar, title, heading = (ids["annotation-kind-bar:view-n0"], ids["annotation-kind-text:view-n0:0"],
+                           ids["annotation-heading:view-n0"])
+    assert bar.bounds[2] == pytest.approx(title.bounds[2] + 2 * PAD_INLINE)
+    assert bar.bounds[2] < heading.bounds[2]
+
+
+def test_heading_requires_its_own_role_before_layout(tmp_path):
+    def mutate(parts):
+        parts["theme"]["body"]["annotationKinds"]["risk"]["heading"] = "{subject}"
+    with pytest.raises(Exception, match="E_THEME_ROLE_REQUIRED"):
+        _render(tmp_path, theme={}, mutate=mutate)
+
+
 def test_the_header_text_sits_inside_the_bar_padding(tmp_path):
     ids = _by_id(_render(tmp_path, theme={}))
     bar = ids["annotation-kind-bar:view-n0"]

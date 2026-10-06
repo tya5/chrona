@@ -20,7 +20,7 @@ LABELS_CLASSIFIED_BY_ROLE = {"finishDelta", "varianceAhead", "varianceBehind"}
 def test_contrast_registry_classifies_only_the_finite_state_text_and_decoration_roles():
     assert [item.scene_role for item in contrast_bindings(ContrastClass.STATE_TEXT)] == [
         "period-label", "variance-ahead", "variance-on-track", "variance-behind", "missing-actual-cell",
-        "annotation-note-text", "annotation-kind-label", "annotation-kind-secondary",
+        "annotation-note-text", "annotation-kind-label", "annotation-kind-secondary", "annotation-heading",
     ]
     assert [item.scene_role for item in contrast_bindings(ContrastClass.DECORATION)] == [
         "calendar-closed", "calendar-exception", "period-band", "axis-band-decoration", "axis-band-decoration2",

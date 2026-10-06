@@ -139,7 +139,7 @@ _PATTERNED_RECT_PAINT = _RECT_PAINT | frozenset(("pattern",))
 _LAYOUT_TYPOGRAPHY = _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("writingMode",))
 _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | _GROUP_TAB | frozenset((
     "cellGap", "cellCornerRadius", "cellCornerChamfer", "frameCornerRadius", "chipPadding", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach",
-    "symbolHeight", "symbolOffset", "cornerRadius", "strokeAlign", "align",
+    "symbolHeight", "symbolOffset", "cornerRadius", "strokeAlign", "align", "barWidth",
     "progressInset", "summaryBarHeight", "swatchInlineSize", "swatchGap", "swatchBlockSize", "pointSwatchSize", "annotationContainer", "marker", "symbol", "edge",
     "stampPlacement", "coneSpread", "coneExtent",
 ))
@@ -234,7 +234,7 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
     register("annotation-note-text", "Scene state Text and contrast policy",
              _TEXT_MEASUREMENT | _TEXT_PAINT | frozenset(("contrastTreatment",)),
              scene_kinds=frozenset(("Text",)))
-    register("annotation-kind-label annotation-kind-secondary", "Layout annotation-kind header text and Scene state Text",
+    register("annotation-kind-label annotation-kind-secondary annotation-heading", "Layout annotation-kind header text and Scene state Text",
              _TEXT_MEASUREMENT | _TEXT_PAINT | frozenset(("contrastTreatment",)),
              scene_kinds=frozenset(("Text",)))
     register("variance-ahead variance-on-track variance-behind missing-actual-cell",
@@ -283,7 +283,7 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              _PATTERNED_RECT_PAINT | frozenset(("annotationContainer", "cornerRadius")) | _VIEWER_FIT,
              scene_kinds=frozenset(("Rect", "Symbol")))
     register("annotation-kind-bar", "Layout annotation-kind title bar and Scene Rect",
-             _RECT_PAINT | frozenset(("chipPadding", "markCornerRadius")), scene_kinds=frozenset(("Rect",)))
+             _RECT_PAINT | frozenset(("chipPadding", "markCornerRadius", "barWidth")), scene_kinds=frozenset(("Rect",)))
     register("annotation-kind-accent", "Layout kind-painted box border ink and Scene Rect/Symbol",
              _RECT_PAINT, scene_kinds=frozenset(("Rect", "Symbol")))
     register("annotation-kind-stamp", "Layout annotation-kind stamp glyph and Scene Symbol",

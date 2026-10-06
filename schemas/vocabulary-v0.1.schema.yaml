@@ -86,3 +86,7 @@ $defs:
     description: "Endpoint of an annotation anchor in a View: `start`, the span-end `end` (canonical, as in `dateEndpoint`) or its alias `finish` (what Views have always said; normalised to `finish` before layout because the text appears in Scene ids), `at`, or `body`."
     examples: [end]
     enum: [start, end, finish, at, body]
+  annotationBarWidth:
+    description: "Inline sizing of an annotation-kind bar within its completed content container."
+    examples: [fill]
+    enum: [fill, hug]

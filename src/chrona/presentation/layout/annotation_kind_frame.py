@@ -13,7 +13,7 @@ from dataclasses import dataclass, replace
 from decimal import Decimal
 from typing import Any, Callable
 
-from chrona.presentation.annotation_kind_text import header_lines
+from chrona.presentation.annotation_kind_text import header_lines, heading_text
 from chrona.presentation.layout.mark_geometry import symbol_parts
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
 from chrona.presentation.layout.surface_quality import (
@@ -54,6 +54,10 @@ class KindFrameMeasure:
     stamp_inline: float = 0.0
     stamp_block: float = 0.0
     stamp_column: float = 0.0
+    heading: KindHeaderLine | None = None
+    bar_block: float = 0.0
+    bar_inline: float = 0.0
+    bar_width: str = "fill"
 
     @property
     def stamp_at_start(self) -> bool:
@@ -70,7 +74,7 @@ class KindFrameMeasure:
 
     @property
     def empty(self) -> bool:
-        return not self.lines and self.stamp_ref is None
+        return not self.lines and self.heading is None and self.stamp_ref is None
 
 
 EMPTY_FRAME = KindFrameMeasure((), False, 0.0, 0.0, 0.0, 0.0, None)
@@ -111,16 +115,31 @@ def measure_kind_frame(*, kind: AnnotationKindToken | None, subject: str, frame:
         stamp_block = float(frame.stamp_size) * text_size
         stamp_inline = stamp_block * aspect
         stamp_column = stamp_inline + STAMP_GAP_EM * text_size
-    if not lines and stamp_ref is None:
+    heading = None
+    content = heading_text(kind.header, subject=subject, subject_id=subject_id)
+    if content is not None:
+        role = frame.heading_role
+        if role is None:
+            raise LayoutError("E_THEME_ROLE_REQUIRED", "/body/roles/annotation-heading")
+        treatment = theme_tokens.text_treatment(role)
+        size = float(treatment.font_size)
+        heading = KindHeaderLine(content, role, size, float(treatment.line_height),
+                                 measure_text_width(content, font_size=size, font_metrics=metric_for(role),
+                                                    letter_spacing=float(treatment.letter_spacing),
+                                                    text_transform=treatment.transform))
+    if not lines and heading is None and stamp_ref is None:
         return EMPTY_FRAME
     padding_inline = float(frame.bar_padding_em) * lines[0].font_size if bar else 0.0
     padding_block = padding_inline / 2
-    header_block = (geometry_sum(line.font_size * line.leading for line in lines) + 2 * padding_block) if lines else 0.0
-    header_inline = (max(line.width for line in lines) + 2 * padding_inline) if lines else 0.0
+    bar_block = (geometry_sum(line.font_size * line.leading for line in lines) + 2 * padding_block) if lines else 0.0
+    bar_inline = (max(line.width for line in lines) + 2 * padding_inline) if lines else 0.0
+    header_block = bar_block + (heading.font_size * heading.leading if heading is not None else 0.0)
+    header_inline = max(bar_inline, heading.width if heading is not None else 0.0)
     return KindFrameMeasure(
         tuple(lines), bar, padding_inline, padding_block, header_block, header_inline,
         frame.bar_role if bar else None,
-        stamp_ref, frame.stamp_corner if stamp_ref is not None else None, stamp_inline, stamp_block, stamp_column)
+        stamp_ref, frame.stamp_corner if stamp_ref is not None else None, stamp_inline, stamp_block, stamp_column,
+        heading, bar_block, bar_inline, frame.bar_width)
 
 
 def place_kind_frame(measure: KindFrameMeasure, *, annotation_id: str, presentation: AnnotationPresentation,
@@ -142,7 +161,8 @@ def place_kind_frame(measure: KindFrameMeasure, *, annotation_id: str, presentat
     inner_width = width - measure.inline_insets
     if measure.bar:
         shapes.append(rect(f"annotation-kind-bar:{annotation_id}", "annotationKindBar",
-                           inner_x, inner_y, inner_width, measure.header_block))
+                           inner_x, inner_y,
+                           inner_width if measure.bar_width == "fill" else measure.bar_inline, measure.bar_block))
     if measure.stamp_ref is not None:
         gap = measure.stamp_column - measure.stamp_inline
         stamp_x = (x if measure.stamp_at_start
@@ -168,4 +188,13 @@ def place_kind_frame(measure: KindFrameMeasure, *, annotation_id: str, presentat
                             semantic_id=semantic_id, annotation=presentation)
         text.append(replace(placed, paint_order=paint_order + 1))
         line_top += line.font_size * line.leading
+    if measure.heading is not None:
+        line = measure.heading
+        placed = place_text(placement_id=f"annotation-heading:{annotation_id}", source_ref=annotation_id,
+                            content=line.content, inline=inner_x,
+                            baseline_block=inner_y + measure.bar_block + line.font_size,
+                            typography_role=line.role, theme_tokens=theme_tokens, font_metrics=font_metrics,
+                            collision_region="annotations", collision_domain=CollisionDomain(annotation_slot, "content"),
+                            semantic_id="annotationHeading", annotation=presentation)
+        text.append(replace(placed, paint_order=paint_order + 1))
     return tuple(shapes), tuple(text)

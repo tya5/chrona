@@ -31,6 +31,20 @@ def test_the_title_defaults_to_the_label():
     assert header_lines(header, subject="Task 1") == ("RISK",)
 
 
+def test_separate_heading_uses_the_closed_title_grammar_without_changing_bar_lines():
+    from chrona.presentation.annotation_kind_text import heading_text
+    header = kind_header("risk", {"label": "RISK", "heading": "{{{subjectId}}} {subject}"})
+    assert header_lines(header, subject="Task") == ("RISK",)
+    assert heading_text(header, subject="Task", subject_id="t1") == "{t1} Task"
+    assert heading_text(kind_header("risk", {"label": "RISK"}), subject="Task") is None
+
+
+@pytest.mark.parametrize("heading", [None, "", " ", 7, "{unknown}", "{secondary}", "{"])
+def test_invalid_separate_heading_is_a_template_error(heading):
+    with pytest.raises(AnnotationKindTextError, match="E_THEME_ANNOTATION_KIND_TEMPLATE"):
+        kind_header("risk", {"label": "RISK", "heading": heading})
+
+
 def test_the_secondary_label_is_a_second_line_unless_the_title_shows_it():
     declared = {"label": "警告", "secondary": "WARNING"}
     assert header_lines(kind_header("risk", declared), subject="x") == ("警告", "WARNING")
