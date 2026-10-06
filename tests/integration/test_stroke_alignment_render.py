@@ -73,3 +73,24 @@ def test_authored_inside_stroke_paints_up_to_but_not_beyond_declared_mark_edge(t
     stroke = ImageColor.getrgb(mark.paint.stroke)
     assert pixels.getpixel((20, 8)) == stroke
     assert pixels.getpixel((12, 8)) != stroke
+
+
+@pytest.mark.parametrize(("reference", "completed_width"), [
+    ({"ref": "width.base"}, 4), ({"expr": "2 * {width.base}"}, 8),
+])
+def test_resolved_theme_numbers_feed_aligned_geometry_without_affecting_px_radius(tmp_path, reference, completed_width):
+    parts = sr.bundle()
+    body = parts["theme"]["body"]
+    body["values"].update({
+        "width.base": {"type": "number", "value": 2},
+        "width.resolved": {"type": "number", "value": reference},
+        "physical-radius": {"type": "radius", "value": 1.5},
+    })
+    body["roles"]["planned"].update(strokeAlign="inside", strokeWidth="width.resolved",
+                                       cornerRadius="physical-radius")
+    rendered = sr.render(tmp_path, sr.project({"a": sr.span("a", date(2026, 2, 2), 30)}),
+                         presentation=parts)
+    mark = next(node for node in rendered.surface.primitives if node.scene_id.startswith("planned:"))
+    assert mark.corner_radius == 1.5
+    assert mark.paint.stroke_width == mark.stroke_clip.stroke_width == completed_width
+    validate_scene_document(scene_document(rendered.scene))
