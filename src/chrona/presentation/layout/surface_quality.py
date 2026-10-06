@@ -32,6 +32,29 @@ class PathCommand:
 
 
 @dataclass(frozen=True)
+class StrokeClip:
+    """Completed contour and finite clip region, never inferred by an adapter."""
+
+    outline: tuple[PathCommand, ...]
+    outside: bool
+    region: tuple[float, float, float, float]
+    stroke_width: float
+
+    def __post_init__(self) -> None:
+        if (not isinstance(self.outside, bool)
+                or len(self.region) != 4 or not all(isfinite(value) for value in self.region)
+                or self.region[2] <= 0 or self.region[3] <= 0
+                or isinstance(self.stroke_width, bool) or not isfinite(self.stroke_width) or self.stroke_width <= 0):
+            raise ValueError("E_LAYOUT_STROKE_CLIP_INVALID")
+
+
+@dataclass(frozen=True)
+class AlignedStrokePlacement:
+    primitive_id: str
+    clip: StrokeClip
+
+
+@dataclass(frozen=True)
 class MarkerGeometry:
     """Completed terminal geometry selected by Theme and owned by Layout."""
 
@@ -632,6 +655,7 @@ class SurfacePlacement:
     lane_emissions: tuple[LaneEmissionPlacement, ...] = ()
     patterns: tuple[PatternedPlacement, ...] = ()
     lane_label_suppressions: tuple[LaneLabelSuppression, ...] = ()
+    aligned_strokes: tuple[AlignedStrokePlacement, ...] = ()
 
     def assert_valid(self) -> None:
         """Reject invalid required geometry before a renderer receives it."""

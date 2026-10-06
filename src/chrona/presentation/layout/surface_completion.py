@@ -1,6 +1,8 @@
 """Owns final slot ownership, overflow evidence, canvas bounds, lane row anchors and catalogue patterns; reads every completed placement batch."""
 from __future__ import annotations
 
+from chrona.presentation.layout.stroke_alignment import complete_aligned_strokes
+
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from decimal import Decimal
@@ -363,6 +365,8 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
                                  info_diagnostics=((SuppressedPlotLabels("table-timeline", suppressed_plot_labels),)
                                                    if suppressed_plot_labels else ()),
                                  lane_emissions=lane_emissions, patterns=patterns,
-                                 lane_label_suppressions=tuple(lane_label_suppressions))
+                                 lane_label_suppressions=tuple(lane_label_suppressions),
+                                 aligned_strokes=complete_aligned_strokes(tuple(marks), tuple(shapes),
+                                                                        lane_emissions, request.theme_tokens))
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks, tuple(mark_absences))

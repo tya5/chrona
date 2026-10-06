@@ -43,3 +43,11 @@ def test_catalogue_pattern_contract_admits_only_always_rect_roles():
     # This restriction is specific to new catalogue values. Existing Theme
     # applicability for legacy patterns remains unchanged.
     assert theme_role_property_consumer("planned", "pattern") is not None
+
+
+def test_stroke_alignment_is_admitted_only_for_contour_stroke_consumers():
+    for role in ("planned", "gate", "network-node", "annotation-note-box", "as-of-label-chip",
+                 "axis-band-decoration", "annotation-artwork", "annotation-kind-stamp"):
+        assert theme_role_property_consumer(role, "strokeAlign") is not None
+    for role in ("as-of-cone", "canvas-texture", "text", "dependency"):
+        assert theme_role_property_consumer(role, "strokeAlign") is None

@@ -6,7 +6,7 @@ from datetime import date
 import math
 from typing import Any
 
-from chrona.presentation.layout.surface_quality import FitWarning, MarkerGeometry, PathCommand, RelationFanIn, TextFit
+from chrona.presentation.layout.surface_quality import FitWarning, MarkerGeometry, PathCommand, RelationFanIn, StrokeClip, TextFit
 from chrona.presentation.layout.pattern_placement import PatternTilePrimitive
 from chrona.presentation.model.font_metrics import FontTabularWarning
 from chrona.presentation.model.info_diagnostics import PresentationInfo
@@ -316,8 +316,15 @@ class ScenePrimitive:
     fan_in: RelationFanIn | None = None
     # The viewer-fit mode of a text-bearing box (#1050); `raw` is today's output.
     viewer_fit: str = "raw"
+    stroke_clip: StrokeClip | None = None
 
     def __post_init__(self) -> None:
+        if self.stroke_clip is not None and (self.kind not in {"Rect", "Symbol", "Path"}
+                or (self.kind != "Rect" and not self.stroke_clip.outline)
+                or self.viewer_fit == BOX_FOLLOWS_TEXT
+                or (self.paint is not None and (self.paint.stroke is None
+                    or self.paint.stroke_width != self.stroke_clip.stroke_width))):
+            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID", "inconsistent completed stroke clip")
         if (self.viewer_fit not in VIEWER_FIT_MODES
                 or (self.viewer_fit != "raw" and self.kind not in {"Rect", "Symbol"})
                 or (self.viewer_fit == BOX_FOLLOWS_TEXT and (

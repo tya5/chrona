@@ -59,6 +59,14 @@ $defs:
     required: [id, kind, sourceRef, sourceKind, purpose, visualRole, bounds, slotId]
     additionalProperties: false
     dependentRequired: {fromInstanceId: [toInstanceId], toInstanceId: [fromInstanceId]}
+    if: {required: [strokeClip]}
+    then:
+      required: [paint]
+      properties:
+        kind: {enum: [Rect, Symbol, Path]}
+        paint: {required: [stroke, strokeWidth], properties: {strokeWidth: {type: number, exclusiveMinimum: 0}}}
+      if: {properties: {kind: {not: {const: Rect}}}}
+      then: {properties: {strokeClip: {required: [outline]}}}
     allOf:
       - description: "Resolved endpoint identity is metadata for a Path, never another primitive kind."
         examples: [{kind: Path, fromInstanceId: source-instance, toInstanceId: target-instance}]
@@ -88,6 +96,7 @@ $defs:
       textLayout: {$ref: "#/$defs/textLayout"}
       paint: {$ref: "#/$defs/paint"}
       cornerRadius: {$ref: "#/$defs/nonnegative"}
+      strokeClip: {$ref: "#/$defs/strokeClip"}
       pathCommands: {$ref: "#/$defs/pathCommands"}
       points: {$ref: "#/$defs/points"}
       href: {$ref: "#/$defs/text"}
@@ -150,6 +159,15 @@ $defs:
   marker: {description: "A completed relation marker geometry.", type: object, required: [outline, headLength, headWidth, attachmentOffset, paintMode], additionalProperties: false, properties: {outline: {$ref: "#/$defs/nonemptyPathCommands"}, headLength: {$ref: "#/$defs/positive"}, headWidth: {$ref: "#/$defs/positive"}, attachmentOffset: {$ref: "#/$defs/number"}, paintMode: {$ref: "#/$defs/markerPaintMode"}, angleDegrees: {description: "Layout-completed terminal axis when the endpoint tangent is shorter than the head.", $ref: "#/$defs/number"}, units: {description: "Layout-completed physical-px units for a derived terminal attachment.", const: userSpaceOnUse}, strokeWidth: {description: "Completed physical stroke width of a stroked derived terminal.", $ref: "#/$defs/nonnegative"}}, if: {required: [units]}, then: {if: {properties: {paintMode: {const: stroke}}}, then: {required: [strokeWidth]}, else: {not: {required: [strokeWidth]}}}, else: {properties: {attachmentOffset: {minimum: 0}}, not: {required: [strokeWidth]}}}
   relationFanIn: {description: "Layout authorization for arrivals sharing one exact target port and one terminal marker owner.", type: object, required: [targetPortId, terminalOwnerId], additionalProperties: false, properties: {targetPortId: {$ref: "#/$defs/string"}, terminalOwnerId: {$ref: "#/$defs/string"}}}
   nonemptyPathCommands: {description: "A non-empty completed path command list.", type: array, minItems: 1, items: {$ref: "#/$defs/pathCommand"}}
+  strokeClip:
+    description: "Layout-completed stroke-only contour clip. No outline means the same Rect bounds/radius; other kinds carry the exact closed contour. Paint already carries the completed doubled stroke width."
+    type: object
+    required: [outside, region]
+    additionalProperties: false
+    properties:
+      outside: {description: "Keep the contour complement rather than its nonzero-winding interior.", type: boolean}
+      region: {$ref: "#/$defs/bounds"}
+      outline: {$ref: "#/$defs/nonemptyPathCommands"}
   markerPaintMode: {description: "The closed marker paint mode.", $ref: "urn:chrona:graphics-v0.1#/$defs/paintMode"}
   pattern: {description: "A completed legacy hatch or catalogue tile.", examples: [{tileInlineSize: 4, tileBlockSize: 4, angleDegrees: 0, strokes: [{start: [0, 0], end: [0, 4], width: 1}]}], oneOf: [{$ref: "#/$defs/legacyPattern"}, {$ref: "#/$defs/catalogPattern"}]}
   legacyPattern: {description: "The unchanged v0.6 repeated line geometry.", type: object, required: [tileInlineSize, tileBlockSize, angleDegrees, strokes], additionalProperties: false, properties: {tileInlineSize: {$ref: "#/$defs/positive"}, tileBlockSize: {$ref: "#/$defs/positive"}, angleDegrees: {$ref: "#/$defs/patternAngle"}, strokes: {$ref: "#/$defs/patternStrokes"}}}

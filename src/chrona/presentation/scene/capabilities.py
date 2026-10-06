@@ -139,7 +139,7 @@ _PATTERNED_RECT_PAINT = _RECT_PAINT | frozenset(("pattern",))
 _LAYOUT_TYPOGRAPHY = _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("writingMode",))
 _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | _GROUP_TAB | frozenset((
     "cellGap", "cellCornerRadius", "cellCornerChamfer", "frameCornerRadius", "chipPadding", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach",
-    "symbolHeight", "symbolOffset", "cornerRadius",
+    "symbolHeight", "symbolOffset", "cornerRadius", "strokeAlign",
     "progressInset", "summaryBarHeight", "swatchInlineSize", "swatchGap", "swatchBlockSize", "pointSwatchSize", "annotationContainer", "marker", "symbol", "edge",
     "stampPlacement", "coneSpread", "coneExtent",
 ))
@@ -189,6 +189,11 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
 
     def register(names: str, consumer: str, properties: frozenset[str],
                  *, scene_kinds: frozenset[str] = frozenset()) -> None:
+        # Contour strokes need a role width or completed glyph-part widths.
+        # A fill-only Symbol or a texture's internal strokes are not box borders.
+        if scene_kinds & {"Rect", "Symbol"} and (
+                "strokeWidth" in properties or names in {"annotation-kind-stamp", "annotation-artwork"}):
+            properties = properties | frozenset(("strokeAlign",))
         for name in names.split():
             if name in roles:
                 raise AssertionError(f"duplicate Theme role contract: {name}")

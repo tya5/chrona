@@ -7,6 +7,8 @@ from typing import Any, Mapping
 
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.pattern_placement import PatternedPlacement, complete_pattern_placement
+from chrona.presentation.layout.stroke_alignment import complete_aligned_strokes
+from chrona.presentation.layout.surface_quality import AlignedStrokePlacement, ShapePlacement
 from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun
 from chrona.presentation.layout.canvas_texture import CanvasTexture, complete_canvas_texture
@@ -40,6 +42,7 @@ class DependencyNetworkLayout:
     fit_warnings: tuple[FitWarning, ...] = ()
     patterns: tuple[PatternedPlacement, ...] = ()
     texture: CanvasTexture | None = None
+    aligned_strokes: tuple[AlignedStrokePlacement, ...] = ()
 
 
 def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bounds: Rect,
@@ -107,7 +110,12 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bound
                        float(title_bounds.block_size)) if title_overflow else None,
         ) if item is not None
     ) + route_warnings
-    return DependencyNetworkLayout(tuple(placed), text, relations, canvas, warnings, patterns, texture)
+    stroke_shapes = tuple(ShapePlacement(node.placement_id, node.object_id, "Rect", node.bounds,
+                                        semantic_id="networkNode") for node in placed)
+    if texture is not None:
+        stroke_shapes = (texture.shape, *stroke_shapes)
+    strokes = complete_aligned_strokes((), stroke_shapes, (), theme_tokens)
+    return DependencyNetworkLayout(tuple(placed), text, relations, canvas, warnings, patterns, texture, strokes)
 
 
 def _title_measurement(measured_sources: MeasuredSources) -> MeasuredTextRun:

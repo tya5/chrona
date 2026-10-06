@@ -119,6 +119,19 @@ This preserves the scheduling model's separation between planned constraints and
 
 ## 5. Theme model
 
+### Contour-relative strokes (#1148)
+
+Box and symbol paint roles may declare `strokeAlign: inside | center | outside`.
+Omission and `center` preserve the existing output. Layout completes twice the
+declared stroke width and a finite clip to the original contour's interior or
+complement; fill is independent. Native Rect bounds/radius are preserved, and
+closed curved/multipart paths retain their nonzero winding, including holes.
+Open or degenerate contours, open-ended spans, wobble and viewer-followed boxes
+fail with `E_LAYOUT_STROKE_ALIGNMENT_INVALID` when opted in; no affine scaling
+stands in for a contour offset. Fill-only contours have no stroke to align.
+Semantic ports and placement identities do not move. SVG paints the exact clip;
+Typst/TikZ explicitly refuse this feature until they support that operation.
+
 ### Derived terminal attachment (#1148)
 
 Omitting a marker token's `attachmentOffset` selects physical-px head dimensions

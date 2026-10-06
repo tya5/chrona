@@ -45,6 +45,7 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
                     for surface in scene.surfaces for primitive in surface.primitives)
     has_fit = any(primitive.viewer_fit != "raw" or (primitive.text_layout is not None and primitive.text_layout.fit is not None)
                   for surface in scene.surfaces for primitive in surface.primitives)
+    has_stroke_clip = any(primitive.stroke_clip is not None for surface in scene.surfaces for primitive in surface.primitives)
     has_marker_axis = any(marker is not None and (marker.angle_degrees is not None or marker.physical_units)
                          for surface in scene.surfaces for primitive in surface.primitives
                          for marker in (primitive.marker_start, primitive.marker_end))
@@ -52,7 +53,7 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
         primitive.from_instance_id is not None or primitive.to_instance_id is not None
         for surface in scene.surfaces for primitive in surface.primitives)
     return {
-        "version": ("chrona/scene/v0.7" if has_catalog_pattern or has_v07_paint or has_tilt or has_scale or has_fit or has_marker_axis
+        "version": ("chrona/scene/v0.7" if has_catalog_pattern or has_v07_paint or has_tilt or has_scale or has_fit or has_marker_axis or has_stroke_clip
                     or has_relation_endpoint_identity
                     else "chrona/scene/v0.6"),
         "kind": "scene",
@@ -411,6 +412,9 @@ def _primitive(item: ScenePrimitive) -> dict[str, Any]:
         "paintOrder": item.paint_order,
         "hostPlacementId": item.host_placement_id,
         "clipSourceId": item.clip_source_id,
+        "strokeClip": ({"outside": item.stroke_clip.outside, "region": _bounds(item.stroke_clip.region),
+                        **({"outline": [_path(command) for command in item.stroke_clip.outline]}
+                           if item.stroke_clip.outline else {})} if item.stroke_clip is not None else None),
         "fromInstanceId": item.from_instance_id,
         "toInstanceId": item.to_instance_id,
         "fanIn": ({"targetPortId": item.fan_in.target_port_id,
