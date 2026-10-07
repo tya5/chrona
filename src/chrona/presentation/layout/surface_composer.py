@@ -105,6 +105,11 @@ class SurfacePreRowGeometry:
     timeline_content: SlotPlacement
     row_viewport: Rect
 
+    def required_timeline_block(self, *, foot_reserve: Decimal = Decimal(0)) -> Decimal:
+        """Natural host demand from this candidate's native prefix, before row fill."""
+        prefix = max(Decimal(0), self.row_viewport.block - self.inline.timeline.bounds.block)
+        return prefix + self.inline.natural_block_requirement + foot_reserve
+
 
 def prepare_surface_content(request: SurfaceLayoutRequest) -> SurfacePreRowGeometry:
     """Complete native headers/captions without placing or fill-expanding any row."""

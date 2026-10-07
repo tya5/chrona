@@ -11,7 +11,9 @@ from chrona.presentation.layout.surface_base import (
     prepare_surface_base, prepare_surface_inline, prepare_surface_slots,
 )
 from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
+from chrona.presentation.layout.surface_composer import prepare_surface_content
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection
+from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from tests.unit.chrona.presentation.scene.test_v05_builder import (
     _Font, _manifest, _theme, _title_measurement, surface_content,
@@ -25,8 +27,9 @@ def _request():
     measured = MeasuredSources({"title": _title_measurement()}, {"title": SourceInput(("Plan",))}, {
         "timeline.row.minBlockSize": Decimal(40), "timeline.row.paddingBlock": Decimal(8),
         "timeline.mark.blockSize": Decimal(8)})
+    content = surface_content()
     return SurfaceLayoutRequest(
-        projection=projection, surface_content=surface_content(),
+        projection=projection, surface_content=content, presentation_contract=normalize_presentation_input(content),
         layout_manifest=_manifest("title", "table", "timeline", "timeline-axis"),
         measured_sources=measured, theme_tokens=ThemeTokenView(_theme()), font_metrics=_Font())
 
@@ -185,3 +188,54 @@ def test_allocation_preserves_existing_manifest_and_missing_source_diagnostics()
         decision for decision in request.layout_manifest.decisions if decision.source != "timeline"))
     with pytest.raises(LayoutError, match="E_PRESENTATION_PRIMITIVE_MISSING"):
         prepare_surface_slots(replace(request, layout_manifest=manifest))
+
+
+def test_pre_row_host_demand_uses_natural_rows_not_fill_expanded_capacity():
+    request = _request()
+    prepared = prepare_surface_content(request)
+    placed = prepare_surface_base(request, inline=prepared.inline, row_viewport=prepared.row_viewport)
+    assert prepared.required_timeline_block() == Decimal(40)
+    assert prepared.required_timeline_block(foot_reserve=Decimal(20)) == Decimal(60)
+    assert placed.rows[0].bounds.block_size > prepared.required_timeline_block()
+    # A larger candidate may offer more surplus, but not larger natural demand.
+    larger = replace(request, layout_manifest=replace(request.layout_manifest, decisions=tuple(
+        replace(decision, bounds=replace(decision.bounds, block_size=decision.bounds.block_size + 500))
+        if decision.source == "timeline" else decision for decision in request.layout_manifest.decisions)))
+    assert prepare_surface_content(larger).required_timeline_block() == Decimal(40)
+
+
+@pytest.mark.parametrize("headed", [("timeline",), ("table",), ("timeline-axis",),
+                                    ("timeline", "table", "timeline-axis")])
+def test_pre_row_host_demand_counts_the_native_prefix_once_from_full_timeline_origin(headed):
+    from copy import deepcopy
+
+    request = _request()
+    theme = deepcopy(_theme())
+    theme["body"]["roles"]["slot-heading"] = deepcopy(theme["body"]["roles"]["text"])
+    content = surface_content(table_columns=(("name", "Name"),), table_cells=(("a", "name", "Activity"),))
+    manifest = replace(request.layout_manifest, decisions=tuple(
+        replace(decision, heading=SlotHeading("Caption")) if decision.source in headed else decision
+        for decision in request.layout_manifest.decisions))
+    prepared = prepare_surface_content(replace(request, surface_content=content,
+                                              presentation_contract=normalize_presentation_input(content),
+                                              theme_tokens=ThemeTokenView(theme),
+                                              layout_manifest=manifest))
+    full = prepared.inline.timeline.bounds
+    prefix = prepared.row_viewport.block - full.block
+    assert prepared.headings.text
+    assert prepared.table.header_text
+    assert prepared.row_viewport.block >= prepared.table.header_end_block
+    assert prepared.required_timeline_block(foot_reserve=Decimal(20)) == (
+        max(Decimal(0), prefix) + prepared.inline.natural_block_requirement + 20)
+    if "timeline" in headed:
+        assert prefix >= prepared.headings.reserved("timeline")
+        assert prepared.required_timeline_block() >= Decimal("66.6")
+
+
+def test_empty_rows_do_not_gain_fill_expanded_natural_demand():
+    request = _request()
+    projection = replace(request.projection, items=())
+    prepared = prepare_surface_content(replace(request, projection=projection))
+    assert not prepared.headings.text
+    assert prepared.headings.reserved("timeline") == 0
+    assert prepared.required_timeline_block() == 0
