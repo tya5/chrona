@@ -16,6 +16,7 @@ from chrona.presentation.layout.obstacles import (
 )
 from chrona.presentation.layout.presentation import TrackPlacement
 from chrona.presentation.layout.rounded_outline import resolve_corner_radius
+from chrona.presentation.layout.chip_geometry import chip_padding
 from chrona.presentation.model.semantic_registry import label_chip_semantic, semantic_binding
 from chrona.presentation.layout.surface_quality import (
     CollisionDomain, GroupPlacement, IconPlacement, LaneLabelSuppression,
@@ -304,8 +305,7 @@ def place_member_labels(context: SurfaceMemberLabelContext,
         label_size = (leading + text_width + trailing, float(font_size) * float(line_height) * len(lines))
         chip_semantic = label_chip_semantic(label_request.semantic_id) or ""
         chip = request.theme_tokens.label_chip(semantic_binding(chip_semantic).theme_role) if chip_semantic else None
-        chip_pad = ((float(chip[0]) * float(font_size), float(chip[0]) * float(font_size) / 2)
-                    if chip is not None else (0.0, 0.0))
+        chip_pad = chip_padding(request.theme_tokens, chip_semantic, float(font_size), label_size[1])
         label_size = (label_size[0] + 2 * chip_pad[0], label_size[1] + 2 * chip_pad[1])
         if lane_measure is not None:
             label_size = (lane_measure.width, lane_measure.height)

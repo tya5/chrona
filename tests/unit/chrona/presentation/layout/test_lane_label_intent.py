@@ -26,6 +26,9 @@ class _Theme:
     def label_chip(self, _role):
         return (Decimal("0.1"), Decimal(0))
 
+    def label_chip_min_block(self, _role):
+        return None
+
 
 @dataclass(frozen=True)
 class _Item:

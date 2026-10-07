@@ -4,10 +4,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from chrona.presentation.layout.chip_geometry import chip_padding
 from chrona.presentation.layout.label_visual_measurement import resolve_label_visual_advances
 from chrona.presentation.layout.model import geometry_sum
 from chrona.presentation.layout.text import measure_text_width, metric_for_role, wrap_text
-from chrona.presentation.model.semantic_registry import label_chip_semantic, semantic_binding
+from chrona.presentation.model.semantic_registry import label_chip_semantic
 
 
 @dataclass(frozen=True)
@@ -119,19 +120,16 @@ def measure_lane_member_labels(projection: Any, surface_content: Any, *,
                 numeric_spacing=treatment.numeric_spacing,
             ) for line in lines)
             text_height = (float(treatment.font_size) * float(treatment.line_height) * len(lines))
-            chip_semantic = label_chip_semantic("memberLabel")
-            chip = theme_tokens.label_chip(semantic_binding(chip_semantic).theme_role) if chip_semantic else None
-            chip_padding = ((float(chip[0]) * float(treatment.font_size),
-                             float(chip[0]) * float(treatment.font_size) / 2)
-                            if chip is not None else (0.0, 0.0))
+            chip_pad = chip_padding(theme_tokens, label_chip_semantic("memberLabel"),
+                                    float(treatment.font_size), text_height)
             labels.append(MeasuredLaneMemberLabel(
                 placement_id, item.object_id, lane_row.lane_id, member_id,
                 item.source_kind, content, candidates, wrap, lines,
-                leading + text_width + trailing + 2 * chip_padding[0],
-                text_height + 2 * chip_padding[1],
-                chip_padding[0] + leading,
+                leading + text_width + trailing + 2 * chip_pad[0],
+                text_height + 2 * chip_pad[1],
+                chip_pad[0] + leading,
                 max(1.0, float(treatment.font_size) * 0.25),
-                visuals, chip_padding, leading, trailing, text_width,
+                visuals, chip_pad, leading, trailing, text_width,
                 treatment.family, int(treatment.weight), float(treatment.font_size),
                 float(treatment.line_height), float(treatment.letter_spacing),
                 treatment.transform, treatment.numeric_spacing,
