@@ -233,6 +233,9 @@ class SurfaceContentInput:
     # Composed group-header text, (group id, text), in display order (#583); a
     # group without an entry keeps its entity title.
     group_headers: tuple[tuple[str, str], ...] = ()
+    # The role-marked runs of a header, (group id, ((text, Theme role or None), ...)), only for a group whose
+    # template marks a placeholder (#1192); `group_headers` keeps the same text, joined.
+    group_header_runs: tuple[tuple[str, tuple[tuple[str, str | None], ...]], ...] = ()
     # Where the as-of label sits on the plot: `top` margin (default) or the plot `foot` (#991).
     as_of_placement: str = "top"
     # Completed per-group band colour, (group id, "#RRGGBB"), from the View's

@@ -117,6 +117,11 @@ slides:
     context: contexts/group-tabs.yaml
     expectedSvg: generated/group-tabs.svg
     expectedScene: generated/group-tabs.scene.json
+  - id: group-header-runs
+    evidence: "Role-marked spans in a group-header template (#1192): the View header template marks {ordinal} and a {figure:id} with the Theme text roles group-ordinal (bold, orange) and group-gloss (small, muted capitals), and the unmarked title keeps groupHeader; Layout measures each run with its own role and places the three runs on one baseline, from the executive sources."
+    context: contexts/group-header-runs.yaml
+    expectedSvg: generated/group-header-runs.svg
+    expectedScene: generated/group-header-runs.scene.json
   - id: group-child-indent
     evidence: "Child rows indented under field-grouping headers (#1065): the View declares hierarchyColumn Workstream over a field grouping with header presentation, and Layout starts each row's label exactly the Theme's table.indent.inlineSize after its header's label, over the executive sources."
     context: contexts/group-child-indent.yaml

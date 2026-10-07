@@ -5,6 +5,7 @@ from dataclasses import dataclass, replace
 from decimal import Decimal
 from typing import Any
 
+from chrona.presentation.layout.group_header_runs import place_group_header_runs
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, GroupPlacement, TextPlacement
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_role, place_text
@@ -117,7 +118,12 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
               for review_row, row in zip(review_rows, rows, strict=True) if row.group_id}
     # A View-declared header template replaces the title text only (#583).
     labels.update(dict(request.surface_content.group_headers))
+    marked = dict(request.surface_content.group_header_runs)
     if tag_column is not None:
+        if any(group_id in marked for group_id in labels):
+            # A vertical tag is one rotated label: runs on one baseline have no meaning there (#1192).
+            raise LayoutError("E_LAYOUT_GROUP_HEADER_RUNS_VERTICAL", "/body/grouping/header",
+                              detail="a role-marked header template needs a horizontal groupHeader role")
         # A vertical label spans the group's rows in the column carved from the table's start (#585).
         text = []
         tab = resolve_group_tab(request.theme_tokens)
@@ -148,6 +154,16 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
                 check_group_tab_inline(tab, group.header_bounds)
                 size -= tab.reserved
                 start += tab.reserved if tab.position == "start" else Decimal(0)
+            if group.group_id in marked:
+                # Role-marked runs share the header's baseline, each measured with its own role (#1192).
+                placed, run_warnings = place_group_header_runs(
+                    group_id=group.group_id, runs=marked[group.group_id], start=start, size=size, bounded=tab is not None,
+                    baseline_block=float(group.header_bounds.block) + group_header_font_size,
+                    header_block_size=float(group.header_bounds.block_size), theme_tokens=request.theme_tokens,
+                    font_metrics=request.font_metrics)
+                text.extend(placed)
+                warnings.extend(run_warnings)
+                continue
             content, disposition = labels[group.group_id], "fit"
             if tab is not None:
                 # A header without a tab keeps today's unbounded text. Beside a tab the text is bounded by the room the

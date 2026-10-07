@@ -258,6 +258,14 @@ class ViewGroupHeader:
     first: str | None = None
     secondary_field: str | None = None
 
+    def role_pointers(self) -> tuple[tuple[str, str], ...]:
+        """Each Theme text role a marked placeholder names (#1192), with the View pointer of its template."""
+        found: list[tuple[str, str]] = []
+        for pointer, template in (("/body/grouping/header/text", self.text), ("/body/grouping/header/first", self.first)):
+            if template is not None:
+                found.extend((role, pointer) for role in sorted(parse_template(template, allow_roles=True).roles))
+        return tuple(found)
+
 
 @dataclass(frozen=True)
 class ViewGroupTint:
@@ -970,7 +978,7 @@ def _validate_header_figures(grouping: ViewGrouping | None, figures: tuple[Figur
         return
     declared = tuple(item.figure_id for item in figures)
     for template in (header.text, header.first):
-        for figure_id in sorted(parse_template(template).figure_ids) if template is not None else ():
+        for figure_id in sorted(parse_template(template, allow_roles=True).figure_ids) if template is not None else ():
             if figure_id not in declared:
                 known = ", ".join(declared) if declared else "none"
                 raise ContractError("E_VIEW_GROUP_HEADER_TEMPLATE",
@@ -987,8 +995,8 @@ def _view_figures(raw: Any) -> tuple[FigureSpec, ...]:
     for index, item in enumerate(raw):
         path = f"/body/figures/{index}"
         figure_id = str(item["id"])
-        if any(char in "{}" or char.isspace() or not char.isprintable() for char in figure_id):
-            raise ContractError("E_VIEW_FIGURE_INVALID", f"figure id {figure_id!r} may not contain braces, whitespace or control characters", f"{path}/id")
+        if any(char in "{}|" or char.isspace() or not char.isprintable() for char in figure_id):
+            raise ContractError("E_VIEW_FIGURE_INVALID", f"figure id {figure_id!r} may not contain braces, `|`, whitespace or control characters", f"{path}/id")
         days = str(item.get("days", "calendar"))
         calendar = str(item["calendar"]) if "calendar" in item else None
         if calendar is not None and days != "working":
@@ -1057,7 +1065,7 @@ def _group_header(raw_grouping: Any) -> ViewGroupHeader | None:
     try:
         for template in (header.text, header.first):
             if template is not None:
-                used |= parse_template(template).fields
+                used |= parse_template(template, allow_roles=True).fields
     except GroupHeaderTextError as error:
         raise ContractError(error.code, error.detail) from error
     if ("secondary" in used) != (header.secondary_field is not None):
