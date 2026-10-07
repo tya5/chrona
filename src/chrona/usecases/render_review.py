@@ -32,7 +32,7 @@ from chrona.presentation.layout.slot_heading import headed_slot_ids, reserve_slo
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources, resolve_theme_metrics
 from chrona.presentation.layout.surface_legend import LegendArrangement, legend_arrangement, legend_source_input
 from chrona.presentation.layout.label_visual_measurement import resolve_label_visual_advances
-from chrona.presentation.layout.surface_composer import prepare_surface_content, timeline_content_block_requirement
+from chrona.presentation.layout.surface_composer import prepare_surface_candidate, timeline_content_block_requirement
 from chrona.presentation.layout.surface_content import detail_source_inputs
 from chrona.presentation.layout.surface_lanes import preflight_fixed_lane_layout
 from chrona.presentation.layout.surface_marks import resolve_mark_geometries, resolve_mark_band
@@ -429,13 +429,14 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         ledger.detail()
     surface_preparation = None
     if view.surface == "table-timeline":
-        surface_preparation = prepare_surface_content(SurfaceLayoutRequest(
+        surface_preparation = prepare_surface_candidate(SurfaceLayoutRequest(
             projection=projection, presentation_contract=normalize_presentation_input(surface_content),
             surface_content=surface_content, layout_manifest=manifest,
             measured_sources=measured, theme_tokens=ThemeTokenView(theme), font_metrics=font_metrics,
             capabilities={name: True for name in render_closure.context.target.capabilities},
             icon_assets=icon_assets, visual_requests=visual_requests,
             fixed_lane_preflight=fixed_lane_preflight, capacity_short_sources=capacity_short_sources))
+        fixed_lane_preflight = surface_preparation.inline.request.fixed_lane_preflight
     scene_input = build_scene_input(
         projection=projection, surface_content=surface_content, layout_manifest=manifest,
         resolved_theme=theme, font_metrics=font_metrics, measured_sources=measured,

@@ -6,7 +6,9 @@ from decimal import Decimal
 from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
-from chrona.presentation.layout.surface_lanes import lane_owner as _lane_owner, review_rows as _review_rows
+from chrona.presentation.layout.surface_lanes import (
+    lane_owner as _lane_owner, review_rows as _review_rows, preflight_fixed_lane_layout,
+)
 from chrona.presentation.layout.surface_marks import (MARK_PAINT_ORDER_BASE, compose_surface_marks)
 from chrona.presentation.layout.surface_visuals import (place_mark_visuals, place_text_visuals)
 from chrona.presentation.layout.surface_member_labels import (
@@ -109,6 +111,20 @@ class SurfacePreRowGeometry:
         """Natural host demand from this candidate's native prefix, before row fill."""
         prefix = max(Decimal(0), self.row_viewport.block - self.inline.timeline.bounds.block)
         return prefix + self.inline.natural_block_requirement + foot_reserve
+
+
+def prepare_surface_candidate(request: SurfaceLayoutRequest) -> SurfacePreRowGeometry:
+    """Close natural geometry using only this candidate's admitted content and manifest."""
+    if request.projection.lane_membership is not None:
+        preflight = preflight_fixed_lane_layout(
+            projection=request.projection, layout_manifest=request.layout_manifest,
+            surface_content=request.surface_content, theme_tokens=request.theme_tokens,
+            metric_values=request.measured_sources.metric_values,
+            icon_assets=request.icon_assets, visual_requests=request.visual_requests,
+            font_metrics=request.font_metrics,
+        )
+        request = replace(request, fixed_lane_preflight=preflight)
+    return prepare_surface_content(request)
 
 
 def prepare_surface_content(request: SurfaceLayoutRequest) -> SurfacePreRowGeometry:

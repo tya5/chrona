@@ -2,6 +2,7 @@
 from dataclasses import FrozenInstanceError, fields, replace
 from datetime import date
 from decimal import Decimal
+from types import SimpleNamespace
 
 import pytest
 
@@ -11,7 +12,7 @@ from chrona.presentation.layout.surface_base import (
     prepare_surface_base, prepare_surface_inline, prepare_surface_slots,
 )
 from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
-from chrona.presentation.layout.surface_composer import prepare_surface_content
+from chrona.presentation.layout.surface_composer import prepare_surface_candidate, prepare_surface_content
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.theme_tokens import ThemeTokenView
@@ -47,6 +48,83 @@ def test_full_allocations_need_no_projection_measurement_fonts_or_row_geometry()
         sources["timeline"].bounds.inline + sources["timeline"].bounds.inline_size)
     with pytest.raises(FrozenInstanceError):
         allocated.slots = ()
+
+
+def test_non_lane_candidate_keeps_native_preparation_and_natural_demand():
+    request = _request()
+    expected = prepare_surface_content(request)
+    actual = prepare_surface_candidate(request)
+    assert actual.row_viewport == expected.row_viewport
+    assert actual.required_timeline_block() == expected.required_timeline_block()
+    assert actual.inline.request is request
+
+
+def test_lane_candidate_replaces_prior_preflight_from_exact_candidate_inputs(monkeypatch):
+    from chrona.presentation.layout import surface_composer
+
+    original = _request()
+    stale, current, completed = object(), object(), object()
+    candidate = replace(original, projection=SimpleNamespace(lane_membership=object()),
+                        fixed_lane_preflight=stale)
+    calls = []
+
+    def preflight(**inputs):
+        calls.append(inputs)
+        return current
+
+    def prepare(request):
+        assert request.fixed_lane_preflight is current
+        assert request.layout_manifest is candidate.layout_manifest
+        assert request.surface_content is candidate.surface_content
+        return completed
+
+    monkeypatch.setattr(surface_composer, "preflight_fixed_lane_layout", preflight)
+    monkeypatch.setattr(surface_composer, "prepare_surface_content", prepare)
+    assert prepare_surface_candidate(candidate) is completed
+    assert calls == [dict(
+        projection=candidate.projection, layout_manifest=candidate.layout_manifest,
+        surface_content=candidate.surface_content, theme_tokens=candidate.theme_tokens,
+        metric_values=candidate.measured_sources.metric_values,
+        icon_assets=candidate.icon_assets, visual_requests=candidate.visual_requests,
+        font_metrics=candidate.font_metrics)]
+    assert candidate.fixed_lane_preflight is stale
+
+
+def test_width_changed_lane_candidate_closes_real_preflight_and_scene_from_same_manifest():
+    from chrona.presentation.model.projection import build_review_projection
+    from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
+    from tests.unit.chrona.presentation.scene.test_relation_ghost_endpoints import (
+        MODES, PLACED, PROJECT, SNAPSHOT,
+    )
+
+    projection = build_review_projection(PROJECT, PLACED, MODES["lanes"], None,
+                                         snapshot_project=PROJECT, snapshot_placements=SNAPSHOT)
+    original = replace(_request(), projection=projection)
+    original = replace(original, measured_sources=replace(original.measured_sources, metric_values={
+        **original.measured_sources.metric_values,
+        "text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4")}))
+    initial = prepare_surface_candidate(original)
+    assert initial.inline.request.fixed_lane_preflight is not None
+    manifest = replace(original.layout_manifest, decisions=tuple(
+        replace(item, bounds=replace(item.bounds, inline_size=Decimal(250)))
+        if item.source in {"timeline", "timeline-axis"} else item
+        for item in original.layout_manifest.decisions))
+    candidate = replace(original, layout_manifest=manifest,
+                        fixed_lane_preflight=initial.inline.request.fixed_lane_preflight)
+    current = prepare_surface_candidate(candidate)
+    preflight = current.inline.request.fixed_lane_preflight
+    assert preflight is not candidate.fixed_lane_preflight
+    assert preflight.seed_inline_frame.timeline_inline_size == Decimal(250)
+    assert candidate.fixed_lane_preflight.seed_inline_frame.timeline_inline_size == Decimal(500)
+    assert current.inline.scale is preflight.scale
+    value = build_scene_input(
+        projection=projection, surface_content=candidate.surface_content, layout_manifest=manifest,
+        resolved_theme=_theme(), font_metrics=candidate.font_metrics,
+        measured_sources=candidate.measured_sources, capabilities={"svg": True},
+        fixed_lane_preflight=preflight, surface_preparation=current)
+    prepared_surface = compose_review_surface(value)
+    native_surface = compose_review_surface(replace(value, surface_preparation=None))
+    assert prepared_surface == native_surface
 
 
 def test_preallocated_surface_base_is_exactly_identical_and_does_not_allocate_twice(monkeypatch):
