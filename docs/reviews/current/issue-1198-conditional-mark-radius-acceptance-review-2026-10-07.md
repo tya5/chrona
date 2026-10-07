@@ -3,7 +3,7 @@
 # Release Review — conditional legacy mark radius
 
 Implementation: `b157cd39d1c76f773cfb974ccdefd993ea5862de`; [design, architecture review and implementation plan](https://github.com/tya5/chrona/issues/1198#issuecomment-6039192670).
-Focused tests: 68 passed. Local conformance: 34 passed; diagnostic inventory differs only in source locations (independently normalized and compared). CI must regenerate that report and verify the shared public snapshot before acceptance.
+Focused tests: 71 passed, including exact legacy ratios 0/0.2/0.5. Local conformance: 34 passed; diagnostic inventory differs only in source locations (independently normalized and compared). CI must regenerate that report and verify the shared public snapshot before acceptance.
 
 ## Literal issue acceptance
 
