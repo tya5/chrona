@@ -72,3 +72,61 @@ def test_nonempty_content_sized_summary_still_reserves_and_draws_its_heading(tmp
     assert summary_runs and all(item.bounds[1] >= caption.bounds[1] + caption.bounds[3] for item in summary_runs)
     assert _slot(headed).bounds[3] > _slot(plain).bounds[3]
     assert b">FIGURES<" in headed.artifact.content
+
+
+def _render_consumed_note(tmp_path, name, *, headed):
+    directory = tmp_path / name
+    directory.mkdir()
+    parts = sr.bundle("executive-light")
+    sr.with_note_rail(parts)
+    if headed:
+        _with_heading_role(parts)
+    notes_slot = sr.find_node(parts["layout"], "notes")
+    notes_slot["blockSize"] = "content"
+    if headed:
+        notes_slot["heading"] = {"text": "Notes"}
+    source = sr.project({"a": sr.span("a", date(2026, 2, 2), 30)})
+    sr.add_notes(source, parts["view"], ["a"],
+                 [sr.candidate("rail", region={"kind": "slot", "source": "annotations"},
+                               connector="leader", search_kind="row-aligned")], words=0)
+    return sr.render(directory, source, presentation=parts)
+
+
+def test_consumed_project_note_does_not_reserve_a_heading_in_empty_notes_slot(tmp_path):
+    plain = _render_consumed_note(tmp_path, "notes-plain", headed=False)
+    headed = _render_consumed_note(tmp_path, "notes-headed", headed=True)
+    plain_slot = next(slot for slot in plain.surface.slots if slot.slot_id == "notes")
+    headed_slot = next(slot for slot in headed.surface.slots if slot.slot_id == "notes")
+
+    assert headed_slot.bounds == plain_slot.bounds
+    assert "slot-heading:notes" not in {item.scene_id for item in headed.surface.primitives}
+    assert "I_LAYOUT_SLOT_HEADING_OMITTED:notes:no-content" in headed.surface.diagnostics
+    assert headed.scene.manifest.content_family_counts.annotations == 1
+    assert headed.scene.manifest.content_family_counts.notes == 0
+    assert headed.artifact.content == plain.artifact.content
+
+
+def _render_empty_legend(tmp_path, name, *, headed):
+    directory = tmp_path / name
+    directory.mkdir()
+    parts = sr.bundle("executive-light")
+    legend_slot = sr.find_node(parts["layout"], "legend")
+    legend_slot["blockSize"] = "content"
+    if headed:
+        legend_slot["heading"] = {"text": "Key"}
+        _with_heading_role(parts)
+    source = sr.project({"a": sr.span("a", date(2026, 2, 2), 30)})
+    return sr.render(directory, source, presentation=parts)
+
+
+def test_empty_legend_placeholder_does_not_reserve_a_suppressed_heading(tmp_path):
+    plain = _render_empty_legend(tmp_path, "legend-plain", headed=False)
+    headed = _render_empty_legend(tmp_path, "legend-headed", headed=True)
+    plain_slot = next(slot for slot in plain.surface.slots if slot.slot_id == "legend")
+    headed_slot = next(slot for slot in headed.surface.slots if slot.slot_id == "legend")
+
+    assert headed_slot.bounds == plain_slot.bounds
+    assert "slot-heading:legend" not in {item.scene_id for item in headed.surface.primitives}
+    assert "I_LAYOUT_SLOT_HEADING_OMITTED:legend:no-content" in headed.surface.diagnostics
+    assert headed.scene.manifest.content_family_counts.legend_entries == 0
+    assert headed.artifact.content == plain.artifact.content
