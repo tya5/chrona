@@ -41,18 +41,18 @@ def _scene_bounds(rendered):
     return [(item.scene_id, tuple(float(value) for value in item.bounds)) for item in rendered.surface.primitives]
 
 
-def test_an_unbound_track_is_the_row_less_its_padding_and_follows_the_row(tmp_path):
+def test_an_unbound_track_is_the_row_less_a_padding_on_each_side_and_follows_the_row(tmp_path):
     short = _render(tmp_path, "short", _parts(row=40, padding=8, drop=("timeline.mark.blockSize",)))
     tall = _render(tmp_path, "tall", _parts(row=60, padding=8, drop=("timeline.mark.blockSize",)))
 
-    assert _mark_block(short) == pytest.approx(32)
-    assert _mark_block(tall) == pytest.approx(52)
+    assert _mark_block(short) == pytest.approx(24)
+    assert _mark_block(tall) == pytest.approx(44)
 
 
 def test_the_track_follows_the_padding_too(tmp_path):
     padded = _render(tmp_path, "padded", _parts(row=40, padding=12, drop=("timeline.mark.blockSize",)))
 
-    assert _mark_block(padded) == pytest.approx(28)
+    assert _mark_block(padded) == pytest.approx(16)
 
 
 def test_a_bound_track_wins_over_the_derivation(tmp_path):
@@ -62,15 +62,24 @@ def test_a_bound_track_wins_over_the_derivation(tmp_path):
 
 
 def test_a_derived_track_equal_to_the_declared_one_changes_nothing(tmp_path):
-    declared = _render(tmp_path, "declared", _parts(row=40, padding=8, explicit={"timeline.mark.blockSize": 32}))
+    declared = _render(tmp_path, "declared", _parts(row=40, padding=8, explicit={"timeline.mark.blockSize": 24}))
     derived = _render(tmp_path, "derived", _parts(row=40, padding=8, drop=("timeline.mark.blockSize",)))
 
     assert _scene_bounds(derived) == _scene_bounds(declared)
     assert derived.scene.diagnostics == declared.scene.diagnostics
 
 
+def test_a_derived_track_equal_to_the_declared_one_leaves_every_inline_position_alone(tmp_path):
+    """Row 22 and padding 3 (a dense row) derive 16: the timeline must not move horizontally (#1150 finding)."""
+    declared = _render(tmp_path, "declared", _parts(row=22, padding=3, explicit={"timeline.mark.blockSize": 16}))
+    derived = _render(tmp_path, "derived", _parts(row=22, padding=3, drop=("timeline.mark.blockSize",)))
+
+    assert _mark_block(derived) == pytest.approx(16)
+    assert _scene_bounds(derived) == _scene_bounds(declared)
+
+
 def test_a_track_the_row_cannot_hold_is_a_metric_diagnostic(tmp_path):
     with pytest.raises(RenderFailed) as error:
-        _render(tmp_path, "none", _parts(row=8, padding=8, drop=("timeline.mark.blockSize",)))
+        _render(tmp_path, "none", _parts(row=16, padding=8, drop=("timeline.mark.blockSize",)))
 
     assert error.value.code == "E_LAYOUT_METRIC_REQUIRED"

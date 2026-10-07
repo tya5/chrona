@@ -95,13 +95,13 @@ def test_corner_radius_metrics_are_optional_and_explicitly_allow_zero():
         resolve_theme_metrics(value)
 
 
-def test_an_unbound_track_size_is_the_row_less_its_total_padding_and_a_bound_one_wins():
+def test_an_unbound_track_size_is_the_row_less_a_padding_on_each_side_and_a_bound_one_wins():
     value = theme()
     assert resolve_theme_metrics(value)["timeline.mark.blockSize"] == Decimal(8)
     del value["body"]["metrics"]["timeline.mark.blockSize"]
-    assert resolve_theme_metrics(value)["timeline.mark.blockSize"] == Decimal(32)
+    assert resolve_theme_metrics(value)["timeline.mark.blockSize"] == Decimal(24)
     value["body"]["values"]["metric.3"]["value"] = 50
-    assert resolve_theme_metrics(value)["timeline.mark.blockSize"] == Decimal(42)
+    assert resolve_theme_metrics(value)["timeline.mark.blockSize"] == Decimal(34)
     value["body"]["values"]["metric.4"]["value"] = 60
     with pytest.raises(LayoutError, match="E_LAYOUT_METRIC_REQUIRED"):
         resolve_theme_metrics(value)
