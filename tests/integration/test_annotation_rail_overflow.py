@@ -139,4 +139,3 @@ def test_marker_none_exhausted_rail_stacks_full_boxes_and_reports_overflow(tmp_p
     _assert_boxes_do_not_overlap(rendered)
     _assert_svg_contains_notes(rendered)
     assert any(warning.code == "W_LAYOUT_LABEL_OVERFLOW" for warning in rendered.surface.fit_warnings)
-
