@@ -10,8 +10,8 @@ from chrona.presentation.layout.axis import (
     AxisInterval, axis_intervals, axis_label_fits, format_axis_tier_label, thinning_schedule,
 )
 from chrona.presentation.layout.axis_lanes import (
-    SecondaryPlan, axis_tick_requirement, label_block, line_extents, measure_axis_text,
-    plan_band_stack, plan_label_lanes, secondary_plan,
+    BandLanePlan, LabelLanePlan, SecondaryPlan, axis_tick_requirement, label_block, line_extents,
+    measure_axis_text, plan_band_stack, plan_label_lanes, secondary_plan,
 )
 from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.layout.model import LayoutError, Rect
@@ -143,6 +143,36 @@ class AxisLabelLaneGeometry:
     block: float
 
 
+@dataclass(frozen=True)
+class AxisCapacityPlan:
+    """Host-size-independent facts for the existing candidate-scale axis capacity guards."""
+
+    tick_lengths: tuple[tuple[int, Decimal], ...]
+    band_lane_ends: tuple[tuple[int, float], ...]
+    secondary_lane_ends: tuple[tuple[int, float], ...]
+    declared_secondary_mismatches: tuple[int, ...]
+
+    def fits(self, block: Decimal) -> bool:
+        return (all(length <= block for _, length in self.tick_lengths)
+                and all(end <= float(block) + float(GEOMETRY_TOLERANCE) for _, end in self.band_lane_ends)
+                and all(end <= float(block) for _, end in self.secondary_lane_ends)
+                and not self.declared_secondary_mismatches)
+
+
+@dataclass(frozen=True)
+class SurfaceAxisMeasurement:
+    """All candidate-scale axis tier facts and their native host-capacity predicates."""
+
+    tiers: tuple[AxisTierMeasurement, ...]
+    label_lanes: tuple[tuple[int, AxisLabelLaneGeometry], ...]
+    labels: LabelLanePlan
+    bands: BandLanePlan
+    capacity: AxisCapacityPlan
+
+    def label_lane(self, tier_index: int) -> AxisLabelLaneGeometry:
+        return next(lane for index, lane in self.label_lanes if index == tier_index)
+
+
 def measure_axis_tier(request: SurfaceLayoutRequest, scale: ScalePlacement, tier_index: int,
                       tier: AxisTier) -> AxisTierMeasurement:
     """Measure native tier choices and labels without admitting them to an axis host."""
@@ -271,6 +301,46 @@ def axis_label_lane_geometry(*, tier_index: int, tier: AxisTier, measured: AxisT
     if tier_index in declared_lanes:
         offset, lane_size = declared_lanes[tier_index]
     return AxisLabelLaneGeometry(offset, lane_size, offset + lane_size, block)
+
+
+def measure_surface_axis(request: SurfaceLayoutRequest, scale: ScalePlacement) -> SurfaceAxisMeasurement:
+    """Measure candidate-scale axis lanes and native host-capacity predicates once."""
+    if request.theme_tokens is None or request.font_metrics is None:
+        raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources")
+    tokens, font_metrics = request.theme_tokens, request.font_metrics
+    tiers = request.surface_content.axis_tiers
+    labels = plan_label_lanes(tiers, tokens, font_metrics)
+    bands = plan_band_stack(tiers, tokens, labels)
+    tier_measurements = tuple(measure_axis_tier(request, scale, index, tier)
+                              for index, tier in enumerate(tiers))
+    band_count = sum(tier.role == "band" for tier in tiers)
+    label_lanes: list[tuple[int, AxisLabelLaneGeometry]] = []
+    tick_lengths: list[tuple[int, Decimal]] = []
+    band_ends: list[tuple[int, float]] = []
+    secondary_ends: list[tuple[int, float]] = []
+    declared_secondary_mismatches: list[int] = []
+    label_cursor = 0.0
+    for tier_index, (tier, measured) in enumerate(zip(tiers, tier_measurements, strict=True)):
+        if tier.role == "labels" and measured.form is not None:
+            lane = axis_label_lane_geometry(tier_index=tier_index, tier=tier, measured=measured,
+                                            declared_lanes=labels.declared, running_offset=label_cursor)
+            label_lanes.append((tier_index, lane))
+            label_cursor = lane.next_offset
+            if measured.secondary is not None:
+                secondary_ends.append((tier_index, lane.offset + lane.size))
+                if tier_index in labels.declared and lane.block > lane.size + float(GEOMETRY_TOLERANCE):
+                    declared_secondary_mismatches.append(tier_index)
+        if tier.role == "band" and band_count > 1 and tier.unit not in labels.by_unit:
+            offset, size = bands.stacked[tier_index]
+            band_ends.append((tier_index, offset + size))
+        if tier.role in {"grid-major", "grid-minor"}:
+            semantic_id = "axisGrid" if tier.role == "grid-major" else "axisGridMinor"
+            tick = axis_tick_requirement(tokens, semantic_binding(semantic_id).scene_role, tier_index)
+            if tick is not None:
+                tick_lengths.append((tier_index, tick))
+    capacity = AxisCapacityPlan(tuple(tick_lengths), tuple(band_ends), tuple(secondary_ends),
+                                tuple(declared_secondary_mismatches))
+    return SurfaceAxisMeasurement(tier_measurements, tuple(label_lanes), labels, bands, capacity)
 
 
 def complete_axis_plot(prepared: SurfaceAxisPreparation, plot: Rect) -> SurfaceAxisPlacements:
@@ -415,7 +485,8 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
     return complete_axis_plot(prepare_surface_axis(request, frame), base.plot)
 
 
-def prepare_surface_axis(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame) -> SurfaceAxisPreparation:
+def prepare_surface_axis(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame, *,
+                         measured: SurfaceAxisMeasurement | None = None) -> SurfaceAxisPreparation:
     """Complete native axis text/bands once, before final shared rows are placed."""
     if request.theme_tokens is None or request.font_metrics is None:
         raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources")
@@ -436,19 +507,23 @@ def prepare_surface_axis(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame)
     band_ordinal = label_ordinal = 0
     tiers = request.surface_content.axis_tiers
     band_tier_count = sum(item.role == "band" for item in tiers)
-    lanes = plan_label_lanes(tiers, tokens, font_metrics)
-    bands = plan_band_stack(tiers, tokens, lanes)
+    if measured is None:
+        lanes = plan_label_lanes(tiers, tokens, font_metrics)
+        bands = plan_band_stack(tiers, tokens, lanes)
+    else:
+        lanes, bands = measured.labels, measured.bands
     declared_lanes, lane_by_unit = lanes.declared, lanes.by_unit
 
     for tier_index, tier in enumerate(tiers):
-        measured = measure_axis_tier(request, scale, tier_index, tier)
-        form = measured.form
-        treatment, metrics = measured.treatment, measured.metrics
-        axis_size, plan = measured.axis_size, measured.secondary
-        intervals, interval_outcomes = measured.intervals, measured.outcomes
-        diagnostics.extend(measured.diagnostics)
-        decisions.extend(measured.decisions)
-        outcomes.append(measured.tier_outcome)
+        tier_measurement = (measure_axis_tier(request, scale, tier_index, tier)
+                            if measured is None else measured.tiers[tier_index])
+        form = tier_measurement.form
+        treatment, metrics = tier_measurement.treatment, tier_measurement.metrics
+        axis_size, plan = tier_measurement.axis_size, tier_measurement.secondary
+        intervals, interval_outcomes = tier_measurement.intervals, tier_measurement.outcomes
+        diagnostics.extend(tier_measurement.diagnostics)
+        decisions.extend(tier_measurement.decisions)
+        outcomes.append(tier_measurement.tier_outcome)
         if tier.role == "band":
             if band_ordinal >= len(axis_band_semantic_ids()):
                 raise LayoutError("E_PRESENTATION_AXIS_INVALID", f"/view/body/axis/tiers/{tier_index}", detail=f"too many band tiers:{band_ordinal + 1}")
@@ -504,8 +579,9 @@ def prepare_surface_axis(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame)
                     raise LayoutError("E_PRESENTATION_AXIS_INVALID", f"/view/body/axis/tiers/{tier_index}", detail=f"too many typography-role labels tiers:{label_ordinal}")
                 label_semantic_id = axis_label_semantic_ids()[label_ordinal]
             orientation = tier.label.orientation
-            lane = axis_label_lane_geometry(tier_index=tier_index, tier=tier, measured=measured,
-                                            declared_lanes=declared_lanes, running_offset=label_lane_offset)
+            lane = (axis_label_lane_geometry(tier_index=tier_index, tier=tier, measured=tier_measurement,
+                                             declared_lanes=declared_lanes, running_offset=label_lane_offset)
+                    if measured is None else measured.label_lane(tier_index))
             label_lane_offset, lane_size, block = lane.offset, lane.size, lane.block
             inset = _axis_label_inset(tokens, tier, axis_size)
             lane_overflow = label_lane_offset + lane_size > float(axis.bounds.block_size)

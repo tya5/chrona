@@ -12,7 +12,7 @@ from chrona.presentation.layout.slot_heading import content_slot
 
 from chrona.presentation.layout.surface_axis import (
     AxisPlotGrid, SurfaceAxisFrame, axis_label_lane_geometry, complete_axis_plot, compose_axis,
-    measure_axis_tier, prepare_surface_axis,
+    measure_axis_tier, measure_surface_axis, prepare_surface_axis,
 )
 from chrona.presentation.layout.surface_base import prepare_surface_base
 from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
@@ -82,6 +82,8 @@ def test_pre_row_axis_closes_mixed_rotated_labels_and_defers_only_full_height_gr
     rotated_measurement = measure_axis_tier(request, base_geometry.scale, 2, tiers[2])
     assert rotated_measurement.tier_outcome == prepared.placements.tier_outcomes[2]
     assert set(rotated_measurement.diagnostics) <= set(prepared.placements.diagnostics)
+    candidate_measurement = measure_surface_axis(request, base_geometry.scale)
+    assert prepare_surface_axis(request, frame, measured=candidate_measurement) == prepared
     grids = tuple(shape for shape in prepared.ordered_shapes if isinstance(shape, AxisPlotGrid))
     assert grids
     assert not any(shape.placement_id.startswith("axis-grid:") for shape in prepared.placements.shapes)
@@ -156,6 +158,46 @@ def test_declared_label_lane_overrides_running_cursor_and_returns_declared_end()
     lane = axis_label_lane_geometry(tier_index=0, tier=tier, measured=measured,
                                     declared_lanes={0: (11.0, 22.0)}, running_offset=99.0)
     assert (lane.offset, lane.size, lane.next_offset) == (11.0, 22.0, 33.0)
+
+
+@pytest.mark.parametrize("unit", ["auto", "rotate-cw"])
+def test_cached_candidate_axis_measurement_matches_native_preparation(unit):
+    label = AxisLabelIntent(
+        None if unit == "auto" else "long-month",
+        (("month", "long-month"), ("quarter", "quarter")) if unit == "auto" else (),
+        "center", "thin-with-record", "horizontal" if unit == "auto" else unit, "en-US")
+    tier = AxisTier("auto" if unit == "auto" else "month", 1, "labels", label)
+    request = _axis_request((tier,))
+    base_geometry = prepare_surface_base(request)
+    frame = SurfaceAxisFrame(base_geometry.scale, base_geometry.timeline,
+                             base_geometry.by_source["timeline-axis"], base_geometry.metric_values)
+    expected = prepare_surface_axis(request, frame)
+    measurement = measure_surface_axis(request, base_geometry.scale)
+    actual = prepare_surface_axis(request, frame, measured=measurement)
+    assert actual == expected
+
+
+def test_cached_axis_preparation_does_not_remeasure_any_candidate_facts(monkeypatch):
+    from chrona.presentation.layout import surface_axis
+
+    tiers = (
+        AxisTier("quarter", 1, "band"),
+        AxisTier("month", 1, "labels", AxisLabelIntent(
+            "long-month", (), "center", "thin-with-record", "rotate-cw", "en-US")),
+    )
+    request = _axis_request(tiers)
+    base_geometry = prepare_surface_base(request)
+    frame = SurfaceAxisFrame(base_geometry.scale, base_geometry.timeline,
+                             base_geometry.by_source["timeline-axis"], base_geometry.metric_values)
+    measured = measure_surface_axis(request, base_geometry.scale)
+    expected = prepare_surface_axis(request, frame)
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("cached candidate axis facts must be consumed without remeasurement")
+
+    for name in ("measure_axis_tier", "plan_label_lanes", "plan_band_stack", "axis_label_lane_geometry"):
+        monkeypatch.setattr(surface_axis, name, forbidden)
+    assert prepare_surface_axis(request, frame, measured=measured) == expected
 
 
 def test_surface_composer_completes_axis_and_captions_before_rows_and_only_then_plot_grids(monkeypatch):
@@ -309,12 +351,50 @@ def test_tick_natural_requirement_is_measurable_before_candidate_capacity_admiss
     if length is None:
         assert _axis_tick_length(tokens, role, Decimal(1), 2) is None
     else:
+        request = replace(_axis_request((AxisTier("month", 1, "grid-major"),)), theme_tokens=tokens)
+        geometry = prepare_surface_base(request)
+        capacity = measure_surface_axis(request, geometry.scale).capacity
+        assert capacity.fits(geometry.by_source["timeline-axis"].bounds.block_size) is (length <= 48)
         with pytest.raises(LayoutError) as caught:
             _axis_tick_length(tokens, role, Decimal(1), 2)
         assert caught.value.diagnostic_id == "E_PRESENTATION_AXIS_OVERFLOW"
         assert caught.value.path == "/view/body/axis/tiers/2"
         assert caught.value.detail == f"tick-length:{role}"
         assert _axis_tick_length(tokens, role, Decimal(length), 2) == Decimal(length)
+        if length > geometry.by_source["timeline-axis"].bounds.block_size:
+            frame = SurfaceAxisFrame(geometry.scale, geometry.timeline,
+                                    geometry.by_source["timeline-axis"], geometry.metric_values)
+            measurement = measure_surface_axis(request, geometry.scale)
+            with pytest.raises(LayoutError) as cached_error:
+                prepare_surface_axis(request, frame, measured=measurement)
+            with pytest.raises(LayoutError) as native_error:
+                prepare_surface_axis(request, frame)
+            assert (cached_error.value.diagnostic_id, cached_error.value.path, cached_error.value.detail) == (
+                native_error.value.diagnostic_id, native_error.value.path, native_error.value.detail)
+
+
+def test_axis_capacity_plan_keeps_exact_tick_band_and_secondary_comparators():
+    from math import inf, nextafter
+
+    from chrona.presentation.layout.surface_axis import AxisCapacityPlan
+    from chrona.presentation.layout.surface_geometry import GEOMETRY_TOLERANCE
+
+    tick = AxisCapacityPlan(((0, Decimal("10")),), (), (), ())
+    assert not tick.fits(Decimal("9.999999"))
+    assert tick.fits(Decimal("10"))
+
+    band_end = 10.0
+    band_boundary = band_end - float(GEOMETRY_TOLERANCE)
+    band = AxisCapacityPlan((), ((0, band_end),), (), ())
+    for block in (nextafter(band_boundary, -inf), band_boundary, nextafter(band_boundary, inf)):
+        decimal_block = Decimal.from_float(block)
+        assert band.fits(decimal_block) == (band_end <= float(decimal_block) + float(GEOMETRY_TOLERANCE))
+
+    secondary_end = 10.0
+    secondary = AxisCapacityPlan((), (), ((0, secondary_end),), ())
+    for block in (nextafter(secondary_end, -inf), secondary_end, nextafter(secondary_end, inf)):
+        decimal_block = Decimal.from_float(block)
+        assert secondary.fits(decimal_block) == (secondary_end <= float(decimal_block))
 
 
 @pytest.mark.parametrize("length", [0, -3])
@@ -356,6 +436,8 @@ def test_tier_measurement_is_available_before_tiny_multiband_host_rejection():
     tiers = (AxisTier("year", 1, "band"), AxisTier("quarter", 1, "band"))
     request = _axis_request(tiers)
     base_geometry = prepare_surface_base(request)
+    measurement = measure_surface_axis(request, base_geometry.scale)
+    assert not measurement.capacity.fits(Decimal(1))
     frame = SurfaceAxisFrame(base_geometry.scale, base_geometry.timeline,
                              replace(base_geometry.by_source["timeline-axis"],
                                      bounds=replace(base_geometry.by_source["timeline-axis"].bounds,
@@ -365,11 +447,16 @@ def test_tier_measurement_is_available_before_tiny_multiband_host_rejection():
                      for index, tier in enumerate(tiers))
     assert tuple(item.tier_outcome.tier_index for item in measured) == (0, 1)
     assert all(item.intervals for item in measured)
+    measurement = measure_surface_axis(request, base_geometry.scale)
     with pytest.raises(LayoutError) as caught:
-        prepare_surface_axis(request, frame)
+        prepare_surface_axis(request, frame, measured=measurement)
     assert caught.value.diagnostic_id == "E_PRESENTATION_AXIS_OVERFLOW"
     assert caught.value.path == "/view/body/axis/tiers/0"
     assert caught.value.detail == "band-lane:0"
+    with pytest.raises(LayoutError) as native:
+        prepare_surface_axis(request, frame)
+    assert (native.value.diagnostic_id, native.value.path, native.value.detail) == (
+        caught.value.diagnostic_id, caught.value.path, caught.value.detail)
 
 
 def test_measurement_preserves_secondary_selection_consumed_by_strict_axis_preparation():
@@ -393,6 +480,72 @@ def test_measurement_preserves_secondary_selection_consumed_by_strict_axis_prepa
     assert measured.secondary is not None
     assert measured.tier_outcome == prepared.placements.tier_outcomes[0]
     assert any(item.secondary_disposition == "placed" for item in measured.outcomes)
+    candidate_measurement = measure_surface_axis(request, base_geometry.scale)
+    assert prepare_surface_axis(request, frame, measured=candidate_measurement) == prepared
+
+
+def test_secondary_declared_lane_mismatch_is_a_fixed_capacity_failure():
+    tier = AxisTier("month", 1, "labels", AxisLabelIntent(
+        "long-month", (), "center", "thin-with-record", "horizontal", "en-US",
+        AxisSecondaryIntent("short-month", "en-US", "axisSecondary", "stacked")))
+    request = _axis_request((tier,))
+    theme = deepcopy(base._theme())
+    theme["body"]["values"]["secondary-size"] = {"type": "number", "value": 8}
+    theme["body"]["values"]["axis-lane"] = {"type": "number", "value": 1}
+    theme["body"]["roles"]["axisSecondary"] = {
+        "fontFamily": "body", "fontWeight": "regular", "fontSize": "secondary-size",
+        "lineHeight": "line", "letterSpacing": "letter-spacing", "textTransform": "text-transform",
+        "numericSpacing": "numeric-spacing",
+    }
+    theme["body"]["roles"]["axis"]["laneBlockSize"] = "axis-lane"
+    request = replace(request, theme_tokens=ThemeTokenView(theme))
+    base_geometry = prepare_surface_base(request)
+    measurement = measure_surface_axis(request, base_geometry.scale)
+    assert measurement.capacity.declared_secondary_mismatches == (0,)
+    assert not measurement.capacity.fits(Decimal(100))
+    frame = SurfaceAxisFrame(base_geometry.scale, base_geometry.timeline,
+                             base_geometry.by_source["timeline-axis"], base_geometry.metric_values)
+    with pytest.raises(LayoutError) as caught:
+        prepare_surface_axis(request, frame, measured=measurement)
+    assert caught.value.diagnostic_id == "E_PRESENTATION_AXIS_OVERFLOW"
+    assert caught.value.path == "/view/body/axis/tiers/0"
+    assert caught.value.detail == "secondary-lane:0"
+    with pytest.raises(LayoutError) as native:
+        prepare_surface_axis(request, frame)
+    assert (native.value.diagnostic_id, native.value.path, native.value.detail) == (
+        caught.value.diagnostic_id, caught.value.path, caught.value.detail)
+
+
+def test_undeclared_secondary_capacity_follows_rotated_label_lane_offset():
+    from math import inf, nextafter
+
+    tiers = (
+        AxisTier("month", 1, "labels", AxisLabelIntent(
+            "long-month", (), "center", "thin-with-record", "rotate-cw", "en-US")),
+        AxisTier("quarter", 1, "labels", AxisLabelIntent(
+            "quarter", (), "center", "thin-with-record", "horizontal", "en-US",
+            AxisSecondaryIntent("quarter", "en-US", "axisSecondary", "stacked"))),
+    )
+    request = _axis_request(tiers)
+    theme = deepcopy(base._theme())
+    theme["body"]["values"]["secondary-size"] = {"type": "number", "value": 8}
+    theme["body"]["roles"]["axisSecondary"] = {
+        "fontFamily": "body", "fontWeight": "regular", "fontSize": "secondary-size",
+        "lineHeight": "line", "letterSpacing": "letter-spacing", "textTransform": "text-transform",
+        "numericSpacing": "numeric-spacing",
+    }
+    request = replace(request, theme_tokens=ThemeTokenView(theme))
+    base_geometry = prepare_surface_base(request)
+    measurement = measure_surface_axis(request, base_geometry.scale)
+    lanes = dict(measurement.label_lanes)
+    assert lanes[0].offset == 0.0
+    assert lanes[1].offset == lanes[0].next_offset
+    secondary_end = dict(measurement.capacity.secondary_lane_ends)[1]
+    assert secondary_end == lanes[1].offset + lanes[1].size
+    boundary = Decimal.from_float(secondary_end)
+    assert measurement.capacity.fits(boundary)
+    below = Decimal.from_float(nextafter(secondary_end, -inf))
+    assert not measurement.capacity.fits(below)
 
 
 @pytest.mark.parametrize("headed", [("table",), ("timeline",), ("timeline-axis",),
