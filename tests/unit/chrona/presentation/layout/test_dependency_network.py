@@ -237,3 +237,47 @@ def test_network_wrapper_keeps_native_title_on_raw_runs_without_aggregate_measur
     assert by_id["title"].bounds.block >= (
         by_id["slot-heading:title-slot-id"].bounds.block
         + by_id["slot-heading:title-slot-id"].bounds.block_size)
+
+
+@pytest.mark.parametrize("direction", ("horizontal", "vertical-lr", "vertical-rl"))
+def test_title_caption_reserves_only_its_own_slot_not_graph_or_routes(direction):
+    resolved = theme()
+    metrics = SimpleNamespace(content_identity="sha256:own-slot-caption",
+                               width=lambda text, size, **kwargs: len(text) * size / 2,
+                               baseline=lambda top, size, line_height: top + size)
+    decisions = (
+        LayoutDecision("title", "slot", Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(60)),
+                       source="title"),
+        LayoutDecision("network", "slot", Rect(Decimal(0), Decimal(60), Decimal(400), Decimal(240)),
+                       source="network"),
+    )
+    manifest = LayoutManifest("test", "sha256:test", "horizontal", direction,
+                              Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(300)), decisions)
+    measured = _measured("a", "b", "c")
+    graph = _network(("a", "b", "c"), (("ab", "a", "b"), ("bc", "b", "c")))
+    request = SurfaceLayoutRequest(
+        projection=SimpleNamespace(network=graph), surface_content=SimpleNamespace(slot_heading_text=()),
+        layout_manifest=manifest, measured_sources=measured,
+        theme_tokens=ThemeTokenView(resolved), font_metrics=metrics)
+    plain = compose_dependency_network_surface(request)
+    core = compose_dependency_network_layout(
+        graph, title_bounds=decisions[0].bounds, bounds=decisions[1].bounds,
+        measured_sources=measured, flow_direction=direction,
+        canvas_bounds=manifest.viewport, theme_tokens=request.theme_tokens)
+    # Without declarations, the wrapper preserves every native completed field.
+    assert plain == core
+    headed_manifest = replace(manifest, decisions=(
+        replace(decisions[0], heading=SlotHeading("Document")), decisions[1]))
+    headed = compose_dependency_network_surface(replace(request, layout_manifest=headed_manifest))
+    assert headed.nodes == plain.nodes
+    assert headed.relations == plain.relations
+    assert headed.canvas_bounds == plain.canvas_bounds
+    assert headed.fit_warnings == plain.fit_warnings
+    assert headed.patterns == plain.patterns
+    assert headed.texture == plain.texture
+    assert headed.aligned_strokes == plain.aligned_strokes
+    assert tuple(item for item in headed.text if item.source_ref != "title") == tuple(
+        item for item in plain.text if item.source_ref != "title")
+    title = next(item for item in headed.text if item.placement_id == "title")
+    caption = next(item for item in headed.text if item.placement_id == "slot-heading:title")
+    assert title.bounds.block >= caption.bounds.block + caption.bounds.block_size
