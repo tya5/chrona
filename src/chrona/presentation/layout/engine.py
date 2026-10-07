@@ -1047,7 +1047,7 @@ def _content_block_capacity_witness(profile: ResolvedLayoutProfile, *, manifest:
 
 def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inline: int,
                                  minimum_block: int, measurements: Mapping[str, Measurement],
-                                 required_blocks: Mapping[str, Decimal],
+                                 required_blocks: Mapping[str, Decimal] | Callable[[LayoutManifest], Mapping[str, Decimal]],
                                  content_sized: bool = False) -> ContentBlockResolution:
     """Verify a native allocation-capacity witness, then choose its least integral extent.
 
@@ -1055,6 +1055,8 @@ def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inl
     auto floor). A speculative witness never becomes output unless the unchanged
     whole profile satisfies every source and, for auto, normal-flow content.
     Shortage evidence always describes the manifest at the returned extent.
+    A demand function is pure and measures that candidate's native inputs;
+    the engine neither carries surface geometry nor reuses another candidate's demand.
     """
     if minimum_block <= 0:
         raise LayoutError("E_LAYOUT_CONSTRAINT_CONTRADICTORY", "/viewport")
@@ -1067,22 +1069,28 @@ def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inl
     def allocations(manifest: LayoutManifest) -> dict[str, Decimal]:
         return {item.source: item.bounds.block_size for item in manifest.decisions if item.source}
 
-    def satisfies(manifest: LayoutManifest) -> bool:
+    def requirements(manifest: LayoutManifest) -> Mapping[str, Decimal]:
+        required = required_blocks(manifest) if callable(required_blocks) else required_blocks
+        missing = sorted(set(required) - set(allocations(manifest)))
+        if missing:
+            raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/layoutManifest/sources/" + missing[0])
+        return required
+
+    def satisfies(manifest: LayoutManifest, required: Mapping[str, Decimal] | None = None) -> bool:
         allocated = allocations(manifest)
-        return (all(allocated[source] >= required for source, required in required_blocks.items())
+        required = requirements(manifest) if required is None else required
+        return (all(allocated[source] >= block for source, block in required.items())
                 and (not content_sized or not _unresolved_normal_flow_warnings(profile, manifest)))
 
     requested = arrange(minimum_block)
     requested_allocated = allocations(requested)
-    missing = sorted(set(required_blocks) - set(requested_allocated))
-    if missing:
-        raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/layoutManifest/sources/" + missing[0])
-    if satisfies(requested):
+    requested_required = requirements(requested)
+    if satisfies(requested, requested_required):
         return ContentBlockResolution(minimum_block)
 
     witness = _content_block_capacity_witness(
         profile, manifest=requested, measurements=measurements,
-        required_blocks=required_blocks, content_sized=content_sized,
+        required_blocks=requested_required, content_sized=content_sized,
     )
     # A strict integral upper witness avoids a native Decimal fr division
     # landing just below an exact capacity boundary. Bisection still tests
@@ -1090,9 +1098,9 @@ def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inl
     high = minimum_block if witness is None else max(minimum_block, int(witness) + 1)
     if high == minimum_block or not satisfies(arrange(high)):
         return ContentBlockResolution(minimum_block, tuple(
-            ShortContentSource(source, required_blocks[source], requested_allocated[source])
-            for source in sorted(required_blocks)
-            if requested_allocated[source] < required_blocks[source]
+            ShortContentSource(source, requested_required[source], requested_allocated[source])
+            for source in sorted(requested_required)
+            if requested_allocated[source] < requested_required[source]
         ))
 
     # Only this verified fitting interval may drive the least-integral search.

@@ -252,6 +252,67 @@ def test_fixed_capped_host_shortage_matches_returned_manifest_allocation():
     assert resolution.short_sources[0].allocated_block == returned_allocation == Decimal(500)
 
 
+def test_candidate_demand_uses_each_native_manifest_not_the_requested_sample():
+    resolved = _capacity_profile(
+        [{"fr": 1}, {"fr": 1}],
+        [_capacity_slot("table", "table", 1), _capacity_slot("timeline", "timeline", 2)],
+    )
+    measurements = _capacity_measurements("table", "timeline")
+    evaluated = []
+
+    def demand(manifest):
+        available = _source_blocks(manifest)["timeline"]
+        required = Decimal(100) if available < Decimal(75) else Decimal(60)
+        evaluated.append((manifest.viewport.block_size, available, required))
+        return {"timeline": required}
+
+    result = resolve_content_block_extent(
+        resolved, viewport_inline=1600, minimum_block=100, measurements=measurements,
+        required_blocks=demand)
+    assert result.extent == 150
+    assert not result.short_sources
+    assert evaluated[0] == (Decimal(100), Decimal(50), Decimal(100))
+    assert any(required == Decimal(60) for _, _, required in evaluated)
+    for extent in (149, 150):
+        manifest = solve_layout(resolved, viewport_inline=1600, viewport_block=extent,
+                                measurements=measurements)
+        assert (_source_blocks(manifest)["timeline"] >= demand(manifest)["timeline"]) == (extent == 150)
+
+
+def test_candidate_demand_keeps_shortage_evidence_from_returned_capped_manifest():
+    resolved = _capacity_profile(
+        [{"minmax": {"min": {"fixed": 300}, "max": {"fixed": 500}}}, "fill"],
+        [_capacity_slot("timeline", "timeline", 1), _capacity_slot("table", "table", 2)],
+    )
+    measurements = _capacity_measurements("table", "timeline")
+
+    def demand(manifest):
+        return {"timeline": _source_blocks(manifest)["timeline"] + Decimal(100)}
+
+    result = resolve_content_block_extent(
+        resolved, viewport_inline=1600, minimum_block=900, measurements=measurements,
+        required_blocks=demand)
+    assert result.extent == 900
+    assert [(item.required_block, item.allocated_block) for item in result.short_sources] == [
+        (Decimal(600), Decimal(500))]
+
+
+def test_constant_candidate_function_matches_constant_map():
+    required = {"timeline": Decimal(850)}
+    args = dict(viewport_inline=1600, minimum_block=900, measurements=MEASUREMENTS)
+    assert resolve_content_block_extent(profile(), required_blocks=lambda manifest: required, **args) == (
+        resolve_content_block_extent(profile(), required_blocks=required, **args))
+
+
+def test_candidate_demand_reports_missing_source_at_the_existing_pointer():
+    with pytest.raises(LayoutError) as caught:
+        resolve_content_block_extent(
+            profile(), viewport_inline=1600, minimum_block=900, measurements=MEASUREMENTS,
+            required_blocks=lambda manifest: {"missing": Decimal(2)})
+    assert caught.value.diagnostic_id == "E_LAYOUT_DRAFT_AUTO_UNSUPPORTED"
+    assert caught.value.path == "/layoutManifest/sources/missing"
+
+
 @pytest.mark.parametrize(("tracks", "span", "required", "expected"), [
     ([{"fr": 3}], 1, Decimal(1), 2),
     ([{"fr": 1}, {"fr": 1}, {"fr": 1}], 3, Decimal(35), 35),
