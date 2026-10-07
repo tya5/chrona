@@ -260,7 +260,8 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
 
 def prepare_surface_base(request: SurfaceLayoutRequest, *,
                          allocation: SurfaceSlotAllocation | None = None,
-                         inline: SurfaceInlineGeometry | None = None) -> SurfaceBaseGeometry:
+                         inline: SurfaceInlineGeometry | None = None,
+                         row_viewport: Rect | None = None) -> SurfaceBaseGeometry:
     """Validate inputs and close slots, rows, groups, scale and mark tracks."""
     inline = inline if inline is not None else prepare_surface_inline(request, allocation=allocation)
     request = inline.request
@@ -281,6 +282,10 @@ def prepare_surface_base(request: SurfaceLayoutRequest, *,
     mark_band_allocation = inline.mark_band_allocation
     group_header_size = inline.group_header_size
     group_tag_inline_size = inline.group_tag_inline_size
+    # Full slots remain ownership/allocation evidence. Only shared row capacity
+    # and plot geometry consume the completed native content viewport.
+    row_viewport = row_viewport if row_viewport is not None else timeline.bounds
+    row_content_bounds = bounds_from_rect(row_viewport)
     row_padding = float(metric_values["timeline.row.paddingBlock"])
     text_line_block = table_text_line_block(
         request.theme_tokens, (cell.typography_role for cell in request.surface_content.table_cells))
@@ -303,13 +308,13 @@ def prepare_surface_base(request: SurfaceLayoutRequest, *,
     if (content.as_of_placement == BELOW_PLOT and content.as_of is not None and content.as_of_label
             and start <= content.as_of < end):
         wanted = below_plot_reserve(request.theme_tokens)
-        slack = row_block_slack(review_rows=review_row_values, timeline_block_size=timeline_bounds[3],
+        slack = row_block_slack(review_rows=review_row_values, timeline_block_size=row_content_bounds[3],
                                 group_header_size=group_header_size, required_block_sizes=requirements)
         if slack >= wanted:
             foot_reserve = wanted
         else:
             foot_fallback = True
-    row_bounds = (timeline_bounds[0], timeline_bounds[1], timeline_bounds[2], timeline_bounds[3] - foot_reserve)
+    row_bounds = (*row_content_bounds[:3], row_content_bounds[3] - foot_reserve)
     raw_rows = place_rows(review_rows=review_row_values, timeline_bounds=row_bounds,
                           group_header_size=group_header_size, required_block_sizes=requirements,
                           distribution=layout_manifest.row_distribution)
@@ -351,7 +356,7 @@ def prepare_surface_base(request: SurfaceLayoutRequest, *,
         inline.slot_ids,
         scale, rows, raw_rows, groups, tracks, role_geometries, mark_block_size,
         lane_subtracks, group_header_size, row_padding, text_line_block, table_bounds,
-        plot_rect(timeline.bounds, (row.bounds for row in rows)),
+        plot_rect(row_viewport, (row.bounds for row in rows)),
         group_tag_inline_size=group_tag_inline_size,
         as_of_foot_reserve=foot_reserve, as_of_foot_fallback=foot_fallback,
         mark_band_allocation=mark_band_allocation,

@@ -30,7 +30,9 @@ from chrona.presentation.layout.surface_completion import (
     SurfaceCompletionContext, SurfaceLayoutComposition, complete_surface_layout,
 )
 from chrona.presentation.layout.surface_annotations import SurfaceAnnotationContext, place_annotations
-from chrona.presentation.layout.surface_table import compose_table
+from chrona.presentation.layout.surface_table import (
+    compose_table, prepare_table_header_seed, table_row_indent_intents,
+)
 from chrona.presentation.layout.surface_heading import place_heading
 from chrona.presentation.layout.surface_groups import (compose_group_presentation)
 from chrona.presentation.layout.surface_backgrounds import (
@@ -106,7 +108,22 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     headings = complete_slot_headings(request=request, slots=inline.by_source, decisions=inline.decisions,
                                       axis_label_tiers=prepared_axis.placements.label_tiers,
                                       prepared=prepared_headings)
-    base = prepare_surface_base(request, inline=inline)
+    table_content = content_slot(inline.table, headings.reserved("table"))
+    timeline_content = content_slot(inline.timeline, headings.reserved("timeline"))
+    table_seed = prepare_table_header_seed(
+        request=request, table=table_content, review_rows=table_row_indent_intents(inline.review_rows),
+        metric_values=inline.metric_values, group_tag_inline_size=inline.group_tag_inline_size)
+    row_start = timeline_content.bounds.block
+    if any(headings.reserved(source) for source in ("table", "timeline", "timeline-axis")):
+        native_ends = [row_start]
+        if table_seed.header_end_block is not None:
+            native_ends.append(table_seed.header_end_block)
+        native_ends.extend(item.bounds.block + item.bounds.block_size
+                           for item in (*prepared_axis.placements.text, *prepared_axis.placements.shapes))
+        row_start = max(native_ends)
+    row_viewport = Rect(timeline_content.bounds.inline, row_start, timeline_content.bounds.inline_size,
+                        max(Decimal(0), timeline_content.bounds.block + timeline_content.bounds.block_size - row_start))
+    base = prepare_surface_base(request, inline=inline, row_viewport=row_viewport)
     request = base.request
     projection = request.projection
     layout_manifest = base.layout_manifest
@@ -114,13 +131,13 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     metric_values = base.metric_values
     start, end = projection.window
     slots, by_source, table, timeline = base.slots, base.by_source, base.table, base.timeline
-    review_rows, timeline_bounds = base.review_rows, base.timeline_bounds
+    review_rows, timeline_bounds = base.review_rows, _bounds(row_viewport)
     slot_ids = base.slot_ids
     text_slot = base.text_slot
     scale, rows, raw_rows = base.scale, base.rows, base.raw_rows
     groups, tracks = base.groups, base.tracks
     role_geometries, mark_block_size = base.role_geometries, base.mark_block_size
-    table_bounds = base.table_bounds
+    table_bounds = table_seed.table_bounds
     if request.theme_tokens is None or request.font_metrics is None:
         raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources")
     def metric_for(typography_role: str) -> Any:
@@ -144,7 +161,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     by_source = {slot.source_ref: slot for slot in slots}
     text.extend(detail_panel_text)
     text.extend(headings.text)
-    table_batch = compose_table(base)
+    table_batch = compose_table(base, seed=table_seed)
     column_placements = table_batch.columns
     text.extend(table_batch.text)
     group_batch = compose_group_presentation(
@@ -330,11 +347,14 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         text.extend(place_summary(request, content_slot(summary_slot, headings.reserved("summary"))))
 
     annotation_slot = by_source.get("annotations")
-    annotation_by_source = (by_source if annotation_slot is None or not headings.reserved("annotations")
-                            else {**by_source, "annotations": content_slot(annotation_slot, headings.reserved("annotations"))})
+    timeline_content = replace(timeline_content, bounds=row_viewport)
+    annotation_by_source = {**by_source, "table": table_content, "timeline": timeline_content,
+                            "timeline-axis": axis_slot}
+    if annotation_slot is not None:
+        annotation_by_source["annotations"] = content_slot(annotation_slot, headings.reserved("annotations"))
     annotation_batch = place_annotations(SurfaceAnnotationContext(
         request, projection, layout_manifest, contract, review_rows, rows, annotation_by_source, scale, start, end,
-        timeline, timeline_bounds, mark_by_id, comparison_clusters, instance_rows, metric_for,
+        timeline_content, timeline_bounds, mark_by_id, comparison_clusters, instance_rows, metric_for,
         surface_obstacles, register_rect, register_port))
     text.extend(annotation_batch.text)
     shapes.extend(annotation_batch.shapes)

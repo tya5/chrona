@@ -192,3 +192,90 @@ def test_axis_caption_keeps_existing_native_tick_capacity_guard():
     with pytest.raises(LayoutError, match="E_PRESENTATION_AXIS_OVERFLOW") as error:
         compose_surface_layout(request)
     assert error.value.path == "/view/body/axis/tiers/0"
+
+
+@pytest.mark.parametrize("headed", [("table",), ("timeline",), ("timeline-axis",),
+                                     ("table", "timeline", "timeline-axis")])
+@pytest.mark.parametrize("label_side", ["auto", "inside"])
+def test_native_captions_close_one_shared_row_floor_from_actual_headers_and_axis(headed, label_side, monkeypatch):
+    from chrona.presentation.layout import surface_composer
+
+    request = _axis_request((AxisTier("month", 1, "grid-major"), AxisTier("quarter", 1, "labels",
+        AxisLabelIntent("quarter", (), "center", "thin-with-record", "horizontal", "en-US"))))
+    content = base.surface_content(table_columns=(("name", "Name"),), table_cells=(("a", "name", "Activity"),),
+                                   axis_tiers=request.surface_content.axis_tiers,
+                                   show_member_labels=True, label_placement="plot", label_content=("title",),
+                                   label_side=label_side, label_overflow="suppress")
+    theme = deepcopy(base._theme())
+    theme["body"]["roles"]["slot-heading"] = deepcopy(theme["body"]["roles"]["text"])
+    theme["body"]["values"]["large-header"] = {"type": "number", "value": 40}
+    theme["body"]["roles"]["tableColumnLabel"] = {
+        **theme["body"]["roles"]["text"], "fontSize": "large-header"}
+    manifest = replace(request.layout_manifest, row_distribution="pack", decisions=tuple(
+        replace(decision, heading=SlotHeading(f"Caption {decision.source}"))
+        if decision.source in headed else decision for decision in request.layout_manifest.decisions))
+    request = replace(request, surface_content=content, presentation_contract=normalize_presentation_input(content),
+                      theme_tokens=ThemeTokenView(theme), layout_manifest=manifest,
+                      measured_sources=replace(request.measured_sources, metric_values={
+                          **request.measured_sources.metric_values, "timeline.mark.blockSize": Decimal(20)}))
+    seed_owner = surface_composer.prepare_table_header_seed
+    seeds = []
+
+    def observed(**kwargs):
+        result = seed_owner(**kwargs)
+        seeds.append(result)
+        return result
+
+    monkeypatch.setattr(surface_composer, "prepare_table_header_seed", observed)
+    domains = []
+    for name in ("SurfaceMemberLabelContext", "SurfaceRoutesContext", "SurfaceAnnotationContext"):
+        original = getattr(surface_composer, name)
+
+        def observed_context(*args, _original=original, _name=name, **kwargs):
+            context = _original(*args, **kwargs)
+            domains.append((_name, context))
+            return context
+
+        monkeypatch.setattr(surface_composer, name, observed_context)
+    placed = surface_composer.compose_surface_layout(request).placement
+    assert len(seeds) == 1
+    header, = (text for text in placed.text if text.placement_id == "column:name")
+    assert header.bounds == seeds[0].header_text[0].bounds
+    assert header.baseline == seeds[0].header_text[0].baseline
+    full_timeline = next(slot for slot in placed.slots if slot.source_ref == "timeline")
+    expected = max(full_timeline.bounds.block + (Decimal("26.6") if "timeline" in headed else 0),
+                   header.bounds.block + header.bounds.block_size,
+                   *(text.bounds.block + text.bounds.block_size for text in placed.text
+                     if text.placement_id.startswith("axis-label:")))
+    assert float(placed.rows[0].bounds.block) == float(expected)
+    assert {name for name, _ in domains} == {
+        "SurfaceMemberLabelContext", "SurfaceRoutesContext", "SurfaceAnnotationContext"}
+    assert all(context.timeline_bounds[1] == float(expected) for _, context in domains)
+    annotations = next(context for name, context in domains if name == "SurfaceAnnotationContext")
+    assert float(annotations.timeline.bounds.block) == float(expected)
+    assert annotations.by_source["timeline"].bounds == annotations.timeline.bounds
+    assert not any(warning.placement_id == "column:name" for warning in placed.fit_warnings)
+    assert all(mark.bounds.block >= expected for mark in placed.marks)
+    assert all(text.bounds.block >= expected for text in placed.text if text.placement_id.startswith("cell:"))
+    labels = [text for text in placed.text if text.placement_id.startswith("member-label:")
+              and text.overflow != "suppressed"]
+    if label_side == "inside":
+        assert labels
+    assert all(text.bounds.block >= expected for text in labels)
+    assert {text.source_ref for text in placed.text if text.placement_id.startswith("slot-heading:")} == set(headed)
+    for decision in manifest.decisions:
+        assert next(slot for slot in placed.slots if slot.source_ref == decision.source).bounds == decision.bounds
+    grids = [shape for shape in placed.shapes if shape.placement_id.startswith("axis-grid:")]
+    assert grids and all(float(shape.bounds.block) == float(expected) for shape in grids)
+    from chrona.presentation.renderers.v05_svg import render_v05_svg
+    scene = base.compose_review_surface(base.build_scene_input(
+        projection=request.projection, surface_content=content, layout_manifest=manifest,
+        resolved_theme=theme, font_metrics=request.font_metrics, measured_sources=request.measured_sources,
+        capabilities={"svg": True}, viewport=(1000, 1000)))
+    svg = ElementTree.fromstring(render_v05_svg(scene))
+    emitted = {node.get("data-scene-id"): node for node in svg.iter() if node.get("data-scene-id")}
+    assert {key for key in emitted if key.startswith("slot-heading:")} == {
+        f"slot-heading:{source}" for source in headed}
+    assert float(emitted["column:name"].get("y")) == round(header.baseline[1], 3)
+    cell = next(text for text in placed.text if text.placement_id == "cell:a:name")
+    assert float(emitted["cell:a:name"].get("y")) == round(cell.baseline[1], 3)

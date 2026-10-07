@@ -5,7 +5,7 @@ from decimal import Decimal
 
 import pytest
 
-from chrona.presentation.layout.model import LayoutError, SlotHeading
+from chrona.presentation.layout.model import LayoutError, Rect, SlotHeading
 from chrona.presentation.layout.sources import MeasuredSources, SourceInput
 from chrona.presentation.layout.surface_base import (
     prepare_surface_base, prepare_surface_inline, prepare_surface_slots,
@@ -109,6 +109,47 @@ def test_point_mark_inline_scale_closes_without_placing_any_shared_rows_or_track
     assert inline.scale == expected.scale
     assert inline.scale.range_start > float(inline.timeline.bounds.inline)
     assert inline.mark_band_allocation == expected.mark_band_allocation
+
+
+def test_completed_row_viewport_changes_capacity_and_plot_without_rewriting_full_slots():
+    request = _request()
+    inline = prepare_surface_inline(request)
+    full = inline.timeline.bounds
+    viewport = Rect(full.inline, full.block + Decimal(30), full.inline_size, full.block_size - Decimal(30))
+    placed = prepare_surface_base(request, inline=inline, row_viewport=viewport)
+    assert placed.slots is inline.slots
+    assert placed.timeline is inline.timeline
+    assert placed.table is inline.table
+    assert placed.by_source is inline.by_source
+    assert placed.scale is inline.scale
+    assert placed.rows[0].bounds.block == viewport.block
+    assert placed.rows[-1].bounds.block + placed.rows[-1].bounds.block_size == full.block + full.block_size
+    assert placed.plot == viewport
+    assert all(track.block >= float(viewport.block) for track in placed.tracks)
+
+
+def test_explicit_full_row_viewport_preserves_every_default_base_fact():
+    request = _request()
+    inline = prepare_surface_inline(request)
+    expected = prepare_surface_base(request, inline=inline)
+    actual = prepare_surface_base(request, inline=inline, row_viewport=inline.timeline.bounds)
+    assert actual == expected
+
+
+def test_below_plot_reserve_uses_content_capacity_not_the_full_slot(monkeypatch):
+    request = _request()
+    request = replace(request, surface_content=replace(
+        request.surface_content, as_of=date(2026, 1, 2), as_of_label="As of", as_of_placement="below-plot"))
+    monkeypatch.setattr("chrona.presentation.layout.surface_base.below_plot_reserve", lambda tokens: 20.0)
+    inline = prepare_surface_inline(request)
+    full = inline.timeline.bounds
+    baseline = prepare_surface_base(request, inline=inline)
+    assert baseline.as_of_foot_reserve == 20 and not baseline.as_of_foot_fallback
+    viewport = Rect(full.inline, full.block + full.block_size - Decimal(50), full.inline_size, Decimal(50))
+    placed = prepare_surface_base(request, inline=inline, row_viewport=viewport)
+    assert placed.as_of_foot_reserve == 0 and placed.as_of_foot_fallback
+    assert placed.slots is baseline.slots
+    assert placed.rows[0].bounds.block == viewport.block
 
 
 def test_heading_and_node_identity_do_not_change_full_source_allocations():
