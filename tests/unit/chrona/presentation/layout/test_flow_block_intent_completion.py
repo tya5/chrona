@@ -4,7 +4,7 @@ from decimal import Decimal
 
 import pytest
 
-from chrona.presentation.layout.engine import measure_natural_normal_flow_block, solve_layout
+from chrona.presentation.layout.engine import _flow_lines, measure_natural_normal_flow_block, solve_layout
 from tests.unit.chrona.presentation.layout.test_cross_size_stretch import (
     container,
     decisions,
@@ -199,6 +199,32 @@ def test_flow_completes_intrinsic_and_bounded_block_intents(spec, expected):
 
     assert natural == Decimal(expected)
     assert decisions(manifest)["child"].block_size == Decimal(expected)
+
+
+def test_content_sized_flow_child_keeps_width_dependent_natural_height_callback():
+    measures = {"child": measurement(preferred_inline=120, preferred_block=30, max_block=60)}
+    root = container(
+        "flow", [slot("child", block="content")],
+        block="content", itemMinInlineSize=1,
+    )
+    profile = _profile_and_measures(root, measures)
+    resolved_root = profile.profile["root"]
+
+    def line_height(inline_size):
+        lines = _flow_lines(
+            resolved_root,
+            "/root",
+            measures,
+            profile,
+            Decimal(inline_size),
+            lambda _child, _path, available_inline: (
+                Decimal(60) if available_inline < Decimal(110) else Decimal(40)
+            ),
+        )
+        return lines[0][0][4]
+
+    assert line_height(100) == Decimal(60)
+    assert line_height(200) == Decimal(40)
 
 
 def test_flow_aspect_ratio_keeps_its_existing_block_geometry():
