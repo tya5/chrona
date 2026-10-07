@@ -10,7 +10,7 @@ from chrona.presentation.layout.axis import (
     axis_intervals, axis_label_fits, format_axis_tier_label, thinning_schedule,
 )
 from chrona.presentation.layout.axis_lanes import (
-    SecondaryPlan, label_block, line_extents, measure_axis_text, plan_label_lanes, secondary_plan,
+    SecondaryPlan, axis_tick_requirement, label_block, line_extents, measure_axis_text, plan_label_lanes, secondary_plan,
 )
 from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.layout.model import LayoutError, Rect
@@ -232,12 +232,10 @@ def _band_cell(placement_id: str, x: float, x2: float, block: Decimal, block_siz
 
 def _axis_tick_length(theme_tokens: Any, role: str, slot_block_size: Decimal, tier_index: int) -> Decimal | None:
     """The Theme-declared tick length of a grid role (#492), or None for the full-height line."""
-    declared = theme_tokens.optional_number(role, "tickLength")
+    declared = axis_tick_requirement(theme_tokens, role, tier_index)
     if declared is None:
         return None
     source = f"/view/body/axis/tiers/{tier_index}"
-    if not declared > 0:
-        raise LayoutError("E_PRESENTATION_AXIS_INVALID", source, detail=f"tick-length:{role}")
     if declared > slot_block_size:
         raise LayoutError("E_PRESENTATION_AXIS_OVERFLOW", source, detail=f"tick-length:{role}")
     return declared

@@ -237,6 +237,64 @@ def test_axis_caption_keeps_existing_native_tick_capacity_guard():
     assert error.value.path == "/view/body/axis/tiers/0"
 
 
+@pytest.mark.parametrize("length", [None, 30, 100])
+def test_tick_natural_requirement_is_measurable_before_candidate_capacity_admission(length):
+    from chrona.presentation.layout.axis_lanes import axis_tick_requirement
+    from chrona.presentation.layout.surface_axis import _axis_tick_length
+
+    theme = deepcopy(base._theme())
+    role = semantic_binding("axisGrid").scene_role
+    if length is not None:
+        theme["body"]["values"]["tick-size"] = {"type": "number", "value": length}
+        theme["body"]["roles"][role]["tickLength"] = "tick-size"
+    tokens = ThemeTokenView(theme)
+    assert axis_tick_requirement(tokens, role, 2) == (None if length is None else Decimal(length))
+    if length is None:
+        assert _axis_tick_length(tokens, role, Decimal(1), 2) is None
+    else:
+        with pytest.raises(LayoutError) as caught:
+            _axis_tick_length(tokens, role, Decimal(1), 2)
+        assert caught.value.diagnostic_id == "E_PRESENTATION_AXIS_OVERFLOW"
+        assert caught.value.path == "/view/body/axis/tiers/2"
+        assert caught.value.detail == f"tick-length:{role}"
+        assert _axis_tick_length(tokens, role, Decimal(length), 2) == Decimal(length)
+
+
+@pytest.mark.parametrize("length", [0, -3])
+def test_tick_requirement_keeps_invalid_declarations_separate_from_short_host(length):
+    from chrona.presentation.layout.axis_lanes import axis_tick_requirement
+
+    theme = deepcopy(base._theme())
+    role = semantic_binding("axisGrid").scene_role
+    theme["body"]["values"]["tick-size"] = {"type": "number", "value": length}
+    theme["body"]["roles"][role]["tickLength"] = "tick-size"
+    with pytest.raises(LayoutError) as caught:
+        axis_tick_requirement(ThemeTokenView(theme), role, 2)
+    assert caught.value.diagnostic_id == "E_PRESENTATION_AXIS_INVALID"
+    assert caught.value.path == "/view/body/axis/tiers/2"
+
+
+def test_band_natural_measurement_precedes_but_does_not_bypass_strict_candidate_admission():
+    from chrona.presentation.layout.axis_lanes import derived_axis_block_size
+    from chrona.presentation.layout.surface_composer import prepare_surface_candidate
+
+    request = _axis_request((AxisTier("quarter", 1, "band"), AxisTier("month", 1, "band")))
+    natural = derived_axis_block_size(request.surface_content.axis_tiers,
+                                     request.theme_tokens, request.font_metrics)
+    assert natural > Decimal(10)
+    for height in (Decimal(1), Decimal(10), natural):
+        candidate = replace(request, layout_manifest=replace(request.layout_manifest, decisions=tuple(
+            replace(item, bounds=replace(item.bounds, block_size=height))
+            if item.source == "timeline-axis" else item for item in request.layout_manifest.decisions)))
+        if height < natural:
+            with pytest.raises(LayoutError) as caught:
+                prepare_surface_candidate(candidate)
+            assert caught.value.diagnostic_id == "E_PRESENTATION_AXIS_OVERFLOW"
+            assert caught.value.path == "/view/body/axis/tiers/0"
+        else:
+            assert prepare_surface_candidate(candidate).axis.placements.shapes
+
+
 @pytest.mark.parametrize("headed", [("table",), ("timeline",), ("timeline-axis",),
                                      ("table", "timeline", "timeline-axis")])
 @pytest.mark.parametrize("label_side", ["auto", "inside"])

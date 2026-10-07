@@ -11,6 +11,15 @@ from chrona.presentation.layout.text import measure_text_width, metric_for_role
 from chrona.presentation.model.axis_names import axis_name_table
 
 
+def axis_tick_requirement(tokens: Any, role: str, tier_index: int) -> Decimal | None:
+    """Measure a declared grid tick independently of any candidate host capacity."""
+    declared = tokens.optional_number(role, "tickLength")
+    if declared is not None and not declared > 0:
+        raise LayoutError("E_PRESENTATION_AXIS_INVALID", f"/view/body/axis/tiers/{tier_index}",
+                          detail=f"tick-length:{role}")
+    return declared
+
+
 @dataclass(frozen=True)
 class SecondaryPlan:
     """The measured pieces of one tier's secondary label (#493); everything is Theme- and table-derived."""
