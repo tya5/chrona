@@ -390,7 +390,6 @@ body:
       backgroundTreatment: fill
       chipPadding: chip-padding
       viewerFit: text-follows-box
-      markCornerRadius: mark-radius-square
       cornerRadius: radius-chip
     group-band:
       backgroundTreatment: none
@@ -593,7 +592,6 @@ body:
       markHeight: mark-height-planned
       markPaintOrder: mark-paint-front
       strokeWidth: stroke-width
-      markCornerRadius: mark-radius-square
       cornerRadius: radius-plan
     axis-major:
       strokeWidth: stroke-width
@@ -623,7 +621,6 @@ body:
       markPaintOrder: mark-paint-back
       symbolHeight: symbol-height-ghost
       dash: dash.ghost
-      markCornerRadius: mark-radius-square
       cornerRadius: radius-ghost
     scenario:
       markHeight: mark-height-container
@@ -635,14 +632,12 @@ body:
       markHeight: mark-height-planned
       markPaintOrder: mark-paint-middle
       symbolHeight: symbol-height-actual
-      markCornerRadius: mark-radius-square
       cornerRadius: radius-plan
     actual:
       strokeWidth: stroke-width
       markHeight: mark-height-actual
       markPaintOrder: mark-paint-front
       symbolHeight: symbol-height-actual
-      markCornerRadius: mark-radius-square
       cornerRadius: radius-actual
     network-node:
       strokeWidth: stroke-width

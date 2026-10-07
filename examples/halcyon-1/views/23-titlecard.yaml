@@ -245,7 +245,7 @@ body:
     - ops
     presentation: header
     header:
-      text: '{ordinal}  {title}'
+      text: '{ordinal|group-ordinal}  {title}'
       ordinal: zero-padded
   ordering:
     by: source
