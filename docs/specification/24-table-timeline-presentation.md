@@ -104,8 +104,8 @@ oversized stack grows that reservation without resizing its nominal track;
 ordinary, folded-header and lane placements use the same Layout allocation.
 
 Derived sizes (#1150). A Theme that leaves `timeline.mark.blockSize` unbound gets the track
-`timeline.row.minBlockSize` less `timeline.row.paddingBlock`, so changing the row moves the
-track with no other edit; a bound value is used as declared, and a row that leaves no positive
+`timeline.row.minBlockSize` less twice `timeline.row.paddingBlock` (a padding above and below the
+track), so changing the row moves the track with no other edit; a bound value is used as declared, and a row that leaves no positive
 remainder is `E_LAYOUT_METRIC_REQUIRED`. Every bundled Theme binds it, so nothing they render changes.
 
 Axis intervals are natural calendar intervals from the resolved View window. The
