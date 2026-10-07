@@ -43,7 +43,8 @@ from chrona.presentation.layout.surface_backgrounds import (
     compose_calendar_backgrounds, compose_group_tabs, compose_row_group_backgrounds, replace_group_header_band,
 )
 from chrona.presentation.layout.surface_axis import (
-    SurfaceAxisFrame, SurfaceAxisPreparation, complete_axis_plot, prepare_surface_axis,
+    AxisVerticalSummary, SurfaceAxisFrame, SurfaceAxisMeasurement, SurfaceAxisPreparation,
+    complete_axis_plot, measure_surface_axis, prepare_surface_axis, summarize_surface_axis_vertical,
 )
 from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT_FALLBACK
 from chrona.presentation.layout.as_of_cone import complete_as_of_cone
@@ -109,8 +110,41 @@ class SurfacePreRowGeometry:
 
     def required_timeline_block(self, *, foot_reserve: Decimal = Decimal(0)) -> Decimal:
         """Natural host demand from this candidate's native prefix, before row fill."""
-        prefix = max(Decimal(0), self.row_viewport.block - self.inline.timeline.bounds.block)
-        return prefix + self.inline.natural_block_requirement + foot_reserve
+        return _required_timeline_block(self.inline, self.row_viewport, foot_reserve)
+
+
+def _required_timeline_block(inline: SurfaceInlineGeometry, row_viewport: Rect,
+                             foot_reserve: Decimal) -> Decimal:
+    prefix = max(Decimal(0), row_viewport.block - inline.timeline.bounds.block)
+    return prefix + inline.natural_block_requirement + foot_reserve
+
+
+@dataclass(frozen=True)
+class _SurfaceNaturalPrefix:
+    inline: SurfaceInlineGeometry
+    axis_frame: SurfaceAxisFrame
+    axis_measurement: SurfaceAxisMeasurement
+    axis_summary: AxisVerticalSummary
+    axis_slot: SlotPlacement
+    prepared_headings: dict[str, SlotHeadings]
+
+
+@dataclass(frozen=True)
+class SurfaceNaturalGeometry:
+    """Candidate-specific completed prefix demand, independent of placed/fill-expanded rows."""
+
+    inline: SurfaceInlineGeometry
+    axis_frame: SurfaceAxisFrame
+    axis_measurement: SurfaceAxisMeasurement
+    axis_summary: AxisVerticalSummary
+    headings: SlotHeadings
+    table: SurfaceTableHeaderSeed
+    axis_content: SlotPlacement
+    timeline_content: SlotPlacement
+    row_viewport: Rect
+
+    def required_timeline_block(self, *, foot_reserve: Decimal = Decimal(0)) -> Decimal:
+        return _required_timeline_block(self.inline, self.row_viewport, foot_reserve)
 
 
 def prepare_surface_candidate(request: SurfaceLayoutRequest) -> SurfacePreRowGeometry:
@@ -127,8 +161,7 @@ def prepare_surface_candidate(request: SurfaceLayoutRequest) -> SurfacePreRowGeo
     return prepare_surface_content(request)
 
 
-def prepare_surface_content(request: SurfaceLayoutRequest) -> SurfacePreRowGeometry:
-    """Complete native headers/captions without placing or fill-expanding any row."""
+def _prepare_surface_natural_prefix(request: SurfaceLayoutRequest) -> _SurfaceNaturalPrefix:
     inline = prepare_surface_inline(request)
     request = inline.request
     axis_slot = inline.by_source["timeline-axis"]
@@ -139,10 +172,18 @@ def prepare_surface_content(request: SurfaceLayoutRequest) -> SurfacePreRowGeome
             request=request, slots=inline.by_source, decisions={"timeline-axis": axis_decision})
         prepared_headings["timeline-axis"] = own_heading
         axis_slot = content_slot(axis_slot, own_heading.reserved("timeline-axis"))
-    prepared_axis = prepare_surface_axis(request, SurfaceAxisFrame(
-        inline.scale, inline.timeline, axis_slot, inline.metric_values))
+    axis_frame = SurfaceAxisFrame(inline.scale, inline.timeline, axis_slot, inline.metric_values)
+    axis_measurement = measure_surface_axis(request, inline.scale)
+    axis_summary = summarize_surface_axis_vertical(request, axis_frame, axis_measurement)
+    return _SurfaceNaturalPrefix(inline, axis_frame, axis_measurement, axis_summary,
+                                 axis_slot, prepared_headings)
+
+
+def _complete_surface_natural_geometry(prefix: _SurfaceNaturalPrefix) -> SurfaceNaturalGeometry:
+    inline, axis_summary, prepared_headings = prefix.inline, prefix.axis_summary, prefix.prepared_headings
+    request = inline.request
     headings = complete_slot_headings(request=request, slots=inline.by_source, decisions=inline.decisions,
-                                      axis_label_tiers=prepared_axis.placements.label_tiers,
+                                      axis_label_tiers=axis_summary.label_tiers,
                                       prepared=prepared_headings)
     table_content = content_slot(inline.table, headings.reserved("table"))
     timeline_content = content_slot(inline.timeline, headings.reserved("timeline"))
@@ -154,13 +195,34 @@ def prepare_surface_content(request: SurfaceLayoutRequest) -> SurfacePreRowGeome
         native_ends = [row_start]
         if table_seed.header_end_block is not None:
             native_ends.append(table_seed.header_end_block)
-        native_ends.extend(item.bounds.block + item.bounds.block_size
-                           for item in (*prepared_axis.placements.text, *prepared_axis.placements.shapes))
+        if axis_summary.max_rect_block_end is not None:
+            native_ends.append(axis_summary.max_rect_block_end)
         row_start = max(native_ends)
     row_viewport = Rect(timeline_content.bounds.inline, row_start, timeline_content.bounds.inline_size,
                         max(Decimal(0), timeline_content.bounds.block + timeline_content.bounds.block_size - row_start))
-    return SurfacePreRowGeometry(inline, prepared_axis, headings, table_seed,
-                                 axis_slot, timeline_content, row_viewport)
+    return SurfaceNaturalGeometry(inline, prefix.axis_frame, prefix.axis_measurement, axis_summary,
+                                  headings, table_seed, prefix.axis_slot, timeline_content, row_viewport)
+
+
+def prepare_surface_natural_geometry(request: SurfaceLayoutRequest) -> SurfaceNaturalGeometry:
+    """Close native prefix demand without axis host admission or row placement."""
+    return _complete_surface_natural_geometry(_prepare_surface_natural_prefix(request))
+
+
+def prepare_surface_content(request: SurfaceLayoutRequest, *,
+                            natural: SurfaceNaturalGeometry | None = None) -> SurfacePreRowGeometry:
+    """Complete native headers/captions without placing or fill-expanding any row."""
+    if natural is None:
+        prefix = _prepare_surface_natural_prefix(request)
+        axis = prepare_surface_axis(prefix.inline.request, prefix.axis_frame,
+                                    measured=prefix.axis_measurement)
+        natural = _complete_surface_natural_geometry(prefix)
+    else:
+        # Candidate facts are reused, but final placement still performs native host admission.
+        axis = prepare_surface_axis(natural.inline.request, natural.axis_frame,
+                                    measured=natural.axis_measurement)
+    return SurfacePreRowGeometry(natural.inline, axis, natural.headings, natural.table,
+                                 natural.axis_content, natural.timeline_content, natural.row_viewport)
 
 
 def compose_surface_layout(request: SurfaceLayoutRequest, *,

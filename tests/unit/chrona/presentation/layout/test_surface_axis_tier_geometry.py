@@ -304,9 +304,9 @@ def test_own_axis_caption_precedes_one_native_axis_solve_and_keeps_full_slot(blo
     original = surface_composer.prepare_surface_axis
     frames = []
 
-    def observed(request, frame):
+    def observed(request, frame, **kwargs):
         frames.append(frame)
-        return original(request, frame)
+        return original(request, frame, **kwargs)
 
     monkeypatch.setattr(surface_composer, "prepare_surface_axis", observed)
     result = surface_composer.compose_surface_layout(request)
