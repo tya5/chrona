@@ -7,7 +7,7 @@ import math
 from typing import Any, Mapping
 
 from chrona.presentation.annotation_kind_text import AnnotationKindTextError, KindHeader, kind_header
-from chrona.presentation.model.semantic_registry import is_annotation_artwork_role
+from chrona.presentation.model.semantic_registry import is_annotation_artwork_role, is_label_chip_role
 
 
 class ThemeTokenError(ValueError):
@@ -669,7 +669,7 @@ class ThemeTokenView:
         ``box-follows-text`` paints a background that ends where the viewer's text ends, so it is valid only for a
         plain, square, untilted, content-sized rectangle with no artwork and no end, top or bottom border: every
         other declaration is refused at its pointer, never silently degraded. A role whose text has no box of its own
-        to follow (``box_follows`` false: a chip, a legend, a table cell, a title, a group tag) admits no
+        to follow (``box_follows`` false: a legend, a table cell, a title, a group tag) admits no
         ``box-follows-text`` (#1096).
         """
         mode = self.optional_choice(role, "viewerFit", VIEWER_FIT_MODES) or VIEWER_FIT_RAW
@@ -679,6 +679,14 @@ class ThemeTokenView:
         if adjust is not None and mode != TEXT_FOLLOWS_BOX:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/viewerFitAdjust")
         if mode == BOX_FOLLOWS_TEXT:
+            if is_label_chip_role(role):
+                physical = self.optional_token(role, "cornerRadius", "radius")
+                if physical is not None:
+                    if physical != 0:
+                        raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/cornerRadius")
+                elif (self.optional_number(role, "markCornerRadius") or Decimal(0)) != 0:
+                    raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markCornerRadius")
+                self.color(role, "fill")
             container = self.annotation_container(role)
             if container is not None:
                 base = f"/body/roles/{role}/annotationContainer"

@@ -343,6 +343,12 @@ def semantic_ids() -> tuple[str, ...]:
     return tuple(_REGISTRY)
 
 
+def is_label_chip_role(role: str) -> bool:
+    """Classify chip roles from the same registry that pairs labels with chips."""
+    return any(binding.purpose == "label-chip" and binding.theme_role == role
+               for binding in _REGISTRY.values())
+
+
 def purposes() -> frozenset[str]:
     """Every Scene purpose the surface may carry, for contract verification."""
     return frozenset(binding.purpose for binding in _REGISTRY.values())
