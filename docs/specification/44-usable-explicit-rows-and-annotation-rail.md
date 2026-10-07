@@ -19,6 +19,16 @@ placement and, when necessary, a direct leader route with Layout warnings.
 An optional annotation may be omitted only under its explicit policy. This
 is a Layout placement rule, not a new annotation resource.
 
+After ordinary rail search exhausts, visible-overflow completion may retain
+the full natural frame's inline overhang while searching the same finite
+vertical positions against the shared obstacle inventory. If no position
+fits, place the frame below all preceding completed rail boxes and list
+records, including unnumbered boxes. Track full box extents, not only body
+text. The box and required heading/body text carry the visible-overflow
+disposition and existing warnings. Ordinary fitting candidates and numbered
+list order remain unchanged; required peer notes must not share a clamped
+fallback position.
+
 ## Boundary with slide vocabulary
 
 This specification deliberately excludes overlay tracks, group headers, calendar bands/as-of markers, legend swatches, and configurable label formats. Those are additive Review vocabulary owned by #42.

@@ -164,10 +164,15 @@ def place_annotation_rail(annotation: AnnotationIntent, resolved: AnnotationAnch
 
 def annotation_rail_candidates(annotation: AnnotationIntent, resolved: AnnotationAnchor, *,
                                anchor_y: float, text_size: tuple[float, float], rail: LabelRect,
-                               obstacles: Iterable[LabelRect] | SurfaceObstacleIndex) -> tuple[AnnotationBox, ...]:
-    """Enumerate finite, box-fit rail positions before connector commitment."""
+                               obstacles: Iterable[LabelRect] | SurfaceObstacleIndex,
+                               allow_inline_overflow: bool = False) -> tuple[AnnotationBox, ...]:
+    """Enumerate finite full-frame rail positions before connector commitment.
+
+    Only visible-overflow completion may allow natural inline overhang. It
+    still checks the whole frame against the shared obstacle inventory.
+    """
     width, height = text_size
-    if width > rail.width or height > rail.height:
+    if (width > rail.width and not allow_inline_overflow) or height > rail.height:
         return ()
     index = obstacles if isinstance(obstacles, SurfaceObstacleIndex) else None
     occupied = () if index is not None else tuple(obstacles)
@@ -183,5 +188,5 @@ def annotation_rail_candidates(annotation: AnnotationIntent, resolved: Annotatio
                         box.x < item.right and item.x < box.right and box.y < item.bottom and item.y < box.bottom
                         for item in occupied))
         if rail.y <= box.y and box.bottom <= rail.bottom and not collides:
-            candidates.append(AnnotationBox(resolved, LabelPlacement("rail", box), True))
+            candidates.append(AnnotationBox(resolved, LabelPlacement("rail", box, width > rail.width), True))
     return tuple(candidates)
