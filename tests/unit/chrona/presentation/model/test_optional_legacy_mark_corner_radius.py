@@ -27,6 +27,15 @@ def test_physical_zero_is_present_and_does_not_fall_back_to_a_legacy_binding():
     assert geometry[3] == Decimal(0)
 
 
+@pytest.mark.parametrize("ratio", ["0", "0.2", "0.5"])
+def test_legacy_only_ratio_is_retained_exactly(ratio):
+    theme = _mark_theme()
+    theme["body"]["values"]["radius"]["value"] = ratio
+    assert ThemeTokenView(theme).mark_geometry("planned") == (
+        Decimal("0.25"), Decimal("0.125"), 10, Decimal(ratio),
+    )
+
+
 def test_physical_binding_ignores_an_unused_invalid_legacy_reference():
     theme = _physical_only(value=3)
     theme["body"]["roles"]["planned"]["markCornerRadius"] = "missing-legacy-radius"
