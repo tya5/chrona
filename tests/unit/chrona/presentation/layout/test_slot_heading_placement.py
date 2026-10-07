@@ -68,6 +68,32 @@ def test_no_declaration_completes_nothing():
     assert complete_slot_headings(request=_request(), slots={}, decisions={}) == SlotHeadings()
 
 
+def test_prepared_axis_caption_is_reused_in_global_node_order_without_remeasurement(monkeypatch):
+    slots = {"timeline-axis": AXIS, "annotations": _slot("annotations", 100, 400)}
+    decisions = {"timeline-axis": _decision("timeline-axis", SlotHeading("Calendar", block="axis-tier")),
+                 "annotations": _decision("annotations", SlotHeading("Notes"))}
+    own = complete_slot_headings(request=_request(), slots=slots,
+                                 decisions={"timeline-axis": decisions["timeline-axis"]})
+    assert own.diagnostics == ("I_LAYOUT_SLOT_HEADING_NO_AXIS_TIER:timeline-axis",)
+    from chrona.presentation.layout import slot_heading
+    original = slot_heading.place_text
+    calls = []
+
+    def observed(**kwargs):
+        calls.append(kwargs["placement_id"])
+        return original(**kwargs)
+
+    monkeypatch.setattr(slot_heading, "place_text", observed)
+    result = complete_slot_headings(request=_request(), slots=slots, decisions=decisions,
+                                    prepared={"timeline-axis": own})
+    assert calls == ["slot-heading:annotations"]
+    assert [text.placement_id for text in result.text] == [
+        "slot-heading:annotations", "slot-heading:timeline-axis"]
+    assert result.text[-1] is own.text[0]
+    assert result.reserved("timeline-axis") == own.reserved("timeline-axis")
+    assert result.diagnostics == own.diagnostics
+
+
 def test_top_puts_the_line_at_the_slot_start_and_reserves_the_line_and_its_gap():
     result = _run([_slot("annotations", 100, 400)], SlotHeading("Notes"))
 

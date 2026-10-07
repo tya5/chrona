@@ -134,7 +134,8 @@ def source_has_content(content: Any, source: str) -> bool:
 
 def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
                            decisions: Mapping[str, LayoutDecision],
-                           axis_label_tiers: tuple[AxisLabelTierGeometry, ...] = ()) -> SlotHeadings:
+                           axis_label_tiers: tuple[AxisLabelTierGeometry, ...] = (),
+                           prepared: Mapping[str, SlotHeadings] | None = None) -> SlotHeadings:
     """Complete every declared heading of a Layout manifest, in the profile's order.
 
     The line box is `font size * line height` of the heading's role (`slot-heading`, else `text`), the gap under it
@@ -144,6 +145,9 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
     line and its gap, and below the band when the heading sits in it. A slot with no area, or too short for its
     heading, draws none and reserves nothing (`I_LAYOUT_SLOT_HEADING_OMITTED:<node>:too-small`). An absent
     optional slot has no decision and so no heading. A heading wider than its slot is cut with its source kept.
+    A source in `prepared` reuses its already completed batch, including an omitted heading's records. This
+    lets the axis's own caption establish its content viewport before native tier geometry exists, while the
+    final batch still follows global node order and never measures that caption twice.
     """
     declared = tuple(item for item in decisions.values() if item.heading is not None)
     if not declared:
@@ -166,6 +170,13 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
     copy_overrides = dict(request.surface_content.slot_heading_text)
     for decision in sorted(declared, key=lambda item: item.node_id):
         source = decision.source or ""
+        if prepared is not None and source in prepared:
+            completed = prepared[source]
+            text.extend(completed.text)
+            reserve.update(completed.reserve or {})
+            diagnostics.extend(completed.diagnostics)
+            warnings.extend(completed.warnings)
+            continue
         slot = slots.get(source)
         heading = decision.heading
         if slot is None or heading is None:

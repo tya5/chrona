@@ -1,7 +1,14 @@
 """Typed horizontal axis-tier geometry exists independently of retained interval labels (#1100)."""
 from dataclasses import replace
+from copy import deepcopy
 from datetime import date
 from decimal import Decimal
+
+import pytest
+from xml.etree import ElementTree
+
+from chrona.presentation.layout.model import LayoutError, SlotHeading
+from chrona.presentation.layout.slot_heading import content_slot
 
 from chrona.presentation.layout.surface_axis import (
     AxisPlotGrid, SurfaceAxisFrame, complete_axis_plot, compose_axis, prepare_surface_axis,
@@ -10,6 +17,8 @@ from chrona.presentation.layout.surface_base import prepare_surface_base
 from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.surface_content import AxisLabelIntent, AxisTier
+from chrona.presentation.model.theme_tokens import ThemeTokenView
+from chrona.presentation.model.semantic_registry import semantic_binding
 from tests.unit.chrona.presentation.scene import test_v05_builder as base
 
 
@@ -117,3 +126,69 @@ def test_surface_composer_completes_axis_and_captions_before_rows_and_only_then_
     assert seen == list(phases)
     assert placement.rows
     assert any(shape.placement_id.startswith("axis-grid:") for shape in placement.shapes)
+
+
+@pytest.mark.parametrize("block", ["top", "header-row", "axis-tier"])
+def test_own_axis_caption_precedes_one_native_axis_solve_and_keeps_full_slot(block, monkeypatch):
+    from chrona.presentation.layout import surface_composer
+
+    request = _axis_request((AxisTier("quarter", 1, "labels", AxisLabelIntent(
+        "quarter", (), "center", "thin-with-record", "horizontal", "en-US")),))
+    theme = deepcopy(base._theme())
+    theme["body"]["roles"]["slot-heading"] = deepcopy(theme["body"]["roles"]["text"])
+    request = replace(request, theme_tokens=ThemeTokenView(theme))
+    manifest = replace(request.layout_manifest, decisions=tuple(
+        replace(decision, heading=SlotHeading("Calendar", block=block))
+        if decision.source == "timeline-axis" else decision
+        for decision in request.layout_manifest.decisions))
+    request = replace(request, layout_manifest=manifest)
+    original = surface_composer.prepare_surface_axis
+    frames = []
+
+    def observed(request, frame):
+        frames.append(frame)
+        return original(request, frame)
+
+    monkeypatch.setattr(surface_composer, "prepare_surface_axis", observed)
+    result = surface_composer.compose_surface_layout(request)
+    caption, = (text for text in result.placement.text
+                if text.placement_id == "slot-heading:timeline-axis")
+    assert len(frames) == 1
+    full_axis = next(slot for slot in result.placement.slots if slot.source_ref == "timeline-axis")
+    assert full_axis.bounds == next(decision.bounds for decision in manifest.decisions
+                                    if decision.source == "timeline-axis")
+    # text fallback: size14, line1.4, gap7 ->26.6 within the original48 allocation.
+    assert frames[0].axis == content_slot(full_axis, Decimal("26.6"))
+    assert caption.bounds.block == full_axis.bounds.block
+    labels = [text for text in result.placement.text if text.placement_id.startswith("axis-label:")]
+    assert labels
+    assert all(text.bounds.block >= frames[0].axis.bounds.block for text in labels)
+    # Exercise Scene projection and the actual adapter before schema admission is widened.
+    from chrona.presentation.renderers.v05_svg import render_v05_svg
+    scene = base.compose_review_surface(base.build_scene_input(
+        projection=request.projection, surface_content=request.surface_content,
+        layout_manifest=manifest, resolved_theme=theme, font_metrics=request.font_metrics,
+        measured_sources=request.measured_sources, capabilities={"svg": True}, viewport=(1000, 1000)))
+    svg = ElementTree.fromstring(render_v05_svg(scene))
+    emitted = [node for node in svg.iter() if node.get("data-scene-id") == "slot-heading:timeline-axis"]
+    assert len(emitted) == 1
+    assert "".join(emitted[0].itertext()) == "Calendar"
+    assert float(emitted[0].get("y")) == caption.baseline[1]
+
+
+def test_axis_caption_keeps_existing_native_tick_capacity_guard():
+    from chrona.presentation.layout.surface_composer import compose_surface_layout
+
+    request = _axis_request((AxisTier("month", 1, "grid-major"),))
+    theme = deepcopy(base._theme())
+    theme["body"]["roles"]["slot-heading"] = deepcopy(theme["body"]["roles"]["text"])
+    theme["body"]["values"]["tick-size"] = {"type": "number", "value": 30}
+    theme["body"]["roles"][semantic_binding("axisGrid").scene_role]["tickLength"] = "tick-size"
+    request = replace(request, theme_tokens=ThemeTokenView(theme))
+    assert compose_surface_layout(request).placement.shapes  #30 fits the original48 allocation.
+    request = replace(request, layout_manifest=replace(request.layout_manifest, decisions=tuple(
+        replace(decision, heading=SlotHeading("Calendar")) if decision.source == "timeline-axis" else decision
+        for decision in request.layout_manifest.decisions)))
+    with pytest.raises(LayoutError, match="E_PRESENTATION_AXIS_OVERFLOW") as error:
+        compose_surface_layout(request)
+    assert error.value.path == "/view/body/axis/tiers/0"

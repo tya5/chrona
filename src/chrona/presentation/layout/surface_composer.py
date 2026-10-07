@@ -93,10 +93,19 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     """Resolve slots, rows, groups, temporal scale, and mark tracks in Layout."""
     inline = prepare_surface_inline(request)
     request = inline.request
+    axis_slot = inline.by_source["timeline-axis"]
+    axis_decision = inline.decisions["timeline-axis"]
+    prepared_headings = {}
+    if axis_decision.heading is not None:
+        own_heading = complete_slot_headings(
+            request=request, slots=inline.by_source, decisions={"timeline-axis": axis_decision})
+        prepared_headings["timeline-axis"] = own_heading
+        axis_slot = content_slot(axis_slot, own_heading.reserved("timeline-axis"))
     prepared_axis = prepare_surface_axis(request, SurfaceAxisFrame(
-        inline.scale, inline.timeline, inline.by_source["timeline-axis"], inline.metric_values))
+        inline.scale, inline.timeline, axis_slot, inline.metric_values))
     headings = complete_slot_headings(request=request, slots=inline.by_source, decisions=inline.decisions,
-                                      axis_label_tiers=prepared_axis.placements.label_tiers)
+                                      axis_label_tiers=prepared_axis.placements.label_tiers,
+                                      prepared=prepared_headings)
     base = prepare_surface_base(request, inline=inline)
     request = base.request
     projection = request.projection
