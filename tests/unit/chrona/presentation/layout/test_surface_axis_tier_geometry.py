@@ -11,7 +11,8 @@ from chrona.presentation.layout.model import LayoutError, SlotHeading
 from chrona.presentation.layout.slot_heading import content_slot
 
 from chrona.presentation.layout.surface_axis import (
-    AxisPlotGrid, SurfaceAxisFrame, complete_axis_plot, compose_axis, measure_axis_tier, prepare_surface_axis,
+    AxisPlotGrid, SurfaceAxisFrame, axis_label_lane_geometry, complete_axis_plot, compose_axis,
+    measure_axis_tier, prepare_surface_axis,
 )
 from chrona.presentation.layout.surface_base import prepare_surface_base
 from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
@@ -102,6 +103,59 @@ def test_pre_row_axis_closes_mixed_rotated_labels_and_defers_only_full_height_gr
                                       (float(current.bounds.inline), 355.0))
         else:
             assert current == previous
+
+
+def test_rotated_label_lane_uses_measured_widths_and_returns_cursor():
+    tier = AxisTier("month", 1, "labels", AxisLabelIntent(
+        "long-month", (), "center", "thin-with-record", "rotate-cw", "en-US"))
+    request = _axis_request((tier,))
+    base_geometry = prepare_surface_base(request)
+    measured = measure_axis_tier(request, base_geometry.scale, 0, tier)
+    lane = axis_label_lane_geometry(tier_index=0, tier=tier, measured=measured,
+                                    declared_lanes={}, running_offset=7.0)
+    from chrona.presentation.layout.text import measure_text_width
+    widths = tuple(measure_text_width(item.label or "", font_size=measured.axis_size,
+        font_metrics=measured.metrics, letter_spacing=float(measured.treatment.letter_spacing),
+        text_transform=measured.treatment.transform, numeric_spacing=measured.treatment.numeric_spacing)
+        for item in measured.outcomes if item.disposition == "placed")
+    assert lane.offset == 7.0
+    assert lane.size == max(widths)
+    assert lane.next_offset == lane.offset + lane.size
+    assert lane.block > 0
+
+
+def test_secondary_label_lane_uses_native_stacked_block_and_tolerance():
+    tier = AxisTier("month", 1, "labels", AxisLabelIntent(
+        "long-month", (), "center", "thin-with-record", "horizontal", "en-US",
+        AxisSecondaryIntent("short-month", "en-US", "axisSecondary", "stacked")))
+    request = _axis_request((tier,))
+    theme = deepcopy(base._theme())
+    theme["body"]["values"]["secondary-size"] = {"type": "number", "value": 8}
+    theme["body"]["roles"]["axisSecondary"] = {
+        "fontFamily": "body", "fontWeight": "regular", "fontSize": "secondary-size",
+        "lineHeight": "line", "letterSpacing": "letter-spacing", "textTransform": "text-transform",
+        "numericSpacing": "numeric-spacing",
+    }
+    request = replace(request, theme_tokens=ThemeTokenView(theme))
+    base_geometry = prepare_surface_base(request)
+    measured = measure_axis_tier(request, base_geometry.scale, 0, tier)
+    lane = axis_label_lane_geometry(tier_index=0, tier=tier, measured=measured,
+                                    declared_lanes={}, running_offset=0.0)
+    from chrona.presentation.layout.axis_lanes import label_block
+    from chrona.presentation.layout.surface_geometry import GEOMETRY_TOLERANCE
+    assert lane.size == label_block(measured.treatment, measured.secondary) + float(GEOMETRY_TOLERANCE)
+    assert lane.block == label_block(measured.treatment, measured.secondary)
+
+
+def test_declared_label_lane_overrides_running_cursor_and_returns_declared_end():
+    tier = AxisTier("quarter", 1, "labels", AxisLabelIntent(
+        "quarter", (), "center", "thin-with-record", "horizontal", "en-US"))
+    request = _axis_request((tier,))
+    base_geometry = prepare_surface_base(request)
+    measured = measure_axis_tier(request, base_geometry.scale, 0, tier)
+    lane = axis_label_lane_geometry(tier_index=0, tier=tier, measured=measured,
+                                    declared_lanes={0: (11.0, 22.0)}, running_offset=99.0)
+    assert (lane.offset, lane.size, lane.next_offset) == (11.0, 22.0, 33.0)
 
 
 def test_surface_composer_completes_axis_and_captions_before_rows_and_only_then_plot_grids(monkeypatch):

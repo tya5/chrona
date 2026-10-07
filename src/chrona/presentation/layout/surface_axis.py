@@ -133,6 +133,16 @@ class AxisTierMeasurement:
         return float(self.treatment.font_size)
 
 
+@dataclass(frozen=True)
+class AxisLabelLaneGeometry:
+    """Native label lane for one tier and the next cursor for following label tiers."""
+
+    offset: float
+    size: float
+    next_offset: float
+    block: float
+
+
 def measure_axis_tier(request: SurfaceLayoutRequest, scale: ScalePlacement, tier_index: int,
                       tier: AxisTier) -> AxisTierMeasurement:
     """Measure native tier choices and labels without admitting them to an axis host."""
@@ -241,6 +251,26 @@ def measure_axis_tier(request: SurfaceLayoutRequest, scale: ScalePlacement, tier
         form, interval_outcomes, name_table.table_id if name_table else None)
     return AxisTierMeasurement(treatment, metrics, plan, tuple(intervals), tier_outcome,
                                tuple(diagnostics), tuple(decisions))
+
+
+def axis_label_lane_geometry(*, tier_index: int, tier: AxisTier, measured: AxisTierMeasurement,
+                             declared_lanes: Mapping[int, tuple[float, float]],
+                             running_offset: float) -> AxisLabelLaneGeometry:
+    """Resolve the native lane size and cursor from one tier's measured labels."""
+    treatment, metrics, plan = measured.treatment, measured.metrics, measured.secondary
+    widths = tuple(measure_text_width(item.label or "", font_size=measured.axis_size, font_metrics=metrics,
+        letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
+        numeric_spacing=treatment.numeric_spacing)
+        for item in measured.outcomes if item.disposition == "placed")
+    lane_size = (measured.axis_size * float(treatment.line_height) + float(GEOMETRY_TOLERANCE)
+                 if tier.label.orientation == "horizontal" else max(widths, default=0.0))
+    block = label_block(treatment, plan)
+    if plan is not None:
+        lane_size = block + float(GEOMETRY_TOLERANCE)
+    offset = running_offset
+    if tier_index in declared_lanes:
+        offset, lane_size = declared_lanes[tier_index]
+    return AxisLabelLaneGeometry(offset, lane_size, offset + lane_size, block)
 
 
 def complete_axis_plot(prepared: SurfaceAxisPreparation, plot: Rect) -> SurfaceAxisPlacements:
@@ -474,16 +504,9 @@ def prepare_surface_axis(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame)
                     raise LayoutError("E_PRESENTATION_AXIS_INVALID", f"/view/body/axis/tiers/{tier_index}", detail=f"too many typography-role labels tiers:{label_ordinal}")
                 label_semantic_id = axis_label_semantic_ids()[label_ordinal]
             orientation = tier.label.orientation
-            widths = tuple(measure_text_width(item.label or "", font_size=axis_size, font_metrics=metrics,
-                letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
-                numeric_spacing=treatment.numeric_spacing) for item in interval_outcomes if item.disposition == "placed")
-            lane_size = (axis_size * float(treatment.line_height) + float(GEOMETRY_TOLERANCE)
-                         if orientation == "horizontal" else max(widths, default=0.0))
-            block = label_block(treatment, plan)
-            if plan is not None:
-                lane_size = block + float(GEOMETRY_TOLERANCE)
-            if tier_index in declared_lanes:
-                label_lane_offset, lane_size = declared_lanes[tier_index]
+            lane = axis_label_lane_geometry(tier_index=tier_index, tier=tier, measured=measured,
+                                            declared_lanes=declared_lanes, running_offset=label_lane_offset)
+            label_lane_offset, lane_size, block = lane.offset, lane.size, lane.block
             inset = _axis_label_inset(tokens, tier, axis_size)
             lane_overflow = label_lane_offset + lane_size > float(axis.bounds.block_size)
             if plan is not None and (lane_overflow or (tier_index in declared_lanes
@@ -553,7 +576,7 @@ def prepare_surface_axis(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame)
                         orientation=orientation, overflow="fit"), semantic_id=label_semantic_id))
                 if not outcome.label_fits or lane_overflow:
                     visible_overflows.append((placed, LabelRect(*bounds_from_rect(axis.bounds))))
-            label_lane_offset += lane_size
+            label_lane_offset = lane.next_offset
         else:
             raise LayoutError("E_PRESENTATION_AXIS_INVALID", "/view/body/axis/tiers")
 
