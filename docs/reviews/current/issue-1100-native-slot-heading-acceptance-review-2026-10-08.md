@@ -9,7 +9,7 @@
 - Source: [Issue #1100](https://github.com/tya5/chrona/issues/1100).
 - Observed: 2026-10-08
 - Current design and implementation plan: [Status](https://github.com/tya5/chrona/issues/1100#issuecomment-6041732444).
-- Implementation: `24097f4c`, following natural-prefix `92887b8e` and candidate-demand `bb5cdc8a`. Local behavior verified; public snapshot and exact-main release remain pending. **Do not close yet.**
+- Implementation: `24097f4c`, empty-axis `a4daf1ef`, following natural-prefix `92887b8e` and candidate-demand `bb5cdc8a`. Local behavior and the shared public snapshot are verified; final-head CI and exact-main release remain pending. **Do not close yet.**
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
@@ -31,6 +31,13 @@
 - PNG visual evidence: `/tmp/chrona-1100-native-visual.0SYR8U/{timeline,network}.png`, produced by the real CLI; transient local evidence only. Caption/title/table/axis/detail and network contents are legible and nonoverlapping. The floating-point-only observation overflow finding is covered with shared geometry tolerance and unchanged enclosing bounds.
 - Independent non-monotone extent defect remains [#1214](https://github.com/tya5/chrona/issues/1214), with experimental code and unsuppressed repros publicly preserved. No generic least-height repair or waiver is claimed here.
 
+### Public artifact review
+
+- [PR #1218](https://github.com/tya5/chrona/pull/1218), [shared snapshot run37699871152](https://github.com/tya5/chrona/actions/runs/37699871152), artifact11516893665 on head475ce7a0/basecc123300: all143 before blobs match the exact base; manifest byte deltas verified; ZIP SHA256 `b0fc3bdc03ff29e9f9fb6fde8d021a2501c7266853d14cd1211075583552b416`. No new/retired paths; 41 Scene/SVG pairs and4 reports change.
+- Per-output counts are disclosed on the PR:451 observation texts added,3 plot labels suppressed with explicit `W_LAYOUT_LABEL_SUPPRESSED`/`I_LAYOUT_PLOT_LABELS_SUPPRESSED` records (table copies remain),1025 primitives modified. These are intended completed-content/geometry effects, not a default-byte-identity claim.
+- All41 changed surfaces enclose primitive/route/Symbol geometry within the completed canvas. Real snapshot SVGs rasterized and read: controller-z slot-heading before/after, capabilities, controller-z-ja executive, orion-asic gates. Native detail attribution is visible and the inspected footer content does not overlap or clip.
+- Diagnostic deltas:41 truthful footer track overflows and3+3 plot-label suppression records added;40 group-detail,3 milestone and1 legend overflow records removed. Footer Flow intrinsic allocation is separately tracked in [#1219](https://github.com/tya5/chrona/issues/1219); declared visible overflow is not hidden or absorbed into corpus YAML. Integer group-header counting was made explicit as boolean accumulation after the first CI's `E_LAYOUT_FLOAT_SUM_UNCLASSIFIED`; the unchanged checker and25 focused tests pass.
+
 ## Publication gate — pending
 
-One coherent PR must provide a reviewed shared public SVG/Scene snapshot and per-slide side-effect counts (including restored observation text and retired heading-source rejection). The exact review-containing main must pass three-OS pytest/conformance/wheel-smoke, MCP and newest-Python materializers before release acceptance and closure. No generated or `examples/**` edits are authored.
+The coherent PR provides the reviewed shared public SVG/Scene snapshot and per-output side-effect counts. Final-head PR checks and the exact review-containing main's three-OS pytest/conformance/wheel-smoke, MCP and newest-Python materializers must pass before release acceptance and closure. No generated or `examples/**` edits are authored.
