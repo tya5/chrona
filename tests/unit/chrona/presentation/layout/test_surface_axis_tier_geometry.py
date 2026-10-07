@@ -11,12 +11,12 @@ from chrona.presentation.layout.model import LayoutError, SlotHeading
 from chrona.presentation.layout.slot_heading import content_slot
 
 from chrona.presentation.layout.surface_axis import (
-    AxisPlotGrid, SurfaceAxisFrame, complete_axis_plot, compose_axis, prepare_surface_axis,
+    AxisPlotGrid, SurfaceAxisFrame, complete_axis_plot, compose_axis, measure_axis_tier, prepare_surface_axis,
 )
 from chrona.presentation.layout.surface_base import prepare_surface_base
 from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
-from chrona.presentation.model.surface_content import AxisLabelIntent, AxisTier
+from chrona.presentation.model.surface_content import AxisLabelIntent, AxisSecondaryIntent, AxisTier
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.model.semantic_registry import semantic_binding
 from tests.unit.chrona.presentation.scene import test_v05_builder as base
@@ -78,6 +78,9 @@ def test_pre_row_axis_closes_mixed_rotated_labels_and_defers_only_full_height_gr
     frame = SurfaceAxisFrame(base_geometry.scale, base_geometry.timeline,
                              base_geometry.by_source["timeline-axis"], base_geometry.metric_values)
     prepared = prepare_surface_axis(request, frame)
+    rotated_measurement = measure_axis_tier(request, base_geometry.scale, 2, tiers[2])
+    assert rotated_measurement.tier_outcome == prepared.placements.tier_outcomes[2]
+    assert set(rotated_measurement.diagnostics) <= set(prepared.placements.diagnostics)
     grids = tuple(shape for shape in prepared.ordered_shapes if isinstance(shape, AxisPlotGrid))
     assert grids
     assert not any(shape.placement_id.startswith("axis-grid:") for shape in prepared.placements.shapes)
@@ -293,6 +296,49 @@ def test_band_natural_measurement_precedes_but_does_not_bypass_strict_candidate_
             assert caught.value.path == "/view/body/axis/tiers/0"
         else:
             assert prepare_surface_candidate(candidate).axis.placements.shapes
+
+
+def test_tier_measurement_is_available_before_tiny_multiband_host_rejection():
+    tiers = (AxisTier("year", 1, "band"), AxisTier("quarter", 1, "band"))
+    request = _axis_request(tiers)
+    base_geometry = prepare_surface_base(request)
+    frame = SurfaceAxisFrame(base_geometry.scale, base_geometry.timeline,
+                             replace(base_geometry.by_source["timeline-axis"],
+                                     bounds=replace(base_geometry.by_source["timeline-axis"].bounds,
+                                                    block_size=Decimal(1))),
+                             base_geometry.metric_values)
+    measured = tuple(measure_axis_tier(request, base_geometry.scale, index, tier)
+                     for index, tier in enumerate(tiers))
+    assert tuple(item.tier_outcome.tier_index for item in measured) == (0, 1)
+    assert all(item.intervals for item in measured)
+    with pytest.raises(LayoutError) as caught:
+        prepare_surface_axis(request, frame)
+    assert caught.value.diagnostic_id == "E_PRESENTATION_AXIS_OVERFLOW"
+    assert caught.value.path == "/view/body/axis/tiers/0"
+    assert caught.value.detail == "band-lane:0"
+
+
+def test_measurement_preserves_secondary_selection_consumed_by_strict_axis_preparation():
+    tier = AxisTier("month", 1, "labels", AxisLabelIntent(
+        "long-month", (), "center", "thin-with-record", "horizontal", "en-US",
+        AxisSecondaryIntent("short-month", "en-US", "axisSecondary", "stacked")))
+    request = _axis_request((tier,))
+    theme = deepcopy(base._theme())
+    theme["body"]["values"]["secondary-size"] = {"type": "number", "value": 8}
+    theme["body"]["roles"]["axisSecondary"] = {
+        "fontFamily": "body", "fontWeight": "regular", "fontSize": "secondary-size",
+        "lineHeight": "line", "letterSpacing": "letter-spacing", "textTransform": "text-transform",
+        "numericSpacing": "numeric-spacing",
+    }
+    request = replace(request, theme_tokens=ThemeTokenView(theme))
+    base_geometry = prepare_surface_base(request)
+    measured = measure_axis_tier(request, base_geometry.scale, 0, tier)
+    frame = SurfaceAxisFrame(base_geometry.scale, base_geometry.timeline,
+                             base_geometry.by_source["timeline-axis"], base_geometry.metric_values)
+    prepared = prepare_surface_axis(request, frame)
+    assert measured.secondary is not None
+    assert measured.tier_outcome == prepared.placements.tier_outcomes[0]
+    assert any(item.secondary_disposition == "placed" for item in measured.outcomes)
 
 
 @pytest.mark.parametrize("headed", [("table",), ("timeline",), ("timeline-axis",),

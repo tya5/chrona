@@ -7,7 +7,7 @@ from decimal import Decimal
 from typing import Any, Callable, Mapping
 
 from chrona.presentation.layout.axis import (
-    axis_intervals, axis_label_fits, format_axis_tier_label, thinning_schedule,
+    AxisInterval, axis_intervals, axis_label_fits, format_axis_tier_label, thinning_schedule,
 )
 from chrona.presentation.layout.axis_lanes import (
     SecondaryPlan, axis_tick_requirement, label_block, line_extents, measure_axis_text,
@@ -30,6 +30,8 @@ from chrona.presentation.model.semantic_registry import (
     axis_band_semantic_ids, axis_label_semantic_ids, semantic_binding,
 )
 from chrona.presentation.model.axis_names import axis_name_table
+from chrona.presentation.model.surface_content import AxisTier
+from chrona.presentation.model.theme_tokens import TextTreatment
 
 
 @dataclass(frozen=True)
@@ -104,6 +106,141 @@ class SurfaceAxisPreparation:
     """Completed native axis facts and ordered, explicitly deferred plot grids."""
     placements: SurfaceAxisPlacements
     ordered_shapes: tuple[ShapePlacement | AxisPlotGrid, ...]
+
+
+@dataclass(frozen=True)
+class AxisTierMeasurement:
+    """Native interval and typography facts for one axis tier, before host-capacity checks."""
+
+    treatment: TextTreatment
+    metrics: Any
+    secondary: SecondaryPlan | None
+    intervals: tuple[AxisInterval, ...]
+    tier_outcome: AxisTierOutcome
+    diagnostics: tuple[str, ...]
+    decisions: tuple[PlacementDecision, ...]
+
+    @property
+    def form(self) -> str | None:
+        return self.tier_outcome.label_form
+
+    @property
+    def outcomes(self) -> tuple[AxisIntervalOutcome, ...]:
+        return self.tier_outcome.intervals
+
+    @property
+    def axis_size(self) -> float:
+        return float(self.treatment.font_size)
+
+
+def measure_axis_tier(request: SurfaceLayoutRequest, scale: ScalePlacement, tier_index: int,
+                      tier: AxisTier) -> AxisTierMeasurement:
+    """Measure native tier choices and labels without admitting them to an axis host."""
+    start, end = request.projection.window
+    tokens, font_metrics = request.theme_tokens, request.font_metrics
+    form = tier.label.form if tier.label else None
+    name_table = axis_name_table(tier.label.name_table_id) if tier.label else None
+    treatment = tokens.text_treatment(tier.typography_role or "axis")
+    metrics = metric_for_role(tokens, tier.typography_role or "axis", font_metrics)
+    axis_size = float(treatment.font_size)
+    plan = secondary_plan(tokens, tier, tier_index, treatment, metrics, font_metrics)
+    requested_units = (tuple(candidate for candidate, _ in tier.label.candidate_forms)
+                       if tier.unit == "auto" and tier.label else (tier.unit,))
+    diagnostics: list[str] = []
+    decisions: list[PlacementDecision] = []
+    try:
+        if tier.unit == "auto":
+            selected = None
+            forms = dict(tier.label.candidate_forms) if tier.label else {}
+            for candidate in ("day", "week", "month", "quarter", "half", "year"):
+                if candidate not in forms:
+                    continue
+                trial = axis_intervals(start, end, candidate, tick_step=tier.every,
+                                       fiscal_start_month=request.surface_content.axis_fiscal_start_month)
+                fits = all(axis_label_fits(
+                    content=format_axis_tier_label(item, forms[candidate], name_table),
+                    available_inline=(item.end - item.start).days * scale.unit_ratio,
+                    font_size=axis_size, font_metrics=metrics,
+                    letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
+                    numeric_spacing=treatment.numeric_spacing, orientation=tier.label.orientation,
+                    line_height=float(treatment.line_height)) for item in trial)
+                if fits or tier.label.overflow == "visible-overflow":
+                    selected, form = trial, forms[candidate]
+                    break
+            if selected is None:
+                candidate = next(item for item in ("day", "week", "month", "quarter", "half", "year")
+                                 if item in forms)
+                selected, form = axis_intervals(start, end, candidate, tick_step=tier.every,
+                                                fiscal_start_month=request.surface_content.axis_fiscal_start_month), forms[candidate]
+            intervals = selected
+        else:
+            intervals = axis_intervals(start, end, tier.unit, tick_step=tier.every,
+                                       fiscal_start_month=request.surface_content.axis_fiscal_start_month)
+    except ValueError as error:
+        raise LayoutError(str(error), "/view/body/axis/tiers") from error
+    if tier.role == "labels" and form is not None:
+        interval_outcomes = tuple(AxisIntervalOutcome(
+            f"axis-label:{tier_index}:{item.index}", item.start, item.end,
+            item.natural_start, item.natural_end,
+            format_axis_tier_label(item, form, name_table),
+            axis_label_fits(
+                content=format_axis_tier_label(item, form, name_table),
+                available_inline=max(0.0, coordinate_for_date(item.end, scale)
+                                     - coordinate_for_date(item.start, scale)
+                                     - _axis_label_inset(tokens, tier, axis_size)),
+                font_size=axis_size, font_metrics=metrics,
+                letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
+                numeric_spacing=treatment.numeric_spacing, orientation=tier.label.orientation,
+                line_height=float(treatment.line_height))) for item in intervals)
+        fits = tuple(bool(item.label_fits) for item in interval_outcomes)
+        if not all(fits) and tier.label.overflow == "thin-with-record":
+            try:
+                schedule = thinning_schedule(fits)
+            except ValueError:
+                interval_outcomes = tuple(replace(
+                    item, disposition="placed", reason=None if item.label_fits else "visible-overflow")
+                    for item in interval_outcomes)
+            else:
+                retained = set(schedule.retained_positions)
+                updated = []
+                for position, outcome in enumerate(interval_outcomes):
+                    if position in retained:
+                        updated.append(replace(outcome, disposition="placed"))
+                    else:
+                        updated.append(replace(
+                            outcome, disposition="thinned", reason="label-does-not-fit"))
+                        diagnostics.append(f"W_LAYOUT_AXIS_LABEL_THINNED:{outcome.candidate_id}:label-does-not-fit")
+                        decisions.append(PlacementDecision(
+                            outcome.candidate_id, f"/view/body/axis/tiers/{tier_index}",
+                            ("thin-with-record", "suppress"), "suppress", "suppressed"))
+                interval_outcomes = tuple(updated)
+                diagnostics.append(f"W_LAYOUT_AXIS_DENSITY:axis-tier:{tier_index}:thinned={len(schedule.thinned_positions)}")
+        else:
+            interval_outcomes = tuple(replace(
+                item, disposition="placed", reason=None if item.label_fits else "visible-overflow")
+                for item in interval_outcomes)
+    else:
+        interval_outcomes = tuple(AxisIntervalOutcome(
+            f"axis-tier:{tier_index}:{item.index}", item.start, item.end,
+            item.natural_start, item.natural_end) for item in intervals)
+    if tier.role == "labels" and form is not None:
+        for interval, outcome in zip(intervals, interval_outcomes, strict=True):
+            if outcome.disposition == "placed":
+                for canonical in name_table.coincident_canonicals(form, interval.natural_start.month):
+                    diagnostics.append(f"W_LAYOUT_AXIS_FORM_EQUIVALENT:{outcome.candidate_id}:table={name_table.table_id}:form={form}:canonical={canonical}:month={interval.natural_start.month}")
+    if plan is not None and tier.role == "labels" and form is not None:
+        interval_outcomes, secondary_diagnostics, secondary_decisions = _secondary_outcomes(
+            tier_index=tier_index, plan=plan, intervals=intervals, outcomes=interval_outcomes,
+            scale=scale, inset=_axis_label_inset(tokens, tier, axis_size), primary=treatment,
+            primary_metrics=metrics)
+        diagnostics.extend(secondary_diagnostics)
+        decisions.extend(secondary_decisions)
+    tier_outcome = AxisTierOutcome(
+        tier_index, f"/view/body/axis/tiers/{tier_index}", tier.role, requested_units,
+        intervals[0].level if intervals else (tier.unit if tier.unit != "auto" else ""), tier.every,
+        form, interval_outcomes, name_table.table_id if name_table else None)
+    return AxisTierMeasurement(treatment, metrics, plan, tuple(intervals), tier_outcome,
+                               tuple(diagnostics), tuple(decisions))
 
 
 def complete_axis_plot(prepared: SurfaceAxisPreparation, plot: Rect) -> SurfaceAxisPlacements:
@@ -274,105 +411,14 @@ def prepare_surface_axis(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame)
     declared_lanes, lane_by_unit = lanes.declared, lanes.by_unit
 
     for tier_index, tier in enumerate(tiers):
-        form = tier.label.form if tier.label else None
-        name_table = axis_name_table(tier.label.name_table_id) if tier.label else None
-        treatment = tokens.text_treatment(tier.typography_role or "axis")
-        metrics = metric_for_role(tokens, tier.typography_role or "axis", font_metrics)
-        axis_size = float(treatment.font_size)
-        plan = secondary_plan(tokens, tier, tier_index, treatment, metrics, font_metrics)
-        requested_units = (tuple(candidate for candidate, _ in tier.label.candidate_forms)
-                           if tier.unit == "auto" and tier.label else (tier.unit,))
-        try:
-            if tier.unit == "auto":
-                selected = None
-                forms = dict(tier.label.candidate_forms) if tier.label else {}
-                for candidate in ("day", "week", "month", "quarter", "half", "year"):
-                    if candidate not in forms:
-                        continue
-                    trial = axis_intervals(start, end, candidate, tick_step=tier.every,
-                                           fiscal_start_month=request.surface_content.axis_fiscal_start_month)
-                    fits = all(axis_label_fits(
-                        content=format_axis_tier_label(item, forms[candidate], name_table),
-                        available_inline=(item.end - item.start).days * scale.unit_ratio,
-                        font_size=axis_size, font_metrics=metrics,
-                        letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
-                        numeric_spacing=treatment.numeric_spacing, orientation=tier.label.orientation,
-                        line_height=float(treatment.line_height)) for item in trial)
-                    if fits or tier.label.overflow == "visible-overflow":
-                        selected, form = trial, forms[candidate]
-                        break
-                if selected is None:
-                    candidate = next(item for item in ("day", "week", "month", "quarter", "half", "year")
-                                     if item in forms)
-                    selected, form = axis_intervals(start, end, candidate, tick_step=tier.every,
-                                                    fiscal_start_month=request.surface_content.axis_fiscal_start_month), forms[candidate]
-                intervals = selected
-            else:
-                intervals = axis_intervals(start, end, tier.unit, tick_step=tier.every,
-                                           fiscal_start_month=request.surface_content.axis_fiscal_start_month)
-        except ValueError as error:
-            raise LayoutError(str(error), "/view/body/axis/tiers") from error
-        if tier.role == "labels" and form is not None:
-            interval_outcomes = tuple(AxisIntervalOutcome(
-                f"axis-label:{tier_index}:{item.index}", item.start, item.end,
-                item.natural_start, item.natural_end,
-                format_axis_tier_label(item, form, name_table),
-                axis_label_fits(
-                    content=format_axis_tier_label(item, form, name_table),
-                    available_inline=max(0.0, coordinate_for_date(item.end, scale)
-                                         - coordinate_for_date(item.start, scale)
-                                         - _axis_label_inset(tokens, tier, axis_size)),
-                    font_size=axis_size, font_metrics=metrics,
-                    letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
-                    numeric_spacing=treatment.numeric_spacing, orientation=tier.label.orientation,
-                    line_height=float(treatment.line_height))) for item in intervals)
-            fits = tuple(bool(item.label_fits) for item in interval_outcomes)
-            if not all(fits) and tier.label.overflow == "thin-with-record":
-                try:
-                    schedule = thinning_schedule(fits)
-                except ValueError:
-                    interval_outcomes = tuple(replace(
-                        item, disposition="placed", reason=None if item.label_fits else "visible-overflow")
-                        for item in interval_outcomes)
-                else:
-                    retained = set(schedule.retained_positions)
-                    updated = []
-                    for position, outcome in enumerate(interval_outcomes):
-                        if position in retained:
-                            updated.append(replace(outcome, disposition="placed"))
-                        else:
-                            updated.append(replace(
-                                outcome, disposition="thinned", reason="label-does-not-fit"))
-                            diagnostics.append(f"W_LAYOUT_AXIS_LABEL_THINNED:{outcome.candidate_id}:label-does-not-fit")
-                            decisions.append(PlacementDecision(
-                                outcome.candidate_id, f"/view/body/axis/tiers/{tier_index}",
-                                ("thin-with-record", "suppress"), "suppress", "suppressed"))
-                    interval_outcomes = tuple(updated)
-                    diagnostics.append(f"W_LAYOUT_AXIS_DENSITY:axis-tier:{tier_index}:thinned={len(schedule.thinned_positions)}")
-            else:
-                interval_outcomes = tuple(replace(
-                    item, disposition="placed", reason=None if item.label_fits else "visible-overflow")
-                    for item in interval_outcomes)
-        else:
-            interval_outcomes = tuple(AxisIntervalOutcome(
-                f"axis-tier:{tier_index}:{item.index}", item.start, item.end,
-                item.natural_start, item.natural_end) for item in intervals)
-        if tier.role == "labels" and form is not None:
-            for interval, outcome in zip(intervals, interval_outcomes, strict=True):
-                if outcome.disposition == "placed":
-                    for canonical in name_table.coincident_canonicals(form, interval.natural_start.month):
-                        diagnostics.append(f"W_LAYOUT_AXIS_FORM_EQUIVALENT:{outcome.candidate_id}:table={name_table.table_id}:form={form}:canonical={canonical}:month={interval.natural_start.month}")
-        if plan is not None and tier.role == "labels" and form is not None:
-            interval_outcomes, secondary_diagnostics, secondary_decisions = _secondary_outcomes(
-                tier_index=tier_index, plan=plan, intervals=intervals, outcomes=interval_outcomes,
-                scale=scale, inset=_axis_label_inset(tokens, tier, axis_size), primary=treatment,
-                primary_metrics=metrics)
-            diagnostics.extend(secondary_diagnostics)
-            decisions.extend(secondary_decisions)
-        outcomes.append(AxisTierOutcome(
-            tier_index, f"/view/body/axis/tiers/{tier_index}", tier.role, requested_units,
-            intervals[0].level if intervals else (tier.unit if tier.unit != "auto" else ""), tier.every,
-            form, interval_outcomes, name_table.table_id if name_table else None))
+        measured = measure_axis_tier(request, scale, tier_index, tier)
+        form = measured.form
+        treatment, metrics = measured.treatment, measured.metrics
+        axis_size, plan = measured.axis_size, measured.secondary
+        intervals, interval_outcomes = measured.intervals, measured.outcomes
+        diagnostics.extend(measured.diagnostics)
+        decisions.extend(measured.decisions)
+        outcomes.append(measured.tier_outcome)
         if tier.role == "band":
             if band_ordinal >= len(axis_band_semantic_ids()):
                 raise LayoutError("E_PRESENTATION_AXIS_INVALID", f"/view/body/axis/tiers/{tier_index}", detail=f"too many band tiers:{band_ordinal + 1}")
