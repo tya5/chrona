@@ -603,6 +603,16 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markCornerRadius")
         return padding, radius
 
+    def label_chip_min_block(self, role: str) -> Decimal | None:
+        """A label chip's declared smallest block size in px (`chipMinBlockSize`), or None (#1150)."""
+        binding = self._body["roles"].get(role)
+        if not isinstance(binding, Mapping) or "chipMinBlockSize" not in binding:
+            return None
+        size = self.number(role, "chipMinBlockSize")
+        if size <= 0:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/chipMinBlockSize")
+        return size
+
     def annotation_container(self, role: str) -> "AnnotationContainerToken | None":
         """Return a declared annotation container's outline geometry (#466, #465).
 

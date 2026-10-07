@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from chrona.presentation.model.semantic_registry import label_chip_semantic, semantic_binding
+from chrona.presentation.layout.chip_geometry import chip_padding
+from chrona.presentation.model.semantic_registry import label_chip_semantic
 
 AS_OF_LABEL_ROLE = "as-of-label"
 BELOW_PLOT = "below-plot"
@@ -29,9 +30,8 @@ def as_of_chip_block_size(theme_tokens: Any) -> float:
     """The chip's block size: one text line plus the chip padding on both sides."""
     treatment = theme_tokens.text_treatment(as_of_label_typography_role(theme_tokens))
     font_size = float(treatment.font_size)
-    chip = theme_tokens.label_chip(semantic_binding(label_chip_semantic("asOfLabel") or "").theme_role)
-    padding = float(chip[0]) * font_size / 2 if chip is not None else 0.0
-    return font_size * float(treatment.line_height) + 2 * padding
+    text_block = font_size * float(treatment.line_height)
+    return text_block + 2 * chip_padding(theme_tokens, label_chip_semantic("asOfLabel"), font_size, text_block)[1]
 
 
 def below_plot_reserve(theme_tokens: Any) -> float:

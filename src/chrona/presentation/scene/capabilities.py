@@ -138,7 +138,7 @@ _CANVAS_PAINT = frozenset(("fill", "opacity", "gradientStart", "gradientEnd", "g
 _PATTERNED_RECT_PAINT = _RECT_PAINT | frozenset(("pattern",))
 _LAYOUT_TYPOGRAPHY = _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("writingMode",))
 _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | _GROUP_TAB | frozenset((
-    "cellGap", "cellCornerRadius", "cellCornerChamfer", "frameCornerRadius", "chipPadding", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach",
+    "cellGap", "cellCornerRadius", "cellCornerChamfer", "frameCornerRadius", "chipPadding", "chipMinBlockSize", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach",
     "symbolHeight", "symbolOffset", "cornerRadius", "strokeAlign", "align", "barWidth", "blockGap", "inlineGap",
     "progressInset", "summaryBarHeight", "swatchInlineSize", "swatchGap", "swatchBlockSize", "pointSwatchSize", "annotationContainer", "marker", "symbol", "edge",
     "stampPlacement", "coneSpread", "coneExtent",
@@ -318,7 +318,7 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
     register("as-of-label", "Layout as-of label text measurement and Scene Text ink", _TEXT_MEASUREMENT | _SHARED_TEXT_ICON_PAINT,
              scene_kinds=frozenset(("Text",)))
     register("as-of-label-chip member-label-chip finish-delta-chip period-label-chip", "Layout label chip and Scene Rect",
-             _PATTERNED_RECT_PAINT | frozenset(("backgroundTreatment", "chipPadding", "markCornerRadius", "cornerRadius")) | _VIEWER_FIT,
+             _PATTERNED_RECT_PAINT | frozenset(("backgroundTreatment", "chipPadding", "chipMinBlockSize", "markCornerRadius", "cornerRadius")) | _VIEWER_FIT,
              scene_kinds=frozenset(("Rect",)))
     register("as-of-cone", "Layout as-of cone and Scene Symbol",
              frozenset(("fill", "opacity", "coneSpread", "coneExtent", "gradientFidelity")),

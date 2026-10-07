@@ -110,7 +110,9 @@ the Theme declares the binding's role (`as-of-label-chip`,
 `member-label-chip`, `finish-delta-chip`, `period-label-chip`) with `backgroundTreatment: fill`,
 optional `chipPadding` (a ratio of the label's font size inline, and half of
 it on the block axis) and optional `markCornerRadius` (a ratio of the chip's
-block size). Layout inflates the label's footprint by the padding before
+block size) and optional `chipMinBlockSize` (a named length in px, greater than zero: the chip's
+smallest block size; a chip shorter than it grows equally above and below its text, a taller one is
+unchanged, #1150; the chip's block size is otherwise the text block plus the block padding on both sides). Layout inflates the label's footprint by the padding before
 candidate search, and completes the chip Rect under the text. Contrast is
 checked against the chip as the text's ground.
 

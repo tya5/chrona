@@ -356,6 +356,7 @@ properties:
             tabPosition: {description: "Inline edge of the header the tab stands on; absent means start. Not used by tag targets (#882, #1166).", enum: [start, end]}
             tabTarget: {description: "Target for the group-tab Rect: header (absent, the existing header behavior) or tag (the vertical group-tag cell; requires vertical groupHeader writingMode) (#1166).", enum: [header, tag]}
             chipPadding: {description: "Named label-chip padding ratio of the label's font size (inline; half on the block axis) for a <purpose>-chip role.", type: string, minLength: 1}
+            chipMinBlockSize: {description: "Named length in px: the smallest block size of a <purpose>-chip label chip; a shorter chip grows equally above and below its text (#1150). Absent keeps the text block plus the chipPadding block padding.", type: string, minLength: 1}
             barWidth: {description: "Annotation-kind bar inline sizing: fill (runtime default) spans the inner container; hug uses measured bar text and padding.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/annotationBarWidth"}
             progressInset: {description: "Named progress-track inset ratio of the host mark's block size; the fill sits inside the track with this gap (0 <= ratio < 0.5).", type: string, minLength: 1}
             annotationContainer: {description: "Named outline/tail-geometry token for an annotation-box role (#466); absent keeps today's plain rectangle.", type: string, minLength: 1}
