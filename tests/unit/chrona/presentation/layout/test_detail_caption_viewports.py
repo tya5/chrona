@@ -80,6 +80,6 @@ def test_observations_complete_after_whole_detail_panels_and_include_their_capti
     header = texts["observations:header:value"]
     assert header.bounds.block > caption.bounds.block + caption.bounds.block_size
     assert texts["observations:row:reading:source"].source_content == "Supplier"
-    assert texts["observations:row:reading:cell:value"].semantic_id == "tableVarianceAhead"
+    assert texts["observations:row:reading:cell:value"].semantic_id == "observationAttentionCell"
     assert all(item.bounds.block + item.bounds.block_size <= slot.bounds.block + slot.bounds.block_size
                for item in texts.values() if item.placement_id.startswith("observations:"))

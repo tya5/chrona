@@ -1,9 +1,11 @@
+from dataclasses import replace
 from decimal import Decimal
 from types import SimpleNamespace
 
 import pytest
 
 from chrona.presentation.layout.model import Rect
+from chrona.presentation.layout.surface_geometry import GEOMETRY_TOLERANCE
 from chrona.presentation.layout.surface_observations import compose_observations, observations_table_content
 from chrona.presentation.layout.surface_quality import SlotPlacement, SurfaceLayoutRequest
 from chrona.presentation.model.theme_tokens import ThemeTokenView
@@ -36,10 +38,11 @@ def test_rows_keep_order_provenance_and_emphasis_as_paint_semantics():
     source_items = [item for item in batch.text if item.placement_id.endswith(":source")]
     assert [item.source_ref for item in source_items] == ["row:a/b", "row:second", "row:third"]
     assert [item.source_content for item in source_items] == [row[1] for row in rows]
+    assert all(item.semantic_id == "observationSource" for item in source_items)
     cells = [item for item in batch.text if ":cell:" in item.placement_id]
     assert [item.semantic_id for item in cells] == [
-        "tableCell", "tableCell", "tableVarianceAhead", "tableVarianceAhead",
-        "tableVarianceBehind", "tableVarianceBehind"]
+        "observationCell", "observationCell", "observationAttentionCell", "observationAttentionCell",
+        "observationCriticalCell", "observationCriticalCell"]
     assert [item.source_ref for item in cells] == [
         "row:a/b", "row:a/b", "row:second", "row:second", "row:third", "row:third"]
     assert all(item.typography_role == "text" for item in cells)
@@ -56,6 +59,9 @@ def test_adversarial_row_and_column_ids_have_injective_stable_paths():
     assert len(ids) == len(set(ids))
     assert "observations:row:a%2Fb:cell:c%3Ad" in ids
     assert "observations:row:a%252Fb:cell:c%253Ad" in ids
+    assert [item.source_ref for item in batch.text if item.semantic_id == "observationColumnLabel"] == [
+        "c:d", "c%3Ad"]
+    assert [item.source_ref for item in batch.text if ":cell:" in item.placement_id] == ["a/b", "a%2Fb"]
 
 
 def test_wrapped_source_and_cells_grow_completed_slot_and_preserve_source_text():
@@ -82,12 +88,26 @@ def test_empty_observations_return_original_slot_without_headers():
     assert batch.warnings == ()
 
 
+@pytest.mark.parametrize("deficit, warns", [(GEOMETRY_TOLERANCE / 2, False),
+                                           (GEOMETRY_TOLERANCE * 2, True)])
+def test_host_overflow_observation_uses_shared_tolerance_without_clamping_geometry(deficit, warns):
+    request = _request((("row", "Source", "normal", (("signal", "Ready"),)),),
+                       (("signal", "Signal"),))
+    seed = compose_observations(slot=_slot(height=1), request=request)
+    slot = replace(seed.slot, bounds=replace(seed.slot.bounds,
+                                             block_size=seed.slot.bounds.block_size - deficit))
+    batch = compose_observations(slot=slot, request=request)
+    assert batch.text == seed.text
+    assert batch.slot.bounds.block_size == seed.slot.bounds.block_size
+    assert any(item.placement_id == "observations:slot" for item in batch.warnings) is warns
+
+
 def test_premeasurement_table_facts_reuse_existing_typed_table_model():
     content = _request((("row", "source", "attention", (("signal", "watch"), ("note/a", "details"))),)).surface_content
     table = observations_table_content(content)
     assert tuple(column.column_id for column in table.columns) == ("signal", "note/a")
     assert tuple(cell.object_id for cell in table.cells) == ("row", "row")
-    assert tuple(cell.semantic_id for cell in table.cells) == ("tableVarianceAhead",) * 2
+    assert tuple(cell.semantic_id for cell in table.cells) == ("observationAttentionCell",) * 2
     assert table.cell_objects == () and table.hierarchy_column is None and table.row_levels == ()
     assert all(column.width.minimum == "ellipsis" and column.width.maximum == "fr"
                for column in table.columns)
@@ -117,9 +137,9 @@ def test_ellipsis_that_cannot_fit_keeps_natural_source_visible():
                for item in batch.warnings)
 
 
-@pytest.mark.parametrize("emphasis, semantic", [("normal", "tableCell"),
-                                                 ("attention", "tableVarianceAhead"),
-                                                 ("critical", "tableVarianceBehind")])
+@pytest.mark.parametrize("emphasis, semantic", [("normal", "observationCell"),
+                                                 ("attention", "observationAttentionCell"),
+                                                 ("critical", "observationCriticalCell")])
 def test_emphasis_contract_mapping(emphasis, semantic):
     from chrona.presentation.layout.surface_observations import _emphasis_semantic
     assert _emphasis_semantic(emphasis) == semantic

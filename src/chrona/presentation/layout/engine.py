@@ -886,8 +886,8 @@ def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inl
         return (all(source_allocated[source] >= required for source, required in candidate_required.items())
                 and not _unresolved_normal_flow_warnings(profile, manifest))
 
-    # The high probe is known to satisfy the whole profile. Find the least
-    # integral viewport that satisfies that same complete-manifest condition.
+    # Retain the published Draft-auto search, evaluating every candidate's
+    # own demand. General non-monotone capacity search is tracked in #1214.
     low, high = minimum_block - 1, max(candidate, int(probe_block))
     if callable(required_blocks) and not satisfies(high):
         return ContentBlockResolution(minimum_block, tuple(

@@ -147,8 +147,8 @@ class SurfaceNaturalGeometry:
         return _required_timeline_block(self.inline, self.row_viewport, foot_reserve)
 
 
-def prepare_surface_candidate(request: SurfaceLayoutRequest) -> SurfacePreRowGeometry:
-    """Close natural geometry using only this candidate's admitted content and manifest."""
+def _request_with_candidate_lane_preflight(request: SurfaceLayoutRequest) -> SurfaceLayoutRequest:
+    """Recompute fixed-lane inputs from this candidate's exact content and manifest."""
     if request.projection.lane_membership is not None:
         preflight = preflight_fixed_lane_layout(
             projection=request.projection, layout_manifest=request.layout_manifest,
@@ -157,8 +157,18 @@ def prepare_surface_candidate(request: SurfaceLayoutRequest) -> SurfacePreRowGeo
             icon_assets=request.icon_assets, visual_requests=request.visual_requests,
             font_metrics=request.font_metrics,
         )
-        request = replace(request, fixed_lane_preflight=preflight)
-    return prepare_surface_content(request)
+        return replace(request, fixed_lane_preflight=preflight)
+    return request
+
+
+def prepare_surface_candidate(request: SurfaceLayoutRequest) -> SurfacePreRowGeometry:
+    """Close completed geometry using this candidate's exact lane preflight."""
+    return prepare_surface_content(_request_with_candidate_lane_preflight(request))
+
+
+def prepare_surface_natural_candidate(request: SurfaceLayoutRequest) -> SurfaceNaturalGeometry:
+    """Close natural prefix demand using this candidate's exact lane preflight."""
+    return prepare_surface_natural_geometry(_request_with_candidate_lane_preflight(request))
 
 
 def _prepare_surface_natural_prefix(request: SurfaceLayoutRequest) -> _SurfaceNaturalPrefix:

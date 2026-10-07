@@ -873,6 +873,12 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         if placed.annotation is not None:
             emit_semantic_text(placed.placement_id, placed.semantic_id)
             continue
+        if placed.placement_id.startswith("observations:"):
+            header_paint = ("tableColumnLabel" if placed.semantic_id == "observationColumnLabel"
+                            and value.theme_tokens.optional_color("tableColumnLabel", "fill") is not None
+                            else None)
+            emit_semantic_text(placed.placement_id, placed.semantic_id, header_paint)
+            continue
         if placed.semantic_id in {"summaryCaption", "summaryUnit", "summaryFigureValue",
                                   "summaryHeader", "summaryMetric", "summaryFigureCaption"}:
             emit_semantic_text(placed.placement_id, placed.semantic_id)

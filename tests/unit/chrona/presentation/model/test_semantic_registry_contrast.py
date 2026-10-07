@@ -12,10 +12,12 @@ GROUND_TEXT_SEMANTICS = {
     "relationLabel", "legendLabel", "projectNote", "noteIndex", "annotationCalloutText", "annotationHighlightText",
     "annotationArrowText", "summaryHeader", "summaryMetric", "summaryFigureValue", "summaryFigureCaption",
     "summaryCaption", "summaryUnit",
-    "slotHeading", "annotationListText", "networkLabel",
+    "slotHeading", "annotationListText", "networkLabel", "observationSource", "observationColumnLabel",
+    "observationCell",
 }
 # Labels painted in the role of a classified state text: the classification is by that role, not by their own.
-LABELS_CLASSIFIED_BY_ROLE = {"finishDelta", "varianceAhead", "varianceBehind"}
+LABELS_CLASSIFIED_BY_ROLE = {"finishDelta", "varianceAhead", "varianceBehind",
+                             "observationAttentionCell", "observationCriticalCell"}
 
 
 def test_contrast_registry_classifies_only_the_finite_state_text_and_decoration_roles():

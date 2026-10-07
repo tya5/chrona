@@ -41,12 +41,12 @@ def test_use_case_hands_the_same_completed_preparation_to_scene_once(tmp_path, m
     import chrona.usecases.render_review as use_case
     from chrona.presentation.scene import v05_builder
 
-    prepare = use_case.prepare_surface_candidate
+    prepare = use_case.prepare_surface_content
     compose = v05_builder.compose_surface_layout
     prepared, forwarded = [], []
 
-    def observe_prepare(request):
-        result = prepare(request)
+    def observe_prepare(request, *, natural=None):
+        result = prepare(request, natural=natural)
         prepared.append(result)
         return result
 
@@ -54,7 +54,7 @@ def test_use_case_hands_the_same_completed_preparation_to_scene_once(tmp_path, m
         forwarded.append((request, prepared))
         return compose(request, prepared=prepared)
 
-    monkeypatch.setattr(use_case, "prepare_surface_candidate", observe_prepare)
+    monkeypatch.setattr(use_case, "prepare_surface_content", observe_prepare)
     monkeypatch.setattr(v05_builder, "compose_surface_layout", observe_compose)
     rendered = _render(tmp_path, heading={"text": "Notes"})
     assert len(prepared) == len(forwarded) == 1

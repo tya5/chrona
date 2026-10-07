@@ -78,7 +78,6 @@ class RegionFrame:
     paint: str | None = None
 
 
-SLOT_HEADING_SOURCES = frozenset({"annotations", "notes", "legend", "summary"})
 SLOT_HEADING_ALIGNS = ("start", "center", "end")
 SLOT_HEADING_BLOCKS = ("top", "header-row", "axis-tier")
 

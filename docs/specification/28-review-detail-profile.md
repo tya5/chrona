@@ -62,7 +62,13 @@ presentation emphasis values. They map to existing Theme paint roles `text`,
 Cell typography remains the `text` role, independently of emphasis paint.
 Column headers preserve declaration order and use table-header typography. Each
 row visibly renders its exact source attribution before its cells; no invented
-provenance label is added. Native column allocation uses measured minima and
+provenance label is added. Attribution is ordinary ground Text with purpose
+`observation-source`, not a primary table cell or fabricated column. Headers and
+cells have purposes `observation-column-label` and `observation-cell`, with the
+existing header/text/emphasis paint roles. Header `sourceRef` retains the raw column
+ID; attribution/cell `sourceRef` retains the raw row ID, and injectively escaped
+placement IDs distinguish cells. They do not reference primary surface rows/columns.
+Native column allocation uses measured minima and
 equal flexible shares, with the existing table gutter and the slot's overflow
 policy. Wrapped source/cell lines determine natural row height.
 

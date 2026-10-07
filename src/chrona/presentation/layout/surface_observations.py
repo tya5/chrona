@@ -7,6 +7,7 @@ from urllib.parse import quote
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.presentation import TableColumnPlacement, place_table_columns, table_text_measurer
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, SlotPlacement, SurfaceLayoutRequest, TextPlacement
+from chrona.presentation.layout.surface_geometry import GEOMETRY_TOLERANCE
 from chrona.presentation.layout.text import ellipsize_text, metric_for_role, place_text, wrap_text
 from chrona.presentation.model.surface_content import (
     SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth, TableContent,
@@ -154,7 +155,7 @@ def compose_observations(*, slot: SlotPlacement, request: SurfaceLayoutRequest) 
                 overflow="suppressed", required=False, collision_region="observations",
                 collision_domain=CollisionDomain(slot.slot_id, "headers"), source_content=column.header,
                 available_inline_start=positions[column.column_id], available_inline_size=available,
-                slot_id=slot.slot_id, semantic_id="tableColumnLabel")
+                slot_id=slot.slot_id, semantic_id="observationColumnLabel")
             placed.append(item)
             warnings.append(FitWarning("W_LAYOUT_DETAIL_PANEL_CLIPPED", item.placement_id, column.column_id,
                                        "detail-panel", "clip-optional", natural, h, available,
@@ -168,7 +169,7 @@ def compose_observations(*, slot: SlotPlacement, request: SurfaceLayoutRequest) 
             overflow=disposition, collision_region="observations",
             collision_domain=CollisionDomain(slot.slot_id, "headers"), source_content=column.header,
             lines=lines, available_inline_start=positions[column.column_id], available_inline_size=available,
-            slot_id=slot.slot_id, semantic_id="tableColumnLabel")
+            slot_id=slot.slot_id, semantic_id="observationColumnLabel")
         placed.append(item)
         header_heights.append(h)
         if disposition == "visible-overflow":
@@ -180,7 +181,7 @@ def compose_observations(*, slot: SlotPlacement, request: SurfaceLayoutRequest) 
     for row_id, source, emphasis, row_cells in content.observation_rows:
         row_key = _id(row_id)
         source_id = f"observations:row:{row_key}:source"
-        cursor += add_text(source_id, row_id, source, text_role, "tableCell", inline_start,
+        cursor += add_text(source_id, row_id, source, text_role, "observationSource", inline_start,
                            inline_size, cursor)
         row_lines: list[tuple[TableColumnContent, str, tuple[str, ...], str, float]] = []
         row_height = 0.0
@@ -217,7 +218,7 @@ def compose_observations(*, slot: SlotPlacement, request: SurfaceLayoutRequest) 
     completed_size = completed_end - slot.bounds.block
     completed_slot = replace(slot, bounds=Rect(slot.bounds.inline, slot.bounds.block,
                                                 slot.bounds.inline_size, completed_size))
-    if completed_size > slot.bounds.block_size:
+    if completed_size > slot.bounds.block_size + GEOMETRY_TOLERANCE:
         warnings.append(FitWarning(
             "W_LAYOUT_VISIBLE_OVERFLOW", "observations:slot", "observations", "observations",
             "visible-overflow", float(slot.bounds.inline_size), float(completed_size),
@@ -231,5 +232,5 @@ def _id(value: str) -> str:
 
 
 def _emphasis_semantic(emphasis: str) -> str:
-    return {"normal": "tableCell", "attention": "tableVarianceAhead",
-            "critical": "tableVarianceBehind"}[emphasis]
+    return {"normal": "observationCell", "attention": "observationAttentionCell",
+            "critical": "observationCriticalCell"}[emphasis]

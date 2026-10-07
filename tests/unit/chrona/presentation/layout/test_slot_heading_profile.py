@@ -12,7 +12,8 @@ from chrona.presentation.layout.engine import solve_layout
 from chrona.presentation.layout.model import LayoutError, Measurement, SlotHeading
 from chrona.presentation.layout.profile import LayoutBase, resolve_layout_profile
 
-SOURCES = {"title", "table", "timeline", "timeline-axis", "legend", "notes", "annotations", "summary"}
+SOURCES = {"title", "table", "timeline", "timeline-axis", "network", "legend", "notes", "annotations",
+           "summary", "group-details", "milestones", "observations"}
 THEME = {"body": {"values": {name: {"type": "number", "value": value} for name, value in
                              {"spacing.m": 16, "spacing.l": 24}.items()}}}
 
@@ -100,18 +101,9 @@ def test_a_malformed_heading_fails_at_its_exact_pointer(heading, pointer) -> Non
     assert (error.value.diagnostic_id, error.value.path) == ("E_LAYOUT_SCHEMA", pointer)
 
 
-@pytest.mark.parametrize("source", ["notes", "annotations", "legend", "summary"])
-def test_the_supported_sources_take_a_heading(source) -> None:
+@pytest.mark.parametrize("source", sorted(SOURCES))
+def test_every_enumerated_source_takes_a_heading(source) -> None:
     resolve_layout_profile(profile(slot("one", source, heading={"text": "Caption"})), available_sources=SOURCES, theme=THEME)
-
-
-@pytest.mark.parametrize("source", ["title", "table", "timeline", "timeline-axis"])
-def test_a_source_whose_block_other_rules_own_rejects_a_heading(source) -> None:
-    value = profile(slot("one", source, heading={"text": "Caption"}))
-    with pytest.raises(LayoutError) as error:
-        resolve_layout_profile(value, available_sources=SOURCES, theme=THEME)
-
-    assert (error.value.diagnostic_id, error.value.path) == ("E_LAYOUT_SLOT_HEADING_SOURCE", "/root/children/0/heading")
 
 
 def derived(base: dict, overrides: dict) -> tuple[dict, dict]:
@@ -137,13 +129,16 @@ def test_a_derived_profile_replaces_the_copy_alone_or_adds_a_heading() -> None:
         "legend": SlotHeading("Key", "start", "top")}
 
 
-def test_a_derived_profile_cannot_give_an_unsupported_source_a_heading_or_a_malformed_one() -> None:
+def test_a_derived_profile_can_add_a_title_heading() -> None:
     base = profile(slot("title", "title"), slot("notes", "notes"))
     value, bases = derived(base, {"title": {"heading": {"text": "Nope"}}})
-    with pytest.raises(LayoutError) as error:
-        resolve_layout_profile(value, available_sources=SOURCES, theme=THEME, bases=bases)
-    assert error.value.diagnostic_id == "E_LAYOUT_SLOT_HEADING_SOURCE"
+    resolved = resolve_layout_profile(value, available_sources=SOURCES, theme=THEME, bases=bases)
+    manifest = solve_layout(resolved, viewport_inline=1600, viewport_block=900, measurements=MEASUREMENTS)
+    assert next(item.heading for item in manifest.decisions if item.node_id == "title") == SlotHeading("Nope", "start", "top")
 
+
+def test_a_derived_profile_still_refuses_a_malformed_heading_override() -> None:
+    base = profile(slot("notes", "notes"))
     value, bases = derived(base, {"notes": {"heading": {"text": "", "block": "top"}}})
     with pytest.raises(LayoutError) as error:
         resolve_layout_profile(value, available_sources=SOURCES, theme=THEME, bases=bases)

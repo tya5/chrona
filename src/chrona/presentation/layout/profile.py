@@ -10,7 +10,7 @@ import re
 from typing import Any, Mapping
 
 from chrona.presentation.layout.model import (
-    SLOT_HEADING_ALIGNS, SLOT_HEADING_BLOCKS, SLOT_HEADING_SOURCES, LayoutError, ResolvedLayoutProfile,
+    SLOT_HEADING_ALIGNS, SLOT_HEADING_BLOCKS, LayoutError, ResolvedLayoutProfile,
 )
 from chrona.resources import schema_validator, validator_for_schema
 from chrona.schema_diagnostics import explain_errors
@@ -252,9 +252,6 @@ def _semantic_validate(profile: dict[str, Any], available_sources: set[str], the
                 raise LayoutError("E_LAYOUT_SOURCE_UNAVAILABLE", path + "/source", node_id)
             if node["priority"] == "required" and node["overflow"] == "clip-optional":
                 raise LayoutError("E_LAYOUT_SCHEMA", path + "/overflow", node_id)
-            if "heading" in node and node["source"] not in SLOT_HEADING_SOURCES:
-                # Other sources are measured and aligned by rules a caption would break (#1064).
-                raise LayoutError("E_LAYOUT_SLOT_HEADING_SOURCE", path + "/heading", node_id)
         if "anchor" in node:
             parent = index.get(parents[node_id] or "")
             if parent is None or parent["kind"] != "overlay":

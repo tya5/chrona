@@ -83,9 +83,9 @@ def test_fixed_lane_preflight_and_final_composition_share_the_completed_scale(mo
     original = builder.compose_surface_layout
     compositions = []
 
-    def capture(layout_request):
+    def capture(layout_request, *, prepared=None):
         preflight_scale = layout_request.fixed_lane_preflight.scale
-        composition = original(layout_request)
+        composition = original(layout_request, prepared=prepared)
         compositions.append((preflight_scale, composition.placement))
         return composition
 

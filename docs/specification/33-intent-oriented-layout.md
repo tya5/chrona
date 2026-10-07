@@ -108,8 +108,10 @@ distance-token rules of section 5. Only the table-timeline surface draws frames;
 surface ignores the declaration.
 
 **Slot headings (#1064, [work record](../planning/active/issue-1065-1064-field-group-indent-and-slot-heading-2026-10-04.md)).**
-A slot whose `source` is `annotations`, `notes`, `legend` or `summary`, and an override of such a slot, may
-declare `heading: {text, align, block}`: a caption over the slot. `text` is literal presentation copy (one to
+A slot whose `source` is any enumerated slot source, and an override of such a slot, may
+declare `heading: {text, align, block}`: a caption over the slot. This includes the native title, table,
+timeline, timeline-axis, dependency-network, group-details, milestones and observations owners as well as
+annotations, notes, legend and summary. `text` is literal presentation copy (one to
 eighty characters, no control character; the Theme role's text transform styles it, so a profile holds "Notes"
 and a Theme makes it "NOTES"); `align` is `start` (default), `center` or `end` within the slot's inline
 extent; `block` is `top` (default), `header-row` or `axis-tier`. The engine records the declaration with the slot's bounds;
@@ -124,11 +126,15 @@ geometry independently of visible or thinned labels; band-only and rotated tiers
 content starts below the whole axis band and any larger caption line/gap. Without a compatible neighboring
 tier, or when that aligned caption line cannot fit inside its slot, `top` applies and Layout records
 `I_LAYOUT_SLOT_HEADING_NO_AXIS_TIER:<node>`; the baseline is never clamped while claiming tier alignment.
-The slot's content (annotation boxes and leaders, note lines, legend entries, summary runs) starts below the
-line and its gap, and below the band when the caption sits in it, so nothing lies under the caption; the slot
-keeps its full bounds. A content-sized slot (`blockSize: content`) measures the caption's block into its
-size only when its selected source has content; intrinsic measurement and caption completion use the same
-semantic presence decision. A fixed or filling slot gives the caption part of its allocation. A caption never moves another slot.
+The slot's content starts below the line and its gap, and below the band when the caption sits in it, so nothing
+lies under the caption; the slot keeps its full bounds. The native owner then lays out its content in that
+reduced viewport: title runs, table/timeline rows, axis tiers, dependency-network geometry and detail-panel
+content each retain their existing owner and placement rules. A content-sized slot (`blockSize: content`)
+measures the caption's block into its size only when its selected source has content; intrinsic measurement
+and caption completion use the same semantic presence decision. For shared table/timeline rows, the native
+table-header and axis prefix are measured for the exact candidate before allocation, and the row floor starts
+after the greater of that prefix and the caption-reduced content start. A fixed or filling slot gives the
+caption part of its allocation. A caption never moves another slot.
 A slot with no area, one too short for its caption, or one whose source has no content draws no caption and
 reserves nothing (`I_LAYOUT_SLOT_HEADING_OMITTED:<node>:<too-small|no-content>`); an absent optional slot has
 no decision and so no caption. A caption wider than the slot is cut with its source kept
@@ -136,9 +142,8 @@ no decision and so no caption. A caption wider than the slot is cut with its sou
 (the whole declaration is replaced). A View may override only the caption copy with `slotHeadingText`
 (Spec 06 §7.5), keyed by the resolved slot node ID. This leaves the profile, hash, allocation, alignment,
 block placement and caption reservation unchanged; Layout measures and completes the selected copy.
-Any other source rejects a heading
-(`E_LAYOUT_SLOT_HEADING_SOURCE` at `/root/.../heading`), and a malformed heading is `E_LAYOUT_SCHEMA` at its
-exact pointer. Absent declarations leave output and manifest bytes unchanged.
+All enumerated slot sources accept a heading; a malformed heading is `E_LAYOUT_SCHEMA` at its exact pointer.
+Absent declarations leave output and manifest bytes unchanged.
 
 `facet` and `repeat` are not M24 layout operators. View may expose a typed repeated
 source, which Layout can arrange with `grid` or `flow`; Layout cannot partition facts.
