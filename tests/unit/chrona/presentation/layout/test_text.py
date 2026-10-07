@@ -1,4 +1,8 @@
-from chrona.presentation.layout.text import measure_text_width, place_text
+from decimal import Decimal
+
+import pytest
+
+from chrona.presentation.layout.text import measured_text_bounds, measure_text_width, place_text
 from chrona.presentation.layout.surface_quality import CollisionDomain
 from chrona.presentation.model.theme_tokens import TextTreatment
 
@@ -22,6 +26,23 @@ class _Font:
 class _SpacedFont(_Font):
     def width(self, content, size, letter_spacing=0):
         return len(content) * size / 2 + max(0, len(content) - 1) * letter_spacing
+
+
+@pytest.mark.parametrize("orientation,rotation", [("horizontal", 0), ("rotate-cw", 90), ("rotate-ccw", -90)])
+def test_measured_bounds_are_the_same_native_rect_used_by_multiline_placement(orientation, rotation):
+    placed = place_text(placement_id="label:bounds", source_ref="a", content="ABC\nDE",
+                        lines=("ABC", "DE"), inline=0.1, baseline_block=0.3,
+                        typography_role="text", theme_tokens=_Theme(), font_metrics=_Font(),
+                        orientation=orientation)
+    bounds = measured_text_bounds(inline=0.1, baseline_block=0.3, width=18.0,
+                                  height=36.0, font_size=12.0, rotation=rotation)
+    assert bounds == placed.bounds
+    if rotation == 90:
+        assert bounds.block + bounds.block_size == Decimal("0.3") + Decimal("18.0")
+    elif rotation == -90:
+        assert bounds.block == Decimal(str(0.3 - 18.0))
+    else:
+        assert bounds.block == Decimal(str(0.3 - 12.0))
 
 
 def test_place_text_returns_a_completed_measured_layout_record():
