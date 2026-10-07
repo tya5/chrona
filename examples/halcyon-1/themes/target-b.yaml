@@ -3,12 +3,27 @@ kind: theme
 id: target-b
 body:
   values:
+    radius-plan:
+      type: radius
+      value: 1.5
+    radius-actual:
+      type: radius
+      value: 1
+    radius-ghost:
+      type: radius
+      value: 2
+    radius-chip:
+      type: radius
+      value: 3
+    comparison-gap:
+      type: number
+      value: 0.8
+    ghost-padding:
+      type: number
+      value: 0.72
     chip-padding:
       type: number
       value: 0.35
-    chip-radius:
-      type: number
-      value: 0.1899
     opacity.axis-band:
       type: number
       value: 1
@@ -38,7 +53,7 @@ body:
       value: 22
     size.subtitle:
       type: number
-      value: 12.5
+      value: {ref: size.body}
     size.body:
       type: number
       value: 12.5
@@ -53,7 +68,7 @@ body:
       value: 10.5
     size.axis-quarter:
       type: number
-      value: 11.5
+      value: {ref: size.note}
     size.axis:
       type: number
       value: 12
@@ -156,7 +171,7 @@ body:
       value: 14
     spacing.l:
       type: number
-      value: 28
+      value: {expr: "2 * {spacing.m}"}
     panel.side:
       type: number
       value: 420
@@ -172,15 +187,15 @@ body:
     timeline-row-height:
       type: number
       value: 22
-    timeline-row-padding:
-      type: number
-      value: 3
     timeline-mark-size:
       type: number
       value: 16
+    timeline-row-padding:
+      type: number
+      value: 3
     timeline-axis-height:
       type: number
-      value: 44
+      value: {expr: "{axis-lane-quarter} + {axis-lane-month}"}
     network-node-min-inline:
       type: number
       value: 120
@@ -195,7 +210,7 @@ body:
       value: 120
     table-column-gutter:
       type: number
-      value: 14
+      value: {ref: spacing.m}
     table-indent:
       type: number
       value: 8
@@ -204,28 +219,22 @@ body:
       value: 4
     size.secondary:
       type: number
-      value: 11.5
+      value: {ref: size.note}
     slot-heading-size:
       type: number
-      value: 11
+      value: {ref: header-size}
     slot-heading-spacing:
       type: number
       value: 0.1
     symbol-height-actual:
       type: number
       value: 0.875
-    symbol-offset-actual:
-      type: number
-      value: 0.0625
     symbol-height-ghost:
       type: number
       value: 0.8125
-    symbol-offset-ghost:
-      type: number
-      value: 0.09375
     table-header-height:
       type: number
-      value: 44
+      value: {ref: timeline-axis-height}
     timeline-group-header-size:
       type: number
       value: 20
@@ -268,15 +277,6 @@ body:
     mark-radius-rounded:
       type: number
       value: 0.25
-    mark-radius-plan:
-      type: number
-      value: 0.1875
-    mark-radius-baseline:
-      type: number
-      value: 0.1471
-    mark-radius-actual:
-      type: number
-      value: 0.2976
     icon-mark-scale:
       type: number
       value: 0.55
@@ -345,21 +345,12 @@ body:
     mark-height-planned:
       type: number
       value: 0.5
-    mark-offset-planned:
-      type: number
-      value: 0.15
     mark-height-ghost:
       type: number
       value: 0.85
-    mark-offset-ghost:
-      type: number
-      value: 0.075
     mark-height-actual:
       type: number
       value: 0.21
-    mark-offset-actual:
-      type: number
-      value: 0.7
     dash.ghost:
       type: dashPattern
       value:
@@ -383,6 +374,10 @@ body:
     legend-block:
       type: number
       value: 22
+  markStack:
+    members: [[planned, missing-actual], [actual]]
+    gap: comparison-gap
+    frame: {roles: [snapshot], padding: ghost-padding}
   roles:
     legend-swatch:
       swatchInlineSize: legend-swatch-inline-size
@@ -394,8 +389,9 @@ body:
     as-of-label-chip:
       backgroundTreatment: fill
       chipPadding: chip-padding
-      markCornerRadius: chip-radius
       viewerFit: text-follows-box
+      markCornerRadius: mark-radius-square
+      cornerRadius: radius-chip
     group-band:
       backgroundTreatment: none
       backgroundPaintOrder: 10
@@ -595,10 +591,10 @@ body:
     missing-actual:
       pattern: hatch
       markHeight: mark-height-planned
-      markOffset: mark-offset-planned
       markPaintOrder: mark-paint-front
-      markCornerRadius: mark-radius-plan
       strokeWidth: stroke-width
+      markCornerRadius: mark-radius-square
+      cornerRadius: radius-plan
     axis-major:
       strokeWidth: stroke-width
     axis-minor:
@@ -624,12 +620,11 @@ body:
     snapshot:
       strokeWidth: stroke-width
       markHeight: mark-height-ghost
-      markOffset: mark-offset-ghost
       markPaintOrder: mark-paint-back
-      markCornerRadius: mark-radius-baseline
       symbolHeight: symbol-height-ghost
-      symbolOffset: symbol-offset-ghost
       dash: dash.ghost
+      markCornerRadius: mark-radius-square
+      cornerRadius: radius-ghost
     scenario:
       markHeight: mark-height-container
       markOffset: mark-offset-start
@@ -638,19 +633,17 @@ body:
     planned:
       strokeWidth: stroke-width
       markHeight: mark-height-planned
-      markOffset: mark-offset-planned
       markPaintOrder: mark-paint-middle
-      markCornerRadius: mark-radius-plan
       symbolHeight: symbol-height-actual
-      symbolOffset: symbol-offset-actual
+      markCornerRadius: mark-radius-square
+      cornerRadius: radius-plan
     actual:
       strokeWidth: stroke-width
       markHeight: mark-height-actual
-      markOffset: mark-offset-actual
       markPaintOrder: mark-paint-front
-      markCornerRadius: mark-radius-actual
       symbolHeight: symbol-height-actual
-      symbolOffset: symbol-offset-actual
+      markCornerRadius: mark-radius-square
+      cornerRadius: radius-actual
     network-node:
       strokeWidth: stroke-width
     progress-fill:
