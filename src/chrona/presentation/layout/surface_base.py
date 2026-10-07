@@ -9,7 +9,7 @@ from typing import Any
 
 from chrona.presentation.layout.group_tags import (
     group_tag_column_size, vertical_group_tags)
-from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect, geometry_sum
+from chrona.presentation.layout.model import LayoutDecision, LayoutError, LayoutManifest, Rect, geometry_sum
 from chrona.presentation.layout.lane_preflight import lane_inline_frame_for_manifest
 from chrona.presentation.layout.lane_projection import LaneProjectionInstance, lane_missing_actual_visible
 from chrona.presentation.layout.lane_subtracks import LaneSubtrackPlan
@@ -31,6 +31,48 @@ from chrona.presentation.layout.surface_quality import (
 from chrona.presentation.layout.mark_geometry import compose_item_marks
 from chrona.presentation.layout.lane_mark_facets import _mark_facets
 from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS
+
+
+@dataclass(frozen=True)
+class SurfaceSlotAllocation:
+    """Full immutable allocations, before captions or shared rows consume their viewports."""
+    decisions: tuple[LayoutDecision, ...]
+    slots: tuple[SlotPlacement, ...]
+
+
+def _layout_manifest(request: SurfaceLayoutRequest) -> LayoutManifest:
+    manifest = request.layout_manifest
+    if not isinstance(manifest, LayoutManifest):
+        raise LayoutError("E_PRESENTATION_LAYOUT_REQUIRED", "/layoutManifest")
+    return manifest
+
+
+def prepare_surface_slots(request: SurfaceLayoutRequest) -> SurfaceSlotAllocation:
+    """Validate source allocations without closing any row, scale, track or axis geometry."""
+    manifest = _layout_manifest(request)
+    decisions = {item.source: item for item in manifest.decisions if item.source}
+    missing = next((slot.value for slot in REQUIRED_SLOTS if slot.value not in decisions), None)
+    if missing is not None:
+        raise LayoutError("E_PRESENTATION_PRIMITIVE_MISSING", f"/layoutManifest/sources/{missing}")
+    ordered = tuple(decisions[source] for source in sorted(decisions))
+    slots = tuple(
+        SlotPlacement(source, source, item.bounds, item.priority or "required",
+                      item.overflow or "visible-overflow",
+                      "primary" if source in {"timeline", "timeline-axis"} else None,
+                      item.direction or "block", item.gap, item.item_min_inline_size)
+        for source, item in sorted(decisions.items())
+    )
+    by_source = {slot.source_ref: slot for slot in slots}
+    table, timeline = by_source["table"], by_source["timeline"]
+    review_surface = SlotPlacement(
+        "review-surface", "review-surface",
+        Rect(table.bounds.inline, min(table.bounds.block, timeline.bounds.block),
+             timeline.bounds.inline + timeline.bounds.inline_size - table.bounds.inline,
+             max(table.bounds.block + table.bounds.block_size,
+                 timeline.bounds.block + timeline.bounds.block_size)
+             - min(table.bounds.block, timeline.bounds.block)),
+    )
+    return SurfaceSlotAllocation(ordered, (*slots, review_surface))
 
 
 @dataclass(frozen=True)
@@ -122,21 +164,17 @@ def _provisional_point_facets(*, projection: Any, rows: tuple[Any, ...], scale: 
     return tuple(result)
 
 
-def prepare_surface_base(request: SurfaceLayoutRequest) -> SurfaceBaseGeometry:
+def prepare_surface_base(request: SurfaceLayoutRequest, *,
+                         allocation: SurfaceSlotAllocation | None = None) -> SurfaceBaseGeometry:
     """Validate inputs and close slots, rows, groups, scale and mark tracks."""
     projection = request.projection
-    layout_manifest = request.layout_manifest
+    layout_manifest = _layout_manifest(request)
     measured_sources = request.measured_sources
     metric_values = getattr(measured_sources, "metric_values", None)
-    if not isinstance(layout_manifest, LayoutManifest):
-        raise LayoutError("E_PRESENTATION_LAYOUT_REQUIRED", "/layoutManifest")
     if not isinstance(metric_values, dict):
         raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources")
-    decisions = {item.source: item for item in layout_manifest.decisions if item.source}
-    required = tuple(slot.value for slot in REQUIRED_SLOTS)
-    missing = next((name for name in required if name not in decisions), None)
-    if missing is not None:
-        raise LayoutError("E_PRESENTATION_PRIMITIVE_MISSING", f"/layoutManifest/sources/{missing}")
+    allocation = allocation if allocation is not None else prepare_surface_slots(request)
+    decisions = {item.source: item for item in allocation.decisions}
     start, end = projection.window
     if not isinstance(start, date) or not isinstance(end, date) or start >= end:
         raise LayoutError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection/window")
@@ -151,24 +189,9 @@ def prepare_surface_base(request: SurfaceLayoutRequest) -> SurfaceBaseGeometry:
             or "timeline.row.paddingBlock" not in metric_values
             or "timeline.mark.blockSize" not in metric_values):
         raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/metricValues")
-    slots = tuple(
-        SlotPlacement(source, source, item.bounds, item.priority or "required",
-                      item.overflow or "visible-overflow",
-                      "primary" if source in {"timeline", "timeline-axis"} else None,
-                      item.direction or "block", item.gap, item.item_min_inline_size)
-        for source, item in sorted(decisions.items())
-    )
+    slots = allocation.slots
     by_source = {slot.source_ref: slot for slot in slots}
     table, timeline = by_source["table"], by_source["timeline"]
-    review_surface = SlotPlacement(
-        "review-surface", "review-surface",
-        Rect(table.bounds.inline, min(table.bounds.block, timeline.bounds.block),
-             timeline.bounds.inline + timeline.bounds.inline_size - table.bounds.inline,
-             max(table.bounds.block + table.bounds.block_size,
-                 timeline.bounds.block + timeline.bounds.block_size)
-             - min(table.bounds.block, timeline.bounds.block)),
-    )
-    slots += (review_surface,)
     review_row_values = review_rows(projection) or tuple(
         type("_Row", (), {"row_id": item.object_id, "label": item.title,
                           "group_id": item.group_id, "table_subject_id": item.object_id,
