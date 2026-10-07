@@ -11,8 +11,7 @@ from chrona.presentation.model.surface_content import (
     AnnotationIntent, AxisLabelIntent, AxisSecondaryIntent, AxisTier, HeadingContent, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, _format_compact_date, display_value, table_value,
 )
 from chrona.presentation.table_presentation import affix_state
-from chrona.presentation.review.detail import resolve_v05_review_detail_profile
-from chrona.presentation.layout.model import LayoutManifest
+from chrona.presentation.review.detail import normalize_v05_review_detail_profile
 from chrona.presentation.model.placement_candidates import legacy_candidate_order, parse_candidates
 from chrona.presentation.contracts.resources import ReviewDetailInput, SummaryProfileInput, ViewInput
 from chrona.presentation.group_header_text import GroupHeaderTextError, compose_group_header_runs, compose_group_headers
@@ -325,6 +324,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                  if key not in consumed_note_ids)
     calendar_closed, calendar_exceptions = calendar_closures(project, projection, view)
     legend = legend_entries(detail, project, projection, color_scale, closed_days_drawn=bool(calendar_closed))
+    detail_content = normalize_v05_review_detail_profile(detail, projection.items)
     scale_paints: tuple[tuple[str, str], ...] = ()
     scale_legend_paints: tuple[tuple[str, str], ...] = ()
     if color_scale is not None:
@@ -346,7 +346,10 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                    notes=notes, legend_entries=legend, coverage_text="",
                                    summary=summary,
                                    template_values=(),
-                                   group_details=(), milestones=(), observation_columns=(), observation_rows=(),
+                                   group_details=detail_content.group_details,
+                                   milestones=detail_content.milestones,
+                                   observation_columns=detail_content.observation_columns,
+                                   observation_rows=detail_content.observation_rows,
                                label_fallback=label_fallback, annotation_fallback=annotation_fallback,
                                link_mode=link_mode, title_link_columns=title_link_columns,
                                attached_labels=_attached_labels(projection, locale),
@@ -370,15 +373,6 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                    for pair in ((item.annotation_id, annotation_kind_colors[item.kind]),
                                                 *((f"{item.annotation_id}#{target}", annotation_kind_colors[item.kind])
                                                   for target in (annotation_kind_also or {}).get(item.kind, ())))))
-
-
-def complete_v05_detail_content(content: SurfaceContentInput, projection: ReviewProjection, *,
-                                detail: ReviewDetailInput | None, layout_manifest: LayoutManifest) -> SurfaceContentInput:
-    """Enrich already selected content with manifest-admitted detail, without reselecting narrative facts."""
-    resolved = resolve_v05_review_detail_profile(_detail_mapping(detail), projection.items, layout_manifest,
-                                                profile_is_validated=True)
-    return replace(content, group_details=resolved.group_details, milestones=resolved.milestones,
-                   observation_columns=resolved.observation_columns, observation_rows=resolved.observation_rows)
 
 
 def _group_header_facts(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput) -> dict[str, Any] | None:
@@ -576,19 +570,6 @@ def _calendar_closures(project: Mapping[str, Any], window: tuple[date, date], sh
     exceptions_enabled = shading.get("exceptions", True) if isinstance(shading, Mapping) else True
     selected = tuple(closed) if non_working else tuple(exception_closed) if exceptions_enabled else ()
     return selected, tuple(exception_closed) if exceptions_enabled else ()
-
-
-def _detail_mapping(detail: ReviewDetailInput | None) -> Mapping[str, Any] | None:
-    """Adapt an accepted typed detail contract to the detail resolver's input shape."""
-    if detail is None:
-        return None
-    # Detail contracts have already passed their resource-schema boundary.
-    # Empty sections are absent presentation content, not a request for a
-    # layout source; nonempty sections retain the immutable contract values.
-    return {"body": {"legend": [{"role": item.role, "label": item.label} for item in detail.legend],
-                      **({"groupDetails": detail.group_details} if detail.group_details else {}),
-                      **({"milestones": detail.milestones} if detail.milestones else {}),
-                      **({"observations": detail.observations} if detail.observations else {})}}
 
 
 def _resource_body(value: Mapping[str, Any] | None, name: str) -> Mapping[str, Any]:

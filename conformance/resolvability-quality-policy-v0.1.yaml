@@ -24,13 +24,13 @@ diagnosticActionability:
     - {<<: *backlog, code: E_AUTHORING_WORKSPACE_SCHEMA, sites: 1}
     - {<<: *backlog, code: E_AXIS_NAME_TABLE_UNKNOWN, sites: 1}
     - {<<: *backlog, code: E_CONTENT_IDENTITY, sites: 4}
-    - {<<: *backlog, code: E_DETAIL_DUPLICATE_COLUMN, sites: 2}
-    - {<<: *backlog, code: E_DETAIL_DUPLICATE_GROUP, sites: 2}
-    - {<<: *backlog, code: E_DETAIL_DUPLICATE_MILESTONE, sites: 2}
+    - {<<: *backlog, code: E_DETAIL_DUPLICATE_COLUMN, sites: 1}
+    - {<<: *backlog, code: E_DETAIL_DUPLICATE_GROUP, sites: 1}
+    - {<<: *backlog, code: E_DETAIL_DUPLICATE_MILESTONE, sites: 1}
     - {<<: *backlog, code: E_DETAIL_DUPLICATE_ROW, sites: 1}
-    - {<<: *backlog, code: E_DETAIL_GROUP_REFERENCE, sites: 2}
-    - {<<: *backlog, code: E_DETAIL_MILESTONE_REFERENCE, sites: 2}
-    - {<<: *backlog, code: E_DETAIL_OBSERVATION_CELLS, sites: 2}
+    - {<<: *backlog, code: E_DETAIL_GROUP_REFERENCE, sites: 1}
+    - {<<: *backlog, code: E_DETAIL_MILESTONE_REFERENCE, sites: 1}
+    - {<<: *backlog, code: E_DETAIL_OBSERVATION_CELLS, sites: 1}
     - {<<: *backlog, code: E_DETAIL_OBSERVATION_PROVENANCE, sites: 1}
     - {<<: *backlog, code: E_DETAIL_SLOT_REQUIRED, sites: 1}
     - {<<: *backlog, code: E_FONT_IMPORT_ARGUMENT, sites: 1}

@@ -24,7 +24,7 @@ from chrona.core.ports import RenderArtifact, Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
 from chrona.presentation.layout.engine import (measure_natural_normal_flow_block,
                                                resolve_content_block_extent, solve_layout)
-from chrona.presentation.layout.model import LayoutError, ResolvedLayoutProfile
+from chrona.presentation.layout.model import LayoutError, LayoutManifest, ResolvedLayoutProfile
 from chrona.presentation.layout.group_header_runs import validate_group_header_roles
 from chrona.presentation.layout.presentation import table_text_line_block, validate_table_text_roles
 from chrona.presentation.layout.profile import resolve_layout_profile
@@ -51,11 +51,12 @@ from chrona.core.periods import period_range_diagnostics, resolve_periods
 from chrona.core.temporal import Calendar
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
 from chrona.presentation.model.projection import ReviewDeadline, ReviewPeriod, build_review_projection
-from chrona.presentation.model.surface_content import HeadingContent, SummaryContent, TableContent
+from chrona.presentation.model.surface_content import HeadingContent, SummaryContent, SurfaceContentInput, TableContent
 from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput, ViewRowMode
+from chrona.presentation.review.detail import ReviewDetailError
 from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, below_plot_reserve
 from chrona.presentation.review.v05_content import (
-    complete_v05_detail_content, compose_heading, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content)
+    compose_heading, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content)
 from chrona.presentation.scene.model import (
     ContentFamilyCounts, InspectionScene, SceneManifest, SceneProvenance,
     SceneSurface,
@@ -217,6 +218,25 @@ def render_review(request: RenderRequest) -> RenderedReview:
                            "presentation", error.path or "/") from error
 
 
+def admit_v05_detail_content(content: SurfaceContentInput, *, detail: ReviewDetailInput | None,
+                             layout_manifest: LayoutManifest) -> SurfaceContentInput:
+    """Validate Detail panel availability after solve and return the already-normalized content unchanged."""
+    available = {item.source for item in layout_manifest.decisions if item.source}
+    required = {item.source for item in layout_manifest.decisions
+                if item.source and item.kind == "slot" and item.priority == "required"}
+    declared = {
+        "group-details": bool(detail and detail.group_details),
+        "milestones": bool(detail and detail.milestones),
+        "observations": bool(detail and detail.observations is not None),
+    }
+    for source in ("group-details", "milestones", "observations"):
+        if declared[source] and source not in available:
+            raise ReviewDetailError("E_DETAIL_SLOT_REQUIRED")
+        if not declared[source] and source in required:
+            raise ReviewDetailError("E_LAYOUT_SOURCE_UNAVAILABLE")
+    return content
+
+
 def _render_review(request: RenderRequest) -> RenderedReview:
     """Render one closure, in the one order the pipeline has."""
     render_closure, ledger = request.closure, ClosureReadLedger(request.closure)
@@ -368,8 +388,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     fixed_lane_preflight = None
     capacity_short_sources = ()
     if projection.lane_membership is not None:
-        seed_content = complete_v05_detail_content(
-            selected_content, projection,
+        seed_content = admit_v05_detail_content(
+            selected_content,
             detail=render_closure.detail_profile.detail if render_closure.detail_profile else None,
             layout_manifest=manifest,
         )
@@ -398,8 +418,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                 content_sized=request.draft_auto_block,
             )
 
-    surface_content = complete_v05_detail_content(
-        selected_content, projection,
+    surface_content = admit_v05_detail_content(
+        selected_content,
         detail=render_closure.detail_profile.detail if render_closure.detail_profile else None,
         layout_manifest=manifest,
     )

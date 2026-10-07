@@ -71,10 +71,12 @@ not yield a fit refusal.
 
 The review command accepts one optional Review Detail Profile alongside Project,
 Actual, View, Theme, and Layout. The profile is
-validated before Scene construction. `SurfaceContentInput` carries normalized immutable
-detail content; it carries no coordinates. The Scene Builder measures and places all
+validated before measurement. `SurfaceContentInput` carries normalized immutable
+detail content; it carries no coordinates. Post-solve slot admission validates the
+matching panels without reselecting those facts. Layout measures and places completed
 panel primitives and attaches the profile entry ID or Project object ID as
-`source_ref`. Adapters MUST NOT read the profile or recompute layout.
+`source_ref`; Scene projects that closure. Adapters MUST NOT read the profile or
+recompute layout.
 
 ## M23 acceptance rules
 
