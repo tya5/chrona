@@ -268,9 +268,9 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
             role_geometries=role_geometries, text_line_block=text_line_block,
             mark_band_allocation=mark_band_allocation,
         )
-        headers = sum(1 for index, row in enumerate(review_row_values)
-                      if row.group_id and group_header_size
-                      and (index == 0 or review_row_values[index - 1].group_id != row.group_id))
+        headers = sum(bool(row.group_id) and bool(group_header_size)
+                      and (index == 0 or review_row_values[index - 1].group_id != row.group_id)
+                      for index, row in enumerate(review_row_values))
         natural_block = (Decimal(str(geometry_sum(requirements)))
                          + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0))
     return SurfaceInlineGeometry(
