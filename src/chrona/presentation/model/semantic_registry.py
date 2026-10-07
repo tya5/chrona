@@ -233,6 +233,8 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("summaryMetric", "label", "summary-metric", "text", "summary", ContrastClass.GROUND_TEXT),
     _binding("summaryFigureValue", "label", "summary-figure-value", "metric", "metric", ContrastClass.GROUND_TEXT),
     _binding("summaryFigureCaption", "label", "summary-figure-caption", "subtitle", "subtitle", ContrastClass.GROUND_TEXT),
+    _binding("summaryCaption", "label", "summary-caption", "summary-caption", "summary-caption", ContrastClass.GROUND_TEXT),
+    _binding("summaryUnit", "label", "summary-unit", "summary-unit", "summary-unit", ContrastClass.GROUND_TEXT),
 )}
 
 
@@ -305,7 +307,7 @@ def contrast_binding_for(scene_role: str, purpose: str | None) -> SemanticBindin
     # Title inks are general Theme typography roles too: a View may name them
     # for a table cell. Registering their title semantics must not disable the
     # purpose-based ground gate for those other text uses (#1164).
-    theme_text_role = scene_role not in _SCENE_ROLES or scene_role in {"heading", "subtitle", "kicker"}
+    theme_text_role = scene_role not in _SCENE_ROLES or scene_role in {"heading", "subtitle", "kicker", "summary-caption", "summary-unit"}
     return next((item for item in contrast_bindings(ContrastClass.GROUND_TEXT)
                  if item.purpose == purpose and (theme_text_role or scene_role in ("text", item.scene_role))), None)
 

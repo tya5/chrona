@@ -58,6 +58,8 @@ The registry owns canonical primitive semantics. Its entries declare `semantic_i
 | `groupHeader` | Rect/Text | `group-header-band`, `group-header` | `groupHeader` |
 | `slotHeading` | Text | `slot-heading` | `slot-heading` (ground text; the role is opt-in and the `text` role applies without it, #1064) |
 | `titleText` / `subtitleText` | Text | `title-text` / `subtitle-text` | `heading` / `subtitle` when the respective role binds `fill`, otherwise the explicit registered `text` alternative; ground text (#1164) |
+| `kickerText` | Text | `kicker-text` | `kicker` when it binds `fill`, otherwise the registered `text` alternative; ground text (#1189) |
+| `summaryCaption` / `summaryUnit` | Text | `summary-caption` / `summary-unit` | `summary-caption` / `summary-unit`; ground text, explicitly carried by inline summary placements (#1190) |
 | `networkLabel` | Text | `title-text` (existing public network-label purpose) | `text`; Layout distinguishes node labels from `titleText`, so title ink never repaints them (#1164) |
 | `regionFrame` | Rect | `region-frame` | Layout completes `region-frame` or the declared `region-frame-<paint>`; an absent selected role omits only that frame (#1165) |
 | `groupTab` | Rect | `group-tab` | `group-tab` (contrast class `decoration`; the role is opt-in, #882) |
@@ -72,8 +74,9 @@ The registry owns canonical primitive semantics. Its entries declare `semantic_i
 
 The renderer keeps stable primitive role strings where needed for public Scene compatibility (for example `as-of`). They are declared by the registry rather than handwritten in composition. Theme lookup accepts explicitly declared ingress aliases only and resolves to the canonical binding before Scene construction.
 
-The registered `heading` and `subtitle` inks are general Theme text roles, not
-title-only contrast classes: a View using either for a table cell retains
+The registered `heading`, `subtitle`, `kicker`, `summary-caption` and
+`summary-unit` inks are general Theme text roles, not purpose-only contrast
+classes: a View using one for a table cell retains
 purpose-based ground-text classification. State-text role precedence and the
 purpose restrictions of other registered Scene roles remain unchanged.
 

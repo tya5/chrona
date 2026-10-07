@@ -242,6 +242,24 @@ def place_notes(request: SurfaceLayoutRequest, notes: SlotPlacement, body_size: 
 
 def place_summary(request: SurfaceLayoutRequest, summary_slot: SlotPlacement) -> tuple[TextPlacement, ...]:
     """Place the summary runs in the allocated summary slot."""
+    if any(panel.arrangement == "inline" for panel in request.surface_content.summary.panels):
+        measured = request.measured_sources.summary_flows.get("summary")
+        if measured is None:
+            raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "summary")
+        runs = {run.placement_id: run for run in request.surface_content.summary.runs}
+        closed_runs = {run.source_ref: run for run in request.measured_sources.run_measurements["summary"]}
+        return tuple(place_text(
+            placement_id=placed.placement_id, source_ref=runs[placed.placement_id].source_ref,
+            content=closed_runs[placed.placement_id].content,
+            inline=float(summary_slot.bounds.inline + placed.inline),
+            baseline_block=float(summary_slot.bounds.block + placed.baseline),
+            typography_role=runs[placed.placement_id].typography_role,
+            theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+            collision_region="summary", collision_domain=CollisionDomain("summary", "content"),
+            source_content=runs[placed.placement_id].content,
+            semantic_id=runs[placed.placement_id].semantic_id,
+            available_inline_start=float(summary_slot.bounds.inline),
+            available_inline_size=float(summary_slot.bounds.inline_size)) for placed in measured.runs)
     text: list[TextPlacement] = []
     cursor = float(summary_slot.bounds.block)
     for run in request.surface_content.summary.runs:

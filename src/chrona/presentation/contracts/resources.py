@@ -383,6 +383,7 @@ class SummaryPanelInput:
     title: str | None
     presentation: str
     metrics: tuple[SummaryMetric | tuple[str, str], ...]
+    arrangement: str = "stack"
 
 
 @dataclass(frozen=True)
@@ -1167,7 +1168,8 @@ def _summary_input(body: FrozenDict) -> SummaryProfileInput:
             else:
                 metrics.append((str(metric_id), str(definition)))
         panels.append(SummaryPanelInput(str(panel["id"]), str(panel["title"]) if "title" in panel else None,
-                                        str(panel.get("presentation", "lines")), tuple(metrics)))
+                                        str(panel.get("presentation", "lines")), tuple(metrics),
+                                        str(panel.get("arrangement", "stack"))))
     return SummaryProfileInput(tuple(panels))
 
 

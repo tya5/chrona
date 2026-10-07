@@ -17,6 +17,27 @@ Scene/Output. A panel is not a Project field, does not create risk workflow, and
 not infer progress, health, probability, or forecast. Layout is profile geometry;
 Theme supplies only declared panel roles and tokens.
 
+**Panel arrangement (#1190).** A Summary Profile panel may declare
+`arrangement: stack | inline`; omission means `stack`. Stack retains the existing
+run order, placement identities, content and typography. Inline arranges that
+panel's ordered runs on one common baseline; panels themselves remain vertically
+ordered. For `figures`, the panel title is a `summary-caption`, each formatted
+metric value is `metric`, and its declared label is `summary-unit`. Multiple
+metrics keep their declared order. For `lines` and shorthand metrics, the title
+and each already-composed metric string use `summary-caption`; their content is
+not parsed to infer a separate unit. Theme declares the inline gap after a run,
+with zero when absent and no gap after the final run. Layout measures each run
+with its selected Theme treatment and completes the run origins, shared baseline
+and panel extent before Scene construction.
+
+When any panel uses `inline`, run identities are structural addresses:
+`summary:/panels/<index>/title` and
+`summary:/panels/<index>/metrics/<index>/(value|label|text)`.
+Authored IDs and source provenance remain unchanged; punctuation or repeated
+IDs cannot alias measured runs. Addresses follow the ordered profile, without
+a cross-reordering identity promise. Every run, including mixed stack panels,
+carries explicit semantics. All-stack profiles keep their legacy identities.
+
 A dark delivery-control composition is also a user-editable resource set. The adapter
 MUST interpret only declared metrics and panels; it MUST NOT contain a dashboard-specific
 score, panel list, or title-based branch.

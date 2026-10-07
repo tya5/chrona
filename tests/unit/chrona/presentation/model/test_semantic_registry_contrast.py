@@ -11,6 +11,7 @@ GROUND_TEXT_SEMANTICS = {
     "memberLabelInsideActual", "memberLabelInsideSnapshot", "memberLabelInsideScenario", "milestoneDigestEntry",
     "relationLabel", "legendLabel", "projectNote", "noteIndex", "annotationCalloutText", "annotationHighlightText",
     "annotationArrowText", "summaryHeader", "summaryMetric", "summaryFigureValue", "summaryFigureCaption",
+    "summaryCaption", "summaryUnit",
     "slotHeading", "annotationListText", "networkLabel",
 }
 # Labels painted in the role of a classified state text: the classification is by that role, not by their own.

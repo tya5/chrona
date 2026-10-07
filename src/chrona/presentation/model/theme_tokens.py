@@ -238,6 +238,15 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/blockGap")
         return gap
 
+    def text_inline_gap(self, role: str) -> Decimal:
+        """Declared separation after an inline summary run; no trailing gap."""
+        gap = self.optional_number(role, "inlineGap")
+        if gap is None:
+            return Decimal(0)
+        if gap < 0:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/inlineGap")
+        return gap
+
     def slot_heading_role(self) -> str:
         """The typography role of a slot heading (#1064): `slot-heading` when the Theme declares it, else `text`."""
         return "slot-heading" if self.has_role("slot-heading") else "text"

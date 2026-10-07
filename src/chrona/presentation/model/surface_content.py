@@ -27,6 +27,7 @@ class SummaryTextRun:
     source_ref: str
     content: str
     typography_role: str
+    semantic_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -35,6 +36,7 @@ class SummaryPanel:
 
     panel_id: str
     runs: tuple[SummaryTextRun, ...]
+    arrangement: str = "stack"
 
 
 @dataclass(frozen=True)

@@ -139,7 +139,7 @@ _PATTERNED_RECT_PAINT = _RECT_PAINT | frozenset(("pattern",))
 _LAYOUT_TYPOGRAPHY = _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("writingMode",))
 _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | _GROUP_TAB | frozenset((
     "cellGap", "cellCornerRadius", "cellCornerChamfer", "frameCornerRadius", "chipPadding", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach",
-    "symbolHeight", "symbolOffset", "cornerRadius", "strokeAlign", "align", "barWidth", "blockGap",
+    "symbolHeight", "symbolOffset", "cornerRadius", "strokeAlign", "align", "barWidth", "blockGap", "inlineGap",
     "progressInset", "summaryBarHeight", "swatchInlineSize", "swatchGap", "swatchBlockSize", "pointSwatchSize", "annotationContainer", "marker", "symbol", "edge",
     "stampPlacement", "coneSpread", "coneExtent",
 ))
@@ -228,7 +228,10 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT, scene_kinds=frozenset(("Text",)))
     register("tableColumnLabel", "Layout table header measurement and Scene Text",
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT | _VIEWER_FIT, scene_kinds=frozenset(("Text",)))
-    register("metric subtitle", "Layout text and Scene Text",
+    register("metric summary-caption summary-unit", "Layout summary text and Scene Text",
+             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT | _VIEWER_FIT | frozenset(("inlineGap",)),
+             scene_kinds=frozenset(("Text",)))
+    register("subtitle", "Layout text and Scene Text",
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _TEXT_PAINT | _VIEWER_FIT,
              scene_kinds=frozenset(("Text",)))
     register("annotation-callout-text annotation-highlight-text annotation-arrow-text",
