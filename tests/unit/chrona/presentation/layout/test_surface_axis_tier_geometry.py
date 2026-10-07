@@ -12,7 +12,7 @@ from chrona.presentation.layout.slot_heading import content_slot
 
 from chrona.presentation.layout.surface_axis import (
     AxisPlotGrid, SurfaceAxisFrame, axis_label_lane_geometry, complete_axis_plot, compose_axis,
-    measure_axis_tier, measure_surface_axis, prepare_surface_axis,
+    measure_axis_tier, measure_surface_axis, prepare_surface_axis, summarize_surface_axis_vertical,
 )
 from chrona.presentation.layout.surface_base import prepare_surface_base
 from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
@@ -45,6 +45,23 @@ def _axis_request(tiers):
 def _axis_batch(tiers):
     prepared = prepare_surface_base(_axis_request(tiers))
     return compose_axis(prepared.request, prepared)
+
+
+def _summary_matches_native(request, *, axis_block_size=None):
+    base_geometry = prepare_surface_base(request)
+    axis_slot = base_geometry.by_source["timeline-axis"]
+    if axis_block_size is not None:
+        axis_slot = replace(axis_slot, bounds=replace(axis_slot.bounds, block_size=axis_block_size))
+    frame = SurfaceAxisFrame(base_geometry.scale, base_geometry.timeline, axis_slot,
+                             base_geometry.metric_values)
+    measured = measure_surface_axis(request, frame.scale)
+    summary = summarize_surface_axis_vertical(request, frame, measured)
+    prepared = prepare_surface_axis(request, frame, measured=measured)
+    bounds = tuple(item.bounds for item in (*prepared.placements.shapes, *prepared.placements.text))
+    expected_end = max((item.block + item.block_size for item in bounds), default=None)
+    assert summary.max_rect_block_end == expected_end
+    assert summary.label_tiers == prepared.placements.label_tiers
+    return summary, prepared, frame, measured
 
 
 def test_horizontal_tier_geometry_shares_the_placed_baseline_despite_thinned_months():
@@ -546,6 +563,125 @@ def test_undeclared_secondary_capacity_follows_rotated_label_lane_offset():
     assert measurement.capacity.fits(boundary)
     below = Decimal.from_float(nextafter(secondary_end, -inf))
     assert not measurement.capacity.fits(below)
+
+
+def test_vertical_summary_matches_transformed_compressed_rotated_and_secondary_text_bounds():
+    tiers = (
+        AxisTier("month", 1, "labels", AxisLabelIntent(
+            "long-month", (), "center", "thin-with-record", "rotate-cw", "en-US")),
+        AxisTier("quarter", 1, "labels", AxisLabelIntent(
+            "quarter", (), "center", "thin-with-record", "horizontal", "en-US",
+            AxisSecondaryIntent("quarter", "en-US", "axisSecondary", "stacked"))),
+    )
+    request = _axis_request(tiers)
+    class _SpacingFont:
+        content_identity = "sha256:test-spacing"
+
+        def width(self, value, size, *, letter_spacing=0):
+            return len(value) * size / 2 + max(0, len(value) - 1) * letter_spacing
+
+    request = replace(request, font_metrics=_SpacingFont())
+    theme = deepcopy(base._theme())
+    theme["body"]["values"]["text-transform"] = {"type": "textTransform", "value": "uppercase"}
+    theme["body"]["values"]["letter-spacing"] = {"type": "number", "value": "0.75"}
+    theme["body"]["values"]["horizontal-scale"] = {"type": "number", "value": "0.8"}
+    theme["body"]["values"]["secondary-size"] = {"type": "number", "value": 8}
+    theme["body"]["roles"]["axis"].update({
+        "textTransform": "text-transform", "letterSpacing": "letter-spacing",
+        "horizontalScale": "horizontal-scale"})
+    theme["body"]["roles"]["axisSecondary"] = {
+        **theme["body"]["roles"]["axis"], "fontSize": "secondary-size"}
+    theme["body"]["roles"].pop("axis-rule", None)
+    theme["body"]["roles"].pop("axis-cell-separator", None)
+    request = replace(request, theme_tokens=ThemeTokenView(theme))
+    summary, prepared, _frame, _measurement = _summary_matches_native(request, axis_block_size=Decimal(200))
+    assert summary.label_tiers
+    assert any(item.orientation == "rotate-cw" for item in prepared.placements.text)
+    assert any(item.placement_id.startswith("axis-label-secondary:") for item in prepared.placements.text)
+    assert all(item.horizontal_scale == 0.8 for item in prepared.placements.text)
+
+
+@pytest.mark.parametrize("shared", [False, True])
+def test_vertical_summary_matches_painted_multi_band_and_shared_band_rects(shared):
+    if shared:
+        tiers = (
+            AxisTier("quarter", 1, "band"),
+            AxisTier("quarter", 1, "labels", AxisLabelIntent(
+                "quarter", (), "center", "thin-with-record", "horizontal", "en-US")),
+            AxisTier("year", 1, "band"),
+        )
+    else:
+        tiers = (AxisTier("quarter", 1, "band"), AxisTier("year", 1, "band"))
+    request = _axis_request(tiers)
+    if shared:
+        theme = deepcopy(base._theme())
+        theme["body"]["values"]["axis-lane"] = {"type": "number", "value": 18}
+        theme["body"]["roles"]["axis"]["laneBlockSize"] = "axis-lane"
+        request = replace(request, theme_tokens=ThemeTokenView(theme))
+    summary, prepared, _frame, _measurement = _summary_matches_native(request)
+    assert summary.max_rect_block_end is not None
+    assert any(item.semantic_id in {"axisBandDecoration", "axisBandDecoration2"}
+               for item in prepared.placements.shapes)
+
+
+def test_vertical_summary_matches_tick_separator_and_rule_rects_but_not_deferred_full_grid():
+    tiers = (
+        AxisTier("month", 1, "grid-major"),
+        AxisTier("month", 1, "labels", AxisLabelIntent(
+            "long-month", (), "center", "thin-with-record", "horizontal", "en-US")),
+    )
+    request = _axis_request(tiers)
+    theme = deepcopy(base._theme())
+    theme["body"]["values"]["tick-size"] = {"type": "number", "value": 18}
+    role = semantic_binding("axisGrid").scene_role
+    theme["body"]["roles"][role]["tickLength"] = "tick-size"
+    theme["body"]["roles"]["axis-cell-separator"] = {"stroke": "ink"}
+    theme["body"]["roles"]["axis-rule"] = {"stroke": "ink"}
+    summary, prepared, _frame, _measurement = _summary_matches_native(
+        replace(request, theme_tokens=ThemeTokenView(theme)))
+    assert summary.max_rect_block_end is not None
+    assert any(item.placement_id.startswith("axis-grid:") for item in prepared.placements.shapes)
+    assert any(item.placement_id.startswith("axis-separator:") for item in prepared.placements.shapes)
+    assert any(item.placement_id == "axis-rule" for item in prepared.placements.shapes)
+
+    deferred = _axis_request((AxisTier("month", 1, "grid-major"),))
+    theme = deepcopy(base._theme())
+    theme["body"]["roles"].pop("axis-rule", None)
+    theme["body"]["roles"].pop("axis-cell-separator", None)
+    deferred = replace(deferred, theme_tokens=ThemeTokenView(theme))
+    summary, prepared, _frame, _measurement = _summary_matches_native(deferred)
+    assert summary.max_rect_block_end is None
+    assert prepared.ordered_shapes
+    assert not prepared.placements.shapes
+
+
+def test_vertical_summary_ignores_unpainted_bands_and_succeeds_for_tiny_host():
+    request = _axis_request((AxisTier("quarter", 1, "band"),))
+    theme = deepcopy(base._theme())
+    role = semantic_binding("axisBandDecoration").scene_role
+    theme["body"]["roles"][role]["backgroundTreatment"] = "none"
+    theme["body"]["roles"].pop("axis-rule", None)
+    theme["body"]["roles"].pop("axis-cell-separator", None)
+    request = replace(request, theme_tokens=ThemeTokenView(theme))
+    summary, prepared, _frame, _measurement = _summary_matches_native(request)
+    assert summary.max_rect_block_end is None
+    assert not any(item.placement_id.startswith("axis-band-rect:") for item in prepared.placements.shapes)
+
+    tiny = _axis_request((AxisTier("quarter", 1, "band"), AxisTier("month", 1, "band")))
+    base_geometry = prepare_surface_base(tiny)
+    frame = SurfaceAxisFrame(base_geometry.scale, base_geometry.timeline,
+                             replace(base_geometry.by_source["timeline-axis"],
+                                     bounds=replace(base_geometry.by_source["timeline-axis"].bounds,
+                                                    block_size=Decimal(1))),
+                             base_geometry.metric_values)
+    measured = measure_surface_axis(tiny, frame.scale)
+    summary = summarize_surface_axis_vertical(tiny, frame, measured)
+    assert summary.max_rect_block_end is not None
+    with pytest.raises(LayoutError) as caught:
+        prepare_surface_axis(tiny, frame, measured=measured)
+    assert caught.value.diagnostic_id == "E_PRESENTATION_AXIS_OVERFLOW"
+    assert caught.value.path == "/view/body/axis/tiers/0"
+    assert caught.value.detail == "band-lane:0"
 
 
 @pytest.mark.parametrize("headed", [("table",), ("timeline",), ("timeline-axis",),
