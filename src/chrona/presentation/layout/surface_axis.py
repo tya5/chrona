@@ -9,6 +9,9 @@ from typing import Any, Callable
 from chrona.presentation.layout.axis import (
     axis_intervals, axis_label_fits, format_axis_tier_label, thinning_schedule,
 )
+from chrona.presentation.layout.axis_lanes import (
+    SecondaryPlan, label_block, line_extents, measure_axis_text, plan_label_lanes, secondary_plan,
+)
 from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.surface_base import SurfaceBaseGeometry
@@ -68,62 +71,7 @@ def _axis_label_inset(theme_tokens: Any, tier: Any, font_size: float) -> float:
     return float(ratio) * font_size if ratio is not None else 0.0
 
 
-@dataclass(frozen=True)
-class _SecondaryPlan:
-    """The measured pieces of one tier's secondary label (#493); everything is Theme- and table-derived."""
-    intent: Any
-    treatment: Any
-    metrics: Any
-    table: Any
-    size: float
-    gap: float
-
-
-def _secondary_plan(tokens: Any, tier: Any, tier_index: int, primary: Any, primary_metrics: Any,
-                    font_metrics: Any) -> _SecondaryPlan | None:
-    """Resolve a labels tier's secondary text role, table and gap once (#493); None when it declares none."""
-    secondary = tier.label.secondary if tier.role == "labels" and tier.label is not None else None
-    if secondary is None:
-        return None
-    treatment = tokens.text_treatment(secondary.typography_role)
-    size = float(treatment.font_size)
-    ratio = tokens.optional_number(secondary.typography_role, "labelGap")
-    if ratio is not None and ratio < 0:
-        raise LayoutError("E_PRESENTATION_AXIS_INVALID", f"/view/body/axis/tiers/{tier_index}",
-                          detail=f"label-gap:{secondary.typography_role}")
-    if ratio is not None:
-        gap = float(ratio) * size
-    else:
-        gap = 0.0 if secondary.placement == "stacked" else _measure(" ", primary, primary_metrics)
-    return _SecondaryPlan(secondary, treatment, metric_for_role(tokens, secondary.typography_role, font_metrics),
-                          axis_name_table(secondary.name_table_id), size, gap)
-
-
-def _line_extents(treatment: Any) -> tuple[float, float]:
-    """Block extent of one text line above and below its baseline, the convention `place_text` boxes use."""
-    size = float(treatment.font_size)
-    return size, size * (float(treatment.line_height) - 1)
-
-
-def _label_block(primary: Any, plan: _SecondaryPlan | None) -> float:
-    """Block size the label line(s) of one cell occupy: the primary alone, a stack, or one shared baseline."""
-    above, below = _line_extents(primary)
-    if plan is None:
-        return above + below
-    above_s, below_s = _line_extents(plan.treatment)
-    if plan.intent.placement == "stacked":
-        return above + below + plan.gap + above_s + below_s
-    return max(above, above_s) + max(below, below_s)
-
-
-def _measure(content: str, treatment: Any, metrics: Any) -> float:
-    """Width of one axis text in its own role's treatment: the single measurement both texts use."""
-    return measure_text_width(content, font_size=float(treatment.font_size), font_metrics=metrics,
-                              letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
-                              numeric_spacing=treatment.numeric_spacing)
-
-
-def _secondary_outcomes(*, tier_index: int, plan: _SecondaryPlan, intervals: Any, outcomes: tuple[AxisIntervalOutcome, ...],
+def _secondary_outcomes(*, tier_index: int, plan: SecondaryPlan, intervals: Any, outcomes: tuple[AxisIntervalOutcome, ...],
                         scale: ScalePlacement, inset: float, primary: Any, primary_metrics: Any
                         ) -> tuple[tuple[AxisIntervalOutcome, ...], list[str], list[PlacementDecision]]:
     """Decide each cell's secondary label from measured fit (#493); it never alters the primary's outcome."""
@@ -137,9 +85,9 @@ def _secondary_outcomes(*, tier_index: int, plan: _SecondaryPlan, intervals: Any
             continue
         content = format_axis_tier_label(interval, plan.intent.form, plan.table)
         available = max(0.0, coordinate_for_date(interval.end, scale) - coordinate_for_date(interval.start, scale) - inset)
-        secondary_width = _measure(content, plan.treatment, plan.metrics)
+        secondary_width = measure_axis_text(content, plan.treatment, plan.metrics)
         required = (secondary_width if plan.intent.placement == "stacked"
-                    else _measure(outcome.label, primary, primary_metrics) + gap + secondary_width)
+                    else measure_axis_text(outcome.label, primary, primary_metrics) + gap + secondary_width)
         if not outcome.label_fits:
             reason: str | None = "primary-does-not-fit"
         else:
@@ -243,25 +191,8 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
     band_ordinal = label_ordinal = 0
     tiers = request.surface_content.axis_tiers
     band_tier_count = sum(item.role == "band" for item in tiers)
-    declared_lanes: dict[int, tuple[float, float]] = {}
-    lane_by_unit: dict[str, tuple[float, float]] = {}
-    lane_cursor = 0.0
-    for tier_index, tier in enumerate(tiers):
-        if tier.role != "labels" or tier.label is None:
-            continue
-        role = tier.typography_role or "axis"
-        declared = tokens.optional_number(role, "laneBlockSize")
-        treatment = tokens.text_treatment(role)
-        if declared is not None and float(declared) > 0 and tier.label.orientation == "horizontal":
-            declared_lanes[tier_index] = (lane_cursor, float(declared))
-            lane_by_unit.setdefault(tier.unit, (lane_cursor, float(declared)))
-            lane_cursor += float(declared)
-        else:
-            first_plan = _secondary_plan(tokens, tier, tier_index, treatment,
-                                         metric_for_role(tokens, role, font_metrics), font_metrics)
-            lane_cursor += ((_label_block(treatment, first_plan) if first_plan is not None
-                             else float(treatment.font_size * treatment.line_height))
-                            + float(GEOMETRY_TOLERANCE))
+    lanes = plan_label_lanes(tiers, tokens, font_metrics)
+    declared_lanes, lane_by_unit = lanes.declared, lanes.by_unit
 
     for tier_index, tier in enumerate(tiers):
         form = tier.label.form if tier.label else None
@@ -269,7 +200,7 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
         treatment = tokens.text_treatment(tier.typography_role or "axis")
         metrics = metric_for_role(tokens, tier.typography_role or "axis", font_metrics)
         axis_size = float(treatment.font_size)
-        plan = _secondary_plan(tokens, tier, tier_index, treatment, metrics, font_metrics)
+        plan = secondary_plan(tokens, tier, tier_index, treatment, metrics, font_metrics)
         requested_units = (tuple(candidate for candidate, _ in tier.label.candidate_forms)
                            if tier.unit == "auto" and tier.label else (tier.unit,))
         try:
@@ -424,7 +355,7 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
                 numeric_spacing=treatment.numeric_spacing) for item in interval_outcomes if item.disposition == "placed")
             lane_size = (axis_size * float(treatment.line_height) + float(GEOMETRY_TOLERANCE)
                          if orientation == "horizontal" else max(widths, default=0.0))
-            block = _label_block(treatment, plan)
+            block = label_block(treatment, plan)
             if plan is not None:
                 lane_size = block + float(GEOMETRY_TOLERANCE)
             if tier_index in declared_lanes:
@@ -457,7 +388,7 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
                 occupied = width if orientation == "horizontal" else axis_size * float(treatment.line_height)
                 secondary_text = outcome.secondary_label if outcome.secondary_disposition == "placed" else None
                 gap = plan.gap if plan is not None else 0.0
-                secondary_width = _measure(secondary_text, plan.treatment, plan.metrics) if secondary_text else 0.0
+                secondary_width = measure_axis_text(secondary_text, plan.treatment, plan.metrics) if secondary_text else 0.0
                 if secondary_text and plan.intent.placement == "inline":
                     occupied = width + gap + secondary_width
                 inline = x if tier.label.align == "start" else x + (available - occupied) / 2
@@ -470,8 +401,8 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
                 if plan is not None:
                     line_top = float(axis.bounds.block) + label_lane_offset + (
                         (lane_size - block) / 2 if tier_index in declared_lanes else 0.0)
-                    above, below = _line_extents(treatment)
-                    above_secondary, _ = _line_extents(plan.treatment)
+                    above, below = line_extents(treatment)
+                    above_secondary, _ = line_extents(plan.treatment)
                     if plan.intent.placement == "stacked":
                         baseline = line_top + above
                         secondary_baseline = line_top + above + below + plan.gap + above_secondary

@@ -57,6 +57,33 @@ def test_sources_are_measured_once_from_semantic_inputs_and_theme_metrics():
     assert measured.metric_values["text.measuredAverageAdvance"] == Decimal(7)
 
 
+def test_an_unbound_header_is_the_axis_and_an_unbound_axis_is_its_lane_sum():
+    class Metrics:
+        content_identity = "sha256:test"
+        def width(self, value, size): return len(value) * size / 2
+        def baseline(self, top, size, line_height): return top + size
+    from types import SimpleNamespace
+    from chrona.presentation.layout.surface_geometry import GEOMETRY_TOLERANCE
+    tier = SimpleNamespace(role="labels", unit="month", typography_role=None,
+                           label=SimpleNamespace(orientation="horizontal", secondary=None))
+    inputs = {"table": SourceInput(item_count=5), "timeline-axis": SourceInput(span_days=60, axis_tiers=(tier, tier))}
+    bound = theme()
+    del bound["body"]["metrics"]["table.header.blockSize"]
+    measured = measure_sources(inputs, bound, font_metrics=Metrics())
+    assert measured.metric_values["table.header.blockSize"] == Decimal(48)
+    assert measured.measurements["table"].preferred_block == Decimal(48 + 5 * 40)
+    unbound = theme()
+    for name in ("timeline.axis.blockSize", "table.header.blockSize"):
+        del unbound["body"]["metrics"][name]
+    measured = measure_sources(inputs, unbound, font_metrics=Metrics())
+    lane = 2 * (14 * 1.4 + float(GEOMETRY_TOLERANCE))
+    axis = measured.metric_values["timeline.axis.blockSize"]
+    assert float(axis) == pytest.approx(lane)
+    assert measured.metric_values["table.header.blockSize"] == axis
+    assert measured.measurements["timeline-axis"].preferred_block == axis
+    assert measured.measurements["table"].preferred_block == axis + 5 * 40
+
+
 def test_missing_unknown_and_wrong_type_metric_bindings_diagnose():
     class Metrics:
         content_identity = "sha256:test"

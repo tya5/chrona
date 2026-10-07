@@ -55,7 +55,7 @@ from chrona.presentation.model.surface_content import HeadingContent, SummaryCon
 from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput, ViewRowMode
 from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, below_plot_reserve
 from chrona.presentation.review.v05_content import (
-    calendar_closures, compose_heading, legend_entries, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content)
+    calendar_closures, compose_heading, legend_entries, normalize_axis_tiers, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content)
 from chrona.presentation.scene.model import (
     ContentFamilyCounts, InspectionScene, SceneManifest, SceneProvenance,
     SceneSurface,
@@ -284,7 +284,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     source_inputs = _source_inputs(project, view, projection, summary,
                                    annotation_input=_annotation_source_input(
                                        view, visual_requests, icon_assets, theme),
-                                   table=table_content,
+                                   table=table_content, locale=environment.locale,
                                    # A dependency network draws its own title line and ignores `heading` (#991).
                                    heading=(compose_heading(view, project, actual_observations, environment.locale)
                                             if view.surface == "table-timeline" else None))
@@ -794,7 +794,7 @@ def _font_failure(error: FontMetricsError) -> RenderFailed:
 def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
                    summary: SummaryContent, annotation_input: SourceInput | None = None, *,
                    table: TableContent | None = None,
-                   heading: HeadingContent | None = None) -> dict[str, SourceInput]:
+                   heading: HeadingContent | None = None, locale: str = "en") -> dict[str, SourceInput]:
     """Declare what each slot will hold, for measurement before layout.
 
     The `legend` entry is a placeholder: Layout measures the legend from the entries it
@@ -817,7 +817,8 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
             table_lines,
             row_count, len(view.table_columns) or 1, table=table),
         "timeline": SourceInput(item_count=row_count, span_days=span_days),
-        "timeline-axis": SourceInput(span_days=span_days, typography_role="axis"),
+        "timeline-axis": SourceInput(span_days=span_days, typography_role="axis",
+                                     axis_tiers=normalize_axis_tiers(view, locale=locale)),
         "network": SourceInput(
             runs=tuple(SourceTextRun(node.title, "text", node.object_id)
                        for node in network.nodes) if network is not None else (),
