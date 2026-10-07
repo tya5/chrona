@@ -85,8 +85,8 @@ def test_multiple_metrics_and_mixed_panels_preserve_order_and_stack_pitch(tmp_pa
     summary["body"]["panels"].append(stack)
     rendered = _render(tmp_path, parts, summary)
     texts = _texts(rendered)
-    inline = [t for name, t in texts.items() if name.startswith("summary:key")]
-    stacked = [t for name, t in texts.items() if name.startswith("summary:stack")]
+    inline = [t for name, t in texts.items() if name.startswith("summary:/panels/0/")]
+    stacked = [t for name, t in texts.items() if name.startswith("summary:/panels/1/")]
     assert [t.text for t in inline] == ["Until launch", "28", "DAYS", "28", "LEFT"]
     assert len({t.text_layout.baseline[1] for t in inline}) == 1
     assert stacked[0].bounds[1] >= max(t.bounds[1] + t.bounds[3] for t in inline) - 0.001
@@ -180,6 +180,33 @@ def test_inline_semantics_do_not_depend_on_panel_or_metric_id_spelling(tmp_path)
     texts = list(_texts(_render(tmp_path, parts, summary)).values())
     assert [t.purpose for t in texts] == ["summary-caption", "summary-figure-value", "summary-unit"]
     assert [t.visual_role for t in texts] == ["summary-caption", "metric", "summary-unit"]
+
+
+@pytest.mark.parametrize("second_id", ["a:m:caption", "a"])
+@pytest.mark.parametrize("arrangement", ["inline", "stack"])
+def test_grouped_run_addresses_do_not_alias_punctuation_or_repeated_authored_ids(tmp_path, second_id, arrangement):
+    parts = _parts(COUNTDOWN)
+    _theme(parts)
+    summary = _inline(_metric(metric_id="m", label="LEFT"), _metric(metric_id="m", label="RIGHT"))
+    first = summary["body"]["panels"][0]
+    first.update(id="a", title="First")
+    second = deepcopy(first)
+    second.update(id=second_id, title="Second", arrangement=arrangement)
+    summary["body"]["panels"].append(second)
+    result = _render(tmp_path, parts, summary)
+    runs = [p for p in result.surface.primitives if p.scene_id.startswith("summary:")]
+    assert len(runs) == len({p.scene_id for p in runs}) == 10
+    assert [p.text for p in runs] == ["First", "28", "LEFT", "28", "RIGHT",
+                                     "Second", "28", "LEFT", "28", "RIGHT"]
+    assert len({p.text_layout.baseline[1] for p in runs[:5]}) == 1
+    if arrangement == "inline":
+        assert len({p.text_layout.baseline[1] for p in runs[5:]}) == 1
+    else:
+        assert [p.visual_role for p in runs[5:]] == ["text", "metric", "subtitle", "metric", "subtitle"]
+    svg_runs = [node for node in ET.fromstring(result.artifact.content).iter()
+                if node.attrib.get("data-scene-id", "").startswith("summary:")]
+    assert len(svg_runs) == 10
+    assert {node.attrib["data-scene-id"] for node in svg_runs} == {p.scene_id for p in runs}
 
 
 def test_inline_gap_is_not_admitted_on_other_roles(tmp_path):

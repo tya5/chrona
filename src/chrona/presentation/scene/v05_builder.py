@@ -863,7 +863,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         if placed.annotation is not None:
             emit_semantic_text(placed.placement_id, placed.semantic_id)
             continue
-        if placed.semantic_id in {"summaryCaption", "summaryUnit", "summaryFigureValue"}:
+        if placed.semantic_id in {"summaryCaption", "summaryUnit", "summaryFigureValue",
+                                  "summaryHeader", "summaryMetric", "summaryFigureCaption"}:
             emit_semantic_text(placed.placement_id, placed.semantic_id)
             continue
         for prefix, purpose, role in text_roles:

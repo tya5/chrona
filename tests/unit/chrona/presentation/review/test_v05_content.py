@@ -529,11 +529,11 @@ def test_inline_summary_figures_retain_panel_and_metric_order_with_explicit_sema
     panel, = content.panels
     assert panel.arrangement == "inline"
     assert tuple((run.placement_id, run.content, run.typography_role, run.semantic_id) for run in panel.runs) == (
-        ("summary:countdown", "発射まで", "summary-caption", "summaryCaption"),
-        ("summary:countdown:days:value", "0", "metric", "summaryFigureValue"),
-        ("summary:countdown:days:caption", "DAYS", "summary-unit", "summaryUnit"),
-        ("summary:countdown:variance:value", "0", "metric", "summaryFigureValue"),
-        ("summary:countdown:variance:caption", "DELTA", "summary-unit", "summaryUnit"),
+        ("summary:/panels/0/title", "発射まで", "summary-caption", "summaryCaption"),
+        ("summary:/panels/0/metrics/0/value", "0", "metric", "summaryFigureValue"),
+        ("summary:/panels/0/metrics/0/label", "DAYS", "summary-unit", "summaryUnit"),
+        ("summary:/panels/0/metrics/1/value", "0", "metric", "summaryFigureValue"),
+        ("summary:/panels/0/metrics/1/label", "DELTA", "summary-unit", "summaryUnit"),
     )
 
 
@@ -554,6 +554,32 @@ def test_inline_lines_and_shorthand_keep_combined_content_without_unit_inference
         ("inline", (("Literal", "summary-caption", "summaryCaption"),
                     ("note: DAY: 0", "summary-caption", "summaryCaption"))),
     )
+
+
+def test_grouped_summary_ids_are_structural_and_keep_authored_source_refs():
+    projection = ReviewProjection((), (date(2026, 3, 1), date(2026, 3, 9)), (), ())
+    summary = {"body": {"panels": [
+        {"id": "same:/panel", "title": "First", "presentation": "figures", "arrangement": "inline",
+         "metrics": [{"id": "metric:/value", "label": "unit", "source": "count.selected", "format": "count"}]},
+        {"id": "same:/panel", "title": "Second", "presentation": "lines", "arrangement": "stack",
+         "metrics": [{"id": "metric:/value", "label": "count", "source": "count.selected", "format": "count"}]},
+    ]}}
+
+    content = normalize_summary_content(typed_summary(summary), projection, None)
+
+    runs = content.runs
+    assert [run.placement_id for run in runs] == [
+        "summary:/panels/0/title", "summary:/panels/0/metrics/0/value", "summary:/panels/0/metrics/0/label",
+        "summary:/panels/1/title", "summary:/panels/1/metrics/0/text",
+    ]
+    assert len({run.placement_id for run in runs}) == len(runs)
+    assert [run.source_ref for run in runs] == ["same:/panel"] * len(runs)
+    assert [run.semantic_id for run in runs] == [
+        "summaryCaption", "summaryFigureValue", "summaryUnit", "summaryHeader", "summaryMetric",
+    ]
+    assert [run.typography_role for run in runs] == [
+        "summary-caption", "metric", "summary-unit", "summary", "summary",
+    ]
 
 
 def test_subtree_summary_normalizes_latest_selected_primary_planned_completion():

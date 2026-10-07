@@ -30,6 +30,14 @@ with zero when absent and no gap after the final run. Layout measures each run
 with its selected Theme treatment and completes the run origins, shared baseline
 and panel extent before Scene construction.
 
+When any panel uses `inline`, run identities are structural addresses:
+`summary:/panels/<index>/title` and
+`summary:/panels/<index>/metrics/<index>/(value|label|text)`.
+Authored IDs and source provenance remain unchanged; punctuation or repeated
+IDs cannot alias measured runs. Addresses follow the ordered profile, without
+a cross-reordering identity promise. Every run, including mixed stack panels,
+carries explicit semantics. All-stack profiles keep their legacy identities.
+
 A dark delivery-control composition is also a user-editable resource set. The adapter
 MUST interpret only declared metrics and panels; it MUST NOT contain a dashboard-specific
 score, panel list, or title-based branch.
