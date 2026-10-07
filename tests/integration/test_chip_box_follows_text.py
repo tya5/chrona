@@ -82,6 +82,10 @@ def _assert_svg_chip_follows_text(rendered, chip, label):
     assert chip.viewer_fit == "box-follows-text"
     assert fit is not None and fit.mode == "box-follows-text" and fit.box_id == chip.scene_id
     assert fit.end_pad_spaces > 0
+    scene_primitives = {item["id"]: item for surface in scene_document(rendered.scene)["surfaces"]
+                        for item in surface["primitives"]}
+    assert scene_primitives[chip.scene_id]["viewerFit"] == "box-follows-text"
+    assert scene_primitives[label.scene_id]["textLayout"]["fit"]["boxId"] == chip.scene_id
     svg = rendered.artifact.content.decode("utf-8")
     assert f'<rect data-scene-id="{chip.scene_id}"' not in svg
     group = re.search(rf'<g data-scene-id="{re.escape(chip.scene_id)}"[^>]*>(.*?)</g>', svg, re.S)
