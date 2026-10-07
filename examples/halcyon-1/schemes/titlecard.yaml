@@ -1,0 +1,66 @@
+version: chrona/color-scheme/v0.2
+kind: color-scheme
+id: titlecard
+body:
+  colors:
+    surface: '#050505'
+    surfaceRaised: '#171513'
+    text: '#F2F0EA'
+    textMuted: '#BDB9B0'
+    accent: '#FF7A1A'
+    positive: '#54E06A'
+    negative: '#FF5A55'
+    warning: '#FF4A3D'
+    neutral: '#8C8A86'
+    rule: '#8C8A86'
+    insideLabelPlanned: '#050505'
+    insideLabelActual: '#050505'
+    insideLabelSnapshot: '#F2F0EA'
+    insideLabelScenario: '#F2F0EA'
+  suitability:
+    background: dark
+    colorVision:
+    - none-claimed
+    print: not-claimed
+  provenance:
+    kind: chrona-authored
+    source: Chrona HALCYON-1 example, Title Card target (docs/research/presentation/titlecard-target-2026-09-26)
+    license: MIT
+  categories:
+    default: '#171513'
+    window: '#FF7A1A'
+    exception: '#3A2410'
+    bar: '#FF7A1A'
+    barEdge: '#050505'
+    actualInk: '#54E06A'
+    asofChip: '#C81914'
+    asofInk: '#F2F0EA'
+    relationInk: '#8C8A86'
+    closed: '#16132F'
+    bus: '#171513'
+    payload: '#171513'
+    ait: '#171513'
+    ground: '#171513'
+    launch: '#171513'
+    ops: '#171513'
+    series-1: '#171513'
+    series-2: '#171513'
+    series-3: '#171513'
+    series-4: '#171513'
+    series-5: '#171513'
+    series-6: '#171513'
+    factory-team: '#171513'
+    fw-team: '#171513'
+    validation-team: '#171513'
+    black: '#050505'
+    panel: '#1B1917'
+    panelHead: '#171513'
+    orange: '#FF7A1A'
+    orangeDark: '#7A3A0C'
+    red: '#E8231F'
+    green: '#54E06A'
+    purple: '#9A7BFF'
+    grey: '#8C8A86'
+    gridFaint: '#2E2C29'
+    lattice: '#1B1A18'
+    stripeInk: '#050505'

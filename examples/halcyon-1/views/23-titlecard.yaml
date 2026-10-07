@@ -1,0 +1,252 @@
+version: chrona/view/v0.28
+kind: view
+id: halcyon-23-titlecard
+body:
+  surface: table-timeline
+  heading:
+    title: 計画表、{project}
+    subtitle: "第弐面 · PROGRAMME BOARD : SLIDE 02 · 26 WORK PACKAGES · 6 SECTIONS · BASELINE / PLAN / ACTUAL"
+    dateForm: day-month-year
+  rows:
+    mode: automatic
+  window:
+    mode: explicit
+    start: '2027-03-01'
+    end: '2027-12-01'
+  periods:
+  - id: launch-window
+    label:
+      placement: top
+  figures:
+  - {id: launch-countdown, kind: daysUntil, to: {period: launch-window, side: start}}
+  comparison:
+    baseline: snapshot
+    baselineMarks: ghost-when-changed
+    missingActualScope: in-progress
+    actual: required
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets:
+    - planned
+    - actual
+    - finishDelta
+    - missingActual
+    - unmatchedActual
+  visibility:
+    labels:
+      placement: table
+      content:
+      - title
+      - finishDelta
+      side: end
+      overflow: suppress
+    relations:
+      mode: semantic
+      overflow: suppress
+    annotations:
+      mode: presentation
+      marker: none
+  annotations:
+  - id: window-note
+    purpose: note
+    anchor:
+      kind: object
+      id: launch
+      facet: planned
+      endpoint: at
+    projectAnnotation: window
+    candidates:
+    - id: rail
+      region:
+        kind: slot
+        source: annotations
+      search:
+        kind: row-aligned
+      obstacles:
+        classes: &id001
+        - mark
+        - text
+        - label-visual
+        - dependency-route
+        - leader-route
+        - annotation-box
+        - port
+        - rule
+      connector:
+        kind: leader
+  - id: tvac-note
+    purpose: note
+    anchor:
+      kind: object
+      id: payload-tvac
+      facet: actual
+      endpoint: body
+    projectAnnotation: tvac
+    candidates:
+    - id: rail
+      region:
+        kind: slot
+        source: annotations
+      search:
+        kind: row-aligned
+      obstacles:
+        classes: *id001
+      connector:
+        kind: leader
+  - id: station-note
+    purpose: note
+    anchor:
+      kind: object
+      id: station
+      facet: planned
+      endpoint: finish
+    projectAnnotation: station
+    candidates:
+    - id: rail
+      region:
+        kind: slot
+        source: annotations
+      search:
+        kind: row-aligned
+      obstacles:
+        classes: *id001
+      connector:
+        kind: leader
+  axis:
+    tiers:
+    - unit: quarter
+      every: 1
+      role: band
+      typographyRole: axisQuarter
+    - unit: quarter
+      every: 1
+      role: grid-major
+    - unit: quarter
+      every: 1
+      role: labels
+      label:
+        form: year-quarter
+        nameTable: en-US
+        align: start
+        overflow: visible-overflow
+        orientation: horizontal
+      typographyRole: axisQuarter
+    - unit: month
+      every: 1
+      role: band
+      typographyRole: axisMonth
+    - unit: month
+      every: 1
+      role: labels
+      label:
+        form: short-month
+        nameTable: ja-JP
+        align: start
+        overflow: visible-overflow
+        orientation: horizontal
+        secondary:
+          form: short-month
+          nameTable: en-US
+          typographyRole: axisSecondary
+          placement: inline
+      typographyRole: axisMonth
+    - unit: month
+      every: 1
+      role: grid-minor
+  markers:
+  - kind: asOf
+    source: actual
+    label: 現在 NOW
+    placement: below-plot
+    date:
+      form: localized-date
+      nameTable: ja-JP
+  shading:
+    nonWorking: true
+    exceptions: true
+  backgroundDecoration:
+    rows: none
+    groups: all
+  hierarchyColumn: Work package
+  tableColumns:
+  - id: Work package
+    source: title
+    missing: em-dash
+    align: start
+    width:
+      minmax:
+        min: content
+        max:
+          fr: 1
+    headerOrientation: horizontal
+  - id: Phase
+    source:
+      field: phase
+    textRole: table-cell-secondary
+    missing: em-dash
+    align: start
+    width: content
+    headerOrientation: horizontal
+  - id: Δ finish
+    source:
+      facet: finishDelta
+    format: signedNumber
+    missing: blank
+    missingBy:
+      inProgress: em-dash
+      dueUnobserved: blank
+      notYetDue: blank
+    align: end
+    width: content
+    headerOrientation: horizontal
+  selection:
+    include:
+      ids:
+      - pdr
+      - structure
+      - avionics
+      - eps
+      - bus-test
+      - cdr
+      - optics
+      - detector
+      - payload-tvac
+      - payload-delivery
+      - integration
+      - vibration
+      - tvac
+      - emc
+      - psr
+      - mcs
+      - station
+      - comms-test
+      - launch-contract
+      - shipment
+      - campaign
+      - frr
+      - launch
+      - rehearsals
+      - leop
+      - first-light
+      types:
+      - span
+      - point
+  grouping:
+    by: field
+    field: owner
+    missing: ungrouped
+    order:
+    - bus
+    - payload
+    - ait
+    - ground
+    - launch
+    - ops
+    presentation: header
+    header:
+      text: '{ordinal}  {title}'
+      ordinal: zero-padded
+  ordering:
+    by: source
+    direction: ascending
+    tieBreak: id
