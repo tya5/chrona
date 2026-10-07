@@ -208,6 +208,12 @@ def _flow_lines(node: Mapping[str, Any], path: str, measurements: Mapping[str, M
         measured = _measure_node(child, child_path, measurements, profile)
         width = max(minimum, measured.preferred_inline)
         height = height_for(child, child_path, min(inline_size, width))
+        block_spec = child["blockSize"]
+        if not (isinstance(block_spec, dict) and "aspectRatio" in block_spec):
+            block_minimum, block_target, block_weight = _spec_base(
+                block_spec, axis="block", measurement=measured, profile=profile, path=child_path + "/blockSize")
+            height = (block_target if block_spec != "content" and block_weight == ZERO and block_target is not None
+                      else max(block_minimum, height))
         if isinstance(child.get("inlineSize"), dict) and "aspectRatio" in child["inlineSize"]:
             width = max(minimum, height * _d(child["inlineSize"]["aspectRatio"]))
         if isinstance(child.get("blockSize"), dict) and "aspectRatio" in child["blockSize"]:
