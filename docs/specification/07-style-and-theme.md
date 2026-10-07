@@ -547,6 +547,15 @@ ground. Adapters serialize completed paint and do not resolve these roles.
 This addition admits only `fill` and `opacity` on `heading`; it does not enable
 the shadow, glow, or gradient effect families on that measurement role.
 
+The optional heading `kicker` (#1189) has its own required typography role
+and the same fill/opacity ink rule as `heading`. Only `kicker` MAY bind
+`blockGap`, a named finite nonnegative number token in pixels (absent: zero),
+for minimum separation between its completed text box and the title box.
+Layout includes this separation in the heading block's measured envelope.
+The role supports horizontalScale and text-follows-box as other heading text;
+it is classified as ground text. Its gap is not a View coordinate or a Scene
+placement decision.
+
 The next specification resolves styled semantic objects into a renderer-neutral Scene. Scene may choose a rectangle, path, marker, text run, or group and assign concrete coordinates; it must preserve the object's identity, relationship kind, resolved visual roles, and token references. It must not decide whether something is `behind`, a dependency, or an explanatory arrow.
 
 The resulting Scene can be rendered to SVG or used by an interactive editor, but neither output becomes the source of Chrona semantics.

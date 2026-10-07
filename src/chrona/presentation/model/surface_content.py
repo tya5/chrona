@@ -11,6 +11,15 @@ from chrona.presentation.table_presentation import BooleanPresencePresentation
 
 
 @dataclass(frozen=True)
+class HeadingContent:
+    """Normalized kicker, title and subtitle text for one table-timeline heading."""
+
+    title: str
+    subtitle: str | None = None
+    kicker: str | None = None
+
+
+@dataclass(frozen=True)
 class SummaryTextRun:
     """One normalized, ordered summary line before Layout gives it geometry."""
 

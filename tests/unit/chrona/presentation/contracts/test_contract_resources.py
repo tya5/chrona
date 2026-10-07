@@ -16,8 +16,9 @@ from chrona.presentation.contracts import (
 from chrona.presentation.contracts.resources import (
     ActualSetContract, ColorSchemeContract, LayoutProfileContract, ProfilePackageContract,
     ProjectContract, RenderContextContract, ReviewDetailProfileContract, SchemaContractError, SnapshotRefContract,
-    SummaryProfileContract, UnsupportedResourceVersionError, ViewContract, ViewLaneLabel, ViewLaneTable, ViewRowMode, _SCHEMAS,
+    SummaryProfileContract, UnsupportedResourceVersionError, ViewContract, ViewHeading, ViewLaneLabel, ViewLaneTable, ViewRowMode, _SCHEMAS,
 )
+from tests.support import synthetic_review as sr
 
 
 ROOT = Path(__file__).resolve().parents[5]
@@ -195,6 +196,40 @@ def test_presentation_collector_runs_contract_semantics_only_after_resource_sche
 
 def _view_contract(value):
     return parse_contract(ClosureIdentity("view", value["id"], "r", "sha256:" + "a" * 64), value)
+
+
+def test_v028_heading_accepts_a_kicker_template_and_checks_its_closed_placeholder_grammar():
+    value = sr.bundle("control-room-dark")["view"]
+    value["version"] = "chrona/view/v0.28"
+    value["body"]["heading"] = {
+        "kicker": "Episode {asOf} · {project}",
+        "title": "{project} board",
+        "subtitle": "Calendar {calendar}",
+        "dateForm": "day-month-year",
+    }
+
+    contract = _view_contract(value)
+
+    assert contract.view.heading == ViewHeading(
+        "{project} board", "Calendar {calendar}", "day-month-year", "Episode {asOf} · {project}")
+
+    value["body"]["heading"]["kicker"] = "Episode {unknown}"
+    with pytest.raises(ContractError, match="E_VIEW_HEADING_TEMPLATE"):
+        _view_contract(value)
+
+    value["body"]["heading"]["kicker"] = "Episode {project"
+    with pytest.raises(ContractError, match="E_VIEW_HEADING_TEMPLATE"):
+        _view_contract(value)
+
+
+@pytest.mark.parametrize("kicker", ("", None, 7, True, [], {}))
+def test_v028_heading_rejects_an_empty_null_or_nonstring_kicker(kicker):
+    value = sr.bundle("control-room-dark")["view"]
+    value["version"] = "chrona/view/v0.28"
+    value["body"]["heading"] = {"kicker": kicker}
+
+    with pytest.raises(SchemaContractError, match="E_RESOURCE_SCHEMA"):
+        _view_contract(value)
 
 
 def test_v16_table_intent_contract_rejects_ambiguous_hierarchy_column():

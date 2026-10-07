@@ -5,10 +5,11 @@ import pytest
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.presentation import place_table_columns, table_text_measurer
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources, resolve_theme_metrics
+from chrona.presentation.layout.text import place_text
 from chrona.presentation.model.surface_content import (
     TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel,
 )
-from chrona.presentation.model.theme_tokens import ThemeTokenView
+from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
 
 
 def theme():
@@ -118,6 +119,29 @@ def test_heading_source_uses_heading_extent_and_baseline():
     assert title.first_baseline == Decimal(34)
 
 
+def test_measured_block_width_uses_the_runs_declared_numeric_spacing():
+    class Metrics:
+        content_identity = "sha256:test"
+        def ensure_numeric_spacing(self, mode):
+            assert mode in {"proportional", "tabular"}
+        def width(self, value, size, letter_spacing=0, numeric_spacing="proportional"):
+            return len(value) * size / (1 if numeric_spacing == "tabular" else 2)
+        def baseline(self, top, size, line_height): return top + size
+
+    resolved = theme()
+    resolved["body"]["values"]["numeric-spacing"]["value"] = "tabular"
+    source = SourceInput(runs=(SourceTextRun("11", "heading", "title"),), run_flow="block")
+    measured = measure_sources({"title": source}, resolved, font_metrics=Metrics())
+    assert measured.run_measurements["title"][0].numeric_spacing == "tabular"
+    assert measured.run_measurements["title"][0].inline_size == Decimal(68)
+    assert measured.measurements["title"].preferred_inline == Decimal(68)
+    placed = place_text(placement_id="title", source_ref="title", content="11", inline=0,
+                        baseline_block=float(measured.block_stacks["title"].baselines[0]),
+                        typography_role="heading", theme_tokens=ThemeTokenView(resolved), font_metrics=Metrics())
+    assert placed.numeric_spacing == "tabular"
+    assert placed.bounds.inline_size == measured.run_measurements["title"][0].inline_size
+
+
 def test_mixed_typography_runs_measure_their_actual_cumulative_height():
     class Metrics:
         content_identity = "sha256:test"
@@ -130,6 +154,78 @@ def test_mixed_typography_runs_measure_their_actual_cumulative_height():
     summary = measured.measurements["summary"]
     assert summary.preferred_block == Decimal("80.0")
     assert summary.preferred_inline == Decimal(170)
+
+
+def test_default_stack_flow_is_unaffected_by_an_unused_kicker_gap():
+    class Metrics:
+        content_identity = "sha256:test"
+        def width(self, value, size): return len(value) * size / 2
+        def baseline(self, top, size, line_height): return top + size
+
+    source = {"title": SourceInput(("Controller Z",), typography_role="heading")}
+    without_gap = theme()
+    with_gap = theme()
+    with_gap["body"]["values"]["kicker-gap"] = {"type": "number", "value": 7}
+    with_gap["body"]["roles"]["kicker"] = {
+        **with_gap["body"]["roles"]["heading"], "blockGap": "kicker-gap",
+    }
+    old_measurement = measure_sources(source, without_gap, font_metrics=Metrics())
+    new_measurement = measure_sources(source, with_gap, font_metrics=Metrics())
+
+    assert old_measurement.measurements == new_measurement.measurements
+    assert old_measurement.run_measurements == new_measurement.run_measurements
+    assert old_measurement.block_stacks == new_measurement.block_stacks == {}
+    title = old_measurement.measurements["title"]
+    assert title.preferred_block == Decimal("40.8")
+    assert title.first_baseline == Decimal(34)
+
+
+def test_block_source_uses_theme_gap_and_closed_mixed_role_baselines_and_envelope():
+    class Metrics:
+        content_identity = "sha256:test"
+        def width(self, value, size): return len(value) * size / 2
+        def baseline(self, top, size, line_height): return top + size * 1.1
+
+    resolved = theme()
+    resolved["body"]["values"]["kicker-gap"] = {"type": "number", "value": 6}
+    resolved["body"]["roles"]["kicker"] = {
+        **resolved["body"]["roles"]["text"], "blockGap": "kicker-gap",
+    }
+    resolved["body"]["roles"]["subtitle"] = resolved["body"]["roles"]["text"]
+    measured = measure_sources({"title": SourceInput(runs=(
+        SourceTextRun("Kicker", "kicker"), SourceTextRun("Main title", "heading"),
+        SourceTextRun("Subtitle", "subtitle"),
+    ), run_flow="block")}, resolved, font_metrics=Metrics())
+
+    stack = measured.block_stacks["title"]
+    title = measured.measurements["title"]
+    runs = measured.run_measurements["title"]
+    assert title.first_baseline == stack.baselines[0]
+    assert title.last_baseline == stack.baselines[-1]
+    assert title.preferred_block == stack.block_size
+    bounds = tuple(
+        (baseline - Decimal(str(run.font_size)),
+         baseline - Decimal(str(run.font_size)) + run.block_size)
+        for run, baseline in zip(runs, stack.baselines)
+    )
+    assert min(top for top, _ in bounds) >= 0
+    assert max(bottom for _, bottom in bounds) <= stack.block_size
+
+
+@pytest.mark.parametrize(
+    ("declared", "token_type"),
+    [(-1, "number"), ("bad-number", "color")],
+)
+def test_text_block_gap_rejects_negative_and_non_number_tokens(declared, token_type):
+    resolved = theme()
+    resolved["body"]["values"]["block-gap"] = {"type": token_type, "value": declared}
+    resolved["body"]["roles"]["kicker"] = {
+        **resolved["body"]["roles"]["heading"], "blockGap": "block-gap",
+    }
+
+    with pytest.raises(ThemeTokenError, match="E_THEME_TOKEN_TYPE") as error:
+        ThemeTokenView(resolved).text_block_gap("kicker")
+    assert error.value.path == "/body/roles/kicker/blockGap"
 
 
 def _table_metrics():

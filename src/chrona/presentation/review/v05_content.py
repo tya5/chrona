@@ -7,7 +7,7 @@ from typing import Any, Mapping
 from chrona.presentation.model.projection import ObservationState, ReviewProjection
 from chrona.core.relation_identity import relation_identity
 from chrona.presentation.model.surface_content import (
-    AnnotationIntent, AxisLabelIntent, AxisSecondaryIntent, AxisTier, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, _format_compact_date, display_value, table_value,
+    AnnotationIntent, AxisLabelIntent, AxisSecondaryIntent, AxisTier, HeadingContent, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, _format_compact_date, display_value, table_value,
 )
 from chrona.presentation.table_presentation import affix_state
 from chrona.presentation.review.detail import resolve_v05_review_detail_profile
@@ -437,10 +437,10 @@ def _as_of_label(marker: Mapping[str, Any] | None, as_of: date | None, locale: s
 
 
 def compose_heading(view: ViewInput, project: Mapping[str, Any], actual_set: Mapping[str, Any] | None,
-                    locale: str) -> tuple[str, str | None]:
-    """The title and optional subtitle a table-timeline surface draws (#991).
+                    locale: str) -> HeadingContent:
+    """Compose the optional kicker, title and subtitle a table-timeline surface draws (#991, #1189).
 
-    Without a declared `heading` the title is the Project title and there is no subtitle, as before.
+    Without a declared `heading` the title is the Project title and there is no kicker or subtitle, as before.
     A declared template reads the Project title, the Actual Set's as-of date in the declared form and
     the Project's default calendar id; a fact the Project lacks renders as empty text.
     """
@@ -448,7 +448,7 @@ def compose_heading(view: ViewInput, project: Mapping[str, Any], actual_set: Map
     project_title = str(project_body.get("title", "Chrona")) if isinstance(project_body, Mapping) else "Chrona"
     heading = view.heading
     if heading is None:
-        return project_title, None
+        return HeadingContent(project_title)
     as_of_value = _resource_body(actual_set, "ACTUAL_SET").get("asOf")
     as_of_text = ""
     if isinstance(as_of_value, str):
@@ -462,7 +462,11 @@ def compose_heading(view: ViewInput, project: Mapping[str, Any], actual_set: Map
     calendar_id = project_body.get("calendar") if isinstance(project_body, Mapping) else None
     facts = {"project": project_title, "asOf": as_of_text, "calendar": str(calendar_id) if calendar_id else ""}
     title = render_heading(heading.title, facts) if heading.title is not None else project_title
-    return title, render_heading(heading.subtitle, facts) if heading.subtitle is not None else None
+    return HeadingContent(
+        title=title,
+        subtitle=render_heading(heading.subtitle, facts) if heading.subtitle is not None else None,
+        kicker=render_heading(heading.kicker, facts) if heading.kicker is not None else None,
+    )
 
 
 def _axis_tier(value: Mapping[str, Any], *, locale: str) -> AxisTier:

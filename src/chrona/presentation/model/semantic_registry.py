@@ -158,6 +158,7 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("groupDetail", "label", "group-detail", "text", "text", ContrastClass.GROUND_TEXT),
     # Table.
     _binding("titleText", "label", "title-text", "heading", "heading", ContrastClass.GROUND_TEXT),
+    _binding("kickerText", "label", "kicker-text", "kicker", "kicker", ContrastClass.GROUND_TEXT),
     # The subtitle line a View's `heading.subtitle` declares (#991), in the Theme's `subtitle` typography role.
     _binding("subtitleText", "label", "subtitle-text", "subtitle", "subtitle", ContrastClass.GROUND_TEXT),
     # The caption a Layout Profile slot declares (#1064), in the Theme's `slot-heading` text role (`text` when absent).
@@ -304,7 +305,7 @@ def contrast_binding_for(scene_role: str, purpose: str | None) -> SemanticBindin
     # Title inks are general Theme typography roles too: a View may name them
     # for a table cell. Registering their title semantics must not disable the
     # purpose-based ground gate for those other text uses (#1164).
-    theme_text_role = scene_role not in _SCENE_ROLES or scene_role in {"heading", "subtitle"}
+    theme_text_role = scene_role not in _SCENE_ROLES or scene_role in {"heading", "subtitle", "kicker"}
     return next((item for item in contrast_bindings(ContrastClass.GROUND_TEXT)
                  if item.purpose == purpose and (theme_text_role or scene_role in ("text", item.scene_role))), None)
 

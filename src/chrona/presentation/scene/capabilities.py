@@ -139,7 +139,7 @@ _PATTERNED_RECT_PAINT = _RECT_PAINT | frozenset(("pattern",))
 _LAYOUT_TYPOGRAPHY = _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("writingMode",))
 _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | _GROUP_TAB | frozenset((
     "cellGap", "cellCornerRadius", "cellCornerChamfer", "frameCornerRadius", "chipPadding", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach",
-    "symbolHeight", "symbolOffset", "cornerRadius", "strokeAlign", "align", "barWidth",
+    "symbolHeight", "symbolOffset", "cornerRadius", "strokeAlign", "align", "barWidth", "blockGap",
     "progressInset", "summaryBarHeight", "swatchInlineSize", "swatchGap", "swatchBlockSize", "pointSwatchSize", "annotationContainer", "marker", "symbol", "edge",
     "stampPlacement", "coneSpread", "coneExtent",
 ))
@@ -207,6 +207,9 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              scene_kinds=frozenset(("Text", "Icon")))
     register("heading", "Layout title measurement and Scene Text",
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("fill", "opacity")) | _VIEWER_FIT,
+             scene_kinds=frozenset(("Text",)))
+    register("kicker", "Layout measured heading stack and Scene Text",
+             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("fill", "opacity", "blockGap")) | _VIEWER_FIT,
              scene_kinds=frozenset(("Text",)))
     register("numeric summary", "Layout text measurement",
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _VIEWER_FIT)

@@ -241,11 +241,12 @@ class ViewSelection:
 
 @dataclass(frozen=True)
 class ViewHeading:
-    """View-declared heading templates (#991): the title and subtitle lines of a table-timeline surface."""
+    """View-declared heading templates (#991, #1189) for a table-timeline surface."""
 
     title: str | None = None
     subtitle: str | None = None
     date_form: str = "localized-date"
+    kicker: str | None = None
 
 
 @dataclass(frozen=True)
@@ -1022,14 +1023,15 @@ def _group_tint(raw_grouping: Any) -> ViewGroupTint | None:
 
 
 def _view_heading(raw: Any) -> ViewHeading | None:
-    """Type the optional heading templates and reject any unknown placeholder (#991)."""
+    """Type the optional heading templates and reject any unknown placeholder (#991, #1189)."""
     if raw is None:
         return None
     heading = ViewHeading(str(raw["title"]) if "title" in raw else None,
                           str(raw["subtitle"]) if "subtitle" in raw else None,
-                          str(raw.get("dateForm", "localized-date")))
+                          str(raw.get("dateForm", "localized-date")),
+                          str(raw["kicker"]) if "kicker" in raw else None)
     try:
-        for template in (heading.title, heading.subtitle):
+        for template in (heading.kicker, heading.title, heading.subtitle):
             if template is not None:
                 validate_heading_template(template)
     except GroupHeaderTextError as error:
