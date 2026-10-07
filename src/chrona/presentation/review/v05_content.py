@@ -14,7 +14,7 @@ from chrona.presentation.review.detail import resolve_v05_review_detail_profile
 from chrona.presentation.layout.model import LayoutManifest
 from chrona.presentation.model.placement_candidates import legacy_candidate_order, parse_candidates
 from chrona.presentation.contracts.resources import ReviewDetailInput, SummaryProfileInput, ViewInput
-from chrona.presentation.group_header_text import GroupHeaderTextError, compose_group_headers
+from chrona.presentation.group_header_text import GroupHeaderTextError, compose_group_header_runs, compose_group_headers
 from chrona.presentation.heading_text import render_heading
 from chrona.presentation.model.color_scale import ResolvedColorScale
 from chrona.presentation.model.axis_names import axis_name_table
@@ -364,6 +364,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                row_decoration=view.background_decoration[0],
                                group_decoration=view.background_decoration[1],
                                group_headers=_group_headers(projection, project, view),
+                               group_header_runs=_group_header_runs(projection, project, view),
                                as_of_placement=str(as_of_marker.get("placement", "top")) if as_of_marker is not None else "top",
                                group_tints=group_tints,
                                # `<id>` paints the bar, accent and stamp; `<id>#header` and `<id>#leader` carry the
@@ -375,11 +376,11 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                                   for target in (annotation_kind_also or {}).get(item.kind, ())))))
 
 
-def _group_headers(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput) -> tuple[tuple[str, str], ...]:
-    """Compose the View's group-header template per group in display order (#583)."""
+def _group_header_facts(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput) -> dict[str, Any] | None:
+    """The group ids, titles and secondaries a header template composes from, or None without a template."""
     declared = view.grouping.header if view.grouping is not None else None
     if declared is None:
-        return ()
+        return None
     group_ids = tuple(dict.fromkeys(row.group_id for row in projection.rows if row.group_id))
     entities = project.get("entities", {})
     titles = {row.group_id: next((item.group_label for item in row.items if item.group_label), row.group_id)
@@ -394,9 +395,30 @@ def _group_headers(projection: ReviewProjection, project: Mapping[str, Any], vie
             if not isinstance(value, str) or not value.strip():
                 raise ValueError(f"E_REVIEW_GROUP_HEADER_SECONDARY:{group_id}:{declared.secondary_field}")
             secondaries[group_id] = value
+    return dict(group_ids=group_ids, titles=titles, secondaries=secondaries, text=declared.text,
+                first=declared.first, ordinal=declared.ordinal, figures=dict(projection.figures))
+
+
+def _group_headers(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput) -> tuple[tuple[str, str], ...]:
+    """Compose the View's group-header template per group in display order (#583)."""
+    facts = _group_header_facts(projection, project, view)
+    if facts is None:
+        return ()
     try:
-        return compose_group_headers(group_ids=group_ids, titles=titles, secondaries=secondaries, text=declared.text,
-                                     first=declared.first, ordinal=declared.ordinal, figures=dict(projection.figures))
+        return compose_group_headers(**facts)
+    except GroupHeaderTextError as error:
+        raise ValueError(f"{error.code}:{error.detail}") from error
+
+
+def _group_header_runs(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput
+                       ) -> tuple[tuple[str, tuple[tuple[str, str | None], ...]], ...]:
+    """The role-marked runs of the groups whose template marks a placeholder (#1192); none for an unmarked template."""
+    facts = _group_header_facts(projection, project, view)
+    if facts is None:
+        return ()
+    try:
+        return tuple((group_id, tuple((run.text, run.role) for run in runs))
+                     for group_id, runs in compose_group_header_runs(**facts))
     except GroupHeaderTextError as error:
         raise ValueError(f"{error.code}:{error.detail}") from error
 

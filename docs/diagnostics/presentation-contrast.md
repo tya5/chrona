@@ -6,7 +6,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 
 | Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors | Warnings |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| actual | `actual` | required | 3.000 | 62 | 390 | 1.000 | 7.583 | 0 | 3 |
+| actual | `actual` | required | 3.000 | 63 | 394 | 1.000 | 7.583 | 0 | 3 |
 | annotation-artwork | `annotation-artwork` | enabled | 1.100 | 3 | 26 | 5.241 | 17.128 | 0 | 0 |
 | annotation-artwork | `annotation-artwork-rods` | enabled | 1.100 | 1 | 12 | 2.262 | 2.262 | 0 | 0 |
 | annotation-border-bottom | `annotation-border-bottom` | enabled | 1.100 | 3 | 4 | 15.434 | 15.434 | 0 | 0 |
@@ -26,50 +26,52 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | annotation-text | `annotation-highlight-text` | required | 4.500 | 3 | 3 | 16.268 | 17.128 | 0 | 0 |
 | annotation-text | `annotation-note-text` | required | 4.500 | 16 | 38 | 5.859 | 13.973 | 0 | 0 |
 | as-of-label | `as-of-label` | required | 4.500 | 3 | 3 | 3.717 | 5.112 | 0 | 1 |
-| as-of-label | `text` | required | 4.500 | 57 | 57 | 9.223 | 14.573 | 0 | 0 |
-| axis-band | `axis-band-decoration` | enabled | 1.100 | 64 | 166 | 1.124 | 1.579 | 0 | 0 |
+| as-of-label | `text` | required | 4.500 | 58 | 58 | 9.223 | 14.573 | 0 | 0 |
+| axis-band | `axis-band-decoration` | enabled | 1.100 | 65 | 168 | 1.124 | 1.579 | 0 | 0 |
 | axis-band | `axis-band-decoration2` | absent | 1.100 | 3 | 0 | — | — | 0 | 0 |
 | axis-band | `axis-band-decoration2` | enabled | 1.100 | 5 | 37 | 1.119 | 1.146 | 0 | 0 |
 | axis-label | `axis-label2` | required | 4.500 | 8 | 28 | 5.727 | 10.019 | 0 | 0 |
 | axis-label | `axis-label3` | required | 4.500 | 8 | 73 | 5.448 | 14.191 | 0 | 0 |
-| axis-label | `text` | required | 4.500 | 56 | 473 | 8.629 | 10.306 | 0 | 0 |
-| calendar-closed | `calendar-closed` | absent | 1.100 | 1 | 0 | — | — | 0 | 0 |
+| axis-label | `text` | required | 4.500 | 57 | 480 | 8.629 | 10.306 | 0 | 0 |
+| calendar-closed | `calendar-closed` | absent | 1.100 | 2 | 0 | — | — | 0 | 0 |
 | calendar-closed | `calendar-closed` | enabled | 1.100 | 63 | 2645 | 1.050 | 1.414 | 0 | 156 |
 | calendar-exception | `calendar-exception` | enabled | 1.100 | 4 | 17 | 1.216 | 1.397 | 0 | 0 |
 | finish-delta | `variance-ahead` | deemphasized | 3.000 | 3 | 9 | 7.708 | 7.708 | 0 | 0 |
-| finish-delta | `variance-behind` | required | 4.500 | 46 | 102 | 4.562 | 5.571 | 0 | 0 |
+| finish-delta | `variance-behind` | required | 4.500 | 47 | 104 | 4.562 | 5.571 | 0 | 0 |
 | finish-delta | `variance-on-track` | required | 4.500 | 4 | 11 | 5.692 | 5.692 | 0 | 0 |
-| group-decoration | `group-band` | absent | 1.100 | 13 | 0 | — | — | 0 | 0 |
+| group-decoration | `group-band` | absent | 1.100 | 14 | 0 | — | — | 0 | 0 |
 | group-decoration | `group-band` | enabled | 1.100 | 50 | 153 | 1.116 | 1.116 | 0 | 0 |
-| group-detail | `text` | required | 4.500 | 40 | 120 | 11.935 | 16.268 | 0 | 0 |
-| group-header | `text` | required | 4.500 | 49 | 196 | 6.703 | 16.268 | 0 | 0 |
-| group-header-band | `group-header-band` | absent | 1.100 | 10 | 0 | — | — | 0 | 0 |
+| group-detail | `text` | required | 4.500 | 41 | 123 | 11.935 | 16.268 | 0 | 0 |
+| group-header | `group-gloss` | required | 4.500 | 1 | 3 | 9.402 | 9.402 | 0 | 0 |
+| group-header | `group-ordinal` | required | 4.500 | 1 | 3 | 7.583 | 7.583 | 0 | 0 |
+| group-header | `text` | required | 4.500 | 50 | 199 | 6.703 | 16.268 | 0 | 0 |
+| group-header-band | `group-header-band` | absent | 1.100 | 11 | 0 | — | — | 0 | 0 |
 | group-header-band | `group-header-band` | enabled | 1.100 | 2 | 12 | 1.119 | 1.122 | 0 | 0 |
 | group-tab | `group-tab` | enabled | 1.100 | 3 | 33 | 1.119 | 6.982 | 0 | 0 |
 | kicker-text | `kicker` | required | 4.500 | 1 | 1 | 15.260 | 15.260 | 0 | 0 |
 | legend-label | `legend` | required | 4.500 | 4 | 25 | 5.448 | 13.415 | 0 | 0 |
-| legend-label | `text` | required | 4.500 | 52 | 175 | 10.019 | 16.268 | 0 | 0 |
-| legend-swatch | `actual` | required | 3.000 | 55 | 55 | 5.022 | 16.268 | 0 | 0 |
+| legend-label | `text` | required | 4.500 | 53 | 177 | 10.019 | 16.268 | 0 | 0 |
+| legend-swatch | `actual` | required | 3.000 | 56 | 56 | 5.022 | 16.268 | 0 | 0 |
 | legend-swatch | `calendar-closed` | enabled | 1.100 | 8 | 8 | 1.050 | 1.460 | 0 | 2 |
 | legend-swatch | `calendar-exception` | enabled | 1.100 | 2 | 2 | 1.216 | 1.228 | 0 | 0 |
 | legend-swatch | `gate` | required | 3.000 | 3 | 3 | 3.061 | 6.667 | 0 | 0 |
 | legend-swatch | `missing-actual` | required | 3.000 | 4 | 4 | 4.637 | 6.242 | 0 | 0 |
-| legend-swatch | `planned` | required | 3.000 | 56 | 101 | 4.637 | 16.354 | 0 | 0 |
+| legend-swatch | `planned` | required | 3.000 | 57 | 102 | 4.637 | 16.354 | 0 | 0 |
 | legend-swatch | `snapshot` | required | 3.000 | 4 | 4 | 2.594 | 5.663 | 0 | 1 |
-| member-label | `member-label-inside-planned` | required | 4.500 | 34 | 34 | 4.651 | 5.727 | 0 | 0 |
-| member-label | `text` | required | 4.500 | 54 | 508 | 9.348 | 14.573 | 0 | 0 |
-| milestone-digest-entry | `text` | required | 4.500 | 40 | 80 | 11.935 | 16.268 | 0 | 0 |
-| missingActual | `missing-actual` | required | 3.000 | 53 | 62 | 3.973 | 14.573 | 0 | 0 |
+| member-label | `member-label-inside-planned` | required | 4.500 | 35 | 35 | 4.651 | 5.727 | 0 | 0 |
+| member-label | `text` | required | 4.500 | 55 | 515 | 9.348 | 14.573 | 0 | 0 |
+| milestone-digest-entry | `text` | required | 4.500 | 41 | 82 | 11.935 | 16.268 | 0 | 0 |
+| missingActual | `missing-actual` | required | 3.000 | 54 | 63 | 3.973 | 14.573 | 0 | 0 |
 | network-node | `network-node` | required | 3.000 | 2 | 32 | 16.354 | 17.050 | 0 | 0 |
 | note-index | `note-index` | required | 4.500 | 4 | 8 | 6.157 | 6.157 | 0 | 0 |
 | period-band | `period-band` | enabled | 1.100 | 8 | 12 | 1.000 | 1.337 | 0 | 1 |
 | period-label | `period-label` | required | 4.500 | 8 | 8 | 1.692 | 13.973 | 0 | 3 |
 | planned | `gate` | required | 3.000 | 4 | 26 | 1.000 | 6.667 | 0 | 2 |
-| planned | `planned` | required | 3.000 | 64 | 756 | 1.163 | 13.238 | 0 | 2 |
-| progress-fill | `progress-fill` | required | 3.000 | 49 | 145 | 3.216 | 4.789 | 0 | 0 |
-| project-note | `text` | required | 4.500 | 45 | 99 | 10.019 | 16.268 | 0 | 0 |
-| relation-label | `text` | required | 4.500 | 30 | 207 | 6.663 | 14.573 | 0 | 0 |
-| row-decoration | `row-band` | absent | 1.100 | 13 | 0 | — | — | 0 | 0 |
+| planned | `planned` | required | 3.000 | 65 | 764 | 1.163 | 13.238 | 0 | 2 |
+| progress-fill | `progress-fill` | required | 3.000 | 50 | 148 | 3.216 | 4.789 | 0 | 0 |
+| project-note | `text` | required | 4.500 | 46 | 101 | 10.019 | 16.268 | 0 | 0 |
+| relation-label | `text` | required | 4.500 | 31 | 214 | 6.663 | 14.573 | 0 | 0 |
+| row-decoration | `row-band` | absent | 1.100 | 14 | 0 | — | — | 0 | 0 |
 | row-decoration | `row-band` | enabled | 1.100 | 26 | 104 | 1.000 | 1.116 | 0 | 8 |
 | slot-heading | `slot-heading` | required | 4.500 | 4 | 4 | 5.448 | 6.609 | 0 | 0 |
 | snapshot | `snapshot` | required | 3.000 | 6 | 36 | 2.469 | 9.528 | 0 | 6 |
@@ -84,14 +86,14 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | summary-unit | `summary-unit` | required | 4.500 | 1 | 1 | 6.720 | 6.720 | 0 | 0 |
 | table-cell | `missing-actual-cell` | required | 4.500 | 3 | 3 | 5.448 | 7.032 | 0 | 0 |
 | table-cell | `table-cell-secondary` | required | 4.500 | 4 | 86 | 5.184 | 5.448 | 0 | 0 |
-| table-cell | `text` | required | 4.500 | 64 | 1332 | 8.683 | 16.354 | 0 | 0 |
+| table-cell | `text` | required | 4.500 | 65 | 1340 | 8.683 | 16.354 | 0 | 0 |
 | table-cell | `variance-ahead` | deemphasized | 3.000 | 6 | 18 | 4.312 | 9.523 | 0 | 0 |
 | table-cell | `variance-behind` | required | 4.500 | 14 | 58 | 5.022 | 6.219 | 0 | 0 |
 | table-cell | `variance-on-track` | required | 4.500 | 10 | 28 | 5.184 | 7.032 | 0 | 0 |
 | table-column-label | `tableColumnLabel` | required | 4.500 | 4 | 10 | 5.184 | 5.448 | 0 | 0 |
-| table-column-label | `text` | required | 4.500 | 60 | 109 | 10.019 | 16.354 | 0 | 0 |
+| table-column-label | `text` | required | 4.500 | 61 | 110 | 10.019 | 16.354 | 0 | 0 |
 | title-text | `heading` | required | 4.500 | 2 | 2 | 7.959 | 11.610 | 0 | 0 |
-| title-text | `text` | required | 4.500 | 64 | 96 | 10.019 | 16.268 | 0 | 0 |
+| title-text | `text` | required | 4.500 | 65 | 97 | 10.019 | 16.268 | 0 | 0 |
 
 ## Per-primitive grounds
 
@@ -2740,6 +2742,79 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/group-child-indent.scene.json` | `cell:silicon-bringup:Workstream` | `text` | 91.765, 316.800 | `row-band:silicon-bringup` | flat | `#EEF3F8` | fill | 14.573 | 4.500 | info |
 | `examples/controller-z/generated/group-child-indent.scene.json` | `column:Workstream` | `text` | 64.565, 78.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/group-child-indent.scene.json` | `title` | `text` | 800.000, 42.456 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `actual:evb-arrival:evb-arrival` | `actual` | 1062.112, 408.800 | `canvas` | canvas | `#0A0A0C` | fill | 9.245 | 3.000 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `actual:firmware:firmware` | `actual` | 602.048, 244.800 | `planned:firmware:firmware` | flat | `#FF7A1A` | stroke | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `actual:performance:performance` | `actual` | 1191.069, 480.800 | `canvas` | canvas | `#0A0A0C` | fill | 9.245 | 3.000 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `actual:silicon-bringup:silicon-bringup` | `actual` | 1069.083, 316.800 | `planned:silicon-bringup:silicon-bringup` | flat | `#FF7A1A` | stroke | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `as-of-label` | `text` | 1336.038, 130.100 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 718.035, 92.800 | `canvas` | canvas | `#0A0A0C` | fill | 1.292 | 1.100 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `axis-band-rect:0:1` | `axis-band-decoration` | 1252.835, 92.800 | `canvas` | canvas | `#0A0A0C` | fill | 1.292 | 1.100 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `axis-label:2:0` | `text` | 724.035, 76.000 | `axis-band-rect:0:0` | flat | `#26242C` | fill | 13.262 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `axis-label:2:1` | `text` | 1246.835, 76.000 | `axis-band-rect:0:1` | flat | `#26242C` | fill | 13.262 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `axis-label:3:0` | `text` | 528.588, 90.400 | `axis-band-rect:0:0` | flat | `#26242C` | fill | 13.262 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `axis-label:3:1` | `text` | 724.865, 90.400 | `axis-band-rect:0:0` | flat | `#26242C` | fill | 13.262 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `axis-label:3:2` | `text` | 939.671, 90.400 | `axis-band-rect:0:1` | flat | `#26242C` | fill | 13.262 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `axis-label:3:3` | `text` | 1150.657, 90.400 | `axis-band-rect:0:1` | flat | `#26242C` | fill | 13.262 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `axis-label:3:4` | `text` | 1363.934, 90.400 | `axis-band-rect:0:1` | flat | `#26242C` | fill | 13.262 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `variance:firmware:firmware` | `variance-behind` | 1036.101, 244.800 | `canvas` | canvas | `#0A0A0C` | fill | 11.210 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `variance:silicon-bringup:silicon-bringup` | `variance-behind` | 1142.275, 339.100 | `canvas` | canvas | `#0A0A0C` | fill | 11.210 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `group-detail:factory-team` | `text` | 108.665, 1003.400 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `group-detail:fw-team` | `text` | 101.098, 866.200 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `group-detail:validation-team` | `text` | 97.458, 934.800 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `group-header:factory-team#run2` | `group-gloss` | 194.357, 599.800 | `canvas` | canvas | `#0A0A0C` | fill | 9.402 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `group-header:fw-team#run2` | `group-gloss` | 120.607, 127.800 | `canvas` | canvas | `#0A0A0C` | fill | 9.402 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `group-header:validation-team#run2` | `group-gloss` | 175.935, 363.800 | `canvas` | canvas | `#0A0A0C` | fill | 9.402 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `group-header:factory-team#run0` | `group-ordinal` | 33.408, 598.000 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `group-header:fw-team#run0` | `group-ordinal` | 32.968, 126.000 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `group-header:validation-team#run0` | `group-ordinal` | 33.304, 362.000 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `group-header:factory-team#run1` | `text` | 114.034, 598.600 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `group-header:fw-team#run1` | `text` | 76.719, 126.600 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `group-header:validation-team#run1` | `text` | 104.719, 362.600 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `legend:actual` | `text` | 967.240, 876.538 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `legend:planned` | `text` | 972.772, 851.338 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `legend-swatch:actual` | `actual` | 940.138, 876.538 | `canvas` | canvas | `#0A0A0C` | fill | 9.245 | 3.000 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `legend-swatch:planned` | `planned` | 940.138, 851.338 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `member-label:dvt:dvt` | `member-label-inside-planned` | 1288.659, 552.800 | `planned:dvt:dvt` | flat | `#FF7A1A` | fill | 8.051 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `member-label:architecture:architecture` | `text` | 570.261, 147.500 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `member-label:evb-arrival:evb-arrival` | `text` | 1077.512, 383.500 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `member-label:firmware:firmware` | `text` | 797.227, 219.500 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `member-label:ga:ga` | `text` | 1512.923, 691.500 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `member-label:performance:performance` | `text` | 1100.451, 455.500 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `member-label:pvt:pvt` | `text` | 1400.909, 619.500 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `member-label:silicon-bringup:silicon-bringup` | `text` | 1124.848, 291.500 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `milestone:evb-arrival` | `text` | 409.357, 846.600 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `milestone:ga` | `text` | 399.676, 876.000 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `missing-actual:architecture:architecture` | `missing-actual` | 602.048, 172.800 | `canvas` | canvas | `#0A0A0C` | stroke | 17.128 | 3.000 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `planned:architecture:architecture` | `planned` | 563.709, 172.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `planned:dvt:dvt` | `planned` | 1288.659, 552.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `planned:evb-arrival:evb-arrival` | `planned` | 1041.200, 408.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `planned:firmware:firmware` | `planned` | 797.227, 244.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `planned:ga:ga` | `planned` | 1557.029, 716.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `planned:performance:performance` | `planned` | 1100.451, 480.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `planned:pvt:pvt` | `planned` | 1368.821, 644.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `planned:silicon-bringup:silicon-bringup` | `planned` | 1124.848, 316.800 | `canvas` | canvas | `#0A0A0C` | fill | 7.583 | 3.000 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 811.168, 244.800 | `actual:firmware:firmware` | flat | `#39C97B` | fill | 9.245 | 3.000 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 1142.972, 480.800 | `actual:performance:performance` | flat | `#39C97B` | fill | 9.245 | 3.000 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 1142.275, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#39C97B` | fill | 9.245 | 3.000 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `note:evb-risk` | `text` | 1357.845, 846.600 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `note:pvt-exit` | `text` | 1407.559, 866.200 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `relation-label:architecture-unlocks-firmware:architecture:architecture:firmware:firmware` | `text` | 564.486, 210.800 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `relation-label:bringup-to-dvt:silicon-bringup:silicon-bringup:dvt:dvt` | `text` | 1273.732, 303.500 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `relation-label:bringup-to-performance:silicon-bringup:silicon-bringup:performance:performance` | `text` | 1000.279, 494.100 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `relation-label:dvt-to-pvt:dvt:dvt:pvt:pvt` | `text` | 1202.883, 604.800 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `relation-label:evb-to-bringup:evb-arrival:evb-arrival:silicon-bringup:silicon-bringup` | `text` | 1092.355, 358.700 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `relation-label:firmware-to-evb:firmware:firmware:evb-arrival:evb-arrival` | `text` | 943.979, 328.800 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `relation-label:pvt-to-ga:pvt:pvt:ga:ga` | `text` | 1484.808, 731.100 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `cell:architecture:Workstream` | `text` | 87.861, 172.800 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `cell:dvt:Workstream` | `text` | 80.749, 552.800 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `cell:evb-arrival:Workstream` | `text` | 59.812, 408.800 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `cell:firmware:Workstream` | `text` | 94.721, 244.800 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `cell:ga:Workstream` | `text` | 87.077, 716.800 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `cell:performance:Workstream` | `text` | 122.672, 480.800 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `cell:pvt:Workstream` | `text` | 111.353, 644.800 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `cell:silicon-bringup:Workstream` | `text` | 75.765, 316.800 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `column:Workstream` | `text` | 64.565, 78.600 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
+| `examples/controller-z/generated/group-header-runs.scene.json` | `title` | `text` | 800.000, 42.456 | `canvas` | canvas | `#0A0A0C` | fill | 17.128 | 4.500 | info |
 | `examples/controller-z/generated/group-tabs.scene.json` | `actual:evb-arrival:evb-arrival` | `actual` | 1062.112, 408.800 | `canvas` | canvas | `#0A0A0C` | fill | 9.245 | 3.000 | info |
 | `examples/controller-z/generated/group-tabs.scene.json` | `actual:firmware:firmware` | `actual` | 602.048, 244.800 | `planned:firmware:firmware` | flat | `#FF7A1A` | stroke | 7.583 | 3.000 | info |
 | `examples/controller-z/generated/group-tabs.scene.json` | `actual:performance:performance` | `actual` | 1191.069, 480.800 | `canvas` | canvas | `#0A0A0C` | fill | 9.245 | 3.000 | info |
@@ -9271,6 +9346,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8): a
 
 | Theme | Scenes | Warnings | Errors |
 | --- | ---: | ---: | ---: |
+| `group-header-runs` | 1 | 0 | 0 |
 | `target-b` | 1 | 82 | 0 |
 | `titlecard` | 1 | 4 | 0 |
 | `yuya` | 1 | 91 | 0 |
@@ -9280,4 +9356,4 @@ Contrast constraints are an opt-in design option (Specification 46 section 8): a
 Every non-exclusive decoration role is enabled in committed Scene evidence; group-band or group-header-band supplies the group concept when there are no corpus errors.
 
 
-Findings: 9207; errors: 0; warnings: 185.
+Findings: 9284; errors: 0; warnings: 185.

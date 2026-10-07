@@ -25,6 +25,7 @@ from chrona.extensions.profiles import validate_profiles
 from chrona.presentation.layout.engine import (measure_natural_normal_flow_block,
                                                resolve_content_block_extent, solve_layout)
 from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.group_header_runs import validate_group_header_roles
 from chrona.presentation.layout.presentation import table_text_line_block, validate_table_text_roles
 from chrona.presentation.layout.profile import resolve_layout_profile
 from chrona.presentation.layout.slot_heading import reserve_slot_heading_blocks
@@ -278,6 +279,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     table_content = normalize_v05_table_content(projection, project, view, actual_set=actual_observations,
                                                 locale=environment.locale)
     validate_table_text_roles(view.table_columns, ThemeTokenView(theme))
+    if view.grouping is not None and view.grouping.header is not None:
+        validate_group_header_roles(view.grouping.header.role_pointers(), ThemeTokenView(theme))
     source_inputs = _source_inputs(project, view, projection, summary,
                                    annotation_input=_annotation_source_input(
                                        view, visual_requests, icon_assets, theme),

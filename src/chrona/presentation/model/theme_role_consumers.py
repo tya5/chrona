@@ -13,6 +13,7 @@ from __future__ import annotations
 from dataclasses import fields, is_dataclass
 from typing import Any, Iterable, Mapping
 
+from chrona.presentation.group_header_text import template_roles
 from chrona.presentation.scene.capabilities import theme_role_contract
 
 UNREAD_DIAGNOSTIC = "W_THEME_ROLE_UNREAD"
@@ -21,6 +22,9 @@ UNREAD_DIAGNOSTIC = "W_THEME_ROLE_UNREAD"
 def _strings(value: Any) -> Iterable[str]:
     if isinstance(value, str):
         yield value
+        if "|" in value:
+            # A group-header template reads the roles its marked placeholders name (#1192).
+            yield from template_roles(value)
     elif isinstance(value, Mapping):
         frame = value.get("frame")
         if isinstance(frame, Mapping) and isinstance(frame.get("paint"), str):

@@ -555,8 +555,14 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             emit_semantic_text(f"cell:{cell.object_id}:{cell.column_id}", cell.semantic_id, cell_paint, href=href, link_title=link_title,
                                table_row_id=row_id, table_column_id=cell.column_id)
     for group in groups:
-        if group.header_bounds is not None:
+        if group.header_bounds is not None and f"group-header:{group.group_id}" in layout_text:
             emit_semantic_text(f"group-header:{group.group_id}", "groupHeader", "text")
+        run_index = 0
+        while f"group-header:{group.group_id}#run{run_index}" in layout_text:  # the runs of a marked header (#1192)
+            run_id = f"group-header:{group.group_id}#run{run_index}"
+            run_role = layout_text[run_id].typography_role
+            emit_semantic_text(run_id, "groupHeader", "text" if run_role == "groupHeader" else run_role)
+            run_index += 1
         segment = 0
         while f"group-tag:{group.group_id}:{segment}" in layout_text:  # the segments of a vertical label (#585)
             emit_semantic_text(f"group-tag:{group.group_id}:{segment}", "groupHeader", "text")
