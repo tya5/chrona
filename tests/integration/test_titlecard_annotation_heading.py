@@ -38,6 +38,7 @@ def test_titlecard_heading_size_completes_distinct_full_frames(tmp_path, size):
     # Keep authored resources and their verified identities untouched. Only the
     # resolved Theme value is varied for this diagnostic/acceptance render.
     theme = _thaw(closure.resolved_theme.resolved_input)
+    authored_size = theme["body"]["values"]["size.annotation-heading"]["value"]
     theme["body"]["values"]["size.annotation-heading"]["value"] = size
     closure = replace(closure, resolved_theme=replace(
         closure.resolved_theme, resolved_input=freeze(theme)))
@@ -62,5 +63,5 @@ def test_titlecard_heading_size_completes_distinct_full_frames(tmp_path, size):
     assert len(headings) == 3
     for heading in headings:
         assert float(rendered[heading.scene_id].attrib["font-size"]) == size
-    if size == 15:
+    if size == authored_size:
         assert result.artifact.content == (example / "generated/23-titlecard.svg").read_bytes()
