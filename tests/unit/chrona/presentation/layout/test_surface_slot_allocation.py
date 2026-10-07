@@ -84,6 +84,7 @@ def test_prepared_inline_frame_reuses_mark_aware_scale_and_all_base_facts(monkey
 
     monkeypatch.setattr("chrona.presentation.layout.surface_base.prepare_surface_inline", forbidden)
     monkeypatch.setattr("chrona.presentation.layout.surface_base.prepare_surface_slots", forbidden)
+    monkeypatch.setattr("chrona.presentation.layout.surface_base.required_row_block_extents", forbidden)
     actual = prepare_surface_base(request, inline=inline)
     for field in fields(expected):
         if field.name != "review_rows":
@@ -91,6 +92,17 @@ def test_prepared_inline_frame_reuses_mark_aware_scale_and_all_base_facts(monkey
     for left, right in zip(actual.review_rows, expected.review_rows, strict=True):
         assert {name: getattr(left, name) for name in vars(type(left)) if not name.startswith("_")} == {
             name: getattr(right, name) for name in vars(type(right)) if not name.startswith("_")}
+
+
+def test_natural_row_demand_is_closed_before_fill_and_not_recomputed_from_placed_rows():
+    request = _request()
+    inline = prepare_surface_inline(request)
+    assert inline.row_requirements == (40.0,)
+    assert inline.natural_block_requirement == Decimal(40)
+    placed = prepare_surface_base(request, inline=inline)
+    assert placed.rows[0].bounds.block_size == inline.timeline.bounds.block_size
+    assert placed.rows[0].bounds.block_size > inline.natural_block_requirement
+    assert inline.row_requirements == (40.0,)
 
 
 def test_point_mark_inline_scale_closes_without_placing_any_shared_rows_or_tracks(monkeypatch):

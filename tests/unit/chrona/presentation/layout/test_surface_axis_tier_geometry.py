@@ -128,6 +128,37 @@ def test_surface_composer_completes_axis_and_captions_before_rows_and_only_then_
     assert any(shape.placement_id.startswith("axis-grid:") for shape in placement.shapes)
 
 
+def test_closed_pre_row_geometry_is_reused_without_another_native_preparation(monkeypatch):
+    from chrona.presentation.layout import surface_composer
+
+    request = _axis_request((AxisTier("month", 1, "grid-major"), AxisTier("quarter", 1, "labels",
+        AxisLabelIntent("quarter", (), "center", "thin-with-record", "horizontal", "en-US"))))
+    prepared = surface_composer.prepare_surface_content(request)
+    expected = surface_composer.compose_surface_layout(request, prepared=prepared)
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("completed pre-row geometry must not be measured or allocated a second time")
+
+    for name in ("prepare_surface_content", "prepare_surface_inline", "prepare_surface_axis",
+                 "prepare_table_header_seed", "complete_slot_headings"):
+        monkeypatch.setattr(surface_composer, name, forbidden)
+    assert surface_composer.compose_surface_layout(request, prepared=prepared) == expected
+
+
+def test_pre_row_geometry_exists_without_placing_any_rows_or_tracks(monkeypatch):
+    from chrona.presentation.layout import surface_base, surface_composer
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("natural sizing must never depend on already placed or fill-expanded rows")
+
+    for name in ("place_rows", "place_mark_tracks", "place_lane_mark_tracks"):
+        monkeypatch.setattr(surface_base, name, forbidden)
+    prepared = surface_composer.prepare_surface_content(_axis_request((AxisTier("month", 1, "grid-major"),)))
+    assert prepared.inline.review_rows
+    assert prepared.axis.ordered_shapes
+    assert prepared.row_viewport == prepared.inline.timeline.bounds
+
+
 @pytest.mark.parametrize("block", ["top", "header-row", "axis-tier"])
 def test_own_axis_caption_precedes_one_native_axis_solve_and_keeps_full_slot(block, monkeypatch):
     from chrona.presentation.layout import surface_composer

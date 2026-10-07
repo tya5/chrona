@@ -63,6 +63,10 @@ class SurfaceInlineGeometry:
     mark_band_allocation: MarkBandAllocation | None
     group_header_size: float
     group_tag_inline_size: float
+    row_requirements: tuple[float, ...]
+    row_padding: float
+    text_line_block: float
+    natural_block_requirement: Decimal
 
 
 def _layout_manifest(request: SurfaceLayoutRequest) -> LayoutManifest:
@@ -249,12 +253,33 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
             mark_band_allocation=mark_band_allocation,
         )
         scale = inset_scale_for_point_facets(provisional_scale, point_facets)
+    row_padding = float(metric_values["timeline.row.paddingBlock"])
+    text_line_block = table_text_line_block(
+        request.theme_tokens, (cell.typography_role for cell in request.surface_content.table_cells))
+    if projection.lane_membership is not None:
+        assert request.fixed_lane_preflight is not None
+        requirement_by_row = dict(request.fixed_lane_preflight.row_requirements)
+        requirements = tuple(requirement_by_row[row.row_id] for row in review_row_values)
+        natural_block = request.fixed_lane_preflight.natural_block_requirement
+    else:
+        requirements = required_row_block_extents(
+            review_rows=review_row_values, row_minimum=float(metric_values["timeline.row.minBlockSize"]),
+            row_padding=row_padding, mark_block_size=mark_block_size,
+            role_geometries=role_geometries, text_line_block=text_line_block,
+            mark_band_allocation=mark_band_allocation,
+        )
+        headers = sum(1 for index, row in enumerate(review_row_values)
+                      if row.group_id and group_header_size
+                      and (index == 0 or review_row_values[index - 1].group_id != row.group_id))
+        natural_block = (Decimal(str(geometry_sum(requirements)))
+                         + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0))
     return SurfaceInlineGeometry(
         request, projection, layout_manifest, measured_sources, metric_values, allocation,
         decisions, slots, by_source, table, timeline, review_row_values, timeline_bounds,
         frozenset(slot.slot_id for slot in slots), scale, role_geometries, mark_block_size,
         mark_band_allocation, group_header_size,
         group_tag_column_size(request.theme_tokens) if group_tags else 0.0,
+        tuple(requirements), row_padding, text_line_block, natural_block,
     )
 
 
@@ -286,22 +311,9 @@ def prepare_surface_base(request: SurfaceLayoutRequest, *,
     # and plot geometry consume the completed native content viewport.
     row_viewport = row_viewport if row_viewport is not None else timeline.bounds
     row_content_bounds = bounds_from_rect(row_viewport)
-    row_padding = float(metric_values["timeline.row.paddingBlock"])
-    text_line_block = table_text_line_block(
-        request.theme_tokens, (cell.typography_role for cell in request.surface_content.table_cells))
-    lane_subtracks = None
-    if projection.lane_membership is not None:
-        assert request.fixed_lane_preflight is not None
-        lane_subtracks = request.fixed_lane_preflight.subtracks
-        requirement_by_row = dict(request.fixed_lane_preflight.row_requirements)
-        requirements = tuple(requirement_by_row[row.row_id] for row in review_row_values)
-    else:
-        requirements = required_row_block_extents(
-            review_rows=review_row_values, row_minimum=float(metric_values["timeline.row.minBlockSize"]),
-            row_padding=row_padding, mark_block_size=mark_block_size,
-            role_geometries=role_geometries, text_line_block=text_line_block,
-            mark_band_allocation=mark_band_allocation,
-        )
+    row_padding, text_line_block = inline.row_padding, inline.text_line_block
+    requirements = inline.row_requirements
+    lane_subtracks = request.fixed_lane_preflight.subtracks if projection.lane_membership is not None else None
     foot_reserve = 0.0
     foot_fallback = False
     content = request.surface_content

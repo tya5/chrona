@@ -1,7 +1,7 @@
 """Coordinates the surface phases in order and assembles the final Layout; reads the request and each phase's typed batch."""
 from __future__ import annotations
 
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from decimal import Decimal
 from typing import Any
 
@@ -19,19 +19,21 @@ from chrona.presentation.layout.surface_route_label_plan import (
     RouteLabelPlanContext, compose_routes_and_member_labels,
 )
 from chrona.presentation.layout.surface_lane_route_plan import LaneRoutePlanContext, plan_lane_route_reservations
-from chrona.presentation.layout.surface_base import prepare_surface_base, prepare_surface_inline
+from chrona.presentation.layout.surface_base import (
+    SurfaceInlineGeometry, prepare_surface_base, prepare_surface_inline,
+)
 from chrona.presentation.layout.surface_content import (
     complete_footer_band, compose_detail_panel_blocks, place_notes, place_summary,
     validate_detail_panel_placement,
 )
 from chrona.presentation.layout.surface_legend import SurfaceLegendContext, place_legend
-from chrona.presentation.layout.slot_heading import complete_slot_headings, content_slot, full_slot
+from chrona.presentation.layout.slot_heading import SlotHeadings, complete_slot_headings, content_slot, full_slot
 from chrona.presentation.layout.surface_completion import (
     SurfaceCompletionContext, SurfaceLayoutComposition, complete_surface_layout,
 )
 from chrona.presentation.layout.surface_annotations import SurfaceAnnotationContext, place_annotations
 from chrona.presentation.layout.surface_table import (
-    compose_table, prepare_table_header_seed, table_row_indent_intents,
+    SurfaceTableHeaderSeed, compose_table, prepare_table_header_seed, table_row_indent_intents,
 )
 from chrona.presentation.layout.surface_heading import place_heading
 from chrona.presentation.layout.surface_groups import (compose_group_presentation)
@@ -39,7 +41,7 @@ from chrona.presentation.layout.surface_backgrounds import (
     compose_calendar_backgrounds, compose_group_tabs, compose_row_group_backgrounds, replace_group_header_band,
 )
 from chrona.presentation.layout.surface_axis import (
-    SurfaceAxisFrame, complete_axis_plot, prepare_surface_axis,
+    SurfaceAxisFrame, SurfaceAxisPreparation, complete_axis_plot, prepare_surface_axis,
 )
 from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT_FALLBACK
 from chrona.presentation.layout.as_of_cone import complete_as_of_cone
@@ -52,7 +54,7 @@ from chrona.presentation.layout.obstacles import (
     ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex,
 )
 from chrona.presentation.layout.surface_quality import (
-    CollisionDomain, FitWarning, PlacementDecision, IconPlacement, ShapePlacement, SurfaceLayoutRequest,
+    CollisionDomain, FitWarning, PlacementDecision, IconPlacement, ShapePlacement, SlotPlacement, SurfaceLayoutRequest,
     LaneLabelSuppression,
 )
 from chrona.presentation.layout.mark_band_allocation import MarkBandAllocation
@@ -91,8 +93,21 @@ def timeline_content_block_requirement(*, projection: Any, group_presentation: s
     return Decimal(str(geometry_sum(requirements))) + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0)
 
 
-def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutComposition:
-    """Resolve slots, rows, groups, temporal scale, and mark tracks in Layout."""
+@dataclass(frozen=True)
+class SurfacePreRowGeometry:
+    """Closed native geometry reusable for natural demand and final row placement."""
+
+    inline: SurfaceInlineGeometry
+    axis: SurfaceAxisPreparation
+    headings: SlotHeadings
+    table: SurfaceTableHeaderSeed
+    axis_content: SlotPlacement
+    timeline_content: SlotPlacement
+    row_viewport: Rect
+
+
+def prepare_surface_content(request: SurfaceLayoutRequest) -> SurfacePreRowGeometry:
+    """Complete native headers/captions without placing or fill-expanding any row."""
     inline = prepare_surface_inline(request)
     request = inline.request
     axis_slot = inline.by_source["timeline-axis"]
@@ -123,6 +138,18 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         row_start = max(native_ends)
     row_viewport = Rect(timeline_content.bounds.inline, row_start, timeline_content.bounds.inline_size,
                         max(Decimal(0), timeline_content.bounds.block + timeline_content.bounds.block_size - row_start))
+    return SurfacePreRowGeometry(inline, prepared_axis, headings, table_seed,
+                                 axis_slot, timeline_content, row_viewport)
+
+
+def compose_surface_layout(request: SurfaceLayoutRequest, *,
+                           prepared: SurfacePreRowGeometry | None = None) -> SurfaceLayoutComposition:
+    """Resolve rows/tracks from native pre-row geometry, then complete one surface."""
+    prepared = prepared if prepared is not None else prepare_surface_content(request)
+    inline, prepared_axis, headings, table_seed = prepared.inline, prepared.axis, prepared.headings, prepared.table
+    axis_slot, timeline_content, row_viewport = prepared.axis_content, prepared.timeline_content, prepared.row_viewport
+    table_content = table_seed.table_slot
+    request = inline.request
     base = prepare_surface_base(request, inline=inline, row_viewport=row_viewport)
     request = base.request
     projection = request.projection
