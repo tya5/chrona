@@ -21,7 +21,7 @@ from chrona.presentation.layout.surface_quality import TextPlacement
 from chrona.presentation.contracts.resources import ViewLaneLabel, ViewLaneTable, ViewRowMode
 from chrona.presentation.contracts import parse_contract
 from chrona.presentation.contracts.resources import freeze
-from chrona.presentation.model.surface_content import TableCellContent, TableColumnContent, TableColumnWidth, TableContent
+from chrona.presentation.model.surface_content import SummaryContent, TableCellContent, TableColumnContent, TableColumnWidth, TableContent
 from chrona.presentation.model.closure import RenderClosure, resolve_render_context
 from chrona.presentation.model.theme_tokens import ThemeTokenError
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
@@ -65,7 +65,7 @@ def test_lane_source_measurement_uses_exact_membership_table_and_lane_count():
                          (TableCellContent("lane:g:a", "Lane", "Avionics", "tableCell"),
                           TableCellContent("lane:g:a", "Items", "2", "tableCell", "numeric")), (), None, ())
     sources = render_usecase._source_inputs(
-        {"project": {"title": "test"}}, view, projection, SimpleNamespace(runs=()), table=table,
+        {"project": {"title": "test"}}, view, projection, SummaryContent(()), table=table,
     )
 
     assert sources["table"].item_count == sources["timeline"].item_count == 1
