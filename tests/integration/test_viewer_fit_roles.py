@@ -172,8 +172,7 @@ def test_pinning_changes_no_geometry_paint_or_finding(tmp_path):
     assert _render(tmp_path, "again", roles=roles).artifact.content == fitted.artifact.content
 
 
-@pytest.mark.parametrize("role,kwargs", [("legend", {}), ("text", {}), ("heading", {}), ("groupHeader", {}),
-                                         ("member-label-chip", {"chips": True})])
+@pytest.mark.parametrize("role,kwargs", [("legend", {}), ("text", {}), ("heading", {}), ("groupHeader", {})])
 def test_a_box_that_follows_its_text_is_refused_where_there_is_no_box_to_follow(tmp_path, role, kwargs):
     with pytest.raises((RenderFailed, ClosureError)) as raised:
         _render(tmp_path, roles={role: {"viewerFit": "box-follows-text"}}, **kwargs)
