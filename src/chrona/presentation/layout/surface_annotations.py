@@ -251,9 +251,13 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
     annotation_slot = by_source.get("annotations")
     annotation_slot_id = annotation_slot.slot_id if annotation_slot is not None else ""
     rail_records: list[TextPlacement] = []
+    # Full callout footprints govern exhausted-rail completion, independently
+    # of the numbered list's ordering and its body-only text records.
+    rail_boxes: list[LabelRect] = []
 
     def ordered_rail_candidates(annotation: Any, resolved: Any, *, anchor_y: float,
-                                text_size: tuple[float, float], rail: LabelRect) -> tuple[AnnotationBox, ...]:
+                                text_size: tuple[float, float], rail: LabelRect,
+                                allow_inline_overflow: bool = False) -> tuple[AnnotationBox, ...]:
         """Enumerate free rail boxes at or below the preceding completed list entry."""
         previous_bottom = max(
             (float(item.bounds.block + item.bounds.block_size) for item in rail_records),
@@ -261,7 +265,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
         height = text_size[1]
         candidates = annotation_rail_candidates(
             annotation, resolved, anchor_y=max(anchor_y, previous_bottom + height / 2),
-            text_size=text_size, rail=rail, obstacles=surface_obstacles)
+            text_size=text_size, rail=rail, obstacles=surface_obstacles,
+            allow_inline_overflow=allow_inline_overflow)
         return tuple(candidate for candidate in candidates
                      if candidate.placement.bounds.y >= previous_bottom)
 
@@ -829,10 +834,12 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                             rail_candidates = ordered_rail_candidates(
                                 annotation, resolved,
                                 anchor_y=anchor_bounds.y + anchor_bounds.height / 2,
-                                text_size=text_size, rail=rail)
-                            previous_bottom = max(
-                                (float(item.bounds.block + item.bounds.block_size)
-                                 for item in rail_records), default=rail.y)
+                                text_size=text_size, rail=rail, allow_inline_overflow=True)
+                            previous_bottom = max((
+                                rail.y,
+                                *(item.bottom for item in rail_boxes),
+                                *(float(item.bounds.block + item.bounds.block_size)
+                                  for item in rail_records)))
                             fallback_bounds = LabelRect(
                                 rail.x, max(rail.y, previous_bottom), text_size[0], text_size[1])
                             box = rail_candidates[0] if rail_candidates else AnnotationBox(
@@ -904,6 +911,9 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             if box is None:
                 continue
             bounds = box.placement.bounds
+            rail_overflow = box.placement.visible_overflow and status_in_list
+            overflow_viewport = (LabelRect(*_bounds(annotation_slot.bounds)) if annotation_slot is not None
+                                 else LabelRect(*_bounds(timeline.bounds)))
             annotation_bounds = Rect(Decimal(str(bounds.x)), Decimal(str(bounds.y)),
                                      Decimal(str(bounds.width)), Decimal(str(bounds.height)))
             if tilt_angle:
@@ -959,6 +969,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             if viewer_fit.mode != "raw":
                 shapes[-1] = replace(shapes[-1], viewer_fit=viewer_fit.mode)
             register_rect(f"annotation-box:{annotation_id}", "annotation-box", "annotations", annotation_bounds)
+            if annotation_slot is not None and status_in_list:
+                rail_boxes.append(bounds)
             # Vector artwork (#848) is ink over the paper the box just painted, under the kind frame and the text.
             artwork_shapes = place_artwork(
                 container.artwork if container is not None else (), annotation_id=annotation_id,
@@ -985,6 +997,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                     annotation_slot=annotation_text_slot, paint_order=ANNOTATION_PAINT_ORDER)
                 kind_text = tuple(fit_text(item, viewer_fit, request.font_metrics, box_id=f"annotation-box:{annotation_id}")
                                   for item in kind_text)
+                if rail_overflow:
+                    kind_text = tuple(replace(item, overflow="visible-overflow") for item in kind_text)
                 if tilt_angle:
                     kind_shapes = tuple(rotate_shape(item, tilt_center, tilt_angle) for item in kind_shapes)
                     kind_text = tuple(rotate_text(item, tilt_center, tilt_angle) for item in kind_text)
@@ -992,6 +1006,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                 for kind_line in kind_text:
                     text.append(kind_line)
                     register_rect(kind_line.placement_id, "text", "annotations", kind_line.bounds)
+                    if rail_overflow:
+                        visible_label_overflows.append((kind_line, overflow_viewport))
             placed_annotation = place_text(placement_id=f"annotation-text:{annotation_id}", source_ref=annotation_id, content=content,
                                            inline=frame_x + annotation_leading + content_left + kind_measure.body_inset_left,
                                            baseline_block=(frame_y + content_top
@@ -1004,6 +1020,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             placed_annotation = replace(placed_annotation, paint_order=ANNOTATION_PAINT_ORDER + 1)
             placed_annotation = fit_text(placed_annotation, viewer_fit, request.font_metrics,
                                          box_id=f"annotation-box:{annotation_id}", end_inset=content_right)
+            if rail_overflow:
+                placed_annotation = replace(placed_annotation, overflow="visible-overflow")
             if tilt_angle:
                 placed_annotation = rotate_text(placed_annotation, tilt_center, tilt_angle)
             text.append(placed_annotation)
@@ -1011,8 +1029,6 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
             if annotation_slot is not None and annotation.number is not None and status_in_list:
                 rail_records.append(placed_annotation)
             if box.placement.visible_overflow:
-                overflow_viewport = (LabelRect(*_bounds(annotation_slot.bounds)) if annotation_slot is not None
-                                     else LabelRect(*_bounds(timeline.bounds)))
                 visible_label_overflows.append((placed_annotation, overflow_viewport))
             if annotation_visuals:
                 if not hasattr(annotation_metrics, "cap_height_at"):
