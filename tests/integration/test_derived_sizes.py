@@ -27,6 +27,13 @@ def _parts(*, row: float | None = None, padding: float | None = None, drop: tupl
     return parts
 
 
+def _lanes(*, quarter: float | None = None, drop: tuple[str, ...] = (), explicit: dict[str, float] | None = None) -> dict:
+    parts = _parts(drop=drop, explicit=explicit)
+    if quarter is not None:
+        parts["theme"]["body"]["values"]["axis-lane-quarter"]["value"] = quarter
+    return parts
+
+
 def _render(tmp_path, name: str, parts: dict):
     directory = tmp_path / name
     directory.mkdir()
@@ -83,3 +90,46 @@ def test_a_track_the_row_cannot_hold_is_a_metric_diagnostic(tmp_path):
         _render(tmp_path, "none", _parts(row=16, padding=8, drop=("timeline.mark.blockSize",)))
 
     assert error.value.code == "E_LAYOUT_METRIC_REQUIRED"
+
+
+_AXIS_AND_HEADER = ("timeline.axis.blockSize", "table.header.blockSize")
+
+
+def _axis_bottom(rendered) -> float:
+    return float(next(item for item in rendered.surface.primitives if item.purpose == "axis-rule").bounds[1])
+
+
+def _first_row_top(rendered) -> float:
+    return float(rendered.surface.rows[0].bounds[1])
+
+
+def test_an_unbound_axis_is_the_sum_of_its_lanes_and_the_header_follows_it(tmp_path):
+    """The packaged Theme declares lanes 24 + 22 (46) and binds the axis 46 and the header 44."""
+    declared = _render(tmp_path, "declared", _lanes(explicit={"timeline.axis.blockSize": 46, "table.header.blockSize": 46}))
+    derived = _render(tmp_path, "derived", _lanes(drop=_AXIS_AND_HEADER))
+
+    assert _scene_bounds(derived) == _scene_bounds(declared)
+    assert derived.scene.diagnostics == declared.scene.diagnostics
+
+
+def test_changing_a_lane_moves_the_axis_and_the_table_header_together(tmp_path):
+    short = _render(tmp_path, "short", _lanes(quarter=24, drop=_AXIS_AND_HEADER))
+    tall = _render(tmp_path, "tall", _lanes(quarter=30, drop=_AXIS_AND_HEADER))
+
+    assert _axis_bottom(tall) - _axis_bottom(short) == pytest.approx(6)
+    # The table's first row starts where the header ends, so the header and the axis end together.
+    assert _first_row_top(tall) - _first_row_top(short) == pytest.approx(6)
+
+
+def test_a_bound_axis_and_header_win_over_the_derivation(tmp_path):
+    bound = _render(tmp_path, "bound", _lanes(quarter=30, explicit={"timeline.axis.blockSize": 60, "table.header.blockSize": 60}))
+    derived = _render(tmp_path, "derived", _lanes(quarter=30, drop=_AXIS_AND_HEADER))
+
+    assert _axis_bottom(bound) - _axis_bottom(derived) == pytest.approx(60 - 52)
+
+
+def test_an_unbound_header_is_the_bound_axis(tmp_path):
+    header = _render(tmp_path, "header", _lanes(drop=("table.header.blockSize",), explicit={"timeline.axis.blockSize": 50}))
+    both = _render(tmp_path, "both", _lanes(explicit={"timeline.axis.blockSize": 50, "table.header.blockSize": 50}))
+
+    assert _scene_bounds(header) == _scene_bounds(both)
