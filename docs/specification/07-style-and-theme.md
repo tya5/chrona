@@ -150,9 +150,7 @@ attachment. Adapters without terminal support continue to refuse terminals.
 
 A role's optional `cornerRadius` binding names a `radius` token. Its value is
 a nonnegative physical-px number or `capsule`. This binding overrides the role's
-legacy ratio/em radius; absence retains that calculation exactly. For mark roles,
-`markCornerRadius` is required and read only when `cornerRadius` is absent; a
-physical binding needs no legacy placeholder. Layout resolves
+legacy ratio/em radius; absence retains that calculation exactly. Layout resolves
 the value against the final box: a physical value is independent of font and track
 size but bounded by half the shorter side; `capsule` is exactly half that side.
 Scene carries the completed radius and adapters do not resolve units or references.
