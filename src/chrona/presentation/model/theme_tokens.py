@@ -448,7 +448,8 @@ class ThemeTokenView:
         height = self.number(role, "markHeight")
         offset = self.optional_number(role, "markOffset")
         order = self.number(role, "markPaintOrder")
-        corner_radius = self.number(role, "markCornerRadius")
+        physical_radius = self.optional_token(role, "cornerRadius", "radius")
+        corner_radius = Decimal(0) if physical_radius is not None else self.number(role, "markCornerRadius")
         if (height <= 0 or height > 1 or (offset is not None and (offset < 0 or offset + height > 1))
                 or corner_radius < 0 or corner_radius > Decimal("0.5") or order != order.to_integral_value()):
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markHeight")
