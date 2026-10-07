@@ -123,6 +123,40 @@ def test_note_beside_dependency_line_moves_in_same_rail_without_covering_it() ->
     assert index.collisions(ObstacleRect(box.x, box.y, box.right, box.bottom)) == ()
 
 
+def test_natural_width_rail_fallback_checks_the_full_frame() -> None:
+    intent = AnnotationIntent("risk", "note",
+                              {"kind": "object", "id": "ship", "facet": "planned", "endpoint": "finish"},
+                              "above", "center", "A risk")
+    resolved = resolve_annotation_anchor(intent, (
+        ComparisonMark("ship", "planned", "span", start=date(2027, 1, 1), end=date(2027, 1, 8)),))
+    rail = LabelRect(110, 0, 40, 100)
+    index = SurfaceObstacleIndex()
+    # This obstacle is beyond the assigned rail but within the natural frame.
+    index.add(SurfaceObstacle("prior", "annotation-box", "annotations", ObstacleRect(155, 40, 170, 60)))
+    options = dict(anchor_y=50, text_size=(70, 10), rail=rail, obstacles=index)
+    assert annotation_rail_candidates(intent, resolved, **options) == ()
+    candidates = annotation_rail_candidates(intent, resolved, **options, allow_inline_overflow=True)
+    assert candidates
+    for candidate in candidates:
+        box = candidate.placement.bounds
+        assert box.width == 70
+        assert candidate.placement.visible_overflow
+        assert rail.y <= box.y and box.bottom <= rail.bottom
+        assert not index.collisions(ObstacleRect(box.x, box.y, box.right, box.bottom))
+    assert candidates[0].placement.bounds.y != 45
+
+
+def test_inline_overflow_does_not_claim_vertical_capacity() -> None:
+    intent = AnnotationIntent("risk", "note",
+                              {"kind": "object", "id": "ship", "facet": "planned", "endpoint": "finish"},
+                              "above", "center", "A risk")
+    resolved = resolve_annotation_anchor(intent, (
+        ComparisonMark("ship", "planned", "span", start=date(2027, 1, 1), end=date(2027, 1, 8)),))
+    assert annotation_rail_candidates(
+        intent, resolved, anchor_y=50, text_size=(70, 110), rail=LabelRect(110, 0, 40, 100),
+        obstacles=SurfaceObstacleIndex(), allow_inline_overflow=True) == ()
+
+
 def test_touching_rectangles_and_collinear_paths_have_declared_clearance() -> None:
     index = SurfaceObstacleIndex()
     index.add(SurfaceObstacle("a", "mark", "timeline", ObstacleRect(0, 0, 10, 10)))
