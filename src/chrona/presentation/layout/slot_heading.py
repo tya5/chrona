@@ -13,12 +13,15 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from decimal import Decimal
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from chrona.presentation.layout.model import LayoutDecision, Measurement, Rect, ResolvedLayoutProfile
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, SlotPlacement, TextPlacement
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_role, place_text
+
+if TYPE_CHECKING:
+    from chrona.presentation.layout.surface_axis import AxisLabelTierGeometry
 
 SLOT_HEADING_SEMANTIC_ID = "slotHeading"
 SLOT_HEADING_PLACEMENT_PREFIX = "slot-heading:"
@@ -124,7 +127,8 @@ def source_has_content(content: Any, source: str) -> bool:
 
 
 def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
-                           decisions: Mapping[str, LayoutDecision]) -> SlotHeadings:
+                           decisions: Mapping[str, LayoutDecision],
+                           axis_label_tiers: tuple[AxisLabelTierGeometry, ...] = ()) -> SlotHeadings:
     """Complete every declared heading of a Layout manifest, in the profile's order.
 
     The line box is `font size * line height` of the heading's role (`slot-heading`, else `text`), the gap under it
@@ -166,15 +170,25 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
         bounds = slot.bounds
         top, bottom = bounds.block, bounds.block + bounds.block_size
         line_top, content_start = top, top + line + gap
-        if heading.block == "header-row":
+        aligned_baseline: float | None = None
+        if heading.block in {"header-row", "axis-tier"}:
             beside = (axis is not None and axis.slot_id != slot.slot_id
                       and axis.bounds.block < bottom and top < axis.bounds.block + axis.bounds.block_size)
-            if beside:
+            if heading.block == "header-row" and beside:
                 band = axis.bounds
                 line_top = min(max(top, band.block + (band.block_size - line) / _TWO), bottom - line)
                 content_start = max(line_top + line + gap, band.block + band.block_size)
-            else:
+            elif heading.block == "header-row":
                 diagnostics.append(f"I_LAYOUT_SLOT_HEADING_NO_HEADER_ROW:{decision.node_id}")
+            else:
+                tier = min(axis_label_tiers, key=lambda item: (item.bounds.block, item.tier_index), default=None)
+                candidate_top = Decimal(str(tier.baseline_block)) - size if tier is not None else None
+                if (beside and candidate_top is not None and top <= candidate_top
+                        and candidate_top + line <= bottom):
+                    line_top, aligned_baseline = candidate_top, tier.baseline_block
+                    content_start = max(line_top + line + gap, axis.bounds.block + axis.bounds.block_size)
+                else:
+                    diagnostics.append(f"I_LAYOUT_SLOT_HEADING_NO_AXIS_TIER:{decision.node_id}")
         if bounds.inline_size <= 0 or content_start >= bottom:
             diagnostics.append(f"I_LAYOUT_SLOT_HEADING_OMITTED:{decision.node_id}:too-small")
             continue
@@ -193,7 +207,8 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
         text.append(place_text(
             placement_id=f"{SLOT_HEADING_PLACEMENT_PREFIX}{decision.node_id}", source_ref=source,
             content=content, overflow=disposition, inline=inline,
-            baseline_block=float(line_top) + float(size), typography_role=role,
+            baseline_block=(aligned_baseline if aligned_baseline is not None else float(line_top) + float(size)),
+            typography_role=role,
             theme_tokens=tokens, font_metrics=request.font_metrics,
             collision_region=f"slot-heading:{decision.node_id}",
             collision_domain=CollisionDomain("slot-heading", decision.node_id),

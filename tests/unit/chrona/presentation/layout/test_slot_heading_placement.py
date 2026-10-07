@@ -11,6 +11,7 @@ from chrona.presentation.layout.slot_heading import (
     SlotHeadings, complete_slot_headings, content_slot, full_slot, headed_slot_ids, reserve_slot_heading_blocks,
 )
 from chrona.presentation.layout.sources import MeasuredSources
+from chrona.presentation.layout.surface_axis import AxisLabelTierGeometry
 from chrona.presentation.layout.surface_quality import SlotPlacement
 from chrona.presentation.model.theme_tokens import TextTreatment
 
@@ -160,6 +161,33 @@ def test_heading_targets_include_optional_profile_slots_without_a_manifest_decis
     resolved = SimpleNamespace(profile={"root": root}, content_hash="unchanged")
     assert headed_slot_ids(resolved) == frozenset({"optional-caption"})
     assert resolved.content_hash == "unchanged" and node["heading"] == {"text": "Notes"}
+
+
+def _tier(index, top, baseline):
+    return AxisLabelTierGeometry(index, Rect(Decimal(100), Decimal(top), Decimal(400), Decimal(20)), baseline)
+
+
+def test_axis_tier_caption_uses_completed_upper_baseline_and_reserves_the_whole_band():
+    slot = _slot("annotations", 100, 400)
+    result = complete_slot_headings(request=_request(), slots={"annotations": slot, "timeline-axis": AXIS},
+        decisions={"annotations": _decision("annotations", SlotHeading("Notes", block="axis-tier"))},
+        axis_label_tiers=(_tier(5, 125, 140.0), _tier(2, 100, 113.75)))
+    assert result.text[0].baseline[1] == 113.75
+    assert result.reserved("annotations") == 50 and result.diagnostics == ()
+
+
+@pytest.mark.parametrize(("axis", "tiers"), [(AXIS, ()), (None, (_tier(0, 100, 110.0),)),
+    (AXIS, (_tier(0, 100, 105.0),)), (_slot("timeline-axis", 600, 50), (_tier(0, 600, 610.0),))])
+def test_incompatible_axis_tier_falls_back_to_top_with_a_record(axis, tiers):
+    slots = {"annotations": _slot("annotations", 100, 400)}
+    if axis is not None:
+        slots["timeline-axis"] = axis
+    result = complete_slot_headings(request=_request(), slots=slots,
+        decisions={"annotations": _decision("annotations", SlotHeading("Notes", block="axis-tier"))},
+        axis_label_tiers=tiers)
+    assert result.text[0].baseline[1] == 110.0
+    assert result.reserved("annotations") == 20
+    assert result.diagnostics == ("I_LAYOUT_SLOT_HEADING_NO_AXIS_TIER:annotations",)
 
 
 def test_an_absent_slot_has_no_caption():

@@ -386,7 +386,7 @@ $defs:
     properties:
       text: {$ref: "urn:chrona:common-v0.1#/$defs/literalCaption"}
       align: {description: "Inline position of the caption within the slot; absent means start.", enum: [start, center, end]}
-      block: {description: "Block position: top of the slot, or centred in the timeline axis header band when that band lies beside the slot (otherwise top); absent means top.", enum: [top, header-row]}
+      block: {description: "Block position: top; header-row centres in the neighboring axis band; axis-tier aligns to its uppermost horizontal labels tier's completed baseline. An absent or incompatible target falls back to top with a record; absent means top.", enum: [top, header-row, axis-tier]}
   frame:
     type: object
     description: "Region frame declaration. The panel is drawn at the node's completed bounds deflated by inset and half the stroke; it never moves or clips content. Optional paint selects region-frame-<paint>; absent paint selects region-frame."

@@ -1,8 +1,10 @@
 """View selects caption copy; completed slot allocation and other primitives stay Layout-owned."""
+import xml.etree.ElementTree as ET
+
 import pytest
 
 from chrona.usecases.render_review import RenderFailed
-from tests.integration.test_slot_heading import HEADING, _by_id, _render
+from tests.integration.test_slot_heading import HEADING, _by_id, _render, _with_heading_role
 from tests.support import synthetic_review as sr
 
 
@@ -49,6 +51,37 @@ def test_absent_optional_slot_accepts_its_copy_without_drawing_a_caption(tmp_pat
                        configure=_copy({"annotations": "Remarks"}))
     assert HEADING not in _by_id(selected)
     assert "annotations" not in {slot.slot_id for slot in selected.surface.slots}
+
+
+def test_axis_tier_heading_matches_the_actual_upper_axis_label_baseline(tmp_path):
+    def configure(parts):
+        _with_heading_role(parts, size=8)
+    selected = _render(tmp_path, heading={"text": "Notes", "block": "axis-tier"},
+                       role=False, configure=configure)
+    heading = _by_id(selected)[HEADING]
+    labels = [item for item in selected.surface.primitives
+              if item.scene_id.startswith("axis-label:") and not item.scene_id.endswith(":secondary")]
+    upper = min(labels, key=lambda item: item.baseline[1])
+    assert heading.baseline[1] == upper.baseline[1]
+    assert not any("I_LAYOUT_SLOT_HEADING_NO_AXIS_TIER" in line for line in selected.surface.diagnostics)
+    assert b">NOTES<" in selected.artifact.content
+    texts = {element.get("data-scene-id"): element for element in ET.fromstring(selected.artifact.content).iter()
+             if element.tag.endswith("}text")}
+    assert texts[HEADING].get("y") == texts[upper.scene_id].get("y")
+
+
+@pytest.mark.parametrize("case", ["rotated", "large-caption", "no-neighbor"])
+def test_incompatible_axis_tier_fallback_is_visible_and_recorded(tmp_path, case):
+    def configure(parts):
+        _with_heading_role(parts, size=40 if case == "large-caption" else 8)
+        if case == "rotated":
+            for tier in parts["view"]["body"]["axis"]["tiers"]:
+                if tier["role"] == "labels":
+                    tier["label"]["orientation"] = "rotate-cw"
+    selected = _render(tmp_path, heading={"text": "Notes", "block": "axis-tier"},
+                       role=False, beside=case != "no-neighbor", configure=configure)
+    assert HEADING in _by_id(selected) and b">NOTES<" in selected.artifact.content
+    assert "I_LAYOUT_SLOT_HEADING_NO_AXIS_TIER:annotations" in selected.surface.diagnostics
 
 
 @pytest.mark.parametrize("target", ["missing", "review", "title", "unknown/~slot"])

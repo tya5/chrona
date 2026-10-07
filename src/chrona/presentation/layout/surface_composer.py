@@ -116,8 +116,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     )
     by_source = {slot.source_ref: slot for slot in slots}
     text.extend(detail_panel_text)
+    # Complete axis geometry before dependent captions, retaining its original primitive emission order.
+    axis_batch = compose_axis(request, base)
     # A slot's declared caption (#1064): its text is completed here and its content is placed below it.
-    headings = complete_slot_headings(request=request, slots=by_source, decisions=base.decisions)
+    headings = complete_slot_headings(request=request, slots=by_source, decisions=base.decisions,
+                                      axis_label_tiers=axis_batch.label_tiers)
     heading_slot_blocks = {source: by_source[source].bounds.block for source in headings.reserve or {}}
     text.extend(headings.text)
     table_batch = compose_table(base)
@@ -132,7 +135,6 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         base=base, rows=rows, groups=groups, theme_tokens=request.theme_tokens,
         row_decoration=request.surface_content.row_decoration,
         group_decoration=request.surface_content.group_decoration))
-    axis_batch = compose_axis(request, base)
     axis = by_source["timeline-axis"]
     shapes.extend(axis_batch.shapes)
     text.extend(axis_batch.text)

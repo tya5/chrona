@@ -67,6 +67,11 @@ def test_the_defaults_are_start_and_top() -> None:
     assert next(item.heading for item in manifest.decisions if item.node_id == "notes") == SlotHeading("Notes", "start", "top")
 
 
+def test_axis_tier_is_an_optional_in_place_block_mode() -> None:
+    manifest = solved(profile(slot("notes", "notes", heading={"text": "Notes", "block": "axis-tier"})))
+    assert next(item.heading for item in manifest.decisions if item.node_id == "notes") == SlotHeading("Notes", "start", "axis-tier")
+
+
 def test_the_manifest_names_a_heading_only_when_one_is_declared() -> None:
     plain = solved(profile(slot("notes", "notes"))).canonical_bytes()
     headed = solved(profile(slot("notes", "notes", heading={"text": "Notes"}))).canonical_bytes()

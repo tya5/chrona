@@ -37,6 +37,15 @@ class CalendarOverlayInterval:
     exception: bool = False  # a day the Project calendar closes by an `exceptions` entry (#991)
 
 
+@dataclass(frozen=True)
+class AxisLabelTierGeometry:
+    """Completed geometry for one horizontal labels tier, independent of retained interval text."""
+
+    tier_index: int
+    bounds: Rect
+    baseline_block: float
+
+
 def calendar_overlay_intervals(*, closed_days: tuple[date, ...], start: date, end: date,
                                 coordinate: Callable[[date, ScalePlacement], float], scale: ScalePlacement,
                                 exceptions: frozenset[date] = frozenset()
@@ -59,6 +68,7 @@ class SurfaceAxisPlacements:
     diagnostics: tuple[str, ...]
     visible_label_overflows: tuple[tuple[TextPlacement, LabelRect], ...]
     calendar_intervals: tuple[CalendarOverlayInterval, ...]
+    label_tiers: tuple[AxisLabelTierGeometry, ...] = ()
 
 
 def _axis_label_inset(theme_tokens: Any, tier: Any, font_size: float) -> float:
@@ -114,6 +124,31 @@ def _label_block(primary: Any, plan: _SecondaryPlan | None) -> float:
     if plan.intent.placement == "stacked":
         return above + below + plan.gap + above_s + below_s
     return max(above, above_s) + max(below, below_s)
+
+
+def _label_baselines(*, axis_block: float, label_lane_offset: float, lane_size: float,
+                     tier_index: int, declared_lanes: dict[int, tuple[float, float]], axis_size: float,
+                     orientation: str, width: float, plan: _SecondaryPlan | None,
+                     block: float, primary: Any) -> tuple[float, float]:
+    """Use the exact primary/secondary baseline rule for both labels and exported tier geometry."""
+    if tier_index in declared_lanes:
+        line_block = axis_size * float(primary.line_height)
+        baseline = axis_block + label_lane_offset + (lane_size - line_block) / 2 + axis_size
+    else:
+        baseline = axis_block + label_lane_offset + (
+            axis_size if orientation == "horizontal" else (0 if orientation == "rotate-cw" else width))
+    secondary_baseline = baseline
+    if plan is not None:
+        line_top = axis_block + label_lane_offset + (
+            (lane_size - block) / 2 if tier_index in declared_lanes else 0.0)
+        above, below = _line_extents(primary)
+        above_secondary, _ = _line_extents(plan.treatment)
+        if plan.intent.placement == "stacked":
+            baseline = line_top + above
+            secondary_baseline = line_top + above + below + plan.gap + above_secondary
+        else:
+            baseline = secondary_baseline = line_top + max(above, above_secondary)
+    return baseline, secondary_baseline
 
 
 def _measure(content: str, treatment: Any, metrics: Any) -> float:
@@ -238,6 +273,7 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
     band_targets: dict[tuple[str, str, str], str] = {}
     diagnostics: list[str] = []
     visible_overflows: list[tuple[TextPlacement, LabelRect]] = []
+    label_tiers: list[AxisLabelTierGeometry] = []
     separator_marks: list[tuple[float, float, float]] = []
     label_lane_offset = band_lane_offset = 0.0
     band_ordinal = label_ordinal = 0
@@ -436,6 +472,17 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
                 # A secondary the lane or slot cannot hold is a Theme/slot mismatch, not a per-cell condition.
                 raise LayoutError("E_PRESENTATION_AXIS_OVERFLOW", f"/view/body/axis/tiers/{tier_index}",
                                   detail=f"secondary-lane:{tier_index}")
+            if orientation == "horizontal":
+                tier_baseline, _ = _label_baselines(
+                    axis_block=float(axis.bounds.block), label_lane_offset=label_lane_offset,
+                    lane_size=lane_size, tier_index=tier_index, declared_lanes=declared_lanes,
+                    axis_size=axis_size, orientation=orientation, width=0.0, plan=plan,
+                    block=block, primary=treatment)
+                label_tiers.append(AxisLabelTierGeometry(
+                    tier_index,
+                    Rect(axis.bounds.inline, axis.bounds.block + Decimal(str(label_lane_offset)),
+                         axis.bounds.inline_size, Decimal(str(lane_size))),
+                    tier_baseline))
             for interval, outcome in zip(intervals, interval_outcomes, strict=True):
                 if outcome.disposition == "thinned":
                     continue
@@ -461,22 +508,11 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
                 if secondary_text and plan.intent.placement == "inline":
                     occupied = width + gap + secondary_width
                 inline = x if tier.label.align == "start" else x + (available - occupied) / 2
-                if tier_index in declared_lanes:
-                    line_block = axis_size * float(treatment.line_height)
-                    baseline = float(axis.bounds.block) + label_lane_offset + (lane_size - line_block) / 2 + axis_size
-                else:
-                    baseline = float(axis.bounds.block) + label_lane_offset + (axis_size if orientation == "horizontal" else (0 if orientation == "rotate-cw" else width))
-                secondary_baseline = baseline
-                if plan is not None:
-                    line_top = float(axis.bounds.block) + label_lane_offset + (
-                        (lane_size - block) / 2 if tier_index in declared_lanes else 0.0)
-                    above, below = _line_extents(treatment)
-                    above_secondary, _ = _line_extents(plan.treatment)
-                    if plan.intent.placement == "stacked":
-                        baseline = line_top + above
-                        secondary_baseline = line_top + above + below + plan.gap + above_secondary
-                    else:
-                        baseline = secondary_baseline = line_top + max(above, above_secondary)
+                baseline, secondary_baseline = _label_baselines(
+                    axis_block=float(axis.bounds.block), label_lane_offset=label_lane_offset,
+                    lane_size=lane_size, tier_index=tier_index, declared_lanes=declared_lanes,
+                    axis_size=axis_size, orientation=orientation, width=width, plan=plan,
+                    block=block, primary=treatment)
                 placed = place_text(placement_id=f"axis-label:{tier_index}:{interval.index}", source_ref="timeline-axis",
                     content=label, inline=inline, baseline_block=baseline,
                     typography_role=tier.typography_role or "axis", theme_tokens=tokens, font_metrics=font_metrics,
@@ -537,4 +573,5 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
         closed_days=tuple(closed), start=start, end=end, coordinate=coordinate_for_date, scale=scale,
         exceptions=frozenset(contract.time.calendar_exceptions))
     return SurfaceAxisPlacements(tuple(shapes), tuple(text), tuple(outcomes), tuple(decisions),
-        label_targets, band_targets, tuple(diagnostics), tuple(visible_overflows), calendar)
+        label_targets, band_targets, tuple(diagnostics), tuple(visible_overflows), calendar,
+        tuple(label_tiers))

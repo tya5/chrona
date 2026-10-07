@@ -112,12 +112,18 @@ A slot whose `source` is `annotations`, `notes`, `legend` or `summary`, and an o
 declare `heading: {text, align, block}`: a caption over the slot. `text` is literal presentation copy (one to
 eighty characters, no control character; the Theme role's text transform styles it, so a profile holds "Notes"
 and a Theme makes it "NOTES"); `align` is `start` (default), `center` or `end` within the slot's inline
-extent; `block` is `top` (default) or `header-row`. The engine records the declaration with the slot's bounds;
+extent; `block` is `top` (default), `header-row` or `axis-tier`. The engine records the declaration with the slot's bounds;
 Layout completes one Text `slot-heading:<node id>` in the Theme text role `slot-heading` (the role `text` when
 the Theme declares none), inside the slot. The line box is the role's font size times line height and the gap
 under it half the font size. At `top` the line starts at the slot's block start. At `header-row` the line box
 is centred in the `timeline-axis` slot's band when that band's block extent intersects the slot's (it lies
 beside the slot; otherwise `top` applies and Layout records `I_LAYOUT_SLOT_HEADING_NO_HEADER_ROW:<node>`).
+At `axis-tier`, the caption baseline equals the primary baseline of the uppermost horizontal labels tier
+(completed block position, then tier index) in that neighboring axis. Layout exports its measured tier
+geometry independently of visible or thinned labels; band-only and rotated tiers are not targets. The
+content starts below the whole axis band and any larger caption line/gap. Without a compatible neighboring
+tier, or when that aligned caption line cannot fit inside its slot, `top` applies and Layout records
+`I_LAYOUT_SLOT_HEADING_NO_AXIS_TIER:<node>`; the baseline is never clamped while claiming tier alignment.
 The slot's content (annotation boxes and leaders, note lines, legend entries, summary runs) starts below the
 line and its gap, and below the band when the caption sits in it, so nothing lies under the caption; the slot
 keeps its full bounds. A content-sized slot (`blockSize: content`) measures the caption's block into its

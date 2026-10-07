@@ -12,6 +12,41 @@
 version: chrona/schema-equivalence-expected-deltas/v0.1
 deltas:
   - layer: L1
+    schema: layout-profile-v0.10.schema.yaml
+    pointer: /properties/overrides/additionalProperties/properties/heading/properties/block/enum
+    before: [top, header-row]
+    after: [top, header-row, axis-tier]
+    reason: "#1100 adds opt-in completed axis-tier caption baseline alignment; top and header-row behavior is unchanged."
+    test: tests/unit/chrona/presentation/layout/test_slot_heading_profile.py::test_axis_tier_is_an_optional_in_place_block_mode
+  - layer: L1
+    schema: layout-profile-v0.10.schema.yaml
+    pointer: /properties/root/oneOf/0/properties/children/items/oneOf/1/properties/heading/properties/block/enum
+    before: [top, header-row]
+    after: [top, header-row, axis-tier]
+    reason: "#1100 adds opt-in completed axis-tier caption baseline alignment; top and header-row behavior is unchanged."
+    test: tests/unit/chrona/presentation/layout/test_slot_heading_profile.py::test_axis_tier_is_an_optional_in_place_block_mode
+  - layer: L1
+    schema: layout-profile-v0.10.schema.yaml
+    pointer: /properties/root/oneOf/1/properties/children/items/oneOf/1/properties/heading/properties/block/enum
+    before: [top, header-row]
+    after: [top, header-row, axis-tier]
+    reason: "#1100 adds opt-in completed axis-tier caption baseline alignment; top and header-row behavior is unchanged."
+    test: tests/unit/chrona/presentation/layout/test_slot_heading_profile.py::test_axis_tier_is_an_optional_in_place_block_mode
+  - layer: L1
+    schema: layout-profile-v0.10.schema.yaml
+    pointer: /properties/root/oneOf/2/properties/children/items/oneOf/1/properties/heading/properties/block/enum
+    before: [top, header-row]
+    after: [top, header-row, axis-tier]
+    reason: "#1100 adds opt-in completed axis-tier caption baseline alignment; top and header-row behavior is unchanged."
+    test: tests/unit/chrona/presentation/layout/test_slot_heading_profile.py::test_axis_tier_is_an_optional_in_place_block_mode
+  - layer: L1
+    schema: layout-profile-v0.10.schema.yaml
+    pointer: /properties/root/oneOf/3/properties/children/items/oneOf/1/properties/heading/properties/block/enum
+    before: [top, header-row]
+    after: [top, header-row, axis-tier]
+    reason: "#1100 adds opt-in completed axis-tier caption baseline alignment; top and header-row behavior is unchanged."
+    test: tests/unit/chrona/presentation/layout/test_slot_heading_profile.py::test_axis_tier_is_an_optional_in_place_block_mode
+  - layer: L1
     schema: view-v0.28.schema.yaml
     pointer: /allOf/1/properties/body/properties/slotHeadingText
     after:
