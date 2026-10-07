@@ -111,6 +111,43 @@ def _capacity_measurements(*sources):
     return {source: m(100, 20) for source in sources}
 
 
+def _aspect_flow_profile(slot_sources):
+    children = [
+        {"id": f"source-{index}", "kind": "slot", "source": source,
+         "inlineSize": "content", "blockSize": "fill",
+         "place": {"inline": "start", "block": "stretch" if source == "timeline" else "start",
+                   "safety": "strict"},
+         "priority": "required", "overflow": "visible-overflow"}
+        for index, source in enumerate(slot_sources)
+    ]
+    root = {
+        "id": "root", "kind": "overlay", "inlineSize": "fill", "blockSize": "fill",
+        "padding": {"token": "spacing.none"},
+        "children": [{
+            "id": "flow", "kind": "flow", "inlineSize": {"aspectRatio": 1},
+            "blockSize": "fill", "itemMinInlineSize": 1,
+            "gap": {"token": "spacing.none"}, "padding": {"token": "spacing.none"},
+            "alignItems": "start", "justifyContent": "start", "children": children,
+        }],
+    }
+    raw = {
+        "version": "chrona/layout-profile/v0.10", "id": "coupled-aspect-flow",
+        "flowDirection": "horizontal", "dependencyNetworkFlowDirection": "horizontal",
+        "requiredThemeTokens": ["spacing.none"],
+        "reviewSurface": {
+            "rowDistribution": "pack",
+            "backgroundExtents": {"rowBand": "table", "groupBand": "timeline",
+                                  "groupHeaderBand": "both", "calendarClosed": "timeline"},
+            "annotationRouting": {"maxBends": 4, "maxDetourRatio": 2},
+        },
+        "root": root,
+    }
+    return resolve_layout_profile(
+        raw, available_sources=SOURCES,
+        theme={"body": {"values": {"spacing.none": {"type": "number", "value": 0}}}},
+    )
+
+
 def _source_blocks(manifest):
     return {item.source: item.bounds.block_size for item in manifest.decisions if item.source}
 
@@ -339,6 +376,44 @@ def test_capacity_inverse_matches_native_tracks_across_floors_caps_weights_and_s
                         available = sum((allocated[index] for index in indices), Decimal(0))
                         available += gap * (len(indices) - 1)
                         assert (available < required) if witness is None else (available >= required)
+
+
+def test_aspect_ratio_flow_resolver_selects_first_height_that_stretches_required_slot():
+    resolved = _aspect_flow_profile(("timeline", "notes"))
+    measurements = {"source-0": m(100, 20), "source-1": m(100, 100)}
+
+    resolution = resolve_content_block_extent(
+        resolved, viewport_inline=400, minimum_block=100, measurements=measurements,
+        required_blocks={"timeline": Decimal(80)},
+    )
+
+    assert resolution.extent == 200
+    manifest = solve_layout(resolved, viewport_inline=400, viewport_block=resolution.extent,
+                            measurements=measurements)
+    assert _source_blocks(manifest)["timeline"] == Decimal(100)
+
+
+def test_aspect_ratio_flow_required_fit_predicate_is_non_monotone():
+    resolved = _aspect_flow_profile(("table", "legend", "notes", "timeline"))
+    measurements = {
+        "source-0": m(100, 20), "source-1": m(100, 20),
+        "source-2": m(100, 100), "source-3": m(100, 20),
+    }
+    allocations = {}
+    for extent in (200, 300, 400):
+        manifest = solve_layout(resolved, viewport_inline=400, viewport_block=extent,
+                                measurements=measurements)
+        allocations[extent] = _source_blocks(manifest)["timeline"]
+
+    assert allocations == {200: Decimal(100), 300: Decimal(20), 400: Decimal(100)}
+    assert allocations[200] >= Decimal(80)
+    assert allocations[300] < Decimal(80)
+    assert allocations[400] >= Decimal(80)
+    resolution = resolve_content_block_extent(
+        resolved, viewport_inline=400, minimum_block=100, measurements=measurements,
+        required_blocks={"timeline": Decimal(80)},
+    )
+    assert resolution.extent == 200
 
 
 def test_grid_track_inputs_match_native_column_and_content_sized_row_measurement():
