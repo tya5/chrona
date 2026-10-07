@@ -108,6 +108,14 @@ Derived sizes (#1150). A Theme that leaves `timeline.mark.blockSize` unbound get
 track), so changing the row moves the track with no other edit; a bound value is used as declared, and a row that leaves no positive
 remainder is `E_LAYOUT_METRIC_REQUIRED`. Every bundled Theme binds it, so nothing they render changes.
 
+A Theme that leaves `timeline.axis.blockSize` unbound gets the sum of the axis lanes: each horizontal
+`labels` tier's declared `laneBlockSize` (else its label block, the same lane rule the axis uses to place
+the tier), stacked; several `band` tiers without a label lane of their own stack theirs, and the axis
+holds the taller of the two stacks. A View whose labels tiers include a rotated one has lanes that depend
+on the interval widths, so its axis stays required (`E_LAYOUT_METRIC_REQUIRED`). A Theme that leaves
+`table.header.blockSize` unbound gets the axis block size, bound or derived, so the table header ends where
+the axis ends. A bound value is used as declared.
+
 Axis intervals are natural calendar intervals from the resolved View window. The
 declared axis formatting and explicit Render Context locale determine each label. Scene
 measures labels before emission; if a required label does not fit its resolved axis

@@ -58,7 +58,7 @@ def test_lane_source_measurement_uses_exact_membership_table_and_lane_count():
     view = SimpleNamespace(
         rows=SimpleNamespace(mode=ViewRowMode.LANES,
                              lane_table=ViewLaneTable(ViewLaneLabel.GROUP, True)),
-        table_columns=(),
+        table_columns=(), axis=None,
     )
     table = TableContent((TableColumnContent("Lane", "Lane", "start", TableColumnWidth("content", "content")),
                           TableColumnContent("Items", "Items", "end", TableColumnWidth("content", "content"))),
@@ -66,7 +66,8 @@ def test_lane_source_measurement_uses_exact_membership_table_and_lane_count():
                           TableCellContent("lane:g:a", "Items", "2", "tableCell", "numeric")), (), None, ())
     sources = render_usecase._source_inputs(
         {"project": {"title": "test"}}, view, projection, SummaryContent(()), table=table,
-        content=SimpleNamespace(group_details=(), milestones=(), observation_columns=(), observation_rows=()),
+        content=SimpleNamespace(group_details=(), milestones=(), observation_columns=(), observation_rows=(),
+                                axis_tiers=()),
     )
 
     assert sources["table"].item_count == sources["timeline"].item_count == 1

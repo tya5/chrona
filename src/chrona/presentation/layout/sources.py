@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
 from typing import Any, Mapping
 
+from chrona.presentation.layout.axis_lanes import derived_axis_block_size
 from chrona.presentation.layout.group_tags import header_child_lead
 from chrona.presentation.layout.model import LayoutError, Measurement
 from chrona.presentation.layout.presentation import (
@@ -13,7 +14,7 @@ from chrona.presentation.layout.presentation import (
 from chrona.presentation.layout.text import measure_text_width, metric_for_role, paint_text
 from chrona.presentation.layout.text_stack import MeasuredTextStack, measure_text_stack
 from chrona.presentation.layout.summary_flow import MeasuredSummary, measure_summary
-from chrona.presentation.model.surface_content import SummaryContent, TableContent
+from chrona.presentation.model.surface_content import AxisTier, SummaryContent, TableContent
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 
 
@@ -68,6 +69,8 @@ class SourceInput:
     # unset the smallest size is the preferred one (nothing shrinks).
     min_inline: Decimal | None = None
     summary: SummaryContent | None = None
+    # The View's axis tiers, for deriving an unbound axis size from their lanes (#1150).
+    axis_tiers: tuple[AxisTier, ...] = ()
 
     def text_runs(self) -> tuple[SourceTextRun, ...]:
         if self.runs:
@@ -96,7 +99,8 @@ REQUIRED_METRICS = (
 )
 
 # A metric a Theme may leave unbound: Layout derives it from other sizes (#1150). A bound value always wins.
-DERIVED_METRICS = ("timeline.mark.blockSize",)
+# The axis and the header need the View's axis tiers, so `measure_sources` derives those two.
+DERIVED_METRICS = ("timeline.mark.blockSize", "timeline.axis.blockSize", "table.header.blockSize")
 
 OPTIONAL_METRICS = (
     "timeline.groupHeader.blockSize", "timeline.calendarClosed.minimumDayWidth",
@@ -144,6 +148,20 @@ def resolve_theme_metrics(theme: Mapping[str, Any], *, required_metrics: tuple[s
     return resolved
 
 
+def derive_axis_metrics(metric: dict[str, Decimal], theme: Mapping[str, Any], inputs: Mapping[str, SourceInput],
+                        typography: ThemeTokenView, font_metrics: Any) -> None:
+    """Fill an unbound axis block size from the axis lanes and an unbound header from the axis (#1150)."""
+    bindings = theme.get("body", {}).get("metrics", {})
+    if "timeline.axis.blockSize" not in metric:
+        axis = derived_axis_block_size(inputs["timeline-axis"].axis_tiers if "timeline-axis" in inputs else (),
+                                       typography, font_metrics)
+        if axis is None:
+            raise LayoutError("E_LAYOUT_METRIC_REQUIRED", "/body/metrics/timeline.axis.blockSize")
+        metric["timeline.axis.blockSize"] = axis
+    if not isinstance(bindings.get("table.header.blockSize"), str):
+        metric["table.header.blockSize"] = metric["timeline.axis.blockSize"]
+
+
 def derived_track_block_size(metrics: Mapping[str, Decimal]) -> Decimal | None:
     """The mark track's default block size: the row block size less a padding on each side (#1150).
 
@@ -163,6 +181,7 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
     """Measure every declared source once without reading Layout or renderer state."""
     metric = resolve_theme_metrics(theme, required_metrics=required_metrics)
     typography = ThemeTokenView(theme)
+    derive_axis_metrics(metric, theme, inputs, typography, font_metrics)
     body_treatment = typography.text_treatment("text")
     body_metrics = metric_for_role(typography, "text", font_metrics)
     body_size = body_treatment.font_size

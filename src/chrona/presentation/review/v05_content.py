@@ -234,8 +234,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         label_fallback = tuple(str(item) for item in visible.fallback.get("labels", ()))
         annotation_fallback = tuple(str(item) for item in visible.fallback.get("annotations", ()))
     temporal = view.time_presentation or {}
-    axis = view.axis or {}
-    axis_tiers = tuple(_axis_tier(item, locale=locale) for item in axis.get("tiers", ()))
+    axis_tiers = normalize_axis_tiers(view, locale=locale)
     project_body = project.get("project", {})
     calendar_id = project_body.get("calendar") if isinstance(project_body, Mapping) else None
     calendars = project.get("calendars", {})
@@ -488,6 +487,12 @@ def compose_heading(view: ViewInput, project: Mapping[str, Any], actual_set: Map
         subtitle=render_heading(heading.subtitle, facts) if heading.subtitle is not None else None,
         kicker=render_heading(heading.kicker, facts) if heading.kicker is not None else None,
     )
+
+
+def normalize_axis_tiers(view: Any, *, locale: str) -> tuple[AxisTier, ...]:
+    """The View's declared axis tiers as Layout-owned intent; measurement and placement read the same tiers."""
+    axis = view.axis or {}
+    return tuple(_axis_tier(item, locale=locale) for item in axis.get("tiers", ()))
 
 
 def _axis_tier(value: Mapping[str, Any], *, locale: str) -> AxisTier:

@@ -849,7 +849,8 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
             table_lines,
             row_count, len(view.table_columns) or 1, table=table),
         "timeline": SourceInput(item_count=row_count, span_days=span_days),
-        "timeline-axis": SourceInput(span_days=span_days, typography_role="axis"),
+        "timeline-axis": SourceInput(span_days=span_days, typography_role="axis",
+                                     axis_tiers=content.axis_tiers),
         "network": SourceInput(
             runs=tuple(SourceTextRun(node.title, "text", node.object_id)
                        for node in network.nodes) if network is not None else (),
