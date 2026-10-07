@@ -8,7 +8,7 @@ import pytest
 
 from chrona.presentation.layout.model import LayoutDecision, Measurement, Rect, SlotHeading
 from chrona.presentation.layout.slot_heading import (
-    SlotHeadings, complete_slot_headings, content_slot, full_slot, reserve_slot_heading_blocks,
+    SlotHeadings, complete_slot_headings, content_slot, full_slot, headed_slot_ids, reserve_slot_heading_blocks,
 )
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.layout.surface_quality import SlotPlacement
@@ -38,7 +38,7 @@ class _Theme:
 
 def _request(**content):
     surface = SimpleNamespace(annotations=("a",), notes=("n",), legend_entries=(("k", "v"),),
-                              summary=SimpleNamespace(runs=("r",)))
+                              summary=SimpleNamespace(runs=("r",)), slot_heading_text=())
     for key, value in content.items():
         setattr(surface, key, value)
     return SimpleNamespace(theme_tokens=_Theme(), font_metrics=_Font(), surface_content=surface)
@@ -142,6 +142,24 @@ def test_a_caption_wider_than_the_slot_is_cut_and_recorded():
     (text,) = result.text
     assert text.content.endswith("…") and text.overflow == "ellipsized" and text.source_content == "A long caption"
     assert [item.code for item in result.warnings] == ["W_LAYOUT_TEXT_ELLIPSIZED"]
+
+
+def test_selected_copy_is_measured_and_ellipsized_with_its_source_retained():
+    result = _run([_slot("annotations", 100, 400, inline_size=40)], SlotHeading("Notes"),
+                  request=_request(slot_heading_text=(("annotations", "A long selected caption"),)))
+    (text,) = result.text
+    assert text.content.endswith("…") and text.source_content == "A long selected caption"
+    assert text.overflow == "ellipsized" and result.reserved("annotations") == 20
+
+
+def test_heading_targets_include_optional_profile_slots_without_a_manifest_decision():
+    node = {"id": "optional-caption", "kind": "slot", "priority": "optional",
+            "source": "annotations", "heading": {"text": "Notes"}}
+    root = {"kind": "column", "id": "root", "children": [node,
+            {"kind": "slot", "id": "headless", "source": "notes"}]}
+    resolved = SimpleNamespace(profile={"root": root}, content_hash="unchanged")
+    assert headed_slot_ids(resolved) == frozenset({"optional-caption"})
+    assert resolved.content_hash == "unchanged" and node["heading"] == {"text": "Notes"}
 
 
 def test_an_absent_slot_has_no_caption():

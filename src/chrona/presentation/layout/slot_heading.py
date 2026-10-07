@@ -15,7 +15,7 @@ from dataclasses import dataclass, replace
 from decimal import Decimal
 from typing import Any
 
-from chrona.presentation.layout.model import LayoutDecision, Measurement, Rect
+from chrona.presentation.layout.model import LayoutDecision, Measurement, Rect, ResolvedLayoutProfile
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, SlotPlacement, TextPlacement
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_role, place_text
@@ -49,6 +49,20 @@ def _headed_content_slots(node: Mapping[str, Any]) -> tuple[str, ...]:
     for child in node.get("children", ()):
         found.extend(_headed_content_slots(child))
     return tuple(found)
+
+
+def headed_slot_ids(resolved_layout: ResolvedLayoutProfile) -> frozenset[str]:
+    """Declared caption targets, including optional slots omitted from a completed manifest."""
+    found: set[str] = set()
+
+    def visit(node: Mapping[str, Any]) -> None:
+        if node.get("kind") == "slot" and "heading" in node:
+            found.add(str(node["id"]))
+        for child in node.get("children", ()):
+            visit(child)
+
+    visit(resolved_layout.profile["root"])
+    return frozenset(found)
 
 
 def reserve_slot_heading_blocks(measured: MeasuredSources, resolved_layout: Any, tokens: Any, *,
@@ -139,6 +153,7 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
     reserve: dict[str, Decimal] = {}
     diagnostics: list[str] = []
     warnings: list[FitWarning] = []
+    copy_overrides = dict(request.surface_content.slot_heading_text)
     for decision in sorted(declared, key=lambda item: item.node_id):
         source = decision.source or ""
         slot = slots.get(source)
@@ -164,7 +179,8 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
             diagnostics.append(f"I_LAYOUT_SLOT_HEADING_OMITTED:{decision.node_id}:too-small")
             continue
         available = float(bounds.inline_size)
-        content, disposition = heading.text, "fit"
+        source_content = copy_overrides.get(decision.node_id, heading.text)
+        content, disposition = source_content, "fit"
         natural = measure_text_width(content, **shape)
         if natural > available:
             content, disposition = ellipsize_text(content, available_inline=available, **shape), "ellipsized"
@@ -181,7 +197,7 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
             theme_tokens=tokens, font_metrics=request.font_metrics,
             collision_region=f"slot-heading:{decision.node_id}",
             collision_domain=CollisionDomain("slot-heading", decision.node_id),
-            source_content=heading.text, semantic_id=SLOT_HEADING_SEMANTIC_ID, slot_id=slot.slot_id,
+            source_content=source_content, semantic_id=SLOT_HEADING_SEMANTIC_ID, slot_id=slot.slot_id,
             available_inline_start=float(bounds.inline), available_inline_size=available))
         reserve[source] = content_start - top
     return SlotHeadings(tuple(text), reserve, tuple(diagnostics), tuple(warnings))

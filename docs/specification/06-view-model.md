@@ -221,6 +221,18 @@ and the Theme's declared kicker gap. Without `kicker`, existing title/deck
 measurement, coordinates and output remain unchanged. This is an optional
 addition to `chrona/view/v0.28`, not a new schema version.
 
+### 7.5 Slot caption copy (#1100)
+
+A View MAY declare `slotHeadingText: {<Layout slot node id>: <literal copy>}`. Each target must be a slot
+with a heading in the resolved Layout Profile, including an optional slot absent from this render. Copy is
+one to eighty characters without control characters, not a template. An unknown, container or headless
+target refuses the render with `E_VIEW_SLOT_HEADING_TARGET` at `/body/slotHeadingText/<escaped node id>`;
+the message names the target and valid headed IDs. Layout completes the selected text using the existing
+heading typography, placement, transform and overflow rules (Spec 33); the caption's inline bounds follow
+its selected text, without mutating the profile, slot allocation or non-caption geometry. An absent optional
+slot still draws nothing. Without this optional v0.28 member,
+or with an empty map, the profile's copy and output remain unchanged.
+
 ### 7.2 Derived figures (#586)
 
 A View MAY declare `figures`, an array of derived figures that the Core computes (Spec 05 §12.2) and a consumer shows by name. Each has a unique `id` (no braces, whitespace or control characters: `E_VIEW_FIGURE_INVALID`; a repeat is `E_VIEW_FIGURE_DUPLICATE`) and one closed `kind`: `daysUntil {from?, to, days?, calendar?}` or `daysIn {period, days?, calendar?}`. A fact (`from`, `to`) is exactly one of `asOf`, `{period, side: start | end}` or `{object, endpoint: at | start | end}`; `from` defaults to `asOf`. `days` is `calendar` (the default) or `working`; `calendar` names the Project calendar a working count uses (the Project default when omitted) and is a dead declaration, `E_VIEW_FIGURE_INVALID`, with calendar days. Nothing else is accepted: no expression, no operator, no field name, no other kind or fact.

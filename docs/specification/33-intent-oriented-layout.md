@@ -127,7 +127,10 @@ A slot with no area, one too short for its caption, or one whose source has no c
 reserves nothing (`I_LAYOUT_SLOT_HEADING_OMITTED:<node>:<too-small|no-content>`); an absent optional slot has
 no decision and so no caption. A caption wider than the slot is cut with its source kept
 (`W_LAYOUT_TEXT_ELLIPSIZED`). A derived profile overrides the copy with `overrides: {<slot>: {heading: ...}}`
-(the whole declaration is replaced); a View carries no heading text. Any other source rejects a heading
+(the whole declaration is replaced). A View may override only the caption copy with `slotHeadingText`
+(Spec 06 §7.5), keyed by the resolved slot node ID. This leaves the profile, hash, allocation, alignment,
+block placement and caption reservation unchanged; Layout measures and completes the selected copy.
+Any other source rejects a heading
 (`E_LAYOUT_SLOT_HEADING_SOURCE` at `/root/.../heading`), and a malformed heading is `E_LAYOUT_SCHEMA` at its
 exact pointer. Absent declarations leave output and manifest bytes unchanged.
 

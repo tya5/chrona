@@ -384,7 +384,7 @@ $defs:
     additionalProperties: false
     required: [text]
     properties:
-      text: {description: "Literal caption copy, one to eighty characters with no control character; the Theme role's text transform styles it.", examples: [Notes], type: string, minLength: 1, maxLength: 80, pattern: "^[^\\u0000-\\u001f\\u007f]+$"}
+      text: {$ref: "urn:chrona:common-v0.1#/$defs/literalCaption"}
       align: {description: "Inline position of the caption within the slot; absent means start.", enum: [start, center, end]}
       block: {description: "Block position: top of the slot, or centred in the timeline axis header band when that band lies beside the slot (otherwise top); absent means top.", enum: [top, header-row]}
   frame:

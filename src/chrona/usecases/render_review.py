@@ -24,11 +24,11 @@ from chrona.core.ports import RenderArtifact, Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
 from chrona.presentation.layout.engine import (measure_natural_normal_flow_block,
                                                resolve_content_block_extent, solve_layout)
-from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.model import LayoutError, ResolvedLayoutProfile
 from chrona.presentation.layout.group_header_runs import validate_group_header_roles
 from chrona.presentation.layout.presentation import table_text_line_block, validate_table_text_roles
 from chrona.presentation.layout.profile import resolve_layout_profile
-from chrona.presentation.layout.slot_heading import reserve_slot_heading_blocks
+from chrona.presentation.layout.slot_heading import headed_slot_ids, reserve_slot_heading_blocks
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources, resolve_theme_metrics
 from chrona.presentation.layout.surface_legend import LegendArrangement, legend_arrangement, legend_source_input
 from chrona.presentation.layout.label_visual_measurement import resolve_label_visual_advances
@@ -318,6 +318,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         raise _font_failure(error) from error
     if layout_error is not None:
         raise layout_error
+    _check_slot_heading_text(view, resolved_layout)
     # A declared slot heading is part of its content-sized slot's measurement (#1064).
     measured = reserve_slot_heading_blocks(measured, resolved_layout, ThemeTokenView(theme), content=selected_content)
     viewport = {"inlineSize": environment.viewport_inline, "blockSize": environment.viewport_block}
@@ -698,6 +699,20 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
                          figures=_resolved_figures(project, result.placements, view, actual),
                          deadlines=_shown_deadlines(project, result.placements, view))
     return projection, tuple(provenance), attachment_warnings(project, result.placements), deadline_warnings(project, result.placements)
+
+
+def _check_slot_heading_text(view: ViewInput, resolved_layout: ResolvedLayoutProfile) -> None:
+    """Admit View copy against the resolved profile, never mutate Layout declarations."""
+    if not view.slot_heading_text:
+        return
+    valid = headed_slot_ids(resolved_layout)
+    for node_id in sorted(view.slot_heading_text):
+        if node_id not in valid:
+            escaped = node_id.replace("~", "~0").replace("/", "~1")
+            raise RenderFailed("E_VIEW_SLOT_HEADING_TARGET",
+                               f"slotHeadingText target {node_id!r} is not a headed slot; valid headed slots: "
+                               + (", ".join(sorted(valid)) or "none"),
+                               "view", f"/body/slotHeadingText/{escaped}")
 
 
 def _check_summary_figures(summary: Any, projection: Any) -> None:

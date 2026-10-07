@@ -362,6 +362,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                group_header_runs=_group_header_runs(projection, project, view),
                                as_of_placement=str(as_of_marker.get("placement", "top")) if as_of_marker is not None else "top",
                                group_tints=group_tints,
+                               slot_heading_text=tuple(sorted((view.slot_heading_text or {}).items())),
                                # `<id>` paints the bar, accent and stamp; `<id>#header` and `<id>#leader` carry the
                                # same colour to the elements a kind's `colorAlso` names (#991).
                                annotation_kind_paints=tuple(
