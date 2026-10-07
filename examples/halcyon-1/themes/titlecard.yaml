@@ -484,7 +484,7 @@ body:
       value: 10
     size.annotation-heading:
       type: number
-      value: 15
+      value: 22
   roles:
     legend-swatch:
       swatchInlineSize: legend-swatch-inline-size
@@ -705,6 +705,14 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+    group-ordinal:
+      fontFamily: editorial
+      fontWeight: weight.bold
+      fontSize: size.group
+      lineHeight: leading.body
+      letterSpacing: header-spacing
+      textTransform: kind-upper
+      numericSpacing: numeric-spacing
     gate:
       strokeWidth: stroke-width
     tableColumnLabel:
@@ -923,6 +931,7 @@ body:
     kicker.fill: text
     summary-caption.fill: text
     summary-unit.fill: category:orange
+    group-ordinal.fill: category:orange
     annotation-heading.fill: text
     subtitle.fill: category:orange
     table-cell-secondary.fill: textMuted
