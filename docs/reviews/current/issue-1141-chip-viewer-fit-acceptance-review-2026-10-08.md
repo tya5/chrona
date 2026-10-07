@@ -3,7 +3,7 @@
 # Release review — chip viewer-fit follow-ups
 
 Implementation: `a602ad3b`, `25c3fdee`, `72ec279e`; [current design, architecture review and implementation plan](https://github.com/tya5/chrona/issues/1141#issuecomment-6040718788).
-Prepared on trusted-ready `bd85359390b5c88eb2287e9e5c38286573398504`. Focused viewer-fit tests: 74 passed; strengthened four-family integration tests: 14 passed. This is local Part 1 evidence, not release acceptance.
+Reconciled with trusted-ready `4cd4aa8cd2d1987f7013f96820f8b02679427a68` in `0b4bb6aa`. Current chip/token/placement/role/SVG tests: 64 passed (`test_viewer_fit_stamp.py`, `test_viewer_fit_token.py`, `test_chip_box_follows_text.py`, `test_viewer_fit_roles.py`); import direction, module reachability and literal review checks pass. This is local Part 1 evidence, not release acceptance.
 
 ## Literal issue acceptance
 
