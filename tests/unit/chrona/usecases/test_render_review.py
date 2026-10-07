@@ -58,7 +58,7 @@ def test_lane_source_measurement_uses_exact_membership_table_and_lane_count():
     view = SimpleNamespace(
         rows=SimpleNamespace(mode=ViewRowMode.LANES,
                              lane_table=ViewLaneTable(ViewLaneLabel.GROUP, True)),
-        table_columns=(),
+        table_columns=(), axis=None,
     )
     table = TableContent((TableColumnContent("Lane", "Lane", "start", TableColumnWidth("content", "content")),
                           TableColumnContent("Items", "Items", "end", TableColumnWidth("content", "content"))),
