@@ -226,7 +226,7 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
                             if panel.arrangement == "inline" for run in panel.runs}
             summary_flow = measure_summary(value.summary,
                                            {run.source_ref: run for run in measured_runs},
-                                           {role: typography.text_inline_gap(role) for role in inline_roles})
+                                           {role: typography.text_inline_gap(role) for role in sorted(inline_roles)})
             summary_flows[source] = summary_flow
             measured_width, text_block = summary_flow.inline_size, summary_flow.block_size
         text_inline = max(average_advance, measured_width)

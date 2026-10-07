@@ -560,7 +560,9 @@ Inline summary panels (#1190) require their own `summary-caption` and
 `summary-unit` typography/ink roles; the figure keeps `metric`. These three
 ground-text roles MAY bind `inlineGap`, a named finite nonnegative number
 token in pixels (absent: zero). It separates that run from the next run;
-the last run contributes no trailing gap. Layout uses each role's effective
+the last run contributes no trailing gap. Layout validates used `inlineGap`
+bindings in lexical role-name order so the first invalid binding is deterministic.
+Layout uses each role's effective
 font, scale, spacing and transformed text to close the shared baseline and
 row envelope. Scene only projects the completed placements and role paint.
 

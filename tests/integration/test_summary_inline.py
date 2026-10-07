@@ -149,6 +149,16 @@ def test_invalid_inline_gap_uses_existing_theme_diagnostic(tmp_path, gap):
     assert caught.value.code == "E_THEME_TOKEN_TYPE"
 
 
+def test_multiple_invalid_inline_gaps_report_first_role_in_lexical_order(tmp_path):
+    parts = _parts(COUNTDOWN)
+    _theme(parts, gap=-1)
+    parts["theme"]["body"]["values"]["test-metric-inlineGap"]["value"] = -1
+    with pytest.raises(RenderFailed) as caught:
+        _render(tmp_path, parts, _inline())
+    assert caught.value.code == "E_THEME_TOKEN_TYPE"
+    assert caught.value.source_ref == "/body/roles/metric/inlineGap"
+
+
 @pytest.mark.skipif(not tt.cjk_available(), reason="requires the optional Noto Sans JP package")
 def test_declared_cjk_face_can_render_the_title_card_wording_without_project_rules(tmp_path):
     parts = _parts(COUNTDOWN)
