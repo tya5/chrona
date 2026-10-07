@@ -57,8 +57,14 @@ Observation column IDs and row IDs are unique. Every row contains exactly the de
 column keys, a stable ID, and a non-empty `source`. Missing provenance yields
 `E_DETAIL_OBSERVATION_PROVENANCE`; a non-rectangular row yields
 `E_DETAIL_OBSERVATION_CELLS`. `normal`, `attention`, and `critical` are closed
-presentation emphasis values. They map to existing Theme roles `body`,
+presentation emphasis values. They map to existing Theme paint roles `text`,
 `variance-ahead`, and `variance-behind`; they do not express delivery status.
+Cell typography remains the `text` role, independently of emphasis paint.
+Column headers preserve declaration order and use table-header typography. Each
+row visibly renders its exact source attribution before its cells; no invented
+provenance label is added. Native column allocation uses measured minima and
+equal flexible shares, with the existing table gutter and the slot's overflow
+policy. Wrapped source/cell lines determine natural row height.
 
 Panel geometry reuses Layout slots and Theme metric bindings rather than introducing
 adapter constants. If content cannot fit its slot, the declared

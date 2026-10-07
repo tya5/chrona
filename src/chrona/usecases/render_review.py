@@ -33,6 +33,7 @@ from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measu
 from chrona.presentation.layout.surface_legend import LegendArrangement, legend_arrangement, legend_source_input
 from chrona.presentation.layout.label_visual_measurement import resolve_label_visual_advances
 from chrona.presentation.layout.surface_composer import timeline_content_block_requirement
+from chrona.presentation.layout.surface_content import detail_source_inputs
 from chrona.presentation.layout.surface_lanes import preflight_fixed_lane_layout
 from chrona.presentation.layout.surface_marks import resolve_mark_geometries, resolve_mark_band
 from chrona.presentation.layout.surface_quality import CapacitySourceEvidence, VisualRequest
@@ -310,7 +311,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     source_inputs = _source_inputs(project, view, projection, summary,
                                    annotation_input=_annotation_source_input(
                                        view, visual_requests, icon_assets, theme),
-                                   table=table_content,
+                                   table=table_content, content=selected_content,
                                    # A dependency network draws its own title line and ignores `heading` (#991).
                                    heading=(compose_heading(view, project, actual_observations, environment.locale)
                                             if view.surface == "table-timeline" else None))
@@ -823,6 +824,7 @@ def _font_failure(error: FontMetricsError) -> RenderFailed:
 
 def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
                    summary: SummaryContent, annotation_input: SourceInput | None = None, *,
+                   content: SurfaceContentInput,
                    table: TableContent | None = None,
                    heading: HeadingContent | None = None) -> dict[str, SourceInput]:
     """Declare what each slot will hold, for measurement before layout.
@@ -854,11 +856,9 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
             typography_role="text"),
         "summary": _summary_source(summary),
         "legend": SourceInput(("legend",), typography_role="legend"),
-        "group-details": SourceInput(("group details",)),
-        "observations": SourceInput(("observations",)),
-        "milestones": SourceInput(("milestones",)),
         "notes": SourceInput(notes or ("notes",), typography_role="annotation"),
     }
+    sources.update(detail_source_inputs(content))
     if annotation_input is not None:
         sources["annotations"] = annotation_input
     return sources
