@@ -139,8 +139,8 @@ def test_halcyon_02_routed_note_trial_is_bounded_clear_and_deterministic(monkeyp
     original = builder.compose_surface_layout
     compositions = []
 
-    def capture(layout_request):
-        composition = original(layout_request)
+    def capture(layout_request, *, prepared=None):
+        composition = original(layout_request, prepared=prepared)
         compositions.append(composition)
         return composition
 
@@ -935,7 +935,15 @@ def test_detail_panel_unbreakable_overflow_is_completed_in_layout(tmp_path, over
     root = _root(); example = root / "examples/controller-z"
     layout = yaml.safe_load((example / "layouts/executive-review.yaml").read_text(encoding="utf-8"))
     footer = next(node for node in layout["root"]["children"] if node["id"] == "footer")
-    next(node for node in footer["children"] if node.get("source") == "group-details")["overflow"] = overflow
+    # Exercise native panel overflow in an explicitly allocated row. Flow's
+    # intrinsic child-width handling is an independent allocator follow-up.
+    footer["kind"] = "row"
+    footer.pop("itemMinInlineSize")
+    details = next(node for node in footer["children"] if node.get("source") == "group-details")
+    # Content-sized slots grow to the detail's natural width, so this overflow
+    # case must declare an actual inline cap to exercise the authored policy.
+    details["inlineSize"] = {"fixed": {"token": "panel.minimum"}}
+    details["overflow"] = overflow
     detail = yaml.safe_load((example / "profiles/review-detail.yaml").read_text(encoding="utf-8"))
     detail["body"]["groupDetails"][0]["description"] = "X" * 1000
     layout_path = tmp_path / "layout.yaml"; layout_path.write_text(yaml.safe_dump(layout, sort_keys=False), encoding="utf-8")
@@ -944,6 +952,7 @@ def test_detail_panel_unbreakable_overflow_is_completed_in_layout(tmp_path, over
     primitives = {item.scene_id: item for item in rendered.surface.primitives}
     placement_id = "group-detail:fw-team"
     if expected == "ellipsized":
+        assert primitives[placement_id].source_ref == "fw-team"
         assert any(line.endswith("…") for line in primitives[placement_id].text_layout.lines)
     else:
         assert placement_id not in primitives
@@ -979,14 +988,26 @@ def test_completed_detail_footer_preserves_the_annotation_successor_gap():
     annotations = slots["annotations"]
     footer_end = max(slots[slot_id][1] + slots[slot_id][3]
                      for slot_id in ("group-details", "milestones", "observations", "legend", "notes"))
-    assert annotations[1] == footer_end + 16
+    assert annotations[1] == pytest.approx(footer_end + 16)
+    scene_document = json.loads(serialize_scene(rendered.scene))
+    assert not [item for item in evaluate_scene_perceptibility(scene_document)
+                if item.severity == "error"]
     group_text = [item for item in rendered.surface.primitives if item.scene_id.startswith("group-detail:")]
     annotation_text = [item for item in rendered.surface.primitives if item.scene_id.startswith("annotation-text:")]
+    note_text = [item for item in rendered.surface.primitives if item.scene_id.startswith("note:")]
+
+    def overlaps(left, right):
+        return (left.bounds[0] < right.bounds[0] + right.bounds[2]
+                and right.bounds[0] < left.bounds[0] + left.bounds[2]
+                and left.bounds[1] < right.bounds[1] + right.bounds[3]
+                and right.bounds[1] < left.bounds[1] + left.bounds[3])
+
     assert all(not (left.bounds[0] < right.bounds[0] + right.bounds[2]
                     and right.bounds[0] < left.bounds[0] + left.bounds[2]
                     and left.bounds[1] < right.bounds[1] + right.bounds[3]
                     and right.bounds[1] < left.bounds[1] + left.bounds[3])
                for left in group_text for right in annotation_text)
+    assert all(not overlaps(annotation, note) for annotation in annotation_text for note in note_text)
 
 
 def test_unexpanded_detail_footer_leaves_annotation_successor_at_manifest_position(tmp_path):
@@ -1007,7 +1028,7 @@ def test_unexpanded_detail_footer_leaves_annotation_successor_at_manifest_positi
     annotations = slots["annotations"]
     footer_end = max(slots[slot_id][1] + slots[slot_id][3]
                      for slot_id in ("group-details", "milestones", "observations", "legend", "notes"))
-    assert annotations[1] == footer_end + 16
+    assert annotations[1] == pytest.approx(footer_end + 16)
 
 
 def test_project_notes_advance_by_their_completed_measured_block_extent():

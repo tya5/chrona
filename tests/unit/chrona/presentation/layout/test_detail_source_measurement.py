@@ -20,7 +20,7 @@ def test_detail_source_inputs_use_actual_entries_not_synthetic_panel_names():
     assert sources["group-details"].lines == ("Team: Description",)
     assert sources["milestones"].lines == ("Gate — 2026-01-02",)
     assert sources["observations"].lines == ("Supplier report",)
-    assert sources["observations"].table.cells[0].semantic_id == "tableVarianceBehind"
+    assert sources["observations"].table.cells[0].semantic_id == "observationCriticalCell"
     assert sources["observations"].item_count == 1
 
 
