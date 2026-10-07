@@ -644,7 +644,17 @@ class ThemeTokenView:
         # A rectangle or balloon may also declare a content inset (#991): padding between the box edge and its text.
         padding = (self._insets(value["contentInsetEm"], role, "annotationContainer/contentInsetEm")
                    if outline != "image" and "contentInsetEm" in value else None)
-        artwork = self._artwork(value.get("artwork"), role, outline, padding)
+        # `contentPaddingEm` (#1150) is measured from the artwork's inner edge, so swapping the glyph keeps it.
+        edge_padding = None
+        if "contentPaddingEm" in value:
+            if padding is not None or outline != "rectangle" or not value.get("artwork"):
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/annotationContainer/contentPaddingEm")
+            edge_padding = self._insets(value["contentPaddingEm"], role, "annotationContainer/contentPaddingEm")
+        artwork = self._artwork(value.get("artwork"), role, outline, padding if edge_padding is None else edge_padding)
+        if edge_padding is not None:
+            # The artwork's inner edge on a side is its widest fixed border there (slice inset x unit, in em).
+            padding = tuple(max(layer.slice_insets[side] * layer.unit_em for layer in artwork) + edge_padding[side]
+                            for side in range(4))  # type: ignore[assignment]
         inline_size = value.get("inlineSize", "content")
         if inline_size not in {"content", "fill"}:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/annotationContainer/inlineSize")
