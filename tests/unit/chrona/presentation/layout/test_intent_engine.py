@@ -1,11 +1,16 @@
 from decimal import ROUND_CEILING, Decimal
 from copy import deepcopy
+from itertools import product
 from pathlib import Path
 
 import pytest
 import yaml
 
-from chrona.presentation.layout.engine import (_unresolved_normal_flow_warnings,
+from chrona.presentation.layout.engine import (_content_block_capacity_witness,
+                                               _block_track_extent_witness,
+                                               _grid_track_inputs,
+                                               _resolve_flexible_tracks,
+                                               _unresolved_normal_flow_warnings,
                                                measure_natural_normal_flow_block,
                                                resolve_content_block_extent, solve_layout)
 from chrona.presentation.layout.model import LayoutError, Measurement
@@ -65,6 +70,434 @@ def test_content_requirement_reallocates_the_whole_normal_flow_profile():
     assert placed["table"].block + placed["table"].block_size == (
         placed["timeline"].block + placed["timeline"].block_size)
     assert placed["notes"].block >= placed["table"].block + placed["table"].block_size
+
+
+def _capacity_profile(row_tracks, children, *, column_tracks=None):
+    """Resolve a synthetic profile whose source track allocation is explicit and local."""
+    raw = {
+        "version": "chrona/layout-profile/v0.10", "id": "fractional-capacity",
+        "flowDirection": "horizontal", "dependencyNetworkFlowDirection": "horizontal",
+        "requiredThemeTokens": ["spacing.none"],
+        "reviewSurface": {
+            "rowDistribution": "pack",
+            "backgroundExtents": {"rowBand": "table", "groupBand": "timeline",
+                                  "groupHeaderBand": "both", "calendarClosed": "timeline"},
+            "annotationRouting": {"maxBends": 4, "maxDetourRatio": 2},
+        },
+    }
+    raw["root"] = {
+        "id": "root", "kind": "grid", "inlineSize": "fill", "blockSize": "fill",
+        "columnTracks": column_tracks or ["fill"], "rowTracks": row_tracks,
+        "gap": {"token": "spacing.none"}, "padding": {"token": "spacing.none"},
+        "alignItems": "stretch", "justifyContent": "start", "children": children,
+    }
+    return resolve_layout_profile(
+        raw, available_sources=SOURCES,
+        theme={"body": {"values": {"spacing.none": {"type": "number", "value": 0}}}},
+    )
+
+
+def _capacity_slot(node_id, source, row, *, block="fill"):
+    return {
+        "id": node_id, "kind": "slot", "source": source,
+        "inlineSize": "fill", "blockSize": block,
+        "place": {"inline": "start", "block": "start", "safety": "strict"},
+        "priority": "required", "overflow": "visible-overflow",
+        "cell": {"column": 1, "row": row},
+    }
+
+
+def _capacity_measurements(*sources):
+    return {source: m(100, 20) for source in sources}
+
+
+def _aspect_flow_profile(slot_sources):
+    children = [
+        {"id": f"source-{index}", "kind": "slot", "source": source,
+         "inlineSize": "content", "blockSize": "fill",
+         "place": {"inline": "start", "block": "stretch" if source == "timeline" else "start",
+                   "safety": "strict"},
+         "priority": "required", "overflow": "visible-overflow"}
+        for index, source in enumerate(slot_sources)
+    ]
+    root = {
+        "id": "root", "kind": "overlay", "inlineSize": "fill", "blockSize": "fill",
+        "padding": {"token": "spacing.none"},
+        "children": [{
+            "id": "flow", "kind": "flow", "inlineSize": {"aspectRatio": 1},
+            "blockSize": "fill", "itemMinInlineSize": 1,
+            "gap": {"token": "spacing.none"}, "padding": {"token": "spacing.none"},
+            "alignItems": "start", "justifyContent": "start", "children": children,
+        }],
+    }
+    raw = {
+        "version": "chrona/layout-profile/v0.10", "id": "coupled-aspect-flow",
+        "flowDirection": "horizontal", "dependencyNetworkFlowDirection": "horizontal",
+        "requiredThemeTokens": ["spacing.none"],
+        "reviewSurface": {
+            "rowDistribution": "pack",
+            "backgroundExtents": {"rowBand": "table", "groupBand": "timeline",
+                                  "groupHeaderBand": "both", "calendarClosed": "timeline"},
+            "annotationRouting": {"maxBends": 4, "maxDetourRatio": 2},
+        },
+        "root": root,
+    }
+    return resolve_layout_profile(
+        raw, available_sources=SOURCES,
+        theme={"body": {"values": {"spacing.none": {"type": "number", "value": 0}}}},
+    )
+
+
+def _source_blocks(manifest):
+    return {item.source: item.bounds.block_size for item in manifest.decisions if item.source}
+
+
+@pytest.mark.parametrize(("content_sized", "minimum_block"), [(False, 900), (True, 1)])
+def test_fractional_equal_tracks_reallocate_timeline_requirement_finitely(content_sized, minimum_block):
+    resolved = _capacity_profile(
+        [{"fr": 1}, {"fr": 1}],
+        [_capacity_slot("table", "table", 1), _capacity_slot("timeline", "timeline", 2)],
+    )
+    measurements = _capacity_measurements("table", "timeline")
+    if content_sized:
+        minimum_block = max(1, int(measure_natural_normal_flow_block(
+            resolved, viewport_inline=1600, measurements=measurements
+        ).to_integral_value(rounding=ROUND_CEILING)))
+    resolution = resolve_content_block_extent(
+        resolved, viewport_inline=1600, minimum_block=minimum_block,
+        measurements=measurements, required_blocks={"timeline": Decimal(1200)},
+        content_sized=content_sized,
+    )
+    assert resolution.extent == 2400
+    assert not resolution.short_sources
+    final = solve_layout(resolved, viewport_inline=1600, viewport_block=resolution.extent,
+                         measurements=measurements, content_sized=content_sized)
+    assert _source_blocks(final)["timeline"] == Decimal(1200)
+
+
+def test_weighted_flexible_tracks_account_for_the_timeline_share():
+    resolved = _capacity_profile(
+        [{"fr": 3}, {"fr": 1}],
+        [_capacity_slot("table", "table", 1), _capacity_slot("timeline", "timeline", 2)],
+    )
+    measurements = _capacity_measurements("table", "timeline")
+    resolution = resolve_content_block_extent(
+        resolved, viewport_inline=1600, minimum_block=900, measurements=measurements,
+        required_blocks={"timeline": Decimal(600)},
+    )
+    assert resolution.extent == 2400
+    assert not resolution.short_sources
+    final = solve_layout(resolved, viewport_inline=1600, viewport_block=resolution.extent,
+                         measurements=measurements)
+    assert _source_blocks(final)["timeline"] == Decimal(600)
+
+
+def test_minmax_floor_and_fill_track_reallocate_after_the_floor():
+    resolved = _capacity_profile(
+        ["fill", {"minmax": {"min": {"fixed": 500}, "max": "fill"}}],
+        [_capacity_slot("table", "table", 1), _capacity_slot("timeline", "timeline", 2)],
+    )
+    measurements = _capacity_measurements("table", "timeline")
+    resolution = resolve_content_block_extent(
+        resolved, viewport_inline=1600, minimum_block=900, measurements=measurements,
+        required_blocks={"timeline": Decimal(1200)},
+    )
+    assert resolution.extent == 2400
+    assert not resolution.short_sources
+    final = solve_layout(resolved, viewport_inline=1600, viewport_block=resolution.extent,
+                         measurements=measurements)
+    assert _source_blocks(final)["timeline"] == Decimal(1200)
+
+
+def test_nested_fractional_tracks_multiply_the_required_viewport_capacity():
+    nested = {
+        "id": "inner", "kind": "grid", "inlineSize": "fill", "blockSize": "fill",
+        "columnTracks": ["fill"], "rowTracks": [{"fr": 1}, {"fr": 1}],
+        "gap": {"token": "spacing.none"}, "padding": {"token": "spacing.none"},
+        "alignItems": "stretch", "justifyContent": "start",
+        "cell": {"column": 1, "row": 2},
+        "children": [_capacity_slot("timeline", "timeline", 1),
+                     _capacity_slot("notes", "notes", 2)],
+    }
+    table = _capacity_slot("table", "table", 1)
+    table["cell"] = {"column": 1, "row": 1}
+    resolved = _capacity_profile([{"fr": 1}, {"fr": 1}], [table, nested])
+    measurements = _capacity_measurements("table", "timeline", "notes")
+    resolution = resolve_content_block_extent(
+        resolved, viewport_inline=1600, minimum_block=900, measurements=measurements,
+        required_blocks={"timeline": Decimal(600)},
+    )
+    assert resolution.extent == 2400
+    assert not resolution.short_sources
+    final = solve_layout(resolved, viewport_inline=1600, viewport_block=resolution.extent,
+                         measurements=measurements)
+    assert _source_blocks(final)["timeline"] == Decimal(600)
+
+
+def test_fixed_capped_host_shortage_matches_returned_manifest_allocation():
+    resolved = _capacity_profile(
+        [{"minmax": {"min": {"fixed": 300}, "max": {"fixed": 500}}}, "fill"],
+        [_capacity_slot("timeline", "timeline", 1), _capacity_slot("table", "table", 2)],
+    )
+    measurements = _capacity_measurements("table", "timeline")
+    resolution = resolve_content_block_extent(
+        resolved, viewport_inline=1600, minimum_block=900, measurements=measurements,
+        required_blocks={"timeline": Decimal(600)},
+    )
+    returned = solve_layout(resolved, viewport_inline=1600, viewport_block=resolution.extent,
+                            measurements=measurements)
+    returned_allocation = _source_blocks(returned)["timeline"]
+    assert resolution.extent == 900
+    assert resolution.short_sources
+    assert resolution.short_sources[0].allocated_block == returned_allocation == Decimal(500)
+
+
+def test_candidate_demand_uses_each_native_manifest_not_the_requested_sample():
+    resolved = _capacity_profile(
+        [{"fr": 1}, {"fr": 1}],
+        [_capacity_slot("table", "table", 1), _capacity_slot("timeline", "timeline", 2)],
+    )
+    measurements = _capacity_measurements("table", "timeline")
+    evaluated = []
+
+    def demand(manifest):
+        available = _source_blocks(manifest)["timeline"]
+        required = Decimal(100) if available < Decimal(75) else Decimal(60)
+        evaluated.append((manifest.viewport.block_size, available, required))
+        return {"timeline": required}
+
+    result = resolve_content_block_extent(
+        resolved, viewport_inline=1600, minimum_block=100, measurements=measurements,
+        required_blocks=demand)
+    assert result.extent == 150
+    assert not result.short_sources
+    assert evaluated[0] == (Decimal(100), Decimal(50), Decimal(100))
+    assert any(required == Decimal(60) for _, _, required in evaluated)
+    for extent in (149, 150):
+        manifest = solve_layout(resolved, viewport_inline=1600, viewport_block=extent,
+                                measurements=measurements)
+        assert (_source_blocks(manifest)["timeline"] >= demand(manifest)["timeline"]) == (extent == 150)
+
+
+def test_candidate_demand_keeps_shortage_evidence_from_returned_capped_manifest():
+    resolved = _capacity_profile(
+        [{"minmax": {"min": {"fixed": 300}, "max": {"fixed": 500}}}, "fill"],
+        [_capacity_slot("timeline", "timeline", 1), _capacity_slot("table", "table", 2)],
+    )
+    measurements = _capacity_measurements("table", "timeline")
+
+    def demand(manifest):
+        return {"timeline": _source_blocks(manifest)["timeline"] + Decimal(100)}
+
+    result = resolve_content_block_extent(
+        resolved, viewport_inline=1600, minimum_block=900, measurements=measurements,
+        required_blocks=demand)
+    assert result.extent == 900
+    assert [(item.required_block, item.allocated_block) for item in result.short_sources] == [
+        (Decimal(600), Decimal(500))]
+
+
+def test_constant_candidate_function_matches_constant_map():
+    required = {"timeline": Decimal(850)}
+    args = dict(viewport_inline=1600, minimum_block=900, measurements=MEASUREMENTS)
+    assert resolve_content_block_extent(profile(), required_blocks=lambda manifest: required, **args) == (
+        resolve_content_block_extent(profile(), required_blocks=required, **args))
+
+
+def test_candidate_demand_reports_missing_source_at_the_existing_pointer():
+    with pytest.raises(LayoutError) as caught:
+        resolve_content_block_extent(
+            profile(), viewport_inline=1600, minimum_block=900, measurements=MEASUREMENTS,
+            required_blocks=lambda manifest: {"missing": Decimal(2)})
+    assert caught.value.diagnostic_id == "E_LAYOUT_DRAFT_AUTO_UNSUPPORTED"
+    assert caught.value.path == "/layoutManifest/sources/missing"
+
+
+@pytest.mark.parametrize(("tracks", "span", "required", "expected"), [
+    ([{"fr": 3}], 1, Decimal(1), 2),
+    ([{"fr": 1}, {"fr": 1}, {"fr": 1}], 3, Decimal(35), 35),
+])
+def test_capacity_search_verifies_native_decimal_boundary_instead_of_false_fallback(
+        tracks, span, required, expected):
+    slot = _capacity_slot("timeline", "timeline", 1)
+    slot["cell"]["rowSpan"] = span
+    resolved = _capacity_profile(tracks, [slot])
+    measurements = _capacity_measurements("timeline")
+    result = resolve_content_block_extent(
+        resolved, viewport_inline=1600, minimum_block=1, measurements=measurements,
+        required_blocks={"timeline": required},
+    )
+    assert result.extent == expected
+    assert not result.short_sources
+    assert _source_blocks(solve_layout(
+        resolved, viewport_inline=1600, viewport_block=expected,
+        measurements=measurements))["timeline"] >= required
+    assert _source_blocks(solve_layout(
+        resolved, viewport_inline=1600, viewport_block=expected - 1,
+        measurements=measurements))["timeline"] < required
+
+
+def test_multiple_required_sources_report_shortfalls_only_from_returned_allocation():
+    resolved = _capacity_profile(
+        ["fill", {"fixed": 200}],
+        [_capacity_slot("timeline", "timeline", 1), _capacity_slot("table", "table", 2)],
+    )
+    measurements = _capacity_measurements("table", "timeline")
+    result = resolve_content_block_extent(
+        resolved, viewport_inline=1600, minimum_block=900, measurements=measurements,
+        required_blocks={"timeline": Decimal(1200), "table": Decimal(300)},
+    )
+    assert result.extent == 900
+    returned = _source_blocks(solve_layout(
+        resolved, viewport_inline=1600, viewport_block=result.extent, measurements=measurements))
+    assert [(item.source_id, item.allocated_block) for item in result.short_sources] == [
+        ("table", returned["table"]), ("timeline", returned["timeline"])]
+    assert returned == {"table": Decimal(200), "timeline": Decimal(700)}
+
+
+def test_capacity_witness_keeps_irrelevant_capped_sibling_out_of_required_subtree():
+    resolved = _capacity_profile(
+        [{"fr": 1}, {"minmax": {"min": {"fixed": 300}, "max": {"fixed": 500}}}],
+        [_capacity_slot("timeline", "timeline", 1), _capacity_slot("table", "table", 2)],
+    )
+    measurements = _capacity_measurements("table", "timeline")
+    manifest = solve_layout(resolved, viewport_inline=1600, viewport_block=900, measurements=measurements)
+    witness = _content_block_capacity_witness(
+        resolved, manifest=manifest, measurements=measurements,
+        required_blocks={"timeline": Decimal(1200)},
+    )
+    assert witness == Decimal(1700)
+
+
+def test_capacity_witness_propagates_any_required_capped_sibling_as_unwitnessable():
+    resolved = _capacity_profile(
+        [{"fr": 1}, {"minmax": {"min": {"fixed": 300}, "max": {"fixed": 500}}}],
+        [_capacity_slot("timeline", "timeline", 1), _capacity_slot("table", "table", 2)],
+    )
+    measurements = _capacity_measurements("table", "timeline")
+    manifest = solve_layout(resolved, viewport_inline=1600, viewport_block=900, measurements=measurements)
+    witness = _content_block_capacity_witness(
+        resolved, manifest=manifest, measurements=measurements,
+        required_blocks={"timeline": Decimal(1200), "table": Decimal(600)},
+    )
+    assert witness is None
+
+
+def test_capacity_witness_aggregates_demand_across_spanned_grid_tracks():
+    spanning = _capacity_slot("timeline", "timeline", 1)
+    spanning["cell"] = {"column": 1, "row": 1, "rowSpan": 2}
+    resolved = _capacity_profile([{"fr": 1}, {"fr": 1}], [spanning])
+    measurements = _capacity_measurements("timeline")
+    manifest = solve_layout(resolved, viewport_inline=1600, viewport_block=900, measurements=measurements)
+    witness = _content_block_capacity_witness(
+        resolved, manifest=manifest, measurements=measurements,
+        required_blocks={"timeline": Decimal(1800)},
+    )
+    assert witness == Decimal(1800)
+
+
+def test_capacity_witness_span_handles_weighted_minmax_track_floor():
+    spanning = _capacity_slot("timeline", "timeline", 1)
+    spanning["cell"] = {"column": 1, "row": 1, "rowSpan": 2}
+    resolved = _capacity_profile(
+        [
+            {"minmax": {"min": {"fixed": 500}, "max": {"fr": 2}}},
+            {"minmax": {"min": {"fixed": 0}, "max": {"fr": 1}}},
+        ],
+        [spanning],
+    )
+    measurements = _capacity_measurements("timeline")
+    manifest = solve_layout(resolved, viewport_inline=1600, viewport_block=900, measurements=measurements)
+    witness = _content_block_capacity_witness(
+        resolved, manifest=manifest, measurements=measurements,
+        required_blocks={"timeline": Decimal(1800)},
+    )
+    assert witness == Decimal(2300)
+    final = solve_layout(resolved, viewport_inline=1600, viewport_block=2300, measurements=measurements)
+    assert _source_blocks(final)["timeline"] >= Decimal(1800)
+
+
+def test_capacity_inverse_matches_native_tracks_across_floors_caps_weights_and_spans():
+    choices = [(Decimal(low), None if high is None else Decimal(high), Decimal(weight))
+               for low, high, weight in [(0, None, 1), (0, None, 3), (10, None, 1),
+                                         (0, 20, 1), (10, 20, 2), (15, 15, 0)]]
+    gap, padding = Decimal(2), Decimal(6)
+    for count in (1, 2, 3):
+        for bases in product(choices, repeat=count):
+            for start in range(count):
+                for end in range(start + 1, count + 1):
+                    indices = tuple(range(start, end))
+                    for required in map(Decimal, (1, 20, 35, 100)):
+                        witness = _block_track_extent_witness(
+                            bases=list(bases), constraints=((indices, required),),
+                            gap=gap, padding=padding, current=Decimal(0))
+                        extent = Decimal(10000) if witness is None else Decimal(int(witness) + 1)
+                        allocated = _resolve_flexible_tracks(
+                            list(bases), extent - padding - gap * (count - 1))
+                        available = sum((allocated[index] for index in indices), Decimal(0))
+                        available += gap * (len(indices) - 1)
+                        assert (available < required) if witness is None else (available >= required)
+
+
+def test_aspect_ratio_flow_resolver_selects_first_height_that_stretches_required_slot():
+    resolved = _aspect_flow_profile(("timeline", "notes"))
+    measurements = {"source-0": m(100, 20), "source-1": m(100, 100)}
+
+    resolution = resolve_content_block_extent(
+        resolved, viewport_inline=400, minimum_block=100, measurements=measurements,
+        required_blocks={"timeline": Decimal(80)},
+    )
+
+    assert resolution.extent == 200
+    manifest = solve_layout(resolved, viewport_inline=400, viewport_block=resolution.extent,
+                            measurements=measurements)
+    assert _source_blocks(manifest)["timeline"] == Decimal(100)
+
+
+def test_aspect_ratio_flow_required_fit_predicate_is_non_monotone():
+    resolved = _aspect_flow_profile(("table", "legend", "notes", "timeline"))
+    measurements = {
+        "source-0": m(100, 20), "source-1": m(100, 20),
+        "source-2": m(100, 100), "source-3": m(100, 20),
+    }
+    allocations = {}
+    for extent in (200, 300, 400):
+        manifest = solve_layout(resolved, viewport_inline=400, viewport_block=extent,
+                                measurements=measurements)
+        allocations[extent] = _source_blocks(manifest)["timeline"]
+
+    assert allocations == {200: Decimal(100), 300: Decimal(20), 400: Decimal(100)}
+    assert allocations[200] >= Decimal(80)
+    assert allocations[300] < Decimal(80)
+    assert allocations[400] >= Decimal(80)
+    resolution = resolve_content_block_extent(
+        resolved, viewport_inline=400, minimum_block=100, measurements=measurements,
+        required_blocks={"timeline": Decimal(80)},
+    )
+    assert resolution.extent == 200
+
+
+def test_grid_track_inputs_match_native_column_and_content_sized_row_measurement():
+    children = [
+        {"id": "first", "kind": "slot", "source": "table", "inlineSize": "fill",
+         "blockSize": "fill", "place": {"inline": "start", "block": "start", "safety": "strict"},
+         "priority": "required", "overflow": "visible-overflow", "cell": {"column": 1, "row": 1}},
+        {"id": "second", "kind": "slot", "source": "timeline", "inlineSize": "fill",
+         "blockSize": "fill", "place": {"inline": "start", "block": "start", "safety": "strict"},
+         "priority": "required", "overflow": "visible-overflow", "cell": {"column": 2, "row": 1}},
+    ]
+    resolved = _capacity_profile(["content"], children, column_tracks=[{"fr": 1}, {"fr": 1}])
+    measurements = {"first": m(100, 20), "second": m(100, 20)}
+    manifest = solve_layout(resolved, viewport_inline=1600, viewport_block=900,
+                            measurements=measurements, content_sized=True)
+    bounds = decisions(manifest)
+    column_sizes, row_measures = _grid_track_inputs(
+        resolved.profile["root"], "/root", inline_size=bounds["root"].inline_size,
+        measurements=measurements, profile=resolved, content_sized=True,
+    )
+    assert column_sizes == [bounds["first"].inline_size, bounds["second"].inline_size]
+    assert row_measures[0] is not None
+    assert row_measures[0].preferred_block >= measurements["first"].preferred_block
 
 
 def test_auto_content_sizing_uses_positive_floor_and_rounds_deterministically():

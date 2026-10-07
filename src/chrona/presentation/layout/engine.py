@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from decimal import ROUND_CEILING, Decimal, getcontext
+from decimal import ROUND_CEILING, Decimal, getcontext, localcontext
+from fractions import Fraction
 from typing import Any, Callable, Mapping
 
 from chrona.presentation.layout.model import (
@@ -360,6 +361,42 @@ def _cross_position(align: str, start: Decimal, available: Decimal, size: Decima
     return start, size
 
 
+def _grid_track_inputs(node: Mapping[str, Any], path: str, *, inline_size: Decimal,
+                      measurements: Mapping[str, Measurement], profile: ResolvedLayoutProfile,
+                      content_sized: bool) -> tuple[list[Decimal], list[Measurement | None]]:
+    """Resolve native grid columns and row-track measurements from one inline allocation."""
+    columns, rows = node["columnTracks"], node["rowTracks"]
+    gap = _gap(profile, node, path)
+    active = _active_children(node, measurements)
+    column_measures: list[Measurement | None] = [None] * len(columns)
+    row_measures: list[Measurement | None] = [None] * len(rows)
+    child_measures: dict[int, Measurement] = {}
+    for index, child in active:
+        measure = _measure_node(child, f"{path}/children/{index}", measurements, profile)
+        child_measures[index] = measure
+        cell = child["cell"]
+        if cell.get("columnSpan", 1) == 1:
+            column_measures[cell["column"] - 1] = measure
+    column_sizes = _allocate(
+        columns, inline_size - gap * (len(columns) - 1), column_measures,
+        axis="inline", profile=profile,
+        paths=[f"{path}/columnTracks/{index}" for index in range(len(columns))],
+    )
+    for index, child in active:
+        cell = child["cell"]
+        if cell.get("rowSpan", 1) != 1:
+            continue
+        measure = child_measures[index]
+        if content_sized:
+            column, span = cell["column"] - 1, cell.get("columnSpan", 1)
+            child_inline = sum(column_sizes[column:column + span], ZERO) + gap * (span - 1)
+            natural_block = _natural_child_block(child, f"{path}/children/{index}", child_inline,
+                                                 measurements, profile)
+            measure = _block_measurement(measure, natural_block)
+        row_measures[cell["row"] - 1] = measure
+    return column_sizes, row_measures
+
+
 class _Arranger:
     def __init__(self, profile: ResolvedLayoutProfile, measurements: Mapping[str, Measurement], *,
                  content_sized: bool = False):
@@ -483,24 +520,9 @@ class _Arranger:
     def _grid(self, node: Mapping[str, Any], path: str, rect: Rect) -> None:
         inline, block, inline_size, block_size = self._content(node, path, rect); gap = _gap(self.profile, node, path)
         cols, rows = node["columnTracks"], node["rowTracks"]
-        col_measures: list[Measurement | None] = [None] * len(cols); row_measures: list[Measurement | None] = [None] * len(rows)
-        child_measures: dict[int, Measurement] = {}
-        for i, child in _active_children(node, self.measurements):
-            measure = _measure_node(child, f"{path}/children/{i}", self.measurements, self.profile); child_measures[i] = measure; cell=child["cell"]
-            if cell.get("columnSpan",1)==1: col_measures[cell["column"]-1]=measure
-        col_sizes=_allocate(cols,inline_size-gap*(len(cols)-1),col_measures,axis="inline",profile=self.profile,paths=[f"{path}/columnTracks/{i}" for i in range(len(cols))])
-        for i, child in _active_children(node, self.measurements):
-            cell = child["cell"]
-            if cell.get("rowSpan", 1) != 1:
-                continue
-            measure = child_measures[i]
-            if self.content_sized:
-                column, span = cell["column"] - 1, cell.get("columnSpan", 1)
-                child_inline = sum(col_sizes[column:column + span], ZERO) + gap * (span - 1)
-                natural_block = _natural_child_block(child, f"{path}/children/{i}", child_inline,
-                                                     self.measurements, self.profile)
-                measure = _block_measurement(measure, natural_block)
-            row_measures[cell["row"] - 1] = measure
+        col_sizes, row_measures = _grid_track_inputs(
+            node, path, inline_size=inline_size, measurements=self.measurements,
+            profile=self.profile, content_sized=self.content_sized)
         row_sizes=_allocate(rows,block_size-gap*(len(rows)-1),row_measures,axis="block",profile=self.profile,paths=[f"{path}/rowTracks/{i}" for i in range(len(rows))])
         required_inline = sum(col_sizes, ZERO) + gap * max(0, len(cols)-1)
         required_block = sum(row_sizes, ZERO) + gap * max(0, len(rows)-1)
@@ -793,86 +815,299 @@ class ContentBlockResolution:
             raise ValueError("E_LAYOUT_CONTENT_RESOLUTION_INVALID")
 
 
+def _track_unit_for_requirement(bases: list[tuple[Decimal, Decimal | None, Decimal]],
+                                indices: tuple[int, ...], required: Decimal,
+                                gap: Decimal) -> Fraction | None:
+    """Return a sufficient common fr unit for one selected track span, or prove it capped."""
+    track_required = max(Fraction(0), Fraction(required) - Fraction(gap) * max(0, len(indices) - 1))
+    fixed = Fraction(0)
+    minimum = Fraction(0)
+    capacity = Fraction(0)
+    unbounded = False
+    events: dict[Fraction, list[tuple[str, Fraction]]] = {}
+    for index in indices:
+        raw_low, raw_high, raw_weight = bases[index]
+        low, weight = Fraction(raw_low), Fraction(raw_weight)
+        high = None if raw_high is None else Fraction(raw_high)
+        if weight <= ZERO:
+            amount = high if high is not None else low
+            fixed += amount
+            capacity += amount
+            continue
+        minimum += low
+        capacity += high if high is not None else low
+        if high is None:
+            unbounded = True
+        elif high < low:
+            return None
+        threshold = low / weight
+        if high is None or high > low:
+            events.setdefault(threshold, []).append(("start", weight))
+        if high is not None and high > low:
+            events.setdefault(high / weight, []).append(("stop", weight))
+    if not unbounded and capacity < track_required:
+        return None
+    value = fixed + minimum
+    if value >= track_required:
+        return Fraction(0)
+    active = Fraction(0)
+    cursor = Fraction(0)
+    for point in sorted(events):
+        if point > cursor and active > ZERO:
+            next_value = value + active * (point - cursor)
+            if next_value >= track_required:
+                return cursor + (track_required - value) / active
+            value = next_value
+        cursor = point
+        for kind, weight in events[point]:
+            if kind == "stop":
+                active -= weight
+        for kind, weight in events[point]:
+            if kind == "start":
+                active += weight
+    if active > ZERO:
+        return cursor + (track_required - value) / active
+    # A finite maximum can still satisfy a multi-track span after every track caps.
+    if not unbounded and value >= track_required:
+        return cursor
+    return None
+
+
+def _block_track_extent_witness(*, bases: list[tuple[Decimal, Decimal | None, Decimal]],
+                                constraints: tuple[tuple[tuple[int, ...], Decimal], ...],
+                                gap: Decimal, padding: Decimal, current: Decimal) -> Decimal | None:
+    """Give a conservative finite container extent for selected direct block tracks."""
+    unit = Fraction(0)
+    for indices, required in constraints:
+        selected = _track_unit_for_requirement(bases, indices, required, gap)
+        if selected is None:
+            return None
+        unit = max(unit, selected)
+    if not constraints:
+        return current
+    fixed = sum((Fraction(high if high is not None else low)
+                 for low, high, weight in bases if weight <= ZERO), Fraction(0))
+    flex_minima = sum((Fraction(low) for low, _high, weight in bases if weight > ZERO), Fraction(0))
+    total_weight = sum((Fraction(weight) for _low, _high, weight in bases if weight > ZERO), Fraction(0))
+    tracks = fixed + flex_minima + total_weight * unit + Fraction(gap) * max(0, len(bases) - 1)
+    extent = max(Fraction(current), tracks + Fraction(padding))
+    # Preserve an upper bound when converting the exact capacity inverse back
+    # to the native allocator's Decimal representation.
+    with localcontext() as context:
+        context.rounding = ROUND_CEILING
+        return Decimal(extent.numerator) / Decimal(extent.denominator)
+
+
+def _content_block_capacity_witness(profile: ResolvedLayoutProfile, *, manifest: LayoutManifest,
+                                    measurements: Mapping[str, Measurement],
+                                    required_blocks: Mapping[str, Decimal],
+                                    content_sized: bool = False) -> Decimal | None:
+    """Conservatively propagate constant source block needs back through the native allocator tree.
+
+    This is an upper-bound witness only. Callers must solve the unchanged profile at the returned
+    extent and verify every requested source allocation before treating it as a fitting bound.
+    """
+    if not required_blocks:
+        return manifest.viewport.block_size
+    decisions = {item.node_id: item for item in manifest.decisions}
+    slots_by_source: dict[str, str] = {}
+
+    def index_nodes(node: Mapping[str, Any]) -> None:
+        node_id = str(node["id"])
+        if node["kind"] == "slot":
+            source = str(node["source"])
+            if source in slots_by_source:
+                slots_by_source[source] = ""
+            else:
+                slots_by_source[source] = node_id
+        for child in node.get("children", ()):
+            index_nodes(child)
+
+    root = profile.profile["root"]
+    index_nodes(root)
+    if any(source not in slots_by_source or not slots_by_source[source]
+           or slots_by_source[source] not in decisions for source in required_blocks):
+        return None
+    demand_by_node = {slots_by_source[source]: _d(required)
+                      for source, required in required_blocks.items()}
+
+    def measured(node: Mapping[str, Any], path: str) -> Measurement:
+        return _measure_node(node, path, measurements, profile)
+
+    def current_size(node: Mapping[str, Any]) -> Decimal | None:
+        decision = decisions.get(str(node["id"]))
+        return decision.bounds.block_size if decision is not None else None
+
+    def visit(node: Mapping[str, Any], path: str) -> Decimal | None:
+        node_id = str(node["id"])
+        current = current_size(node)
+        if current is None:
+            return None
+        if node["kind"] == "slot":
+            required = demand_by_node.get(node_id)
+            return max(current, required) if required is not None else ZERO
+        children = _active_children(node, measurements)
+        child_needs: dict[int, Decimal] = {}
+        for index, child in children:
+            need = visit(child, f"{path}/children/{index}")
+            if need is None:
+                return None
+            if need > ZERO:
+                child_needs[index] = need
+        if not child_needs:
+            return ZERO
+        kind = node["kind"]
+        i0, i1, b0, b1 = _padding(profile, node, path)
+        block_padding = b0 + b1
+        if kind == "column":
+            bases = []
+            constraints = []
+            for offset, (index, child) in enumerate(children):
+                child_path = f"{path}/children/{index}"
+                child_measure = measured(child, child_path)
+                spec = child["blockSize"]
+                if isinstance(spec, dict) and "aspectRatio" in spec:
+                    parent_decision = decisions[node_id]
+                    i0_parent, i1_parent, _b0, _b1 = _padding(profile, node, path)
+                    cross = max(ZERO, parent_decision.bounds.inline_size - i0_parent - i1_parent)
+                    spec = {"fixed": cross / _d(spec["aspectRatio"])}
+                bases.append(_spec_base(spec, axis="block", measurement=child_measure,
+                                        profile=profile, path=child_path + "/blockSize"))
+                if index in child_needs:
+                    constraints.append(((offset,), child_needs[index]))
+            target = _block_track_extent_witness(
+                bases=bases, constraints=tuple(constraints), gap=_gap(profile, node, path),
+                padding=block_padding, current=max(ZERO, current - block_padding))
+            return None if target is None else max(current, target)
+        if kind == "grid":
+            rows = node["rowTracks"]
+            indexed_children = dict(children)
+            col_sizes, row_measures = _grid_track_inputs(
+                node, path,
+                inline_size=max(ZERO, decisions[node_id].bounds.inline_size - i0 - i1),
+                measurements=measurements, profile=profile, content_sized=content_sized)
+            bases = [_spec_base(spec, axis="block", measurement=row_measures[index], profile=profile,
+                                path=f"{path}/rowTracks/{index}")
+                     for index, spec in enumerate(rows)]
+            constraints = []
+            for index in child_needs:
+                child = indexed_children[index]
+                cell = child["cell"]
+                start = cell["row"] - 1
+                span = cell.get("rowSpan", 1)
+                constraints.append((tuple(range(start, start + span)), child_needs[index]))
+            target = _block_track_extent_witness(
+                bases=bases, constraints=tuple(constraints), gap=_gap(profile, node, path),
+                padding=block_padding, current=max(ZERO, current - block_padding))
+            return None if target is None else max(current, target)
+        if kind in {"row", "overlay"}:
+            inner = max(ZERO, current - block_padding)
+            needed = inner
+            active_by_index = dict(children)
+            for index, required in child_needs.items():
+                child = active_by_index[index]
+                child_path = f"{path}/children/{index}"
+                child_decision = decisions.get(str(child["id"]))
+                if child_decision is None:
+                    return None
+                if child["kind"] == "slot" and child_decision.bounds.block_size >= required:
+                    continue
+                spec = child["blockSize"]
+                measure = measured(child, child_path)
+                base = _spec_base(spec, axis="block", measurement=measure, profile=profile,
+                                  path=child_path + "/blockSize")
+                if isinstance(spec, dict) and "aspectRatio" in spec:
+                    capacity = child_decision.bounds.inline_size / _d(spec["aspectRatio"])
+                    if required > capacity:
+                        return None
+                    continue
+                if base[2] <= ZERO:
+                    capacity = base[1] if base[1] is not None else base[0]
+                    if required > capacity:
+                        return None
+                    continue
+                default_align = node["alignItems"] if kind == "row" else "start"
+                align = child.get("place", {}).get("block", default_align)
+                if base[1] is not None and align == "stretch" and required > base[1]:
+                    return None
+                needed = max(needed, required, base[0])
+            return max(current, needed + block_padding)
+        if kind == "flow":
+            active_by_index = dict(children)
+            for index, required in child_needs.items():
+                child = active_by_index[index]
+                child_bounds = current_size(child)
+                if child_bounds is None or required > child_bounds:
+                    return None
+            return current
+        return None
+
+    return visit(root, "/root")
+
+
 def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inline: int,
                                  minimum_block: int, measurements: Mapping[str, Measurement],
-                                 required_blocks: Mapping[str, Decimal],
+                                 required_blocks: Mapping[str, Decimal] | Callable[[LayoutManifest], Mapping[str, Decimal]],
                                  content_sized: bool = False) -> ContentBlockResolution:
-    """Resolve measured content hosts against one coherent finite profile.
+    """Verify a native allocation-capacity witness, then choose its least integral extent.
 
-    The probe is a normal finite arrangement.  Each declared content
-    requirement contributes only its deficit from its allocated slot, so the
-    final value preserves profile chrome and the fixed inline extent. Both
-    fixed and Draft-auto requests use this same Layout decision; the requested
-    block extent is a minimum, not a clipping boundary. Draft auto supplies
-    its positive one-unit sizing floor here; finite requests supply their
-    requested extent. The synthetic Context seed is not inferred here.
+    The requested extent remains the finite minimum (or the caller's measured
+    auto floor). A speculative witness never becomes output unless the unchanged
+    whole profile satisfies every source and, for auto, normal-flow content.
+    Shortage evidence always describes the manifest at the returned extent.
+    A demand function is pure and measures that candidate's native inputs;
+    the engine neither carries surface geometry nor reuses another candidate's demand.
     """
     if minimum_block <= 0:
         raise LayoutError("E_LAYOUT_CONSTRAINT_CONTRADICTORY", "/viewport")
-    requested = solve_layout(profile, viewport_inline=viewport_inline,
-                             viewport_block=minimum_block, measurements=measurements,
-                             content_sized=content_sized)
-    requested_allocated = {item.source: item.bounds.block_size for item in requested.decisions if item.source}
-    missing = sorted(set(required_blocks) - set(requested_allocated))
-    if missing:
-        raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/layoutManifest/sources/" + missing[0])
-    if (all(requested_allocated[source] >= required for source, required in required_blocks.items())
-            and (not content_sized or not _unresolved_normal_flow_warnings(profile, requested))):
+
+    def arrange(extent: int) -> LayoutManifest:
+        return solve_layout(profile, viewport_inline=viewport_inline,
+                            viewport_block=extent, measurements=measurements,
+                            content_sized=content_sized)
+
+    def allocations(manifest: LayoutManifest) -> dict[str, Decimal]:
+        return {item.source: item.bounds.block_size for item in manifest.decisions if item.source}
+
+    def requirements(manifest: LayoutManifest) -> Mapping[str, Decimal]:
+        required = required_blocks(manifest) if callable(required_blocks) else required_blocks
+        missing = sorted(set(required) - set(allocations(manifest)))
+        if missing:
+            raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/layoutManifest/sources/" + missing[0])
+        return required
+
+    def satisfies(manifest: LayoutManifest, required: Mapping[str, Decimal] | None = None) -> bool:
+        allocated = allocations(manifest)
+        required = requirements(manifest) if required is None else required
+        return (all(allocated[source] >= block for source, block in required.items())
+                and (not content_sized or not _unresolved_normal_flow_warnings(profile, manifest)))
+
+    requested = arrange(minimum_block)
+    requested_allocated = allocations(requested)
+    requested_required = requirements(requested)
+    if satisfies(requested, requested_required):
         return ContentBlockResolution(minimum_block)
-    if not content_sized:
-        # Finite Draft and immutable requests preserve #468's requested
-        # minimum and source-deficit reallocation behavior exactly.
-        probe_block = max(_d(minimum_block), max(required_blocks.values(), default=ZERO) + _d(minimum_block))
-        manifest = solve_layout(profile, viewport_inline=viewport_inline,
-                                viewport_block=probe_block, measurements=measurements)
-        allocated = {item.source: item.bounds.block_size for item in manifest.decisions if item.source}
-        extent = max((_d(minimum_block), *(probe_block - allocated[source] + required
-                                           for source, required in required_blocks.items())))
-        candidate = int(extent.to_integral_value(rounding=ROUND_CEILING))
-        final = solve_layout(profile, viewport_inline=viewport_inline,
-                             viewport_block=candidate, measurements=measurements)
-        final_allocated = {item.source: item.bounds.block_size for item in final.decisions if item.source}
-        short_sources = tuple(
-            ShortContentSource(source, required_blocks[source], final_allocated[source])
-            for source in sorted(required_blocks)
-            if final_allocated[source] < required_blocks[source]
-        )
-        return ContentBlockResolution(minimum_block, short_sources) if short_sources else ContentBlockResolution(candidate)
 
-    # The intrinsic whole-profile measurement supplies the auto floor. Add
-    # declared content needs on top, then verify the final complete manifest.
-    probe_block = max(_d(minimum_block), max(required_blocks.values(), default=ZERO) + _d(minimum_block))
-    manifest = solve_layout(profile, viewport_inline=viewport_inline,
-                            viewport_block=probe_block, measurements=measurements,
-                            content_sized=True)
-    allocated = {item.source: item.bounds.block_size for item in manifest.decisions if item.source}
-    probe_satisfied = (all(allocated[source] >= required for source, required in required_blocks.items())
-                       and not _unresolved_normal_flow_warnings(profile, manifest))
-    if not probe_satisfied:
-        short_sources = tuple(
-            ShortContentSource(source, required_blocks[source], requested_allocated[source])
-            for source in sorted(required_blocks)
-            if requested_allocated[source] < required_blocks[source]
-        )
-        return ContentBlockResolution(minimum_block, short_sources)
-    extent = max((_d(minimum_block), *(probe_block - allocated[source] + required
-                                    for source, required in required_blocks.items())))
-    candidate = int(extent.to_integral_value(rounding=ROUND_CEILING))
+    witness = _content_block_capacity_witness(
+        profile, manifest=requested, measurements=measurements,
+        required_blocks=requested_required, content_sized=content_sized,
+    )
+    # A strict integral upper witness avoids a native Decimal fr division
+    # landing just below an exact capacity boundary. Bisection still tests
+    # that boundary and returns it whenever the unchanged allocator fits.
+    high = minimum_block if witness is None else max(minimum_block, int(witness) + 1)
+    if high == minimum_block or not satisfies(arrange(high)):
+        return ContentBlockResolution(minimum_block, tuple(
+            ShortContentSource(source, requested_required[source], requested_allocated[source])
+            for source in sorted(requested_required)
+            if requested_allocated[source] < requested_required[source]
+        ))
 
-    def satisfies(extent: int) -> bool:
-        manifest = solve_layout(profile, viewport_inline=viewport_inline,
-                                viewport_block=extent, measurements=measurements,
-                                content_sized=True)
-        source_allocated = {item.source: item.bounds.block_size for item in manifest.decisions if item.source}
-        return (all(source_allocated[source] >= required for source, required in required_blocks.items())
-                and not _unresolved_normal_flow_warnings(profile, manifest))
-
-    # The high probe is known to satisfy the whole profile. Find the least
-    # integral viewport that satisfies that same complete-manifest condition.
-    low, high = minimum_block - 1, max(candidate, int(probe_block))
+    # Only this verified fitting interval may drive the least-integral search.
+    low = minimum_block
     while high - low > 1:
         middle = (low + high) // 2
-        if satisfies(middle):
+        if satisfies(arrange(middle)):
             high = middle
         else:
             low = middle
