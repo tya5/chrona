@@ -291,6 +291,8 @@ primitive is always Rect: `missing-actual.pattern`, `network-node.pattern`,
 `finish-delta-chip.pattern`. Other pattern values and all other
 role/property pairs retain their current contracts.
 
+**Group header runs (#1192).** A View's group-header template may mark a placeholder with a Theme text role (`{ordinal|group-ordinal}`); the role is an ordinary declared text role (typography properties and a `fill` binding, as a View-named `textRole`) and is a consumer for the #1117 check. The rule is Specification 50 section 3.4.
+
 **Group tab (#882, #1166).** Theme role `group-tab` declares a tab Rect targeted at group-header text (`tabTarget: header`, the default and today's behavior) or at the vertical group-tag cell (`tabTarget: tag`). `tabTarget` is an optional `header | tag` enum in the live `theme-v0.15` schema (Specification 56 section 3.2); absence preserves existing header output byte-for-byte. A tag target requires `groupHeader.writingMode: vertical`, including when the role is not drawable. Header-only `tabInlineSize`, `tabBlockSize` and `tabPosition` are invalid on a tag target rather than silently ignored. `tabGap` remains a named number token in px: it separates a header tab from its text, while for a tag plate it insets all four sides of the allocated cell. The vertical tag's natural text line-box remains `fontSize × lineHeight`; the allocated column adds `2 × tabGap` so a quarter-turned sideways run fits within the inset plate. A Theme without the role is unchanged. Geometry, failures and contrast are Specification 50 section 3.4.
 
 **Deadline mark (#822).** Theme role `deadline-mark` paints a deadline's tick and run (Spec 06 section 7.3) as Scene

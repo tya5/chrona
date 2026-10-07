@@ -156,9 +156,10 @@ def test_every_public_theme_declaration_and_scene_paint_role_has_a_consumer():
             for primitive in surface["primitives"]:
                 contract = theme_role_contract(primitive["visualRole"])
                 if contract is None:
-                    # The one open name: a Theme role a View's `tableColumns[].textRole` names (#1062), a Text of
-                    # purpose `table-cell` painted with the fill the capability table admits for an open name.
-                    assert (primitive["kind"], primitive["purpose"]) == ("Text", "table-cell"), (
+                    # The open names: a Theme role a View's `tableColumns[].textRole` names (#1062), a Text of
+                    # purpose `table-cell`, or one a group-header template marks (#1192), a Text of purpose
+                    # `group-header`, painted with the fill the capability table admits for an open name.
+                    assert (primitive["kind"], primitive["purpose"]) in {("Text", "table-cell"), ("Text", "group-header")}, (
                         path, primitive["visualRole"], primitive["kind"])
                 else:
                     assert primitive["kind"] in contract.scene_kinds, (path, primitive["visualRole"], primitive["kind"])

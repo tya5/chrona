@@ -29,6 +29,7 @@ slides:
   controller-z/gate-paint: {axisLabels: 7, dvtHosted: true}
   controller-z/gate-symbols: {axisLabels: 7, dvtHosted: true}
   controller-z/group-child-indent: {axisLabels: 7, dvtHosted: true}
+  controller-z/group-header-runs: {axisLabels: 7, dvtHosted: true}
   controller-z/group-tabs: {axisLabels: 7, dvtHosted: true}
   controller-z/hand-wobble: {axisLabels: 7, dvtHosted: true}
   controller-z/heading: {axisLabels: 7, dvtHosted: true}
