@@ -130,3 +130,26 @@ def test_empty_legend_placeholder_does_not_reserve_a_suppressed_heading(tmp_path
     assert "I_LAYOUT_SLOT_HEADING_OMITTED:legend:no-content" in headed.surface.diagnostics
     assert headed.scene.manifest.content_family_counts.legend_entries == 0
     assert headed.artifact.content == plain.artifact.content
+
+
+def test_empty_timeline_axis_does_not_reserve_a_heading(tmp_path):
+    def render(name, headed):
+        directory = tmp_path / name
+        directory.mkdir()
+        parts = sr.bundle("executive-light")
+        parts["view"]["body"].pop("axis")
+        axis = sr.find_node(parts["layout"], "timeline-axis")
+        if headed:
+            axis["heading"] = {"text": "Calendar"}
+        source = sr.project({"a": sr.span("a", date(2026, 2, 2), 30)})
+        return sr.render(directory, source, presentation=parts)
+
+    plain = render("axis-plain", headed=False)
+    headed = render("axis-headed", headed=True)
+    plain_slot = next(slot for slot in plain.surface.slots if slot.slot_id == "timeline-axis")
+    headed_slot = next(slot for slot in headed.surface.slots if slot.slot_id == "timeline-axis")
+
+    assert headed_slot.bounds == plain_slot.bounds
+    assert "slot-heading:timeline-axis" not in {item.scene_id for item in headed.surface.primitives}
+    assert "I_LAYOUT_SLOT_HEADING_OMITTED:timeline-axis:no-content" in headed.surface.diagnostics
+    assert headed.artifact.content == plain.artifact.content

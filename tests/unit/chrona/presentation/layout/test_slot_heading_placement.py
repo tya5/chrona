@@ -13,6 +13,7 @@ from chrona.presentation.layout.slot_heading import (
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.layout.surface_axis import AxisLabelTierGeometry
 from chrona.presentation.layout.surface_quality import SlotPlacement
+from chrona.presentation.model.surface_content import AxisTier
 from chrona.presentation.model.theme_tokens import TextTreatment
 
 SIZE, LINE = 10, Decimal("1.5")  # a 15 unit line box; the gap under it is 5
@@ -40,7 +41,8 @@ class _Theme:
 def _request(**content):
     surface = SimpleNamespace(annotations=("a",), notes=("n",), legend_entries=(("k", "v"),),
                               summary=SimpleNamespace(runs=("r",)), slot_heading_text=(),
-                              group_details=(), milestones=(), observation_rows=())
+                              group_details=(), milestones=(), observation_rows=(),
+                              axis_tiers=(AxisTier("day", 1, "labels"),))
     for key, value in content.items():
         setattr(surface, key, value)
     return SimpleNamespace(theme_tokens=_Theme(), font_metrics=_Font(), surface_content=surface)
@@ -179,6 +181,26 @@ def test_detail_presence_is_shared_by_measurement_and_completion(source, field):
     assert _run([slot], heading, source=source, request=present).reserved(source) == 20
     assert reserve_slot_heading_blocks(measured, resolved, _Theme(), content=present.surface_content
                                       ).measurements[source].preferred_block == 30
+
+
+@pytest.mark.parametrize(("tiers", "draws"), [((), False), ((AxisTier("day", 1, "labels"),), True)])
+def test_timeline_axis_presence_is_shared_by_measurement_and_completion(tiers, draws):
+    slot = _slot("timeline-axis", 100, 400)
+    heading = SlotHeading("Calendar")
+    request = _request(axis_tiers=tiers)
+    measured = MeasuredSources({"timeline-axis": Measurement(*(Decimal(10) for _ in range(6)))}, {}, {})
+    resolved = SimpleNamespace(profile={"root": {"kind": "slot", "source": "timeline-axis",
+                                                  "blockSize": "content", "heading": {"text": "Calendar"}}})
+
+    result = _run([slot], heading, source="timeline-axis", request=request)
+    updated = reserve_slot_heading_blocks(measured, resolved, _Theme(), content=request.surface_content)
+    if draws:
+        assert len(result.text) == 1 and result.reserved("timeline-axis") == 20
+        assert updated.measurements["timeline-axis"].preferred_block == 30
+    else:
+        assert result.text == () and result.reserved("timeline-axis") == 0
+        assert result.diagnostics == ("I_LAYOUT_SLOT_HEADING_OMITTED:timeline-axis:no-content",)
+        assert updated is measured
 
 
 def test_full_slot_restores_the_caption_around_a_translated_content_viewport():

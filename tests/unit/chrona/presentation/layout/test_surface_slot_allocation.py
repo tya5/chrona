@@ -14,6 +14,7 @@ from chrona.presentation.layout.surface_base import (
 from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
 from chrona.presentation.layout.surface_composer import prepare_surface_candidate, prepare_surface_content
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection
+from chrona.presentation.model.surface_content import AxisLabelIntent, AxisTier
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from tests.unit.chrona.presentation.scene.test_v05_builder import (
@@ -290,7 +291,9 @@ def test_pre_row_host_demand_counts_the_native_prefix_once_from_full_timeline_or
     request = _request()
     theme = deepcopy(_theme())
     theme["body"]["roles"]["slot-heading"] = deepcopy(theme["body"]["roles"]["text"])
-    content = surface_content(table_columns=(("name", "Name"),), table_cells=(("a", "name", "Activity"),))
+    content = surface_content(table_columns=(("name", "Name"),), table_cells=(("a", "name", "Activity"),),
+                              axis_tiers=(AxisTier("month", 1, "labels", AxisLabelIntent(
+                                  "long-month", (), "center", "thin-with-record", "horizontal", "en-US")),))
     manifest = replace(request.layout_manifest, decisions=tuple(
         replace(decision, heading=SlotHeading("Caption")) if decision.source in headed else decision
         for decision in request.layout_manifest.decisions))

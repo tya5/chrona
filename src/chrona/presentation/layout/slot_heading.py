@@ -129,6 +129,8 @@ def source_has_content(content: Any, source: str) -> bool:
         return bool(content.milestones)
     if source == "observations":
         return bool(content.observation_rows)
+    if source == "timeline-axis":
+        return bool(content.axis_tiers)
     return True
 
 

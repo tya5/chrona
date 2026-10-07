@@ -143,6 +143,8 @@ no decision and so no caption. A caption wider than the slot is cut with its sou
 (Spec 06 §7.5), keyed by the resolved slot node ID. This leaves the profile, hash, allocation, alignment,
 block placement and caption reservation unchanged; Layout measures and completes the selected copy.
 All enumerated slot sources accept a heading; a malformed heading is `E_LAYOUT_SCHEMA` at its exact pointer.
+For `timeline-axis`, semantic presence is its normalized nonempty axis-tier declaration; an empty axis omits
+the heading and adds no content-sized caption reserve.
 Absent declarations leave output and manifest bytes unchanged.
 
 `facet` and `repeat` are not M24 layout operators. View may expose a typed repeated
