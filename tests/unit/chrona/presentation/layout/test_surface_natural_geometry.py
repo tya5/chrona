@@ -35,7 +35,7 @@ def test_natural_prefix_and_completed_prefix_share_exact_candidate_demand(monkey
 
 
 def test_final_axis_admission_reuses_natural_measurements_and_prefix_batches(monkeypatch):
-    from chrona.presentation.layout import surface_composer
+    from chrona.presentation.layout import surface_preparation
 
     request = _axis_request((AxisTier("month", 1, "grid-major"),))
     natural = prepare_surface_natural_geometry(request)
@@ -45,14 +45,14 @@ def test_final_axis_admission_reuses_natural_measurements_and_prefix_batches(mon
 
     for name in ("prepare_surface_inline", "measure_surface_axis", "summarize_surface_axis_vertical",
                  "prepare_table_header_seed", "complete_slot_headings"):
-        monkeypatch.setattr(surface_composer, name, forbidden)
+        monkeypatch.setattr(surface_preparation, name, forbidden)
     completed = prepare_surface_content(request, natural=natural)
     assert completed.axis.placements.shapes
     assert completed.row_viewport == natural.row_viewport
 
 
 def test_tiny_host_natural_summary_succeeds_before_native_axis_admission(monkeypatch):
-    from chrona.presentation.layout import surface_composer
+    from chrona.presentation.layout import surface_preparation
     from chrona.presentation.layout.surface_base import prepare_surface_inline as prepare_inline
 
     request = _axis_request((AxisTier("quarter", 1, "band"), AxisTier("month", 1, "band")))
@@ -63,7 +63,7 @@ def test_tiny_host_natural_summary_succeeds_before_native_axis_admission(monkeyp
         tiny_axis = replace(axis, bounds=replace(axis.bounds, block_size=Decimal(1)))
         return replace(inline, by_source={**inline.by_source, "timeline-axis": tiny_axis})
 
-    monkeypatch.setattr(surface_composer, "prepare_surface_inline", tiny_inline)
+    monkeypatch.setattr(surface_preparation, "prepare_surface_inline", tiny_inline)
     natural = prepare_surface_natural_geometry(request)
     assert natural.axis_summary.max_rect_block_end is not None
     with pytest.raises(LayoutError) as caught:

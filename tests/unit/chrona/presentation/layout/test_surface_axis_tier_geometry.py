@@ -219,6 +219,7 @@ def test_cached_axis_preparation_does_not_remeasure_any_candidate_facts(monkeypa
 
 def test_surface_composer_completes_axis_and_captions_before_rows_and_only_then_plot_grids(monkeypatch):
     from chrona.presentation.layout import surface_composer
+    from chrona.presentation.layout import surface_preparation
 
     request = _axis_request((
         AxisTier("month", 1, "grid-major"),
@@ -229,7 +230,8 @@ def test_surface_composer_completes_axis_and_captions_before_rows_and_only_then_
     phases = ("prepare_surface_inline", "prepare_surface_axis", "complete_slot_headings",
               "prepare_surface_base", "complete_axis_plot")
     for name in phases:
-        original = getattr(surface_composer, name)
+        owner = surface_composer if name in {"prepare_surface_base", "complete_axis_plot"} else surface_preparation
+        original = getattr(owner, name)
 
         def observed(*args, _name=name, _original=original, **kwargs):
             seen.append(_name)
@@ -237,7 +239,7 @@ def test_surface_composer_completes_axis_and_captions_before_rows_and_only_then_
                 assert kwargs["inline"] is not None
             return _original(*args, **kwargs)
 
-        monkeypatch.setattr(surface_composer, name, observed)
+        monkeypatch.setattr(owner, name, observed)
     placement = surface_composer.compose_surface_layout(request).placement
     assert seen == list(phases)
     assert placement.rows
@@ -246,6 +248,7 @@ def test_surface_composer_completes_axis_and_captions_before_rows_and_only_then_
 
 def test_closed_pre_row_geometry_is_reused_without_another_native_preparation(monkeypatch):
     from chrona.presentation.layout import surface_composer
+    from chrona.presentation.layout import surface_preparation
     from chrona.presentation.renderers.v05_svg import render_v05_svg
 
     request = _axis_request((AxisTier("month", 1, "grid-major"), AxisTier("quarter", 1, "labels",
@@ -266,7 +269,7 @@ def test_closed_pre_row_geometry_is_reused_without_another_native_preparation(mo
 
     for name in ("prepare_surface_content", "prepare_surface_inline", "prepare_surface_axis",
                  "prepare_table_header_seed", "complete_slot_headings"):
-        monkeypatch.setattr(surface_composer, name, forbidden)
+        monkeypatch.setattr(surface_preparation, name, forbidden)
     assert surface_composer.compose_surface_layout(request, prepared=prepared) == expected
     scene = base.compose_review_surface(scene_input)
     assert scene == expected_scene
@@ -289,7 +292,7 @@ def test_pre_row_geometry_exists_without_placing_any_rows_or_tracks(monkeypatch)
 
 @pytest.mark.parametrize("block", ["top", "header-row", "axis-tier"])
 def test_own_axis_caption_precedes_one_native_axis_solve_and_keeps_full_slot(block, monkeypatch):
-    from chrona.presentation.layout import surface_composer
+    from chrona.presentation.layout import surface_composer, surface_preparation
 
     request = _axis_request((AxisTier("quarter", 1, "labels", AxisLabelIntent(
         "quarter", (), "center", "thin-with-record", "horizontal", "en-US")),))
@@ -301,14 +304,14 @@ def test_own_axis_caption_precedes_one_native_axis_solve_and_keeps_full_slot(blo
         if decision.source == "timeline-axis" else decision
         for decision in request.layout_manifest.decisions))
     request = replace(request, layout_manifest=manifest)
-    original = surface_composer.prepare_surface_axis
+    original = surface_preparation.prepare_surface_axis
     frames = []
 
     def observed(request, frame, **kwargs):
         frames.append(frame)
         return original(request, frame, **kwargs)
 
-    monkeypatch.setattr(surface_composer, "prepare_surface_axis", observed)
+    monkeypatch.setattr(surface_preparation, "prepare_surface_axis", observed)
     result = surface_composer.compose_surface_layout(request)
     caption, = (text for text in result.placement.text
                 if text.placement_id == "slot-heading:timeline-axis")
@@ -688,7 +691,7 @@ def test_vertical_summary_ignores_unpainted_bands_and_succeeds_for_tiny_host():
                                      ("table", "timeline", "timeline-axis")])
 @pytest.mark.parametrize("label_side", ["auto", "inside"])
 def test_native_captions_close_one_shared_row_floor_from_actual_headers_and_axis(headed, label_side, monkeypatch):
-    from chrona.presentation.layout import surface_composer
+    from chrona.presentation.layout import surface_composer, surface_preparation
 
     request = _axis_request((AxisTier("month", 1, "grid-major"), AxisTier("quarter", 1, "labels",
         AxisLabelIntent("quarter", (), "center", "thin-with-record", "horizontal", "en-US"))))
@@ -708,7 +711,7 @@ def test_native_captions_close_one_shared_row_floor_from_actual_headers_and_axis
                       theme_tokens=ThemeTokenView(theme), layout_manifest=manifest,
                       measured_sources=replace(request.measured_sources, metric_values={
                           **request.measured_sources.metric_values, "timeline.mark.blockSize": Decimal(20)}))
-    seed_owner = surface_composer.prepare_table_header_seed
+    seed_owner = surface_preparation.prepare_table_header_seed
     seeds = []
 
     def observed(**kwargs):
@@ -716,7 +719,7 @@ def test_native_captions_close_one_shared_row_floor_from_actual_headers_and_axis
         seeds.append(result)
         return result
 
-    monkeypatch.setattr(surface_composer, "prepare_table_header_seed", observed)
+    monkeypatch.setattr(surface_preparation, "prepare_table_header_seed", observed)
     domains = []
     for name in ("SurfaceMemberLabelContext", "SurfaceRoutesContext", "SurfaceAnnotationContext"):
         original = getattr(surface_composer, name)

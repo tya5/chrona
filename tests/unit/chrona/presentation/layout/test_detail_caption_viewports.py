@@ -60,6 +60,17 @@ def test_captions_and_detail_content_complete_in_nonoverlapping_whole_panels(des
     assert group.bounds.block + group.bounds.block_size <= milestone.bounds.block
 
 
+def test_narrow_native_detail_panel_wraps_cjk_inside_its_completed_slot():
+    description = "日本語の計画と検証。" * 20
+    placed = _compose(headed=False, description=description)
+    slot = next(slot for slot in placed.slots if slot.source_ref == "group-details")
+    text = next(text for text in placed.text if text.placement_id == "group-detail:team")
+    assert len(text.lines) > 1
+    assert text.source_content == f"Team: {description}"
+    assert text.bounds.inline_size <= slot.bounds.inline_size
+    assert text.bounds.block + text.bounds.block_size <= slot.bounds.block + slot.bounds.block_size
+
+
 def test_native_panel_growth_without_captions_keeps_the_existing_stack_rule():
     placed = _compose(headed=False, description="Long description " * 40)
     slots = {slot.source_ref: slot for slot in placed.slots}

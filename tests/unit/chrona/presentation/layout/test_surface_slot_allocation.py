@@ -61,7 +61,7 @@ def test_non_lane_candidate_keeps_native_preparation_and_natural_demand():
 
 
 def test_lane_candidate_replaces_prior_preflight_from_exact_candidate_inputs(monkeypatch):
-    from chrona.presentation.layout import surface_composer
+    from chrona.presentation.layout import surface_preparation
 
     original = _request()
     stale, current, completed = object(), object(), object()
@@ -79,8 +79,8 @@ def test_lane_candidate_replaces_prior_preflight_from_exact_candidate_inputs(mon
         assert request.surface_content is candidate.surface_content
         return completed
 
-    monkeypatch.setattr(surface_composer, "preflight_fixed_lane_layout", preflight)
-    monkeypatch.setattr(surface_composer, "prepare_surface_content", prepare)
+    monkeypatch.setattr(surface_preparation, "preflight_fixed_lane_layout", preflight)
+    monkeypatch.setattr(surface_preparation, "prepare_surface_content", prepare)
     assert prepare_surface_candidate(candidate) is completed
     assert calls == [dict(
         projection=candidate.projection, layout_manifest=candidate.layout_manifest,

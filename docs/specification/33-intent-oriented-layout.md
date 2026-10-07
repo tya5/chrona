@@ -402,6 +402,7 @@ These private modules divide Layout implementation only; they do not change auth
 | `surface_routes` | Place dependency paths/ports and relation labels. |
 | `surface_annotations` | Place annotation boxes, text, visuals and connectors. |
 | `surface_legend` | Place legend entries and role-derived swatches. |
+| `surface_observations` | Measure and place native observation tables, attributed source lines and row cells inside their content slot. |
 | `surface_heading` | Project closed heading measurements and baselines into title-slot text placements. |
 | `surface_content` | Place detail, summary, notes and footer source content. |
 | `surface_backgrounds` | Complete source-bound row/group/axis/calendar background geometry from completed extents and overlay intervals. |
@@ -411,6 +412,7 @@ These private modules divide Layout implementation only; they do not change auth
 | `surface_completion` | Complete slot ownership, overflow evidence, canvas bounds, lane row anchors and catalogue patterns for final Rect shapes and span marks, and assemble the final placement. |
 | `surface_geometry` | Pure rectangle/date conversions and shared precision/paint-order constants. |
 | `surface_composer` | Invoke typed phase batches in order and construct final Layout output. |
+| `surface_preparation` | Close candidate-specific inline, heading, axis, table-header and shared row-floor geometry before row placement; derive natural demand and final host admission from the same measured prefix. |
 
 Each module owns its named concern and reads closed inputs plus preceding typed Layout results; shared mutable surface state is limited to the obstacle index. The policy coordinators use private index copies: `surface_lane_route_plan` returns only rehearsed corridors, while `surface_route_label_plan` returns the selected completed batches and their matching index under the bounded recovery rule below. `surface_legend` and `surface_content` complete named sources in allocated slots outside obstacle-candidate phases; fixed host backgrounds complete when their extents are known. The #466 phase order governs obstacle-sensitive candidates, not these placements. Ownership names guide internal issue coordination and are not public import contracts. Module moves themselves preserve behavior and introduce no placement policy.
 
@@ -669,6 +671,10 @@ actually satisfies every declared content-host requirement. A fixed/capped
 profile that cannot do so retains the requested finite allocation and the
 ordinary visible fallback; a speculative larger canvas without added host
 capacity is not a valid reallocation.
+Footer successor completion uses every completed native footer line,
+including wrapped notes, preserves the allocated successor gap, and occurs
+before annotation placement; no-growth or inline-disjoint successors remain
+unchanged.
 
 Draft ingress defaults to an inline extent of 1600 and a content-resolved
 block extent (`1600xauto` in the CLI). Draft closure still carries a finite

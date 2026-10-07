@@ -208,19 +208,22 @@ def complete_footer_band(*, provisional_slots: tuple[SlotPlacement, ...],
     if not provisional_footer:
         return completed_slots
     provisional_end = max(slot.bounds.block + slot.bounds.block_size for slot in provisional_footer)
-    completed_footer = tuple(completed_by_source[slot.source_ref] for slot in provisional_footer)
+    # The allocated first line determines the predecessor end and its declared
+    # successor gap. Completion must include later Flow lines as well: a wrapped
+    # notes slot can start exactly where that successor was provisionally placed.
+    completed_footer = tuple(completed_by_source[source]
+                             for source, slot in provisional_by_source.items()
+                             if source in _FOOTER_SOURCES and slot.bounds.block >= panel_start)
     completed_end = max(slot.bounds.block + slot.bounds.block_size for slot in completed_footer)
     annotation = completed_by_source.get("annotations")
-    panels = tuple(completed_by_source[source] for source in sorted(_DETAIL_PANEL_SOURCES)
-                   if source in completed_by_source)
-    overlaps_panel_inline = annotation is not None and any(
-        annotation.bounds.inline < panel.bounds.inline + panel.bounds.inline_size
-        and panel.bounds.inline < annotation.bounds.inline + annotation.bounds.inline_size
-        for panel in panels
+    overlaps_footer_inline = annotation is not None and any(
+        annotation.bounds.inline < slot.bounds.inline + slot.bounds.inline_size
+        and slot.bounds.inline < annotation.bounds.inline + annotation.bounds.inline_size
+        for slot in completed_footer
     )
     growth = completed_end - provisional_end
     if (growth <= GEOMETRY_TOLERANCE or annotation is None
-            or annotation.bounds.block < provisional_end or not overlaps_panel_inline):
+            or annotation.bounds.block < provisional_end or not overlaps_footer_inline):
         return completed_slots
     translated = replace(annotation, bounds=Rect(annotation.bounds.inline, annotation.bounds.block + growth,
                                                  annotation.bounds.inline_size, annotation.bounds.block_size))

@@ -1,4 +1,4 @@
-"""Layout-owned measurement and placement for Review Detail observations."""
+"""Owns Review Detail observation measurement and placement; reads selected content, allocated slots and Theme typography."""
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
