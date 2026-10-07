@@ -55,7 +55,7 @@ from chrona.presentation.model.surface_content import HeadingContent, SummaryCon
 from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput, ViewRowMode
 from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, below_plot_reserve
 from chrona.presentation.review.v05_content import (
-    calendar_closures, compose_heading, legend_entries, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content)
+    complete_v05_detail_content, compose_heading, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content)
 from chrona.presentation.scene.model import (
     ContentFamilyCounts, InspectionScene, SceneManifest, SceneProvenance,
     SceneSurface,
@@ -281,6 +281,12 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     validate_table_text_roles(view.table_columns, ThemeTokenView(theme))
     if view.grouping is not None and view.grouping.header is not None:
         validate_group_header_roles(view.grouping.header.role_pointers(), ThemeTokenView(theme))
+    selected_content = normalize_v05_surface_content(
+        projection, project, view, actual_set=actual_observations,
+        detail=render_closure.detail_profile.detail if render_closure.detail_profile else None,
+        summary=summary, locale=environment.locale, color_scale=color_scale, table=table_content,
+        group_tints=group_tints, annotation_kind_colors=_annotation_kind_colors(theme),
+        annotation_kind_also=_annotation_kind_also(theme))
     source_inputs = _source_inputs(project, view, projection, summary,
                                    annotation_input=_annotation_source_input(
                                        view, visual_requests, icon_assets, theme),
@@ -301,9 +307,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         resolved_layout, layout_error = None, error
     try:
         source_inputs["legend"] = legend_source_input(
-            legend_entries(render_closure.detail_profile.detail if render_closure.detail_profile else None,
-                           project, projection, color_scale,
-                           closed_days_drawn=bool(calendar_closures(project, projection, view)[0])),
+            selected_content.legend_entries,
             tokens=ThemeTokenView(theme),
             mark_block_size=float(resolve_theme_metrics(theme)["timeline.mark.blockSize"]),
             font_metrics=font_metrics,
@@ -315,7 +319,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     if layout_error is not None:
         raise layout_error
     # A declared slot heading is part of its content-sized slot's measurement (#1064).
-    measured = reserve_slot_heading_blocks(measured, resolved_layout, ThemeTokenView(theme))
+    measured = reserve_slot_heading_blocks(measured, resolved_layout, ThemeTokenView(theme), content=selected_content)
     viewport = {"inlineSize": environment.viewport_inline, "blockSize": environment.viewport_block}
     measurements = _slot_measurements(resolved_layout.profile["root"], measured)
     natural_block_floor = max(1, int(measure_natural_normal_flow_block(
@@ -363,12 +367,10 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     fixed_lane_preflight = None
     capacity_short_sources = ()
     if projection.lane_membership is not None:
-        seed_content = normalize_v05_surface_content(
-            projection, project, view, actual_set=actual_observations,
+        seed_content = complete_v05_detail_content(
+            selected_content, projection,
             detail=render_closure.detail_profile.detail if render_closure.detail_profile else None,
-            summary=summary, layout_manifest=manifest, locale=environment.locale,
-            color_scale=color_scale, table=table_content, group_tints=group_tints,
-            annotation_kind_colors=_annotation_kind_colors(theme), annotation_kind_also=_annotation_kind_also(theme),
+            layout_manifest=manifest,
         )
         fixed_lane_preflight = preflight_fixed_lane_layout(
             projection=projection, layout_manifest=manifest, surface_content=seed_content,
@@ -395,17 +397,10 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                 content_sized=request.draft_auto_block,
             )
 
-    surface_content = normalize_v05_surface_content(
-        projection, project, view,
-        actual_set=actual_observations,
+    surface_content = complete_v05_detail_content(
+        selected_content, projection,
         detail=render_closure.detail_profile.detail if render_closure.detail_profile else None,
-        summary=summary,
         layout_manifest=manifest,
-        locale=environment.locale,
-        color_scale=color_scale,
-        table=table_content,
-        group_tints=group_tints,
-        annotation_kind_colors=_annotation_kind_colors(theme), annotation_kind_also=_annotation_kind_also(theme),
     )
     if render_closure.detail_profile is not None:
         ledger.detail()

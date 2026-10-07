@@ -121,7 +121,8 @@ beside the slot; otherwise `top` applies and Layout records `I_LAYOUT_SLOT_HEADI
 The slot's content (annotation boxes and leaders, note lines, legend entries, summary runs) starts below the
 line and its gap, and below the band when the caption sits in it, so nothing lies under the caption; the slot
 keeps its full bounds. A content-sized slot (`blockSize: content`) measures the caption's block into its
-size; a fixed or filling slot gives the caption part of its allocation. A caption never moves another slot.
+size only when its selected source has content; intrinsic measurement and caption completion use the same
+semantic presence decision. A fixed or filling slot gives the caption part of its allocation. A caption never moves another slot.
 A slot with no area, one too short for its caption, or one whose source has no content draws no caption and
 reserves nothing (`I_LAYOUT_SLOT_HEADING_OMITTED:<node>:<too-small|no-content>`); an absent optional slot has
 no decision and so no caption. A caption wider than the slot is cut with its source kept

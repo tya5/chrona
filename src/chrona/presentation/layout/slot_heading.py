@@ -51,7 +51,8 @@ def _headed_content_slots(node: Mapping[str, Any]) -> tuple[str, ...]:
     return tuple(found)
 
 
-def reserve_slot_heading_blocks(measured: MeasuredSources, resolved_layout: Any, tokens: Any) -> MeasuredSources:
+def reserve_slot_heading_blocks(measured: MeasuredSources, resolved_layout: Any, tokens: Any, *,
+                                content: Any) -> MeasuredSources:
     """Add a heading's block to the measurement of each content-sized slot that declares one.
 
     A slot sized by its content is allocated what its content measures, so the caption's line and gap are part
@@ -59,7 +60,7 @@ def reserve_slot_heading_blocks(measured: MeasuredSources, resolved_layout: Any,
     a declared heading.
     """
     sources = [source for source in _headed_content_slots(resolved_layout.profile["root"])
-               if source in measured.measurements]
+               if source in measured.measurements and source_has_content(content, source)]
     if not sources:
         return measured
     treatment = tokens.text_treatment(tokens.slot_heading_role())
@@ -95,7 +96,7 @@ def full_slot(original: SlotPlacement, completed_content: SlotPlacement, reserve
                                                   original.bounds.inline_size, size))
 
 
-def _has_content(content: Any, source: str) -> bool:
+def source_has_content(content: Any, source: str) -> bool:
     """Whether the surface has anything to put in the slot of `source`: a caption over nothing is not drawn."""
     if source == "annotations":
         return bool(content.annotations)
@@ -144,7 +145,7 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
         heading = decision.heading
         if slot is None or heading is None:
             continue
-        if not _has_content(request.surface_content, source):
+        if not source_has_content(request.surface_content, source):
             diagnostics.append(f"I_LAYOUT_SLOT_HEADING_OMITTED:{decision.node_id}:no-content")
             continue
         bounds = slot.bounds

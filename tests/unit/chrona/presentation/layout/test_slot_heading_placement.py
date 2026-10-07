@@ -118,10 +118,22 @@ def test_a_slot_too_short_or_without_area_draws_nothing_and_reserves_nothing():
     ("annotations", {"annotations": ()}), ("notes", {"notes": ()}), ("legend", {"legend_entries": ()}),
     ("summary", {"summary": SimpleNamespace(runs=())})])
 def test_a_source_without_content_draws_no_caption(source, content):
-    result = _run([_slot(source, 100, 400)], SlotHeading("Caption"), source=source, request=_request(**content))
+    request = _request(**content)
+    slot = _slot(source, 100, 400)
+    result = _run([slot], SlotHeading("Caption"), source=source, request=request)
 
     assert result.text == () and result.reserved(source) == 0
     assert result.diagnostics == (f"I_LAYOUT_SLOT_HEADING_OMITTED:{source}:no-content",)
+
+    baseline = Measurement(Decimal(10), Decimal(20), Decimal(40), Decimal(10), Decimal(20), Decimal(30),
+                           Decimal(7), Decimal(9))
+    measured = MeasuredSources({source: baseline}, {}, {})
+    resolved = SimpleNamespace(profile={"root": {"kind": "slot", "source": source,
+                                                    "blockSize": "content", "heading": {"text": "Caption"}}})
+    unchanged = reserve_slot_heading_blocks(measured, resolved, _Theme(), content=request.surface_content)
+    assert unchanged.measurements[source] == baseline
+    assert unchanged.measurements[source].first_baseline == baseline.first_baseline
+    assert unchanged.measurements[source].last_baseline == baseline.last_baseline
 
 
 def test_a_caption_wider_than_the_slot_is_cut_and_recorded():
@@ -160,11 +172,11 @@ def test_a_content_sized_slot_measures_the_caption_in_and_others_do_not():
         {"kind": "slot", "source": "legend", "blockSize": "content", "heading": {"text": "Key"}},
         {"kind": "slot", "source": "notes", "blockSize": "fill", "heading": {"text": "Notes"}}]}})
 
-    result = reserve_slot_heading_blocks(measured, resolved, _Theme())
+    result = reserve_slot_heading_blocks(measured, resolved, _Theme(), content=_request().surface_content)
 
     legend = result.measurements["legend"]
     assert (legend.min_block, legend.preferred_block, legend.max_block) == (30, 40, 50)  # each plus 20
     assert (legend.first_baseline, legend.last_baseline) == (27, 29)
     assert result.measurements["notes"] == measured.measurements["notes"]  # a filling slot gives from its allocation
     assert reserve_slot_heading_blocks(measured, SimpleNamespace(profile={"root": {"kind": "column", "children": []}}),
-                                       _Theme()) is measured
+                                       _Theme(), content=_request().surface_content) is measured

@@ -1,6 +1,7 @@
 """Current-resource normalization for v0.5 optional Scene content."""
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import date, timedelta
 from typing import Any, Mapping
 
@@ -195,7 +196,7 @@ def legend_entries(detail: ReviewDetailInput | None, project: Mapping[str, Any],
 def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput,
                                   *, actual_set: Mapping[str, Any] | None = None,
                                   detail: ReviewDetailInput | None = None, summary: SummaryContent,
-                                  layout_manifest: LayoutManifest | None = None, locale: str = "en-US",
+                                  locale: str = "en-US",
                                   color_scale: ResolvedColorScale | None = None,
                                   table: TableContent | None = None,
                                   group_tints: tuple[tuple[str, str], ...] = (),
@@ -322,9 +323,6 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     # its View annotation and no longer duplicated into the notes slot (#466).
     notes = tuple((str(key), str(value.get("text", ""))) for key, value in project_notes.items()
                  if key not in consumed_note_ids)
-    resolved_detail = (resolve_v05_review_detail_profile(_detail_mapping(detail), projection.items, layout_manifest,
-                                                          profile_is_validated=True)
-                       if layout_manifest is not None else None)
     calendar_closed, calendar_exceptions = calendar_closures(project, projection, view)
     legend = legend_entries(detail, project, projection, color_scale, closed_days_drawn=bool(calendar_closed))
     scale_paints: tuple[tuple[str, str], ...] = ()
@@ -348,10 +346,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                    notes=notes, legend_entries=legend, coverage_text="",
                                    summary=summary,
                                    template_values=(),
-                                   group_details=resolved_detail.group_details if resolved_detail else (),
-                               milestones=resolved_detail.milestones if resolved_detail else (),
-                               observation_columns=resolved_detail.observation_columns if resolved_detail else (),
-                               observation_rows=resolved_detail.observation_rows if resolved_detail else (),
+                                   group_details=(), milestones=(), observation_columns=(), observation_rows=(),
                                label_fallback=label_fallback, annotation_fallback=annotation_fallback,
                                link_mode=link_mode, title_link_columns=title_link_columns,
                                attached_labels=_attached_labels(projection, locale),
@@ -374,6 +369,15 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                    for pair in ((item.annotation_id, annotation_kind_colors[item.kind]),
                                                 *((f"{item.annotation_id}#{target}", annotation_kind_colors[item.kind])
                                                   for target in (annotation_kind_also or {}).get(item.kind, ())))))
+
+
+def complete_v05_detail_content(content: SurfaceContentInput, projection: ReviewProjection, *,
+                                detail: ReviewDetailInput | None, layout_manifest: LayoutManifest) -> SurfaceContentInput:
+    """Enrich already selected content with manifest-admitted detail, without reselecting narrative facts."""
+    resolved = resolve_v05_review_detail_profile(_detail_mapping(detail), projection.items, layout_manifest,
+                                                profile_is_validated=True)
+    return replace(content, group_details=resolved.group_details, milestones=resolved.milestones,
+                   observation_columns=resolved.observation_columns, observation_rows=resolved.observation_rows)
 
 
 def _group_header_facts(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput) -> dict[str, Any] | None:
