@@ -37,6 +37,32 @@ def test_empty_view_copy_map_is_byte_identical(tmp_path):
     assert selected.surface.primitives == plain.surface.primitives
 
 
+def test_use_case_hands_the_same_completed_preparation_to_scene_once(tmp_path, monkeypatch):
+    import chrona.usecases.render_review as use_case
+    from chrona.presentation.scene import v05_builder
+
+    prepare = use_case.prepare_surface_content
+    compose = v05_builder.compose_surface_layout
+    prepared, forwarded = [], []
+
+    def observe_prepare(request):
+        result = prepare(request)
+        prepared.append(result)
+        return result
+
+    def observe_compose(request, *, prepared=None):
+        forwarded.append((request, prepared))
+        return compose(request, prepared=prepared)
+
+    monkeypatch.setattr(use_case, "prepare_surface_content", observe_prepare)
+    monkeypatch.setattr(v05_builder, "compose_surface_layout", observe_compose)
+    rendered = _render(tmp_path, heading={"text": "Notes"})
+    assert len(prepared) == len(forwarded) == 1
+    assert forwarded[0][1] is prepared[0]
+    assert forwarded[0][0] is prepared[0].inline.request
+    assert b">NOTES<" in rendered.artifact.content
+
+
 def test_copy_targets_node_identity_not_slot_source(tmp_path):
     def configure(parts):
         sr.find_node(parts["layout"], "annotations")["id"] = "note-rail"

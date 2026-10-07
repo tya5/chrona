@@ -13,7 +13,7 @@ from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
 from chrona.presentation.layout.model import LayoutError, LayoutManifest
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
 from chrona.presentation.layout.lane_subtracks import FixedLanePreflight
-from chrona.presentation.layout.surface_composer import compose_surface_layout
+from chrona.presentation.layout.surface_composer import SurfacePreRowGeometry, compose_surface_layout
 from chrona.presentation.layout.surface_quality import AlignedStrokePlacement, CapacitySourceEvidence, SurfaceLayoutRequest
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.layout.pattern_placement import PatternedPlacement
@@ -68,6 +68,7 @@ class SceneBuildInput:
     visual_requests: tuple[Any, ...] = ()
     fixed_lane_preflight: FixedLanePreflight | None = None
     capacity_short_sources: tuple[CapacitySourceEvidence, ...] = ()
+    surface_preparation: SurfacePreRowGeometry | None = None
 
 
 _REQUIRED_SOURCES = {
@@ -336,7 +337,8 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
                       icon_assets: dict[str, Any] | None = None,
                       visual_requests: tuple[Any, ...] = (),
                       fixed_lane_preflight: FixedLanePreflight | None = None,
-                      capacity_short_sources: tuple[CapacitySourceEvidence, ...] = ()) -> SceneBuildInput:
+                      capacity_short_sources: tuple[CapacitySourceEvidence, ...] = (),
+                      surface_preparation: SurfacePreRowGeometry | None = None) -> SceneBuildInput:
     """Bind validated v0.5 inputs without reopening authoring or legacy contracts."""
     if not isinstance(layout_manifest, LayoutManifest):
         raise SceneBuildError("E_PRESENTATION_LAYOUT_REQUIRED", "/layoutManifest")
@@ -361,7 +363,7 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
     return SceneBuildInput(projection, surface_content, layout_manifest,
                            ThemeTokenView(resolved_theme), font_metrics, measured_sources,
                            dict(capabilities), visual_profile, viewport, icon_assets, visual_requests,
-                           fixed_lane_preflight, capacity_short_sources)
+                           fixed_lane_preflight, capacity_short_sources, surface_preparation)
 
 
 def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
@@ -385,12 +387,12 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
     if not hasattr(projection, "items") or not hasattr(projection, "window"):
         raise SceneBuildError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection")
     metric = value.measured_sources.metric_values
-    contract = normalize_presentation_input(value.surface_content)
     if "text.body.size" not in metric or "text.body.lineHeight" not in metric:
         raise SceneBuildError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/metricValues")
     try:
-        composition = compose_surface_layout(SurfaceLayoutRequest(
-            projection=projection, presentation_contract=contract,
+        request = (value.surface_preparation.inline.request if value.surface_preparation is not None
+                   else SurfaceLayoutRequest(
+            projection=projection, presentation_contract=normalize_presentation_input(value.surface_content),
             surface_content=value.surface_content, layout_manifest=value.layout_manifest,
             measured_sources=value.measured_sources, theme_tokens=value.theme_tokens,
             font_metrics=value.font_metrics,
@@ -399,6 +401,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             fixed_lane_preflight=value.fixed_lane_preflight,
             capacity_short_sources=value.capacity_short_sources,
         ))
+        composition = compose_surface_layout(request, prepared=value.surface_preparation)
     except LayoutError as error:
         raise SceneBuildError(error.diagnostic_id, error.path, error.detail) from error
     placed_surface = composition.placement

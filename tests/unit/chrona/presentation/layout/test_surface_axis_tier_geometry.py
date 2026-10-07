@@ -130,11 +130,20 @@ def test_surface_composer_completes_axis_and_captions_before_rows_and_only_then_
 
 def test_closed_pre_row_geometry_is_reused_without_another_native_preparation(monkeypatch):
     from chrona.presentation.layout import surface_composer
+    from chrona.presentation.renderers.v05_svg import render_v05_svg
 
     request = _axis_request((AxisTier("month", 1, "grid-major"), AxisTier("quarter", 1, "labels",
         AxisLabelIntent("quarter", (), "center", "thin-with-record", "horizontal", "en-US"))))
     prepared = surface_composer.prepare_surface_content(request)
     expected = surface_composer.compose_surface_layout(request, prepared=prepared)
+    arguments = dict(projection=request.projection, surface_content=request.surface_content,
+                     layout_manifest=request.layout_manifest, resolved_theme=base._theme(),
+                     font_metrics=request.font_metrics, measured_sources=request.measured_sources,
+                     capabilities={"svg": True}, viewport=(1000, 1000))
+    expected_scene = base.compose_review_surface(base.build_scene_input(**arguments))
+    expected_svg = render_v05_svg(expected_scene)
+    scene_input = base.build_scene_input(**arguments, surface_preparation=prepared)
+    assert scene_input.surface_preparation is prepared
 
     def forbidden(*args, **kwargs):
         pytest.fail("completed pre-row geometry must not be measured or allocated a second time")
@@ -143,6 +152,9 @@ def test_closed_pre_row_geometry_is_reused_without_another_native_preparation(mo
                  "prepare_table_header_seed", "complete_slot_headings"):
         monkeypatch.setattr(surface_composer, name, forbidden)
     assert surface_composer.compose_surface_layout(request, prepared=prepared) == expected
+    scene = base.compose_review_surface(scene_input)
+    assert scene == expected_scene
+    assert render_v05_svg(scene) == expected_svg
 
 
 def test_pre_row_geometry_exists_without_placing_any_rows_or_tracks(monkeypatch):
