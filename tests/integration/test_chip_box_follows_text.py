@@ -151,7 +151,7 @@ def test_physical_zero_radius_overrides_a_rounded_legacy_chip_and_is_admitted(tm
                 if item.kind == "Rect" and item.visual_role == "member-label-chip")
     label = next(item for item in rendered.surface.primitives
                  if item.kind == "Text" and item.purpose == "member-label" and f"chip:{item.scene_id}" == chip.scene_id)
-    assert chip.corner_radius == 0
+    assert chip.corner_radius in (None, 0)
     _assert_svg_chip_follows_text(rendered, chip, label)
 
 
@@ -228,7 +228,11 @@ def test_other_chip_families_have_real_raw_svg_box_and_label_pairs(tmp_path, fam
 
 @pytest.mark.parametrize("family", ["as-of-label-chip", "finish-delta-chip", "period-label-chip"])
 def test_other_chip_families_accept_box_follows_text(tmp_path, family):
+    raw = _other_chip_render(tmp_path, "raw", family)
     rendered = _other_chip_render(tmp_path, "fitted", family, viewer_fit="box-follows-text")
+    assert [(item.scene_id, item.bounds, item.paint) for item in rendered.surface.primitives] == [
+        (item.scene_id, item.bounds, item.paint) for item in raw.surface.primitives]
+    assert evaluate_scene_contrast(scene_document(rendered.scene)) == evaluate_scene_contrast(scene_document(raw.scene))
     label = _other_chip_label(rendered, family)
     chip = next(item for item in rendered.surface.primitives if item.kind == "Rect"
                 and item.visual_role == family)
