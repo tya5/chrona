@@ -12,7 +12,7 @@ from dataclasses import dataclass, replace
 from decimal import Decimal
 from typing import Any
 
-from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.model import LayoutError, geometry_sum
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, TextPlacement
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_role, place_text
 
@@ -77,15 +77,17 @@ def _resolve_runs(runs: tuple[tuple[str, str | None], ...], theme_tokens: Any, f
     return resolved
 
 
+def _extent(runs: list[_Run]) -> float:
+    """The inline size of the runs and the gaps before them, as one correctly rounded sum."""
+    return geometry_sum(value for run in runs for value in (run.gap, run.width))
+
+
 def _give_way(runs: list[_Run], available: float) -> None:
     """Shorten the last run first, then the one before it, until the block fits ``available``."""
-    def total() -> float:
-        return sum(run.gap + run.width for run in runs)
-
     for index in reversed(range(len(runs))):
-        if total() <= available:
+        if _extent(runs) <= available:
             return
-        before = sum(run.gap + run.width for run in runs[:index]) + runs[index].gap
+        before = geometry_sum((_extent(runs[:index]), runs[index].gap))
         run = runs[index]
         budget = available - before
         shortened = ellipsize_text(run.source, available_inline=budget, **run.shape) if budget > 0 else ""
@@ -107,15 +109,15 @@ def place_group_header_runs(*, group_id: str, runs: tuple[tuple[str, str | None]
     suppressed with the same typed warning.
     """
     resolved = _resolve_runs(runs, theme_tokens, font_metrics)
-    natural = sum(run.gap + run.width for run in resolved)
-    if bounded and natural > float(size):
+    if bounded and _extent(resolved) > float(size):
         _give_way(resolved, float(size))
     placements: list[TextPlacement] = []
     warnings: list[FitWarning] = []
-    cursor = float(start)
+    advances: list[float] = [float(start)]
     prefix = run_placement_prefix(group_id)
     for index, run in enumerate(resolved):
-        cursor += run.gap
+        advances.append(run.gap)
+        cursor = geometry_sum(advances)
         placement_id = f"{prefix}{index}"
         placed = place_text(
             placement_id=placement_id, source_ref=group_id, content=run.content or run.source,
@@ -127,7 +129,7 @@ def place_group_header_runs(*, group_id: str, runs: tuple[tuple[str, str | None]
         if run.state == "suppressed":
             placed = replace(placed, overflow="suppressed", required=False, selected_rung="suppress")
         else:
-            cursor += run.width
+            advances.append(run.width)
         if run.state != "fit":
             warnings.append(FitWarning(
                 "W_LAYOUT_TEXT_ELLIPSIZED", placement_id, group_id, "group-header-text",
