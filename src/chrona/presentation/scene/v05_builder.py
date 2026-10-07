@@ -8,7 +8,8 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from typing import Any, Mapping
 
-from chrona.presentation.layout.dependency_network import compose_dependency_network_layout
+from chrona.presentation.layout.dependency_network import compose_dependency_network_surface
+from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
 from chrona.presentation.layout.model import LayoutError, LayoutManifest
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
 from chrona.presentation.layout.lane_subtracks import FixedLanePreflight
@@ -1023,19 +1024,11 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
     if network is None:
         raise SceneBuildError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection/network")
     decisions = tuple(item for item in value.layout_manifest.decisions if item.kind == "slot" and item.source)
-    by_source = {item.source: item for item in decisions}
     try:
-        title, network_slot = by_source["title"], by_source["network"]
-    except KeyError as error:
-        raise SceneBuildError("E_PRESENTATION_PRIMITIVE_MISSING", "/layoutManifest/sources/network") from error
-    try:
-        placed = compose_dependency_network_layout(
-            network, title_bounds=title.bounds, bounds=network_slot.bounds,
-            measured_sources=value.measured_sources, flow_direction=value.layout_manifest.dependency_network_flow_direction,
-            max_bends=value.layout_manifest.relation_max_bends,
-            max_detour_ratio=value.layout_manifest.relation_max_detour_ratio,
-            canvas_bounds=value.layout_manifest.viewport,
-            theme_tokens=value.theme_tokens)
+        placed = compose_dependency_network_surface(SurfaceLayoutRequest(
+            projection=projection, surface_content=value.surface_content,
+            layout_manifest=value.layout_manifest, measured_sources=value.measured_sources,
+            theme_tokens=value.theme_tokens, font_metrics=value.font_metrics))
     except LayoutError as error:
         raise SceneBuildError(error.diagnostic_id, error.path) from error
     slots = tuple(SceneSlot(item.node_id, item.source, None,
@@ -1105,6 +1098,7 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
     completed_primitives = _attach_completed_patterns(completed_primitives, placed.patterns)
     completed_primitives = _attach_completed_strokes(completed_primitives, placed.aligned_strokes)
     return SceneSurface("dependency-network", slots, (), (), None, completed_primitives,
+                        diagnostics=placed.diagnostics,
                         canvas_bounds=(float(placed.canvas_bounds.inline), float(placed.canvas_bounds.block),
                                        float(placed.canvas_bounds.inline_size), float(placed.canvas_bounds.block_size)),
                         fit_warnings=placed.fit_warnings)

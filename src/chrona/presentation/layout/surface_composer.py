@@ -109,19 +109,25 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     def metric_for(typography_role: str) -> Any:
         return metric_for_role(request.theme_tokens, typography_role, request.font_metrics)
     body_size = float(request.theme_tokens.text_treatment("text").font_size)
-    text = list(place_heading(request, by_source["title"], measured_sources))
-    footer_provisional_slots = slots
-    slots, detail_panel_text, detail_panel_warnings, detail_visual_reservations = compose_detail_panel_blocks(
-        slots=slots, request=request, requested_canvas=request.layout_manifest.viewport,
-    )
-    by_source = {slot.source_ref: slot for slot in slots}
-    text.extend(detail_panel_text)
-    # Complete axis geometry before dependent captions, retaining its original primitive emission order.
+    # Caption reservations precede native content, while primitive order remains title/detail/captions.
     axis_batch = compose_axis(request, base)
-    # A slot's declared caption (#1064): its text is completed here and its content is placed below it.
     headings = complete_slot_headings(request=request, slots=by_source, decisions=base.decisions,
                                       axis_label_tiers=axis_batch.label_tiers)
     heading_slot_blocks = {source: by_source[source].bounds.block for source in headings.reserve or {}}
+    text = list(place_heading(request, content_slot(by_source["title"], headings.reserved("title")),
+                              measured_sources))
+    footer_provisional_slots = slots
+    detail_sources = {"group-details", "milestones", "observations"}
+    detail_content_slots = tuple(content_slot(slot, headings.reserved(slot.source_ref))
+                                if slot.source_ref in detail_sources else slot for slot in slots)
+    slots, detail_panel_text, detail_panel_warnings, detail_visual_reservations = compose_detail_panel_blocks(
+        slots=detail_content_slots, request=request, requested_canvas=request.layout_manifest.viewport,
+        caption_reserves=headings.reserve,
+    )
+    slots = tuple(full_slot(by_source[slot.source_ref], slot, headings.reserved(slot.source_ref))
+                  if slot.source_ref in detail_sources else slot for slot in slots)
+    by_source = {slot.source_ref: slot for slot in slots}
+    text.extend(detail_panel_text)
     text.extend(headings.text)
     table_batch = compose_table(base)
     column_placements = table_batch.columns
@@ -297,11 +303,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     slots = complete_footer_band(provisional_slots=footer_provisional_slots, completed_slots=slots)
     by_source = {slot.source_ref: slot for slot in slots}
     for source, block in heading_slot_blocks.items():
-        moved = float(by_source[source].bounds.block - block)
+        moved = by_source[source].bounds.block - block
         if moved:  # the footer band carried the slot down: its caption goes with it
-            text = [replace(item, bounds=Rect(item.bounds.inline, item.bounds.block + Decimal(str(moved)),
+            text = [replace(item, bounds=Rect(item.bounds.inline, item.bounds.block + moved,
                                               item.bounds.inline_size, item.bounds.block_size),
-                            baseline=(item.baseline[0], item.baseline[1] + moved))
+                            baseline=(item.baseline[0], item.baseline[1] + float(moved)))
                     if item.collision_domain.slot == "slot-heading" and item.source_ref == source else item
                     for item in text]
     summary_slot = by_source.get("summary")

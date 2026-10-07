@@ -1,6 +1,7 @@
 """Owns title/detail panels, notes, summary and footer source content in allocated slots; reads completed slots and Theme tokens."""
 
 from dataclasses import dataclass, replace
+from collections.abc import Mapping
 from decimal import Decimal
 from typing import Any
 
@@ -51,7 +52,9 @@ def _detail_panel_entries(source: str, values: tuple[Any, ...]) -> tuple[tuple[s
 
 
 def compose_detail_panel_blocks(*, slots: tuple[SlotPlacement, ...], request: SurfaceLayoutRequest,
-                                 requested_canvas: Rect) -> tuple[tuple[SlotPlacement, ...], list[Any], list[FitWarning], frozenset[str]]:
+                                 requested_canvas: Rect,
+                                 caption_reserves: Mapping[str, Decimal] | None = None
+                                 ) -> tuple[tuple[SlotPlacement, ...], list[Any], list[FitWarning], frozenset[str]]:
     """Complete Review Detail panel lines, rectangles, and visible-fit records."""
     slot_by_source = {slot.source_ref: slot for slot in slots}
     sources = (("group-details", request.surface_content.group_details, "group-detail"),
@@ -78,7 +81,9 @@ def compose_detail_panel_blocks(*, slots: tuple[SlotPlacement, ...], request: Su
             previous_left = previous.bounds.inline
             previous_right = previous.bounds.inline + previous.bounds.inline_size
             if left < previous_right and previous_left < right:
-                block = max(block, previous.bounds.block + previous.bounds.block_size)
+                # Stack the whole panel, not its content over the predecessor's last line.
+                block = max(block, previous.bounds.block + previous.bounds.block_size
+                            + (caption_reserves or {}).get(source, Decimal(0)))
         cursor = block
         item_overflows: list[tuple[Any, float, float]] = []
         for source_ref, content in _detail_panel_entries(source, values):

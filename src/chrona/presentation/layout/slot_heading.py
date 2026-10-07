@@ -109,7 +109,7 @@ def full_slot(original: SlotPlacement, completed_content: SlotPlacement, reserve
         return completed_content
     content = completed_content.bounds
     size = max(original.bounds.block_size, reserved + content.block_size)
-    return replace(completed_content, bounds=Rect(original.bounds.inline, original.bounds.block,
+    return replace(completed_content, bounds=Rect(content.inline, content.block - reserved,
                                                   original.bounds.inline_size, size))
 
 
@@ -123,6 +123,12 @@ def source_has_content(content: Any, source: str) -> bool:
         return bool(content.legend_entries)
     if source == "summary":
         return bool(content.summary.runs)
+    if source == "group-details":
+        return bool(content.group_details)
+    if source == "milestones":
+        return bool(content.milestones)
+    if source == "observations":
+        return bool(content.observation_rows)
     return True
 
 

@@ -6,8 +6,12 @@ from types import SimpleNamespace
 import pytest
 
 from chrona.presentation.layout.dependency_network import compose_dependency_network_layout
-from chrona.presentation.layout.model import LayoutError, Rect
+from chrona.presentation.layout.dependency_network import compose_dependency_network_surface
+from chrona.presentation.layout.model import LayoutDecision, LayoutError, LayoutManifest, Measurement, Rect, SlotHeading
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun
+from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
+from chrona.presentation.model.theme_tokens import ThemeTokenView
+from tests.unit.chrona.presentation.layout.test_sources import theme
 
 
 def _network(nodes, edges):
@@ -148,3 +152,88 @@ def test_network_text_placements_carry_the_measured_horizontal_scale():
                                               bounds=Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(200)),
                                               measured_sources=measured, flow_direction="horizontal")
     assert {item.horizontal_scale for item in plain.text} == {1.0}
+
+
+def test_native_network_heading_reduces_graph_viewport_and_route_region():
+    resolved = theme()
+    tokens = ThemeTokenView(resolved)
+    metrics = SimpleNamespace(content_identity="sha256:network-heading",
+                               width=lambda text, size, **kwargs: len(text) * size / 2,
+                               baseline=lambda top, size, line_height: top + size)
+    decisions = (
+        LayoutDecision("title-slot", "slot", Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(50)),
+                       source="title", heading=SlotHeading("Document")),
+        LayoutDecision("network-slot", "slot", Rect(Decimal(0), Decimal(50), Decimal(400), Decimal(200)),
+                       source="network", heading=SlotHeading("Dependencies")),
+    )
+    manifest = LayoutManifest("test", "sha256:test", "horizontal", "horizontal",
+                              Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(250)), decisions)
+    measured = _measured("a", "b")
+    # The aggregate measurement includes caption space; native title geometry does not.
+    from chrona.presentation.layout.sources import SourceInput, measure_sources
+    title_measurement = measure_sources({"title": SourceInput(("Network",), typography_role="heading")},
+                                       resolved, font_metrics=metrics)
+    measured = replace(measured,
+                       inputs={**measured.inputs, "title": title_measurement.inputs["title"]},
+                       measurements={**measured.measurements, "title": Measurement(
+                           title_measurement.measurements["title"].min_inline,
+                           title_measurement.measurements["title"].preferred_inline,
+                           title_measurement.measurements["title"].max_inline,
+                           title_measurement.measurements["title"].min_block + 30,
+                           title_measurement.measurements["title"].preferred_block + 30,
+                           title_measurement.measurements["title"].max_block + 30,
+                           title_measurement.measurements["title"].first_baseline + 30,
+                           title_measurement.measurements["title"].last_baseline + 30)},
+                       run_measurements={**measured.run_measurements, "title": title_measurement.run_measurements["title"]})
+    request = SurfaceLayoutRequest(
+        projection=SimpleNamespace(network=_network(("a", "b"), (("ab", "a", "b"),))),
+        surface_content=SimpleNamespace(slot_heading_text=()), layout_manifest=manifest,
+        measured_sources=measured, theme_tokens=tokens, font_metrics=metrics)
+    layout = compose_dependency_network_surface(request)
+    by_id = {item.placement_id: item for item in layout.text}
+    assert by_id["slot-heading:network-slot"].semantic_id == "slotHeading"
+    assert by_id["title"].baseline[1] > float(measured.run_measurements["title"][0].baseline)
+    assert by_id["title"].baseline[1] < float(measured.run_measurements["title"][0].baseline + 50)
+    network_heading_bottom = by_id["slot-heading:network-slot"].bounds.block + by_id["slot-heading:network-slot"].bounds.block_size
+    assert min(node.bounds.block for node in layout.nodes) >= network_heading_bottom
+    assert layout.relations
+    assert all(point[1] >= network_heading_bottom for relation in layout.relations for point in relation.points)
+    assert layout.canvas_bounds == manifest.viewport
+
+
+def test_network_wrapper_keeps_native_title_on_raw_runs_without_aggregate_measurement():
+    resolved = theme()
+    metrics = SimpleNamespace(content_identity="sha256:transformed-network-title",
+                               width=lambda text, size, **kwargs: len(text) * size / 2,
+                               baseline=lambda top, size, line_height: top + size)
+    decisions = (
+        LayoutDecision("title-slot-id", "slot", Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(50)),
+                       source="title", heading=SlotHeading("Caption")),
+        LayoutDecision("graph-slot-id", "slot", Rect(Decimal(0), Decimal(50), Decimal(400), Decimal(200)),
+                       source="network"),
+    )
+    manifest = LayoutManifest("test", "sha256:test", "horizontal", "horizontal",
+                              Rect(Decimal(0), Decimal(0), Decimal(400), Decimal(250)), decisions)
+    measured = _measured("object-1")
+    transformed = replace(measured.run_measurements["title"][0], content="NETWORK TITLE")
+    measured = replace(measured, measurements={}, inputs={},
+                       run_measurements={**measured.run_measurements, "title": (transformed,)})
+    request = SurfaceLayoutRequest(
+        projection=SimpleNamespace(network=_network(("object-1",), ())),
+        surface_content=SimpleNamespace(slot_heading_text=()), layout_manifest=manifest,
+        measured_sources=measured, theme_tokens=ThemeTokenView(resolved), font_metrics=metrics)
+
+    layout = compose_dependency_network_surface(request)
+    by_id = {item.placement_id: item for item in layout.text}
+    assert set(by_id) == {"slot-heading:title-slot-id", "title", "network-label:object-1"}
+    assert by_id["title"].content == "NETWORK TITLE"
+    assert by_id["title"].semantic_id == "titleText"
+    assert by_id["title"].source_ref == "title" and by_id["title"].slot_id == "title-slot-id"
+    assert by_id["network-label:object-1"].slot_id == "graph-slot-id"
+    assert layout.nodes[0].slot_id == "graph-slot-id"
+    assert by_id["slot-heading:title-slot-id"].content == "Caption"
+    assert by_id["slot-heading:title-slot-id"].semantic_id == "slotHeading"
+    assert by_id["slot-heading:title-slot-id"].slot_id == "title-slot-id"
+    assert by_id["title"].bounds.block >= (
+        by_id["slot-heading:title-slot-id"].bounds.block
+        + by_id["slot-heading:title-slot-id"].bounds.block_size)

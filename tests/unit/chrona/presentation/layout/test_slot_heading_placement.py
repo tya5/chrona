@@ -39,7 +39,8 @@ class _Theme:
 
 def _request(**content):
     surface = SimpleNamespace(annotations=("a",), notes=("n",), legend_entries=(("k", "v"),),
-                              summary=SimpleNamespace(runs=("r",)), slot_heading_text=())
+                              summary=SimpleNamespace(runs=("r",)), slot_heading_text=(),
+                              group_details=(), milestones=(), observation_rows=())
     for key, value in content.items():
         setattr(surface, key, value)
     return SimpleNamespace(theme_tokens=_Theme(), font_metrics=_Font(), surface_content=surface)
@@ -135,6 +136,30 @@ def test_a_source_without_content_draws_no_caption(source, content):
     assert unchanged.measurements[source] == baseline
     assert unchanged.measurements[source].first_baseline == baseline.first_baseline
     assert unchanged.measurements[source].last_baseline == baseline.last_baseline
+
+
+@pytest.mark.parametrize(("source", "field"), [("group-details", "group_details"),
+    ("milestones", "milestones"), ("observations", "observation_rows")])
+def test_detail_presence_is_shared_by_measurement_and_completion(source, field):
+    slot = _slot(source, 100, 400)
+    heading = SlotHeading("Detail")
+    measured = MeasuredSources({source: Measurement(*(Decimal(10) for _ in range(6)))}, {}, {})
+    resolved = SimpleNamespace(profile={"root": {"kind": "slot", "source": source,
+                                                "blockSize": "content", "heading": {"text": "Detail"}}})
+    empty = _request(**{field: ()})
+    assert _run([slot], heading, source=source, request=empty).text == ()
+    assert reserve_slot_heading_blocks(measured, resolved, _Theme(), content=empty.surface_content) is measured
+    present = _request(**{field: ("entry",)})
+    assert _run([slot], heading, source=source, request=present).reserved(source) == 20
+    assert reserve_slot_heading_blocks(measured, resolved, _Theme(), content=present.surface_content
+                                      ).measurements[source].preferred_block == 30
+
+
+def test_full_slot_restores_the_caption_around_a_translated_content_viewport():
+    slot = _slot("milestones", 100, 80)
+    completed = _slot("milestones", 300, 90)
+    assert full_slot(slot, completed, Decimal(20)).bounds == Rect(
+        Decimal(600), Decimal(280), Decimal(200), Decimal(110))
 
 
 def test_a_caption_wider_than_the_slot_is_cut_and_recorded():
