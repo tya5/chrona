@@ -125,9 +125,9 @@ body:
         outline: rectangle
         cornerRadius: 0
         contentInsetEm:
-          top: 0.9
+          top: 0.6
           right: 0.9
-          bottom: 0.9
+          bottom: 0.6
           left: 0.9
         inlineSize: fill
         border:
@@ -467,6 +467,24 @@ body:
     spacing.s:
       type: number
       value: 8
+    size.kicker:
+      type: number
+      value: 24
+    gap.kicker:
+      type: number
+      value: 2
+    size.summary-caption:
+      type: number
+      value: 24
+    size.summary-unit:
+      type: number
+      value: 20
+    gap.summary-run:
+      type: number
+      value: 10
+    size.annotation-heading:
+      type: number
+      value: 15
   roles:
     legend-swatch:
       swatchInlineSize: legend-swatch-inline-size
@@ -534,6 +552,52 @@ body:
       iconScale: icon-scale
       iconGap: icon-gap
       viewerFit: text-follows-box
+    kicker:
+      horizontalScale: squeeze.tier
+      blockGap: gap.kicker
+      fontFamily: editorial
+      fontWeight: weight.bold
+      fontSize: size.kicker
+      lineHeight: leading.tight
+      letterSpacing: header-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+      viewerFit: text-follows-box
+    summary-caption:
+      inlineGap: gap.summary-run
+      fontFamily: editorial
+      fontWeight: weight.bold
+      fontSize: size.summary-caption
+      lineHeight: leading.tight
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+      viewerFit: text-follows-box
+    summary-unit:
+      inlineGap: gap.summary-run
+      fontFamily: editorial
+      fontWeight: weight.bold
+      fontSize: size.summary-unit
+      lineHeight: leading.tight
+      letterSpacing: slot-heading-spacing
+      textTransform: kind-upper
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+      viewerFit: text-follows-box
+    annotation-heading:
+      contrastTreatment: required
+      fontFamily: editorial
+      fontWeight: weight.bold
+      fontSize: size.annotation-heading
+      lineHeight: leading.tight
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
     subtitle:
       fontFamily: editorial
       fontWeight: weight.bold
@@ -619,6 +683,7 @@ body:
       iconGap: icon-gap
       viewerFit: text-follows-box
     metric:
+      inlineGap: gap.summary-run
       fontFamily: editorial
       fontWeight: weight.bold
       fontSize: size.figure
@@ -842,6 +907,7 @@ body:
       letterSpacing: kind-secondary-spacing
     annotation-kind-bar:
       chipPadding: kind-bar-padding
+      barWidth: fill
     annotation-kind-accent: {}
   colorBindings:
     axis-rule.stroke: category:orange
@@ -854,6 +920,10 @@ body:
     member-label-inside-snapshot.fill: insideLabelSnapshot
     member-label-inside-scenario.fill: insideLabelScenario
     heading.fill: text
+    kicker.fill: text
+    summary-caption.fill: text
+    summary-unit.fill: category:orange
+    annotation-heading.fill: text
     subtitle.fill: category:orange
     table-cell-secondary.fill: textMuted
     legend.fill: text
@@ -940,12 +1010,14 @@ body:
     risk:
       label: WARNING
       secondary: 警告 WARNING
-      title: '{subject}'
+      title: '{secondary}'
+      heading: '{subject}'
       color: warning
       stamp: chrona-target-parts:hazard-tab
     note:
       label: REPORT
       secondary: 報告 REPORT
-      title: '{subject}'
+      title: '{secondary}'
+      heading: '{subject}'
       color: accent
       stamp: chrona-target-parts:hazard-tab

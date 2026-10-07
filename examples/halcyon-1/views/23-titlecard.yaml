@@ -4,8 +4,9 @@ id: halcyon-23-titlecard
 body:
   surface: table-timeline
   heading:
+    kicker: 第弐面
     title: 計画表、{project}
-    subtitle: "第弐面 · PROGRAMME BOARD : SLIDE 02 · 26 WORK PACKAGES · 6 SECTIONS · BASELINE / PLAN / ACTUAL"
+    subtitle: "PROGRAMME BOARD : SLIDE 02 · 26 WORK PACKAGES · 6 SECTIONS · BASELINE / PLAN / ACTUAL"
     dateForm: day-month-year
   rows:
     mode: automatic
