@@ -1,4 +1,4 @@
-"""Project measured heading runs into completed title-slot placements."""
+"""Owns measured heading projection; reads closed sources, title slot and Theme typography."""
 from __future__ import annotations
 
 from chrona.presentation.layout.model import LayoutError

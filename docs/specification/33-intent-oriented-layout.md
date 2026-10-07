@@ -385,7 +385,8 @@ These private modules divide Layout implementation only; they do not change auth
 | `surface_routes` | Place dependency paths/ports and relation labels. |
 | `surface_annotations` | Place annotation boxes, text, visuals and connectors. |
 | `surface_legend` | Place legend entries and role-derived swatches. |
-| `surface_content` | Place title, detail, summary, notes and footer source content. |
+| `surface_heading` | Project closed heading measurements and baselines into title-slot text placements. |
+| `surface_content` | Place detail, summary, notes and footer source content. |
 | `surface_backgrounds` | Complete source-bound row/group/axis/calendar background geometry from completed extents and overlay intervals. |
 | `surface_periods` | Complete named-period band geometry (#582) from the View-selected periods, the completed scale and the Theme treatment; clip to the window and plot and record a period with no extent. |
 | `surface_deadlines` | Complete a deadline tick and, for a slipped deadline, a run to the planned finish (#822) from the View-shown deadlines, the completed planned marks, the scale and the Theme reach; record a deadline outside the window or on a folded header point. |
