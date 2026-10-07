@@ -145,15 +145,17 @@ def resolve_theme_metrics(theme: Mapping[str, Any], *, required_metrics: tuple[s
 
 
 def derived_track_block_size(metrics: Mapping[str, Decimal]) -> Decimal | None:
-    """The mark track's default block size: the row block size less the row's total block padding (#1150).
+    """The mark track's default block size: the row block size less a padding on each side (#1150).
 
-    `timeline.row.paddingBlock` is the row's total padding, added once (Specification 24 section 2), so the
-    track is what the row leaves inside it. None when the row, its padding or a positive remainder is missing.
+    The row keeps `timeline.row.paddingBlock` above and below the track, so the track is the row block
+    size less twice it (CSS `box-sizing`: inner size from outer size and padding). The row's own
+    requirement still adds `paddingBlock` once (Specification 24 section 2), so a derived track always
+    fits with that padding to spare. None when the row, its padding or a positive remainder is missing.
     """
     row, padding = metrics.get("timeline.row.minBlockSize"), metrics.get("timeline.row.paddingBlock")
-    if row is None or padding is None or row - padding <= 0:
+    if row is None or padding is None or row - 2 * padding <= 0:
         return None
-    return row - padding
+    return row - 2 * padding
 
 
 def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any], *, font_metrics: Any,
