@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from chrona.presentation.layout.axis_lanes import derived_axis_block_size, plan_label_lanes
+from chrona.presentation.layout.axis_lanes import derived_axis_block_size, plan_band_stack, plan_label_lanes
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.sources import SourceInput, derive_axis_metrics
 from chrona.presentation.layout.surface_geometry import GEOMETRY_TOLERANCE
@@ -61,6 +61,40 @@ def test_a_rotated_label_tier_or_no_tier_cannot_be_derived():
     assert derived_axis_block_size([labels("day", orientation="rotate-cw")], tokens, None) is None
     assert derived_axis_block_size([], tokens, None) is None
     assert derived_axis_block_size([band("year")], tokens, None) is None
+
+
+def test_interleaved_shared_band_does_not_advance_the_independent_band_stack():
+    tokens = Tokens({"top": 24})
+    tiers = [band("year"), labels("quarter", role="top"), band("quarter")]
+    labels_plan = plan_label_lanes(tiers, tokens, None)
+    bands_plan = plan_band_stack(tiers, tokens, labels_plan)
+    height = 15 + float(GEOMETRY_TOLERANCE)
+    assert bands_plan.stacked == {0: (0.0, height)}
+    assert bands_plan.total == height
+    assert labels_plan.by_unit["quarter"] == (0.0, 24.0)
+    assert derived_axis_block_size(tiers, tokens, None) == Decimal(str(max(24.0, height)))
+
+
+def test_each_unshared_band_keeps_its_own_declared_typography_size():
+    class RoleTokens(Tokens):
+        def text_treatment(self, role):
+            return SimpleNamespace(font_size=Decimal(20 if role == "large" else 10),
+                                   line_height=Decimal("1.5"))
+
+    tokens = RoleTokens({})
+    tiers = [band("year"), band("quarter", role="large")]
+    plan = plan_band_stack(tiers, tokens, plan_label_lanes(tiers, tokens, None))
+    first, second = 15 + float(GEOMETRY_TOLERANCE), 30 + float(GEOMETRY_TOLERANCE)
+    assert plan.stacked == {0: (0.0, first), 1: (first, second)}
+    assert plan.total == first + second
+
+
+def test_a_single_unshared_band_uses_its_host_not_a_stacked_natural_lane():
+    tokens = Tokens({})
+    tiers = [band("year")]
+    plan = plan_band_stack(tiers, tokens, plan_label_lanes(tiers, tokens, None))
+    assert plan.stacked == {}
+    assert plan.total == 0
 
 
 def test_an_unbound_axis_without_derivable_tiers_stays_a_metric_diagnostic():

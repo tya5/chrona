@@ -10,7 +10,8 @@ from chrona.presentation.layout.axis import (
     axis_intervals, axis_label_fits, format_axis_tier_label, thinning_schedule,
 )
 from chrona.presentation.layout.axis_lanes import (
-    SecondaryPlan, axis_tick_requirement, label_block, line_extents, measure_axis_text, plan_label_lanes, secondary_plan,
+    SecondaryPlan, axis_tick_requirement, label_block, line_extents, measure_axis_text,
+    plan_band_stack, plan_label_lanes, secondary_plan,
 )
 from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.layout.model import LayoutError, Rect
@@ -264,11 +265,12 @@ def prepare_surface_axis(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame)
     visible_overflows: list[tuple[TextPlacement, LabelRect]] = []
     label_tiers: list[AxisLabelTierGeometry] = []
     separator_marks: list[tuple[float, float, float]] = []
-    label_lane_offset = band_lane_offset = 0.0
+    label_lane_offset = 0.0
     band_ordinal = label_ordinal = 0
     tiers = request.surface_content.axis_tiers
     band_tier_count = sum(item.role == "band" for item in tiers)
     lanes = plan_label_lanes(tiers, tokens, font_metrics)
+    bands = plan_band_stack(tiers, tokens, lanes)
     declared_lanes, lane_by_unit = lanes.declared, lanes.by_unit
 
     for tier_index, tier in enumerate(tiers):
@@ -381,7 +383,7 @@ def prepare_surface_axis(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame)
             elif band_tier_count == 1:
                 band_block, band_block_size = axis.bounds.block, axis.bounds.block_size
             else:
-                band_lane_size = axis_size * float(treatment.line_height) + float(GEOMETRY_TOLERANCE)
+                band_lane_offset, band_lane_size = bands.stacked[tier_index]
                 if band_lane_offset + band_lane_size > float(axis.bounds.block_size) + float(GEOMETRY_TOLERANCE):
                     raise LayoutError("E_PRESENTATION_AXIS_OVERFLOW", f"/view/body/axis/tiers/{tier_index}", detail=f"band-lane:{band_ordinal}")
                 band_block, band_block_size = axis.bounds.block + Decimal(str(band_lane_offset)), Decimal(str(band_lane_size))
@@ -402,8 +404,6 @@ def prepare_surface_axis(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame)
                     band_targets[("axis-band", interval.level, str(interval.index))] = placement_id
                     shapes.append(_band_cell(placement_id, x, x2, band_block, band_block_size, semantic_id=semantic_id,
                                              paint_order=paint_order, corner=corner, diagnostics=diagnostics))
-            if band_tier_count > 1 and tier.unit not in lane_by_unit:
-                band_lane_offset += band_lane_size
             band_ordinal += 1
         elif tier.role in {"grid-major", "grid-minor"}:
             semantic_id = "axisGrid" if tier.role == "grid-major" else "axisGridMinor"
