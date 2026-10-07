@@ -6,5 +6,6 @@ body:
     - id: countdown
       title: 発射まで
       presentation: figures
+      arrangement: inline
       metrics:
-        - {id: countdown, source: {figure: launch-countdown}, label: "DAYS · LAUNCH WINDOW OPENS IN", format: count}
+        - {id: countdown, source: {figure: launch-countdown}, label: DAYS, format: count}
