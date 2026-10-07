@@ -19,7 +19,7 @@ from chrona.presentation.layout.surface_route_label_plan import (
     RouteLabelPlanContext, compose_routes_and_member_labels,
 )
 from chrona.presentation.layout.surface_lane_route_plan import LaneRoutePlanContext, plan_lane_route_reservations
-from chrona.presentation.layout.surface_base import prepare_surface_base
+from chrona.presentation.layout.surface_base import prepare_surface_base, prepare_surface_inline
 from chrona.presentation.layout.surface_content import (
     complete_footer_band, compose_detail_panel_blocks, place_notes, place_summary,
     validate_detail_panel_placement,
@@ -36,7 +36,9 @@ from chrona.presentation.layout.surface_groups import (compose_group_presentatio
 from chrona.presentation.layout.surface_backgrounds import (
     compose_calendar_backgrounds, compose_group_tabs, compose_row_group_backgrounds, replace_group_header_band,
 )
-from chrona.presentation.layout.surface_axis import compose_axis
+from chrona.presentation.layout.surface_axis import (
+    SurfaceAxisFrame, complete_axis_plot, prepare_surface_axis,
+)
 from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT_FALLBACK
 from chrona.presentation.layout.as_of_cone import complete_as_of_cone
 from chrona.presentation.layout.surface_deadlines import compose_deadline_marks
@@ -89,7 +91,13 @@ def timeline_content_block_requirement(*, projection: Any, group_presentation: s
 
 def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutComposition:
     """Resolve slots, rows, groups, temporal scale, and mark tracks in Layout."""
-    base = prepare_surface_base(request)
+    inline = prepare_surface_inline(request)
+    request = inline.request
+    prepared_axis = prepare_surface_axis(request, SurfaceAxisFrame(
+        inline.scale, inline.timeline, inline.by_source["timeline-axis"], inline.metric_values))
+    headings = complete_slot_headings(request=request, slots=inline.by_source, decisions=inline.decisions,
+                                      axis_label_tiers=prepared_axis.placements.label_tiers)
+    base = prepare_surface_base(request, inline=inline)
     request = base.request
     projection = request.projection
     layout_manifest = base.layout_manifest
@@ -110,9 +118,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         return metric_for_role(request.theme_tokens, typography_role, request.font_metrics)
     body_size = float(request.theme_tokens.text_treatment("text").font_size)
     # Caption reservations precede native content, while primitive order remains title/detail/captions.
-    axis_batch = compose_axis(request, base)
-    headings = complete_slot_headings(request=request, slots=by_source, decisions=base.decisions,
-                                      axis_label_tiers=axis_batch.label_tiers)
+    axis_batch = complete_axis_plot(prepared_axis, base.plot)
     heading_slot_blocks = {source: by_source[source].bounds.block for source in headings.reserve or {}}
     text = list(place_heading(request, content_slot(by_source["title"], headings.reserved("title")),
                               measured_sources))

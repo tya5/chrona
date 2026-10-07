@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from datetime import date
 from decimal import Decimal
-from typing import Any, Callable
+from typing import Any, Callable, Mapping
 
 from chrona.presentation.layout.axis import (
     axis_intervals, axis_label_fits, format_axis_tier_label, thinning_schedule,
@@ -19,7 +19,7 @@ from chrona.presentation.layout.surface_geometry import (
 from chrona.presentation.layout.rounded_outline import resolve_corner_radius
 from chrona.presentation.layout.surface_quality import (
     AxisIntervalOutcome, AxisTierOutcome, CollisionDomain, PathCommand, PlacementDecision, ScalePlacement,
-    ShapePlacement, SurfaceLayoutRequest, TextPlacement,
+    ShapePlacement, SlotPlacement, SurfaceLayoutRequest, TextPlacement,
 )
 from chrona.presentation.layout.text import measure_text_width, metric_for_role, place_text
 from chrona.presentation.model.semantic_registry import (
@@ -69,6 +69,44 @@ class SurfaceAxisPlacements:
     visible_label_overflows: tuple[tuple[TextPlacement, LabelRect], ...]
     calendar_intervals: tuple[CalendarOverlayInterval, ...]
     label_tiers: tuple[AxisLabelTierGeometry, ...] = ()
+
+
+@dataclass(frozen=True)
+class SurfaceAxisFrame:
+    """Axis inputs independent of final shared rows or plot block extent."""
+    scale: ScalePlacement
+    timeline: SlotPlacement
+    axis: SlotPlacement
+    metric_values: Mapping[str, Any]
+
+
+@dataclass(frozen=True)
+class AxisPlotGrid:
+    """A full-height grid's completed inline coordinate, awaiting the final plot."""
+    placement_id: str
+    inline: float
+    semantic_id: str
+
+    def complete(self, plot: Rect) -> ShapePlacement:
+        return ShapePlacement(
+            self.placement_id, "timeline-axis", "Path",
+            Rect(Decimal(str(self.inline)), plot.block, Decimal(0), plot.block_size),
+            ((self.inline, float(plot.block)), (self.inline, float(plot.block + plot.block_size))),
+            semantic_id=self.semantic_id, paint_order=BACKGROUND_PAINT_ORDER + 1)
+
+
+@dataclass(frozen=True)
+class SurfaceAxisPreparation:
+    """Completed native axis facts and ordered, explicitly deferred plot grids."""
+    placements: SurfaceAxisPlacements
+    ordered_shapes: tuple[ShapePlacement | AxisPlotGrid, ...]
+
+
+def complete_axis_plot(prepared: SurfaceAxisPreparation, plot: Rect) -> SurfaceAxisPlacements:
+    """Close only plot-dependent grid endpoints, retaining native shape order."""
+    return replace(prepared.placements, shapes=tuple(
+        shape.complete(plot) if isinstance(shape, AxisPlotGrid) else shape
+        for shape in prepared.ordered_shapes))
 
 
 def _axis_label_inset(theme_tokens: Any, tier: Any, font_size: float) -> float:
@@ -259,13 +297,18 @@ def _axis_tick_length(theme_tokens: Any, role: str, slot_block_size: Decimal, ti
 
 def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> SurfaceAxisPlacements:
     """Place all axis tiers against completed scale and return calendar intervals, not shapes."""
+    frame = SurfaceAxisFrame(base.scale, base.timeline, base.by_source["timeline-axis"], base.metric_values)
+    return complete_axis_plot(prepare_surface_axis(request, frame), base.plot)
+
+
+def prepare_surface_axis(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame) -> SurfaceAxisPreparation:
+    """Complete native axis text/bands once, before final shared rows are placed."""
     if request.theme_tokens is None or request.font_metrics is None:
         raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources")
     start, end = request.projection.window
-    scale, timeline = base.scale, base.timeline
-    axis = base.by_source["timeline-axis"]
+    scale, timeline, axis = frame.scale, frame.timeline, frame.axis
     tokens, font_metrics = request.theme_tokens, request.font_metrics
-    shapes: list[ShapePlacement] = []
+    shapes: list[ShapePlacement | AxisPlotGrid] = []
     text: list[TextPlacement] = []
     outcomes: list[AxisTierOutcome] = []
     decisions: list[PlacementDecision] = []
@@ -422,7 +465,7 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
                     x, x2 = x + gap / 2, max(x + gap / 2, x2 - gap / 2)
                 # A cell at the window edge reaches the plot edge (#880); the cell gap lies between cells, so the
                 # outer edge of that cell takes no gap and ends where the axis rule ends.
-                edge, edge2 = extend_to_plot_edges(raw, raw2, scale=scale, plot=base.plot)
+                edge, edge2 = extend_to_plot_edges(raw, raw2, scale=scale, plot=timeline.bounds)
                 x, x2 = (edge if edge != raw else x), (edge2 if edge2 != raw2 else x2)
                 placement_id = f"axis-band-rect:{tier_index}:{interval.index}"
                 treatment_bg, paint_order = tokens.background(semantic_binding(semantic_id).scene_role)
@@ -436,12 +479,13 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
         elif tier.role in {"grid-major", "grid-minor"}:
             semantic_id = "axisGrid" if tier.role == "grid-major" else "axisGridMinor"
             tick = _axis_tick_length(tokens, semantic_binding(semantic_id).scene_role, axis.bounds.block_size, tier_index)
-            if tick is None:
-                grid_top, grid_size = base.plot.block, base.plot.block_size
-            else:
+            if tick is not None:
                 grid_top, grid_size = axis.bounds.block + axis.bounds.block_size - tick, tick
             for interval in intervals:
                 x = coordinate_for_date(interval.start, scale)
+                if tick is None:
+                    shapes.append(AxisPlotGrid(f"axis-grid:{tier_index}:{interval.index}", x, semantic_id))
+                    continue
                 shapes.append(ShapePlacement(f"axis-grid:{tier_index}:{interval.index}", "timeline-axis", "Path",
                     Rect(Decimal(str(x)), grid_top, Decimal(0), grid_size),
                     ((x, float(grid_top)), (x, float(grid_top + grid_size))),
@@ -554,7 +598,8 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
         shapes.append(ShapePlacement("axis-rule", "timeline-axis", "Path",
             Rect(Decimal(str(left)), Decimal(str(y)), Decimal(str(right - left)), Decimal(0)),
             ((left, y), (right, y)), semantic_id="axisRule", paint_order=BACKGROUND_PAINT_ORDER + 2))
-    bands = tuple(item for item in shapes if item.semantic_id in axis_band_semantic_ids())
+    bands = tuple(item for item in shapes if isinstance(item, ShapePlacement)
+                  and item.semantic_id in axis_band_semantic_ids())
     def host(item: TextPlacement) -> str | None:
         centre = item.bounds.inline + item.bounds.inline_size / 2
         lane_centre = item.bounds.block + item.bounds.block_size / 2
@@ -565,13 +610,15 @@ def compose_axis(request: SurfaceLayoutRequest, base: SurfaceBaseGeometry) -> Su
     text = [replace(item, host_placement_id=host(item), paint_order=HOSTED_TEXT_PAINT_ORDER)
             if item.semantic_id in axis_label_semantic_ids() else item for item in text]
     contract = request.presentation_contract
-    minimum = base.metric_values.get("timeline.calendarClosed.minimumDayWidth")
+    minimum = frame.metric_values.get("timeline.calendarClosed.minimumDayWidth")
     closed = contract.time.calendar_closed
     if minimum is not None and scale.unit_ratio < float(minimum):
         closed = contract.time.calendar_exceptions
     calendar = calendar_overlay_intervals(
         closed_days=tuple(closed), start=start, end=end, coordinate=coordinate_for_date, scale=scale,
         exceptions=frozenset(contract.time.calendar_exceptions))
-    return SurfaceAxisPlacements(tuple(shapes), tuple(text), tuple(outcomes), tuple(decisions),
+    placements = SurfaceAxisPlacements(tuple(shape for shape in shapes if isinstance(shape, ShapePlacement)),
+        tuple(text), tuple(outcomes), tuple(decisions),
         label_targets, band_targets, tuple(diagnostics), tuple(visible_overflows), calendar,
         tuple(label_tiers))
+    return SurfaceAxisPreparation(placements, tuple(shapes))

@@ -40,6 +40,31 @@ class SurfaceSlotAllocation:
     slots: tuple[SlotPlacement, ...]
 
 
+@dataclass(frozen=True)
+class SurfaceInlineGeometry:
+    """Validated pre-row facts used to close the shared inline geometry."""
+    request: SurfaceLayoutRequest
+    projection: Any
+    layout_manifest: LayoutManifest
+    measured_sources: Any
+    metric_values: dict[str, Any]
+    allocation: SurfaceSlotAllocation
+    decisions: dict[str, Any]
+    slots: tuple[SlotPlacement, ...]
+    by_source: dict[str, SlotPlacement]
+    table: SlotPlacement
+    timeline: SlotPlacement
+    review_rows: tuple[Any, ...]
+    timeline_bounds: tuple[float, float, float, float]
+    slot_ids: frozenset[str]
+    scale: ScalePlacement
+    role_geometries: Mapping[str, MarkGeometry]
+    mark_block_size: float
+    mark_band_allocation: MarkBandAllocation | None
+    group_header_size: float
+    group_tag_inline_size: float
+
+
 def _layout_manifest(request: SurfaceLayoutRequest) -> LayoutManifest:
     manifest = request.layout_manifest
     if not isinstance(manifest, LayoutManifest):
@@ -164,9 +189,9 @@ def _provisional_point_facets(*, projection: Any, rows: tuple[Any, ...], scale: 
     return tuple(result)
 
 
-def prepare_surface_base(request: SurfaceLayoutRequest, *,
-                         allocation: SurfaceSlotAllocation | None = None) -> SurfaceBaseGeometry:
-    """Validate inputs and close slots, rows, groups, scale and mark tracks."""
+def prepare_surface_inline(request: SurfaceLayoutRequest, *,
+                           allocation: SurfaceSlotAllocation | None = None) -> SurfaceInlineGeometry:
+    """Close validated slots and exact mark-aware scale before rows are placed."""
     projection = request.projection
     layout_manifest = _layout_manifest(request)
     measured_sources = request.measured_sources
@@ -224,6 +249,38 @@ def prepare_surface_base(request: SurfaceLayoutRequest, *,
             mark_band_allocation=mark_band_allocation,
         )
         scale = inset_scale_for_point_facets(provisional_scale, point_facets)
+    return SurfaceInlineGeometry(
+        request, projection, layout_manifest, measured_sources, metric_values, allocation,
+        decisions, slots, by_source, table, timeline, review_row_values, timeline_bounds,
+        frozenset(slot.slot_id for slot in slots), scale, role_geometries, mark_block_size,
+        mark_band_allocation, group_header_size,
+        group_tag_column_size(request.theme_tokens) if group_tags else 0.0,
+    )
+
+
+def prepare_surface_base(request: SurfaceLayoutRequest, *,
+                         allocation: SurfaceSlotAllocation | None = None,
+                         inline: SurfaceInlineGeometry | None = None) -> SurfaceBaseGeometry:
+    """Validate inputs and close slots, rows, groups, scale and mark tracks."""
+    inline = inline if inline is not None else prepare_surface_inline(request, allocation=allocation)
+    request = inline.request
+    projection = inline.projection
+    start, end = projection.window
+    layout_manifest = inline.layout_manifest
+    measured_sources = inline.measured_sources
+    metric_values = inline.metric_values
+    decisions = inline.decisions
+    slots = inline.slots
+    by_source = inline.by_source
+    table, timeline = inline.table, inline.timeline
+    review_row_values = inline.review_rows
+    timeline_bounds = inline.timeline_bounds
+    scale = inline.scale
+    role_geometries = inline.role_geometries
+    mark_block_size = inline.mark_block_size
+    mark_band_allocation = inline.mark_band_allocation
+    group_header_size = inline.group_header_size
+    group_tag_inline_size = inline.group_tag_inline_size
     row_padding = float(metric_values["timeline.row.paddingBlock"])
     text_line_block = table_text_line_block(
         request.theme_tokens, (cell.typography_role for cell in request.surface_content.table_cells))
@@ -289,13 +346,13 @@ def prepare_surface_base(request: SurfaceLayoutRequest, *,
                                 mark_band_allocation=mark_band_allocation))
     return SurfaceBaseGeometry(
         request, projection, layout_manifest, measured_sources, metric_values, decisions,
-        slots, {slot.source_ref: slot for slot in slots}, table, timeline,
+        slots, by_source, table, timeline,
         review_row_values, timeline_bounds,
-        frozenset(slot.slot_id for slot in slots),
+        inline.slot_ids,
         scale, rows, raw_rows, groups, tracks, role_geometries, mark_block_size,
         lane_subtracks, group_header_size, row_padding, text_line_block, table_bounds,
         plot_rect(timeline.bounds, (row.bounds for row in rows)),
-        group_tag_inline_size=group_tag_column_size(request.theme_tokens) if group_tags else 0.0,
+        group_tag_inline_size=group_tag_inline_size,
         as_of_foot_reserve=foot_reserve, as_of_foot_fallback=foot_fallback,
         mark_band_allocation=mark_band_allocation,
     )
