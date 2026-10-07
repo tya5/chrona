@@ -87,3 +87,21 @@ def test_a_box_that_cannot_follow_its_text_is_refused_at_the_offending_declarati
 ])
 def test_text_follows_box_composes_with_every_container_the_other_mode_refuses(container):
     assert _view(container, viewerFit="text-follows-box").viewer_fit("annotation").mode == "text-follows-box"
+
+
+@pytest.mark.parametrize("role", ["as-of-label-chip", "member-label-chip", "finish-delta-chip", "period-label-chip"])
+def test_each_registered_chip_role_admits_a_square_solid_follower(role):
+    theme = _theme()
+    theme["body"]["roles"][role] = {"viewerFit": "box-follows-text", "fill": "chipFill"}
+    theme["body"]["values"]["chipFill"] = {"type": "color", "value": "#ffffff"}
+    assert ThemeTokenView(theme).viewer_fit(role).mode == "box-follows-text"
+
+
+def test_physical_square_chip_radius_overrides_a_nonzero_legacy_radius():
+    theme = _theme()
+    theme["body"]["roles"]["member-label-chip"] = {
+        "viewerFit": "box-follows-text", "fill": "chipFill", "cornerRadius": "square", "markCornerRadius": "rounded"}
+    theme["body"]["values"].update({"chipFill": {"type": "color", "value": "#ffffff"},
+                                      "square": {"type": "radius", "value": 0},
+                                      "rounded": {"type": "number", "value": 0.2}})
+    assert ThemeTokenView(theme).viewer_fit("member-label-chip").mode == "box-follows-text"

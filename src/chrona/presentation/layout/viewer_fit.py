@@ -10,7 +10,7 @@ from dataclasses import replace
 from typing import Any
 
 from chrona.presentation.layout.model import LayoutError
-from chrona.presentation.layout.surface_quality import TextFit, TextPlacement
+from chrona.presentation.layout.surface_quality import IconPlacement, ShapePlacement, TextFit, TextPlacement
 from chrona.presentation.layout.text import measure_text_width, metric_for_family
 from chrona.presentation.model.semantic_registry import label_chip_semantic, semantic_binding
 from chrona.presentation.model.theme_tokens import (
@@ -70,31 +70,46 @@ def require_followable_content(token: ViewerFitToken, *, has_kind_frame: bool, h
         raise LayoutError("E_LAYOUT_VIEWER_FIT_STATIC_CHROME", pointer)
 
 
-def stamp_text_fits(texts: tuple[TextPlacement, ...], theme_tokens: Any, font_metrics: Any) -> tuple[TextPlacement, ...]:
+def stamp_surface_fits(texts: tuple[TextPlacement, ...], shapes: tuple[ShapePlacement, ...],
+                       icons: tuple[IconPlacement, ...], theme_tokens: Any,
+                       font_metrics: Any) -> tuple[tuple[TextPlacement, ...], tuple[ShapePlacement, ...]]:
     """Complete the viewer fit of every other text of the surface, once, after all of Layout's geometry (#1096).
 
     A label that carries a chip takes its chip role's mode; any other text takes the mode of its own typography role
     (a legend, a table cell, a bar label, a title, a vertical group tag). These runs have no box of their own that
-    follows them, so only ``text-follows-box`` applies: each line is pinned to the width Layout finally measured for
-    it. A run that already has its fit (an annotation) and a suppressed run are left alone; ``raw`` is the default and
-    returns the very same placements.
+    follows them, so only ``text-follows-box`` applies. Completed chips can also follow text: their stable identity
+    supplies the box and their completed bounds supply the end inset, without re-computing chip geometry.
+    Already fitted, suppressed and empty runs are left alone; raw preserves the very same placements.
     """
-    cache: dict[tuple[str, str], ViewerFitToken] = {}
+    cache: dict[tuple[str, bool], ViewerFitToken] = {}
+    chip_shapes = {shape.placement_id: shape for shape in shapes}
+    visual_hosts = {icon.host_placement_id for icon in icons}
+    followers: set[str] = set()
 
-    def token_for(text: TextPlacement) -> ViewerFitToken:
-        key = (text.semantic_id, text.typography_role)
+    def token_for(text: TextPlacement, chip: ShapePlacement | None) -> ViewerFitToken:
+        chip_semantic = label_chip_semantic(text.semantic_id)
+        chip_role = semantic_binding(chip_semantic).theme_role if chip_semantic else None
+        role = chip_role if chip is not None else text.typography_role
+        key = (role, chip is not None)
         if key not in cache:
-            chip_semantic = label_chip_semantic(text.semantic_id)
-            chip_role = semantic_binding(chip_semantic).theme_role if chip_semantic else None
-            chip = chip_role is not None and theme_tokens.label_chip(chip_role) is not None
-            cache[key] = theme_tokens.viewer_fit(chip_role if chip else text.typography_role, box_follows=False)
+            cache[key] = theme_tokens.viewer_fit(role, box_follows=chip is not None)
         return cache[key]
 
     result: list[TextPlacement] = []
     for text in texts:
-        token = token_for(text) if text.fit is None and text.overflow != "suppressed" else ViewerFitToken()
-        if token.mode == VIEWER_FIT_RAW or not text.lines or any(not line for line in text.lines):
+        if text.fit is not None or text.overflow == "suppressed" or not text.lines or any(not line for line in text.lines):
             result.append(text)
             continue
-        result.append(fit_text(text, token, font_metrics, box_id=text.placement_id))
-    return tuple(result)
+        chip = chip_shapes.get("chip:" + text.placement_id) if label_chip_semantic(text.semantic_id) else None
+        token = token_for(text, chip)
+        if token.mode == BOX_FOLLOWS_TEXT and chip is not None:
+            require_followable_content(token, has_kind_frame=False,
+                                       has_visual=text.placement_id in visual_hosts, pointer=text.source_ref)
+            end_inset = float(chip.bounds.inline + chip.bounds.inline_size
+                              - text.bounds.inline - text.bounds.inline_size)
+            result.append(fit_text(text, token, font_metrics, box_id=chip.placement_id, end_inset=end_inset))
+            followers.add(chip.placement_id)
+        else:
+            result.append(fit_text(text, token, font_metrics, box_id=text.placement_id))
+    return (tuple(result), tuple(replace(shape, viewer_fit=BOX_FOLLOWS_TEXT)
+                                 if shape.placement_id in followers else shape for shape in shapes))
