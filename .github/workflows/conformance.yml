@@ -139,7 +139,7 @@ jobs:
 
   reproduction-newest-python:
     needs: [classify-pr, derived-preview]
-    if: ${{ always() && ((github.event_name == 'pull_request' && needs.classify-pr.outputs.path == 'code') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
+    if: ${{ !cancelled() && ((github.event_name == 'pull_request' && needs.classify-pr.outputs.path == 'code') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -165,7 +165,7 @@ jobs:
 
   mcp-floor:
     needs: [classify-pr]
-    if: ${{ always() && ((github.event_name == 'pull_request' && needs.classify-pr.outputs.path == 'code') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
+    if: ${{ !cancelled() && ((github.event_name == 'pull_request' && needs.classify-pr.outputs.path == 'code') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -181,7 +181,7 @@ jobs:
 
   derived-ready:
     needs: [classify-pr, derived-preview, pr-conformance, pr-pytest, reproduction-newest-python]
-    if: ${{ always() && github.event_name == 'pull_request' }}
+    if: ${{ !cancelled() && github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -192,6 +192,8 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           GH_TOKEN: ${{ github.token }}
           PR_KIND: ${{ needs.classify-pr.outputs.path }}
           PREVIEW: ${{ needs.derived-preview.result }}
@@ -211,6 +213,11 @@ jobs:
             fi
             ready=false
             for attempt in $(seq 1 60); do
+              # Stop promptly once a newer push superseded this head (#1229).
+              pr_head="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq .head.sha)"
+              if [[ "$pr_head" != "$PR_HEAD_SHA" ]]; then
+                echo "superseded by $pr_head"; exit 1
+              fi
               current="$(gh api --method GET "repos/$GITHUB_REPOSITORY/commits/$PR_BASE_SHA/check-runs" \
                 -f check_name=derived-main -f filter=all -f per_page=100 \
                 --jq '[.check_runs[] | select(.app.slug == "github-actions")] | sort_by([.started_at // .created_at, .id]) | if length == 0 then "" else (last.status + ":" + (last.conclusion // "")) end')"
