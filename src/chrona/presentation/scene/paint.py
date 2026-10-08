@@ -142,7 +142,8 @@ class ArtworkAdmission:
 
 
 def resolve_artwork_admission(tokens: ThemeTokenView, *, needs_finish: bool,
-                              visual_profile: VisualProfile | None, role: str = ARTWORK_ROLE) -> ArtworkAdmission:
+                              visual_profile: VisualProfile | None, role: str = ARTWORK_ROLE,
+                              treatment: str = "annotation-artwork") -> ArtworkAdmission:
     """Decide whether the profile paints one completed artwork layer.
 
     A fill part needs only the symbol outline every profile admits. A stroke part carries a required line cap and
@@ -161,7 +162,7 @@ def resolve_artwork_admission(tokens: ThemeTokenView, *, needs_finish: bool,
         raise ScenePaintError(error.diagnostic_id, error.path) from error
     if admitted:
         return ArtworkAdmission(True)
-    return ArtworkAdmission(False, (_omission(role, "annotation-artwork", "artworkFidelity",
+    return ArtworkAdmission(False, (_omission(role, treatment, "artworkFidelity",
                                               visual_profile, required),))
 
 
