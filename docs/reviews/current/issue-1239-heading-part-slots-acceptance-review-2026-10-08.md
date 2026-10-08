@@ -2,10 +2,10 @@
 
 <!-- chrona:literal-acceptance/v1 -->
 
-Implementation: `440773ca1f5af9c2ec812c8718b79aafcc5e5360`, based on
-ready main `2b168a73cc04a189afa84a4cf0f3ab3576dd2413`.
-Measurement closure correction: `67469d668eb80ab3d664b8da1cee342a2452e985`
-uses the existing block-run measurement path to retain each part's numeric spacing.
+Implementation through `224ea2ce9874e18b14616944c25cd010c9555a82`, based on
+ready main `d5bdf0be26c128b76baf87d59b80189b7d87b3cb`.
+Split runs retain numeric spacing through native block measurement; placements
+consume the closed stack baseline and baseline-minus-font-size bounds.
 [Living design, architecture review and plan](https://github.com/tya5/chrona/issues/1239#issuecomment-6059626833).
 Release acceptance remains pending exact-head PR CI, shared generated-output
 inspection and published-main three-OS release evidence. Do not close yet.
@@ -26,10 +26,15 @@ inspection and published-main three-OS release evidence. Do not close yet.
 
 ## Programme-level criteria (optional)
 
-Focused heading/profile/source/network tests: 67 passed; Layout/Scene boundary,
-module ownership and registry tests: 9 passed. Schema equivalence L1/L2/L3,
+Combined focused heading/profile/source/network, Layout/Scene boundary,
+module ownership, vocabulary, text-stack and allocation tests: 354 passed.
+Schema equivalence L1/L2/L3,
 schema annotations, role-consumer and semantic reachability checks passed.
 Whole-title composition, legacy network title placement and routes remain on
 their existing paths. Split placements consume closed measured bounds/baselines;
 Scene only projects identities, ownership and paint. No examples or generated
 outputs were authored. Unallocated copy does not require unused typography.
+CI run 37778346231 exposed nine generic allocation fixtures claiming `title`
+repeatedly and one incomplete vocabulary assertion. The fixtures now use an
+ordinary source; all four approved source values are registered and compared
+without splitting dotted names. Duplicate-heading validation remains strict.
