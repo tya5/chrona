@@ -160,6 +160,8 @@ class AnnotationKindFrame:
     stamp_size: Decimal = Decimal(0)
     heading_role: str | None = None
     bar_width: str = "fill"
+    bar_bleed: str = "none"
+    stamp_placement: str = "column"
 
 
 @dataclass(frozen=True)
@@ -819,18 +821,24 @@ class ThemeTokenView:
             if not Decimal(0) <= padding <= Decimal(2):
                 raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{bar_role}/chipPadding")
         stamp_role = declared("annotation-kind-stamp")
-        corner, stamp_size = None, Decimal(0)
+        corner, stamp_size, stamp_placement = None, Decimal(0), "column"
         if stamp_role is not None:
             placement = self.token(stamp_role, "stampPlacement", "stampPlacement")
+            stamp_placement = placement.get("placement", "column") if isinstance(placement, Mapping) else None
             corner = placement.get("corner") if isinstance(placement, Mapping) else None
             stamp_size = self._decimal(placement.get("size") if isinstance(placement, Mapping) else None,
                                        stamp_role, "stampPlacement/size") or Decimal(0)
-            if corner not in {"start-top", "end-top", "start-bottom", "end-bottom"} or stamp_size <= 0:
+            valid_corner = isinstance(corner, str) and corner in ("start-top", "end-top", "start-bottom", "end-bottom")
+            valid_placement = isinstance(stamp_placement, str) and stamp_placement in ("column", "bar-end")
+            corner_matches = valid_corner if stamp_placement == "column" else corner is None
+            if not valid_placement or not corner_matches or stamp_size <= 0:
                 raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{stamp_role}/stampPlacement")
+        bar_bleed = self.optional_choice("annotation-kind-bar", "barBleed", ("none", "border")) or "none"
         return AnnotationKindFrame(declared("annotation-kind-label"), declared("annotation-kind-secondary"),
                                    bar_role, padding, stamp_role, corner, stamp_size,
                                    declared("annotation-heading"),
-                                   self.optional_choice("annotation-kind-bar", "barWidth", ("fill", "hug")) or "fill")
+                                   self.optional_choice("annotation-kind-bar", "barWidth", ("fill", "hug")) or "fill",
+                                   bar_bleed, stamp_placement)
 
     def _insets(self, value: Any, role: str, property_name: str) -> tuple[Decimal, Decimal, Decimal, Decimal]:
         """Return a validated (top, right, bottom, left) em-relative inset quadruple."""

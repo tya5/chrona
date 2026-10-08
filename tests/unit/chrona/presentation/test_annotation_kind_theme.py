@@ -1,12 +1,20 @@
 """#584: Theme resolution of `annotationKinds`, the kind roles and the kind header text contrast gate."""
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
+import yaml
 
 from chrona.presentation.color_scheme import ColorSchemeError, resolve_theme
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
+from chrona.presentation.scene.capabilities import theme_role_property_consumer
+from chrona.resources import validator_for_schema
 from tests.support import annotation_kinds as ak
 from tests.support import synthetic_review as sr
+
+_THEME_SCHEMA = validator_for_schema(yaml.safe_load(
+    (Path(__file__).resolve().parents[4] / "schemas/theme-v0.15.schema.yaml").read_text(encoding="utf-8")))
 
 
 def _resolve(**options):
@@ -102,6 +110,7 @@ def test_the_frame_reads_which_elements_the_theme_declares_and_their_geometry():
     assert (frame.label_role, frame.secondary_role, frame.bar_role) == (
         "annotation-kind-label", "annotation-kind-secondary", "annotation-kind-bar")
     assert float(frame.bar_padding_em) == 0.5
+    assert (frame.bar_bleed, frame.stamp_placement) == ("none", "column")
     assert not hasattr(frame, "accent_role")
     border = ThemeTokenView(resolved).annotation_container("annotation-note-box").border
     assert border["end"].width == 5 and border["end"].paint == "kind"
@@ -150,10 +159,70 @@ def test_a_theme_without_a_stamp_role_has_no_stamp_in_its_frame():
     _, resolved = _resolve()
     frame = ThemeTokenView(resolved).annotation_kind_frame()
     assert frame.stamp_role is None and frame.stamp_corner is None
+    assert frame.stamp_placement == "column"
+
+
+@pytest.mark.parametrize("placement,corner", [(None, "end-top"), ("column", "start-bottom")])
+def test_column_stamp_placement_keeps_the_legacy_corner(placement, corner):
+    parts = sr.bundle()
+    ak.with_kind_theme(parts, stamp="end-top")
+    value = {"corner": corner, "size": 2}
+    if placement is not None:
+        value["placement"] = placement
+    parts["theme"]["body"]["values"]["kind-stamp-placement"]["value"] = value
+    resolved = resolve_theme(parts["theme"], parts["scheme"], scheme_content_identity="sha256:test")
+    frame = ThemeTokenView(resolved).annotation_kind_frame()
+    assert (frame.stamp_placement, frame.stamp_corner, float(frame.stamp_size)) == ("column", corner, 2.0)
+
+
+def test_bar_end_stamp_placement_has_size_but_no_corner():
+    parts = sr.bundle()
+    ak.with_kind_theme(parts, stamp="end-top")
+    parts["theme"]["body"]["values"]["kind-stamp-placement"]["value"] = {
+        "placement": "bar-end", "size": 1.5}
+    resolved = resolve_theme(parts["theme"], parts["scheme"], scheme_content_identity="sha256:test")
+    frame = ThemeTokenView(resolved).annotation_kind_frame()
+    assert (frame.stamp_placement, frame.stamp_corner, float(frame.stamp_size)) == ("bar-end", None, 1.5)
+
+
+@pytest.mark.parametrize("value", [
+    {"placement": "bar-end", "corner": "end-top", "size": 2},
+    {"placement": "column", "size": 2},
+    {"placement": "unknown", "size": 2},
+])
+def test_stamp_placement_schema_rejects_meaningless_corner_combinations(value):
+    parts = sr.bundle()
+    ak.with_kind_theme(parts, stamp="end-top")
+    parts["theme"]["body"]["values"]["kind-stamp-placement"]["value"] = value
+    assert tuple(_THEME_SCHEMA.iter_errors(parts["theme"]))
+
+
+@pytest.mark.parametrize("bleed", ["none", "border"])
+def test_bar_bleed_is_typed_intent_with_none_as_the_absent_default(bleed):
+    parts, resolved = _resolve()
+    assert ThemeTokenView(resolved).annotation_kind_frame().bar_bleed == "none"
+    parts["theme"]["body"]["roles"]["annotation-kind-bar"]["barBleed"] = bleed
+    resolved = resolve_theme(parts["theme"], parts["scheme"], scheme_content_identity="sha256:test")
+    assert ThemeTokenView(resolved).annotation_kind_frame().bar_bleed == bleed
+
+
+@pytest.mark.parametrize("bleed", ["edge", 3])
+def test_bar_bleed_schema_rejects_values_outside_the_closed_vocabulary(bleed):
+    parts = sr.bundle()
+    ak.with_kind_theme(parts)
+    parts["theme"]["body"]["roles"]["annotation-kind-bar"]["barBleed"] = bleed
+    assert tuple(_THEME_SCHEMA.iter_errors(parts["theme"]))
+
+
+def test_bar_bleed_is_admitted_only_as_annotation_kind_bar_geometry():
+    assert theme_role_property_consumer("annotation-kind-bar", "barBleed") is not None
+    assert theme_role_property_consumer("annotation-kind-stamp", "barBleed") is None
+    assert theme_role_property_consumer("text", "barBleed") is None
 
 
 @pytest.mark.parametrize("placement", [{"corner": "middle", "size": 2}, {"corner": "end-top", "size": 0},
-                                       {"corner": "end-top", "size": -1}])
+                                       {"corner": "end-top", "size": -1}, {"corner": ["end-top"], "size": 2},
+                                       {"placement": [], "size": 2}])
 def test_an_invalid_stamp_placement_token_is_a_token_type_error(placement):
     parts = sr.bundle()
     ak.with_kind_theme(parts, stamp="end-top")
