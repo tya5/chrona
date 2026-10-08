@@ -58,21 +58,50 @@ def _shape(theme_tokens: Any, role: str, font_metrics: Any) -> dict[str, Any]:
                 numeric_spacing=treatment.numeric_spacing)
 
 
+def _painted(text: str, shape: dict[str, Any]) -> float:
+    """The advance of whitespace as painted: each character is followed by its letter-spacing (#1238).
+
+    ``measure_text_width`` counts the spacing between characters only; the spacing after the last one is the gap's.
+    """
+    if not text:
+        return 0.0
+    spacing = measure_text_width("  ", **shape) - 2 * measure_text_width(" ", **shape)
+    return measure_text_width(text, **shape) + spacing
+
+
+def _trailing_spacing(shape: dict[str, Any]) -> float:
+    """The letter-spacing painted after the last character of a run (not part of its measured width)."""
+    return measure_text_width("  ", **shape) - 2 * measure_text_width(" ", **shape)
+
+
 def _resolve_runs(runs: tuple[tuple[str, str | None], ...], theme_tokens: Any, font_metrics: Any) -> list[_Run]:
-    """Split edge whitespace into gaps (measured in the face of the run it belongs to) and measure each run."""
+    """Split edge whitespace into gaps (measured in the face of the text it belongs to) and measure each run.
+
+    Literal edge spaces are the gap between two runs (Spec 50 section 3.4). As in one painted line, the gap also holds
+    the letter-spacing after the last character before the whitespace and after each whitespace character (#1238).
+    """
     resolved: list[_Run] = []
     pending = 0.0
+    spaced = False  # whitespace was seen since the last run
+    previous: dict[str, Any] | None = None
     for text, declared in runs:
         role = declared or DEFAULT_ROLE
         shape = _shape(theme_tokens, role, font_metrics)
         core = text.strip()
         if not core:
-            pending += measure_text_width(text, **shape) if text else 0.0
+            if text:
+                pending += _painted(text, shape)
+                spaced = True
             continue
         lead = text[:len(text) - len(text.lstrip())]
         trail = text[len(text.rstrip()):]
-        gap = pending + (measure_text_width(lead, **shape) if lead else 0.0)
-        pending = measure_text_width(trail, **shape) if trail else 0.0
+        gap = pending + _painted(lead, shape)
+        spaced = spaced or bool(lead)
+        if spaced and previous is not None:
+            gap += _trailing_spacing(previous)
+        pending = _painted(trail, shape)
+        spaced = bool(trail)
+        previous = shape
         resolved.append(_Run(role, core, core, shape, gap, measure_text_width(core, **shape)))
     return resolved
 
