@@ -32,8 +32,8 @@ Current plan: [living Status](https://github.com/tya5/chrona/issues/888#issuecom
 [PR #1223 shared snapshot](https://github.com/tya5/chrona/actions/runs/37725212704):
 all 67 public Scene/SVG pairs byte-identical; only diagnostic inventory source locations and two new ingress sites change.
 
-[Part2 snapshot at95ce116c](https://github.com/tya5/chrona/actions/runs/37729757646),
-artifact11529825209: all67 Scene/SVG pairs byte-identical, no added/retired outputs
+[Part2 snapshot at4a0f5a2a](https://github.com/tya5/chrona/actions/runs/37731495183),
+artifact11529494566: all67 Scene/SVG pairs byte-identical, no added/retired outputs
 or runtime diagnostic changes. Only declared-value source locations, diagnostic
 sites/source locations and newly declared presentation vocabulary reports differ.
 The final corrected head must repeat shared-snapshot verification before merge.
@@ -49,6 +49,16 @@ are corrected and checked. The initial CI conformance failure is only the
 diagnostic actionability ratchet (three new bare error sites); owner-local detail
 and assertions correct them without changing policy counts. Diagnostic/model/SVG
 regressions: **35 PASS**. No generated report was patched to absorb the changes.
+
+CI37731495183 passed conformance, MCP floor and newest-Python reproduction.
+All five pytest failures are accounted for: three prior-art checks lacked the
+radial capability observation; two texture tests retained obsolete role/opacity
+expectations. The corrections retain unknown competitor support, assert every
+admitted role property's consumer, reject opaque opacity0.5 at the exact pointer,
+and prove opacity1 preserves Scene content and SVG bytes (resource provenance
+correctly differs). The corrected focused group passes **53 tests**; the research
+matrix freshness check passes. `derived-ready` failed only because pytest failed;
+the corrected head still requires all CI gates before merge.
 
 Layout owns all glyph paths/run geometry; Scene projects one admitted batch and resolves used paint channels.
 Sparse ink/contact remains renderer-neutral; ordered ground composition preserves opaque/translucent host,

@@ -34,6 +34,7 @@ External columns are curated review observations, not runtime inputs or feature 
 | `mark.marker-geometry` | mark | supported | Theme | Completed marker geometry is target-neutral. | issue-384 | unknown | unknown | documented |
 | `paint.pattern-geometry` | mark | supported | Theme | Completed finite pattern geometry is target-neutral. | issue-384 | unknown | unknown | documented |
 | `mark.symbol-outline` | mark | supported | Theme | Completed point-symbol outline is target-neutral. | issue-384 | unknown | unknown | documented |
+| `paint.radial-gradient` | effect | supported | Theme | A bounded completed radial canvas overlay uses fixed ink and Layout geometry. | specification-63 | unknown | unknown | unknown |
 
 ## Review rule
 
