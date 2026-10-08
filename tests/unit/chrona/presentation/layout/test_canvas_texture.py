@@ -7,7 +7,9 @@ from decimal import Decimal
 import pytest
 
 from chrona.presentation.layout.canvas_texture import (
-    CANVAS_SLOT_ID, CANVAS_TEXTURE_PLACEMENT_ID, complete_canvas_texture,
+    CANVAS_SLOT_ID,
+    CANVAS_TEXTURE_PLACEMENT_ID,
+    complete_canvas_texture,
 )
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.model.theme_tokens import ThemeTokenView
@@ -86,4 +88,32 @@ def test_an_inline_pattern_cannot_be_a_texture() -> None:
         complete_canvas_texture(tokens, _canvas())
 
     assert error.value.diagnostic_id == "E_THEME_ROLE_PROPERTY_UNSUPPORTED"
+    assert error.value.path == "/body/roles/canvas-texture/pattern"
+
+
+@pytest.mark.parametrize("motif", ["grain", "rain"])
+def test_seeded_texture_completes_deterministically_at_the_canvas_origin(motif: str) -> None:
+    def tokens(seed: int) -> ThemeTokenView:
+        declaration = {"kind": "seeded", "algorithm": "splitmix64-v1", "motif": motif,
+                       "seed": seed, "tile": {"inlineSize": 32, "blockSize": 48}, "count": 8}
+        declaration.update({"radius": 0.5} if motif == "grain" else
+                           {"length": 12, "strokeWidth": 0.5, "slant": -0.25})
+        return _tokens(values={"texture": {"type": "pattern", "value": declaration}})
+
+    first = complete_canvas_texture(tokens(17), _canvas())
+    assert first is not None
+    assert first == complete_canvas_texture(tokens(17), _canvas())
+    assert first != complete_canvas_texture(tokens(18), _canvas())
+    assert first.pattern.pattern.origin == (-8.0, 4.0)
+    assert first.pattern.pattern.region == first.pattern.pattern.clip == _canvas()
+    assert first.pattern.pattern.angle_degrees == 0
+    assert len(first.pattern.pattern.primitives) == 8
+
+
+def test_invalid_seeded_texture_reports_the_selected_role_binding() -> None:
+    declaration = {"kind": "seeded", "algorithm": "splitmix64-v1", "motif": "grain",
+                   "seed": 1, "tile": {"inlineSize": 1, "blockSize": 1}, "count": 1, "radius": 1}
+    with pytest.raises(LayoutError) as error:
+        complete_canvas_texture(_tokens(values={"texture": {"type": "pattern", "value": declaration}}), _canvas())
+    assert error.value.diagnostic_id == "E_THEME_TOKEN_TYPE"
     assert error.value.path == "/body/roles/canvas-texture/pattern"
