@@ -219,7 +219,7 @@ jobs:
                 echo "superseded by $pr_head"; exit 1
               fi
               current="$(gh api --method GET "repos/$GITHUB_REPOSITORY/commits/$PR_BASE_SHA/check-runs" \
-                -f check_name=derived-main -f filter=all -f per_page=100 \
+                -f check_name=derived-main-probe-1229 -f filter=all -f per_page=100 \
                 --jq '[.check_runs[] | select(.app.slug == "github-actions")] | sort_by([.started_at // .created_at, .id]) | if length == 0 then "" else (last.status + ":" + (last.conclusion // "")) end')"
               if [[ "$current" == "completed:success" ]]; then ready=true; break; fi
               if [[ "$current" == completed:* && "$current" != completed:success ]]; then
