@@ -1,0 +1,66 @@
+version: chrona/color-scheme/v0.2
+kind: color-scheme
+id: marquee
+body:
+  colors:
+    surface: '#0D0A09'
+    surfaceRaised: '#16110F'
+    text: '#EFE4CF'
+    textMuted: '#A79A86'
+    accent: '#D9A93D'
+    positive: '#8FC7A2'
+    negative: '#FF6B6B'
+    warning: '#FF6B6B'
+    neutral: '#6F665D'
+    rule: '#8C6D2A'
+    insideLabelPlanned: '#EFE4CF'
+    insideLabelActual: '#1C1512'
+    insideLabelSnapshot: '#EFE4CF'
+    insideLabelScenario: '#EFE4CF'
+  suitability:
+    background: dark
+    colorVision:
+    - none-claimed
+    print: not-claimed
+  provenance:
+    kind: chrona-authored
+    source: Chrona HALCYON-1 example, Marquee target (docs/research/presentation/marquee-target-2026-09-26)
+    license: MIT
+  categories:
+    default: '#0D0A09'
+    window: '#D9A93D'
+    exception: '#A3202A'
+    bar: '#A3202A'
+    barEdge: '#D9A93D'
+    actualInk: '#EADCC0'
+    asofChip: '#D9A93D'
+    asofInk: '#1C1512'
+    relationInk: '#8A8075'
+    closed: '#16120F'
+    bus: '#0D0A09'
+    payload: '#0D0A09'
+    ait: '#0D0A09'
+    ground: '#0D0A09'
+    launch: '#0D0A09'
+    ops: '#0D0A09'
+    series-1: '#0D0A09'
+    series-2: '#0D0A09'
+    series-3: '#0D0A09'
+    series-4: '#0D0A09'
+    series-5: '#0D0A09'
+    series-6: '#0D0A09'
+    factory-team: '#0D0A09'
+    fw-team: '#0D0A09'
+    validation-team: '#0D0A09'
+    stage: '#0D0A09'
+    stage2: '#16110F'
+    velvet: '#A3202A'
+    velvetBright: '#CC3641'
+    velvetDeep: '#3A1115'
+    gold: '#D9A93D'
+    goldDim: '#8C6D2A'
+    bulb: '#FFE3A0'
+    paper: '#EADCC0'
+    paperEdge: '#C9B48A'
+    ink: '#1C1512'
+    gridFaint: '#2A2218'

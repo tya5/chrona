@@ -1,0 +1,11 @@
+version: chrona/review-detail-profile/v0.1
+id: halcyon-marquee-legend
+body:
+  legend:
+    - {role: snapshot, label: baseline}
+    - {role: planned, label: plan}
+    - {role: actual, label: actual}
+    - {role: missing-actual, label: in the wings}
+    - {role: milestone, label: gate}
+    - {role: calendar-exception, label: holiday}
+    - {role: dependency, label: dependency}

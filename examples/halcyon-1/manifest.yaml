@@ -118,3 +118,8 @@ slides:
     context: contexts/23-titlecard.yaml
     expectedSvg: generated/23-titlecard.svg
     expectedScene: generated/23-titlecard.scene.json
+  - id: marquee
+    evidence: "Issue #1233: YAML-only assembly of the owner-approved hand-drawn Marquee target (stage-black ground, bulb-lit title sign, ACT-numbered group bands, dark quarter tier, opening-night range, as-of light cone, tilted newspaper clippings, ticket legend)."
+    context: contexts/24-marquee.yaml
+    expectedSvg: generated/24-marquee.svg
+    expectedScene: generated/24-marquee.scene.json
