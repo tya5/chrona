@@ -2,12 +2,12 @@
 
 <!-- chrona:literal-acceptance/v1 -->
 
-Prospective integration `53aea19b48a8bf39776d6952b43bfd9024d5dca6` combines this
-implementation with public PR #1245 head `b973ed645aec1bc6d376a6d0873c29f95632f8ca`.
-Published ready main is `dab0bb3b419e41b2aee95e470d74e6296718eb27` (#1239 and reviewer PR1241).
-PR #1245 is not merged; final publication will follow #1242 on a ready tip.
+Integration `84fc050dc14ad3b57df5a2885bc31436f16689de` combines this implementation
+with merged PR #1245, public source main `8518c381aa08f0de61e16caab071edee90ab402d`.
+Its derived sync is pending; final publication follows the resulting ready tip.
+The integration adds only predecessor acceptance documents, not product changes.
 [Living design, architecture review and plan](https://github.com/tya5/chrona/issues/1237#issuecomment-6061351395).
-Release pending predecessor merges, final-base PR CI/shared snapshot and exact
+Release pending the ready base, final-base PR CI/shared snapshot and exact
 published-main three-OS gate. Do not close yet.
 
 ## Literal issue acceptance
