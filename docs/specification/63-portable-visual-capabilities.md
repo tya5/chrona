@@ -190,6 +190,19 @@ flooded with the colour at the opacity, merged twice under the source graphic;
 PNG is that SVG through resvg. The drop-shadow filter is unchanged. A Scene that
 carries a glow is written as `chrona/scene/v0.7` (optional `paint.glow`).
 
+The explicit #1237 exception admits only these four properties on `heading`,
+`kicker`, and `frame-glyph`/`frame-glyph-<slug>`; it does not add gradient or
+shadow to those roles. `subtitle` already admits glow and follows the same
+activation rule, while retaining its other existing effect properties. For
+heading parts, Scene activates a glow only when the role has its own `fill`;
+otherwise a requested color/blur/opacity glow fails with
+`E_THEME_ROLE_REQUIRED` at that fill binding. Fidelity-only and opacity-only
+declarations do not request a glow: this means `glowFidelity` alone or ordinary
+`opacity` alone. `glowColor`, `glowBlur` and `glowOpacity` remain an all-or-none
+tuple, so a lone `glowOpacity` is `E_VISUAL_CAPABILITY_VALUE` at `glowBlur`.
+The same Scene-completed region, contrast class, and fidelity ladder above
+apply, with no change to completed text or glyph geometry.
+
 ## 8. Hand wobble (#588)
 
 A Theme role whose completed primitive is a Rect or a Path admits four properties:
@@ -280,7 +293,8 @@ The artwork of a rectangle annotation container (Specification 07) is a few `Sym
 ### 10.1 Catalogue-glyph frame borders (#888)
 
 The independent `frame-glyph` or `frame-glyph-<slug>` role uses the same
-fill/stroke capabilities and `artworkFidelity` rule. Layout completes one
+fill/stroke capabilities and `artworkFidelity` rule, plus the explicit glow
+exception in section 7. Layout completes one
 typed glyph batch per framed node; Scene admits or omits that **whole border**
 before flattening its parts, never individual bulbs or corners. An unsupported
 required stroke fails at `/body/roles/<selected-role>/artworkFidelity`; optional
