@@ -3,12 +3,15 @@
 # Issue #888 — surface decoration acceptance
 
 Part1 merged in [PR #1223](https://github.com/tya5/chrona/pull/1223), commit
-`497b2bdc51f04001c9d177b8becd03f45b9bd918`. Part2 local acceptance on public
-WIP `e1d680534cfc59a24131f6ee7fb90bf83b3ed217`, based on ready main
-`ce6abfa4f3fa7aab1dacd8e244c09226947d3860`; final implementation and this review
-are published together in [PR #1225](https://github.com/tya5/chrona/pull/1225).
-Final-head checks and exact-main three-OS release remain pending; the issue stays
-open until they pass.
+`497b2bdc51f04001c9d177b8becd03f45b9bd918`; Part2 and this acceptance review
+merged in [PR #1225](https://github.com/tya5/chrona/pull/1225), commit
+`8d4b9e4bac1e9d6f896faea699775f5ec91e130f`.
+[Exact-head PR CI](https://github.com/tya5/chrona/actions/runs/37736606755),
+[derived-main/ready](https://github.com/tya5/chrona/actions/runs/37739591332), and
+[exact published-main three-OS release](https://github.com/tya5/chrona/actions/runs/37740417618)
+all passed. The release verifies `f4bce2c71eccd4029a0f596ddca0e655b6f3ded8`:
+Windows/Linux/macOS full pytest, conformance and wheel smoke, MCP floor, and
+newest-Python public materializers. All six criteria below are met; #888 is closed.
 Current plan: [living Status](https://github.com/tya5/chrona/issues/888#issuecomment-6048944931).
 
 ## Literal issue acceptance
@@ -32,11 +35,12 @@ Current plan: [living Status](https://github.com/tya5/chrona/issues/888#issuecom
 [PR #1223 shared snapshot](https://github.com/tya5/chrona/actions/runs/37725212704):
 all 67 public Scene/SVG pairs byte-identical; only diagnostic inventory source locations and two new ingress sites change.
 
-[Part2 snapshot at4a0f5a2a](https://github.com/tya5/chrona/actions/runs/37731495183),
-artifact11529494566: all67 Scene/SVG pairs byte-identical, no added/retired outputs
+[Final Part2 snapshot](https://github.com/tya5/chrona/actions/runs/37736606755),
+artifact11532223303, head `24f3c3d1c5d93ddc554b8564205b37ecb47d565f`:
+all67 Scene/SVG pairs byte-identical, no added/retired outputs
 or runtime diagnostic changes. Only declared-value source locations, diagnostic
 sites/source locations and newly declared presentation vocabulary reports differ.
-The final corrected head must repeat shared-snapshot verification before merge.
+All143 published generated files match that reviewed snapshot byte-for-byte.
 
 ## Architecture conclusion
 
@@ -58,7 +62,7 @@ admitted role property's consumer, reject opaque opacity0.5 at the exact pointer
 and prove opacity1 preserves Scene content and SVG bytes (resource provenance
 correctly differs). The corrected focused group passes **53 tests**; the research
 matrix freshness check passes. `derived-ready` failed only because pytest failed;
-the corrected head still requires all CI gates before merge.
+the final corrected head passed every PR gate and the exact-main release above.
 
 Layout owns all glyph paths/run geometry; Scene projects one admitted batch and resolves used paint channels.
 Sparse ink/contact remains renderer-neutral; ordered ground composition preserves opaque/translucent host,
@@ -66,5 +70,5 @@ cone and annotation boundaries. Layout also completes seeded tiles and radial ge
 Scene projects fixed after-content layers, and both quality gates observe ordered
 overprinted pairs. SVG serializes completed geometry and PNG uses that same SVG.
 No `examples/**`, bundled bitmap, or generated public evidence was authored.
-CI shared snapshot/count table and the exact published three-OS release run remain required;
-no zero-diff claim or issue closure is authorized by these local results.
+The shared-snapshot count table and exact published three-OS release above complete
+the publication gate; local tests alone were not used to authorize closure.
