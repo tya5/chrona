@@ -2,9 +2,10 @@
 
 <!-- chrona:literal-acceptance/v1 -->
 
-Implementation through `cae24c233949743b0780daceeb33e4fe0aeb5aeb` incorporates
-published main `a7af6eb001cdcdb29c6a4fba3df740c6086dcc9f` (#1239).
-Its derived gate is pending; final publication will follow #1242 on a ready tip.
+Prospective integration `f1235a733fe635fb9c461509308f58b76ad5ca41` combines this
+implementation with public PR #1245 head `b9ab5eef7963c41e12d4c12c674a3feff22df50b`.
+Published ready main is `ba679506c1c8d4661004a480b704530830ea0488` (#1239).
+PR #1245 is not merged; final publication will follow #1242 on a ready tip.
 [Living design, architecture review and plan](https://github.com/tya5/chrona/issues/1237#issuecomment-6061351395).
 Release pending predecessor merges, final-base PR CI/shared snapshot and exact
 published-main three-OS gate. Do not close yet.
@@ -25,8 +26,9 @@ published-main three-OS gate. Do not close yet.
 
 ## Programme-level criteria (optional)
 
-Combined glow/frame-consumer, adapter integration, whole/split heading/network,
-kicker/Scene-boundary/ownership and semantic-reachability tests: 156 passed.
+Combined glow/frame-consumer, annotation kind/bar/stamp, adapter integration,
+whole/split heading/network, kicker/Scene-boundary/ownership and semantic
+reachability tests: 217 passed in the prospective integration.
 Schema annotations and diff checks passed.
 Layout measurements and completed geometry do not change. Scene selects
 explicit glow roles and requires their own fill; adapters serialize existing
