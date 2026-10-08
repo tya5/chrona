@@ -429,6 +429,44 @@ def test_a_label_is_a_scene_text_of_the_period_title_centred_on_its_band(tmp_pat
     assert label.contrast_treatment == "required"
 
 
+def _override(parts: dict, text: str) -> dict:
+    parts["view"]["body"]["periods"][0]["label"]["text"] = text
+    return parts
+
+
+def test_a_view_label_text_replaces_the_project_period_title_for_that_view_only(tmp_path):
+    rendered = _render(tmp_path, parts=_override(_labelled(_parts()), "OPENING NIGHT"))
+    (label,) = _labels(rendered)
+
+    assert label.text == "OPENING NIGHT"
+    assert (label.scene_id, label.source_ref) == ("period-label:window", "window")
+    # The Project period keeps its own title; only this View's caption changes.
+    assert _labels(_render(tmp_path, parts=_labelled(_parts()), name="plain"))[0].text == "window"
+
+
+def test_without_a_label_text_the_output_is_byte_identical(tmp_path):
+    plain = _render(tmp_path, parts=_labelled(_parts()), name="plain")
+    again = _render(tmp_path, parts=_labelled(_parts()), name="again")
+
+    assert plain.artifact.content == again.artifact.content
+    assert b"OPENING NIGHT" not in plain.artifact.content
+
+
+def test_the_label_text_follows_the_literal_caption_rule(tmp_path):
+    validator = schema_validator("view-v0.28.schema.yaml")
+    for text, ok in (("OPENING NIGHT", True), ("", False), ("x" * 81, False), ("a" + chr(10) + "b", False)):
+        view = _override(_labelled(_parts()), text)["view"]
+        assert (not list(validator.iter_errors(view))) is ok, text
+
+
+def test_a_label_text_without_a_placement_is_refused():
+    validator = schema_validator("view-v0.28.schema.yaml")
+    view = _parts()["view"]
+    view["body"]["periods"] = [{"id": "window", "label": {"text": "OPENING NIGHT"}}]
+
+    assert list(validator.iter_errors(view))
+
+
 def test_a_band_without_a_label_selection_has_no_label_primitive(tmp_path):
     assert _labels(_render(tmp_path)) == []
 
