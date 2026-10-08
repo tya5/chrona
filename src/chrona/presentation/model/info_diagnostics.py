@@ -37,7 +37,7 @@ class PaintOmission:
     def __post_init__(self) -> None:
         if (not self.role or any(char in self.role for char in ";=")
                 or self.treatment not in {"linear-gradient", "drop-shadow", "glow", "wobble", "stroke-finish", "as-of-cone",
-                                       "annotation-artwork"}
+                                       "annotation-artwork", "frame-glyph"}
                 or not self.source_ref.startswith("/body/roles/")
                 or not self.visual_profile or any(char in self.visual_profile for char in ";=")
                 or not self.target_kind

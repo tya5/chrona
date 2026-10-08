@@ -338,6 +338,17 @@ Typst and TikZ draw a plain one and reject a patterned one, and no Scene field i
 allocation, not a plot-height overlay: it follows the node's bounds, and the plot rule of Specification 50
 is unchanged inside it.
 
+The independent catalogue border (#888) projects each Layout `frameGlyph`
+batch to `Symbol` parts named `frame-glyph:<node id>:part<n>`, purpose
+`frame-glyph`, selected `frame-glyph[-<paint>]` role, pseudo-slot
+`frame-glyph-slot:<node id>` and paint order 0. Each node's panel then border
+precedes its children's frames and all content; all parts remain in one layer.
+Scene admits or omits the entire typed batch before projection (Specification
+63 section 10.1), never reconstructing its run, paths or fit. Parts use only
+their completed fill/stroke paint intent; sparse ink is not a bounds-sized
+ground (Specification 46 section 8). No new Scene primitive or public field
+is introduced.
+
 ### 4.0 v0.1 Scene profile
 
 A Scene profile declares layout policy, not geometry. The first Date-only profile is

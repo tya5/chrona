@@ -94,6 +94,10 @@ def _paint_family(primitive: ScenePrimitive, tokens: ThemeTokenView) -> PaintFam
         return PaintFamily.OUTLINE
     if pattern is not None and pattern_kind(pattern) == "diagonal-hatch":
         return PaintFamily.HATCH
+    if primitive.kind == PrimitiveKind.SYMBOL and primitive.glyph_paint_mode == "stroke":
+        # Preserve explicit outline overrides above, then require only the
+        # channel the completed catalogue part actually paints.
+        return PaintFamily.PATH
     if primitive.purpose == "region-frame" and tokens.optional_color(primitive.visual_role, "fill") is None:
         # A frame role that declares no fill is an outline panel (#889).
         return PaintFamily.OUTLINE
@@ -156,9 +160,9 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
     # Layer admission has already happened at the typed placement boundary.
     # Keep the existing canvas/artwork/part omission order and deduplication.
     artwork_omissions = tuple(item for item in surface.info_diagnostics
-                             if isinstance(item, PaintOmission) and item.treatment == "annotation-artwork")
+                             if isinstance(item, PaintOmission) and item.treatment in {"annotation-artwork", "frame-glyph"})
     base_info = tuple(item for item in surface.info_diagnostics
-                      if not (isinstance(item, PaintOmission) and item.treatment == "annotation-artwork"))
+                      if not (isinstance(item, PaintOmission) and item.treatment in {"annotation-artwork", "frame-glyph"}))
     clip_hosts = frozenset(item.clip_source_id for item in surface.primitives if item.clip_source_id)
     try:
         resolved = tuple(_complete_primitive_paint(
@@ -536,6 +540,23 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                    float(placed.bounds.inline_size), float(placed.bounds.block_size)),
                 slot_id=placed.slot_id, paint_order=placed.paint_order,
                 corner_radius=placed.corner_radius or None))
+        elif placed.semantic_id == "frameGlyph":
+            frame = semantic_binding("frameGlyph")
+            role = placed.visual_role or frame.scene_role
+            try:
+                admission = resolve_artwork_admission(
+                    value.theme_tokens, needs_finish=any(part.paint_mode == "stroke" for part in placed.symbol_parts),
+                    visual_profile=value.visual_profile, role=role, treatment="frame-glyph")
+            except ScenePaintError as error:
+                raise SceneBuildError(error.diagnostic_id, error.path, error.detail) from error
+            artwork_omissions.extend(admission.omissions)
+            if admission.admitted:
+                bounds = (float(placed.bounds.inline), float(placed.bounds.block),
+                          float(placed.bounds.inline_size), float(placed.bounds.block_size))
+                primitives.extend(_symbol_primitives(
+                    placed.placement_id, placed.source_ref, "decoration", frame.purpose,
+                    role, bounds, placed.symbol_parts, slot_id=placed.slot_id,
+                    paint_order=placed.paint_order, part_order_step=0))
     if "kicker" in layout_text:
         emit_semantic_text("kicker", "kickerText", value.theme_tokens.title_paint_role("kicker"))
     emit_semantic_text("title", "titleText", value.theme_tokens.title_paint_role())

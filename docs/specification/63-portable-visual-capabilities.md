@@ -239,3 +239,14 @@ is written as `chrona/scene/v0.7` (optional `opacity` on a gradient stop).
 ## 10. Annotation artwork (#848)
 
 The artwork of a rectangle annotation container (Specification 07) is a few `Symbol` parts. A fill part needs `mark.symbol-outline`, which every profile admits; a stroke part carries a required line cap and join and so needs `stroke.line-cap` and `stroke.line-join`. Where the selected profile lacks them and a completed artwork layer has a stroke part, that layer's selected Theme role's `artworkFidelity` decides: `required` (the default) is `E_VISUAL_CAPABILITY_UNSUPPORTED` at `/body/roles/<selected-role>/artworkFidelity`; `decorative-optional` omits the **whole** affected layer independently, including when several layers reuse one role and reports `I_VISUAL_TREATMENT_OMITTED:role=<selected-role>;treatment=annotation-artwork;profile=<selected>;paintable=<first rich profile of the target>`. The treatment name `annotation-artwork` joins the closed set of omitted treatments. Scene decides at the typed layer boundary before flattening parts, without a new public Scene field. The legacy object retains its exact role, pointer and omission identity. Layout geometry does not depend on the profile. Typst and TikZ never receive a stroked artwork part; Typst receives no `Symbol` at all.
+
+### 10.1 Catalogue-glyph frame borders (#888)
+
+The independent `frame-glyph` or `frame-glyph-<slug>` role uses the same
+fill/stroke capabilities and `artworkFidelity` rule. Layout completes one
+typed glyph batch per framed node; Scene admits or omits that **whole border**
+before flattening its parts, never individual bulbs or corners. An unsupported
+required stroke fails at `/body/roles/<selected-role>/artworkFidelity`; optional
+omission uses treatment `frame-glyph` and leaves the independent region-frame
+panel and content unchanged. Neither profile admission nor omission changes
+Layout geometry. The existing target restrictions on `Symbol` still apply.
