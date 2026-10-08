@@ -8,7 +8,7 @@ import pytest
 
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.scene.capabilities import (
-    capability_ceiling, theme_role_property_consumer,
+    capability_ceiling, theme_role_contract, theme_role_property_consumer,
 )
 from chrona.presentation.scene.model import ScenePrimitive
 from chrona.presentation.scene.paint import PaintFamily, ScenePaintError, resolve_scene_paint
@@ -134,15 +134,23 @@ def test_png_baseline_suggests_the_png_profile() -> None:
 
 
 @pytest.mark.parametrize("role", ["planned", "milestone", "axis-major", "dependency", "annotation",
-                                  "variance-ahead", "member-label-inside-planned"])
-def test_glow_is_admitted_where_a_shadow_is(role) -> None:
+                                  "variance-ahead", "member-label-inside-planned", "heading", "kicker",
+                                  "subtitle", "frame-glyph", "frame-glyph-marquee"])
+def test_glow_is_admitted_on_existing_and_explicit_glow_roles(role) -> None:
     for name in ("glowColor", "glowBlur", "glowOpacity", "glowFidelity"):
-        assert theme_role_property_consumer(role, name) == theme_role_property_consumer(role, "shadowBlur") is not None
+        assert theme_role_property_consumer(role, name) is not None
+        assert theme_role_contract(role).owner_of(name) == "Scene paint"
 
 
-@pytest.mark.parametrize("role", ["background", "text", "icon-mark", "heading", "legend-swatch"])
+@pytest.mark.parametrize("role", ["background", "text", "icon-mark", "legend-swatch"])
 def test_glow_is_not_admitted_on_canvas_icon_shared_text_or_measurement_roles(role) -> None:
     assert theme_role_property_consumer(role, "glowBlur") is None
+
+
+@pytest.mark.parametrize("role", ["heading", "kicker", "frame-glyph", "frame-glyph-marquee"])
+def test_glow_roles_do_not_also_admit_gradient_or_shadow(role) -> None:
+    assert theme_role_property_consumer(role, "shadowBlur") is None
+    assert theme_role_property_consumer(role, "gradientStart") is None
 
 
 def test_the_capability_is_admitted_in_the_closed_ceiling() -> None:

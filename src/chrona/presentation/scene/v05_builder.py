@@ -78,6 +78,16 @@ _REQUIRED_SOURCES = {
 }
 
 
+def _heading_paint_role(tokens: ThemeTokenView, role: str = "heading") -> str:
+    # A glow payload selects its declared role, including that role's own ink.
+    # Fidelity alone is not a request; malformed tuples reach generic validation.
+    if (tokens.optional_color(role, "glowColor") is not None
+            or tokens.optional_number(role, "glowBlur") is not None
+            or tokens.optional_number(role, "glowOpacity") is not None):
+        return role
+    return tokens.title_paint_role(role)
+
+
 def _paint_family(primitive: ScenePrimitive, tokens: ThemeTokenView) -> PaintFamily:
     if primitive.pattern is not None and primitive.pattern.primitives:
         return PaintFamily.SOLID
@@ -570,10 +580,10 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                     role, bounds, placed.symbol_parts, slot_id=placed.slot_id,
                     paint_order=placed.paint_order, part_order_step=0))
     if "kicker" in layout_text:
-        emit_semantic_text("kicker", "kickerText", value.theme_tokens.title_paint_role("kicker"))
-    emit_semantic_text("title", "titleText", value.theme_tokens.title_paint_role())
+        emit_semantic_text("kicker", "kickerText", _heading_paint_role(value.theme_tokens, "kicker"))
+    emit_semantic_text("title", "titleText", _heading_paint_role(value.theme_tokens))
     if "subtitle" in layout_text:
-        emit_semantic_text("subtitle", "subtitleText", value.theme_tokens.title_paint_role("subtitle"))
+        emit_semantic_text("subtitle", "subtitleText", _heading_paint_role(value.theme_tokens, "subtitle"))
     for column in value.surface_content.table_columns:
         # A Theme that declares `tableColumnLabel` with a fill paints its headers with it (#991).
         header_paint = ("tableColumnLabel" if value.theme_tokens.optional_color("tableColumnLabel", "fill") is not None else None)
@@ -1104,8 +1114,9 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
                      "dependency-critical": semantic_binding("criticalEdge")}
     def emit_text(text: Any) -> None:
         binding = semantic_binding(text.semantic_id)
-        paint_role = (value.theme_tokens.title_paint_role()
-                      if text.semantic_id == "titleText" else binding.scene_role)
+        paint_role = (_heading_paint_role(value.theme_tokens, binding.scene_role)
+                      if text.semantic_id in {"titleText", "kickerText", "subtitleText"}
+                      else binding.scene_role)
         layout = TextLayout((float(text.bounds.inline), float(text.bounds.block),
                              float(text.bounds.inline_size), float(text.bounds.block_size)),
                             text.baseline or (float(text.bounds.inline), float(text.bounds.block)),
