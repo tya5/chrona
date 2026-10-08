@@ -38,7 +38,7 @@ body:
       value: 60
     size.subtitle:
       type: number
-      value: 12
+      value: 13
     size.body:
       type: number
       value: 12
@@ -53,13 +53,13 @@ body:
       value: 10.5
     size.axis-quarter:
       type: number
-      value: 11.5
+      value: 13
     size.axis:
       type: number
       value: 12
     size.legend:
       type: number
-      value: 11
+      value: 12
     size.note:
       type: number
       value: 12.5
@@ -112,7 +112,7 @@ body:
       value: 1
     header-size:
       type: number
-      value: 11
+      value: 13
     header-spacing:
       type: number
       value: 0.08
@@ -125,10 +125,10 @@ body:
         outline: rectangle
         cornerRadius: 0
         contentInsetEm:
-          top: 0.6
-          right: 0.9
+          top: 0
+          right: 0.5
           bottom: 0.6
-          left: 0.9
+          left: 0.5
         inlineSize: fill
         border:
           start: {width: 2, paint: kind}
@@ -202,7 +202,7 @@ body:
       value: 11.5
     slot-heading-size:
       type: number
-      value: 11
+      value: 14
     slot-heading-spacing:
       type: number
       value: 0.1
@@ -316,7 +316,7 @@ body:
       value: 1
     axis-label-inset:
       type: number
-      value: 0
+      value: 0.3
     opacity.period-band:
       type: number
       value: 1
@@ -485,6 +485,24 @@ body:
     size.annotation-heading:
       type: number
       value: 22
+    squeeze.label:
+      type: number
+      value: 0.8
+    squeeze.label-soft:
+      type: number
+      value: 0.86
+    spacing.cond:
+      type: number
+      value: 0.14
+    spacing.cond-wide:
+      type: number
+      value: 0.2
+    axis-label-inset-quarter:
+      type: number
+      value: 0.55
+    frame.stripe.width:
+      type: number
+      value: 10
   roles:
     legend-swatch:
       swatchInlineSize: legend-swatch-inline-size
@@ -529,6 +547,7 @@ body:
       iconScale: icon-scale
       iconGap: icon-gap
       viewerFit: text-follows-box
+      horizontalScale: squeeze.label-soft
     numeric:
       fontFamily: editorial
       fontWeight: weight.bold
@@ -540,6 +559,7 @@ body:
       iconScale: icon-scale
       iconGap: icon-gap
       viewerFit: text-follows-box
+      horizontalScale: squeeze.label-soft
     heading:
       horizontalScale: squeeze.title
       fontFamily: editorial
@@ -583,12 +603,13 @@ body:
       fontWeight: weight.bold
       fontSize: size.summary-unit
       lineHeight: leading.tight
-      letterSpacing: slot-heading-spacing
+      letterSpacing: spacing.cond
       textTransform: kind-upper
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
       viewerFit: text-follows-box
+      horizontalScale: squeeze.label
     annotation-heading:
       contrastTreatment: required
       fontFamily: editorial
@@ -603,12 +624,13 @@ body:
       fontWeight: weight.bold
       fontSize: size.subtitle
       lineHeight: leading.body
-      letterSpacing: slot-heading-spacing
+      letterSpacing: spacing.cond
       textTransform: kind-upper
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
       viewerFit: text-follows-box
+      horizontalScale: squeeze.label
     axis:
       fontFamily: editorial
       fontWeight: weight.bold
@@ -625,12 +647,13 @@ body:
       fontWeight: weight.bold
       fontSize: size.legend
       lineHeight: leading.body
-      letterSpacing: slot-heading-spacing
+      letterSpacing: spacing.cond
       textTransform: kind-upper
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
       viewerFit: text-follows-box
+      horizontalScale: squeeze.label
     annotation:
       fontFamily: editorial
       fontWeight: weight.regular
@@ -641,6 +664,7 @@ body:
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+      horizontalScale: squeeze.label-soft
     annotation-note-box:
       strokeWidth: stroke-width
       annotationContainer: note-container
@@ -654,23 +678,26 @@ body:
       letterSpacing: letter-spacing
       textTransform: text-transform
       numericSpacing: numeric-spacing
+      horizontalScale: squeeze.label-soft
     table-cell-secondary:
       fontFamily: editorial
       fontWeight: weight.regular
       fontSize: size.secondary
       lineHeight: leading.body
-      letterSpacing: header-spacing
+      letterSpacing: spacing.cond
       textTransform: kind-upper
       numericSpacing: numeric-spacing
       viewerFit: text-follows-box
+      horizontalScale: squeeze.label
     slot-heading:
       fontFamily: editorial
       fontWeight: weight.bold
       fontSize: slot-heading-size
       lineHeight: leading.body
-      letterSpacing: slot-heading-spacing
+      letterSpacing: spacing.cond-wide
       textTransform: kind-upper
       numericSpacing: numeric-spacing
+      horizontalScale: squeeze.label
     summary:
       fontFamily: editorial
       fontWeight: weight.bold
@@ -700,11 +727,12 @@ body:
       fontWeight: weight.bold
       fontSize: size.group
       lineHeight: leading.body
-      letterSpacing: header-spacing
+      letterSpacing: spacing.cond
       textTransform: kind-upper
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
+      horizontalScale: squeeze.label
     group-ordinal:
       fontFamily: editorial
       fontWeight: weight.bold
@@ -713,6 +741,7 @@ body:
       letterSpacing: header-spacing
       textTransform: kind-upper
       numericSpacing: numeric-spacing
+      horizontalScale: squeeze.label-soft
     gate:
       strokeWidth: stroke-width
     tableColumnLabel:
@@ -720,12 +749,13 @@ body:
       fontWeight: weight.bold
       fontSize: header-size
       lineHeight: leading.body
-      letterSpacing: slot-heading-spacing
+      letterSpacing: spacing.cond-wide
       textTransform: kind-upper
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
       viewerFit: text-follows-box
+      horizontalScale: squeeze.label
     calendar-exception:
       backgroundTreatment: fill
       backgroundPaintOrder: 12
@@ -814,13 +844,15 @@ body:
       fontWeight: weight.bold
       fontSize: size.axis-quarter
       lineHeight: leading.body
-      letterSpacing: slot-heading-spacing
+      letterSpacing: spacing.cond
       textTransform: kind-upper
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
       laneBlockSize: axis-lane-quarter
       viewerFit: text-follows-box
+      horizontalScale: squeeze.label
+      labelInset: axis-label-inset-quarter
     axisMonth:
       fontFamily: editorial
       fontWeight: weight.bold
@@ -871,6 +903,7 @@ body:
       letterSpacing: letter-spacing
       textTransform: text-transform
       numericSpacing: numeric-spacing
+      horizontalScale: squeeze.label-soft
     annotation-kind-label:
       contrastTreatment: required
       fontFamily: editorial
@@ -898,12 +931,13 @@ body:
       fontWeight: weight.regular
       fontSize: size.axis-secondary
       lineHeight: leading.body
-      letterSpacing: letter-spacing
+      letterSpacing: spacing.cond
       textTransform: kind-upper
       numericSpacing: numeric-spacing
       labelGap: axis-secondary-gap
       iconScale: icon-scale
       iconGap: icon-gap
+      horizontalScale: squeeze.label
     annotation-kind-secondary:
       contrastTreatment: required
       fontFamily: editorial
@@ -912,11 +946,14 @@ body:
       fontWeight: weight.bold
       fontSize: size.kind-secondary
       lineHeight: kind-secondary-leading
-      letterSpacing: kind-secondary-spacing
+      letterSpacing: spacing.cond
+      horizontalScale: squeeze.label
     annotation-kind-bar:
       chipPadding: kind-bar-padding
       barWidth: fill
     annotation-kind-accent: {}
+    region-frame-stripe:
+      pattern: tab-pattern
   colorBindings:
     axis-rule.stroke: category:orange
     background.fill: surface
@@ -951,12 +988,12 @@ body:
     annotation-kind-stamp.fill: surface
     annotation-kind-stamp.stroke: surface
     axis-major.stroke: category:gridFaint
-    axis-minor.stroke: category:gridFaint
+    axis-minor.stroke: category:gridMonth
     axis-band-decoration.fill: category:orange
     axis-band-decoration2.fill: category:panelHead
     axis-label2.fill: surface
     axis-label3.fill: text
-    axis-cell-separator.stroke: surface
+    axis-cell-separator.stroke: category:grey
     tableColumnLabel.fill: category:orange
     group-band.fill: category:default
     row-band.fill: category:default
@@ -997,6 +1034,8 @@ body:
     period-label.fill: text
     region-frame-countdown.fill: category:panel
     region-frame-countdown.stroke: category:orange
+    region-frame-stripe.fill: category:orange
+    region-frame-stripe.stroke: category:stripeInk
   metrics:
     text.body.size: size.body
     text.body.lineHeight: leading.body

@@ -2,7 +2,7 @@ version: chrona/layout-profile/v0.10
 id: titlecard
 flowDirection: horizontal
 dependencyNetworkFlowDirection: horizontal
-requiredThemeTokens: [countdown.width, legend-block, legend-gap, legend-item-min, note-rail-width, spacing.l, spacing.m, spacing.none, spacing.s]
+requiredThemeTokens: [countdown.width, frame.stripe.width, legend-block, legend-gap, legend-item-min, note-rail-width, spacing.l, spacing.m, spacing.none, spacing.s]
 reviewSurface: {rowDistribution: fill, backgroundExtents: {rowBand: table, groupBand: both, groupHeaderBand: both, calendarClosed: timeline}, annotationRouting: {maxBends: 4, maxDetourRatio: 2}}
 relationRouting: {maxBends: 4, maxDetourRatio: 4, entry: side}
 root:
@@ -32,24 +32,34 @@ root:
           place: {inline: start, block: start, safety: safe}
           priority: required
           overflow: visible-overflow
-        - id: countdown
+        - id: countdown-bezel
           kind: column
           inlineSize: {fixed: {token: countdown.width}}
           blockSize: content
           gap: {token: spacing.none}
-          padding: {token: spacing.s}
+          padding: {inlineStart: {token: frame.stripe.width}, inlineEnd: {token: spacing.none}, blockStart: {token: spacing.none}, blockEnd: {token: spacing.none}}
           alignItems: stretch
           justifyContent: start
-          frame: {paint: countdown}
+          frame: {paint: stripe}
           children:
-            - id: summary
-              kind: slot
-              source: summary
+            - id: countdown
+              kind: column
               inlineSize: fill
               blockSize: content
-              place: {inline: stretch, block: start, safety: safe}
-              priority: required
-              overflow: visible-overflow
+              gap: {token: spacing.none}
+              padding: {token: spacing.s}
+              alignItems: stretch
+              justifyContent: start
+              frame: {paint: countdown}
+              children:
+                - id: summary
+                  kind: slot
+                  source: summary
+                  inlineSize: fill
+                  blockSize: content
+                  place: {inline: stretch, block: start, safety: safe}
+                  priority: required
+                  overflow: visible-overflow
     - id: review
       kind: row
       inlineSize: fill
