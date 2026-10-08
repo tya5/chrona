@@ -4,10 +4,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Mapping
 
-from chrona.presentation.layout.model import LayoutError, Rect
+from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.layout.surface_quality import CollisionDomain, SlotPlacement, SurfaceLayoutRequest, TextPlacement
-from chrona.presentation.layout.text import place_text
+from chrona.presentation.layout.text import measured_text_bounds, place_text
 
 
 HEADING_PARTS = (("kicker", "kicker"), ("title", "heading"), ("subtitle", "subtitle"))
@@ -48,10 +48,18 @@ def place_surface_headings(request: SurfaceLayoutRequest,
                               f"/measuredSources/runMeasurements/{source_id}",
                               "a heading part requires exactly one closed text run")
         run = runs[0]
+        stack = measured.block_stacks.get(source_id)
+        if stack is None or len(stack.baselines) != 1:
+            raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED",
+                              f"/measuredSources/blockStacks/{source_id}",
+                              "a heading part requires one closed block baseline")
+        baseline = float(slot.bounds.block + stack.baselines[0])
         text.append(TextPlacement(
             part, "title", run.content,
-            Rect(slot.bounds.inline, slot.bounds.block, run.inline_size, run.block_size), role,
-            baseline=(float(slot.bounds.inline), float(slot.bounds.block + run.baseline)),
+            measured_text_bounds(inline=float(slot.bounds.inline), baseline_block=baseline,
+                                 width=float(run.inline_size), height=float(run.block_size),
+                                 font_size=run.font_size, rotation=0), role,
+            baseline=(float(slot.bounds.inline), baseline),
             lines=(run.content,), font_family=run.font_family, font_weight=run.font_weight,
             font_size=run.font_size, line_height=run.line_height,
             letter_spacing=run.letter_spacing, text_transform=run.text_transform,

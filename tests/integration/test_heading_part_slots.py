@@ -94,6 +94,8 @@ def test_split_heading_parts_keep_roles_slots_and_actual_svg_geometry(tmp_path):
         assert primitives[part].slot_id == slots[f"heading.{part}"].slot_id
         sx, sy, sw, sh = slots[f"heading.{part}"].bounds
         x, y, width, height = primitives[part].bounds
+        assert y == pytest.approx(primitives[part].text_layout.baseline[1]
+                                  - primitives[part].text_layout.font_size)
         assert x >= sx - 0.01 and x + width <= sx + sw + 0.01
         assert y >= sy - 0.01 and y + height <= sy + sh + 0.01, (part, (x, y, width, height),
                                                                    (sx, sy, sw, sh))
