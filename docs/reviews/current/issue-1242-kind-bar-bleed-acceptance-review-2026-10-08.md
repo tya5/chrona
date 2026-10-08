@@ -3,7 +3,7 @@
 <!-- chrona:literal-acceptance/v1 -->
 
 Implementation includes frozen-vocabulary registration `179a3abe6c67b303335ca9662cc60b9a9ee74ff0`, based on
-ready main `dab0bb3b419e41b2aee95e470d74e6296718eb27` (#1239 and reviewer PR1241).
+ready main `93ba519031f3ff87275edd4082203c97f1a580f1` (#1239, reviewer PR1241 and PR1243).
 The public-base merge preserves the reviewer's YAML and bot-generated evidence.
 [Living design, architecture review and plan](https://github.com/tya5/chrona/issues/1242#issuecomment-6060806272).
 Publication, exact-head CI/shared snapshot and exact published-main three-OS
@@ -45,3 +45,9 @@ three Title Card YAML changes were ordinary-merged without product conflicts.
 The updated-base L1/L2/L3 schema equivalence check passed (L2+L3 40.9s),
 as did another 96 vocabulary/parts/annotation tests. Exact-head CI and shared
 snapshot must be refreshed on this ready published main before merge.
+Run [37801009696](https://github.com/tya5/chrona/actions/runs/37801009696)
+passed all product checks; only `derived-ready` rejected the main advance from
+PR1243's acceptance document. Its artifact11561432102 audit proved all 68 SVG
+and 68 Scene outputs byte-identical, add/remove0; only the two diagnostic sites
+and four enum coverage values changed. The new-base merge changes no product
+code, schemas or examples; final exact-base validation is still required.
