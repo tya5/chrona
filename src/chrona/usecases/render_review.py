@@ -713,7 +713,10 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
         snapshot_analysis=snapshot_result.analysis if snapshot_result is not None else None,
     )
     projection = replace(projection, periods=_selected_periods(project, result.placements, view),
-                         figures=_resolved_figures(project, result.placements, view, actual),
+                         figures=_resolved_figures(project, result.placements,
+                                                   replace(view, figures=tuple(item for item in view.figures
+                                                                              if item.scope == "global")), actual),
+                         group_figures=_resolved_group_figures(project, result.placements, view, actual, projection),
                          deadlines=_shown_deadlines(project, result.placements, view))
     return projection, tuple(provenance), attachment_warnings(project, result.placements), deadline_warnings(project, result.placements)
 
@@ -742,6 +745,11 @@ def _check_summary_figures(summary: Any, projection: Any) -> None:
                 continue
             path = f"/body/panels/{panel.id}/metrics/{metric.id}"
             if source["figure"] not in declared:
+                scoped = {figure_id for _, values in projection.group_figures for figure_id, _ in values}
+                if source["figure"] in scoped:
+                    raise RenderFailed("E_FIGURE_SCOPE_UNAVAILABLE",
+                                       f"summary metric {metric.id} names group-scoped figure {source['figure']} without a current group",
+                                       "presentation", path)
                 known = ", ".join(declared) if declared else "none"
                 raise RenderFailed("E_VIEW_FIGURE_UNKNOWN",
                                    f"summary metric {metric.id} names figure {source['figure']}, which the View does not declare (declared: {known})",
@@ -753,7 +761,8 @@ def _check_summary_figures(summary: Any, projection: Any) -> None:
 
 
 def _resolved_figures(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput,
-                      actual: Mapping[str, Any] | None) -> tuple[tuple[str, int], ...]:
+                      actual: Mapping[str, Any] | None, *,
+                      group_first_start: date | None = None) -> tuple[tuple[str, int], ...]:
     """Every figure the View declares, computed by the Core from the facts gathered here (#586).
 
     This is the one place the as-of, the placements, the resolved periods and the Project calendars are
@@ -767,10 +776,43 @@ def _resolved_figures(project: dict[str, Any], placements: dict[str, dict[str, A
         view.figures, as_of=date.fromisoformat(as_of) if isinstance(as_of, str) else None, placements=placements,
         periods=resolve_periods(project, placements),
         calendars={key: Calendar.from_mapping(value) for key, value in (project.get("calendars") or {}).items()},
-        default_calendar=(project.get("project") or {}).get("calendar"))
+        default_calendar=(project.get("project") or {}).get("calendar"), group_first_start=group_first_start)
     if resolution.diagnostics:
         raise RenderRejected(list(resolution.diagnostics))
     return tuple(resolution.values.items())
+
+
+def _resolved_group_figures(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput,
+                            actual: Mapping[str, Any] | None, projection: Any
+                            ) -> tuple[tuple[str, tuple[tuple[str, int], ...]], ...]:
+    """Gather selected Primary dates per semantic group; Core only receives neutral dates."""
+    specs = tuple(item for item in view.figures if item.scope == "group")
+    if not specs:
+        return ()
+    group_ids = tuple(dict.fromkeys(row.group_id for row in projection.rows if row.group_id))
+    if not group_ids:
+        raise RenderRejected([Diagnostic("E_FIGURE_GROUP_UNAVAILABLE",
+                                         f"Figure {item.figure_id} requires a current group, but the View projects none",
+                                         f"{item.path}/scope") for item in specs])
+    scoped_view = replace(view, figures=specs)
+    values = []
+    diagnostics = []
+    for group_id in group_ids:
+        member_ids = {item.object_id for row in projection.rows if row.group_id == group_id
+                      for item in row.items if item.source_kind in {"primary", "combined"}}
+        starts = tuple(item.planned.get("start", item.planned.get("at")) for item in projection.items
+                       if item.source_kind == "primary" and item.object_id in member_ids)
+        dates = tuple(item for item in starts if isinstance(item, date))
+        try:
+            resolved = _resolved_figures(project, placements, scoped_view, actual,
+                                         group_first_start=min(dates) if dates else None)
+            values.append((group_id, resolved))
+        except RenderRejected as error:
+            diagnostics.extend(replace(item, message=f"Group {group_id}: {item.message}")
+                               for item in error.diagnostics)
+    if diagnostics:
+        raise RenderRejected(diagnostics)
+    return tuple(values)
 
 
 def _shown_deadlines(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput) -> tuple[ReviewDeadline, ...]:

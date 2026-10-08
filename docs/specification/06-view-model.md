@@ -245,6 +245,16 @@ A View MAY declare `figures`, an array of derived figures that the Core computes
 
 Every declared figure is resolved after scheduling, whether or not a consumer shows it. A fact that cannot be read refuses the render with all findings (`E_FIGURE_PERIOD_UNKNOWN`, `E_FIGURE_OBJECT_UNKNOWN`, `E_FIGURE_ENDPOINT_UNAVAILABLE`, `E_FIGURE_ASOF_MISSING`, `E_FIGURE_CALENDAR_UNAVAILABLE`; the message names the figure, the fact and what is declared): a figure is never blank, zero or guessed. A Summary Profile metric shows a figure with `source: {figure: <id>}` (Spec 46); a metric naming an id the View does not declare is `E_VIEW_FIGURE_UNKNOWN`. The member is optional and additive in `chrona/view/v0.28`; a View without `figures` renders as before.
 
+A `daysUntil` figure MAY declare `scope: group` (omission or `global` resolves once).
+The additional fact `{group: firstPlannedStart}` requires that scope. View projection gathers
+the earliest selected Primary planned start or point in each rendered group; Core receives only
+that date, not projection objects. Group figures are keyed by group identity and figure identity,
+separately from global values. Plain and role-marked group headers resolve `{figure:<id>}` in their
+current group. A global consumer such as a Summary Profile cannot select a group-only value
+(`E_FIGURE_SCOPE_UNAVAILABLE`). No projected groups is `E_FIGURE_GROUP_UNAVAILABLE`; a group
+without a selected Primary start/point is `E_FIGURE_GROUP_START_MISSING`, not zero. Neither
+comparison ghosts nor duplicate lane appearances change the selected dates.
+
 ## 8. Comparison Views
 
 A comparison is a named relation between independently identified states; it is not a mutable field added to every Project object.

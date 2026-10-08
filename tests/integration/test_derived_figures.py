@@ -79,6 +79,35 @@ def test_period_last_flows_through_the_view_contract_into_rendered_summary_text(
     assert b">37<" in rendered.artifact.content
 
 
+GROUP_COUNTDOWN = {"id": "group-countdown", "kind": "daysUntil", "scope": "group",
+                   "to": {"group": "firstPlannedStart"}}
+
+
+def test_group_countdowns_use_each_groups_selected_start_in_actual_svg(tmp_path):
+    parts = _parts(COUNTDOWN, GROUP_COUNTDOWN, slot=False)
+    parts["view"]["body"]["grouping"]["header"] = {
+        "text": "{title} {figure:group-countdown} / {figure:countdown}", "ordinal": "arabic"}
+    rendered = _render(tmp_path, parts, None)
+    headers = {item.scene_id: item.text for item in rendered.surface.primitives if item.purpose == "group-header"}
+    assert headers == {"group-header:a": "Team a -46 / 28", "group-header:b": "Team b 28 / 28"}
+    assert b"Team a -46 / 28" in rendered.artifact.content
+    assert b"Team b 28 / 28" in rendered.artifact.content
+
+
+def test_current_group_facts_require_an_explicit_group_scope(tmp_path):
+    figure = dict(GROUP_COUNTDOWN)
+    del figure["scope"]
+    error = _refused(tmp_path, figure)
+    assert error.diagnostic_id == "E_VIEW_FIGURE_INVALID"
+    assert error.source_ref == "/body/figures/0/scope"
+
+
+def test_group_figures_cannot_be_shown_by_an_unscoped_summary(tmp_path):
+    with pytest.raises(RenderFailed) as failure:
+        _render(tmp_path, _parts(GROUP_COUNTDOWN), _summary(_metric("group-countdown")))
+    assert failure.value.code == "E_FIGURE_SCOPE_UNAVAILABLE"
+
+
 @pytest.mark.parametrize(("format", "expected"), [("count", "28"), ("text", "28"), ("signedDays", "+28d")])
 def test_the_metric_format_applies_to_a_figure(tmp_path, format, expected):
     texts = _texts(_render(tmp_path, _parts(COUNTDOWN), _summary(_metric(format=format, metric_id="countdown"))))

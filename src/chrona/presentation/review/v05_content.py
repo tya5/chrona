@@ -396,7 +396,8 @@ def _group_header_facts(projection: ReviewProjection, project: Mapping[str, Any]
                 raise ValueError(f"E_REVIEW_GROUP_HEADER_SECONDARY:{group_id}:{declared.secondary_field}")
             secondaries[group_id] = value
     return dict(group_ids=group_ids, titles=titles, secondaries=secondaries, text=declared.text,
-                first=declared.first, ordinal=declared.ordinal, figures=dict(projection.figures))
+                first=declared.first, ordinal=declared.ordinal, figures=dict(projection.figures),
+                group_figures={group_id: dict(values) for group_id, values in projection.group_figures})
 
 
 def _group_headers(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput) -> tuple[tuple[str, str], ...]:

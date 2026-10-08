@@ -194,7 +194,8 @@ def render_header_runs(template: HeaderTemplate, *, ordinal: str, title: str, se
 
 
 def _compose(*, group_ids: tuple[str, ...], titles: dict[str, str], secondaries: dict[str, str] | None,
-             text: str, first: str | None, ordinal: str, figures: Mapping[str, int] | None) -> Iterator[
+             text: str, first: str | None, ordinal: str, figures: Mapping[str, int] | None,
+             group_figures: Mapping[str, Mapping[str, int]] | None) -> Iterator[
                  tuple[str, HeaderTemplate, dict[str, Any]]]:
     main = parse_template(text, allow_roles=True)
     opening = parse_template(first, allow_roles=True) if first is not None else main
@@ -207,22 +208,26 @@ def _compose(*, group_ids: tuple[str, ...], titles: dict[str, str], secondaries:
         rendered_ordinal = (format_ordinal(position, ordinal, group_count=count)
                             if "ordinal" in template.fields else "")
         yield group_id, template, dict(ordinal=rendered_ordinal, title=titles.get(group_id, group_id),
-                                       secondary=secondary, figures=figures)
+                                       secondary=secondary,
+                                       figures={**(figures or {}), **((group_figures or {}).get(group_id, {}))})
 
 
 def compose_group_headers(*, group_ids: tuple[str, ...], titles: dict[str, str], secondaries: dict[str, str] | None,
                           text: str, first: str | None, ordinal: str,
-                          figures: Mapping[str, int] | None = None) -> tuple[tuple[str, str], ...]:
+                          figures: Mapping[str, int] | None = None,
+                          group_figures: Mapping[str, Mapping[str, int]] | None = None) -> tuple[tuple[str, str], ...]:
     """Return ``(group id, header text)`` for each group in display order (marks do not change the text)."""
     return tuple((group_id, render_header(template, **facts)) for group_id, template, facts in _compose(
         group_ids=group_ids, titles=titles, secondaries=secondaries, text=text, first=first, ordinal=ordinal,
-        figures=figures))
+        figures=figures, group_figures=group_figures))
 
 
 def compose_group_header_runs(*, group_ids: tuple[str, ...], titles: dict[str, str],
                               secondaries: dict[str, str] | None, text: str, first: str | None, ordinal: str,
-                              figures: Mapping[str, int] | None = None) -> tuple[tuple[str, tuple[HeaderRun, ...]], ...]:
+                              figures: Mapping[str, int] | None = None,
+                              group_figures: Mapping[str, Mapping[str, int]] | None = None
+                              ) -> tuple[tuple[str, tuple[HeaderRun, ...]], ...]:
     """Return ``(group id, runs)`` for each group whose template marks a role; an unmarked header has none (#1192)."""
     return tuple((group_id, render_header_runs(template, **facts)) for group_id, template, facts in _compose(
         group_ids=group_ids, titles=titles, secondaries=secondaries, text=text, first=first, ordinal=ordinal,
-        figures=figures) if template.roles)
+        figures=figures, group_figures=group_figures) if template.roles)

@@ -9,7 +9,7 @@ import re
 from typing import Any, Mapping
 
 
-from chrona.core.figures import AsOfFact, FigureSpec, ObjectFact, PeriodFact
+from chrona.core.figures import AsOfFact, FigureSpec, GroupStartFact, ObjectFact, PeriodFact
 from chrona.core.store_address import StoreAddressError, check_store_address
 from chrona.resources import schema_validator
 from chrona.schema_diagnostics import SchemaViolation, explain_all_errors, explain_errors
@@ -1006,9 +1006,14 @@ def _view_figures(raw: Any) -> tuple[FigureSpec, ...]:
         if calendar is not None and days != "working":
             raise ContractError("E_VIEW_FIGURE_INVALID", f"figure {figure_id} names a calendar but counts calendar days", f"{path}/calendar")
         if item["kind"] == "daysUntil":
-            specs.append(FigureSpec(figure_id, "daysUntil", to=_figure_fact(item["to"]),
-                                    origin=_figure_fact(item["from"]) if "from" in item else AsOfFact(),
-                                    days=days, calendar_id=calendar, path=path))
+            scope = str(item.get("scope", "global"))
+            target = _figure_fact(item["to"])
+            origin = _figure_fact(item["from"]) if "from" in item else AsOfFact()
+            if scope != "group" and any(isinstance(fact, GroupStartFact) for fact in (origin, target)):
+                raise ContractError("E_VIEW_FIGURE_INVALID",
+                                    f"figure {figure_id} reads a current-group fact without scope group", f"{path}/scope")
+            specs.append(FigureSpec(figure_id, "daysUntil", to=target, origin=origin,
+                                    days=days, calendar_id=calendar, path=path, scope=scope))
         else:
             specs.append(FigureSpec(figure_id, "daysIn", period_id=str(item["period"]), days=days, calendar_id=calendar, path=path))
     if len({item.figure_id for item in specs}) != len(specs):
@@ -1016,11 +1021,13 @@ def _view_figures(raw: Any) -> tuple[FigureSpec, ...]:
     return tuple(specs)
 
 
-def _figure_fact(raw: Any) -> AsOfFact | PeriodFact | ObjectFact:
+def _figure_fact(raw: Any) -> AsOfFact | PeriodFact | ObjectFact | GroupStartFact:
     if raw == "asOf":
         return AsOfFact()
     if "period" in raw:
         return PeriodFact(str(raw["period"]), str(raw["side"]))
+    if "group" in raw:
+        return GroupStartFact()
     return ObjectFact(str(raw["object"]), str(raw["endpoint"]))
 
 

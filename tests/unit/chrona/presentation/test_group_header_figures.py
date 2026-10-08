@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 
 from chrona.presentation.group_header_text import (
-    GroupHeaderTextError, compose_group_headers, parse_template, render_header)
+    GroupHeaderTextError, compose_group_header_runs, compose_group_headers, parse_template, render_header)
 
 
 def test_a_figure_placeholder_names_a_figure_and_renders_its_signed_integer():
@@ -46,3 +46,22 @@ def test_composition_passes_the_figures_to_every_group_and_to_the_first_template
                                    text="{title} {figure:f}", first="First {figure:g}", ordinal="arabic",
                                    figures={"f": 7, "g": -1})
     assert result == (("a", "First -1"), ("b", "B 7"))
+
+
+def test_group_figures_are_scoped_without_overwriting_global_values():
+    global_values = {"global": 63}
+    grouped = {"a": {"local": -1}, "b": {"local": 0}}
+    result = compose_group_headers(group_ids=("a", "b"), titles={}, secondaries=None,
+                                   text="{figure:global} / {figure:local}", first=None, ordinal="arabic",
+                                   figures=global_values, group_figures=grouped)
+    assert result == (("a", "63 / -1"), ("b", "63 / 0"))
+    assert global_values == {"global": 63}
+    assert grouped == {"a": {"local": -1}, "b": {"local": 0}}
+
+
+def test_marked_group_headers_resolve_the_same_scoped_values():
+    runs = compose_group_header_runs(group_ids=("a", "b"), titles={}, secondaries=None,
+                                     text="{figure:local|metric}", first=None, ordinal="arabic",
+                                     group_figures={"a": {"local": 0}, "b": {"local": -3}})
+    assert [(group, [(run.text, run.role) for run in values]) for group, values in runs] == [
+        ("a", [("0", "metric")]), ("b", [("-3", "metric")])]

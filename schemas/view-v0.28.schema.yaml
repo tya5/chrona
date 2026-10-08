@@ -794,7 +794,7 @@ $defs:
       typographyRole: {description: "Named Theme text-treatment role measuring and sizing the secondary text; its colour is the tier's.", type: string, minLength: 1}
       placement: {description: "stacked draws it on the line below the main label; inline draws it after the main label on the same baseline.", enum: [stacked, inline]}
   figureFact:
-    description: "One fact a figure reads: the Actual Set as-of, a named period's start, exclusive end or final covered day, or the placed date of an object endpoint."
+    description: "One fact a figure reads: the Actual Set as-of, a named period's start, exclusive end or final covered day, an object's placed endpoint, or the current selected group's first planned start."
     examples: [asOf, {period: launch-window, side: start}, {period: launch-window, side: last}, {object: tvac, endpoint: end}]
     oneOf:
       - {description: "The Actual Set as-of date.", const: asOf}
@@ -812,6 +812,13 @@ $defs:
         properties:
           object: {description: "Identifier of a Project object.", type: string, minLength: 1}
           endpoint: {description: "The endpoint the object's schedule offers: at for a point, start or end for a span.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/dateEndpoint"}
+      - description: "The earliest selected Primary planned start or point of the current group; requires figure scope group."
+        examples: [{group: firstPlannedStart}]
+        type: object
+        required: [group]
+        additionalProperties: false
+        properties:
+          group: {description: "The current group's first planned start or point, gathered by View projection.", const: firstPlannedStart}
   figureDaysUntil:
     description: "Signed days from one fact to another; negative once the target has passed."
     examples: [{id: launch-countdown, kind: daysUntil, to: {period: launch-window, side: start}}]
@@ -821,6 +828,7 @@ $defs:
     properties:
       id: {description: "Figure identifier, unique in this View and named by consumers; no braces or whitespace.", type: string, minLength: 1}
       kind: {description: "Days from `from` to `to`.", const: daysUntil}
+      scope: {description: "Resolve once globally (default), or once for each current View group; group results are shown by group headers only.", enum: [global, group]}
       from: {description: "The starting fact; the as-of when omitted.", $ref: "#/$defs/figureFact"}
       to: {description: "The target fact.", $ref: "#/$defs/figureFact"}
       days: {description: "Count calendar days (the default) or working days of the figure's calendar.", enum: [calendar, working]}

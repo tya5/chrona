@@ -9,7 +9,7 @@ from datetime import date, timedelta
 import pytest
 
 from chrona.core.figures import (
-    AsOfFact, FigureSpec, ObjectFact, PeriodFact, calendar_days_until, resolve_figures, working_days_in,
+    AsOfFact, FigureSpec, GroupStartFact, ObjectFact, PeriodFact, calendar_days_until, resolve_figures, working_days_in,
     working_days_until)
 from chrona.core.periods import ResolvedPeriod
 from chrona.core.temporal import Calendar, advance
@@ -142,6 +142,22 @@ def test_period_last_reports_a_missing_period_at_the_declaration():
     assert result.values == {}
     assert _codes(result) == ["E_FIGURE_PERIOD_UNKNOWN"]
     assert result.diagnostics[0].path == "/body/figures/0/to/period"
+
+
+def test_core_reads_only_the_injected_group_start_date():
+    spec = FigureSpec("group", "daysUntil", to=GroupStartFact(), scope="group")
+    result = resolve_figures((spec,), as_of=D("2028-02-28"), placements={}, periods=(),
+                             calendars={}, default_calendar=None, group_first_start=D("2028-03-01"))
+    assert result.values == {"group": 2}
+    assert result.diagnostics == ()
+
+
+def test_an_unavailable_group_start_is_not_zero():
+    result = _resolve(FigureSpec("group", "daysUntil", to=GroupStartFact(),
+                                 scope="group", path="/body/figures/0"))
+    assert result.values == {}
+    assert _codes(result) == ["E_FIGURE_GROUP_START_MISSING"]
+    assert result.diagnostics[0].path == "/body/figures/0/to/group"
 
 
 def test_each_fact_form_resolves():

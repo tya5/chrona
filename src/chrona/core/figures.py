@@ -1,7 +1,8 @@
 """Derived figures: a closed set of derivations over declared facts (#586).
 
 A figure is a signed whole number of days computed from dates the Project and the Actual Set already
-state: the as-of, a named period's boundary, an object's placed endpoint. The set of facts and the set of
+state: the as-of, a named period's boundary, an object's placed endpoint, or an injected selected-group date.
+Selection and group membership stay caller-owned. The set of facts and the set of
 derivations are closed here; nothing is an expression and nothing reads a field by name. This module is
 pure: the caller gathers the as-of, the placements, the resolved periods and the calendars and passes them
 in, and a fact that cannot be read is a diagnostic naming the figure, the fact and what is declared, never
@@ -53,7 +54,12 @@ class ObjectFact:
     endpoint: str
 
 
-Fact = AsOfFact | PeriodFact | ObjectFact
+@dataclass(frozen=True)
+class GroupStartFact:
+    """The caller-gathered first planned start/point in the current selected group."""
+
+
+Fact = AsOfFact | PeriodFact | ObjectFact | GroupStartFact
 
 
 @dataclass(frozen=True)
@@ -68,6 +74,7 @@ class FigureSpec:
     days: str = "calendar"
     calendar_id: str | None = None
     path: str = ""
+    scope: str = "global"
 
 
 @dataclass(frozen=True)
@@ -102,7 +109,8 @@ def _working_in(first: date, stop: date, calendar: Calendar) -> int:
 
 def resolve_figures(specs: Sequence[FigureSpec], *, as_of: date | None,
                     placements: Mapping[str, Mapping[str, date]], periods: Sequence[ResolvedPeriod],
-                    calendars: Mapping[str, Calendar], default_calendar: str | None) -> FigureResolution:
+                    calendars: Mapping[str, Calendar], default_calendar: str | None,
+                    group_first_start: date | None = None) -> FigureResolution:
     """Resolve every declared figure; report every finding, not only the first.
 
     A figure with a finding yields no value, so a consumer can never read a made-up number for it; the
@@ -113,7 +121,7 @@ def resolve_figures(specs: Sequence[FigureSpec], *, as_of: date | None,
     diagnostics: list[Diagnostic] = []
     for spec in specs:
         found: list[Diagnostic] = []
-        resolve = _Reader(spec, as_of, placements, declared, found)
+        resolve = _Reader(spec, as_of, placements, declared, found, group_first_start)
         calendar = _calendar(spec, calendars, default_calendar, found) if spec.days == "working" else None
         if spec.kind == "daysUntil":
             origin, target = resolve.read(spec.origin, "from"), resolve.read(spec.to, "to")
@@ -135,11 +143,19 @@ class _Reader:
     """Reads one fact of one figure, appending a diagnostic when it cannot."""
 
     def __init__(self, spec: FigureSpec, as_of: date | None, placements: Mapping[str, Mapping[str, date]],
-                 periods: Mapping[str, ResolvedPeriod], found: list[Diagnostic]) -> None:
+                 periods: Mapping[str, ResolvedPeriod], found: list[Diagnostic], group_first_start: date | None) -> None:
         self._spec, self._as_of, self._placements, self._periods, self._found = spec, as_of, placements, periods, found
+        self._group_first_start = group_first_start
 
     def read(self, fact: Fact | None, where: str) -> date | None:
         spec = self._spec
+        if isinstance(fact, GroupStartFact):
+            if self._group_first_start is None:
+                self._found.append(Diagnostic(
+                    "E_FIGURE_GROUP_START_MISSING",
+                    f"Figure {spec.figure_id} reads the current group's first planned start, but none is available",
+                    f"{spec.path}/{where}/group", details={"figure": spec.figure_id}))
+            return self._group_first_start
         if isinstance(fact, AsOfFact):
             if self._as_of is None:
                 self._found.append(Diagnostic(
