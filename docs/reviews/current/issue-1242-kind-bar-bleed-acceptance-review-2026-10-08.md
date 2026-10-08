@@ -2,9 +2,9 @@
 
 <!-- chrona:literal-acceptance/v1 -->
 
-Implementation through `1754dfbfc65fd344c207e3946e595b48ef3f5bd5` incorporates
-published main `a7af6eb001cdcdb29c6a4fba3df740c6086dcc9f` (#1239).
-Its derived gate is pending; final publication will use the resulting ready tip.
+Implementation through `c68b048b5ad3c5f1bd28ce07b4e5e00362f2f6a8`, based on
+ready main `ba679506c1c8d4661004a480b704530830ea0488` (#1239).
+Its bot-only report update changes no product code from the tested integration.
 [Living design, architecture review and plan](https://github.com/tya5/chrona/issues/1242#issuecomment-6060806272).
 Publication, exact-head CI/shared snapshot and exact published-main three-OS
 release remain pending. Do not close yet.
