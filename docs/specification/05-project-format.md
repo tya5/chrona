@@ -211,6 +211,10 @@ objects:
     calendar: factory
 ```
 
+A calendar MAY declare an optional `title` (non-empty text, #1026), a display name only: it never
+affects scheduling, and the View heading placeholder `{calendar}` shows it, or the calendar identifier when
+absent ([Spec 06 §7.4](06-view-model.md)). The member is additive in place in `chrona/timeline/v0.7`.
+
 A Project that declares no default calendar (`project.calendar` absent) has no
 built-in one: Chrona assumes no Monday-to-Friday week, so working-day arithmetic
 without a calendar is `E_CALENDAR_REQUIRED` and a View shades no closed day

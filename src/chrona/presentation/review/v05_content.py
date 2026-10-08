@@ -458,13 +458,26 @@ def _as_of_label(marker: Mapping[str, Any] | None, as_of: date | None, locale: s
     return f"{label} {formatted}" if label else formatted
 
 
+def _heading_calendar_name(project: Mapping[str, Any]) -> str:
+    """The `{calendar}` fact: the default calendar's declared `title` when it has one, else its identifier (#1026)."""
+    project_body = project.get("project", {})
+    calendar_id = project_body.get("calendar") if isinstance(project_body, Mapping) else None
+    if not calendar_id:
+        return ""
+    calendars = project.get("calendars", {})
+    calendar = calendars.get(calendar_id) if isinstance(calendars, Mapping) else None
+    title = calendar.get("title") if isinstance(calendar, Mapping) else None
+    return title if isinstance(title, str) and title else str(calendar_id)
+
+
 def compose_heading(view: ViewInput, project: Mapping[str, Any], actual_set: Mapping[str, Any] | None,
                     locale: str) -> HeadingContent:
     """Compose the optional kicker, title and subtitle a table-timeline surface draws (#991, #1189).
 
     Without a declared `heading` the title is the Project title and there is no kicker or subtitle, as before.
     A declared template reads the Project title, the Actual Set's as-of date in the declared form and
-    the Project's default calendar id; a fact the Project lacks renders as empty text.
+    the Project's default calendar name (its declared `title`, else its id); a fact the Project lacks renders
+    as empty text.
     """
     project_body = project.get("project", {})
     project_title = str(project_body.get("title", "Chrona")) if isinstance(project_body, Mapping) else "Chrona"
@@ -481,8 +494,7 @@ def compose_heading(view: ViewInput, project: Mapping[str, Any], actual_set: Map
             "monthLong": table.month_long[as_of.month - 1], "monthNumber": as_of.month,
             "monthNumeric": f"{as_of.month:02d}", "day": as_of.day, "dayNumeric": f"{as_of.day:02d}",
         })
-    calendar_id = project_body.get("calendar") if isinstance(project_body, Mapping) else None
-    facts = {"project": project_title, "asOf": as_of_text, "calendar": str(calendar_id) if calendar_id else ""}
+    facts = {"project": project_title, "asOf": as_of_text, "calendar": _heading_calendar_name(project)}
     title = render_heading(heading.title, facts) if heading.title is not None else project_title
     return HeadingContent(
         title=title,
