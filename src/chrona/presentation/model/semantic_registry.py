@@ -156,6 +156,12 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     _binding("groupTab", "decoration", "group-tab", "group-tab", "group-tab", ContrastClass.DECORATION),
     _binding("groupHeader", "decoration", "group-header", "group-header", "groupHeader", ContrastClass.GROUND_TEXT),
     _binding("groupDetail", "label", "group-detail", "text", "text", ContrastClass.GROUND_TEXT),
+    _binding("observationSource", "label", "observation-source", "text", "text", ContrastClass.GROUND_TEXT),
+    _binding("observationColumnLabel", "label", "observation-column-label", "text", "text", ContrastClass.GROUND_TEXT),
+    _binding("observationCell", "label", "observation-cell", "text", "text", ContrastClass.GROUND_TEXT),
+    # Emphasis is classified by the existing state-text role, like finishDelta.
+    _binding("observationAttentionCell", "label", "observation-cell", "variance-ahead", "variance-ahead"),
+    _binding("observationCriticalCell", "label", "observation-cell", "variance-behind", "variance-behind"),
     # Table.
     _binding("titleText", "label", "title-text", "heading", "heading", ContrastClass.GROUND_TEXT),
     _binding("kickerText", "label", "kicker-text", "kicker", "kicker", ContrastClass.GROUND_TEXT),

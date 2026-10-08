@@ -182,7 +182,11 @@ def test_layout_marks_the_shortened_header_text_ellipsized_and_the_others_fit(tm
 
     placed = []
     real = v05_builder.compose_surface_layout
-    monkeypatch.setattr(v05_builder, "compose_surface_layout", lambda request: placed.append(real(request)) or placed[-1])
+    def capture(request, *, prepared=None):
+        placed.append(real(request, prepared=prepared))
+        return placed[-1]
+
+    monkeypatch.setattr(v05_builder, "compose_surface_layout", capture)
     title = "Title " * 6
     header = _headers(_render(tmp_path, _parts(declare=False), _source(title)))["bus"]
     (tmp_path / "tab").mkdir()

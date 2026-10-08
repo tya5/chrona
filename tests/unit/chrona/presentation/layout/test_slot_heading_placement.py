@@ -8,10 +8,12 @@ import pytest
 
 from chrona.presentation.layout.model import LayoutDecision, Measurement, Rect, SlotHeading
 from chrona.presentation.layout.slot_heading import (
-    SlotHeadings, complete_slot_headings, content_slot, full_slot, reserve_slot_heading_blocks,
+    SlotHeadings, complete_slot_headings, content_slot, full_slot, headed_slot_ids, reserve_slot_heading_blocks,
 )
 from chrona.presentation.layout.sources import MeasuredSources
+from chrona.presentation.layout.surface_axis import AxisLabelTierGeometry
 from chrona.presentation.layout.surface_quality import SlotPlacement
+from chrona.presentation.model.surface_content import AxisTier
 from chrona.presentation.model.theme_tokens import TextTreatment
 
 SIZE, LINE = 10, Decimal("1.5")  # a 15 unit line box; the gap under it is 5
@@ -38,7 +40,9 @@ class _Theme:
 
 def _request(**content):
     surface = SimpleNamespace(annotations=("a",), notes=("n",), legend_entries=(("k", "v"),),
-                              summary=SimpleNamespace(runs=("r",)))
+                              summary=SimpleNamespace(runs=("r",)), slot_heading_text=(),
+                              group_details=(), milestones=(), observation_rows=(),
+                              axis_tiers=(AxisTier("day", 1, "labels"),))
     for key, value in content.items():
         setattr(surface, key, value)
     return SimpleNamespace(theme_tokens=_Theme(), font_metrics=_Font(), surface_content=surface)
@@ -64,6 +68,32 @@ AXIS = _slot("timeline-axis", 100, 50, inline=100, inline_size=400)  # a band fr
 
 def test_no_declaration_completes_nothing():
     assert complete_slot_headings(request=_request(), slots={}, decisions={}) == SlotHeadings()
+
+
+def test_prepared_axis_caption_is_reused_in_global_node_order_without_remeasurement(monkeypatch):
+    slots = {"timeline-axis": AXIS, "annotations": _slot("annotations", 100, 400)}
+    decisions = {"timeline-axis": _decision("timeline-axis", SlotHeading("Calendar", block="axis-tier")),
+                 "annotations": _decision("annotations", SlotHeading("Notes"))}
+    own = complete_slot_headings(request=_request(), slots=slots,
+                                 decisions={"timeline-axis": decisions["timeline-axis"]})
+    assert own.diagnostics == ("I_LAYOUT_SLOT_HEADING_NO_AXIS_TIER:timeline-axis",)
+    from chrona.presentation.layout import slot_heading
+    original = slot_heading.place_text
+    calls = []
+
+    def observed(**kwargs):
+        calls.append(kwargs["placement_id"])
+        return original(**kwargs)
+
+    monkeypatch.setattr(slot_heading, "place_text", observed)
+    result = complete_slot_headings(request=_request(), slots=slots, decisions=decisions,
+                                    prepared={"timeline-axis": own})
+    assert calls == ["slot-heading:annotations"]
+    assert [text.placement_id for text in result.text] == [
+        "slot-heading:annotations", "slot-heading:timeline-axis"]
+    assert result.text[-1] is own.text[0]
+    assert result.reserved("timeline-axis") == own.reserved("timeline-axis")
+    assert result.diagnostics == own.diagnostics
 
 
 def test_top_puts_the_line_at_the_slot_start_and_reserves_the_line_and_its_gap():
@@ -118,10 +148,66 @@ def test_a_slot_too_short_or_without_area_draws_nothing_and_reserves_nothing():
     ("annotations", {"annotations": ()}), ("notes", {"notes": ()}), ("legend", {"legend_entries": ()}),
     ("summary", {"summary": SimpleNamespace(runs=())})])
 def test_a_source_without_content_draws_no_caption(source, content):
-    result = _run([_slot(source, 100, 400)], SlotHeading("Caption"), source=source, request=_request(**content))
+    request = _request(**content)
+    slot = _slot(source, 100, 400)
+    result = _run([slot], SlotHeading("Caption"), source=source, request=request)
 
     assert result.text == () and result.reserved(source) == 0
     assert result.diagnostics == (f"I_LAYOUT_SLOT_HEADING_OMITTED:{source}:no-content",)
+
+    baseline = Measurement(Decimal(10), Decimal(20), Decimal(40), Decimal(10), Decimal(20), Decimal(30),
+                           Decimal(7), Decimal(9))
+    measured = MeasuredSources({source: baseline}, {}, {})
+    resolved = SimpleNamespace(profile={"root": {"kind": "slot", "source": source,
+                                                    "blockSize": "content", "heading": {"text": "Caption"}}})
+    unchanged = reserve_slot_heading_blocks(measured, resolved, _Theme(), content=request.surface_content)
+    assert unchanged.measurements[source] == baseline
+    assert unchanged.measurements[source].first_baseline == baseline.first_baseline
+    assert unchanged.measurements[source].last_baseline == baseline.last_baseline
+
+
+@pytest.mark.parametrize(("source", "field"), [("group-details", "group_details"),
+    ("milestones", "milestones"), ("observations", "observation_rows")])
+def test_detail_presence_is_shared_by_measurement_and_completion(source, field):
+    slot = _slot(source, 100, 400)
+    heading = SlotHeading("Detail")
+    measured = MeasuredSources({source: Measurement(*(Decimal(10) for _ in range(6)))}, {}, {})
+    resolved = SimpleNamespace(profile={"root": {"kind": "slot", "source": source,
+                                                "blockSize": "content", "heading": {"text": "Detail"}}})
+    empty = _request(**{field: ()})
+    assert _run([slot], heading, source=source, request=empty).text == ()
+    assert reserve_slot_heading_blocks(measured, resolved, _Theme(), content=empty.surface_content) is measured
+    present = _request(**{field: ("entry",)})
+    assert _run([slot], heading, source=source, request=present).reserved(source) == 20
+    assert reserve_slot_heading_blocks(measured, resolved, _Theme(), content=present.surface_content
+                                      ).measurements[source].preferred_block == 30
+
+
+@pytest.mark.parametrize(("tiers", "draws"), [((), False), ((AxisTier("day", 1, "labels"),), True)])
+def test_timeline_axis_presence_is_shared_by_measurement_and_completion(tiers, draws):
+    slot = _slot("timeline-axis", 100, 400)
+    heading = SlotHeading("Calendar")
+    request = _request(axis_tiers=tiers)
+    measured = MeasuredSources({"timeline-axis": Measurement(*(Decimal(10) for _ in range(6)))}, {}, {})
+    resolved = SimpleNamespace(profile={"root": {"kind": "slot", "source": "timeline-axis",
+                                                  "blockSize": "content", "heading": {"text": "Calendar"}}})
+
+    result = _run([slot], heading, source="timeline-axis", request=request)
+    updated = reserve_slot_heading_blocks(measured, resolved, _Theme(), content=request.surface_content)
+    if draws:
+        assert len(result.text) == 1 and result.reserved("timeline-axis") == 20
+        assert updated.measurements["timeline-axis"].preferred_block == 30
+    else:
+        assert result.text == () and result.reserved("timeline-axis") == 0
+        assert result.diagnostics == ("I_LAYOUT_SLOT_HEADING_OMITTED:timeline-axis:no-content",)
+        assert updated is measured
+
+
+def test_full_slot_restores_the_caption_around_a_translated_content_viewport():
+    slot = _slot("milestones", 100, 80)
+    completed = _slot("milestones", 300, 90)
+    assert full_slot(slot, completed, Decimal(20)).bounds == Rect(
+        Decimal(600), Decimal(280), Decimal(200), Decimal(110))
 
 
 def test_a_caption_wider_than_the_slot_is_cut_and_recorded():
@@ -130,6 +216,51 @@ def test_a_caption_wider_than_the_slot_is_cut_and_recorded():
     (text,) = result.text
     assert text.content.endswith("…") and text.overflow == "ellipsized" and text.source_content == "A long caption"
     assert [item.code for item in result.warnings] == ["W_LAYOUT_TEXT_ELLIPSIZED"]
+
+
+def test_selected_copy_is_measured_and_ellipsized_with_its_source_retained():
+    result = _run([_slot("annotations", 100, 400, inline_size=40)], SlotHeading("Notes"),
+                  request=_request(slot_heading_text=(("annotations", "A long selected caption"),)))
+    (text,) = result.text
+    assert text.content.endswith("…") and text.source_content == "A long selected caption"
+    assert text.overflow == "ellipsized" and result.reserved("annotations") == 20
+
+
+def test_heading_targets_include_optional_profile_slots_without_a_manifest_decision():
+    node = {"id": "optional-caption", "kind": "slot", "priority": "optional",
+            "source": "annotations", "heading": {"text": "Notes"}}
+    root = {"kind": "column", "id": "root", "children": [node,
+            {"kind": "slot", "id": "headless", "source": "notes"}]}
+    resolved = SimpleNamespace(profile={"root": root}, content_hash="unchanged")
+    assert headed_slot_ids(resolved) == frozenset({"optional-caption"})
+    assert resolved.content_hash == "unchanged" and node["heading"] == {"text": "Notes"}
+
+
+def _tier(index, top, baseline):
+    return AxisLabelTierGeometry(index, Rect(Decimal(100), Decimal(top), Decimal(400), Decimal(20)), baseline)
+
+
+def test_axis_tier_caption_uses_completed_upper_baseline_and_reserves_the_whole_band():
+    slot = _slot("annotations", 100, 400)
+    result = complete_slot_headings(request=_request(), slots={"annotations": slot, "timeline-axis": AXIS},
+        decisions={"annotations": _decision("annotations", SlotHeading("Notes", block="axis-tier"))},
+        axis_label_tiers=(_tier(5, 125, 140.0), _tier(2, 100, 113.75)))
+    assert result.text[0].baseline[1] == 113.75
+    assert result.reserved("annotations") == 50 and result.diagnostics == ()
+
+
+@pytest.mark.parametrize(("axis", "tiers"), [(AXIS, ()), (None, (_tier(0, 100, 110.0),)),
+    (AXIS, (_tier(0, 100, 105.0),)), (_slot("timeline-axis", 600, 50), (_tier(0, 600, 610.0),))])
+def test_incompatible_axis_tier_falls_back_to_top_with_a_record(axis, tiers):
+    slots = {"annotations": _slot("annotations", 100, 400)}
+    if axis is not None:
+        slots["timeline-axis"] = axis
+    result = complete_slot_headings(request=_request(), slots=slots,
+        decisions={"annotations": _decision("annotations", SlotHeading("Notes", block="axis-tier"))},
+        axis_label_tiers=tiers)
+    assert result.text[0].baseline[1] == 110.0
+    assert result.reserved("annotations") == 20
+    assert result.diagnostics == ("I_LAYOUT_SLOT_HEADING_NO_AXIS_TIER:annotations",)
 
 
 def test_an_absent_slot_has_no_caption():
@@ -160,11 +291,11 @@ def test_a_content_sized_slot_measures_the_caption_in_and_others_do_not():
         {"kind": "slot", "source": "legend", "blockSize": "content", "heading": {"text": "Key"}},
         {"kind": "slot", "source": "notes", "blockSize": "fill", "heading": {"text": "Notes"}}]}})
 
-    result = reserve_slot_heading_blocks(measured, resolved, _Theme())
+    result = reserve_slot_heading_blocks(measured, resolved, _Theme(), content=_request().surface_content)
 
     legend = result.measurements["legend"]
     assert (legend.min_block, legend.preferred_block, legend.max_block) == (30, 40, 50)  # each plus 20
     assert (legend.first_baseline, legend.last_baseline) == (27, 29)
     assert result.measurements["notes"] == measured.measurements["notes"]  # a filling slot gives from its allocation
     assert reserve_slot_heading_blocks(measured, SimpleNamespace(profile={"root": {"kind": "column", "children": []}}),
-                                       _Theme()) is measured
+                                       _Theme(), content=_request().surface_content) is measured

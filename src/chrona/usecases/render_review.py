@@ -24,18 +24,18 @@ from chrona.core.ports import RenderArtifact, Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
 from chrona.presentation.layout.engine import (measure_natural_normal_flow_block,
                                                resolve_content_block_extent, solve_layout)
-from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.model import LayoutError, LayoutManifest, ResolvedLayoutProfile
 from chrona.presentation.layout.group_header_runs import validate_group_header_roles
-from chrona.presentation.layout.presentation import table_text_line_block, validate_table_text_roles
+from chrona.presentation.layout.presentation import validate_table_text_roles
 from chrona.presentation.layout.profile import resolve_layout_profile
-from chrona.presentation.layout.slot_heading import reserve_slot_heading_blocks
+from chrona.presentation.layout.slot_heading import headed_slot_ids, reserve_slot_heading_blocks
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources, resolve_theme_metrics
 from chrona.presentation.layout.surface_legend import LegendArrangement, legend_arrangement, legend_source_input
 from chrona.presentation.layout.label_visual_measurement import resolve_label_visual_advances
-from chrona.presentation.layout.surface_composer import timeline_content_block_requirement
-from chrona.presentation.layout.surface_lanes import preflight_fixed_lane_layout
-from chrona.presentation.layout.surface_marks import resolve_mark_geometries, resolve_mark_band
-from chrona.presentation.layout.surface_quality import CapacitySourceEvidence, VisualRequest
+from chrona.presentation.layout.surface_composer import prepare_surface_content, prepare_surface_natural_candidate
+from chrona.presentation.layout.surface_content import detail_source_inputs
+from chrona.presentation.layout.surface_quality import CapacitySourceEvidence, SurfaceLayoutRequest, VisualRequest
+from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.closure import ClosureError, RenderClosure
 from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMetricsError, FontTabularWarning, resolve_font_metrics_catalog
 from chrona.presentation.model.font_resources import FontAssetResolver
@@ -51,11 +51,12 @@ from chrona.core.periods import period_range_diagnostics, resolve_periods
 from chrona.core.temporal import Calendar
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
 from chrona.presentation.model.projection import ReviewDeadline, ReviewPeriod, build_review_projection
-from chrona.presentation.model.surface_content import HeadingContent, SummaryContent, TableContent
+from chrona.presentation.model.surface_content import HeadingContent, SummaryContent, SurfaceContentInput, TableContent
 from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput, ViewRowMode
+from chrona.presentation.review.detail import ReviewDetailError
 from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, below_plot_reserve
 from chrona.presentation.review.v05_content import (
-    calendar_closures, compose_heading, legend_entries, normalize_axis_tiers, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content)
+    compose_heading, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content)
 from chrona.presentation.scene.model import (
     ContentFamilyCounts, InspectionScene, SceneManifest, SceneProvenance,
     SceneSurface,
@@ -217,6 +218,25 @@ def render_review(request: RenderRequest) -> RenderedReview:
                            "presentation", error.path or "/") from error
 
 
+def admit_v05_detail_content(content: SurfaceContentInput, *, detail: ReviewDetailInput | None,
+                             layout_manifest: LayoutManifest) -> SurfaceContentInput:
+    """Validate Detail panel availability after solve and return the already-normalized content unchanged."""
+    available = {item.source for item in layout_manifest.decisions if item.source}
+    required = {item.source for item in layout_manifest.decisions
+                if item.source and item.kind == "slot" and item.priority == "required"}
+    declared = {
+        "group-details": bool(detail and detail.group_details),
+        "milestones": bool(detail and detail.milestones),
+        "observations": bool(detail and detail.observations is not None),
+    }
+    for source in ("group-details", "milestones", "observations"):
+        if declared[source] and source not in available:
+            raise ReviewDetailError("E_DETAIL_SLOT_REQUIRED")
+        if not declared[source] and source in required:
+            raise ReviewDetailError("E_LAYOUT_SOURCE_UNAVAILABLE")
+    return content
+
+
 def _render_review(request: RenderRequest) -> RenderedReview:
     """Render one closure, in the one order the pipeline has."""
     render_closure, ledger = request.closure, ClosureReadLedger(request.closure)
@@ -281,10 +301,16 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     validate_table_text_roles(view.table_columns, ThemeTokenView(theme))
     if view.grouping is not None and view.grouping.header is not None:
         validate_group_header_roles(view.grouping.header.role_pointers(), ThemeTokenView(theme))
+    selected_content = normalize_v05_surface_content(
+        projection, project, view, actual_set=actual_observations,
+        detail=render_closure.detail_profile.detail if render_closure.detail_profile else None,
+        summary=summary, locale=environment.locale, color_scale=color_scale, table=table_content,
+        group_tints=group_tints, annotation_kind_colors=_annotation_kind_colors(theme),
+        annotation_kind_also=_annotation_kind_also(theme))
     source_inputs = _source_inputs(project, view, projection, summary,
                                    annotation_input=_annotation_source_input(
                                        view, visual_requests, icon_assets, theme),
-                                   table=table_content, locale=environment.locale,
+                                   table=table_content, content=selected_content,
                                    # A dependency network draws its own title line and ignores `heading` (#991).
                                    heading=(compose_heading(view, project, actual_observations, environment.locale)
                                             if view.surface == "table-timeline" else None))
@@ -301,9 +327,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         resolved_layout, layout_error = None, error
     try:
         source_inputs["legend"] = legend_source_input(
-            legend_entries(render_closure.detail_profile.detail if render_closure.detail_profile else None,
-                           project, projection, color_scale,
-                           closed_days_drawn=bool(calendar_closures(project, projection, view)[0])),
+            selected_content.legend_entries,
             tokens=ThemeTokenView(theme),
             mark_block_size=float(resolve_theme_metrics(theme)["timeline.mark.blockSize"]),
             font_metrics=font_metrics,
@@ -314,46 +338,53 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         raise _font_failure(error) from error
     if layout_error is not None:
         raise layout_error
+    _check_slot_heading_text(view, resolved_layout)
     # A declared slot heading is part of its content-sized slot's measurement (#1064).
-    measured = reserve_slot_heading_blocks(measured, resolved_layout, ThemeTokenView(theme))
+    measured = reserve_slot_heading_blocks(measured, resolved_layout, ThemeTokenView(theme), content=selected_content)
     viewport = {"inlineSize": environment.viewport_inline, "blockSize": environment.viewport_block}
     measurements = _slot_measurements(resolved_layout.profile["root"], measured)
     natural_block_floor = max(1, int(measure_natural_normal_flow_block(
         resolved_layout, viewport_inline=viewport["inlineSize"], measurements=measurements
     ).to_integral_value(rounding=ROUND_CEILING))) if request.draft_auto_block else viewport["blockSize"]
-    required_block = None
+    capacity_short_sources = ()
     # An as-of chip placed `below-plot` (#1063) needs its block under the last row, so the timeline asks for it too.
     foot_reserve = Decimal(str(_below_plot_reserve(view, actual_set=actual_observations, projection=projection,
                                                    theme_tokens=ThemeTokenView(theme))))
-    if view.surface == "table-timeline":
-        mark_tokens = ThemeTokenView(theme)
-        mark_geometries = resolve_mark_geometries(mark_tokens)
-        mark_band = resolve_mark_band(mark_tokens, float(measured.metric_values["timeline.mark.blockSize"]),
-                                      role_geometries=mark_geometries)
-        timeline_requirement = foot_reserve + timeline_content_block_requirement(
-            projection=projection,
-            group_presentation=("band" if ThemeTokenView(theme).writing_mode("groupHeader") == "vertical"
-                                else view.grouping.presentation if view.grouping and view.grouping.presentation
-                                else "band"),
-            metric_values=measured.metric_values,
-            role_geometries=mark_geometries,
-            mark_band_allocation=mark_band,
-            text_line_block=table_text_line_block(
-                ThemeTokenView(theme), (cell.typography_role for cell in table_content.cells)),
+
+    def candidate_request(candidate: LayoutManifest, *, short_sources=()) -> SurfaceLayoutRequest:
+        content = admit_v05_detail_content(
+            selected_content,
+            detail=render_closure.detail_profile.detail if render_closure.detail_profile else None,
+            layout_manifest=candidate,
         )
-        initial_resolution = resolve_content_block_extent(
+        return SurfaceLayoutRequest(
+            projection=projection, presentation_contract=normalize_presentation_input(content),
+            surface_content=content, layout_manifest=candidate,
+            measured_sources=measured, theme_tokens=ThemeTokenView(theme), font_metrics=font_metrics,
+            capabilities={name: True for name in render_closure.context.target.capabilities},
+            icon_assets=icon_assets, visual_requests=visual_requests,
+            capacity_short_sources=short_sources,
+        )
+
+    if view.surface == "table-timeline":
+        def candidate_demand(candidate: LayoutManifest) -> Mapping[str, Decimal]:
+            natural = prepare_surface_natural_candidate(candidate_request(candidate))
+            return {"timeline": natural.required_timeline_block(foot_reserve=foot_reserve)}
+
+        block_resolution = resolve_content_block_extent(
             resolved_layout, viewport_inline=viewport["inlineSize"],
             minimum_block=natural_block_floor if request.draft_auto_block else viewport["blockSize"],
             measurements=measurements,
-            required_blocks={"timeline": timeline_requirement},
+            required_blocks=candidate_demand,
             content_sized=request.draft_auto_block,
         )
-        required_block = initial_resolution.extent
-        viewport["blockSize"] = required_block
-    if request.draft_auto_block:
-        if required_block is None:
-            raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/projection/surface",
-                              detail=f"surface={view.surface}")
+        viewport["blockSize"] = block_resolution.extent
+        capacity_short_sources = tuple(CapacitySourceEvidence(
+            item.source_id, item.required_block, item.allocated_block)
+            for item in block_resolution.short_sources)
+    elif request.draft_auto_block:
+        raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/projection/surface",
+                          detail=f"surface={view.surface}")
     manifest = solve_layout(
         resolved_layout, viewport_inline=viewport["inlineSize"],
         viewport_block=viewport["blockSize"], measurements=measurements,
@@ -361,52 +392,18 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     )
 
     fixed_lane_preflight = None
-    capacity_short_sources = ()
-    if projection.lane_membership is not None:
-        seed_content = normalize_v05_surface_content(
-            projection, project, view, actual_set=actual_observations,
+    surface_preparation = None
+    if view.surface == "table-timeline":
+        natural = prepare_surface_natural_candidate(candidate_request(manifest, short_sources=capacity_short_sources))
+        surface_preparation = prepare_surface_content(natural.inline.request, natural=natural)
+        surface_content = surface_preparation.inline.request.surface_content
+        fixed_lane_preflight = surface_preparation.inline.request.fixed_lane_preflight
+    else:
+        surface_content = admit_v05_detail_content(
+            selected_content,
             detail=render_closure.detail_profile.detail if render_closure.detail_profile else None,
-            summary=summary, layout_manifest=manifest, locale=environment.locale,
-            color_scale=color_scale, table=table_content, group_tints=group_tints,
-            annotation_kind_colors=_annotation_kind_colors(theme), annotation_kind_also=_annotation_kind_also(theme),
+            layout_manifest=manifest,
         )
-        fixed_lane_preflight = preflight_fixed_lane_layout(
-            projection=projection, layout_manifest=manifest, surface_content=seed_content,
-            theme_tokens=ThemeTokenView(theme), metric_values=measured.metric_values,
-            icon_assets=icon_assets, visual_requests=visual_requests,
-            font_metrics=font_metrics,
-        )
-        exact_resolution = resolve_content_block_extent(
-            resolved_layout, viewport_inline=viewport["inlineSize"],
-            minimum_block=natural_block_floor if request.draft_auto_block else viewport["blockSize"],
-            measurements=measurements,
-            required_blocks={"timeline": fixed_lane_preflight.natural_block_requirement + foot_reserve},
-            content_sized=request.draft_auto_block,
-        )
-        exact_block = exact_resolution.extent
-        capacity_short_sources = tuple(CapacitySourceEvidence(
-            item.source_id, item.required_block, item.allocated_block)
-            for item in exact_resolution.short_sources)
-        if exact_block != viewport["blockSize"]:
-            viewport["blockSize"] = exact_block
-            manifest = solve_layout(
-                resolved_layout, viewport_inline=viewport["inlineSize"],
-                viewport_block=viewport["blockSize"], measurements=measurements,
-                content_sized=request.draft_auto_block,
-            )
-
-    surface_content = normalize_v05_surface_content(
-        projection, project, view,
-        actual_set=actual_observations,
-        detail=render_closure.detail_profile.detail if render_closure.detail_profile else None,
-        summary=summary,
-        layout_manifest=manifest,
-        locale=environment.locale,
-        color_scale=color_scale,
-        table=table_content,
-        group_tints=group_tints,
-        annotation_kind_colors=_annotation_kind_colors(theme), annotation_kind_also=_annotation_kind_also(theme),
-    )
     if render_closure.detail_profile is not None:
         ledger.detail()
     scene_input = build_scene_input(
@@ -419,6 +416,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         visual_requests=visual_requests,
         fixed_lane_preflight=fixed_lane_preflight,
         capacity_short_sources=capacity_short_sources,
+        surface_preparation=surface_preparation,
     )
 
     unused = ledger.unused()
@@ -705,6 +703,20 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
     return projection, tuple(provenance), attachment_warnings(project, result.placements), deadline_warnings(project, result.placements)
 
 
+def _check_slot_heading_text(view: ViewInput, resolved_layout: ResolvedLayoutProfile) -> None:
+    """Admit View copy against the resolved profile, never mutate Layout declarations."""
+    if not view.slot_heading_text:
+        return
+    valid = headed_slot_ids(resolved_layout)
+    for node_id in sorted(view.slot_heading_text):
+        if node_id not in valid:
+            escaped = node_id.replace("~", "~0").replace("/", "~1")
+            raise RenderFailed("E_VIEW_SLOT_HEADING_TARGET",
+                               f"slotHeadingText target {node_id!r} is not a headed slot; valid headed slots: "
+                               + (", ".join(sorted(valid)) or "none"),
+                               "view", f"/body/slotHeadingText/{escaped}")
+
+
 def _check_summary_figures(summary: Any, projection: Any) -> None:
     """A Summary Profile metric naming a figure must name one the View declared, in a format an integer has (#586)."""
     declared = dict(projection.figures)
@@ -793,8 +805,9 @@ def _font_failure(error: FontMetricsError) -> RenderFailed:
 
 def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
                    summary: SummaryContent, annotation_input: SourceInput | None = None, *,
+                   content: SurfaceContentInput,
                    table: TableContent | None = None,
-                   heading: HeadingContent | None = None, locale: str = "en") -> dict[str, SourceInput]:
+                   heading: HeadingContent | None = None) -> dict[str, SourceInput]:
     """Declare what each slot will hold, for measurement before layout.
 
     The `legend` entry is a placeholder: Layout measures the legend from the entries it
@@ -818,18 +831,16 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
             row_count, len(view.table_columns) or 1, table=table),
         "timeline": SourceInput(item_count=row_count, span_days=span_days),
         "timeline-axis": SourceInput(span_days=span_days, typography_role="axis",
-                                     axis_tiers=normalize_axis_tiers(view, locale=locale)),
+                                     axis_tiers=content.axis_tiers),
         "network": SourceInput(
             runs=tuple(SourceTextRun(node.title, "text", node.object_id)
                        for node in network.nodes) if network is not None else (),
             typography_role="text"),
         "summary": _summary_source(summary),
         "legend": SourceInput(("legend",), typography_role="legend"),
-        "group-details": SourceInput(("group details",)),
-        "observations": SourceInput(("observations",)),
-        "milestones": SourceInput(("milestones",)),
         "notes": SourceInput(notes or ("notes",), typography_role="annotation"),
     }
+    sources.update(detail_source_inputs(content))
     if annotation_input is not None:
         sources["annotations"] = annotation_input
     return sources

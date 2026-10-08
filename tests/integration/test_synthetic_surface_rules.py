@@ -146,8 +146,8 @@ def _annotated(tmp_path, monkeypatch, *, plot_positions: int, second_positions: 
     compositions = []
     original = builder.compose_surface_layout
 
-    def capture(request):
-        result = original(request)
+    def capture(request, *, prepared=None):
+        result = original(request, prepared=prepared)
         compositions.append(result)
         return result
 

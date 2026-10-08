@@ -1,10 +1,14 @@
 """Owns title/detail panels, notes, summary and footer source content in allocated slots; reads completed slots and Theme tokens."""
 
 from dataclasses import dataclass, replace
+from collections.abc import Mapping
 from decimal import Decimal
 from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, Rect
+from chrona.presentation.layout.sources import SourceInput
+from chrona.presentation.layout.surface_observations import compose_observations, observations_table_content
+from chrona.presentation.model.surface_content import SurfaceContentInput
 from chrona.presentation.layout.surface_visuals import (
     reserve_text_visuals,
 )
@@ -50,12 +54,28 @@ def _detail_panel_entries(source: str, values: tuple[Any, ...]) -> tuple[tuple[s
     return tuple((value[0], f"{value[1]} — {value[2].isoformat()}") for value in values)
 
 
+def detail_source_inputs(content: SurfaceContentInput) -> dict[str, SourceInput]:
+    """Measure the same immutable Detail facts the native owners will place."""
+    return {
+        "group-details": SourceInput(tuple(text for _, text in _detail_panel_entries(
+            "group-details", content.group_details))),
+        "milestones": SourceInput(tuple(text for _, text in _detail_panel_entries(
+            "milestones", content.milestones))),
+        "observations": SourceInput(tuple(source for _, source, _, _ in content.observation_rows),
+            item_count=len(content.observation_rows), column_count=len(content.observation_columns),
+            table=observations_table_content(content)),
+    }
+
+
 def compose_detail_panel_blocks(*, slots: tuple[SlotPlacement, ...], request: SurfaceLayoutRequest,
-                                 requested_canvas: Rect) -> tuple[tuple[SlotPlacement, ...], list[Any], list[FitWarning], frozenset[str]]:
+                                 requested_canvas: Rect,
+                                 caption_reserves: Mapping[str, Decimal] | None = None
+                                 ) -> tuple[tuple[SlotPlacement, ...], list[Any], list[FitWarning], frozenset[str]]:
     """Complete Review Detail panel lines, rectangles, and visible-fit records."""
     slot_by_source = {slot.source_ref: slot for slot in slots}
     sources = (("group-details", request.surface_content.group_details, "group-detail"),
-               ("milestones", request.surface_content.milestones, "milestone"))
+               ("milestones", request.surface_content.milestones, "milestone"),
+               ("observations", request.surface_content.observation_rows, "observations"))
     visual_requests = detail_visual_requests(request)
     completed: list[Any] = []
     warnings: list[FitWarning] = []
@@ -78,8 +98,18 @@ def compose_detail_panel_blocks(*, slots: tuple[SlotPlacement, ...], request: Su
             previous_left = previous.bounds.inline
             previous_right = previous.bounds.inline + previous.bounds.inline_size
             if left < previous_right and previous_left < right:
-                block = max(block, previous.bounds.block + previous.bounds.block_size)
+                # Stack the whole panel, not its content over the predecessor's last line.
+                block = max(block, previous.bounds.block + previous.bounds.block_size
+                            + (caption_reserves or {}).get(source, Decimal(0)))
         cursor = block
+        if source == "observations":
+            batch = compose_observations(slot=replace(slot, bounds=Rect(
+                slot.bounds.inline, block, slot.bounds.inline_size, slot.bounds.block_size)), request=request)
+            replacements[source] = batch.slot
+            allocated.append(batch.slot)
+            completed.extend(batch.text)
+            warnings.extend(batch.warnings)
+            continue
         item_overflows: list[tuple[Any, float, float]] = []
         for source_ref, content in _detail_panel_entries(source, values):
             placement_id = f"{prefix}:{source_ref}"
@@ -157,7 +187,8 @@ def compose_detail_panel_blocks(*, slots: tuple[SlotPlacement, ...], request: Su
     return final_slots, completed, warnings, frozenset(pre_reserved)
 
 
-_FOOTER_SOURCES = frozenset({"group-details", "milestones", "observations", "legend", "notes"})
+_DETAIL_PANEL_SOURCES = frozenset({"group-details", "milestones", "observations"})
+_FOOTER_SOURCES = _DETAIL_PANEL_SOURCES | {"legend", "notes"}
 
 
 def complete_footer_band(*, provisional_slots: tuple[SlotPlacement, ...],
@@ -166,30 +197,33 @@ def complete_footer_band(*, provisional_slots: tuple[SlotPlacement, ...],
     provisional_by_source = {slot.source_ref: slot for slot in provisional_slots}
     completed_by_source = {slot.source_ref: slot for slot in completed_slots}
     panel_start = min((slot.bounds.block for source, slot in provisional_by_source.items()
-                       if source in {"group-details", "milestones"}), default=None)
+                       if source in _DETAIL_PANEL_SOURCES), default=None)
     if panel_start is None:
         return completed_slots
     panel_line = max((slot.bounds.block_size for source, slot in provisional_by_source.items()
-                      if source in {"group-details", "milestones"}), default=Decimal(0))
+                      if source in _DETAIL_PANEL_SOURCES), default=Decimal(0))
     provisional_footer = tuple(slot for source, slot in provisional_by_source.items()
                                if source in _FOOTER_SOURCES
                                and panel_start <= slot.bounds.block <= panel_start + panel_line + GEOMETRY_TOLERANCE)
     if not provisional_footer:
         return completed_slots
     provisional_end = max(slot.bounds.block + slot.bounds.block_size for slot in provisional_footer)
-    completed_footer = tuple(completed_by_source[slot.source_ref] for slot in provisional_footer)
+    # The allocated first line determines the predecessor end and its declared
+    # successor gap. Completion must include later Flow lines as well: a wrapped
+    # notes slot can start exactly where that successor was provisionally placed.
+    completed_footer = tuple(completed_by_source[source]
+                             for source, slot in provisional_by_source.items()
+                             if source in _FOOTER_SOURCES and slot.bounds.block >= panel_start)
     completed_end = max(slot.bounds.block + slot.bounds.block_size for slot in completed_footer)
     annotation = completed_by_source.get("annotations")
-    panels = tuple(completed_by_source[source] for source in ("group-details", "milestones")
-                   if source in completed_by_source)
-    overlaps_panel_inline = annotation is not None and any(
-        annotation.bounds.inline < panel.bounds.inline + panel.bounds.inline_size
-        and panel.bounds.inline < annotation.bounds.inline + annotation.bounds.inline_size
-        for panel in panels
+    overlaps_footer_inline = annotation is not None and any(
+        annotation.bounds.inline < slot.bounds.inline + slot.bounds.inline_size
+        and slot.bounds.inline < annotation.bounds.inline + annotation.bounds.inline_size
+        for slot in completed_footer
     )
     growth = completed_end - provisional_end
     if (growth <= GEOMETRY_TOLERANCE or annotation is None
-            or annotation.bounds.block < provisional_end or not overlaps_panel_inline):
+            or annotation.bounds.block < provisional_end or not overlaps_footer_inline):
         return completed_slots
     translated = replace(annotation, bounds=Rect(annotation.bounds.inline, annotation.bounds.block + growth,
                                                  annotation.bounds.inline_size, annotation.bounds.block_size))
@@ -199,7 +233,7 @@ def complete_footer_band(*, provisional_slots: tuple[SlotPlacement, ...],
 def validate_detail_panel_placement(text: list[Any], slots: tuple[SlotPlacement, ...]) -> None:
     """Keep final detail text and final panel rectangles consistent after visual projection."""
     slot_by_id = {slot.slot_id: slot for slot in slots}
-    panels = [item for item in text if item.placement_id.startswith(("group-detail:", "milestone:"))]
+    panels = [item for item in text if item.placement_id.startswith(("group-detail:", "milestone:", "observations:"))]
     for item in panels:
         if item.overflow in {"suppressed", "visible-overflow"}:
             continue

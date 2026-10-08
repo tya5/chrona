@@ -56,8 +56,8 @@ def test_crowded_halcyon_plot_selects_declared_rail_with_named_diagnostic(tmp_pa
     original = builder.compose_surface_layout
     compositions = []
 
-    def capture(request):
-        result = original(request)
+    def capture(request, *, prepared=None):
+        result = original(request, prepared=prepared)
         compositions.append(result)
         return result
 

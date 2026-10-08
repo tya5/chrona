@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Any
+from typing import Any, Literal
 
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.surface_quality import AnnotationPresentation, CollisionDomain, TextPlacement
@@ -163,6 +163,20 @@ def wrap_text(content: str, *, available_inline: float, font_size: float, font_m
     return tuple(lines or [content])
 
 
+def measured_text_bounds(*, inline: float, baseline_block: float, width: float,
+                         height: float, font_size: float,
+                         rotation: Literal[0, 90, -90]) -> Rect:
+    """Close a measured run's bounds with the native baseline-pivot arithmetic."""
+    if rotation == 0:
+        return Rect(Decimal(str(inline)), Decimal(str(baseline_block - font_size)),
+                    Decimal(str(width)), Decimal(str(height)))
+    if rotation == 90:
+        return Rect(Decimal(str(inline + font_size - height)), Decimal(str(baseline_block)),
+                    Decimal(str(height)), Decimal(str(width)))
+    return Rect(Decimal(str(inline - font_size)), Decimal(str(baseline_block - width)),
+                Decimal(str(height)), Decimal(str(width)))
+
+
 def place_text(*, placement_id: str, source_ref: str, content: str,
                inline: float, baseline_block: float, typography_role: str,
                theme_tokens: Any, font_metrics: Any, overflow: str = "fit",
@@ -193,15 +207,8 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
     if rotation is None:
         raise ValueError("E_PRESENTATION_TEXT_ORIENTATION")
     height = font_size * leading * len(resolved_lines)
-    if rotation == 0:
-        bounds = Rect(Decimal(str(inline)), Decimal(str(baseline_block - font_size)),
-                      Decimal(str(width)), Decimal(str(height)))
-    elif rotation == 90:
-        bounds = Rect(Decimal(str(inline + font_size - height)), Decimal(str(baseline_block)),
-                      Decimal(str(height)), Decimal(str(width)))
-    else:
-        bounds = Rect(Decimal(str(inline - font_size)), Decimal(str(baseline_block - width)),
-                      Decimal(str(height)), Decimal(str(width)))
+    bounds = measured_text_bounds(inline=inline, baseline_block=baseline_block, width=width,
+                                  height=height, font_size=font_size, rotation=rotation)
     return TextPlacement(
         placement_id, source_ref, painted_content,
         bounds,

@@ -11,6 +11,50 @@
 # against the base it was recorded for. L2 and L3 entries compare with the recorded baseline and stay until it is re-recorded.
 version: chrona/schema-equivalence-expected-deltas/v0.1
 deltas:
+  - layer: L1
+    schema: layout-profile-v0.10.schema.yaml
+    pointer: /properties/overrides/additionalProperties/properties/heading/properties/block/enum
+    before: [top, header-row]
+    after: [top, header-row, axis-tier]
+    reason: "#1100 adds opt-in completed axis-tier caption baseline alignment; top and header-row behavior is unchanged."
+    test: tests/unit/chrona/presentation/layout/test_slot_heading_profile.py::test_axis_tier_is_an_optional_in_place_block_mode
+  - layer: L1
+    schema: layout-profile-v0.10.schema.yaml
+    pointer: /properties/root/oneOf/0/properties/children/items/oneOf/1/properties/heading/properties/block/enum
+    before: [top, header-row]
+    after: [top, header-row, axis-tier]
+    reason: "#1100 adds opt-in completed axis-tier caption baseline alignment; top and header-row behavior is unchanged."
+    test: tests/unit/chrona/presentation/layout/test_slot_heading_profile.py::test_axis_tier_is_an_optional_in_place_block_mode
+  - layer: L1
+    schema: layout-profile-v0.10.schema.yaml
+    pointer: /properties/root/oneOf/1/properties/children/items/oneOf/1/properties/heading/properties/block/enum
+    before: [top, header-row]
+    after: [top, header-row, axis-tier]
+    reason: "#1100 adds opt-in completed axis-tier caption baseline alignment; top and header-row behavior is unchanged."
+    test: tests/unit/chrona/presentation/layout/test_slot_heading_profile.py::test_axis_tier_is_an_optional_in_place_block_mode
+  - layer: L1
+    schema: layout-profile-v0.10.schema.yaml
+    pointer: /properties/root/oneOf/2/properties/children/items/oneOf/1/properties/heading/properties/block/enum
+    before: [top, header-row]
+    after: [top, header-row, axis-tier]
+    reason: "#1100 adds opt-in completed axis-tier caption baseline alignment; top and header-row behavior is unchanged."
+    test: tests/unit/chrona/presentation/layout/test_slot_heading_profile.py::test_axis_tier_is_an_optional_in_place_block_mode
+  - layer: L1
+    schema: layout-profile-v0.10.schema.yaml
+    pointer: /properties/root/oneOf/3/properties/children/items/oneOf/1/properties/heading/properties/block/enum
+    before: [top, header-row]
+    after: [top, header-row, axis-tier]
+    reason: "#1100 adds opt-in completed axis-tier caption baseline alignment; top and header-row behavior is unchanged."
+    test: tests/unit/chrona/presentation/layout/test_slot_heading_profile.py::test_axis_tier_is_an_optional_in_place_block_mode
+  - layer: L1
+    schema: view-v0.28.schema.yaml
+    pointer: /allOf/1/properties/body/properties/slotHeadingText
+    after:
+      type: object
+      propertyNames: {type: string, minLength: 1, pattern: "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"}
+      additionalProperties: {type: string, minLength: 1, maxLength: 80, pattern: "^[^\\u0000-\\u001f\\u007f]+$"}
+    reason: "#1100 adds optional View caption copy; existing View admission is unchanged. The equivalence gate records a property added under a closed body explicitly."
+    test: tests/unit/chrona/presentation/contracts/test_contract_resources.py::test_v028_slot_heading_text_is_detached_immutable_optional_caption_mapping
   - {"layer": "L2", "document": "examples/aster-ssd/generated/overview.scene.json", "before": {"path": "examples/aster-ssd/generated/overview.scene.json", "schema": "scene-v0.6.schema.yaml", "valid": true, "error": null}, "after": {"path": "examples/aster-ssd/generated/overview.scene.json", "schema": "scene-v0.7.schema.yaml", "valid": true, "error": null}, "reason": "#1109 R2 transports relation endpoint instance identities into the generated Scene; the optional members select v0.7 and the document remains valid.", "test": "tests/unit/chrona/presentation/scene/test_relation_endpoint_identity.py::test_relation_endpoint_identity_is_optional_and_selects_scene_v07"}
   - {"layer": "L2", "document": "examples/controller-z-ja/generated/executive.scene.json", "before": {"path": "examples/controller-z-ja/generated/executive.scene.json", "schema": "scene-v0.6.schema.yaml", "valid": true, "error": null}, "after": {"path": "examples/controller-z-ja/generated/executive.scene.json", "schema": "scene-v0.7.schema.yaml", "valid": true, "error": null}, "reason": "#1109 R2 transports relation endpoint instance identities into the generated Scene; the optional members select v0.7 and the document remains valid.", "test": "tests/unit/chrona/presentation/scene/test_relation_endpoint_identity.py::test_relation_endpoint_identity_is_optional_and_selects_scene_v07"}
   - {"layer": "L2", "document": "examples/controller-z/generated/annotations.scene.json", "before": {"path": "examples/controller-z/generated/annotations.scene.json", "schema": "scene-v0.6.schema.yaml", "valid": true, "error": null}, "after": {"path": "examples/controller-z/generated/annotations.scene.json", "schema": "scene-v0.7.schema.yaml", "valid": true, "error": null}, "reason": "#1109 R2 transports relation endpoint instance identities into the generated Scene; the optional members select v0.7 and the document remains valid.", "test": "tests/unit/chrona/presentation/scene/test_relation_endpoint_identity.py::test_relation_endpoint_identity_is_optional_and_selects_scene_v07"}
@@ -427,3 +471,5 @@ deltas:
   - {"layer": "L2", "document": "examples/halcyon-1/generated/02-programme-board.scene.json", "before": {"path": "examples/halcyon-1/generated/02-programme-board.scene.json", "schema": "scene-v0.6.schema.yaml", "valid": true, "error": null}, "after": {"path": "examples/halcyon-1/generated/02-programme-board.scene.json", "schema": "scene-v0.7.schema.yaml", "valid": true, "error": null}, "reason": "#1109 R1 regenerates this Scene under v0.7 to carry the optional relation-marker angle while remaining schema-valid.", "test": "tests/unit/tools/test_schema_equivalence.py::test_gate_passes_on_the_committed_tree"}
   - {"layer": "L2", "document": "examples/halcyon-1/generated/11-overlay-briefing.scene.json", "before": {"path": "examples/halcyon-1/generated/11-overlay-briefing.scene.json", "schema": "scene-v0.6.schema.yaml", "valid": true, "error": null}, "after": {"path": "examples/halcyon-1/generated/11-overlay-briefing.scene.json", "schema": "scene-v0.7.schema.yaml", "valid": true, "error": null}, "reason": "#1109 R1 regenerates this Scene under v0.7 to carry the optional relation-marker angle while remaining schema-valid.", "test": "tests/unit/tools/test_schema_equivalence.py::test_gate_passes_on_the_committed_tree"}
   - {"layer": "L2", "document": "examples/halcyon-1/generated/12-glyph-gates.scene.json", "before": {"path": "examples/halcyon-1/generated/12-glyph-gates.scene.json", "schema": "scene-v0.6.schema.yaml", "valid": true, "error": null}, "after": {"path": "examples/halcyon-1/generated/12-glyph-gates.scene.json", "schema": "scene-v0.7.schema.yaml", "valid": true, "error": null}, "reason": "#1109 R1 regenerates this Scene under v0.7 to carry the optional relation-marker angle while remaining schema-valid.", "test": "tests/unit/tools/test_schema_equivalence.py::test_gate_passes_on_the_committed_tree"}
+  - {"schema": "theme-v0.15.schema.yaml", "pointer": "/properties/body/properties/values/additionalProperties/allOf/6/then/properties/value/allOf", "before": [{"if": {"properties": {"outline": {"enum": ["balloon", "image"]}}, "required": ["outline"]}, "then": {"not": {"required": ["tiltDegrees"]}}}, {"if": {"required": ["border"]}, "then": {"properties": {"outline": {"const": "rectangle"}}}}, {"if": {"required": ["artwork"]}, "then": {"required": ["contentInsetEm"], "properties": {"outline": {"const": "rectangle"}}}}, {"if": {"properties": {"outline": {"const": "balloon"}}, "required": ["outline"]}, "then": {"required": ["outline", "cornerRadius", "tailBaseEm"]}}, {"if": {"properties": {"outline": {"const": "image"}}, "required": ["outline"]}, "then": {"required": ["outline", "cornerRadius", "image", "sliceInsetsEm", "contentInsetEm"], "properties": {"cornerRadius": {"const": 0}}}}], "after": [{"if": {"properties": {"outline": {"enum": ["balloon", "image"]}}, "required": ["outline"]}, "then": {"not": {"required": ["tiltDegrees"]}}}, {"if": {"required": ["border"]}, "then": {"properties": {"outline": {"const": "rectangle"}}}}, {"if": {"required": ["artwork"]}, "then": {"anyOf": [{"required": ["contentInsetEm"]}, {"required": ["contentPaddingEm"]}], "properties": {"outline": {"const": "rectangle"}}}}, {"if": {"required": ["contentPaddingEm"]}, "then": {"required": ["artwork"], "not": {"required": ["contentInsetEm"]}}}, {"if": {"properties": {"outline": {"const": "balloon"}}, "required": ["outline"]}, "then": {"required": ["outline", "cornerRadius", "tailBaseEm"]}}, {"if": {"properties": {"outline": {"const": "image"}}, "required": ["outline"]}, "then": {"required": ["outline", "cornerRadius", "image", "sliceInsetsEm", "contentInsetEm"], "properties": {"cornerRadius": {"const": 0}}}}], "reason": "#1150: an annotation container with artwork takes either the absolute contentInsetEm or the new optional contentPaddingEm (padding measured from the artwork's inner edge); the two exclude each other. A Theme that declares contentInsetEm is unchanged (Spec 56 3.2).", "test": "tests/integration/test_artwork_padding.py::test_a_padding_without_its_artwork_or_beside_an_absolute_inset_is_rejected"}
+  - {"schema": "theme-v0.15.schema.yaml", "pointer": "/properties/body/properties/values/additionalProperties/allOf/6/then/properties/value/properties/contentPaddingEm", "after": {"type": "object", "additionalProperties": false, "required": ["top", "right", "bottom", "left"], "properties": {"top": {"type": "number", "minimum": 0}, "right": {"type": "number", "minimum": 0}, "bottom": {"type": "number", "minimum": 0}, "left": {"type": "number", "minimum": 0}}}, "reason": "#1150: an annotation container with artwork takes the optional property contentPaddingEm (padding measured from the artwork's inner edge), added in place to the annotationContainer token value (Spec 56 3.2); a Theme that does not use it is unchanged.", "test": "tests/integration/test_artwork_padding.py::test_the_padding_from_the_inner_edge_is_the_slice_inset_plus_the_padding"}

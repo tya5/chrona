@@ -795,7 +795,7 @@ class ContentBlockResolution:
 
 def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inline: int,
                                  minimum_block: int, measurements: Mapping[str, Measurement],
-                                 required_blocks: Mapping[str, Decimal],
+                                 required_blocks: Mapping[str, Decimal] | Callable[[LayoutManifest], Mapping[str, Decimal]],
                                  content_sized: bool = False) -> ContentBlockResolution:
     """Resolve measured content hosts against one coherent finite profile.
 
@@ -809,67 +809,92 @@ def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inl
     """
     if minimum_block <= 0:
         raise LayoutError("E_LAYOUT_CONSTRAINT_CONTRADICTORY", "/viewport")
+    def allocations(manifest: LayoutManifest) -> dict[str, Decimal]:
+        return {item.source: item.bounds.block_size for item in manifest.decisions if item.source}
+
+    def requirements(manifest: LayoutManifest) -> Mapping[str, Decimal]:
+        required = required_blocks(manifest) if callable(required_blocks) else required_blocks
+        missing = sorted(set(required) - set(allocations(manifest)))
+        if missing:
+            raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/layoutManifest/sources/" + missing[0])
+        return required
+
     requested = solve_layout(profile, viewport_inline=viewport_inline,
                              viewport_block=minimum_block, measurements=measurements,
                              content_sized=content_sized)
-    requested_allocated = {item.source: item.bounds.block_size for item in requested.decisions if item.source}
-    missing = sorted(set(required_blocks) - set(requested_allocated))
-    if missing:
-        raise LayoutError("E_LAYOUT_DRAFT_AUTO_UNSUPPORTED", "/layoutManifest/sources/" + missing[0])
-    if (all(requested_allocated[source] >= required for source, required in required_blocks.items())
+    requested_allocated = allocations(requested)
+    requested_required = requirements(requested)
+    if (all(requested_allocated[source] >= required for source, required in requested_required.items())
             and (not content_sized or not _unresolved_normal_flow_warnings(profile, requested))):
         return ContentBlockResolution(minimum_block)
     if not content_sized:
         # Finite Draft and immutable requests preserve #468's requested
         # minimum and source-deficit reallocation behavior exactly.
-        probe_block = max(_d(minimum_block), max(required_blocks.values(), default=ZERO) + _d(minimum_block))
+        probe_block = max(_d(minimum_block), max(requested_required.values(), default=ZERO) + _d(minimum_block))
         manifest = solve_layout(profile, viewport_inline=viewport_inline,
                                 viewport_block=probe_block, measurements=measurements)
-        allocated = {item.source: item.bounds.block_size for item in manifest.decisions if item.source}
+        allocated = allocations(manifest)
+        probe_required = requirements(manifest)
         extent = max((_d(minimum_block), *(probe_block - allocated[source] + required
-                                           for source, required in required_blocks.items())))
+                                           for source, required in probe_required.items())))
         candidate = int(extent.to_integral_value(rounding=ROUND_CEILING))
         final = solve_layout(profile, viewport_inline=viewport_inline,
                              viewport_block=candidate, measurements=measurements)
-        final_allocated = {item.source: item.bounds.block_size for item in final.decisions if item.source}
+        final_allocated = allocations(final)
+        final_required = requirements(final)
         short_sources = tuple(
-            ShortContentSource(source, required_blocks[source], final_allocated[source])
-            for source in sorted(required_blocks)
-            if final_allocated[source] < required_blocks[source]
+            ShortContentSource(source, final_required[source], final_allocated[source])
+            for source in sorted(final_required)
+            if final_allocated[source] < final_required[source]
         )
-        return ContentBlockResolution(minimum_block, short_sources) if short_sources else ContentBlockResolution(candidate)
+        if short_sources:
+            short_sources = tuple(
+                ShortContentSource(source, requested_required[source], requested_allocated[source])
+                for source in sorted(requested_required)
+                if requested_allocated[source] < requested_required[source]
+            )
+            return ContentBlockResolution(minimum_block, short_sources)
+        return ContentBlockResolution(candidate)
 
     # The intrinsic whole-profile measurement supplies the auto floor. Add
     # declared content needs on top, then verify the final complete manifest.
-    probe_block = max(_d(minimum_block), max(required_blocks.values(), default=ZERO) + _d(minimum_block))
+    probe_block = max(_d(minimum_block), max(requested_required.values(), default=ZERO) + _d(minimum_block))
     manifest = solve_layout(profile, viewport_inline=viewport_inline,
                             viewport_block=probe_block, measurements=measurements,
                             content_sized=True)
-    allocated = {item.source: item.bounds.block_size for item in manifest.decisions if item.source}
-    probe_satisfied = (all(allocated[source] >= required for source, required in required_blocks.items())
+    allocated = allocations(manifest)
+    probe_required = requirements(manifest)
+    probe_satisfied = (all(allocated[source] >= required for source, required in probe_required.items())
                        and not _unresolved_normal_flow_warnings(profile, manifest))
     if not probe_satisfied:
         short_sources = tuple(
-            ShortContentSource(source, required_blocks[source], requested_allocated[source])
-            for source in sorted(required_blocks)
-            if requested_allocated[source] < required_blocks[source]
+            ShortContentSource(source, requested_required[source], requested_allocated[source])
+            for source in sorted(requested_required)
+            if requested_allocated[source] < requested_required[source]
         )
         return ContentBlockResolution(minimum_block, short_sources)
     extent = max((_d(minimum_block), *(probe_block - allocated[source] + required
-                                    for source, required in required_blocks.items())))
+                                    for source, required in probe_required.items())))
     candidate = int(extent.to_integral_value(rounding=ROUND_CEILING))
 
     def satisfies(extent: int) -> bool:
         manifest = solve_layout(profile, viewport_inline=viewport_inline,
                                 viewport_block=extent, measurements=measurements,
                                 content_sized=True)
-        source_allocated = {item.source: item.bounds.block_size for item in manifest.decisions if item.source}
-        return (all(source_allocated[source] >= required for source, required in required_blocks.items())
+        source_allocated = allocations(manifest)
+        candidate_required = requirements(manifest)
+        return (all(source_allocated[source] >= required for source, required in candidate_required.items())
                 and not _unresolved_normal_flow_warnings(profile, manifest))
 
-    # The high probe is known to satisfy the whole profile. Find the least
-    # integral viewport that satisfies that same complete-manifest condition.
+    # Retain the published Draft-auto search, evaluating every candidate's
+    # own demand. General non-monotone capacity search is tracked in #1214.
     low, high = minimum_block - 1, max(candidate, int(probe_block))
+    if callable(required_blocks) and not satisfies(high):
+        return ContentBlockResolution(minimum_block, tuple(
+            ShortContentSource(source, requested_required[source], requested_allocated[source])
+            for source in sorted(requested_required)
+            if requested_allocated[source] < requested_required[source]
+        ))
     while high - low > 1:
         middle = (low + high) // 2
         if satisfies(middle):

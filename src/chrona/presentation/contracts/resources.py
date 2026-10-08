@@ -374,6 +374,7 @@ class ViewInput:
     figures: tuple[FigureSpec, ...] = ()
     heading: ViewHeading | None = None
     deadlines: str | None = None  # `slipped` or `all`: which Project deadlines the surface draws; None draws none (#822)
+    slot_heading_text: FrozenDict | None = None
 
 
 @dataclass(frozen=True)
@@ -956,7 +957,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
         periods=_view_periods(body.get("periods", ())),
         figures=figures,
         deadlines=str(body["deadlines"]["show"]) if "deadlines" in body else None,
-        heading=_view_heading(body.get("heading")))
+        heading=_view_heading(body.get("heading")),
+        slot_heading_text=(freeze(body["slotHeadingText"]) if "slotHeadingText" in body else None))
 
 
 def _view_periods(raw: Any) -> tuple[ViewPeriod, ...]:
