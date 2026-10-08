@@ -4,6 +4,8 @@
 
 Implementation: `440773ca1f5af9c2ec812c8718b79aafcc5e5360`, based on
 ready main `2b168a73cc04a189afa84a4cf0f3ab3576dd2413`.
+Measurement closure correction: `67469d668eb80ab3d664b8da1cee342a2452e985`
+uses the existing block-run measurement path to retain each part's numeric spacing.
 [Living design, architecture review and plan](https://github.com/tya5/chrona/issues/1239#issuecomment-6059626833).
 Release acceptance remains pending exact-head PR CI, shared generated-output
 inspection and published-main three-OS release evidence. Do not close yet.
