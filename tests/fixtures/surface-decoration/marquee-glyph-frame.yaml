@@ -1,6 +1,8 @@
 # Reusable Theme/Layout fragments for a catalogue-glyph title frame (#888).
-# Merge themePatch into the Theme body; replace the Layout title node with
-# layoutNode. Other presentation and Project declarations remain independent.
+# Set the Theme version from themePatch.version; merge its values, roles and
+# colorBindings into the Theme body and schemePatch into Scheme categories.
+# Replace the Layout title node with layoutNode.
+# Other presentation and Project declarations remain independent.
 layoutNode:
   id: marquee-title-panel
   kind: row
@@ -12,22 +14,36 @@ layoutNode:
   justifyContent: center
   frame: {inset: 4, paint: marquee}
   children:
-    - {id: title, kind: slot, source: title, inlineSize: fill, blockSize: content}
+    - id: title
+      kind: slot
+      source: title
+      inlineSize: fill
+      blockSize: content
+      place: {inline: center, block: start, safety: safe}
+      priority: required
+      overflow: visible-overflow
 themePatch:
+  version: chrona/theme/v0.15
   values:
-    marquee.ground: {type: color, value: '#181818'}
-    marquee.bulb: {type: color, value: '#FFDA63'}
-    marquee.ring: {type: color, value: '#C99824'}
     marquee.symbol: {type: symbol, value: {shape: {catalog: 'chrona-target-parts:bulb'}}}
     marquee.size: {type: number, value: 16}
     marquee.pitch: {type: number, value: 24}
     marquee.fidelity: {type: fidelity, value: required}
   roles:
-    region-frame-marquee: {fill: marquee.ground}
+    region-frame-marquee: {}
     frame-glyph-marquee:
       symbol: marquee.symbol
       glyphSize: marquee.size
       glyphPitch: marquee.pitch
-      fill: marquee.bulb
-      stroke: marquee.ring
       artworkFidelity: marquee.fidelity
+  colorBindings:
+    heading.fill: category:marquee-text
+    region-frame-marquee.fill: category:marquee-ground
+    frame-glyph-marquee.fill: category:marquee-bulb
+    frame-glyph-marquee.stroke: category:marquee-ring
+schemePatch:
+  categories:
+    marquee-text: '#F6ECCB'
+    marquee-ground: '#181818'
+    marquee-bulb: '#FFDA63'
+    marquee-ring: '#C99824'

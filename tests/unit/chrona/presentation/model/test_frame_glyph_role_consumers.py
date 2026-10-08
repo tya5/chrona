@@ -45,10 +45,12 @@ def test_named_glyph_role_is_read_only_when_its_frame_paint_is_named():
 
 def test_reusable_marquee_patch_resolves_its_ink_independently_of_the_panel():
     root = Path(__file__).resolve().parents[5]
-    patch = yaml.safe_load((root / "tests/fixtures/surface-decoration/marquee-glyph-frame.yaml").read_text())["themePatch"]
+    fixture = yaml.safe_load((root / "tests/fixtures/surface-decoration/marquee-glyph-frame.yaml").read_text())
+    patch = fixture["themePatch"]
     parts = sr.bundle()
-    for key in ("values", "roles"):
+    for key in ("values", "roles", "colorBindings"):
         parts["theme"]["body"][key].update(patch[key])
+    parts["scheme"]["body"]["categories"].update(fixture["schemePatch"]["categories"])
     resolved = resolve_theme(parts["theme"], parts["scheme"], scheme_content_identity="sha256:test")
     body = resolved["body"]
     panel = body["roles"]["region-frame-marquee"]

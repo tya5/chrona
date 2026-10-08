@@ -369,6 +369,20 @@ class: a frame is ground, and what lies on it (a mark, state text, a group heade
 fill by the ground rule of Specification 46 (completed Scene paint; a frame without a fill is not ground; a translucent fill is
 composited over the ground beneath it, #1013). `frameCornerRadius` is added in place to the live Theme
 schemas (Specification 56 section 3.2).
+
+**Frame glyph (#888).** The same Layout Profile `frame` declaration independently selects
+`frame-glyph` or `frame-glyph-<paint>` when its optional `paint` names a shared slug; it does not
+reuse or alter the selected `region-frame[-<paint>]` Rect role. The selected role binds a catalogue-only
+`symbol` plus `glyphSize` and `glyphPitch`, each a named finite number token in physical px. Size is
+positive; pitch is at least size. Layout completes one whole border batch from the node's arranged
+bounds and frame inset; fewer than four fitting corner marks omits the border as a whole. Fill/stroke,
+opacity and artwork fidelity use the generic Theme role's paint bindings, with unsupported stroke cap/join
+capability handled by whole-batch omission or failure. A missing selected glyph role draws no glyph and does not
+fall back to the base role; an independently selected region-frame Rect still draws without a glyph role, and a
+glyph role can draw without a region-frame Rect role. Without a frame declaration or without the selected glyph
+role, glyph completion changes no existing output. Theme role properties are optional additions to live
+`theme-v0.15`; derived `theme-v0.16` inherits the effective Theme through its base without adding a separate
+role contract.
 `planned`, `actual`, `snapshot`, and `scenario` can emit either Rect or Symbol;
 `milestone` emits Symbol; callout/arrow boxes can be balloon Symbols. Catalogue
 patterns on these roles require a separate completed Symbol clip/paint design

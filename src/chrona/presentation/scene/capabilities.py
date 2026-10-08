@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 from re import fullmatch
-from chrona.presentation.model.semantic_registry import is_annotation_artwork_role
+from chrona.presentation.model.semantic_registry import is_annotation_artwork_role, is_frame_glyph_role
 
 
 class CapabilityDisposition(StrEnum):
@@ -351,7 +351,7 @@ def theme_role_contract(role: str) -> RolePropertyContract | None:
     # The suffix is the shared common-v0.1 slug lexeme selected by frame.paint.
     if fullmatch(r"region-frame-[a-z][a-z0-9-]*", role):
         return _ROLE_PROPERTY_CONTRACTS["region-frame"]
-    if fullmatch(r"frame-glyph-[a-z][a-z0-9-]*", role):
+    if is_frame_glyph_role(role):
         return _ROLE_PROPERTY_CONTRACTS["frame-glyph"]
     if is_annotation_artwork_role(role):
         return _ROLE_PROPERTY_CONTRACTS["annotation-artwork"]

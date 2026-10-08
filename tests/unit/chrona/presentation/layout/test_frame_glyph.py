@@ -7,7 +7,9 @@ import yaml
 
 from chrona.presentation.layout.frame_glyph import complete_frame_glyphs, frame_glyph_boxes
 from chrona.presentation.layout.model import LayoutDecision, Rect, RegionFrame
+from chrona.presentation.color_scheme import resolve_theme
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
+from tests.support import synthetic_review as sr
 
 D = Decimal
 
@@ -147,8 +149,15 @@ def test_reusable_marquee_yaml_completes_the_actual_packaged_bulb_parts():
     root = Path(__file__).resolve().parents[5]
     declaration = yaml.safe_load((root / "tests/fixtures/surface-decoration/marquee-glyph-frame.yaml").read_text())
     catalogue = yaml.safe_load((root / "src/chrona/resources/icons/chrona-target-parts-v2026-10.yaml").read_text())
-    tokens = ThemeTokenView({"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme",
-                            "body": declaration["themePatch"]},
+    parts = sr.bundle()
+    theme_patch, scheme_patch = declaration["themePatch"], declaration["schemePatch"]
+    parts["theme"]["version"] = theme_patch["version"]
+    parts["theme"]["body"]["values"].update(theme_patch["values"])
+    parts["theme"]["body"]["roles"].update(theme_patch["roles"])
+    parts["theme"]["body"]["colorBindings"].update(theme_patch["colorBindings"])
+    parts["scheme"]["body"]["categories"].update(scheme_patch["categories"])
+    resolved = resolve_theme(parts["theme"], parts["scheme"], scheme_content_identity="fixture")
+    tokens = ThemeTokenView(resolved,
                             catalog_glyphs={"chrona-target-parts:bulb": catalogue["body"]["glyphs"]["bulb"]})
     result = complete_frame_glyphs(tokens, (decision(paint="marquee", width="800", height="80", inset="4"),))
     shape, = result.shapes

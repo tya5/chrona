@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from chrona.presentation.model.semantic_registry import (
-    ContrastClass, contrast_binding, contrast_binding_for, is_annotation_artwork_role)
+    ContrastClass, contrast_binding, contrast_binding_for, is_annotation_artwork_role, is_frame_glyph_role)
 from chrona.presentation.scene.cone_ground import AS_OF_CONE_ROLE, ConeGround, cones_in
 from chrona.presentation.scene.paint_analysis import (
     blend_over, composited_contrast, is_hex_color, sample_linear_gradient)
@@ -566,6 +566,9 @@ def _host_under(subject: Mapping[str, Any], primitives: list[Any], index: int,
         if is_annotation_artwork_role(prior.get("visualRole")):
             # Artwork parts cover the whole note by bounds but paint only their ink: see `_artwork_ink`.
             continue
+        if is_frame_glyph_role(prior.get("visualRole")):
+            # Frame symbols paint sparse glyph ink, not their enclosing slot bounds.
+            continue
         if (subject.get("visualRole") in _SIBLING_INK_ROLES and prior.get("visualRole") == subject.get("visualRole")
                 and prior.get("sourceRef") == subject.get("sourceRef")):
             # The parts of one stamp glyph are one ink, not grounds for each other (#584).
@@ -608,7 +611,10 @@ def _grounds_for(primitive: Mapping[str, Any], primitives: list[Any], index: int
         host_id, ground, unsupported, kind = _note_box_ground(primitive, primitives, index, sample)
         if unsupported or ground is None:
             return host_id, None, unsupported
-        groups = _tinted([[(ground, kind, host_id)]], primitive, primitives, index, host_id, cones)
+        groups, unreadable = _frame_glyph_grounds(
+            [[(ground, kind, host_id)]], host_id, primitive, primitives, index, cones)
+        if unreadable is not None:
+            return unreadable, None, True
         return _with_artwork_ink(host_id, groups, primitive, primitives, index)
     # A decoration is a tint against its dominant substrate: no ink, no cone, and no composite (#995).
     host_id, groups, unsupported = _grounds_under(
@@ -685,7 +691,11 @@ def _grounds_under(subject: Mapping[str, Any], primitives: list[Any], index: int
     if found is None:
         if canvas is None:
             return "canvas", None, False
-        return "canvas", _tinted([[(canvas, "canvas", "canvas")]], label, primitives, index, "canvas", cones), False
+        if not ink:
+            return "canvas", _tinted([[(canvas, "canvas", "canvas")]], label, primitives, index, "canvas", cones), False
+        groups, unreadable = _frame_glyph_grounds(
+            [[(canvas, "canvas", "canvas")]], "canvas", label, primitives, index, cones)
+        return (unreadable, None, True) if unreadable is not None else ("canvas", groups, False)
     host_index, host = found
     host_id = host.get("id") if isinstance(host.get("id"), str) else None
     paint = host["paint"]
@@ -720,7 +730,89 @@ def _grounds_under(subject: Mapping[str, Any], primitives: list[Any], index: int
         groups = [[(blend_over(ink=own_colour, opacity=float(opacity), ground=under), _translucent(own_kind, under_kind),
                     host_id) for under, under_kind, _ in group]
                   for own_colour, own_kind, _ in own for group in beneath]
-    return host_id, _tinted(groups, label, primitives, index, host_id, cones), False
+    if not ink:
+        return host_id, _tinted(groups, label, primitives, index, host_id, cones), False
+    completed, unreadable = _frame_glyph_grounds(groups, host_id, label, primitives, index, cones)
+    return (unreadable, None, True) if unreadable is not None else (host_id, completed, False)
+
+
+def _frame_glyph_grounds(groups: list[list[_Ground]], host_id: str | None,
+                          label: Mapping[str, Any],
+                          primitives: list[Any], subject_index: int,
+                          cones: tuple[ConeGround, ...]
+                          ) -> tuple[list[list[_Ground]], str | None]:
+    """Interleave sparse frame ink and cones between the resolved host and subject.
+
+    Bounds only shortlist candidate frame parts; `selected_symbol_ink` decides actual contact.
+    Each paint-order boundary is retained so a cone before a glyph tints its substrate, while a
+    cone after it tints both the substrate and glyph ink. Existing ground groups remain as the
+    conservative uncovered alternatives.
+    """
+    subject_box = label.get("bounds")
+    if not isinstance(subject_box, Mapping):
+        return _tinted(groups, label, primitives, subject_index, host_id, cones), None
+    try:
+        bounds = (float(subject_box["inline"]), float(subject_box["block"]),
+                  float(subject_box["inlineSize"]), float(subject_box["blockSize"]))
+    except (KeyError, TypeError, ValueError):
+        return _tinted(groups, label, primitives, subject_index, host_id, cones), None
+
+    host_key = (-1, -1)
+    if host_id is not None:
+        host_key = next(((item.get("paintOrder", 0), position)
+                         for position, item in enumerate(primitives)
+                         if isinstance(item, Mapping) and item.get("id") == host_id), host_key)
+    actual_upper = primitives[subject_index]
+    upper_order = actual_upper.get("paintOrder", 0)
+    subject_key = (upper_order, subject_index)
+    candidates: list[tuple[tuple[int, int], int, Mapping[str, Any]]] = []
+    x, y, width, height = bounds
+    for part_index, part in enumerate(primitives):
+        if (not isinstance(part, Mapping) or part.get("kind") != "Symbol"
+                or not is_frame_glyph_role(part.get("visualRole"))):
+            continue
+        part_order = part.get("paintOrder", 0)
+        if not isinstance(part_order, int) or isinstance(part_order, bool):
+            continue
+        key = (part_order, part_index)
+        if not (host_key < key < subject_key):
+            continue
+        part_box = part.get("bounds")
+        if not isinstance(part_box, Mapping):
+            # A malformed candidate that could have touched is fail-closed by the ink reader.
+            candidates.append((key, part_index, part))
+            continue
+        try:
+            px, py = float(part_box["inline"]), float(part_box["block"])
+            pw, ph = float(part_box["inlineSize"]), float(part_box["blockSize"])
+        except (KeyError, TypeError, ValueError):
+            candidates.append((key, part_index, part))
+            continue
+        if px < x + width and x < px + pw and py < y + height and y < py + ph:
+            candidates.append((key, part_index, part))
+
+    if not candidates:
+        return _tinted(groups, label, primitives, subject_index, host_id, cones), None
+
+    boundary_id = host_id
+    for _, frame_index, frame in sorted(candidates, key=lambda item: item[0]):
+        inks, unreadable = selected_symbol_ink((frame,), bounds, unreadable_identity="frame-glyph")
+        if unreadable is not None:
+            return groups, unreadable
+        if not inks:
+            continue
+        # Cones up to this part tint the ground below it, but not its ink.
+        groups = _tinted(groups, label, primitives, frame_index, boundary_id, cones)
+        bases = [ground for group in groups for ground in group]
+        for part_id, colour, opacity in inks:
+            if opacity == 1.0:
+                painted = [(colour, "frame-glyph-ink", part_id)]
+            else:
+                painted = [(blend_over(ink=colour, opacity=opacity, ground=base),
+                            "frame-glyph-ink", part_id) for base, _, _ in bases]
+            groups = [*groups, painted]
+        boundary_id = part_id
+    return _tinted(groups, label, primitives, subject_index, boundary_id, cones), None
 
 
 def _translucent(own_kind: str, under_kind: str) -> str:

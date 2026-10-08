@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import pytest
+from types import SimpleNamespace
 
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.scene.paint import (
@@ -10,6 +11,8 @@ from chrona.presentation.scene.paint import (
 from chrona.presentation.scene.visual_capabilities import (
     BASELINE_PROFILE, PNG_PROFILE, SVG_PROFILE, resolve_visual_profile,
 )
+from chrona.presentation.model.semantic_registry import PrimitiveKind
+from chrona.presentation.scene.v05_builder import _paint_family
 
 
 def _tokens(*, fidelity: str | None = None, role_name: str = "frame-glyph") -> ThemeTokenView:
@@ -24,6 +27,24 @@ def _tokens(*, fidelity: str | None = None, role_name: str = "frame-glyph") -> T
 
 def _profile(identifier: str, target: str = "svg"):
     return resolve_visual_profile(identifier, target)
+
+
+@pytest.mark.parametrize("mode,family", [("stroke", PaintFamily.PATH), ("fill", PaintFamily.SOLID)])
+def test_builder_selects_the_completed_glyph_parts_used_channel(mode, family):
+    primitive = SimpleNamespace(pattern=None, kind=PrimitiveKind.SYMBOL, purpose="frame-glyph",
+                                visual_role="frame-glyph", glyph_paint_mode=mode)
+    assert _paint_family(primitive, _tokens()) == family
+
+
+def test_builder_keeps_explicit_outline_override_before_glyph_part_channel_selection():
+    tokens = ThemeTokenView({
+        "version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme",
+        "body": {"values": {"outline": {"type": "pattern", "value": {"kind": "outline"}}},
+                 "roles": {"ghost": {"pattern": "outline"}}, "metrics": {}},
+    })
+    primitive = SimpleNamespace(pattern=None, kind=PrimitiveKind.SYMBOL, purpose="planned",
+                                visual_role="ghost", glyph_paint_mode="fill")
+    assert _paint_family(primitive, tokens) == PaintFamily.OUTLINE
 
 
 @pytest.mark.parametrize(("target", "profile_id"), [("svg", BASELINE_PROFILE), ("png", BASELINE_PROFILE)])
