@@ -43,8 +43,9 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | group-decoration | `group-band` | enabled | 1.100 | 50 | 153 | 1.116 | 1.116 | 0 | 0 |
 | group-detail | `text` | required | 4.500 | 41 | 123 | 11.935 | 16.268 | 0 | 0 |
 | group-header | `group-gloss` | required | 4.500 | 1 | 3 | 9.402 | 9.402 | 0 | 0 |
+| group-header | `group-header` | required | 4.500 | 1 | 12 | 7.627 | 7.627 | 0 | 0 |
 | group-header | `group-ordinal` | required | 4.500 | 3 | 15 | 6.982 | 7.583 | 0 | 0 |
-| group-header | `text` | required | 4.500 | 51 | 211 | 6.703 | 16.268 | 0 | 0 |
+| group-header | `text` | required | 4.500 | 50 | 199 | 6.703 | 16.268 | 0 | 0 |
 | group-header-band | `group-header-band` | absent | 1.100 | 11 | 0 | — | — | 0 | 0 |
 | group-header-band | `group-header-band` | enabled | 1.100 | 3 | 18 | 1.119 | 1.154 | 0 | 0 |
 | group-tab | `group-tab` | enabled | 1.100 | 4 | 39 | 1.119 | 6.982 | 0 | 0 |
@@ -9511,12 +9512,12 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:launch#run0` | `group-ordinal` | 56.502, 655.917 | `group-header-band:launch` | flat | `#171513` | fill | 6.982 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:ops#run0` | `group-ordinal` | 56.502, 773.047 | `group-header-band:ops` | flat | `#171513` | fill | 6.982 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:payload#run0` | `group-ordinal` | 56.502, 362.806 | `group-header-band:payload` | flat | `#171513` | fill | 6.982 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:ait#run1` | `text` | 160.544, 460.510 | `group-header-band:ait` | flat | `#171513` | fill | 15.981 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:bus#run1` | `text` | 112.568, 226.250 | `group-header-band:bus` | flat | `#171513` | fill | 15.981 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:ground#run1` | `text` | 116.845, 577.639 | `group-header-band:ground` | flat | `#171513` | fill | 15.981 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:launch#run1` | `text` | 120.982, 655.917 | `group-header-band:launch` | flat | `#171513` | fill | 15.981 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:ops#run1` | `text` | 124.822, 773.047 | `group-header-band:ops` | flat | `#171513` | fill | 15.981 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:payload#run1` | `text` | 117.646, 362.806 | `group-header-band:payload` | flat | `#171513` | fill | 15.981 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:ait#run1` | `text` | 162.714, 460.510 | `group-header-band:ait` | flat | `#171513` | fill | 15.981 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:bus#run1` | `text` | 114.738, 226.250 | `group-header-band:bus` | flat | `#171513` | fill | 15.981 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:ground#run1` | `text` | 119.014, 577.639 | `group-header-band:ground` | flat | `#171513` | fill | 15.981 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:launch#run1` | `text` | 123.152, 655.917 | `group-header-band:launch` | flat | `#171513` | fill | 15.981 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:ops#run1` | `text` | 126.992, 773.047 | `group-header-band:ops` | flat | `#171513` | fill | 15.981 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:payload#run1` | `text` | 119.816, 362.806 | `group-header-band:payload` | flat | `#171513` | fill | 15.981 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header-band:ait` | `group-header-band` | 658.000, 461.810 | `canvas-texture` | flat | `#050505` | fill | 1.119 | 1.100 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header-band:bus` | `group-header-band` | 658.000, 227.550 | `canvas-texture` | flat | `#050505` | fill | 1.119 | 1.100 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header-band:ground` | `group-header-band` | 658.000, 578.939 | `canvas-texture` | flat | `#050505` | fill | 1.119 | 1.100 | info |
@@ -9811,24 +9812,24 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `calendar-exception:2027-05-31` | `calendar-exception` | 738.935, 562.035 | `canvas` | canvas | `#0D0A09` | fill | 1.444 | 1.100 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `calendar-exception:2027-07-05` | `calendar-exception` | 842.209, 562.035 | `canvas` | canvas | `#0D0A09` | fill | 1.444 | 1.100 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `calendar-exception:2027-09-06` | `calendar-exception` | 1028.102, 562.035 | `canvas` | canvas | `#0D0A09` | fill | 1.444 | 1.100 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ait#run1` | `group-ordinal` | 89.286, 488.610 | `group-header-band:ait` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:bus#run1` | `group-ordinal` | 83.384, 242.983 | `group-header-band:bus` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ground#run1` | `group-ordinal` | 87.738, 611.423 | `group-header-band:ground` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:launch#run1` | `group-ordinal` | 84.787, 693.911 | `group-header-band:launch` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ops#run1` | `group-ordinal` | 87.738, 816.725 | `group-header-band:ops` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:payload#run1` | `group-ordinal` | 86.335, 385.959 | `group-header-band:payload` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ait#run0` | `text` | 61.992, 488.610 | `group-header-band:ait` | flat | `#3A1115` | fill | 13.115 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ait#run2` | `text` | 216.652, 488.610 | `group-header-band:ait` | flat | `#3A1115` | fill | 13.115 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:bus#run0` | `text` | 61.992, 242.983 | `group-header-band:bus` | flat | `#3A1115` | fill | 13.115 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:bus#run2` | `text` | 147.949, 242.983 | `group-header-band:bus` | flat | `#3A1115` | fill | 13.115 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ground#run0` | `text` | 61.992, 611.423 | `group-header-band:ground` | flat | `#3A1115` | fill | 13.115 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ground#run2` | `text` | 162.316, 611.423 | `group-header-band:ground` | flat | `#3A1115` | fill | 13.115 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:launch#run0` | `text` | 61.992, 693.911 | `group-header-band:launch` | flat | `#3A1115` | fill | 13.115 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:launch#run2` | `text` | 161.225, 693.911 | `group-header-band:launch` | flat | `#3A1115` | fill | 13.115 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ops#run0` | `text` | 61.992, 816.725 | `group-header-band:ops` | flat | `#3A1115` | fill | 13.115 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ops#run2` | `text` | 171.749, 816.725 | `group-header-band:ops` | flat | `#3A1115` | fill | 13.115 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:payload#run0` | `text` | 61.992, 385.959 | `group-header-band:payload` | flat | `#3A1115` | fill | 13.115 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:payload#run2` | `text` | 160.462, 385.959 | `group-header-band:payload` | flat | `#3A1115` | fill | 13.115 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ait#run0` | `group-header` | 61.992, 488.610 | `group-header-band:ait` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ait#run2` | `group-header` | 223.532, 488.610 | `group-header-band:ait` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:bus#run0` | `group-header` | 61.992, 242.983 | `group-header-band:bus` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:bus#run2` | `group-header` | 154.829, 242.983 | `group-header-band:bus` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ground#run0` | `group-header` | 61.992, 611.423 | `group-header-band:ground` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ground#run2` | `group-header` | 169.196, 611.423 | `group-header-band:ground` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:launch#run0` | `group-header` | 61.992, 693.911 | `group-header-band:launch` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:launch#run2` | `group-header` | 168.105, 693.911 | `group-header-band:launch` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ops#run0` | `group-header` | 61.992, 816.725 | `group-header-band:ops` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ops#run2` | `group-header` | 178.629, 816.725 | `group-header-band:ops` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:payload#run0` | `group-header` | 61.992, 385.959 | `group-header-band:payload` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:payload#run2` | `group-header` | 167.342, 385.959 | `group-header-band:payload` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ait#run1` | `group-ordinal` | 92.726, 488.610 | `group-header-band:ait` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:bus#run1` | `group-ordinal` | 86.824, 242.983 | `group-header-band:bus` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ground#run1` | `group-ordinal` | 91.178, 611.423 | `group-header-band:ground` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:launch#run1` | `group-ordinal` | 88.227, 693.911 | `group-header-band:launch` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ops#run1` | `group-ordinal` | 91.178, 816.725 | `group-header-band:ops` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:payload#run1` | `group-ordinal` | 89.775, 385.959 | `group-header-band:payload` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header-band:ait` | `group-header-band` | 662.000, 490.548 | `canvas` | canvas | `#0D0A09` | fill | 1.194 | 1.100 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header-band:bus` | `group-header-band` | 662.000, 244.921 | `canvas` | canvas | `#0D0A09` | fill | 1.194 | 1.100 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header-band:ground` | `group-header-band` | 662.000, 613.361 | `canvas` | canvas | `#0D0A09` | fill | 1.194 | 1.100 | info |
