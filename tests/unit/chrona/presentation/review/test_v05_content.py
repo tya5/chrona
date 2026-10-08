@@ -44,6 +44,22 @@ def test_compose_heading_formats_kicker_title_and_subtitle_from_the_same_closed_
     assert content == HeadingContent("HALCYON board", "Calendar engineering", "Episode 20 Aug 2026 · HALCYON")
 
 
+def _calendar_heading(calendars, calendar="engineering"):
+    view = replace(typed_view({"body": {"tableColumns": (), "visibility": {}}}),
+                   heading=ViewHeading(subtitle="{calendar}", date_form="day-month-year"))
+    project = {"project": {"title": "P", "calendar": calendar}, "calendars": calendars}
+    return compose_heading(view, project, None, "en-US").subtitle
+
+
+def test_heading_calendar_is_the_declared_title_else_the_id_else_empty():
+    assert _calendar_heading({"engineering": {"title": "Engineering (JP)"}}) == "Engineering (JP)"
+    assert _calendar_heading({"engineering": {}}) == "engineering"
+    assert _calendar_heading({}) == "engineering"
+    assert _calendar_heading({"other": {"title": "X"}}) == "engineering"
+    assert _calendar_heading({"engineering": {"title": ""}}) == "engineering"
+    assert _calendar_heading({}, calendar=None) == ""
+
+
 def test_lane_plot_label_defaults_preserve_authored_content_and_side():
     projection = ReviewProjection((), (date(2026, 1, 1), date(2026, 1, 2)), (), ())
     table = TableContent((), (), (), None, ())

@@ -129,6 +129,7 @@ $defs:
     additionalProperties: false
     required: [working_days]
     properties:
+      title: {description: "Optional human-readable calendar name; the View heading placeholder {calendar} shows it instead of the calendar identifier. Absent, the identifier is shown.", examples: ["Engineering (Japan)"], type: string, minLength: 1}
       working_days:
         type: array
         description: "Unique weekday names that are normally working days."
