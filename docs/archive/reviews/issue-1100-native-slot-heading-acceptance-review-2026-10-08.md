@@ -9,7 +9,7 @@
 - Source: [Issue #1100](https://github.com/tya5/chrona/issues/1100).
 - Observed: 2026-10-08
 - Current design and implementation plan: [Status](https://github.com/tya5/chrona/issues/1100#issuecomment-6041732444).
-- Reviewed implementation: [`7dc9fb6e`](https://github.com/tya5/chrona/commit/7dc9fb6eada23e0bb34e69975f6fd8cc027faa1a), including footer/preparation correction `0b9ac866`, on ready base `90c3ef0e`. Release requires the exact-main gate below; its receipt belongs in the current work record.
+- Reviewed implementation: [`7dc9fb6e`](https://github.com/tya5/chrona/commit/7dc9fb6eada23e0bb34e69975f6fd8cc027faa1a), including footer/preparation correction `0b9ac866`, integrated at final head `b8122731` and merged as `92c3d7f1`. All four criteria and required release gates are met; #1100 is closed.
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
@@ -35,11 +35,27 @@
 - [PR #1218](https://github.com/tya5/chrona/pull/1218), [shared snapshot run37704804324](https://github.com/tya5/chrona/actions/runs/37704804324), artifact11519432121 on head7dc9fb6e/base90c3ef0e: all143 before blobs match the exact base, with equal before/after/manifest pathsets. No new/retired paths;41 Scene/SVG pairs and4 reports change;26 pairs remain byte-identical. Snapshot tar SHA256 `275b677da3a03fca418d08016bd05227298629c03c2ea5cd639b52182a819030`.
 - Per-output counts are disclosed on the PR:451 observation texts added,3 plot labels suppressed with explicit `W_LAYOUT_LABEL_SUPPRESSED`/`I_LAYOUT_PLOT_LABELS_SUPPRESSED` records (table copies remain),1025 primitives modified. These are intended completed-content/geometry effects, not a default-byte-identity claim.
 - Shared perceptibility evaluator over all67 public Scenes: **0 errors,7294 observations**. Final annotations SVG SHA256 `62f2b024be91860d6a2ac105e24486572a772197f173a196025530736f8a00a4` matches the actual rendered/visually inspected correction. Real SVG/PNG evidence read as a batch: annotations, annotation-artwork, annotation-kinds, viewer-fit, slot-heading before/after, capabilities, Japanese executive and Orion gates. Native detail attribution is visible.
-- Implementation-head CI run37704804324 passes all three pytest shards, conformance, MCP-floor and newest-Python reproduction. Final review-head PR readiness and exact-main release remain the publication conditions below.
+- Final-head [CI37717207123](https://github.com/tya5/chrona/actions/runs/37717207123) passes all three pytest shards, conformance, MCP-floor, newest-Python reproduction and derived-ready.
 - Diagnostic deltas:41 truthful footer track overflows and3+3 plot-label suppression records added;40 group-detail,3 milestone and1 legend overflow records removed. Footer Flow intrinsic allocation is separately tracked in [#1219](https://github.com/tya5/chrona/issues/1219); declared visible overflow is not hidden or absorbed into corpus YAML. Integer group-header counting was made explicit as boolean accumulation after the first CI's `E_LAYOUT_FLOAT_SUM_UNCLASSIFIED`; the unchanged checker and25 focused tests pass.
 - Earlier failures are dispositioned in the work record: integer counting made explicit; four annotation/note intersections/occlusions corrected by the completed footer union; stale mocks and source semantics updated without dropping geometry assertions; ownership gates restored. Six footer cases cover wrapped/unwrapped, growth/no-growth, disjoint and notes-only inline overlap. Final notes end935.2; annotations start951.2: the declared16px gap. No corpus changes or evaluator exemptions.
 - Native overflow uses a genuinely capped row and retains ellipsis/suppression assertions. Flow's ignored leaf inline caps and intrinsic allocation remain [#1219](https://github.com/tya5/chrona/issues/1219#issuecomment-6049196576); no generic parent-flow repair or warning waiver is claimed.
 
-## Publication requirements
+## Final publication and current-main audit
 
-Before release acceptance and closure, verify all final-head PR checks, snapshot identity across this review-only publication, and the exact review-containing main's three-OS pytest/conformance/wheel-smoke, MCP and newest-Python materializers. Record exact commit/run receipts in the linked current work record. No generated or `examples/**` edits are authored.
+Final artifact11524661318, head `b8122731`, retains every per-output row in the
+PR count table: 41 changed Scene/SVG pairs,451 added texts,3 removed plot labels,
+1025 modified primitives. All41 pairs on audit main
+`9287153608719d1e0ccb66f151004ce6bb7c0dd5` match the final snapshot byte-for-byte;
+the shared observer reports3647 findings and0 errors. All41 actual SVGs were
+rasterized with packaged Noto fonts and visually read in five batches. Current
+copy/native/empty-slot actual-SVG focused tests:22 passed. Known narrow Flow/index
+allocation and visible footer overflow remain #1219, not a claimed repair.
+
+[Derived sync37719244946](https://github.com/tya5/chrona/actions/runs/37719244946)
+and [exact generated-main gate37720020737](https://github.com/tya5/chrona/actions/runs/37720020737)
+passed. Review-containing published main
+`c36c43de0de6cfc6b280c9d55296a0f8c2e14d79` passed
+[release37720832167](https://github.com/tya5/chrona/actions/runs/37720832167):
+Windows/Linux/macOS full pytest, conformance and wheel smoke, MCP floor and
+newest-Python materializers. The linked current Status records the closing audit.
+No product, generated or `examples/**` edits were required by this review.
