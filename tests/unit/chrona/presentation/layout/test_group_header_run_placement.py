@@ -146,3 +146,26 @@ def test_role_admission_names_the_view_pointer_and_the_theme_pointer_in_the_deta
     assert "/body/roles/nope" in str(missing.value.detail)
     assert (inkless.value.diagnostic_id, inkless.value.path) == ("E_THEME_ROLE_REQUIRED", "/body/grouping/header/text")
     assert "/body/roles/noink/fill" in str(inkless.value.detail)
+
+
+def test_edge_spaces_of_a_template_are_the_measured_gaps_between_its_runs():
+    # "A {x|r} B" (#1238): the runs A, x, B with one space (5) before and after the marked span.
+    placements, _ = _place((("A ", None), ("x", "ordinal"), (" B", None)))
+
+    assert [item.content for item in placements] == ["A", "x", "B"]
+    assert _starts(placements) == [100, 100 + 5 + 5, 110 + 10 + 5]
+
+
+def test_the_gap_holds_the_letter_spacing_a_painted_line_would_put_around_the_space():
+    # gloss: letter-spacing 0.5 x 5 = 2.5, glyph 2.5 wide; "g g" paints g, 2.5, space 2.5, 2.5, g.
+    placements, _ = _place((("g ", "gloss"), ("g", "gloss")))
+    flush, _ = _place((("g", "gloss"), ("g", "gloss")))
+
+    assert _starts(placements)[1] - _starts(placements)[0] == 2.5 + 2.5 + 2.5 + 2.5
+    assert _starts(flush)[1] - _starts(flush)[0] == 2.5  # no whitespace, no gap: unchanged
+
+
+def test_a_leading_space_of_the_first_run_is_a_gap_before_it():
+    placements, _ = _place(((" A", None), ("x", "ordinal")))
+
+    assert _starts(placements)[0] == 100 + 5

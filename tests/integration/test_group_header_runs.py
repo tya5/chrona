@@ -274,3 +274,14 @@ def test_the_unread_role_check_sees_the_template_as_the_consumer(tmp_path):
 
     assert not [item for item in unread(marked) if "group-ordinal" in item or "group-gloss" in item]
     assert any("/body/roles/group-ordinal" in item for item in unread(unmarked))
+
+
+def test_a_single_space_beside_a_marked_span_is_a_gap_with_the_letter_spacing_around_it(tmp_path):
+    # #1238: "ACT {ordinal|r} - {title}" must not render as "ACTI-".
+    parts = _parts("ACT {ordinal|group-ordinal} · {title}", secondary=False)
+    parts["theme"]["body"]["values"]["group-ordinal.spacing"] = {"type": "number", "value": 0.2}
+    runs = _runs(_render(tmp_path, parts), "team-0")
+
+    assert [run.text for run in runs] == ["ACT", "01", "· Team 0"]
+    gaps = [later.baseline[0] - (earlier.baseline[0] + earlier.bounds[2]) for earlier, later in zip(runs, runs[1:])]
+    assert all(gap > 2 for gap in gaps)  # the space plus the spacing after the glyph before it
