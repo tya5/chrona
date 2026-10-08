@@ -23,7 +23,10 @@ def measurement(*, min_inline=10, preferred_inline=20, max_inline=40,
 
 def slot(node_id, *, inline="fill", block="fill", place=None):
     return {
-        "id": node_id, "kind": "slot", "source": "title",
+        # These solver fixtures exercise generic allocation, not title ownership.
+        # Keep their slots on an ordinary source so each fixture remains valid
+        # under the one-owner heading-part contract.
+        "id": node_id, "kind": "slot", "source": "network",
         "inlineSize": inline, "blockSize": block,
         "place": {"inline": "stretch", "block": "stretch", "safety": "strict", **(place or {})},
         "priority": "required", "overflow": "visible-overflow",
@@ -54,7 +57,7 @@ def resolved(root, sources):
         },
         "root": root,
     }
-    return resolve_layout_profile(raw, available_sources={"title"},
+    return resolve_layout_profile(raw, available_sources={"network"},
                                   theme={"body": {"values": TOKEN_VALUES}})
 
 

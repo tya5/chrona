@@ -42,6 +42,10 @@ class Slot(str, Enum):
     """Every surface region a Layout Profile may bind content to."""
 
     TITLE = "title"
+    HEADING = "heading"
+    HEADING_TITLE = "heading.title"
+    HEADING_KICKER = "heading.kicker"
+    HEADING_SUBTITLE = "heading.subtitle"
     TABLE = "table"
     TIMELINE = "timeline"
     TIMELINE_AXIS = "timeline-axis"
