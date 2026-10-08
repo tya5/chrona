@@ -248,7 +248,9 @@ def _semantic_validate(profile: dict[str, Any], available_sources: set[str], the
         size_distances(node["inlineSize"], path + "/inlineSize")
         size_distances(node["blockSize"], path + "/blockSize")
         if kind == "slot":
-            if node["source"] not in available_sources and node["priority"] == "required":
+            source = node["source"]
+            available_source = "title" if source == "heading" else source
+            if available_source not in available_sources and node["priority"] == "required":
                 raise LayoutError("E_LAYOUT_SOURCE_UNAVAILABLE", path + "/source", node_id)
             if node["priority"] == "required" and node["overflow"] == "clip-optional":
                 raise LayoutError("E_LAYOUT_SCHEMA", path + "/overflow", node_id)
@@ -340,6 +342,27 @@ def _semantic_validate(profile: dict[str, Any], available_sources: set[str], the
             visit(child, f"{path}/children/{offset}")
 
     visit(profile["root"], "/root")
+    heading_claims: dict[str, tuple[str, str]] = {}
+    heading_parts = {"heading.title": ("title",), "heading.kicker": ("kicker",),
+                     "heading.subtitle": ("subtitle",)}
+
+    def claim_heading(node: dict[str, Any], path: str) -> None:
+        if node.get("kind") == "slot":
+            source = node["source"]
+            claimed = ("kicker", "title", "subtitle") if source in {"title", "heading"} else heading_parts.get(source, ())
+            for part in claimed:
+                previous = heading_claims.get(part)
+                if previous is not None:
+                    previous_source, previous_id = previous
+                    raise LayoutError(
+                        "E_LAYOUT_SCHEMA", path + "/source", str(node["id"]),
+                        f"heading part {part!r} is already claimed by slot {previous_id!r} ({previous_source!r})",
+                    )
+                heading_claims[part] = (source, str(node["id"]))
+        for offset, child in enumerate(node.get("children", ())):
+            claim_heading(child, f"{path}/children/{offset}")
+
+    claim_heading(profile["root"], "/root")
     return distances, tuple(sorted(literals))
 
 
@@ -348,4 +371,10 @@ def resolve_layout_profile(profile: Mapping[str, Any], *, available_sources: set
     resolved = _merge_base(profile, bases or {}, (str(profile.get("id", "")),))
     _validate_schema(resolved)
     distances, literals = _semantic_validate(resolved, available_sources, theme)
+    def canonicalize_heading_aliases(node: dict[str, Any]) -> None:
+        if node.get("kind") == "slot" and node.get("source") == "heading":
+            node["source"] = "title"
+        for child in node.get("children", ()):
+            canonicalize_heading_aliases(child)
+    canonicalize_heading_aliases(resolved["root"])
     return ResolvedLayoutProfile(str(resolved["id"]), _canonical_hash(resolved), resolved, distances, literals)

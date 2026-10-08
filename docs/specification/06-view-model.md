@@ -212,6 +212,12 @@ A deadline outside the View window draws nothing and is recorded as the Scene di
 
 A `table-timeline` View MAY declare `heading: {title?, subtitle?, dateForm?}`. Each of `title` and `subtitle` is a template of literal text and the closed placeholders `{project}` (the Project title), `{asOf}` (the Actual Set's as-of date, formatted in `dateForm`, today `localized-date` in the context locale) and `{calendar}` (the Project's default calendar **title** when that calendar declares one, else its **id**; #1026). `{{` and `}}` are literal braces; any other brace use is `E_VIEW_HEADING_TEMPLATE`. The grammar is the group-header template's (section 6, #583) with this placeholder set. A fact the Project lacks (no as-of date, no default calendar) renders as empty text. Without `title` the title is the Project title; without `subtitle` there is no subtitle line, and a View without `heading` renders as before. The content layer composes the text; the title slot measures it as a stack of a `heading` run and a `subtitle` run, so the slot grows by the subtitle line; Layout places the subtitle under the title and Scene emits it as `subtitle-text` in the Theme's `subtitle` typography role (a Theme without that role fails with `E_THEME_ROLE_REQUIRED`). A `dependency-network` View draws its own title and ignores `heading`. The member is optional and additive in `chrona/view/v0.28`.
 
+For independent heading-part sources (Spec 33, #1239), both native surfaces
+resolve the View's heading into named parts. A dependency-network profile without
+a whole-title host selects this mode; its legacy whole-title mode still ignores
+View heading. Only allocated parts require their typography roles, and Layout
+reports unallocated nonempty copy without measuring it.
+
 A heading MAY also declare `kicker` (#1189), a template using the same facts,
 grammar and `dateForm`, above the title in the Theme's required `kicker`
 typography role. Content normalization retains named kicker/title/subtitle

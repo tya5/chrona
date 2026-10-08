@@ -1,10 +1,76 @@
 """Owns measured heading projection; reads closed sources, title slot and Theme typography."""
 from __future__ import annotations
 
+from dataclasses import dataclass
+from typing import Mapping
+
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.layout.surface_quality import CollisionDomain, SlotPlacement, SurfaceLayoutRequest, TextPlacement
-from chrona.presentation.layout.text import place_text
+from chrona.presentation.layout.text import measured_text_bounds, place_text
+
+
+HEADING_PARTS = (("kicker", "kicker"), ("title", "heading"), ("subtitle", "subtitle"))
+
+
+@dataclass(frozen=True)
+class HeadingPlacementBatch:
+    """Completed heading text and explicit notices for real unallocated copy."""
+
+    text: tuple[TextPlacement, ...]
+    diagnostics: tuple[str, ...] = ()
+
+
+def place_surface_headings(request: SurfaceLayoutRequest,
+                           slots: Mapping[str, SlotPlacement],
+                           measured: MeasuredSources) -> HeadingPlacementBatch:
+    """Compose either the existing whole heading or independently sourced parts.
+
+    The profile's claim validation guarantees one owner per canonical text identity.
+    No geometry or source selection is left for Scene to infer.
+    """
+    if "title" in slots:
+        return HeadingPlacementBatch(place_heading(request, slots["title"], measured))
+    text: list[TextPlacement] = []
+    diagnostics: list[str] = []
+    for part, role in HEADING_PARTS:
+        source_id = f"heading.{part}"
+        source = measured.inputs.get(source_id)
+        runs = measured.run_measurements.get(source_id, ())
+        if source is None or not source.text_runs():
+            continue
+        slot = slots.get(source_id)
+        if slot is None:
+            diagnostics.append(f"I_LAYOUT_HEADING_PART_OMITTED:{part}")
+            continue
+        if len(runs) != 1:
+            raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED",
+                              f"/measuredSources/runMeasurements/{source_id}",
+                              "a heading part requires exactly one closed text run")
+        run = runs[0]
+        stack = measured.block_stacks.get(source_id)
+        if stack is None or len(stack.baselines) != 1:
+            raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED",
+                              f"/measuredSources/blockStacks/{source_id}",
+                              "a heading part requires one closed block baseline")
+        baseline = float(slot.bounds.block + stack.baselines[0])
+        text.append(TextPlacement(
+            part, "title", run.content,
+            measured_text_bounds(inline=float(slot.bounds.inline), baseline_block=baseline,
+                                 width=float(run.inline_size), height=float(run.block_size),
+                                 font_size=run.font_size, rotation=0), role,
+            baseline=(float(slot.bounds.inline), baseline),
+            lines=(run.content,), font_family=run.font_family, font_weight=run.font_weight,
+            font_size=run.font_size, line_height=run.line_height,
+            letter_spacing=run.letter_spacing, text_transform=run.text_transform,
+            numeric_spacing=run.numeric_spacing, horizontal_scale=run.horizontal_scale,
+            font_asset_identity=run.font_asset_identity, collision_region=slot.slot_id,
+            slot_id=slot.slot_id,
+            collision_domain=CollisionDomain(slot.slot_id, "content"),
+            source_content=source.text_runs()[0].content,
+            available_inline_start=float(slot.bounds.inline),
+            available_inline_size=float(slot.bounds.inline_size)))
+    return HeadingPlacementBatch(tuple(text), tuple(diagnostics))
 
 
 def place_heading(request: SurfaceLayoutRequest, slot: SlotPlacement, measured: MeasuredSources) -> tuple[TextPlacement, ...]:
