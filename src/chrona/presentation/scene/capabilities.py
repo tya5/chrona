@@ -153,6 +153,7 @@ _VIEWER_FIT = frozenset(("viewerFit", "viewerFitAdjust"))
 _CLOSURE_POLICY = frozenset(("contrastTreatment",))
 _PAINT_GEOMETRY = frozenset(("strokeWidth",))
 _ARTWORK_PAINT = frozenset(("fill", "stroke", "opacity", "artworkFidelity"))
+_GLOW_PAINT = frozenset(("glowColor", "glowBlur", "glowOpacity", "glowFidelity"))
 _SCENE_PAINT = (_RECT_PAINT | _PATH_PAINT | _TEXT_PAINT | _CANVAS_PAINT | _ARTWORK_PAINT
                 | frozenset(("pattern", "textureFidelity"))) - _PAINT_GEOMETRY
 
@@ -210,10 +211,10 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _SHARED_TEXT_ICON_PAINT | _VIEWER_FIT,
              scene_kinds=frozenset(("Text", "Icon")))
     register("heading", "Layout title measurement and Scene Text",
-             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("fill", "opacity")) | _VIEWER_FIT,
+             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("fill", "opacity")) | _GLOW_PAINT | _VIEWER_FIT,
              scene_kinds=frozenset(("Text",)))
     register("kicker", "Layout measured heading stack and Scene Text",
-             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("fill", "opacity", "blockGap")) | _VIEWER_FIT,
+             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("fill", "opacity", "blockGap")) | _GLOW_PAINT | _VIEWER_FIT,
              scene_kinds=frozenset(("Text",)))
     register("numeric summary", "Layout text measurement",
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _VIEWER_FIT)
@@ -340,7 +341,7 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
     register("region-frame", "Layout region frame and Scene Rect", _PATTERNED_RECT_PAINT | frozenset(("frameCornerRadius",)),
              scene_kinds=frozenset(("Rect",)))
     register("frame-glyph", "Layout region frame glyph run and Scene Symbol",
-             _ARTWORK_PAINT | frozenset(("symbol", "glyphSize", "glyphPitch")),
+             _ARTWORK_PAINT | _GLOW_PAINT | frozenset(("symbol", "glyphSize", "glyphPitch")),
              scene_kinds=frozenset(("Symbol",)))
     register("legend-swatch", "Layout legend swatch size and gap",
              frozenset(("swatchInlineSize", "swatchGap", "swatchBlockSize", "pointSwatchSize")))

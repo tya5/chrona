@@ -597,8 +597,8 @@ and font asset identities are independent of this ink choice. `heading.stroke`
 is `E_THEME_ROLE_PROPERTY_UNSUPPORTED` at its binding pointer. Both lines are
 ground text and use the declared `contrastPolicy.groundText` on their completed
 ground. Adapters serialize completed paint and do not resolve these roles.
-This addition admits only `fill` and `opacity` on `heading`; it does not enable
-the shadow, glow, or gradient effect families on that measurement role.
+This ink addition admits only `fill` and `opacity` on `heading`; effect
+properties are governed separately below.
 
 The optional heading `kicker` (#1189) has its own required typography role
 and the same fill/opacity ink rule as `heading`. Only `kicker` MAY bind
@@ -608,6 +608,21 @@ Layout includes this separation in the heading block's measured envelope.
 The role supports horizontalScale and text-follows-box as other heading text;
 it is classified as ground text. Its gap is not a View coordinate or a Scene
 placement decision.
+
+**Heading-part and frame-glyph glow (#1237).** `heading` and `kicker` MAY bind
+the existing glow properties only: `glowColor`, `glowBlur`, `glowOpacity` and
+`glowFidelity`. `subtitle` already admits glow and follows the same activation
+rule: a glow activates only when the same role also declares its own `fill`; a
+missing fill is `E_THEME_ROLE_REQUIRED` at `/body/roles/<role>/fill`. An
+ordinary `opacity`-only or `glowFidelity`-only binding does not request a glow
+and preserves the shared `text` paint. `glowColor`, `glowBlur` and
+`glowOpacity` remain an all-or-none tuple; a lone `glowOpacity` is invalid under
+Specification 63. `frame-glyph` and its existing `frame-glyph-<slug>`
+family admit the same four glow properties alongside their existing glyph
+paint and geometry. Glow keeps Specification 63's validation and fidelity
+ladder. These additions do not admit gradient or shadow on `heading`, `kicker`
+or `frame-glyph`; `subtitle` retains its existing effect properties. No glow
+changes text measurement, glyph geometry, or contrast classification.
 
 Inline summary panels (#1190) require their own `summary-caption` and
 `summary-unit` typography/ink roles; the figure keeps `metric`. These three

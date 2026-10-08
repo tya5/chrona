@@ -14,14 +14,17 @@ from tests.support import synthetic_review as sr
 def test_catalogue_run_properties_have_explicit_responsibility_owners(role):
     contract = theme_role_contract(role)
     assert contract.scene_kinds == frozenset({"Symbol"})
-    assert contract.properties == frozenset({"fill", "stroke", "opacity", "artworkFidelity", "symbol", "glyphSize", "glyphPitch"})
+    assert contract.properties == frozenset({"fill", "stroke", "opacity", "artworkFidelity", "symbol", "glyphSize", "glyphPitch",
+                                             "glowColor", "glowBlur", "glowOpacity", "glowFidelity"})
     for name in ("symbol", "glyphSize", "glyphPitch"):
         assert contract.owner_of(name) == "Layout/Scene completed geometry"
-    for name in ("fill", "stroke", "opacity", "artworkFidelity"):
+    for name in ("fill", "stroke", "opacity", "artworkFidelity", "glowColor", "glowBlur", "glowOpacity", "glowFidelity"):
         assert contract.owner_of(name) == "Scene paint"
     assert theme_role_property_consumer(role, "symbolHeight") is None  # track ratio is not a physical glyph size
     assert theme_role_property_consumer(role, "pattern") is None
     assert theme_role_property_consumer(role, "frameCornerRadius") is None
+    assert theme_role_property_consumer(role, "shadowBlur") is None
+    assert theme_role_property_consumer(role, "gradientStart") is None
 
 
 def test_existing_rect_frame_named_glyph_is_not_reinterpreted():
