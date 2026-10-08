@@ -353,7 +353,10 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
         overlay_attrs = ""
         if node.visual_role in {"canvas-overlay", "canvas-overlay-gradient"}:
             if node.kind != "Rect" or node.bounds != surface.canvas_bounds:
-                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                raise ValueError(
+                    f"E_PRESENTATION_PRIMITIVE_INVALID: canvas overlay {node.scene_id!r} requires kind='Rect' and "
+                    f"bounds equal to completed canvasBounds={surface.canvas_bounds!r}; received "
+                    f"kind={node.kind!r}, bounds={node.bounds!r}")
             overlay_attrs = f' pointer-events="none" clip-path="url(#{canvas_overlay_clip_id()})"'
         common = (f'data-scene-id="{escape(node.scene_id)}" data-source-ref="{escape(node.source_ref)}" '
                   f'data-purpose="{escape(node.purpose)}"{overlay_attrs}')

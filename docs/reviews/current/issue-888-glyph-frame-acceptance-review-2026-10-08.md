@@ -6,8 +6,9 @@ Part1 merged in [PR #1223](https://github.com/tya5/chrona/pull/1223), commit
 `497b2bdc51f04001c9d177b8becd03f45b9bd918`. Part2 local acceptance on public
 WIP `e1d680534cfc59a24131f6ee7fb90bf83b3ed217`, based on ready main
 `ce6abfa4f3fa7aab1dacd8e244c09226947d3860`; final implementation and this review
-are published together. Part2 shared snapshot and exact-main three-OS release
-remain pending; the issue stays open until they pass.
+are published together in [PR #1225](https://github.com/tya5/chrona/pull/1225).
+Final-head checks and exact-main three-OS release remain pending; the issue stays
+open until they pass.
 Current plan: [living Status](https://github.com/tya5/chrona/issues/888#issuecomment-6048944931).
 
 ## Literal issue acceptance
@@ -31,6 +32,12 @@ Current plan: [living Status](https://github.com/tya5/chrona/issues/888#issuecom
 [PR #1223 shared snapshot](https://github.com/tya5/chrona/actions/runs/37725212704):
 all 67 public Scene/SVG pairs byte-identical; only diagnostic inventory source locations and two new ingress sites change.
 
+[Part2 snapshot at95ce116c](https://github.com/tya5/chrona/actions/runs/37729757646),
+artifact11529825209: all67 Scene/SVG pairs byte-identical, no added/retired outputs
+or runtime diagnostic changes. Only declared-value source locations, diagnostic
+sites/source locations and newly declared presentation vocabulary reports differ.
+The final corrected head must repeat shared-snapshot verification before merge.
+
 ## Architecture conclusion
 
 Part1 focused frame/schema/paint/contrast/artwork group: **236 PASS**; adapter/consumer
@@ -38,8 +45,10 @@ tests: **13 PASS**; PR CI passed. Part2 batched geometry/quality and actual SVG/
 integration: **218 PASS**, with a later extreme-coordinate contact regression passing
 in the focused quality group. Full schema-equivalence passes with precise optional-field
 L1 declarations. Schema annotations and semantic-registry production reachability
-are corrected and checked. CI-regenerated diagnostic/declaration/presentation reports must be checked
-in the final PR. No generated report was patched to absorb the changes.
+are corrected and checked. The initial CI conformance failure is only the
+diagnostic actionability ratchet (three new bare error sites); owner-local detail
+and assertions correct them without changing policy counts. Diagnostic/model/SVG
+regressions: **35 PASS**. No generated report was patched to absorb the changes.
 
 Layout owns all glyph paths/run geometry; Scene projects one admitted batch and resolves used paint channels.
 Sparse ink/contact remains renderer-neutral; ordered ground composition preserves opaque/translucent host,

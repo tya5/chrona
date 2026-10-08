@@ -131,7 +131,10 @@ class RadialGradient:
                 or any(value <= 0 for value in self.radii)
                 or len(self.stops) not in {2, 3}
                 or self.fidelity not in {"required", "decorative-optional"}):
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            raise ValueError(
+                f"E_PRESENTATION_PRIMITIVE_INVALID: radial geometry requires a finite center pair, positive finite "
+                f"radii pair, 2 or 3 stops, and fidelity 'required' or 'decorative-optional'; received "
+                f"center={self.center!r}, radii={self.radii!r}, stopCount={len(self.stops)}, fidelity={self.fidelity!r}")
         if (self.stops[0].offset != 0 or self.stops[-1].offset != 1
                 or any(not _finite_number(stop.offset) or not 0 <= stop.offset <= 1
                        or not _finite_number(stop.opacity) or not 0 <= stop.opacity <= 1
@@ -141,7 +144,12 @@ class RadialGradient:
                 or len({stop.color for stop in self.stops}) != 1
                 or self.stops[0].opacity != 0 or self.stops[-1].opacity != 1
                 or (len(self.stops) == 3 and self.stops[1].opacity != 0)):
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            raise ValueError(
+                f"E_PRESENTATION_PRIMITIVE_INVALID: radial stops require strictly increasing finite offsets from 0 "
+                f"to 1, one shared color, opacity 0 at the first and optional middle stop, and opacity 1 at the last; "
+                f"received offsets={tuple(stop.offset for stop in self.stops)!r}, "
+                f"colors={tuple(stop.color for stop in self.stops)!r}, "
+                f"opacities={tuple(stop.opacity for stop in self.stops)!r}")
 
 
 @dataclass(frozen=True)

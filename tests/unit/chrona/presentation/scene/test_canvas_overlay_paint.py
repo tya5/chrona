@@ -175,12 +175,12 @@ def test_radial_gradient_is_forbidden_on_background_canvas_paint():
 
 
 def test_radial_gradient_model_rejects_unbounded_or_noncontract_stop_data():
-    with pytest.raises(ValueError, match="E_PRESENTATION_PRIMITIVE_INVALID"):
+    with pytest.raises(ValueError, match="E_PRESENTATION_PRIMITIVE_INVALID: radial stops.*colors=.*#000000.*#ffffff"):
         RadialGradient((0, 0), (1, 1),
                        (RadialGradientStop(0, "#000000", 0),
                         RadialGradientStop(0.5, "#ffffff", 0),
                         RadialGradientStop(1, "#000000", 1)), "required")
-    with pytest.raises(ValueError, match="E_PRESENTATION_PRIMITIVE_INVALID"):
+    with pytest.raises(ValueError, match=r"E_PRESENTATION_PRIMITIVE_INVALID: radial geometry.*radii=\(1, 0\)"):
         RadialGradient((0, 0), (1, 0),
                        (RadialGradientStop(0, "#000000", 0),
                         RadialGradientStop(1, "#000000", 1)), "required")

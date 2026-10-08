@@ -96,6 +96,15 @@ def test_svg_uses_negative_completed_origin_without_adapter_repositioning():
     assert '<rect x="-12" y="-4" width="112" height="54"' in output
 
 
+def test_canvas_overlay_rejects_bounds_that_differ_from_completed_canvas_with_details():
+    overlay = ScenePrimitive("overlay", "Rect", "canvas-overlay-gradient", "decoration",
+                             "canvas-overlay-gradient", "canvas-overlay-gradient", (1, 2, 3, 4),
+                             paint=ScenePaint("#101820", None, None, (), 1))
+    with pytest.raises(ValueError, match=r"E_PRESENTATION_PRIMITIVE_INVALID: canvas overlay 'overlay'.*"
+                       r"canvasBounds=\(0, 0, 10, 10\).*bounds=\(1, 2, 3, 4\)"):
+        render_v05_svg(_surface(overlay))
+
+
 def test_svg_projects_nondefault_measured_text_treatment_without_remeasuring():
     layout = TextLayout((1, 2, 8, 4), (1, 6), ("AB",), "Test Sans", 400, 12, 1.2,
                         "sha256:test", 3, "uppercase", "tabular")
