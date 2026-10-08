@@ -128,11 +128,18 @@ def test_radial_completed_geometry_must_fit_binary64_but_large_finite_values_are
         "E_VISUAL_CAPABILITY_LIMIT", "/body/roles/canvas-overlay-gradient/radialRadiusInline")
 
 
-def test_pattern_role_without_pattern_binding_is_required():
+def test_pattern_role_without_a_pattern_binding_is_absent():
     with pytest.raises(LayoutError) as error:
         complete_canvas_overlays(Tokens({"canvas-overlay": {}}), CANVAS)
     assert (error.value.diagnostic_id, error.value.path) == (
         "E_THEME_ROLE_REQUIRED", "/body/roles/canvas-overlay/pattern")
+
+
+def test_pattern_binding_with_unsupported_value_fails_closed():
+    with pytest.raises(LayoutError) as error:
+        complete_canvas_overlays(Tokens({"canvas-overlay": {}}, {"canvas-overlay": {"kind": "other"}}), CANVAS)
+    assert (error.value.diagnostic_id, error.value.path) == (
+        "E_THEME_ROLE_PROPERTY_UNSUPPORTED", "/body/roles/canvas-overlay/pattern")
 
 
 def test_positive_radial_radius_cannot_collapse_to_zero_in_binary64():

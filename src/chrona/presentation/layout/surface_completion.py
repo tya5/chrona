@@ -23,6 +23,7 @@ from chrona.presentation.layout.surface_quality import (
     SlotPlacement, SurfaceLayoutRequest, SurfacePlacement, TextPlacement,
 )
 from chrona.presentation.layout.canvas_texture import complete_canvas_texture
+from chrona.presentation.layout.canvas_overlays import complete_canvas_overlays
 from chrona.presentation.layout.region_frame import complete_region_frames
 from chrona.presentation.layout.surface_visuals import place_axis_band_visuals
 from chrona.presentation.layout.viewer_fit import stamp_surface_fits
@@ -348,6 +349,9 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
     patterns = complete_catalog_patterns(tuple(marks), tuple(shapes), request.theme_tokens)
     # The canvas texture is ground: completed over the final canvas; Scene emits it first.
     texture = complete_canvas_texture(request.theme_tokens, canvas)
+    completed_overlays = complete_canvas_overlays(request.theme_tokens, canvas)
+    canvas_overlays = completed_overlays if (
+        completed_overlays.pattern is not None or completed_overlays.radial is not None) else None
     # Frames are ground one step above the texture: first among the shapes, parent before child.
     shapes = [*frames.shapes, *shapes]
     patterns = (*frames.patterns, *patterns)
@@ -369,6 +373,7 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
                                  lane_emissions=lane_emissions, patterns=patterns,
                                  lane_label_suppressions=tuple(lane_label_suppressions),
                                  aligned_strokes=complete_aligned_strokes(tuple(marks), tuple(shapes),
-                                                                        lane_emissions, request.theme_tokens))
+                                                                        lane_emissions, request.theme_tokens),
+                                 canvas_overlays=canvas_overlays)
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks, tuple(mark_absences))

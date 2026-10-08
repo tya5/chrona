@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
 from math import hypot, isfinite
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.pattern_placement import PatternedPlacement
@@ -13,6 +13,9 @@ from chrona.presentation.layout.obstacles import ObstacleGeometry
 from chrona.presentation.layout.lane_subtracks import FixedLanePreflight
 from chrona.presentation.model.info_diagnostics import PresentationInfo, SuppressedPlotLabels
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, axis_label_semantic_ids
+
+if TYPE_CHECKING:  # avoid the runtime cycle: canvas_overlays uses SlotPlacement.
+    from chrona.presentation.layout.canvas_overlays import CanvasOverlays
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, FIT_ADJUSTS, TEXT_FOLLOWS_BOX
 
 
@@ -681,6 +684,7 @@ class SurfacePlacement:
     patterns: tuple[PatternedPlacement, ...] = ()
     lane_label_suppressions: tuple[LaneLabelSuppression, ...] = ()
     aligned_strokes: tuple[AlignedStrokePlacement, ...] = ()
+    canvas_overlays: CanvasOverlays | None = None
 
     def assert_valid(self) -> None:
         """Reject invalid required geometry before a renderer receives it."""
@@ -711,6 +715,20 @@ class SurfacePlacement:
         required = tuple(item for item in self.text if item.required and item.overflow != 'suppressed')
         if self.canvas_bounds is not None and (self.canvas_bounds.inline_size <= 0 or self.canvas_bounds.block_size <= 0):
             raise ValueError("E_LAYOUT_CANVAS_BOUNDS_INVALID")
+        if self.canvas_overlays is not None:
+            for role, overlay in (("canvas-overlay-gradient", self.canvas_overlays.radial),
+                                  ("canvas-overlay", self.canvas_overlays.pattern)):
+                if overlay is None:
+                    continue
+                slot = overlay.slot
+                if (self.canvas_bounds is None or overlay.placement_id != role
+                        or slot.slot_id != role or slot.source_ref != role
+                        or slot.bounds != self.canvas_bounds):
+                    raise ValueError(f"E_LAYOUT_CANVAS_OVERLAY_INVALID:{role}")
+                if role == "canvas-overlay" and (
+                        overlay.pattern.region != self.canvas_bounds
+                        or overlay.pattern.clip != self.canvas_bounds):
+                    raise ValueError(f"E_LAYOUT_CANVAS_OVERLAY_INVALID:{role}")
         for index, item in enumerate(required):
             for other in required[index + 1:]:
                 if (item.overflow != "visible-overflow" and other.overflow != "visible-overflow"

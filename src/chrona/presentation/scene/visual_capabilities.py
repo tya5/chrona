@@ -13,6 +13,7 @@ from chrona.presentation.scene.capabilities import (
     LINEAR_GRADIENT,
     MARKER_GEOMETRY,
     PATTERN_GEOMETRY,
+    RADIAL_GRADIENT,
     SYMBOL_OUTLINE,
     WOBBLE,
     admitted_capability_ids,
@@ -25,7 +26,7 @@ SVG_PROFILE = "chrona-output/visual/v0.6-svg"
 PNG_PROFILE = "chrona-output/visual/v0.6-png"
 SVG_ICON_PROFILE = "chrona-output/visual/v0.7-svg"
 PNG_ICON_PROFILE = "chrona-output/visual/v0.7-png"
-RICH_CAPABILITIES = admitted_capability_ids(LINEAR_GRADIENT, DROP_SHADOW, GLOW, WOBBLE, LINE_CAP, LINE_JOIN)
+RICH_CAPABILITIES = admitted_capability_ids(LINEAR_GRADIENT, RADIAL_GRADIENT, DROP_SHADOW, GLOW, WOBBLE, LINE_CAP, LINE_JOIN)
 MARK_GEOMETRY_CAPABILITIES = admitted_capability_ids(MARKER_GEOMETRY, PATTERN_GEOMETRY, SYMBOL_OUTLINE)
 ICON_CAPABILITIES = admitted_capability_ids(ICON_VECTOR, ICON_RASTER)
 
@@ -97,6 +98,7 @@ def validate_surface_visual_profile(surface: SceneSurface, profile: VisualProfil
         if paint is None:
             continue
         _require(profile, LINEAR_GRADIENT, paint.gradient.fidelity if paint.gradient else None, path)
+        _require(profile, RADIAL_GRADIENT, paint.radial_gradient.fidelity if paint.radial_gradient else None, path)
         _require(profile, DROP_SHADOW, paint.shadow.fidelity if paint.shadow else None, path)
         _require(profile, GLOW, paint.glow.fidelity if paint.glow else None, path)
         _require(profile, WOBBLE, paint.wobble.fidelity if paint.wobble else None, path)

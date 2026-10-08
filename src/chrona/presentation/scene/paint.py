@@ -6,13 +6,14 @@ from enum import StrEnum
 from math import cos, radians, sin
 from typing import Mapping
 
+from chrona.presentation.layout.canvas_overlays import RadialOverlayPlacement
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
 from chrona.presentation.model.info_diagnostics import PaintOmission
 from chrona.presentation.scene.model import (
-    DropShadow, Glow, LinearGradient, SceneIconPath, ScenePaint, StrokeFinish, StrokeWobble,
+    DropShadow, Glow, LinearGradient, RadialGradient, RadialGradientStop, SceneIconPath, ScenePaint, StrokeFinish, StrokeWobble,
 )
 from chrona.presentation.scene.visual_capabilities import (
-    DROP_SHADOW, GLOW, LINEAR_GRADIENT, LINE_CAP, LINE_JOIN, WOBBLE,
+    DROP_SHADOW, GLOW, LINEAR_GRADIENT, LINE_CAP, LINE_JOIN, PATTERN_GEOMETRY, RADIAL_GRADIENT, WOBBLE,
     VisualProfile, first_supporting_visual_profile,
 )
 
@@ -42,6 +43,12 @@ class PaintResolution:
     omissions: tuple[PaintOmission, ...] = ()
 
 
+@dataclass(frozen=True)
+class RadialOverlayResolution:
+    paint: ScenePaint | None
+    omissions: tuple[PaintOmission, ...] = ()
+
+
 def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
                         *, visual_profile: VisualProfile | None = None,
                         gradient_bounds: tuple[float, float, float, float] | None = None,
@@ -49,11 +56,12 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
                         canvas_bounds: tuple[float, float, float, float] | None = None,
                         part_mode: str | None = None, part_color: str | None = None,
                         catalog_pattern: bool = False,
+                        ink_only_pattern: bool = False,
                         catalog_glyph_stroke_width: float | None = None,
                         catalog_glyph_line_cap: str | None = None,
                         catalog_glyph_line_join: str | None = None) -> PaintResolution:
     """Resolve one closed role into renderer-neutral channels, without defaults."""
-    fill_required = family in {PaintFamily.TEXT, PaintFamily.SOLID, PaintFamily.CANVAS}
+    fill_required = family in {PaintFamily.TEXT, PaintFamily.SOLID, PaintFamily.CANVAS} and not ink_only_pattern
     stroke_required = family in {PaintFamily.OUTLINE, PaintFamily.HATCH, PaintFamily.PATH}
     try:
         fill = tokens.optional_color(role, "fill")
@@ -76,9 +84,11 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
     if stroke is not None and width is None and not (catalog_pattern or catalog_glyph_stroke_width is not None
                                                     or part_mode == "fill"):
         raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/strokeWidth")
-    if catalog_pattern and fill is None:
+    if ink_only_pattern and (not catalog_pattern or fill is not None):
+        raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", path)
+    if catalog_pattern and fill is None and not ink_only_pattern:
         raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/fill")
-    if catalog_pattern and opacity not in (None, 1, 1.0):
+    if catalog_pattern and not ink_only_pattern and opacity not in (None, 1, 1.0):
         raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", f"{path}/opacity")
     if width is not None and width <= 0:
         raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", f"{path}/strokeWidth")
@@ -139,6 +149,64 @@ class ArtworkAdmission:
 
     admitted: bool
     omissions: tuple[PaintOmission, ...] = ()
+
+
+def is_ink_only_surface_pattern(tokens: ThemeTokenView, role: str) -> bool:
+    """Select only the explicitly declared surface-pattern contracts."""
+    if role == "canvas-overlay":
+        return True
+    if role != "canvas-texture":
+        return False
+    binding = tokens._body["roles"].get(role, {})
+    return isinstance(binding, Mapping) and binding.get("patternMode") == "ink-only"
+
+
+def resolve_surface_pattern_admission(tokens: ThemeTokenView, role: str, *,
+                                      visual_profile: VisualProfile | None) -> ArtworkAdmission:
+    """Admit or omit the whole transparent pattern before adapter invocation."""
+    required = frozenset((PATTERN_GEOMETRY,))
+    try:
+        fidelity = _fidelity(tokens, role, "textureFidelity")
+        profile = visual_profile
+        # The legacy capability belongs to baseline for every target; that
+        # does not assert transparent tile serialization on Typst or TikZ.
+        if profile is not None and profile.target_kind not in {"svg", "png"}:
+            profile = replace(profile, capabilities=profile.capabilities - required)
+        admitted = _admit(profile, required, fidelity, f"/body/roles/{role}/textureFidelity")
+    except ThemeTokenError as error:
+        raise ScenePaintError(error.diagnostic_id, error.path) from error
+    if admitted:
+        return ArtworkAdmission(True)
+    return ArtworkAdmission(False, (_omission(role, role, "textureFidelity", visual_profile, required),))
+
+
+def resolve_radial_overlay_paint(tokens: ThemeTokenView, placement: RadialOverlayPlacement, *,
+                                  visual_profile: VisualProfile | None) -> RadialOverlayResolution:
+    """Attach resolved ink to already completed Layout radial geometry."""
+    role = "canvas-overlay-gradient"
+    path = f"/body/roles/{role}"
+    try:
+        fill = tokens.optional_color(role, "fill")
+        opacity = tokens.optional_number(role, "opacity")
+        fidelity = _fidelity(tokens, role, "gradientFidelity")
+        if fill is None:
+            raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/fill")
+        if opacity is not None and not 0 <= opacity <= 1:
+            raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", f"{path}/opacity")
+        required = frozenset((RADIAL_GRADIENT,))
+        if not _admit(visual_profile, required, fidelity, f"{path}/gradientFidelity"):
+            return RadialOverlayResolution(
+                None,
+                (_omission(role, role, "gradientFidelity", visual_profile, required),))
+    except ThemeTokenError as error:
+        raise ScenePaintError(error.diagnostic_id, error.path) from error
+    gradient = RadialGradient(
+        tuple(float(value) for value in placement.center),
+        tuple(float(value) for value in placement.radii),
+        tuple(RadialGradientStop(float(offset), fill, 1.0 if offset == 1 else 0.0)
+              for offset in placement.stop_offsets), fidelity)
+    return RadialOverlayResolution(ScenePaint(fill, None, None, (), 1.0 if opacity is None else float(opacity),
+                                      radial_gradient=gradient))
 
 
 def resolve_artwork_admission(tokens: ThemeTokenView, *, needs_finish: bool,

@@ -53,11 +53,18 @@ class CanvasOverlays:
 def complete_canvas_overlays(theme_tokens: Any, canvas: Rect) -> CanvasOverlays:
     """Complete the declared overlay geometries against the final canvas without allocating content."""
     has_role = getattr(theme_tokens, "has_role", None)
-    if not callable(has_role):
-        return CanvasOverlays()
+    optional_pattern = getattr(theme_tokens, "optional_pattern", None)
+    pattern = None
+    if callable(has_role) and has_role(CANVAS_OVERLAY_ROLE):
+        pattern_value = optional_pattern(CANVAS_OVERLAY_ROLE) if callable(optional_pattern) else None
+        pattern = _pattern_overlay(canvas, pattern_value)
 
-    pattern = _pattern_overlay(theme_tokens, canvas) if has_role(CANVAS_OVERLAY_ROLE) else None
-    radial = _radial_overlay(theme_tokens, canvas) if has_role(CANVAS_OVERLAY_GRADIENT_ROLE) else None
+    optional_number = getattr(theme_tokens, "optional_number", None)
+    radial = None
+    if callable(has_role) and has_role(CANVAS_OVERLAY_GRADIENT_ROLE):
+        radial_values = ({name: optional_number(CANVAS_OVERLAY_GRADIENT_ROLE, name)
+                          for name in _RADIAL_PROPERTIES} if callable(optional_number) else {})
+        radial = _radial_overlay(canvas, radial_values)
     return CanvasOverlays(pattern=pattern, radial=radial)
 
 
@@ -65,9 +72,8 @@ def _slot(role: str, canvas: Rect) -> SlotPlacement:
     return SlotPlacement(role, role, canvas)
 
 
-def _pattern_overlay(theme_tokens: Any, canvas: Rect) -> PatternOverlayPlacement:
+def _pattern_overlay(canvas: Rect, value: Any) -> PatternOverlayPlacement:
     pointer = f"/body/roles/{CANVAS_OVERLAY_ROLE}/pattern"
-    value = theme_tokens.optional_pattern(CANVAS_OVERLAY_ROLE)
     if value is None:
         raise LayoutError("E_THEME_ROLE_REQUIRED", pointer)
     if not isinstance(value, Mapping):
@@ -83,12 +89,12 @@ def _pattern_overlay(theme_tokens: Any, canvas: Rect) -> PatternOverlayPlacement
     return PatternOverlayPlacement(CANVAS_OVERLAY_ROLE, role_slot, completed)
 
 
-def _radial_overlay(theme_tokens: Any, canvas: Rect) -> RadialOverlayPlacement:
+def _radial_overlay(canvas: Rect, raw_values: Mapping[str, Any]) -> RadialOverlayPlacement:
     role = CANVAS_OVERLAY_GRADIENT_ROLE
     base = f"/body/roles/{role}"
     values: dict[str, Decimal] = {}
     for name in _RADIAL_PROPERTIES:
-        raw = theme_tokens.optional_number(role, name)
+        raw = raw_values.get(name)
         pointer = f"{base}/{name}"
         if raw is None:
             raise LayoutError("E_THEME_ROLE_REQUIRED", pointer)

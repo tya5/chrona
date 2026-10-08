@@ -7,7 +7,7 @@ from typing import Any, Mapping
 
 
 from chrona.presentation.scene.model import (
-    PRIMARY_LANE_MARK_PURPOSES, DecorationDisposition, InspectionScene, LinearGradient,
+    PRIMARY_LANE_MARK_PURPOSES, DecorationDisposition, InspectionScene, LinearGradient, RadialGradient,
     PatternGeometry, SceneIconPath, SceneLaneObstacle, SceneLaneRectObstacle,
     SceneLaneSegmentObstacle, ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish,
     TextLayout, requires_lane_member_provenance,
@@ -36,6 +36,7 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
                               for surface in scene.surfaces for primitive in surface.primitives)
     has_v07_paint = any(primitive.paint is not None and (primitive.paint.glow is not None
                                                     or primitive.paint.wobble is not None
+                                                    or primitive.paint.radial_gradient is not None
                                                     or (primitive.paint.gradient is not None
                                                         and primitive.paint.gradient.stop_opacities is not None))
                    for surface in scene.surfaces for primitive in surface.primitives)
@@ -233,6 +234,10 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
         for index, primitive in enumerate(primitives):
             if not isinstance(primitive, Mapping):
                 return False
+            paint = primitive.get("paint")
+            radial = paint.get("radialGradient") if isinstance(paint, Mapping) else None
+            if radial is not None and not _radial_paint_is_closed(primitive, paint, radial):
+                return False
             row, column, purpose = primitive.get("tableRowId"), primitive.get("tableColumnId"), primitive.get("purpose")
             lane_row, lane_member = primitive.get("laneRowId"), primitive.get("laneMemberId")
             if ((lane_row is None) != (lane_member is None)
@@ -294,6 +299,36 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
         if any(count < 2 for count in fan_in_counts.values()):
             return False
     return True
+
+
+def _radial_paint_is_closed(primitive: Mapping[str, Any], paint: Mapping[str, Any],
+                            radial: Mapping[str, Any]) -> bool:
+    """Check the finite fixed-ink alpha program even for raw JSON Scene documents."""
+    if (primitive.get("kind") != "Rect" or "pattern" in primitive
+            or any(key in paint for key in ("stroke", "strokeWidth", "gradient", "shadow", "glow",
+                                             "wobble", "strokeFinish", "image"))):
+        return False
+    stops = radial.get("stops")
+    fill = paint.get("fill")
+    if not isinstance(stops, list) or len(stops) not in {2, 3} or not isinstance(fill, str):
+        return False
+    if any(not isinstance(stop, Mapping) or stop.get("color") != fill for stop in stops):
+        return False
+    offsets = [stop.get("offset") for stop in stops]
+    opacities = [stop.get("opacity") for stop in stops]
+    return (offsets[0] == 0 and offsets[-1] == 1
+            and all(_finite_scalar(offset) for offset in offsets)
+            and all(left < right for left, right in zip(offsets, offsets[1:]))
+            and opacities == ([0, 1] if len(stops) == 2 else [0, 0, 1]))
+
+
+def _finite_scalar(value: Any) -> bool:
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return False
+    try:
+        return math.isfinite(value)
+    except (OverflowError, ValueError):
+        return False
 
 
 def _finite(value: Any) -> bool:
@@ -482,6 +517,7 @@ def _paint(value: ScenePaint) -> dict[str, Any]:
                     "gradient": _gradient(value.gradient) if value.gradient is not None else None,
                     "shadow": _shadow(value.shadow) if value.shadow is not None else None,
                     "glow": _glow(value.glow) if value.glow is not None else None,
+                    "radialGradient": _radial_gradient(value.radial_gradient) if value.radial_gradient is not None else None,
                     "wobble": _wobble(value.wobble) if value.wobble is not None else None,
                     "strokeFinish": _finish(value.stroke_finish) if value.stroke_finish is not None else None,
                     "image": _image(value.image) if value.image is not None else None})
@@ -501,6 +537,13 @@ def _gradient(value: LinearGradient) -> dict[str, Any]:
     if value.stop_opacities is not None:
         stops = [{**stop, "opacity": opacity} for stop, opacity in zip(stops, value.stop_opacities)]
     return {"start": _point(value.start), "end": _point(value.end), "stops": stops, "fidelity": value.fidelity}
+
+
+def _radial_gradient(value: RadialGradient) -> dict[str, Any]:
+    return {"center": _point(value.center), "radii": list(value.radii),
+            "stops": [{"offset": stop.offset, "color": stop.color, "opacity": stop.opacity}
+                      for stop in value.stops],
+            "fidelity": value.fidelity}
 
 
 def _shadow(value: Any) -> dict[str, Any]:

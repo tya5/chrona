@@ -116,6 +116,32 @@ properties:
                         properties:
                           kind: {const: catalog}
                           ref: {description: "Authored `set:name` reference to a normalized catalogue pattern.", type: string, pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"}
+                      - description: "A bounded deterministic repeating grain/rain pattern, consumed only by canvas texture and overlay roles (#888)."
+                        oneOf:
+                          - type: object
+                            additionalProperties: false
+                            required: [kind, algorithm, motif, seed, tile, count, radius]
+                            properties:
+                              kind: {const: seeded}
+                              algorithm: {const: splitmix64-v1}
+                              motif: {const: grain}
+                              seed: {type: integer, minimum: 0, maximum: 4294967295}
+                              tile: {$ref: "#/$defs/seededPatternTile"}
+                              count: {$ref: "#/$defs/seededPatternCount"}
+                              radius: {type: number, exclusiveMinimum: 0}
+                          - type: object
+                            additionalProperties: false
+                            required: [kind, algorithm, motif, seed, tile, count, length, strokeWidth, slant]
+                            properties:
+                              kind: {const: seeded}
+                              algorithm: {const: splitmix64-v1}
+                              motif: {const: rain}
+                              seed: {type: integer, minimum: 0, maximum: 4294967295}
+                              tile: {$ref: "#/$defs/seededPatternTile"}
+                              count: {$ref: "#/$defs/seededPatternCount"}
+                              length: {type: number, exclusiveMinimum: 0}
+                              strokeWidth: {type: number, exclusiveMinimum: 0}
+                              slant: {type: number}
             - description: "Point-symbol selection is finite Theme data resolved into a Scene outline: a built-in shape, or a multi-part glyph fitted contain/centred into the mark's bounds. Each glyph part paints from the milestone role's own colour unless it declares a fixed color; an outline-treatment role overrides every part to stroke regardless."
               examples: [{type: symbol, value: {shape: diamond}}, {type: symbol, value: {shape: glyph, viewBox: [100, 100], parts: [{d: "M0 0L100 0L100 100L0 100Z", paint: fill}]}}]
               if:
@@ -338,6 +364,13 @@ properties:
           properties:
             marker: {description: "Named marker token for the role.", type: string, minLength: 1}
             pattern: {description: "Named pattern token for the role.", type: string, minLength: 1}
+            patternMode: {description: "Canvas texture mode; absent preserves the opaque substrate-and-ink behavior, ink-only removes its substrate (#888).", enum: [ink-only]}
+            textureFidelity: {description: "Named fidelity token for optional ink-only canvas textures and overlays (#888).", type: string, minLength: 1}
+            radialCenterInline: {description: "Named canvas-relative radial center fraction on the inline axis (#888).", type: string, minLength: 1}
+            radialCenterBlock: {description: "Named canvas-relative radial center fraction on the block axis (#888).", type: string, minLength: 1}
+            radialRadiusInline: {description: "Named positive canvas-relative radial radius fraction on the inline axis (#888).", type: string, minLength: 1}
+            radialRadiusBlock: {description: "Named positive canvas-relative radial radius fraction on the block axis (#888).", type: string, minLength: 1}
+            radialInnerStop: {description: "Named radial transparent-stop fraction in [0, 1) (#888).", type: string, minLength: 1}
             symbol: {description: "Named point-symbol token for the role.", type: string, minLength: 1}
             fontFamily: {description: "Named font-family token for the role.", type: string, minLength: 1}
             fontWeight: {description: "Named font-weight token for the role.", type: string, minLength: 1}
@@ -503,6 +536,15 @@ properties:
         propertyNames: {pattern: "^[A-Za-z][A-Za-z0-9._-]*$"}
         additionalProperties: {description: "Named source-measurement metric.", type: string, minLength: 1}
 $defs:
+  seededPatternTile:
+    description: "Positive finite physical-pixel extent of one repeating seeded tile (#888)."
+    type: object
+    additionalProperties: false
+    required: [inlineSize, blockSize]
+    properties:
+      inlineSize: {type: number, exclusiveMinimum: 0}
+      blockSize: {type: number, exclusiveMinimum: 0}
+  seededPatternCount: {description: "Number of motifs in one seeded tile (#888).", type: integer, minimum: 1, maximum: 64}
   artworkGeometry:
     description: "One catalogue glyph and its nine-slice geometry, shared by both artwork forms."
     type: object

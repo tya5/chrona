@@ -159,6 +159,9 @@ def _theme():
         roles.setdefault(role, {"fill": "ink", "stroke": "ink", "strokeWidth": "stroke-width"}).update(
             {"markHeight": height, "markOffset": offset, "markPaintOrder": order, "markCornerRadius": radius})
     roles["summary-bar"].update({"markHeight": "summary-height"})
+    # These are opt-in treatment roles, not generic semantic text/shape roles.
+    roles.pop("canvas-overlay", None)
+    roles.pop("canvas-overlay-gradient", None)
     return {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme", "body": {
         "values": {"ink": {"type": "color", "value": "#102030"},
                    "body": {"type": "fontFamily", "value": "Test Sans"},

@@ -47,6 +47,8 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
             value = paint.fill
             if paint.gradient is not None:
                 value = f"url(#{gradient_id(paint)})"
+            if paint.radial_gradient is not None:
+                value = f"url(#{radial_gradient_id(paint)})"
         else:
             value = fill_override if fill_override is not None else "none"
         result.append(f'fill="{escape(value, quote=True)}"')
@@ -70,6 +72,11 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
         if paint.gradient.stop_opacities is not None: identity += (paint.gradient.stop_opacities,)
         payload = repr(identity).encode()
         return "gradient-" + sha256(payload).hexdigest()[:12]
+    def radial_gradient_id(paint: ScenePaint) -> str:
+        assert paint.radial_gradient is not None
+        return "radial-gradient-" + sha256(repr(paint.radial_gradient).encode()).hexdigest()[:12]
+    def canvas_overlay_clip_id() -> str:
+        return "canvas-overlay-clip-" + sha256(repr(surface.canvas_bounds).encode()).hexdigest()[:12]
     def shadow_id(paint: ScenePaint) -> str:
         assert paint.shadow is not None
         return "shadow-" + sha256(repr(paint.shadow).encode()).hexdigest()[:12]
@@ -106,11 +113,13 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
             payload = f"({legacy}, {paint.stroke!r}, {paint.opacity!r})"
         return "pattern-" + sha256(payload.encode()).hexdigest()[:12]
     def catalog_pattern_body(pattern: object, paint: ScenePaint) -> str:
-        if paint.fill is None or paint.stroke is None or paint.opacity != 1:
+        if paint.stroke is None or (paint.fill is not None and paint.opacity != 1):
             raise ValueError("E_PRESENTATION_PAINT_INVALID")
         ink = escape(paint.stroke, quote=True)
-        substrate = escape(paint.fill, quote=True)
-        parts = [f'<rect x="0" y="0" width="{number(pattern.tile_inline_size)}" height="{number(pattern.tile_block_size)}" fill="{substrate}"/>']
+        parts = []
+        if paint.fill is not None:
+            substrate = escape(paint.fill, quote=True)
+            parts.append(f'<rect x="0" y="0" width="{number(pattern.tile_inline_size)}" height="{number(pattern.tile_block_size)}" fill="{substrate}"/>')
         for item in pattern.primitives:
             if item.kind == "circle":
                 parts.append(f'<circle cx="{number(item.cx)}" cy="{number(item.cy)}" r="{number(item.radius)}" fill="{ink}"/>')
@@ -141,6 +150,10 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
     marker_pairs = {(completed(node).stroke, marker) for node in surface.primitives if node.kind == "Path"
                     for marker in (node.marker_start, node.marker_end) if marker}
     patterns = {(node.pattern, completed(node)) for node in surface.primitives if node.pattern}
+    radial_gradients = {radial_gradient_id(completed(node)): completed(node).radial_gradient
+                        for node in surface.primitives if completed(node).radial_gradient is not None}
+    canvas_overlay_nodes = tuple(node for node in surface.primitives
+                                 if node.visual_role in {"canvas-overlay", "canvas-overlay-gradient"})
     has_links = any(node.href is not None for node in surface.primitives)
     ns = ' xmlns:xlink="http://www.w3.org/1999/xlink"' if has_links else ""
     view_box = f"{number(canvas_inline)} {number(canvas_block)} {number(width)} {number(height)}"
@@ -162,8 +175,12 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
                     and node.text_layout.fit.mode == BOX_FOLLOWS_TEXT} if viewer_fit else {})
     fit_floods = {fit_filter_id(completed(node)): completed(node) for node in surface.primitives
                   if viewer_fit and node.viewer_fit == BOX_FOLLOWS_TEXT and completed(node).fill is not None}
-    if marker_pairs or patterns or gradients or shadows or glows or clip_hosts or fit_floods or stroke_clip_nodes:
+    if (marker_pairs or patterns or gradients or radial_gradients or shadows or glows
+            or clip_hosts or fit_floods or stroke_clip_nodes or canvas_overlay_nodes):
         definitions: list[str] = []
+        if canvas_overlay_nodes:
+            x, y, w, h = surface.canvas_bounds
+            definitions.append(f'<clipPath id="{canvas_overlay_clip_id()}" clipPathUnits="userSpaceOnUse"><rect x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}"/></clipPath>')
         for color, marker in sorted(marker_pairs, key=lambda pair: (
                 repr(pair), pair[1].angle_degrees is not None, pair[1].angle_degrees or 0.0,
                 pair[1].physical_units, pair[1].stroke_width or 0.0)):
@@ -193,6 +210,13 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
         for identifier, gradient in sorted(gradients.items()):
             assert gradient is not None
             definitions.append(f'<linearGradient id="{identifier}" gradientUnits="userSpaceOnUse" x1="{number(gradient.start[0])}" y1="{number(gradient.start[1])}" x2="{number(gradient.end[0])}" y2="{number(gradient.end[1])}">' + "".join(f'<stop offset="{number(position * 100)}%" stop-color="{escape(color, quote=True)}"{stop_opacity(gradient, index)}/>' for index, (position, color) in enumerate(gradient.stops)) + '</linearGradient>')
+        for identifier, radial in sorted(radial_gradients.items()):
+            assert radial is not None
+            cx, cy = radial.center
+            rx, ry = radial.radii
+            transform = f'translate({number(cx)} {number(cy)}) scale({number(rx)} {number(ry)})'
+            stops = "".join(f'<stop offset="{number(stop.offset * 100)}%" stop-color="{escape(stop.color, quote=True)}" stop-opacity="{number(stop.opacity)}"/>' for stop in radial.stops)
+            definitions.append(f'<radialGradient id="{identifier}" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="1" gradientTransform="{transform}">{stops}</radialGradient>')
         for identifier, shadow in sorted(shadows.items()):
             assert shadow is not None
             definitions.append(f'<filter id="{identifier}"><feDropShadow dx="{number(shadow.offset_x)}" dy="{number(shadow.offset_y)}" stdDeviation="{number(shadow.blur)}" flood-color="{escape(shadow.color, quote=True)}" flood-opacity="{number(shadow.opacity)}"/></filter>')
@@ -326,7 +350,13 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
                 f'{attrs(paint, fill=True, stroke=False)}>{body}</text>')
 
     for node in (node for _, node in sorted(enumerate(surface.primitives), key=lambda item: (item[1].paint_order, item[0]))):
-        common = f'data-scene-id="{escape(node.scene_id)}" data-source-ref="{escape(node.source_ref)}" data-purpose="{escape(node.purpose)}"'
+        overlay_attrs = ""
+        if node.visual_role in {"canvas-overlay", "canvas-overlay-gradient"}:
+            if node.kind != "Rect" or node.bounds != surface.canvas_bounds:
+                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            overlay_attrs = f' pointer-events="none" clip-path="url(#{canvas_overlay_clip_id()})"'
+        common = (f'data-scene-id="{escape(node.scene_id)}" data-source-ref="{escape(node.source_ref)}" '
+                  f'data-purpose="{escape(node.purpose)}"{overlay_attrs}')
         paint, (x, y, w, h) = completed(node), node.bounds
         if node.stroke_clip is not None:
             if (node.kind not in {"Rect", "Symbol", "Path"} or node.viewer_fit == BOX_FOLLOWS_TEXT
@@ -394,7 +424,7 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
                     raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
             appearance = (attrs(paint, fill=False, stroke=not bool(node.pattern.primitives),
                                 fill_override=f"url(#{pattern_id(node.pattern, paint)})")
-                          if node.pattern is not None else attrs(paint, fill=paint.fill is not None, stroke=paint.stroke is not None))
+                          if node.pattern is not None else attrs(paint, fill=paint.fill is not None or paint.radial_gradient is not None, stroke=paint.stroke is not None))
             radius = f' rx="{number(node.corner_radius)}" ry="{number(node.corner_radius)}"' if node.corner_radius else ""
             clip = f' clip-path="url(#clip-{escape(node.clip_source_id, quote=True)})"' if node.clip_source_id else ""
             if paint.wobble is not None and paint.wobble.outline:

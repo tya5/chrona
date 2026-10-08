@@ -283,10 +283,11 @@ def _annotation_note_ground(*, declared_roles: Mapping[str, Any], resolved_roles
 
 
 def _canvas_texture(*, roles: Mapping[str, Any], values: Mapping[str, Any]) -> None:
-    """Require the canvas texture role to name a catalogue pattern (#587).
+    """Require the canvas texture role to name a finite repeating pattern (#587, #888).
 
     Fill (substrate) and stroke (ink) are checked with the other catalogue-pattern
     paint by resource closure. An inline pattern has no tile, so it cannot be a texture.
+    Seeded patterns are Layout-completed from their explicit finite declaration.
     """
     binding = roles.get("canvas-texture")
     if not isinstance(binding, Mapping):
@@ -297,7 +298,7 @@ def _canvas_texture(*, roles: Mapping[str, Any], values: Mapping[str, Any]) -> N
         raise ColorSchemeError("E_THEME_ROLE_REQUIRED", pointer)
     token = values.get(token_id)
     value = token.get("value") if isinstance(token, Mapping) else None
-    if not isinstance(value, Mapping) or value.get("kind") != "catalog":
+    if not isinstance(value, Mapping) or value.get("kind") not in {"catalog", "seeded"}:
         raise ColorSchemeError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", pointer)
 
 
