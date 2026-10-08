@@ -2,9 +2,9 @@
 
 <!-- chrona:literal-acceptance/v1 -->
 
-Implementation: `7bf4f4265cdd9c13f1fc6f7460d7942fd81480f3`; ready-base merge
-`d1e97bb9b389c512524668ca7f9b033c0d8c3843` incorporates main
-`3e7a57db1cf4b148b6ee6d4c896708f86f9cea69`.
+Implementation through `1754dfbfc65fd344c207e3946e595b48ef3f5bd5` incorporates
+published main `a7af6eb001cdcdb29c6a4fba3df740c6086dcc9f` (#1239).
+Its derived gate is pending; final publication will use the resulting ready tip.
 [Living design, architecture review and plan](https://github.com/tya5/chrona/issues/1242#issuecomment-6060806272).
 Publication, exact-head CI/shared snapshot and exact published-main three-OS
 release remain pending. Do not close yet.
@@ -31,6 +31,6 @@ for bar-end and retains legacy kind tint for column; it calculates no geometry.
 Existing rotation and contrast paths are reused. Border bleed is an explicit
 square-ended strip, including on rounded boxes; text retains corner clearance.
 Actual corner pixels verify this selected treatment, not implicit clipping.
-Final combined annotation/Theme/Scene/ownership tests: 128 passed; schema
+Combined annotation/Theme/Scene/ownership and heading-part regressions: 137 passed; schema
 L1/L2/L3, annotations and literal acceptance checker passed. Public CI remains
 pending. Generated outputs and examples were not authored.
