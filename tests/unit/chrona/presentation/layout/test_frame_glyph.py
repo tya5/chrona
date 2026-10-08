@@ -117,8 +117,8 @@ def test_catalogue_stroke_envelope_stays_inside_the_declared_inset():
 
 
 @pytest.mark.parametrize("cap,join,envelope", [("round", "round", 1), ("square", "bevel", 2),
-                                             ("butt", "miter", 4)])
-def test_stroke_envelope_accounts_for_cap_diagonal_and_miter_limit(cap, join, envelope):
+                                             ("butt", "miter", 20)])
+def test_stroke_envelope_accounts_for_cap_diagonal_and_target_neutral_miter_bound(cap, join, envelope):
     glyph = {"viewport": {"inlineSize": 10, "blockSize": 10}, "parts": [
         {"data": "M0 0L10 0L10 10L0 10Z", "paint": "stroke", "strokeWidth": 2,
          "lineCap": cap, "lineJoin": join}]}

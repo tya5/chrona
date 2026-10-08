@@ -2,15 +2,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import isfinite
 from typing import Any, Mapping
 
 from chrona.presentation.model.semantic_registry import (
     ContrastClass, contrast_binding, contrast_binding_for, is_annotation_artwork_role)
 from chrona.presentation.scene.cone_ground import AS_OF_CONE_ROLE, ConeGround, cones_in
-from chrona.presentation.scene.ink_touch import InkTouchError, fill_touches, stroke_touches
 from chrona.presentation.scene.paint_analysis import (
     blend_over, composited_contrast, is_hex_color, sample_linear_gradient)
+from chrona.presentation.scene.sparse_ink import selected_symbol_ink, valid_opacity
 
 
 DECORATION_FLOOR = 1.10
@@ -660,7 +659,7 @@ def _artwork_ink(label: Mapping[str, Any], primitives: list[Any], index: int
     except (KeyError, TypeError, ValueError):
         return [], None
     order = label.get("paintOrder", 0)
-    found: list[tuple[str, str, float]] = []
+    selected: list[Mapping[str, Any]] = []
     for prior_index, prior in enumerate(primitives):
         if (not isinstance(prior, Mapping) or not is_annotation_artwork_role(prior.get("visualRole")) or prior.get("kind") != "Symbol"
                 or prior.get("sourceRef") != source_ref):
@@ -668,29 +667,8 @@ def _artwork_ink(label: Mapping[str, Any], primitives: list[Any], index: int
         prior_order = prior.get("paintOrder", 0)
         if not isinstance(prior_order, int) or (prior_order, prior_index) >= (order, index):
             continue
-        part_id = prior.get("id") if isinstance(prior.get("id"), str) else None
-        paint, symbol = prior.get("paint"), prior.get("symbol")
-        outline = symbol.get("outline") if isinstance(symbol, Mapping) else None
-        if not isinstance(paint, Mapping) or not isinstance(outline, list) or part_id is None:
-            return [], part_id or "annotation-artwork"
-        width, opacity = paint.get("strokeWidth"), paint.get("opacity", 1.0)
-        stroked = is_hex_color(paint.get("stroke")) and isinstance(width, (int, float)) and width > 0
-        filled = is_hex_color(paint.get("fill"))
-        try:
-            if filled:
-                touches = fill_touches(outline, rect)
-            elif stroked:
-                touches = stroke_touches(outline, rect, float(width))
-            else:
-                continue
-        except InkTouchError:
-            return [], part_id
-        if not touches:
-            continue
-        if not _opacity(opacity):
-            return [], part_id
-        found.append((part_id, str(paint["fill"] if filled else paint["stroke"]), float(opacity)))
-    return found, None
+        selected.append(prior)
+    return selected_symbol_ink(selected, rect, unreadable_identity="annotation-artwork")
 
 
 def _grounds_under(subject: Mapping[str, Any], primitives: list[Any], index: int, canvas: str | None,
@@ -782,7 +760,7 @@ def _ground(canvas: Any, scene_path: str) -> str | None:
 
 
 def _opacity(value: Any) -> bool:
-    return isinstance(value, (int, float)) and not isinstance(value, bool) and isfinite(float(value)) and 0 <= float(value) <= 1
+    return valid_opacity(value)
 
 
 def _string(value: Any, detail: str) -> str:

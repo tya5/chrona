@@ -83,10 +83,11 @@ def complete_frame_glyphs(tokens: Any, decisions: tuple[LayoutDecision, ...]) ->
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/symbol")
         glyphs = {shape["catalog"]: tokens.catalog_glyph(shape["catalog"])}
         prototype = symbol_parts(symbol, (0.0, 0.0, float(size), float(size)), catalog_glyphs=glyphs)
-        # SVG's miter limit is 4; a square cap at an arbitrary tangent needs
-        # a conservative diagonal allowance. Round/bevel needs half-width.
+        # Spec46 §7 uses ten stroke widths for a target-neutral path envelope;
+        # do not assume SVG's default miter limit. A square cap at an arbitrary
+        # tangent needs a diagonal allowance. Round/bevel needs half-width.
         envelope = max((Decimal(str(part.stroke_width)) / _TWO *
-                        (4 if part.line_join == "miter" else 2 if part.line_cap == "square" else 1)
+                        (20 if part.line_join == "miter" else 2 if part.line_cap == "square" else 1)
                         for part in prototype
                         if part.paint_mode == "stroke" and part.stroke_width is not None), default=Decimal(0))
         bounds = decision.bounds
