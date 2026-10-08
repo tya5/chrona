@@ -279,6 +279,7 @@ PROBES: dict[str, tuple[list[Any], list[Any]]] = {
     "revisionToken": (["main", "v1.2", "a:b/c", "é"], ["", " ", "a b", "a\tb", 5]),
     "fractionalTrack": ([{"fr": 1}, {"fr": 0.5}, {"fr": 1000000}], [{}, {"fr": 0}, {"fr": -1}, {"fr": 1000001}, {"fr": "1"}, {"fr": 1, "x": 1}, "1fr", 1]),
     "license": ([{"spdx": "MIT", "notice": "n"}], [{}, {"spdx": "MIT"}, {"notice": "n"}, {"spdx": "", "notice": "n"}, {"spdx": "MIT", "notice": ""}, {"spdx": "MIT", "notice": "n", "x": 1}, "MIT"]),
+    "literalCaption": (["Notes", "作業計画", "a" * 80], ["", "a" * 81, "bad\ncaption", "bad\x00caption", 5, None]),
 }
 
 # Accepted today by the byte-exact `$` anchor, `\d`, or the shape-only date. Not endorsed: a later slice

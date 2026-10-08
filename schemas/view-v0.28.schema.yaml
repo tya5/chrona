@@ -343,6 +343,11 @@ allOf:
               title: {description: "The title template; a Project without a title shows `Chrona`.", type: string, minLength: 1, examples: ["{project} programme board"]}
               subtitle: {description: "The subtitle template, drawn under the title in the Theme's `subtitle` typography role.", type: string, minLength: 1, examples: ["as of {asOf}"]}
               dateForm: {description: "The form of {asOf}; absent is the localized date.", enum: [localized-date, day-month, day-month-year]}
+          slotHeadingText:
+            description: "Optional literal caption replacements keyed by resolved Layout slot node ID. Each target must already declare a heading; only its text is replaced."
+            type: object
+            propertyNames: {$ref: "urn:chrona:common-v0.1#/$defs/identifier"}
+            additionalProperties: {$ref: "urn:chrona:common-v0.1#/$defs/literalCaption"}
           deadlines:
             description: "Draws each object's Project deadline as a tick at its date and, when the planned finish is later, a run from the tick to that finish; absent draws none."
             examples: [{show: slipped}]

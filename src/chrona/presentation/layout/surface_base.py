@@ -9,7 +9,7 @@ from typing import Any
 
 from chrona.presentation.layout.group_tags import (
     group_tag_column_size, vertical_group_tags)
-from chrona.presentation.layout.model import LayoutError, LayoutManifest, Rect, geometry_sum
+from chrona.presentation.layout.model import LayoutDecision, LayoutError, LayoutManifest, Rect, geometry_sum
 from chrona.presentation.layout.lane_preflight import lane_inline_frame_for_manifest
 from chrona.presentation.layout.lane_projection import LaneProjectionInstance, lane_missing_actual_visible
 from chrona.presentation.layout.lane_subtracks import LaneSubtrackPlan
@@ -31,6 +31,77 @@ from chrona.presentation.layout.surface_quality import (
 from chrona.presentation.layout.mark_geometry import compose_item_marks
 from chrona.presentation.layout.lane_mark_facets import _mark_facets
 from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS
+
+
+@dataclass(frozen=True)
+class SurfaceSlotAllocation:
+    """Full immutable allocations, before captions or shared rows consume their viewports."""
+    decisions: tuple[LayoutDecision, ...]
+    slots: tuple[SlotPlacement, ...]
+
+
+@dataclass(frozen=True)
+class SurfaceInlineGeometry:
+    """Validated pre-row facts used to close the shared inline geometry."""
+    request: SurfaceLayoutRequest
+    projection: Any
+    layout_manifest: LayoutManifest
+    measured_sources: Any
+    metric_values: dict[str, Any]
+    allocation: SurfaceSlotAllocation
+    decisions: dict[str, Any]
+    slots: tuple[SlotPlacement, ...]
+    by_source: dict[str, SlotPlacement]
+    table: SlotPlacement
+    timeline: SlotPlacement
+    review_rows: tuple[Any, ...]
+    timeline_bounds: tuple[float, float, float, float]
+    slot_ids: frozenset[str]
+    scale: ScalePlacement
+    role_geometries: Mapping[str, MarkGeometry]
+    mark_block_size: float
+    mark_band_allocation: MarkBandAllocation | None
+    group_header_size: float
+    group_tag_inline_size: float
+    row_requirements: tuple[float, ...]
+    row_padding: float
+    text_line_block: float
+    natural_block_requirement: Decimal
+
+
+def _layout_manifest(request: SurfaceLayoutRequest) -> LayoutManifest:
+    manifest = request.layout_manifest
+    if not isinstance(manifest, LayoutManifest):
+        raise LayoutError("E_PRESENTATION_LAYOUT_REQUIRED", "/layoutManifest")
+    return manifest
+
+
+def prepare_surface_slots(request: SurfaceLayoutRequest) -> SurfaceSlotAllocation:
+    """Validate source allocations without closing any row, scale, track or axis geometry."""
+    manifest = _layout_manifest(request)
+    decisions = {item.source: item for item in manifest.decisions if item.source}
+    missing = next((slot.value for slot in REQUIRED_SLOTS if slot.value not in decisions), None)
+    if missing is not None:
+        raise LayoutError("E_PRESENTATION_PRIMITIVE_MISSING", f"/layoutManifest/sources/{missing}")
+    ordered = tuple(decisions[source] for source in sorted(decisions))
+    slots = tuple(
+        SlotPlacement(source, source, item.bounds, item.priority or "required",
+                      item.overflow or "visible-overflow",
+                      "primary" if source in {"timeline", "timeline-axis"} else None,
+                      item.direction or "block", item.gap, item.item_min_inline_size)
+        for source, item in sorted(decisions.items())
+    )
+    by_source = {slot.source_ref: slot for slot in slots}
+    table, timeline = by_source["table"], by_source["timeline"]
+    review_surface = SlotPlacement(
+        "review-surface", "review-surface",
+        Rect(table.bounds.inline, min(table.bounds.block, timeline.bounds.block),
+             timeline.bounds.inline + timeline.bounds.inline_size - table.bounds.inline,
+             max(table.bounds.block + table.bounds.block_size,
+                 timeline.bounds.block + timeline.bounds.block_size)
+             - min(table.bounds.block, timeline.bounds.block)),
+    )
+    return SurfaceSlotAllocation(ordered, (*slots, review_surface))
 
 
 @dataclass(frozen=True)
@@ -122,21 +193,17 @@ def _provisional_point_facets(*, projection: Any, rows: tuple[Any, ...], scale: 
     return tuple(result)
 
 
-def prepare_surface_base(request: SurfaceLayoutRequest) -> SurfaceBaseGeometry:
-    """Validate inputs and close slots, rows, groups, scale and mark tracks."""
+def prepare_surface_inline(request: SurfaceLayoutRequest, *,
+                           allocation: SurfaceSlotAllocation | None = None) -> SurfaceInlineGeometry:
+    """Close validated slots and exact mark-aware scale before rows are placed."""
     projection = request.projection
-    layout_manifest = request.layout_manifest
+    layout_manifest = _layout_manifest(request)
     measured_sources = request.measured_sources
     metric_values = getattr(measured_sources, "metric_values", None)
-    if not isinstance(layout_manifest, LayoutManifest):
-        raise LayoutError("E_PRESENTATION_LAYOUT_REQUIRED", "/layoutManifest")
     if not isinstance(metric_values, dict):
         raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources")
-    decisions = {item.source: item for item in layout_manifest.decisions if item.source}
-    required = tuple(slot.value for slot in REQUIRED_SLOTS)
-    missing = next((name for name in required if name not in decisions), None)
-    if missing is not None:
-        raise LayoutError("E_PRESENTATION_PRIMITIVE_MISSING", f"/layoutManifest/sources/{missing}")
+    allocation = allocation if allocation is not None else prepare_surface_slots(request)
+    decisions = {item.source: item for item in allocation.decisions}
     start, end = projection.window
     if not isinstance(start, date) or not isinstance(end, date) or start >= end:
         raise LayoutError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection/window")
@@ -151,24 +218,9 @@ def prepare_surface_base(request: SurfaceLayoutRequest) -> SurfaceBaseGeometry:
             or "timeline.row.paddingBlock" not in metric_values
             or "timeline.mark.blockSize" not in metric_values):
         raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources/metricValues")
-    slots = tuple(
-        SlotPlacement(source, source, item.bounds, item.priority or "required",
-                      item.overflow or "visible-overflow",
-                      "primary" if source in {"timeline", "timeline-axis"} else None,
-                      item.direction or "block", item.gap, item.item_min_inline_size)
-        for source, item in sorted(decisions.items())
-    )
+    slots = allocation.slots
     by_source = {slot.source_ref: slot for slot in slots}
     table, timeline = by_source["table"], by_source["timeline"]
-    review_surface = SlotPlacement(
-        "review-surface", "review-surface",
-        Rect(table.bounds.inline, min(table.bounds.block, timeline.bounds.block),
-             timeline.bounds.inline + timeline.bounds.inline_size - table.bounds.inline,
-             max(table.bounds.block + table.bounds.block_size,
-                 timeline.bounds.block + timeline.bounds.block_size)
-             - min(table.bounds.block, timeline.bounds.block)),
-    )
-    slots += (review_surface,)
     review_row_values = review_rows(projection) or tuple(
         type("_Row", (), {"row_id": item.object_id, "label": item.title,
                           "group_id": item.group_id, "table_subject_id": item.object_id,
@@ -204,12 +256,11 @@ def prepare_surface_base(request: SurfaceLayoutRequest) -> SurfaceBaseGeometry:
     row_padding = float(metric_values["timeline.row.paddingBlock"])
     text_line_block = table_text_line_block(
         request.theme_tokens, (cell.typography_role for cell in request.surface_content.table_cells))
-    lane_subtracks = None
     if projection.lane_membership is not None:
         assert request.fixed_lane_preflight is not None
-        lane_subtracks = request.fixed_lane_preflight.subtracks
         requirement_by_row = dict(request.fixed_lane_preflight.row_requirements)
         requirements = tuple(requirement_by_row[row.row_id] for row in review_row_values)
+        natural_block = request.fixed_lane_preflight.natural_block_requirement
     else:
         requirements = required_row_block_extents(
             review_rows=review_row_values, row_minimum=float(metric_values["timeline.row.minBlockSize"]),
@@ -217,19 +268,65 @@ def prepare_surface_base(request: SurfaceLayoutRequest) -> SurfaceBaseGeometry:
             role_geometries=role_geometries, text_line_block=text_line_block,
             mark_band_allocation=mark_band_allocation,
         )
+        headers = sum(bool(row.group_id) and bool(group_header_size)
+                      and (index == 0 or review_row_values[index - 1].group_id != row.group_id)
+                      for index, row in enumerate(review_row_values))
+        natural_block = (Decimal(str(geometry_sum(requirements)))
+                         + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0))
+    return SurfaceInlineGeometry(
+        request, projection, layout_manifest, measured_sources, metric_values, allocation,
+        decisions, slots, by_source, table, timeline, review_row_values, timeline_bounds,
+        frozenset(slot.slot_id for slot in slots), scale, role_geometries, mark_block_size,
+        mark_band_allocation, group_header_size,
+        group_tag_column_size(request.theme_tokens) if group_tags else 0.0,
+        tuple(requirements), row_padding, text_line_block, natural_block,
+    )
+
+
+def prepare_surface_base(request: SurfaceLayoutRequest, *,
+                         allocation: SurfaceSlotAllocation | None = None,
+                         inline: SurfaceInlineGeometry | None = None,
+                         row_viewport: Rect | None = None) -> SurfaceBaseGeometry:
+    """Validate inputs and close slots, rows, groups, scale and mark tracks."""
+    inline = inline if inline is not None else prepare_surface_inline(request, allocation=allocation)
+    request = inline.request
+    projection = inline.projection
+    start, end = projection.window
+    layout_manifest = inline.layout_manifest
+    measured_sources = inline.measured_sources
+    metric_values = inline.metric_values
+    decisions = inline.decisions
+    slots = inline.slots
+    by_source = inline.by_source
+    table, timeline = inline.table, inline.timeline
+    review_row_values = inline.review_rows
+    timeline_bounds = inline.timeline_bounds
+    scale = inline.scale
+    role_geometries = inline.role_geometries
+    mark_block_size = inline.mark_block_size
+    mark_band_allocation = inline.mark_band_allocation
+    group_header_size = inline.group_header_size
+    group_tag_inline_size = inline.group_tag_inline_size
+    # Full slots remain ownership/allocation evidence. Only shared row capacity
+    # and plot geometry consume the completed native content viewport.
+    row_viewport = row_viewport if row_viewport is not None else timeline.bounds
+    row_content_bounds = bounds_from_rect(row_viewport)
+    row_padding, text_line_block = inline.row_padding, inline.text_line_block
+    requirements = inline.row_requirements
+    lane_subtracks = request.fixed_lane_preflight.subtracks if projection.lane_membership is not None else None
     foot_reserve = 0.0
     foot_fallback = False
     content = request.surface_content
     if (content.as_of_placement == BELOW_PLOT and content.as_of is not None and content.as_of_label
             and start <= content.as_of < end):
         wanted = below_plot_reserve(request.theme_tokens)
-        slack = row_block_slack(review_rows=review_row_values, timeline_block_size=timeline_bounds[3],
+        slack = row_block_slack(review_rows=review_row_values, timeline_block_size=row_content_bounds[3],
                                 group_header_size=group_header_size, required_block_sizes=requirements)
         if slack >= wanted:
             foot_reserve = wanted
         else:
             foot_fallback = True
-    row_bounds = (timeline_bounds[0], timeline_bounds[1], timeline_bounds[2], timeline_bounds[3] - foot_reserve)
+    row_bounds = (*row_content_bounds[:3], row_content_bounds[3] - foot_reserve)
     raw_rows = place_rows(review_rows=review_row_values, timeline_bounds=row_bounds,
                           group_header_size=group_header_size, required_block_sizes=requirements,
                           distribution=layout_manifest.row_distribution)
@@ -266,13 +363,13 @@ def prepare_surface_base(request: SurfaceLayoutRequest) -> SurfaceBaseGeometry:
                                 mark_band_allocation=mark_band_allocation))
     return SurfaceBaseGeometry(
         request, projection, layout_manifest, measured_sources, metric_values, decisions,
-        slots, {slot.source_ref: slot for slot in slots}, table, timeline,
+        slots, by_source, table, timeline,
         review_row_values, timeline_bounds,
-        frozenset(slot.slot_id for slot in slots),
+        inline.slot_ids,
         scale, rows, raw_rows, groups, tracks, role_geometries, mark_block_size,
         lane_subtracks, group_header_size, row_padding, text_line_block, table_bounds,
-        plot_rect(timeline.bounds, (row.bounds for row in rows)),
-        group_tag_inline_size=group_tag_column_size(request.theme_tokens) if group_tags else 0.0,
+        plot_rect(row_viewport, (row.bounds for row in rows)),
+        group_tag_inline_size=group_tag_inline_size,
         as_of_foot_reserve=foot_reserve, as_of_foot_fallback=foot_fallback,
         mark_band_allocation=mark_band_allocation,
     )

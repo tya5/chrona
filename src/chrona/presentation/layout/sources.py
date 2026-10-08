@@ -9,7 +9,7 @@ from chrona.presentation.layout.axis_lanes import derived_axis_block_size
 from chrona.presentation.layout.group_tags import header_child_lead
 from chrona.presentation.layout.model import LayoutError, Measurement
 from chrona.presentation.layout.presentation import (
-    header_group_cell_indent, measure_table_columns, table_cell_indent, table_content_inline_size, table_text_measurer,
+    header_group_cell_indent, measure_table_columns, place_table_columns, table_cell_indent, table_content_inline_size, table_text_measurer,
 )
 from chrona.presentation.layout.text import measure_text_width, metric_for_role, paint_text
 from chrona.presentation.layout.text_stack import MeasuredTextStack, measure_text_stack
@@ -265,6 +265,24 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
                 preferred_inline = max(column_floor, measured_content)
                 minimum_inline = measured_content
             preferred_block = metric["table.header.blockSize"] + Decimal(max(1, value.item_count)) * metric["timeline.row.minBlockSize"]
+        elif source == "observations" and value.table is not None and value.table.columns:
+            table = value.table
+            measured_content = _table_content_inline(table, typography, font_metrics, metric, float(body_size))
+            measure_observation_text = table_text_measurer(typography, font_metrics)
+            provenance_inline = Decimal(str(max(
+                (measure_observation_text(source, "text", "horizontal") for source in value.lines), default=0.0)))
+            preferred_inline = max(measured_content, provenance_inline)
+            gutter = float(metric["table.column.gutter.inlineSize"])
+            compact_columns = place_table_columns(columns=table.columns, cells=table.cells,
+                bounds=(0.0, 0.0, 0.0, 0.0), measure_text=measure_observation_text,
+                minimum_inline=float(body_size), gutter=gutter, overflow="ellipsize-with-source",
+                header_role=typography.table_header_role())
+            minimum_inline = Decimal(str(table_content_inline_size(
+                tuple(column.inline_size for column in compact_columns), gutter)))
+            header = typography.text_treatment(typography.table_header_role())
+            body = typography.text_treatment("text")
+            preferred_block = (header.font_size * header.line_height
+                               + Decimal(value.item_count) * 2 * body.font_size * body.line_height)
         elif source == "timeline":
             preferred_inline = Decimal(max(1, value.span_days)) * metric["timeline.dayWidth"]
             preferred_block = Decimal(max(1, value.item_count)) * metric["timeline.row.minBlockSize"]
@@ -273,7 +291,7 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
             preferred_block = metric["timeline.axis.blockSize"]
         else:
             preferred_inline, preferred_block = text_inline, text_block
-        if source != "table":
+        if source != "table" and not (source == "observations" and value.table is not None and value.table.columns):
             minimum_inline = min(preferred_inline, text_inline)
             if value.min_inline is not None:
                 minimum_inline = min(preferred_inline, value.min_inline)

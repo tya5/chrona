@@ -646,6 +646,11 @@ An axis-band Rect uses the resolved axis surface/stroke token as its background,
 its axis-label Text uses the resolved foreground text paint and the level-specific
 typography. Likewise, a table-header-band Rect uses the table-header surface paint,
 while table-column-label Text uses foreground text paint and table-header typography.
+Review Detail observations use `observation-column-label`, `observation-cell` and
+`observation-source` Text purposes with the existing text/header/emphasis paint roles.
+Their source references and stable placement IDs retain the declared identities
+(Spec28); they do not fabricate primary table row/column references. Scene projects
+Layout's completed geometry, typography and identities.
 An adapter MUST NOT flatten these foreground and background mappings into one color per
 role. Required foreground Text and its containing background MUST differ in resolved
 color; equality is a failed presentation validation result, never an accepted invisible

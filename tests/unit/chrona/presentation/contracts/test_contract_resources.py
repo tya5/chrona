@@ -232,6 +232,32 @@ def test_v028_heading_rejects_an_empty_null_or_nonstring_kicker(kicker):
         _view_contract(value)
 
 
+def test_v028_slot_heading_text_is_detached_immutable_optional_caption_mapping():
+    value = sr.bundle("control-room-dark")["view"]
+    value["version"] = "chrona/view/v0.28"
+    value["body"]["slotHeadingText"] = {"notes-panel": "Flight notes"}
+
+    contract = _view_contract(value)
+    assert contract.view.slot_heading_text == {"notes-panel": "Flight notes"}
+    value["body"]["slotHeadingText"]["notes-panel"] = "Changed late"
+    assert contract.view.slot_heading_text["notes-panel"] == "Flight notes"
+    with pytest.raises(TypeError):
+        contract.view.slot_heading_text["notes-panel"] = "Changed"
+
+    value["body"]["slotHeadingText"] = {}
+    assert _view_contract(value).view.slot_heading_text == {}
+
+
+@pytest.mark.parametrize("captions", ({"": "Notes"}, {"notes": ""}, {"notes": None}, {"notes": 7}, {"notes": "bad\ncaption"}))
+def test_v028_slot_heading_text_schema_rejects_invalid_keys_or_caption_values(captions):
+    value = sr.bundle("control-room-dark")["view"]
+    value["version"] = "chrona/view/v0.28"
+    value["body"]["slotHeadingText"] = captions
+
+    with pytest.raises(SchemaContractError, match="E_RESOURCE_SCHEMA"):
+        _view_contract(value)
+
+
 def test_v16_table_intent_contract_rejects_ambiguous_hierarchy_column():
     automatic = yaml.safe_load((ROOT / "examples/halcyon-1/views/06-flight-readiness.yaml").read_text(encoding="utf-8"))
     automatic["body"].pop("hierarchyColumn")

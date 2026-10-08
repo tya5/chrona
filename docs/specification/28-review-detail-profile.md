@@ -57,8 +57,20 @@ Observation column IDs and row IDs are unique. Every row contains exactly the de
 column keys, a stable ID, and a non-empty `source`. Missing provenance yields
 `E_DETAIL_OBSERVATION_PROVENANCE`; a non-rectangular row yields
 `E_DETAIL_OBSERVATION_CELLS`. `normal`, `attention`, and `critical` are closed
-presentation emphasis values. They map to existing Theme roles `body`,
+presentation emphasis values. They map to existing Theme paint roles `text`,
 `variance-ahead`, and `variance-behind`; they do not express delivery status.
+Cell typography remains the `text` role, independently of emphasis paint.
+Column headers preserve declaration order and use table-header typography. Each
+row visibly renders its exact source attribution before its cells; no invented
+provenance label is added. Attribution is ordinary ground Text with purpose
+`observation-source`, not a primary table cell or fabricated column. Headers and
+cells have purposes `observation-column-label` and `observation-cell`, with the
+existing header/text/emphasis paint roles. Header `sourceRef` retains the raw column
+ID; attribution/cell `sourceRef` retains the raw row ID, and injectively escaped
+placement IDs distinguish cells. They do not reference primary surface rows/columns.
+Native column allocation uses measured minima and
+equal flexible shares, with the existing table gutter and the slot's overflow
+policy. Wrapped source/cell lines determine natural row height.
 
 Panel geometry reuses Layout slots and Theme metric bindings rather than introducing
 adapter constants. If content cannot fit its slot, the declared
@@ -71,10 +83,12 @@ not yield a fit refusal.
 
 The review command accepts one optional Review Detail Profile alongside Project,
 Actual, View, Theme, and Layout. The profile is
-validated before Scene construction. `SurfaceContentInput` carries normalized immutable
-detail content; it carries no coordinates. The Scene Builder measures and places all
+validated before measurement. `SurfaceContentInput` carries normalized immutable
+detail content; it carries no coordinates. Post-solve slot admission validates the
+matching panels without reselecting those facts. Layout measures and places completed
 panel primitives and attaches the profile entry ID or Project object ID as
-`source_ref`. Adapters MUST NOT read the profile or recompute layout.
+`source_ref`; Scene projects that closure. Adapters MUST NOT read the profile or
+recompute layout.
 
 ## M23 acceptance rules
 

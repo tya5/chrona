@@ -66,6 +66,8 @@ def test_lane_source_measurement_uses_exact_membership_table_and_lane_count():
                           TableCellContent("lane:g:a", "Items", "2", "tableCell", "numeric")), (), None, ())
     sources = render_usecase._source_inputs(
         {"project": {"title": "test"}}, view, projection, SummaryContent(()), table=table,
+        content=SimpleNamespace(group_details=(), milestones=(), observation_columns=(), observation_rows=(),
+                                axis_tiers=()),
     )
 
     assert sources["table"].item_count == sources["timeline"].item_count == 1
@@ -396,14 +398,14 @@ def test_lane_scene_membership_is_theme_independent_for_same_project_and_view():
 
 def test_hidden_lane_layout_budgets_overlapping_authored_members_before_final_allocation(monkeypatch):
     completed = []
-    original = render_usecase.preflight_fixed_lane_layout
+    original = render_usecase.prepare_surface_content
 
-    def capture(**kwargs):
-        result = original(**kwargs)
+    def capture(layout_request, *, natural=None):
+        result = original(layout_request, natural=natural)
         completed.append(result)
         return result
 
-    monkeypatch.setattr(render_usecase, "preflight_fixed_lane_layout", capture)
+    monkeypatch.setattr(render_usecase, "prepare_surface_content", capture)
     with tempfile.TemporaryDirectory() as temporary:
         closure, snapshot = _closure(Path(temporary))
         value = yaml.safe_load((EXAMPLE / "views/02-programme-board.yaml").read_text(encoding="utf-8"))
@@ -422,8 +424,10 @@ def test_hidden_lane_layout_budgets_overlapping_authored_members_before_final_al
     lane = next(item for item in rendered.surface.rows if '"dense"' in item.row_id)
     timeline = next(item for item in rendered.surface.slots if item.source == "timeline")
     assert len(completed) == 1
-    assert next(item for item in completed[0].subtracks.lanes if item.lane_id == lane.row_id).subtrack_count > 1
-    assert timeline.bounds[3] >= float(completed[0].natural_block_requirement)
+    preflight = completed[0].inline.request.fixed_lane_preflight
+    assert preflight is not None
+    assert next(item for item in preflight.subtracks.lanes if item.lane_id == lane.row_id).subtrack_count > 1
+    assert timeline.bounds[3] >= float(completed[0].required_timeline_block())
     assert max(row.bounds[1] + row.bounds[3] for row in rendered.surface.rows) <= (
         timeline.bounds[1] + timeline.bounds[3]
     )

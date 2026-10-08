@@ -5,8 +5,8 @@ from dataclasses import replace
 from decimal import Decimal
 from typing import Any
 
-from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
-from chrona.presentation.layout.surface_lanes import lane_owner as _lane_owner, review_rows as _review_rows
+from chrona.presentation.layout.model import LayoutError, Rect
+from chrona.presentation.layout.surface_lanes import lane_owner as _lane_owner
 from chrona.presentation.layout.surface_marks import (MARK_PAINT_ORDER_BASE, compose_surface_marks)
 from chrona.presentation.layout.surface_visuals import (place_mark_visuals, place_text_visuals)
 from chrona.presentation.layout.surface_member_labels import (
@@ -19,29 +19,34 @@ from chrona.presentation.layout.surface_route_label_plan import (
     RouteLabelPlanContext, compose_routes_and_member_labels,
 )
 from chrona.presentation.layout.surface_lane_route_plan import LaneRoutePlanContext, plan_lane_route_reservations
-from chrona.presentation.layout.surface_base import prepare_surface_base
+from chrona.presentation.layout.surface_base import (
+    prepare_surface_base,
+)
 from chrona.presentation.layout.surface_content import (
     complete_footer_band, compose_detail_panel_blocks, place_notes, place_summary,
     validate_detail_panel_placement,
 )
 from chrona.presentation.layout.surface_legend import SurfaceLegendContext, place_legend
-from chrona.presentation.layout.slot_heading import complete_slot_headings, content_slot, full_slot
+from chrona.presentation.layout.slot_heading import SlotHeadings, content_slot, full_slot
 from chrona.presentation.layout.surface_completion import (
     SurfaceCompletionContext, SurfaceLayoutComposition, complete_surface_layout,
 )
 from chrona.presentation.layout.surface_annotations import SurfaceAnnotationContext, place_annotations
-from chrona.presentation.layout.surface_table import compose_table
+from chrona.presentation.layout.surface_table import (
+    compose_table,
+)
 from chrona.presentation.layout.surface_heading import place_heading
 from chrona.presentation.layout.surface_groups import (compose_group_presentation)
 from chrona.presentation.layout.surface_backgrounds import (
     compose_calendar_backgrounds, compose_group_tabs, compose_row_group_backgrounds, replace_group_header_band,
 )
-from chrona.presentation.layout.surface_axis import compose_axis
+from chrona.presentation.layout.surface_axis import (
+    complete_axis_plot,
+)
 from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT_FALLBACK
 from chrona.presentation.layout.as_of_cone import complete_as_of_cone
 from chrona.presentation.layout.surface_deadlines import compose_deadline_marks
 from chrona.presentation.layout.surface_periods import compose_period_bands, period_label_requests
-from chrona.presentation.layout.presentation import (MarkGeometry, required_row_block_extents)
 from chrona.presentation.layout.text import metric_for_role
 from chrona.presentation.layout.labels import (LabelRect, LabelRequest)
 from chrona.presentation.layout.obstacles import (
@@ -51,45 +56,25 @@ from chrona.presentation.layout.surface_quality import (
     CollisionDomain, FitWarning, PlacementDecision, IconPlacement, ShapePlacement, SurfaceLayoutRequest,
     LaneLabelSuppression,
 )
-from chrona.presentation.layout.mark_band_allocation import MarkBandAllocation
 from chrona.presentation.layout.surface_geometry import (
     bounds_from_rect as _bounds, coordinate_for_date as _coordinate,
 )
+from chrona.presentation.layout.surface_preparation import (
+    SurfaceNaturalGeometry, SurfacePreRowGeometry, prepare_surface_candidate,
+    prepare_surface_content, prepare_surface_natural_candidate, prepare_surface_natural_geometry,
+    timeline_content_block_requirement,
+)
 
 
-def timeline_content_block_requirement(*, projection: Any, group_presentation: str,
-                                       metric_values: dict[str, Decimal], role_geometries: dict[str, MarkGeometry] | None = None,
-                                       mark_band_allocation: MarkBandAllocation | None = None,
-                                       text_line_block: float = 0.0) -> Decimal:
-    """Return the minimum timeline block extent for explicit review rows."""
-    rows = _review_rows(projection) or tuple(
-        type("_Row", (), {"group_id": item.group_id, "items": (item,)})()
-        for item in projection.items
-    )
-    if getattr(projection, "lane_membership", None) is not None:
-        # The View fixes lane count before measurement. Its full mark-facet
-        # subtrack extent is closed after the inline scale exists; one mark
-        # band per lane is the profile's minimum, not a second membership solve.
-        rows = tuple(replace(row, items=row.items[:1]) for row in rows)
-    requirements = required_row_block_extents(
-        review_rows=tuple(rows), row_minimum=float(metric_values["timeline.row.minBlockSize"]),
-        row_padding=float(metric_values["timeline.row.paddingBlock"]),
-        mark_block_size=float(metric_values["timeline.mark.blockSize"]), role_geometries=role_geometries,
-        mark_band_allocation=mark_band_allocation,
-        text_line_block=text_line_block,
-    )
-    headers = 0
-    previous = object()
-    for row in rows:
-        if row.group_id != previous:
-            headers += 1 if row.group_id and group_presentation == "header" else 0
-            previous = row.group_id
-    return Decimal(str(geometry_sum(requirements))) + Decimal(headers) * metric_values.get("timeline.groupHeader.blockSize", 0)
-
-
-def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutComposition:
-    """Resolve slots, rows, groups, temporal scale, and mark tracks in Layout."""
-    base = prepare_surface_base(request)
+def compose_surface_layout(request: SurfaceLayoutRequest, *,
+                           prepared: SurfacePreRowGeometry | None = None) -> SurfaceLayoutComposition:
+    """Resolve rows/tracks from native pre-row geometry, then complete one surface."""
+    prepared = prepared if prepared is not None else prepare_surface_content(request)
+    inline, prepared_axis, headings, table_seed = prepared.inline, prepared.axis, prepared.headings, prepared.table
+    axis_slot, timeline_content, row_viewport = prepared.axis_content, prepared.timeline_content, prepared.row_viewport
+    table_content = table_seed.table_slot
+    request = inline.request
+    base = prepare_surface_base(request, inline=inline, row_viewport=row_viewport)
     request = base.request
     projection = request.projection
     layout_manifest = base.layout_manifest
@@ -97,30 +82,37 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     metric_values = base.metric_values
     start, end = projection.window
     slots, by_source, table, timeline = base.slots, base.by_source, base.table, base.timeline
-    review_rows, timeline_bounds = base.review_rows, base.timeline_bounds
+    review_rows, timeline_bounds = base.review_rows, _bounds(row_viewport)
     slot_ids = base.slot_ids
     text_slot = base.text_slot
     scale, rows, raw_rows = base.scale, base.rows, base.raw_rows
     groups, tracks = base.groups, base.tracks
     role_geometries, mark_block_size = base.role_geometries, base.mark_block_size
-    table_bounds = base.table_bounds
+    table_bounds = table_seed.table_bounds
     if request.theme_tokens is None or request.font_metrics is None:
         raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", "/measuredSources")
     def metric_for(typography_role: str) -> Any:
         return metric_for_role(request.theme_tokens, typography_role, request.font_metrics)
     body_size = float(request.theme_tokens.text_treatment("text").font_size)
-    text = list(place_heading(request, by_source["title"], measured_sources))
+    # Caption reservations precede native content, while primitive order remains title/detail/captions.
+    axis_batch = complete_axis_plot(prepared_axis, base.plot)
+    heading_slot_blocks = {source: by_source[source].bounds.block for source in headings.reserve or {}}
+    text = list(place_heading(request, content_slot(by_source["title"], headings.reserved("title")),
+                              measured_sources))
     footer_provisional_slots = slots
+    detail_sources = {"group-details", "milestones", "observations"}
+    detail_content_slots = tuple(content_slot(slot, headings.reserved(slot.source_ref))
+                                if slot.source_ref in detail_sources else slot for slot in slots)
     slots, detail_panel_text, detail_panel_warnings, detail_visual_reservations = compose_detail_panel_blocks(
-        slots=slots, request=request, requested_canvas=request.layout_manifest.viewport,
+        slots=detail_content_slots, request=request, requested_canvas=request.layout_manifest.viewport,
+        caption_reserves=headings.reserve,
     )
+    slots = tuple(full_slot(by_source[slot.source_ref], slot, headings.reserved(slot.source_ref))
+                  if slot.source_ref in detail_sources else slot for slot in slots)
     by_source = {slot.source_ref: slot for slot in slots}
     text.extend(detail_panel_text)
-    # A slot's declared caption (#1064): its text is completed here and its content is placed below it.
-    headings = complete_slot_headings(request=request, slots=by_source, decisions=base.decisions)
-    heading_slot_blocks = {source: by_source[source].bounds.block for source in headings.reserve or {}}
     text.extend(headings.text)
-    table_batch = compose_table(base)
+    table_batch = compose_table(base, seed=table_seed)
     column_placements = table_batch.columns
     text.extend(table_batch.text)
     group_batch = compose_group_presentation(
@@ -132,7 +124,6 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         base=base, rows=rows, groups=groups, theme_tokens=request.theme_tokens,
         row_decoration=request.surface_content.row_decoration,
         group_decoration=request.surface_content.group_decoration))
-    axis_batch = compose_axis(request, base)
     axis = by_source["timeline-axis"]
     shapes.extend(axis_batch.shapes)
     text.extend(axis_batch.text)
@@ -295,11 +286,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
     slots = complete_footer_band(provisional_slots=footer_provisional_slots, completed_slots=slots)
     by_source = {slot.source_ref: slot for slot in slots}
     for source, block in heading_slot_blocks.items():
-        moved = float(by_source[source].bounds.block - block)
+        moved = by_source[source].bounds.block - block
         if moved:  # the footer band carried the slot down: its caption goes with it
-            text = [replace(item, bounds=Rect(item.bounds.inline, item.bounds.block + Decimal(str(moved)),
+            text = [replace(item, bounds=Rect(item.bounds.inline, item.bounds.block + moved,
                                               item.bounds.inline_size, item.bounds.block_size),
-                            baseline=(item.baseline[0], item.baseline[1] + moved))
+                            baseline=(item.baseline[0], item.baseline[1] + float(moved)))
                     if item.collision_domain.slot == "slot-heading" and item.source_ref == source else item
                     for item in text]
     summary_slot = by_source.get("summary")
@@ -307,11 +298,14 @@ def compose_surface_layout(request: SurfaceLayoutRequest) -> SurfaceLayoutCompos
         text.extend(place_summary(request, content_slot(summary_slot, headings.reserved("summary"))))
 
     annotation_slot = by_source.get("annotations")
-    annotation_by_source = (by_source if annotation_slot is None or not headings.reserved("annotations")
-                            else {**by_source, "annotations": content_slot(annotation_slot, headings.reserved("annotations"))})
+    timeline_content = replace(timeline_content, bounds=row_viewport)
+    annotation_by_source = {**by_source, "table": table_content, "timeline": timeline_content,
+                            "timeline-axis": axis_slot}
+    if annotation_slot is not None:
+        annotation_by_source["annotations"] = content_slot(annotation_slot, headings.reserved("annotations"))
     annotation_batch = place_annotations(SurfaceAnnotationContext(
         request, projection, layout_manifest, contract, review_rows, rows, annotation_by_source, scale, start, end,
-        timeline, timeline_bounds, mark_by_id, comparison_clusters, instance_rows, metric_for,
+        timeline_content, timeline_bounds, mark_by_id, comparison_clusters, instance_rows, metric_for,
         surface_obstacles, register_rect, register_port))
     text.extend(annotation_batch.text)
     shapes.extend(annotation_batch.shapes)

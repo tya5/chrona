@@ -247,6 +247,8 @@ class SurfaceContentInput:
     # Required plot-label text of each point drawn on the row of the span it
     # attaches to (#486): title, planned date and finish delta, never dropped.
     attached_labels: tuple[tuple[str, str], ...] = ()
+    # View-selected literal caption copy, keyed by an already headed Layout slot node.
+    slot_heading_text: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True)

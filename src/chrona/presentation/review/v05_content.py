@@ -1,6 +1,7 @@
 """Current-resource normalization for v0.5 optional Scene content."""
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import date, timedelta
 from typing import Any, Mapping
 
@@ -10,8 +11,7 @@ from chrona.presentation.model.surface_content import (
     AnnotationIntent, AxisLabelIntent, AxisSecondaryIntent, AxisTier, HeadingContent, RelationPresentationFact, SummaryContent, SummaryPanel, SummaryTextRun, SurfaceContentInput, TableCellContent, TableColumnContent, TableColumnWidth, TableContent, TableRowLevel, _format_compact_date, display_value, table_value,
 )
 from chrona.presentation.table_presentation import affix_state
-from chrona.presentation.review.detail import resolve_v05_review_detail_profile
-from chrona.presentation.layout.model import LayoutManifest
+from chrona.presentation.review.detail import normalize_v05_review_detail_profile
 from chrona.presentation.model.placement_candidates import legacy_candidate_order, parse_candidates
 from chrona.presentation.contracts.resources import ReviewDetailInput, SummaryProfileInput, ViewInput
 from chrona.presentation.group_header_text import GroupHeaderTextError, compose_group_header_runs, compose_group_headers
@@ -195,7 +195,7 @@ def legend_entries(detail: ReviewDetailInput | None, project: Mapping[str, Any],
 def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput,
                                   *, actual_set: Mapping[str, Any] | None = None,
                                   detail: ReviewDetailInput | None = None, summary: SummaryContent,
-                                  layout_manifest: LayoutManifest | None = None, locale: str = "en-US",
+                                  locale: str = "en-US",
                                   color_scale: ResolvedColorScale | None = None,
                                   table: TableContent | None = None,
                                   group_tints: tuple[tuple[str, str], ...] = (),
@@ -321,11 +321,9 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     # its View annotation and no longer duplicated into the notes slot (#466).
     notes = tuple((str(key), str(value.get("text", ""))) for key, value in project_notes.items()
                  if key not in consumed_note_ids)
-    resolved_detail = (resolve_v05_review_detail_profile(_detail_mapping(detail), projection.items, layout_manifest,
-                                                          profile_is_validated=True)
-                       if layout_manifest is not None else None)
     calendar_closed, calendar_exceptions = calendar_closures(project, projection, view)
     legend = legend_entries(detail, project, projection, color_scale, closed_days_drawn=bool(calendar_closed))
+    detail_content = normalize_v05_review_detail_profile(detail, projection.items)
     scale_paints: tuple[tuple[str, str], ...] = ()
     scale_legend_paints: tuple[tuple[str, str], ...] = ()
     if color_scale is not None:
@@ -347,10 +345,10 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                    notes=notes, legend_entries=legend, coverage_text="",
                                    summary=summary,
                                    template_values=(),
-                                   group_details=resolved_detail.group_details if resolved_detail else (),
-                               milestones=resolved_detail.milestones if resolved_detail else (),
-                               observation_columns=resolved_detail.observation_columns if resolved_detail else (),
-                               observation_rows=resolved_detail.observation_rows if resolved_detail else (),
+                                   group_details=detail_content.group_details,
+                                   milestones=detail_content.milestones,
+                                   observation_columns=detail_content.observation_columns,
+                                   observation_rows=detail_content.observation_rows,
                                label_fallback=label_fallback, annotation_fallback=annotation_fallback,
                                link_mode=link_mode, title_link_columns=title_link_columns,
                                attached_labels=_attached_labels(projection, locale),
@@ -366,6 +364,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                group_header_runs=_group_header_runs(projection, project, view),
                                as_of_placement=str(as_of_marker.get("placement", "top")) if as_of_marker is not None else "top",
                                group_tints=group_tints,
+                               slot_heading_text=tuple(sorted((view.slot_heading_text or {}).items())),
                                # `<id>` paints the bar, accent and stamp; `<id>#header` and `<id>#leader` carry the
                                # same colour to the elements a kind's `colorAlso` names (#991).
                                annotation_kind_paints=tuple(
@@ -576,19 +575,6 @@ def _calendar_closures(project: Mapping[str, Any], window: tuple[date, date], sh
     exceptions_enabled = shading.get("exceptions", True) if isinstance(shading, Mapping) else True
     selected = tuple(closed) if non_working else tuple(exception_closed) if exceptions_enabled else ()
     return selected, tuple(exception_closed) if exceptions_enabled else ()
-
-
-def _detail_mapping(detail: ReviewDetailInput | None) -> Mapping[str, Any] | None:
-    """Adapt an accepted typed detail contract to the detail resolver's input shape."""
-    if detail is None:
-        return None
-    # Detail contracts have already passed their resource-schema boundary.
-    # Empty sections are absent presentation content, not a request for a
-    # layout source; nonempty sections retain the immutable contract values.
-    return {"body": {"legend": [{"role": item.role, "label": item.label} for item in detail.legend],
-                      **({"groupDetails": detail.group_details} if detail.group_details else {}),
-                      **({"milestones": detail.milestones} if detail.milestones else {}),
-                      **({"observations": detail.observations} if detail.observations else {})}}
 
 
 def _resource_body(value: Mapping[str, Any] | None, name: str) -> Mapping[str, Any]:

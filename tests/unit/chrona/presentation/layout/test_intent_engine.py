@@ -525,3 +525,137 @@ def test_narrow_relative_overlay_preserves_child_placement_and_warns():
     assert "milestones" in placed
     assert manifest.fit_warnings
     assert any(warning.placement_id == "milestones" for warning in manifest.fit_warnings)
+
+
+def _capacity_profile(row_tracks, children, *, column_tracks=None):
+    raw = {
+        "version": "chrona/layout-profile/v0.10", "id": "fractional-capacity",
+        "flowDirection": "horizontal", "dependencyNetworkFlowDirection": "horizontal",
+        "requiredThemeTokens": ["spacing.none"],
+        "reviewSurface": {
+            "rowDistribution": "pack",
+            "backgroundExtents": {"rowBand": "table", "groupBand": "timeline",
+                                  "groupHeaderBand": "both", "calendarClosed": "timeline"},
+            "annotationRouting": {"maxBends": 4, "maxDetourRatio": 2},
+        },
+        "root": {
+            "id": "root", "kind": "grid", "inlineSize": "fill", "blockSize": "fill",
+            "columnTracks": column_tracks or ["fill"], "rowTracks": row_tracks,
+            "gap": {"token": "spacing.none"}, "padding": {"token": "spacing.none"},
+            "alignItems": "stretch", "justifyContent": "start", "children": children,
+        },
+    }
+    return resolve_layout_profile(
+        raw, available_sources=SOURCES,
+        theme={"body": {"values": {"spacing.none": {"type": "number", "value": 0}}}},
+    )
+
+
+def _capacity_slot(node_id, source, row):
+    return {
+        "id": node_id, "kind": "slot", "source": source,
+        "inlineSize": "fill", "blockSize": "fill",
+        "place": {"inline": "start", "block": "start", "safety": "strict"},
+        "priority": "required", "overflow": "visible-overflow",
+        "cell": {"column": 1, "row": row},
+    }
+
+
+def _capacity_measurements(*sources):
+    return {source: m(100, 20) for source in sources}
+
+
+def _source_blocks(manifest):
+    return {item.source: item.bounds.block_size for item in manifest.decisions if item.source}
+
+
+def test_candidate_demand_uses_each_native_manifest_not_the_requested_sample():
+    resolved = _capacity_profile(
+        [{"fr": 1}, {"fr": 1}],
+        [_capacity_slot("table", "table", 1), _capacity_slot("timeline", "timeline", 2)],
+    )
+    measurements = _capacity_measurements("table", "timeline")
+    evaluated = []
+
+    def demand(manifest):
+        available = _source_blocks(manifest)["timeline"]
+        required = Decimal(100) if available < Decimal(75) else Decimal(60)
+        evaluated.append((manifest.viewport.block_size, available, required))
+        return {"timeline": required}
+
+    result = resolve_content_block_extent(
+        resolved, viewport_inline=1600, minimum_block=100, measurements=measurements,
+        required_blocks=demand)
+    assert result.extent == 160
+    assert not result.short_sources
+    assert evaluated[0] == (Decimal(100), Decimal(50), Decimal(100))
+    assert any(required == Decimal(60) for _, _, required in evaluated)
+    selected = solve_layout(resolved, viewport_inline=1600, viewport_block=result.extent,
+                            measurements=measurements)
+    assert (result.extent, _source_blocks(selected)["timeline"], demand(selected)["timeline"]) == (
+        Decimal(160), Decimal(80), Decimal(60))
+
+
+def test_candidate_demand_keeps_shortage_evidence_from_returned_capped_manifest():
+    resolved = _capacity_profile(
+        [{"minmax": {"min": {"fixed": 300}, "max": {"fixed": 500}}}, "fill"],
+        [_capacity_slot("timeline", "timeline", 1), _capacity_slot("table", "table", 2)],
+    )
+    measurements = _capacity_measurements("table", "timeline")
+
+    def demand(manifest):
+        return {"timeline": _source_blocks(manifest)["timeline"] + Decimal(100)}
+
+    result = resolve_content_block_extent(
+        resolved, viewport_inline=1600, minimum_block=900, measurements=measurements,
+        required_blocks=demand)
+    constant_map = resolve_content_block_extent(
+        resolved, viewport_inline=1600, minimum_block=900, measurements=measurements,
+        required_blocks={"timeline": Decimal(600)})
+    assert result.extent == 900
+    assert result == constant_map
+    assert [(item.required_block, item.allocated_block) for item in result.short_sources] == [
+        (Decimal(600), Decimal(500))]
+
+
+def test_static_and_candidate_demand_shortfalls_describe_returned_manifest():
+    resolved = _capacity_profile(
+        [
+            {"minmax": {"min": {"fixed": 20}, "max": {"fr": 1}}},
+            {"fr": 3}, {"fixed": 895},
+        ],
+        [_capacity_slot("timeline", "timeline", 1), _capacity_slot("table", "table", 2)],
+    )
+    measurements = _capacity_measurements("table", "timeline")
+    arguments = dict(profile=resolved, viewport_inline=1600, minimum_block=900,
+                     measurements=measurements)
+    static = resolve_content_block_extent(**arguments,
+                                          required_blocks={"timeline": Decimal(90)})
+    dynamic = resolve_content_block_extent(**arguments,
+                                           required_blocks=lambda manifest: {"timeline": Decimal(90)})
+    returned = solve_layout(resolved, viewport_inline=1600, viewport_block=900,
+                            measurements=measurements)
+    candidate = solve_layout(resolved, viewport_inline=1600, viewport_block=1057,
+                             measurements=measurements)
+    assert static == dynamic
+    assert static.extent == 900
+    assert _source_blocks(returned)["timeline"] == Decimal(20)
+    assert _source_blocks(candidate)["timeline"] == Decimal("40.5")
+    assert [(item.required_block, item.allocated_block) for item in static.short_sources] == [
+        (Decimal(90), _source_blocks(returned)["timeline"])]
+
+
+def test_constant_candidate_function_matches_constant_map():
+    required = {"timeline": Decimal(850)}
+    args = dict(viewport_inline=1600, minimum_block=900, measurements=MEASUREMENTS)
+    assert resolve_content_block_extent(profile(), required_blocks=lambda manifest: required, **args) == (
+        resolve_content_block_extent(profile(), required_blocks=required, **args))
+
+
+def test_candidate_demand_reports_missing_source_at_the_existing_pointer():
+    with pytest.raises(LayoutError) as caught:
+        resolve_content_block_extent(
+            profile(), viewport_inline=1600, minimum_block=900, measurements=MEASUREMENTS,
+            required_blocks=lambda manifest: {"missing": Decimal(2)})
+    assert caught.value.diagnostic_id == "E_LAYOUT_DRAFT_AUTO_UNSUPPORTED"
+    assert caught.value.path == "/layoutManifest/sources/missing"

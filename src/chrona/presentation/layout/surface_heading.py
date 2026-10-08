@@ -37,9 +37,13 @@ def place_heading(request: SurfaceLayoutRequest, slot: SlotPlacement, measured: 
 
     # No kicker: retain the existing title/deck measurement and equations.
     title = source.lines[0] if source and source.lines else ""
-    text = [place("title", title, "heading",
-                  float(slot.bounds.block) + float(measurement.first_baseline or 0))]
     runs = measured.run_measurements.get("title", ())
+    # The selected title slot may have been measured with a caption reservation.
+    # Its run measurements remain the native title geometry; use those here so
+    # passing the reduced content viewport does not apply the caption offset twice.
+    baseline = (float(slot.bounds.block) + float(runs[0].baseline) if runs
+                else float(slot.bounds.block) + float(measurement.first_baseline or 0))
+    text = [place("title", title, "heading", baseline)]
     if source is not None and len(source.lines) > 1 and len(runs) > 1:
         text.append(place("subtitle", source.lines[1], runs[1].typography_role, max(
             float(slot.bounds.block) + float(runs[0].block_size) + float(runs[1].baseline),

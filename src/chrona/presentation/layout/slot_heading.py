@@ -13,12 +13,15 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from decimal import Decimal
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
-from chrona.presentation.layout.model import LayoutDecision, Measurement, Rect
+from chrona.presentation.layout.model import LayoutDecision, Measurement, Rect, ResolvedLayoutProfile
 from chrona.presentation.layout.sources import MeasuredSources
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, SlotPlacement, TextPlacement
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_role, place_text
+
+if TYPE_CHECKING:
+    from chrona.presentation.layout.surface_axis import AxisLabelTierGeometry
 
 SLOT_HEADING_SEMANTIC_ID = "slotHeading"
 SLOT_HEADING_PLACEMENT_PREFIX = "slot-heading:"
@@ -51,7 +54,22 @@ def _headed_content_slots(node: Mapping[str, Any]) -> tuple[str, ...]:
     return tuple(found)
 
 
-def reserve_slot_heading_blocks(measured: MeasuredSources, resolved_layout: Any, tokens: Any) -> MeasuredSources:
+def headed_slot_ids(resolved_layout: ResolvedLayoutProfile) -> frozenset[str]:
+    """Declared caption targets, including optional slots omitted from a completed manifest."""
+    found: set[str] = set()
+
+    def visit(node: Mapping[str, Any]) -> None:
+        if node.get("kind") == "slot" and "heading" in node:
+            found.add(str(node["id"]))
+        for child in node.get("children", ()):
+            visit(child)
+
+    visit(resolved_layout.profile["root"])
+    return frozenset(found)
+
+
+def reserve_slot_heading_blocks(measured: MeasuredSources, resolved_layout: Any, tokens: Any, *,
+                                content: Any) -> MeasuredSources:
     """Add a heading's block to the measurement of each content-sized slot that declares one.
 
     A slot sized by its content is allocated what its content measures, so the caption's line and gap are part
@@ -59,7 +77,7 @@ def reserve_slot_heading_blocks(measured: MeasuredSources, resolved_layout: Any,
     a declared heading.
     """
     sources = [source for source in _headed_content_slots(resolved_layout.profile["root"])
-               if source in measured.measurements]
+               if source in measured.measurements and source_has_content(content, source)]
     if not sources:
         return measured
     treatment = tokens.text_treatment(tokens.slot_heading_role())
@@ -91,11 +109,11 @@ def full_slot(original: SlotPlacement, completed_content: SlotPlacement, reserve
         return completed_content
     content = completed_content.bounds
     size = max(original.bounds.block_size, reserved + content.block_size)
-    return replace(completed_content, bounds=Rect(original.bounds.inline, original.bounds.block,
+    return replace(completed_content, bounds=Rect(content.inline, content.block - reserved,
                                                   original.bounds.inline_size, size))
 
 
-def _has_content(content: Any, source: str) -> bool:
+def source_has_content(content: Any, source: str) -> bool:
     """Whether the surface has anything to put in the slot of `source`: a caption over nothing is not drawn."""
     if source == "annotations":
         return bool(content.annotations)
@@ -105,11 +123,21 @@ def _has_content(content: Any, source: str) -> bool:
         return bool(content.legend_entries)
     if source == "summary":
         return bool(content.summary.runs)
+    if source == "group-details":
+        return bool(content.group_details)
+    if source == "milestones":
+        return bool(content.milestones)
+    if source == "observations":
+        return bool(content.observation_rows)
+    if source == "timeline-axis":
+        return bool(content.axis_tiers)
     return True
 
 
 def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
-                           decisions: Mapping[str, LayoutDecision]) -> SlotHeadings:
+                           decisions: Mapping[str, LayoutDecision],
+                           axis_label_tiers: tuple[AxisLabelTierGeometry, ...] = (),
+                           prepared: Mapping[str, SlotHeadings] | None = None) -> SlotHeadings:
     """Complete every declared heading of a Layout manifest, in the profile's order.
 
     The line box is `font size * line height` of the heading's role (`slot-heading`, else `text`), the gap under it
@@ -119,6 +147,9 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
     line and its gap, and below the band when the heading sits in it. A slot with no area, or too short for its
     heading, draws none and reserves nothing (`I_LAYOUT_SLOT_HEADING_OMITTED:<node>:too-small`). An absent
     optional slot has no decision and so no heading. A heading wider than its slot is cut with its source kept.
+    A source in `prepared` reuses its already completed batch, including an omitted heading's records. This
+    lets the axis's own caption establish its content viewport before native tier geometry exists, while the
+    final batch still follows global node order and never measures that caption twice.
     """
     declared = tuple(item for item in decisions.values() if item.heading is not None)
     if not declared:
@@ -138,32 +169,51 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
     reserve: dict[str, Decimal] = {}
     diagnostics: list[str] = []
     warnings: list[FitWarning] = []
+    copy_overrides = dict(request.surface_content.slot_heading_text)
     for decision in sorted(declared, key=lambda item: item.node_id):
         source = decision.source or ""
+        if prepared is not None and source in prepared:
+            completed = prepared[source]
+            text.extend(completed.text)
+            reserve.update(completed.reserve or {})
+            diagnostics.extend(completed.diagnostics)
+            warnings.extend(completed.warnings)
+            continue
         slot = slots.get(source)
         heading = decision.heading
         if slot is None or heading is None:
             continue
-        if not _has_content(request.surface_content, source):
+        if not source_has_content(request.surface_content, source):
             diagnostics.append(f"I_LAYOUT_SLOT_HEADING_OMITTED:{decision.node_id}:no-content")
             continue
         bounds = slot.bounds
         top, bottom = bounds.block, bounds.block + bounds.block_size
         line_top, content_start = top, top + line + gap
-        if heading.block == "header-row":
+        aligned_baseline: float | None = None
+        if heading.block in {"header-row", "axis-tier"}:
             beside = (axis is not None and axis.slot_id != slot.slot_id
                       and axis.bounds.block < bottom and top < axis.bounds.block + axis.bounds.block_size)
-            if beside:
+            if heading.block == "header-row" and beside:
                 band = axis.bounds
                 line_top = min(max(top, band.block + (band.block_size - line) / _TWO), bottom - line)
                 content_start = max(line_top + line + gap, band.block + band.block_size)
-            else:
+            elif heading.block == "header-row":
                 diagnostics.append(f"I_LAYOUT_SLOT_HEADING_NO_HEADER_ROW:{decision.node_id}")
+            else:
+                tier = min(axis_label_tiers, key=lambda item: (item.bounds.block, item.tier_index), default=None)
+                candidate_top = Decimal(str(tier.baseline_block)) - size if tier is not None else None
+                if (beside and candidate_top is not None and top <= candidate_top
+                        and candidate_top + line <= bottom):
+                    line_top, aligned_baseline = candidate_top, tier.baseline_block
+                    content_start = max(line_top + line + gap, axis.bounds.block + axis.bounds.block_size)
+                else:
+                    diagnostics.append(f"I_LAYOUT_SLOT_HEADING_NO_AXIS_TIER:{decision.node_id}")
         if bounds.inline_size <= 0 or content_start >= bottom:
             diagnostics.append(f"I_LAYOUT_SLOT_HEADING_OMITTED:{decision.node_id}:too-small")
             continue
         available = float(bounds.inline_size)
-        content, disposition = heading.text, "fit"
+        source_content = copy_overrides.get(decision.node_id, heading.text)
+        content, disposition = source_content, "fit"
         natural = measure_text_width(content, **shape)
         if natural > available:
             content, disposition = ellipsize_text(content, available_inline=available, **shape), "ellipsized"
@@ -176,11 +226,12 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
         text.append(place_text(
             placement_id=f"{SLOT_HEADING_PLACEMENT_PREFIX}{decision.node_id}", source_ref=source,
             content=content, overflow=disposition, inline=inline,
-            baseline_block=float(line_top) + float(size), typography_role=role,
+            baseline_block=(aligned_baseline if aligned_baseline is not None else float(line_top) + float(size)),
+            typography_role=role,
             theme_tokens=tokens, font_metrics=request.font_metrics,
             collision_region=f"slot-heading:{decision.node_id}",
             collision_domain=CollisionDomain("slot-heading", decision.node_id),
-            source_content=heading.text, semantic_id=SLOT_HEADING_SEMANTIC_ID, slot_id=slot.slot_id,
+            source_content=source_content, semantic_id=SLOT_HEADING_SEMANTIC_ID, slot_id=slot.slot_id,
             available_inline_start=float(bounds.inline), available_inline_size=available))
         reserve[source] = content_start - top
     return SlotHeadings(tuple(text), reserve, tuple(diagnostics), tuple(warnings))

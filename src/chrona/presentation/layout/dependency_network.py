@@ -1,7 +1,7 @@
 """Deterministic, measured placement closure for a dependency-network View."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from decimal import Decimal
 from typing import Any, Mapping
 
@@ -13,6 +13,8 @@ from chrona.presentation.layout.routing import place_relation_route, relation_ro
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun
 from chrona.presentation.layout.canvas_texture import CanvasTexture, complete_canvas_texture
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, RelationPlacement, TextPlacement, intersects
+from chrona.presentation.layout.surface_quality import SlotPlacement, SurfaceLayoutRequest
+from chrona.presentation.layout.slot_heading import complete_slot_headings, content_slot
 
 
 @dataclass(frozen=True)
@@ -43,6 +45,7 @@ class DependencyNetworkLayout:
     patterns: tuple[PatternedPlacement, ...] = ()
     texture: CanvasTexture | None = None
     aligned_strokes: tuple[AlignedStrokePlacement, ...] = ()
+    diagnostics: tuple[str, ...] = ()
 
 
 def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bounds: Rect,
@@ -51,7 +54,8 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bound
                                       max_bends: int = 4,
                                       max_detour_ratio: float = 2.0,
                                       canvas_bounds: Rect | None = None,
-                                      theme_tokens: Any | None = None) -> DependencyNetworkLayout:
+                                      theme_tokens: Any | None = None,
+                                      route_bounds: Rect | None = None) -> DependencyNetworkLayout:
     """Place a typed View graph without reading Project, View syntax, or Scene state."""
     nodes, edges = tuple(network.nodes), tuple(network.edges)
     ids = {node.object_id for node in nodes}
@@ -82,7 +86,8 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bound
     requested_canvas = canvas_bounds or _union(title_bounds, bounds)
     canvas = _completed_canvas(requested_canvas, title_bounds, tuple(node.bounds for node in placed),
                                tuple(item.bounds for item in text))
-    relations, route_warnings = _route_edges(edges, placed, canvas, max_bends, max_detour_ratio)
+    route_region = _expand_route_bounds(route_bounds, placed) if route_bounds is not None else canvas
+    relations, route_warnings = _route_edges(edges, placed, route_region, max_bends, max_detour_ratio)
     patterns: tuple[PatternedPlacement, ...] = ()
     optional_pattern = getattr(theme_tokens, "optional_pattern", None)
     if callable(optional_pattern):
@@ -116,6 +121,54 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bound
         stroke_shapes = (texture.shape, *stroke_shapes)
     strokes = complete_aligned_strokes((), stroke_shapes, (), theme_tokens)
     return DependencyNetworkLayout(tuple(placed), text, relations, canvas, warnings, patterns, texture, strokes)
+
+
+def compose_dependency_network_surface(request: SurfaceLayoutRequest) -> DependencyNetworkLayout:
+    """Complete native title/network headings and graph geometry from one closed request."""
+    manifest = request.layout_manifest
+    network = getattr(request.projection, "network", None)
+    if manifest is None or network is None:
+        raise LayoutError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection/network")
+    decisions = {item.source: item for item in manifest.decisions
+                 if item.kind == "slot" and item.source in {"title", "network"}}
+    if "title" not in decisions or "network" not in decisions:
+        raise LayoutError("E_PRESENTATION_PRIMITIVE_MISSING", "/layoutManifest/sources/network")
+    slots = {source: SlotPlacement(item.node_id, source, item.bounds,
+                                   item.priority or "required", item.overflow or "visible-overflow")
+             for source, item in decisions.items()}
+    headings = complete_slot_headings(request=request, slots=slots, decisions=decisions)
+    title_reserve = headings.reserved("title")
+    network_reserve = headings.reserved("network")
+    title_slot = content_slot(slots["title"], title_reserve)
+    network_slot = content_slot(slots["network"], network_reserve)
+    route_bounds = None
+    if network_reserve:
+        # Routes are contained in the network's content viewport, with its lower edge
+        # extended only for naturally overflowing graph nodes. The complete canvas is
+        # still allowed to include the caption and therefore remains the Scene canvas.
+        route_bounds = Rect(network_slot.bounds.inline, network_slot.bounds.block,
+                            network_slot.bounds.inline_size,
+                            max(network_slot.bounds.block_size,
+                                manifest.viewport.block + manifest.viewport.block_size
+                                - network_slot.bounds.block))
+    placed = compose_dependency_network_layout(
+        network, title_bounds=title_slot.bounds, bounds=network_slot.bounds,
+        measured_sources=request.measured_sources,
+        flow_direction=manifest.dependency_network_flow_direction,
+        max_bends=manifest.relation_max_bends,
+        max_detour_ratio=manifest.relation_max_detour_ratio,
+        canvas_bounds=manifest.viewport, theme_tokens=request.theme_tokens,
+        route_bounds=route_bounds)
+    # Source vocabulary is not slot identity. Close native ownership against the same
+    # manifest slots as captions before Scene receives any completed primitive.
+    placed = replace(placed,
+        nodes=tuple(replace(node, slot_id=slots["network"].slot_id) for node in placed.nodes),
+        text=tuple(replace(item, slot_id=slots[item.slot_id].slot_id) for item in placed.text),
+        relations=tuple(replace(item, slot_id=slots["network"].slot_id) for item in placed.relations))
+    if headings.text:
+        placed = replace(placed, text=(*headings.text, *placed.text))
+    return replace(placed, fit_warnings=(*headings.warnings, *placed.fit_warnings),
+                   diagnostics=headings.diagnostics)
 
 
 def _title_measurement(measured_sources: MeasuredSources) -> MeasuredTextRun:
@@ -274,6 +327,17 @@ def _completed_canvas(requested: Rect, title_bounds: Rect, nodes: tuple[Rect, ..
         inline_end = max(inline_end, item.inline + item.inline_size)
         block_end = max(block_end, item.block + item.block_size)
     return Rect(requested.inline, requested.block, inline_end - requested.inline, block_end - requested.block)
+
+
+def _expand_route_bounds(requested: Rect, nodes: list[NetworkNodePlacement]) -> Rect:
+    """Grow a restricted route viewport for natural node overflow, never upward."""
+    inline_end = max(requested.inline + requested.inline_size,
+                     *(node.bounds.inline + node.bounds.inline_size for node in nodes))
+    block_end = max(requested.block + requested.block_size,
+                    *(node.bounds.block + node.bounds.block_size for node in nodes))
+    inline_start = min(requested.inline, *(node.bounds.inline for node in nodes))
+    return Rect(inline_start, requested.block, inline_end - inline_start,
+                block_end - requested.block)
 
 
 def _union(left: Rect, right: Rect) -> Rect:

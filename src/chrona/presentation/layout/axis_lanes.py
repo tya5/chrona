@@ -11,6 +11,15 @@ from chrona.presentation.layout.text import measure_text_width, metric_for_role
 from chrona.presentation.model.axis_names import axis_name_table
 
 
+def axis_tick_requirement(tokens: Any, role: str, tier_index: int) -> Decimal | None:
+    """Measure a declared grid tick independently of any candidate host capacity."""
+    declared = tokens.optional_number(role, "tickLength")
+    if declared is not None and not declared > 0:
+        raise LayoutError("E_PRESENTATION_AXIS_INVALID", f"/view/body/axis/tiers/{tier_index}",
+                          detail=f"tick-length:{role}")
+    return declared
+
+
 @dataclass(frozen=True)
 class SecondaryPlan:
     """The measured pieces of one tier's secondary label (#493); everything is Theme- and table-derived."""
@@ -100,6 +109,28 @@ def plan_label_lanes(tiers: Any, tokens: Any, font_metrics: Any) -> LabelLanePla
     return LabelLanePlan(declared_lanes, lane_by_unit, lane_cursor)
 
 
+@dataclass(frozen=True)
+class BandLanePlan:
+    """Unshared multi-band lanes; shared label lanes overlay this independent stack."""
+
+    stacked: dict[int, tuple[float, float]]
+    total: float
+
+
+def plan_band_stack(tiers: Any, tokens: Any, labels: LabelLanePlan) -> BandLanePlan:
+    """Measure the same band offsets for source demand and strict native placement."""
+    stacked = {}
+    cursor = 0.0
+    if sum(tier.role == "band" for tier in tiers) > 1:
+        for tier_index, tier in enumerate(tiers):
+            if tier.role == "band" and tier.unit not in labels.by_unit:
+                treatment = tokens.text_treatment(tier.typography_role or "axis")
+                height = float(treatment.font_size) * float(treatment.line_height) + float(GEOMETRY_TOLERANCE)
+                stacked[tier_index] = (cursor, height)
+                cursor += height
+    return BandLanePlan(stacked, cursor)
+
+
 def derived_axis_block_size(tiers: Any, tokens: Any, font_metrics: Any) -> Decimal | None:
     """The axis block size a Theme may leave unbound: the sum of the axis lanes (#1150).
 
@@ -113,12 +144,6 @@ def derived_axis_block_size(tiers: Any, tokens: Any, font_metrics: Any) -> Decim
                         for tier in tiers):
         return None
     labels = plan_label_lanes(tiers, tokens, font_metrics)
-    bands = [tier for tier in tiers if tier.role == "band"]
-    band_stack = 0.0
-    if len(bands) > 1:
-        for tier in bands:
-            if tier.unit not in labels.by_unit:
-                treatment = tokens.text_treatment(tier.typography_role or "axis")
-                band_stack += float(treatment.font_size) * float(treatment.line_height) + float(GEOMETRY_TOLERANCE)
-    total = max(labels.total, band_stack)
+    bands = plan_band_stack(tiers, tokens, labels)
+    total = max(labels.total, bands.total)
     return Decimal(str(total)) if total > 0 else None

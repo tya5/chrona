@@ -92,3 +92,10 @@ $defs:
     examples: ["sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", null]
     type: [string, "null"]
     pattern: "^sha256:[0-9a-f]{64}$"
+  literalCaption:
+    description: "Literal caption copy: one to eighty characters with no control character; the Theme role's text transform styles it."
+    examples: [Notes]
+    type: string
+    minLength: 1
+    maxLength: 80
+    pattern: "^[^\\u0000-\\u001f\\u007f]+$"

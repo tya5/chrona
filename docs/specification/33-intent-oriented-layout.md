@@ -108,27 +108,44 @@ distance-token rules of section 5. Only the table-timeline surface draws frames;
 surface ignores the declaration.
 
 **Slot headings (#1064, [work record](../planning/active/issue-1065-1064-field-group-indent-and-slot-heading-2026-10-04.md)).**
-A slot whose `source` is `annotations`, `notes`, `legend` or `summary`, and an override of such a slot, may
-declare `heading: {text, align, block}`: a caption over the slot. `text` is literal presentation copy (one to
+A slot whose `source` is any enumerated slot source, and an override of such a slot, may
+declare `heading: {text, align, block}`: a caption over the slot. This includes the native title, table,
+timeline, timeline-axis, dependency-network, group-details, milestones and observations owners as well as
+annotations, notes, legend and summary. `text` is literal presentation copy (one to
 eighty characters, no control character; the Theme role's text transform styles it, so a profile holds "Notes"
 and a Theme makes it "NOTES"); `align` is `start` (default), `center` or `end` within the slot's inline
-extent; `block` is `top` (default) or `header-row`. The engine records the declaration with the slot's bounds;
+extent; `block` is `top` (default), `header-row` or `axis-tier`. The engine records the declaration with the slot's bounds;
 Layout completes one Text `slot-heading:<node id>` in the Theme text role `slot-heading` (the role `text` when
 the Theme declares none), inside the slot. The line box is the role's font size times line height and the gap
 under it half the font size. At `top` the line starts at the slot's block start. At `header-row` the line box
 is centred in the `timeline-axis` slot's band when that band's block extent intersects the slot's (it lies
 beside the slot; otherwise `top` applies and Layout records `I_LAYOUT_SLOT_HEADING_NO_HEADER_ROW:<node>`).
-The slot's content (annotation boxes and leaders, note lines, legend entries, summary runs) starts below the
-line and its gap, and below the band when the caption sits in it, so nothing lies under the caption; the slot
-keeps its full bounds. A content-sized slot (`blockSize: content`) measures the caption's block into its
-size; a fixed or filling slot gives the caption part of its allocation. A caption never moves another slot.
+At `axis-tier`, the caption baseline equals the primary baseline of the uppermost horizontal labels tier
+(completed block position, then tier index) in that neighboring axis. Layout exports its measured tier
+geometry independently of visible or thinned labels; band-only and rotated tiers are not targets. The
+content starts below the whole axis band and any larger caption line/gap. Without a compatible neighboring
+tier, or when that aligned caption line cannot fit inside its slot, `top` applies and Layout records
+`I_LAYOUT_SLOT_HEADING_NO_AXIS_TIER:<node>`; the baseline is never clamped while claiming tier alignment.
+The slot's content starts below the line and its gap, and below the band when the caption sits in it, so nothing
+lies under the caption; the slot keeps its full bounds. The native owner then lays out its content in that
+reduced viewport: title runs, table/timeline rows, axis tiers, dependency-network geometry and detail-panel
+content each retain their existing owner and placement rules. A content-sized slot (`blockSize: content`)
+measures the caption's block into its size only when its selected source has content; intrinsic measurement
+and caption completion use the same semantic presence decision. For shared table/timeline rows, the native
+table-header and axis prefix are measured for the exact candidate before allocation, and the row floor starts
+after the greater of that prefix and the caption-reduced content start. A fixed or filling slot gives the
+caption part of its allocation. A caption never moves another slot.
 A slot with no area, one too short for its caption, or one whose source has no content draws no caption and
 reserves nothing (`I_LAYOUT_SLOT_HEADING_OMITTED:<node>:<too-small|no-content>`); an absent optional slot has
 no decision and so no caption. A caption wider than the slot is cut with its source kept
 (`W_LAYOUT_TEXT_ELLIPSIZED`). A derived profile overrides the copy with `overrides: {<slot>: {heading: ...}}`
-(the whole declaration is replaced); a View carries no heading text. Any other source rejects a heading
-(`E_LAYOUT_SLOT_HEADING_SOURCE` at `/root/.../heading`), and a malformed heading is `E_LAYOUT_SCHEMA` at its
-exact pointer. Absent declarations leave output and manifest bytes unchanged.
+(the whole declaration is replaced). A View may override only the caption copy with `slotHeadingText`
+(Spec 06 §7.5), keyed by the resolved slot node ID. This leaves the profile, hash, allocation, alignment,
+block placement and caption reservation unchanged; Layout measures and completes the selected copy.
+All enumerated slot sources accept a heading; a malformed heading is `E_LAYOUT_SCHEMA` at its exact pointer.
+For `timeline-axis`, semantic presence is its normalized nonempty axis-tier declaration; an empty axis omits
+the heading and adds no content-sized caption reserve.
+Absent declarations leave output and manifest bytes unchanged.
 
 `facet` and `repeat` are not M24 layout operators. View may expose a typed repeated
 source, which Layout can arrange with `grid` or `flow`; Layout cannot partition facts.
@@ -385,6 +402,7 @@ These private modules divide Layout implementation only; they do not change auth
 | `surface_routes` | Place dependency paths/ports and relation labels. |
 | `surface_annotations` | Place annotation boxes, text, visuals and connectors. |
 | `surface_legend` | Place legend entries and role-derived swatches. |
+| `surface_observations` | Measure and place native observation tables, attributed source lines and row cells inside their content slot. |
 | `surface_heading` | Project closed heading measurements and baselines into title-slot text placements. |
 | `surface_content` | Place detail, summary, notes and footer source content. |
 | `surface_backgrounds` | Complete source-bound row/group/axis/calendar background geometry from completed extents and overlay intervals. |
@@ -394,6 +412,7 @@ These private modules divide Layout implementation only; they do not change auth
 | `surface_completion` | Complete slot ownership, overflow evidence, canvas bounds, lane row anchors and catalogue patterns for final Rect shapes and span marks, and assemble the final placement. |
 | `surface_geometry` | Pure rectangle/date conversions and shared precision/paint-order constants. |
 | `surface_composer` | Invoke typed phase batches in order and construct final Layout output. |
+| `surface_preparation` | Close candidate-specific inline, heading, axis, table-header and shared row-floor geometry before row placement; derive natural demand and final host admission from the same measured prefix. |
 
 Each module owns its named concern and reads closed inputs plus preceding typed Layout results; shared mutable surface state is limited to the obstacle index. The policy coordinators use private index copies: `surface_lane_route_plan` returns only rehearsed corridors, while `surface_route_label_plan` returns the selected completed batches and their matching index under the bounded recovery rule below. `surface_legend` and `surface_content` complete named sources in allocated slots outside obstacle-candidate phases; fixed host backgrounds complete when their extents are known. The #466 phase order governs obstacle-sensitive candidates, not these placements. Ownership names guide internal issue coordination and are not public import contracts. Module moves themselves preserve behavior and introduce no placement policy.
 
@@ -652,6 +671,10 @@ actually satisfies every declared content-host requirement. A fixed/capped
 profile that cannot do so retains the requested finite allocation and the
 ordinary visible fallback; a speculative larger canvas without added host
 capacity is not a valid reallocation.
+Footer successor completion uses every completed native footer line,
+including wrapped notes, preserves the allocated successor gap, and occurs
+before annotation placement; no-growth or inline-disjoint successors remain
+unchanged.
 
 Draft ingress defaults to an inline extent of 1600 and a content-resolved
 block extent (`1600xauto` in the CLI). Draft closure still carries a finite
