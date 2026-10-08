@@ -73,8 +73,8 @@ class SceneBuildInput:
 
 
 _REQUIRED_SOURCES = {
-    "table-timeline": frozenset(("title", "table", "timeline", "timeline-axis")),
-    "dependency-network": frozenset(("title", "network")),
+    "table-timeline": frozenset(("table", "timeline", "timeline-axis")),
+    "dependency-network": frozenset(("network",)),
 }
 
 
@@ -430,7 +430,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                             item.priority, item.overflow)
                   for item in placed_surface.slots)
     by_source = {slot.source: slot for slot in slots}
-    table, timeline, axis, title_slot = (by_source[name] for name in ("table", "timeline", "timeline-axis", "title"))
+    table, timeline, axis = (by_source[name] for name in ("table", "timeline", "timeline-axis"))
     review_rows = composition.review_rows
     rows = tuple(
         SceneRow(placement.object_id, placement.group_id,
@@ -574,7 +574,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                     paint_order=placed.paint_order, part_order_step=0))
     if "kicker" in layout_text:
         emit_semantic_text("kicker", "kickerText", value.theme_tokens.title_paint_role("kicker"))
-    emit_semantic_text("title", "titleText", value.theme_tokens.title_paint_role())
+    if "title" in layout_text:
+        emit_semantic_text("title", "titleText", value.theme_tokens.title_paint_role())
     if "subtitle" in layout_text:
         emit_semantic_text("subtitle", "subtitleText", value.theme_tokens.title_paint_role("subtitle"))
     for column in value.surface_content.table_columns:
@@ -1105,10 +1106,14 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
     node_binding = semantic_binding("networkNode")
     edge_bindings = {"dependency": semantic_binding("networkEdge"),
                      "dependency-critical": semantic_binding("criticalEdge")}
+    heading_part_slots = {item.node_id for item in value.layout_manifest.decisions
+                          if item.kind == "slot" and item.source in {
+                              "heading.title", "heading.kicker", "heading.subtitle"}}
     def emit_text(text: Any) -> None:
         binding = semantic_binding(text.semantic_id)
-        paint_role = (value.theme_tokens.title_paint_role()
-                      if text.semantic_id == "titleText" else binding.scene_role)
+        heading_roles = {"titleText": "heading", "kickerText": "kicker", "subtitleText": "subtitle"}
+        paint_role = (value.theme_tokens.title_paint_role(heading_roles[text.semantic_id])
+                      if text.semantic_id in heading_roles else binding.scene_role)
         layout = TextLayout((float(text.bounds.inline), float(text.bounds.block),
                              float(text.bounds.inline_size), float(text.bounds.block_size)),
                             text.baseline or (float(text.bounds.inline), float(text.bounds.block)),
@@ -1116,12 +1121,14 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
                             text.line_height, text.font_asset_identity, text.letter_spacing,
                             text.text_transform, text.numeric_spacing, text.orientation, text.rotation_degrees,
                             text.horizontal_scale)
-        primitives.append(ScenePrimitive(text.placement_id, PrimitiveKind.TEXT, text.source_ref, "network",
+        primitives.append(ScenePrimitive(text.placement_id, PrimitiveKind.TEXT, text.source_ref,
+                                         text.slot_id if text.slot_id in heading_part_slots else "network",
                                          binding.purpose, paint_role, layout.bounds, text=text.content,
                                          baseline=layout.baseline, text_layout=layout,
                                          paint_order=text.paint_order, host_placement_id=text.host_placement_id))
-    title_text = next(item for item in placed.text if item.placement_id == "title")
-    emit_text(title_text)
+    title_text = next((item for item in placed.text if item.placement_id == "title"), None)
+    if title_text is not None:
+        emit_text(title_text)
     for relation in placed.relations:
         binding = edge_bindings[relation.semantic_id]
         primitives.append(ScenePrimitive(f"network-edge:{relation.relation_id}", PrimitiveKind.PATH,

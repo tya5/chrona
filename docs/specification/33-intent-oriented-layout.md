@@ -158,6 +158,29 @@ For `timeline-axis`, semantic presence is its normalized nonempty axis-tier decl
 the heading and adds no content-sized caption reserve.
 Absent declarations leave output and manifest bytes unchanged.
 
+### Heading source claims (#1239)
+
+A slot source of `heading` is a whole-block alias for the existing `title` source. It is
+canonicalized to `title` after profile validation, so the resolved source identity and
+whole-heading output remain unchanged. `heading.title`, `heading.kicker`, and
+`heading.subtitle` select one part of the View-resolved heading and retain that part's
+existing typography role. A whole-block claim (`title` or `heading`) claims all three
+parts; an individual source claims only its named part. No part may be claimed twice.
+Duplicate or overlapping claims, including claims introduced through resolved base
+overrides, fail with `E_LAYOUT_SCHEMA` at the later slot's `/source` pointer and name
+the already-claiming slot and part.
+
+Heading-part sources remain valid even when their optional content is empty; required
+priority does not synthesize copy. Layout omits a placement for an empty part. If a
+nonempty part has no slot claim, Layout omits it and records
+`I_LAYOUT_HEADING_PART_OMITTED:<part>`; an empty unclaimed part is silent. The legacy
+`title` whole-block claim remains the default and keeps its prior composition path.
+Only claimed parts require typography measurement; unclaimed copy remains available
+for omission notices without requiring an unused role. Dependency-network's legacy
+whole-title host still ignores View heading templates (Spec 06); a profile without
+that host opts into the View-resolved parts. Part placements carry their measured
+bounds, baseline, typography and explicit slot owner directly into Scene.
+
 `facet` and `repeat` are not M24 layout operators. View may expose a typed repeated
 source, which Layout can arrange with `grid` or `flow`; Layout cannot partition facts.
 

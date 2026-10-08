@@ -42,6 +42,10 @@ class Slot(str, Enum):
     """Every surface region a Layout Profile may bind content to."""
 
     TITLE = "title"
+    HEADING = "heading"
+    HEADING_TITLE = "heading.title"
+    HEADING_KICKER = "heading.kicker"
+    HEADING_SUBTITLE = "heading.subtitle"
     TABLE = "table"
     TIMELINE = "timeline"
     TIMELINE_AXIS = "timeline-axis"
@@ -55,7 +59,7 @@ class Slot(str, Enum):
     NOTES = "notes"
 
 
-REQUIRED_SLOTS = (Slot.TITLE, Slot.TABLE, Slot.TIMELINE, Slot.TIMELINE_AXIS)
+REQUIRED_SLOTS = (Slot.TABLE, Slot.TIMELINE, Slot.TIMELINE_AXIS)
 
 
 @dataclass(frozen=True)

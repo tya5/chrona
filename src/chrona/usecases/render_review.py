@@ -308,13 +308,16 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         summary=summary, locale=environment.locale, color_scale=color_scale, table=table_content,
         group_tints=group_tints, annotation_kind_colors=_annotation_kind_colors(theme),
         annotation_kind_also=_annotation_kind_also(theme))
+    heading_content = (compose_heading(view, project, actual_observations, environment.locale)
+                       if view.surface == "table-timeline" else None)
     source_inputs = _source_inputs(project, view, projection, summary,
                                    annotation_input=_annotation_source_input(
                                        view, visual_requests, icon_assets, theme),
                                    table=table_content, content=selected_content,
                                    # A dependency network draws its own title line and ignores `heading` (#991).
-                                   heading=(compose_heading(view, project, actual_observations, environment.locale)
-                                            if view.surface == "table-timeline" else None))
+                                   heading=(heading_content if view.surface == "table-timeline" else None),
+                                   view_heading=heading_content or HeadingContent(
+                                       str(project.get("project", {}).get("title", ""))))
     required_metrics = (("timeline.groupHeader.blockSize",)
                         if view.grouping is not None and view.grouping.presentation == "header" else ())
     # The legend slot is measured as the legend Layout will draw: the same entries, the same
@@ -326,6 +329,11 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         resolved_layout = resolve_layout_profile(layout, available_sources=set(source_inputs), theme=theme)
     except LayoutError as error:
         resolved_layout, layout_error = None, error
+    claimed_sources = (_layout_slot_sources(resolved_layout.profile["root"])
+                       if resolved_layout is not None else frozenset())
+    if view.surface == "dependency-network" and resolved_layout is not None and "title" not in claimed_sources:
+        source_inputs.update(_heading_part_sources(
+            compose_heading(view, project, actual_observations, environment.locale)))
     try:
         source_inputs["legend"] = legend_source_input(
             selected_content.legend_entries,
@@ -333,8 +341,14 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             mark_block_size=float(resolve_theme_metrics(theme)["timeline.mark.blockSize"]),
             font_metrics=font_metrics,
             arrangement=legend_arrangement(resolved_layout) if resolved_layout is not None else LegendArrangement())
-        measured = measure_sources(source_inputs, theme, font_metrics=font_metrics,
+        measurement_inputs = {source: value for source, value in source_inputs.items()
+                              if (not source.startswith("heading.") or source in claimed_sources)
+                              and (source != "title" or "title" in claimed_sources)}
+        measured = measure_sources(measurement_inputs, theme, font_metrics=font_metrics,
                                    required_metrics=required_metrics)
+        # Omitted content remains available for notices, without demanding unused
+        # typography or influencing the legacy aggregate measurements.
+        measured = replace(measured, inputs=source_inputs)
     except FontMetricsError as error:
         raise _font_failure(error) from error
     if layout_error is not None:
@@ -808,7 +822,8 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
                    summary: SummaryContent, annotation_input: SourceInput | None = None, *,
                    content: SurfaceContentInput,
                    table: TableContent | None = None,
-                   heading: HeadingContent | None = None) -> dict[str, SourceInput]:
+                   heading: HeadingContent | None = None,
+                   view_heading: HeadingContent | None = None) -> dict[str, SourceInput]:
     """Declare what each slot will hold, for measurement before layout.
 
     The `legend` entry is a placeholder: Layout measures the legend from the entries it
@@ -841,9 +856,29 @@ def _source_inputs(project: dict[str, Any], view: ViewInput, projection: Any,
         "legend": SourceInput(("legend",), typography_role="legend"),
         "notes": SourceInput(notes or ("notes",), typography_role="annotation"),
     }
+    if view_heading is not None:
+        sources.update(_heading_part_sources(view_heading))
     sources.update(detail_source_inputs(content))
     if annotation_input is not None:
         sources["annotations"] = annotation_input
+    return sources
+
+
+def _layout_slot_sources(node: Mapping[str, Any]) -> frozenset[str]:
+    own = frozenset((node["source"],)) if node.get("kind") == "slot" else frozenset()
+    return own.union(*(_layout_slot_sources(child) for child in node.get("children", ())))
+
+
+def _heading_part_sources(heading: HeadingContent) -> dict[str, SourceInput]:
+    sources = {}
+    for part, text, role in (("title", heading.title, "heading"),
+                             ("kicker", heading.kicker, "kicker"),
+                             ("subtitle", heading.subtitle, "subtitle")):
+        source_ref = f"heading.{part}"
+        sources[source_ref] = SourceInput(
+            lines=(text,) if text else (), typography_role=role,
+            runs=(SourceTextRun(text, role, source_ref),) if text else (),
+            content_present=bool(text), run_flow="block")
     return sources
 
 
