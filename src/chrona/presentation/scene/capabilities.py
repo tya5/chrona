@@ -138,7 +138,7 @@ _CANVAS_PAINT = frozenset(("fill", "opacity", "gradientStart", "gradientEnd", "g
 _PATTERNED_RECT_PAINT = _RECT_PAINT | frozenset(("pattern",))
 _LAYOUT_TYPOGRAPHY = _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("writingMode",))
 _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | _GROUP_TAB | frozenset((
-    "cellGap", "cellCornerRadius", "cellCornerChamfer", "frameCornerRadius", "chipPadding", "chipMinBlockSize", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach",
+    "cellGap", "cellCornerRadius", "cellCornerChamfer", "frameCornerRadius", "glyphSize", "glyphPitch", "chipPadding", "chipMinBlockSize", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach",
     "symbolHeight", "symbolOffset", "cornerRadius", "strokeAlign", "align", "barWidth", "blockGap", "inlineGap",
     "progressInset", "summaryBarHeight", "swatchInlineSize", "swatchGap", "swatchBlockSize", "pointSwatchSize", "annotationContainer", "marker", "symbol", "edge",
     "stampPlacement", "coneSpread", "coneExtent",
@@ -327,6 +327,9 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              scene_kinds=frozenset(("Rect",)))
     register("region-frame", "Layout region frame and Scene Rect", _PATTERNED_RECT_PAINT | frozenset(("frameCornerRadius",)),
              scene_kinds=frozenset(("Rect",)))
+    register("frame-glyph", "Layout region frame glyph run and Scene Symbol",
+             _ARTWORK_PAINT | frozenset(("symbol", "glyphSize", "glyphPitch")),
+             scene_kinds=frozenset(("Symbol",)))
     register("legend-swatch", "Layout legend swatch size and gap",
              frozenset(("swatchInlineSize", "swatchGap", "swatchBlockSize", "pointSwatchSize")))
     register("baseline", "Retired Theme paint alias", frozenset())
@@ -348,6 +351,8 @@ def theme_role_contract(role: str) -> RolePropertyContract | None:
     # The suffix is the shared common-v0.1 slug lexeme selected by frame.paint.
     if fullmatch(r"region-frame-[a-z][a-z0-9-]*", role):
         return _ROLE_PROPERTY_CONTRACTS["region-frame"]
+    if fullmatch(r"frame-glyph-[a-z][a-z0-9-]*", role):
+        return _ROLE_PROPERTY_CONTRACTS["frame-glyph"]
     if is_annotation_artwork_role(role):
         return _ROLE_PROPERTY_CONTRACTS["annotation-artwork"]
     return _ROLE_PROPERTY_CONTRACTS.get(role)
