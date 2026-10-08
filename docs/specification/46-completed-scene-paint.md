@@ -307,8 +307,11 @@ candidate tile copies per subject/layer; unreadable geometry/paint or exceeding
 that bound fails closed as `E_SCENE_CONTRAST_GROUND_UNSUPPORTED`. Findings use
 `overlay-blend` and the last applicable overlay identity, with sampled colours.
 Enumerate candidates by intersecting the closed subject bounds with the canvas
-clip, inverse-rotating its four corners about the completed pattern origin,
-and taking the resulting tile-space extents. For each axis of tile extent `T`,
+clip and inverting the completed tile transform for its four corners. With
+tile centre `c=(tileInlineSize/2, tileBlockSize/2)` and rotation `R`, the
+forward transform is `origin + c + R(p-c)` and the inverse is
+`c + R^-1(p-origin-c)`, matching existing SVG translate/rotate serialization.
+Take the resulting tile-space extents. For each axis of tile extent `T`,
 indices run inclusively from `ceil(min/T)-1` through `floor(max/T)`; thus seam
 touch includes both neighbours. The cap counts the Cartesian product before
 ink rejection; 4096 is allowed, 4097 is not. Actual contact uses transformed ink
