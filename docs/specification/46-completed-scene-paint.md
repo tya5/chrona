@@ -300,6 +300,14 @@ contracts; it is not a universal every-pixel proof. Do not Cartesian-mix
 independent overlay colour lists or treat a later overlay as an earlier host.
 Decoration tint retains its dominant-substrate rule; no legibility floor changes.
 
+Periodic stroke contact uses the flattened path's half-width segment bodies,
+declared butt/round/square endpoint caps, and bevel/round/miter joins, clipped
+to the tile and canvas. Miter contact uses the offset-line intersection within
+ten stroke widths of the join; an intersection outside that bound is replaced
+by a local disk of that radius as a conservative alternative covering the
+admitted miter limits up to ten (section 7). This is an observer envelope, not
+an adapter miter-limit setting. It changes no annotation/frame contact rule.
+
 Pattern contact uses completed tile primitives, repeat phase, rotation and clip,
 not the full canvas bounds. Overlapping primitives in one tile paint the same
 opaque ink before the layer opacity is applied once. Bound contact work to 4096
