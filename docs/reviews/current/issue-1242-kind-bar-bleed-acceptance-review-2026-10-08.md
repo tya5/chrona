@@ -2,8 +2,9 @@
 
 <!-- chrona:literal-acceptance/v1 -->
 
-Implementation: `7bf4f4265cdd9c13f1fc6f7460d7942fd81480f3`, based on ready
-main `d5bdf0be26c128b76baf87d59b80189b7d87b3cb`.
+Implementation: `7bf4f4265cdd9c13f1fc6f7460d7942fd81480f3`; ready-base merge
+`d1e97bb9b389c512524668ca7f9b033c0d8c3843` incorporates main
+`3e7a57db1cf4b148b6ee6d4c896708f86f9cea69`.
 [Living design, architecture review and plan](https://github.com/tya5/chrona/issues/1242#issuecomment-6060806272).
 Publication, exact-head CI/shared snapshot and exact published-main three-OS
 release remain pending. Do not close yet.
