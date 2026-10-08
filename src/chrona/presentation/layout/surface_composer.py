@@ -35,7 +35,7 @@ from chrona.presentation.layout.surface_annotations import SurfaceAnnotationCont
 from chrona.presentation.layout.surface_table import (
     compose_table,
 )
-from chrona.presentation.layout.surface_heading import place_heading
+from chrona.presentation.layout.surface_heading import place_surface_headings
 from chrona.presentation.layout.surface_groups import (compose_group_presentation)
 from chrona.presentation.layout.surface_backgrounds import (
     compose_calendar_backgrounds, compose_group_tabs, compose_row_group_backgrounds, replace_group_header_band,
@@ -97,8 +97,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     # Caption reservations precede native content, while primitive order remains title/detail/captions.
     axis_batch = complete_axis_plot(prepared_axis, base.plot)
     heading_slot_blocks = {source: by_source[source].bounds.block for source in headings.reserve or {}}
-    text = list(place_heading(request, content_slot(by_source["title"], headings.reserved("title")),
-                              measured_sources))
+    heading_batch = place_surface_headings(
+        request, {source: content_slot(slot, headings.reserved(source))
+                  for source, slot in by_source.items()}, measured_sources)
+    text = list(heading_batch.text)
     footer_provisional_slots = slots
     detail_sources = {"group-details", "milestones", "observations"}
     detail_content_slots = tuple(content_slot(slot, headings.reserved(slot.source_ref))
@@ -133,6 +135,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     axis_band_targets = axis_batch.band_targets
     diagnostics = list(axis_batch.diagnostics)
     diagnostics.extend(headings.diagnostics)
+    diagnostics.extend(heading_batch.diagnostics)
     visible_label_overflows = list(axis_batch.visible_label_overflows)
     calendar_intervals = axis_batch.calendar_intervals
     contract = request.presentation_contract

@@ -55,7 +55,7 @@ class Slot(str, Enum):
     NOTES = "notes"
 
 
-REQUIRED_SLOTS = (Slot.TITLE, Slot.TABLE, Slot.TIMELINE, Slot.TIMELINE_AXIS)
+REQUIRED_SLOTS = (Slot.TABLE, Slot.TIMELINE, Slot.TIMELINE_AXIS)
 
 
 @dataclass(frozen=True)
