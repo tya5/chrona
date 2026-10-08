@@ -230,6 +230,16 @@ properties:
                           right: {type: number, minimum: 0}
                           bottom: {type: number, minimum: 0}
                           left: {type: number, minimum: 0}
+                      contentPaddingEm:
+                        description: "Padding of an artwork container's note text measured from the artwork's inner edge (top/right/bottom/left, in em): the content inset on a side is that side's widest artwork fixed border (sliceInsets x unitEm) plus this padding, so swapping the glyph keeps the padding (#1150). Used instead of contentInsetEm, on a rectangle outline with artwork."
+                        type: object
+                        additionalProperties: false
+                        required: [top, right, bottom, left]
+                        properties:
+                          top: {type: number, minimum: 0}
+                          right: {type: number, minimum: 0}
+                          bottom: {type: number, minimum: 0}
+                          left: {type: number, minimum: 0}
                       inlineSize:
                         description: "How the note box is sized along the inline axis in an annotations slot (#1051): content (the default) sizes it to its text; fill takes the slot's full inline size and wraps the body in what the box chrome leaves. Outside a slot's row-aligned placement fill acts as content and Layout reports W_LAYOUT_ANNOTATION_FILL_NOT_SLOT."
                         enum: [content, fill]
@@ -273,8 +283,17 @@ properties:
                         if:
                           required: [artwork]
                         then:
-                          required: [contentInsetEm]
+                          anyOf:
+                            - required: [contentInsetEm]
+                            - required: [contentPaddingEm]
                           properties: {outline: {const: rectangle}}
+                      - description: "A padding from the artwork's inner edge replaces the absolute content inset and needs the artwork it is measured from (#1150)."
+                        examples: [{outline: rectangle, cornerRadius: 0, contentPaddingEm: {top: 0.4, right: 0.4, bottom: 0.4, left: 0.4}, artwork: {glyph: "chrona-target-parts:scroll-frame", sliceInsets: {top: 16.3, right: 8.2, bottom: 11.5, left: 8.2}, unitEm: 0.09}}]
+                        if:
+                          required: [contentPaddingEm]
+                        then:
+                          required: [artwork]
+                          not: {required: [contentInsetEm]}
                       - if:
                           properties: {outline: {const: balloon}}
                           required: [outline]
