@@ -2,9 +2,9 @@
 
 <!-- chrona:literal-acceptance/v1 -->
 
-Implementation `5e891e73660c48081bd6c443fb970b3b14bc44ef`; ready-base merge
-`87b4ea07f547bbabb75209501a2659a407b4a11a` incorporates main
-`3e7a57db1cf4b148b6ee6d4c896708f86f9cea69`.
+Implementation through `cae24c233949743b0780daceeb33e4fe0aeb5aeb` incorporates
+published main `a7af6eb001cdcdb29c6a4fba3df740c6086dcc9f` (#1239).
+Its derived gate is pending; final publication will follow #1242 on a ready tip.
 [Living design, architecture review and plan](https://github.com/tya5/chrona/issues/1237#issuecomment-6061351395).
 Release pending predecessor merges, final-base PR CI/shared snapshot and exact
 published-main three-OS gate. Do not close yet.
@@ -25,9 +25,9 @@ published-main three-OS gate. Do not close yet.
 
 ## Programme-level criteria (optional)
 
-Focused tests: 48 glow/frame-consumer unit, 11 new adapter integration,
-84 heading/kicker/Scene-boundary/ownership regression and 4 semantic-reachability
-tests passed. Schema annotations and diff checks passed.
+Combined glow/frame-consumer, adapter integration, whole/split heading/network,
+kicker/Scene-boundary/ownership and semantic-reachability tests: 156 passed.
+Schema annotations and diff checks passed.
 Layout measurements and completed geometry do not change. Scene selects
 explicit glow roles and requires their own fill; adapters serialize existing
 paint. Generic all-or-none glow validation and contrast floors remain intact;
