@@ -1,0 +1,20 @@
+# Neutral test-only catalogue source for Offworld's continuous scanline tile.
+# Import through the existing theme-asset-source/v0.1 authoring path; this is
+# intentionally not an addition to the shipped catalogue.
+version: chrona/theme-asset-source/v0.1
+kind: theme-asset-source
+id: chrona-test-surface-textures
+body:
+  set: chrona-test-surface-textures
+  aliases: []
+  license:
+    spdx: MIT
+    notice: Original minimal scanline geometry authored for the Chrona fixture.
+  glyphs: {}
+  patterns:
+    scanlines:
+      tile: {inlineSize: 8, blockSize: 4}
+      angle: 0
+      densityBasisPoints: 625
+      primitives:
+        - {kind: line, x1: 0, y1: 2, x2: 8, y2: 2, strokeWidth: 0.25}

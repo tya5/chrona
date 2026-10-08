@@ -816,6 +816,136 @@ def _resolve_theme_catalog_assets(theme: Mapping[str, Any],
         target = glyphs if kind == "glyph" else patterns
         target[reference] = entry
 
+    canvas_pattern_roles = {"canvas-texture", "canvas-overlay"}
+
+    def bound_value(role: str, binding: Mapping[str, Any], property_name: str,
+                    expected_type: str, *, required: bool = True) -> Any:
+        pointer = f"/body/roles/{role}/{property_name}"
+        token_id = binding.get(property_name)
+        if token_id is None and not required:
+            return None
+        if not isinstance(token_id, str):
+            raise ClosureError("E_THEME_ROLE_REQUIRED", pointer)
+        token = values.get(token_id)
+        if not isinstance(token, Mapping) or token.get("type") != expected_type:
+            raise ClosureError("E_THEME_TOKEN_TYPE", pointer)
+        return token.get("value")
+
+    def validate_color(role: str, binding: Mapping[str, Any], property_name: str,
+                       *, required: bool = True) -> None:
+        value = bound_value(role, binding, property_name, "color", required=required)
+        if value is None and not required:
+            return
+        if not isinstance(value, str) or not re.fullmatch(r"#[0-9A-Fa-f]{6}", value):
+            raise ClosureError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", f"/body/roles/{role}/{property_name}")
+
+    def validate_numeric(role: str, binding: Mapping[str, Any], property_name: str,
+                         *, required: bool = True) -> Any:
+        value = bound_value(role, binding, property_name, "number", required=required)
+        if value is None and not required:
+            return None
+        try:
+            finite = isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(float(value))
+        except (OverflowError, TypeError, ValueError):
+            finite = False
+        if not finite:
+            raise ClosureError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/{property_name}")
+        return value
+
+    def validate_seeded_pattern(role: str, declaration: Mapping[str, Any]) -> None:
+        pointer = f"/body/roles/{role}/pattern"
+        motif = declaration.get("motif")
+        numeric_values: list[Any] = []
+        tile = declaration.get("tile")
+        if not isinstance(tile, Mapping):
+            raise ClosureError("E_THEME_TOKEN_TYPE", pointer)
+        numeric_values.extend((tile.get("inlineSize"), tile.get("blockSize")))
+        numeric_values.extend((declaration.get("radius"),) if motif == "grain" else
+                              (declaration.get("length"), declaration.get("strokeWidth"), declaration.get("slant")))
+        try:
+            if any(not isinstance(value, (int, float)) or isinstance(value, bool)
+                   or not math.isfinite(float(value)) for value in numeric_values):
+                raise ValueError
+        except (OverflowError, TypeError, ValueError):
+            raise ClosureError("E_THEME_TOKEN_TYPE", pointer) from None
+        if (not isinstance(declaration.get("seed"), int) or isinstance(declaration.get("seed"), bool)
+                or not 0 <= declaration["seed"] <= 0xFFFFFFFF
+                or not isinstance(declaration.get("count"), int) or isinstance(declaration.get("count"), bool)
+                or not 1 <= declaration["count"] <= 64):
+            raise ClosureError("E_THEME_TOKEN_TYPE", pointer)
+
+    def validate_fidelity(role: str, binding: Mapping[str, Any], property_name: str) -> None:
+        if property_name not in binding:
+            return
+        value = bound_value(role, binding, property_name, "fidelity")
+        if value not in {"required", "decorative-optional"}:
+            raise ClosureError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/{property_name}")
+
+    def validate_canvas_pattern(role: str, binding: Mapping[str, Any]) -> None:
+        mode = binding.get("patternMode") if role == "canvas-texture" else "ink-only"
+        if mode not in {None, "ink-only"}:
+            raise ClosureError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", f"/body/roles/{role}/patternMode")
+        ink_only = mode == "ink-only"
+        if role == "canvas-overlay" or ink_only:
+            if "fill" in binding:
+                raise ClosureError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", f"/body/roles/{role}/fill")
+            validate_color(role, binding, "stroke")
+            validate_numeric(role, binding, "opacity", required=False)
+            validate_fidelity(role, binding, "textureFidelity")
+        else:
+            if "textureFidelity" in binding:
+                raise ClosureError("E_THEME_ROLE_PROPERTY_UNSUPPORTED",
+                                   f"/body/roles/{role}/textureFidelity")
+            # Preserve the historical opaque-pattern no-op bindings. The old
+            # validator accepted opacity=1 and backgroundTreatment=fill.
+            if "opacity" in binding:
+                validate_numeric(role, binding, "opacity", required=False)
+                token_id = binding["opacity"]
+                token = values.get(token_id) if isinstance(token_id, str) else None
+                token_value = token.get("value") if isinstance(token, Mapping) else None
+                if (not isinstance(token, Mapping) or token.get("type") != "number"
+                        or not isinstance(token_value, (int, float))
+                        or isinstance(token_value, bool) or not math.isfinite(float(token_value))
+                        or float(token_value) != 1):
+                    raise ClosureError("E_THEME_ROLE_PROPERTY_UNSUPPORTED",
+                                       f"/body/roles/{role}/opacity")
+            if ("backgroundTreatment" in binding
+                    and binding["backgroundTreatment"] != "fill"):
+                raise ClosureError("E_THEME_ROLE_PROPERTY_UNSUPPORTED",
+                                   f"/body/roles/{role}/backgroundTreatment")
+            validate_color(role, binding, "fill")
+            validate_color(role, binding, "stroke")
+        conflicting = ("strokeWidth", "dash", "strokeLineCap", "strokeLineJoin",
+                       "strokeFinishFidelity", "gradientStart", "gradientEnd", "gradientAngle",
+                       "gradientFidelity", "shadowColor", "shadowOffsetX", "shadowOffsetY",
+                       "shadowBlur", "shadowOpacity", "shadowFidelity", "glowColor", "glowBlur",
+                       "glowOpacity", "glowFidelity", "wobbleAmplitude", "wobbleWavelength",
+                       "wobbleSeed", "wobbleFidelity", "backgroundPaintOrder")
+        for property_name in conflicting:
+            if property_name in binding:
+                raise ClosureError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", f"/body/roles/{role}/{property_name}")
+        if role == "canvas-overlay" and "patternMode" in binding:
+            raise ClosureError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", f"/body/roles/{role}/patternMode")
+
+    def validate_radial_overlay(role: str, binding: Mapping[str, Any]) -> None:
+        if "stroke" in binding:
+            raise ClosureError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", f"/body/roles/{role}/stroke")
+        validate_color(role, binding, "fill")
+        for property_name in ("radialCenterInline", "radialCenterBlock", "radialRadiusInline",
+                              "radialRadiusBlock", "radialInnerStop"):
+            validate_numeric(role, binding, property_name)
+        validate_numeric(role, binding, "opacity", required=False)
+        validate_fidelity(role, binding, "gradientFidelity")
+        conflicting = ("pattern", "patternMode", "textureFidelity", "strokeWidth", "dash",
+                       "strokeLineCap", "strokeLineJoin", "strokeFinishFidelity", "gradientStart",
+                       "gradientEnd", "gradientAngle", "shadowColor", "shadowOffsetX", "shadowOffsetY",
+                       "shadowBlur", "shadowOpacity", "shadowFidelity", "glowColor", "glowBlur",
+                       "glowOpacity", "glowFidelity", "wobbleAmplitude", "wobbleWavelength",
+                       "wobbleSeed", "wobbleFidelity", "backgroundTreatment", "backgroundPaintOrder")
+        for property_name in conflicting:
+            if property_name in binding:
+                raise ClosureError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", f"/body/roles/{role}/{property_name}")
+
     def validate_pattern_paint(role: str, binding: Mapping[str, Any]) -> None:
         conflicting = ("strokeWidth", "dash", "strokeLineCap", "strokeLineJoin",
                        "strokeFinishFidelity", "gradientStart", "gradientEnd",
@@ -852,6 +982,18 @@ def _resolve_theme_catalog_assets(theme: Mapping[str, Any],
     for role, binding in roles.items():
         if not isinstance(binding, Mapping):
             continue
+        role_name = str(role)
+        if role_name in canvas_pattern_roles:
+            if role_name == "canvas-texture" and "pattern" not in binding and "patternMode" not in binding:
+                # Preserve the legacy non-drawable role-without-pattern behavior.
+                pass
+            else:
+                if "pattern" not in binding:
+                    raise ClosureError("E_THEME_ROLE_REQUIRED", f"/body/roles/{role_name}/pattern")
+                validate_canvas_pattern(role_name, binding)
+        elif role_name == "canvas-overlay-gradient":
+            validate_radial_overlay(role_name, binding)
+
         for property_name, expected_kind, ref_pointer in (
                 ("symbol", "glyph", "shape/catalog"), ("pattern", "pattern", "ref")):
             token_id = binding.get(property_name)
@@ -864,15 +1006,22 @@ def _resolve_theme_catalog_assets(theme: Mapping[str, Any],
                 shape = token_value.get("shape")
                 if isinstance(shape, Mapping):
                     reference = shape.get("catalog")
-            elif property_name == "pattern" and isinstance(token_value, Mapping) and token_value.get("kind") == "catalog":
-                reference = token_value.get("ref")
+            elif property_name == "pattern" and isinstance(token_value, Mapping):
+                pattern_kind = token_value.get("kind")
+                if pattern_kind == "catalog":
+                    reference = token_value.get("ref")
+                elif pattern_kind == "seeded":
+                    if role_name not in canvas_pattern_roles:
+                        raise ClosureError("E_THEME_ROLE_PROPERTY_UNSUPPORTED",
+                                           f"/body/roles/{role_name}/pattern")
+                    validate_seeded_pattern(role_name, token_value)
             if reference is None:
                 continue
             pointer = f"/body/values/{token_id}/value/{ref_pointer}"
             if property_name == "pattern" and theme_catalog_pattern_consumer(str(role), property_name) is None:
                 raise ClosureError("E_THEME_ROLE_PROPERTY_UNSUPPORTED",
                                    f"/body/roles/{role}/{property_name}")
-            if property_name == "pattern":
+            if property_name == "pattern" and role_name not in canvas_pattern_roles:
                 validate_pattern_paint(str(role), binding)
             resolve(reference, expected_kind, pointer)
     for role, binding in roles.items():

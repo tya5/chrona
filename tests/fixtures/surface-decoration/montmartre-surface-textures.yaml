@@ -1,0 +1,36 @@
+# Reusable warm-grain and radial-vignette Theme/Scheme fragments (#888).
+# Merge values, roles, and colorBindings into Theme v0.15; merge categories
+# into the Color Scheme. These are authored fragments, not a full resource.
+themePatch:
+  version: chrona/theme/v0.15
+  values:
+    montmartre.grain: {type: pattern, value: {kind: seeded, algorithm: splitmix64-v1, motif: grain, seed: 582041, tile: {inlineSize: 96, blockSize: 72}, count: 14, radius: 0.55}}
+    montmartre.grain-opacity: {type: number, value: 0.13}
+    montmartre.grain-fidelity: {type: fidelity, value: required}
+    montmartre.vignette-opacity: {type: number, value: 0.42}
+    montmartre.vignette-fidelity: {type: fidelity, value: required}
+    montmartre.vignette-center-inline: {type: number, value: 0.5}
+    montmartre.vignette-center-block: {type: number, value: 0.5}
+    montmartre.vignette-radius-inline: {type: number, value: 0.78}
+    montmartre.vignette-radius-block: {type: number, value: 0.82}
+    montmartre.vignette-inner-stop: {type: number, value: 0.2}
+  roles:
+    canvas-overlay:
+      pattern: montmartre.grain
+      opacity: montmartre.grain-opacity
+      textureFidelity: montmartre.grain-fidelity
+    canvas-overlay-gradient:
+      opacity: montmartre.vignette-opacity
+      gradientFidelity: montmartre.vignette-fidelity
+      radialCenterInline: montmartre.vignette-center-inline
+      radialCenterBlock: montmartre.vignette-center-block
+      radialRadiusInline: montmartre.vignette-radius-inline
+      radialRadiusBlock: montmartre.vignette-radius-block
+      radialInnerStop: montmartre.vignette-inner-stop
+  colorBindings:
+    canvas-overlay.stroke: category:montmartre-grain-ink
+    canvas-overlay-gradient.fill: category:montmartre-vignette-ink
+schemePatch:
+  categories:
+    montmartre-grain-ink: '#704A2C'
+    montmartre-vignette-ink: '#312018'

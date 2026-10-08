@@ -27,6 +27,7 @@ class PresentationCapability:
 
 
 LINEAR_GRADIENT = "paint.linear-gradient"
+RADIAL_GRADIENT = "paint.radial-gradient"
 DROP_SHADOW = "effect.drop-shadow"
 GLOW = "effect.glow"
 WOBBLE = "stroke.wobble"
@@ -82,6 +83,8 @@ _CAPABILITIES = (
                            "Completed finite pattern geometry is target-neutral.", "issue-384"),
     PresentationCapability(SYMBOL_OUTLINE, "mark", CapabilityDisposition.ADMITTED, "Theme",
                            "Completed point-symbol outline is target-neutral.", "issue-384"),
+    PresentationCapability(RADIAL_GRADIENT, "effect", CapabilityDisposition.ADMITTED, "Theme",
+                           "A bounded completed radial canvas overlay uses fixed ink and Layout geometry.", "specification-63"),
 )
 
 _BY_IDENTIFIER = {item.identifier: item for item in _CAPABILITIES}
@@ -141,16 +144,17 @@ _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | _GROUP_TAB | frozenset((
     "cellGap", "cellCornerRadius", "cellCornerChamfer", "frameCornerRadius", "glyphSize", "glyphPitch", "chipPadding", "chipMinBlockSize", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach",
     "symbolHeight", "symbolOffset", "cornerRadius", "strokeAlign", "align", "barWidth", "blockGap", "inlineGap",
     "progressInset", "summaryBarHeight", "swatchInlineSize", "swatchGap", "swatchBlockSize", "pointSwatchSize", "annotationContainer", "marker", "symbol", "edge",
-    "stampPlacement", "coneSpread", "coneExtent",
+    "stampPlacement", "coneSpread", "coneExtent", "radialCenterInline", "radialCenterBlock",
+    "radialRadiusInline", "radialRadiusBlock", "radialInnerStop",
 ))
-_LAYOUT_POLICY = frozenset(("backgroundTreatment", "backgroundPaintOrder"))
+_LAYOUT_POLICY = frozenset(("backgroundTreatment", "backgroundPaintOrder", "patternMode"))
 # A box role's viewer-fit mode (#1050): Layout measures the per-line widths, the SVG adapter serialises them.
 _VIEWER_FIT = frozenset(("viewerFit", "viewerFitAdjust"))
 _CLOSURE_POLICY = frozenset(("contrastTreatment",))
 _PAINT_GEOMETRY = frozenset(("strokeWidth",))
 _ARTWORK_PAINT = frozenset(("fill", "stroke", "opacity", "artworkFidelity"))
 _SCENE_PAINT = (_RECT_PAINT | _PATH_PAINT | _TEXT_PAINT | _CANVAS_PAINT | _ARTWORK_PAINT
-                | frozenset(("pattern",))) - _PAINT_GEOMETRY
+                | frozenset(("pattern", "textureFidelity"))) - _PAINT_GEOMETRY
 
 
 def _property_owner(property_name: str) -> str:
@@ -323,7 +327,15 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
     register("as-of-cone", "Layout as-of cone and Scene Symbol",
              frozenset(("fill", "opacity", "coneSpread", "coneExtent", "gradientFidelity")),
              scene_kinds=frozenset(("Symbol",)))
-    register("canvas-texture", "Layout canvas texture and Scene Rect", frozenset(("fill", "stroke", "pattern")),
+    register("canvas-texture", "Layout canvas texture and Scene Rect",
+             frozenset(("fill", "stroke", "pattern", "patternMode", "opacity", "textureFidelity")),
+             scene_kinds=frozenset(("Rect",)))
+    register("canvas-overlay", "Layout canvas pattern overlay and Scene Rect",
+             frozenset(("pattern", "stroke", "opacity", "textureFidelity")),
+             scene_kinds=frozenset(("Rect",)))
+    register("canvas-overlay-gradient", "Layout canvas radial geometry and Scene paint",
+             frozenset(("fill", "opacity", "gradientFidelity", "radialCenterInline", "radialCenterBlock",
+                        "radialRadiusInline", "radialRadiusBlock", "radialInnerStop")),
              scene_kinds=frozenset(("Rect",)))
     register("region-frame", "Layout region frame and Scene Rect", _PATTERNED_RECT_PAINT | frozenset(("frameCornerRadius",)),
              scene_kinds=frozenset(("Rect",)))
@@ -342,7 +354,7 @@ _OPEN_LEGEND_PROPERTIES = _RECT_PAINT
 _CATALOG_PATTERN_ROLES = frozenset((
     "missing-actual", "network-node", "progress-fill", "summary-bar",
     "annotation-highlight-box", "axis-band-decoration", "axis-band-decoration2", "period-band", "group-tab",
-    "as-of-label-chip", "member-label-chip", "finish-delta-chip", "canvas-texture", "region-frame",
+    "as-of-label-chip", "member-label-chip", "finish-delta-chip", "canvas-texture", "canvas-overlay", "region-frame",
 ))
 
 

@@ -1,4 +1,4 @@
-"""Completed canvas texture owned by Layout: one Theme-declared catalogue tile repeated over the canvas.
+"""Completed canvas texture owned by Layout: one declared tile repeated over the canvas.
 
 A texture is ground, not content. Layout completes one Rect over the whole
 completed canvas, the repeat phase (the canvas top-left) and the pseudo-slot
@@ -12,7 +12,11 @@ from dataclasses import dataclass
 from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, Rect
-from chrona.presentation.layout.pattern_placement import PatternedPlacement, complete_pattern_placement
+from chrona.presentation.layout.pattern_placement import (
+    PatternedPlacement,
+    complete_pattern_placement,
+)
+from chrona.presentation.layout.seeded_pattern import complete_seeded_pattern
 from chrona.presentation.layout.surface_quality import ShapePlacement, SlotPlacement
 
 CANVAS_TEXTURE_ROLE = "canvas-texture"
@@ -36,7 +40,7 @@ def complete_canvas_texture(theme_tokens: Any, canvas: Rect) -> CanvasTexture | 
 
     The role is declared by its pattern: there is no ``none`` spelling, and a Theme that
     does not name a pattern for the role has no texture. The pattern must be a
-    catalogue pattern; resource closure rejects anything else earlier (a role without a
+    catalogue or seeded pattern; resource closure rejects anything else earlier (a role without a
     pattern is rejected there too), so a failure here is a fail-closed guard, never a
     partial texture.
     """
@@ -46,13 +50,17 @@ def complete_canvas_texture(theme_tokens: Any, canvas: Rect) -> CanvasTexture | 
     pattern = theme_tokens.optional_pattern(CANVAS_TEXTURE_ROLE)
     if pattern is None:
         return None
-    if not isinstance(pattern, Mapping) or pattern.get("kind") != "catalog":
+    if not isinstance(pattern, Mapping) or pattern.get("kind") not in {"catalog", "seeded"}:
         raise LayoutError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", f"/body/roles/{CANVAS_TEXTURE_ROLE}/pattern")
+    completed_pattern = (
+        complete_seeded_pattern(pattern, canvas, pointer=f"/body/roles/{CANVAS_TEXTURE_ROLE}/pattern")
+        if pattern["kind"] == "seeded" else complete_pattern_placement(pattern, canvas)
+    )
     shape = ShapePlacement(
         CANVAS_TEXTURE_PLACEMENT_ID, "canvas", "Rect", canvas, slot_id=CANVAS_SLOT_ID,
         paint_order=CANVAS_TEXTURE_PAINT_ORDER, semantic_id=CANVAS_TEXTURE_SEMANTIC_ID)
     return CanvasTexture(
         shape,
-        PatternedPlacement(shape.placement_id, complete_pattern_placement(pattern, canvas)),
+        PatternedPlacement(shape.placement_id, completed_pattern),
         SlotPlacement(CANVAS_SLOT_ID, CANVAS_SLOT_ID, canvas),
     )

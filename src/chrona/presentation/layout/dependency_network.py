@@ -12,6 +12,7 @@ from chrona.presentation.layout.surface_quality import AlignedStrokePlacement, S
 from chrona.presentation.layout.routing import place_relation_route, relation_route_quality
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun
 from chrona.presentation.layout.canvas_texture import CanvasTexture, complete_canvas_texture
+from chrona.presentation.layout.canvas_overlays import CanvasOverlays, complete_canvas_overlays
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, RelationPlacement, TextPlacement, intersects
 from chrona.presentation.layout.surface_quality import SlotPlacement, SurfaceLayoutRequest
 from chrona.presentation.layout.slot_heading import complete_slot_headings, content_slot
@@ -46,6 +47,7 @@ class DependencyNetworkLayout:
     texture: CanvasTexture | None = None
     aligned_strokes: tuple[AlignedStrokePlacement, ...] = ()
     diagnostics: tuple[str, ...] = ()
+    canvas_overlays: CanvasOverlays | None = None
 
 
 def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bounds: Rect,
@@ -97,6 +99,9 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bound
                 node.placement_id, complete_pattern_placement(token, node.bounds))
                 for node in placed)
     texture = complete_canvas_texture(theme_tokens, canvas)
+    completed_overlays = complete_canvas_overlays(theme_tokens, canvas)
+    canvas_overlays = completed_overlays if (
+        completed_overlays.pattern is not None or completed_overlays.radial is not None) else None
     if texture is not None:
         patterns = (texture.pattern, *patterns)
     overflowed = (canvas.inline_size > requested_canvas.inline_size
@@ -120,7 +125,8 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bound
     if texture is not None:
         stroke_shapes = (texture.shape, *stroke_shapes)
     strokes = complete_aligned_strokes((), stroke_shapes, (), theme_tokens)
-    return DependencyNetworkLayout(tuple(placed), text, relations, canvas, warnings, patterns, texture, strokes)
+    return DependencyNetworkLayout(tuple(placed), text, relations, canvas, warnings, patterns, texture, strokes,
+                                   canvas_overlays=canvas_overlays)
 
 
 def compose_dependency_network_surface(request: SurfaceLayoutRequest) -> DependencyNetworkLayout:

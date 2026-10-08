@@ -7,8 +7,10 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Mapping
 
-from chrona.presentation.scene.capabilities import CapabilityDisposition, capability_ceiling
-
+from chrona.presentation.scene.capabilities import (
+    CapabilityDisposition,
+    capability_ceiling,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / "docs/research/presentation/presentation-capability-prior-art.md"
@@ -70,6 +72,9 @@ OBSERVATIONS: Mapping[str, Mapping[str, SourceObservation]] = {
     "decoration.treatment": _observations(**{"mermaid": Observation.DOCUMENTED, "microsoft-project": Observation.DOCUMENTED}),
     "decoration.row-band": _observations(),
     "paint.linear-gradient": _observations(),
+    # The reviewed Gantt sources do not document radial canvas paint; record
+    # that as unknown rather than inferring support from their other styling.
+    "paint.radial-gradient": _observations(),
     "effect.drop-shadow": _observations(),
     "effect.glow": _observations(),
     "stroke.wobble": _observations(),

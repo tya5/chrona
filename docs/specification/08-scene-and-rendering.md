@@ -306,6 +306,30 @@ it: a mark or state text is measured against the worse of the two
 (`groundKind` `texture-substrate` or `texture-ink`), a decoration tint against the
 substrate, and the texture itself has no floor.
 
+**Transparent canvas treatments (#888).** Layout completes an ink-only texture
+as the same clipped periodic geometry, with no substrate paint. It is sparse
+ink, never an opaque host by canvas bounds. Layout also completes the full-canvas
+bounds/clip and pseudo-slots for `canvas-overlay-gradient` and `canvas-overlay`;
+neither enters obstacle allocation or changes content geometry. Their placement,
+slot, source and role identities are respectively `canvas-overlay-gradient`
+and `canvas-overlay`, with purposes of the same name and no contrast class.
+Scene owns their paint relation: after projecting all content, emit the radial
+overlay at one above the greatest content paint order, then the patterned
+overlay one above that. Adapters do not infer or change this order.
+
+Optional Scene v0.7 `paint.radialGradient` carries completed `{center, radii,
+stops, fidelity}` with positive inline/block radii and ordered colour/opacity
+stops. Layout owns centre/radii and offsets; Scene resolves Scheme colours and
+opacity. Linear `gradient` and `radialGradient` are mutually exclusive. The
+extension follows the optional glow/wobble/stop-alpha precedents: existing
+Scene documents and absent-field serialization remain unchanged; v0.6 is not
+extended. Patterned overlays reuse existing completed pattern data and carry
+no algorithm, seed or resource lookup to an adapter. SVG serializes the layer
+with `pointer-events="none"`; the independent interaction layer stays usable.
+PNG consumes that same completed SVG. Omission and admission are Spec63 section 1.1.
+Contrast and perceptibility consume the same ordered overprint pairs (Spec46),
+not an adapter-derived raster or a flat-canvas-only proxy.
+
 **As-of light cone (#890).** When the Theme declares the role `as-of-cone` and the
 as-of marker lies in the window, Layout completes one closed polygon beside the as-of
 line it already places: apex at the top of the line (the as-of x, the plot top), a foot

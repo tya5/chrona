@@ -33,8 +33,9 @@ from chrona.presentation.scene.model import (
 )
 from chrona.presentation.scene.paint import (
     AS_OF_CONE_ROLE, PaintFamily, ScenePaintError, complete_icon_path_paints, resolve_artwork_admission,
-    resolve_cone_paint, resolve_scene_paint,
+    is_ink_only_surface_pattern, resolve_cone_paint, resolve_scene_paint, resolve_surface_pattern_admission,
 )
+from chrona.presentation.scene.surface_overlays import project_canvas_overlays
 from chrona.presentation.scene.stroke_wobble import (
     MAX_OUTLINE_POINTS, WobbleLimitError, complete_path_wobble, complete_rect_wobble,
 )
@@ -266,6 +267,16 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
         # The cone's paint is its gradient; a profile that cannot paint one omits the whole cone (#890).
         cone = resolve_cone_paint(tokens, primitive.visual_role, visual_profile=visual_profile, bounds=primitive.bounds)
         return (replace(primitive, paint=cone.paint) if cone.paint is not None else None), cone.omissions
+    if primitive.visual_role == "canvas-overlay-gradient":
+        if primitive.paint is None or primitive.paint.radial_gradient is None:
+            raise SceneBuildError("E_PRESENTATION_PAINT_INVALID", "/body/roles/canvas-overlay-gradient")
+        return primitive, ()
+    ink_only_pattern = bool(primitive.pattern and primitive.pattern.primitives
+                            and is_ink_only_surface_pattern(tokens, primitive.visual_role))
+    if ink_only_pattern:
+        admission = resolve_surface_pattern_admission(tokens, primitive.visual_role, visual_profile=visual_profile)
+        if not admission.admitted:
+            return None, admission.omissions
     family = _paint_family(primitive, tokens)
     paint_role = primitive.visual_role
     resolution = resolve_scene_paint(tokens, paint_role, family,
@@ -274,6 +285,7 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
                                      part_mode=primitive.glyph_paint_mode,
                                      part_color=primitive.glyph_paint_color,
                                      catalog_pattern=bool(primitive.pattern and primitive.pattern.primitives),
+                                     ink_only_pattern=ink_only_pattern,
                                      catalog_glyph_stroke_width=primitive.glyph_stroke_width,
                                      catalog_glyph_line_cap=primitive.glyph_line_cap,
                                      catalog_glyph_line_join=primitive.glyph_line_join)
@@ -1027,7 +1039,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
     canvas = placed_surface.canvas_bounds
     completed_primitives = _attach_completed_patterns(completed_primitives, placed_surface.patterns)
     completed_primitives = _attach_completed_strokes(completed_primitives, placed_surface.aligned_strokes)
-    return SceneSurface("table-timeline", slots, rows, groups, scale, completed_primitives, columns=columns,
+    surface = SceneSurface("table-timeline", slots, rows, groups, scale, completed_primitives, columns=columns,
                         diagnostics=placed_surface.diagnostics,
                         canvas_bounds=(float(canvas.inline), float(canvas.block), float(canvas.inline_size),
                                        float(canvas.block_size)) if canvas is not None else None,
@@ -1035,6 +1047,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                         info_diagnostics=(*placed_surface.info_diagnostics, *artwork_omissions),
                         lane_mode=lane_mode, lane_members=lane_members,
                         lane_obstacles=lane_obstacles, lane_clearance=lane_clearance)
+    return project_canvas_overlays(surface, placed_surface.canvas_overlays, value.theme_tokens, value.visual_profile)
 
 
 def _attach_completed_strokes(primitives: tuple[ScenePrimitive, ...],
@@ -1127,8 +1140,9 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
         raise SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", str(error)) from error
     completed_primitives = _attach_completed_patterns(completed_primitives, placed.patterns)
     completed_primitives = _attach_completed_strokes(completed_primitives, placed.aligned_strokes)
-    return SceneSurface("dependency-network", slots, (), (), None, completed_primitives,
+    surface = SceneSurface("dependency-network", slots, (), (), None, completed_primitives,
                         diagnostics=placed.diagnostics,
                         canvas_bounds=(float(placed.canvas_bounds.inline), float(placed.canvas_bounds.block),
                                        float(placed.canvas_bounds.inline_size), float(placed.canvas_bounds.block_size)),
                         fit_warnings=placed.fit_warnings)
+    return project_canvas_overlays(surface, placed.canvas_overlays, value.theme_tokens, value.visual_profile)

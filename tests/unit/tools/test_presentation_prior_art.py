@@ -7,6 +7,11 @@ def test_prior_art_matrix_is_deterministic_and_complete():
     matrix = prior_art.render()
     assert matrix == prior_art.render()
     assert "`decoration.row-band`" in matrix
+    assert "`paint.radial-gradient`" in matrix
+    assert prior_art.OBSERVATIONS["paint.radial-gradient"] == {
+        source.identifier: prior_art.SourceObservation(prior_art.Observation.UNKNOWN)
+        for source in prior_art.SOURCES
+    }
     assert "deliberately-rejected" in matrix
     assert "[Microsoft Project Gantt]" in matrix
     assert "| Chrona |" in matrix

@@ -315,9 +315,9 @@ Symbol, Text, Icon, patterned or image-filled Rect, or clip host. The properties
 in place to the live Theme schemas (Spec 56 section 3.2); the algorithm, limits and the
 profile ladder are in Specification 63 section 8.
 
-**Canvas texture (#587).** The Theme role `canvas-texture` paints one catalogue
+**Canvas texture (#587, #888).** The Theme role `canvas-texture` paints one catalogue
 pattern over the whole completed canvas, below every other primitive. It admits
-exactly `pattern` (a `{kind: catalog, ref}` token; an inline pattern kind is
+by default exactly `pattern` (a `{kind: catalog, ref}` token; an inline pattern kind is
 `E_THEME_ROLE_PROPERTY_UNSUPPORTED`), `fill` (the opaque substrate, declared and
 never inherited from `background`) and `stroke` (the ink). A role that names no
 pattern is `E_THEME_ROLE_REQUIRED` at `/body/roles/canvas-texture/pattern`;
@@ -330,6 +330,43 @@ hidden. The texture is ground, not content: it carries no contrast class and no
 floor of its own, and marks and state text that lie on it are gated against both
 its substrate and its ink (a decoration tint is judged against the substrate).
 Typst and TikZ reject it like any pattern. See Specification 08 section 4.0.1.
+
+The optional literal `patternMode: ink-only` deliberately removes the substrate;
+absence means `substrate-and-ink` and preserves the existing opaque contract.
+Ink-only mode requires the Scheme-bound `stroke` ink, forbids `fill`, and also
+admits named `opacity` and `textureFidelity` tokens (defaults 1 and `required`).
+The tile's filled shapes and stroked paths both use that ink; they are not
+rebound to a substrate colour. A canvas gradient remains visible through holes.
+Neither mode admits role stroke geometry, gradients, shadows or paint-order knobs.
+
+`canvas-overlay` is a distinct optional ink-only pattern role with `pattern`,
+Scheme-bound `stroke`, named `opacity` and `textureFidelity`. It has no substrate
+and paints above content; it is not a reordered `canvas-texture`. These canvas
+roles admit catalogue patterns and the new `seeded` branch of the existing
+pattern token type, not `outline` or `diagonal-hatch`. Other pattern consumers
+retain their current contracts. Seeded values require `kind: seeded`,
+`algorithm: splitmix64-v1`, `motif: grain | rain`, an integer `seed` in
+`[0, 4294967295]`, positive physical-px `tile.inlineSize`/`tile.blockSize`, and
+integer `count` in `[1, 64]`. Grain additionally requires positive `radius`;
+rain requires positive `length` and `strokeWidth`, and finite `slant` (inline
+displacement per block unit). Motif fields are disjoint and unused fields are
+invalid. This declares a repeating seeded tile, not a bitmap or independent
+noise at every canvas pixel. Generation and fit are Specification 33 section 14.
+
+`canvas-overlay-gradient` is an independent optional radial overlay, painted
+before `canvas-overlay` and after content. It requires Scheme-bound `fill` ink
+and named number tokens `radialCenterInline`, `radialCenterBlock` (fractions in
+`[0, 1]`), `radialRadiusInline`, `radialRadiusBlock` (finite positive fractions), and
+`radialInnerStop` in `[0, 1)`. Named `opacity` and `gradientFidelity` default to
+1 and `required`. Its ink fades from transparent through the inner stop to full
+role opacity at normalized radius 1; outer ink is held beyond that radius.
+Completed centre/radii must also remain finite; overflowing multiplication is
+`E_VISUAL_CAPABILITY_LIMIT` at the responsible radial property.
+It admits no stroke, pattern, linear-gradient or other effect properties.
+There is one role of each overlay kind, not an arbitrary layer graph. Missing
+bindings are `E_THEME_ROLE_REQUIRED`; invalid radial domains are
+`E_VISUAL_CAPABILITY_LIMIT`, at the offending role-property pointer. Conflicting
+properties are `E_THEME_ROLE_PROPERTY_UNSUPPORTED`. Absent roles emit nothing.
 
 **As-of light cone (#890).** The Theme role `as-of-cone` paints the light the as-of
 marker casts: a polygon from the top of the as-of line, widening downward, fading from

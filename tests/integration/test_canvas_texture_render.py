@@ -48,6 +48,7 @@ def _presentation(role: dict | None = None, *, extra_bindings: dict | None = Non
         body["values"]["canvas-texture.hatch"] = {"type": "pattern", "value": {
             "kind": "diagonal-hatch", "tileInlineSize": 6, "tileBlockSize": 6, "angle": 45, "strokeWidth": 1}}
         body["values"]["canvas-texture.one"] = {"type": "number", "value": 1}
+        body["values"]["canvas-texture.half"] = {"type": "number", "value": 0.5}
         body["roles"]["canvas-texture"] = role
         body["colorBindings"].update({"canvas-texture.fill": "surface", "canvas-texture.stroke": "surfaceRaised",
                                       **(extra_bindings or {})})
@@ -110,6 +111,25 @@ def test_two_renders_of_one_theme_are_byte_identical(tmp_path) -> None:
     assert _textured(tmp_path).artifact.content == _textured(tmp_path / "again").artifact.content
 
 
+def test_opaque_texture_opacity_one_preserves_scene_content_and_svg_bytes(tmp_path) -> None:
+    plain_directory = tmp_path / "plain"
+    explicit_directory = tmp_path / "explicit"
+    plain_directory.mkdir()
+    explicit_directory.mkdir()
+    plain = _textured(plain_directory)
+    explicit = _render(explicit_directory, _presentation({
+        "pattern": "canvas-texture.lattice", "opacity": "canvas-texture.one",
+    }))
+
+    plain_document = scene_document(plain.scene)
+    explicit_document = scene_document(explicit.scene)
+    # The authored Theme differs, so its provenance identity must differ;
+    # completed geometry and paint must remain exactly the same.
+    assert plain_document.pop("provenance") != explicit_document.pop("provenance")
+    assert plain_document == explicit_document
+    assert plain.artifact.content == explicit.artifact.content
+
+
 def test_a_theme_without_the_role_has_no_texture_slot_primitive_or_pattern(tmp_path) -> None:
     review = _render(tmp_path, _presentation())
     svg = review.artifact.content.decode()
@@ -144,7 +164,7 @@ def test_typst_and_tikz_never_receive_a_texture(tmp_path) -> None:
 @pytest.mark.parametrize(("role", "code", "pointer"), [
     ({}, "E_THEME_ROLE_REQUIRED", "/body/roles/canvas-texture/pattern"),
     ({"pattern": "canvas-texture.hatch"}, "E_THEME_ROLE_PROPERTY_UNSUPPORTED", "/body/roles/canvas-texture/pattern"),
-    ({"pattern": "canvas-texture.lattice", "opacity": "canvas-texture.one"},
+    ({"pattern": "canvas-texture.lattice", "opacity": "canvas-texture.half"},
      "E_THEME_ROLE_PROPERTY_UNSUPPORTED", "/body/roles/canvas-texture/opacity"),
     ({"pattern": "canvas-texture.lattice", "backgroundPaintOrder": 5},
      "E_THEME_ROLE_PROPERTY_UNSUPPORTED", "/body/roles/canvas-texture/backgroundPaintOrder"),

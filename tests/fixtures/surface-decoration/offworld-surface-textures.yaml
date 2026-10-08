@@ -1,0 +1,52 @@
+# Reusable horizon, ink-only rain underlay and scanline overlay fragments
+# (#888). Merge values, roles, and colorBindings into Theme v0.15; merge
+# categories into the Color Scheme. The scanline ref is supplied by the
+# adjacent neutral source fixture, imported with theme-asset-source/v0.1.
+themePatch:
+  version: chrona/theme/v0.15
+  values:
+    offworld.rain: {type: pattern, value: {kind: seeded, algorithm: splitmix64-v1, motif: rain, seed: 407219, tile: {inlineSize: 112, blockSize: 84}, count: 12, length: 13, strokeWidth: 0.45, slant: 0.08}}
+    offworld.rain-opacity: {type: number, value: 0.18}
+    offworld.rain-fidelity: {type: fidelity, value: required}
+    offworld.scanline-pattern: {type: pattern, value: {kind: catalog, ref: chrona-test-surface-textures:scanlines}}
+    offworld.scanline-opacity: {type: number, value: 0.24}
+    offworld.scanline-fidelity: {type: fidelity, value: required}
+    offworld.horizon-gradient-angle: {type: number, value: 90}
+    offworld.horizon-gradient-fidelity: {type: fidelity, value: required}
+  roles:
+    tableColumnLabel:
+      fontFamily: editorial
+      fontWeight: text-weight
+      fontSize: text-size
+      lineHeight: text-line-height
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+    background:
+      gradientAngle: offworld.horizon-gradient-angle
+      gradientFidelity: offworld.horizon-gradient-fidelity
+    canvas-texture:
+      patternMode: ink-only
+      pattern: offworld.rain
+      opacity: offworld.rain-opacity
+      textureFidelity: offworld.rain-fidelity
+    canvas-overlay:
+      pattern: offworld.scanline-pattern
+      opacity: offworld.scanline-opacity
+      textureFidelity: offworld.scanline-fidelity
+  colorBindings:
+    background.gradientStart: category:offworld-horizon-start
+    background.gradientEnd: category:offworld-horizon-end
+    canvas-texture.stroke: category:offworld-rain-ink
+    canvas-overlay.stroke: category:offworld-scanline-ink
+    heading.fill: category:offworld-text-light
+    tableColumnLabel.fill: category:offworld-text-light
+schemePatch:
+  categories:
+    offworld-horizon-start: '#101A28'
+    offworld-horizon-end: '#E9A35C'
+    offworld-rain-ink: '#B6CCD8'
+    offworld-scanline-ink: '#EBC68C'
+    offworld-text-light: '#FFFFFF'

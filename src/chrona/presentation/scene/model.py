@@ -62,6 +62,7 @@ class ScenePaint:
     image: "ImageFill | None" = None
     glow: "Glow | None" = None
     wobble: "StrokeWobble | None" = None
+    radial_gradient: "RadialGradient | None" = None
 
 
 @dataclass(frozen=True)
@@ -104,6 +105,51 @@ class LinearGradient:
     stops: tuple[tuple[float, str], ...]
     fidelity: str
     stop_opacities: tuple[float, ...] | None = None
+
+
+@dataclass(frozen=True)
+class RadialGradientStop:
+    """One completed opacity stop for a fixed-ink radial surface fade."""
+
+    offset: float
+    color: str
+    opacity: float
+
+
+@dataclass(frozen=True)
+class RadialGradient:
+    """A completed finite elliptical surface fade (#888); adapters only serialize it."""
+
+    center: tuple[float, float]
+    radii: tuple[float, float]
+    stops: tuple[RadialGradientStop, ...]
+    fidelity: str
+
+    def __post_init__(self) -> None:
+        if (len(self.center) != 2 or len(self.radii) != 2
+                or not all(_finite_number(value) for value in (*self.center, *self.radii))
+                or any(value <= 0 for value in self.radii)
+                or len(self.stops) not in {2, 3}
+                or self.fidelity not in {"required", "decorative-optional"}):
+            raise ValueError(
+                f"E_PRESENTATION_PRIMITIVE_INVALID: radial geometry requires a finite center pair, positive finite "
+                f"radii pair, 2 or 3 stops, and fidelity 'required' or 'decorative-optional'; received "
+                f"center={self.center!r}, radii={self.radii!r}, stopCount={len(self.stops)}, fidelity={self.fidelity!r}")
+        if (self.stops[0].offset != 0 or self.stops[-1].offset != 1
+                or any(not _finite_number(stop.offset) or not 0 <= stop.offset <= 1
+                       or not _finite_number(stop.opacity) or not 0 <= stop.opacity <= 1
+                       or not isinstance(stop.color, str) or not stop.color
+                       for stop in self.stops)
+                or any(left.offset >= right.offset for left, right in zip(self.stops, self.stops[1:]))
+                or len({stop.color for stop in self.stops}) != 1
+                or self.stops[0].opacity != 0 or self.stops[-1].opacity != 1
+                or (len(self.stops) == 3 and self.stops[1].opacity != 0)):
+            raise ValueError(
+                f"E_PRESENTATION_PRIMITIVE_INVALID: radial stops require strictly increasing finite offsets from 0 "
+                f"to 1, one shared color, opacity 0 at the first and optional middle stop, and opacity 1 at the last; "
+                f"received offsets={tuple(stop.offset for stop in self.stops)!r}, "
+                f"colors={tuple(stop.color for stop in self.stops)!r}, "
+                f"opacities={tuple(stop.opacity for stop in self.stops)!r}")
 
 
 @dataclass(frozen=True)
@@ -335,6 +381,15 @@ class ScenePrimitive:
         if (((self.marker_start is not None or self.marker_end is not None) and self.kind != "Path")
                 or (self.pattern is not None and self.kind != "Rect")
                 or (self.image_fill_pending is not None and self.kind not in {"Rect", "Symbol"})
+                or (self.paint is not None and self.paint.radial_gradient is not None and (
+                    self.kind != "Rect" or self.pattern is not None
+                    or self.paint.fill is None
+                    or any(stop.color != self.paint.fill for stop in self.paint.radial_gradient.stops)
+                    or self.paint.stroke is not None or self.paint.stroke_width is not None
+                    or self.paint.dash or self.paint.gradient is not None
+                    or self.paint.shadow is not None or self.paint.glow is not None
+                    or self.paint.wobble is not None or self.paint.stroke_finish is not None
+                    or self.paint.image is not None))
                 or (self.symbol is not None and self.kind != "Symbol")
                 or (self.kind == "Symbol" and self.symbol is None)
                 or (self.glyph_paint_mode is not None and self.kind != "Symbol")
@@ -576,7 +631,9 @@ class SceneSurface:
 
     def __post_init__(self) -> None:
         """Reject incomplete clip references before any adapter can serialize them."""
-        if self.canvas_bounds is not None and (len(self.canvas_bounds) != 4 or self.canvas_bounds[2] <= 0 or self.canvas_bounds[3] <= 0):
+        if (self.canvas_paint is not None and self.canvas_paint.radial_gradient is not None
+                or (self.canvas_bounds is not None and (len(self.canvas_bounds) != 4
+                    or self.canvas_bounds[2] <= 0 or self.canvas_bounds[3] <= 0))):
             raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
         by_id = {item.scene_id: (index, item) for index, item in enumerate(self.primitives)}
         if len(by_id) != len(self.primitives):

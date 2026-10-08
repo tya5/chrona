@@ -13,13 +13,21 @@ from chrona.presentation.layout.model import LayoutDecision, LayoutManifest, Rec
 from chrona.presentation.layout.sources import MeasuredSources, MeasuredTextRun
 from chrona.presentation.model.surface_content import AxisTier
 from chrona.presentation.scene.capabilities import (
-    theme_catalog_pattern_consumer, theme_role_contract, theme_role_property_consumer,
+    theme_catalog_pattern_consumer,
+    theme_role_contract,
+    theme_role_property_consumer,
 )
 from chrona.presentation.scene.contrast_policy import evaluate_scene_contrast
 from chrona.presentation.scene.perceptibility import evaluate_scene_perceptibility
-from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
+from chrona.presentation.scene.v05_builder import (
+    build_scene_input,
+    compose_review_surface,
+)
 from tests.unit.chrona.presentation.scene.test_v05_builder import (
-    BACKGROUND_EXTENTS, _axis_tiers_scene, _theme, surface_content,
+    BACKGROUND_EXTENTS,
+    _axis_tiers_scene,
+    _theme,
+    surface_content,
 )
 
 ENTRY = {"tile": {"inlineSize": 12, "blockSize": 21}, "angle": 0, "densityBasisPoints": 1455,
@@ -110,11 +118,14 @@ def test_a_band_of_any_paint_order_stays_above_the_texture() -> None:
     assert all((item.paint_order, surface.primitives.index(item)) > (texture.paint_order, 0) for item in bands)
 
 
-def test_the_role_is_admitted_for_fill_stroke_and_pattern_only() -> None:
+def test_the_role_admits_only_declared_surface_pattern_controls() -> None:
     contract = theme_role_contract("canvas-texture")
 
-    assert contract is not None and contract.properties == {"fill", "stroke", "pattern"}
-    for refused in ("opacity", "backgroundPaintOrder", "backgroundTreatment", "strokeWidth", "dash",
+    assert contract is not None and contract.properties == {
+        "fill", "stroke", "pattern", "patternMode", "opacity", "textureFidelity"}
+    for admitted in contract.properties:
+        assert theme_role_property_consumer("canvas-texture", admitted) is not None, admitted
+    for refused in ("backgroundPaintOrder", "backgroundTreatment", "strokeWidth", "dash",
                     "gradientAngle", "shadowBlur", "fontSize"):
         assert theme_role_property_consumer("canvas-texture", refused) is None, refused
     assert theme_catalog_pattern_consumer("canvas-texture", "pattern") is not None

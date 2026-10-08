@@ -731,3 +731,42 @@ final timeline host, and fill-expanded row placements MUST NOT become an
 input to a subsequent content-sizing pass. Explicit larger minimum requests
 may therefore create surplus for fill, while a compact auto result places
 rows at their natural requirements.
+
+## 14. Seeded canvas tiles and overlay geometry (#888)
+
+The `seeded` pattern declaration (Spec07) is a bounded Layout program. It
+completes existing `PatternPlacement` data: angle 0, top-left canvas phase,
+canvas region/clip, corner radius 0, and primitives in motif declaration order.
+No Scene or adapter runs a generator. Both surfaces use the completed canvas,
+not the initially requested viewport. Texture and overlays never enlarge it.
+
+`splitmix64-v1` uses unsigned arithmetic modulo `2**64`. For draw index `j`
+starting at 0, let `z = seed + (j + 1) * 0x9E3779B97F4A7C15`; then
+`z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9`,
+`z = (z ^ (z >> 27)) * 0x94D049BB133111EB`, and
+`z = z ^ (z >> 31)`, masking each integer result to 64 bits. The draw is
+`(z >> 11) / 2**53`. Exactly two draws per motif select inline/block position;
+no scene identity, hash, dictionary order, runtime randomness or trigonometry
+participates. This version is independent of future wobble algorithm changes.
+
+All arithmetic uses IEEE-754 binary64. Quantization is `round(value, 3)`:
+nearest 0.001px on the represented value, ties to even (not multiply-then-round).
+Reject nonfinite inputs before rounding; round physical tile/motif dimensions
+before positive-domain and fit checks. Completed geometry must remain finite
+and nondegenerate after position quantization/clamping. Grain is a filled circle of the declared
+radius, with centre independently uniform in `[radius, extent - radius)`.
+Rain is one butt-capped stroked line with block displacement `length` and
+inline displacement `slant * length`, centred uniformly within the tile
+after reserving half its displacement and half the stroke width on each side.
+Both available centre ranges must be positive; a motif cannot cross its tile.
+Selected centres are rounded to 0.001px and clamped to their centre ranges;
+rain endpoints are rounded to 0.001px and clamped to the half-stroke inset tile.
+Invalid or collapsed dimensions/fit are `E_THEME_TOKEN_TYPE` at the selected
+role's `pattern` binding, not a partial tile. Density is the ceiling of the
+summed motif-area upper bound as basis points of tile area, clamped to
+`[1, 10000]`; actual ink geometry, not this bound, decides contact.
+
+Layout completes radial centre as canvas origin plus the declared centre
+fractions times canvas extents, and radii as radius fractions times those
+extents. The stop offsets are 0, the declared inner stop when greater than 0,
+and 1. Scene adds colour and opacity without deriving spatial geometry.
