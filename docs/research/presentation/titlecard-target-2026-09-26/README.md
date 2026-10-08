@@ -56,3 +56,29 @@ The reusable parts of this target are extracted as monochrome assets in the pack
 | Hatch for unobserved work | `chrona-target-parts:hatch` | in the catalogue; bindable as a pattern on the Rect roles today |
 
 Still needed before this target's preset can be assembled: #582 (launch window as a patterned range), #583 (the numbered hazard tab on each group header), #584 (title bar and hazard corner by annotation kind), #585 (horizontal compression), #586 (the countdown figure), #587 (the canvas lattice).
+
+## Reproduction (#1182)
+
+![Title Card mock (top) and chrona output (bottom)](titlecard-reproduction-2026-10-08.png)
+
+The bottom image is the HALCYON-1 slide `titlecard` (`examples/halcyon-1`), rendered from YAML alone: View `views/23-titlecard.yaml`, Theme `themes/titlecard.yaml`, scheme `schemes/titlecard.yaml`, Layout and profiles `layouts/titlecard.yaml`, `profiles/titlecard-detail.yaml` and `profiles/titlecard-countdown.yaml`, and Context `contexts/23-titlecard.yaml`.
+
+### Gap table
+
+Classification: (a) tuned in YAML; (b) a missing general knob, filed and delivered; (c) a deliberate difference.
+
+| Element | Result | Class | Through |
+|---|---|---|---|
+| Black ground, flat alarm palette, faint hexagon lattice | matches | a, b | #587 |
+| Horizontally compressed title with the `第弐面` kicker above it | matches (face differs, see below) | b | #585, #1189 |
+| Countdown `発射まで 63 DAYS` with a derived figure | matches | b | #586, #1190 |
+| Orange quarter tier and bilingual month tier | matches (Arabic month numerals) | a, b | #426, #493 |
+| Hazard-stripe group tabs with an orange ordinal | matches | b | #882, #1192 |
+| Hexagon gates, with an outlined baseline gate | matches | b | #464 |
+| Plan, ghost, actual and hatch marks | matches | a | |
+| `現在 NOW` as-of line and chip | matches | b | #1063, #1110 |
+| Hexagon-lattice launch window | matches | b | #582, #911 |
+| `警告 WARNING` / `報告 REPORT` panels: full-width title bar, 22 px heading, body | matches | b | #1191, #1201 |
+| Heavy Mincho face | Noto Sans JP. chrona packages no extra face (owner, 2026-10-06); users can import their own Mincho (#983) | c | owner decision |
+| Kanji month names (三月), a dotted date (2027.08.20), a `NOW` legend entry, Japanese group titles | not expressible, or not in the project data | c | |
+| The rule beside the kicker; the two small caption lines under `発射まで` | absent | c | ornament and missing data |
