@@ -94,3 +94,11 @@ $defs:
     description: "Inline sizing of an annotation-kind bar within its completed content container."
     examples: [fill]
     enum: [fill, hug]
+  annotationBarBleed:
+    description: "Whether an annotation-kind bar stays within its content inset or reaches the container's inner border."
+    examples: [none]
+    enum: [none, border]
+  annotationStampPlacement:
+    description: "Whether an annotation-kind stamp occupies a note column or sits at the end of its bar."
+    examples: [column]
+    enum: [column, bar-end]

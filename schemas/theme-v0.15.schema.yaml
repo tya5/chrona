@@ -337,7 +337,7 @@ properties:
                           properties:
                             cornerRadius: {const: 0}
             - description: "An annotation-kind stamp: the note corner it stands at and its square size as a ratio of the note text size (#584)."
-              examples: [{type: stampPlacement, value: {corner: end-top, size: 2}}]
+              examples: [{type: stampPlacement, value: {corner: end-top, size: 2}}, {type: stampPlacement, value: {placement: bar-end, size: 2}}]
               if:
                 properties: {type: {const: stampPlacement}}
               required: [type]
@@ -346,10 +346,26 @@ properties:
                   value:
                     type: object
                     additionalProperties: false
-                    required: [corner, size]
+                    required: [size]
                     properties:
+                      placement: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/annotationStampPlacement"}
                       corner: {description: "The note corner the stamp stands at.", enum: [start-top, end-top, start-bottom, end-bottom]}
                       size: {description: "Stamp block size as a ratio of the note text size.", type: number, exclusiveMinimum: 0}
+                    allOf:
+                      - if:
+                          properties: {placement: {const: bar-end}}
+                          required: [placement]
+                        then:
+                          not: {required: [corner]}
+                      - if:
+                          properties: {placement: {enum: [column]}}
+                          required: [placement]
+                        then:
+                          required: [corner]
+                      - if:
+                          not: {required: [placement]}
+                        then:
+                          required: [corner]
             - description: "Writing mode is finite so Layout measures the block/inline swap of a vertical label (#585)."
               examples: [{type: writingMode, value: vertical}]
               if:
@@ -416,11 +432,12 @@ properties:
             chipPadding: {description: "Named label-chip padding ratio of the label's font size (inline; half on the block axis) for a <purpose>-chip role.", type: string, minLength: 1}
             chipMinBlockSize: {description: "Named length in px: the smallest block size of a <purpose>-chip label chip; a shorter chip grows equally above and below its text (#1150). Absent keeps the text block plus the chipPadding block padding.", type: string, minLength: 1}
             barWidth: {description: "Annotation-kind bar inline sizing: fill (runtime default) spans the inner container; hug uses measured bar text and padding.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/annotationBarWidth"}
+            barBleed: {description: "Annotation-kind bar extent: none (runtime default) stays within content insets; border reaches the container's inner border edges.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/annotationBarBleed"}
             progressInset: {description: "Named progress-track inset ratio of the host mark's block size; the fill sits inside the track with this gap (0 <= ratio < 0.5).", type: string, minLength: 1}
             annotationContainer: {description: "Named outline/tail-geometry token for an annotation-box role (#466); absent keeps today's plain rectangle.", type: string, minLength: 1}
             viewerFit: {description: "How an annotation box role and its text absorb a viewer that lacks the measured font (#1050): raw (the default, today's output); text-follows-box pins every text line of the box to the width Layout measured; box-follows-text paints the box background to end where the viewer's text ends (a plain square, untilted, content-sized rectangle with no artwork and no end, top or bottom border).", enum: [raw, text-follows-box, box-follows-text]}
             viewerFitAdjust: {description: "With viewerFit text-follows-box: how the viewer stretches a line to its measured width, spacing (the default; inter-glyph gaps only) or spacingAndGlyphs (glyph outlines too) (#1050).", enum: [spacing, spacingAndGlyphs]}
-            stampPlacement: {description: "Named stampPlacement token (corner and size) for the annotation-kind stamp role (#584).", type: string, minLength: 1}
+            stampPlacement: {description: "Named stampPlacement token (column corner or bar-end placement, and size) for the annotation-kind stamp role (#584, #1242).", type: string, minLength: 1}
             swatchInlineSize: {description: "Named absolute inline length for a legend swatch whose on-chart length has no single value (a span, line, or decoration key); absent means Layout falls back to the legend label's own font size (#427).", type: string, minLength: 1}
             swatchGap: {description: "Named absolute distance from a legend swatch to its label (#1111); the legend slot gap stays the distance between entries. Absent, the slot gap is both.", type: string, minLength: 1}
             swatchBlockSize: {description: "Named absolute block length of an area (background) legend swatch (#1111); declaring it makes the area swatch a rectangle of swatchInlineSize (else the legacy side) by this size. Absent, the legacy square.", type: string, minLength: 1}

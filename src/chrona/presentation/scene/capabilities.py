@@ -141,7 +141,7 @@ _CANVAS_PAINT = frozenset(("fill", "opacity", "gradientStart", "gradientEnd", "g
 _PATTERNED_RECT_PAINT = _RECT_PAINT | frozenset(("pattern",))
 _LAYOUT_TYPOGRAPHY = _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("writingMode",))
 _LAYOUT_GEOMETRY = _AXIS_MEASUREMENT | _AXIS_TICK | _GROUP_TAB | frozenset((
-    "cellGap", "cellCornerRadius", "cellCornerChamfer", "frameCornerRadius", "glyphSize", "glyphPitch", "chipPadding", "chipMinBlockSize", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach",
+    "cellGap", "cellCornerRadius", "cellCornerChamfer", "frameCornerRadius", "glyphSize", "glyphPitch", "chipPadding", "chipMinBlockSize", "markHeight", "markOffset", "markPaintOrder", "markCornerRadius", "markReach", "barBleed",
     "symbolHeight", "symbolOffset", "cornerRadius", "strokeAlign", "align", "barWidth", "blockGap", "inlineGap",
     "progressInset", "summaryBarHeight", "swatchInlineSize", "swatchGap", "swatchBlockSize", "pointSwatchSize", "annotationContainer", "marker", "symbol", "edge",
     "stampPlacement", "coneSpread", "coneExtent", "radialCenterInline", "radialCenterBlock",
@@ -293,7 +293,7 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              _PATTERNED_RECT_PAINT | frozenset(("annotationContainer", "cornerRadius")) | _VIEWER_FIT,
              scene_kinds=frozenset(("Rect", "Symbol")))
     register("annotation-kind-bar", "Layout annotation-kind title bar and Scene Rect",
-             _RECT_PAINT | frozenset(("chipPadding", "markCornerRadius", "barWidth")), scene_kinds=frozenset(("Rect",)))
+             _RECT_PAINT | frozenset(("chipPadding", "markCornerRadius", "barWidth", "barBleed")), scene_kinds=frozenset(("Rect",)))
     register("annotation-kind-accent", "Layout kind-painted box border ink and Scene Rect/Symbol",
              _RECT_PAINT, scene_kinds=frozenset(("Rect", "Symbol")))
     register("annotation-kind-stamp", "Layout annotation-kind stamp glyph and Scene Symbol",
