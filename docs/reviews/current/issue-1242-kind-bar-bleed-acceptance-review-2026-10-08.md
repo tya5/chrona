@@ -34,3 +34,12 @@ Actual corner pixels verify this selected treatment, not implicit clipping.
 Combined annotation/Theme/Scene/ownership and heading-part regressions: 137 passed; schema
 L1/L2/L3, annotations and literal acceptance checker passed. Public CI remains
 pending. Generated outputs and examples were not authored.
+
+PR run [37794966428](https://github.com/tya5/chrona/actions/runs/37794966428)
+failed only `test_vocabulary_is_a_registered_live_part_with_frozen_digests`
+(shard 3: 2728 passed); `derived-ready` consequently rejected its pytest
+outcome. The two new vocabulary definitions lacked Spec56 frozen inventory
+digests. Registering both definitions changes neither their schemas nor
+runtime behavior; all 81 vocabulary/inventory tests now pass. Reviewer PR1241's
+three Title Card YAML changes were ordinary-merged without product conflicts.
+Exact-head CI must be refreshed on its ready published main before merge.
