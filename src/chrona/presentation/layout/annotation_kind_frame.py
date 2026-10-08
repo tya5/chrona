@@ -58,6 +58,8 @@ class KindFrameMeasure:
     bar_block: float = 0.0
     bar_inline: float = 0.0
     bar_width: str = "fill"
+    bar_bleed: str = "none"
+    stamp_placement: str = "column"
 
     @property
     def stamp_at_start(self) -> bool:
@@ -114,7 +116,11 @@ def measure_kind_frame(*, kind: AnnotationKindToken | None, subject: str, frame:
             raise LayoutError("E_THEME_ASSET_REFERENCE", pointer) from error
         stamp_block = float(frame.stamp_size) * text_size
         stamp_inline = stamp_block * aspect
-        stamp_column = stamp_inline + STAMP_GAP_EM * text_size
+        if frame.stamp_placement == "column":
+            stamp_column = stamp_inline + STAMP_GAP_EM * text_size
+        elif not bar:
+            raise LayoutError("E_LAYOUT_ANNOTATION_KIND_STAMP_PLACEMENT", pointer,
+                              detail="bar-end stamp placement requires a drawable annotation-kind label bar")
     heading = None
     content = heading_text(kind.header, subject=subject, subject_id=subject_id)
     if content is not None:
@@ -133,18 +139,23 @@ def measure_kind_frame(*, kind: AnnotationKindToken | None, subject: str, frame:
     padding_block = padding_inline / 2
     bar_block = (geometry_sum(line.font_size * line.leading for line in lines) + 2 * padding_block) if lines else 0.0
     bar_inline = (max(line.width for line in lines) + 2 * padding_inline) if lines else 0.0
+    if stamp_ref is not None and frame.stamp_placement == "bar-end":
+        # This reserve belongs to the bar, never to the note's body/heading column.
+        bar_inline += stamp_inline + STAMP_GAP_EM * text_size
+        bar_block = max(bar_block, stamp_block)
     header_block = bar_block + (heading.font_size * heading.leading if heading is not None else 0.0)
     header_inline = max(bar_inline, heading.width if heading is not None else 0.0)
     return KindFrameMeasure(
         tuple(lines), bar, padding_inline, padding_block, header_block, header_inline,
         frame.bar_role if bar else None,
         stamp_ref, frame.stamp_corner if stamp_ref is not None else None, stamp_inline, stamp_block, stamp_column,
-        heading, bar_block, bar_inline, frame.bar_width)
+        heading, bar_block, bar_inline, frame.bar_width, frame.bar_bleed, frame.stamp_placement)
 
 
 def place_kind_frame(measure: KindFrameMeasure, *, annotation_id: str, presentation: AnnotationPresentation,
                      content_box: tuple[float, float, float, float], theme_tokens: ThemeTokenView,
-                     font_metrics: Any, annotation_slot: str, paint_order: int
+                     font_metrics: Any, annotation_slot: str, paint_order: int,
+                     inner_border_box: tuple[float, float, float, float] | None = None
                      ) -> tuple[tuple[ShapePlacement, ...], tuple[TextPlacement, ...]]:
     """Complete the bar, stamp and header text inside ``content_box`` (x, y, width, height)."""
     x, y, width, height = content_box
@@ -159,16 +170,26 @@ def place_kind_frame(measure: KindFrameMeasure, *, annotation_id: str, presentat
     inner_x = x + measure.body_inset_left
     inner_y = y
     inner_width = width - measure.inline_insets
+    bar_x, bar_y = inner_x, inner_y
+    bar_width = inner_width if measure.bar_width == "fill" else measure.bar_inline
+    if measure.bar and measure.bar_bleed == "border":
+        if inner_border_box is None:
+            raise LayoutError("E_PRESENTATION_MEASUREMENTS_REQUIRED", f"/annotations/{annotation_id}",
+                              detail="border-bleeding kind bar requires completed inner-border bounds")
+        bar_x, bar_y, bar_width, _ = inner_border_box
     if measure.bar:
         shapes.append(rect(f"annotation-kind-bar:{annotation_id}", "annotationKindBar",
-                           inner_x, inner_y,
-                           inner_width if measure.bar_width == "fill" else measure.bar_inline, measure.bar_block))
+                           bar_x, bar_y, bar_width, measure.bar_block))
     if measure.stamp_ref is not None:
-        gap = measure.stamp_column - measure.stamp_inline
-        stamp_x = (x if measure.stamp_at_start
-                   else x + width - measure.stamp_column + gap)
-        stamp_y = (y if str(measure.stamp_corner).endswith("top")
-                   else y + height - measure.stamp_block)
+        if measure.stamp_placement == "bar-end":
+            stamp_x = bar_x + bar_width - measure.stamp_inline
+            stamp_y = bar_y + (measure.bar_block - measure.stamp_block) / 2
+        else:
+            gap = measure.stamp_column - measure.stamp_inline
+            stamp_x = (x if measure.stamp_at_start
+                       else x + width - measure.stamp_column + gap)
+            stamp_y = (y if str(measure.stamp_corner).endswith("top")
+                       else y + height - measure.stamp_block)
         bounds = (stamp_x, stamp_y, measure.stamp_inline, measure.stamp_block)
         try:
             parts = symbol_parts({"shape": {"catalog": measure.stamp_ref}}, bounds,
@@ -177,11 +198,16 @@ def place_kind_frame(measure: KindFrameMeasure, *, annotation_id: str, presentat
             raise LayoutError("E_THEME_ASSET_REFERENCE", f"/annotations/{annotation_id}") from error
         shapes.append(replace(rect(f"annotation-kind-stamp:{annotation_id}", "annotationKindStamp", *bounds),
                               kind="Glyph", symbol_parts=parts))
-    line_top = inner_y + measure.bar_padding_block
+    label_x = inner_x
+    label_y = inner_y
+    if measure.bar and measure.bar_bleed == "border":
+        label_x = bar_x + measure.body_inset_left
+        label_y = bar_y
+    line_top = label_y + measure.bar_padding_block
     for index, line in enumerate(measure.lines):
         semantic_id = "annotationKindLabel" if index == 0 else "annotationKindSecondary"
         placed = place_text(placement_id=f"annotation-kind-text:{annotation_id}:{index}", source_ref=annotation_id,
-                            content=line.content, inline=inner_x + measure.bar_padding_inline,
+                            content=line.content, inline=label_x + measure.bar_padding_inline,
                             baseline_block=line_top + line.font_size, typography_role=line.role,
                             theme_tokens=theme_tokens, font_metrics=font_metrics,
                             collision_region="annotations", collision_domain=CollisionDomain(annotation_slot, "content"),

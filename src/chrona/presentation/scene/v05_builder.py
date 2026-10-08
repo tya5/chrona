@@ -303,9 +303,12 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
     if tint is not None:
         # A group's tint replaces only the band's visible channel (#583).
         completed = replace(completed, stroke=tint) if family == PaintFamily.OUTLINE else replace(completed, fill=tint)
-    kind_paint = (annotation_kind_paints.get(primitive.source_ref)
-                  if primitive.purpose in {"annotation-kind-bar", "annotation-kind-accent",
-                                           "annotation-kind-stamp"} else None)
+    # A bar-end stamp lies on the kind-coloured bar, so its declared role ink
+    # must remain independently selectable. Column stamps keep their legacy tint.
+    kind_painted = (primitive.purpose in {"annotation-kind-bar", "annotation-kind-accent"}
+                    or (primitive.purpose == "annotation-kind-stamp"
+                        and tokens.annotation_kind_frame().stamp_placement == "column"))
+    kind_paint = annotation_kind_paints.get(primitive.source_ref) if kind_painted else None
     # `colorAlso` (#991): the same colour also paints the header text and the leader line of the note.
     also_paint = (annotation_kind_paints.get(f"{primitive.source_ref}#header")
                   if primitive.purpose in {"annotation-kind-label", "annotation-kind-secondary", "annotation-heading"}
