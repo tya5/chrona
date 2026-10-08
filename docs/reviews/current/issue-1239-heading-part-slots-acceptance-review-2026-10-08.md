@@ -2,8 +2,8 @@
 
 <!-- chrona:literal-acceptance/v1 -->
 
-Implementation through `224ea2ce9874e18b14616944c25cd010c9555a82`, based on
-ready main `d5bdf0be26c128b76baf87d59b80189b7d87b3cb`.
+Implementation through `2bb434931377509b16221e0609d94ccb3c480b35`, based on
+ready main `3e7a57db1cf4b148b6ee6d4c896708f86f9cea69`.
 Split runs retain numeric spacing through native block measurement; placements
 consume the closed stack baseline and baseline-minus-font-size bounds.
 [Living design, architecture review and plan](https://github.com/tya5/chrona/issues/1239#issuecomment-6059626833).
@@ -27,7 +27,7 @@ inspection and published-main three-OS release evidence. Do not close yet.
 ## Programme-level criteria (optional)
 
 Combined focused heading/profile/source/network, Layout/Scene boundary,
-module ownership, vocabulary, text-stack and allocation tests: 354 passed.
+module ownership, vocabulary, text-stack and allocation tests: 356 passed.
 Schema equivalence L1/L2/L3,
 schema annotations, role-consumer and semantic reachability checks passed.
 Whole-title composition, legacy network title placement and routes remain on
