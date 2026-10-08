@@ -26,7 +26,7 @@ from chrona.presentation.layout.engine import (measure_natural_normal_flow_block
                                                resolve_content_block_extent, solve_layout)
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, ResolvedLayoutProfile
 from chrona.presentation.layout.group_header_runs import validate_group_header_roles
-from chrona.presentation.layout.presentation import validate_table_text_roles
+from chrona.presentation.layout.presentation import validate_label_text_role, validate_table_text_roles
 from chrona.presentation.layout.profile import resolve_layout_profile
 from chrona.presentation.layout.slot_heading import headed_slot_ids, reserve_slot_heading_blocks
 from chrona.presentation.layout.sources import SourceInput, SourceTextRun, measure_sources, resolve_theme_metrics
@@ -299,6 +299,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     table_content = normalize_v05_table_content(projection, project, view, actual_set=actual_observations,
                                                 locale=environment.locale)
     validate_table_text_roles(view.table_columns, ThemeTokenView(theme))
+    validate_label_text_role(view.visibility.labels, ThemeTokenView(theme))
     if view.grouping is not None and view.grouping.header is not None:
         validate_group_header_roles(view.grouping.header.role_pointers(), ThemeTokenView(theme))
     selected_content = normalize_v05_surface_content(

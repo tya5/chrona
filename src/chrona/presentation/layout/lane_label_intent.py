@@ -94,7 +94,7 @@ def measure_lane_member_labels(projection: Any, surface_content: Any, *,
             candidates = _candidates(surface_content.label_side,
                                      surface_content.label_fallback, preferred)
 
-            role = "text"
+            role = surface_content.label_text_role or "text"
             treatment = theme_tokens.text_treatment(role)
             metrics = metric_for_role(theme_tokens, role, font_metrics)
             visuals = resolve_label_visual_advances(

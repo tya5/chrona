@@ -213,6 +213,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
     label_placement = "plot" if labels is True else "none"
     label_content: tuple[str, ...] = ("title",) if labels is True else ()
     label_side = "auto"
+    label_text_role: str | None = None
     label_fallback: tuple[str, ...] = ()
     annotation_fallback: tuple[str, ...] = ()
     link_mode = visible.links
@@ -230,6 +231,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                 "content", ("title", "finishDelta") if lane_mode else ()))
             label_side = str(labels.get("side", "auto"))
             label_overflow = str(labels.get("overflow", "suppress" if lane_mode else "visible-overflow"))
+            label_text_role = str(labels["textRole"]) if "textRole" in labels else None
     if isinstance(visible.fallback, Mapping):
         label_fallback = tuple(str(item) for item in visible.fallback.get("labels", ()))
         annotation_fallback = tuple(str(item) for item in visible.fallback.get("annotations", ()))
@@ -349,7 +351,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
                                    milestones=detail_content.milestones,
                                    observation_columns=detail_content.observation_columns,
                                    observation_rows=detail_content.observation_rows,
-                               label_fallback=label_fallback, annotation_fallback=annotation_fallback,
+                               label_fallback=label_fallback, label_text_role=label_text_role, annotation_fallback=annotation_fallback,
                                link_mode=link_mode, title_link_columns=title_link_columns,
                                attached_labels=_attached_labels(projection, locale),
                                table_cell_objects=table_cell_objects,
