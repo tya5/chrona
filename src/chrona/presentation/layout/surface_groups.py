@@ -9,7 +9,7 @@ from chrona.presentation.layout.group_header_runs import place_group_header_runs
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, GroupPlacement, TextPlacement
 from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_role, place_text
-from chrona.presentation.layout.vertical_text import place_vertical_label
+from chrona.presentation.layout.vertical_text import place_vertical_label_fit
 from chrona.presentation.model.theme_tokens import ThemeTokenError
 
 
@@ -125,23 +125,40 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
             raise LayoutError("E_LAYOUT_GROUP_HEADER_RUNS_VERTICAL", "/body/grouping/header",
                               detail="a role-marked header template needs a horizontal groupHeader role")
         # A vertical label spans the group's rows in the column carved from the table's start (#585).
-        text = []
+        text, tag_warnings = [], []
         tab = resolve_group_tab(request.theme_tokens)
+        align = request.theme_tokens.optional_choice("groupHeader", "align", ("start", "center", "end")) or "start"
         for group in groups:
             if group.group_id and group.group_id in labels:
                 cell = (group_tag_bounds(tab, tag_column, group.content_bounds)
                         if tab is not None and tab.target == "tag" else
                         Rect(Decimal(str(tag_column[0])), group.content_bounds.block,
                              Decimal(str(tag_column[1])), group.content_bounds.block_size))
-                text.extend(place_vertical_label(
+                fitted = place_vertical_label_fit(
                     label=labels[group.group_id], placement_prefix=f"group-tag:{group.group_id}",
                     source_ref=group.group_id, column_inline=float(cell.inline), column_size=float(cell.inline_size),
                     block_start=float(cell.block),
                     available_block=float(cell.block_size), typography_role="groupHeader",
                     theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                     collision_region=f"group:{group.group_id}",
-                    collision_domain=CollisionDomain("group-header", group.group_id), semantic_id="groupHeader"))
-        return SurfaceGroupPresentation(tuple(text))
+                    collision_domain=CollisionDomain("group-header", group.group_id), semantic_id="groupHeader",
+                    align=align)
+                text.extend(fitted.placements)
+                # A tag cut or overrunning its group's rows is reported, never silently shortened (#981).
+                shown = fitted.placements[0].overflow if fitted.placements else "fit"
+                if shown in {"ellipsized", "visible-overflow"}:
+                    ellipsized = shown == "ellipsized"
+                    tag_warnings.append(FitWarning(
+                        "W_LAYOUT_TEXT_ELLIPSIZED" if ellipsized else "W_LAYOUT_VISIBLE_OVERFLOW",
+                        fitted.placements[0].placement_id, group.group_id, "group-tag-text",
+                        "ellipsize-with-source" if ellipsized else "visible-overflow",
+                        float(cell.inline_size), fitted.required_block, float(cell.inline_size),
+                        fitted.available_block))
+        return SurfaceGroupPresentation(tuple(text), tuple(tag_warnings))
+    if request.theme_tokens.optional_choice("groupHeader", "align", ("start", "center", "end")) is not None:
+        # `align` places a vertical tag in its rows; on a horizontal header it would be silently ignored (#981).
+        raise LayoutError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", "/body/roles/groupHeader/align",
+                          detail="align on groupHeader needs a vertical writingMode")
     group_header_font_size = (float(request.theme_tokens.text_treatment("groupHeader").font_size)
                               if any(group.header_bounds is not None for group in groups) else body_size)
     text, warnings = [], []

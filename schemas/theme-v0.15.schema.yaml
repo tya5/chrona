@@ -409,7 +409,7 @@ properties:
             iconGap: {description: "Named typography-relative icon inline-gap ratio for the role.", type: string, minLength: 1}
             markHeight: {description: "Named lane-slot-relative mark block-size ratio for this semantic role.", type: string, minLength: 1}
             markOffset: {description: "Named lane-slot-relative mark block-start ratio for this semantic role.", type: string, minLength: 1}
-            align: {description: "Block alignment for offset-free role geometry: start, center (the default), or end. An explicit markOffset retains precedence (#1149).", $ref: "urn:chrona:vocabulary-v0.1#/$defs/logicalAlignment"}
+            align: {description: "Block alignment for offset-free role geometry: start, center (the default), or end. An explicit markOffset retains precedence (#1149). On a vertical groupHeader it places a tag shorter than its group rows at their start (the default), middle or end (#981); a horizontal groupHeader refuses it.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/logicalAlignment"}
             markPaintOrder: {description: "Named completed mark paint-order value for this semantic role.", type: string, minLength: 1}
             markCornerRadius: {description: "Named mark corner-radius ratio for this semantic role.", type: string, minLength: 1}
             cornerRadius: {description: "Named radius token overriding this role's legacy radius with physical px or capsule.", type: string, minLength: 1}
