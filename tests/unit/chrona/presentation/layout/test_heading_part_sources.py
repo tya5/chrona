@@ -78,6 +78,27 @@ def test_empty_declared_heading_part_has_zero_measurement_and_no_runs():
     assert "heading.kicker" not in measured.block_stacks
 
 
+def test_heading_part_measurement_honors_its_declared_numeric_spacing():
+    normalized = HeadingContent("111")
+    source = _source_map(view_heading=normalized)["heading.title"]
+    resolved = theme()
+    resolved["body"]["values"]["numeric-spacing"]["value"] = "tabular"
+    seen = []
+
+    class Metrics(_Metrics):
+        def ensure_numeric_spacing(self, mode):
+            assert mode in {"proportional", "tabular"}
+
+        def width(self, value, size, **kwargs):
+            if value == "111":
+                seen.append(kwargs["numeric_spacing"])
+            return super().width(value, size, **kwargs)
+
+    measured = measure_sources({"heading.title": source}, resolved, font_metrics=Metrics())
+    assert seen == ["tabular"]
+    assert measured.run_measurements["heading.title"][0].numeric_spacing == "tabular"
+
+
 def test_empty_heading_part_does_not_reserve_or_draw_a_slot_caption(monkeypatch):
     import chrona.presentation.layout.slot_heading as slot_heading
 

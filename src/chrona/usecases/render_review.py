@@ -878,7 +878,7 @@ def _heading_part_sources(heading: HeadingContent) -> dict[str, SourceInput]:
         sources[source_ref] = SourceInput(
             lines=(text,) if text else (), typography_role=role,
             runs=(SourceTextRun(text, role, source_ref),) if text else (),
-            content_present=bool(text))
+            content_present=bool(text), run_flow="block")
     return sources
 
 
