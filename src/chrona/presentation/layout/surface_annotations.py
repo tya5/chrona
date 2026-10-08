@@ -906,6 +906,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                                  candidate_sides=(annotation.side,),
                                                  viewport=LabelRect(*_bounds(annotation_slot.bounds)), obstacles=surface_obstacles,
                                                  overflow=annotation_slot.overflow, required=annotation_slot.priority == "required")
+            except LayoutError:
+                raise
             except ValueError as error:
                 raise LayoutError(str(error), f"/annotations/{index}") from error
             if box is None:
@@ -993,6 +995,9 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                     content_box=(frame_x + content_left, frame_y + content_top,
                                  frame_width - content_left - content_right,
                                  frame_height - content_top - content_bottom),
+                    inner_border_box=(frame_x + box_border.start, frame_y + box_border.top,
+                                      frame_width - box_border.start - box_border.end,
+                                      frame_height - box_border.top - box_border.bottom),
                     theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
                     annotation_slot=annotation_text_slot, paint_order=ANNOTATION_PAINT_ORDER)
                 kind_text = tuple(fit_text(item, viewer_fit, request.font_metrics, box_id=f"annotation-box:{annotation_id}")
