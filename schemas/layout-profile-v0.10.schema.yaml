@@ -363,8 +363,8 @@ $defs:
       id: {$ref: "#/$defs/id"}
       kind: {description: "Selects the leaf slot node form.", const: slot}
       source:
-        description: "Semantic presentation surface placed by this slot."
-        enum: [title, table, timeline, timeline-axis, network, summary, legend, group-details, observations, milestones, annotations, notes]
+        description: "Semantic presentation surface placed by this slot; heading may select the whole block or one independently placed part."
+        enum: [title, heading, heading.title, heading.kicker, heading.subtitle, table, timeline, timeline-axis, network, summary, legend, group-details, observations, milestones, annotations, notes]
       inlineSize: {$ref: "#/$defs/size"}
       blockSize: {$ref: "#/$defs/size"}
       place: {$ref: "#/$defs/place"}

@@ -71,8 +71,13 @@ class SourceInput:
     summary: SummaryContent | None = None
     # The View's axis tiers, for deriving an unbound axis size from their lanes (#1150).
     axis_tiers: tuple[AxisTier, ...] = ()
+    # A declared source may be available while its selected View part is empty.
+    # Empty sources contribute no runs and have zero natural extent.
+    content_present: bool = True
 
     def text_runs(self) -> tuple[SourceTextRun, ...]:
+        if not self.content_present:
+            return ()
         if self.runs:
             return self.runs
         return tuple(SourceTextRun(line, self.typography_role) for line in self.lines)
@@ -193,6 +198,10 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
     block_stacks: dict[str, MeasuredTextStack] = {}
     summary_flows: dict[str, MeasuredSummary] = {}
     for source, value in sorted(inputs.items()):
+        if not value.content_present:
+            result[source] = Measurement(*(Decimal(0) for _ in range(6)))
+            run_measurements[source] = ()
+            continue
         runs = value.text_runs()
         first_role = runs[0].typography_role if runs else value.typography_role
         first_treatment = typography.text_treatment(first_role)

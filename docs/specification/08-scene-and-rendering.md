@@ -666,8 +666,9 @@ required or visible-overflow name with an own mark instead fails with
 move, or connect the name. No member-label leader Path is emitted (#554).
 
 For the `table-timeline`, `review`, and `minimal` surface instances, Scene emits the
-following I3 core primitive set before any adapter is invoked: one resolved heading
-`Text` and, when Detail enables it, one resolved subtitle `Text`; one
+following I3 core primitive set before any adapter is invoked: resolved heading
+`Text` parts only when allocated by the Layout Profile (Spec33), each in its
+Layout-completed host; one
 axis-band `Rect` and one axis-label `Text` for each declared axis interval; one tick
 `Path` for each declared tick; one planned/baseline/actual/variance `Rect` or `Symbol`
 only when that semantic facet is authorized by the resolved projection; and one
@@ -710,6 +711,10 @@ and an adapter serializes both token values without choosing a fallback opacity.
 An optional kicker is projected before the title as `kicker-text`, with its
 Layout-completed baseline/bounds and `kicker` typography. Its own fill activates
 the kicker paint role; otherwise the existing `text` ink rule applies (#1189).
+Whole and split heading sources share the canonical `kicker`, `title` and
+`subtitle` primitive identities. Heading slots are optional on both timeline and
+network surfaces; Scene projects only completed parts and never creates a missing
+title host or infers part placement. Layout reports nonempty unallocated copy.
 
 The remaining I3 families are closed as follows.  `table-timeline` owns table frame,
 header band, column-label Text, group surface/header, alternating row surface, row
