@@ -334,7 +334,7 @@ allOf:
                 - $ref: "#/$defs/figureDaysUntil"
                 - $ref: "#/$defs/figureDaysIn"
           heading:
-            description: "The optional kicker above the title, the title, and optional subtitle lines of a table-timeline surface (a dependency network ignores it), each a template of literal text and the placeholders {project} (the Project title), {asOf} (the Actual Set's as-of date in dateForm) and {calendar} (the Project's default calendar id); {{ and }} are literal braces. Absent, the title is the Project title and there is no kicker or subtitle."
+            description: "The optional kicker above the title, the title, and optional subtitle lines of a table-timeline surface (a dependency network ignores it), each a template of literal text and the placeholders {project} (the Project title), {asOf} (the Actual Set's as-of date in dateForm) and {calendar} (the Project's default calendar title, else its id); {{ and }} are literal braces. Absent, the title is the Project title and there is no kicker or subtitle."
             examples: [{kicker: "Episode {asOf}", title: "{project}", subtitle: "Every work package by owning team, as of {asOf}, calendar {calendar}"}]
             type: object
             minProperties: 1

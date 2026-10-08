@@ -95,3 +95,53 @@ def test_a_subtitle_needs_the_themes_subtitle_role(tmp_path):
     with pytest.raises(RenderFailed) as caught:
         _render(tmp_path, {"subtitle": "x"}, theme_edit=drop)
     assert "E_THEME_ROLE_REQUIRED" in str(caught.value) or caught.value.diagnostic_id == "E_THEME_ROLE_REQUIRED"
+
+
+# {calendar} shows the default calendar's declared title, else its id (#1026). No test reads `examples/`.
+_WEEK = ["mon", "tue", "wed", "thu", "fri"]
+
+
+def _render_calendar(tmp_path, name: str, calendar: dict, subtitle: str = "range for {calendar}"):
+    directory = tmp_path / name
+    directory.mkdir()
+    source = _source()
+    source["calendars"] = {"engineering": calendar}
+    parts = sr.bundle("control-room-dark")
+    parts["view"]["body"]["heading"] = {"subtitle": subtitle}
+    return sr.render(directory, source, presentation=parts, actual=ACTUAL)
+
+
+def test_a_calendar_without_a_title_keeps_rendering_its_id(tmp_path):
+    rendered = _render_calendar(tmp_path, "a", {"working_days": _WEEK})
+    assert _texts(rendered)["subtitle"].text == "range for engineering"
+
+
+def test_a_declared_calendar_title_replaces_the_id(tmp_path):
+    rendered = _render_calendar(tmp_path, "a", {"title": "launch campaign", "working_days": _WEEK})
+    assert _texts(rendered)["subtitle"].text == "range for launch campaign"
+
+
+def test_a_unicode_calendar_title_renders_as_is(tmp_path):
+    title = "Équipe Développement — Ελλάδα Привет"
+    rendered = _render_calendar(tmp_path, "a", {"title": title, "working_days": _WEEK})
+    assert _texts(rendered)["subtitle"].text == f"range for {title}"
+
+
+def test_a_calendar_title_is_escaped_in_svg(tmp_path):
+    rendered = _render_calendar(tmp_path, "a", {"title": "R&D <A>", "working_days": _WEEK})
+    svg = rendered.artifact.content.decode()
+    assert "R&amp;D &lt;A&gt;" in svg and "R&D <A>" not in svg
+
+
+def test_a_long_calendar_title_never_overflows_the_surface(tmp_path):
+    title = "a very long calendar title " * 12
+    rendered = _render_calendar(tmp_path, "a", {"title": title, "working_days": _WEEK})
+    subtitle = _texts(rendered)["subtitle"]
+    assert subtitle.text == f"range for {title}" or subtitle.text.endswith("…")
+    assert subtitle.bounds[0] + subtitle.bounds[2] <= rendered.surface.canvas_bounds[2] + 0.01
+
+
+def test_a_calendar_title_changes_nothing_when_no_placeholder_reads_it(tmp_path):
+    plain = _render_calendar(tmp_path, "p", {"working_days": _WEEK}, "{project}")
+    titled = _render_calendar(tmp_path, "t", {"title": "T", "working_days": _WEEK}, "{project}")
+    assert plain.artifact.content == titled.artifact.content

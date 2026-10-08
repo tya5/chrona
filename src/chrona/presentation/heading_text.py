@@ -2,7 +2,7 @@
 
 A View's `heading` carries two optional templates of literal text and the closed placeholders
 `{project}` (the Project title), `{asOf}` (the Actual Set's as-of date in the declared date form) and
-`{calendar}` (the Project's default calendar id). It shares the brace grammar of the group-header
+`{calendar}` (the Project's default calendar title, else its id). It shares the brace grammar of the group-header
 template (`group_header_text.parse_template`) with its own placeholder set. This module is pure: callers
 supply the facts.
 """
