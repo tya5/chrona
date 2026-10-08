@@ -281,6 +281,40 @@ worse ratio deciding (`ground_kind` `pattern-host-substrate` or
 `pattern-host-ink`; a canvas texture stays `texture-substrate` and
 `texture-ink`).
 
+**Transparent surface overprint (#888).** An ink-only `canvas-texture` is not a
+host by its bounds. For legibility classes, its actual repeated ink contributes
+a composited ground only where it touches the subject bounds; a later opaque
+host hides it and a translucent host composites over it. Holes retain the
+underlying canvas or host. Opaque texture behaviour is unchanged.
+
+Above-content overlays are evaluated separately from prior-ground lookup.
+For each existing backdrop alternative `B`, form subject foreground `F` by
+compositing its channel ink/opacity over `B`. Sample a continuous radial overlay
+at that channel's existing painted sample (fill centre, stroke left-edge block
+midpoint) and composite it over BOTH `F` and `B`. Then the single sparse pattern
+overlay adds touched-ink and uncovered alternatives in Scene paint order,
+compositing its ink over both members of the covered pair. Evaluate the existing
+floor against each resulting pair; opaque overprint that erases contrast fails.
+This retains the existing point-sampled gradient and conservative bounds-contact
+contracts; it is not a universal every-pixel proof. Do not Cartesian-mix
+independent overlay colour lists or treat a later overlay as an earlier host.
+Decoration tint retains its dominant-substrate rule; no legibility floor changes.
+
+Pattern contact uses completed tile primitives, repeat phase, rotation and clip,
+not the full canvas bounds. Overlapping primitives in one tile paint the same
+opaque ink before the layer opacity is applied once. Bound contact work to 4096
+candidate tile copies per subject/layer; unreadable geometry/paint or exceeding
+that bound fails closed as `E_SCENE_CONTRAST_GROUND_UNSUPPORTED`. Findings use
+`overlay-blend` and the last applicable overlay identity, with sampled colours.
+Enumerate candidates by intersecting the closed subject bounds with the canvas
+clip, inverse-rotating its four corners about the completed pattern origin,
+and taking the resulting tile-space extents. For each axis of tile extent `T`,
+indices run inclusively from `ceil(min/T)-1` through `floor(max/T)`; thus seam
+touch includes both neighbours. The cap counts the Cartesian product before
+ink rejection; 4096 is allowed, 4097 is not. Actual contact uses transformed ink
+clipped to its tile and canvas; edge touch counts, and stroke never expands
+the candidate region beyond the clipped tile.
+
 **The as-of light cone as a translucent ground (#890).** The cone (role `as-of-cone`,
 a Symbol with a gradient whose stops carry opacities) is never an ordinary opaque host.
 `_ground_under` skips it, and an explicit step composites it over the host a mark, state

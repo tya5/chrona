@@ -24,9 +24,46 @@ The initial v0.6 vocabulary is closed:
   `miter|round|bevel`).
 
 No raw SVG/XML/CSS, transform, arbitrary definition, filter graph, rectangular
-or path clip, mask, blend, generic image, radial gradient, general blur, animation,
+or path clip, mask, blend, generic image, arbitrary radial gradient, general blur, animation,
 script, HTML, or network asset is admitted. A future target cannot make a
 deferred capability available by silently interpreting package data.
+Section 1.1 admits only the finite clipped surface radial treatment (#888),
+not raw target gradient syntax or an arbitrary effect graph.
+
+### 1.1. Transparent surface treatments (#888)
+
+Ink-only periodic canvas paints use existing `paint.pattern-geometry` and
+ordinary opacity. Required SVG/PNG layers are admitted in profiles that support
+patterns; unsupported targets fail before serialization. Named
+`textureFidelity` (`required` by default, or `decorative-optional`) admits only
+whole-layer omission, never an opaque tile, flattened substitute or recolouring.
+An omitted ink-only texture/overlay reports `I_VISUAL_TREATMENT_OMITTED` with
+treatment `canvas-texture`/`canvas-overlay`; failures point to the selected
+role's `textureFidelity`. Existing opaque textures retain their contract.
+
+The distinct `paint.radial-gradient` capability admits a finite two-opacity
+surface fade, used only by `canvas-overlay-gradient`. Layout completes its
+positive elliptical radii, centre, canvas region and inner-stop offset;
+Scene completes fixed ink colour, stop alpha and fidelity. Radius is
+`sqrt(((x-cx)/rx)**2 + ((y-cy)/ry)**2)`. Alpha is 0 through the inner stop,
+linear to role opacity at radius 1, and constant beyond 1. Only alpha varies;
+colour stays fixed, and composition uses the existing sRGB-encoded-channel
+alpha compositor (Spec46). Bounds are the completed canvas clip and fixed
+layer/stop structure, not an arbitrary radius threshold. Stops share one Scheme-resolved ink; no raster, filter,
+arbitrary stop program or adapter-completed geometry is admitted.
+Optional Scene v0.7 `paint.radialGradient` preserves every existing valid
+document and absent-field serialization, like glow/wobble/stop-alpha additions.
+It cannot coexist with linear `gradient`, pattern or another effect.
+
+Rich v0.6 SVG/PNG profiles and their v0.7 icon-profile extensions admit radial
+paint; baseline and non-SVG/PNG routes do not.
+Named `gradientFidelity` defaults to `required`: unsupported is
+`E_VISUAL_CAPABILITY_UNSUPPORTED` at
+`/body/roles/canvas-overlay-gradient/gradientFidelity`; `decorative-optional`
+omits the whole layer and reports treatment `canvas-overlay-gradient`.
+Omission preserves content geometry/paint and the other independent layers.
+SVG serializes closed radial data and non-interactive overlays; PNG uses pinned
+resvg. Typst/TikZ/PDF never receive unsupported completed treatments.
 
 ## 2. Ownership and completed Scene data
 
@@ -58,8 +95,8 @@ IDs and limits; it is an immutable evaluation input. The valid identifiers are:
 | Profile | Target | Supported capability IDs |
 | --- | --- | --- |
 | `chrona-output/visual/v0.5-baseline` | SVG, PNG, PDF, Typst, TikZ | none |
-| `chrona-output/visual/v0.6-svg` | SVG | all initial v0.6 IDs, `effect.glow` and `stroke.wobble` |
-| `chrona-output/visual/v0.6-png` | PNG through pinned resvg | all initial v0.6 IDs, `effect.glow` and `stroke.wobble` |
+| `chrona-output/visual/v0.6-svg` | SVG | all initial v0.6 IDs, `effect.glow`, `stroke.wobble` and `paint.radial-gradient` |
+| `chrona-output/visual/v0.6-png` | PNG through pinned resvg | all initial v0.6 IDs, `effect.glow`, `stroke.wobble` and `paint.radial-gradient` |
 
 PDF, Typst, and TikZ have no v0.6 profile. PDF's current svglib/ReportLab route
 does not preserve the required drop-shadow; it must reject a rich profile before
