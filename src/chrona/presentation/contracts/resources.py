@@ -344,6 +344,7 @@ class ViewPeriod:
     period_id: str
     label_placement: str | None = None
     label_overflow: str = "visible-overflow"
+    label_text: str | None = None
 
 
 @dataclass(frozen=True)
@@ -965,7 +966,8 @@ def _view_periods(raw: Any) -> tuple[ViewPeriod, ...]:
     """Close the schema-accepted period selection; one entry per Project period (#582)."""
     periods = tuple(ViewPeriod(str(item["id"]),
                                str(item["label"]["placement"]) if "label" in item else None,
-                               str(item["label"].get("overflow", "visible-overflow")) if "label" in item else "visible-overflow")
+                               str(item["label"].get("overflow", "visible-overflow")) if "label" in item else "visible-overflow",
+                               str(item["label"]["text"]) if "label" in item and "text" in item["label"] else None)
                     for item in raw)
     if len({item.period_id for item in periods}) != len(periods):
         repeated = sorted({item.period_id for item in periods if [p.period_id for p in periods].count(item.period_id) > 1})
