@@ -25,10 +25,11 @@ published-main three-OS gate. Do not close yet.
 
 ## Programme-level criteria (optional)
 
-Focused tests: 48 glow/frame-consumer unit, 10 new adapter integration,
+Focused tests: 48 glow/frame-consumer unit, 11 new adapter integration,
 84 heading/kicker/Scene-boundary/ownership regression and 4 semantic-reachability
 tests passed. Schema annotations and diff checks passed.
 Layout measurements and completed geometry do not change. Scene selects
 explicit glow roles and requires their own fill; adapters serialize existing
 paint. Generic all-or-none glow validation and contrast floors remain intact;
 gradient/shadow stay excluded from the newly admitted roles.
+The network title also emits the heading glow filter and rejects missing own fill.

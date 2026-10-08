@@ -97,7 +97,8 @@ def _presentation(*, headings: bool = True, heading_glow: bool = False, frame_gl
     return parts
 
 
-def _render(directory: Path, *, parts: dict | None = None, profile: str = SVG, target: str = "svg"):
+def _render(directory: Path, *, parts: dict | None = None, profile: str = SVG, target: str = "svg",
+            actual: dict | None = None):
     directory.mkdir(parents=True, exist_ok=True)
     parts = _presentation() if parts is None else parts
     paths = {kind: sr._write(directory / f"{kind}.yaml", value) for kind, value in parts.items()}
@@ -106,6 +107,7 @@ def _render(directory: Path, *, parts: dict | None = None, profile: str = SVG, t
     draft = resolve_draft_render(
         project_path=sr._write(directory / "project.yaml", project), view_path=paths["view"],
         theme_path=paths["theme"], scheme_path=paths["scheme"], layout_path=paths["layout"],
+        actual_path=sr._write(directory / "actual.yaml", actual) if actual is not None else None,
         icon_catalog_paths=(_catalogue(directory),), viewport=(900, 560),
         target_kind=target, visual_profile=profile)
     return render_review(RenderRequest(
@@ -126,6 +128,29 @@ def _glyphs(rendered):
 def _raster(review, path: Path) -> Image.Image:
     path.write_bytes(review.artifact.content)
     return Image.open(io.BytesIO(review.artifact.content)).convert("RGB")
+
+
+def _network_parts(*, omit_heading_fill: bool = False) -> dict:
+    parts = _presentation(heading_glow=True, frame_glow=False)
+    layout = parts["layout"]
+    layout["requiredThemeTokens"] = ["spacing.l", "spacing.m"]
+    title_slot = sr.find_node(layout, "title")
+    layout["root"]["children"] = [title_slot, {
+        "id": "network", "kind": "slot", "source": "network", "inlineSize": "fill", "blockSize": "fill",
+        "place": {"inline": "stretch", "block": "stretch", "safety": "strict"},
+        "priority": "required", "overflow": "visible-overflow",
+    }]
+    body = parts["view"]["body"]
+    body["surface"] = "dependency-network"
+    for key in ("tableColumns", "hierarchyColumn", "backgroundDecoration", "axis", "markers", "shading",
+                "timePresentation", "annotations", "annotationPresentation"):
+        body.pop(key, None)
+    body["rows"] = {"mode": "automatic"}
+    body["grouping"] = {"by": "none", "missing": "ungrouped"}
+    body["visibility"] = {"labels": False, "relations": "semantic", "annotations": "none"}
+    if omit_heading_fill:
+        parts["theme"]["body"]["colorBindings"].pop("heading.fill", None)
+    return parts
 
 
 def test_glow_paints_every_heading_and_frame_glyph_in_scene_svg_and_png(tmp_path):
@@ -244,3 +269,20 @@ def test_declared_heading_glow_changes_paint_not_completed_title_geometry(tmp_pa
         assert after[identifier].paint.fill == before[identifier].paint.fill
         assert after[identifier].paint.glow is not None
     assert _glyphs(plain)[0].bounds == _glyphs(glowing)[0].bounds
+
+
+def test_dependency_network_title_glow_uses_heading_paint_role_and_requires_own_fill(tmp_path):
+    actual = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "observed",
+              "body": {"asOf": "2026-02-20", "observations": []}}
+    rendered = _render(tmp_path / "network", parts=_network_parts(), actual=actual)
+    title = next(item for item in rendered.surface.primitives if item.scene_id == "title")
+    assert title.visual_role == "heading" and title.paint.glow is not None
+    root = ET.fromstring(rendered.artifact.content)
+    node = next(item for item in root.iter() if item.attrib.get("data-scene-id") == "title")
+    assert node.attrib["fill"] == title.paint.fill
+    assert node.attrib["filter"].startswith("url(#glow-")
+
+    with pytest.raises(RenderFailed) as error:
+        _render(tmp_path / "network-no-fill", parts=_network_parts(omit_heading_fill=True), actual=actual)
+    assert error.value.code == "E_THEME_ROLE_REQUIRED"
+    assert error.value.source_ref == "/body/roles/heading/fill"
