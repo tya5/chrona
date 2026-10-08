@@ -29,6 +29,7 @@ LEDGER: dict[str, tuple[str, str]] = {
     "calendar.exceptions": (MAPPED, "`except D ...` and `work D ...`"),
     "calendar.exceptions.date": (MAPPED, "a date after `except` or `work`"),
     "calendar.exceptions.working": (MAPPED, "`except` is false, `work` is true"),
+    "calendar.title": (YAML_ONLY, "a display name for presentation headings; does not affect the dates a plan is drafted with"),
     "calendar.fiscalStartMonth": (YAML_ONLY, "reporting metadata; does not affect the dates a plan is drafted with"),
     "period.title": (YAML_ONLY, "a label for presentation; does not affect the dates a plan is drafted with"),
     "period.start": (YAML_ONLY, "a presentation range: a date or an object endpoint, two shapes"),

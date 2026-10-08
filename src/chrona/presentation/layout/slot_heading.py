@@ -77,7 +77,8 @@ def reserve_slot_heading_blocks(measured: MeasuredSources, resolved_layout: Any,
     a declared heading.
     """
     sources = [source for source in _headed_content_slots(resolved_layout.profile["root"])
-               if source in measured.measurements and source_has_content(content, source)]
+               if source in measured.measurements
+               and source_has_content(content, source, measured_inputs=measured.inputs)]
     if not sources:
         return measured
     treatment = tokens.text_treatment(tokens.slot_heading_role())
@@ -113,8 +114,11 @@ def full_slot(original: SlotPlacement, completed_content: SlotPlacement, reserve
                                                   original.bounds.inline_size, size))
 
 
-def source_has_content(content: Any, source: str) -> bool:
+def source_has_content(content: Any, source: str, *, measured_inputs: Mapping[str, Any] | None = None) -> bool:
     """Whether the surface has anything to put in the slot of `source`: a caption over nothing is not drawn."""
+    source_input = (measured_inputs or {}).get(source)
+    if source_input is not None and not source_input.content_present:
+        return False
     if source == "annotations":
         return bool(content.annotations)
     if source == "notes":
@@ -170,6 +174,8 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
     diagnostics: list[str] = []
     warnings: list[FitWarning] = []
     copy_overrides = dict(request.surface_content.slot_heading_text)
+    measured_sources = getattr(request, "measured_sources", None)
+    measured_inputs = measured_sources.inputs if measured_sources is not None else None
     for decision in sorted(declared, key=lambda item: item.node_id):
         source = decision.source or ""
         if prepared is not None and source in prepared:
@@ -183,7 +189,7 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
         heading = decision.heading
         if slot is None or heading is None:
             continue
-        if not source_has_content(request.surface_content, source):
+        if not source_has_content(request.surface_content, source, measured_inputs=measured_inputs):
             diagnostics.append(f"I_LAYOUT_SLOT_HEADING_OMITTED:{decision.node_id}:no-content")
             continue
         bounds = slot.bounds

@@ -16,6 +16,7 @@ from chrona.presentation.layout.canvas_overlays import CanvasOverlays, complete_
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, RelationPlacement, TextPlacement, intersects
 from chrona.presentation.layout.surface_quality import SlotPlacement, SurfaceLayoutRequest
 from chrona.presentation.layout.slot_heading import complete_slot_headings, content_slot
+from chrona.presentation.layout.surface_heading import place_surface_headings
 
 
 @dataclass(frozen=True)
@@ -50,14 +51,15 @@ class DependencyNetworkLayout:
     canvas_overlays: CanvasOverlays | None = None
 
 
-def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bounds: Rect,
+def compose_dependency_network_layout(network: Any, *, title_bounds: Rect | None, bounds: Rect,
                                       measured_sources: MeasuredSources,
                                       flow_direction: str,
                                       max_bends: int = 4,
                                       max_detour_ratio: float = 2.0,
                                       canvas_bounds: Rect | None = None,
                                       theme_tokens: Any | None = None,
-                                      route_bounds: Rect | None = None) -> DependencyNetworkLayout:
+                                      route_bounds: Rect | None = None,
+                                      heading_text: tuple[TextPlacement, ...] | None = None) -> DependencyNetworkLayout:
     """Place a typed View graph without reading Project, View syntax, or Scene state."""
     nodes, edges = tuple(network.nodes), tuple(network.edges)
     ids = {node.object_id for node in nodes}
@@ -74,8 +76,12 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bound
         raise LayoutError("E_LAYOUT_METRIC_REQUIRED", "/body/metrics/network") from error
     if min_inline <= 0 or min_block <= 0 or gap < 0:
         raise LayoutError("E_LAYOUT_NETWORK_OVERFLOW", "/layoutManifest/network")
-    title = _title_measurement(measured_sources)
-    title_placement = _place_title(title, title_bounds)
+    title_placement = None
+    if heading_text is None:
+        if title_bounds is None:
+            raise LayoutError("E_LAYOUT_NETWORK_MEASUREMENT", "/layoutManifest/sources/title")
+        title_placement = _place_title(_title_measurement(measured_sources), title_bounds)
+        heading_text = (title_placement,)
     measured = _node_measurements(nodes, measured_sources)
     ranks = _ranks(nodes, edges)
     by_rank: dict[int, list[Any]] = {}
@@ -83,9 +89,10 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bound
         by_rank.setdefault(ranks[node.object_id], []).append(node)
     placed = _place_nodes(by_rank, ranks, measured, bounds, min_inline, min_block, gap,
                           flow_direction == "horizontal")
-    text = (title_placement,) + tuple(_place_node_text(node, measured[node.object_id]) for node in placed)
-    _assert_surface_quality(placed, text)
-    requested_canvas = canvas_bounds or _union(title_bounds, bounds)
+    node_text = tuple(_place_node_text(node, measured[node.object_id]) for node in placed)
+    text = heading_text + node_text
+    _assert_surface_quality(placed, node_text)
+    requested_canvas = canvas_bounds or (_union(title_bounds, bounds) if title_bounds is not None else bounds)
     canvas = _completed_canvas(requested_canvas, title_bounds, tuple(node.bounds for node in placed),
                                tuple(item.bounds for item in text))
     route_region = _expand_route_bounds(route_bounds, placed) if route_bounds is not None else canvas
@@ -106,8 +113,9 @@ def compose_dependency_network_layout(network: Any, *, title_bounds: Rect, bound
         patterns = (texture.pattern, *patterns)
     overflowed = (canvas.inline_size > requested_canvas.inline_size
                   or canvas.block_size > requested_canvas.block_size)
-    title_overflow = (title_placement.bounds.inline_size > title_bounds.inline_size
-                      or title_placement.bounds.block_size > title_bounds.block_size)
+    title_overflow = (title_placement is not None and title_bounds is not None
+                      and (title_placement.bounds.inline_size > title_bounds.inline_size
+                           or title_placement.bounds.block_size > title_bounds.block_size))
     warnings = tuple(
         item for item in (
             FitWarning("W_LAYOUT_NETWORK_OVERFLOW", "network", "/layoutManifest/network",
@@ -136,16 +144,21 @@ def compose_dependency_network_surface(request: SurfaceLayoutRequest) -> Depende
     if manifest is None or network is None:
         raise LayoutError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection/network")
     decisions = {item.source: item for item in manifest.decisions
-                 if item.kind == "slot" and item.source in {"title", "network"}}
-    if "title" not in decisions or "network" not in decisions:
+                 if item.kind == "slot" and item.source in {
+                     "title", "network", "heading.title", "heading.kicker", "heading.subtitle"}}
+    if "network" not in decisions:
         raise LayoutError("E_PRESENTATION_PRIMITIVE_MISSING", "/layoutManifest/sources/network")
     slots = {source: SlotPlacement(item.node_id, source, item.bounds,
                                    item.priority or "required", item.overflow or "visible-overflow")
              for source, item in decisions.items()}
     headings = complete_slot_headings(request=request, slots=slots, decisions=decisions)
-    title_reserve = headings.reserved("title")
     network_reserve = headings.reserved("network")
-    title_slot = content_slot(slots["title"], title_reserve)
+    content_slots = {source: content_slot(slot, headings.reserved(source))
+                     for source, slot in slots.items()}
+    title_slot = content_slots.get("title")
+    heading_batch = None
+    if title_slot is None:
+        heading_batch = place_surface_headings(request, content_slots, request.measured_sources)
     network_slot = content_slot(slots["network"], network_reserve)
     route_bounds = None
     if network_reserve:
@@ -158,23 +171,30 @@ def compose_dependency_network_surface(request: SurfaceLayoutRequest) -> Depende
                                 manifest.viewport.block + manifest.viewport.block_size
                                 - network_slot.bounds.block))
     placed = compose_dependency_network_layout(
-        network, title_bounds=title_slot.bounds, bounds=network_slot.bounds,
+        network, title_bounds=title_slot.bounds if title_slot is not None else None,
+        bounds=network_slot.bounds,
         measured_sources=request.measured_sources,
         flow_direction=manifest.dependency_network_flow_direction,
         max_bends=manifest.relation_max_bends,
         max_detour_ratio=manifest.relation_max_detour_ratio,
         canvas_bounds=manifest.viewport, theme_tokens=request.theme_tokens,
-        route_bounds=route_bounds)
+        route_bounds=route_bounds,
+        heading_text=tuple(replace(item, semantic_id={
+            "title": "titleText", "kicker": "kickerText", "subtitle": "subtitleText"
+        }[item.placement_id]) for item in heading_batch.text) if heading_batch is not None else None)
     # Source vocabulary is not slot identity. Close native ownership against the same
     # manifest slots as captions before Scene receives any completed primitive.
+    slot_owners = {source: slot.slot_id for source, slot in slots.items()}
+    slot_owners.update({slot.slot_id: slot.slot_id for slot in slots.values()})
     placed = replace(placed,
         nodes=tuple(replace(node, slot_id=slots["network"].slot_id) for node in placed.nodes),
-        text=tuple(replace(item, slot_id=slots[item.slot_id].slot_id) for item in placed.text),
+        text=tuple(replace(item, slot_id=slot_owners[item.slot_id]) for item in placed.text),
         relations=tuple(replace(item, slot_id=slots["network"].slot_id) for item in placed.relations))
     if headings.text:
         placed = replace(placed, text=(*headings.text, *placed.text))
     return replace(placed, fit_warnings=(*headings.warnings, *placed.fit_warnings),
-                   diagnostics=headings.diagnostics)
+                   diagnostics=(*headings.diagnostics,
+                                *(heading_batch.diagnostics if heading_batch is not None else ())))
 
 
 def _title_measurement(measured_sources: MeasuredSources) -> MeasuredTextRun:
@@ -319,16 +339,18 @@ def _assert_surface_quality(nodes: list[NetworkNodePlacement], text: tuple[TextP
             raise LayoutError("E_LAYOUT_NETWORK_OVERFLOW", "/layoutManifest/network")
         if any(intersects(node.bounds, other.bounds) for other in nodes[index + 1:]):
             raise LayoutError("E_LAYOUT_NETWORK_OVERFLOW", "/layoutManifest/network")
-    _, *labels = text
-    for label, node in zip(labels, nodes, strict=True):
+    for label, node in zip(text, nodes, strict=True):
         if not _contains(node.bounds, label.bounds):
             raise LayoutError("E_LAYOUT_NETWORK_OVERFLOW", f"/projection/network/nodes/{node.object_id}")
 
 
-def _completed_canvas(requested: Rect, title_bounds: Rect, nodes: tuple[Rect, ...], text: tuple[Rect, ...]) -> Rect:
+def _completed_canvas(requested: Rect, title_bounds: Rect | None, nodes: tuple[Rect, ...], text: tuple[Rect, ...]) -> Rect:
     """Return Layout's natural network extent, anchored at the requested origin."""
-    inline_end = max(requested.inline + requested.inline_size, title_bounds.inline + title_bounds.inline_size)
-    block_end = max(requested.block + requested.block_size, title_bounds.block + title_bounds.block_size)
+    inline_end = requested.inline + requested.inline_size
+    block_end = requested.block + requested.block_size
+    if title_bounds is not None:
+        inline_end = max(inline_end, title_bounds.inline + title_bounds.inline_size)
+        block_end = max(block_end, title_bounds.block + title_bounds.block_size)
     for item in nodes + text:
         inline_end = max(inline_end, item.inline + item.inline_size)
         block_end = max(block_end, item.block + item.block_size)

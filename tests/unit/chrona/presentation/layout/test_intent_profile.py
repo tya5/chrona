@@ -27,6 +27,7 @@ def theme(*, bad=False):
 
 
 SOURCES = {"title", "table", "timeline", "timeline-axis", "legend", "notes", "group-details", "observations", "milestones"}
+HEADING_SOURCES = SOURCES | {"heading.title", "heading.kicker", "heading.subtitle"}
 
 
 def test_complete_profile_resolves_tokens_and_canonical_hash():
@@ -58,6 +59,65 @@ def test_semantic_failures_have_stable_ids(mutate, diagnostic):
     value = fixture("layout-profile-intent-v0.2.yaml"); mutate(value)
     with pytest.raises(LayoutError, match=diagnostic):
         resolve_layout_profile(value, available_sources=SOURCES, theme=theme())
+
+
+def test_heading_whole_alias_resolves_to_legacy_title_identity():
+    legacy = fixture("layout-profile-intent-v0.2.yaml")
+    alias = deepcopy(legacy)
+    alias["root"]["children"][0]["source"] = "heading"
+    legacy_result = resolve_layout_profile(legacy, available_sources=SOURCES, theme=theme())
+    alias_result = resolve_layout_profile(alias, available_sources=SOURCES, theme=theme())
+    assert alias_result.profile["root"]["children"][0]["source"] == "title"
+    assert alias_result.content_hash == legacy_result.content_hash
+
+
+def test_heading_part_source_is_accepted():
+    value = fixture("layout-profile-intent-v0.2.yaml")
+    value["root"]["children"][0]["source"] = "heading.subtitle"
+    resolved = resolve_layout_profile(value, available_sources=HEADING_SOURCES, theme=theme())
+    assert resolved.profile["root"]["children"][0]["source"] == "heading.subtitle"
+
+
+@pytest.mark.parametrize("first,second", [
+    ("heading.title", "heading.title"),
+    ("title", "heading.subtitle"),
+    ("heading", "heading.kicker"),
+    ("heading", "title"),
+])
+def test_duplicate_heading_claim_fails_at_later_source_pointer(first, second):
+    value = fixture("layout-profile-intent-v0.2.yaml")
+    value["root"]["children"][0]["source"] = first
+    duplicate = deepcopy(value["root"]["children"][0])
+    duplicate["id"] = "second-heading"
+    duplicate["source"] = second
+    value["root"]["children"].insert(1, duplicate)
+    with pytest.raises(LayoutError, match="E_LAYOUT_SCHEMA") as caught:
+        resolve_layout_profile(value, available_sources=HEADING_SOURCES, theme=theme())
+    assert caught.value.path == "/root/children/1/source"
+    assert "heading part" in caught.value.detail
+    assert "title" in caught.value.detail or "kicker" in caught.value.detail or "subtitle" in caught.value.detail
+
+
+def test_heading_claims_are_checked_after_base_overrides_resolve():
+    base = fixture("layout-profile-intent-v0.2.yaml")
+    base["root"]["children"][0]["source"] = "heading.kicker"
+    base["root"]["children"].append({**deepcopy(base["root"]["children"][0]),
+                                      "id": "second-kicker", "source": "heading.kicker"})
+    identity = "sha256:" + "1" * 64
+    derived = {
+        "version": base["version"], "id": "derived", "flowDirection": base["flowDirection"],
+        "dependencyNetworkFlowDirection": base["dependencyNetworkFlowDirection"],
+        "requiredThemeTokens": base["requiredThemeTokens"], "reviewSurface": base["reviewSurface"],
+        "extends": {"id": base["id"], "kind": "layout-profile",
+                    "store": {"provider": "local", "identity": "test"},
+                    "address": "layouts/base.yaml", "revision": {"token": "r1"},
+                    "contentIdentity": identity},
+        "overrides": {"title": {"inlineSize": {"fixed": 240}}},
+    }
+    with pytest.raises(LayoutError, match="E_LAYOUT_SCHEMA") as caught:
+        resolve_layout_profile(derived, available_sources=HEADING_SOURCES,
+                               theme=theme(), bases={base["id"]: LayoutBase(base, "r1", identity)})
+    assert caught.value.path == "/root/children/3/source"
 
 
 def test_wrong_type_and_missing_tokens_are_rejected():
