@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import replace
 
 from chrona.presentation.layout.canvas_overlays import CanvasOverlays
+from chrona.presentation.model.semantic_registry import semantic_binding
 from chrona.presentation.model.theme_tokens import ThemeTokenView
 from chrona.presentation.scene.model import ScenePrimitive, SceneSlot, SceneSurface
 from chrona.presentation.scene.paint import resolve_radial_overlay_paint
@@ -23,7 +24,8 @@ def project_canvas_overlays(surface: SceneSurface, placements: CanvasOverlays | 
     for placement in (placements.radial, placements.pattern):
         if placement is None:
             continue
-        role = placement.placement_id
+        binding = semantic_binding("canvasOverlayGradient" if placement is placements.radial else "canvasOverlay")
+        role = binding.scene_role
         rect = placement.slot.bounds
         bounds = (float(rect.inline), float(rect.block), float(rect.inline_size), float(rect.block_size))
         paint = None
@@ -39,7 +41,7 @@ def project_canvas_overlays(surface: SceneSurface, placements: CanvasOverlays | 
         order += 1
         slots.append(SceneSlot(placement.slot.slot_id, role, None, bounds))
         primitives.append(ScenePrimitive(
-            role, "Rect", role, "decoration", role, role, bounds,
+            placement.placement_id, "Rect", role, binding.primitive_kind, binding.purpose, role, bounds,
             slot_id=placement.slot.slot_id, paint_order=order, paint=paint, pattern=pattern,
             visual_capability_source_ref=f"/body/roles/{role}"))
     return replace(surface, slots=tuple(slots), primitives=tuple(primitives), info_diagnostics=tuple(information))

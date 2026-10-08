@@ -5,12 +5,23 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from chrona.presentation.model.semantic_registry import (
-    ContrastClass, contrast_binding, contrast_binding_for, is_annotation_artwork_role, is_frame_glyph_role)
+    ContrastClass,
+    contrast_binding,
+    contrast_binding_for,
+    is_annotation_artwork_role,
+    is_frame_glyph_role,
+)
 from chrona.presentation.scene.cone_ground import AS_OF_CONE_ROLE, ConeGround, cones_in
+from chrona.presentation.scene.ink_touch import InkTouchError
 from chrona.presentation.scene.paint_analysis import (
-    blend_over, composited_contrast, is_hex_color, sample_linear_gradient)
+    blend_over,
+    composited_contrast,
+    is_hex_color,
+    sample_linear_gradient,
+)
+from chrona.presentation.scene.pattern_ink import pattern_ink_touches
 from chrona.presentation.scene.sparse_ink import selected_symbol_ink, valid_opacity
-
+from chrona.presentation.scene.surface_overprint import ordered_overprint_pairs
 
 DECORATION_FLOOR = 1.10
 MARK_FLOOR = 3.0
@@ -121,6 +132,11 @@ def evaluate_scene_contrast(document: Mapping[str, Any], *, decoration_severity:
         ground = _ground(canvas, scene_path)
         primitives = raw_surface.get("primitives")
         _require(isinstance(primitives, list), f"missing primitives at {scene_path}")
+        if any(isinstance(item, Mapping) and (
+                item.get("visualRole") in {"canvas-overlay", "canvas-overlay-gradient"}
+                or (item.get("visualRole") == "canvas-texture" and isinstance(item.get("paint"), Mapping)
+                    and item["paint"].get("fill") is None)) for item in primitives):
+            ground = canvas
         try:
             cones = cones_in(primitives)
         except ValueError as error:
@@ -292,10 +308,23 @@ def _primitive_findings(scene_path: str, primitive: Mapping[str, Any], canvas: s
         # A canvas texture and a catalogue pattern are ground in two colours: a mark or a label may lie
         # on either. A decoration is a tint judged against the dominant substrate, not against thin ink lines.
         ratio = ground = ground_kind = None
-        for option_ground, option_kind, option_id in (option for group in groups for option in group):
-            option_ratio = composited_contrast(fill=paint[channel], opacity=float(opacity), ground=option_ground)
-            if ratio is None or option_ratio < ratio:
-                ratio, ground, ground_kind, ground_id = option_ratio, option_ground, option_kind, option_id
+        options = [option for group in groups for option in group]
+        if not decoration and _has_later_overlay(primitives, primitive, index):
+            try:
+                pairs = ordered_overprint_pairs(primitive, primitives, index, foreground=paint[channel],
+                                                opacity=float(opacity), grounds=options, sample=sample)
+            except InkTouchError:
+                unsupported_ground = True
+                continue
+            for pair in pairs:
+                option_ratio = composited_contrast(fill=pair.foreground, opacity=1, ground=pair.backdrop)
+                if ratio is None or option_ratio < ratio:
+                    ratio, ground, ground_kind, ground_id = option_ratio, pair.backdrop, pair.ground_kind, pair.ground_id
+        else:
+            for option_ground, option_kind, option_id in options:
+                option_ratio = composited_contrast(fill=paint[channel], opacity=float(opacity), ground=option_ground)
+                if ratio is None or option_ratio < ratio:
+                    ratio, ground, ground_kind, ground_id = option_ratio, option_ground, option_kind, option_id
         candidates.append((ratio, channel, ground_id, ground, sample, ground_kind))
     if not candidates:
         error_code = "E_SCENE_CONTRAST_GROUND_UNSUPPORTED" if unsupported_ground else "E_SCENE_CONTRAST_PAINT"
@@ -418,6 +447,20 @@ def _pattern_findings(scene_path: str, primitive: Mapping[str, Any], pattern: An
         pairs += [("stroke", *host_ground, ink) for host_ground in group]
     findings = []
     for channel, ground, ground_kind, ground_id, foreground in pairs:
+        if not decoration and _has_later_overlay(primitives, primitive, index):
+            try:
+                overprinted = ordered_overprint_pairs(
+                    primitive, primitives, index, foreground=foreground, opacity=1,
+                    grounds=[(ground, ground_kind, ground_id)], sample=_sample_point(primitive, channel))
+            except InkTouchError:
+                severity, unsupported_code = _failure("E_SCENE_CONTRAST_GROUND_UNSUPPORTED", severity_class,
+                                                      policy_class, severities)
+                return (SceneContrastFinding(unsupported_code, severity, scene_path, purpose, role, primitive_id,
+                                             None, floor, disposition, paint_channel=channel,
+                                             ground_kind="unsupported", severity_class=severity_class),)
+            worst = min(overprinted, key=lambda pair: composited_contrast(
+                fill=pair.foreground, opacity=1, ground=pair.backdrop))
+            foreground, ground, ground_kind, ground_id = worst.foreground, worst.backdrop, worst.ground_kind, worst.ground_id
         ratio = composited_contrast(fill=foreground, opacity=1.0, ground=ground)
         severity, pair_code = "info", code
         if ratio < floor:
@@ -426,6 +469,35 @@ def _pattern_findings(scene_path: str, primitive: Mapping[str, Any], pattern: An
                                              ratio, floor, disposition, ground_id, ground, channel,
                                              *sample, ground_kind, density, severity_class=severity_class))
     return tuple(findings)
+
+
+def _has_later_overlay(primitives: list[Any], subject: Mapping[str, Any], index: int) -> bool:
+    key = (subject.get("paintOrder", 0), index)
+    return any(isinstance(item, Mapping) and item.get("visualRole") in {
+        "canvas-overlay", "canvas-overlay-gradient"} and (item.get("paintOrder", 0), position) > key
+        for position, item in enumerate(primitives))
+
+
+def effective_surface_paint_pairs(subject: Mapping[str, Any], primitives: list[Any], index: int,
+                                   canvas: Mapping[str, Any], channel: str = "fill") -> tuple:
+    """Shared quality observation of opt-in surface treatments, using real host grounds."""
+    paint = subject.get("paint")
+    if not isinstance(paint, Mapping) or not is_hex_color(paint.get(channel)):
+        raise InkTouchError("unreadable subject channel")
+    sample = _sample_point(subject, channel)
+    binding = contrast_binding_for(subject.get("visualRole"), subject.get("purpose"))
+    decoration = binding is not None and binding.contrast_class == ContrastClass.DECORATION
+    try:
+        cones = cones_in(primitives)
+    except ValueError as error:
+        raise InkTouchError("unreadable prior cone ground") from error
+    _, groups, unsupported = _grounds_for(subject, primitives, index, canvas, sample,
+                                          cones=cones, catalog_patterns=True, decoration=decoration)
+    if unsupported or groups is None:
+        raise InkTouchError("unsupported completed surface ground")
+    return ordered_overprint_pairs(subject, [] if decoration else primitives, index,
+                                    foreground=paint[channel], opacity=float(paint.get("opacity", 1)),
+                                    grounds=[option for group in groups for option in group], sample=sample)
 
 
 def _cone_overlay(cones: tuple[ConeGround, ...], primitives: list[Any], index: int,
@@ -611,7 +683,7 @@ def _grounds_for(primitive: Mapping[str, Any], primitives: list[Any], index: int
         host_id, ground, unsupported, kind = _note_box_ground(primitive, primitives, index, sample)
         if unsupported or ground is None:
             return host_id, None, unsupported
-        groups, unreadable = _frame_glyph_grounds(
+        groups, unreadable = _sparse_ground_layers(
             [[(ground, kind, host_id)]], host_id, primitive, primitives, index, cones)
         if unreadable is not None:
             return unreadable, None, True
@@ -689,11 +761,17 @@ def _grounds_under(subject: Mapping[str, Any], primitives: list[Any], index: int
     """
     found = None if sample[0] is None or sample[1] is None else _host_under(subject, primitives, index, sample)
     if found is None:
+        if isinstance(canvas, Mapping):
+            try:
+                canvas = (sample_linear_gradient(canvas["gradient"], sample)
+                          if ink and canvas.get("gradient") is not None else _ground(canvas, "canvas"))
+            except (ValueError, TypeError, KeyError):
+                return "canvas", None, True
         if canvas is None:
             return "canvas", None, False
         if not ink:
             return "canvas", _tinted([[(canvas, "canvas", "canvas")]], label, primitives, index, "canvas", cones), False
-        groups, unreadable = _frame_glyph_grounds(
+        groups, unreadable = _sparse_ground_layers(
             [[(canvas, "canvas", "canvas")]], "canvas", label, primitives, index, cones)
         return (unreadable, None, True) if unreadable is not None else ("canvas", groups, False)
     host_index, host = found
@@ -732,18 +810,18 @@ def _grounds_under(subject: Mapping[str, Any], primitives: list[Any], index: int
                   for own_colour, own_kind, _ in own for group in beneath]
     if not ink:
         return host_id, _tinted(groups, label, primitives, index, host_id, cones), False
-    completed, unreadable = _frame_glyph_grounds(groups, host_id, label, primitives, index, cones)
+    completed, unreadable = _sparse_ground_layers(groups, host_id, label, primitives, index, cones)
     return (unreadable, None, True) if unreadable is not None else (host_id, completed, False)
 
 
-def _frame_glyph_grounds(groups: list[list[_Ground]], host_id: str | None,
+def _sparse_ground_layers(groups: list[list[_Ground]], host_id: str | None,
                           label: Mapping[str, Any],
                           primitives: list[Any], subject_index: int,
                           cones: tuple[ConeGround, ...]
                           ) -> tuple[list[list[_Ground]], str | None]:
-    """Interleave sparse frame ink and cones between the resolved host and subject.
+    """Interleave sparse frame/pattern ink and cones between host and subject.
 
-    Bounds only shortlist candidate frame parts; `selected_symbol_ink` decides actual contact.
+    Bounds shortlist layers; their completed symbol/tile geometry decides contact.
     Each paint-order boundary is retained so a cone before a glyph tints its substrate, while a
     cone after it tints both the substrate and glyph ink. Existing ground groups remain as the
     conservative uncovered alternatives.
@@ -768,8 +846,10 @@ def _frame_glyph_grounds(groups: list[list[_Ground]], host_id: str | None,
     candidates: list[tuple[tuple[int, int], int, Mapping[str, Any]]] = []
     x, y, width, height = bounds
     for part_index, part in enumerate(primitives):
-        if (not isinstance(part, Mapping) or part.get("kind") != "Symbol"
-                or not is_frame_glyph_role(part.get("visualRole"))):
+        patterned_ink = (isinstance(part, Mapping) and part.get("visualRole") == "canvas-texture"
+                         and isinstance(part.get("paint"), Mapping) and part["paint"].get("fill") is None)
+        if (not isinstance(part, Mapping) or not patterned_ink and (
+                part.get("kind") != "Symbol" or not is_frame_glyph_role(part.get("visualRole")))):
             continue
         part_order = part.get("paintOrder", 0)
         if not isinstance(part_order, int) or isinstance(part_order, bool):
@@ -796,7 +876,17 @@ def _frame_glyph_grounds(groups: list[list[_Ground]], host_id: str | None,
 
     boundary_id = host_id
     for _, frame_index, frame in sorted(candidates, key=lambda item: item[0]):
-        inks, unreadable = selected_symbol_ink((frame,), bounds, unreadable_identity="frame-glyph")
+        patterned_ink = frame.get("visualRole") == "canvas-texture"
+        if patterned_ink:
+            try:
+                touches = pattern_ink_touches(frame, bounds)
+            except InkTouchError:
+                return groups, str(frame.get("id", "canvas-texture"))
+            paint = frame["paint"]
+            inks = [(frame["id"], paint["stroke"], float(paint.get("opacity", 1)))] if touches else []
+            unreadable = None
+        else:
+            inks, unreadable = selected_symbol_ink((frame,), bounds, unreadable_identity="frame-glyph")
         if unreadable is not None:
             return groups, unreadable
         if not inks:
@@ -805,11 +895,12 @@ def _frame_glyph_grounds(groups: list[list[_Ground]], host_id: str | None,
         groups = _tinted(groups, label, primitives, frame_index, boundary_id, cones)
         bases = [ground for group in groups for ground in group]
         for part_id, colour, opacity in inks:
+            ink_kind = "pattern-ink" if patterned_ink else "frame-glyph-ink"
             if opacity == 1.0:
-                painted = [(colour, "frame-glyph-ink", part_id)]
+                painted = [(colour, ink_kind, part_id)]
             else:
                 painted = [(blend_over(ink=colour, opacity=opacity, ground=base),
-                            "frame-glyph-ink", part_id) for base, _, _ in bases]
+                            ink_kind, part_id) for base, _, _ in bases]
             groups = [*groups, painted]
         boundary_id = part_id
     return _tinted(groups, label, primitives, subject_index, boundary_id, cones), None

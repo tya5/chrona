@@ -7,12 +7,19 @@ from math import hypot, isfinite
 from typing import Any, Mapping, Sequence
 
 from chrona.presentation.layout.obstacles import (
-    ObstacleRect, ObstacleSegment, segment_length_inside_rect, segment_overlap_length,
+    ObstacleRect,
+    ObstacleSegment,
+    segment_length_inside_rect,
+    segment_overlap_length,
 )
 from chrona.presentation.layout.path_geometry import flatten_corner
-from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, semantic_binding
+from chrona.presentation.model.semantic_registry import (
+    axis_band_semantic_ids,
+    semantic_binding,
+)
+from chrona.presentation.scene.contrast_policy import effective_surface_paint_pairs
+from chrona.presentation.scene.ink_touch import InkTouchError
 from chrona.presentation.scene.paint_analysis import composited_contrast, is_hex_color
-
 
 MICRO_POINT_TOLERANCE = 0.001
 TEXT_INTERSECTION_AREA = 4.0
@@ -518,6 +525,10 @@ def _occlusion_findings(scene_path: str, primitives: Sequence[_Primitive]) -> li
         if text.kind != "Text" or not text.bounds.positive_area:
             continue
         for rect in primitives:
+            if rect.visual_role in {"canvas-overlay", "canvas-overlay-gradient"}:
+                # These fields are overprints, not opaque bounding-box hosts;
+                # their effective paired paints are observed below.
+                continue
             ground = rect.kind == "Rect" or (rect.kind == "Symbol" and rect.visual_role in _BAND_CELL_ROLES)
             if not ground or not rect.bounds.positive_area or not _later(rect, text) or not _opaque_fill(rect.paint):
                 continue
@@ -564,15 +575,17 @@ def _paint_findings(scene_path: str, surface: Mapping[str, Any], primitives: Seq
             density = pattern.get("densityBasisPoints")
             _require(isinstance(density, int) and not isinstance(density, bool) and 1 <= density <= 10000,
                      f"invalid catalogue pattern density for {item.primitive_id}")
-            _require(isinstance(paint, Mapping) and _opacity(paint) == 1.0
-                     and is_hex_color(paint.get("fill")) and is_hex_color(paint.get("stroke")),
+            ink_only = (item.visual_role in {"canvas-texture", "canvas-overlay"}
+                        and isinstance(paint, Mapping) and paint.get("fill") is None)
+            _require(isinstance(paint, Mapping) and is_hex_color(paint.get("stroke"))
+                     and (ink_only or _opacity(paint) == 1.0 and is_hex_color(paint.get("fill"))),
                      f"invalid catalogue pattern channels for {item.primitive_id}")
             tile_inline, tile_block, angle = (pattern.get(key) for key in
                                                ("tileInlineSize", "tileBlockSize", "angleDegrees"))
             _require(_positive_finite(tile_inline) and _positive_finite(tile_block) and _finite(angle),
                      f"invalid catalogue pattern geometry for {item.primitive_id}")
             facts: tuple[tuple[str, float | str], ...] = (
-                ("substrate", str(paint["fill"])), ("ink", str(paint["stroke"])),
+                ("substrate", "transparent" if ink_only else str(paint["fill"])), ("ink", str(paint["stroke"])),
                 ("densityBasisPoints", float(density)), ("tileInlineSize", float(tile_inline)),
                 ("tileBlockSize", float(tile_block)), ("angleDegrees", float(angle)),
             )
@@ -604,13 +617,28 @@ def _paint_findings(scene_path: str, surface: Mapping[str, Any], primitives: Seq
     texture = next((item for item in primitives if item.visual_role == "canvas-texture"
                     and isinstance(item.paint, Mapping) and is_hex_color(item.paint.get("fill"))
                     and is_hex_color(item.paint.get("stroke"))), None)
+    surface_treatments = any(item.visual_role in {"canvas-overlay", "canvas-overlay-gradient"}
+                             or (item.visual_role == "canvas-texture" and isinstance(item.paint, Mapping)
+                                 and item.paint.get("fill") is None) for item in primitives)
     for item in primitives:
+        if item.visual_role in {"canvas-overlay", "canvas-overlay-gradient"}:
+            continue
         if not item.bounds.positive_area or not isinstance(item.paint, Mapping) or not is_hex_color(item.paint.get("fill")):
             continue
-        grounds = ((str(texture.paint["fill"]), str(texture.paint["stroke"]))
-                   if texture is not None and item is not texture else (str(canvas["fill"]),))
-        ratio = min(composited_contrast(fill=str(item.paint["fill"]), opacity=_opacity(item.paint), ground=ground)
-                    for ground in grounds)
+        if surface_treatments:
+            raw_primitives = surface["primitives"]
+            try:
+                pairs = effective_surface_paint_pairs(raw_primitives[item.index], raw_primitives, item.index, canvas)
+                ratio = min(composited_contrast(fill=pair.foreground, opacity=1, ground=pair.backdrop) for pair in pairs)
+            except InkTouchError:
+                findings.append(_finding("E_SCENE_CONTRAST_GROUND_UNSUPPORTED", "error", scene_path,
+                                         (item.primitive_id,), item.slot_id, (), "unsupported"))
+                continue
+        else:
+            grounds = ((str(texture.paint["fill"]), str(texture.paint["stroke"]))
+                       if texture is not None and item is not texture else (str(canvas["fill"]),))
+            ratio = min(composited_contrast(fill=str(item.paint["fill"]), opacity=_opacity(item.paint), ground=ground)
+                        for ground in grounds)
         findings.append(_finding("I_SCENE_PAINT_CONTRAST", "info", scene_path, (item.primitive_id,), item.slot_id,
                                  (("contrastRatio", ratio),), None))
     return findings

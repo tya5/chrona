@@ -118,30 +118,34 @@ properties:
                           ref: {description: "Authored `set:name` reference to a normalized catalogue pattern.", type: string, pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"}
                       - description: "A bounded deterministic repeating grain/rain pattern, consumed only by canvas texture and overlay roles (#888)."
                         oneOf:
-                          - type: object
+                          - description: "Seeded grain uses a count and radius inside one finite tile."
+                            examples: [{kind: seeded, algorithm: splitmix64-v1, motif: grain, seed: 582041, tile: {inlineSize: 96, blockSize: 72}, count: 14, radius: 0.55}]
+                            type: object
                             additionalProperties: false
                             required: [kind, algorithm, motif, seed, tile, count, radius]
                             properties:
-                              kind: {const: seeded}
-                              algorithm: {const: splitmix64-v1}
-                              motif: {const: grain}
-                              seed: {type: integer, minimum: 0, maximum: 4294967295}
+                              kind: {description: "Discriminator for deterministic seeded pattern data.", const: seeded}
+                              algorithm: {description: "Versioned deterministic pseudo-random placement algorithm.", const: splitmix64-v1}
+                              motif: {description: "The sparse circular grain motif.", const: grain}
+                              seed: {description: "Unsigned 32-bit deterministic motif seed.", type: integer, minimum: 0, maximum: 4294967295}
                               tile: {$ref: "#/$defs/seededPatternTile"}
                               count: {$ref: "#/$defs/seededPatternCount"}
-                              radius: {type: number, exclusiveMinimum: 0}
-                          - type: object
+                              radius: {description: "Positive grain-dot radius in physical pixels.", examples: [0.55], type: number, exclusiveMinimum: 0}
+                          - description: "Seeded rain uses finite slanted strokes inside one finite tile."
+                            examples: [{kind: seeded, algorithm: splitmix64-v1, motif: rain, seed: 407219, tile: {inlineSize: 112, blockSize: 84}, count: 12, length: 13, strokeWidth: 0.45, slant: 0.08}]
+                            type: object
                             additionalProperties: false
                             required: [kind, algorithm, motif, seed, tile, count, length, strokeWidth, slant]
                             properties:
-                              kind: {const: seeded}
-                              algorithm: {const: splitmix64-v1}
-                              motif: {const: rain}
-                              seed: {type: integer, minimum: 0, maximum: 4294967295}
+                              kind: {description: "Discriminator for deterministic seeded pattern data.", const: seeded}
+                              algorithm: {description: "Versioned deterministic pseudo-random placement algorithm.", const: splitmix64-v1}
+                              motif: {description: "The sparse slanted rain-stroke motif.", const: rain}
+                              seed: {description: "Unsigned 32-bit deterministic motif seed.", type: integer, minimum: 0, maximum: 4294967295}
                               tile: {$ref: "#/$defs/seededPatternTile"}
                               count: {$ref: "#/$defs/seededPatternCount"}
-                              length: {type: number, exclusiveMinimum: 0}
-                              strokeWidth: {type: number, exclusiveMinimum: 0}
-                              slant: {type: number}
+                              length: {description: "Positive rain-stroke length in physical pixels.", examples: [13], type: number, exclusiveMinimum: 0}
+                              strokeWidth: {description: "Positive rain-stroke width in physical pixels.", examples: [0.45], type: number, exclusiveMinimum: 0}
+                              slant: {description: "Finite horizontal displacement per unit of vertical rain-stroke length.", examples: [0.08], type: number}
             - description: "Point-symbol selection is finite Theme data resolved into a Scene outline: a built-in shape, or a multi-part glyph fitted contain/centred into the mark's bounds. Each glyph part paints from the milestone role's own colour unless it declares a fixed color; an outline-treatment role overrides every part to stroke regardless."
               examples: [{type: symbol, value: {shape: diamond}}, {type: symbol, value: {shape: glyph, viewBox: [100, 100], parts: [{d: "M0 0L100 0L100 100L0 100Z", paint: fill}]}}]
               if:
@@ -544,8 +548,8 @@ $defs:
     additionalProperties: false
     required: [inlineSize, blockSize]
     properties:
-      inlineSize: {type: number, exclusiveMinimum: 0}
-      blockSize: {type: number, exclusiveMinimum: 0}
+      inlineSize: {description: "Positive horizontal tile extent in physical pixels.", examples: [96], type: number, exclusiveMinimum: 0}
+      blockSize: {description: "Positive vertical tile extent in physical pixels.", examples: [72], type: number, exclusiveMinimum: 0}
   seededPatternCount: {description: "Number of motifs in one seeded tile (#888).", type: integer, minimum: 1, maximum: 64}
   artworkGeometry:
     description: "One catalogue glyph and its nine-slice geometry, shared by both artwork forms."

@@ -7,14 +7,30 @@ from math import cos, radians, sin
 from typing import Mapping
 
 from chrona.presentation.layout.canvas_overlays import RadialOverlayPlacement
-from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
 from chrona.presentation.model.info_diagnostics import PaintOmission
+from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
 from chrona.presentation.scene.model import (
-    DropShadow, Glow, LinearGradient, RadialGradient, RadialGradientStop, SceneIconPath, ScenePaint, StrokeFinish, StrokeWobble,
+    DropShadow,
+    Glow,
+    LinearGradient,
+    RadialGradient,
+    RadialGradientStop,
+    SceneIconPath,
+    ScenePaint,
+    StrokeFinish,
+    StrokeWobble,
 )
 from chrona.presentation.scene.visual_capabilities import (
-    DROP_SHADOW, GLOW, LINEAR_GRADIENT, LINE_CAP, LINE_JOIN, PATTERN_GEOMETRY, RADIAL_GRADIENT, WOBBLE,
-    VisualProfile, first_supporting_visual_profile,
+    DROP_SHADOW,
+    GLOW,
+    LINE_CAP,
+    LINE_JOIN,
+    LINEAR_GRADIENT,
+    PATTERN_GEOMETRY,
+    RADIAL_GRADIENT,
+    WOBBLE,
+    VisualProfile,
+    first_supporting_visual_profile,
 )
 
 
