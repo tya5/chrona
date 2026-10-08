@@ -1411,6 +1411,7 @@ Integer values above their schema minimum that a committed slide declares (for e
 | `frame:board` | — | halcyon-1/yuya | halcyon-1/yuya |
 | `frame:chart-panel` | — | controller-z/region-frames | controller-z/region-frames |
 | `frame:countdown` | — | halcyon-1/titlecard | halcyon-1/titlecard |
+| `frame:countdown-bezel` | — | halcyon-1/titlecard | halcyon-1/titlecard |
 | `frame:key-panel` | — | controller-z/region-frames | controller-z/region-frames |
 | `frame:page` | — | halcyon-1/marquee | halcyon-1/marquee |
 | `frame:plaque` | — | halcyon-1/yuya | halcyon-1/yuya |

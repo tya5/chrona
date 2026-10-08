@@ -119,3 +119,5 @@ schemas:
       dateEndpoint: "sha256:810a101b6fa57c83ae9456e6351bbf4111a4d52930701187df91cdf1011be451"
       anchorEndpoint: "sha256:363fdf1525d49d68653a6782cb42322dc5053687b671c5e541ff9a125fd3c34f"
       annotationBarWidth: "sha256:80c91e191e2141b84d909db19d96a5fae1e69325c89660f09398c2c19910f6e1"
+      annotationBarBleed: "sha256:cd158c96c0064f4b6a36be6a297648f83c6d4e5851f85b182b24aa9e2e889095"
+      annotationStampPlacement: "sha256:f3465652337317cbbb49d72db2589aea7c86b97e084a9fd45c9b5e2bc6bf5d3e"
