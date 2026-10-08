@@ -423,7 +423,7 @@ View selects the period. `validate` computes no dates and cannot report it, the 
 
 A derived figure is a signed whole number of days computed by the Core from dates a Project and its Actual Set already state (#586). Core defines it; a View declares which figures it needs (Spec 06) and a Summary Profile or a header template shows it (Spec 46, Spec 50). The set of facts and the set of derivations are closed; nothing is an expression and no field is read by name.
 
-A fact is exactly one of: the Actual Set as-of; a named period's `start` or `end` (§12.1; `end` is the exclusive end); an object's placed `at`, `start` or `end` (the completed date the schedule gives that endpoint, which moves with a re-plan).
+A fact is exactly one of: the Actual Set as-of; a named period's `start`, `end` or `last` (§12.1; `end` is the exclusive end and `last` is `end` minus one calendar day); an object's placed `at`, `start` or `end` (the completed date the schedule gives that endpoint, which moves with a re-plan). `last` is the final covered calendar day even when it is not a working day; a working-day figure applies its counting convention to that same date, without moving the boundary.
 
 | Kind | Value |
 | --- | --- |

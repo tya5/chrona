@@ -71,6 +71,14 @@ def test_a_countdown_shows_the_days_from_the_as_of_to_the_period_start_over_its_
     assert texts["summary:key:countdown:caption"] == "DAYS"
 
 
+def test_period_last_flows_through_the_view_contract_into_rendered_summary_text(tmp_path):
+    figure = dict(COUNTDOWN, to={"period": "window", "side": "last"})
+    rendered = _render(tmp_path, _parts(figure), _summary(_metric(metric_id="countdown")))
+    # [March 20, March 30) closes on March 29: 37 days after February 20.
+    assert _texts(rendered)["summary:key:countdown:value"] == "37"
+    assert b">37<" in rendered.artifact.content
+
+
 @pytest.mark.parametrize(("format", "expected"), [("count", "28"), ("text", "28"), ("signedDays", "+28d")])
 def test_the_metric_format_applies_to_a_figure(tmp_path, format, expected):
     texts = _texts(_render(tmp_path, _parts(COUNTDOWN), _summary(_metric(format=format, metric_id="countdown"))))

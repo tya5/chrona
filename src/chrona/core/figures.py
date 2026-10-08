@@ -28,7 +28,7 @@ from chrona.core.temporal import Calendar
 
 KINDS = ("daysUntil", "daysIn")
 DAY_BASES = ("calendar", "working")
-PERIOD_SIDES = ("start", "end")
+PERIOD_SIDES = ("start", "end", "last")
 OBJECT_ENDPOINTS = ("at", "start", "end")
 
 
@@ -39,7 +39,7 @@ class AsOfFact:
 
 @dataclass(frozen=True)
 class PeriodFact:
-    """One boundary of a named period; ``end`` is the exclusive end."""
+    """A named period's start, exclusive end, or final covered calendar day."""
 
     period_id: str
     side: str
@@ -152,7 +152,13 @@ class _Reader:
             if period is None:
                 self._found.append(_period_unknown(spec, fact.period_id, self._periods, f"/{where}/period"))
                 return None
-            return period.start if fact.side == "start" else period.end
+            if fact.side == "start":
+                return period.start
+            if fact.side == "end":
+                return period.end
+            if fact.side == "last":
+                return period.end - timedelta(days=1)
+            raise TypeError(f"figure {spec.figure_id}: unknown period side {fact.side!r}")
         if isinstance(fact, ObjectFact):
             placement = self._placements.get(fact.object_id)
             if placement is None:

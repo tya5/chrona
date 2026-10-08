@@ -794,17 +794,17 @@ $defs:
       typographyRole: {description: "Named Theme text-treatment role measuring and sizing the secondary text; its colour is the tier's.", type: string, minLength: 1}
       placement: {description: "stacked draws it on the line below the main label; inline draws it after the main label on the same baseline.", enum: [stacked, inline]}
   figureFact:
-    description: "One fact a figure reads: the Actual Set as-of, a named period's start or end (end is exclusive), or the placed date of an object endpoint."
-    examples: [asOf, {period: launch-window, side: start}, {object: tvac, endpoint: end}]
+    description: "One fact a figure reads: the Actual Set as-of, a named period's start, exclusive end or final covered day, or the placed date of an object endpoint."
+    examples: [asOf, {period: launch-window, side: start}, {period: launch-window, side: last}, {object: tvac, endpoint: end}]
     oneOf:
       - {description: "The Actual Set as-of date.", const: asOf}
-      - description: "One boundary of a named Project period."
+      - description: "A named Project period's boundary or final covered calendar day."
         type: object
         required: [period, side]
         additionalProperties: false
         properties:
           period: {description: "Identifier of a period declared in the Project's `periods`.", type: string, minLength: 1}
-          side: {description: "The period's start, or its exclusive end.", enum: [start, end]}
+          side: {description: "The period's start, exclusive end, or last covered calendar day (end minus one day).", enum: [start, end, last]}
       - description: "The completed (placed) date of one endpoint of a Project object."
         type: object
         required: [object, endpoint]
