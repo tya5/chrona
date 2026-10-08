@@ -64,6 +64,7 @@ slides:
   halcyon-1/gallery-vertical-group-tags: {axisLabels: 13, chips: ['chip:as-of-label', 'chip:period-label:launch-window']}
   halcyon-1/glyph-gates: {axisLabels: 13, chips: ['chip:as-of-label', 'chip:period-label:launch-window']}
   halcyon-1/launch-campaign: {axisLabels: 7}
+  halcyon-1/marquee: {axisLabels: 13, chips: ['chip:as-of-label']}
   halcyon-1/mission-brief: {axisLabels: 13}
   halcyon-1/overlay-briefing: {axisLabels: 13, chips: ['chip:as-of-label', 'chip:period-label:launch-window']}
   halcyon-1/programme-board: {axisLabels: 13, chips: ['chip:as-of-label', 'chip:period-label:launch-window']}
