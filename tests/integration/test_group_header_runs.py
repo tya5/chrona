@@ -285,3 +285,57 @@ def test_a_single_space_beside_a_marked_span_is_a_gap_with_the_letter_spacing_ar
     assert [run.text for run in runs] == ["ACT", "01", "· Team 0"]
     gaps = [later.baseline[0] - (earlier.baseline[0] + earlier.bounds[2]) for earlier, later in zip(runs, runs[1:])]
     assert all(gap > 2 for gap in gaps)  # the space plus the spacing after the glyph before it
+
+
+def _ink(rendered, scene_id):
+    svg = ET.fromstring(rendered.artifact.content)
+    return next(item.attrib["fill"] for item in svg.iter() if item.attrib.get("data-scene-id") == scene_id)
+
+
+def _with_header_ink(template=TEMPLATE, intent="warning", **options):
+    parts = _parts(template, **options)
+    parts["theme"]["body"]["colorBindings"]["group-header.fill"] = intent
+    return parts
+
+
+def test_unmarked_runs_take_the_declared_header_ink_and_the_marked_spans_keep_their_role_ink(tmp_path):
+    plain = _render(tmp_path, _parts(), "plain")
+    inked = _render(tmp_path, _with_header_ink(), "inked")
+
+    assert [run.visual_role for run in _runs(plain, "team-0")] == ["group-ordinal", "text", "group-gloss"]
+    assert [run.visual_role for run in _runs(inked, "team-0")] == ["group-ordinal", "group-header", "group-gloss"]
+    assert _ink(inked, "group-header:team-0#run1") != _ink(plain, "group-header:team-0#run1")
+    for index in (0, 2):  # the marked spans are unchanged
+        assert _ink(inked, f"group-header:team-0#run{index}") == _ink(plain, f"group-header:team-0#run{index}")
+
+
+def test_an_unmarked_template_takes_the_declared_header_ink_too(tmp_path):
+    plain = _render(tmp_path, _parts("{ordinal} {title}", secondary=False, group_roles=False), "plain")
+    inked = _render(tmp_path, _with_header_ink("{ordinal} {title}", secondary=False, group_roles=False), "inked")
+
+    assert _ink(inked, "group-header:team-0") != _ink(plain, "group-header:team-0")
+    assert _texts(inked)["group-header:team-0"].visual_role == "group-header"
+
+
+def test_without_a_header_ink_declaration_the_output_is_unchanged(tmp_path):
+    first = _render(tmp_path, _parts(), "a")
+    second = _render(tmp_path, deepcopy(_parts()), "b")
+
+    assert first.artifact.content == second.artifact.content
+    assert {run.visual_role for run in _runs(first, "team-0")} == {"group-ordinal", "text", "group-gloss"}
+
+
+def test_the_contrast_gate_judges_the_header_ink_over_the_header_band(tmp_path):
+    rendered = _render(tmp_path, _with_header_ink(intent="surface"))
+    findings = {item.primitive_id: item for item in evaluate_scene_contrast(scene_document(rendered.scene))
+                if item.primitive_id == "group-header:team-0#run1"}
+
+    assert findings["group-header:team-0#run1"].visual_role == "group-header"
+    assert findings["group-header:team-0#run1"].severity == "error"
+
+
+def test_an_unread_role_is_still_reported_beside_the_header_ink(tmp_path):
+    rendered = _render(tmp_path, _with_header_ink("{ordinal} {title}", secondary=False))
+
+    assert any("W_THEME_ROLE_UNREAD" in str(item) and "/body/roles/group-ordinal" in str(item)
+               for item in rendered.warning_records)
