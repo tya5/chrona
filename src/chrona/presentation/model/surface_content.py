@@ -213,6 +213,7 @@ class SurfaceContentInput:
     observation_columns: tuple[tuple[str, str], ...]
     observation_rows: tuple[tuple[str, str, str, tuple[tuple[str, str], ...]], ...]
     label_fallback: tuple[str, ...] = ()
+    label_text_role: str | None = None  # the Theme text role of the plot member labels (#1141)
     annotation_fallback: tuple[str, ...] = ()
     link_mode: str = "none"
     title_link_columns: tuple[str, ...] = ()

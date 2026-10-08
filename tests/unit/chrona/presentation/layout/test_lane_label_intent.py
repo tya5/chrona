@@ -49,7 +49,7 @@ def _inputs(items, member_ids=None, *, attached=(), fallback=("start", "end")):
                                    member_item_ids=tuple(member_ids)),),
     )
     content = SimpleNamespace(show_member_labels=True, label_content=("title", "finishDelta"),
-                              label_side="auto", label_fallback=fallback,
+                              label_side="auto", label_fallback=fallback, label_text_role=None,
                               attached_labels=tuple(attached))
     return projection, content
 

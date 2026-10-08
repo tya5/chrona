@@ -692,7 +692,12 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
         label_id = f"member-label:{instance_id}"
         if label_id in layout_text and layout_text[label_id].overflow != "suppressed":
             semantic_id = inside_member_label_semantic(source_kind) if layout_text[label_id].selected_rung == "inside" else "memberLabel"
-            emit_semantic_text(label_id, semantic_id, href=href, link_title=link_title)
+            # An outside label in a View-named role (`visibility.labels.textRole`, #1141) is painted with that role's
+            # fill when the Theme binds one; the inside rungs keep their own roles.
+            label_role = value.surface_content.label_text_role
+            label_paint = (label_role if label_role is not None and semantic_id == "memberLabel"
+                           and value.theme_tokens.optional_color(label_role, "fill") is not None else None)
+            emit_semantic_text(label_id, semantic_id, label_paint, href=href, link_title=link_title)
         variance_id = f"variance:{instance_id}"
         if source_kind == "combined" and item.finish_delta is not None and variance_id in layout_text:
             role = (semantic_binding("varianceBehind").scene_role if item.finish_delta > 0

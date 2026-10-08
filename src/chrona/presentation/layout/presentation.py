@@ -247,6 +247,14 @@ def validate_table_text_roles(columns: Any, theme_tokens: Any) -> None:
                               detail=f"the Theme declares no text role {role!r} (/body/roles/{role})")
 
 
+def validate_label_text_role(labels: Any, theme_tokens: Any) -> None:
+    """Fail a View whose `visibility.labels.textRole` names a role the Theme does not declare (#1141)."""
+    role = labels.get("textRole") if isinstance(labels, Mapping) else None
+    if role is not None and not theme_tokens.has_role(role):
+        raise LayoutError("E_THEME_ROLE_REQUIRED", "/body/visibility/labels/textRole",
+                          detail=f"the Theme declares no text role {role!r} (/body/roles/{role})")
+
+
 def table_text_line_block(theme_tokens: Any, typography_roles: Any) -> float:
     """Return the tallest line block among the table cell roles a row holds."""
     return max((float(theme_tokens.text_treatment(role).font_size * theme_tokens.text_treatment(role).line_height)

@@ -198,7 +198,7 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                         raise LayoutError("E_LAYOUT_LANE_PREFLIGHT_INVALID", f"/placement/member-label:{instance_id}")
                 sides = tuple(side for side in ladder if side != "suppress")
                 requests.append(LabelRequest(f"member-label:{instance_id}", item.object_id, " ".join(parts),
-                    anchor, sides, "text", "plot-label", CollisionDomain("timeline", "overlay"),
+                    anchor, sides, request.surface_content.label_text_role or "text", "plot-label", CollisionDomain("timeline", "overlay"),
                     "visible-overflow" if attached is not None else "suppress" if lane_mode else
                     "suppress" if "suppress" in ladder else contract.labels.overflow,
                     wrap, bounds=row_bands.get(review_row.row_id),
