@@ -107,6 +107,17 @@ declaration is checked before the schema so an error is named at its exact point
 distance-token rules of section 5. Only the table-timeline surface draws frames; the dependency-network
 surface ignores the declaration.
 
+The same declaration independently selects `frame-glyph[-<paint>]` (#888,
+Specification 07), even without a panel role. Layout contain-centres upright
+catalogue glyphs in `glyphSize` squares, reserving the completed stroke envelope
+inside `inset` (Specification 46 section 7). Emit four unique corners, then
+clockwise top/right/bottom/left interiors. An edge's centre span `L` has
+`floor(L / glyphPitch)` equal intervals, distributing the remainder; either
+span shorter than the pitch omits the whole border. No populated content also
+omits it, with `I_LAYOUT_FRAME_GLYPH_OMITTED:<node>:<no-content|too-small>`.
+Each node's panel precedes its one completed glyph batch, parents before
+children; Scene never fits the run or changes content allocation.
+
 **Slot headings (#1064, [work record](../planning/active/issue-1065-1064-field-group-indent-and-slot-heading-2026-10-04.md)).**
 A slot whose `source` is any enumerated slot source, and an override of such a slot, may
 declare `heading: {text, align, block}`: a caption over the slot. This includes the native title, table,

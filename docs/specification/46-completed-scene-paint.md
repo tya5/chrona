@@ -373,6 +373,16 @@ that touches no ink is judged on the substrate alone. A decoration over the artw
 a part of the label's note whose outline or opacity cannot be read is `E_SCENE_CONTRAST_GROUND_UNSUPPORTED`, never
 skipped. Note prose keeps its C4 pairing with its own opaque flat box.
 
+**Repeated frame glyph ink.** A prior `Symbol` with the `frame-glyph` role family is never a host by its slot-sized
+bounds. For a legibility-class subject, each painted frame part strictly between the resolved host and subject in
+`(paintOrder, document index)` is an additional ground only where its actual fill or stroke touches the subject's
+bounds; source identity does not restrict this frame ink. The existing sparse-symbol contact rules and fail-closed
+paint handling apply. Resolve parts in paint order: cones before a part tint the ground beneath it, and cones after it
+tint both that ground and the part's ink. A later opaque host hides earlier frame parts; a translucent host composites
+over the frame ink beneath it. Keep the underlying ground as a conservative alternative where the frame does not cover
+the whole subject. Decorations retain their dominant-substrate rule, and annotation artwork keeps its separate
+same-source rule above.
+
 A dual-channel Rect or Symbol is evaluated at a separate painted sample for
 each channel: fill at bounds centre, stroke at the left-edge block midpoint.
 Either channel may carry a data mark's 3.0:1 visibility floor, and the

@@ -24,6 +24,7 @@ from chrona.presentation.layout.surface_quality import (
 )
 from chrona.presentation.layout.canvas_texture import complete_canvas_texture
 from chrona.presentation.layout.canvas_overlays import complete_canvas_overlays
+from chrona.presentation.layout.frame_glyph import complete_frame_glyphs
 from chrona.presentation.layout.region_frame import complete_region_frames
 from chrona.presentation.layout.surface_visuals import place_axis_band_visuals
 from chrona.presentation.layout.viewer_fit import stamp_surface_fits
@@ -309,10 +310,11 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
         ))
     # Region frames (#889) are completed from the arranged profile; the canvas grows to contain one, never the reverse.
     frames = complete_region_frames(request.theme_tokens, layout_manifest.decisions)
+    glyph_frames = complete_frame_glyphs(request.theme_tokens, layout_manifest.decisions)
     canvas = completed_canvas(
         requested=request.layout_manifest.viewport,
         rectangles=(tuple(slot.bounds for slot in slots) + tuple(row.bounds for row in rows)
-                    + frames.extents
+                    + frames.extents + glyph_frames.extents
                     + tuple(column.bounds for column in column_placements)
                     + tuple(group.content_bounds for group in groups)
                     + tuple(group.header_bounds for group in groups if group.header_bounds is not None)
@@ -352,11 +354,16 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
     completed_overlays = complete_canvas_overlays(request.theme_tokens, canvas)
     canvas_overlays = completed_overlays if (
         completed_overlays.pattern is not None or completed_overlays.radial is not None) else None
-    # Frames are ground one step above the texture: first among the shapes, parent before child.
-    shapes = [*frames.shapes, *shapes]
+    # Keep each node's panel then glyph border together in profile pre-order:
+    # a child's panel must not be painted below its parent's glyphs.
+    frame_order = {f"layout-node:{decision.node_id}": index
+                   for index, decision in enumerate(layout_manifest.decisions)}
+    frame_shapes = sorted((*frames.shapes, *glyph_frames.shapes),
+                          key=lambda item: frame_order[item.source_ref])
+    shapes = [*frame_shapes, *shapes]
     patterns = (*frames.patterns, *patterns)
-    slots = (*slots, *frames.slots)
-    diagnostics = [*diagnostics, *frames.diagnostics]
+    slots = (*slots, *frames.slots, *glyph_frames.slots)
+    diagnostics = [*diagnostics, *frames.diagnostics, *glyph_frames.diagnostics]
     if texture is not None:
         shapes = [texture.shape, *shapes]
         patterns = (texture.pattern, *patterns)

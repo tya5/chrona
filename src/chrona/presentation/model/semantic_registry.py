@@ -121,6 +121,8 @@ _REGISTRY: dict[str, SemanticBinding] = {binding.semantic_id: binding for bindin
     # Region frame (#889): the panel Layout completes behind a framed Layout Profile node. Ground like the
     # texture and for the same reason not contrast-classified: what lies on it is gated against its fill.
     _binding("regionFrame", "decoration", "region-frame", "region-frame", "region-frame"),
+    # A sparse catalogue border is ground only where its completed ink touches content.
+    _binding("frameGlyph", "decoration", "frame-glyph", "frame-glyph", "frame-glyph"),
     # Axis.
     _binding("axisBand", "label", "axis-band", "axis-band", "axis", ContrastClass.GROUND_TEXT),
     _binding("axisBandDecoration", "decoration", "axis-band", "axis-band-decoration", "axis-band-decoration", ContrastClass.DECORATION),
@@ -289,6 +291,12 @@ def is_annotation_artwork_role(role: object) -> bool:
     """The closed artwork paint family; its suffix is the common slug lexeme."""
     return isinstance(role, str) and (role == "annotation-artwork" or
                                      fullmatch(r"annotation-artwork-[a-z][a-z0-9-]*", role) is not None)
+
+
+def is_frame_glyph_role(role: object) -> bool:
+    """The independent catalogue border family, using the common slug lexeme."""
+    return isinstance(role, str) and (role == "frame-glyph" or
+                                     fullmatch(r"frame-glyph-[a-z][a-z0-9-]*", role) is not None)
 
 
 def contrast_binding(scene_role: str) -> SemanticBinding | None:
