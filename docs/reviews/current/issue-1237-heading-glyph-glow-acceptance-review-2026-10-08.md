@@ -2,12 +2,12 @@
 
 <!-- chrona:literal-acceptance/v1 -->
 
-Integration `84fc050dc14ad3b57df5a2885bc31436f16689de` combines this implementation
-with merged PR #1245, public source main `8518c381aa08f0de61e16caab071edee90ab402d`.
-Its derived sync is pending; final publication follows the resulting ready tip.
-The integration adds only predecessor acceptance documents, not product changes.
+Integration `8e5cb6de14b90605fbe6b37e0811d80c6d81a23a` combines this implementation
+with merged PR #1245 on ready main `a32da92b28dfd60ab22b6a023dfb0fbfe7688f63`.
+Sync37808293536 and exact gate37809637574 succeeded. The public-base refresh
+adds predecessor acceptance documents and bot reports, not product changes.
 [Living design, architecture review and plan](https://github.com/tya5/chrona/issues/1237#issuecomment-6061351395).
-Release pending the ready base, final-base PR CI/shared snapshot and exact
+Release pending final-base PR CI/shared snapshot and exact
 published-main three-OS gate. Do not close yet.
 
 ## Literal issue acceptance
