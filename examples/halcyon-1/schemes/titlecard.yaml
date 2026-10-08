@@ -62,5 +62,6 @@ body:
     purple: '#9A7BFF'
     grey: '#8C8A86'
     gridFaint: '#2E2C29'
+    gridMonth: '#4F4B46'
     lattice: '#1B1A18'
     stripeInk: '#050505'
