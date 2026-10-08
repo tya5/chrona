@@ -317,7 +317,7 @@ allOf:
               properties:
                 id: {description: "Identifier of a period declared in the Project's `periods`.", type: string, minLength: 1}
                 label:
-                  description: "Optional label of the band, its text the period title; absent draws the band without a label."
+                  description: "Optional label of the band, its text the period title or the `text` override; absent draws the band without a label."
                   examples: [{placement: top, overflow: suppress}]
                   type: object
                   required: [placement]
@@ -325,6 +325,7 @@ allOf:
                   properties:
                     placement: {description: "Where the label sits: at the plot's top edge, at its bottom edge, or centred in the band.", enum: [top, bottom, inside]}
                     overflow: {description: "What happens when no collision-free position exists: suppress the label with a recorded warning, or place it anyway with a recorded overflow. Defaults to visible-overflow.", enum: [suppress, visible-overflow]}
+                    text: {description: "Optional display text of the label, replacing the Project period title for this View only (the Theme role's text transform styles it); absent shows the period title.", $ref: "urn:chrona:common-v0.1#/$defs/literalCaption", examples: [OPENING NIGHT]}
           figures:
             description: "Derived figures: signed whole numbers of days the Core computes from declared facts, each shown by name from a Summary Profile metric (source figure) or a group-header placeholder; absent declares none."
             examples: [[{id: launch-countdown, kind: daysUntil, to: {period: launch-window, side: start}}]]
