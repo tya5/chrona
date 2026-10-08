@@ -2,9 +2,9 @@
 
 <!-- chrona:literal-acceptance/v1 -->
 
-Implementation through `c68b048b5ad3c5f1bd28ce07b4e5e00362f2f6a8`, based on
-ready main `ba679506c1c8d4661004a480b704530830ea0488` (#1239).
-Its bot-only report update changes no product code from the tested integration.
+Implementation includes frozen-vocabulary registration `179a3abe6c67b303335ca9662cc60b9a9ee74ff0`, based on
+ready main `dab0bb3b419e41b2aee95e470d74e6296718eb27` (#1239 and reviewer PR1241).
+The public-base merge preserves the reviewer's YAML and bot-generated evidence.
 [Living design, architecture review and plan](https://github.com/tya5/chrona/issues/1242#issuecomment-6060806272).
 Publication, exact-head CI/shared snapshot and exact published-main three-OS
 release remain pending. Do not close yet.
@@ -42,4 +42,6 @@ outcome. The two new vocabulary definitions lacked Spec56 frozen inventory
 digests. Registering both definitions changes neither their schemas nor
 runtime behavior; all 81 vocabulary/inventory tests now pass. Reviewer PR1241's
 three Title Card YAML changes were ordinary-merged without product conflicts.
-Exact-head CI must be refreshed on its ready published main before merge.
+The updated-base L1/L2/L3 schema equivalence check passed (L2+L3 40.9s),
+as did another 96 vocabulary/parts/annotation tests. Exact-head CI and shared
+snapshot must be refreshed on this ready published main before merge.
