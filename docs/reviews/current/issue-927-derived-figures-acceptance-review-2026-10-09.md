@@ -2,7 +2,7 @@
 
 # Issue #927 — derived figures acceptance
 
-Public base: `510fd5f90bcc057d72e575423ec6e114dfa51837`. Design, architecture review and
+Public base: `c43a63ba10cad750c2224cde800fec15c34e1c7b`. Design, architecture review and
 implementation plan: [issue Status](https://github.com/tya5/chrona/issues/927#issuecomment-6071114520).
 Implementation is on `dev-a/927-derived-figures-20261009`, not yet released.
 
@@ -15,7 +15,7 @@ Implementation is on `dev-a/927-derived-figures-20261009`, not yet released.
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | Acceptance for whichever is taken: synthetic tests per kind and edge date, a diagnostic for a missing fact, default output unchanged, S0 gate in the PR. | not met | [Date and last-day tests](../../../tests/unit/chrona/core/test_figures.py), [closed count tests](../../../tests/unit/chrona/core/test_figure_counts.py), [scoped facts](../../../tests/unit/chrona/usecases/test_group_figures.py), [rendered labels](../../../tests/integration/test_figure_label_surfaces.py); local S0 L1/L2/L3 passed. [PR run](https://github.com/tya5/chrona/actions/runs/37863476558) on `0206ebc8`: all 136 public SVG/Scene paths byte-identical. ID-site inventory failed; corrected-head PR and exact-main release gates remain pending. | — |
+| 1 | Acceptance for whichever is taken: synthetic tests per kind and edge date, a diagnostic for a missing fact, default output unchanged, S0 gate in the PR. | not met | [Date and last-day tests](../../../tests/unit/chrona/core/test_figures.py), [closed count tests](../../../tests/unit/chrona/core/test_figure_counts.py), [scoped facts](../../../tests/unit/chrona/usecases/test_group_figures.py), [rendered labels](../../../tests/integration/test_figure_label_surfaces.py); local S0 L1/L2/L3 passed. [Corrected-head CI](https://github.com/tya5/chrona/actions/runs/37866368343) passed all checks; its 145-path snapshot preserves all 136 public SVG/Scene bytes. [Critical-path scope clarification](https://github.com/tya5/chrona/issues/927#issuecomment-6073015256), refreshed-base validation and exact-main release remain pending. | — |
 
 ## Programme-level criteria (optional)
 
@@ -29,11 +29,14 @@ Implementation is on `dev-a/927-derived-figures-20261009`, not yet released.
   The three figure kinds share one local ID definition without changing validation.
 - S0: 443 mapped documents and 739 probes, L2+L3 40.1s; annotation lint and
   literal acceptance-review validation passed.
-- Public archive audit on `0206ebc8`: SHA-256 comparison of all 145 paths found
-  zero changed SVG/Scene files (136 checked), two changed diagnostic/coverage reports,
-  and no retirements. No corpus/preset source edits. Conformance, MCP-floor, newest-Python
-  reproduction and pytest shards 2/3 passed; shard 1 failed the ID-site inventory and
-  derived-ready consequently failed. Corrected-head and exact-main gates remain open.
+- Corrected-head public archive audit: all 145 paths checked, zero changed SVG/Scene
+  files (136 checked), two changed diagnostic/coverage reports, no retirements.
+  No corpus/preset source edits. Run 37866368343 passed conformance, MCP-floor,
+  newest-Python reproduction, all three pytest shards and derived-ready. CI is not
+  the scope blocker; refreshed-head PR and exact-main release evidence remain required.
+- Reconciled ready base `c43a63ba`: 199 focused figure/label tests passed (33.13s).
+  S0 passed 443 mapped documents/739 probes; L2+L3 43.5s, four invalid fixtures
+  unchanged. Ordinary main merge introduces no figure-policy change.
 
 ## Architecture conclusion
 
