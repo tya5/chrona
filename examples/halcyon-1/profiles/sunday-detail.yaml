@@ -1,0 +1,20 @@
+version: chrona/review-detail-profile/v0.1
+id: halcyon-sunday-legend
+body:
+  legend:
+  - role: snapshot
+    label: baseline
+  - role: planned
+    label: plan
+  - role: actual
+    label: actual
+  - role: missing-actual
+    label: not yet observed
+  - role: milestone
+    label: gate
+  - role: calendar-exception
+    label: holiday
+  - role: period-band
+    label: launch window
+  - role: dependency
+    label: depends on
