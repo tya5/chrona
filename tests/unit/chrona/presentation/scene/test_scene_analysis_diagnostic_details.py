@@ -74,9 +74,9 @@ def test_capability_substitution_error_names_identifier_and_missing_owner():
 
 
 def test_scene_serialization_errors_name_version_schema_path_and_closed_reference():
-    version = _message(lambda: serialization.validate_scene_document({"version": "chrona/scene/v0.5"}),
+    version = _message(lambda: serialization.validate_scene_document({"version": "chrona/scene/v0.99"}),
                        serialization.SceneSerializationError)
-    assert version.startswith("E_SCENE_SERIALIZATION:") and "document.version" in version and "v0.5" in version
+    assert version.startswith("E_SCENE_SERIALIZATION:") and "document.version" in version and "v0.99" in version
 
     schema = _message(lambda: serialization.validate_scene_document(
         {"version": "chrona/scene/v0.6", "kind": "wrong"}), serialization.SceneSerializationError)
@@ -140,7 +140,7 @@ def test_owner_detail_helpers_are_required_by_code_only_mutations(monkeypatch):
     monkeypatch.setattr(serialization, "_scene_error", lambda detail: serialization.SceneSerializationError("E_SCENE_SERIALIZATION"))
     with pytest.raises(AssertionError):
         assert "document.version" in _message(
-            lambda: serialization.validate_scene_document({"version": "chrona/scene/v0.5"}),
+            lambda: serialization.validate_scene_document({"version": "chrona/scene/v0.99"}),
             serialization.SceneSerializationError)
 
     monkeypatch.setattr(perceptibility, "_require", lambda condition, detail: (

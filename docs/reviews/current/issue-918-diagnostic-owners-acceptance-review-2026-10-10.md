@@ -12,8 +12,14 @@ merge: `1ce7a83248850298d5dd74f20192ccbe2cb07804`, incorporating
 [Initial PR CI](https://github.com/tya5/chrona/actions/runs/37952231069)
 exposed four Scene negative-probe equivalence failures: its consumer treated
 owner detail as part of the code. The corrected consumer retains the leading
-code; schemas, baseline probes and expected deltas are unchanged. Updated PR
-CI, exact-main release and public-materializer evidence remain required.
+code; schemas, baseline probes and expected deltas are unchanged.
+[Candidate CI](https://github.com/tya5/chrona/actions/runs/37955021163)
+passed conformance, derived preview, MCP floor and newest-Python reproduction.
+All three pytest shards failed on remaining test consumers of the old bare-code
+and stderr contracts, removed-helper imports and an archived-schema fixture.
+Two JSON parsing failures capture two CLI invocations without draining the first
+success envelope; they do not demonstrate duplicate emission by one command.
+Consumer corrections and a fresh full CI/exact-main gate remain required.
 Authorities: [design](../../design/issue-918-diagnostic-owners-design-2026-10-09.md)
 and [work record](../../planning/active/issue-918-diagnostic-owners-design-plan-2026-10-09.md).
 
@@ -36,7 +42,7 @@ and [work record](../../planning/active/issue-918-diagnostic-owners-design-plan-
 | 8 | `render` has one documented machine channel for warnings that matches the other commands, or the disposition (keep stderr) is recorded with its reason. | met | Spec 66 and [skill reference](../../../skills/chrona/references/diagnostics.md); [success-envelope tests](../../../tests/unit/chrona/app/test_cli_render_result.py); all 19 successful render cases use stdout and empty stderr. | — |
 | 9 | Goldens, the skill reference and Spec 66 agree; the MCP `render_draft` rows equal the CLI rows (existing test). | not met | Local golden and [CLI/MCP parity test](../../../tests/unit/chrona/app/test_agent_tools.py) agree; CI cross-platform characterization remains pending. | — |
 | 10 | Every `W_LAYOUT_*` and `W_SCENE_*` row names the Project object it is about (`sourceRef` and the title in the message) where the placement belongs to one. | met | [Scene producer tests](../../../tests/unit/chrona/presentation/scene/test_diagnostic_provenance.py), Layout icon/shape producer tests and [ledger tests](../../../tests/unit/chrona/usecases/test_warning_provenance.py) cover explicit typed joins, escaped IDs, suppression, multiple subjects and ownerless findings; golden rows below. | — |
-| 11 | Scene diagnostics, SVG and PNG bytes and the multiplicity invariant are unchanged (existing tests). | not met | [Local 114-case comparison](../../../tests/cli/test_cli_characterization.py): all 37 generated files byte-identical, warning identities/counts unchanged. [CI](https://github.com/tya5/chrona/actions/runs/37952231069) public-materializer and exact-main release evidence remain pending. | — |
+| 11 | Scene diagnostics, SVG and PNG bytes and the multiplicity invariant are unchanged (existing tests). | not met | [Local 114-case comparison](../../../tests/cli/test_cli_characterization.py): all 37 generated files byte-identical, warning identities/counts unchanged. Candidate public artifact below preserves all 140 SVG/Scene files and newest-Python reproduction passed; full pytest and exact-main release remain required. | — |
 | 12 | The CLI golden and the MCP `render_draft` warnings agree and are reviewed row by row. | met | [CLI/MCP tests](../../../tests/unit/chrona/app/test_agent_tools.py) retain real-render parity and exercise the actual MCP envelope projection for every successful golden case: 19 cases, all 22 rows, including empty/info/multi-owner detail. Complete CLI row audit below. | — |
 
 ## Programme-level criteria (optional)
@@ -50,6 +56,14 @@ renderer value assertions: 15 passed; latest-main overlapping Layout tests:
 26 passed; complete golden-row MCP projection plus real-render parity:
 20 passed; same-pass recording/full-envelope maintenance tests: 2 passed;
 schema-equivalence consumer/regression suite: 32 passed.
+Remaining diagnostic consumer corrections: 591 passed (16.64s), covering
+store-address rejection, role/ground contrast and Scene serialization details
+with the unchanged archived-schema guard.
+CLI failed-node batch: 11 passed (42.95s), including three successive-command
+captures, exact warning fields, multiplicity and importer operands.
+Render consumers: three focused nodes passed before an interrupted slow batch;
+the skill-envelope node passed separately. Updated collision, legend, attachment
+and platform-specific font consumers await CI; no complete corpus run is claimed.
 These are focused checks, not a substitute for full release CI.
 
 The MCP projection test supplies the characterized ledger rows to the real
@@ -103,6 +117,19 @@ python -m tests.cli.test_cli_characterization --record` in separate baseline
 and feature worktrees with their own Python 3.11 venvs; compare file hashes,
 exit codes and ordered warning identities/counts. Logs are local evidence,
 not committed resources.
+
+Current candidate public artifact:
+[11628895137](https://github.com/tya5/chrona/actions/runs/37955021163/artifacts/11628895137),
+`derived-snapshot-bac5bef2f40d2eaad6f235e5dd46fe63c66ea544`, provider digest
+`sha256:c0c144e8be2e701e0dd0d45c8c9f1d4fcc68f00b93b9280fffdbc7e680650ce2`.
+Downloaded with `gh run download 37955021163 --repo tya5/chrona --name
+derived-snapshot-bac5bef2f40d2eaad6f235e5dd46fe63c66ea544`.
+The before/after archives have 149 paths each, no retirements, and all 140
+SVG/Scene files are byte-identical. Every before-file matches ready main
+`5ebc493b`; the only changes are the diagnostic and declared-value inventory
+reports. Archive members and the declared changed-path list were checked as
+a batch without extracting into the worktree. Newest-Python reproduction passed;
+full pytest and exact-main release remain incomplete.
 
 ### Every successful-render warning row
 

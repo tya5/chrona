@@ -69,9 +69,12 @@ def test_render_reports_the_outside_span_warning(tmp_path, monkeypatch, capsys):
     path.write_text(yaml.safe_dump(project, sort_keys=False), encoding="utf-8")
     monkeypatch.setattr(sys, "argv", ["chrona", "render", str(path), "--output", str(tmp_path / "out.svg")])
     main()
-    lines = [json.loads(line) for line in capsys.readouterr().err.splitlines() if line.startswith("{")]
-    assert any(line["code"] == "W_PROJECT_ATTACHED_OUTSIDE_HOST" and line["sourceRef"] == "campaign-readiness"
-               for line in lines)
+    output = capsys.readouterr()
+    assert output.err == ""
+    envelope = json.loads(output.out)
+    assert envelope["status"] == "ok" and envelope["diagnostics"] == []
+    assert any(item["code"] == "W_PROJECT_ATTACHED_OUTSIDE_HOST" and item["sourceRef"] == "campaign-readiness"
+               for item in envelope["warnings"])
 
 
 def _derived(at_floor: str) -> dict:

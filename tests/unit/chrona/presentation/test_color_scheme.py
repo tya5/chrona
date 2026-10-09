@@ -185,7 +185,7 @@ def test_note_ink_too_close_to_its_box_fails_naming_the_role_and_the_box():
         resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)
     assert error.value.diagnostic_id == "E_SCHEME_STATE_TEXT_CONTRAST"
     assert error.value.source_ref == "/body/roles/annotation-note-text/fill"
-    assert error.value.detail.startswith("annotation-note-text:annotation-note-box:")
+    assert error.value.detail.startswith("'annotation-note-text':'annotation-note-box':")
 
 
 def test_note_ink_that_reads_on_the_canvas_but_not_on_its_box_fails():
@@ -193,7 +193,7 @@ def test_note_ink_that_reads_on_the_canvas_but_not_on_its_box_fails():
     theme = _paper_note_theme(box="text", ink="text")
     with pytest.raises(ColorSchemeError) as error:
         resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)
-    assert error.value.detail.startswith("annotation-note-text:annotation-note-box:")
+    assert error.value.detail.startswith("'annotation-note-text':'annotation-note-box':")
 
 
 def test_light_canvas_notes_resolve_as_before_and_a_dark_box_needs_a_light_ink():
@@ -202,7 +202,7 @@ def test_light_canvas_notes_resolve_as_before_and_a_dark_box_needs_a_light_ink()
     theme["body"]["colorBindings"]["annotation-note-box.fill"] = "accent"
     with pytest.raises(ColorSchemeError) as error:
         resolve_theme(theme, scheme(), scheme_content_identity=IDENTITY)
-    assert error.value.detail.startswith("annotation-note-text:annotation-note-box:")
+    assert error.value.detail.startswith("'annotation-note-text':'annotation-note-box':")
 
 
 def test_note_ink_opacity_counts_against_the_box():
@@ -211,7 +211,7 @@ def test_note_ink_opacity_counts_against_the_box():
     theme["body"]["values"]["ink-opacity"] = {"type": "number", "value": 0.25}
     with pytest.raises(ColorSchemeError) as error:
         resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)
-    assert error.value.detail.startswith("annotation-note-text:annotation-note-box:")
+    assert error.value.detail.startswith("'annotation-note-text':'annotation-note-box':")
 
 
 def test_a_note_box_with_no_readable_fill_leaves_the_canvas_as_the_ground():
@@ -222,7 +222,7 @@ def test_a_note_box_with_no_readable_fill_leaves_the_canvas_as_the_ground():
     with pytest.raises(ColorSchemeError) as error:
         resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)
     assert error.value.diagnostic_id == "E_SCHEME_STATE_TEXT_CONTRAST"
-    assert error.value.detail.startswith("annotation-note-text:")
+    assert error.value.detail.startswith("'annotation-note-text':")
     assert "annotation-note-box" not in error.value.detail
     theme = _paper_note_theme(ink="text")
     theme["body"]["colorBindings"].pop("annotation-note-box.fill")
