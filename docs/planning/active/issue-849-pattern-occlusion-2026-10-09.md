@@ -3,9 +3,8 @@
 ## Baseline and literal acceptance
 
 Source: [#849](https://github.com/tya5/chrona/issues/849), observed 2026-10-09.
-Published source base: `e09c93b33c5b788f8b914edcc44267f83cb7d94f`;
-its derived sync must finish before publication. The last ready base is
-`510fd5f90bcc057d72e575423ec6e114dfa51837`.
+Published ready base: `b06897db78492fd070bed249d601001c11dee0b7`
+(derived-main run 37869675074 passed). This contains reviewer source `e09c93b3`.
 
 1. A seigaiha tile is expressible without approximation, and the density and contrast gates see the occluded result.
 2. Evidence: Yuya's launch window through YAML.
@@ -58,13 +57,16 @@ closed on exhaustion or unresolved numeric predicates, never report no ink.
 - Specify source/catalog version evolution for the changed density boundary
   contract under Spec 56, plus Scene capability/version handling. Do not keep
   contradictory legacy density semantics implicitly when a new field appears.
-- Check Specs 08/46/56, existing catalogue import, pattern placement,
+- Check Specs 08/46/56/64, existing catalogue import, pattern placement,
   serialization/identity, perceptibility and touched-ink contrast together.
   Preserve the existing opaque channel contrast floors; geometry occlusion is
   not permission to weaken colour contrast.
 - Determine atomic resource migration from the actual chosen schema changes.
   Existing package densities need no value edits; generated mirrors still
   require normal regeneration and identity verification if their contract changes.
+  Spec 64's pinned catalogues are immutable: publish successor identities and
+  update Context/package pins, not the bytes of an existing pinned resource.
+  Density's existing quadratic measurement uses 16 chords; contact uses eight.
 
 ## Implementation and release planning boundary
 
@@ -83,4 +85,5 @@ report all unintended corpus changes rather than tuning data to absorb them.
 Focused local tests precede PR S0/conformance/materializers and exact-main
 three-OS release. Keep the issue open until both literal rows have direct proof.
 
-Status: design-plan draft; no #849 product implementation or acceptance claim.
+Status: design plan; reviewed design and implementation plan remain outstanding.
+No #849 product implementation or acceptance claim.
