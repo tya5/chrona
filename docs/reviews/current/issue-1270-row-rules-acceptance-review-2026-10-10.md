@@ -2,7 +2,7 @@
 
 # Issue #1270 — row rules acceptance
 
-Ready base: `0617e671c51ed14fe0d242a37a18a744bd85b7e8`. [Published design and architecture review](https://github.com/tya5/chrona/issues/1270#issuecomment-6088015312). Layout completes row-bottom paths; Scene projects them; Theme supplies decoration paint. No corpus or derived output was authored. Public artifact and release checks remain pending; do not close.
+Ready source base: `d4c93f64ae888d335c0aa4b412e05686894bf76b`. [PR #1314](https://github.com/tya5/chrona/pull/1314), reviewed head `4da0b28c243094af931ed13cff3589d8627be29a`, merged at `8915b4598c35b89561ac07b7edaf7af3d018f7cb`. [Published design and architecture review](https://github.com/tya5/chrona/issues/1270#issuecomment-6088015312). Layout completes row-bottom paths; Scene projects them; Theme supplies decoration paint. No corpus or derived output was authored. Final review publication and exact-main release remain pending; do not close.
 
 ## Literal issue acceptance
 
@@ -15,11 +15,13 @@ Ready base: `0617e671c51ed14fe0d242a37a18a744bd85b7e8`. [Published design and ar
 | ---: | --- | --- | --- | --- |
 | 1 | A test Theme/View with `rows: rules` yields exactly one rule per item row and none on header rows. Each rule's y equals its row's bottom edge, and its x extent equals the row band extent (checked from Scene). | met | [Synthetic Scene and SVG tests](../../../tests/integration/test_row_rules.py) verify all four item rows, including group-final rows, full table-to-timeline extent, and header exclusion. | — |
 | 2 | Missing role → `E_THEME_ROLE_REQUIRED`. | met | [Missing-role test](../../../tests/integration/test_row_rules.py) checks the code, canonical View pointer, and required Theme role pointer. | — |
-| 3 | Corpus without the declaration → unchanged output (existing goldens/ledger pass). | not met | [Absent/none byte test](../../../tests/integration/test_row_rules.py) passes; exact public before/after artifact audit remains required. | — |
+| 3 | Corpus without the declaration → unchanged output (existing goldens/ledger pass). | met | [Absent/none byte test](../../../tests/integration/test_row_rules.py); [exact-head artifact audit](https://github.com/tya5/chrona/pull/1314#issuecomment-6088989633): all 70 SVG and 70 Scene files byte-identical, no added/retired paths. Only three intended diagnostic/coverage reports change. | — |
 | 4 | Do not edit `examples/**`. The reviewer adopts the setting in target B, Title Card, Marquee and Yuya. | met | [Published scope](https://github.com/tya5/chrona/issues/1270#issuecomment-6088015312) excludes examples and generated evidence; target adoption is reviewer-owned. | — |
 
 ## Programme-level criteria (optional)
 
 None. Focused batch: 100 passed (19.59s), including semantic registry, capabilities, contrast and existing group/tab tests. Independent read-only review found no concrete defect. S0 passed: one declared View enum expansion, 37 equal schema structures, 451 mapped documents/739 probes; four unchanged baseline-invalid fixtures. The provided pruning tool retired six already-landed #927 L1 entries.
 
-[Initial CI](https://github.com/tya5/chrona/actions/runs/37983841717) failed the decoration witness check: row-band and row-rule were incorrectly required independently. The [published design correction](https://github.com/tya5/chrona/issues/1270#issuecomment-6088015312) makes them alternatives for one required row-decoration concept, retaining every emitted finding and all other obligations. Correction source `8c85167b9ed2f4eacdda558dd4d83f1ba75b27c4`: 12 tool/registry and seven row-rule tests passed, including either alternative, neither, and missing unrelated decoration; all 19 passed again after the main review merge. Downstream missing-artifact failures resulted from the preview failure; they are not independent test failures. Replacement exact-head CI/artifacts and exact-main three-OS pytest/conformance/wheel with this review published remain required.
+[Exact-head CI](https://github.com/tya5/chrona/actions/runs/37988094523) passed every check, including all three PR pytest shards, conformance, newest-Python materializers and derived-ready. The [published coverage correction](https://github.com/tya5/chrona/issues/1270#issuecomment-6088015312) treats row-band/row-rule as alternatives while retaining all emitted contrast findings; focused correction tests: 19 passed, diagnostic ratchet: one passed. The original witness failure and consequent missing-artifact failures are resolved, not waived.
+
+Required release evidence: automatic derived sync, publication of this final review, then successful three-OS pytest/conformance/wheel on the exact published main containing it.
