@@ -208,6 +208,7 @@ def test_declared_figures_that_nothing_shows_leave_the_scene_unchanged(tmp_path)
     declared = _render(tmp_path / "declared", _parts(COUNTDOWN, slot=False), None)
     plain = _render(tmp_path / "plain", _parts(slot=False), None)
     assert declared.surface.primitives == plain.surface.primitives
+    assert declared.artifact.content == plain.artifact.content
 
 
 def test_a_summary_without_a_figure_source_is_unchanged_by_a_figure_declaration(tmp_path):
@@ -217,6 +218,7 @@ def test_a_summary_without_a_figure_source_is_unchanged_by_a_figure_declaration(
     with_figures = _render(tmp_path / "with", _parts(COUNTDOWN), _summary(metric))
     without = _render(tmp_path / "without", _parts(), _summary(metric))
     assert with_figures.surface.primitives == without.surface.primitives
+    assert with_figures.artifact.content == without.artifact.content
 
 
 # ---------------------------------------------------------------- missing facts
