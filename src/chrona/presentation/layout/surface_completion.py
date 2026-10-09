@@ -4,7 +4,7 @@ from __future__ import annotations
 from chrona.presentation.layout.stroke_alignment import complete_aligned_strokes
 
 from collections.abc import Mapping
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from decimal import Decimal
 from typing import Any
 from chrona.presentation.layout.icon_geometry import complete_icon_paths
@@ -30,6 +30,7 @@ from chrona.presentation.layout.surface_visuals import place_axis_band_visuals
 from chrona.presentation.layout.viewer_fit import stamp_surface_fits
 from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids
+from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject, table_row_subjects, review_row_subjects
 
 
 @dataclass(frozen=True)
@@ -77,6 +78,8 @@ class SurfaceCompletionContext:
     visible_route_fallbacks: list[RelationPlacement]
     visible_group_header_overflows: list[Any]
     lane_label_suppressions: list[LaneLabelSuppression]
+    diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
+    visible_label_subjects: Mapping[str, tuple[DiagnosticSubject, ...]] = field(default_factory=dict)
 
 
 def contains_block_interval(*, container_start: Decimal, container_end: Decimal,
@@ -225,6 +228,16 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
     # geometry.  Neither Scene nor an adapter gets a policy question to answer.
     fit_warnings: list[FitWarning] = [*layout_manifest.fit_warnings, *detail_panel_warnings,
                                       *side_content_warnings, *text_visual_warnings]
+    cell_subjects = table_row_subjects(context.review_rows)
+    row_subjects = review_row_subjects(context.review_rows)
+    project_cell_ids = {cell.object_id for cell in getattr(
+        getattr(request, "surface_content", None), "table_cells", ())}
+    annotation_subjects = {
+        annotation.annotation_id: (DiagnosticSubject.project_object(
+            annotation.subject_id, annotation.subject or None),)
+        for annotation in getattr(getattr(request, "surface_content", None), "annotations", ())
+        if annotation.subject_id
+    }
     warned_placement_ids: set[str] = set()
     timeline_end = timeline.bounds.block + timeline.bounds.block_size
     header_start = Decimal(str(table_bounds[1]))
@@ -266,6 +279,9 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
                 "W_LAYOUT_VISIBLE_OVERFLOW", item.placement_id, item.source_ref,
                 "table-text", "visible-overflow", float(item.bounds.inline_size),
                 float(item.bounds.block_size), float(item.available_inline_size or 0), block_available,
+                subjects=((cell_subjects[item.source_ref],)
+                          if item.placement_id.startswith("cell:") and item.source_ref in cell_subjects
+                          and item.source_ref in project_cell_ids else ()),
             ))
     for row in rows:
         if row.bounds.block + row.bounds.block_size > timeline_end + GEOMETRY_TOLERANCE:
@@ -274,6 +290,7 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
                 "review-row-density", "visible-overflow", float(row.bounds.inline_size),
                 float(row.bounds.block_size), float(timeline.bounds.inline_size),
                 max(0.0, float(timeline_end - row.bounds.block)),
+                subjects=row_subjects.get(row.row_id, ()),
             ))
     for mark in marks:
         # A legend swatch drawn as the real point-shaped primitive (#427) lives in
@@ -289,18 +306,23 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
                 "mark-containment", "visible-overflow", float(mark.bounds.inline_size),
                 float(mark.bounds.block_size), float(timeline.bounds.inline_size),
                 max(0.0, float(timeline_end - mark.bounds.block)),
+                subjects=mark.subjects,
             ))
     for item, available in visible_label_overflows:
         fit_warnings.append(FitWarning(
             "W_LAYOUT_LABEL_OVERFLOW", item.placement_id, item.source_ref,
             "label-collision", "visible-overflow", float(item.bounds.inline_size),
             float(item.bounds.block_size), available.width, available.height,
+            subjects=context.visible_label_subjects.get(
+                item.placement_id, annotation_subjects.get(item.source_ref, ())),
         ))
     for relation in visible_route_fallbacks:
         fit_warnings.append(FitWarning(
             "W_LAYOUT_ROUTE_FALLBACK", relation.relation_id, relation.source_ref,
             "relation-route", "direct-path", 0.0, 0.0,
             float(timeline.bounds.inline_size), float(timeline.bounds.block_size),
+            subjects=(annotation_subjects.get(relation.source_ref, ())
+                      if relation.annotation is not None else ()),
         ))
     for group_id, header, available_block in visible_group_header_overflows:
         fit_warnings.append(FitWarning(
@@ -381,6 +403,7 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
                                  lane_label_suppressions=tuple(lane_label_suppressions),
                                  aligned_strokes=complete_aligned_strokes(tuple(marks), tuple(shapes),
                                                                         lane_emissions, request.theme_tokens),
-                                 canvas_overlays=canvas_overlays)
+                                 canvas_overlays=canvas_overlays,
+                                 diagnostic_provenance=context.diagnostic_provenance)
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks, tuple(mark_absences))

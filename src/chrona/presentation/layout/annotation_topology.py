@@ -16,6 +16,15 @@ HARD_CLASSES = ("mark", "text", "label-visual", "annotation-box", "port", "rule"
 BRIDGE_CLASSES = ("dependency-route", "leader-route")
 
 
+def _topology_search_error(**operands: object) -> ValueError:
+    fields = []
+    for name, value in operands.items():
+        shown = repr(value).replace("\n", " ").replace("\r", " ")[:96]
+        fields.append(f"{name}={shown}")
+    return ValueError("E_LAYOUT_ANNOTATION_SEARCH_INPUT: bounded topology search "
+                      + ", ".join(fields))
+
+
 @dataclass(frozen=True)
 class AnnotationRouteTrial:
     points: tuple[tuple[float, float], ...]
@@ -111,7 +120,9 @@ def route_strict_bounded(start: tuple[float, float], end: tuple[float, float],
     and the separate connector-state budget applies to examined paths.
     """
     if limit < 1:
-        raise ValueError("E_LAYOUT_ANNOTATION_SEARCH_INPUT")
+        raise _topology_search_error(state_limit=limit, start=start, end=end,
+                                     bounds=bounds, max_bends=max_bends,
+                                     max_detour_ratio=max_detour_ratio)
     left, top, right, bottom = bounds
     xs = {start[0], end[0]}
     ys = {start[1], end[1]}

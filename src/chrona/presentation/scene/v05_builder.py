@@ -24,6 +24,7 @@ from chrona.presentation.model.semantic_registry import (
     inside_member_label_semantic, semantic_binding)
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.model.info_diagnostics import PaintOmission
+from chrona.presentation.model.diagnostic_sources import DiagnosticSubject, PrimitiveProvenance, review_row_subjects
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, ThemeTokenView
 from chrona.presentation.scene.pattern_geometry import pattern_geometry, pattern_kind, project_pattern_placement
 from chrona.presentation.scene.model import DecorationDisposition, ImageFill, ImageTile, SceneColumn, SceneGroup, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, SymbolGeometry, TextLayout
@@ -480,6 +481,32 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                  placed_surface.scale.range_start, placed_surface.scale.range_end,
                                  placed_surface.scale.origin, placed_surface.scale.unit_ratio)
     primitives: list[ScenePrimitive] = []
+    primitive_provenance: list[PrimitiveProvenance] = []
+    row_subjects = review_row_subjects(review_rows)
+    table_subjects = {
+        review_row.row_id: next((item for item in review_row.items
+                                if (item.item_id or item.object_id) == review_row.table_subject_id), None)
+        for review_row in review_rows
+    }
+
+    def record_project_primitives(primitive_ids: tuple[str, ...] | list[str], item: Any) -> None:
+        subject = DiagnosticSubject.project_object(item.object_id, item.title)
+        primitive_provenance.extend(PrimitiveProvenance(primitive_id, (subject,))
+                                    for primitive_id in primitive_ids)
+
+    explicit_annotation_subjects = {
+        annotation.annotation_id: DiagnosticSubject.project_object(
+            annotation.subject_id, annotation.subject or None)
+        for annotation in value.surface_content.annotations if annotation.subject_id
+    }
+
+    def record_annotation_primitives(primitive_ids: tuple[str, ...] | list[str],
+                                    annotation_id: str) -> None:
+        subject = explicit_annotation_subjects.get(annotation_id)
+        if subject is not None:
+            primitive_provenance.extend(PrimitiveProvenance(primitive_id, (subject,))
+                                        for primitive_id in primitive_ids)
+
     artwork_omissions: list[PaintOmission] = []
     layout_text = {item.placement_id: item for item in placed_surface.text}
     lane_emissions_by_placement = {
@@ -528,7 +555,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
 
     def emit_layout_text(scene_id: str, purpose: str, role: str,
                          href: str | None = None, link_title: str | None = None,
-                         table_row_id: str | None = None, table_column_id: str | None = None) -> None:
+                         table_row_id: str | None = None, table_column_id: str | None = None,
+                         project_item: Any | None = None) -> None:
         placed = layout_text[scene_id]
         if placed.overflow == "suppressed":
             return
@@ -548,12 +576,15 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                          table_column_id=table_column_id, paint_order=placed.paint_order,
                                          host_placement_id=placed.host_placement_id,
                                          contrast_treatment=treatment))
+        if project_item is not None:
+            record_project_primitives((scene_id,), project_item)
     def emit_semantic_text(scene_id: str, semantic_id: str, role: str | None = None,
                            href: str | None = None, link_title: str | None = None,
-                           table_row_id: str | None = None, table_column_id: str | None = None) -> None:
+                           table_row_id: str | None = None, table_column_id: str | None = None,
+                           project_item: Any | None = None) -> None:
         binding = semantic_binding(semantic_id)
         emit_layout_text(scene_id, binding.purpose, role or binding.scene_role, href, link_title,
-                         table_row_id, table_column_id)
+                         table_row_id, table_column_id, project_item)
 
     # The canvas texture is ground: it is the first primitive, below every paint order.
     for placed in placed_surface.shapes:
@@ -613,7 +644,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             cell_paint = (cell.typography_role if cell.semantic_id == "tableCell" and cell.typography_role not in {"text", "numeric"}
                           and value.theme_tokens.optional_color(cell.typography_role, "fill") is not None else None)
             emit_semantic_text(f"cell:{cell.object_id}:{cell.column_id}", cell.semantic_id, cell_paint, href=href, link_title=link_title,
-                               table_row_id=row_id, table_column_id=cell.column_id)
+                               table_row_id=row_id, table_column_id=cell.column_id,
+                               project_item=table_subjects.get(cell.object_id))
     # A Theme that binds `group-header.fill` inks the unmarked header text with it (#1244); a marked span keeps its
     # own role ink, and without the binding the header takes the body text ink as before.
     header_paint = "group-header" if value.theme_tokens.optional_color("group-header", "fill") is not None else "text"
@@ -644,6 +676,9 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "decoration",
                                              binding.purpose, binding.scene_role, bounds, slot_id=placed.slot_id,
                                              paint_order=placed.paint_order))
+            if placed.semantic_id == "rowBand" and row_subjects.get(placed.source_ref):
+                primitive_provenance.append(PrimitiveProvenance(
+                    placed.placement_id, row_subjects[placed.source_ref]))
     mark_placements = {placement.placement_id: placement for placement in placed_surface.marks}
     for review_row, row in zip(review_rows, rows, strict=True):
       members = sorted(enumerate(review_row.items),
@@ -673,12 +708,14 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                                     path_commands=planned_mark.path_commands,
                                                     href=href, link_title=link_title, slot_id=planned_mark.slot_id,
                                                     paint_order=planned_mark.paint_order, end_treatment=planned_mark.end_treatment))
+                record_project_primitives(planned_ids or (planned_id,), item)
             else:
                 primitives.append(ScenePrimitive(planned_id, PrimitiveKind.RECT, item.object_id, "object", planned_binding.purpose, planned_role,
                                                  bounds,
                                                  corner_radius=planned_mark.corner_radius,
                                                  href=href, link_title=link_title, slot_id=planned_mark.slot_id,
                                                  paint_order=planned_mark.paint_order, end_treatment=planned_mark.end_treatment))
+                record_project_primitives((planned_id,), item)
         actual = item.actual or {}
         actual_binding = semantic_binding("actual")
         actual_mark = mark_placements.get(f"actual:{instance_id}")
@@ -694,16 +731,19 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                                         primitive_ids=actual_ids,
                                                         corner_radius=actual_mark.corner_radius, slot_id=actual_mark.slot_id,
                                                         paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
+                    record_project_primitives(actual_ids or (actual_id,), item)
                 else:
                     primitives.append(ScenePrimitive(actual_id, PrimitiveKind.RECT, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
                                                      bounds, corner_radius=actual_mark.corner_radius, slot_id=actual_mark.slot_id,
                                                      paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
+                    record_project_primitives((actual_id,), item)
             else:
                 primitives.extend(_symbol_primitives(actual_id, item.object_id, "object", actual_binding.purpose, actual_binding.scene_role,
                                                     bounds, actual_mark.symbol_parts, corner_radius=actual_mark.corner_radius,
                                                     primitive_ids=actual_ids,
                                                     path_commands=actual_mark.path_commands, slot_id=actual_mark.slot_id,
                                                     paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
+                record_project_primitives(actual_ids or (actual_id,), item)
         missing_mark = mark_placements.get(f"missing-actual:{instance_id}")
         if missing_mark is not None and (projection.lane_membership is not None or
                                          "missingActual" in (getattr(projection, "comparison_facets", ()) or ("missingActual",))):
@@ -715,6 +755,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             primitives.append(ScenePrimitive(missing_id, PrimitiveKind.RECT, item.object_id, "object", missing_binding.purpose, missing_binding.scene_role,
                                              bounds, corner_radius=missing_mark.corner_radius, slot_id=missing_mark.slot_id,
                                              paint_order=missing_mark.paint_order, end_treatment=missing_mark.end_treatment))
+            record_project_primitives((missing_id,), item)
         label_id = f"member-label:{instance_id}"
         if label_id in layout_text and layout_text[label_id].overflow != "suppressed":
             semantic_id = inside_member_label_semantic(source_kind) if layout_text[label_id].selected_rung == "inside" else "memberLabel"
@@ -723,13 +764,15 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             label_role = value.surface_content.label_text_role
             label_paint = (label_role if label_role is not None and semantic_id == "memberLabel"
                            and value.theme_tokens.optional_color(label_role, "fill") is not None else None)
-            emit_semantic_text(label_id, semantic_id, label_paint, href=href, link_title=link_title)
+            emit_semantic_text(label_id, semantic_id, label_paint, href=href, link_title=link_title,
+                               project_item=item)
         variance_id = f"variance:{instance_id}"
         if source_kind == "combined" and item.finish_delta is not None and variance_id in layout_text:
             role = (semantic_binding("varianceBehind").scene_role if item.finish_delta > 0
                     else semantic_binding("varianceAhead").scene_role if item.finish_delta < 0
                     else semantic_binding("finishDelta").scene_role)
-            emit_semantic_text(variance_id, "finishDelta", role, href, link_title)
+            emit_semantic_text(variance_id, "finishDelta", role, href, link_title,
+                               project_item=item)
     for folded in getattr(projection, "folded_points", ()):
         for item in folded.all_items:
             instance_id = f"group-header:{folded.group_id}:{item.item_id or item.object_id}"
@@ -749,6 +792,10 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                                     path_commands=planned_mark.path_commands, href=href, link_title=link_title,
                                                     slot_id=planned_mark.slot_id, paint_order=planned_mark.paint_order,
                                                     end_treatment=planned_mark.end_treatment))
+                folded_id = f"planned:{instance_id}"
+                record_project_primitives(tuple(
+                    f"{folded_id}:part{index}" if part.paint_mode is not None else folded_id
+                    for index, part in enumerate(planned_mark.symbol_parts)), item)
             actual_mark = mark_placements.get(f"actual:{instance_id}")
             if actual_mark is not None:
                 binding = semantic_binding("actual")
@@ -759,11 +806,15 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                                     corner_radius=actual_mark.corner_radius,
                                                     path_commands=actual_mark.path_commands, slot_id=actual_mark.slot_id,
                                                     paint_order=actual_mark.paint_order, end_treatment=actual_mark.end_treatment))
+                folded_id = f"actual:{instance_id}"
+                record_project_primitives(tuple(
+                    f"{folded_id}:part{index}" if part.paint_mode is not None else folded_id
+                    for index, part in enumerate(actual_mark.symbol_parts)), item)
         label_id = f"member-label:group-header:{folded.group_id}:{folded.item.object_id}"
         if label_id in layout_text:
             semantic_id = (inside_member_label_semantic(folded.item.source_kind)
                            if layout_text[label_id].selected_rung == "inside" else "memberLabel")
-            emit_semantic_text(label_id, semantic_id)
+            emit_semantic_text(label_id, semantic_id, project_item=folded.item)
     for placed in placed_surface.text:
         if placed.semantic_id == "axisBand" or placed.semantic_id in axis_label_semantic_ids():
             # No role override: each id's own registered scene role resolves
@@ -855,17 +906,23 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                              progress.purpose, progress.scene_role, bounds, slot_id=placed.slot_id,
                                              paint_order=placed.paint_order, clip_source_id=placed.clip_host_id,
                                              corner_radius=placed.corner_radius or None))
+            if placed.subjects:
+                primitive_provenance.append(PrimitiveProvenance(placed.placement_id, placed.subjects))
         elif placed.semantic_id == "deadlineMark":
             deadline = semantic_binding("deadlineMark")
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.PATH, placed.source_ref, "object",
                                              deadline.purpose, deadline.scene_role, bounds, slot_id=placed.slot_id,
                                              points=placed.points, paint_order=placed.paint_order))
+            if placed.subjects:
+                primitive_provenance.append(PrimitiveProvenance(placed.placement_id, placed.subjects))
         elif placed.placement_id.startswith("chip:"):
             chip_binding = semantic_binding(placed.semantic_id)
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "review",
                                              chip_binding.purpose, chip_binding.scene_role, bounds, slot_id=placed.slot_id,
                                              paint_order=placed.paint_order,
                                              corner_radius=placed.corner_radius or None, viewer_fit=placed.viewer_fit))
+            if placed.subjects:
+                primitive_provenance.append(PrimitiveProvenance(placed.placement_id, placed.subjects))
         elif placed.placement_id.startswith("summary-bar:"):
             summary_bar = semantic_binding("summaryBar")
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "summary",
@@ -883,14 +940,18 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             artwork_omissions.extend(admission.omissions)
             if not admission.admitted:
                 continue
-            primitives.extend(_symbol_primitives(placed.placement_id, placed.source_ref, "annotation", artwork.purpose,
-                                                 role, bounds, placed.symbol_parts,
-                                                 paint_order=placed.paint_order, part_order_step=0))
+            emitted = _symbol_primitives(placed.placement_id, placed.source_ref, "annotation", artwork.purpose,
+                                         role, bounds, placed.symbol_parts,
+                                         paint_order=placed.paint_order, part_order_step=0)
+            primitives.extend(emitted)
+            record_annotation_primitives(tuple(item.scene_id for item in emitted), placed.source_ref)
         elif placed.semantic_id == "annotationKindStamp":
             stamp = semantic_binding("annotationKindStamp")
-            primitives.extend(_symbol_primitives(placed.placement_id, placed.source_ref, "annotation", stamp.purpose,
-                                                 stamp.scene_role, bounds, placed.symbol_parts,
-                                                 paint_order=placed.paint_order))
+            emitted = _symbol_primitives(placed.placement_id, placed.source_ref, "annotation", stamp.purpose,
+                                         stamp.scene_role, bounds, placed.symbol_parts,
+                                         paint_order=placed.paint_order)
+            primitives.extend(emitted)
+            record_annotation_primitives(tuple(item.scene_id for item in emitted), placed.source_ref)
         elif placed.annotation is not None:
             annotation_box = semantic_binding(placed.semantic_id)
             image_fill_pending = (ImageFill(placed.image_fill.asset_identity, placed.image_fill.viewport,
@@ -903,12 +964,14 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                                  annotation_box.purpose, annotation_box.scene_role, bounds,
                                                  symbol=SymbolGeometry(placed.path_commands), paint_order=placed.paint_order,
                                                  image_fill_pending=image_fill_pending, viewer_fit=placed.viewer_fit))
+                record_annotation_primitives((placed.placement_id,), placed.source_ref)
             else:
                 primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "annotation",
                                                  annotation_box.purpose, annotation_box.scene_role,
                                                  bounds, paint_order=placed.paint_order,
                                                  image_fill_pending=image_fill_pending, viewer_fit=placed.viewer_fit,
                                                  corner_radius=placed.corner_radius or None))
+                record_annotation_primitives((placed.placement_id,), placed.source_ref)
     for placed in placed_surface.icons:
         bounds = (float(placed.bounds.inline), float(placed.bounds.block),
                   float(placed.bounds.inline_size), float(placed.bounds.block_size))
@@ -921,6 +984,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                          icon_alternative=placed.alternative, icon_decorative=placed.decorative,
                                          visual_capability_source_ref=placed.visual_capability_source_ref,
                                          slot_id=placed.slot_id, paint_order=placed.paint_order))
+        if placed.subjects:
+            primitive_provenance.append(PrimitiveProvenance(placed.placement_id, placed.subjects))
     # A Theme that binds `legend.fill` paints the legend labels with it (#1062); otherwise they keep `text`.
     legend_paint = "legend" if value.theme_tokens.optional_color("legend", "fill") is not None else None
     text_roles = tuple(
@@ -936,6 +1001,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             continue
         if placed.annotation is not None:
             emit_semantic_text(placed.placement_id, placed.semantic_id)
+            record_annotation_primitives((placed.placement_id,), placed.source_ref)
             continue
         if placed.placement_id.startswith("observations:"):
             header_paint = ("tableColumnLabel" if placed.semantic_id == "observationColumnLabel"
@@ -958,6 +1024,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                 elif placed.placement_id.count(":") == 1 and placed.placement_id.startswith("summary:"):
                     purpose = semantic_binding("summaryHeader").purpose
                 emit_layout_text(placed.placement_id, purpose, role)
+                if purpose == "noteIndex":
+                    record_annotation_primitives((placed.placement_id,), placed.source_ref)
                 break
     for relation in placed_surface.relations:
         if relation.suppressed or relation.annotation is None:
@@ -969,6 +1037,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                          points=relation.points, path_commands=relation.path_commands,
                                          marker_end=relation.marker_end,
                                          paint_order=relation.paint_order))
+        record_annotation_primitives((relation.relation_id,), relation.source_ref)
     ownership = {item.placement_id: item.slot_id for item in placed_surface.text}
     ownership.update({item.placement_id: item.slot_id for item in placed_surface.marks})
     ownership.update({item.placement_id: item.slot_id for item in placed_surface.shapes})
@@ -1077,7 +1146,9 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                         fit_warnings=placed_surface.fit_warnings,
                         info_diagnostics=(*placed_surface.info_diagnostics, *artwork_omissions),
                         lane_mode=lane_mode, lane_members=lane_members,
-                        lane_obstacles=lane_obstacles, lane_clearance=lane_clearance)
+                        lane_obstacles=lane_obstacles, lane_clearance=lane_clearance,
+                        diagnostic_provenance=placed_surface.diagnostic_provenance,
+                        primitive_provenance=tuple(primitive_provenance))
     return project_canvas_overlays(surface, placed_surface.canvas_overlays, value.theme_tokens, value.visual_profile)
 
 
@@ -1111,6 +1182,9 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
                             item.priority or "required", item.overflow or "visible-overflow")
                   for item in decisions)
     primitives: list[ScenePrimitive] = []
+    primitive_provenance: list[PrimitiveProvenance] = []
+    project_items = {node.object_id: node for node in network.nodes}
+    project_items.update({item.object_id: item for item in getattr(projection, "items", ())})
     texture_slot: dict[str, str] = {}
     if placed.texture is not None:
         # Ground first, as on the table-timeline surface: below every paint order.
@@ -1148,6 +1222,10 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
                                          binding.purpose, paint_role, layout.bounds, text=text.content,
                                          baseline=layout.baseline, text_layout=layout,
                                          paint_order=text.paint_order, host_placement_id=text.host_placement_id))
+        project_item = project_items.get(text.source_ref)
+        if project_item is not None:
+            subject = DiagnosticSubject.project_object(project_item.object_id, project_item.title)
+            primitive_provenance.append(PrimitiveProvenance(text.placement_id, (subject,)))
     title_text = next((item for item in placed.text if item.placement_id == "title"), None)
     if title_text is not None:
         emit_text(title_text)
@@ -1163,6 +1241,8 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
         primitives.append(ScenePrimitive(f"network-node:{node.object_id}", PrimitiveKind.RECT, node.object_id,
                                          "network", node_binding.purpose, node_binding.scene_role, bounds,
                                          paint_order=node.paint_order))
+        subject = DiagnosticSubject.project_object(node.object_id, getattr(node, "title", None))
+        primitive_provenance.append(PrimitiveProvenance(f"network-node:{node.object_id}", (subject,)))
     for text in placed.text:
         if text.placement_id != "title":
             emit_text(text)
@@ -1181,5 +1261,7 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
                         diagnostics=placed.diagnostics,
                         canvas_bounds=(float(placed.canvas_bounds.inline), float(placed.canvas_bounds.block),
                                        float(placed.canvas_bounds.inline_size), float(placed.canvas_bounds.block_size)),
-                        fit_warnings=placed.fit_warnings)
+                        fit_warnings=placed.fit_warnings,
+                        diagnostic_provenance=getattr(placed, "diagnostic_provenance", ()),
+                        primitive_provenance=tuple(primitive_provenance))
     return project_canvas_overlays(surface, placed.canvas_overlays, value.theme_tokens, value.visual_profile)

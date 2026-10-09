@@ -26,6 +26,14 @@ from chrona.presentation.layout.routing import relation_route_quality
 from chrona.presentation.layout.surface_quality import MarkPlacement
 
 
+def _search_input_error(owner: str, **operands: object) -> ValueError:
+    fields = []
+    for name, value in operands.items():
+        shown = repr(value).replace("\n", " ").replace("\r", " ")[:96]
+        fields.append(f"{name}={shown}")
+    return ValueError("E_LAYOUT_ANNOTATION_SEARCH_INPUT: " + owner + " " + ", ".join(fields))
+
+
 @dataclass(frozen=True)
 class NearestFreeTrial:
     """One examined lattice position, whether or not it was accepted."""
@@ -57,7 +65,9 @@ def lattice_positions(region: LabelRect, box_size: tuple[float, float],
     """
     width, height = box_size
     if width <= 0 or height <= 0 or max_positions < 1:
-        raise ValueError("E_LAYOUT_ANNOTATION_SEARCH_INPUT")
+        raise _search_input_error("lattice box candidates", box_size=box_size,
+                                  max_positions=max_positions, region=(region.x, region.y,
+                                                                       region.width, region.height))
     min_x, min_y = region.x, region.y
     max_x, max_y = region.right - width, region.bottom - height
     if max_x < min_x or max_y < min_y:
@@ -175,7 +185,9 @@ def nearest_free_routed_tail_box(*, region: LabelRect, anchor: MarkPlacement, en
     accepted geometry is never written to the caller's monotone index here.
     """
     if route_state_limit < 1:
-        raise ValueError("E_LAYOUT_ANNOTATION_SEARCH_INPUT")
+        raise _search_input_error("routed-tail search", route_state_limit=route_state_limit,
+                                  box_size=box_size, max_positions=max_positions,
+                                  endpoint=endpoint, anchor_id=anchor.placement_id)
     anchor_center = (float(anchor.bounds.inline + anchor.bounds.inline_size / 2),
                      float(anchor.bounds.block + anchor.bounds.block_size / 2))
     route_states = box_trials = 0

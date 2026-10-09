@@ -493,7 +493,7 @@ class CompactIconCommand:
 def _compact_commands(value: object) -> tuple[CompactIconCommand, ...]:
     """Decode the v0.3 canonical primitive stream at the contract boundary."""
     if not isinstance(value, str):
-        raise ContractError("E_ICON_CATALOG_GEOMETRY")
+        raise ContractError("E_ICON_CATALOG_GEOMETRY", f"command stream type={type(value).__name__}; expected compact path string")
     tokens = value.split()
     commands: list[CompactIconCommand] = []
     index = 0
@@ -501,19 +501,20 @@ def _compact_commands(value: object) -> tuple[CompactIconCommand, ...]:
         kind = tokens[index]
         count = _COMPACT_ARITY.get(kind)
         if count is None or index + count >= len(tokens):
-            raise ContractError("E_ICON_CATALOG_GEOMETRY")
+            raise ContractError("E_ICON_CATALOG_GEOMETRY", f"tokenIndex={index}, command={kind!r}; expected M/L/Q/Z with complete coordinate arity")
         raw_points = tokens[index + 1:index + 1 + count]
         if any(not _COMPACT_NUMBER.fullmatch(token) for token in raw_points):
-            raise ContractError("E_ICON_CATALOG_GEOMETRY")
+            bad = next(token for token in raw_points if not _COMPACT_NUMBER.fullmatch(token))
+            raise ContractError("E_ICON_CATALOG_GEOMETRY", f"tokenIndex={index + 1 + raw_points.index(bad)}, coordinate={bad[:32]!r}; expected finite compact decimal")
         points = tuple(float(token) for token in raw_points)
         if not all(math.isfinite(point) for point in points):
-            raise ContractError("E_ICON_CATALOG_GEOMETRY")
+            raise ContractError("E_ICON_CATALOG_GEOMETRY", f"tokenIndex={index + 1}, command={kind!r}; expected finite coordinates")
         commands.append(CompactIconCommand({"M": "move", "L": "line", "Q": "quadratic", "Z": "close"}[kind],
                                            tuple((points[offset], points[offset + 1])
                                                  for offset in range(0, len(points), 2))))
         index += count + 1
     if not commands or commands[0].kind != "move":
-        raise ContractError("E_ICON_CATALOG_GEOMETRY")
+        raise ContractError("E_ICON_CATALOG_GEOMETRY", f"first command={commands[0].kind if commands else None!r}; expected initial move command")
     return tuple(commands)
 
 
@@ -817,7 +818,7 @@ def validate_icon_catalog_entry(catalog: IconCatalogContract, name: str) -> None
     """Schema-check one selected raw entry, then let closure expand its commands."""
     raw = catalog.raw_icons.get(name)
     if raw is None:
-        raise ContractError("E_ICON_CATALOG_SCHEMA")
+        raise ContractError("E_ICON_CATALOG_SCHEMA", f"catalog={catalog.identity.id!r}, icon={name!r}; expected selected canonical entry")
     source = {
         "version": catalog.version, "kind": "icon-catalog", "id": catalog.identity.id,
         "body": {"set": catalog.set_name, "aliases": list(catalog.aliases),

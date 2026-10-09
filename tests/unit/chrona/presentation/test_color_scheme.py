@@ -18,8 +18,10 @@ def test_scheme_requires_provenance_and_resolves_named_categories():
 
 def test_scheme_rejects_insufficient_text_contrast():
     bad = scheme(); bad["body"]["colors"]["text"] = "#F5F7FA"
-    with pytest.raises(ColorSchemeError, match="E_SCHEME_CONTRAST"):
+    with pytest.raises(ColorSchemeError, match="E_SCHEME_CONTRAST") as error:
         resolve_color_scheme(bad, content_identity="sha256:" + "a" * 64)
+    assert error.value.source_ref == "/body/colors/text"
+    assert "4.5:1 against surface and surfaceRaised" in error.value.detail
 
 
 def test_theme_validates_each_inside_label_role_against_its_host_mark():
@@ -42,8 +44,10 @@ def test_theme_validates_each_inside_label_role_against_its_host_mark():
     resolved = resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
     assert "member-label-inside-planned" in resolved["body"]["roles"]
     theme["body"]["colorBindings"]["member-label-inside-planned.fill"] = "accent"
-    with pytest.raises(ColorSchemeError, match="E_SCHEME_INSIDE_LABEL_CONTRAST"):
+    with pytest.raises(ColorSchemeError, match="E_SCHEME_INSIDE_LABEL_CONTRAST") as error:
         resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
+    assert error.value.source_ref == "/body/colorBindings/member-label-inside-planned.fill"
+    assert "intent='accent'" in error.value.detail and "expected insideLabelPlanned" in error.value.detail
 
 
 def test_theme_state_text_requires_declared_treatment_and_composited_floor():
@@ -68,6 +72,8 @@ def test_theme_state_text_requires_declared_treatment_and_composited_floor():
         resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
     assert error.value.diagnostic_id == "E_SCHEME_STATE_TEXT_TREATMENT"
     assert error.value.source_ref == "/body/roles/variance-ahead"
+    assert "role='variance-ahead', treatment=None" in error.value.detail
+    assert "expected required or deemphasized" in error.value.detail
 
 
 def _note_theme():
@@ -98,6 +104,7 @@ def test_annotation_note_text_requires_required_treatment():
         resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
     assert error.value.diagnostic_id == "E_SCHEME_STATE_TEXT_TREATMENT"
     assert error.value.source_ref == "/body/roles/annotation-note-text/contrastTreatment"
+    assert "role='annotation-note-text', treatment='deemphasized'" in error.value.detail
 
 
 def test_annotation_note_box_requires_effective_flat_opaque_fill():
@@ -107,6 +114,8 @@ def test_annotation_note_box_requires_effective_flat_opaque_fill():
         resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
     assert error.value.diagnostic_id == "E_SCHEME_ANNOTATION_NOTE_GROUND"
     assert error.value.source_ref == "/body/roles/annotation-note-box/fill"
+    assert "role='annotation-note-box'" in error.value.detail
+    assert "expected opaque #RRGGBB color token" in error.value.detail
 
     theme = _note_theme()
     theme["body"]["roles"]["annotation-note-box"]["opacity"] = "note-opacity"
@@ -115,6 +124,7 @@ def test_annotation_note_box_requires_effective_flat_opaque_fill():
         resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
     assert error.value.diagnostic_id == "E_SCHEME_ANNOTATION_NOTE_GROUND"
     assert error.value.source_ref == "/body/roles/annotation-note-box/opacity"
+    assert "token='note-opacity'" in error.value.detail and "expected opacity 1" in error.value.detail
 
 
 def test_annotation_note_box_accepts_scheme_inserted_opaque_fill_and_default_opacity():
@@ -129,6 +139,7 @@ def test_annotation_note_box_rejects_gradient_or_pattern_ground_with_exact_point
         resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
     assert error.value.diagnostic_id == "E_SCHEME_ANNOTATION_NOTE_GROUND"
     assert error.value.source_ref == "/body/colorBindings/annotation-note-box.gradientStart"
+    assert "property='gradientStart'" in error.value.detail
 
     theme = _note_theme()
     theme["body"]["roles"]["annotation-note-box"]["pattern"] = "box-pattern"

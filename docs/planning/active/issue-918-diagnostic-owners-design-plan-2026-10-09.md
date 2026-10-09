@@ -1,6 +1,10 @@
 # Issue 918 — diagnostic owners: design plan
 
-Status: baseline and design planning; product implementation has not started.
+Status: implementation in progress; no issue acceptance or release claimed.
+Selected [design](../../design/issue-918-diagnostic-owners-design-2026-10-09.md),
+[architecture review](../../reviews/current/issue-918-diagnostic-owners-architecture-review-2026-10-09.md)
+and [implementation plan](issue-918-diagnostic-owners-implementation-plan-2026-10-09.md)
+are published through `1316b8e02694f7179c765fc4847b5583223f253d`.
 Authority: [issue 918](https://github.com/tya5/chrona/issues/918), including
 consolidated issues 919–922. Public baseline:
 `546f7c3f9e700afa7553632d8dd6ac0c94a348a0` (`derived-main` successful).
@@ -71,7 +75,23 @@ CI full three-OS release including the literal acceptance review. Derived
 public evidence is bot-owned, not hand-edited. A remaining or deferred row
 keeps the issue open without an approved successor disposition.
 
-## Literal acceptance (all pending)
+## Integrated implementation evidence
+
+S1 is published at `9125ca33`; S2–S4 are ready for integrated publication.
+Python 3.11 focused integration: 220 passed. The inventory validates 1,609
+sites with zero bare reachable constructors; the policy retains its unrelated
+declared-value and corpus rules. Owner tests include detail-removal mutations.
+The 114-case CLI comparison against the baseline preserves all exit codes and
+37 generated files byte-for-byte: 19 successful-render envelopes and four
+owner-error messages change; 22 warning rows preserve identity and multiplicity.
+Relation-only and field/entity-group findings retain their real source, not
+invented endpoint/member ownership. Provenance keeps canonical pointers and
+known titles; it is excluded from Scene serialization and geometry.
+CI full release and public-materializer acceptance remain pending. The local
+conformance review found stale bot-owned inventory reports; its policy-shape
+and Scene-field ownership failures were corrected and individually rechecked.
+
+## Literal acceptance (release evidence pending)
 
 | ID | Criterion | Evidence owner |
 | --- | --- | --- |

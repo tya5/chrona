@@ -192,7 +192,8 @@ def test_pattern_rejects_invalid_circle_fill_channel(channel):
         })
     assert error.value.diagnostic_id == "E_THEME_ASSET_SOURCE_PATTERN"
     assert "fillChannel must be 'ink', 'substrate', or 'none'" in str(error.value)
-    assert repr(channel) in str(error.value)
+    assert "/entry/primitives/0/fillChannel" in str(error.value)
+    assert (repr(channel) if isinstance(channel, (str, int, float, bool, type(None), list)) else "<list>") in str(error.value)
 
 
 def test_pattern_circle_none_requires_stroke_and_zero_visible_ink_is_rejected():
@@ -204,7 +205,8 @@ def test_pattern_circle_none_requires_stroke_and_zero_visible_ink_is_rejected():
                             "fillChannel": "none"}],
         })
     assert invalid_channel.value.diagnostic_id == "E_THEME_ASSET_SOURCE_PATTERN"
-    assert "fillChannel='none' requires a positive strokeWidth" in str(invalid_channel.value)
+    assert "/entry/primitives/0/strokeWidth" in str(invalid_channel.value)
+    assert "fillChannel='none'" in str(invalid_channel.value)
     with pytest.raises(IconNormalizationError) as error:
         normalize_pattern_entry({
             "tile": {"inlineSize": 8, "blockSize": 8}, "angle": 0,
@@ -212,6 +214,124 @@ def test_pattern_circle_none_requires_stroke_and_zero_visible_ink_is_rejected():
             "primitives": [{"kind": "circle", "cx": 0, "cy": 0, "radius": 0.01}],
         })
     assert error.value.diagnostic_id == "E_THEME_ASSET_SOURCE_DENSITY"
+
+
+@pytest.mark.parametrize("value,code,operand", [
+    (None, "E_THEME_ASSET_SOURCE_GLYPH", "/entry requires object fields"),
+    ({"viewport": {"inlineSize": 24, "blockSize": 24}, "parts": [{"paint": "fill", "d": "M0 0 A 1 1"}]},
+     "E_THEME_ASSET_SOURCE_PATH", "/entry/parts/0/d"),
+    ({"viewport": {"inlineSize": 24, "blockSize": 24}, "parts": [{"paint": "stroke", "d": "M0 0L2 2", "strokeWidth": "wide", "lineCap": "round", "lineJoin": "round"}]},
+     "E_THEME_ASSET_SOURCE_VALUE", "/entry/parts/0/strokeWidth"),
+])
+def test_glyph_diagnostics_identify_invalid_operand(value, code, operand):
+    with pytest.raises(IconNormalizationError) as error:
+        normalize_glyph_entry(value)
+    assert error.value.diagnostic_id == code
+    assert operand in str(error.value)
+
+
+def test_pattern_diagnostics_identify_numeric_operand_and_expected_range():
+    with pytest.raises(IconNormalizationError) as error:
+        normalize_pattern_entry({
+            "tile": {"inlineSize": 8, "blockSize": 8}, "angle": 0,
+            "densityBasisPoints": 1250,
+            "primitives": [{"kind": "rect", "x": 0, "y": 0,
+                            "inlineSize": 8, "blockSize": 257}],
+        })
+    assert error.value.diagnostic_id == "E_THEME_ASSET_SOURCE_LIMIT"
+    assert "/entry/primitives/0/blockSize=257" in str(error.value)
+    assert "<= 8" in str(error.value)
+
+
+def test_path_diagnostic_identifies_path_reference_and_unsupported_command():
+    with pytest.raises(IconNormalizationError) as error:
+        normalize_icon("vector", b'<svg viewBox="0 0 24 24"><path d="M0 0 A 1 1"/></svg>', (24, 24))
+    assert error.value.diagnostic_id == "E_ICON_SVG_UNSAFE"
+    assert "/svg/path/@d" in str(error.value)
+    assert "unexpected character='A'" in str(error.value)
+
+
+def test_png_diagnostic_reports_actual_and_expected_viewport():
+    payload = b"\x89PNG\r\n\x1a\n" + b"\x00\x00\x00\rIHDR" + (23).to_bytes(4, "big") + (24).to_bytes(4, "big")
+    with pytest.raises(IconNormalizationError) as error:
+        normalize_icon("raster", payload, (24, 24))
+    assert error.value.diagnostic_id == "E_ICON_PNG_INVALID"
+    assert "23x24" in str(error.value) and "24x24" in str(error.value)
+
+
+@pytest.mark.parametrize("kind,payload,code,operand", [
+    ("poster", b"unused", "E_ICON_CATALOG_SCHEMA", "'poster'"),
+    ("raster", b"short-png", "E_ICON_PNG_INVALID", "byte_length=9"),
+    ("vector", b"<svg>", "E_ICON_SVG_UNSAFE", "malformed at"),
+    ("vector", b'<svg viewBox="0 0 24 24"/>', "E_ICON_SVG_LIMIT", "paths=0"),
+])
+def test_icon_diagnostics_name_bad_kind_or_payload_operand(kind, payload, code, operand):
+    with pytest.raises(IconNormalizationError) as error:
+        normalize_icon(kind, payload, (24, 24))
+    assert error.value.diagnostic_id == code
+    assert operand in str(error.value)
+
+
+def test_png_limit_diagnostic_reports_actual_dimensions_and_allowed_range():
+    payload = b"\x89PNG\r\n\x1a\n" + b"\x00\x00\x00\rIHDR" + (4097).to_bytes(4, "big") + (24).to_bytes(4, "big")
+    with pytest.raises(IconNormalizationError) as error:
+        normalize_icon("raster", payload, (4097, 24))
+    assert error.value.diagnostic_id == "E_ICON_PNG_LIMIT"
+    assert "4097x24" in str(error.value) and "1..4096" in str(error.value)
+
+
+def test_svg_unknown_attribute_diagnostic_bounds_key_sample():
+    extras = " ".join(f'custom-{index:04d}="x"' for index in range(500))
+    payload = f'<svg viewBox="0 0 24 24" {extras}/>'.encode()
+    with pytest.raises(IconNormalizationError) as error:
+        normalize_icon("vector", payload, (24, 24))
+    message = str(error.value)
+    assert "unexpected_attributes(count=500" in message
+    assert "custom-0000" in message
+    assert len(message) < 300
+
+
+def test_glyph_extra_field_diagnostic_bounds_key_sample():
+    parts = {f"extra-{index:04d}": index for index in range(500)}
+    with pytest.raises(IconNormalizationError) as error:
+        normalize_glyph_entry({"viewport": {"inlineSize": 24, "blockSize": 24},
+                               "parts": [{"paint": "fill", "d": "M0 0 L1 1", **parts}]})
+    message = str(error.value)
+    assert "fields(count=502" in message
+    assert "extra-0000" in message
+    assert len(message) < 300
+
+
+def test_svg_limit_diagnostic_reports_actual_path_count():
+    payload = b'<svg viewBox="0 0 24 24">' + b'<path d="M0 0"/>' * 129 + b"</svg>"
+    with pytest.raises(IconNormalizationError) as error:
+        normalize_icon("vector", payload, (24, 24))
+    assert error.value.diagnostic_id == "E_ICON_SVG_LIMIT"
+    assert "paths=129" in str(error.value) and "1..128" in str(error.value)
+
+
+def test_pattern_diagnostic_names_invalid_primitive_kind():
+    with pytest.raises(IconNormalizationError) as error:
+        normalize_pattern_entry({
+            "tile": {"inlineSize": 8, "blockSize": 8}, "angle": 0,
+            "densityBasisPoints": 1,
+            "primitives": [{"kind": "hexagon", "seed": "r7"}],
+        })
+    assert error.value.diagnostic_id == "E_THEME_ASSET_SOURCE_PATTERN"
+    assert "/entry/primitives/0" in str(error.value)
+    assert "hexagon" in str(error.value) and "seed" in str(error.value)
+
+
+def test_pattern_density_diagnostic_names_declared_and_derived_values():
+    with pytest.raises(IconNormalizationError) as error:
+        normalize_pattern_entry({
+            "tile": {"inlineSize": 8, "blockSize": 8}, "angle": 0,
+            "densityBasisPoints": 1251,
+            "primitives": [{"kind": "rect", "x": 0, "y": 0,
+                            "inlineSize": 8, "blockSize": 1}],
+        })
+    assert error.value.diagnostic_id == "E_THEME_ASSET_SOURCE_DENSITY"
+    assert "densityBasisPoints=1251" in str(error.value) and "derived density=1250" in str(error.value)
 
 
 def test_pattern_visible_density_is_invariant_under_tile_rotation():

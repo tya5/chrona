@@ -16,6 +16,19 @@ from chrona.presentation.layout.obstacles import (
 from chrona.presentation.layout.surface_quality import IconPlacement, MarkPlacement, ShapePlacement, VisualRequest
 
 
+def _candidate_input_error(owner: str, **operands: object) -> ValueError:
+    """Keep candidate failures actionable without dumping geometry or payloads."""
+    fields = []
+    for name, value in operands.items():
+        if isinstance(value, bytes):
+            shown = "<bytes>"
+        else:
+            shown = repr(value)
+        shown = shown.replace("\n", " ").replace("\r", " ")[:96]
+        fields.append(f"{name}={shown}")
+    return ValueError(f"E_LAYOUT_LANE_CANDIDATE_INPUT: {owner} " + ", ".join(fields))
+
+
 @dataclass(frozen=True)
 class LaneFacetPort:
     """One stable source port on a completed primitive facet."""
@@ -29,7 +42,8 @@ class LaneFacetPort:
                 or len(self.position) != 2
                 or not all(isinstance(value, (int, float)) and not isinstance(value, bool)
                            and isfinite(value) for value in self.position)):
-            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+            raise _candidate_input_error("LaneFacetPort", port_id=self.port_id,
+                                         purpose=self.purpose, position=self.position)
 
 
 @dataclass(frozen=True)
@@ -48,7 +62,11 @@ class LanePlainMarkProjection:
                 or not isfinite(self.corner_radius) or self.corner_radius < 0
                 or self.end_treatment not in {"closed", "open"}
                 or (self.shape == "open-span") != (self.end_treatment == "open")):
-            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+            raise _candidate_input_error("LanePlainMarkProjection", shape=self.shape,
+                                         semantic_role=self.semantic_role,
+                                         paint_order=self.paint_order,
+                                         corner_radius=self.corner_radius,
+                                         end_treatment=self.end_treatment)
 
 
 @dataclass(frozen=True)
@@ -81,7 +99,11 @@ class LaneGlyphPartProjection:
                 or not isfinite(self.corner_radius) or self.corner_radius < 0
                 or self.end_treatment not in {"closed", "open"}
                 or (self.mark_shape == "open-span") != (self.end_treatment == "open")):
-            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+            raise _candidate_input_error("LaneGlyphPartProjection", part_index=self.part_index,
+                                         semantic_role=self.semantic_role,
+                                         paint_order=self.paint_order, paint_mode=self.paint_mode,
+                                         mark_shape=self.mark_shape,
+                                         stroke_width=self.stroke_width)
 
 
 @dataclass(frozen=True)
@@ -105,7 +127,11 @@ class LaneProgressProjection:
                 > self.host_bounds.inline + self.host_bounds.inline_size
                 or self.clip_bounds.block + self.clip_bounds.block_size
                 > self.host_bounds.block + self.host_bounds.block_size):
-            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+            raise _candidate_input_error("LaneProgressProjection",
+                                         host_placement_id=self.host_placement_id,
+                                         semantic_role=self.semantic_role,
+                                         host_bounds=self.host_bounds,
+                                         clip_bounds=self.clip_bounds)
 
 
 @dataclass(frozen=True)
@@ -153,7 +179,10 @@ class LaneIconProjection:
             and isinstance(self.stroke_scale, (int, float)) and not isinstance(self.stroke_scale, bool)
             and isfinite(self.stroke_scale) and self.stroke_scale > 0
         ):
-            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+            raise _candidate_input_error("LaneIconProjection", placement_id=self.placement_id,
+                                         icon_id=self.icon_id, kind=self.kind,
+                                         path_index=self.path_index, path_count=self.path_count,
+                                         paint=self.paint, bounds=self.bounds)
         if self.kind == "vector":
             valid_path = (
                 isinstance(self.path_index, int) and not isinstance(self.path_index, bool)
@@ -179,7 +208,10 @@ class LaneIconProjection:
                 and isinstance(self.raster_payload, bytes) and bool(self.raster_payload)
             )
         if not valid_path:
-            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+            raise _candidate_input_error("LaneIconProjection", placement_id=self.placement_id,
+                                         icon_id=self.icon_id, kind=self.kind,
+                                         path_index=self.path_index, path_count=self.path_count,
+                                         paint=self.paint, stroke_width=self.stroke_width)
 
     @property
     def common_metadata(self) -> tuple[object, ...]:
@@ -263,28 +295,39 @@ class LaneMarkFacet:
                                and isfinite(value) for value in self.port_host_bounds)
                     or self.port_host_bounds[2] < self.port_host_bounds[0]
                     or self.port_host_bounds[3] < self.port_host_bounds[1]))):
-            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+            raise _candidate_input_error("LaneMarkFacet", facet_id=self.facet_id,
+                                         source_ref=self.source_ref,
+                                         primitive_id=self.primitive_id,
+                                         primitive_type=self.primitive_type)
         left, top, right, bottom = obstacle_envelope(self.visible_footprint)
         bounds_left, bounds_top, bounds_right, bounds_bottom = self.primitive_bounds
         if not (left - 1e-9 <= bounds_left <= bounds_right <= right + 1e-9
                 and top - 1e-9 <= bounds_top <= bounds_bottom <= bottom + 1e-9):
-            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+            raise _candidate_input_error("LaneMarkFacet", facet_id=self.facet_id,
+                                         primitive_bounds=self.primitive_bounds,
+                                         visible_footprint=self.visible_footprint)
         points = (point for _, command_points in self.completed_geometry for point in command_points)
         tolerance = 1e-9
         if any(not (bounds_left - tolerance <= point[0] <= bounds_right + tolerance
                     and bounds_top - tolerance <= point[1] <= bounds_bottom + tolerance) for point in points):
-            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+            raise _candidate_input_error("LaneMarkFacet", facet_id=self.facet_id,
+                                         primitive_bounds=self.primitive_bounds,
+                                         reason="completed point outside bounds")
         host = self.port_host_bounds
         if any(not (host[0] - tolerance <= port.position[0] <= host[2] + tolerance
                     and host[1] - tolerance <= port.position[1] <= host[3] + tolerance)
                for port in self.ports):
-            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+            raise _candidate_input_error("LaneMarkFacet", facet_id=self.facet_id,
+                                         port_host_bounds=host, port_ids=tuple(p.port_id for p in self.ports))
         if self.icon_projection is not None:
             projection = self.icon_projection
             if (not isinstance(projection, LaneIconProjection)
                     or self.primitive_id != projection.placement_id
                     or self.primitive_type != "Icon"):
-                raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+                raise _candidate_input_error("LaneMarkFacet", facet_id=self.facet_id,
+                                             primitive_id=self.primitive_id,
+                                             icon_placement_id=getattr(projection, "placement_id", None),
+                                             primitive_type=self.primitive_type)
             if projection.kind == "raster":
                 rect = projection.bounds
                 expected = (float(rect.inline), float(rect.block),
@@ -294,17 +337,27 @@ class LaneMarkFacet:
                         or not isinstance(self.visible_footprint, ObstacleRect)
                         or (self.visible_footprint.left, self.visible_footprint.top,
                             self.visible_footprint.right, self.visible_footprint.bottom) != expected):
-                    raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+                    raise _candidate_input_error("LaneMarkFacet", facet_id=self.facet_id,
+                                                 primitive_bounds=self.primitive_bounds,
+                                                 raster_bounds=expected)
         elif self.primitive_type == "Icon":
-            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+            raise _candidate_input_error("LaneMarkFacet", facet_id=self.facet_id,
+                                         primitive_type=self.primitive_type,
+                                         reason="Icon primitive requires icon projection")
         payloads = (self.icon_projection, self.plain_mark_projection,
                     self.glyph_part_projection, self.progress_projection)
         if sum(value is not None for value in payloads) > 1:
-            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+            raise _candidate_input_error("LaneMarkFacet", facet_id=self.facet_id,
+                                         projection_types=tuple(type(value).__name__
+                                                                for value in payloads if value is not None),
+                                         reason="at most one projection payload is allowed")
         if ((self.plain_mark_projection is not None and self.primitive_type not in {"Rect", "Path"})
                 or (self.glyph_part_projection is not None and self.primitive_type != "Symbol")
                 or (self.progress_projection is not None and self.primitive_type != "Rect")):
-            raise ValueError("E_LAYOUT_LANE_CANDIDATE_INPUT")
+            raise _candidate_input_error("LaneMarkFacet", facet_id=self.facet_id,
+                                         primitive_type=self.primitive_type,
+                                         projection_types=tuple(type(value).__name__
+                                                                for value in payloads if value is not None))
 
 
 def _item_by_instance(projection: Any, closure: LaneProjectionClosure) -> dict[LaneProjectionInstance, Any]:

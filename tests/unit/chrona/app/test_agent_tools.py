@@ -450,11 +450,13 @@ def test_warning_records_keep_their_fields_sorted_and_scrubbed(scope, monkeypatc
     assert "count" not in first and "occurrences" not in first
 
 
-def test_warnings_equal_what_the_cli_prints_to_stderr(scope, monkeypatch, capsys, workspace):
+def test_warnings_equal_the_cli_stdout_success_envelope(scope, monkeypatch, capsys, workspace):
     result = run(scope, "render_draft", project="launch.yaml", viewport="300x300", inline="none")
-    rc, _, err = cli(monkeypatch, capsys, workspace, "render", "launch.yaml", "--viewport", "300x300", "--output", "o.svg")
-    printed = [json.loads(line) for line in err.splitlines()]
-    assert rc == 0 and len(printed) == len(result.structured["warnings"]) > 0
+    rc, out, err = cli(monkeypatch, capsys, workspace, "render", "launch.yaml", "--viewport", "300x300", "--output", "o.svg")
+    envelope = json.loads(out)
+    printed = envelope["warnings"]
+    assert rc == 0 and err == "" and envelope["status"] == "ok" and envelope["diagnostics"] == []
+    assert len(printed) == len(result.structured["warnings"]) > 0
     for line, item in zip(printed, result.structured["warnings"], strict=True):
         warning = line["severity"] == "warning"  # an info record's own `count` is a number of labels, not a merge count
         top = {"code", "severity", "component", "sourceRef", "message"} | ({"count", "occurrences"} if warning else set())

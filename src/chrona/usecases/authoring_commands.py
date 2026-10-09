@@ -41,7 +41,7 @@ def apply_authoring_command(
     try:
         if command["type"] == "materializePresentationPreset":
             if cas_write_aggregate is None:
-                raise ValueError("E_AUTHORING_AGGREGATE_WRITER")
+                raise ValueError("E_AUTHORING_AGGREGATE_WRITER: materializePresentationPreset requires an aggregate CAS writer")
             from chrona.usecases.authoring_materialization import materialization_candidate
             candidate, candidates = materialization_candidate(
                 workspace_path, current, directory=command["payload"].get("directory", "presentation"),
@@ -80,7 +80,7 @@ def _apply(candidate: dict[str, Any], command: dict[str, Any]) -> None:
     elif command_type == "setPresentationOverride":
         body["presentation"]["binding"]["overrides"] = payload["overrides"]
     else:
-        raise ValueError("E_AUTHORING_COMMAND")
+        raise ValueError(f"E_AUTHORING_COMMAND: unsupported command type {command_type!r}")
 
 
 def _accepted(command: dict[str, Any], workspace: str, result: str, *, reversible: bool | None = None) -> dict[str, Any]:
@@ -93,6 +93,8 @@ def _accepted(command: dict[str, Any], workspace: str, result: str, *, reversibl
 
 
 def _rejected(command: dict[str, Any], code: str, base: str, *, detail: str = "") -> dict[str, Any]:
+    code, _, inline_detail = code.partition(":")
+    detail = detail or inline_detail.strip()
     diagnostic: dict[str, Any] = {"code": code}
     if detail:
         diagnostic["detail"] = detail

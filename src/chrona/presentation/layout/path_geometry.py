@@ -7,6 +7,10 @@ from math import isfinite
 from chrona.presentation.layout.surface_quality import PathCommand
 
 
+def _path_error(detail: str) -> ValueError:
+    return ValueError(f"E_LAYOUT_PATH_INPUT: {detail}")
+
+
 def rounded_orthogonal_path(points: tuple[tuple[float, float], ...], radius: float, *,
                             start_run: float = 0.0, end_run: float = 0.0,
                             blocked: Callable[[tuple[tuple[float, float], ...]], bool] | None = None,
@@ -21,9 +25,10 @@ def rounded_orthogonal_path(points: tuple[tuple[float, float], ...], radius: flo
     is clear, down to a square corner.
     """
     if len(points) < 2 or radius < 0 or not isfinite(radius) or start_run < 0 or end_run < 0:
-        raise ValueError("E_LAYOUT_PATH_INPUT")
-    if any(left[0] != right[0] and left[1] != right[1] for left, right in zip(points, points[1:])):
-        raise ValueError("E_LAYOUT_PATH_INPUT")
+        raise _path_error(f"rounded orthogonal path requires at least two points, finite nonnegative radius/start_run/end_run; point_count={len(points)}, radius={radius!r}, start_run={start_run!r}, end_run={end_run!r}")
+    for index, (left, right) in enumerate(zip(points, points[1:])):
+        if left[0] != right[0] and left[1] != right[1]:
+            raise _path_error(f"segment {index} from {left!r} to {right!r} is diagonal; expected horizontal or vertical")
     if radius == 0:
         return (PathCommand("move", (points[0],)),) + tuple(PathCommand("line", (point,)) for point in points[1:])
     commands: list[PathCommand] = [PathCommand("move", (points[0],))]
@@ -78,13 +83,13 @@ def flatten_corner(before: tuple[float, float], control: tuple[float, float],
 def flatten_path(commands: tuple[PathCommand, ...]) -> tuple[tuple[float, float], ...]:
     """The drawn route as a polyline: straight commands as given, quadratics as chords."""
     result: list[tuple[float, float]] = []
-    for command in commands:
+    for index, command in enumerate(commands):
         if command.kind in {"move", "line"}:
             result.append(command.points[0])
         elif command.kind == "quadratic":
             result.extend(flatten_corner(result[-1], *command.points)[1:])
         else:
-            raise ValueError("E_LAYOUT_PATH_INPUT")
+            raise _path_error(f"path command[{index}].kind={command.kind!r}; expected move, line, or quadratic")
     return tuple(result)
 
 
@@ -118,7 +123,7 @@ def open_span_path(*, inline: float, block: float, inline_size: float, block_siz
                    radius: float) -> tuple[PathCommand, ...]:
     """Return a closed continuation-chevron outline for a completed open span."""
     if inline_size <= 0 or block_size <= 0 or radius < 0 or not isfinite(radius):
-        raise ValueError("E_LAYOUT_PATH_INPUT")
+        raise _path_error(f"open span requires positive inline_size/block_size and finite nonnegative radius; inline_size={inline_size!r}, block_size={block_size!r}, radius={radius!r}")
     terminal = min(block_size / 2, inline_size / 2)
     leading = min(radius, block_size / 2, max(0.0, (inline_size - terminal) / 2))
     left, top = inline, block

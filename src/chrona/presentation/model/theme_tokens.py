@@ -20,6 +20,29 @@ class ThemeTokenError(ValueError):
         self.detail = detail
 
 
+def _operand(value: Any) -> str:
+    """Describe an invalid Theme operand by type without echoing authored content."""
+    if value is None:
+        return "NoneType"
+    if isinstance(value, bool):
+        return "bool"
+    if isinstance(value, Mapping):
+        return "mapping"
+    if isinstance(value, (list, tuple)):
+        return f"{type(value).__name__}(length={len(value)})"
+    return type(value).__name__
+
+
+def _shown(value: Any) -> str:
+    """Bound a scalar Theme operand without dumping resource content."""
+    if isinstance(value, int) and not isinstance(value, bool) and value.bit_length() > 320:
+        return f"<int bits={value.bit_length()}>"
+    if value is None or isinstance(value, (str, int, float, bool)):
+        text = repr(value)
+        return text if len(text) <= 96 else text[:93] + "..."
+    return _operand(value)
+
+
 # A role's declared horizontal compression (#585): the painted run is scaled along its own inline axis. The floor keeps
 # a compressed face recognisably the same face; the ceiling makes it compression only (no extension).
 HORIZONTAL_SCALE_FLOOR = Decimal("0.5")
@@ -237,7 +260,7 @@ class ThemeTokenView:
         if gap is None:
             return Decimal(0)
         if gap < 0:
-            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/blockGap")
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/blockGap", f"value={_shown(gap)}; expected nonnegative number")
         return gap
 
     def text_inline_gap(self, role: str) -> Decimal:
@@ -246,7 +269,7 @@ class ThemeTokenView:
         if gap is None:
             return Decimal(0)
         if gap < 0:
-            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/inlineGap")
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/inlineGap", f"value={_shown(gap)}; expected nonnegative number")
         return gap
 
     def slot_heading_role(self) -> str:
@@ -258,24 +281,26 @@ class ThemeTokenView:
         binding = roles.get(role)
         path = f"/body/roles/{role}/{property_name}"
         if not isinstance(binding, Mapping) or not isinstance(binding.get(property_name), str):
-            raise ThemeTokenError("E_THEME_ROLE_REQUIRED", path)
+            raise ThemeTokenError("E_THEME_ROLE_REQUIRED", path,
+                                  f"role={_shown(role)}, property={_shown(property_name)}; bindingType={_operand(binding)}; expected token-name string")
         token_id = binding[property_name]
         declared = self._body["values"].get(token_id)
         if not isinstance(declared, Mapping) or declared.get("type") != expected_type or "value" not in declared:
-            raise ThemeTokenError("E_THEME_TOKEN_TYPE", path)
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", path,
+                                  f"role={_shown(role)}, property={_shown(property_name)}, token={_shown(token_id)}; declaredType={_operand(declared.get('type') if isinstance(declared, Mapping) else declared)}, expectedType={_shown(expected_type)}")
         return declared["value"]
 
     def color(self, role: str, property_name: str = "fill") -> str:
         value = self.token(role, property_name, "color")
         if not isinstance(value, str):
-            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/{property_name}")
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/{property_name}", f"valueType={_operand(value)}; expected string colour")
         return value
 
     def opacity(self, role: str) -> float:
         """Resolve one finite, closed role opacity."""
         value = self.number(role, "opacity")
         if value < 0 or value > 1:
-            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/opacity")
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/opacity", f"value={value}; expected number in [0, 1]")
         return float(value)
 
     def optional_pattern(self, role: str) -> Mapping[str, Any] | None:
@@ -290,7 +315,7 @@ class ThemeTokenView:
             reference = value.get("ref")
             entry = self._catalog_patterns.get(str(reference)) if isinstance(reference, str) else None
             if not isinstance(entry, Mapping):
-                raise ThemeTokenError("E_THEME_ASSET_REFERENCE", f"/body/roles/{role}/pattern")
+                raise ThemeTokenError("E_THEME_ASSET_REFERENCE", f"/body/roles/{role}/pattern", f"reference={_shown(reference)}; no matching catalog pattern")
             return {"kind": "catalog", "ref": reference, **dict(entry)}
         return value
 
@@ -375,15 +400,18 @@ class ThemeTokenView:
         """Resolve one closed dash pattern; absence is diagnosed by the caller."""
         value = self.token(role, "dash", "dashPattern")
         if not isinstance(value, list):
-            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/dash")
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/dash",
+                                  f"role={_shown(role)}, property='dash', valueType={_operand(value)}; expected list of positive finite numbers")
         result: list[float] = []
         for index, segment in enumerate(value):
             try:
                 number = Decimal(str(segment))
             except (InvalidOperation, ValueError) as error:
-                raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/dash/{index}") from error
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/dash/{index}",
+                                      f"role={_shown(role)}, property='dash[{index}]', valueType={_operand(segment)}; expected positive finite number") from error
             if not number.is_finite() or number <= 0:
-                raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/dash/{index}")
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/dash/{index}",
+                                      f"role={_shown(role)}, property='dash[{index}]', value={_shown(number)}; expected positive finite number")
             result.append(float(number))
         return tuple(result)
 
@@ -400,7 +428,8 @@ class ThemeTokenView:
         except (TypeError, ValueError) as error:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/fontWeight") from error
         if weight < 1:
-            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/fontWeight")
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/fontWeight",
+                                  f"role={_shown(role)}, property='fontWeight', value={_shown(weight)}; expected positive integer font weight")
         return weight
 
     def _typography_components(self, role: str) -> tuple[str, int, Decimal, Decimal]:
@@ -408,7 +437,8 @@ class ThemeTokenView:
         family, weight = self.font_family(role), self.font_weight(role)
         size, line_height = self.number(role, "fontSize"), self.number(role, "lineHeight")
         if size <= 0 or line_height <= 0:
-            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}")
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}",
+                                  f"role={role!r}, fontSize={size}, lineHeight={line_height}; expected both positive numbers")
         return family, weight, size, line_height
 
     def text_treatment(self, role: str) -> TextTreatment:
@@ -420,7 +450,8 @@ class ThemeTokenView:
         if (spacing < Decimal("-1") or spacing > Decimal("1")
                 or transform not in {"none", "uppercase", "lowercase", "capitalize"}
                 or numeric_spacing not in {"proportional", "tabular"}):
-            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}")
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}",
+                                  f"role={_shown(role)}, letterSpacing={_shown(spacing)}, textTransform={_shown(transform)}, numericSpacing={_shown(numeric_spacing)}; expected spacing [-1, 1], transform none/uppercase/lowercase/capitalize, numeric spacing proportional/tabular")
         scale = self.optional_number(role, "horizontalScale")
         scale = (Decimal(1) if scale is None
                  else checked_horizontal_scale(scale, f"/body/roles/{role}/horizontalScale"))
@@ -442,7 +473,8 @@ class ThemeTokenView:
         """Return the closed typography-relative icon scale and gap for one role."""
         scale, gap = self.number(role, "iconScale"), self.number(role, "iconGap")
         if scale < 0 or gap < 0:
-            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}")
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}",
+                                  f"role={_shown(role)}, iconScale={_shown(scale)}, iconGap={_shown(gap)}; expected nonnegative values")
         return scale, gap
 
     def mark_geometry(self, role: str) -> tuple[Decimal, Decimal | None, int, Decimal]:
@@ -454,7 +486,8 @@ class ThemeTokenView:
         corner_radius = Decimal(0) if physical_radius is not None else self.number(role, "markCornerRadius")
         if (height <= 0 or height > 1 or (offset is not None and (offset < 0 or offset + height > 1))
                 or corner_radius < 0 or corner_radius > Decimal("0.5") or order != order.to_integral_value()):
-            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markHeight")
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markHeight",
+                                  f"role={_shown(role)}, markHeight={_shown(height)}, markOffset={_shown(offset)}, cornerRadius={_shown(corner_radius)}, paintOrder={_shown(order)}; expected height (0,1], offset fitting track, radius [0,0.5], integral order")
         return height, offset, int(order), corner_radius
 
     def mark_alignment(self, role: str) -> str:
@@ -514,18 +547,18 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer, "expected a number-token name")
         declared = self._body["values"].get(token_id)
         if not isinstance(declared, Mapping) or declared.get("type") != "number" or "value" not in declared:
-            raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer, f"{token_id!r} must name a number token")
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer, f"{_shown(token_id)} must name a number token")
         try:
             value = Decimal(str(declared["value"]))
         except (InvalidOperation, ValueError) as error:
-            raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer, f"{token_id!r} has a nonnumeric value") from error
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer, f"{_shown(token_id)} has a nonnumeric value") from error
         try:
             representable = math.isfinite(float(value))
         except (OverflowError, ValueError):
             representable = False
         if not value.is_finite() or not representable or value < 0:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer,
-                                  f"{token_id!r} must be finite, nonnegative, and representable in Layout")
+                                  f"{_shown(token_id)} must be finite, nonnegative, and representable in Layout")
         return value
 
     def symbol_geometry(self, role: str) -> tuple[Decimal | None, Decimal | None]:
@@ -904,7 +937,8 @@ class ThemeTokenView:
         except (InvalidOperation, ValueError) as error:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/{property_name}") from error
         if not result.is_finite():
-            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/{property_name}")
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/{property_name}",
+                                  f"role={_shown(role)}, property={_shown(property_name)}, valueType={_operand(value)}; expected finite number")
         return result
 
 

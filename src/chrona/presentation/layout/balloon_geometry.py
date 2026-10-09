@@ -58,7 +58,7 @@ def balloon_outline(box: LabelRect, tip: Point, *, corner_radius: float, tail_ba
     neutral without introducing curve-specific obstacle math.
     """
     if corner_radius < 0 or tail_base <= 0:
-        raise ValueError("E_LAYOUT_BALLOON_GEOMETRY")
+        raise ValueError(f"E_LAYOUT_BALLOON_GEOMETRY: corner_radius={corner_radius!r} must be nonnegative and tail_base={tail_base!r} positive for box={box!r}")
     radius = min(corner_radius, box.width / 2, box.height / 2)
     edge = nearest_eligible_edge(box, tip)
     base_a, base_b = tail_base_points(box, tip, edge=edge, tail_base=tail_base, corner_radius=radius)

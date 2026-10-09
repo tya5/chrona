@@ -1,10 +1,12 @@
 from copy import deepcopy
+from dataclasses import replace
 from hashlib import sha256
 from importlib.resources import files
 import json
+from pathlib import Path
 import pytest
 
-from chrona.presentation.model.font_metrics import resolve_font_files, resolve_font_metrics, resolve_font_metrics_catalog
+from chrona.presentation.model.font_metrics import font_metrics_from_document, resolve_font_files, resolve_font_metrics, resolve_font_metrics_catalog
 from chrona.presentation.model.font_metrics import FontMetricsError
 from chrona.resources import safe_load
 
@@ -23,8 +25,9 @@ def descriptor():
 def test_font_metrics_measurement_is_asset_bound_and_deterministic():
     value = descriptor(); probe = deepcopy(value)
     probe["assets"][0]["metrics"]["contentIdentity"] = "sha256:" + "1" * 64
-    with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE"):
+    with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE") as error:
         resolve_font_metrics("Noto Sans", probe)
+    assert "Noto Sans" in error.value.detail and "contentIdentity" in error.value.detail
     metrics = resolve_font_metrics("Noto Sans", value)
     assert metrics.width("Chrona", 20) == metrics.width("Chrona", 20)
     assert metrics.width("Chrona", 20) > 0
@@ -54,15 +57,17 @@ def test_primary_metrics_reject_incomplete_or_nonuniform_tabular_advances(tmp_pa
         "metrics": {"locator": {"provider": "context", "address": "metrics.json"},
                     "contentIdentity": "sha256:" + sha256(metric_path.read_bytes()).hexdigest()},
     }]}
-    with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE"):
+    with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE") as error:
         resolve_font_metrics("Noto Sans", descriptor, asset_root=tmp_path)
+    assert "/numericAdvances" in error.value.detail
 
 
 def test_font_metrics_rejects_a_different_declared_weight():
     value = descriptor()
     value["assets"][1]["metrics"] = value["assets"][0]["metrics"]
-    with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE"):
+    with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE") as error:
         resolve_font_metrics("Noto Sans", value, weight=700)
+    assert "weight=700" in error.value.detail and "expected 700; got 400" in error.value.detail
 
 
 def test_catalog_selects_exact_declared_family_weight_and_rejects_missing_face():
@@ -70,10 +75,12 @@ def test_catalog_selects_exact_declared_family_weight_and_rejects_missing_face()
 
     assert catalog.select("Noto Sans, sans-serif", 400).weight == 400
     assert catalog.select("Noto Sans", 700).weight == 700
-    with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE"):
+    with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE") as missing_family:
         catalog.select("Noto Sans Mono", 400)
-    with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE"):
+    assert "Noto Sans Mono" in missing_family.value.detail and "weight=400" in missing_family.value.detail
+    with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE") as missing_weight:
         catalog.select("Noto Sans", 500)
+    assert "Noto Sans" in missing_weight.value.detail and "weight=500" in missing_weight.value.detail
 
 
 def test_packaged_catalog_selects_the_bundled_monospace_face():
@@ -93,9 +100,12 @@ def test_font_metrics_rejects_path_traversal():
 
 def test_font_metrics_rejects_an_unmeasured_glyph_instead_of_using_notdef_width():
     metrics = resolve_font_metrics("Noto Sans", descriptor())
+    text = "private-\U0010ffff"
     with pytest.raises(FontMetricsError, match="E_FONT_GLYPH_UNAVAILABLE") as error:
-        metrics.width("\U0010ffff", 12)
+        metrics.width(text, 12)
     assert "U+10FFFF" in error.value.detail
+    assert "Noto Sans" in error.value.detail and "weight=400" in error.value.detail and f"text_length={len(text)}" in error.value.detail
+    assert "private" not in error.value.detail
 
 
 def test_metrics_resolution_does_not_read_font_bytes_but_raster_resolution_does():
@@ -104,7 +114,55 @@ def test_metrics_resolution_does_not_read_font_bytes_but_raster_resolution_does(
     assert resolve_font_metrics("Noto Sans", value).width("Chrona", 12) > 0
     with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE") as error:
         resolve_font_files(value, asset_root=None)
-    assert error.value.detail == "fonts/missing.ttf"
+    assert "fonts/missing.ttf" in error.value.detail and "Noto Sans" in error.value.detail
+
+
+def test_missing_numeric_spacing_reports_requested_feature_and_face():
+    metrics = resolve_font_metrics("Noto Sans", descriptor())
+    with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE") as error:
+        metrics.ensure_numeric_spacing("oldstyle")
+    assert "Noto Sans" in error.value.detail and "weight=400" in error.value.detail
+    assert "numeric_spacing='oldstyle'" in error.value.detail and "proportional/tabular" in error.value.detail
+
+
+def test_glyph_error_reports_missing_digit_advance_without_echoing_text():
+    metrics = replace(resolve_font_metrics("Noto Sans", descriptor()),
+                      numeric_advances={"proportional": {}})
+    with pytest.raises(FontMetricsError, match="E_FONT_GLYPH_UNAVAILABLE") as error:
+        metrics.width("7", 12)
+    assert "codepoint=U+0037" in error.value.detail
+    assert "Noto Sans" in error.value.detail and "weight=400" in error.value.detail
+    assert "text_length=1" in error.value.detail
+
+
+def test_metrics_document_identity_error_names_expected_and_current_face():
+    payload = json.loads(files("chrona.resources").joinpath("font_metrics", "noto-sans-regular-v2.json").read_bytes())
+    payload["family"] = "Not the declared face"
+    with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE") as error:
+        font_metrics_from_document(json.dumps(payload).encode(), metrics_path=Path("metrics/regular.json"),
+                                   family="Noto Sans", weight=400)
+    assert "/family" in error.value.detail
+    assert "Noto Sans" in error.value.detail and "Not the declared face" in error.value.detail
+
+
+def test_metrics_document_numeric_error_names_bad_spacing_field_and_expected_digit_set(tmp_path):
+    payload = json.loads(files("chrona.resources").joinpath("font_metrics", "noto-sans-regular-v2.json").read_bytes())
+    payload["numericAdvances"]["tabular"].pop("48")
+    path = tmp_path / "defective-tabular-metrics.json"
+    document = json.dumps(payload).encode()
+    path.write_bytes(document)
+    with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE") as error:
+        font_metrics_from_document(document, metrics_path=path, family="Noto Sans", weight=400)
+    assert "/numericAdvances/tabular" in error.value.detail
+    assert "all ten digit codepoints" in error.value.detail and "missing=" in error.value.detail
+
+
+def test_metrics_document_json_error_reports_path_and_location(tmp_path):
+    path = tmp_path / "malformed-metrics.json"
+    with pytest.raises(FontMetricsError, match="E_FONT_METRICS_UNAVAILABLE") as error:
+        font_metrics_from_document(b'{"version":', metrics_path=path, family="Noto Sans", weight=400)
+    assert path.name in error.value.detail
+    assert "line=1" in error.value.detail and "column=" in error.value.detail
 
 
 def test_draft_substitute_measures_packaged_checkmark_and_records_one_warning():

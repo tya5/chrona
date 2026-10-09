@@ -23,7 +23,9 @@ class PointMarkFootprint:
                 or any(isinstance(value, bool) or not isinstance(value, (int, float))
                        or not isfinite(value) for value in (self.left, self.right))
                 or self.left > self.right):
-            raise ValueError("E_LAYOUT_MARK_OVERFLOW")
+            raise ValueError(f"E_LAYOUT_MARK_OVERFLOW: point facet anchor_date={self.anchor_date!r}, "
+                             f"left={self.left!r}, right={self.right!r}; "
+                             "expected an exact date and finite ordered inline bounds")
 
 
 def inset_scale_for_point_facets(

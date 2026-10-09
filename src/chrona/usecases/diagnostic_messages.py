@@ -156,7 +156,7 @@ def _number(value: object) -> str:
     return f"{value:g}" if isinstance(value, (int, float)) else str(value)
 
 
-def describe_warning(payload: Mapping[str, object]) -> WarningText:
+def _describe_warning(payload: Mapping[str, object]) -> WarningText:
     """Name the cause and the subject of one warning record of ``usecases.warning_ledger``."""
     code = str(payload.get("code", ""))
     identity = str(payload.get("diagnostic", ""))
@@ -187,6 +187,24 @@ def describe_warning(payload: Mapping[str, object]) -> WarningText:
         return WarningText(own)  # a family that says what is wrong keeps its sentence; only equal sentences merge
     tail = identity.removeprefix(code).removeprefix(":") if identity.startswith(code) else ""
     return WarningText(derived_message(code), tail)
+
+
+def describe_warning(payload: Mapping[str, object]) -> WarningText:
+    """Keep the cause stable while naming explicitly supplied Project subjects."""
+    text = _describe_warning(payload)
+    supplied = payload.get("sourceSubjects")
+    if isinstance(supplied, (list, tuple)):
+        subjects = [item for item in supplied if isinstance(item, Mapping)]
+    elif "sourceTitle" in payload:
+        subjects = [{"sourceRef": payload.get("sourceRef", "/"), "title": payload["sourceTitle"]}]
+    else:
+        return text
+    names = [f"{item['title']!r} ({item.get('sourceRef', '/')})" if item.get("title") is not None
+             else str(item.get("sourceRef", "/")) for item in subjects]
+    if not names:
+        return text
+    owner = ", ".join(names)
+    return WarningText(text.cause, f"{owner}; {text.subject}" if text.subject else owner)
 
 
 def warning_message(text: WarningText, count: int = 1) -> str:

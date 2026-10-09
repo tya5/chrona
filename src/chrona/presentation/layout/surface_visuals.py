@@ -10,6 +10,7 @@ from chrona.presentation.layout.label_visual_measurement import (
 )
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
 from chrona.presentation.layout.surface_geometry import HOSTED_TEXT_PAINT_ORDER
+from chrona.presentation.model.diagnostic_sources import DiagnosticSubject, table_row_subjects
 from chrona.presentation.layout.surface_quality import (
     FitWarning, IconPlacement, MarkPlacement, ShapePlacement, SurfaceLayoutRequest,
     TextPlacement,
@@ -111,6 +112,22 @@ def place_text_visuals(text: tuple[TextPlacement, ...], request: SurfaceLayoutRe
         requested.setdefault(placement_id, {})[visual.side] = visual
     icons: list[IconPlacement] = []
     warnings: list[FitWarning] = []
+    surface_content = getattr(request, "surface_content", None)
+    table_object_ids = {cell.object_id for cell in getattr(surface_content, "table_cells", ())}
+    projection = getattr(request, "projection", None)
+    project_items = {str(item.object_id): item for item in getattr(projection, "items", ())}
+    declared_rows = getattr(projection, "rows", ())
+    cell_subjects = (table_row_subjects(declared_rows) if declared_rows else {
+        key: DiagnosticSubject.project_object(key, getattr(item, "title", None))
+        for key, item in project_items.items()
+    })
+
+    def text_subjects(item: TextPlacement) -> tuple[DiagnosticSubject, ...]:
+        # TableCellContent identifies a declared row, whose table subject owns
+        # the cell. Generic text and lane-level cells do not prove an object.
+        if item.source_ref not in table_object_ids or item.source_ref not in cell_subjects:
+            return ()
+        return (cell_subjects[item.source_ref],)
     for placement_id, by_side in requested.items():
         matches = [item for item in placed_text if item.placement_id == placement_id
                    and item.overflow != "suppressed"]
@@ -168,7 +185,8 @@ def place_text_visuals(text: tuple[TextPlacement, ...], request: SurfaceLayoutRe
             if item.placement_id not in pre_reserved_placements:
                 warnings.append(FitWarning("W_LAYOUT_VISIBLE_OVERFLOW", item.placement_id,
                     item.source_ref, "text-visual", "visible-overflow", leading + width + trailing,
-                    float(item.bounds.block_size), max(0.0, allocated), float(item.bounds.block_size)))
+                    float(item.bounds.block_size), max(0.0, allocated), float(item.bounds.block_size),
+                    subjects=text_subjects(item)))
         baseline = item.baseline
         if baseline is None or not hasattr(item_metrics, "cap_height_at"):
             raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(iter(by_side.values())).source_ref)
@@ -194,7 +212,7 @@ def place_text_visuals(text: tuple[TextPlacement, ...], request: SurfaceLayoutRe
                 icon.payload, icon.alternative, visual.decorative, bounds, "labelVisual",
                 icon_width / icon.viewport[0], item.slot_id, paint_order=item.paint_order,
                 lane_row_id=item.lane_row_id, lane_member_id=item.lane_member_id,
-                host_placement_id=item.placement_id))
+                host_placement_id=item.placement_id, subjects=text_subjects(item)))
     if requested:
         raise LayoutError("E_LAYOUT_VISUAL_TARGET", next(iter(next(iter(requested.values())).values())).source_ref)
     return SurfaceTextVisuals(tuple(placed_text), tuple(icons), tuple(warnings))
@@ -235,7 +253,8 @@ def place_mark_visuals(marks: tuple[MarkPlacement, ...],
             icon.icon_id, icon.kind, icon.content_identity, icon.viewport, icon.payload,
             icon.alternative, visual.decorative, bounds, "iconMark", width / icon.viewport[0],
             host.slot_id, paint_order=host.paint_order + 1, lane_row_id=host.lane_row_id,
-            lane_member_id=host.lane_member_id, host_placement_id=host.placement_id))
+            lane_member_id=host.lane_member_id, host_placement_id=host.placement_id,
+            subjects=host.subjects))
     return SurfaceMarkVisuals(tuple(icons))
 
 

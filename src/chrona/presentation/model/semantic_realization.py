@@ -4,6 +4,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
+def _shown(value: object) -> str:
+    text = repr(value)
+    return text if len(text) <= 96 else text[:93] + "..."
+
+
+def _diagnostic_error(code: str, detail: str) -> ValueError:
+    return ValueError(f"{code}: {detail}")
+
+
 @dataclass(frozen=True)
 class RealizationFamily:
     """One reviewable set of source states and its Scene primitive family.
@@ -44,14 +53,16 @@ def realization_families() -> tuple[RealizationFamily, ...]:
 def validate_realization_families(families: tuple[RealizationFamily, ...]) -> None:
     """Reject an ambiguous or unreviewed realization-evidence declaration."""
     seen: set[str] = set()
-    for family in families:
+    for index, family in enumerate(families):
         if (not family.family_id or family.family_id in seen or not family.selector
                 or not family.primitive_purpose or not family.admitted_states
                 or len(set(family.admitted_states)) != len(family.admitted_states)):
-            raise ValueError("E_PRESENTATION_REALIZATION_INVALID")
+            raise _diagnostic_error("E_PRESENTATION_REALIZATION_INVALID", f"familyIndex={index}, familyId={_shown(family.family_id)}, selector={_shown(family.selector)}, purpose={_shown(family.primitive_purpose)}; expected unique id and nonempty selector/purpose/states")
         states = set(family.admitted_states)
         if any(state not in states or not reason for state, reason in family.intentional_equivalences):
-            raise ValueError("E_PRESENTATION_REALIZATION_INVALID")
+            bad = next((state, reason) for state, reason in family.intentional_equivalences
+                       if state not in states or not reason)
+            raise _diagnostic_error("E_PRESENTATION_REALIZATION_INVALID", f"familyId={_shown(family.family_id)}, equivalenceState={_shown(bad[0])}, reasonPresent={bool(bad[1])}; expected admitted state and nonempty reason")
         seen.add(family.family_id)
 
 
@@ -60,4 +71,4 @@ def realization_family(identifier: str) -> RealizationFamily:
     for family in _FAMILIES:
         if family.family_id == identifier:
             return family
-    raise ValueError(f"E_PRESENTATION_REALIZATION_UNKNOWN:{identifier}")
+    raise _diagnostic_error("E_PRESENTATION_REALIZATION_UNKNOWN", f"identifier={_shown(identifier)}; expected one of {tuple(family.family_id for family in _FAMILIES)!r}")

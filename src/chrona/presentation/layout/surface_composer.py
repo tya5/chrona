@@ -47,6 +47,7 @@ from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT_FALLBACK
 from chrona.presentation.layout.as_of_cone import complete_as_of_cone
 from chrona.presentation.layout.surface_deadlines import compose_deadline_marks
 from chrona.presentation.layout.surface_periods import compose_period_bands, period_label_requests
+from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance
 from chrona.presentation.layout.text import metric_for_role
 from chrona.presentation.layout.labels import (LabelRect, LabelRequest)
 from chrona.presentation.layout.obstacles import (
@@ -134,9 +135,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     axis_label_targets = axis_batch.label_targets
     axis_band_targets = axis_batch.band_targets
     diagnostics = list(axis_batch.diagnostics)
+    diagnostic_provenance: list[DiagnosticProvenance] = []
     diagnostics.extend(headings.diagnostics)
     diagnostics.extend(heading_batch.diagnostics)
     visible_label_overflows = list(axis_batch.visible_label_overflows)
+    visible_label_subjects: dict[str, tuple[Any, ...]] = {}
     calendar_intervals = axis_batch.calendar_intervals
     contract = request.presentation_contract
     period_batch = compose_period_bands(
@@ -161,6 +164,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     mark_by_id = {item.placement_id: item for item in marks}
     mark_absences = list(mark_batch.absences)
     diagnostics.extend(mark_batch.diagnostics)
+    diagnostic_provenance.extend(mark_batch.diagnostic_provenance)
     visible_group_header_overflows = list(mark_batch.visible_group_header_overflows)
     groups = list(mark_batch.groups)
     for update in mark_batch.group_header_updates:
@@ -185,6 +189,11 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     if base.as_of_foot_fallback and as_of_label is not None:
         diagnostics.append(f"{BELOW_PLOT_FALLBACK}:as-of-label")
     member_label_requests = build_member_label_requests(member_label_context)
+    member_label_subjects = {
+        item.placement_id: item.subjects
+        for item in (*member_label_requests.pre_route, *member_label_requests.post_route)
+        if item.subjects
+    }
     period_requests = period_label_requests(period_batch.extents, _bounds(base.plot))
     if period_requests:  # placed first of the pre-route labels, so routes and later labels avoid them
         member_label_requests = replace(member_label_requests,
@@ -235,6 +244,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         visible_label_overflows.extend(batch.visible_overflows)
         placement_decisions.extend(batch.decisions)
         diagnostics.extend(batch.diagnostics)
+        diagnostic_provenance.extend(batch.diagnostic_provenance)
+        visible_label_subjects.update(batch.visible_overflow_subjects)
         lane_label_suppressions.extend(batch.lane_label_suppressions)
         handled_candidate_visuals.update(batch.handled_visual_sources)
 
@@ -316,6 +327,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     candidate_icons.extend(annotation_batch.icons)
     placement_decisions.extend(annotation_batch.decisions)
     diagnostics.extend(annotation_batch.diagnostics)
+    diagnostic_provenance.extend(annotation_batch.diagnostic_provenance)
     visible_label_overflows.extend(annotation_batch.visible_label_overflows)
     visible_route_fallbacks.extend(annotation_batch.visible_route_fallbacks)
     handled_candidate_visuals.update(annotation_batch.handled_visual_sources)
@@ -324,7 +336,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         handled_sources=handled_candidate_visuals, axis_label_targets=axis_label_targets,
         pre_reserved_placements=detail_visual_reservations)
     text, icons = list(text_visuals.text), list(text_visuals.icons)
-    text_visual_warnings = list(text_visuals.warnings)
+    icons = [replace(icon, subjects=member_label_subjects.get(icon.host_placement_id, icon.subjects))
+             for icon in icons]
+    text_visual_warnings = [replace(warning, subjects=member_label_subjects.get(warning.placement_id, warning.subjects))
+                            for warning in text_visuals.warnings]
     validate_detail_panel_placement(text, slots)
     icons.extend(candidate_icons)
     icons.extend(place_mark_visuals(tuple(marks), request).icons)
@@ -346,4 +361,6 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         detail_panel_warnings=detail_panel_warnings, side_content_warnings=side_content_warnings,
         text_visual_warnings=text_visual_warnings, visible_label_overflows=visible_label_overflows,
         visible_route_fallbacks=visible_route_fallbacks, visible_group_header_overflows=visible_group_header_overflows,
-        lane_label_suppressions=lane_label_suppressions))
+        lane_label_suppressions=lane_label_suppressions,
+        diagnostic_provenance=tuple(diagnostic_provenance),
+        visible_label_subjects=visible_label_subjects))

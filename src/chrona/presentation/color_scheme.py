@@ -23,6 +23,26 @@ class ColorSchemeError(ValueError):
         self.detail = detail
 
 
+def _shown(value: object) -> str:
+    """Bound diagnostic operands and never include an invalid document value."""
+    if isinstance(value, int) and not isinstance(value, bool) and value.bit_length() > 320:
+        return f"<int bits={value.bit_length()}>"
+    if value is None or isinstance(value, (str, int, float, bool)):
+        text = repr(value)
+        return text if len(text) <= 96 else text[:93] + "..."
+    if isinstance(value, Mapping):
+        return f"<mapping keys={len(value)}>"
+    if isinstance(value, (list, tuple)):
+        if len(value) <= 8 and all(
+                item is None or isinstance(item, (str, int, float, bool)) for item in value):
+            rendered = repr(value)
+            if len(rendered) <= 96:
+                return rendered
+        sample = tuple(_shown(item) for item in value[:8])
+        return f"<{type(value).__name__} length={len(value)} sample={sample!r}>"
+    return f"<{type(value).__name__}>"
+
+
 _INTENTS = {"surface", "surfaceRaised", "text", "textMuted", "accent", "positive", "negative", "warning", "neutral",
             "insideLabelPlanned", "insideLabelActual", "insideLabelSnapshot", "insideLabelScenario"}
 # An intent a Scheme may declare and need not (#991): the line colour of rules and separators.
@@ -45,7 +65,7 @@ def _contrast(first: str, second: str) -> float:
     try:
         return composited_contrast(fill=first, opacity=1.0, ground=second)
     except ValueError as error:
-        raise ColorSchemeError("E_SCHEME_SCHEMA") from error
+        raise ColorSchemeError("E_SCHEME_SCHEMA", detail=f"color operands expected #RRGGBB; firstType={type(first).__name__}, secondType={type(second).__name__}") from error
 
 
 _STATE_TEXT_CONTRAST_FLOORS = {"required": 4.5, "deemphasized": 3.0}
@@ -92,23 +112,28 @@ def _state_text_contrast(*, declared_roles: Mapping[str, Any], resolved_roles: M
             continue
         treatment = declared.get("contrastTreatment") if isinstance(declared, Mapping) else None
         if role == "annotation-note-text" and treatment != "required":
-            raise ColorSchemeError("E_SCHEME_STATE_TEXT_TREATMENT", f"{path}/contrastTreatment")
+            raise ColorSchemeError("E_SCHEME_STATE_TEXT_TREATMENT", f"{path}/contrastTreatment",
+                                   f"role={_shown(role)}, treatment={_shown(treatment)}; expected required")
         if treatment not in _STATE_TEXT_CONTRAST_FLOORS:
-            raise ColorSchemeError("E_SCHEME_STATE_TEXT_TREATMENT", path)
+            raise ColorSchemeError("E_SCHEME_STATE_TEXT_TREATMENT", path,
+                                   f"role={_shown(role)}, treatment={_shown(treatment)}; expected required or deemphasized")
         if role == "variance-behind" and treatment != "required":
-            raise ColorSchemeError("E_SCHEME_STATE_TEXT_TREATMENT", path)
+            raise ColorSchemeError("E_SCHEME_STATE_TEXT_TREATMENT", path,
+                                   f"role={_shown(role)}, treatment={_shown(treatment)}; expected required for variance-behind")
         resolved = resolved_roles.get(role)
         token = resolved.get("fill") if isinstance(resolved, Mapping) else None
         value = values.get(token) if isinstance(token, str) else None
         if not isinstance(value, Mapping) or value.get("type") != "color" or not isinstance(value.get("value"), str):
-            raise ColorSchemeError("E_SCHEME_STATE_TEXT_CONTRAST", f"{path}/fill")
+            raise ColorSchemeError("E_SCHEME_STATE_TEXT_CONTRAST", f"{path}/fill",
+                                   detail=f"role={_shown(role)}, token={_shown(token)}, valueType={type(value).__name__}; expected color token with string value")
         opacity = 1.0
         opacity_token = resolved.get("opacity") if isinstance(resolved, Mapping) else None
         if opacity_token is not None:
             opacity_value = values.get(opacity_token) if isinstance(opacity_token, str) else None
             if (not isinstance(opacity_value, Mapping) or opacity_value.get("type") != "number"
                     or not isinstance(opacity_value.get("value"), (int, float))):
-                raise ColorSchemeError("E_SCHEME_STATE_TEXT_CONTRAST", f"{path}/opacity")
+                raise ColorSchemeError("E_SCHEME_STATE_TEXT_CONTRAST", f"{path}/opacity",
+                                       detail=f"role={_shown(role)}, token={_shown(opacity_token)}, valueType={type(opacity_value).__name__}; expected numeric opacity token")
             opacity = float(opacity_value["value"])
         try:
             ground, box_role = _state_text_ground(role, resolved_roles=resolved_roles, values=values,
@@ -118,8 +143,8 @@ def _state_text_contrast(*, declared_roles: Mapping[str, Any], resolved_roles: M
             raise ColorSchemeError("E_SCHEME_STATE_TEXT_CONTRAST", f"{path}/fill") from error
         if contrast < _STATE_TEXT_CONTRAST_FLOORS[treatment]:
             raise ColorSchemeError("E_SCHEME_STATE_TEXT_CONTRAST", f"{path}/fill",
-                                   detail=(f"{role}:{contrast:.2f}" if box_role is None
-                                           else f"{role}:{box_role}:{contrast:.2f}"))
+                                   detail=(f"{_shown(role)}:{contrast:.2f}" if box_role is None
+                                           else f"{_shown(role)}:{_shown(box_role)}:{contrast:.2f}"))
 
 
 def _role_color(roles: Mapping[str, Any], values: Mapping[str, Any], role: str, property_name: str = "fill") -> str | None:
@@ -137,12 +162,14 @@ def _annotation_kinds(*, declared: Any, colors: Mapping[str, str]) -> dict[str, 
     if declared is None:
         return {}
     if not isinstance(declared, Mapping):
-        raise ColorSchemeError("E_THEME_ANNOTATION_KIND_TEMPLATE", "/body/annotationKinds")
+        raise ColorSchemeError("E_THEME_ANNOTATION_KIND_TEMPLATE", "/body/annotationKinds",
+                               f"valueType={type(declared).__name__}; expected mapping of kind identifiers to declarations")
     resolved: dict[str, dict[str, str]] = {}
     for kind, declaration in declared.items():
         pointer = f"/body/annotationKinds/{kind}"
         if not isinstance(kind, str) or not kind or not isinstance(declaration, Mapping):
-            raise ColorSchemeError("E_THEME_ANNOTATION_KIND_TEMPLATE", pointer)
+            raise ColorSchemeError("E_THEME_ANNOTATION_KIND_TEMPLATE", pointer,
+                                   f"kindType={type(kind).__name__}, declarationType={type(declaration).__name__}; expected nonempty id and mapping")
         try:
             kind_header(kind, declaration)
         except AnnotationKindTextError as error:
@@ -151,13 +178,15 @@ def _annotation_kinds(*, declared: Any, colors: Mapping[str, str]) -> dict[str, 
         intent = declaration.get("color")
         if intent is not None:
             if not isinstance(intent, str) or (intent not in _INTENTS and intent not in colors):
-                raise ColorSchemeError("E_SCHEME_INTENT_UNKNOWN", f"{pointer}/color")
+                raise ColorSchemeError("E_SCHEME_INTENT_UNKNOWN", f"{pointer}/color",
+                                       f"intent={_shown(intent)}; expected one of declared scheme intents or color category slots")
             entry["color"] = colors[intent]
         also = declaration.get("colorAlso")
         if also is not None:
             if (not isinstance(also, (list, tuple)) or not also or len(set(also)) != len(also)
                     or any(item not in {"header", "leader"} for item in also) or intent is None):
-                raise ColorSchemeError("E_THEME_ANNOTATION_KIND_TEMPLATE", f"{pointer}/colorAlso")
+                raise ColorSchemeError("E_THEME_ANNOTATION_KIND_TEMPLATE", f"{pointer}/colorAlso",
+                                       f"valueType={type(also).__name__}, colorIntent={_shown(intent)}; expected unique nonempty header/leader list and a color intent")
             entry["colorAlso"] = list(also)
         resolved[kind] = entry
     return resolved
@@ -171,11 +200,13 @@ def _horizontal_scales(*, declared_roles: Mapping[str, Any], values: Mapping[str
         pointer = f"/body/roles/{role}/horizontalScale"
         declared = values.get(binding["horizontalScale"])
         if not isinstance(declared, Mapping) or declared.get("type") != "number" or "value" not in declared:
-            raise ColorSchemeError("E_THEME_TOKEN_TYPE", pointer)
+            raise ColorSchemeError("E_THEME_TOKEN_TYPE", pointer,
+                                   f"role={_shown(role)}, property='horizontalScale', token={_shown(binding['horizontalScale'])}, declarationType={type(declared).__name__}; expected number token")
         try:
             checked_horizontal_scale(Decimal(str(declared["value"])), pointer)
         except InvalidOperation as error:
-            raise ColorSchemeError("E_THEME_TOKEN_TYPE", pointer) from error
+            raise ColorSchemeError("E_THEME_TOKEN_TYPE", pointer,
+                                   f"role={role!r}, property='horizontalScale', valueType={type(declared['value']).__name__}; expected finite number in [0.5, 1]") from error
         except ThemeTokenError as error:
             raise ColorSchemeError(error.diagnostic_id, pointer, detail=str(declared["value"])) from error
 
@@ -189,7 +220,8 @@ def _writing_modes(*, declared_roles: Mapping[str, Any], values: Mapping[str, An
         declared = values.get(binding["writingMode"])
         if (not isinstance(declared, Mapping) or declared.get("type") != "writingMode"
                 or declared.get("value") not in {"horizontal", "vertical"}):
-            raise ColorSchemeError("E_THEME_TOKEN_TYPE", pointer)
+            raise ColorSchemeError("E_THEME_TOKEN_TYPE", pointer,
+                                   f"role={_shown(role)}, property='writingMode', token={_shown(binding['writingMode'])}, valueType={type(declared).__name__}; expected horizontal or vertical writingMode token")
         if declared["value"] == "vertical" and "horizontalScale" in binding:
             scale = values.get(binding["horizontalScale"])
             if isinstance(scale, Mapping) and Decimal(str(scale.get("value", 1))) != 1:
@@ -211,7 +243,8 @@ def _annotation_kind_text_contrast(*, declared_roles: Mapping[str, Any], resolve
         path = f"/body/roles/{role}"
         treatment = declared.get("contrastTreatment") if isinstance(declared, Mapping) else None
         if treatment not in _STATE_TEXT_CONTRAST_FLOORS:
-            raise ColorSchemeError("E_SCHEME_STATE_TEXT_TREATMENT", path)
+            raise ColorSchemeError("E_SCHEME_STATE_TEXT_TREATMENT", path,
+                                   f"role={_shown(role)}, treatment={_shown(treatment)}; expected required or deemphasized")
         ink = _role_color(resolved_roles, values, role)
         if ink is None:
             raise ColorSchemeError("E_SCHEME_STATE_TEXT_CONTRAST", f"{path}/fill")
@@ -240,7 +273,7 @@ def _annotation_kind_text_contrast(*, declared_roles: Mapping[str, Any], resolve
             contrast = _contrast(text_ink, ground)
             if contrast < _STATE_TEXT_CONTRAST_FLOORS[treatment]:
                 raise ColorSchemeError("E_SCHEME_ANNOTATION_KIND_CONTRAST", f"{path}/fill",
-                                       detail=f"{role}:{name}:{contrast:.2f}")
+                                       detail=f"{_shown(role)}:{_shown(name)}:{contrast:.2f}")
 
 
 def _annotation_note_ground(*, declared_roles: Mapping[str, Any], resolved_roles: Mapping[str, Any],
@@ -261,7 +294,8 @@ def _annotation_note_ground(*, declared_roles: Mapping[str, Any], resolved_roles
             target = f"{role}.{property_name}"
             pointer = (f"/body/colorBindings/{target}" if target in color_bindings
                        else f"/body/roles/{role}/{property_name}")
-            raise ColorSchemeError("E_SCHEME_ANNOTATION_NOTE_GROUND", pointer)
+            raise ColorSchemeError("E_SCHEME_ANNOTATION_NOTE_GROUND", pointer,
+                                   f"role={_shown(role)}, property={_shown(property_name)}; note text requires flat opaque solid fill")
     fill_pointer = (f"/body/colorBindings/{role}.fill" if f"{role}.fill" in color_bindings
                     else f"/body/roles/{role}/fill")
     token = resolved.get("fill") if isinstance(resolved, Mapping) else None
@@ -269,7 +303,8 @@ def _annotation_note_ground(*, declared_roles: Mapping[str, Any], resolved_roles
     if (not isinstance(value, Mapping) or value.get("type") != "color"
             or not isinstance(value.get("value"), str)
             or fullmatch(r"#[0-9A-Fa-f]{6}", value["value"]) is None):
-        raise ColorSchemeError("E_SCHEME_ANNOTATION_NOTE_GROUND", fill_pointer)
+        raise ColorSchemeError("E_SCHEME_ANNOTATION_NOTE_GROUND", fill_pointer,
+                               f"role={_shown(role)}, token={_shown(token)}, valueType={type(value).__name__}; expected opaque #RRGGBB color token")
 
     opacity_token = resolved.get("opacity") if isinstance(resolved, Mapping) else None
     if opacity_token is None:
@@ -279,7 +314,8 @@ def _annotation_note_ground(*, declared_roles: Mapping[str, Any], resolved_roles
             or not isinstance(opacity_value.get("value"), (int, float))
             or isinstance(opacity_value.get("value"), bool)
             or float(opacity_value["value"]) != 1.0):
-        raise ColorSchemeError("E_SCHEME_ANNOTATION_NOTE_GROUND", f"/body/roles/{role}/opacity")
+        raise ColorSchemeError("E_SCHEME_ANNOTATION_NOTE_GROUND", f"/body/roles/{role}/opacity",
+                               f"role={_shown(role)}, token={_shown(opacity_token)}, valueType={type(opacity_value).__name__}; expected opacity 1")
 
 
 def _canvas_texture(*, roles: Mapping[str, Any], values: Mapping[str, Any]) -> None:
@@ -295,11 +331,13 @@ def _canvas_texture(*, roles: Mapping[str, Any], values: Mapping[str, Any]) -> N
     token_id = binding.get("pattern")
     pointer = "/body/roles/canvas-texture/pattern"
     if not isinstance(token_id, str):
-        raise ColorSchemeError("E_THEME_ROLE_REQUIRED", pointer)
+        raise ColorSchemeError("E_THEME_ROLE_REQUIRED", pointer,
+                               f"role='canvas-texture', pattern={_shown(token_id)}; expected catalog or seeded pattern token name")
     token = values.get(token_id)
     value = token.get("value") if isinstance(token, Mapping) else None
     if not isinstance(value, Mapping) or value.get("kind") not in {"catalog", "seeded"}:
-        raise ColorSchemeError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", pointer)
+        raise ColorSchemeError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", pointer,
+                               f"role='canvas-texture', token={_shown(token_id)}, valueType={type(value).__name__}; expected catalog or seeded pattern")
 
 
 def _contrast_policy(declared: Any) -> dict[str, str]:
@@ -340,19 +378,26 @@ def resolve_color_scheme(scheme: Mapping[str, Any], *, content_identity: str) ->
     colors = body.get("colors") if isinstance(body, Mapping) else None
     provenance = body.get("provenance") if isinstance(body, Mapping) else None
     if scheme.get("version") != "chrona/color-scheme/v0.2" or scheme.get("kind") != "color-scheme" or not isinstance(colors, Mapping):
-        raise ColorSchemeError("E_SCHEME_SCHEMA")
+        raise ColorSchemeError("E_SCHEME_SCHEMA", detail=f"kind={_shown(scheme.get('kind'))}, version={_shown(scheme.get('version'))}, colorsType={type(colors).__name__}; expected color-scheme v0.2 with color mapping")
     if not isinstance(provenance, Mapping) or not all(provenance.get(k) for k in ("kind", "source", "license")):
-        raise ColorSchemeError("E_SCHEME_PROVENANCE")
+        missing = tuple(k for k in ("kind", "source", "license") if not isinstance(provenance, Mapping) or not provenance.get(k))
+        raise ColorSchemeError("E_SCHEME_PROVENANCE", "/body/provenance",
+                               f"missing or empty provenance fields={_shown(missing)}; expected kind, source, and license")
     if not _INTENTS.issubset(colors):
-        raise ColorSchemeError("E_SCHEME_SCHEMA")
+        raise ColorSchemeError("E_SCHEME_SCHEMA", "/body/colors",
+                               f"missing intents={_shown(tuple(sorted(_INTENTS - set(colors))))}; expected all required color intents")
     if any(_contrast(str(colors["text"]), str(colors[surface])) < 4.5 for surface in ("surface", "surfaceRaised")):
-        raise ColorSchemeError("E_SCHEME_CONTRAST")
+        raise ColorSchemeError("E_SCHEME_CONTRAST", "/body/colors/text",
+                               "text color must meet 4.5:1 against surface and surfaceRaised")
     result = {key: str(colors[key]) for key in _INTENTS}
     result.update({key: str(colors[key]) for key in _OPTIONAL_INTENTS if key in colors})
     categories = body.get("categories")
     if not isinstance(categories, Mapping) or not categories or any(not isinstance(slot, str) or not isinstance(color, str)
                                                                       for slot, color in categories.items()):
-        raise ColorSchemeError("E_SCHEME_SCHEMA")
+        invalid = next(((slot, type(color).__name__) for slot, color in categories.items()
+                        if not isinstance(slot, str) or not isinstance(color, str)), None) if isinstance(categories, Mapping) else None
+        raise ColorSchemeError("E_SCHEME_SCHEMA", "/body/categories",
+                               f"categoriesType={type(categories).__name__}, invalidEntry={_shown(invalid)}; expected nonempty string-to-color mapping")
     result.update({f"category:{slot}": color for slot, color in categories.items()})
     return result
 
@@ -360,10 +405,11 @@ def resolve_color_scheme(scheme: Mapping[str, Any], *, content_identity: str) ->
 def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme_content_identity: str) -> dict[str, Any]:
     """Produce the only concrete Theme value permitted to reach presentation adapters."""
     if theme.get("version") != "chrona/theme/v0.15" or theme.get("kind") != "theme":
-        raise ColorSchemeError("E_SCHEME_THEME_BINDING")
+        raise ColorSchemeError("E_SCHEME_THEME_BINDING", detail=f"kind={_shown(theme.get('kind'))}, version={_shown(theme.get('version'))}; expected theme v0.15")
     body = theme.get("body")
     if not isinstance(body, Mapping) or not isinstance(body.get("colorBindings"), Mapping):
-        raise ColorSchemeError("E_SCHEME_THEME_BINDING")
+        raise ColorSchemeError("E_SCHEME_THEME_BINDING", "/body/colorBindings",
+                               f"bodyType={type(body).__name__}, colorBindingsType={type(body.get('colorBindings') if isinstance(body, Mapping) else None).__name__}; expected binding mapping")
     colors = resolve_color_scheme(scheme, content_identity=scheme_content_identity)
     values = dict(body.get("values", {}))
     roles = {name: dict(binding) for name, binding in body.get("roles", {}).items() if isinstance(binding, Mapping)}
@@ -373,14 +419,17 @@ def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme
                 raise ColorSchemeError("E_THEME_ROLE_PROPERTY_UNSUPPORTED",
                                        f"/body/roles/{role}/{property_name}")
     for target, intent in body["colorBindings"].items():
+        target_pointer = target if isinstance(target, str) and len(target) <= 120 else "<long-target>"
         if (not isinstance(target, str) or "." not in target or not isinstance(intent, str)
                 or (intent not in _INTENTS and intent not in colors)):
-            raise ColorSchemeError("E_SCHEME_INTENT_UNKNOWN")
+            raise ColorSchemeError("E_SCHEME_INTENT_UNKNOWN", f"/body/colorBindings/{target_pointer}",
+                                   f"target={_shown(target)}, intent={_shown(intent)}; expected role.property and a declared intent/category")
         role, property_name = target.rsplit(".", 1)
         if property_name not in {"fill", "stroke", "gradientStart", "gradientEnd", "shadowColor", "glowColor"}:
-            raise ColorSchemeError("E_SCHEME_THEME_BINDING")
+            raise ColorSchemeError("E_SCHEME_THEME_BINDING", f"/body/colorBindings/{target_pointer}",
+                                   f"property={_shown(property_name)}; expected one of fill, stroke, gradientStart, gradientEnd, shadowColor, glowColor")
         if theme_role_property_consumer(role, property_name) is None:
-            raise ColorSchemeError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", f"/body/colorBindings/{target}")
+            raise ColorSchemeError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", f"/body/colorBindings/{target_pointer}")
         token = f"__scheme.{intent}.{target}"
         color = colors[intent]
         values[token] = {"type": "color", "value": color}
@@ -410,25 +459,33 @@ def resolve_theme(theme: Mapping[str, Any], scheme: Mapping[str, Any], *, scheme
                     or not isinstance(label_value, Mapping) or label_value.get("type") != "color"
                     or not isinstance(host_value, Mapping) or host_value.get("type") != "color"
                     or _contrast(str(label_value.get("value")), str(host_value.get("value"))) < 4.5):
-                raise ColorSchemeError("E_SCHEME_INSIDE_LABEL_CONTRAST")
+                raise ColorSchemeError("E_SCHEME_INSIDE_LABEL_CONTRAST", f"/body/colorBindings/{label_role}.fill",
+                                       f"labelRole={_shown(label_role)}, hostRole={_shown(host_role)}, intent={_shown(body['colorBindings'].get(f'{label_role}.fill'))}; expected {_INSIDE_LABEL_INTENTS[label_role]} with contrast at least 4.5")
     declared_scales = body.get("colorScales", {})
     if not isinstance(declared_scales, Mapping):
-        raise ColorSchemeError("E_SCHEME_THEME_BINDING")
+        raise ColorSchemeError("E_SCHEME_THEME_BINDING", "/body/colorScales",
+                               f"colorScalesType={type(declared_scales).__name__}; expected mapping of scale identifiers")
     resolved_scales: dict[str, dict[str, dict[str, str]]] = {}
     for scale_id, declaration in declared_scales.items():
+        scale_pointer = scale_id if isinstance(scale_id, str) and len(scale_id) <= 120 else "<long-scale>"
         slots = declaration.get("slots") if isinstance(declaration, Mapping) else None
         palette = declaration.get("palette") if isinstance(declaration, Mapping) else None
         if isinstance(scale_id, str) and isinstance(palette, (list, tuple)) and palette:
             resolved_palette = [str(slot) for slot in palette]
             if any(f"category:{slot}" not in colors for slot in resolved_palette):
-                raise ColorSchemeError("E_PRESENTATION_SCALE_MAPPING")
+                missing = tuple(slot for slot in resolved_palette if f"category:{slot}" not in colors)
+                raise ColorSchemeError("E_PRESENTATION_SCALE_MAPPING", f"/body/colorScales/{scale_pointer}/palette",
+                                       f"missing category slots={_shown(missing)}; expected declared scheme categories")
             resolved_scales[scale_id] = {"palette": resolved_palette}
             continue
         if not isinstance(scale_id, str) or not isinstance(slots, Mapping):
-            raise ColorSchemeError("E_PRESENTATION_SCALE_MAPPING")
+            raise ColorSchemeError("E_PRESENTATION_SCALE_MAPPING", f"/body/colorScales/{scale_pointer}",
+                                   f"scaleIdType={type(scale_id).__name__}, slotsType={type(slots).__name__}; expected scale id and slots mapping or palette")
         resolved_slots = {str(value): str(slot) for value, slot in slots.items()}
         if any(f"category:{slot}" not in colors for slot in resolved_slots.values()):
-            raise ColorSchemeError("E_PRESENTATION_SCALE_MAPPING")
+            missing = tuple(sorted({slot for slot in resolved_slots.values() if f"category:{slot}" not in colors}))
+            raise ColorSchemeError("E_PRESENTATION_SCALE_MAPPING", f"/body/colorScales/{scale_pointer}/slots",
+                                   f"missing category slots={_shown(missing)}; expected declared scheme categories")
         resolved_scales[scale_id] = {"slots": resolved_slots}
     suitability = scheme.get("body", {}).get("suitability", {}) if isinstance(scheme.get("body"), Mapping) else {}
     claimed = suitability.get("colorVision", ()) if isinstance(suitability, Mapping) else ()

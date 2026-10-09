@@ -9,6 +9,10 @@ from typing import Any, Iterable, Mapping, Sequence
 from jsonschema.exceptions import ValidationError
 
 
+def _empty_error(operand: str) -> ValueError:
+    return ValueError(f"E_SCHEMA_VIOLATION_EMPTY: {operand}=0; expected one or more schema validation errors")
+
+
 @dataclass(frozen=True)
 class SchemaViolation:
     """One selected structural failure at an RFC 6901 instance location."""
@@ -33,7 +37,7 @@ def explain_errors(
     """
     candidates = tuple(errors)
     if not candidates:
-        raise ValueError("E_SCHEMA_VIOLATION_EMPTY")
+        raise _empty_error("errors")
     error = min(candidates, key=_error_key)
     return replace(_explain(error), resource_kind=resource_kind, resource_identity=resource_identity)
 
@@ -44,7 +48,7 @@ def explain_all_errors(
     """Explain every independent leaf violation in deterministic order."""
     candidates = tuple(_leaf_errors(tuple(errors)))
     if not candidates:
-        raise ValueError("E_SCHEMA_VIOLATION_EMPTY")
+        raise _empty_error("leafErrors")
     explained = [replace(_explain(error), resource_kind=resource_kind, resource_identity=resource_identity)
                  for error in sorted(candidates, key=_aggregate_error_key)]
     unique: dict[tuple[object, ...], SchemaViolation] = {}

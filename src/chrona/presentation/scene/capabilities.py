@@ -90,6 +90,15 @@ _CAPABILITIES = (
 _BY_IDENTIFIER = {item.identifier: item for item in _CAPABILITIES}
 
 
+def _brief(value: str) -> str:
+    clipped = value[:64]
+    return repr(clipped + ("…" if len(value) > len(clipped) else ""))
+
+
+def _capability_error(code: str, detail: str) -> ValueError:
+    return ValueError(f"{code}: {detail}")
+
+
 def capability_ceiling() -> tuple[PresentationCapability, ...]:
     """Return every admitted, deferred, and deliberately rejected decision."""
     return _CAPABILITIES
@@ -101,7 +110,10 @@ def admitted_capability_ids(*identifiers: str) -> frozenset[str]:
     unknown = [identifier for identifier in selected
                if identifier not in _BY_IDENTIFIER or _BY_IDENTIFIER[identifier].disposition is not CapabilityDisposition.ADMITTED]
     if unknown:
-        raise ValueError(f"E_VISUAL_CAPABILITY_CEILING:{unknown[0]}")
+        requested = unknown[0]
+        capability = _BY_IDENTIFIER.get(requested)
+        disposition = capability.disposition.value if capability is not None else "undeclared"
+        raise _capability_error("E_VISUAL_CAPABILITY_CEILING", f"requested {_brief(requested)} has disposition {disposition!r}; expected an admitted capability identifier")
     return frozenset(selected)
 
 
@@ -109,7 +121,8 @@ def validate_substitution_request(capability_id: str) -> None:
     """Reject a substitution request until its semantic encoding owns an alternative."""
     capability = _BY_IDENTIFIER.get(capability_id)
     if capability is None or capability.substitution_owner is None:
-        raise ValueError("E_VISUAL_CAPABILITY_SUBSTITUTION")
+        owner = None if capability is None else capability.substitution_owner
+        raise _capability_error("E_VISUAL_CAPABILITY_SUBSTITUTION", f"capability {_brief(capability_id)} has no substitution owner (owner={owner!r}); request a capability with an explicit semantic substitution owner")
 
 
 # Theme admission is a consumer projection of the same presentation ceiling.

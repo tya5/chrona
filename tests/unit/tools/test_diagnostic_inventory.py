@@ -79,6 +79,48 @@ def test_discovery_requires_a_complete_diagnostic_identifier(tmp_path):
     assert [site.code for site in sites] == ["E_COMPLETE"]
 
 
+def test_diagnostic_identity_reads_are_not_construction_sites(tmp_path):
+    source = tmp_path / "src" / "chrona"
+    source.mkdir(parents=True)
+    (source / "sample.py").write_text(
+        'value.startswith("W_LAYOUT_LABEL_SUPPRESSED:")\n'
+        'value.removeprefix("W_LAYOUT_LABEL_SUPPRESSED:")\n'
+        'value.endswith("E_COMPLETE")\n'
+        'value.removesuffix("E_COMPLETE")\n'
+        'raise ValueError("E_COMPLETE")\n', encoding="utf-8")
+    assert [site.code for site in discover(tmp_path)] == ["E_COMPLETE"]
+
+
+def test_duplicate_helper_explicit_field_is_owner_detail(tmp_path):
+    source = tmp_path / "src" / "chrona"
+    source.mkdir(parents=True)
+    (source / "sample.py").write_text(
+        '_unique(values, "E_DETAIL_DUPLICATE_GROUP", field="/groupDetails/groupId")\n',
+        encoding="utf-8")
+    site, = discover(tmp_path)
+    assert site.code == "E_DETAIL_DUPLICATE_GROUP" and site.has_detail
+
+
+def test_typed_superclass_code_requires_unconditional_nonempty_detail(tmp_path):
+    source = tmp_path / "src" / "chrona"
+    source.mkdir(parents=True)
+    (source / "sample.py").write_text(
+        'class Detailed(ValueError):\n'
+        ' def __init__(self, values):\n'
+        '  super().__init__("E_DETAILED")\n'
+        '  self.detail = f"count={len(values)}"\n'
+        'class Empty(ValueError):\n'
+        ' def __init__(self):\n'
+        '  super().__init__("E_EMPTY")\n'
+        '  self.detail = ""\n'
+        'class Conditional(ValueError):\n'
+        ' def __init__(self, value):\n'
+        '  super().__init__("E_CONDITIONAL")\n'
+        '  if value: self.detail = value\n', encoding="utf-8")
+    assert {site.code: site.has_detail for site in discover(tmp_path)} == {
+        "E_DETAILED": True, "E_EMPTY": False, "E_CONDITIONAL": False}
+
+
 def test_discovery_marks_transitively_imported_cli_module_as_user_facing(tmp_path):
     source = tmp_path / "src" / "chrona"
     (source / "app").mkdir(parents=True)

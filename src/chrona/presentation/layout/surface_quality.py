@@ -12,11 +12,17 @@ from chrona.presentation.layout.pattern_placement import PatternedPlacement
 from chrona.presentation.layout.obstacles import ObstacleGeometry
 from chrona.presentation.layout.lane_subtracks import FixedLanePreflight
 from chrona.presentation.model.info_diagnostics import PresentationInfo, SuppressedPlotLabels
+from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, axis_label_semantic_ids
 
 if TYPE_CHECKING:  # avoid the runtime cycle: canvas_overlays uses SlotPlacement.
     from chrona.presentation.layout.canvas_overlays import CanvasOverlays
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, FIT_ADJUSTS, TEXT_FOLLOWS_BOX
+
+
+def _diagnostic_value(value: Any) -> str:
+    """Bounded scalar context; never expand invalid payload objects."""
+    return repr(value[:160]) if isinstance(value, str) else type(value).__name__
 
 
 @dataclass(frozen=True)
@@ -29,9 +35,10 @@ class PathCommand:
     def __post_init__(self) -> None:
         expected = {"move": 1, "line": 1, "quadratic": 2}.get(self.kind)
         if expected is None or len(self.points) != expected:
-            raise ValueError("E_LAYOUT_PATH_COMMAND_INVALID")
+            raise ValueError(f"E_LAYOUT_PATH_COMMAND_INVALID: command kind={self.kind!r} has {len(self.points)} points; expected {expected if expected is not None else 'move, line or quadratic'}")
         if not all(all(isinstance(value, (int, float)) for value in point) for point in self.points):
-            raise ValueError("E_LAYOUT_PATH_COMMAND_INVALID")
+            types = tuple(tuple(type(value).__name__ for value in point) for point in self.points)
+            raise ValueError(f"E_LAYOUT_PATH_COMMAND_INVALID: {self.kind!r} point coordinate types={types!r}; expected numeric coordinates")
 
 
 def is_closed_stroke_contour(commands: tuple[PathCommand, ...]) -> bool:
@@ -113,7 +120,7 @@ class MarkerGeometry:
                 or self.paint_mode not in {"fill", "stroke"}
                 or (self.angle_degrees is not None and (not isinstance(self.angle_degrees, (int, float))
                     or isinstance(self.angle_degrees, bool) or not isfinite(self.angle_degrees)))):
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: MarkerGeometry paint_mode={self.paint_mode!r}, head_length={self.head_length}, head_width={self.head_width}, attachment_offset={self.attachment_offset}, outline_count={len(self.outline)}, physical_units={self.physical_units}, stroke_width={self.stroke_width}, painted_run={self.painted_run}, angle_degrees={self.angle_degrees}; expected a finite supported terminal with positive head dimensions")
 
 
 GEOMETRY_TOLERANCE = Decimal("0.000001")
@@ -166,7 +173,7 @@ def annotation_presentation(purpose: str) -> AnnotationPresentation:
             "explanatory-arrow": AnnotationPresentation("explanatory-arrow", "annotationArrowBox", "annotationArrowText", "annotationArrowLeader"),
         }[purpose]
     except KeyError as error:
-        raise ValueError("E_PRESENTATION_ANNOTATION_PURPOSE") from error
+        raise ValueError(f"E_PRESENTATION_ANNOTATION_PURPOSE: purpose {purpose!r}; expected callout, highlight, note or explanatory-arrow") from error
 
 
 @dataclass(frozen=True)
@@ -259,7 +266,7 @@ class VisualRequest:
 
     def __post_init__(self) -> None:
         if self.side not in {"leading", "trailing"} or not self.ref:
-            raise ValueError("E_VIEW_VISUAL_REQUEST")
+            raise ValueError(f"E_VIEW_VISUAL_REQUEST: source {self.source_ref!r}, side={self.side!r}, ref={self.ref!r}; expected leading/trailing and a non-empty reference")
 
 
 @dataclass(frozen=True)
@@ -283,6 +290,7 @@ class MarkPlacement:
     lane_row_id: str | None = None
     lane_member_id: str | None = None
     lane_source_kind: str | None = None
+    subjects: tuple[DiagnosticSubject, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -329,6 +337,7 @@ class ShapePlacement:
     viewer_fit: str = "raw"
     # Selected Theme role for completed named region frames; absent keeps the legacy Scene role.
     visual_role: str | None = None
+    subjects: tuple[DiagnosticSubject, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -362,7 +371,7 @@ class RowPlacement:
         if anchor is not None and (not anchor.is_finite()
                                    or anchor < self.bounds.block
                                    or anchor > self.bounds.block + self.bounds.block_size):
-            raise ValueError("E_LAYOUT_LANE_ROW_ANCHOR_INVALID")
+            raise ValueError(f"E_LAYOUT_LANE_ROW_ANCHOR_INVALID: row {_diagnostic_value(self.row_id)} anchor={anchor}; block range={self.bounds.block}..{self.bounds.block + self.bounds.block_size}")
 
 
 @dataclass(frozen=True)
@@ -475,7 +484,7 @@ class PlacementDecision:
                 or not 0 <= self.box_positions_examined <= self.box_position_limit
                 or self.route_state_limit < 0
                 or not 0 <= self.route_states_examined <= self.route_state_limit):
-            raise ValueError("E_LAYOUT_PLACEMENT_DECISION_INVALID")
+            raise ValueError(f"E_LAYOUT_PLACEMENT_DECISION_INVALID: decision {_diagnostic_value(self.decision_id)} topology={self.selected_topology!r}, search_count={self.search_count}, box positions={self.box_positions_examined}/{self.box_position_limit}, route states={self.route_states_examined}/{self.route_state_limit}, crossings={len(self.crossing_ids)}")
 
 
 @dataclass(frozen=True)
@@ -491,13 +500,14 @@ class FitWarning:
     required_block: float
     available_inline: float
     available_block: float
+    subjects: tuple[DiagnosticSubject, ...] = ()
 
     def __post_init__(self) -> None:
         if (not self.code.startswith("W" + "_LAYOUT_") or not self.placement_id or not self.source_ref
                 or not self.failure_kind or not self.behaviour
                 or min(self.required_inline, self.required_block,
                        self.available_inline, self.available_block) < 0):
-            raise ValueError("E_LAYOUT_FIT_WARNING_INVALID")
+            raise ValueError(f"E_LAYOUT_FIT_WARNING_INVALID: code={_diagnostic_value(self.code)}, placement={_diagnostic_value(self.placement_id)}, source={_diagnostic_value(self.source_ref)}, failure={self.failure_kind!r}, behaviour={self.behaviour!r}, required={self.required_inline}x{self.required_block}, available={self.available_inline}x{self.available_block}")
 
 
 @dataclass(frozen=True)
@@ -578,6 +588,7 @@ class IconPlacement:
     lane_row_id: str | None = None
     lane_member_id: str | None = None
     host_placement_id: str | None = None
+    subjects: tuple[DiagnosticSubject, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -599,7 +610,7 @@ class LaneEmissionFacet:
                 or self.obstacle_class not in {"mark", "required-label", "leader-route"}
                 or not isinstance(self.obstacle, (ObstacleRect, ObstacleSegment))
                 or (self.part_index is not None and self.part_index < 0)):
-            raise ValueError("E_LAYOUT_LANE_EMISSION_INVALID")
+            raise ValueError(f"E_LAYOUT_LANE_EMISSION_INVALID: facet {_diagnostic_value(self.facet_id)}, placement={_diagnostic_value(self.placement_id)}, primitive={_diagnostic_value(self.primitive_id)}, type={self.placement_type!r}, obstacle_class={self.obstacle_class!r}, obstacle_type={type(self.obstacle).__name__}, part_index={self.part_index}")
 
 
 @dataclass(frozen=True)
@@ -618,7 +629,7 @@ class LaneEmissionPlacement:
                 or not all(isinstance(value, str) and value for value in
                            (self.placement_id, self.row_id, self.member_id, self.purpose))
                 or not isinstance(self.facets, tuple) or not self.facets):
-            raise ValueError("E_LAYOUT_LANE_EMISSION_INVALID")
+            raise ValueError(f"E_LAYOUT_LANE_EMISSION_INVALID: placement {_diagnostic_value(self.placement_id)}, type={self.placement_type!r}, row={_diagnostic_value(self.row_id)}, member={_diagnostic_value(self.member_id)}, purpose={self.purpose!r}, facets_type={type(self.facets).__name__}, facets_count={len(self.facets) if isinstance(self.facets, tuple) else 'unavailable'}")
 
 
 @dataclass(frozen=True)
@@ -633,7 +644,7 @@ class CapacitySourceEvidence:
         if (self.source_id != "timeline" or not self.required_block.is_finite()
                 or not self.allocated_block.is_finite()
                 or self.allocated_block >= self.required_block):
-            raise ValueError("E_LAYOUT_SUPPRESSION_EVIDENCE_INVALID")
+            raise ValueError(f"E_LAYOUT_SUPPRESSION_EVIDENCE_INVALID: source={_diagnostic_value(self.source_id)}, required_block={self.required_block}, allocated_block={self.allocated_block}; expected timeline with finite required > allocated")
 
 
 @dataclass(frozen=True)
@@ -656,7 +667,7 @@ class LaneLabelSuppression:
                 or (self.reason == "capacity" and self.remaining_capacity != 0)
                 or (self.reason == "obstruction" and self.short_sources)
                 or len({item.source_id for item in self.short_sources}) != len(self.short_sources)):
-            raise ValueError("E_LAYOUT_SUPPRESSION_EVIDENCE_INVALID")
+            raise ValueError(f"E_LAYOUT_SUPPRESSION_EVIDENCE_INVALID: placement={_diagnostic_value(self.placement_id)}, lane={_diagnostic_value(self.lane_id)}, member={_diagnostic_value(self.member_id)}, reason={self.reason!r}, remaining_capacity={self.remaining_capacity}, short_sources_count={len(self.short_sources)}")
 
 
 @dataclass(frozen=True)
@@ -685,6 +696,7 @@ class SurfacePlacement:
     lane_label_suppressions: tuple[LaneLabelSuppression, ...] = ()
     aligned_strokes: tuple[AlignedStrokePlacement, ...] = ()
     canvas_overlays: CanvasOverlays | None = None
+    diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
 
     def assert_valid(self) -> None:
         """Reject invalid required geometry before a renderer receives it."""
@@ -704,17 +716,17 @@ class SurfacePlacement:
                 or len(suppression_facts) != len(self.lane_label_suppressions)
                 or len(counts) != (1 if suppressed_members else 0)
                 or (counts and counts[0].count != len(suppressed_members))):
-            raise ValueError("E_LAYOUT_SUPPRESSION_COUNT_INVALID")
+            raise ValueError(f"E_LAYOUT_SUPPRESSION_COUNT_INVALID: suppressed={len(suppressed_members)}, reported={len(reported_suppressions)}, lane_members={len(suppressed_lane_members)}, evidence={len(self.lane_label_suppressions)}, count_rows={len(counts)}, declared_count={counts[0].count if counts else None}")
         rows_by_id = {item.row_id: item for item in self.rows}
         for placement_id, fact in suppression_facts.items():
             text = suppressed_text[placement_id]
             row = rows_by_id.get(fact.lane_id)
             if (text.lane_row_id != fact.lane_id or text.lane_member_id != fact.member_id
                     or row is None or row.bounds != fact.row_bounds):
-                raise ValueError("E_LAYOUT_SUPPRESSION_EVIDENCE_INVALID")
+                raise ValueError(f"E_LAYOUT_SUPPRESSION_EVIDENCE_INVALID: placement={_diagnostic_value(placement_id)}, text lane/member={text.lane_row_id!r}/{text.lane_member_id!r}, evidence lane/member={fact.lane_id!r}/{fact.member_id!r}, row_found={row is not None}, bounds_match={row is not None and row.bounds == fact.row_bounds}")
         required = tuple(item for item in self.text if item.required and item.overflow != 'suppressed')
         if self.canvas_bounds is not None and (self.canvas_bounds.inline_size <= 0 or self.canvas_bounds.block_size <= 0):
-            raise ValueError("E_LAYOUT_CANVAS_BOUNDS_INVALID")
+            raise ValueError(f"E_LAYOUT_CANVAS_BOUNDS_INVALID: inline_size={self.canvas_bounds.inline_size}, block_size={self.canvas_bounds.block_size}; expected positive canvas dimensions")
         if self.canvas_overlays is not None:
             for role, overlay in (("canvas-overlay-gradient", self.canvas_overlays.radial),
                                   ("canvas-overlay", self.canvas_overlays.pattern)):
@@ -773,7 +785,7 @@ class SurfacePlacement:
                     raise ValueError(f"E_LAYOUT_CLIP_HOST_INVALID:{shape.placement_id}")
         pattern_ids = [item.placement_id for item in self.patterns]
         if len(pattern_ids) != len(set(pattern_ids)):
-            raise ValueError("E_LAYOUT_PATTERN_PLACEMENT_DUPLICATE")
+            raise ValueError(f"E_LAYOUT_PATTERN_PLACEMENT_DUPLICATE: pattern placement IDs={tuple(item.placement_id[:160] for item in self.patterns[:8])!r}, total={len(self.patterns)}")
         marks_by_id = {item.placement_id: item for item in self.marks}
         shapes_by_id = {item.placement_id: item for item in self.shapes}
         for item in self.patterns:

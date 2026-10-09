@@ -134,10 +134,46 @@ def cli_reachable_modules(root: Path) -> set[str]:
     return reached
 
 
+def _typed_detail_initializers(tree: ast.AST) -> set[int]:
+    """A fixed superclass code can have an explicit typed detail field.
+
+    Recognize only unconditional constructor assignments, not a detail field
+    that might be absent on the failing path. Value assertions remain tests'
+    responsibility, as for a constructor's explicit ``detail=`` argument.
+    """
+    calls: set[int] = set()
+    for owner in ast.walk(tree):
+        if not isinstance(owner, ast.ClassDef):
+            continue
+        for method in owner.body:
+            if not isinstance(method, ast.FunctionDef) or method.name != "__init__":
+                continue
+            has_detail = any(
+                isinstance(statement, ast.Assign)
+                and any(_name(target) == "self.detail" for target in statement.targets)
+                and not (isinstance(statement.value, ast.Constant) and statement.value.value in (None, ""))
+                for statement in method.body)
+            if not has_detail:
+                continue
+            for statement in method.body:
+                call = statement.value if isinstance(statement, ast.Expr) else None
+                if (isinstance(call, ast.Call) and isinstance(call.func, ast.Attribute)
+                        and call.func.attr == "__init__" and isinstance(call.func.value, ast.Call)
+                        and isinstance(call.func.value.func, ast.Name)
+                        and call.func.value.func.id == "super"):
+                    calls.add(id(call))
+    return calls
+
+
 def _calls(tree: ast.AST, path: str, *, layer: str) -> Iterable[DiagnosticSite]:
     functions = _function_names(tree)
+    typed_details = _typed_detail_initializers(tree)
     for node in ast.walk(tree):
         if not isinstance(node, ast.Call):
+            continue
+        # Reading an existing diagnostic identity is not constructing one.
+        if isinstance(node.func, ast.Attribute) and node.func.attr in {
+                "startswith", "endswith", "removeprefix", "removesuffix"}:
             continue
         code_index = next((index for index, value in enumerate(node.args) if _literal_code(value)), None)
         if code_index is None:
@@ -145,7 +181,7 @@ def _calls(tree: ast.AST, path: str, *, layer: str) -> Iterable[DiagnosticSite]:
         code, inline_detail = _code_and_inline_detail(node.args[code_index])
         assert code is not None
         detail_arguments = node.args[code_index + 1:]
-        detail_keywords = [item for item in node.keywords if item.arg in {"detail", "message", "path", "source_ref"}]
+        detail_keywords = [item for item in node.keywords if item.arg in {"detail", "message", "path", "source_ref", "field"}]
         yield DiagnosticSite(
             code=code,
             path=path,
@@ -154,7 +190,7 @@ def _calls(tree: ast.AST, path: str, *, layer: str) -> Iterable[DiagnosticSite]:
             function=functions.get(id(node), "<module>"),
             constructor=_name(node.func),
             layer=layer,
-            has_detail=bool(detail_arguments or detail_keywords or inline_detail),
+            has_detail=bool(detail_arguments or detail_keywords or inline_detail or id(node) in typed_details),
         )
 
 

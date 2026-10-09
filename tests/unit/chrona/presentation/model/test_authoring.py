@@ -5,6 +5,7 @@ import yaml
 
 from chrona.presentation.contracts import ClosureIdentity, ContractError, parse_contract
 from chrona.presentation.model.authoring import AuthoringError, normalize_authoring_workspace
+from chrona.presentation.model import authoring as authoring_module
 
 
 ROOT = Path(__file__).resolve().parents[5]
@@ -81,8 +82,10 @@ def test_workspace_rejects_scheme_not_declared_by_preset():
     resources = _resources()
     document = _workspace()
     document["body"]["presentation"]["binding"]["overrides"] = {"theme": {"colorScheme": "not-admitted"}}
-    with pytest.raises(AuthoringError, match="E_AUTHORING_COLOR_SCHEME"):
+    with pytest.raises(AuthoringError, match="E_AUTHORING_COLOR_SCHEME") as error:
         normalize_authoring_workspace(_contract("authoring-workspace", document), _contract("presentation-preset", _preset(resources)), resources)
+    assert "requested='not-admitted'" in str(error.value)
+    assert "compatible schemes=('executive-light',)" in str(error.value)
 
 
 def test_workspace_schema_rejects_geometry_override():
@@ -102,5 +105,43 @@ def test_explicit_workspace_has_no_binding_and_bypasses_guided_normalization():
     workspace = _contract("authoring-workspace", document)
     assert workspace.mode == "explicit"
     assert workspace.binding is None
-    with pytest.raises(AuthoringError, match="E_AUTHORING_EXPLICIT_MODE"):
+    with pytest.raises(AuthoringError, match="E_AUTHORING_EXPLICIT_MODE") as error:
         normalize_authoring_workspace(workspace, _contract("presentation-preset", _preset(_resources())), _resources())
+    assert "workspace mode='explicit'" in str(error.value)
+    assert "bindingPresent=False" in str(error.value)
+
+
+def test_workspace_preset_identity_diagnostic_names_bound_and_selected_values():
+    resources = _resources()
+    document = _workspace()
+    document["body"]["presentation"]["binding"]["preset"]["id"] = "other-preset"
+    workspace = _contract("authoring-workspace", document)
+    preset = _contract("presentation-preset", _preset(resources))
+    with pytest.raises(AuthoringError, match="E_AUTHORING_PRESET_IDENTITY") as error:
+        normalize_authoring_workspace(workspace, preset, resources)
+    assert "bound preset id/version='other-preset'/'1'" in str(error.value)
+    assert "selected='plan-actual'/'1'" in str(error.value)
+
+
+@pytest.mark.parametrize(("bad_kind", "operand"), [
+    ("project", "projectType=object"),
+    ("view", "viewType=object"),
+    ("theme", "themeType=object"),
+    ("color-scheme", "colorSchemeType=object"),
+    ("layout-profile", "layoutProfileType=object"),
+    ("actual-set", "actualSetType=object"),
+])
+def test_normalization_diagnostic_names_actual_wrong_typed_contract(monkeypatch, bad_kind, operand):
+    resources = _resources()
+    workspace = _contract("authoring-workspace", _workspace())
+    preset = _contract("presentation-preset", _preset(resources))
+    original = authoring_module.parse_contract
+
+    def boundary_contract(identity, source):
+        result = original(identity, source)
+        return object() if identity.kind == bad_kind else result
+
+    monkeypatch.setattr(authoring_module, "parse_contract", boundary_contract)
+    with pytest.raises(AuthoringError, match="E_AUTHORING_NORMALIZATION") as error:
+        normalize_authoring_workspace(workspace, preset, resources)
+    assert operand in str(error.value)

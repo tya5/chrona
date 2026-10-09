@@ -484,10 +484,41 @@ def test_golden_holds_no_host_path():
         assert needle not in text, needle
 
 
-def _record() -> None:  # pragma: no cover - maintenance entry point
-    records = {case.id: run_case(case)[0] for case in CASES}
+def _record() -> None:
+    records = {}
+    # Capture exact artifacts in the same pass as the golden, not a second
+    # round of expensive renders just to recover their byte evidence.
+    with contextlib.ExitStack() as stack:
+        target = os.environ.get("CHRONA_CHARACTERIZATION_RAW")
+        raw_stream = stack.enter_context(open(target, "w", encoding="utf-8")) if target else None
+        for case in CASES:
+            golden, raw = run_case(case)
+            records[case.id] = golden
+            if raw_stream is not None:
+                raw_stream.write(json.dumps({"id": case.id, **raw}, sort_keys=True, ensure_ascii=False) + "\n")
     GOLDEN.write_text(json.dumps(records, indent=1, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"recorded {len(records)} cases to {GOLDEN}")
+
+
+def test_record_captures_golden_and_byte_evidence_in_one_pass(tmp_path, monkeypatch):
+    target = tmp_path / "raw.jsonl"
+    golden_path = tmp_path / "golden.json"
+    cases = (Case("first", ("render",)), Case("second", ("render",)))
+    calls = []
+
+    def invoke(case):
+        calls.append(case.id)
+        return {"exit": 0}, {"files": {"output.svg": {"sha256": case.id}}}
+
+    monkeypatch.setattr(sys.modules[__name__], "GOLDEN", golden_path)
+    monkeypatch.setattr(sys.modules[__name__], "CASES", cases)
+    monkeypatch.setattr(sys.modules[__name__], "run_case", invoke)
+    monkeypatch.setenv("CHRONA_CHARACTERIZATION_RAW", str(target))
+    _record()
+    assert calls == ["first", "second"]
+    assert json.loads(golden_path.read_text()) == {"first": {"exit": 0}, "second": {"exit": 0}}
+    assert [json.loads(line)["files"]["output.svg"]["sha256"]
+            for line in target.read_text().splitlines()] == calls
 
 
 if __name__ == "__main__":  # pragma: no cover

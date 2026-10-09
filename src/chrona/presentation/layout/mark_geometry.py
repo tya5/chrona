@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from decimal import Decimal
 from math import isfinite
@@ -16,6 +16,27 @@ from chrona.presentation.layout.path_geometry import open_span_path, rounded_dia
 from chrona.presentation.layout.rounded_outline import resolve_corner_radius
 from chrona.presentation.layout.surface_quality import MarkPlacement
 from chrona.presentation.model.projection import ObservationState
+from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
+
+
+def _brief(value: object) -> str:
+    if isinstance(value, str):
+        clipped = value[:64]
+        return repr(clipped + ("…" if len(value) > len(clipped) else ""))
+    if value is None or isinstance(value, (bool, int, float)):
+        return repr(value)
+    if isinstance(value, (tuple, list)) and len(value) <= 4 and all(
+            item is None or isinstance(item, (bool, int, float, str)) for item in value):
+        return repr(type(value)(value))
+    return f"<{type(value).__name__}>"
+
+
+def _theme_error(detail: str) -> ValueError:
+    return ValueError(f"E_THEME_TOKEN_TYPE: {detail}")
+
+
+def _primitive_error(detail: str) -> ValueError:
+    return ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: {detail}")
 
 
 @dataclass(frozen=True)
@@ -43,6 +64,7 @@ class MarkItemComposition:
     marks: tuple[MarkPlacement, ...]
     diagnostics: tuple[str, ...]
     absences: tuple[MarkFacetAbsence, ...]
+    diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
 
 
 def _coordinate(value: date, scale: ScalePlacement) -> float:
@@ -189,7 +211,10 @@ def compose_item_marks(*, item: Any, instance_id: str, source_kind: str,
     else:
         absences.append(MarkFacetAbsence("actual", "member-has-no-actual-facet"))
 
-    return MarkItemComposition(tuple(marks), tuple(diagnostics), tuple(absences))
+    subject = DiagnosticSubject.project_object(item.object_id, getattr(item, "title", None))
+    provenance = tuple(DiagnosticProvenance(diagnostic, (subject,)) for diagnostic in diagnostics)
+    marks = [replace(mark, subjects=(subject,)) for mark in marks]
+    return MarkItemComposition(tuple(marks), tuple(diagnostics), tuple(absences), provenance)
 
 
 def symbol_parts(value: Mapping[str, object], bounds: tuple[float, float, float, float],
@@ -203,7 +228,7 @@ def symbol_parts(value: Mapping[str, object], bounds: tuple[float, float, float,
         glyph = (catalog_glyphs.get(reference) if isinstance(reference, str)
                  and catalog_glyphs is not None else None)
         if not isinstance(glyph, Mapping):
-            raise ValueError("E_THEME_TOKEN_TYPE")
+            raise _theme_error(f"shape.catalog={_brief(reference)} has no matching catalog glyph; expected a declared glyph identifier")
         value = {"shape": "glyph", **glyph}
     elif shape_value == "catalog-glyph":
         value = {**value, "shape": "glyph"}
@@ -213,7 +238,7 @@ def symbol_parts(value: Mapping[str, object], bounds: tuple[float, float, float,
         shape = _choice(value, "shape", {"diamond", "circle", "square", "chevron"})
         x, y, width, height = bounds
         if width < 0 or height < 0:
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            raise _primitive_error(f"symbol bounds width={_brief(width)}, height={_brief(height)} must be nonnegative")
         if shape == "diamond":
             points = ((x + width / 2, y), (x + width, y + height / 2),
                       (x + width / 2, y + height), (x, y + height / 2))
@@ -289,14 +314,14 @@ def glyph_parts(value: Mapping[str, object], bounds: tuple[float, float, float, 
         view_box = (view_box.get("inlineSize"), view_box.get("blockSize"))
     if (not isinstance(view_box, (list, tuple)) or len(view_box) != 2
             or any(not isinstance(item, (int, float)) or isinstance(item, bool) or item <= 0 for item in view_box)):
-        raise ValueError("E_THEME_TOKEN_TYPE")
+        raise _theme_error(f"glyph viewport must contain two positive dimensions; received {_brief(view_box)}")
     view_width, view_height = float(view_box[0]), float(view_box[1])
     parts = value.get("parts")
     if not isinstance(parts, (list, tuple)) or not parts:
-        raise ValueError("E_THEME_TOKEN_TYPE")
+        raise _theme_error(f"glyph parts must be a non-empty sequence; received {_brief(parts)}")
     x, y, width, height = bounds
     if width < 0 or height < 0:
-        raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        raise _primitive_error(f"glyph destination bounds width={_brief(width)}, height={_brief(height)} must be nonnegative")
     scale = min(width / view_width, height / view_height)
     offset_x = x + (width - view_width * scale) / 2
     offset_y = y + (height - view_height * scale) / 2
@@ -305,25 +330,25 @@ def glyph_parts(value: Mapping[str, object], bounds: tuple[float, float, float, 
     result = []
     for part in parts:
         if not isinstance(part, Mapping):
-            raise ValueError("E_THEME_TOKEN_TYPE")
+            raise _theme_error(f"glyph part entry must be a mapping; received {type(part).__name__}")
         paint = _choice(part, "paint", {"fill", "stroke", "none"})
         if catalog_glyph and paint not in {"fill", "stroke"}:
-            raise ValueError("E_THEME_TOKEN_TYPE")
+            raise _theme_error(f"catalog glyph part.paint={_brief(paint)}; expected 'fill' or 'stroke'")
         color = part.get("color")
         if color is not None and not isinstance(color, str):
-            raise ValueError("E_THEME_TOKEN_TYPE")
+            raise _theme_error(f"glyph part.color must be a string when present; received {_brief(color)}")
         if paint == "none":
             continue
         raw = part.get("data") if catalog_glyph else part.get("d")
         if not isinstance(raw, str) or not raw:
-            raise ValueError("E_THEME_TOKEN_TYPE")
+            raise _theme_error(f"glyph path data must be a non-empty string; received {_brief(raw)}")
         try:
             parsed = parse_path_commands(raw)
         except IconNormalizationError as error:
-            raise ValueError("E_THEME_TOKEN_TYPE") from error
+            raise _theme_error(f"glyph path data is not valid normalized geometry (length={len(raw)}, parser={type(error).__name__})") from error
         if catalog_glyph and any(command.kind not in {"move", "line", "quadratic", "close"}
                                  for command in parsed):
-            raise ValueError("E_THEME_TOKEN_TYPE")
+            raise _theme_error("catalog glyph commands must use only move, line, quadratic, or close")
         outline = []
         start = None
         for command in parsed:
@@ -337,12 +362,12 @@ def glyph_parts(value: Mapping[str, object], bounds: tuple[float, float, float, 
                 outline.append(PathCommand("quadratic", tuple(transform(point) for point in command.points)))
             elif command.kind == "close":
                 if start is None:
-                    raise ValueError("E_THEME_TOKEN_TYPE")
+                    raise _theme_error("glyph path close command requires a preceding move command")
                 outline.append(PathCommand("line", (start,)))
             else:
-                raise ValueError("E_THEME_TOKEN_TYPE")
+                raise _theme_error(f"glyph command kind={_brief(command.kind)} is unsupported for this glyph; expected move, line, quadratic, or close")
         if not outline:
-            raise ValueError("E_THEME_TOKEN_TYPE")
+            raise _theme_error("glyph path must produce at least one completed outline command")
         stroke_width = part.get("strokeWidth") if catalog_glyph else None
         line_cap = part.get("lineCap") if catalog_glyph else None
         line_join = part.get("lineJoin") if catalog_glyph else None
@@ -351,7 +376,7 @@ def glyph_parts(value: Mapping[str, object], bounds: tuple[float, float, float, 
                     or not isfinite(float(stroke_width)) or float(stroke_width) <= 0
                     or line_cap not in {"butt", "round", "square"}
                     or line_join not in {"miter", "round", "bevel"}):
-                raise ValueError("E_THEME_TOKEN_TYPE")
+                raise _theme_error(f"catalog glyph stroke requires positive finite strokeWidth and supported lineCap/lineJoin; width={_brief(stroke_width)}, cap={_brief(line_cap)}, join={_brief(line_join)}")
             stroke_width = float(stroke_width) * scale
         result.append(_GlyphPart(tuple(outline), paint, color,
                                  float(stroke_width) if stroke_width is not None else None,
@@ -368,5 +393,5 @@ def _closed_lines(points: tuple[tuple[float, float], ...]) -> tuple[PathCommand,
 def _choice(value: Mapping[str, object], name: str, choices: set[str]) -> str:
     result = value.get(name)
     if not isinstance(result, str) or result not in choices:
-        raise ValueError("E_THEME_TOKEN_TYPE")
+        raise _theme_error(f"symbol {name}={_brief(result)}; expected one of {sorted(choices)!r}")
     return result

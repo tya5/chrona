@@ -63,4 +63,3 @@ def test_actual_rejection_operands_reach_result_row_messages():
         row = _row(result)
         assert row["code"] == expected_code
         assert expected_detail in row["message"]
-

@@ -42,11 +42,13 @@ def test_detail_normalizes_before_admission_and_admission_preserves_content_iden
 def test_detail_admission_keeps_the_missing_slot_diagnostic():
     detail = ReviewDetailInput((), (), (), freeze({"columns": [], "rows": []}))
     selected = _selected(detail)[1]
-    with pytest.raises(ReviewDetailError, match="E_DETAIL_SLOT_REQUIRED"):
+    with pytest.raises(ReviewDetailError, match="E_DETAIL_SLOT_REQUIRED") as raised:
         admit_v05_detail_content(selected, detail=detail, layout_manifest=SimpleNamespace(decisions=()))
+    assert "observations" in str(raised.value) and "Layout slot" in str(raised.value)
 
 
 def test_detail_enrichment_keeps_a_required_source_unavailable_diagnostic():
     selected = _selected()[1]
-    with pytest.raises(ReviewDetailError, match="E_LAYOUT_SOURCE_UNAVAILABLE"):
+    with pytest.raises(ReviewDetailError, match="E_LAYOUT_SOURCE_UNAVAILABLE") as raised:
         admit_v05_detail_content(selected, detail=None, layout_manifest=_manifest(required=True))
+    assert "observations" in str(raised.value) and "Detail content" in str(raised.value)
