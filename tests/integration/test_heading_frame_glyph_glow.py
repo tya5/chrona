@@ -170,7 +170,9 @@ def test_glow_paints_every_heading_and_frame_glyph_in_scene_svg_and_png(tmp_path
     svg_path = tmp_path / "glowing.svg"
     svg_path.write_bytes(svg_review.artifact.content)
     nodes = {node.attrib.get("data-scene-id"): node for node in svg.iter()}
-    assert all(nodes[identifier] is not None and nodes[identifier].attrib.get("filter", "").startswith("url(#glow-")
+    parents = {child: parent for parent in svg.iter() for child in parent}
+    assert all(nodes[identifier] is not None and
+               (parents[nodes[identifier]] if identifier in headings else nodes[identifier]).attrib.get("filter", "").startswith("url(#glow-")
                for identifier in (*headings, *(item.scene_id for item in glyphs)))
     filters = {item.paint.glow.color for item in (*headings.values(), *glyphs)}
     assert filters == {GLOW_FILL}
@@ -280,7 +282,9 @@ def test_dependency_network_title_glow_uses_heading_paint_role_and_requires_own_
     root = ET.fromstring(rendered.artifact.content)
     node = next(item for item in root.iter() if item.attrib.get("data-scene-id") == "title")
     assert node.attrib["fill"] == title.paint.fill
-    assert node.attrib["filter"].startswith("url(#glow-")
+    parents = {child: parent for parent in root.iter() for child in parent}
+    assert parents[node].attrib["filter"].startswith("url(#glow-")
+    assert "filter" not in node.attrib
 
     with pytest.raises(RenderFailed) as error:
         _render(tmp_path / "network-no-fill", parts=_network_parts(omit_heading_fill=True), actual=actual)

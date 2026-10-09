@@ -1,5 +1,6 @@
 from datetime import date
 from dataclasses import replace
+from hashlib import sha256
 from io import BytesIO
 from pathlib import Path
 
@@ -151,6 +152,22 @@ def test_svg_projects_the_layout_selected_rotation_about_the_supplied_baseline()
                                text="AB", baseline=layout.baseline, text_layout=layout,
                                paint=ScenePaint("#112233", None, None, (), 1))
     assert 'transform="rotate(90 1 6)"' in render_v05_svg(_surface(primitive))
+
+
+@pytest.mark.parametrize("scale,digest", [
+    (0.5, "2d5fd667caa797a22ad407bb70d88a12c4996ac66c7334df657ed21a06a120a5"),
+    (0.86, "ee86f80cca9d115d153f254880855328eca65d608c3dcc11c6d39dc4eaebb95a"),
+    (1.0, "91363e781d81c753db08c9bb3f06636e4eb637359b32fbf2367a1e48b85f8428"),
+])
+def test_non_glow_text_bytes_match_the_published_1261_baseline(scale, digest):
+    # Captured from public main 510fd5f9 before changing glow serialization.
+    layout = TextLayout((30, 40, 100 * scale, 24), (30, 60), ("ENDING D",),
+                        "Noto Sans", 400, 24, 1.2, "sha256:synthetic", horizontal_scale=scale)
+    node = ScenePrimitive("run", "Text", "synthetic", "heading", "heading", "heading", layout.bounds,
+                          text="ENDING D", baseline=layout.baseline, text_layout=layout,
+                          paint=ScenePaint("#111111", None, None, (), 1))
+    output = render_v05_svg(replace(_surface(node), canvas_bounds=(0, 0, 400, 200)))
+    assert sha256(output.encode()).hexdigest() == digest
 
 
 def test_svg_adapter_does_not_infer_orientation_or_measure_text() -> None:

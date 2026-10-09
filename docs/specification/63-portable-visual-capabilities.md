@@ -187,6 +187,8 @@ profile of the target>`, a `required` glow is `E_VISUAL_CAPABILITY_UNSUPPORTED`
 at `/body/roles/<role>/glowBlur`. SVG draws it as one filter per glowing element
 over `region` (`filterUnits="userSpaceOnUse"`): the Gaussian-blurred alpha,
 flooded with the colour at the opacity, merged twice under the source graphic;
+for transformed text, the filter belongs to an untransformed parent so the
+completed surface-space region and blur are not scaled or rotated again.
 PNG is that SVG through resvg. The drop-shadow filter is unchanged. A Scene that
 carries a glow is written as `chrona/scene/v0.7` (optional `paint.glow`).
 
