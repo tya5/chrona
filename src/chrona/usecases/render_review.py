@@ -61,7 +61,7 @@ from chrona.presentation.review.detail import ReviewDetailError
 from chrona.presentation.review.figure_facts import projected_counts
 from chrona.presentation.annotation_kind_text import AnnotationKindTextError, header_lines, heading_text
 from chrona.presentation.figure_text import FigureTextError, resolve_figure_text
-from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, below_plot_reserve
+from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, below_plot_reserve, measure_as_of_chip
 from chrona.presentation.review.v05_content import (
     compose_heading, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content)
 from chrona.presentation.scene.model import (
@@ -382,8 +382,14 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     ).to_integral_value(rounding=ROUND_CEILING))) if request.draft_auto_block else viewport["blockSize"]
     capacity_short_sources = ()
     # An as-of chip placed `below-plot` (#1063) needs its block under the last row, so the timeline asks for it too.
+    try:
+        as_of_chip_measurement = measure_as_of_chip(selected_content, window=projection.window,
+            theme_tokens=ThemeTokenView(theme), font_metrics=font_metrics,
+            visual_requests=visual_requests, icon_assets=icon_assets)
+    except FontMetricsError as error:
+        raise _font_failure(error) from error
     foot_reserve = Decimal(str(_below_plot_reserve(view, actual_set=actual_observations, projection=projection,
-                                                   theme_tokens=ThemeTokenView(theme))))
+        theme_tokens=ThemeTokenView(theme), chip_measurement=as_of_chip_measurement)))
 
     def candidate_request(candidate: LayoutManifest, *, short_sources=()) -> SurfaceLayoutRequest:
         content = admit_v05_detail_content(
@@ -398,6 +404,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             capabilities={name: True for name in render_closure.context.target.capabilities},
             icon_assets=icon_assets, visual_requests=visual_requests,
             capacity_short_sources=short_sources,
+            as_of_chip_measurement=as_of_chip_measurement,
         )
 
     if view.surface == "table-timeline":
@@ -517,7 +524,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                           surface.info_diagnostics, collisions, attachments, deadlines, warning_records)
 
 
-def _below_plot_reserve(view: Any, *, actual_set: Any, projection: Any, theme_tokens: Any) -> float:
+def _below_plot_reserve(view: Any, *, actual_set: Any, projection: Any, theme_tokens: Any,
+                        chip_measurement: Any = None) -> float:
     """The block extent a `below-plot` as-of chip needs under the plot; 0 without such a marker in the window."""
     marker = next((item for item in view.markers if item.get("kind") == "asOf" and item.get("source") == "actual"
                    and item.get("placement") == BELOW_PLOT and item.get("label")), None)
@@ -526,7 +534,8 @@ def _below_plot_reserve(view: Any, *, actual_set: Any, projection: Any, theme_to
     if marker is None or not isinstance(as_of_value, str):
         return 0.0
     start, end = projection.window
-    return below_plot_reserve(theme_tokens) if start <= date.fromisoformat(as_of_value) < end else 0.0
+    return (below_plot_reserve(theme_tokens, chip_measurement=chip_measurement)
+            if start <= date.fromisoformat(as_of_value) < end else 0.0)
 
 
 def _inspection_scene(closure: RenderClosure, surface: SceneSurface, projection: Any,

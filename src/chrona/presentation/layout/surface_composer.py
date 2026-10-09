@@ -191,6 +191,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         tuple(groups), scale, tuple(marks), timeline_bounds, as_of_label,
         as_of_below_plot=base.as_of_foot_reserve > 0 and as_of_label is not None,
         rows_bottom=float(base.plot.block + base.plot.block_size),
+        as_of_chip_measurement=base.as_of_chip_measurement,
     )
     if base.as_of_foot_fallback and as_of_label is not None:
         diagnostics.append(f"{BELOW_PLOT_FALLBACK}:as-of-label")

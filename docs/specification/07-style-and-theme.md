@@ -309,8 +309,10 @@ role/property pairs retain their current contracts.
 `member-label-chip`, `finish-delta-chip`, `period-label-chip`) MAY name a
 `chipShape` token. Its closed value is `{kind: rectangle}`, `{kind: burst,
 points: N, innerRatio: q}`, or `{kind: catalog, glyph, sliceInsets, unitEm}`.
-Absent and explicit rectangle retain the existing chip geometry and output;
-shape selection does not activate a chip without `backgroundTreatment: fill`.
+Absent and explicit rectangle retain the existing chip geometry, paint and
+SVG output; Scene provenance still records each authored Theme's real content
+identity. Absent-token backward byte checks use unchanged resource inputs.
+Shape selection does not activate a chip without `backgroundTreatment: fill`.
 Burst requires integer `N >= 2` and finite `0 < q <= 1`. Its `2N` alternating
 vertices have outer/inner radii `R`/`qR`, with an outer tip at the top. Layout
 encloses the padded text in the polygon's inscribed disk, retains the actual

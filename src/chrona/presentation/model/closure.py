@@ -1026,6 +1026,11 @@ def _resolve_theme_catalog_assets(theme: Mapping[str, Any],
             resolve(reference, expected_kind, pointer)
     for role, binding in roles.items():
         # The vector artwork of an annotation container (#848) is a catalogue glyph the Theme names.
+        chip_token_id = binding.get("chipShape") if isinstance(binding, Mapping) else None
+        chip_token = values.get(chip_token_id) if isinstance(chip_token_id, str) else None
+        chip_value = chip_token.get("value") if isinstance(chip_token, Mapping) else None
+        if isinstance(chip_value, Mapping) and chip_value.get("kind") == "catalog":
+            resolve(chip_value.get("glyph"), "glyph", f"/body/values/{chip_token_id}/value/glyph")
         token_id = binding.get("annotationContainer") if isinstance(binding, Mapping) else None
         token = values.get(token_id) if isinstance(token_id, str) else None
         token_value = token.get("value") if isinstance(token, Mapping) else None
@@ -1042,6 +1047,17 @@ def _resolve_theme_catalog_assets(theme: Mapping[str, Any],
         for kind, entry in declared_kinds.items():
             if isinstance(entry, Mapping) and entry.get("stamp") is not None:
                 resolve(entry["stamp"], "glyph", f"/body/annotationKinds/{kind}/stamp")
+    # Validate selected shape policy even if this render emits no such label.
+    # Assets are already closed, so catalog viewport/inset checks need no I/O.
+    tokens = None
+    for role, binding in roles.items():
+        if isinstance(binding, Mapping) and "chipShape" in binding:
+            try:
+                if tokens is None:
+                    tokens = ThemeTokenView(theme, catalog_glyphs=glyphs, catalog_patterns=patterns)
+                tokens.label_chip_shape(str(role))
+            except ThemeTokenError as error:
+                raise ClosureError(error.diagnostic_id, error.path) from error
     return glyphs, patterns
 
 
