@@ -537,7 +537,7 @@ properties:
           properties:
             label: {description: "Primary label of the kind; the first header line unless the title template changes it.", type: string, minLength: 1}
             secondary: {description: "Optional second-script label, set as a second header line unless the title template shows it.", type: string, minLength: 1}
-            title: {description: "Optional header template of literal text and the closed placeholders {label}, {secondary}, {subject} (the anchored object's title) and {subjectId} (its id); {{ and }} are literal braces. Default is {label}.", type: string, minLength: 1}
+            title: {description: "Optional header template of literal text and the closed placeholders {label}, {secondary}, {subject} (the anchored object's title), {subjectId} (its id) and {figure:id} (a global figure declared by the View); {{ and }} are literal braces. Default is {label}.", type: string, minLength: 1, examples: ["{label} {figure:countdown}"]}
             heading: {description: "Optional separate heading template using the title grammar, between the bar and body in annotation-heading typography.", type: string, minLength: 1}
             color: {description: "Optional Scheme intent or explicit category slot that paints the kind's bar, accent and stamp; checked at Theme resolution.", type: string, minLength: 1}
             colorAlso: {description: "Optional extra elements the kind colour also paints: the header text (label and secondary) and the leader line, beside the bar, accent and stamp it always paints (#991). Absent paints none of them.", examples: [[header, leader]], type: array, minItems: 1, uniqueItems: true, items: {description: "One element the kind colour also paints.", enum: [header, leader]}}

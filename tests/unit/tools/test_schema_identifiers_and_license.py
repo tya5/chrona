@@ -44,6 +44,7 @@ ALLOWED_SHAPES: dict[str, str] = {
                         "and `identifier` also refuses control characters, so referencing it would newly reject an input (N1, B5 not unified)",
     "unconstrained-string": "Project relation ids have no length rule at all; tightening even to non-empty changes what Project accepts",
     "bounded-non-empty-string": "review-detail-profile ids carry their own 4096 bound, a different contract from `identifier`",
+    "figure-identity": "View figure ids share one View-local definition with the historical non-empty-string grammar, without changing typed-ingress validation",
     "layout-profile-id": "layout-profile declares its own stricter `id` (`^[A-Za-z][A-Za-z0-9._-]*$`, bounded); it is a named local definition, not a copy",
     "slug": "a lowercase catalogue key (`slug`), a different concept from a free identifier",
     "portable-name": "a portable asset or set name (`portableName`), a different concept from a free identifier",
@@ -81,7 +82,8 @@ ID_SITES: dict[tuple[str, str], int] = {
     ("theme-asset-source-v0.2.schema.yaml", "portable-name"): 1,
     ("theme-v0.15.schema.yaml", "non-empty-string"): 1,
     ("theme-v0.16.schema.yaml", "non-empty-string"): 2,
-    ("view-v0.28.schema.yaml", "non-empty-string"): 19,
+    ("view-v0.28.schema.yaml", "figure-identity"): 3,
+    ("view-v0.28.schema.yaml", "non-empty-string"): 17,
 }
 
 
@@ -97,6 +99,8 @@ def _category(node: dict[str, Any]) -> str:
         return "bounded-non-empty-string"
     if shape == {"$ref": "#/$defs/id"}:
         return "layout-profile-id"
+    if shape == {"$ref": "#/$defs/figureIdentity"}:
+        return "figure-identity"
     if shape == {"$ref": f"{COMMON_ID}#/$defs/slug"}:
         return "slug"
     if shape in ({"$ref": f"{COMMON_ID}#/$defs/portableName"}, {"$ref": "#/$defs/name"}):
@@ -164,6 +168,16 @@ def test_identifier_is_defined_but_no_existing_id_is_tightened_to_it():
     assert [value for value in control if not today.is_valid(value)] == [], "today's ids accept control characters"
     assert [value for value in control if validator.is_valid(value)] == [], "identifier refuses them"
     assert all(category != "identifier" for _, category in _all_sites()), "no site adopts identifier yet: adopting is a tightening"
+
+
+def test_view_figure_kinds_share_one_local_identity_definition():
+    view = _schema("view-v0.28.schema.yaml")["$defs"]
+    identity = view["figureIdentity"]
+    assert {key: value for key, value in identity.items() if key not in {"description", "examples"}} == {
+        "type": "string", "minLength": 1,
+    }
+    for kind in ("figureDaysUntil", "figureDaysIn", "figureCount"):
+        assert view[kind]["properties"]["id"]["$ref"] == "#/$defs/figureIdentity"
 
 
 # --------------------------------------------------------------------------------------------

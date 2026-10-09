@@ -9,7 +9,7 @@ from datetime import date, timedelta
 import pytest
 
 from chrona.core.figures import (
-    AsOfFact, FigureSpec, ObjectFact, PeriodFact, calendar_days_until, resolve_figures, working_days_in,
+    AsOfFact, FigureSpec, GroupStartFact, ObjectFact, PeriodFact, calendar_days_until, resolve_figures, working_days_in,
     working_days_until)
 from chrona.core.periods import ResolvedPeriod
 from chrona.core.temporal import Calendar, advance
@@ -107,6 +107,57 @@ def _codes(result):
 def test_a_countdown_to_a_period_start_is_the_calendar_days_from_the_as_of():
     result = _resolve(FigureSpec("launch-countdown", "daysUntil", to=PeriodFact("window", "start")))
     assert dict(result.values) == {"launch-countdown": 63} and result.diagnostics == ()
+
+
+@pytest.mark.parametrize(("start", "end", "as_of", "expected"), [
+    ("2027-01-04", "2027-01-05", "2027-01-04", 0),
+    ("2027-12-31", "2028-01-02", "2027-12-31", 1),
+    ("2028-02-28", "2028-03-01", "2028-02-28", 1),
+    ("2027-03-01", "2027-03-04", "2027-03-05", -2),
+])
+def test_period_last_is_the_final_covered_calendar_day(start, end, as_of, expected):
+    periods = (ResolvedPeriod("p", "Period", D(start), D(end)),)
+    result = _resolve(FigureSpec("last", "daysUntil", to=PeriodFact("p", "last")),
+                      FigureSpec("end", "daysUntil", to=PeriodFact("p", "end")),
+                      periods=periods, as_of=D(as_of))
+    assert result.diagnostics == ()
+    assert result.values == {"last": expected, "end": expected + 1}
+
+
+def test_period_last_can_be_the_origin_and_never_moves_to_a_working_day():
+    # Last is Sunday Jan 10; the holiday calendar makes Saturday Jan 9 a working day.
+    periods = (ResolvedPeriod("p", "Period", D("2027-01-04"), D("2027-01-11")),)
+    result = _resolve(
+        FigureSpec("last-to-monday", "daysUntil", origin=PeriodFact("p", "last"),
+                   to=AsOfFact(), days="working", calendar_id="holiday"),
+        FigureSpec("to-last", "daysUntil", to=PeriodFact("p", "last")),
+        as_of=D("2027-01-11"), periods=periods)
+    assert result.diagnostics == ()
+    assert result.values == {"last-to-monday": 1, "to-last": -1}
+
+
+def test_period_last_reports_a_missing_period_at_the_declaration():
+    result = _resolve(FigureSpec("last", "daysUntil", to=PeriodFact("absent", "last"),
+                                 path="/body/figures/0"))
+    assert result.values == {}
+    assert _codes(result) == ["E_FIGURE_PERIOD_UNKNOWN"]
+    assert result.diagnostics[0].path == "/body/figures/0/to/period"
+
+
+def test_core_reads_only_the_injected_group_start_date():
+    spec = FigureSpec("group", "daysUntil", to=GroupStartFact(), scope="group")
+    result = resolve_figures((spec,), as_of=D("2028-02-28"), placements={}, periods=(),
+                             calendars={}, default_calendar=None, group_first_start=D("2028-03-01"))
+    assert result.values == {"group": 2}
+    assert result.diagnostics == ()
+
+
+def test_an_unavailable_group_start_is_not_zero():
+    result = _resolve(FigureSpec("group", "daysUntil", to=GroupStartFact(),
+                                 scope="group", path="/body/figures/0"))
+    assert result.values == {}
+    assert _codes(result) == ["E_FIGURE_GROUP_START_MISSING"]
+    assert result.diagnostics[0].path == "/body/figures/0/to/group"
 
 
 def test_each_fact_form_resolves():

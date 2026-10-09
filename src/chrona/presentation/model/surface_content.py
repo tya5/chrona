@@ -151,6 +151,9 @@ class AnnotationIntent:
     subject: str = ""
     # The id of the anchored Project object, the `{subjectId}` of a kind header (#991).
     subject_id: str = ""
+    # Presentation-composed kind text; Layout measures these strings without figure substitution.
+    kind_header_lines: tuple[str, ...] | None = None
+    kind_heading_text: str | None = None
     # Canonical View anchor pointer retained for Layout failures only; never enters
     # placement equality, hashing, repr or Scene output.
     anchor_source_ref: str = field(default="/", kw_only=True, compare=False, hash=False, repr=False)
