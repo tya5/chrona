@@ -73,8 +73,14 @@ class RenderResult:
 
     @property
     def warnings(self) -> list[dict]:
-        """The JSON-line diagnostics the CLI wrote to stderr, parsed afresh."""
-        return [json.loads(line) for line in self.stderr.splitlines() if line.startswith("{")]
+        """The CLI success-envelope warning rows, parsed afresh from stdout."""
+        envelope = json.loads(self.stdout)
+        if envelope.get("status") != "ok" or envelope.get("diagnostics") != []:
+            raise RenderCacheError("a successful cached render requires the CLI success envelope")
+        warnings = envelope.get("warnings")
+        if not isinstance(warnings, list):
+            raise RenderCacheError("the CLI success envelope must contain warning rows")
+        return warnings
 
 
 def _under_allowed_root(path: Path) -> bool:

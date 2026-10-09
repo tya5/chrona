@@ -323,13 +323,15 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
             # the first declared candidate if every one is exhausted.
             return AnnotationIntent(str(annotation["id"]), purpose, anchor, "rail", "center",
                                     content, number, (), parse_candidates(declared_candidates),
-                                    kind=kind, subject=subject, subject_id=subject_id)
+                                    kind=kind, subject=subject, subject_id=subject_id,
+                                    anchor_source_ref=f"/body/annotations/{index}/anchor")
         placement = annotation["placement"]
         return AnnotationIntent(str(annotation["id"]), purpose, anchor,
                                 str(placement["side"]), str(placement["alignment"]),
                                 content, number, annotation_fallback or ("rail",),
                                 legacy_candidate_order(purpose, annotation_fallback)[0],
-                                kind=kind, subject=subject, subject_id=subject_id)
+                                kind=kind, subject=subject, subject_id=subject_id,
+                                anchor_source_ref=f"/body/annotations/{index}/anchor")
 
     annotations = tuple(_annotation(index, annotation) for index, annotation in enumerate(raw_annotations))
     # A selected Project annotation is consumed once: it is presented through

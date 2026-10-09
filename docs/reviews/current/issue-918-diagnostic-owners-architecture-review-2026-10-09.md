@@ -20,3 +20,16 @@ identity changes, whole-string consumers, and CLI scripts reading stderr.
 Synthetic fixtures, explicit source capture, mutation checks and byte/row audits
 are the required controls. Coordinate shared Layout files with dev B; do not
 use corpus tuning to absorb a change.
+
+Follow-up review (6085291520), source baseline `48465773`: Theme schema uses
+`body.colorScales`; correcting the illustrative pointer requires no syntax
+change (Spec 56). View normalization owns annotation array provenance (06),
+while Layout still owns target eligibility and geometry (08/50); provenance
+must not enter identity or Scene serialization. Model-owned scale errors are
+translated once at the application boundary (66), not guessed by adapters.
+Standalone materialization serializes the existing failure report only at its
+adapter boundary (40); library exceptions and success bytes remain intact.
+Decision: accept this correction for implementation-plan publication. A13–A15
+remain unaccepted until source/transport tests and the exact-main gate prove
+them; identity leakage, late scale-value failures and lost diagnostic rows are
+the additional review risks.

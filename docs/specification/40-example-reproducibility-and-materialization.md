@@ -21,7 +21,17 @@ Example Context files are derived immutable closure manifests. Any change to a r
 
 The acceptance Context test selects the schema by Context version. Integration tests discover every output from the authored manifests, including outputs not yet tracked by Git, materialize each slide through `render-review`, compare its expected SVG and Scene byte-for-byte with the freshly generated PR snapshot or synchronized `main` artifacts, and prove mismatch detection. A removed manifest retires its previously generated SVG/Scene outputs in the same synchronized commit as the reports; it never authorizes deletion of unrelated or authored files. PR CI fails render/closure/quality errors and exposes source-caused output diffs, including retirements, without requiring stale committed evidence to match. A successful post-merge regeneration publishes the canonical derived bytes before exact-main release CI. A failed or pending regeneration blocks the next merge; a materialization failure remains a release failure.
 
-## 5. Historical evidence
+## 5. Standalone adapter failure reporting
+
+The standalone `tools/materialize_example.py` adapter leaves successful
+materialization silent. On failure it emits one stdout JSON envelope
+`{status, diagnostics}` using the shared application failure-report mapping
+and exits with that report's code. Typed rejected/failed diagnostics retain
+their codes, messages, source pointers and details; library materialization
+calls still raise typed exceptions without printing. Artifact publication and
+closure identity rules are unaffected.
+
+## 6. Historical evidence
 
 The three empty M27 documents are recovered only by verifying their exact historical non-empty blob/content identity. If no such verified content is accessible, they remain documented as unavailable rather than invented. The milestone ledger's current status must be regenerated only as a current operational record, never presented as historical review evidence.
 

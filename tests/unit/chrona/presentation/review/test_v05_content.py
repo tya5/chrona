@@ -309,6 +309,7 @@ def test_view_annotation_ladder_normalizes_to_typed_candidates() -> None:
     }})
     value = normalize_v05_surface_content(projection, {}, view, summary=EMPTY_SUMMARY)
     assert value.annotations[0].fallback_ladder == ("rail",)
+    assert value.annotations[0].anchor_source_ref == "/body/annotations/0/anchor"
     assert value.annotations[0].candidates[0].region.kind == "slot"
     assert value.annotations[0].candidates[0].search.kind == "row-aligned"
     assert value.annotations[0].candidates[0].connector.kind == "leader"
@@ -496,6 +497,7 @@ def test_structured_temporal_and_annotation_presentation_is_normalized():
     assert value.annotations[0].annotation_id == "note"
     assert value.annotations[0].content == "Watch this"
     assert value.annotations[0].number == 1
+    assert value.annotations[0].anchor_source_ref == "/body/annotations/0/anchor"
 
 
 def test_annotation_anchor_end_is_normalized_to_finish_at_ingress():

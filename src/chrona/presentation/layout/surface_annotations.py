@@ -70,6 +70,28 @@ from chrona.presentation.layout.surface_geometry import (
 ANNOTATION_PAINT_ORDER = 400
 
 
+def _anchor_operand(value: object) -> str:
+    """Keep one diagnostic operand bounded without shortening its source pointer."""
+    return repr(value).replace("\n", " ").replace("\r", " ")[:96]
+
+
+def _anchor_failure(annotation: Any, reason: str, *, code: str = "E_PRESENTATION_ANCHOR_MISSING",
+                    **operands: object) -> LayoutError:
+    """Attach a post-resolution anchor failure to its declared View source."""
+    anchor = annotation.anchor
+    values = {
+        "annotation_id": annotation.annotation_id,
+        "object_id": anchor.get("id"),
+        "facet": anchor.get("facet"),
+        "endpoint": anchor.get("endpoint"),
+        **operands,
+    }
+    fields = []
+    for name, value in values.items():
+        fields.append(f"{name}={_anchor_operand(value)}")
+    return LayoutError(code, annotation.anchor_source_ref, detail=f"{reason}: " + ", ".join(fields))
+
+
 def _annotation_icon_subjects(annotation: Any) -> tuple[DiagnosticSubject, ...]:
     """Keep visual provenance tied to the normalized Project-object claim."""
     if not annotation.subject_id:
@@ -375,9 +397,15 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                   if (row_id is None or row_id == f"group-header:{folded.group_id}:{folded.item.object_id}")
                                   and (item_id is None or item_id == folded.item.item_id)]
             if len(matching) + len(folded_matches) > 1:
-                raise LayoutError("E_PRESENTATION_ROW_ANCHOR_AMBIGUOUS", f"/annotations/{index}/anchor")
+                raise _anchor_failure(annotation, "anchor matches multiple rows or folded points",
+                                      code="E_PRESENTATION_ROW_ANCHOR_AMBIGUOUS",
+                                      row_id=row_id, item_id=item_id,
+                                      match_count=len(matching) + len(folded_matches))
             if matching:
-                anchor_bounds = annotation_anchor_bounds(resolved.mark, resolved.endpoint, matching[0][1], scale)
+                anchor_bounds = annotation_anchor_bounds(
+                    resolved.mark, resolved.endpoint, matching[0][1], scale,
+                    source_ref=annotation.anchor_source_ref,
+                    annotation_id=annotation.annotation_id)
                 selected_items = tuple(item for item in matching[0][0].items
                                        if item.object_id == resolved.object_id and (item_id is None or item.item_id == item_id))
                 anchor_item = selected_items[0] if selected_items else None
@@ -391,7 +419,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                 selected_items = (folded.item,)
                 anchor_host = mark
             else:
-                raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
+                raise _anchor_failure(annotation, "selected mark has no matching rendered row or folded point")
             as_of_side_constraint: tuple[float, str] | None = None
             if contract.time.as_of is not None and start <= contract.time.as_of < end:
                 as_of_x = _coordinate(contract.time.as_of, scale)
@@ -442,7 +470,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                 if not candidate_box.leader_required or presentation.leader_semantic_id is None:
                     return None
                 if anchor_host is None:
-                    raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
+                    raise _anchor_failure(annotation, "selected mark has no placed leader host")
                 candidate_bounds = candidate_box.placement.bounds
                 anchor_center = (anchor_bounds.x + anchor_bounds.width / 2,
                                  anchor_bounds.y + anchor_bounds.height / 2)
@@ -1155,7 +1183,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                 target = (routed_tail_tip if routed_tail_tip is not None else
                           _radius_aware_box_port(bounds, anchor_center, leader_radius))
                 if anchor_host is None:
-                    raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
+                    raise _anchor_failure(annotation, "selected mark has no placed leader host")
                 target_port_obstacle_id = f"port:annotation:{annotation_id}:target"
                 leader_fallback = selected_leader is None
                 if leader_fallback:
@@ -1229,7 +1257,8 @@ def comparison_marks(projection: Any) -> tuple[ComparisonMark, ...]:
 
 
 def annotation_anchor_bounds(mark: ComparisonMark, endpoint: str, row: RowPlacement,
-                              scale: ScalePlacement) -> LabelRect:
+                              scale: ScalePlacement, *, source_ref: str = "/",
+                              annotation_id: str = "") -> LabelRect:
     if endpoint == "start":
         at = mark.start
     elif endpoint in {"finish", "end"}:
@@ -1241,6 +1270,11 @@ def annotation_anchor_bounds(mark: ComparisonMark, endpoint: str, row: RowPlacem
     else:
         at = None
     if not isinstance(at, date):
-        raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", "/annotations/anchor")
+        raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", source_ref,
+                          detail=f"annotation_id={_anchor_operand(annotation_id)}, "
+                                 f"object_id={_anchor_operand(mark.source_id)}, "
+                                 f"facet={_anchor_operand(mark.facet)}, "
+                                 f"endpoint={_anchor_operand(endpoint)}, "
+                                 "reason=selected mark has no resolved endpoint date")
     return LabelRect(_coordinate(at, scale), float(row.bounds.block + row.bounds.block_size * Decimal("0.35")),
                      1.0, max(2.0, float(row.bounds.block_size) * 0.2))
