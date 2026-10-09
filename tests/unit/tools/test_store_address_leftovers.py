@@ -1,6 +1,6 @@
 """Two address sites that moved to `storeAddress` in place (#731, slice I731-D).
 
-`preset-library-v0.2` `address` and `icon-catalog-v0.4` `rasterSource.address` reference the strict `storeAddress` without a
+`preset-library-v0.2` `address` and `icon-catalog-v0.5` `rasterSource.address` reference the strict `storeAddress` without a
 version bump (Spec 56 section 3.2, "Tightening a further site"). The in-place reading holds only because each consumer refuses
 every value the schema refuses, at every use of the field: `preset_library._safe` uses the shared guard, and the catalog
 parse step checks every declared raster address, selected or not. Every verdict is decided from data and the JSON Schema
@@ -64,7 +64,7 @@ def _raster(address: object) -> dict[str, Any]:
     return {"address": address, "contentIdentity": IDENTITY}
 
 
-def _catalog_v04(addresses: dict[str, object]) -> dict[str, Any]:
+def _catalog_v05(addresses: dict[str, object]) -> dict[str, Any]:
     # The envelope schema-checks the first entry only (a representative), so a good entry goes first and the parse-time
     # check alone decides the others, which is the population this slice closes.
     icons = {"aaa-representative": {"kind": "raster", "source": _raster("icons/ok.png"),
@@ -88,7 +88,7 @@ def _parse(value: dict[str, Any]):
 
 def _parse_accepts(addresses: dict[str, object]) -> bool:
     try:
-        _parse(_catalog_v04(addresses))
+        _parse(_catalog_v05(addresses))
     except ContractError as error:
         assert error.diagnostic_id == "E_ICON_ASSET_PATH"
         return False
@@ -214,7 +214,7 @@ def test_the_library_schema_refuses_an_unsafe_member_address_before_the_consumer
 def test_an_unselected_raster_entry_cannot_carry_an_unsafe_address(text):
     """B1's failing population: nothing selects the entry, yet the catalog is refused at parse time."""
     with pytest.raises(ContractError) as caught:
-        _parse(_catalog_v04({"good": "icons/good.png", "unselected": text}))
+        _parse(_catalog_v05({"good": "icons/good.png", "unselected": text}))
     assert caught.value.diagnostic_id == "E_ICON_ASSET_PATH"
     assert caught.value.source_ref == "/body/icons/unselected/source/address"
 
@@ -230,7 +230,7 @@ def test_the_first_and_the_last_entry_are_both_checked():
 
 def test_a_vector_entry_and_a_catalog_without_icons_are_not_affected():
     assert _parse_accepts({})
-    value = _catalog_v04({"ok": "icons/ok.png"})
+    value = _catalog_v05({"ok": "icons/ok.png"})
     value["body"]["icons"]["vec"] = {"kind": "vector", "viewport": {"inlineSize": 24, "blockSize": 24},
                                      "alternative": "v", "paths": [{"paint": "fill", "data": "M 0 0 L 1 1 Z"}]}
     _parse(value)
@@ -239,7 +239,7 @@ def test_a_vector_entry_and_a_catalog_without_icons_are_not_affected():
 @pytest.mark.parametrize("text", ["a/.../b", "a\n"], ids=["dots", "newline"])
 def test_a_draft_catalog_with_an_unselected_unsafe_address_is_refused_with_its_pointer(tmp_path, text):
     path = tmp_path / "catalog.yaml"
-    path.write_text(yaml.safe_dump(_catalog_v04({"unselected": text})), encoding="utf-8")
+    path.write_text(yaml.safe_dump(_catalog_v05({"unselected": text})), encoding="utf-8")
     with pytest.raises(ClosureError) as caught:
         _load_draft_resource("icon-catalog", path)
     assert caught.value.code == "E_ICON_ASSET_PATH" if hasattr(caught.value, "code") else True
@@ -257,7 +257,7 @@ def test_every_committed_and_packaged_v04_catalog_still_parses():
 
 
 def test_a_v03_catalog_keeps_its_own_pattern_and_is_not_checked_at_parse_time():
-    value = _catalog_v04({"x": "a//b"})
+    value = _catalog_v05({"x": "a//b"})
     value["version"] = "chrona/icon-catalog/v0.3"
     del value["body"]["glyphs"], value["body"]["patterns"]
     value["body"]["provenance"] = {"sourceKind": "iconify-json", "sourcePrefix": "acme", "sourceContentIdentity": "sha256:" + "b" * 64,
