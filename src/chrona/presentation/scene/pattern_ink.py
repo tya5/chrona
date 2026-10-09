@@ -80,10 +80,27 @@ def _tile_primitive(value: Any) -> tuple[str, Any]:
         raise InkTouchError("unreadable tile primitive")
     kind = value.get("kind")
     if kind == "circle":
+        if not {"kind", "cx", "cy", "radius"} <= set(value) <= {
+                "kind", "cx", "cy", "radius", "fillChannel", "strokeWidth"}:
+            raise InkTouchError("invalid pattern circle fields")
         cx, cy, radius = (_finite(value.get(key)) for key in ("cx", "cy", "radius"))
         if radius <= 0:
             raise InkTouchError("invalid pattern circle")
-        return kind, (cx, cy, radius)
+        channel = value.get("fillChannel", "ink")
+        if not isinstance(channel, str) or channel not in {"ink", "substrate", "none"}:
+            raise InkTouchError("invalid pattern circle fill channel")
+        if channel == "substrate":
+            raise InkTouchError("substrate circle reached sparse-ink observer")
+        stroke_width = value.get("strokeWidth")
+        if "strokeWidth" in value and stroke_width is None:
+            raise InkTouchError("invalid pattern circle stroke width")
+        if stroke_width is not None:
+            stroke_width = _positive(stroke_width)
+            if stroke_width > 16:
+                raise InkTouchError("invalid pattern circle stroke width")
+        if channel == "none" and stroke_width is None:
+            raise InkTouchError("unpainted pattern circle reached sparse-ink observer")
+        return kind, (cx, cy, radius, channel, stroke_width)
     if kind == "rect":
         x, y = _finite(value.get("x")), _finite(value.get("y"))
         width, height = _positive(value.get("inlineSize")), _positive(value.get("blockSize"))
@@ -144,13 +161,20 @@ def _primitive_touches(item: tuple[str, Any], polygon: Sequence[tuple[float, flo
         return False
     kind, geometry = item
     if kind == "circle":
-        cx, cy, radius = geometry
-        if _point_in_polygon((cx, cy), polygon):
-            return True
-        if any(hypot(cx - x, cy - y) <= radius for x, y in polygon):
-            return True
-        return any(_point_segment_distance((cx, cy), a, b) <= radius
-                   for a, b in _polygon_edges(polygon))
+        cx, cy, radius, channel, stroke_width = geometry
+        if channel == "ink":
+            reach = radius + (stroke_width or 0.0) / 2
+            if not isfinite(reach):
+                raise InkTouchError("non-finite pattern circle ink radius")
+            return _circle_touches((cx, cy), reach, polygon)
+        if channel == "none":
+            half = stroke_width / 2
+            inner, outer = max(0.0, radius - half), radius + half
+            if not all(isfinite(value) for value in (inner, outer)):
+                raise InkTouchError("non-finite pattern circle annulus")
+            minimum, maximum = _radial_range((cx, cy), polygon)
+            return minimum <= outer and maximum >= inner
+        raise InkTouchError("unsupported pattern circle fill channel")
     if kind == "rect":
         return _filled_polygon_touches(geometry, polygon)
     paint, (commands, width, cap, join) = kind, geometry
@@ -227,12 +251,27 @@ def _cap_quad_touches(endpoint, adjacent, polygon, half, *, start):
 
 
 def _circle_touches(center, radius, polygon):
-    cx, cy = center
+    minimum, _ = _radial_range(center, polygon)
+    return minimum <= radius
+
+
+def _radial_range(center, polygon):
+    """Exact min/max center distance over a clipped convex query polygon."""
+    if not polygon:
+        raise InkTouchError("empty clipped circle contact polygon")
     if _point_in_polygon(center, polygon):
-        return True
-    if any(hypot(cx - x, cy - y) <= radius for x, y in polygon):
-        return True
-    return any(_point_segment_distance(center, a, b) <= radius for a, b in _polygon_edges(polygon))
+        minimum = 0.0
+    else:
+        distances = (hypot(center[0] - x, center[1] - y) for x, y in polygon)
+        if len(polygon) == 1:
+            minimum = next(distances)
+        else:
+            minimum = min(_point_segment_distance(center, a, b)
+                          for a, b in _polygon_edges(polygon))
+    maximum = max(hypot(center[0] - x, center[1] - y) for x, y in polygon)
+    if not isfinite(minimum) or not isfinite(maximum):
+        raise InkTouchError("non-finite pattern circle radial range")
+    return minimum, maximum
 
 
 def _join_touches(previous, vertex, following, polygon, half, join):

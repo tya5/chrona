@@ -37,6 +37,18 @@ def test_resolver_rejects_a_dash_without_a_stroke():
     assert error.value.diagnostic_id == "E_PRESENTATION_PAINT_INVALID"
 
 
+def test_ink_only_pattern_rejects_substrate_operation_before_scene_completion():
+    tokens = _tokens({"stroke": "stroke"})
+    with pytest.raises(ScenePaintError) as error:
+        resolve_scene_paint(tokens, "role", PaintFamily.CANVAS, catalog_pattern=True,
+                            ink_only_pattern=True, pattern_has_substrate=True)
+    assert (error.value.diagnostic_id, error.value.path) == (
+        "E_PRESENTATION_PAINT_INVALID", "/body/roles/role")
+    accepted = resolve_scene_paint(tokens, "role", PaintFamily.CANVAS, catalog_pattern=True,
+                                   ink_only_pattern=True, pattern_has_substrate=False)
+    assert accepted.paint.fill is None and accepted.paint.stroke == "#445566"
+
+
 def test_resolver_completes_absent_opacity_before_adapter_invocation():
     paint = resolve_scene_paint(_tokens({"fill": "fill"}), "role", PaintFamily.TEXT).paint
     assert paint.opacity == 1.0

@@ -49,15 +49,15 @@ body:
       token: example-v1
   inputs:
     iconCatalogs:
-    - id: chrona-target-parts-v2026-10
+    - id: chrona-target-parts-v2026-10-09
       kind: icon-catalog
       store:
         provider: package
         identity: chrona.resources
-      address: icons/chrona-target-parts-v2026-10.yaml
+      address: icons/chrona-target-parts-v2026-10-09.yaml
       revision:
-        token: v2026-10
-      contentIdentity: sha256:22fb3e80b35568bf3cbd55f94c0af715b8606322547b5e81a0254009ca45d1dc
+        token: v2026-10-09
+      contentIdentity: sha256:139be42bed11eaa9809ef98bb427eb74f8f0862c3d5c4ccfd9eba2b23185acee
     actual:
       id: controller-z-observed
       kind: actual-set

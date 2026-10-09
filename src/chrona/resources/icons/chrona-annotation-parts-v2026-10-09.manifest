@@ -1,0 +1,24 @@
+catalog:
+  file: chrona-annotation-parts-v2026-10-09.yaml
+  version: chrona/icon-catalog/v0.5
+  set: chrona-annotation-parts
+  aliases: [annotation-parts]
+  sha256: 6cd6591036f927a7df4fe2ee75274bcb38dd90790e4823e9121ff0d2be55f5c9
+source:
+  file: chrona-annotation-parts-v2026-10-09.source.yaml
+  version: chrona/theme-asset-source/v0.2
+  sha256: 76baeb3864cd69819ae47e6d07042c32bdac568b8b739eb29bb77e590a019fe8
+license:
+  spdx: MIT
+  noticeFile: chrona-annotation-parts.NOTICE
+  noticeSha256: b07fa7bbb7bff0acdfb2cf02905b7ca7ad1db3ead9f59b13f47c4ced097f3eb6
+  copyright: Copyright (c) 2026 Chrona Contributors
+entries:
+  glyphs: [scroll-mounting, scroll-rods]
+  patterns: {}
+consumers:
+  annotation-artwork: [scroll-mounting, scroll-rods]
+normalization:
+  profile: chrona/theme-asset-normalization/v0.2
+  importer: chrona.presentation.icons.importer.import_theme_assets
+  command: chrona icon-catalog import --theme-assets SOURCE.yaml --output CATALOG.yaml

@@ -56,10 +56,10 @@ entries:
       layout: {id: chrona-builtin-technical-print, kind: layout-profile, sourceRoot: presets/bundles/technical-print, sourcePath: layout.yaml}
       detailProfile: {id: chrona-builtin-technical-print-detail, kind: review-detail-profile, sourceRoot: presets/bundles/technical-print, sourcePath: detail.yaml}
       iconCatalogs:
-        - id: chrona-theme-starter-v2026-09-29
+        - id: chrona-theme-starter-v2026-10-09
           kind: icon-catalog
           sourceRoot: icons
-          sourcePath: chrona-theme-starter-v2026-09-29.yaml
+          sourcePath: chrona-theme-starter-v2026-10-09.yaml
           noticeSourcePath: chrona-theme-starter.NOTICE
-          contentIdentity: sha256:9e7328de7c437fb927ecd0522431f7ef0efe82ea4bdab9774e3264330ec171f1
+          contentIdentity: sha256:2945f6d2767ca0cc2c8a4a6045055c6f1ee944f5097269ee45340904856b0ec0
           noticeContentIdentity: sha256:b07fa7bbb7bff0acdfb2cf02905b7ca7ad1db3ead9f59b13f47c4ced097f3eb6

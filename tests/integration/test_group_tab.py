@@ -23,7 +23,7 @@ from chrona.usecases.render_review import RenderFailed
 from tests.support import synthetic_review as sr
 
 ROOT = Path(__file__).resolve().parents[2]
-CATALOGUE = ROOT / "src/chrona/resources/icons/chrona-target-parts-v2026-10.yaml"
+CATALOGUE = ROOT / "src/chrona/resources/icons/chrona-target-parts-v2026-10-09.yaml"
 STRIPES = "chrona-target-parts:hazard-stripes"
 OWNERS = ("bus", "payload", "ground")
 YELLOW, DARK = "#FFC857", "#0B1220"  # the packaged `warning` and `surface` colours

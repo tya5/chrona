@@ -587,8 +587,13 @@ def _pattern(value: PatternGeometry) -> dict[str, Any]:
         primitives = []
         for item in value.primitives:
             if item.kind == "circle":
-                primitives.append({"kind": "circle", "cx": item.cx, "cy": item.cy,
-                                   "radius": item.radius})
+                primitive = {"kind": "circle", "cx": item.cx, "cy": item.cy,
+                             "radius": item.radius}
+                if item.fill_channel not in (None, "ink"):
+                    primitive["fillChannel"] = item.fill_channel
+                if item.stroke_width is not None:
+                    primitive["strokeWidth"] = item.stroke_width
+                primitives.append(primitive)
             elif item.kind == "rect":
                 primitives.append({"kind": "rect", "x": item.x, "y": item.y,
                                    "inlineSize": item.inline_size, "blockSize": item.block_size})
