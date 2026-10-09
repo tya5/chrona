@@ -161,7 +161,18 @@ def close_lane_projection(
                         instance, "missing-actual", "incomplete-actual-payload"))
             continue
 
-        if _has_complete_actual(item.source_type, actual):
+        if (missing_actual_visible and getattr(item, "missing_actual_mark", "due-end") == "in-progress"
+                and item.source_type == "span" and isinstance(actual.get("start"), date)):
+            # `comparison.missingActualScope: in-progress` (#1027): the View marked this span as in progress, so
+            # Layout draws the missing-actual span from its actual start to the cutoff in place of the open actual.
+            if as_of is None:
+                raise LayoutError("E_LAYOUT_LANE_AS_OF_REQUIRED", f"{path}/actual/start")
+            if as_of <= actual["start"]:
+                intentional_absences.append(LaneIntentionalAbsence(
+                    instance, "missing-actual", "in-progress-empty-at-cutoff"))
+            else:
+                _expect_mark(expected_marks, instance, "missing-actual", "missing-actual")
+        elif _has_complete_actual(item.source_type, actual):
             if actual.get("openUntil") == "asOf":
                 start = actual.get("start")
                 if as_of is None:
