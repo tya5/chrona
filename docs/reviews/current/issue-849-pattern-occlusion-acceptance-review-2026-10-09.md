@@ -46,5 +46,7 @@ tests passed (28.25s). Both passive axis fills and substrate admission remain
 in Scene paint completion. S0 passed 449 mapped documents/739 probes (39.7s);
 four invalid fixtures unchanged. The ledger tool proved and retired the two
 already-merged #490 entries; no schema behavior or diagnostic baseline was relaxed.
-Final ready-main reconciliation, refreshed-head PR checks and exact-main three-OS
-release containing this review remain required. Keep #849 open.
+Ready main `e52e9c31bbb08e6e55d4389f645a04a8d5102a42` is ordinarily merged.
+Final S0: 451 mapped documents/739 probes, PASS (44.9s); both new #490 public
+materializers pass committed-byte checks. Refreshed-head PR checks and exact-main
+three-OS release containing this review remain required. Keep #849 open.
