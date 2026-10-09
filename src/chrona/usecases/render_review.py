@@ -217,6 +217,8 @@ def render_review(request: RenderRequest) -> RenderedReview:
     """Transport detector-owned presentation pointers across the use-case boundary."""
     try:
         return _render_review(request)
+    except ColorScaleError as error:
+        raise RenderFailed(error.code, error.detail, "presentation", error.source_ref) from error
     except (LayoutError, ThemeTokenError, ScenePaintError) as error:
         message = error_message(error.diagnostic_id, getattr(error, "detail", None))
         node = getattr(error, "node_id", None)  # a Layout finding names the offending token or node here
@@ -259,14 +261,11 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     if manifests:
         ledger.packages()
     projection, scenario_provenance, attachments, deadlines = _project_review(project, view, render_closure, manifests, request.scheduler)
-    try:
-        color_scale = resolve_color_scale(view.color_encoding, theme["body"].get("colorScales"),
-                                          theme["body"].get("categorySlots"),
-                                          color_vision=tuple(theme["body"].get("colorVision", ())),
-                                          observed=_observed_scale_values(view.color_encoding, projection))
-        group_tints, group_tint_collisions = _resolve_group_tints(view, projection, theme)
-    except ColorScaleError as error:
-        raise RenderFailed(str(error), str(error), "presentation") from error
+    color_scale = resolve_color_scale(view.color_encoding, theme["body"].get("colorScales"),
+                                      theme["body"].get("categorySlots"),
+                                      color_vision=tuple(theme["body"].get("colorVision", ())),
+                                      observed=_observed_scale_values(view.color_encoding, projection))
+    group_tints, group_tint_collisions = _resolve_group_tints(view, projection, theme)
     if render_closure.actual_set is not None:
         ledger.actual()
     if render_closure.snapshot is not None:
@@ -670,6 +669,7 @@ def _resolve_group_tints(view: Any, projection: Any, theme: Mapping[str, Any]
         {"scale": tint.scale, "target": "group", "source": {"field": view.grouping.field},
          "domain": list(tint.domain) if tint.domain is not None else "firstAppearance"},
         theme["body"].get("colorScales"), theme["body"].get("categorySlots"),
+        source_ref="/body/grouping/tint",
         color_vision=tuple(theme["body"].get("colorVision", ())), observed=groups)
     if scale is None:
         return (), ()

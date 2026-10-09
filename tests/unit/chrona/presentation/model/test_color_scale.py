@@ -1,6 +1,7 @@
 import pytest
 
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
+from chrona.presentation.color_scheme import ColorSchemeError, resolve_color_scheme
 
 
 def _scale():
@@ -16,10 +17,14 @@ def test_scale_resolves_explicit_value_to_named_slot():
 
 
 def test_scale_rejects_unknown_or_missing_selected_value():
-    with pytest.raises(ColorScaleError, match="E_PRESENTATION_SCALE_VALUE:task:owner"):
-        _scale().color_for("task", {"owner": "other"})
-    with pytest.raises(ColorScaleError, match="E_PRESENTATION_SCALE_VALUE:task:owner"):
-        _scale().color_for("task", {})
+    for fields, operand in (({"owner": "other"}, "value='other'"), ({}, "value=None")):
+        with pytest.raises(ColorScaleError) as caught:
+            _scale().color_for("task", fields)
+        error = caught.value
+        assert error.code == "E_PRESENTATION_SCALE_VALUE"
+        assert error.source_ref == "/body/colorEncoding"
+        assert "object='task'" in error.detail and "field='owner'" in error.detail
+        assert operand in error.detail
 
 
 def test_scale_requires_an_exact_mapping_and_existing_slot():
@@ -71,8 +76,69 @@ def _mapping_error(call, *needles):
      ("domain value 'bus'", "missing Scheme category 'absent'")),
     (lambda: _resolve(scales={"owner": {"slots": {"bus": 3}}}),
      ("domain value 'bus'", "slot=3", "string Scheme category")),
-    (lambda: _resolve(scales={"owner": {"slots": {"bus": "bus"}}}, categories={"bus": 17}),
-     ("Scheme category 'bus'", "color=17", "string color")),
 ])
 def test_scale_mapping_errors_name_the_invalid_operand_and_expected_form(call, needles):
     _mapping_error(call, *needles)
+
+
+def test_theme_slot_failures_use_escaped_theme_pointer_and_keep_both_key_sets():
+    with pytest.raises(ColorScaleError) as caught:
+        resolve_color_scale(
+            {"scale": "ignored", "target": "planned", "source": {"field": "owner"}, "domain": ["bus"]},
+            {"ignored": {"slots": {"other": "bus"}}}, {"bus": "#112233"},
+        )
+    error = caught.value
+    assert error.code == "E_PRESENTATION_SCALE_MAPPING"
+    assert error.source_ref == "/body/colorScales/ignored/slots"
+    assert "missing keys=[\"'bus'\"]" in error.detail
+    assert "extra keys=[\"'other'\"]" in error.detail
+
+
+def test_theme_scale_identifier_is_rfc6901_escaped():
+    with pytest.raises(ColorScaleError) as caught:
+        resolve_color_scale(
+            {"scale": "a/b~c", "target": "planned", "source": {"field": "owner"}, "domain": ["bus"]},
+            {}, {"bus": "#112233"},
+        )
+    assert caught.value.source_ref == "/body/colorScales/a~1b~0c/slots"
+
+
+def test_scheme_category_shape_error_keeps_scheme_owned_code_and_pointer():
+    with pytest.raises(ColorScaleError) as caught:
+        resolve_color_scale(
+            {"scale": "owner", "target": "planned", "source": {"field": "owner"}, "domain": ["bus"]},
+            {"owner": {"slots": {"bus": "bad/category"}}}, {"bad/category": 17},
+        )
+    assert caught.value.code == "E_PRESENTATION_SCALE_MAPPING"
+    assert caught.value.source_ref == "/body/categories/bad~1category"
+
+
+def test_color_scheme_ingress_keeps_its_existing_schema_code_and_pointer():
+    from tests.support import synthetic_review as sr
+
+    scheme = sr.bundle("control-room-dark")["scheme"]
+    scheme["body"]["categories"]["series-1"] = 17
+    with pytest.raises(ColorSchemeError) as caught:
+        resolve_color_scheme(scheme, content_identity="synthetic-scheme")
+    assert caught.value.diagnostic_id == "E_SCHEME_SCHEMA"
+    assert caught.value.source_ref == "/body/categories"
+
+
+def test_encoding_pointer_is_runtime_provenance_not_scale_identity():
+    default = _scale()
+    same_default = resolve_color_scale(
+        {"scale": "owner", "target": "planned", "source": {"field": "owner"}, "domain": ["bus", "payload"]},
+        {"owner": {"slots": {"bus": "bus", "payload": "payload"}}},
+        {"bus": "#112233", "payload": "#445566"}, source_ref="/body/grouping/tint",
+    )
+    assert default == same_default
+    assert "encoding_source_ref" not in repr(default)
+    grouped = resolve_color_scale(
+        {"scale": "owner", "target": "planned", "source": {"field": "owner"}, "domain": ["bus"]},
+        {"owner": {"slots": {"bus": "bus"}}}, {"bus": "#112233"},
+        source_ref="/body/grouping/tint",
+    )
+    with pytest.raises(ColorScaleError) as caught:
+        grouped.color_for("group-a", {"owner": "other"})
+    assert caught.value.code == "E_PRESENTATION_SCALE_VALUE"
+    assert caught.value.source_ref == "/body/grouping/tint"

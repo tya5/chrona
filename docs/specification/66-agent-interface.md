@@ -156,6 +156,12 @@ present only when `status` is `ok` (a field a call had already produced, such as
   command prints the same text). `count` (2 or more) is present only when equal rows were merged into one
   (`usecases.failure_report.collapse_records`); no `count` means once. `sourceRef` is a JSON pointer, or the
   ledger's own reference for a render warning, or `/`.
+- Presentation failures preserve the owner's stable code separately from its
+  bounded detail. Theme color-scale slot failures identify
+  `/body/colorScales/<escaped-id>/slots` and missing/extra keys; View annotation
+  anchor failures identify `/body/annotations/<index>/anchor` and the missing
+  facet, mark or endpoint. Transport does not derive ownership from messages
+  or put a formatted message in `code`.
 - A render warning has a `message` too, `<cause>: <subject>` (`usecases.diagnostic_messages.describe_warning`,
   applied by `usecases.warning_ledger`). Warnings of one code, severity and cause are one row, however many
   placements raised them (`usecases.diagnostic_messages.collapse_warnings`, applied by
