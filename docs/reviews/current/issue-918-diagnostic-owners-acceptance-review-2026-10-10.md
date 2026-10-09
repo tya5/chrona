@@ -2,33 +2,24 @@
 
 # Issue 918 — diagnostic owner acceptance
 
-Status: follow-up focused acceptance recorded; release pending, do not close.
+Status: implementation and evidence are met; publish this refreshed review and
+pass the exact-main release gate containing it before closing.
 Source: [issue 918](https://github.com/tya5/chrona/issues/918), observed
 2026-10-10, including the consolidated 919–922 bodies.
-Merged implementation: `484657736a8fa7dbc5c8668ffc20d57f6c5f23ab` in
-[PR 1276](https://github.com/tya5/chrona/pull/1276), accepted head
-`ab2650030bb55b95d4cc6f34dc5c97dde1cb2e8a` on ready base
-`e1a6f8122aa14b57392ac0363a35e09ff5ab1cbe`.
-Follow-up source: `e66136cfe72e5c44a67a89c7d286d7ee49f82123` on ready
-main `2487d752ed45b6c8c55fe9d183a20ccaf3abadea`; characterized candidate
-`02c4cb5c98522b7d2a9b3cb94c31fc413b07a90f` has the artifact proof below;
-terminal PR and exact-main release proof remain required.
-The branch now includes ready main `5360a127` by ordinary merge; fresh
-exact-head PR checks are required before merge acceptance.
-[Initial PR CI](https://github.com/tya5/chrona/actions/runs/37952231069)
-exposed four Scene negative-probe equivalence failures: its consumer treated
-owner detail as part of the code. The corrected consumer retains the leading
-code; schemas, baseline probes and expected deltas are unchanged.
-[Candidate CI](https://github.com/tya5/chrona/actions/runs/37955021163)
-passed conformance, derived preview, MCP floor and newest-Python reproduction.
-All three pytest shards failed on remaining test consumers of the old bare-code
-and stderr contracts, removed-helper imports and an archived-schema fixture.
-Two JSON parsing failures capture two CLI invocations without draining the first
-success envelope; they do not demonstrate duplicate emission by one command.
-Consumer corrections were verified by
-[corrected PR CI](https://github.com/tya5/chrona/actions/runs/37959980414):
-all three pytest shards, conformance, MCP floor, newest-Python reproduction
-and derived-ready passed. Exact-main three-OS/wheel release remains required.
+Merged implementation: [PR 1276](https://github.com/tya5/chrona/pull/1276)
+and follow-up [PR 1309](https://github.com/tya5/chrona/pull/1309), whose merge
+commit is `b0fff1cac6893808e0082d05247d95e0d791feee`; accepted source head
+`7134cb738bfe527dff24274d9d6d8b0ceac14c52` passed
+[PR CI 37970633414](https://github.com/tya5/chrona/actions/runs/37970633414).
+Its [snapshot proof](https://github.com/tya5/chrona/pull/1309#issuecomment-6086726133)
+audited artifact 11635094621 (`sha256:aa486b92a0a701cf5656cbb2c6e95b3d3d0b22c2e1b017888c31322ba368be19`):
+149 before/after paths, all 140 SVG/Scene files unchanged, and only the
+diagnostic inventory changed.
+The exact-main release on ready main `7503e53076e4e0b924051b89759a9ece6ca9d038`
+passed [run 37975649612](https://github.com/tya5/chrona/actions/runs/37975649612),
+including all three OS pytest/conformance/wheel jobs, MCP floor and newest-Python
+reproduction. This refreshed review still needs publication followed by the
+automatic exact-main release on the commit containing it.
 Authorities: [design](../../design/issue-918-diagnostic-owners-design-2026-10-09.md)
 and [work record](../../planning/active/issue-918-diagnostic-owners-design-plan-2026-10-09.md).
 
@@ -49,9 +40,9 @@ and [work record](../../planning/active/issue-918-diagnostic-owners-design-plan-
 | 6 | The Actual-command and snapshot result tuples carry `"E_X: detail"` strings (or a detail field), and the automation-result rows built from them name the revision, key or observation; tests that compared whole tuples are updated. The inventory is extended to read these tuple literals so the ratchet covers them. | met | Published S1 `9125ca33`; [automation bridge tests](../../../tests/unit/chrona/operational/test_actual_result_details.py), command/snapshot owner tests, tuple inventory cases. | — |
 | 7 | The options and the choice are recorded with how to reverse it. | met | [Selected design](../../design/issue-918-diagnostic-owners-design-2026-10-09.md), Render transport section, compares alternatives and specifies explicit Spec 66/skill/golden reversal. | — |
 | 8 | `render` has one documented machine channel for warnings that matches the other commands, or the disposition (keep stderr) is recorded with its reason. | met | Spec 66 and [skill reference](../../../skills/chrona/references/diagnostics.md); [success-envelope tests](../../../tests/unit/chrona/app/test_cli_render_result.py); all 19 successful render cases use stdout and empty stderr. | — |
-| 9 | Goldens, the skill reference and Spec 66 agree; the MCP `render_draft` rows equal the CLI rows (existing test). | not met | Local golden and [CLI/MCP parity test](../../../tests/unit/chrona/app/test_agent_tools.py) agree; CI cross-platform characterization remains pending. | — |
+| 9 | Goldens, the skill reference and Spec 66 agree; the MCP `render_draft` rows equal the CLI rows (existing test). | met | Local golden and [CLI/MCP parity test](../../../tests/unit/chrona/app/test_agent_tools.py) agree; [exact-main run 37975649612](https://github.com/tya5/chrona/actions/runs/37975649612) passed the cross-platform test matrix on Ubuntu, macOS and Windows. | — |
 | 10 | Every `W_LAYOUT_*` and `W_SCENE_*` row names the Project object it is about (`sourceRef` and the title in the message) where the placement belongs to one. | met | [Scene producer tests](../../../tests/unit/chrona/presentation/scene/test_diagnostic_provenance.py), Layout icon/shape producer tests and [ledger tests](../../../tests/unit/chrona/usecases/test_warning_provenance.py) cover explicit typed joins, escaped IDs, suppression, multiple subjects and ownerless findings; golden rows below. | — |
-| 11 | Scene diagnostics, SVG and PNG bytes and the multiplicity invariant are unchanged (existing tests). | not met | [Local 114-case comparison](../../../tests/cli/test_cli_characterization.py): all 37 generated files byte-identical, warning identities/counts unchanged. Candidate public artifact below preserves all 140 SVG/Scene files and newest-Python reproduction passed; full pytest and exact-main release remain required. | — |
+| 11 | Scene diagnostics, SVG and PNG bytes and the multiplicity invariant are unchanged (existing tests). | met | [Local 114-case comparison](../../../tests/cli/test_cli_characterization.py) found all 37 generated files byte-identical and warning identities/counts unchanged; [PR 1309 artifact proof](https://github.com/tya5/chrona/pull/1309#issuecomment-6086726133) verified all 140 public SVG/Scene files unchanged; [exact-main run 37975649612](https://github.com/tya5/chrona/actions/runs/37975649612) passed. | — |
 | 12 | The CLI golden and the MCP `render_draft` warnings agree and are reviewed row by row. | met | [CLI/MCP tests](../../../tests/unit/chrona/app/test_agent_tools.py) retain real-render parity and exercise the actual MCP envelope projection for every successful golden case: 19 cases, all 22 rows, including empty/info/multi-owner detail. Complete CLI row audit below. | — |
 | 13 | Expected detail: `scale=owner, missing=[m0,…], extra=[bus,…], at /body/scales/owner/slots`. | met | [Synthetic production tests](../../../tests/integration/test_color_scale_failure_provenance.py) prove stable code, scale/missing/extra keys and escaped canonical `/body/colorScales/<id>/slots` for both callers; the actual schema uses `colorScales`, not the example's `scales`. Late value errors retain the View pointer. | — |
 | 14 | Expected detail: the View pointer `/body/annotations/<i>/anchor` and the reason, e.g. "object titlecard has no completed actual mark". | met | [Synthetic render transport](../../../tests/integration/test_annotation_anchor_failure_transport.py) proves unobserved/in-progress actual rejection, annotation/object/reason and canonical View pointer; [owner tests](../../../tests/unit/chrona/presentation/layout/test_annotation_routing_diagnostic_details.py) cover absent endpoint/invalid fields/post-resolution provenance and bounded text without truncating pointers. | — |
@@ -153,18 +144,17 @@ exit codes and ordered warning identities/counts. Logs are local evidence,
 not committed resources.
 
 Audited corrected candidate public artifact:
-[11630069335](https://github.com/tya5/chrona/actions/runs/37959980414/artifacts/11630069335),
-`derived-snapshot-ab2650030bb55b95d4cc6f34dc5c97dde1cb2e8a`, provider digest
-`sha256:daccd1844013f06a66c83f63476d4d04404dc5c55fc64ac2ff72d0aacdb9bd2e`.
-Downloaded with `gh run download 37959980414 --repo tya5/chrona --name
-derived-snapshot-ab2650030bb55b95d4cc6f34dc5c97dde1cb2e8a`.
+[11635094621](https://github.com/tya5/chrona/pull/1309#issuecomment-6086726133),
+`derived-snapshot-7134cb738bfe527dff24274d9d6d8b0ceac14c52`, provider digest
+`sha256:aa486b92a0a701cf5656cbb2c6e95b3d3d0b22c2e1b017888c31322ba368be19`.
 The before/after archives have 149 paths each, no retirements, and all 140
 SVG/Scene files are byte-identical. Every before-file matches ready main
-`e1a6f812`; the only changes are the diagnostic and declared-value inventory
-reports. Archive members and the declared changed-path list were checked as
-a batch without extracting into the worktree. Corrected-head newest-Python
-reproduction and all pytest shards passed; exact-main three-OS release remains
-incomplete.
+`5360a127`; the only changed path is the diagnostic inventory report.
+Archive members and the declared changed-path list were checked as a batch
+without extracting into the worktree. Corrected-head PR checks passed, followed
+by the three-OS release on ready main `7503e530`. Final
+acceptance-review publication and its exact-main release remain required before
+closure.
 
 ### Every successful-render warning row
 
@@ -201,4 +191,5 @@ generated inventories manually or count this local run as green. The CI
 schema-equivalence fix only separates code from owner detail; it does not
 reclassify the four known invalid corpus documents or relax an expected delta.
 The issue
-stays open until every row and the required release gate are met.
+stays open until this refreshed review is published and the exact-main release
+on the commit containing it succeeds.

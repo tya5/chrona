@@ -173,6 +173,17 @@ def wrap_text(content: str, *, available_inline: float, font_size: float, font_m
     return tuple(lines or [content])
 
 
+def centred_text_baseline(bounds: Rect, *, font_size: Any, line_height: Any) -> float:
+    """Return the baseline that centres one role's line box in a vertical band.
+
+    This is shared by table cells and group headers so both use the same
+    measured line-box convention without requiring either owner to import the
+    other's placement code.
+    """
+    line_block = float(font_size * line_height)
+    return float(bounds.block) + (float(bounds.block_size) - line_block) / 2 + float(font_size)
+
+
 def measured_text_bounds(*, inline: float, baseline_block: float, width: float,
                          height: float, font_size: float,
                          rotation: Literal[0, 90, -90]) -> Rect:

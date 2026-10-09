@@ -949,6 +949,12 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                                          paint_order=placed.paint_order, part_order_step=0)
             primitives.extend(emitted)
             record_annotation_primitives(tuple(item.scene_id for item in emitted), placed.source_ref)
+        elif placed.semantic_id == "rowRule":
+            row_rule = semantic_binding("rowRule")
+            primitives.append(ScenePrimitive(
+                placed.placement_id, PrimitiveKind.PATH, placed.source_ref, "decoration",
+                row_rule.purpose, row_rule.scene_role, bounds, points=placed.points,
+                slot_id=placed.slot_id, paint_order=placed.paint_order))
         elif placed.semantic_id == "annotationKindStamp":
             stamp = semantic_binding("annotationKindStamp")
             emitted = _symbol_primitives(placed.placement_id, placed.source_ref, "annotation", stamp.purpose,
