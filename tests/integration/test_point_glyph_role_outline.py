@@ -24,9 +24,13 @@ def _parts(*, stroke: bool = True, width: bool = True, alignment: str | None = N
            outline_pattern: bool = False, glyph: str = "diamond", row_mode: str = "lanes") -> dict:
     parts = sr.bundle("executive-light")
     body = parts["theme"]["body"]
-    body["values"]["point-outline-glyph"] = {
-        "type": "symbol", "value": {"shape": {"catalog": f"chrona-target-parts:{glyph}"}}
-    }
+    glyph_value = (
+        {"shape": "glyph", "viewBox": [10, 10],
+         "parts": [{"d": "M0 5L5 0L10 5L5 10Z", "paint": "fill"}]}
+        if glyph == "inline" else
+        {"shape": {"catalog": f"chrona-target-parts:{glyph}"}}
+    )
+    body["values"]["point-outline-glyph"] = {"type": "symbol", "value": glyph_value}
     body["roles"]["milestoneSymbol"]["symbol"] = "point-outline-glyph"
     body["colorBindings"]["milestone.fill"] = "surface"
     body["colorBindings"]["gate.fill"] = "surface"
@@ -90,9 +94,14 @@ def _local_symbol(item):
     return item.scene_id, item.paint, (width, height), commands, local_clip
 
 
-@pytest.mark.parametrize("row_mode", ["lanes", "automatic"])
-def test_bound_point_outline_reaches_mark_legend_svg_and_external_ground_contrast(tmp_path, monkeypatch, row_mode):
-    rendered = _render(tmp_path / "rendered", row_mode=row_mode)
+@pytest.mark.parametrize(("row_mode", "glyph"), [
+    ("lanes", "diamond"), ("automatic", "diamond"),
+    ("lanes", "inline"), ("automatic", "inline"),
+])
+def test_bound_point_outline_reaches_mark_legend_svg_and_external_ground_contrast(
+    tmp_path, monkeypatch, row_mode, glyph,
+):
+    rendered = _render(tmp_path / "rendered", row_mode=row_mode, glyph=glyph)
     mark = _glyph_parts(rendered, source_kind="object", source_ref="gate")
     swatch = _glyph_parts(rendered, source_kind="legend", source_ref="milestone")
 
@@ -117,7 +126,7 @@ def test_bound_point_outline_reaches_mark_legend_svg_and_external_ground_contras
     from chrona.presentation.layout import mark_geometry, surface_legend
     monkeypatch.setattr(mark_geometry, "complete_point_outline", lambda parts, **_kwargs: parts)
     monkeypatch.setattr(surface_legend, "complete_point_outline", lambda parts, **_kwargs: parts)
-    plain = _render(tmp_path / "plain", row_mode=row_mode)
+    plain = _render(tmp_path / "plain", row_mode=row_mode, glyph=glyph)
     plain_mark = _glyph_parts(plain, source_kind="object", source_ref="gate")
     (fill_finding,) = (item for item in evaluate_scene_contrast(scene_document(plain.scene))
                        if item.primitive_id == plain_mark[0].scene_id)
@@ -161,6 +170,14 @@ def test_completed_contour_obeys_point_role_alignment_without_changing_source_pa
 
     assert len(mark) == 3
     source_fill, source_stroke, contour = mark
+    # Catalogue width/finish intents are consumed into completed Scene paint;
+    # glyph_* metadata is deliberately cleared at that boundary.
+    assert source_stroke.paint.stroke_finish is not None
+    assert source_stroke.paint.stroke_finish.line_cap == "round"
+    assert source_stroke.paint.stroke_finish.line_join == "round"
+    source_width = min(source_stroke.bounds[2:]) / 16  # bulb: width 1 in a 16×16 viewport
+    assert source_stroke.paint.stroke_width == pytest.approx(
+        source_width if outside is None else 2 * source_width)
     assert len(legacy_mark) == 2
     for current, original in zip(mark[:2], legacy_mark):
         assert _local_symbol(current) == _local_symbol(original)
