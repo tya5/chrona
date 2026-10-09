@@ -2,7 +2,7 @@
 
 # Issue #1284 — group-header inset acceptance
 
-Source: `264f27afdff894899b19c754de500b9f82987c1f`, based on ready main `7503e53076e4e0b924051b89759a9ece6ca9d038`. [Published contract and architecture review](https://github.com/tya5/chrona/issues/1284#issuecomment-6087491029). Layout owns the offset and measured content extent; glyph bounds and Scene projection are unchanged. Public artifact and release gates remain pending; do not close.
+Source: `058b3e7822d9f0e8a939fb6055e2bc2b39496d3d`, refreshed by an ordinary merge of ready main `0617e671c51ed14fe0d242a37a18a744bd85b7e8`. [Published contract and architecture review](https://github.com/tya5/chrona/issues/1284#issuecomment-6087491029). Layout owns the offset and measured content extent; glyph bounds and Scene projection are unchanged. [PR #1312](https://github.com/tya5/chrona/pull/1312) needs fresh readiness checks: the previous head passed functional checks but failed readiness on its stale main base. Public artifact and release gates remain pending; do not close.
 
 ## Literal issue acceptance
 
@@ -20,4 +20,4 @@ Source: `264f27afdff894899b19c754de500b9f82987c1f`, based on ready main `7503e53
 
 ## Programme-level criteria (optional)
 
-None. S0: `.venv/bin/python -m tools.schema_equivalence --base-rev origin/main` passed: 38 schema structures equal, 451 mapped documents/739 probes, four unchanged baseline-invalid fixtures; L2+L3 46.5s. Scene delivery ownership passed (31 dataclasses/225 fields). Required next evidence: exact-head PR artifact/checks, then exact-main three-OS pytest/conformance/wheel with this review published.
+None. After the base refresh, the 14 inset/capability tests passed again and S0 passed with 38 schema structures equal (four unchanged baseline-invalid fixtures). Earlier broader evidence: 248 group/tab/Theme tests, 451 mapped documents/739 probes, and Scene delivery ownership (31 dataclasses/225 fields). Required next evidence: exact-head PR artifact/checks, then exact-main three-OS pytest/conformance/wheel with this review published.
