@@ -1,7 +1,7 @@
 # Neutral test-only catalogue source for Offworld's continuous scanline tile.
-# Import through the existing theme-asset-source/v0.1 authoring path; this is
+# Import through the existing theme-asset-source/v0.2 authoring path; this is
 # intentionally not an addition to the shipped catalogue.
-version: chrona/theme-asset-source/v0.1
+version: chrona/theme-asset-source/v0.2
 kind: theme-asset-source
 id: chrona-test-surface-textures
 body:

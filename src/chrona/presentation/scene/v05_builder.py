@@ -298,6 +298,9 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
                                      part_color=primitive.glyph_paint_color,
                                      catalog_pattern=bool(primitive.pattern and primitive.pattern.primitives),
                                      ink_only_pattern=ink_only_pattern,
+                                     pattern_has_substrate=bool(primitive.pattern and any(
+                                         item.kind == "circle" and item.fill_channel == "substrate"
+                                         for item in primitive.pattern.primitives)),
                                      catalog_glyph_stroke_width=primitive.glyph_stroke_width,
                                      catalog_glyph_line_cap=primitive.glyph_line_cap,
                                      catalog_glyph_line_join=primitive.glyph_line_join)

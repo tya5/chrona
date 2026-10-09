@@ -229,6 +229,15 @@ def _primitive_contains(primitive: dict[str, object], x: float, y: float) -> boo
         return _segment_tree_contains(primitive["_segmentTree"], x, y)
 
 
+def _circle_stroke_contains(primitive: dict[str, object], x: float, y: float) -> bool:
+    width = float(primitive.get("strokeWidth", 0))
+    if width <= 0:
+        return False
+    distance = math.hypot(x - float(primitive["cx"]), y - float(primitive["cy"]))
+    radius = float(primitive["radius"])
+    return max(0.0, radius - width / 2) <= distance <= radius + width / 2
+
+
 def _flatten_path(commands: list[dict[str, object]]) -> list[tuple[float, float]]:
     points: list[tuple[float, float]] = []
     current = start = None
@@ -298,37 +307,6 @@ def _segment_tree_contains(node: tuple[object, ...], x: float, y: float) -> bool
             or _segment_tree_contains(node[2], x, y))
 
 
-def _periodic_offsets(primitive: dict[str, object], width: float, height: float) -> tuple[tuple[float, float], ...]:
-    kind = primitive["kind"]
-    if kind == "circle":
-        cx, cy, radius = float(primitive["cx"]), float(primitive["cy"]), float(primitive["radius"])
-        bounds = (cx - radius, cy - radius, cx + radius, cy + radius)
-    elif kind == "rect":
-        x, y = float(primitive["x"]), float(primitive["y"])
-        bounds = (x, y, x + float(primitive["inlineSize"]), y + float(primitive["blockSize"]))
-    else:
-        points = primitive.get("_densityPoints") or _flatten_path(primitive["commands"])
-        expansion = float(primitive.get("strokeWidth", 0)) / 2
-        bounds = (min(point[0] for point in points) - expansion,
-                  min(point[1] for point in points) - expansion,
-                  max(point[0] for point in points) + expansion,
-                  max(point[1] for point in points) + expansion)
-    xs = [0.0]
-    ys = [0.0]
-    if bounds[0] < 0:
-        xs.append(float(-width))
-    if bounds[2] > width:
-        xs.append(float(width))
-    if bounds[1] < 0:
-        ys.append(float(-height))
-    if bounds[3] > height:
-        ys.append(float(height))
-    # Source centerlines and filled primitive geometry lie within the base
-    # tile. For any sample in that tile, a farther integer translation cannot
-    # be nearer than the base tile or its immediately adjacent copies.
-    return tuple((dx, dy) for dx in xs for dy in ys)
-
-
 def normalize_pattern_entry(value: object) -> dict[str, object]:
     """Normalize a bounded repeat tile and derive its sampled density."""
     if not isinstance(value, dict) or set(value) != {"tile", "angle", "densityBasisPoints", "primitives"}:
@@ -348,11 +326,26 @@ def normalize_pattern_entry(value: object) -> dict[str, object]:
             raise IconNormalizationError("E_THEME_ASSET_SOURCE_PATTERN")
         kind = primitive.get("kind")
         item: dict[str, object]
-        if kind == "circle" and set(primitive) == {"kind", "cx", "cy", "radius"}:
+        if kind == "circle" and set(primitive) <= {"kind", "cx", "cy", "radius", "fillChannel", "strokeWidth"} and {"kind", "cx", "cy", "radius"} <= set(primitive):
             cx = _finite_number(primitive["cx"], minimum=0, maximum=width)
             cy = _finite_number(primitive["cy"], minimum=0, maximum=height)
             radius = _finite_number(primitive["radius"], positive=True, maximum=128)
             item = {"kind": "circle", "cx": cx, "cy": cy, "radius": radius}
+            fill_channel = primitive.get("fillChannel", "ink")
+            if not isinstance(fill_channel, str) or fill_channel not in {"ink", "substrate", "none"}:
+                raise IconNormalizationError(
+                    "E_THEME_ASSET_SOURCE_PATTERN",
+                    f"circle fillChannel must be 'ink', 'substrate', or 'none'; found {fill_channel!r}",
+                )
+            if "fillChannel" in primitive:
+                item["fillChannel"] = fill_channel
+            if "strokeWidth" in primitive:
+                item["strokeWidth"] = _finite_number(primitive["strokeWidth"], positive=True, maximum=16)
+            if fill_channel == "none" and "strokeWidth" not in primitive:
+                raise IconNormalizationError(
+                    "E_THEME_ASSET_SOURCE_PATTERN",
+                    "circle fillChannel='none' requires a positive strokeWidth to leave visible ink",
+                )
         elif kind == "rect" and set(primitive) == {"kind", "x", "y", "inlineSize", "blockSize"}:
             x = _finite_number(primitive["x"], minimum=0, maximum=width)
             y = _finite_number(primitive["y"], minimum=0, maximum=height)
@@ -387,14 +380,14 @@ def normalize_pattern_entry(value: object) -> dict[str, object]:
         else:
             raise IconNormalizationError("E_THEME_ASSET_SOURCE_PATTERN")
         normalized.append(item)
-    density_primitives: list[tuple[dict[str, object], tuple[tuple[float, float], ...]]] = []
+    density_primitives: list[dict[str, object]] = []
     for primitive in normalized:
         sample = dict(primitive)
         if sample.get("kind") == "path":
             sample["_densityPoints"] = _flatten_path(sample["commands"])
             if sample["paint"] == "stroke":
                 sample["_segmentTree"] = _build_segment_tree(sample["_densityPoints"], float(sample["strokeWidth"]) / 2)
-        density_primitives.append((sample, _periodic_offsets(sample, width, height)))
+        density_primitives.append(sample)
     covered = 0
     cells = 128 * 128
     for row in range(128):
@@ -405,8 +398,24 @@ def normalize_pattern_entry(value: object) -> dict[str, object]:
             # Rotation transforms sample and geometry together, so its value
             # is exactly the unrotated local-grid coverage for every angle.
             x, y = px, py
-            if any(_primitive_contains(primitive, x + dx, y + dy)
-                   for primitive, offsets in density_primitives for dx, dy in offsets):
+            # The finite tile clips each primitive before repetition. Evaluate
+            # source primitives in authored painter order so substrate fills
+            # erase earlier ink and later strokes/paths can paint over them.
+            ink = False
+            for primitive in density_primitives:
+                kind = primitive["kind"]
+                if kind == "circle":
+                    if _primitive_contains(primitive, x, y):
+                        channel = primitive.get("fillChannel", "ink")
+                        if channel == "ink":
+                            ink = True
+                        elif channel == "substrate":
+                            ink = False
+                    if _circle_stroke_contains(primitive, x, y):
+                        ink = True
+                elif _primitive_contains(primitive, x, y):
+                    ink = True
+            if ink:
                 covered += 1
     density = int((Decimal(covered * 10_000) / Decimal(cells)).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
     if not 1 <= density <= 10_000:

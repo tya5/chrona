@@ -10,7 +10,7 @@ from chrona.usecases.failure_report import StableFailure
 
 def test_icons_is_an_explicit_packaged_preset_source_root():
     root = resources.builtin_preset_source_root("icons")
-    assert root.joinpath("chrona-theme-starter-v2026-09-29.yaml").is_file()
+    assert root.joinpath("chrona-theme-starter-v2026-10-09.yaml").is_file()
     assert root.joinpath("chrona-theme-starter.NOTICE").is_file()
 
 

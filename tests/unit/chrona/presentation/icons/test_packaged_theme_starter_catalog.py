@@ -10,7 +10,7 @@ from chrona.presentation.icons.importer import import_theme_assets
 
 
 RESOURCE_DIR = Path(__file__).resolve().parents[5] / "src/chrona/resources/icons"
-MANIFEST = RESOURCE_DIR / "chrona-theme-starter-v2026-09-29.manifest"
+MANIFEST = RESOURCE_DIR / "chrona-theme-starter-v2026-10-09.manifest"
 
 
 def test_packaged_theme_starter_catalog_has_pinned_inventory_and_identity(tmp_path: Path) -> None:
@@ -28,6 +28,8 @@ def test_packaged_theme_starter_catalog_has_pinned_inventory_and_identity(tmp_pa
 
     catalog = json.loads(catalog_bytes)
     body = catalog["body"]
+    assert catalog["version"] == manifest["catalog"]["version"] == "chrona/icon-catalog/v0.5"
+    assert catalog["id"] == "chrona-theme-starter-v2026-10-09"
     assert catalog["version"] == manifest["catalog"]["version"]
     assert body["set"] == manifest["catalog"]["set"]
     assert body["aliases"] == manifest["catalog"]["aliases"]

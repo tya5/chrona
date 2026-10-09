@@ -30,6 +30,39 @@ def test_pattern_placement_anchors_tile_at_translated_rect_top_left():
     assert placed.density_basis_points == 1250
 
 
+def test_circle_operations_are_closed_optional_and_legacy_defaults_stay_implicit():
+    pattern = {
+        "tile": {"inlineSize": 8, "blockSize": 8}, "angle": 0,
+        "densityBasisPoints": 1000,
+        "primitives": [
+            {"kind": "circle", "cx": 2, "cy": 3, "radius": 1},
+            {"kind": "circle", "cx": 5, "cy": 3, "radius": 2,
+             "fillChannel": "substrate", "strokeWidth": 0.5},
+            {"kind": "circle", "cx": 7, "cy": 3, "radius": 1,
+             "fillChannel": "none", "strokeWidth": 0.25},
+        ],
+    }
+    circles = complete_pattern_placement(pattern, Rect(Decimal(0), Decimal(0), Decimal(20), Decimal(20))).primitives
+    assert circles[0].fill_channel is None and circles[0].stroke_width is None
+    assert (circles[1].fill_channel, circles[1].stroke_width) == ("substrate", 0.5)
+    assert (circles[2].fill_channel, circles[2].stroke_width) == ("none", 0.25)
+
+
+@pytest.mark.parametrize("primitive", [
+    {"kind": "circle", "cx": 2, "cy": 3, "radius": 1, "fillChannel": "substratee"},
+    {"kind": "circle", "cx": 2, "cy": 3, "radius": 1, "strokeWidth": 0},
+    {"kind": "circle", "cx": 2, "cy": 3, "radius": 1, "strokeWidth": -1},
+    {"kind": "circle", "cx": 2, "cy": 3, "radius": 1, "strokeWidth": 16.01},
+    {"kind": "circle", "cx": 2, "cy": 3, "radius": 1, "extra": True},
+])
+def test_circle_operations_reject_unknown_or_invalid_values(primitive):
+    with pytest.raises(LayoutError, match="E_PRESENTATION_PRIMITIVE_INVALID"):
+        complete_pattern_placement({
+            "tile": {"inlineSize": 8, "blockSize": 8}, "angle": 0,
+            "densityBasisPoints": 1000, "primitives": [primitive],
+        }, Rect(Decimal(0), Decimal(0), Decimal(20), Decimal(20)))
+
+
 def test_pattern_placement_preserves_completed_rounded_rect_clip():
     bounds = Rect(Decimal(5), Decimal(7), Decimal(40), Decimal(20))
     pattern = {

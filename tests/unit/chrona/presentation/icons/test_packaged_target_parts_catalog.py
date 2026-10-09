@@ -12,8 +12,8 @@ from chrona.presentation.icons.importer import import_theme_assets
 
 
 RESOURCE_DIR = Path(__file__).resolve().parents[5] / "src/chrona/resources/icons"
-MANIFEST = RESOURCE_DIR / "chrona-target-parts-v2026-10.manifest"
-STARTER_MANIFEST = RESOURCE_DIR / "chrona-theme-starter-v2026-09-29.manifest"
+MANIFEST = RESOURCE_DIR / "chrona-target-parts-v2026-10-09.manifest"
+STARTER_MANIFEST = RESOURCE_DIR / "chrona-theme-starter-v2026-10-09.manifest"
 
 
 def _manifest() -> dict:
@@ -33,7 +33,7 @@ def test_packaged_target_parts_catalog_has_pinned_inventory_and_identity(tmp_pat
 
     catalog = json.loads(catalog_bytes)
     body = catalog["body"]
-    assert catalog["version"] == manifest["catalog"]["version"] == "chrona/icon-catalog/v0.4"
+    assert catalog["version"] == manifest["catalog"]["version"] == "chrona/icon-catalog/v0.5"
     assert body["set"] == manifest["catalog"]["set"] == "chrona-target-parts"
     assert body["aliases"] == manifest["catalog"]["aliases"]
     assert sorted(body["glyphs"]) == manifest["entries"]["glyphs"]
@@ -41,6 +41,14 @@ def test_packaged_target_parts_catalog_has_pinned_inventory_and_identity(tmp_pat
     for name, expected in manifest["entries"]["patterns"].items():
         assert body["patterns"][name]["densityBasisPoints"] == expected["densityBasisPoints"]
     assert body["icons"] == {} and body["entryAliases"] == {}
+    seigaiha = body["patterns"]["seigaiha"]
+    assert seigaiha["tile"] == {"inlineSize": 20.0, "blockSize": 10.0}
+    assert seigaiha["angle"] == 0.0
+    assert [(item["cx"], item["cy"], item["radius"], item["fillChannel"], item["strokeWidth"])
+            for item in seigaiha["primitives"]] == [
+                (cx, cy, radius, channel, 0.8)
+                for cx, cy in ((0.0, 10.0), (20.0, 10.0), (10.0, 5.0))
+                for radius, channel in ((10.0, "substrate"), (7.0, "none"), (4.0, "none"))]
 
     provenance = body["provenance"]
     assert provenance["sourceKind"] == "theme-asset-source"
@@ -65,7 +73,8 @@ def test_every_entry_has_a_declared_consumer_or_a_named_owner() -> None:
     assert set(consumers["pattern-roles"]) == patterns
     assert glyphs.isdisjoint(patterns)
     assert all(owner.startswith("#") and owner[1:].isdigit() for owner in unconsumed.values())
-    assert set(manifest["dropped"]) == {"seigaiha"}
+    assert "seigaiha" in patterns
+    assert manifest["entries"]["patterns"]["seigaiha"]["densityBasisPoints"] == 2606
 
 
 def test_the_catalogue_is_a_wheel_resource_distinct_from_the_pinned_starter() -> None:
@@ -88,4 +97,6 @@ def test_parts_carry_no_colour_and_every_stroke_is_complete() -> None:
     for name, pattern in body["patterns"].items():
         assert set(pattern) == {"tile", "angle", "densityBasisPoints", "primitives"}, name
         for primitive in pattern["primitives"]:
-            assert primitive["kind"] in {"circle", "rect", "path"} and "color" not in primitive and "fill" not in primitive
+            assert primitive["kind"] in {"circle", "rect", "path"} and "color" not in primitive
+            if primitive["kind"] == "circle" and "fillChannel" in primitive:
+                assert primitive["fillChannel"] in {"ink", "substrate", "none"}
