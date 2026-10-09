@@ -57,7 +57,7 @@ def test_report_names_measured_primitive_ground_and_channel(tmp_path):
 # --- #995: a decoration warns, text and marks fail --------------------------------------------------------
 
 
-def _corpus(tmp_path, monkeypatch, *extra, listed=True):
+def _corpus(tmp_path, monkeypatch, *extra, listed=True, omit_roles=()):
     """A committed Scene that paints every decoration role (the first one faint) plus `extra` primitives.
 
     Its Theme is `demo`; the repository's opt-in registry (#1126) lists it unless `listed` is false.
@@ -66,12 +66,21 @@ def _corpus(tmp_path, monkeypatch, *extra, listed=True):
     from tools import presentation_contrast
 
     decorations = []
-    for number, binding in enumerate(contrast_bindings(ContrastClass.DECORATION)):
+    selected = [binding for binding in contrast_bindings(ContrastClass.DECORATION)
+                if binding.scene_role not in omit_roles]
+    for number, binding in enumerate(selected):
         fill = "#F4F4F4" if number == 0 else "#202020"
-        decorations.append({"id": f"d{number}", "kind": "Rect", "visualRole": binding.scene_role,
-                            "purpose": binding.purpose, "paintOrder": 10,
-                            "bounds": {"inline": 200 + number * 30, "block": 0, "inlineSize": 20, "blockSize": 10},
-                            "paint": {"fill": fill, "opacity": 1}})
+        if binding.scene_role == "row-rule":
+            decorations.append({"id": f"d{number}", "kind": "Path", "visualRole": binding.scene_role,
+                                "purpose": binding.purpose, "paintOrder": 10,
+                                "points": [[200 + number * 30, 0], [220 + number * 30, 0]],
+                                "paint": {"stroke": fill, "strokeWidth": 0.5, "opacity": 1}})
+        else:
+            decorations.append({"id": f"d{number}", "kind": "Rect", "visualRole": binding.scene_role,
+                                "purpose": binding.purpose, "paintOrder": 10,
+                                "bounds": {"inline": 200 + number * 30, "block": 0,
+                                           "inlineSize": 20, "blockSize": 10},
+                                "paint": {"fill": fill, "opacity": 1}})
     path = tmp_path / "examples/demo/generated/slide.scene.json"
     path.parent.mkdir(parents=True)
     document = _scene(*decorations, *extra)
@@ -93,6 +102,39 @@ def test_a_corpus_with_only_a_warned_decoration_passes_the_check(tmp_path, monke
     text = output.read_text(encoding="utf-8")
     assert "warnings: 1." in text and "errors: 0;" in text
     assert "| Errors | Warnings |" in text and "| warning |" in text
+
+
+def test_each_row_decoration_alternative_satisfies_coverage_without_ignoring_findings(tmp_path, monkeypatch):
+    from tools import presentation_contrast
+
+    for omitted, present in (({"row-rule"}, "row-band"), ({"row-band"}, "row-rule")):
+        case_root = tmp_path / present
+        tool = _corpus(case_root, monkeypatch, omit_roles=omitted)
+        records = tool.evaluate_committed_scenes(tool.committed_scene_paths(case_root), root=case_root)
+        report = tool.report_document(records)
+
+        assert report["corpusErrors"] == []
+        finding_roles = {item["finding"]["visualRole"] for item in records}
+        assert present in finding_roles
+        assert omitted.isdisjoint(finding_roles)
+
+
+def test_absent_both_row_decoration_alternatives_is_a_coverage_error(tmp_path, monkeypatch):
+    tool = _corpus(tmp_path, monkeypatch, omit_roles={"row-band", "row-rule"})
+
+    report = tool.report_document(tool.evaluate_committed_scenes(
+        tool.committed_scene_paths(tmp_path), root=tmp_path))
+
+    assert report["corpusErrors"] == ["E_PRESENTATION_CONTRAST_DECORATION_WITNESS"]
+
+
+def test_row_alternative_does_not_waive_an_unrelated_decoration_role(tmp_path, monkeypatch):
+    tool = _corpus(tmp_path, monkeypatch, omit_roles={"axis-band-decoration"})
+
+    report = tool.report_document(tool.evaluate_committed_scenes(
+        tool.committed_scene_paths(tmp_path), root=tmp_path))
+
+    assert report["corpusErrors"] == ["E_PRESENTATION_CONTRAST_DECORATION_WITNESS"]
 
 
 def test_a_corpus_with_an_illegible_mark_still_fails_the_check(tmp_path, monkeypatch):

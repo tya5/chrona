@@ -596,7 +596,7 @@ identity rule.
 Stroke decoration remains Theme-owned and is selected by primitive purpose from the
 completed resolved Theme. The purpose mapping is closed: ticks/major axis use
 `axisMajor`, minor axis uses `axisMinor`, table frame uses `frame`, row rules use
-`rowRule`, group separators use `groupSeparator`, and dependency/explanatory paths use
+the `rowRule` semantic's `row-rule` Theme role (#1270), group separators use `groupSeparator`, and dependency/explanatory paths use
 `dependency`. The selected token contributes color, opacity, width, and dash together;
 mixing fields from different tokens or hard-coding a dash is invalid.
 
