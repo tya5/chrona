@@ -345,9 +345,12 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
             scale = layout.horizontal_scale
             steps.append(f"matrix({number(scale)} 0 0 1 {number(node.baseline[0] * (1 - scale))} 0)")
         transform = f' transform="{" ".join(steps)}"' if steps else ""
-        return (f'<text {common} x="{number(node.baseline[0])}" y="{number(node.baseline[1])}" font-family="{escape(layout.family, quote=True)}" '
+        markup = (f'<text {common} x="{number(node.baseline[0])}" y="{number(node.baseline[1])}" font-family="{escape(layout.family, quote=True)}" '
                 f'font-weight="{layout.weight}" font-size="{number(layout.font_size)}"{transform}{treatment}{single}{preserve} '
-                f'{attrs(paint, fill=True, stroke=False)}>{body}</text>')
+                f'{attrs(paint, fill=True, stroke=False, effects=paint.glow is None)}>{body}</text>')
+        # Glow.region is already in completed surface coordinates. A filter on the
+        # transformed text would transform that region (and the blur) a second time.
+        return f'<g filter="url(#{glow_id(paint)})">{markup}</g>' if paint.glow is not None else markup
 
     for node in (node for _, node in sorted(enumerate(surface.primitives), key=lambda item: (item[1].paint_order, item[0]))):
         overlay_attrs = ""
