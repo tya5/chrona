@@ -12,6 +12,16 @@
 version: chrona/schema-equivalence-expected-deltas/v0.1
 deltas:
   - {layer: L1, schema: view-v0.28.schema.yaml, pointer: /allOf/1/properties/body/properties/backgroundDecoration/properties/rows/enum, before: [none, alternate], after: [none, alternate, rules], reason: "Issue #1270 opts in to completed item-row rules; undeclared/none/alternate behavior is unchanged.", test: "tests/integration/test_row_rules.py::test_rule_per_item_row_uses_bottom_and_full_table_to_timeline_extent_in_scene_and_svg"}
+  - layer: L1
+    schema: layout-profile-v0.10.schema.yaml
+    pointer: /properties/reviewSurface/properties/backgroundExtents/properties/groupHeaderBand
+    before: {enum: [table, timeline, both]}
+    after:
+      anyOf:
+        - {enum: [table, timeline, both]}
+        - {const: text}
+    reason: "Issue #1283 permits the measured text extent only for groupHeaderBand; the shared three-region vocabulary and other background roles remain unchanged."
+    test: "tests/unit/tools/test_vocabulary_part.py::test_background_extent_is_shared_and_text_is_only_group_header_extension"
   - {"layer":"L2","document":"tests/fixtures/icons/theme-assets-valid.yaml","before":{"path":"tests/fixtures/icons/theme-assets-valid.yaml","schema":"theme-asset-source-v0.1.schema.yaml","valid":true,"error":null},"after":{"path":"tests/fixtures/icons/theme-assets-valid.yaml","schema":"theme-asset-source-v0.2.schema.yaml","valid":true,"error":null},"reason":"#849 atomically migrates first-party declarative fixtures to source v0.2; density mismatch remains an importer-level refusal.","test":"tests/unit/chrona/presentation/icons/test_importer.py::test_theme_assets_import_emits_canonical_v05_catalogue_with_license_and_exact_densities"}
   - {"layer":"L2","document":"tests/fixtures/icons/theme-assets-invalid-density.yaml","before":{"path":"tests/fixtures/icons/theme-assets-invalid-density.yaml","schema":"theme-asset-source-v0.1.schema.yaml","valid":true,"error":null},"after":{"path":"tests/fixtures/icons/theme-assets-invalid-density.yaml","schema":"theme-asset-source-v0.2.schema.yaml","valid":true,"error":null},"reason":"#849 atomically migrates first-party declarative fixtures to source v0.2; density mismatch remains an importer-level refusal.","test":"tests/unit/chrona/presentation/icons/test_importer.py::test_theme_assets_import_emits_canonical_v05_catalogue_with_license_and_exact_densities"}
   - {"layer": "L2", "document": "examples/aster-ssd/generated/overview.scene.json", "before": {"path": "examples/aster-ssd/generated/overview.scene.json", "schema": "scene-v0.6.schema.yaml", "valid": true, "error": null}, "after": {"path": "examples/aster-ssd/generated/overview.scene.json", "schema": "scene-v0.7.schema.yaml", "valid": true, "error": null}, "reason": "#1109 R2 transports relation endpoint instance identities into the generated Scene; the optional members select v0.7 and the document remains valid.", "test": "tests/unit/chrona/presentation/scene/test_relation_endpoint_identity.py::test_relation_endpoint_identity_is_optional_and_selects_scene_v07"}
