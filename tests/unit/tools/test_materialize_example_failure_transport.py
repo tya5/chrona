@@ -95,8 +95,8 @@ def test_main_keeps_success_silent_and_passes_materializer_arguments(tmp_path, m
     materializer.main()
 
     assert calls == [((manifest, "synthetic-slide", output), {"write": False})]
-    assert capsys.readouterr().out == ""
-    assert capsys.readouterr().err == ""
+    captured = capsys.readouterr()
+    assert captured.out == "" and captured.err == ""
 
 
 def test_library_materialize_preserves_typed_failure_and_never_prints(tmp_path, monkeypatch, capsys):

@@ -86,6 +86,8 @@ stderr fallback also failed their synthetic assertions. All mutations were
 restored before the integrated run. Bounded long-input anchor tests preserve
 the complete pointer and cap message operands. Scale resolver codes remain
 unchanged; upstream Scheme ingress retains its own schema code/pointer.
+Invalid id/facet/endpoint assertions and the single-capture success-silence
+assertion are verified in the final owner/adapter batch: 31 passed (1.11s).
 
 The MCP projection test supplies the characterized ledger rows to the real
 `render_draft` tool envelope without rerendering 19 images; the retained

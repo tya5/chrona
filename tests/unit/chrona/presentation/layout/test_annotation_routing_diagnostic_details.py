@@ -77,6 +77,22 @@ def test_missing_annotation_anchor_names_actual_target():
     assert "no completed actual mark" in missing.value.detail
 
 
+@pytest.mark.parametrize(("field", "value"), [("id", None), ("facet", "observation"), ("endpoint", "middle")])
+def test_invalid_anchor_field_names_the_field_and_keeps_view_provenance(field, value):
+    anchor = {"kind": "object", "id": "titlecard", "facet": "actual", "endpoint": "finish"}
+    anchor[field] = value
+    annotation = replace(_annotation(anchor=anchor), anchor_source_ref="/body/annotations/7/anchor")
+
+    with pytest.raises(ValueError) as missing:
+        resolve_annotation_anchor(annotation, ())
+
+    assert missing.value.diagnostic_id == "E_PRESENTATION_ANCHOR_MISSING"
+    assert missing.value.path == "/body/annotations/7/anchor"
+    assert f"missing_or_invalid={field!r}" in missing.value.detail
+    assert f"{field if field != 'id' else 'object_id'}={value!r}" in missing.value.detail
+    assert "annotation_id='annotation-alpha'" in missing.value.detail
+
+
 def test_missing_mark_endpoint_names_exact_endpoint_and_reason():
     mark = ComparisonMark("titlecard", "actual", "span", start=date(2026, 1, 1))
     annotation = replace(_annotation(anchor={"kind": "object", "id": "titlecard", "facet": "actual",
