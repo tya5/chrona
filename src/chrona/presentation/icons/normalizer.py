@@ -333,13 +333,19 @@ def normalize_pattern_entry(value: object) -> dict[str, object]:
             item = {"kind": "circle", "cx": cx, "cy": cy, "radius": radius}
             fill_channel = primitive.get("fillChannel", "ink")
             if not isinstance(fill_channel, str) or fill_channel not in {"ink", "substrate", "none"}:
-                raise IconNormalizationError("E_THEME_ASSET_SOURCE_PATTERN")
+                raise IconNormalizationError(
+                    "E_THEME_ASSET_SOURCE_PATTERN",
+                    f"circle fillChannel must be 'ink', 'substrate', or 'none'; found {fill_channel!r}",
+                )
             if "fillChannel" in primitive:
                 item["fillChannel"] = fill_channel
             if "strokeWidth" in primitive:
                 item["strokeWidth"] = _finite_number(primitive["strokeWidth"], positive=True, maximum=16)
             if fill_channel == "none" and "strokeWidth" not in primitive:
-                raise IconNormalizationError("E_THEME_ASSET_SOURCE_PATTERN")
+                raise IconNormalizationError(
+                    "E_THEME_ASSET_SOURCE_PATTERN",
+                    "circle fillChannel='none' requires a positive strokeWidth to leave visible ink",
+                )
         elif kind == "rect" and set(primitive) == {"kind", "x", "y", "inlineSize", "blockSize"}:
             x = _finite_number(primitive["x"], minimum=0, maximum=width)
             y = _finite_number(primitive["y"], minimum=0, maximum=height)

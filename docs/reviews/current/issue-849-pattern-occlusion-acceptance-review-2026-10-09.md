@@ -28,7 +28,17 @@ graphics 116, resource/schema 152, package/library 17 and actual-Yuya checks.
 S0 passed: 443 mapped documents, 739 probes, L2+L3 39.6s, four existing invalid
 fixtures unchanged; successor and additive Scene deltas are explicit.
 Schema inventory/annotations/references and Scene delivery checks passed.
-No manifest-derived output was edited. Definition-ID changes may be nonvisual;
-the Yuya pattern/closure change is intended. Required PR snapshot batch audit,
-conformance/pytest/newest-Python and exact-main three-OS release containing this
-review remain pending. Local evidence is not release acceptance; keep #849 open.
+No manifest-derived output was edited. [PR #1265 snapshot](https://github.com/tya5/chrona/actions/runs/37874183347),
+head `141b07e1`: artifact 11591428496, 145 paths, 23 changed (11 SVG,
+11 Scene, inventory), no additions/retirements. Ten non-Yuya Scenes change
+only resource provenance; their SVGs differ only in pattern IDs. Root verified
+these JSON-pointer and SVG invariants independently. Yuya alone changes
+completed pattern content: the intended exact nine-circle stack, density 2606bp.
+That run's conformance failed diagnostic actionability at five new bare sites
+(paint-invalid: two; primitive-invalid: one; source-pattern: two). Add
+owner-local detail, not a larger bare-site allowance; validation semantics stay
+unchanged. Focused detail tests: 57 passed; the actionability validator passes
+at the unchanged bare-site counts (10/76/5). The local generated inventory is
+stale and is left to CI snapshot regeneration. Corrected-head PR checks and exact-main three-OS release containing
+this review remain required. Local evidence is not release acceptance;
+keep #849 open.

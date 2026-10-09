@@ -127,16 +127,26 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
                     fill = ink
                 elif channel == "substrate":
                     if paint.fill is None:
-                        raise ValueError("E_PRESENTATION_PAINT_INVALID")
+                        raise ValueError(
+                            f"E_PRESENTATION_PAINT_INVALID: pattern circle at ({number(item.cx)}, {number(item.cy)}) "
+                            "requests fillChannel='substrate' but its completed ScenePaint has no fill; bind a role fill"
+                        )
                     fill = escape(paint.fill, quote=True)
                 elif channel == "none":
                     fill = "none"
                 else:
-                    raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                    raise ValueError(
+                        f"E_PRESENTATION_PRIMITIVE_INVALID: pattern circle at ({number(item.cx)}, {number(item.cy)}) "
+                        f"has unsupported fillChannel {channel!r}; expected 'ink', 'substrate', or 'none'"
+                    )
                 appearance = f'fill="{fill}"'
                 if item.stroke_width is not None:
                     if paint.stroke is None:
-                        raise ValueError("E_PRESENTATION_PAINT_INVALID")
+                        raise ValueError(
+                            f"E_PRESENTATION_PAINT_INVALID: pattern circle at ({number(item.cx)}, {number(item.cy)}) "
+                            f"has strokeWidth={number(item.stroke_width)} but its completed ScenePaint has no stroke; "
+                            "bind a role stroke or omit strokeWidth"
+                        )
                     appearance += (f' stroke="{ink}" stroke-width="{number(item.stroke_width)}"')
                 parts.append(f'<circle cx="{number(item.cx)}" cy="{number(item.cy)}" r="{number(item.radius)}" {appearance}/>')
             elif item.kind == "rect":

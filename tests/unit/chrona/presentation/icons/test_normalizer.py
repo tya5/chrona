@@ -183,23 +183,28 @@ def test_pattern_circle_stroke_paints_after_fill_and_can_be_ink_only():
 
 @pytest.mark.parametrize("channel", ["bad", None, [], 3])
 def test_pattern_rejects_invalid_circle_fill_channel(channel):
-    with pytest.raises(IconNormalizationError, match="E_THEME_ASSET_SOURCE_PATTERN"):
+    with pytest.raises(IconNormalizationError) as error:
         normalize_pattern_entry({
             "tile": {"inlineSize": 8, "blockSize": 8}, "angle": 0,
             "densityBasisPoints": 100,
             "primitives": [{"kind": "circle", "cx": 4, "cy": 4, "radius": 2,
                             "fillChannel": channel}],
         })
+    assert error.value.diagnostic_id == "E_THEME_ASSET_SOURCE_PATTERN"
+    assert "fillChannel must be 'ink', 'substrate', or 'none'" in str(error.value)
+    assert repr(channel) in str(error.value)
 
 
 def test_pattern_circle_none_requires_stroke_and_zero_visible_ink_is_rejected():
-    with pytest.raises(IconNormalizationError, match="E_THEME_ASSET_SOURCE_PATTERN"):
+    with pytest.raises(IconNormalizationError) as invalid_channel:
         normalize_pattern_entry({
             "tile": {"inlineSize": 8, "blockSize": 8}, "angle": 0,
             "densityBasisPoints": 1,
             "primitives": [{"kind": "circle", "cx": 4, "cy": 4, "radius": 2,
                             "fillChannel": "none"}],
         })
+    assert invalid_channel.value.diagnostic_id == "E_THEME_ASSET_SOURCE_PATTERN"
+    assert "fillChannel='none' requires a positive strokeWidth" in str(invalid_channel.value)
     with pytest.raises(IconNormalizationError) as error:
         normalize_pattern_entry({
             "tile": {"inlineSize": 8, "blockSize": 8}, "angle": 0,
