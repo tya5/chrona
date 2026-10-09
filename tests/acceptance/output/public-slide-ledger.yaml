@@ -71,6 +71,7 @@ slides:
   halcyon-1/overlay-briefing: {axisLabels: 13, chips: ['chip:as-of-label', 'chip:period-label:launch-window']}
   halcyon-1/programme-board: {axisLabels: 13, chips: ['chip:as-of-label', 'chip:period-label:launch-window']}
   halcyon-1/replan-baseline: {axisLabels: 7, chips: ['chip:as-of-label']}
+  halcyon-1/sunday: {axisLabels: 13, chips: ['chip:as-of-label']}
   halcyon-1/target-b: {axisLabels: 13, chips: ['chip:as-of-label']}
   halcyon-1/titlecard: {axisLabels: 22, chips: ['chip:as-of-label']}
   halcyon-1/tvac-slip: {axisLabels: 7, chips: ['chip:as-of-label']}
