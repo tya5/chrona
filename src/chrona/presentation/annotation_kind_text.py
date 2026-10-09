@@ -12,6 +12,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
+from chrona.presentation.group_header_text import FIGURE_PREFIX, GroupHeaderTextError, parse_template
+
 PLACEHOLDERS = ("label", "secondary", "subject", "subjectId")
 DEFAULT_TITLE = "{label}"
 CODE = "E_THEME_ANNOTATION_KIND_TEMPLATE"
@@ -38,6 +40,11 @@ class KindHeader:
     heading_parts: tuple[tuple[str, str], ...] = ()
 
     @property
+    def figure_ids(self) -> frozenset[str]:
+        return frozenset(value[len(FIGURE_PREFIX):] for kind, value in (*self.parts, *self.heading_parts)
+                         if kind == "field" and value.startswith(FIGURE_PREFIX))
+
+    @property
     def inline_secondary(self) -> bool:
         """Whether the title shows the secondary label itself (then there is no second line)."""
         return ("field", "secondary") in self.parts
@@ -45,37 +52,10 @@ class KindHeader:
 
 def parse_title(source: str) -> tuple[tuple[str, str], ...]:
     """Parse ``source`` or raise ``E_THEME_ANNOTATION_KIND_TEMPLATE`` for any other brace use."""
-    parts: list[tuple[str, str]] = []
-    literal: list[str] = []
-    index = 0
-    while index < len(source):
-        char = source[index]
-        if char == "{":
-            if source[index + 1:index + 2] == "{":
-                literal.append("{")
-                index += 2
-                continue
-            end = source.find("}", index + 1)
-            name = source[index + 1:end] if end != -1 else ""
-            if name not in PLACEHOLDERS:
-                raise AnnotationKindTextError(CODE, f"unknown or unterminated placeholder in {source!r}")
-            if literal:
-                parts.append(("text", "".join(literal)))
-                literal = []
-            parts.append(("field", name))
-            index = end + 1
-            continue
-        if char == "}":
-            if source[index + 1:index + 2] != "}":
-                raise AnnotationKindTextError(CODE, f"lone closing brace in {source!r}")
-            literal.append("}")
-            index += 2
-            continue
-        literal.append(char)
-        index += 1
-    if literal:
-        parts.append(("text", "".join(literal)))
-    return tuple(parts)
+    try:
+        return parse_template(source, placeholders=PLACEHOLDERS, code=CODE).parts
+    except GroupHeaderTextError as error:
+        raise AnnotationKindTextError(error.code, error.detail) from error
 
 
 def kind_header(kind_id: str, declaration: Mapping[str, object]) -> KindHeader:
@@ -101,18 +81,36 @@ def kind_header(kind_id: str, declaration: Mapping[str, object]) -> KindHeader:
     return KindHeader(label, secondary, title, parts, heading, heading_parts)
 
 
-def heading_text(header: KindHeader, *, subject: str, subject_id: str = "") -> str | None:
+def _render(parts: tuple[tuple[str, str], ...], values: Mapping[str, str],
+            figures: Mapping[str, int] | None) -> str:
+    rendered = []
+    for kind, value in parts:
+        if kind == "text":
+            rendered.append(value)
+        elif value.startswith(FIGURE_PREFIX):
+            figure_id = value[len(FIGURE_PREFIX):]
+            if figures is None or figure_id not in figures:
+                raise AnnotationKindTextError("E_VIEW_FIGURE_UNKNOWN", f"no resolved figure {figure_id!r}")
+            rendered.append(str(figures[figure_id]))
+        else:
+            rendered.append(values[value])
+    return "".join(rendered)
+
+
+def heading_text(header: KindHeader, *, subject: str, subject_id: str = "",
+                 figures: Mapping[str, int] | None = None) -> str | None:
     """Render the optional separate heading with the same closed grammar as the title."""
     if header.heading is None:
         return None
     values = {"label": header.label, "secondary": header.secondary or "", "subject": subject, "subjectId": subject_id}
-    return "".join(value if kind == "text" else values[value] for kind, value in header.heading_parts)
+    return _render(header.heading_parts, values, figures)
 
 
-def header_lines(header: KindHeader, *, subject: str, subject_id: str = "") -> tuple[str, ...]:
+def header_lines(header: KindHeader, *, subject: str, subject_id: str = "",
+                 figures: Mapping[str, int] | None = None) -> tuple[str, ...]:
     """The header text: the rendered title, then the secondary label unless the title shows it."""
     values = {"label": header.label, "secondary": header.secondary or "", "subject": subject, "subjectId": subject_id}
-    first = "".join(value if kind == "text" else values[value] for kind, value in header.parts)
+    first = _render(header.parts, values, figures)
     if header.secondary is not None and not header.inline_secondary:
         return (first, header.secondary)
     return (first,)

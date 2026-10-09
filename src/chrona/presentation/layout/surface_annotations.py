@@ -583,7 +583,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                         kind=kind_token, subject=annotation.subject, subject_id=annotation.subject_id,
                         frame=kind_theme, theme_tokens=request.theme_tokens, metric_for=metric_for,
                         outline=container.outline if container is not None else None,
-                        pointer=f"/annotations/{index}", text_size=size)
+                        pointer=f"/annotations/{index}", text_size=size,
+                        header_texts=annotation.kind_header_lines, heading_content=annotation.kind_heading_text)
                     require_followable_content(viewer_fit, has_kind_frame=not kind_measure.empty,
                                                has_visual=bool(annotation_visuals), pointer=f"/annotations/{index}")
                     wrap_available = max(1.0, wrap_available - kind_measure.inline_insets)
