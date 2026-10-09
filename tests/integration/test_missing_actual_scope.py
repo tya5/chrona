@@ -81,7 +81,14 @@ def test_in_progress_marks_only_the_started_span_from_its_actual_start_to_as_of(
     assert width == pytest.approx(21 * day, abs=0.05)  # up to as-of, 2 Mar
 
 
-def test_the_scope_is_not_available_with_lane_rows(tmp_path):
-    with pytest.raises(Exception) as caught:
-        _render(tmp_path, "in-progress", rows="lanes")
-    assert "E_REVIEW_MISSING_ACTUAL_SCOPE_LANES" in str(caught.value)
+def test_in_progress_with_lane_rows_draws_the_same_marks_as_automatic_rows(tmp_path):
+    lanes = _render(tmp_path, "in-progress", rows="lanes")
+    missing, actual = _marks(lanes, "missing-actual"), _marks(lanes, "actual")
+    assert set(missing) == {"running", "started", "noprogress", "explicit"}
+    assert set(actual) == {"finished"}
+    assert not {"stalled", "future", "overdue", "gate"} & set(missing)
+
+
+def test_the_default_scope_with_lane_rows_is_unchanged_by_the_in_progress_inventory(tmp_path):
+    first = _render(tmp_path, None, rows="lanes")
+    assert set(_marks(first, "missing-actual")) == {"overdue", "gate"}
