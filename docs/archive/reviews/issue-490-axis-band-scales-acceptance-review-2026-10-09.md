@@ -33,8 +33,13 @@ byte-identical, with no preset or test allowance changes. Original preset equali
 and SVG suite: nine passed. Both inspected public renders show seven axis labels
 and a hosted DVT, with no resource errors. Worst separability is 1.221/1.365
 (floor 1.15); months follow their quarter's fill. The inherited footer-overflow
-warning remains disclosed. Exact-main three-OS release containing this completed
-review remains required; keep the issue open until that release succeeds.
+warning remains disclosed. PR #1265 published the completed review at `02ad1ecb`.
+[Exact-main release 37886024726](https://github.com/tya5/chrona/actions/runs/37886024726)
+passed on `8faae268aa005d253dfc88100f0879dae372e697`: macOS/Ubuntu/Windows full pytest
+(8354/8350/8349 passed), conformance and installed-wheel smoke, MCP-floor and
+newest-Python public reproduction. All 149 bot paths match the audited snapshot;
+both axis pairs remain unchanged by #849. [All-row closing audit](https://github.com/tya5/chrona/issues/490#issuecomment-6075135622):
+closed 2026-10-09T05:48:28Z; no deferred criterion.
 
 ## Architecture conclusion
 
