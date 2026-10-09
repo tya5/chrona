@@ -3,7 +3,7 @@
 # Issue #849 — ordered pattern circles
 
 Implementation: `84371c27e2b7f8f7ecc427da842d1244c4d387d9`.
-[Current design, architecture review and implementation plan](../../planning/active/issue-849-pattern-occlusion-2026-10-09.md).
+[Completed design, architecture review and implementation plan](../planning/issue-849-pattern-occlusion-2026-10-09.md).
 Source/catalogue successors migrate atomically; the nine archived originals
 are byte-identical. Layout owns completed phase/clip, Scene transports circle
 channels and widths, SVG serializes native circles. Opaque contrast stays
@@ -28,25 +28,22 @@ graphics 116, resource/schema 152, package/library 17 and actual-Yuya checks.
 S0 passed: 443 mapped documents, 739 probes, L2+L3 39.6s, four existing invalid
 fixtures unchanged; successor and additive Scene deltas are explicit.
 Schema inventory/annotations/references and Scene delivery checks passed.
-No manifest-derived output was edited. [PR #1265 snapshot](https://github.com/tya5/chrona/actions/runs/37878133851),
-head `578a3235`: artifact 11593520999, 145 paths, 23 changed (11 SVG,
-11 Scene, inventory), no additions/retirements. Ten non-Yuya Scenes change
-only resource provenance; their SVGs differ only in pattern IDs. Root verified
-these JSON-pointer and SVG invariants independently. Yuya alone changes
-completed pattern content: the intended exact nine-circle stack, density 2606bp.
-Artifact digest: `sha256:a89df214bafb8ef76b1be5ed0774c6e6397bcfedb43a7ede0556e1d2222bf764`.
-All 22 visual files match the inspected predecessor artifact. Diagnostic
-bare-site counts remain 10/76/5; owner-local details do not relax validation.
-The trusted packaged Material v0.3 exception and archive-name checks passed;
-189 focused schema-management tests passed. Run 37878133851 passed all required
-PR checks. [Independent current-head audit](https://github.com/tya5/chrona/issues/849#issuecomment-6073664817).
+No manifest-derived output was edited. [Exact-head PR run 37882016501](https://github.com/tya5/chrona/actions/runs/37882016501)
+passed on `8fba4b2d`, ready base `e52e9c31`. Artifact 11595342434,
+digest `sha256:fdd886deaff471170bfdbf4a1b00095bbfd114397c113bf4666f7e62bf9df374`:
+149 paths, 23 changed (11 SVG, 11 Scene, inventory), no additions/retirements.
+Ten non-Yuya Scenes change only provenance; their SVGs change only pattern IDs.
+Yuya alone changes completed pattern content: nine native circles, density 2606bp.
+Both #490 SVG/Scene pairs remain byte-identical; bare-site counts stay 10/76/5.
+[Independent artifact audit](https://github.com/tya5/chrona/issues/849#issuecomment-6074159632).
+Combined axis/pattern tests: 129 passed (28.25s); schema-management tests: 189 passed.
+Final S0: 451 mapped documents/739 probes, PASS (44.9s); four invalid fixtures
+unchanged and both #490 materializer byte checks passed. No baseline was relaxed.
 
-After ordinary merge of #490 source main `3d7b3051`, 129 combined axis/pattern
-tests passed (28.25s). Both passive axis fills and substrate admission remain
-in Scene paint completion. S0 passed 449 mapped documents/739 probes (39.7s);
-four invalid fixtures unchanged. The ledger tool proved and retired the two
-already-merged #490 entries; no schema behavior or diagnostic baseline was relaxed.
-Ready main `e52e9c31bbb08e6e55d4389f645a04a8d5102a42` is ordinarily merged.
-Final S0: 451 mapped documents/739 probes, PASS (44.9s); both new #490 public
-materializers pass committed-byte checks. Refreshed-head PR checks and exact-main
-three-OS release containing this review remain required. Keep #849 open.
+PR #1265 merged at `02ad1ecb`; bot main `8faae268aa005d253dfc88100f0879dae372e697`
+matches all 149 audited snapshot paths. Trusted gate 37885200009 and sync 37884422454
+passed. [Exact-main release 37886024726](https://github.com/tya5/chrona/actions/runs/37886024726)
+passed macOS/Ubuntu/Windows full pytest (8354/8350/8349 passed, 67/71/72 OS-dependent
+skips), conformance and installed-wheel smoke, MCP-floor and newest-Python public
+reproduction. [All-row closing audit](https://github.com/tya5/chrona/issues/849#issuecomment-6075135029):
+closed 2026-10-09T05:48:25Z; no deferred criterion.

@@ -115,12 +115,10 @@ commits on the same branch. Keep both literal acceptance rows open until direct
 target and gate evidence prove them; target styling unrelated to seigaiha is not
 part of this issue.
 
-Status: design and implementation plan published before code. Implementation is
-locally complete; release review/publication remain open. Focused normalization,
-contract/schema, Layout/Scene/paint/SVG tests passed; S0 passed (443 mapped
-documents, 739 probes, L2+L3 39.6s; four pre-existing invalid fixtures unchanged).
-Actual Yuya YAML produces nine ordered native circles and 2606bp; both observers
-report that completed density and the PNG was inspected with packaged fonts.
-Its intended new Scene/SVG differs from the old generated evidence; CI must
-publish/audit the new snapshot before release acceptance. No manual generated
-manifest output edits. PR/main release gates are not yet satisfied.
+Status: completed and closed 2026-10-09T05:48:25Z. Design and implementation plan
+were published before code; PR #1265 merged at `02ad1ecb`. Bot main
+`8faae268aa005d253dfc88100f0879dae372e697` matches all 149 audited snapshot paths.
+Final S0 passed 451 mapped documents/739 probes; four invalid fixtures unchanged.
+Actual Yuya YAML produces nine ordered native circles and 2606bp; no manual
+manifest-derived edits. Exact-main three-OS release 37886024726 passed all checks.
+[Completed literal acceptance and release evidence](../reviews/issue-849-pattern-occlusion-acceptance-review-2026-10-09.md).
