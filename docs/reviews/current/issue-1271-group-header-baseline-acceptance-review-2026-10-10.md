@@ -20,4 +20,6 @@ Implementation: `20e22d0b`, based on adopted ready main `0617e671c51ed14fe0d242a
 
 None. Focused group/table/header batch: 219 passed (49.36s), including four new ordinary/folded Scene/SVG cases and the unchanged table centering assertion. Independent review verified the final-band translation updates both bounds and baseline without remeasurement. Scene delivery ownership passes (31 dataclasses/225 fields).
 
-Required release evidence: ready-main base, exact-head PR checks, artifact per-slide header-position counts and unrelated-byte audit, automatic derived sync, then exact-main three-OS pytest/conformance/wheel with this review published. Do not close before those gates.
+CI [37988066235](https://github.com/tya5/chrona/actions/runs/37988066235) found one stale annotation characterization hash. Independent before/after comparison retains all 60 primitives and changes only four group-header Text bounds/baselines by +0.2 px; annotations, leaders and diagnostics are identical. Both full-byte hashes are refreshed without weakening assertions. [Exact-head public artifact audit](https://github.com/tya5/chrona/pull/1313#issuecomment-6089006948) records the approved output changes.
+
+Required release evidence: refreshed ready-main base and exact-head PR checks, automatic derived sync, then exact-main three-OS pytest/conformance/wheel with this review published. Do not close before those gates.
