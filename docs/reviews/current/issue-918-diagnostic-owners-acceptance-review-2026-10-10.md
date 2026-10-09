@@ -5,9 +5,10 @@
 Status: release pending; do not close.
 Source: [issue 918](https://github.com/tya5/chrona/issues/918), observed
 2026-10-10, including the consolidated 919–922 bodies.
-Implementation: `a5a6d3bb`; row-by-row proof: `afd37958`; latest ready-main
-merge: `1ce7a83248850298d5dd74f20192ccbe2cb07804`, incorporating
-`5ebc493b6fbaeb7910889b5e4d487a633c70f739` in
+Implementation: `a5a6d3bb`; row-by-row proof: `afd37958`; consumer correction:
+`8daa8ae3`; latest ready-main merge:
+`a07516c3944cd18c6a692b32414c562b08f1ae07`, incorporating
+`e1a6f8122aa14b57392ac0363a35e09ff5ab1cbe` in
 [PR 1276](https://github.com/tya5/chrona/pull/1276).
 [Initial PR CI](https://github.com/tya5/chrona/actions/runs/37952231069)
 exposed four Scene negative-probe equivalence failures: its consumer treated
@@ -64,6 +65,7 @@ captures, exact warning fields, multiplicity and importer operands.
 Render consumers: three focused nodes passed before an interrupted slow batch;
 the skill-envelope node passed separately. Updated collision, legend, attachment
 and platform-specific font consumers await CI; no complete corpus run is claimed.
+Latest-main lane/inventory/render-envelope focused batch: 29 passed (8.57s).
 These are focused checks, not a substitute for full release CI.
 
 The MCP projection test supplies the characterized ledger rows to the real
@@ -118,7 +120,7 @@ and feature worktrees with their own Python 3.11 venvs; compare file hashes,
 exit codes and ordered warning identities/counts. Logs are local evidence,
 not committed resources.
 
-Current candidate public artifact:
+Audited pre-correction candidate public artifact:
 [11628895137](https://github.com/tya5/chrona/actions/runs/37955021163/artifacts/11628895137),
 `derived-snapshot-bac5bef2f40d2eaad6f235e5dd46fe63c66ea544`, provider digest
 `sha256:c0c144e8be2e701e0dd0d45c8c9f1d4fcc68f00b93b9280fffdbc7e680650ce2`.
