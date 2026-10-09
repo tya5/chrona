@@ -189,6 +189,7 @@ class ReviewProjection:
     periods: tuple[ReviewPeriod, ...] = ()
     figures: tuple[tuple[str, int], ...] = ()  # (figure id, days) the Core resolved from the View's `figures` (#586)
     deadlines: tuple[ReviewDeadline, ...] = ()  # the Project deadlines the View's `deadlines` shows, in Project order (#822)
+    group_figures: tuple[tuple[str, tuple[tuple[str, int], ...]], ...] = ()
 
 
 @dataclass(frozen=True)
