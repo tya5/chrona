@@ -10386,7 +10386,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8): a
 
 ## Decoration corpus witness
 
-Every non-exclusive decoration role is enabled in committed Scene evidence; group-band or group-header-band supplies the group concept when there are no corpus errors.
+Every non-exclusive decoration role is enabled in committed Scene evidence; group-band or group-header-band supplies the group concept, and row-band or row-rule supplies the row concept when there are no corpus errors.
 
 
 Findings: 10312; errors: 0; warnings: 271.
