@@ -2,7 +2,7 @@
 
 # Issue #1271 — group-header baseline acceptance
 
-Source base: `d4eef57f5422b31ca568ec9f174af24a704deb16` (#927 merged); derived-ready adoption and publication remain pending. [Selected design and architecture correction](https://github.com/tya5/chrona/issues/1271#issuecomment-6087858363). Layout reuses the table's exact line-box formula and translates completed header text after folded extent completion. No Scene measurement, new schemas or folded-mark allocation change.
+Implementation: `20e22d0b`, based on adopted ready main `0617e671c51ed14fe0d242a37a18a744bd85b7e8` (#927 merged). [Selected design and architecture correction](https://github.com/tya5/chrona/issues/1271#issuecomment-6087858363). Layout reuses the table's exact line-box formula and translates completed header text after folded extent completion. No Scene measurement, new schemas or folded-mark allocation change. Exact-head and release gates remain pending.
 
 ## Literal issue acceptance
 
