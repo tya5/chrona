@@ -25,14 +25,14 @@ def materialization_candidate(workspace_path: Path, workspace: dict[str, Any], *
     root = workspace_path.parent.resolve()
     workspace_contract = parse_contract(_identity("authoring-workspace", workspace), workspace)
     if not isinstance(workspace_contract, AuthoringWorkspaceContract) or workspace_contract.mode != "guided" or workspace_contract.binding is None:
-        raise ValueError("E_AUTHORING_EXPLICIT_MODE")
+        raise ValueError(f"E_AUTHORING_EXPLICIT_MODE: workspace {workspace_path.name!r} requires guided presentation with a preset binding")
     _relative(directory)
     guided_bytes = _render_bytes(resolve_guided_draft_render(workspace_path=workspace_path))
     preset_path = _child(root, str(workspace_contract.binding["preset"]["path"]))
     preset = safe_load(preset_path.read_text(encoding="utf-8"))
     preset_contract = parse_contract(_identity("presentation-preset", preset), preset)
     if not isinstance(preset_contract, PresentationPresetContract):
-        raise ValueError("E_AUTHORING_PRESET_SCHEMA")
+        raise ValueError(f"E_AUTHORING_PRESET_SCHEMA: preset {preset_path.name!r} must resolve to a presentation-preset contract")
     acquired = {str(item["path"]): safe_load(_child(preset_path.parent, str(item["path"])).read_text(encoding="utf-8"))
                 for item in (*preset_contract.resources.values(), *preset_contract.compatible_color_schemes)}
     normalized = normalize_authoring_workspace(workspace_contract, preset_contract, acquired)
@@ -61,7 +61,7 @@ def materialization_candidate(workspace_path: Path, workspace: dict[str, Any], *
             actual_path=(staged / written["actual-set"]["path"]) if "actual-set" in written else None,
         )
         if _render_bytes(explicit_draft) != guided_bytes:
-            raise ValueError("E_AUTHORING_MATERIALIZE_OUTPUT_PROOF")
+            raise ValueError(f"E_AUTHORING_MATERIALIZE_OUTPUT_PROOF: workspace {workspace_path.name!r} guided and explicit artifact identities differ")
     context = _context(written)
     context_payload = yaml.safe_dump(context, sort_keys=True).encode()
     candidates[f"{directory}/context.yaml"] = context_payload
@@ -95,14 +95,14 @@ def _relative(value: str) -> None:
     try:
         check_store_address(value)
     except StoreAddressError as error:
-        raise ValueError("E_AUTHORING_MATERIALIZE_PATH") from error
+        raise ValueError(f"E_AUTHORING_MATERIALIZE_PATH: resource address {value!r} must be a safe relative Store address") from error
 
 
 def _child(root: Path, relative: str) -> Path:
     try:
         return resolve_store_address(root, relative)
     except StoreAddressError as error:
-        raise ValueError("E_AUTHORING_MATERIALIZE_PATH") from error
+        raise ValueError(f"E_AUTHORING_MATERIALIZE_PATH: resource address {relative!r} must resolve inside the workspace") from error
 
 
 def _plain(value: Any) -> Any:

@@ -15,6 +15,14 @@ from chrona.presentation.layout.route_search import RouteSearchFailure
 ROUTE_GRID_OFFSET = 2.0  # how far a route runs from the edge of an obstacle
 
 
+def _route_attempt_error(owner: str, **operands: object) -> ValueError:
+    fields = []
+    for name, value in operands.items():
+        shown = repr(value).replace("\n", " ").replace("\r", " ")[:96]
+        fields.append(f"{name}={shown}")
+    return ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID: " + owner + " " + ", ".join(fields))
+
+
 def remove_substroke_jogs(points: tuple[tuple[float, float], ...], minimum: float, *,
                          accept: Callable[[tuple[tuple[float, float], ...]], bool],
                          start_minimum: float = 0.0, end_minimum: float = 0.0,
@@ -82,28 +90,37 @@ class RouteAttemptEvidence:
     def __post_init__(self) -> None:
         if (self.outcome not in {"egress-collision", "no-route-found", "quality-rejected", "accepted", "eligible-not-selected"}
                 or not self.source_side or not self.target_side):
-            raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+            raise _route_attempt_error("port-pair outcome", source_side=self.source_side,
+                                       target_side=self.target_side, outcome=self.outcome)
         if self.search_disposition is not None and self.search_disposition not in {
                 "bounded-candidates-exhausted", "expansion-limit"}:
-            raise ValueError(
-                "E_LAYOUT_ROUTE_ATTEMPT_INVALID: search_disposition must be "
-                "bounded-candidates-exhausted or expansion-limit."
-            )
+            raise _route_attempt_error("search disposition", source_side=self.source_side,
+                                       target_side=self.target_side,
+                                       search_disposition=self.search_disposition,
+                                       expected=("bounded-candidates-exhausted", "expansion-limit"))
         if self.search_disposition is not None and self.outcome != "quality-rejected":
-            raise ValueError(
-                "E_LAYOUT_ROUTE_ATTEMPT_INVALID: search_disposition is valid only "
-                "for a quality-rejected attempt."
-            )
+            raise _route_attempt_error("search disposition outcome", source_side=self.source_side,
+                                       target_side=self.target_side, outcome=self.outcome,
+                                       search_disposition=self.search_disposition,
+                                       expected_outcome="quality-rejected")
         if self.outcome == "egress-collision":
             if (not self.blocker_ids or self.search_failure is not None
                     or any(value is not None for value in self._quality_values())):
-                raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+                raise _route_attempt_error("egress collision evidence",
+                                           source_side=self.source_side, target_side=self.target_side,
+                                           outcome=self.outcome, blocker_ids=self.blocker_ids,
+                                           search_failure=self.search_failure,
+                                           quality_values=self._quality_values())
         elif self.outcome == "no-route-found":
             if (self.blocker_ids or self.search_failure not in {
                     "E_PRESENTATION_ROUTE_LIMIT", "E_CONNECTOR_UNROUTABLE", "E_LAYOUT_ROUTE_SELF_OVERLAP",
                     "E_LAYOUT_ROUTE_THROUGH_MARK"}
                     or any(value is not None for value in self._quality_values())):
-                raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+                raise _route_attempt_error("no-route evidence",
+                                           source_side=self.source_side, target_side=self.target_side,
+                                           outcome=self.outcome, search_failure=self.search_failure,
+                                           blocker_ids=self.blocker_ids,
+                                           quality_values=self._quality_values())
         else:
             values = self._quality_values()
             if (self.blocker_ids or self.search_failure is not None
@@ -111,11 +128,20 @@ class RouteAttemptEvidence:
                     or not all(isfinite(value) for value in (self.length, self.direct_length, self.max_detour_ratio))
                     or self.length < 0 or self.direct_length < 0 or self.bends < 0
                     or self.max_bends < 0 or self.max_detour_ratio <= 0):
-                raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+                raise _route_attempt_error("route quality metrics",
+                                           source_side=self.source_side, target_side=self.target_side,
+                                           outcome=self.outcome, length=self.length,
+                                           direct_length=self.direct_length, bends=self.bends,
+                                           max_bends=self.max_bends,
+                                           max_detour_ratio=self.max_detour_ratio)
             within = self.bends <= self.max_bends and (
                 self.direct_length == 0 or self.length <= self.direct_length * self.max_detour_ratio)
             if within != (self.outcome in {"accepted", "eligible-not-selected"}):
-                raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+                raise _route_attempt_error("route quality outcome", source_side=self.source_side,
+                                           target_side=self.target_side, outcome=self.outcome,
+                                           length=self.length, direct_length=self.direct_length,
+                                           bends=self.bends, max_bends=self.max_bends,
+                                           max_detour_ratio=self.max_detour_ratio)
 
     def _quality_values(self) -> tuple[float | int | None, ...]:
         return (self.length, self.direct_length, self.bends, self.max_bends, self.max_detour_ratio)
@@ -129,7 +155,9 @@ class RouteSuppressionEvidence:
     def __post_init__(self) -> None:
         if not self.relation_id or not self.attempts or any(
                 attempt.outcome == "accepted" for attempt in self.attempts):
-            raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+            raise _route_attempt_error("suppression evidence", relation_id=self.relation_id,
+                                       attempt_outcomes=tuple(getattr(item, "outcome", None)
+                                                              for item in self.attempts))
 
     @property
     def primary_cause(self) -> str:
@@ -291,7 +319,7 @@ def relation_route_quality(points: tuple[tuple[float, float], ...], *,
 def route_quality_metrics(points: tuple[tuple[float, float], ...]) -> tuple[float, float, int]:
     """Return the exact metrics used by the route-quality decision and evidence."""
     if len(points) < 2:
-        raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+        raise _route_attempt_error("route point sequence", point_count=len(points))
     bends = max(0, len(points) - 2)
     length = geometry_sum(abs(right[0] - left[0]) + abs(right[1] - left[1])
                           for left, right in zip(points, points[1:]))
@@ -326,7 +354,10 @@ class RelationRouteSelection:
                 or (self.selected_pair is None) != (not accepted)
                 or (self.selected_pair is None and self.points)
                 or (self.selected_pair is not None and len(self.points) < 2)):
-            raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+            raise _route_attempt_error("route selection", point_count=len(self.points),
+                                       attempt_outcomes=tuple(item.outcome for item in self.attempts),
+                                       selected_pair=(tuple((item.side) for item in self.selected_pair)
+                                                      if self.selected_pair is not None else None))
 
 
 def select_relation_route(
@@ -350,7 +381,9 @@ def select_relation_route(
     labels are never exempted from either corridor or body collisions.
     """
     if not port_pairs or not relation_scene_id:
-        raise ValueError("E_LAYOUT_ROUTE_ATTEMPT_INVALID")
+        raise _route_attempt_error("route candidate set", relation_scene_id=relation_scene_id,
+                                   port_pair_count=len(port_pairs), bounds=bounds,
+                                   max_bends=max_bends, max_detour_ratio=max_detour_ratio)
     attempts: list[RouteAttemptEvidence] = []
     best = None
     chosen = None

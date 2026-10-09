@@ -16,7 +16,8 @@ class ObstacleRect:
     def __post_init__(self) -> None:
         if (not all(isfinite(value) for value in (self.left, self.top, self.right, self.bottom))
                 or self.right <= self.left or self.bottom <= self.top):
-            raise ValueError("E_LAYOUT_OBSTACLE_GEOMETRY")
+            raise _obstacle_error("E_LAYOUT_OBSTACLE_GEOMETRY", "ObstacleRect",
+                                  left=self.left, top=self.top, right=self.right, bottom=self.bottom)
 
 
 @dataclass(frozen=True)
@@ -31,13 +32,22 @@ class ObstacleSegment:
         if (not all(isfinite(value) for value in (*self.start, *self.end, self.stroke_width))
                 or self.start == self.end
                 or self.stroke_width < 0):
-            raise ValueError("E_LAYOUT_OBSTACLE_GEOMETRY")
+            raise _obstacle_error("E_LAYOUT_OBSTACLE_GEOMETRY", "ObstacleSegment",
+                                  start=self.start, end=self.end, stroke_width=self.stroke_width)
 
 
 ObstacleGeometry = ObstacleRect | ObstacleSegment
 # A corridor that a lane route needs but has not been placed in yet: member names avoid it, routes ignore it.
 ROUTE_RESERVE_CLASS = "route-reserve"
 BOUNDARY_CONTACT_TOLERANCE = 1e-9
+
+
+def _obstacle_error(code: str, owner: str, **operands: object) -> ValueError:
+    fields = []
+    for name, value in operands.items():
+        shown = repr(value).replace("\n", " ").replace("\r", " ")[:96]
+        fields.append(f"{name}={shown}")
+    return ValueError(f"{code}: {owner} " + ", ".join(fields))
 
 
 def obstacle_envelope(geometry: ObstacleGeometry) -> tuple[float, float, float, float]:
@@ -63,7 +73,9 @@ class SurfaceObstacle:
     def __post_init__(self) -> None:
         if (not self.placement_id or not self.obstacle_class or not self.region_id
                 or not isfinite(self.clearance) or self.clearance < 0):
-            raise ValueError("E_LAYOUT_OBSTACLE_INPUT")
+            raise _obstacle_error("E_LAYOUT_OBSTACLE_INPUT", "SurfaceObstacle",
+                                  placement_id=self.placement_id, obstacle_class=self.obstacle_class,
+                                  region_id=self.region_id, clearance=self.clearance)
 
 
 def _intersects(left: ObstacleGeometry, right: ObstacleGeometry, clearance: float) -> bool:
@@ -89,7 +101,7 @@ def _intersects(left: ObstacleGeometry, right: ObstacleGeometry, clearance: floa
 def obstacles_intersect(left: ObstacleGeometry, right: ObstacleGeometry, clearance: float = 0.0) -> bool:
     """Apply Layout's canonical visible-obstacle collision predicate read-only."""
     if not isfinite(clearance) or clearance < 0:
-        raise ValueError("E_LAYOUT_OBSTACLE_INPUT")
+        raise _obstacle_error("E_LAYOUT_OBSTACLE_INPUT", "collision clearance", clearance=clearance)
     return _intersects(left, right, clearance)
 
 
@@ -288,7 +300,8 @@ class SurfaceObstacleIndex:
 
     def add(self, obstacle: SurfaceObstacle) -> None:
         if obstacle.placement_id in self._by_id:
-            raise ValueError("E_LAYOUT_OBSTACLE_ID_DUPLICATE")
+            raise _obstacle_error("E_LAYOUT_OBSTACLE_ID_DUPLICATE", "obstacle inventory",
+                                  placement_id=obstacle.placement_id)
         self._by_id[obstacle.placement_id] = obstacle
         self._ordered = None
         self._prepared = {}
@@ -300,7 +313,9 @@ class SurfaceObstacleIndex:
         exact obstacle content, including any substituted geometry.
         """
         if geometry_overrides is not None and any(key not in self._by_id for key in geometry_overrides):
-            raise ValueError("E_LAYOUT_OBSTACLE_INPUT: geometry override must name a registered obstacle")
+            raise _obstacle_error("E_LAYOUT_OBSTACLE_INPUT", "geometry override",
+                                  unknown_placement_ids=tuple(key for key in geometry_overrides
+                                                              if key not in self._by_id))
         clone = SurfaceObstacleIndex()
         clone._by_id = (dict(self._by_id) if not geometry_overrides else
                         {key: replace(item, geometry=geometry_overrides[key])
@@ -361,21 +376,30 @@ class SurfaceObstacleIndex:
                    port_ids: Iterable[str] = (),
                    clearance: float = 0.0) -> tuple[SurfaceObstacle, ...]:
         if not isfinite(clearance) or clearance < 0:
-            raise ValueError("E_LAYOUT_OBSTACLE_INPUT")
+            raise _obstacle_error("E_LAYOUT_OBSTACLE_INPUT", "collision clearance", clearance=clearance)
         exemptions = frozenset(port_ids)
         if host_id is not None:
             host = self._by_id.get(host_id)
             if host is None or host.obstacle_class != "mark":
-                raise ValueError("E_LAYOUT_OBSTACLE_EXEMPTION_INVALID")
+                raise _obstacle_error("E_LAYOUT_OBSTACLE_EXEMPTION_INVALID", "host exemption",
+                                      host_id=host_id,
+                                      actual_class=host.obstacle_class if host is not None else None,
+                                      expected_class="mark")
             exemptions |= {host_id}
         if rule_host_id is not None:
             rule = self._by_id.get(rule_host_id)
             if rule is None or rule.obstacle_class != "rule":
-                raise ValueError("E_LAYOUT_OBSTACLE_EXEMPTION_INVALID")
+                raise _obstacle_error("E_LAYOUT_OBSTACLE_EXEMPTION_INVALID", "rule host exemption",
+                                      rule_host_id=rule_host_id,
+                                      actual_class=rule.obstacle_class if rule is not None else None,
+                                      expected_class="rule")
             exemptions |= {rule_host_id}
         if any(port_id not in self._by_id or self._by_id[port_id].obstacle_class != "port"
                for port_id in exemptions.difference({item for item in (host_id, rule_host_id) if item is not None})):
-            raise ValueError("E_LAYOUT_OBSTACLE_EXEMPTION_INVALID")
+            raise _obstacle_error("E_LAYOUT_OBSTACLE_EXEMPTION_INVALID", "port exemptions",
+                                  invalid_port_ids=tuple(port_id for port_id in exemptions
+                                                         if port_id not in self._by_id
+                                                         or self._by_id[port_id].obstacle_class != "port"))
         candidate_box = obstacle_envelope(geometry)
         prepared = self._selection(classes, regions)
         items, envelopes, clearances = prepared.items, prepared.envelopes, prepared.clearances
@@ -399,7 +423,11 @@ class SurfaceObstacleIndex:
         hosts = frozenset(host_ids)
         if not hosts or any(host not in self._by_id or self._by_id[host].obstacle_class != "mark"
                             for host in hosts):
-            raise ValueError("E_LAYOUT_OBSTACLE_EXEMPTION_INVALID")
+            raise _obstacle_error("E_LAYOUT_OBSTACLE_EXEMPTION_INVALID", "egress host exemptions",
+                                  host_ids=tuple(hosts), expected_class="mark",
+                                  actual_classes=tuple((host, self._by_id[host].obstacle_class
+                                                        if host in self._by_id else None)
+                                                       for host in hosts))
         def shared_endpoint_branch(item: SurfaceObstacle) -> bool:
             other = item.geometry
             if (item.obstacle_class not in {"dependency-route", "leader-route"}

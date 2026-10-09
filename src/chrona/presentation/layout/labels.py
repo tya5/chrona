@@ -13,6 +13,15 @@ from chrona.presentation.layout.obstacles import (
     SurfaceObstacleIndex,
     obstacle_envelope,
 )
+from chrona.presentation.model.diagnostic_sources import DiagnosticSubject
+
+
+def _label_error(code: str, owner: str, **operands: object) -> ValueError:
+    fields = []
+    for name, value in operands.items():
+        shown = repr(value).replace("\n", " ").replace("\r", " ")[:96]
+        fields.append(f"{name}={shown}")
+    return ValueError(f"{code}: {owner} " + ", ".join(fields))
 
 
 @dataclass(frozen=True)
@@ -171,6 +180,7 @@ class LabelRequest:
     lane_row_id: str | None = None
     lane_member_id: str | None = None
     lane_source_kind: str | None = None
+    subjects: tuple[DiagnosticSubject, ...] = ()
 
 
 def _intersects(a: LabelRect, b: LabelRect) -> bool:
@@ -180,7 +190,8 @@ def _intersects(a: LabelRect, b: LabelRect) -> bool:
 def _candidate(anchor: LabelRect, size: tuple[float, float], side: str, gap: float) -> LabelRect:
     width, height = size
     if width <= 0 or height <= 0 or gap < 0:
-        raise ValueError("E_PRESENTATION_LABEL_INPUT")
+        raise _label_error("E_PRESENTATION_LABEL_INPUT", "label candidate geometry",
+                           anchor=anchor, size=size, side=side, gap=gap)
     if side == "above":
         return LabelRect(anchor.x + (anchor.width - width) / 2, anchor.y - gap - height, width, height)
     if side == "below":
@@ -191,9 +202,11 @@ def _candidate(anchor: LabelRect, size: tuple[float, float], side: str, gap: flo
         return LabelRect(anchor.right + gap, anchor.y + (anchor.height - height) / 2, width, height)
     if side == "inside":
         if width > anchor.width or height > anchor.height:
-            raise ValueError("E_PRESENTATION_LABEL_UNPLACEABLE")
+            raise _label_error("E_PRESENTATION_LABEL_UNPLACEABLE", "inside label candidate",
+                               anchor_size=(anchor.width, anchor.height), size=size, side=side)
         return LabelRect(anchor.x + (anchor.width - width) / 2, anchor.y + (anchor.height - height) / 2, width, height)
-    raise ValueError("E_PRESENTATION_LABEL_INPUT")
+    raise _label_error("E_PRESENTATION_LABEL_INPUT", "label candidate side",
+                       anchor=anchor, size=size, side=side, gap=gap)
 
 
 def _visible_candidate(anchor: LabelRect, size: tuple[float, float], side: str, gap: float) -> LabelRect:
@@ -201,7 +214,8 @@ def _visible_candidate(anchor: LabelRect, size: tuple[float, float], side: str, 
     if side == "inside":
         width, height = size
         if width <= 0 or height <= 0 or gap < 0:
-            raise ValueError("E_PRESENTATION_LABEL_INPUT")
+            raise _label_error("E_PRESENTATION_LABEL_INPUT", "visible label candidate",
+                               anchor=anchor, size=size, side=side, gap=gap)
         return LabelRect(anchor.x + (anchor.width - width) / 2,
                          anchor.y + (anchor.height - height) / 2, width, height)
     return _candidate(anchor, size, side, gap)
@@ -228,7 +242,10 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
             or (maximum_side_gap is not None
                 and (isinstance(maximum_side_gap, bool)
                      or not isfinite(maximum_side_gap) or maximum_side_gap < 0))):
-        raise ValueError("E_PRESENTATION_LABEL_INPUT")
+        raise _label_error("E_PRESENTATION_LABEL_INPUT", "label request",
+                           sides=sides, overflow=overflow,
+                           visible_fallback_side=visible_fallback_side,
+                           maximum_side_gap=maximum_side_gap, size=size, gap=gap)
     index = obstacles if isinstance(obstacles, SurfaceObstacleIndex) else None
     blocked = () if index is not None else tuple(obstacles)
 
@@ -261,7 +278,7 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
         try:
             candidate = _candidate(anchor, size, side, gap)
         except ValueError as exc:
-            if str(exc) == "E_PRESENTATION_LABEL_UNPLACEABLE":
+            if str(exc).split(":", 1)[0] == "E_PRESENTATION_LABEL_UNPLACEABLE":
                 continue
             raise
         if admissible(candidate) and clear(candidate, side):
@@ -370,11 +387,15 @@ def place_label(anchor: LabelRect, size: tuple[float, float], candidates: Iterab
             try:
                 return LabelPlacement(side, _visible_candidate(anchor, size, side, gap), True)
             except ValueError as exc:
-                if str(exc) != "E_PRESENTATION_LABEL_UNPLACEABLE":
+                if str(exc).split(":", 1)[0] != "E_PRESENTATION_LABEL_UNPLACEABLE":
                     raise
-        raise ValueError("E_PRESENTATION_LABEL_UNPLACEABLE")
+        raise _label_error("E_PRESENTATION_LABEL_UNPLACEABLE", "visible fallback candidates",
+                           sides=(visible_fallback_side,) if visible_fallback_side is not None else sides,
+                           size=size, anchor=anchor, bounds=bounds)
     if required:
-        raise ValueError("E_PRESENTATION_LABEL_UNPLACEABLE")
+        raise _label_error("E_PRESENTATION_LABEL_UNPLACEABLE", "required label candidates",
+                           sides=sides, size=size, anchor=anchor, bounds=bounds,
+                           gap=gap, overflow=overflow)
     return None
 
 
@@ -415,7 +436,10 @@ def _place_member_name_ladder(
             or overflow not in {"suppress", "visible-overflow", "diagnose"}
             or (visible_fallback_side is not None and
                 (overflow != "visible-overflow" or visible_fallback_side not in sides))):
-        raise ValueError("E_PRESENTATION_LABEL_INPUT")
+        raise _label_error("E_PRESENTATION_LABEL_INPUT", "member-name ladder",
+                           sides=sides, gap=gap, maximum_end_gap=maximum_end_gap,
+                           text_inline_inset=text_inline_inset, maximum_stagger=maximum_stagger,
+                           overflow=overflow, visible_fallback_side=visible_fallback_side)
     available_obstacles = (obstacles if isinstance(obstacles, SurfaceObstacleIndex)
                            else tuple(obstacles))
     for side in sides:
@@ -539,7 +563,9 @@ def place_member_name(
             or overflow not in {"suppress", "visible-overflow", "diagnose"}
             or (visible_fallback_side is not None and
                 (overflow != "visible-overflow" or visible_fallback_side not in sides))):
-        raise ValueError("E_PRESENTATION_LABEL_INPUT")
+        raise _label_error("E_PRESENTATION_LABEL_INPUT", "member-name request",
+                           sides=sides, own_mark_right=own_mark_right, overflow=overflow,
+                           visible_fallback_side=visible_fallback_side)
     placed = _place_member_name_ladder(anchor, size, sides, overflow="suppress", **options)
     if placed is not None or not sides:
         return placed

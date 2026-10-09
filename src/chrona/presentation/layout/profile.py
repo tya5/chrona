@@ -136,7 +136,8 @@ def _nodes(root: Mapping[str, Any]) -> tuple[dict[str, dict[str, Any]], dict[str
     def visit(node: Mapping[str, Any], parent: str | None) -> None:
         node_id = str(node["id"])
         if node_id in found:
-            raise LayoutError("E_LAYOUT_NODE_DUPLICATE", node_id=node_id)
+            raise LayoutError("E_LAYOUT_NODE_DUPLICATE", node_id=node_id,
+                              detail=f"node ID {node_id[:160]!r} is repeated in the Layout profile")
         found[node_id] = node  # type: ignore[assignment]
         parents[node_id] = parent
         for child in node.get("children", ()):

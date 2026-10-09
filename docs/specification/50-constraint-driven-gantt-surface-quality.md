@@ -21,6 +21,17 @@ Before any functional change, replace Scene-owned geometry helpers with the foll
 
 - `SurfaceLayoutRequest`: canonical table cells, Review rows/members, axis facts, label requests, relation endpoints, decoration requests, resolved slots, Theme metrics and FontMetrics identity.
 - `SurfacePlacement`: table columns/cells, rows/tracks/marks, axis text slots, label placements, group header placements, relation placements, decoration placements and ordered diagnostics.
+
+Diagnostic provenance (#918) is an immutable, non-rendered sidecar captured
+from explicit typed source facts at the producer. Layout retains Project
+object pointers and known titles for object-backed warnings, including
+suppressed placements; Scene projects these facts without parsing identifiers.
+Exact primitive identities may join Scene findings to explicit subject facts.
+View, axis, slot, group and relation sources are not assumed to be Project
+objects. Multi-owner findings retain ordered subjects. The sidecar is not a
+serialized Scene/schema field: existing per-placement diagnostic strings,
+warning identities/multiplicity, geometry, paint and SVG/PNG bytes remain
+unchanged. Spec 66 owns the message and transport projection.
 - `TextPlacement`: source id, content, measured bounds, typography role, overflow result (`fit`, `ellipsized`, or `suppressed`).
 - `RelationPlacement`: source/target ports, path, quality measurements, or explicit suppression.
 

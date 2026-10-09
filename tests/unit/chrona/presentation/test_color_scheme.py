@@ -18,8 +18,10 @@ def test_scheme_requires_provenance_and_resolves_named_categories():
 
 def test_scheme_rejects_insufficient_text_contrast():
     bad = scheme(); bad["body"]["colors"]["text"] = "#F5F7FA"
-    with pytest.raises(ColorSchemeError, match="E_SCHEME_CONTRAST"):
+    with pytest.raises(ColorSchemeError, match="E_SCHEME_CONTRAST") as error:
         resolve_color_scheme(bad, content_identity="sha256:" + "a" * 64)
+    assert error.value.source_ref == "/body/colors/text"
+    assert "4.5:1 against surface and surfaceRaised" in error.value.detail
 
 
 def test_theme_validates_each_inside_label_role_against_its_host_mark():
@@ -42,8 +44,10 @@ def test_theme_validates_each_inside_label_role_against_its_host_mark():
     resolved = resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
     assert "member-label-inside-planned" in resolved["body"]["roles"]
     theme["body"]["colorBindings"]["member-label-inside-planned.fill"] = "accent"
-    with pytest.raises(ColorSchemeError, match="E_SCHEME_INSIDE_LABEL_CONTRAST"):
+    with pytest.raises(ColorSchemeError, match="E_SCHEME_INSIDE_LABEL_CONTRAST") as error:
         resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
+    assert error.value.source_ref == "/body/colorBindings/member-label-inside-planned.fill"
+    assert "intent='accent'" in error.value.detail and "expected insideLabelPlanned" in error.value.detail
 
 
 def test_theme_state_text_requires_declared_treatment_and_composited_floor():
@@ -68,6 +72,8 @@ def test_theme_state_text_requires_declared_treatment_and_composited_floor():
         resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
     assert error.value.diagnostic_id == "E_SCHEME_STATE_TEXT_TREATMENT"
     assert error.value.source_ref == "/body/roles/variance-ahead"
+    assert "role='variance-ahead', treatment=None" in error.value.detail
+    assert "expected required or deemphasized" in error.value.detail
 
 
 def _note_theme():
@@ -98,6 +104,7 @@ def test_annotation_note_text_requires_required_treatment():
         resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
     assert error.value.diagnostic_id == "E_SCHEME_STATE_TEXT_TREATMENT"
     assert error.value.source_ref == "/body/roles/annotation-note-text/contrastTreatment"
+    assert "role='annotation-note-text', treatment='deemphasized'" in error.value.detail
 
 
 def test_annotation_note_box_requires_effective_flat_opaque_fill():
@@ -107,6 +114,8 @@ def test_annotation_note_box_requires_effective_flat_opaque_fill():
         resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
     assert error.value.diagnostic_id == "E_SCHEME_ANNOTATION_NOTE_GROUND"
     assert error.value.source_ref == "/body/roles/annotation-note-box/fill"
+    assert "role='annotation-note-box'" in error.value.detail
+    assert "expected opaque #RRGGBB color token" in error.value.detail
 
     theme = _note_theme()
     theme["body"]["roles"]["annotation-note-box"]["opacity"] = "note-opacity"
@@ -115,6 +124,7 @@ def test_annotation_note_box_requires_effective_flat_opaque_fill():
         resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
     assert error.value.diagnostic_id == "E_SCHEME_ANNOTATION_NOTE_GROUND"
     assert error.value.source_ref == "/body/roles/annotation-note-box/opacity"
+    assert "token='note-opacity'" in error.value.detail and "expected opacity 1" in error.value.detail
 
 
 def test_annotation_note_box_accepts_scheme_inserted_opaque_fill_and_default_opacity():
@@ -129,6 +139,7 @@ def test_annotation_note_box_rejects_gradient_or_pattern_ground_with_exact_point
         resolve_theme(theme, scheme(), scheme_content_identity="sha256:" + "a" * 64)
     assert error.value.diagnostic_id == "E_SCHEME_ANNOTATION_NOTE_GROUND"
     assert error.value.source_ref == "/body/colorBindings/annotation-note-box.gradientStart"
+    assert "property='gradientStart'" in error.value.detail
 
     theme = _note_theme()
     theme["body"]["roles"]["annotation-note-box"]["pattern"] = "box-pattern"
@@ -174,7 +185,7 @@ def test_note_ink_too_close_to_its_box_fails_naming_the_role_and_the_box():
         resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)
     assert error.value.diagnostic_id == "E_SCHEME_STATE_TEXT_CONTRAST"
     assert error.value.source_ref == "/body/roles/annotation-note-text/fill"
-    assert error.value.detail.startswith("annotation-note-text:annotation-note-box:")
+    assert error.value.detail.startswith("'annotation-note-text':'annotation-note-box':")
 
 
 def test_note_ink_that_reads_on_the_canvas_but_not_on_its_box_fails():
@@ -182,7 +193,7 @@ def test_note_ink_that_reads_on_the_canvas_but_not_on_its_box_fails():
     theme = _paper_note_theme(box="text", ink="text")
     with pytest.raises(ColorSchemeError) as error:
         resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)
-    assert error.value.detail.startswith("annotation-note-text:annotation-note-box:")
+    assert error.value.detail.startswith("'annotation-note-text':'annotation-note-box':")
 
 
 def test_light_canvas_notes_resolve_as_before_and_a_dark_box_needs_a_light_ink():
@@ -191,7 +202,7 @@ def test_light_canvas_notes_resolve_as_before_and_a_dark_box_needs_a_light_ink()
     theme["body"]["colorBindings"]["annotation-note-box.fill"] = "accent"
     with pytest.raises(ColorSchemeError) as error:
         resolve_theme(theme, scheme(), scheme_content_identity=IDENTITY)
-    assert error.value.detail.startswith("annotation-note-text:annotation-note-box:")
+    assert error.value.detail.startswith("'annotation-note-text':'annotation-note-box':")
 
 
 def test_note_ink_opacity_counts_against_the_box():
@@ -200,7 +211,7 @@ def test_note_ink_opacity_counts_against_the_box():
     theme["body"]["values"]["ink-opacity"] = {"type": "number", "value": 0.25}
     with pytest.raises(ColorSchemeError) as error:
         resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)
-    assert error.value.detail.startswith("annotation-note-text:annotation-note-box:")
+    assert error.value.detail.startswith("'annotation-note-text':'annotation-note-box':")
 
 
 def test_a_note_box_with_no_readable_fill_leaves_the_canvas_as_the_ground():
@@ -211,7 +222,7 @@ def test_a_note_box_with_no_readable_fill_leaves_the_canvas_as_the_ground():
     with pytest.raises(ColorSchemeError) as error:
         resolve_theme(theme, _dark_scheme(), scheme_content_identity=IDENTITY)
     assert error.value.diagnostic_id == "E_SCHEME_STATE_TEXT_CONTRAST"
-    assert error.value.detail.startswith("annotation-note-text:")
+    assert error.value.detail.startswith("'annotation-note-text':")
     assert "annotation-note-box" not in error.value.detail
     theme = _paper_note_theme(ink="text")
     theme["body"]["colorBindings"].pop("annotation-note-box.fill")

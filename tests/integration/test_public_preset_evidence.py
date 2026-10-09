@@ -89,7 +89,11 @@ def test_legend_swatch_marks_are_never_checked_against_the_timeline_bottom(tmp_p
         "--output", str(output),
     ])
     main()
-    warnings = [json.loads(line) for line in capsys.readouterr().err.splitlines() if line.startswith("{")]
+    output = capsys.readouterr()
+    assert output.err == ""
+    envelope = json.loads(output.out)
+    assert envelope["status"] == "ok" and envelope["diagnostics"] == []
+    warnings = envelope["warnings"]
     assert not [item for item in warnings if item.get("code") == "W_LAYOUT_MARK_OVERFLOW"]
 
 

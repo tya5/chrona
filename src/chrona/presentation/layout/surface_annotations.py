@@ -59,6 +59,7 @@ from chrona.presentation.layout.surface_quality import (
     IconPlacement, LayoutImageFill, ShapePlacement, SurfaceLayoutRequest,
     SlotPlacement, TextPlacement, annotation_presentation,
 )
+from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.layout.image_slice_geometry import image_slice_tiles
 from chrona.presentation.layout.surface_geometry import (
     HOSTED_TEXT_PAINT_ORDER,
@@ -67,6 +68,13 @@ from chrona.presentation.layout.surface_geometry import (
 
 
 ANNOTATION_PAINT_ORDER = 400
+
+
+def _annotation_icon_subjects(annotation: Any) -> tuple[DiagnosticSubject, ...]:
+    """Keep visual provenance tied to the normalized Project-object claim."""
+    if not annotation.subject_id:
+        return ()
+    return (DiagnosticSubject.project_object(annotation.subject_id, annotation.subject or None),)
 
 
 def _container_radius(value: Any, container: Any, text_size: float,
@@ -172,6 +180,7 @@ class SurfaceAnnotationBatch:
     handled_visual_sources: frozenset[str]
     suppressed_index_ids: frozenset[str]
     suppressed_callout_ids: frozenset[str]
+    diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
 
 
 def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBatch:
@@ -243,6 +252,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
     candidate_icons: list[IconPlacement] = []
     placement_decisions: list[PlacementDecision] = []
     diagnostics: list[str] = []
+    diagnostic_provenance: list[DiagnosticProvenance] = []
     visible_label_overflows: list[Any] = []
     visible_route_fallbacks: list[RelationPlacement] = []
     handled_candidate_visuals: set[str] = set()
@@ -254,6 +264,14 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
     # Full callout footprints govern exhausted-rail completion, independently
     # of the numbered list's ordering and its body-only text records.
     rail_boxes: list[LabelRect] = []
+
+    def add_diagnostic(value: str, annotation: Any) -> None:
+        diagnostics.append(value)
+        # `subject_id` is set only when normalized View annotation ingress
+        # resolved its explicit Project-object anchor.
+        if annotation.subject_id:
+            diagnostic_provenance.append(DiagnosticProvenance(value, (
+                DiagnosticSubject.project_object(annotation.subject_id, annotation.subject or None),)))
 
     def ordered_rail_candidates(annotation: Any, resolved: Any, *, anchor_y: float,
                                 text_size: tuple[float, float], rail: LabelRect,
@@ -734,8 +752,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                     tail_route_states_examined = routed.route_states
                                     tail_route_search_exhausted = routed.exhausted and routed.box is None
                                     if routed.exhausted and routed.box is None:
-                                        diagnostics.append(
-                                            f"W_LAYOUT_ANNOTATION_ROUTE_SEARCH_EXHAUSTED:{annotation_id}:{rung}")
+                                        add_diagnostic(
+                                            f"W_LAYOUT_ANNOTATION_ROUTE_SEARCH_EXHAUSTED:{annotation_id}:{rung}", annotation)
                                     if routed.box is not None and routed.egress is not None and routed.route is not None:
                                         box = AnnotationBox(resolved, LabelPlacement(rung, routed.box, False), False)
                                         selected_rung, tail_tip = rung, routed.tip
@@ -778,14 +796,14 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                             break
                     if (box is not None and annotation.candidates
                             and selected_rung != candidates[0].candidate_id):
-                        diagnostics.append(
-                            f"W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK:{annotation_id}:{selected_rung}")
+                        add_diagnostic(
+                            f"W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK:{annotation_id}:{selected_rung}", annotation)
                     if box is None:
                         if annotation_id in suppressed_callout_ids:
                             placement_decisions.append(PlacementDecision(
                                 f"annotation:{annotation_id}", annotation_id, tuple(ladder),
                                 "suppress", "suppressed", search_count=annotation_search_count))
-                            diagnostics.append(f"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:{annotation_id}")
+                            add_diagnostic(f"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:{annotation_id}", annotation)
                             discovered_callout_suppressions.add(annotation_id)
                             if annotation_slot is not None and annotation.number is not None:
                                 summary_content = (f"{annotation.number}. {annotation.content} "
@@ -815,7 +833,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                             placement_decisions.append(PlacementDecision(f"annotation:{annotation_id}", annotation_id,
                                                                          tuple(ladder), "suppress", "suppressed",
                                                                          search_count=annotation_search_count))
-                            diagnostics.append(f"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:{annotation_id}")
+                            add_diagnostic(f"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:{annotation_id}", annotation)
                             discovered_callout_suppressions.add(annotation_id)
                             continue
                         # A normal annotation is never silently suppressed or
@@ -884,7 +902,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                         text_width = (frame_width - annotation_leading - annotation_trailing - kind_measure.inline_insets
                                       - content_left - content_right)
                     elif fill_declared:
-                        diagnostics.append(f"W_LAYOUT_ANNOTATION_FILL_NOT_SLOT:{annotation_id}:{selected_rung or 'none'}")
+                        add_diagnostic(f"W_LAYOUT_ANNOTATION_FILL_NOT_SLOT:{annotation_id}:{selected_rung or 'none'}", annotation)
                 else:
                     if has_index_suppression and annotation.number is not None:
                         content = list_content
@@ -1051,7 +1069,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                                          icon.content_identity, icon.viewport, icon.payload, icon.alternative,
                                                          visual.decorative, icon_bounds, "labelVisual",
                                                          icon_width / icon.viewport[0], annotation_slot_id,
-                                                         paint_order=placed_annotation.paint_order))
+                                                         paint_order=placed_annotation.paint_order,
+                                                         subjects=_annotation_icon_subjects(annotation)))
             if annotation.number is not None:
                 note_index_visuals = measure_candidate_visuals(
                     f"note-index:{annotation_id}", "annotation", request).visuals
@@ -1071,7 +1090,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                     gap=max(1.0, size * 0.25), required=False, overflow="suppress",
                 ))
                 if note_index is None:
-                    diagnostics.append(f"W_LAYOUT_NOTE_INDEX_SUPPRESSED:{annotation_id}")
+                    add_diagnostic(f"W_LAYOUT_NOTE_INDEX_SUPPRESSED:{annotation_id}", annotation)
                     discovered_index_suppressions.add(annotation_id)
                 else:
                     note_index_inline = note_index.bounds.x
@@ -1102,7 +1121,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                                                  icon.content_identity, icon.viewport, icon.payload, icon.alternative,
                                                                  visual.decorative, icon_bounds, "labelVisual",
                                                                  icon_width / icon.viewport[0], annotation_slot_id,
-                                                                 paint_order=note_index_text.paint_order))
+                                                                 paint_order=note_index_text.paint_order,
+                                                                 subjects=_annotation_icon_subjects(annotation)))
                 if (has_index_suppression and annotation_slot is not None and annotation.number is not None
                         and not status_in_list):
                     status_content = f"{annotation.number}. index not shown on plot"
@@ -1191,7 +1211,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
         tuple(text), tuple(shapes), tuple(relations), tuple(candidate_icons), tuple(placement_decisions),
         tuple(diagnostics), tuple(visible_label_overflows), tuple(visible_route_fallbacks),
         frozenset(handled_candidate_visuals), frozenset(discovered_index_suppressions),
-        frozenset(discovered_callout_suppressions))
+        frozenset(discovered_callout_suppressions), tuple(diagnostic_provenance))
 
 
 def comparison_marks(projection: Any) -> tuple[ComparisonMark, ...]:

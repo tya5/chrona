@@ -30,6 +30,15 @@ if TYPE_CHECKING:
 LaneFootprint: TypeAlias = ObstacleRect | ObstacleSegment
 
 
+def _lane_error(code: str, owner: str, **operands: object) -> ValueError:
+    fields = []
+    for name, value in operands.items():
+        shown = "<bytes>" if isinstance(value, bytes) else repr(value)
+        shown = shown.replace("\n", " ").replace("\r", " ")[:96]
+        fields.append(f"{name}={shown}")
+    return ValueError(f"{code}: {owner} " + ", ".join(fields))
+
+
 @dataclass(frozen=True)
 class LaneFacetFootprint:
     """One source-keyed visible primitive footprint and exact overlay targets."""
@@ -63,7 +72,9 @@ class LaneSubtrack:
         if (not self.lane_id or self.subtrack_count < 1
                 or not all(isfinite(value) for value in (self.pitch, self.offset, self.block_extent))
                 or self.pitch <= 0 or self.offset < 0 or self.block_extent <= 0):
-            raise ValueError("E_LAYOUT_LANE_SUBTRACK_INVALID")
+            raise _lane_error("E_LAYOUT_LANE_SUBTRACK_INVALID", "LaneSubtrack",
+                              lane_id=self.lane_id, subtrack_count=self.subtrack_count,
+                              pitch=self.pitch, offset=self.offset, block_extent=self.block_extent)
 
 
 @dataclass(frozen=True)
@@ -80,7 +91,9 @@ class LaneItemSubtrack:
         if (not self.item_id or not isinstance(self.projection_instance_id, LaneProjectionInstance)
                 or not self.lane_id or self.track_index < 0
                 or not isfinite(self.block_offset) or self.block_offset < 0):
-            raise ValueError("E_LAYOUT_LANE_SUBTRACK_INVALID")
+            raise _lane_error("E_LAYOUT_LANE_SUBTRACK_INVALID", "LaneItemSubtrack",
+                              item_id=self.item_id, lane_id=self.lane_id,
+                              track_index=self.track_index, block_offset=self.block_offset)
 
 
 @dataclass(frozen=True)
@@ -120,14 +133,19 @@ class FixedLanePreflight:
     def __post_init__(self) -> None:
         if (not self.natural_block_requirement.is_finite()
                 or self.natural_block_requirement < 0):
-            raise ValueError("E_LAYOUT_LANE_PREFLIGHT_INVALID")
+            raise _lane_error("E_LAYOUT_LANE_PREFLIGHT_INVALID", "FixedLanePreflight",
+                              natural_block_requirement=self.natural_block_requirement)
         if (len({item.placement_id for item in self.measured_labels}) != len(self.measured_labels)
                 or len({lane_id for lane_id, _ in self.row_requirements}) != len(self.row_requirements)
                 or any(not isfinite(size) or size <= 0 for _, size in self.row_requirements)
                 or (self.row_requirements and
                     {lane_id for lane_id, _ in self.row_requirements}
                     != {lane.lane_id for lane in self.subtracks.lanes})):
-            raise ValueError("E_LAYOUT_LANE_PREFLIGHT_INVALID")
+            raise _lane_error("E_LAYOUT_LANE_PREFLIGHT_INVALID", "FixedLanePreflight",
+                              measured_label_ids=tuple(getattr(item, "placement_id", None)
+                                                      for item in self.measured_labels),
+                              row_requirements=self.row_requirements,
+                              lane_ids=tuple(lane.lane_id for lane in self.subtracks.lanes))
 
 
 def assign_lane_subtracks(
@@ -150,7 +168,8 @@ def assign_lane_subtracks(
             and (len(reserved_band_bounds) != 2
                  or any(not isfinite(value) for value in reserved_band_bounds)
                  or reserved_band_bounds[1] <= reserved_band_bounds[0])):
-        raise ValueError("E_LAYOUT_LANE_SUBTRACK_INPUT:reserved band bounds must be a finite positive interval")
+        raise _lane_error("E_LAYOUT_LANE_SUBTRACK_INPUT", "reserved band bounds",
+                          bounds=reserved_band_bounds)
     lane_members, assignments = _validate_membership(membership)
     units, overlay_pairs = _validate_footprints(item_footprints, set(assignments), assignments)
     ordered_units = [unit for lane in membership.lanes for item_id in lane_members[lane.lane_id]
@@ -166,7 +185,9 @@ def assign_lane_subtracks(
             host_id = assignments[child_id].source_id
             if (host_id not in member_ids or assignments[host_id].rule == "attached"
                     or assignments[host_id].lane_id != lane.lane_id):
-                raise ValueError("E_LAYOUT_LANE_SUBTRACK_INPUT")
+                raise _lane_error("E_LAYOUT_LANE_SUBTRACK_INPUT", "attached host", lane_id=lane.lane_id,
+                                  item_id=child_id, host_id=host_id,
+                                  host_lane_id=assignments.get(host_id).lane_id if host_id in assignments else None)
         lane_units = [unit for item_id in (*roots, *children) for unit in units[item_id]]
         _validate_intra_instance_collisions(lane_units, overlay_pairs, clearance)
         min_top = min(0.0, reserved_band_bounds[0]) if reserved_band_bounds is not None else 0.0
@@ -179,7 +200,9 @@ def assign_lane_subtracks(
         offset = max(0.0, -min_top)
         pitch = max(mark_band_size, max_bottom - min_top) + clearance
         if not isfinite(pitch) or pitch <= 0 or not isfinite(offset):
-            raise ValueError("E_LAYOUT_LANE_SUBTRACK_INPUT")
+            raise _lane_error("E_LAYOUT_LANE_SUBTRACK_INPUT", "computed lane pitch",
+                              lane_id=lane.lane_id, pitch=pitch, offset=offset,
+                              mark_band_size=mark_band_size, clearance=clearance)
 
         lane_assignments = {item_id: assignments[item_id] for item_id in member_ids}
         host_tracks: dict[str, list[int]] = {}
@@ -194,7 +217,10 @@ def assign_lane_subtracks(
                              if _fits_track(unit, index, placed, offset, pitch,
                                             overlay_pairs, clearance)), None)
             if selected is None:
-                raise ValueError("E_LAYOUT_LANE_SUBTRACK_UNPLACEABLE")
+                raise _lane_error("E_LAYOUT_LANE_SUBTRACK_UNPLACEABLE", "track candidate",
+                                  item_id=unit.item_id, lane_id=lane.lane_id,
+                                  projection_instance_id=unit.projection_instance_id,
+                                  candidate_tracks=tuple(track_order))
             placed.append((unit, selected))
             max_track = max(max_track, selected)
             host_tracks.setdefault(unit.item_id, []).append(selected)
@@ -221,13 +247,14 @@ def _validate_metrics(mark_band_size: float, clearance: float) -> None:
     if (any(not isinstance(value, (int, float)) or isinstance(value, bool)
             or not isfinite(value) for value in values)
             or mark_band_size <= 0 or clearance < 0):
-        raise ValueError("E_LAYOUT_LANE_SUBTRACK_INPUT")
+        raise _lane_error("E_LAYOUT_LANE_SUBTRACK_INPUT", "lane metrics",
+                          mark_band_size=mark_band_size, clearance=clearance)
 
 
 def _validate_membership(membership: LaneMembership) -> tuple[dict[str, tuple[str, ...]], dict[str, LaneAssignment]]:
     if (not isinstance(membership, LaneMembership) or not isinstance(membership.lanes, tuple)
             or not isinstance(membership.assignments, tuple)):
-        raise TypeError("E_LAYOUT_LANE_SUBTRACK_INPUT")
+        raise TypeError("E_LAYOUT_LANE_SUBTRACK_INPUT: membership must contain LaneMembership tuples")
     lanes: dict[str, tuple[str, ...]] = {}
     for lane in membership.lanes:
         if (not isinstance(lane, Lane) or not isinstance(lane.lane_id, str) or not lane.lane_id
@@ -236,7 +263,10 @@ def _validate_membership(membership: LaneMembership) -> tuple[dict[str, tuple[st
                 or any(not isinstance(item_id, str) or not item_id for item_id in lane.member_item_ids)
                 or len(set(lane.member_item_ids)) != len(lane.member_item_ids)
                 or lane.lane_id in lanes):
-            raise ValueError("E_LAYOUT_LANE_SUBTRACK_INPUT")
+            raise _lane_error("E_LAYOUT_LANE_SUBTRACK_INPUT", "lane membership",
+                              lane_id=getattr(lane, "lane_id", None),
+                              group_id=getattr(lane, "group_id", None),
+                              member_item_ids=getattr(lane, "member_item_ids", None))
         lanes[lane.lane_id] = lane.member_item_ids
     assignments: dict[str, LaneAssignment] = {}
     for assignment in membership.assignments:
@@ -249,15 +279,25 @@ def _validate_membership(membership: LaneMembership) -> tuple[dict[str, tuple[st
                 or not isinstance(assignment.source_id, str) or not assignment.source_id
                 or assignment.item_id in assignments
                 or assignment.lane_id not in lanes or assignment.item_id not in lanes[assignment.lane_id]):
-            raise ValueError("E_LAYOUT_LANE_SUBTRACK_INPUT")
+            raise _lane_error("E_LAYOUT_LANE_SUBTRACK_INPUT", "lane assignment",
+                              item_id=getattr(assignment, "item_id", None),
+                              lane_id=getattr(assignment, "lane_id", None),
+                              group_id=getattr(assignment, "group_id", None),
+                              rule=getattr(assignment, "rule", None),
+                              source_id=getattr(assignment, "source_id", None))
         assignments[assignment.item_id] = assignment
     member_order = tuple(item_id for member_ids in lanes.values() for item_id in member_ids)
     expected = set(member_order)
     if len(expected) != len(member_order) or set(assignments) != expected:
-        raise ValueError("E_LAYOUT_LANE_SUBTRACK_INPUT")
+        raise _lane_error("E_LAYOUT_LANE_SUBTRACK_INPUT", "membership assignments",
+                          lane_item_ids=member_order,
+                          assigned_item_ids=tuple(assignments))
     for lane in membership.lanes:
         if any(assignments[item_id].group_id != lane.group_id for item_id in lane.member_item_ids):
-            raise ValueError("E_LAYOUT_LANE_SUBTRACK_INPUT")
+            raise _lane_error("E_LAYOUT_LANE_SUBTRACK_INPUT", "lane group assignment",
+                              lane_id=lane.lane_id, group_id=lane.group_id,
+                              assignments=tuple((item_id, assignments[item_id].group_id)
+                                                for item_id in lane.member_item_ids))
     return lanes, assignments
 
 
@@ -266,7 +306,7 @@ def _validate_footprints(
     assignments: dict[str, LaneAssignment],
 ) -> tuple[dict[str, list[LaneItemFootprints]], set[frozenset[str]]]:
     if not isinstance(values, tuple):
-        raise TypeError("E_LAYOUT_LANE_SUBTRACK_INPUT")
+        raise TypeError("E_LAYOUT_LANE_SUBTRACK_INPUT: footprints must be a tuple")
     result: dict[str, list[LaneItemFootprints]] = {item_id: [] for item_id in expected_ids}
     facet_owner: dict[str, tuple[LaneItemFootprints, LaneFacetFootprint]] = {}
     overlay_pairs: set[frozenset[str]] = set()
@@ -277,7 +317,10 @@ def _validate_footprints(
                 or not isinstance(unit.projection_instance_id, LaneProjectionInstance)
                 or unit.projection_instance_id in instance_ids
                 or not isinstance(unit.facets, tuple) or not unit.facets):
-            raise ValueError("E_LAYOUT_LANE_SUBTRACK_INPUT")
+            raise _lane_error("E_LAYOUT_LANE_SUBTRACK_INPUT", "item footprints",
+                              item_id=getattr(unit, "item_id", None),
+                              projection_instance_id=getattr(unit, "projection_instance_id", None),
+                              facet_count=len(unit.facets) if isinstance(getattr(unit, "facets", None), tuple) else None)
         instance_ids.add(unit.projection_instance_id)
         result[unit.item_id].append(unit)
         for facet in unit.facets:
@@ -287,18 +330,30 @@ def _validate_footprints(
                            for target in facet.overlay_with)
                     or len(set(facet.overlay_with)) != len(facet.overlay_with)
                     or not isinstance(facet.footprint, (ObstacleRect, ObstacleSegment))):
-                raise ValueError("E_LAYOUT_LANE_SUBTRACK_INPUT")
+                raise _lane_error("E_LAYOUT_LANE_SUBTRACK_INPUT", "facet footprint",
+                                  item_id=unit.item_id, facet_id=getattr(facet, "facet_id", None),
+                                  overlay_with=getattr(facet, "overlay_with", None),
+                                  footprint_type=type(getattr(facet, "footprint", None)).__name__)
             facet_owner[facet.facet_id] = (unit, facet)
     if any(not result[item_id] for item_id in expected_ids):
-        raise ValueError("E_LAYOUT_LANE_SUBTRACK_INPUT")
+        raise _lane_error("E_LAYOUT_LANE_SUBTRACK_INPUT", "missing item footprints",
+                          item_ids=tuple(item_id for item_id in expected_ids if not result[item_id]))
     for facet_id, (unit, facet) in facet_owner.items():
         for target in facet.overlay_with:
             other = facet_owner.get(target)
             if other is None or assignments[other[0].item_id].lane_id != assignments[unit.item_id].lane_id:
-                raise ValueError("E_LAYOUT_LANE_SUBTRACK_OVERLAY_INVALID")
+                raise _lane_error("E_LAYOUT_LANE_SUBTRACK_OVERLAY_INVALID", "overlay target",
+                                  facet_id=facet_id, target_facet_id=target,
+                                  source_item_id=unit.item_id,
+                                  target_item_id=other[0].item_id if other is not None else None,
+                                  source_lane_id=assignments[unit.item_id].lane_id,
+                                  target_lane_id=(assignments[other[0].item_id].lane_id
+                                                  if other is not None else None))
             target_facet = other[1]
             if facet_id not in target_facet.overlay_with:
-                raise ValueError("E_LAYOUT_LANE_SUBTRACK_OVERLAY_INVALID")
+                raise _lane_error("E_LAYOUT_LANE_SUBTRACK_OVERLAY_INVALID", "asymmetric overlay",
+                                  facet_id=facet_id, target_facet_id=target,
+                                  reciprocal_targets=target_facet.overlay_with)
             overlay_pairs.add(frozenset((facet_id, target)))
     return result, overlay_pairs
 

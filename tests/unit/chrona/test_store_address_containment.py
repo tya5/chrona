@@ -484,5 +484,8 @@ def test_aggregate_recovery_refuses_a_marker_directory_that_is_not_a_contained_n
     marker.write_text(json.dumps({"workspaceIdentity": content_identity({"id": "w"}), "directory": directory, "resources": {}}))
     with pytest.raises(OperationalResourceError) as error:
         _recover_incomplete_aggregate(workspace)
-    assert error.value.args[0] == "E_AUTHORING_AGGREGATE_RECOVERY"
+    assert error.value.code == "E_AUTHORING_AGGREGATE_RECOVERY"
+    assert str(error.value).startswith("E_AUTHORING_AGGREGATE_RECOVERY: ")
+    assert "transaction marker '.workspace.yaml.authoring-transaction.json'" in error.value.detail
+    assert "cannot be validated or recovered" in error.value.detail
     assert (outside / "keep.yaml").exists()

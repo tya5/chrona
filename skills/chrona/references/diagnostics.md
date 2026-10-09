@@ -12,8 +12,10 @@ Every row has a `message` that says what is wrong. A row may also carry `count` 
 more): equal findings were merged into it; no `count` means it happened once.
 
 Exit status: 1 for `rejected` (the plan or a preset is wrong), 2 for `failed` (the file,
-the flag or the output suffix is wrong), 0 for success. Warnings and notes are JSON lines
-on standard error and the exit status stays 0.
+the flag or the output suffix is wrong), 0 for success. Successful `render`,
+`render-review` and `render-workspace` print one JSON stdout envelope
+`{"status": "ok", "diagnostics": [], "warnings": [...]}`. Read `warnings`
+there, not former stderr JSON lines; warnings and notes keep exit 0.
 
 Every code below is checked by a test against the source, and each plan-level code is
 provoked by the test with a small synthetic plan, so a removed or renamed code fails the
@@ -51,10 +53,12 @@ in the repository); if you meet one, quote it to the user and do not guess a fix
 | `E_SKILL_OUTPUT_EXISTS` | `chrona skill copy --output DIR` found `DIR` already in use. | Copy to a new directory; do not overwrite. |
 | `E_RESOURCE_VERSION_UNSUPPORTED` | A preset copied by an older chrona is stale for this version. | Copy the preset again into a new directory and re-apply your edits. |
 
-## Warnings and notes (render succeeded, exit 0, on standard error)
+## Warnings and notes (render succeeded, exit 0, in stdout.warnings)
 
 A warning has a `message` (what happened, then which label or placement) and its measured
-facts. Warnings with the same code and cause are one line: `count` says how many (2 or
+facts. Object-backed warnings name the known Project title and its escaped
+`/objects/<id>` pointer; axis, slot, relation and other non-object findings do
+not invent an object. Warnings with the same code and cause are one row: `count` says how many (2 or
 more), the first subject is in `message` and `diagnostic`, and `occurrences` lists the
 others (at most 20). The picture is written; the question is whether you accept it.
 

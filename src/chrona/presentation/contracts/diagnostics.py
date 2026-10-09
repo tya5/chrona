@@ -55,6 +55,8 @@ class PresentationIngressRejected(ValueError):
     def __init__(self, diagnostics: tuple[PresentationDiagnostic, ...]) -> None:
         super().__init__("E_PRESENTATION_REJECTED")
         self.diagnostics = diagnostics
+        codes = tuple(dict.fromkeys(item.code for item in diagnostics))[:8]
+        self.detail = f"diagnosticCount={len(diagnostics)}, codes={codes!r}; expected an empty diagnostic set before presentation use"
 
 
 def collect_presentation_contracts(

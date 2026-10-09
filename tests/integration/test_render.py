@@ -23,7 +23,7 @@ from chrona.scheduling.scheduler import ReferenceScheduler
 from chrona.usecases.render_review import RenderFailed, RenderRequest, render_review
 from chrona.presentation.scene.serialization import serialize_scene
 from chrona.presentation.scene.perceptibility import evaluate_scene_perceptibility
-from chrona.app.cli import _emit_render_warnings
+from chrona.app.cli import _emit_render_result
 from chrona.resources import default_preset_resource, default_preset_root
 
 
@@ -352,9 +352,12 @@ def test_suppressed_plot_labels_have_one_completed_info_count(capsys, tmp_path):
     assert not per_id & visible_labels
     assert rendered.scene.diagnostics.count(
         f"I_LAYOUT_PLOT_LABELS_SUPPRESSED:surface=table-timeline;count={len(per_id)}") == 1
-    _emit_render_warnings(rendered)
-    info = [json.loads(line) for line in capsys.readouterr().err.splitlines()
-            if '"I_LAYOUT_PLOT_LABELS_SUPPRESSED"' in line]
+    _emit_render_result(rendered)
+    output = capsys.readouterr()
+    assert output.err == ""
+    envelope = json.loads(output.out)
+    assert envelope["status"] == "ok" and envelope["diagnostics"] == []
+    info = [item for item in envelope["warnings"] if item["code"] == "I_LAYOUT_PLOT_LABELS_SUPPRESSED"]
     assert info == [{"code": "I_LAYOUT_PLOT_LABELS_SUPPRESSED", "count": len(per_id),
                      "severity": "info", "surfaceId": "table-timeline",
                      "message": f"{len(per_id)} plot labels on table-timeline were left out because they do not fit"}]
@@ -438,9 +441,12 @@ def test_elevated_preset_reports_default_profile_omissions_and_rich_svg_paints_t
     assert all(item.source_ref.startswith("/body/roles/group-band/") for item in omissions)
     assert sum(item.startswith("I_VISUAL_TREATMENT_OMITTED:") for item in baseline.scene.diagnostics) == 2
     assert len([item for item in baseline.surface.primitives if item.visual_role == "group-band"]) == 6
-    _emit_render_warnings(baseline)
-    notices = [json.loads(line) for line in capsys.readouterr().err.splitlines()
-               if '"I_VISUAL_TREATMENT_OMITTED"' in line]
+    _emit_render_result(baseline)
+    output = capsys.readouterr()
+    assert output.err == ""
+    envelope = json.loads(output.out)
+    assert envelope["status"] == "ok" and envelope["diagnostics"] == []
+    notices = [item for item in envelope["warnings"] if item["code"] == "I_VISUAL_TREATMENT_OMITTED"]
     assert len(notices) == 2
     assert all(item["severity"] == "info" and item["paintableProfile"] == "chrona-output/visual/v0.6-svg"
                for item in notices)

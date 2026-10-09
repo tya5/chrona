@@ -2,6 +2,7 @@ from io import BytesIO
 from dataclasses import replace
 from hashlib import sha256
 from importlib.resources import files
+import json
 from pathlib import Path
 import platform
 import shutil
@@ -149,9 +150,12 @@ def test_host_face_without_tabular_digits_uses_proportional_mode_with_warning_on
     main()
     assert output.read_bytes().startswith(b"<svg")
     assert '"code":"W_FONT_TABULAR_UNAVAILABLE"' in scene_path.read_text()
-    warning_output = capsys.readouterr().err
-    assert '"code": "W_FONT_TABULAR_UNAVAILABLE"' in warning_output
-    assert '"role": "numeric"' in warning_output
+    output_stream = capsys.readouterr()
+    assert output_stream.err == ""
+    envelope = json.loads(output_stream.out)
+    assert envelope["status"] == "ok" and envelope["diagnostics"] == []
+    warning = next(item for item in envelope["warnings"] if item["code"] == "W_FONT_TABULAR_UNAVAILABLE")
+    assert warning["role"] == "numeric"
 
 
 def test_system_font_resolution_is_rejected_if_a_caller_attempts_immutable_rendering():
