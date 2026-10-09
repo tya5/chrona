@@ -6,8 +6,8 @@ import pytest
 from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
 from chrona.presentation.layout.presentation import MarkBandFrame, MarkGeometry, RowPlacement, TrackPlacement, mark_bounds, measure_table_columns, minimum_track_block_extent, place_mark_tracks, place_rows, place_table_columns, required_row_block_extents, table_cell_indent, table_text_line_block
 from chrona.presentation.layout.text import ellipsize_text
-from chrona.presentation.layout.surface_table import _centred_cell_baseline
 from chrona.presentation.layout.surface_completion import contains_block_interval
+from chrona.presentation.layout.text import centred_text_baseline
 from chrona.presentation.model.surface_content import TableCellContent, TableColumnContent, TableColumnWidth
 from chrona.presentation.model.projection import ObservationState
 
@@ -329,6 +329,6 @@ def test_table_text_line_block_is_the_tallest_cell_role() -> None:
 
 def test_table_cell_line_box_is_centred_in_its_row_in_its_own_role() -> None:
     row = Rect(Decimal(0), Decimal(100), Decimal(10), Decimal(27))
-    baseline = _centred_cell_baseline(row, SimpleNamespace(font_size=14, line_height=1.5))
+    baseline = centred_text_baseline(row, font_size=14, line_height=1.5)
     top = baseline - 14
     assert top - 100 == pytest.approx(100 + 27 - (top + 21))
