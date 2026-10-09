@@ -15,7 +15,8 @@ from chrona.presentation.layout.surface_base import SurfaceBaseGeometry
 from chrona.presentation.layout.surface_quality import (
     CollisionDomain, ColumnPlacement, SlotPlacement, SurfaceLayoutRequest, TextPlacement,
 )
-from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_role, place_text
+from chrona.presentation.layout.text import (centred_text_baseline, ellipsize_text, measure_text_width,
+                                             metric_for_role, place_text)
 
 
 @dataclass(frozen=True)
@@ -169,6 +170,7 @@ def compose_table(base: SurfaceBaseGeometry, *, seed: SurfaceTableHeaderSeed | N
         row = row_by_subject.get(object_id)
         position = positions.get(column_id)
         if row is not None and position is not None and column_id in column_intents:
+            treatment = tokens.text_treatment(typography_role)
             indent = (cell_indents[object_id]
                       if column_id == request.surface_content.table_hierarchy_column else 0)
             available = max(0.0, column_widths[column_id] - indent - body_size)
@@ -188,7 +190,8 @@ def compose_table(base: SurfaceBaseGeometry, *, seed: SurfaceTableHeaderSeed | N
                 placement_id=f"cell:{object_id}:{column_id}", source_ref=object_id, content=resolved,
                 inline=_aligned_inline(resolved, column_id, position[0] + indent, available,
                                        typography_role, "horizontal", measure_table_text, column_intents),
-                baseline_block=_centred_cell_baseline(row.bounds, tokens.text_treatment(typography_role)),
+                baseline_block=centred_text_baseline(
+                    row.bounds, font_size=treatment.font_size, line_height=treatment.line_height),
                 typography_role=typography_role, theme_tokens=tokens, font_metrics=font_metrics,
                 overflow=overflow, collision_region="table",
                 collision_domain=CollisionDomain("table", f"row:{row.row_id}"), source_content=content,
@@ -220,9 +223,3 @@ def _aligned_inline(content: str, column_id: str, start: float, available_inline
     if align == "center":
         return start + max(0.0, (available_inline - width) / 2)
     return start
-
-
-def _centred_cell_baseline(row: Any, treatment: Any) -> float:
-    """Centre a table cell's line box in its row, using that cell's own role."""
-    line_block = float(treatment.font_size * treatment.line_height)
-    return float(row.block) + (float(row.block_size) - line_block) / 2 + float(treatment.font_size)
