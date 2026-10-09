@@ -50,4 +50,3 @@ def test_resolution_does_not_mutate_mapping():
     before = figures.copy()
     assert resolve_figure_text("Value {figure:f}", figures) == "Value -2"
     assert figures == before
-
