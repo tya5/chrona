@@ -1,0 +1,63 @@
+version: chrona/color-scheme/v0.2
+kind: color-scheme
+id: sunday
+body:
+  colors:
+    surface: '#F6EFDC'
+    surfaceRaised: '#FFFDF5'
+    text: '#1A1A1A'
+    textMuted: '#5A554C'
+    accent: '#F7C948'
+    positive: '#2F6B1F'
+    negative: '#B8301E'
+    warning: '#D13A26'
+    neutral: '#8F887A'
+    rule: '#1A1A1A'
+    insideLabelPlanned: '#1A1A1A'
+    insideLabelActual: '#FFFDF5'
+    insideLabelSnapshot: '#1A1A1A'
+    insideLabelScenario: '#1A1A1A'
+  suitability:
+    background: light
+    colorVision:
+    - none-claimed
+    print: not-claimed
+  provenance:
+    kind: chrona-authored
+    source: Chrona HALCYON-1 example, Sunday Strip target (docs/research/presentation/sunday-target-2026-09-26)
+    license: MIT
+  categories:
+    default: '#FFFDF5'
+    window: '#E4F0D6'
+    exception: '#F7C948'
+    bar: '#7EC8E3'
+    barEdge: '#1A1A1A'
+    actualInk: '#D13A26'
+    asofChip: '#D13A26'
+    asofInk: '#FFFDF5'
+    relationInk: '#8F887A'
+    closed: '#1A1A1A'
+    bus: '#FFFDF5'
+    payload: '#FFFDF5'
+    ait: '#FFFDF5'
+    ground: '#FFFDF5'
+    launch: '#FFFDF5'
+    ops: '#FFFDF5'
+    series-1: '#0D0A09'
+    series-2: '#0D0A09'
+    series-3: '#0D0A09'
+    series-4: '#0D0A09'
+    series-5: '#0D0A09'
+    series-6: '#0D0A09'
+    factory-team: '#0D0A09'
+    fw-team: '#0D0A09'
+    validation-team: '#0D0A09'
+    paper: '#FFFDF5'
+    ink: '#1A1A1A'
+    gridFaint: '#D9D2BF'
+    yellow: '#F7C948'
+    red: '#D13A26'
+    grass: '#E4F0D6'
+    grassInk: '#6FB04F'
+    grey: '#8F887A'
+    dots: '#7EC8E3'
