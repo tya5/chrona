@@ -23,12 +23,20 @@ Theme isolation. S0 after isolation: 448 mapped documents, 739 probes, PASS
 (L2+L3 40.1s; four existing invalid fixtures unchanged).
 The two disposable SVG/Scene renders exist, but materializer comparison reports
 the expected mismatch because their generated repository evidence is not yet published.
-[PR #1263 snapshot](https://github.com/tya5/chrona/actions/runs/37868811432),
-head `77c8e092`: 149 paths audited, all 136 existing SVG/Scene files byte-identical,
-four new SVG/Scene files, four report changes, no retirements. Both new SVGs
-match the local rendered bytes; packaged-font raster inspection confirms
-alternating months and months following their quarter's fill. The inherited
-footer-overflow warning is disclosed, not absorbed by unrelated data/style edits.
+[Latest pre-correction snapshot](https://github.com/tya5/chrona/actions/runs/37870709799),
+head `9ae297cf`: 149 paths audited, all 136 existing SVG/Scene files byte-identical,
+four new SVG/Scene files, four report changes, no retirements. Its pytest failed
+two new-slide band-contrast cases and the missing slide-ledger rows;
+derived-ready failed transitively. These were slice-introduced failures.
+The new Theme now declares two dedicated Scheme categories, without changing
+existing category values: both fills clear every group/row ground by at least
+1.221 and 1.365 respectively (required 1.15). The two source-ledger rows record
+seven axis labels and a hosted DVT. Root reran the original readability
+assertions against copied-project public renders; both pass. The focused
+axis-scale suite passed 72 tests. Updated-head snapshot/CI remain required.
+Packaged-font raster inspection confirms alternating months and months
+following their quarter's fill. The inherited footer-overflow warning is
+disclosed, not absorbed by unrelated data/style edits.
 Committed generated evidence and exact-main three-OS release remain pending;
 keep the issue open.
 

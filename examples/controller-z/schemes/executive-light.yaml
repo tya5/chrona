@@ -37,3 +37,5 @@ body:
     fw-team: "#E7F0FA"
     validation-team: "#E8F6F0"
     capabilities-band: "#D8DDE6"
+    axis-band-even: "#D8DDE6"
+    axis-band-odd: "#C2D9A8"
