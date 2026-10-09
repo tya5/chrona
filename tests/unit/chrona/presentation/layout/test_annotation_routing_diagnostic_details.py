@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import fields, replace
 from datetime import date
 from types import SimpleNamespace
 
@@ -16,6 +17,7 @@ from chrona.presentation.layout.annotations import (
     resolve_annotation_anchor,
     route_annotation_leader,
 )
+from chrona.presentation.layout.surface_annotations import _anchor_failure, annotation_anchor_bounds
 from chrona.presentation.layout.comparison_marks import ComparisonMark
 from chrona.presentation.layout.labels import LabelRect
 from chrona.presentation.layout.obstacles import (
@@ -51,18 +53,93 @@ def test_annotation_route_budget_error_names_inputs():
 
 def test_unsupported_annotation_anchor_names_actual_kind():
     with pytest.raises(ValueError) as unsupported:
-        resolve_annotation_anchor(_annotation(anchor={"kind": "group", "id": "group-alpha"}), ())
+        resolve_annotation_anchor(replace(_annotation(anchor={"kind": "group", "id": "group-alpha"}),
+                                          anchor_source_ref="/body/annotations/3/anchor"), ())
     assert str(unsupported.value).startswith("E_PRESENTATION_ANCHOR_UNSUPPORTED:")
+    assert unsupported.value.diagnostic_id == "E_PRESENTATION_ANCHOR_UNSUPPORTED"
+    assert unsupported.value.path == "/body/annotations/3/anchor"
     assert "annotation_id='annotation-alpha'" in str(unsupported.value)
     assert "anchor_kind='group'" in str(unsupported.value)
 
 
 def test_missing_annotation_anchor_names_actual_target():
     with pytest.raises(ValueError) as missing:
-        resolve_annotation_anchor(_annotation(), ())
+        resolve_annotation_anchor(replace(_annotation(
+            anchor={"kind": "object", "id": "titlecard", "facet": "actual", "endpoint": "finish"}),
+            anchor_source_ref="/body/annotations/0/anchor"), ())
     assert str(missing.value).startswith("E_PRESENTATION_ANCHOR_MISSING:")
-    assert "object_id='object-alpha'" in str(missing.value)
-    assert "facet='planned'" in str(missing.value)
+    assert missing.value.diagnostic_id == "E_PRESENTATION_ANCHOR_MISSING"
+    assert missing.value.path == "/body/annotations/0/anchor"
+    assert "annotation_id='annotation-alpha'" in missing.value.detail
+    assert "object_id='titlecard'" in missing.value.detail
+    assert "facet='actual'" in missing.value.detail
+    assert "endpoint='finish'" in missing.value.detail
+    assert "no completed actual mark" in missing.value.detail
+
+
+def test_missing_mark_endpoint_names_exact_endpoint_and_reason():
+    mark = ComparisonMark("titlecard", "actual", "span", start=date(2026, 1, 1))
+    annotation = replace(_annotation(anchor={"kind": "object", "id": "titlecard", "facet": "actual",
+                                      "endpoint": "finish"}),
+                         anchor_source_ref="/body/annotations/2/anchor")
+    with pytest.raises(ValueError) as missing:
+        resolve_annotation_anchor(annotation, (mark,))
+    assert missing.value.diagnostic_id == "E_PRESENTATION_ANCHOR_MISSING"
+    assert missing.value.path == "/body/annotations/2/anchor"
+    assert "endpoint='finish'" in missing.value.detail
+    assert "selected mark has no finish date" in missing.value.detail
+
+
+def test_anchor_source_pointer_is_runtime_only_metadata():
+    intent = _annotation()
+    other = replace(intent, anchor_source_ref="/body/annotations/8/anchor")
+    pointer = next(item for item in fields(AnnotationIntent) if item.name == "anchor_source_ref")
+    assert intent.anchor_source_ref == "/"
+    assert intent == other
+    assert "anchor_source_ref" not in repr(intent)
+    assert pointer.kw_only and pointer.compare is False and pointer.hash is False and pointer.repr is False
+
+
+def test_post_resolution_anchor_geometry_failure_keeps_the_declared_view_pointer():
+    mark = ComparisonMark("titlecard", "actual", "span")
+    with pytest.raises(ValueError) as missing:
+        annotation_anchor_bounds(mark, "body", None, None,
+                                 source_ref="/body/annotations/4/anchor", annotation_id="view-note")
+    assert missing.value.diagnostic_id == "E_PRESENTATION_ANCHOR_MISSING"
+    assert missing.value.path == "/body/annotations/4/anchor"
+    assert "annotation_id='view-note'" in missing.value.detail
+    assert "object_id='titlecard'" in missing.value.detail
+    assert "endpoint='body'" in missing.value.detail
+    assert "no resolved endpoint date" in missing.value.detail
+
+
+def test_post_resolution_anchor_detail_bounds_operands_but_preserves_full_pointer():
+    long_id = "annotation-\n" + ("a" * 180)
+    long_object_id = "object-\r" + ("b" * 180)
+    pointer = "/body/annotations/123456789/anchor"
+    mark = ComparisonMark(long_object_id, "actual", "span")
+    with pytest.raises(ValueError) as missing:
+        annotation_anchor_bounds(mark, "finish", None, None,
+                                 source_ref=pointer, annotation_id=long_id)
+    error = missing.value
+    assert error.path == pointer
+    assert "reason=selected mark has no resolved endpoint date" in error.detail
+    assert "\n" not in error.detail and "\r" not in error.detail
+    for operand in ("annotation_id=", "object_id="):
+        rendered = error.detail.split(operand, 1)[1].split(", ", 1)[0]
+        assert len(rendered) <= 96
+
+
+def test_post_resolution_host_failure_keeps_the_same_anchor_provenance():
+    annotation = replace(_annotation(anchor={"kind": "object", "id": "titlecard",
+                                           "facet": "actual", "endpoint": "body"}),
+                         anchor_source_ref="/body/annotations/5/anchor")
+    failure = _anchor_failure(annotation, "selected mark has no matching rendered row or folded point")
+    assert failure.diagnostic_id == "E_PRESENTATION_ANCHOR_MISSING"
+    assert failure.path == "/body/annotations/5/anchor"
+    assert "object_id='titlecard'" in failure.detail
+    assert "facet='actual'" in failure.detail
+    assert "endpoint='body'" in failure.detail
 
 
 def test_unsupported_annotation_purpose_names_actual_value():

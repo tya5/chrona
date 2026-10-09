@@ -109,7 +109,9 @@ def test_a_group_outside_a_listed_domain_is_an_error_naming_it(tmp_path):
         parts["theme"]["body"]["colorScales"]["fixed"] = {"slots": {"bus": "series-1", "payload": "series-2"}}
     with pytest.raises(RenderFailed) as failure:
         _render(tmp_path, _parts({"scale": "fixed", "domain": ["bus", "payload"]}, mutate=mutate))
-    assert "E_PRESENTATION_SCALE_VALUE" in str(failure.value) and "ground" in str(failure.value)
+    assert failure.value.code == "E_PRESENTATION_SCALE_VALUE"
+    assert failure.value.source_ref == "/body/grouping/tint"
+    assert "value='ground'" in failure.value.message
 
 
 def test_an_unknown_scale_is_a_mapping_error(tmp_path):
