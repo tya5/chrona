@@ -18,10 +18,14 @@
 
 ## Programme-level criteria (optional)
 
-Base: `510fd5f90bcc057d72e575423ec6e114dfa51837`. Focused command:
+Ready main base: `ab3075e4f3c8cd584db7ddc14ca08eb2f8d925a0`. Focused command:
 `.venv/bin/python -m pytest -q tests/unit/chrona/presentation/layout/test_surface_relation_label_search.py tests/integration/test_relation_label_acceptance.py`
-— 3 passed (10.64s). PR snapshot and exact-main three-OS release evidence
-containing this review remain pending; the issue stays open until that gate passes.
+— 3 passed (9.91s) after ordinary main merge. [PR #1264](https://github.com/tya5/chrona/pull/1264)
+changes only two test files and this review. Prior-head [CI 37870698659](https://github.com/tya5/chrona/actions/runs/37870698659)
+passed; artifact 11590491557 has all 145 paths byte-identical (68 SVG,
+68 Scene, nine reports; no additions or retirements). Refreshed-head PR checks
+and exact-main three-OS release containing this review remain pending;
+the issue stays open until that gate passes.
 
 ## Architecture conclusion
 
