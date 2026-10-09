@@ -21,4 +21,3 @@ def test_group_header_admits_only_its_selected_layout_inset_measurement():
     # The existing axis owner still admits both properties.
     for property_name in ("labelGap", "laneBlockSize"):
         assert theme_role_property_consumer("axis", property_name) is not None
-
