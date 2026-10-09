@@ -1,0 +1,50 @@
+catalog:
+  file: chrona-target-parts-v2026-10-09.yaml
+  version: chrona/icon-catalog/v0.5
+  set: chrona-target-parts
+  aliases: [target-parts]
+  sha256: 139be42bed11eaa9809ef98bb427eb74f8f0862c3d5c4ccfd9eba2b23185acee
+source:
+  file: chrona-target-parts-v2026-10-09.source.yaml
+  version: chrona/theme-asset-source/v0.2
+  sha256: 9fce251562adc2d8ba1e2802cad60fa7572d144258abacea4158079dd0fca508
+license:
+  spdx: MIT
+  noticeFile: chrona-target-parts.NOTICE
+  noticeSha256: b07fa7bbb7bff0acdfb2cf02905b7ca7ad1db3ead9f59b13f47c4ced097f3eb6
+  copyright: Copyright (c) 2026 Chrona Contributors
+entries:
+  glyphs: [bulb, clipping-edge, diamond, diamond-outline, hazard-tab, hexagon, hexagon-outline, lantern, lantern-outline, panel-corner, pin, pin-outline, scroll-frame, seal-note, seal-risk, star, star-outline]
+  patterns:
+    ben-day-dots: {densityBasisPoints: 1592}
+    ben-day-dots-fine: {densityBasisPoints: 1523}
+    bulb-row: {densityBasisPoints: 1433}
+    hatch: {densityBasisPoints: 4063}
+    hatch-fine: {densityBasisPoints: 3281}
+    hatch-wide: {densityBasisPoints: 3281}
+    hazard-stripes: {densityBasisPoints: 5000}
+    hexagon-lattice: {densityBasisPoints: 1455}
+    hexagon-lattice-wide: {densityBasisPoints: 566}
+    seigaiha: {densityBasisPoints: 2606}
+consumers:
+  # Glyphs a Theme can bind today: milestoneSymbol, milestoneSymbolActual, milestoneSymbolBaseline (Theme v0.13).
+  milestone-symbol: [diamond, diamond-outline, hexagon, hexagon-outline, lantern, lantern-outline, pin, pin-outline, star, star-outline]
+  # Patterns a Theme can bind today: the Rect-only role/property pairs of Specification 07 section 5.2.
+  pattern-roles: [ben-day-dots, ben-day-dots-fine, bulb-row, hatch, hatch-fine, hatch-wide, hazard-stripes, hexagon-lattice, hexagon-lattice-wide, seigaiha]
+  # Glyphs no Theme role can place on a surface yet, and the issue that owns the role.
+  none-yet:
+    bulb: '#587'
+    clipping-edge: '#848'
+    hazard-tab: '#584'
+    panel-corner: '#587'
+    scroll-frame: '#848'
+    seal-note: '#584'
+    seal-risk: '#584'
+notes:
+  - A stripe or edge line is centred in its tile (or doubled on both tile edges) because an adapter clips a pattern to its tile.
+  - Outline twins are stroke-only; the dash and the baseline outline treatment belong to the Theme.
+  - Parts carry no colour. Seal strokes and the hexagon, pin, star, lantern, clipping and corner geometry are original work drawn from the structure of the target pages.
+normalization:
+  profile: chrona/theme-asset-normalization/v0.2
+  importer: chrona.presentation.icons.importer.import_theme_assets
+  command: chrona icon-catalog import --theme-assets SOURCE.yaml --output CATALOG.yaml

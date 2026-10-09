@@ -302,6 +302,29 @@ def test_scene_completes_pattern_form_before_adapter_invocation():
     assert completed.primitives[0].pattern is not None
 
 
+def test_ink_only_canvas_overlay_rejects_substrate_before_scene_return():
+    from chrona.presentation.layout.pattern_placement import PatternTilePrimitive
+    from chrona.presentation.scene.model import PatternGeometry
+    from chrona.presentation.scene.v05_builder import _complete_surface_paint
+
+    themed = _theme()
+    themed["body"]["roles"]["canvas-overlay"] = {"stroke": "ink"}
+    tokens = ThemeTokenView(themed)
+    pattern = PatternGeometry(
+        10, 10, 0, density_basis_points=1000,
+        primitives=(PatternTilePrimitive("circle", cx=5, cy=5, radius=2,
+                                         fill_channel="substrate"),),
+        origin=(0, 0), region_bounds=(0, 0, 20, 20), clip_bounds=(0, 0, 20, 20),
+        corner_radius=0,
+    )
+    primitive = ScenePrimitive("overlay", "Rect", "overlay", "decoration", "canvas-overlay",
+                               "canvas-overlay", (0, 0, 20, 20), pattern=pattern)
+    with pytest.raises(SceneBuildError, match="E_PRESENTATION_PAINT_INVALID") as error:
+        _complete_surface_paint(SceneSurface("s", (), (), (), None, (primitive,),
+                                             canvas_bounds=(0, 0, 20, 20)), tokens)
+    assert error.value.path == "/body/roles/canvas-overlay"
+
+
 def test_scene_records_declared_background_absence_without_a_drawable_primitive():
     themed = _theme()
     themed["body"]["roles"]["row-band"] = {

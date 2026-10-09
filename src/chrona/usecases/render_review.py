@@ -50,6 +50,9 @@ from chrona.core.figures import resolve_figures
 from chrona.core.periods import period_range_diagnostics, resolve_periods
 from chrona.core.temporal import Calendar
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
+from chrona.presentation.model.axis_color_scale import (
+    AxisBandScaleError, resolve_axis_band_scales, validate_axis_band_fill_targets,
+)
 from chrona.presentation.model.projection import ReviewDeadline, ReviewPeriod, build_review_projection
 from chrona.presentation.model.surface_content import HeadingContent, SummaryContent, SurfaceContentInput, TableContent
 from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput, ViewRowMode
@@ -308,6 +311,16 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         summary=summary, locale=environment.locale, color_scale=color_scale, table=table_content,
         group_tints=group_tints, annotation_kind_colors=_annotation_kind_colors(theme),
         annotation_kind_also=_annotation_kind_also(theme))
+    try:
+        validate_axis_band_fill_targets(selected_content.axis_tiers, ThemeTokenView(theme))
+        axis_band_scale = resolve_axis_band_scales(
+            selected_content.axis_tiers, window=projection.window,
+            fiscal_start_month=selected_content.axis_fiscal_start_month,
+            scales=theme["body"].get("colorScales", {}), categories=theme["body"].get("categorySlots", {}),
+            color_vision=tuple(theme["body"].get("colorVision", ())))
+    except AxisBandScaleError as error:
+        raise RenderFailed(error.code, error.detail, "presentation", error.path) from error
+    selected_content = replace(selected_content, axis_band_paints=axis_band_scale.paints)
     heading_content = (compose_heading(view, project, actual_observations, environment.locale)
                        if view.surface == "table-timeline" else None)
     source_inputs = _source_inputs(project, view, projection, summary,
@@ -455,7 +468,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         validate_surface_visual_profile(surface, visual_profile)
     except VisualCapabilityError as error:
         raise RenderFailed(error.diagnostic_id, error.message, "presentation", error.path) from error
-    collisions = (color_scale.collisions if color_scale is not None else ()) + group_tint_collisions
+    collisions = ((color_scale.collisions if color_scale is not None else ())
+                  + group_tint_collisions + axis_band_scale.collisions)
     scene = _inspection_scene(render_closure, surface, projection, surface_content,
                               (surface.canvas_bounds[2], surface.canvas_bounds[3]),
                               resolution.tabular_warnings if resolution is not None else (),
@@ -800,7 +814,7 @@ def _selected_periods(project: dict[str, Any], placements: dict[str, dict[str, A
             raise RenderFailed("E_VIEW_PERIOD_UNKNOWN",
                                f"the View selects period {selected.period_id}, which the Project does not declare (declared: {known})",
                                "presentation", f"/body/periods/{index}/id")
-    return tuple(ReviewPeriod(item.period_id, item.title, item.start, item.end,
+    return tuple(ReviewPeriod(item.period_id, selected.label_text or item.title, item.start, item.end,
                               selected.label_placement, selected.label_overflow)
                  for selected, item in ((selected, declared[selected.period_id]) for selected in view.periods))
 

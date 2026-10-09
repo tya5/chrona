@@ -1,3 +1,5 @@
+import math
+
 import pytest
 
 from chrona.presentation.icons import IconNormalizationError, normalize_glyph_entry, normalize_icon, normalize_pattern_entry
@@ -89,14 +91,161 @@ def test_pattern_stroke_grid_ties_are_inclusive():
     assert pattern["densityBasisPoints"] == 156
 
 
-def test_pattern_wraps_strokes_across_all_relevant_tile_edges():
+def test_pattern_clips_edge_strokes_to_the_fundamental_tile():
+    # Tile clipping happens before repetition: only the right half of this
+    # edge-centered stroke contributes to the fundamental cell.
     pattern = normalize_pattern_entry({
         "tile": {"inlineSize": 8, "blockSize": 8}, "angle": 0,
-        "densityBasisPoints": 1250,
+        "densityBasisPoints": 625,
         "primitives": [{"kind": "line", "x1": 0, "y1": 0,
                         "x2": 0, "y2": 8, "strokeWidth": 1}],
     })
-    assert pattern["densityBasisPoints"] == 1250
+    assert pattern["densityBasisPoints"] == 625
+
+
+def _reference_circle_density(circles, *, tile=(8, 8)):
+    """Independent 128² sample-grid oracle for ordered circle paint operations."""
+    width, height = tile
+    visible = 0
+    for row in range(128):
+        y = (row + 0.5) * height / 128
+        for column in range(128):
+            x = (column + 0.5) * width / 128
+            ink = False
+            for cx, cy, radius, channel, stroke_width in circles:
+                distance = math.hypot(x - cx, y - cy)
+                if distance <= radius:
+                    if channel == "ink":
+                        ink = True
+                    elif channel == "substrate":
+                        ink = False
+                if stroke_width is not None and max(0, radius - stroke_width / 2) <= distance <= radius + stroke_width / 2:
+                    ink = True
+            visible += ink
+    # Explicit positive half-up rounding, matching the declared basis-point unit.
+    return visible, math.floor(visible * 10_000 / (128 * 128) + 0.5)
+
+
+def test_pattern_circle_defaults_to_ink_without_changing_normalized_bytes():
+    pattern = normalize_pattern_entry({
+        "tile": {"inlineSize": 8, "blockSize": 8}, "angle": 0,
+        "densityBasisPoints": 10000,
+        "primitives": [{"kind": "circle", "cx": 4, "cy": 4, "radius": 16}],
+    })
+    assert pattern["primitives"] == [{"kind": "circle", "cx": 4.0, "cy": 4.0, "radius": 16.0}]
+
+
+def test_pattern_substrate_fill_erases_earlier_ink_in_painter_order():
+    circles = [
+        (4, 4, 3, "ink", None),
+        (4, 4, 2, "substrate", None),
+        (4.5, 4, 1, "substrate", None),
+        (4, 4, 0.5, "ink", None),
+    ]
+    primitives = [
+        {"kind": "circle", "cx": cx, "cy": cy, "radius": radius,
+         **({"fillChannel": channel} if channel != "ink" else {})}
+        for cx, cy, radius, channel, _stroke in circles
+    ]
+    _visible_samples, expected = _reference_circle_density(circles)
+    _full_samples, full_ink = _reference_circle_density([circles[0]])
+    assert 0 < expected < full_ink
+    normalized = normalize_pattern_entry({
+        "tile": {"inlineSize": 8, "blockSize": 8}, "angle": 0,
+        "densityBasisPoints": expected, "primitives": primitives,
+    })
+    assert normalized["densityBasisPoints"] == expected
+
+
+def test_pattern_circle_stroke_paints_after_fill_and_can_be_ink_only():
+    stroke_only = [{"kind": "circle", "cx": 4, "cy": 4, "radius": 2,
+                    "fillChannel": "none", "strokeWidth": 0.125}]
+    # The 128×128 grid has 0.0625-unit spacing here. Exactly 412 samples lie
+    # in this thin annulus, yielding 251 bp after half-up rounding.
+    samples, expected = _reference_circle_density([(4, 4, 2, "none", 0.125)])
+    assert samples == 412
+    assert expected == 251
+    normalized = normalize_pattern_entry({
+        "tile": {"inlineSize": 8, "blockSize": 8}, "angle": 0,
+        "densityBasisPoints": expected, "primitives": stroke_only,
+    })
+    assert normalized["densityBasisPoints"] == expected
+
+    substrate_then_ring = [{"kind": "circle", "cx": 4, "cy": 4, "radius": 4,
+                            "fillChannel": "substrate", "strokeWidth": 1}]
+    _ring_samples, expected_ring = _reference_circle_density([(4, 4, 4, "substrate", 1)])
+    assert expected_ring > 0
+    assert normalize_pattern_entry({
+        "tile": {"inlineSize": 8, "blockSize": 8}, "angle": 0,
+        "densityBasisPoints": expected_ring, "primitives": substrate_then_ring,
+    })["densityBasisPoints"] == expected_ring
+
+
+@pytest.mark.parametrize("channel", ["bad", None, [], 3])
+def test_pattern_rejects_invalid_circle_fill_channel(channel):
+    with pytest.raises(IconNormalizationError) as error:
+        normalize_pattern_entry({
+            "tile": {"inlineSize": 8, "blockSize": 8}, "angle": 0,
+            "densityBasisPoints": 100,
+            "primitives": [{"kind": "circle", "cx": 4, "cy": 4, "radius": 2,
+                            "fillChannel": channel}],
+        })
+    assert error.value.diagnostic_id == "E_THEME_ASSET_SOURCE_PATTERN"
+    assert "fillChannel must be 'ink', 'substrate', or 'none'" in str(error.value)
+    assert repr(channel) in str(error.value)
+
+
+def test_pattern_circle_none_requires_stroke_and_zero_visible_ink_is_rejected():
+    with pytest.raises(IconNormalizationError) as invalid_channel:
+        normalize_pattern_entry({
+            "tile": {"inlineSize": 8, "blockSize": 8}, "angle": 0,
+            "densityBasisPoints": 1,
+            "primitives": [{"kind": "circle", "cx": 4, "cy": 4, "radius": 2,
+                            "fillChannel": "none"}],
+        })
+    assert invalid_channel.value.diagnostic_id == "E_THEME_ASSET_SOURCE_PATTERN"
+    assert "fillChannel='none' requires a positive strokeWidth" in str(invalid_channel.value)
+    with pytest.raises(IconNormalizationError) as error:
+        normalize_pattern_entry({
+            "tile": {"inlineSize": 8, "blockSize": 8}, "angle": 0,
+            "densityBasisPoints": 1,
+            "primitives": [{"kind": "circle", "cx": 0, "cy": 0, "radius": 0.01}],
+        })
+    assert error.value.diagnostic_id == "E_THEME_ASSET_SOURCE_DENSITY"
+
+
+def test_pattern_visible_density_is_invariant_under_tile_rotation():
+    primitive = {"kind": "circle", "cx": 0, "cy": 4, "radius": 2,
+                 "fillChannel": "none", "strokeWidth": 1}
+    _samples, expected = _reference_circle_density([(0, 4, 2, "none", 1)])
+    for angle in (0, 45):
+        assert normalize_pattern_entry({
+            "tile": {"inlineSize": 8, "blockSize": 8}, "angle": angle,
+            "densityBasisPoints": expected, "primitives": [primitive],
+        })["densityBasisPoints"] == expected
+
+
+def test_pattern_seigaiha_circle_tile_uses_final_visible_ink_density():
+    centres = [(0, 10), (20, 10), (10, 5)]
+    radii = (10, 7, 4)
+    primitives = [
+        {"kind": "circle", "cx": cx, "cy": cy, "radius": radius,
+         "fillChannel": "substrate" if radius == 10 else "none",
+         "strokeWidth": 0.8}
+        for cx, cy in centres for radius in radii
+    ]
+    _samples, expected = _reference_circle_density([
+        (cx, cy, radius, "substrate" if radius == 10 else "none", 0.8)
+        for cx, cy in centres for radius in radii
+    ], tile=(20, 10))
+    assert len(primitives) == 9
+    assert expected == 2606
+    normalized = normalize_pattern_entry({
+        "tile": {"inlineSize": 20, "blockSize": 10}, "angle": 0,
+        "densityBasisPoints": expected, "primitives": primitives,
+    })
+    assert normalized["densityBasisPoints"] == expected
+    assert normalized["primitives"] == primitives
 
 
 @pytest.mark.parametrize("primitive,declared", [

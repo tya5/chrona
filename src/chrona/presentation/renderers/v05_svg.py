@@ -122,7 +122,33 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
             parts.append(f'<rect x="0" y="0" width="{number(pattern.tile_inline_size)}" height="{number(pattern.tile_block_size)}" fill="{substrate}"/>')
         for item in pattern.primitives:
             if item.kind == "circle":
-                parts.append(f'<circle cx="{number(item.cx)}" cy="{number(item.cy)}" r="{number(item.radius)}" fill="{ink}"/>')
+                channel = item.fill_channel or "ink"
+                if channel == "ink":
+                    fill = ink
+                elif channel == "substrate":
+                    if paint.fill is None:
+                        raise ValueError(
+                            f"E_PRESENTATION_PAINT_INVALID: pattern circle at ({number(item.cx)}, {number(item.cy)}) "
+                            "requests fillChannel='substrate' but its completed ScenePaint has no fill; bind a role fill"
+                        )
+                    fill = escape(paint.fill, quote=True)
+                elif channel == "none":
+                    fill = "none"
+                else:
+                    raise ValueError(
+                        f"E_PRESENTATION_PRIMITIVE_INVALID: pattern circle at ({number(item.cx)}, {number(item.cy)}) "
+                        f"has unsupported fillChannel {channel!r}; expected 'ink', 'substrate', or 'none'"
+                    )
+                appearance = f'fill="{fill}"'
+                if item.stroke_width is not None:
+                    if paint.stroke is None:
+                        raise ValueError(
+                            f"E_PRESENTATION_PAINT_INVALID: pattern circle at ({number(item.cx)}, {number(item.cy)}) "
+                            f"has strokeWidth={number(item.stroke_width)} but its completed ScenePaint has no stroke; "
+                            "bind a role stroke or omit strokeWidth"
+                        )
+                    appearance += (f' stroke="{ink}" stroke-width="{number(item.stroke_width)}"')
+                parts.append(f'<circle cx="{number(item.cx)}" cy="{number(item.cy)}" r="{number(item.radius)}" {appearance}/>')
             elif item.kind == "rect":
                 parts.append(f'<rect x="{number(item.x)}" y="{number(item.y)}" width="{number(item.inline_size)}" height="{number(item.block_size)}" fill="{ink}"/>')
             elif item.kind == "path":
@@ -345,9 +371,12 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
             scale = layout.horizontal_scale
             steps.append(f"matrix({number(scale)} 0 0 1 {number(node.baseline[0] * (1 - scale))} 0)")
         transform = f' transform="{" ".join(steps)}"' if steps else ""
-        return (f'<text {common} x="{number(node.baseline[0])}" y="{number(node.baseline[1])}" font-family="{escape(layout.family, quote=True)}" '
+        markup = (f'<text {common} x="{number(node.baseline[0])}" y="{number(node.baseline[1])}" font-family="{escape(layout.family, quote=True)}" '
                 f'font-weight="{layout.weight}" font-size="{number(layout.font_size)}"{transform}{treatment}{single}{preserve} '
-                f'{attrs(paint, fill=True, stroke=False)}>{body}</text>')
+                f'{attrs(paint, fill=True, stroke=False, effects=paint.glow is None)}>{body}</text>')
+        # Glow.region is already in completed surface coordinates. A filter on the
+        # transformed text would transform that region (and the blur) a second time.
+        return f'<g filter="url(#{glow_id(paint)})">{markup}</g>' if paint.glow is not None else markup
 
     for node in (node for _, node in sorted(enumerate(surface.primitives), key=lambda item: (item[1].paint_order, item[0]))):
         overlay_attrs = ""

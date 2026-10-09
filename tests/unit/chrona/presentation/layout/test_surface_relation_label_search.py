@@ -56,12 +56,14 @@ def _index(*, canonical_blockers: bool) -> SurfaceObstacleIndex:
                               ObstacleSegment((40, 50), (100, 50), stroke_width=1)))
     if canonical_blockers:
         # With 15px text and 2.5px gap, these occupy the canonical above,
-        # below, start, and end placements. A 15px rightward above move is clear.
+        # below, start, and end placements. A text obstacle also blocks the
+        # first rightward above candidate, leaving the next bounded candidate.
         index.extend((
             SurfaceObstacle("block:above", "mark", "timeline", ObstacleRect(45, 23.5, 77.5, 48)),
             SurfaceObstacle("block:below", "mark", "timeline", ObstacleRect(42, 52, 100, 78)),
             SurfaceObstacle("block:start", "mark", "timeline", ObstacleRect(5, 32, 24, 58)),
             SurfaceObstacle("block:end", "mark", "timeline", ObstacleRect(101, 32, 120, 58)),
+            SurfaceObstacle("block:text", "text", "timeline", ObstacleRect(77.5, 35.5, 92.5, 47.5)),
         ))
     return index
 
@@ -69,11 +71,14 @@ def _index(*, canonical_blockers: bool) -> SurfaceObstacleIndex:
 def test_relation_label_uses_shared_bounded_search_after_all_four_canonical_sides_fail():
     obstacles = _index(canonical_blockers=True)
     original_obstacles = obstacles.all()
+    text_blocker = next(item for item in original_obstacles if item.obstacle_class == "text")
+    first_side_neighborhood = ObstacleRect(77.5, 35.5, 92.5, 47.5)
+    assert obstacles_intersect(first_side_neighborhood, text_blocker.geometry, text_blocker.clearance)
     routes, relation = _routes()
     assert place_label(LabelRect(40, 50, 60, 1), (15, 12),
                        ("above", "below", "start", "end"),
                        bounds=LabelRect(0, 0, 140, 100), obstacles=obstacles,
-                       gap=2.5, classes=("mark", "dependency-route"),
+                       gap=2.5, classes=("mark", "text", "dependency-route"),
                        overflow="suppress", required=False) is None
 
     result = place_relation_labels(_context(obstacles), routes)
@@ -83,8 +88,10 @@ def test_relation_label_uses_shared_bounded_search_after_all_four_canonical_side
     label = result.text[0]
     assert label.placement_id == "relation-label:a-to-b"
     assert label.selected_rung == "above"
-    assert float(label.bounds.inline) == 77.5
-    assert float(label.bounds.inline) - 62.5 <= 15  # measured text-width displacement bound
+    # The first otherwise-legal bounded candidate (77.5, 35.5) is occupied by
+    # indexed text; the selected label is a distinct clear candidate.
+    assert (float(label.bounds.inline), float(label.bounds.block)) != (77.5, 35.5)
+    assert float(label.bounds.inline) - 62.5 <= 30  # measured-text-sized bounded displacement
     rect = ObstacleRect(float(label.bounds.inline), float(label.bounds.block),
                         float(label.bounds.inline + label.bounds.inline_size),
                         float(label.bounds.block + label.bounds.block_size))

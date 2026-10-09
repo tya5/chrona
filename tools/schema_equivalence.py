@@ -1016,9 +1016,9 @@ PROBE_SITES: tuple[ProbeSite, ...] = (
               repair=_REGISTRY_REPAIR),
     ProbeSite("command-request", _OPERATIONAL + "accepted-capture-command.yaml", "/commandId", "identifier",
               repair=_REGISTRY_REPAIR),
-    ProbeSite("icon-catalog", "tests/fixtures/icons/theme-assets-valid.normalized-v0.4.yaml",
+    ProbeSite("icon-catalog", "tests/fixtures/icons/theme-assets-valid.normalized-v0.5.yaml",
               "/body/provenance/sourceContentIdentity", "sha256"),
-    ProbeSite("icon-catalog", "tests/fixtures/icons/theme-assets-valid.normalized-v0.4.yaml", "/id", "identifier"),
+    ProbeSite("icon-catalog", "tests/fixtures/icons/theme-assets-valid.normalized-v0.5.yaml", "/id", "identifier"),
     ProbeSite("layout-profile", _C + "layout-profile-intent-v0.2.yaml", "/root/id", "identifier"),
     ProbeSite("layout-profile", _C + "layout-profile-intent-v0.2.yaml", "/root/children/0/source", "path"),
     ProbeSite("presentation-preset", "examples/controller-z/elevated-light.preset.yaml", "/body/resources/view/path", "path"),
@@ -1142,7 +1142,7 @@ INLINE_DOCUMENTS: dict[str, Callable[[], dict[str, Any]]] = {
             "id": "project", "kind": "project", "store": {"provider": "local", "identity": "store"},
             "address": "projects/main.yaml", "revision": {"token": "main"}}}},
     "icon-catalog-raster": lambda: {
-        "version": "chrona/icon-catalog/v0.4", "kind": "icon-catalog", "id": "raster-assets", "body": {
+        "version": "chrona/icon-catalog/v0.5", "kind": "icon-catalog", "id": "raster-assets", "body": {
             "set": "starter", "aliases": [],
             "provenance": {"sourceKind": "theme-asset-source", "sourceContentIdentity": _REVISION,
                            "license": {"spdx": "CC0-1.0", "notice": "CC0 notice"}},

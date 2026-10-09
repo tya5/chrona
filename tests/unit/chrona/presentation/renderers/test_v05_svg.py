@@ -1,5 +1,6 @@
 from datetime import date
 from dataclasses import replace
+from hashlib import sha256
 from io import BytesIO
 from pathlib import Path
 
@@ -82,6 +83,66 @@ def test_catalogue_pattern_uses_completed_origin_substrate_and_ink_in_svg_and_pn
     assert image.getpixel((4, 3)) == (255, 255, 255)
 
 
+def test_catalogue_circle_channels_render_in_declared_order_with_native_stroke():
+    pattern = PatternGeometry(
+        10, 10, 0, density_basis_points=4000,
+        primitives=(
+            PatternTilePrimitive("circle", cx=5, cy=5, radius=4, fill_channel="substrate"),
+            PatternTilePrimitive("circle", cx=5, cy=5, radius=3,
+                                 fill_channel="none", stroke_width=0.5),
+        ),
+        origin=(0, 0), region_bounds=(0, 0, 10, 10), clip_bounds=(0, 0, 10, 10),
+        corner_radius=0,
+    )
+    rect = ScenePrimitive("circles", "Rect", "a", "object", "planned", "planned", (0, 0, 10, 10),
+                          paint=ScenePaint("#FFFFFF", "#202020", None, (), 1), pattern=pattern)
+    output = render_v05_svg(_surface(rect))
+    first = '<circle cx="5" cy="5" r="4" fill="#FFFFFF"/>'
+    second = '<circle cx="5" cy="5" r="3" fill="none" stroke="#202020" stroke-width="0.5"/>'
+    assert first in output and second in output and output.index(first) < output.index(second)
+
+
+def test_catalogue_circle_substrate_requires_completed_fill_with_actionable_detail():
+    pattern = PatternGeometry(
+        4, 4, 0, density_basis_points=1000,
+        primitives=(PatternTilePrimitive("circle", cx=2, cy=2, radius=1,
+                                         fill_channel="substrate"),),
+        origin=(0, 0), region_bounds=(0, 0, 4, 4), clip_bounds=(0, 0, 4, 4),
+        corner_radius=0,
+    )
+    primitive = ScenePrimitive(
+        "substrate", "Rect", "a", "object", "planned", "planned", (0, 0, 4, 4),
+        paint=ScenePaint(None, "#202020", None, (), 1), pattern=pattern,
+    )
+    with pytest.raises(ValueError) as error:
+        render_v05_svg(_surface(primitive))
+    assert str(error.value).startswith("E_PRESENTATION_PAINT_INVALID:")
+    assert "pattern circle at (2, 2)" in str(error.value)
+    assert "fillChannel='substrate'" in str(error.value)
+    assert "completed ScenePaint has no fill" in str(error.value)
+
+
+def test_catalogue_circle_invalid_channel_reports_value_and_allowed_channels():
+    # Deliberately bypass the validated Layout DTO to exercise the SVG
+    # adapter's defensive branch for an impossible completed Scene value.
+    item = PatternTilePrimitive("circle", cx=2, cy=2, radius=1)
+    object.__setattr__(item, "fill_channel", "other")
+    pattern = PatternGeometry(
+        4, 4, 0, density_basis_points=1000,
+        primitives=(item,), origin=(0, 0), region_bounds=(0, 0, 4, 4),
+        clip_bounds=(0, 0, 4, 4), corner_radius=0,
+    )
+    primitive = ScenePrimitive(
+        "bad-channel", "Rect", "a", "object", "planned", "planned", (0, 0, 4, 4),
+        paint=ScenePaint("#FFFFFF", "#202020", None, (), 1), pattern=pattern,
+    )
+    with pytest.raises(ValueError) as error:
+        render_v05_svg(_surface(primitive))
+    assert str(error.value).startswith("E_PRESENTATION_PRIMITIVE_INVALID:")
+    assert "fillChannel 'other'" in str(error.value)
+    assert "expected 'ink', 'substrate', or 'none'" in str(error.value)
+
+
 def test_svg_serializes_the_completed_canvas_not_a_caller_supplied_viewport():
     surface = replace(_surface(), canvas_bounds=(3, 4, 17, 19))
     output = render_v05_svg(surface)
@@ -132,6 +193,22 @@ def test_svg_projects_the_layout_selected_rotation_about_the_supplied_baseline()
                                text="AB", baseline=layout.baseline, text_layout=layout,
                                paint=ScenePaint("#112233", None, None, (), 1))
     assert 'transform="rotate(90 1 6)"' in render_v05_svg(_surface(primitive))
+
+
+@pytest.mark.parametrize("scale,digest", [
+    (0.5, "2d5fd667caa797a22ad407bb70d88a12c4996ac66c7334df657ed21a06a120a5"),
+    (0.86, "ee86f80cca9d115d153f254880855328eca65d608c3dcc11c6d39dc4eaebb95a"),
+    (1.0, "91363e781d81c753db08c9bb3f06636e4eb637359b32fbf2367a1e48b85f8428"),
+])
+def test_non_glow_text_bytes_match_the_published_1261_baseline(scale, digest):
+    # Captured from public main 510fd5f9 before changing glow serialization.
+    layout = TextLayout((30, 40, 100 * scale, 24), (30, 60), ("ENDING D",),
+                        "Noto Sans", 400, 24, 1.2, "sha256:synthetic", horizontal_scale=scale)
+    node = ScenePrimitive("run", "Text", "synthetic", "heading", "heading", "heading", layout.bounds,
+                          text="ENDING D", baseline=layout.baseline, text_layout=layout,
+                          paint=ScenePaint("#111111", None, None, (), 1))
+    output = render_v05_svg(replace(_surface(node), canvas_bounds=(0, 0, 400, 200)))
+    assert sha256(output.encode()).hexdigest() == digest
 
 
 def test_svg_adapter_does_not_infer_orientation_or_measure_text() -> None:

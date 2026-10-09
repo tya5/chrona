@@ -150,7 +150,7 @@ def test_bundled_material_catalog_matches_the_offline_iconify_utils_conformance_
         assert sha256(json.dumps(entry, sort_keys=True, separators=(",", ":")).encode()).hexdigest() == expected["catalogGeometrySha256"]
 
 
-def test_theme_assets_import_emits_canonical_v04_catalogue_with_license_and_exact_densities(tmp_path):
+def test_theme_assets_import_emits_canonical_v05_catalogue_with_license_and_exact_densities(tmp_path):
     root = Path(__file__).resolve().parents[5]
     source = root / "tests/fixtures/icons/theme-assets-valid.yaml"
     first, second = tmp_path / "one.yaml", tmp_path / "two.yaml"
@@ -160,7 +160,7 @@ def test_theme_assets_import_emits_canonical_v04_catalogue_with_license_and_exac
     catalog = yaml.safe_load(first.read_bytes())
     body = catalog["body"]
 
-    assert catalog["version"] == "chrona/icon-catalog/v0.4"
+    assert catalog["version"] == "chrona/icon-catalog/v0.5"
     assert body["provenance"]["sourceKind"] == "theme-asset-source"
     assert body["provenance"]["sourceContentIdentity"] == "sha256:" + sha256(source.read_bytes()).hexdigest()
     assert body["provenance"]["license"] == {
@@ -171,10 +171,25 @@ def test_theme_assets_import_emits_canonical_v04_catalogue_with_license_and_exac
             if name.startswith("dither-")} == {"dither-12-5": 1250, "dither-25": 2500, "dither-50": 5000}
     assert body["glyphs"]["pin"]["parts"][0]["data"].startswith("M 12 1 Q 5 1 5 8")
     parsed = parse_contract(ClosureIdentity("icon-catalog", catalog["id"], "r1", result["contentIdentity"]), catalog)
-    assert parsed.version == "chrona/icon-catalog/v0.4"
+    assert parsed.version == "chrona/icon-catalog/v0.5"
     assert first.read_bytes() == second.read_bytes()
-    assert first.read_bytes() == (root / "tests/fixtures/icons/theme-assets-valid.normalized-v0.4.yaml").read_bytes()
+    assert first.read_bytes() == (root / "tests/fixtures/icons/theme-assets-valid.normalized-v0.5.yaml").read_bytes()
     assert result["contentIdentity"] == repeated["contentIdentity"]
+
+
+def test_theme_assets_import_refuses_retired_source_without_replacing_output(tmp_path):
+    root = Path(__file__).resolve().parents[5]
+    value = yaml.safe_load((root / "tests/fixtures/icons/theme-assets-valid.yaml").read_bytes())
+    value["version"] = "chrona/theme-asset-source/v0.1"
+    source = tmp_path / "retired.yaml"
+    source.write_text(yaml.safe_dump(value), encoding="utf-8")
+    output = tmp_path / "existing.yaml"
+    output.write_bytes(b"keep")
+    with pytest.raises(IconImportError) as error:
+        import_theme_assets(source, output)
+    assert error.value.code == "E_THEME_ASSET_SOURCE_SCHEMA"
+    assert error.value.source_ref == "/version"
+    assert output.read_bytes() == b"keep"
 
 
 def test_theme_assets_import_rejects_mismatched_density_without_replacing_output(tmp_path):
