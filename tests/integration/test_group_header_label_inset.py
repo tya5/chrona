@@ -177,6 +177,65 @@ def test_untabbed_large_inset_keeps_visible_overflow_instead_of_ellipsizing(tmp_
     assert text.text == "Group 0"
 
 
+@pytest.mark.parametrize("marked", [False, True], ids=["plain", "role-marked"])
+def test_folded_header_centering_and_label_inset_preserve_band_and_mark_geometry(tmp_path, marked):
+    from datetime import date
+
+    source = _source()
+    source["objects"].update({
+        f"point-{index}": sr.point(f"point-{index}", date(2026, 2, 2 + index), owner="team-0")
+        for index in range(4)
+    })
+
+    def render_with_inset(name, inset):
+        parts = _parts(inset=inset, marked=marked)
+        theme_body = parts["theme"]["body"]
+        theme_body["values"].update({
+            "header.size": {"type": "number", "value": 20},
+            "header.leading": {"type": "number", "value": 1.6},
+        })
+        theme_body["roles"]["groupHeader"].update({
+            "fontSize": "header.size", "lineHeight": "header.leading",
+        })
+        parts["view"]["body"]["rows"] = {"mode": "automatic", "points": "group-header"}
+        output = tmp_path / name
+        output.mkdir(parents=True, exist_ok=True)
+        return sr.render(output, source, presentation=parts)
+
+    zero = render_with_inset("zero", 0)
+    inset = render_with_inset("inset", 0.4)
+    zero_primitives, inset_primitives = _by_id(zero), _by_id(inset)
+    group_ids = ("team-0", "team-1")
+
+    assert zero.surface.groups == inset.surface.groups
+    zero_marks = {item.scene_id: item for item in zero.surface.primitives
+                  if item.kind.value == "Symbol" and item.source_ref.startswith("point-")}
+    inset_marks = {item.scene_id: item for item in inset.surface.primitives
+                   if item.kind.value == "Symbol" and item.source_ref.startswith("point-")}
+    assert len(zero_marks) == len(inset_marks) == 4
+    assert zero_marks == inset_marks
+
+    for rendered, primitives, ratio in ((zero, zero_primitives, 0), (inset, inset_primitives, 0.4)):
+        svg = ET.fromstring(rendered.artifact.content)
+        svg_text = {item.attrib.get("data-scene-id"): item for item in svg.iter()
+                    if item.tag.rsplit("}", 1)[-1] == "text" and item.attrib.get("data-scene-id")}
+        for group_id in group_ids:
+            band = primitives[f"group-header-band:{group_id}"]
+            if group_id == "team-0":
+                assert band.bounds[3] > 20 * 1.6
+            text_ids = ([f"group-header:{group_id}#run0", f"group-header:{group_id}#run1"] if marked
+                        else [f"group-header:{group_id}"])
+            for text_id in text_ids:
+                text = primitives[text_id]
+                expected_baseline = band.bounds[1] + (band.bounds[3] - 20 * 1.6) / 2 + 20
+                assert text.baseline[1] == pytest.approx(expected_baseline, abs=0.01)
+                assert float(svg_text[text_id].attrib["y"]) == pytest.approx(expected_baseline, abs=0.01)
+            leading = primitives[text_ids[0]]
+            assert leading.baseline[0] == pytest.approx(band.bounds[0] + ratio * 20)
+            if marked:
+                assert leading.text_layout.font_size == 22
+
+
 def test_end_tab_must_leave_nonnegative_inline_capacity(tmp_path):
     with pytest.raises(RenderFailed) as raised:
         _render(tmp_path, _parts(inset=1000, tab=(30, "end")))
