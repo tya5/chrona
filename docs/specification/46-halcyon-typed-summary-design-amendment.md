@@ -23,7 +23,7 @@ observation.
 
 ## Derived figure source (#586)
 
-A typed metric `source` may also be `{figure: <id>}`, naming a derived figure the View declares (Specification 06 section 7.2; the Core derives it, Specification 05 section 12.2). Its value is a signed whole number of days. `format` is `count` (`63`), `signedDays` (`+63d`) or `text` (`63`); `date` is `E_PRESENTATION_SUMMARY_FORMAT`, and an id the View does not declare is `E_VIEW_FIGURE_UNKNOWN`. The metric `label` is the caption, so a `figures` panel shows the number over it. The `unknown` rule below applies to the other sources only: a figure whose fact is missing refuses the render before content is built, so it is never rendered as `unknown`.
+A typed metric `source` may also be `{figure: <id>}`, naming a global figure the View declares (Specification 06 section 7.2; Specification 05 section 12.2). Day figures accept `count` (`63`), `signedDays` (`+63d`) or `text` (`63`); count figures accept `count` or `text`. An incompatible formatter is `E_PRESENTATION_SUMMARY_FORMAT`, an undeclared id is `E_VIEW_FIGURE_UNKNOWN`, and a group-only figure is `E_FIGURE_SCOPE_UNAVAILABLE`. The metric `label` is the caption, so a `figures` panel shows the number over it. The `unknown` rule below applies to the other sources only: a figure whose fact is missing refuses the render before content is built, so it is never rendered as `unknown`.
 
 ## Validation and compatibility
 

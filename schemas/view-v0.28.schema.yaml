@@ -326,14 +326,16 @@ allOf:
                     placement: {description: "Where the label sits: at the plot's top edge, at its bottom edge, or centred in the band.", enum: [top, bottom, inside]}
                     overflow: {description: "What happens when no collision-free position exists: suppress the label with a recorded warning, or place it anyway with a recorded overflow. Defaults to visible-overflow.", enum: [suppress, visible-overflow]}
                     text: {description: "Optional display text of the label, replacing the Project period title for this View only (the Theme role's text transform styles it); absent shows the period title.", $ref: "urn:chrona:common-v0.1#/$defs/literalCaption", examples: [OPENING NIGHT]}
+                    template: {description: "Optional closed figure template instead of literal text: {figure:id} reads a global View figure; {{ and }} escape braces. Mutually exclusive with text.", $ref: "urn:chrona:common-v0.1#/$defs/literalCaption", examples: ["WINDOW CLOSES IN {figure:closing} DAYS"]}
           figures:
-            description: "Derived figures: signed whole numbers of days the Core computes from declared facts, each shown by name from a Summary Profile metric (source figure) or a group-header placeholder; absent declares none."
+            description: "Derived integer figures: signed days from declared dates or neutral projected counts, shown by name in Summary, group headers and declared label templates; absent declares none."
             examples: [[{id: launch-countdown, kind: daysUntil, to: {period: launch-window, side: start}}]]
             type: array
             items:
               oneOf:
                 - $ref: "#/$defs/figureDaysUntil"
                 - $ref: "#/$defs/figureDaysIn"
+                - $ref: "#/$defs/figureCount"
           heading:
             description: "The optional kicker above the title, the title, and optional subtitle lines of a table-timeline surface (a dependency network ignores it), each a template of literal text and the placeholders {project} (the Project title), {asOf} (the Actual Set's as-of date in dateForm) and {calendar} (the Project's default calendar title, else its id); {{ and }} are literal braces. Absent, the title is the Project title and there is no kicker or subtitle."
             examples: [{kicker: "Episode {asOf}", title: "{project}", subtitle: "Every work package by owning team, as of {asOf}, calendar {calendar}"}]
@@ -845,6 +847,17 @@ $defs:
       period: {description: "Identifier of a period declared in the Project's `periods`.", type: string, minLength: 1}
       days: {description: "Count calendar days (the default) or working days of the figure's calendar.", enum: [calendar, working]}
       calendar: {description: "Project calendar for working days; the Project default calendar when omitted. Only with days working.", type: string, minLength: 1}
+  figureCount:
+    description: "An integer count of selected Primary review facts, globally or in the current group."
+    examples: [{id: overdue, kind: count, source: missingActual}, {id: group-late, kind: count, source: behind, scope: group}]
+    type: object
+    required: [id, kind, source]
+    additionalProperties: false
+    properties:
+      id: {description: "Figure identifier, unique in this View and named by consumers; no braces or whitespace.", type: string, minLength: 1}
+      kind: {description: "Select an already-projected integer count, without inferring dates or state.", const: count}
+      source: {description: "Closed selected-item/state/known-variance or observed behind/ahead count; missingActual requires an explicit as-of.", enum: [selected, recorded, dueUnobserved, notYetDue, unavailable, missingActual, knownFinishVariance, behind, ahead]}
+      scope: {description: "Resolve once globally (default), or once for each current View group; group results are shown by group headers only.", enum: [global, group]}
   visual:
     description: "One direct or data-encoded icon request for an admitted occurrence."
     examples:

@@ -12,6 +12,7 @@ from chrona.presentation.model.surface_content import (
 )
 from chrona.presentation.table_presentation import affix_state
 from chrona.presentation.review.detail import normalize_v05_review_detail_profile
+from chrona.presentation.review.figure_facts import projected_counts
 from chrona.presentation.model.placement_candidates import legacy_candidate_order, parse_candidates
 from chrona.presentation.contracts.resources import ReviewDetailInput, SummaryProfileInput, ViewInput
 from chrona.presentation.group_header_text import GroupHeaderTextError, compose_group_header_runs, compose_group_headers
@@ -637,13 +638,13 @@ def normalize_summary_content(summary: SummaryProfileInput | None, projection: R
     points = sorted(item.planned["at"] for item in projection.items
                     if item.source_type == "point" and isinstance(item.planned.get("at"), date))
     as_of_value = ((actual_set or {}).get("body") or {}).get("asOf")
+    counts = projected_counts(projection.items, as_of_available=as_of_value is not None)
     values: dict[str, Any] = {
         "actual.asOf": date.fromisoformat(as_of_value) if isinstance(as_of_value, str) else None,
         "planned.nextPoint": points[0] if points else None,
-        "count.selected": len(projection.items),
-        "count.missingActual": (sum(item.observation_state == ObservationState.DUE_UNOBSERVED
-                                    for item in projection.items) if as_of_value is not None else None),
-        "count.knownFinishVariance": sum(item.finish_delta is not None for item in projection.items),
+        "count.selected": counts.selected,
+        "count.missingActual": counts.missing_actual,
+        "count.knownFinishVariance": counts.known_finish_variance,
     }
     panels: list[SummaryPanel] = []
     grouped_ids = bool(summary and any(panel.arrangement == "inline" for panel in summary.panels))
@@ -662,9 +663,7 @@ def normalize_summary_content(summary: SummaryProfileInput | None, projection: R
                     if source.get("actual") == "asOf":
                         source = "actual.asOf"
                     elif source.get("counts") == "finishDelta":
-                        behind = sum(item.finish_delta > 0 for item in projection.items if item.finish_delta is not None)
-                        ahead = sum(item.finish_delta < 0 for item in projection.items if item.finish_delta is not None)
-                        values["counts.finishDelta"] = f"{behind} / {ahead}"
+                        values["counts.finishDelta"] = f"{counts.behind} / {counts.ahead}"
                         source = "counts.finishDelta"
                     elif source.get("scenario") in {"id", "title"}:
                         values[f"scenario.{source['scenario']}"] = _scenario_summary_value(

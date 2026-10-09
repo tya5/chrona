@@ -84,13 +84,15 @@ EMPTY_FRAME = KindFrameMeasure((), False, 0.0, 0.0, 0.0, 0.0, None)
 
 def measure_kind_frame(*, kind: AnnotationKindToken | None, subject: str, frame: AnnotationKindFrame, subject_id: str = "",
                        theme_tokens: ThemeTokenView, metric_for: Callable[[str], Any],
-                       outline: str | None, pointer: str, text_size: float = 0.0) -> KindFrameMeasure:
+                       outline: str | None, pointer: str, text_size: float = 0.0,
+                       header_texts: tuple[str, ...] | None = None,
+                       heading_content: str | None = None) -> KindFrameMeasure:
     """Measure the header and stamp; reject a title bar on an unsupported outline."""
     if kind is None:
         return EMPTY_FRAME
     lines: list[KindHeaderLine] = []
     if frame.label_role is not None:
-        texts = header_lines(kind.header, subject=subject, subject_id=subject_id)
+        texts = header_texts if header_texts is not None else header_lines(kind.header, subject=subject, subject_id=subject_id)
         for index, content in enumerate(texts):
             role = frame.label_role if index == 0 else frame.secondary_role
             if role is None:
@@ -122,7 +124,8 @@ def measure_kind_frame(*, kind: AnnotationKindToken | None, subject: str, frame:
             raise LayoutError("E_LAYOUT_ANNOTATION_KIND_STAMP_PLACEMENT", pointer,
                               detail="bar-end stamp placement requires a drawable annotation-kind label bar")
     heading = None
-    content = heading_text(kind.header, subject=subject, subject_id=subject_id)
+    content = (heading_content if header_texts is not None
+               else heading_text(kind.header, subject=subject, subject_id=subject_id))
     if content is not None:
         role = frame.heading_role
         if role is None:

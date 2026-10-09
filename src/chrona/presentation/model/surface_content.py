@@ -145,6 +145,9 @@ class AnnotationIntent:
     subject: str = ""
     # The id of the anchored Project object, the `{subjectId}` of a kind header (#991).
     subject_id: str = ""
+    # Presentation-composed kind text; Layout measures these strings without figure substitution.
+    kind_header_lines: tuple[str, ...] | None = None
+    kind_heading_text: str | None = None
 
 
 @dataclass(frozen=True)

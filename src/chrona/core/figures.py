@@ -1,12 +1,15 @@
 """Derived figures: a closed set of derivations over declared facts (#586).
 
-A figure is a signed whole number of days computed from dates the Project and the Actual Set already
+A day figure is a signed whole number of days computed from dates the Project and the Actual Set already
 state: the as-of, a named period's boundary, an object's placed endpoint, or an injected selected-group date.
 Selection and group membership stay caller-owned. The set of facts and the set of
 derivations are closed here; nothing is an expression and nothing reads a field by name. This module is
 pure: the caller gathers the as-of, the placements, the resolved periods and the calendars and passes them
 in, and a fact that cannot be read is a diagnostic naming the figure, the fact and what is declared, never
 a blank, a zero or a guess.
+
+Count figures select an immutable caller-gathered integer fact. Selection and observation-state
+interpretation belong to View projection, not Core; an unavailable count is a diagnostic, not zero.
 
 Conventions (Specification 05, "Derived figures"):
 
@@ -27,7 +30,9 @@ from chrona.core.diagnostics import Diagnostic
 from chrona.core.periods import ResolvedPeriod
 from chrona.core.temporal import Calendar
 
-KINDS = ("daysUntil", "daysIn")
+KINDS = ("daysUntil", "daysIn", "count")
+COUNT_SOURCES = ("selected", "recorded", "dueUnobserved", "notYetDue", "unavailable",
+                 "missingActual", "knownFinishVariance", "behind", "ahead")
 DAY_BASES = ("calendar", "working")
 PERIOD_SIDES = ("start", "end", "last")
 OBJECT_ENDPOINTS = ("at", "start", "end")
@@ -75,6 +80,27 @@ class FigureSpec:
     calendar_id: str | None = None
     path: str = ""
     scope: str = "global"
+    source: str | None = None
+
+
+@dataclass(frozen=True)
+class FigureCounts:
+    """Immutable neutral count facts; the caller owns selection and state interpretation."""
+
+    selected: int
+    recorded: int
+    due_unobserved: int
+    not_yet_due: int
+    unavailable: int
+    missing_actual: int | None
+    known_finish_variance: int
+    behind: int
+    ahead: int
+
+    def value(self, source: str) -> int | None:
+        values = (self.selected, self.recorded, self.due_unobserved, self.not_yet_due,
+                  self.unavailable, self.missing_actual, self.known_finish_variance, self.behind, self.ahead)
+        return dict(zip(COUNT_SOURCES, values, strict=True))[source]
 
 
 @dataclass(frozen=True)
@@ -110,7 +136,8 @@ def _working_in(first: date, stop: date, calendar: Calendar) -> int:
 def resolve_figures(specs: Sequence[FigureSpec], *, as_of: date | None,
                     placements: Mapping[str, Mapping[str, date]], periods: Sequence[ResolvedPeriod],
                     calendars: Mapping[str, Calendar], default_calendar: str | None,
-                    group_first_start: date | None = None) -> FigureResolution:
+                    group_first_start: date | None = None,
+                    counts: FigureCounts | None = None) -> FigureResolution:
     """Resolve every declared figure; report every finding, not only the first.
 
     A figure with a finding yields no value, so a consumer can never read a made-up number for it; the
@@ -121,6 +148,18 @@ def resolve_figures(specs: Sequence[FigureSpec], *, as_of: date | None,
     diagnostics: list[Diagnostic] = []
     for spec in specs:
         found: list[Diagnostic] = []
+        if spec.kind == "count":
+            if spec.source not in COUNT_SOURCES:
+                raise TypeError(f"figure {spec.figure_id}: unknown count source {spec.source!r}")
+            value = counts.value(spec.source) if counts is not None else None
+            if value is None:
+                diagnostics.append(Diagnostic(
+                    "E_FIGURE_COUNT_UNAVAILABLE",
+                    f"Figure {spec.figure_id} reads count {spec.source}, but that projected fact is unavailable",
+                    f"{spec.path}/source", details={"figure": spec.figure_id, "source": spec.source}))
+            else:
+                values[spec.figure_id] = value
+            continue
         resolve = _Reader(spec, as_of, placements, declared, found, group_first_start)
         calendar = _calendar(spec, calendars, default_calendar, found) if spec.days == "working" else None
         if spec.kind == "daysUntil":
@@ -128,13 +167,15 @@ def resolve_figures(specs: Sequence[FigureSpec], *, as_of: date | None,
             if not found and origin is not None and target is not None:
                 values[spec.figure_id] = (calendar_days_until(origin, target) if calendar is None
                                           else working_days_until(origin, target, calendar))
-        else:
+        elif spec.kind == "daysIn":
             period = declared.get(spec.period_id or "")
             if period is None:
                 found.append(_period_unknown(spec, spec.period_id, declared, "/period"))
             elif not found:
                 values[spec.figure_id] = ((period.end - period.start).days if calendar is None
                                           else working_days_in(period.start, period.end, calendar))
+        else:
+            raise TypeError(f"figure {spec.figure_id}: unknown kind {spec.kind!r}")
         diagnostics.extend(found)
     return FigureResolution(values, tuple(diagnostics))
 

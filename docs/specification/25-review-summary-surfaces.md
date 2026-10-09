@@ -48,3 +48,8 @@ selected Primary items whose View-projected observation state is
 metric is unavailable, not zero. An incomplete but selected observation and
 future work are not counted. Summary formatting does not independently
 interpret planned or Actual dates.
+
+View count figures (Spec 06 §7.2) use this same projection-owned count producer.
+Their neutral integer bundle is passed to Core's closed selector; no consumer re-derives
+observation state or counts lane/comparison occurrences. Behind/ahead remain counts of
+known positive/negative observed finish deltas, not a critical-path forecast.
