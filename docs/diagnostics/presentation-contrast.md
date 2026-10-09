@@ -10114,7 +10114,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `group-tab:launch` | `group-tab` | 39.500, 659.872 | `group-header-band:launch` | flat | `#3A1115` | fill | 7.627 | 1.100 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `group-tab:ops` | `group-tab` | 39.500, 782.671 | `group-header-band:ops` | flat | `#3A1115` | fill | 7.627 | 1.100 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `group-tab:payload` | `group-tab` | 39.500, 351.955 | `group-header-band:payload` | flat | `#3A1115` | fill | 7.627 | 1.100 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `kicker` | `kicker` | 430.253, 48.785 | `canvas` | canvas | `#0D0A09` | fill | 9.106 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `kicker` | `kicker` | 413.680, 48.785 | `canvas` | canvas | `#0D0A09` | fill | 9.106 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `legend:actual` | `legend` | 281.008, 898.337 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `legend:calendar-exception` | `legend` | 596.623, 898.337 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `legend:dependency` | `legend` | 717.398, 898.337 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
