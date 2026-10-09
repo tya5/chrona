@@ -14,7 +14,7 @@ Implementation: [PR #1313](https://github.com/tya5/chrona/pull/1313), reviewed h
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
 | 1 | A Scene test shows the header's line box centred in the header band (tolerance 0.01 px), for both the plain and the role-marked path. | met | [Synthetic Scene/SVG test](../../../tests/integration/test_group_header_baseline.py): plain/marked, all three groups, ordinary and expanded folded headers; folded symbols retain their pitch and centered stack. | — |
-| 2 | Do not edit `examples/**`. Derived sync regenerates them. The reviewer checks Marquee, Title Card and target B afterwards. | met | Only Layout, [Spec50](../../specification/50-constraint-driven-gantt-surface-quality.md), synthetic tests and this review change. No examples or generated evidence authored. Public change counts and bot regeneration remain release gates below. | — |
+| 2 | Do not edit `examples/**`. Derived sync regenerates them. The reviewer checks Marquee, Title Card and target B afterwards. | met | Only Layout, [Spec50](../../specification/50-constraint-driven-gantt-surface-quality.md), synthetic tests and this review are authored; bot regeneration and byte audit are recorded below. [Board #454, Lanes](https://github.com/tya5/chrona/issues/454) makes target adoption the reviewer's step, not a dev closing condition; reviewer completion is not claimed. | — |
 
 ## Programme-level criteria (optional)
 
