@@ -7,6 +7,7 @@ exactly those widths. How a browser or resvg then draws them is the measured evi
 from __future__ import annotations
 
 import re
+import xml.etree.ElementTree as ET
 from dataclasses import replace
 from datetime import date
 
@@ -14,7 +15,7 @@ import pytest
 
 from chrona.presentation.layout.surface_quality import TextFit
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer, render_v05_svg
-from chrona.presentation.scene.model import ScenePaint, ScenePrimitive, SceneSurface, SurfaceScaleManifest, TextLayout
+from chrona.presentation.scene.model import Glow, ScenePaint, ScenePrimitive, SceneSurface, SurfaceScaleManifest, TextLayout
 from chrona.presentation.scene.viewer_fit import viewer_fit_fallbacks
 
 BOX = "annotation-box:n"
@@ -95,6 +96,32 @@ def test_a_single_line_box_that_follows_its_text_pads_the_text_run():
     svg = render_v05_svg(_surface(lines=("One",), fit=TextFit("box-follows-text", box_id=BOX, end_pad_spaces=2),
                                   box_fit="box-follows-text"))
     assert ">One  </text>" in svg and 'xml:space="preserve"' in svg
+
+
+@pytest.mark.parametrize("mode", ["box-follows-text", "text-follows-box"])
+def test_text_glow_keeps_one_canvas_filter_inside_viewer_fit_and_link(mode):
+    fit = (TextFit(mode, box_id=BOX, end_pad_spaces=2) if mode == "box-follows-text"
+           else _follow((60.0,)))
+    surface = _surface(lines=("Squeezed",), fit=fit, box_fit=mode, scale=0.75)
+    box, text = surface.primitives
+    text = replace(text, href="https://example.test/run",
+                   paint=replace(text.paint, opacity=0.6,
+                                 glow=Glow("#FFD24A", 2, 0.8, "required", (24, 14, 102, 26))))
+    root = ET.fromstring(render_v05_svg(replace(surface, primitives=(box, text))))
+    parents = {child: parent for parent in root.iter() for child in parent}
+    node = next(item for item in root.iter() if item.tag.endswith("text"))
+    parent = parents[node]
+    assert parent.tag.endswith("g") and "transform" not in parent.attrib
+    assert parent.attrib["filter"].startswith("url(#glow-")
+    assert "filter" not in node.attrib and node.attrib["opacity"] == "0.6"
+    assert "opacity" not in parent.attrib and "matrix(0.75" in node.attrib["transform"]
+    assert sum(item.attrib.get("filter", "").startswith("url(#glow-") for item in root.iter()) == 1
+    if mode == "box-follows-text":
+        assert node.text == "Squeezed  "
+        assert parents[parent].attrib["filter"].startswith("url(#fit-")
+    else:
+        assert node.attrib["textLength"] == "80"
+        assert parents[parent].tag.endswith("a")
 
 
 def test_a_box_without_a_start_inset_still_gets_a_positive_extent_rect():
