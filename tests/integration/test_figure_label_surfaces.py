@@ -5,6 +5,7 @@ import pytest
 
 from chrona.presentation.model.closure import ClosureError
 from chrona.usecases.render_review import RenderFailed
+from tests.integration import test_axis_band_color_scales as axis_bands
 from tests.integration import test_named_periods as periods
 from tests.support import annotation_kinds as ak
 from tests.support import synthetic_review as sr
@@ -75,6 +76,27 @@ def test_annotation_kind_title_reads_global_figures_before_layout_and_svg(tmp_pa
     title = next(item for item in rendered.surface.primitives if item.scene_id == "annotation-kind-text:view-n0:0")
     assert title.text == "RISK 3"
     assert b"RISK 3" in rendered.artifact.content
+
+
+def test_figure_annotation_and_axis_scale_complete_together_before_scene(tmp_path):
+    source = ak.project(kinds=("risk",))
+    parts = axis_bands._parts(tiers=axis_bands._alternating_tiers(),
+                             scales={"alternating": axis_bands.SLOTS["parity"]})
+    ak.with_view_notes(parts, source)
+    kinds = deepcopy(ak.KINDS)
+    kinds["risk"]["title"] = "{label} {figure:n}"
+    ak.with_kind_theme(parts, kinds=kinds)
+    parts["view"]["body"]["figures"] = [{"id": "n", "kind": "count", "source": "selected"}]
+    rendered = sr.render(tmp_path, source, presentation=parts)
+    title = next(item for item in rendered.surface.primitives
+                 if item.scene_id == "annotation-kind-text:view-n0:0")
+    assert title.text == "RISK 3"
+    assert b"RISK 3" in rendered.artifact.content
+    bands, svg_bands = axis_bands._bands(rendered), axis_bands._svg_bands(rendered)
+    expected = tuple(axis_bands.COLORS[axis_bands.SLOTS["parity"][str(index % 2)]]
+                     for index in range(6))
+    assert tuple(item.paint.fill for item in bands.values()) == expected
+    assert tuple(node.attrib["fill"] for node in svg_bands.values()) == expected
 
 
 def test_annotation_kind_unknown_figure_names_the_theme_consumer(tmp_path):

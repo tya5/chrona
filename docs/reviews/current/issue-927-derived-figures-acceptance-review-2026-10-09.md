@@ -40,6 +40,10 @@ Implementation is on `dev-a/927-derived-figures-20261009`, not yet released.
   seven unmerged #927 entries remain. The ordinary merge preserves both
   axis-band scale completion and annotation-header completion before text
   measurement. No figure-policy change; fresh-head artifact/CI proof remains.
+- Combined figure-backed annotation/axis-scale SVG regression and the two
+  affected integration files: 21 passed (51.18s). The same render proves the
+  resolved annotation title and all six completed axis-band paints survive
+  the merge together.
 
 ## Architecture conclusion
 
