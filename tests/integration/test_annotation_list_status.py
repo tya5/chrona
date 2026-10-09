@@ -11,10 +11,10 @@ from chrona.presentation.scene.serialization import serialize_scene
 from tests.support import synthetic_review as sr
 
 
-# SVG bytes remain those captured at published base cc6baa90. The #1088
-# Theme v0.15 migration changes only the Scene's Theme provenance identity.
-NO_SUPPRESSION_SCENE_SHA256 = "45b7c21b73c0f08008f9b6e012226ea963130e08759d9179116facd9ee5fb1c6"
-NO_SUPPRESSION_SVG_SHA256 = "6be1fa03bd77c3ba28a069a1378bd1d0c24379be5bb02477afc4c93107b305c6"
+# #1271 centers four group-header lines (+0.2 px); annotation boxes,
+# leaders, numbering and diagnostics remain unchanged.
+NO_SUPPRESSION_SCENE_SHA256 = "80a32a819bc06e37eeb23b38575d9d0dfdd6aa15c9b36da50ef3ceba6cc59bb5"
+NO_SUPPRESSION_SVG_SHA256 = "9d13fb41f70395a185d500fc1283429140a9ef9f44c6cd005c89950dd25ed43c"
 
 
 def _fixture():
