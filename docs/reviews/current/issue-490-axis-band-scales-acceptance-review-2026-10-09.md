@@ -11,7 +11,7 @@
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | A band tier can resolve alternating fills from a Theme, and a committed slide shows it. | not met | [SVG integration tests](../../../tests/integration/test_axis_band_color_scales.py) pass; [authored slide](../../../examples/controller-z/contexts/axis-alternating.yaml) renders alternating fills. Committed generated SVG and release evidence remain pending. | — |
+| 1 | A band tier can resolve alternating fills from a Theme, and a committed slide shows it. | met | [SVG integration tests](../../../tests/integration/test_axis_band_color_scales.py), [authored slide](../../../examples/controller-z/contexts/axis-alternating.yaml) and [bot-committed SVG](https://github.com/tya5/chrona/blob/e52e9c31bbb08e6e55d4389f645a04a8d5102a42/examples/controller-z/generated/axis-alternating.svg) show alternating fills. Committed bytes match the inspected PR snapshot. | — |
 | 2 | A band tier can resolve a different fill per interval from a declared Theme colour scale keyed by interval, and a finer tier can key off its containing coarser interval; #421's separability check applies. | met | [Synthetic tests](../../../tests/unit/chrona/presentation/model/test_axis_color_scale.py) and [SVG integration tests](../../../tests/integration/test_axis_band_color_scales.py) cover interval mapping, later-declared parents, natural containment, missing mappings and separability warnings; [authored quarter/month slide](../../../examples/controller-z/contexts/axis-interval-scales.yaml) renders both paints. | — |
 
 ## Programme-level criteria (optional)
@@ -21,27 +21,20 @@ published wiring: `9c3362aaed3a09794fb72350abe3c2b1e23fc9d9`.
 Focused tests: 169 passed; the 8 SVG integration tests also pass after example
 Theme isolation. S0 after isolation: 448 mapped documents, 739 probes, PASS
 (L2+L3 40.1s; four existing invalid fixtures unchanged).
-The two disposable SVG/Scene renders exist, but materializer comparison reports
-the expected mismatch because their generated repository evidence is not yet published.
-[Pre-isolation CI](https://github.com/tya5/chrona/actions/runs/37874047420),
-head `50246dfd`: conformance, materializer reproduction and two pytest shards
-passed. The only test failure was the packaged/example Scheme equality guard;
-derived-ready failed transitively. The correction isolates the same two demo
-categories in `schemes/axis-color-scales.yaml`, referenced only by the two new
-Contexts. `executive-light.yaml` is restored byte-identically to ready main;
-no preset bundle or test allowance changes. Both fills clear every group/row ground by at least
-1.221 and 1.365 respectively (required 1.15). The two source-ledger rows record
-seven axis labels and a hosted DVT. Root reran the original readability
-assertions against copied-project public renders; both pass. The focused
-axis-scale suite passed 72 tests. After Scheme isolation, the original preset
-equality guard and SVG suite pass (nine tests); both copied-project public SVGs
-are byte-identical to the inspected corrected renders, with seven labels,
-hosted DVT and no resource errors. Updated-head snapshot/CI remain required.
-Packaged-font raster inspection confirms alternating months and months
-following their quarter's fill. The inherited footer-overflow warning is
-disclosed, not absorbed by unrelated data/style edits.
-Committed generated evidence and exact-main three-OS release remain pending;
-keep the issue open.
+[PR #1263](https://github.com/tya5/chrona/pull/1263) merged at `3d7b3051` after
+[exact-head CI 37878114689](https://github.com/tya5/chrona/actions/runs/37878114689)
+passed every required check. Artifact `11593876282`, digest
+`sha256:55c1a7f1de855f868187db25f55e9f8eda571f5660e63edd97e9de2848c4c180`:
+145→149 paths, exactly two SVG/Scene pairs added; all 136 existing visual files
+byte-identical. The bot commit `e52e9c31` matches all 149 audited snapshot paths.
+
+The dedicated Scheme affects only the two new Contexts; executive-light remains
+byte-identical, with no preset or test allowance changes. Original preset equality
+and SVG suite: nine passed. Both inspected public renders show seven axis labels
+and a hosted DVT, with no resource errors. Worst separability is 1.221/1.365
+(floor 1.15); months follow their quarter's fill. The inherited footer-overflow
+warning remains disclosed. Exact-main three-OS release containing this completed
+review remains required; keep the issue open until that release succeeds.
 
 ## Architecture conclusion
 
