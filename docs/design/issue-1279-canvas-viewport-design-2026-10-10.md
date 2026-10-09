@@ -35,7 +35,17 @@ identity `(surfaceId, sourceRef)`, structured facts and a readable cause/subject
 Inspection Scene diagnostics and CLI/MCP reports retain the same identity.
 Adapters, Core, View, Theme and resource schemas gain no policy or syntax.
 
+`SurfaceLayoutRequest` and `SceneBuildInput` carry `declared_viewport` separately
+from allocation. `SurfacePlacement`, `DependencyNetworkLayout` and `SceneSurface`
+carry one optional typed `canvas_warning`; it is not a `FitWarning` with guessed
+available dimensions. `collect_render_warnings` has its own canvas-warning
+projection, after the existing fit family, and includes both identity fields.
+The Scene delivery registry assigns this runtime field to the shared report
+producer, not an adapter or a new serialized primitive member.
+
 This intentionally adds reports on existing overflowing renders, not clipping,
 resizing, layout fallback, or a strict refusal. Unconstrained auto height stays
 unwarned; independently overflowing inline extent still warns. Router, axis-label
 and tall-output fixes remain #1292/#1291/#1299. No corpus exceptions or edits.
+Existing `W_LAYOUT_NETWORK_OVERFLOW` remains a distinct allocation-fit warning;
+the new rule adds one canvas warning without deleting other warning families.

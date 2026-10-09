@@ -15,3 +15,6 @@ Decision: accepted for implementation planning; release evidence is not yet met.
 Review risks: both surfaces must receive the original declaration; attribution
 must include content-adjusted slots and exclude self-derived canvas treatments.
 Verify every current artifact's actual SVG extent and shared warning membership.
+Independent review identified the typed transport/identity seam; the selected
+design now names `declared_viewport`, `canvas_warning` and the dedicated ledger
+projection, and explicitly preserves the distinct network allocation warning.
