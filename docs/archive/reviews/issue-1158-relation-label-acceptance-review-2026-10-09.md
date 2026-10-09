@@ -21,11 +21,15 @@
 Ready main base: `ab3075e4f3c8cd584db7ddc14ca08eb2f8d925a0`. Focused command:
 `.venv/bin/python -m pytest -q tests/unit/chrona/presentation/layout/test_surface_relation_label_search.py tests/integration/test_relation_label_acceptance.py`
 — 3 passed (9.91s) after ordinary main merge. [PR #1264](https://github.com/tya5/chrona/pull/1264)
-changes only two test files and this review. Prior-head [CI 37870698659](https://github.com/tya5/chrona/actions/runs/37870698659)
-passed; artifact 11590491557 has all 145 paths byte-identical (68 SVG,
-68 Scene, nine reports; no additions or retirements). Refreshed-head PR checks
-and exact-main three-OS release containing this review remain pending;
-the issue stays open until that gate passes.
+changes only two test files and this review. [Exact-head CI 37874567105](https://github.com/tya5/chrona/actions/runs/37874567105)
+passed; artifact 11591977127 preserves all 145 paths byte-identically (68 SVG,
+68 Scene, nine reports; no additions/retirements), digest
+`sha256:3cc4d96cf7b1852bc8913fc09fd6dfddf71b712c16302c2499015045bb4410e9`.
+PR #1264 merged at `c43a63ba10cad750c2224cde800fec15c34e1c7b`.
+[Exact-main release 37878059361](https://github.com/tya5/chrona/actions/runs/37878059361)
+passed Ubuntu/Windows/macOS full pytest, conformance and wheel/smoke, MCP-floor,
+and newest-Python public reproduction. [All-row closing audit](https://github.com/tya5/chrona/issues/1158#issuecomment-6074013659):
+issue closed 2026-10-09T04:03:04Z with no deferred criterion.
 
 ## Architecture conclusion
 
