@@ -885,30 +885,56 @@ def _glyph_fixture():
     return compose_review_surface(value)
 
 
+def _assert_glyph_rectangle(node, *, inset_fraction=0.0):
+    x, y, width, height = node.bounds
+    left, right = x + width * inset_fraction, x + width * (1 - inset_fraction)
+    top, bottom = y + height * inset_fraction, y + height * (1 - inset_fraction)
+    expected = ((left, top), (right, top), (right, bottom), (left, bottom), (left, top))
+    outline = node.symbol.outline
+    assert tuple(command.kind for command in outline) == ("move", "line", "line", "line", "line")
+    for command, point in zip(outline, expected, strict=True):
+        assert command.points[0] == pytest.approx(point, abs=1e-4)
+
+
 def test_a_theme_bound_multi_part_glyph_renders_every_part_of_a_planned_gate():
     surface = _glyph_fixture()
     parts = [node for node in surface.primitives if node.scene_id.startswith("planned:group-header:fw:gate:part")]
-    assert len(parts) == 2
-    assert parts[0].paint.fill != "#1B1B1B"  # body: the role's own colour
-    assert parts[1].paint.fill == "#1B1B1B"  # band: the asset's literal colour
+    assert len(parts) == 3
+    body, band, outline = parts
+    _assert_glyph_rectangle(body)
+    _assert_glyph_rectangle(band, inset_fraction=0.3)
+    _assert_glyph_rectangle(outline)
+    assert body.paint.fill == "#102030" and body.paint.stroke is None  # original body: role ink
+    assert band.paint.fill == "#1B1B1B" and band.paint.stroke is None  # original band: asset ink
+    assert (outline.paint.fill, outline.paint.stroke, outline.paint.stroke_width) == (None, "#102030", 1.0)
     assert all(node.kind == "Symbol" and node.purpose == "planned" for node in parts)
 
 
 def test_a_theme_bound_multi_part_glyph_renders_every_part_of_an_actual_gate():
     surface = _glyph_fixture()
     parts = [node for node in surface.primitives if node.scene_id.startswith("actual:group-header:fw:gate:part")]
-    assert len(parts) == 2
-    assert parts[1].paint.fill == "#1B1B1B"
+    assert len(parts) == 3
+    body, band, outline = parts
+    _assert_glyph_rectangle(body)
+    _assert_glyph_rectangle(band, inset_fraction=0.3)
+    _assert_glyph_rectangle(outline)
+    assert body.paint.fill == "#102030" and body.paint.stroke is None
+    assert band.paint.fill == "#1B1B1B" and band.paint.stroke is None
+    assert (outline.paint.fill, outline.paint.stroke, outline.paint.stroke_width) == (None, "#102030", 1.0)
 
 
 def test_baseline_gate_glyph_distinguishes_its_band_by_treatment_not_colour():
     surface = _glyph_fixture()
     baseline_parts = [node for node in surface.primitives
                       if node.scene_id.startswith("planned:group-header:fw:scenario:baseline:gate:part")]
-    assert len(baseline_parts) == 2
-    body, band = baseline_parts
+    assert len(baseline_parts) == 3
+    body, band, outline = baseline_parts
+    _assert_glyph_rectangle(body)
+    _assert_glyph_rectangle(band, inset_fraction=0.3)
+    _assert_glyph_rectangle(outline)
     assert body.paint.fill is not None and body.paint.stroke is None
     assert band.paint.fill is None and band.paint.stroke is not None  # hollow band, not a literal colour
+    assert (outline.paint.fill, outline.paint.stroke, outline.paint.stroke_width) == (None, "#102030", 1.0)
     planned_parts = [node for node in surface.primitives if node.scene_id.startswith("planned:group-header:fw:gate:part")]
     # Baseline and planned share the asset's body/band shapes but differ in the band's paint mode,
     # so the two variants are distinguishable without relying on either's colour.
