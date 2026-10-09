@@ -367,6 +367,20 @@ Scene/SVG bytes remain unchanged. See the [L3b route-evidence correction](../des
 
 ### 3.4 Groups and legend
 
+**Horizontal header inset (#1284).** `groupHeader.labelInset` names a finite,
+nonnegative font-size ratio. Layout places plain and role-marked header text
+at the header band start plus that ratio times `groupHeader`'s font size;
+absent keeps existing placement. Completed header-content bounds include this
+leading inset and the measured, nonsuppressed text/run ends, without inflating
+glyph bounds. Baselines, authored run gaps and untabbed visible-overflow policy
+remain unchanged. A start tab requires the absolute inset to cover its
+`tabInlineSize + tabGap`; an end tab requires inset plus its reservation not
+to exceed the header width. Incompatible declarations fail with
+`E_LAYOUT_GROUP_TAB_SIZE` at `/body/roles/groupHeader/labelInset`, reporting
+the actual inset and required reservation. Negative ratios fail there with
+`E_THEME_TOKEN_TYPE`. Vertical tags refuse this horizontal property there with
+`E_THEME_ROLE_PROPERTY_UNSUPPORTED` and retain `tabGap`.
+
 View grouping gains `presentation: band | header`; `header` requires a non-zero resolved `timeline.groupHeader.blockSize`. Layout reserves one header block before the group's first row and supplies measured header text bounds spanning the selected table/timeline surface. Missing capacity completes visible stacked geometry and `W_LAYOUT_GROUP_HEADER_OVERFLOW`.
 
 **Header text (#583).** `grouping.header` is an optional View template for the header text. It is usable only with `presentation: header` and grouping by `field` or `objectType` (`E_VIEW_GROUP_HEADER_UNUSABLE`). `text` (and the optional `first`, used for the first group in display order) is literal text with the closed placeholders `{ordinal}`, `{title}`, `{secondary}` and `{figure:<id>}`; `{{` and `}}` are literal braces and any other brace use is `E_VIEW_GROUP_HEADER_TEMPLATE`. `{ordinal}` is the group's 1-based position in display order in the form `ordinal`: `arabic` (default), `zero-padded` (width: the digit count of the group count, at least 2), `roman` (1 to 3999), `kanji` and `kanji-formal` (daiji; both 1 to 99); a position outside the form's range is `E_REVIEW_GROUP_ORDINAL_RANGE`, never a fallback. `{title}` is the group's entity title. `{secondary}` is the string in `entities.<group>.fields.<secondary.entityField>`, and the declaration and the placeholder must appear together (`E_VIEW_GROUP_HEADER_TEMPLATE`); a missing or empty value is `E_REVIEW_GROUP_HEADER_SECONDARY`. `{figure:<id>}` (#586) is the signed whole number of days of the derived figure of that id in the View's `figures` (Specification 06 section 7.2), in ASCII digits with a minus sign when negative and with no format specification; the same number appears in every group's header, an id the View does not declare is `E_VIEW_GROUP_HEADER_TEMPLATE` (the message lists the declared ids), and a figure whose fact is missing refuses the render (Specification 05 section 12.2) rather than showing a blank. Content normalization composes the final text once and Layout places it as it places the title, so overflow follows the existing header rules. A View without `header` renders the entity title unchanged.
