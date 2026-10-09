@@ -19,6 +19,11 @@ from tools.derived_artifact_report import report_stale_artifact
 POLICY_VERSION = "chrona/resolvability-quality-policy/v0.1"
 DIAGNOSTIC_CODE = re.compile(r"^[EW]_[A-Z0-9_]+$")
 DISPOSITIONS = {"sufficient", "backlog"}
+RESULT_DIAGNOSTICS = {
+    "ActualCommandResult": 2,
+    "ActualIntakeCommandResult": 2,
+    "SnapshotCaptureResult": 2,
+}
 
 
 class DiagnosticInventoryError(ValueError):
@@ -54,9 +59,9 @@ def _code_and_inline_detail(node: ast.AST) -> tuple[str | None, bool]:
         value, _, rest = node.value.partition(":")
         return (value, bool(rest.strip())) if DIAGNOSTIC_CODE.fullmatch(value) else (None, False)
     if isinstance(node, ast.JoinedStr) and node.values and isinstance(node.values[0], ast.Constant) and isinstance(node.values[0].value, str):
-        value, colon, _ = node.values[0].value.partition(":")
+        value, colon, rest = node.values[0].value.partition(":")
         if colon and DIAGNOSTIC_CODE.fullmatch(value):
-            return value, True
+            return value, bool(rest.strip()) or any(isinstance(part, ast.FormattedValue) for part in node.values[1:])
     return None, False
 
 
@@ -153,6 +158,45 @@ def _calls(tree: ast.AST, path: str, *, layer: str) -> Iterable[DiagnosticSite]:
         )
 
 
+def _result_diagnostic_tuples(tree: ast.AST, path: str, *, layer: str) -> Iterable[DiagnosticSite]:
+    """Discover diagnostic string literals in the three public result tuples (#918 S1).
+
+    These are deliberately named constructors, not a scan for arbitrary tuples
+    containing strings that happen to look like codes. Their third positional
+    argument (or ``diagnostics=`` keyword) is the public diagnostics field.
+    """
+    functions = _function_names(tree)
+    for call in ast.walk(tree):
+        if not isinstance(call, ast.Call):
+            continue
+        constructor = _name(call.func).rsplit(".", 1)[-1]
+        if constructor not in RESULT_DIAGNOSTICS:
+            continue
+        argument = next((keyword.value for keyword in call.keywords if keyword.arg == "diagnostics"), None)
+        if argument is None:
+            position = RESULT_DIAGNOSTICS[constructor]
+            if len(call.args) > position:
+                argument = call.args[position]
+        if not isinstance(argument, ast.Tuple):
+            continue
+        for value in argument.elts:
+            code, inline_detail = _code_and_inline_detail(value)
+            if code is None:
+                continue
+            # A result tuple entry is itself the diagnostic payload. There are
+            # no additional constructor arguments that can supply its detail.
+            yield DiagnosticSite(
+                code=code,
+                path=path,
+                line=value.lineno,
+                column=value.col_offset,
+                function=functions.get(id(call), "<module>"),
+                constructor=constructor,
+                layer=layer,
+                has_detail=inline_detail,
+            )
+
+
 def discover(root: Path) -> tuple[DiagnosticSite, ...]:
     source = root / "src" / "chrona"
     reachable = cli_reachable_modules(root)
@@ -161,7 +205,9 @@ def discover(root: Path) -> tuple[DiagnosticSite, ...]:
         path = source_path.relative_to(root).as_posix()
         tree = ast.parse(source_path.read_text(encoding="utf-8"), filename=path)
         module = path.removeprefix("src/").replace("/", ".").removesuffix(".py").removesuffix(".__init__")
-        sites.extend(_calls(tree, path, layer="user-facing-ingress" if module in reachable else "internal"))
+        layer = "user-facing-ingress" if module in reachable else "internal"
+        sites.extend(_calls(tree, path, layer=layer))
+        sites.extend(_result_diagnostic_tuples(tree, path, layer=layer))
     return tuple(sorted(sites))
 
 
