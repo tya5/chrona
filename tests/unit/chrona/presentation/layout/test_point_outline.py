@@ -4,8 +4,12 @@ from chrona.presentation.layout.mark_geometry import (
     SymbolPartPlacement,
     complete_point_outline,
 )
-from chrona.presentation.layout.model import LayoutError
+from chrona.presentation.layout.lane_mark_facets import _mark_facets
+from chrona.presentation.layout.lane_projection import LaneProjectionInstance
+from chrona.presentation.layout.model import LayoutError, Rect
+from chrona.presentation.layout.surface_quality import MarkPlacement
 from chrona.presentation.layout.surface_quality import PathCommand as C
+from chrona.presentation.model.projection import ReviewItem
 
 
 def _rect(x0: float, y0: float, x1: float, y1: float):
@@ -144,3 +148,40 @@ def test_contour_union_failure_maps_to_bounded_layout_error_without_fallback(mon
         assert tokens.color_queries == []
     else:
         raise AssertionError("invalid contour must not fall back to the raw path")
+
+
+def test_lane_facets_keep_completed_outline_width_not_planned_theme_fallback():
+    fill = SymbolPartPlacement(_rect(0, 0, 10, 10), paint_mode="fill")
+
+    class RoleWidths(_Tokens):
+        def optional_number(self, role, property_name):
+            self.number_queries.append((role, property_name))
+            return {"gate": 2.0, "planned": 9.0}.get(role) if property_name == "strokeWidth" else None
+
+    theme = RoleWidths()
+    completed_parts = complete_point_outline((fill,), paint_role="gate", theme_tokens=theme)
+    item = ReviewItem(
+        "work", "Work", "point", {"at": None}, None, None, ("planned",),
+        item_id="work-view", source_kind="primary",
+    )
+    instance = LaneProjectionInstance("row-1", "work-view", "work", "primary")
+    mark_bounds = Rect(0, 0, 10, 10)
+    mark = MarkPlacement(
+        "mark:work", "work", mark_bounds, (5, 5), (5, 5), mark_shape="point",
+        semantic_id="planned", symbol_parts=completed_parts,
+    )
+
+    facets = _mark_facets(item, instance, mark, theme)
+
+    assert len(facets) == 2
+    original, outline = facets
+    assert original.glyph_part_projection.paint_mode == "fill"
+    assert original.ports and len(original.ports) == 2
+    assert outline.glyph_part_projection.paint_mode == "stroke"
+    assert outline.glyph_part_projection.stroke_width == 2.0
+    # The outline's visible collision envelope is expanded from its 0..10 path
+    # by the completed gate width (10×width), not planned's different width.
+    assert (outline.visible_footprint.left, outline.visible_footprint.top,
+            outline.visible_footprint.right, outline.visible_footprint.bottom) == (-20, -20, 30, 30)
+    assert not outline.ports
+    assert theme.number_queries == [("gate", "strokeWidth")]

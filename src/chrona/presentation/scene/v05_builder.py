@@ -137,7 +137,12 @@ def _symbol_primitives(scene_id: str, source_ref: str, source_kind: str, purpose
                            PrimitiveKind.SYMBOL, source_ref, source_kind, purpose, visual_role,
                            bounds, symbol=SymbolGeometry(part.commands), paint_order=base_paint_order + index * order_step,
                            glyph_paint_mode=part.paint_mode, glyph_paint_color=part.paint_color,
-                           glyph_stroke_width=part.stroke_width,
+                           # Intrinsic catalogue width and finish are one tuple.
+                           # Role outlines keep their width in Layout; paint uses
+                           # the role binding rather than a catalogue override.
+                           glyph_stroke_width=(part.stroke_width
+                                               if part.line_cap is not None and part.line_join is not None
+                                               else None),
                            glyph_line_cap=part.line_cap, glyph_line_join=part.line_join, **shared)
             for index, part in enumerate(completed_parts)]
 

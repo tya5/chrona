@@ -8,6 +8,31 @@ from chrona.presentation.layout.surface_quality import PathCommand, ScalePlaceme
 from chrona.presentation.model.projection import ObservationState
 
 
+def test_scene_projects_intrinsic_finish_metadata_without_reclassifying_role_outline_width():
+    from chrona.presentation.layout.mark_geometry import SymbolPartPlacement
+    from chrona.presentation.scene.v05_builder import _symbol_primitives
+
+    commands = (PathCommand("move", ((0.0, 0.0),)),
+                PathCommand("line", ((10.0, 0.0),)),
+                PathCommand("line", ((5.0, 10.0),)),
+                PathCommand("line", ((0.0, 0.0),)))
+    intrinsic = SymbolPartPlacement(commands, "stroke", stroke_width=0.75,
+                                    line_cap="round", line_join="bevel")
+    role_outline = SymbolPartPlacement(commands, "stroke", stroke_width=2.0)
+    originals = (intrinsic, role_outline)
+    projected = _symbol_primitives("gate", "point", "object", "mark", "gate",
+                                   (0, 0, 10, 10), originals)
+
+    assert projected[0].glyph_stroke_width == 0.75
+    assert projected[0].glyph_line_cap == "round"
+    assert projected[0].glyph_line_join == "bevel"
+    assert projected[1].glyph_stroke_width is None
+    assert projected[1].glyph_line_cap is None and projected[1].glyph_line_join is None
+    assert projected[1].glyph_paint_mode == "stroke" and projected[1].visual_role == "gate"
+    assert projected[1].symbol.outline == commands
+    assert role_outline.stroke_width == 2.0
+
+
 def _glyph(*parts):
     return {"shape": "glyph", "viewBox": [10, 10], "parts": list(parts)}
 
