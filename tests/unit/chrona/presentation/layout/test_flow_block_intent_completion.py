@@ -211,19 +211,18 @@ def test_content_sized_flow_child_keeps_width_dependent_natural_height_callback(
     resolved_root = profile.profile["root"]
 
     def line_height(inline_size):
-        lines = _flow_lines(
-            resolved_root,
-            "/root",
-            measures,
-            profile,
-            Decimal(inline_size),
-            lambda _child, _path, available_inline: (
-                Decimal(60) if available_inline < Decimal(110) else Decimal(40)
-            ),
-        )
+        seen = []
+
+        def height(_child, _path, available_inline):
+            seen.append(available_inline)
+            return Decimal(60) if available_inline < Decimal(110) else Decimal(40)
+
+        lines = _flow_lines(resolved_root, "/root", measures, profile, Decimal(inline_size), height)
+        # The callback gets the extent the child is arranged at, whatever the line bound (#1206, Spec 33 section 13).
+        assert seen == [lines[0][0][3]] == [Decimal(120)]
         return lines[0][0][4]
 
-    assert line_height(100) == Decimal(60)
+    assert line_height(100) == Decimal(40)
     assert line_height(200) == Decimal(40)
 
 

@@ -207,7 +207,7 @@ def _flow_lines(node: Mapping[str, Any], path: str, measurements: Mapping[str, M
         child_path = f"{path}/children/{index}"
         measured = _measure_node(child, child_path, measurements, profile)
         width = max(minimum, measured.preferred_inline)
-        height = height_for(child, child_path, min(inline_size, width))
+        height = height_for(child, child_path, width)  # the extent it is arranged at: natural sizes are kept (Spec 33 section 13)
         block_spec = child["blockSize"]
         if not (isinstance(block_spec, dict) and "aspectRatio" in block_spec):
             block_minimum, block_target, block_weight = _spec_base(
