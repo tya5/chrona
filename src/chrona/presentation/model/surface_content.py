@@ -5,6 +5,7 @@ from datetime import date
 from dataclasses import dataclass
 from typing import Any
 
+from chrona.presentation.model.axis_color_scale import AxisBandFillSpec
 from chrona.presentation.model.placement_candidates import PlacementCandidate
 from chrona.presentation.model.projection import ObservationState, ReviewItem
 from chrona.presentation.table_presentation import BooleanPresencePresentation
@@ -179,6 +180,7 @@ class AxisTier:
     role: str
     label: AxisLabelIntent | None = None
     typography_role: str | None = None
+    fill_scale: AxisBandFillSpec | None = None
 
 
 @dataclass(frozen=True)
