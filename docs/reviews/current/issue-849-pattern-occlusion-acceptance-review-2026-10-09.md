@@ -38,7 +38,10 @@ That run's conformance failed diagnostic actionability at five new bare sites
 (paint-invalid: two; primitive-invalid: one; source-pattern: two). Add
 owner-local detail, not a larger bare-site allowance; validation semantics stay
 unchanged. Focused detail tests: 57 passed; the actionability validator passes
-at the unchanged bare-site counts (10/76/5). The local generated inventory is
+at the unchanged bare-site counts (10/76/5). Run 37875272756 subsequently passed
+conformance but shard three found the inventory reason missing the existing
+"trusted packaged data" fact. Restoring that explanation preserves the Material
+v0.3 exception; its 24 inventory tests pass. The local generated inventory is
 stale and is left to CI snapshot regeneration. Corrected-head PR checks and exact-main three-OS release containing
 this review remain required. Local evidence is not release acceptance;
 keep #849 open.
