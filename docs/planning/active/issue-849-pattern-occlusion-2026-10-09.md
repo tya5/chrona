@@ -95,22 +95,24 @@ evidence, not compensation for a core side effect. Keep all other target
 styling unchanged. The reference's per-circle opacity 0.9 is not a new asset
 channel: the exact geometry uses the existing opaque pattern contract.
 
-## Implementation and release planning boundary
+## Implementation plan
 
-Finalize owned files and schema/resource migrations only after this reviewed
-design and the normative specification updates are published. Expected seams: source/catalog/Scene
-schemas, icon normalization/import, PatternTilePrimitive/placement, Scene
-serialization/contact, SVG emission and relevant living specifications.
-Keep one work record and one coherent product PR, with separately published
-design-plan, reviewed-design and implementation-plan commits before code.
+Reviewed design/specifications published at `745ee4fd229b60ed791dcca444e73a5ab5b4d8ba`.
+The following slices form one product PR; no intermediate reader/resource
+state is merged. Their commits may be reviewed independently.
 
-Acceptance evidence must include ordered hidden/remaining ink, multiple
-erasers, fill-before-stroke, thin strokes, tile edges and rotations,
-deterministic bounded failure, emitted exact circle SVG, post-occlusion density
-and contrast, and Yuya YAML. Batch affected renders and public snapshot diffs;
-report all unintended corpus changes rather than tuning data to absorb them.
-Focused local tests precede PR S0/conformance/materializers and exact-main
-three-OS release. Keep the issue open until both literal rows have direct proof.
+| Slice | Owned files and migrations | Focused evidence / acceptance |
+| --- | --- | --- |
+| 1. Contract and normalization | `schemas/graphics-v0.1.schema.yaml`: new shared pattern-circle definition referencing existing coordinate/radius definitions; source v0.2/catalogue v0.5 schemas; Scene v0.7 optional fields; `icons/normalizer.py`, `icons/importer.py`, `contracts/resources.py`. Archive predecessor schemas in `docs/archive/schemas/`, remove their readers/inventory entries and update retained v0.3's successor note. | Normalizer/importer/catalogue/graphics tests: painter order, several knockouts, fill-before-stroke, no-op/invalid channels, zero visible ink, edge clipping, angle-invariant density, half-up rounding and unchanged old primitive output. Refuse retired versions explicitly; icon-only v0.3 remains supported. |
+| 2. Completed geometry and observation | `layout/pattern_placement.py`, Scene model/projection/serialization, paint completion, `scene/pattern_ink.py`, SVG pattern emission. Circle channel/width remain passive completed facts; no new geometry policy in adapters. | Placement/Scene/paint/ink/SVG tests: outline versus disk, thin rings, holes, transformed clipped queries, closed edges, zero-area queries, 4096-copy boundary, exact native circle markup, substrate rejection on fill-less paint before Scene completion. Opaque contrast/perceptibility consume final density without changing floors. |
+| 3. Atomic resource closure and Yuya | Successor starter/target-parts/annotation-parts source/catalogue/manifests with `v2026-10-09` IDs; existing notices/set aliases unchanged. Update the two source builders, packaged library pins, HALCYON catalogue mirrors and Context pins (Yuya/Title Card/Marquee), fixture schemas, importer/probe references, wheel-smoke paths and catalogue reproduction tests. Add exact target-parts seigaiha; Yuya changes only its pattern reference. Retire superseded live resources after every reference is migrated; Git preserves immutable history. | Reproduce all catalogues through the importer, verify canonical bytes/hashes/notice closure and unchanged fifteen existing densities; reject stale pins. Pipeline-test Yuya's launch-window primitive stack, density, contrast findings and emitted SVG; inspect actual raster against the target geometry. No flow-engine or preset-bundle edits. |
+| 4. Publication gate | Update schema-equivalence ledger/probes for successor contracts and additive Scene fields, prune stale merged deltas, add one concise literal acceptance review. Generated manifest outputs are CI-owned, not patched by dev. | Batched focused tests, `tools.schema_equivalence --base-rev origin/main`, conformance, affected public materializers and snapshot before/after counts. Inspect SVG/Scene/raster evidence as a batch; disclose nonvisual definition-ID changes and all user-visible changes/diagnostics. PR pytest/newest-Python followed by exact-main three-OS release containing the review. |
 
-Status: reviewed design; publish with normative specifications before finalizing
-the implementation plan. No #849 product implementation or acceptance claim.
+Before each publication fetch and check current ready main and dev B's file
+ownership. Serial pushes; ordinary merge if a published branch's base advances.
+Design, this implementation plan, code and acceptance are separate coherent
+commits on the same branch. Keep both literal acceptance rows open until direct
+target and gate evidence prove them; target styling unrelated to seigaiha is not
+part of this issue.
+
+Status: design published; implementation plan ready for publication before code.
