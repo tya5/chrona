@@ -5,7 +5,7 @@ body:
   surface: table-timeline
   heading:
     title: "{project} · Programme board"
-    subtitle: "Every work package by owning team · baseline, current plan and observed · as of {asOf} · calendar: {calendar}"
+    subtitle: "Every work package by owning team · baseline, current plan and observed · as of {asOf} · calendar: {calendar} (range for launch campaign)"
     dateForm: day-month-year
   rows:
     mode: automatic

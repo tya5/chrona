@@ -47,10 +47,35 @@ root:
               children:
                 - id: title
                   kind: slot
-                  source: title
+                  source: heading.title
                   inlineSize: content
                   blockSize: content
                   place: {inline: center, block: center, safety: safe}
+                  priority: required
+                  overflow: visible-overflow
+            - id: head-text
+              kind: column
+              inlineSize: fill
+              blockSize: content
+              gap: {token: spacing.none}
+              padding: {token: spacing.none}
+              alignItems: start
+              justifyContent: start
+              children:
+                - id: kicker
+                  kind: slot
+                  source: heading.kicker
+                  inlineSize: fill
+                  blockSize: content
+                  place: {inline: start, block: start, safety: safe}
+                  priority: required
+                  overflow: visible-overflow
+                - id: subtitle
+                  kind: slot
+                  source: heading.subtitle
+                  inlineSize: fill
+                  blockSize: content
+                  place: {inline: start, block: start, safety: safe}
                   priority: required
                   overflow: visible-overflow
         - id: review
