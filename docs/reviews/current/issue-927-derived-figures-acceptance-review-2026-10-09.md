@@ -2,7 +2,7 @@
 
 # Issue #927 — derived figures acceptance
 
-Public base: `5360a127bc8dcee13b1e5ae137475f6c9f12c704`. Design, architecture review and
+Public ready base: `7503e53076e4e0b924051b89759a9ece6ca9d038`. Design, architecture review and
 implementation plan: [issue Status](https://github.com/tya5/chrona/issues/927#issuecomment-6071114520).
 Implementation is on `dev-a/927-derived-figures-20261009`, not yet released.
 
@@ -15,7 +15,7 @@ Implementation is on `dev-a/927-derived-figures-20261009`, not yet released.
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | Acceptance for whichever is taken: synthetic tests per kind and edge date, a diagnostic for a missing fact, default output unchanged, S0 gate in the PR. | not met | [Date and last-day tests](../../../tests/unit/chrona/core/test_figures.py), [closed count tests](../../../tests/unit/chrona/core/test_figure_counts.py), [scoped facts](../../../tests/unit/chrona/usecases/test_group_figures.py), [rendered labels](../../../tests/integration/test_figure_label_surfaces.py); local S0 L1/L2/L3 passed. [Corrected-head CI](https://github.com/tya5/chrona/actions/runs/37866368343) passed all checks; its 145-path snapshot preserves all 136 public SVG/Scene bytes. [Critical-path scope clarification](https://github.com/tya5/chrona/issues/927#issuecomment-6073015256), refreshed-base validation and exact-main release remain pending. | — |
+| 1 | Acceptance for whichever is taken: synthetic tests per kind and edge date, a diagnostic for a missing fact, default output unchanged, S0 gate in the PR. | not met | [Date/last-day](../../../tests/unit/chrona/core/test_figures.py), [closed counts](../../../tests/unit/chrona/core/test_figure_counts.py), [scoped facts](../../../tests/unit/chrona/usecases/test_group_figures.py) and [rendered labels](../../../tests/integration/test_figure_label_surfaces.py) pass; latest-base S0 L1/L2/L3 passes. [149-path artifact proof](https://github.com/tya5/chrona/pull/1259#issuecomment-6086768856) preserves all 140 public SVG/Scene bytes. [Critical-path scope clarification](https://github.com/tya5/chrona/issues/927#issuecomment-6073015256), fresh-head CI and exact-main release remain pending. | — |
 
 ## Programme-level criteria (optional)
 
@@ -23,27 +23,24 @@ Implementation is on `dev-a/927-derived-figures-20261009`, not yet released.
   `last`, literal-safe period `label.template`, and annotation-kind title/heading figures.
 - Counts retain the existing behind/ahead meaning. The issue's critical-path wording is
   awaiting clarification; no forecast or critical-path endpoint delta is invented.
-- Focused runs: 176 group regressions, 142 annotation regressions, 76 count/label/helper
-  tests, 45 final label tests and 40 contract/fact tests passed (overlapping suites).
-- Corrected-head focused suite: 117 passed, including all 18 ID-site inventory tests.
-  The three figure kinds share one local ID definition without changing validation.
-- S0: 443 mapped documents and 739 probes, L2+L3 40.1s; annotation lint and
-  literal acceptance-review validation passed.
-- Corrected-head public archive audit: all 145 paths checked, zero changed SVG/Scene
-  files (136 checked), two changed diagnostic/coverage reports, no retirements.
-  No corpus/preset source edits. Run 37866368343 passed conformance, MCP-floor,
-  newest-Python reproduction, all three pytest shards and derived-ready. CI is not
-  the scope blocker; refreshed-head PR and exact-main release evidence remain required.
-- Reconciled ready base `5360a127`: 232 focused figure/label tests passed (38.25s).
-  S0 passed 451 mapped documents/739 probes; L2+L3 47.9s, four invalid fixtures
-  unchanged. Eight landed #849 L1 entries were proven stale and pruned; the
-  seven unmerged #927 entries remain. The ordinary merge preserves both
-  axis-band scale completion and annotation-header completion before text
-  measurement. No figure-policy change; fresh-head artifact/CI proof remains.
-- Combined figure-backed annotation/axis-scale SVG regression and the two
-  affected integration files: 21 passed (51.18s). The same render proves the
-  resolved annotation title and all six completed axis-band paints survive
-  the merge together.
+- Focused figure/label suite: 232 passed (38.25s); combined annotation-figure/
+  axis-scale SVG suite: 21 passed (51.18s). The three kinds share one local ID
+  definition; global/group facts remain separate.
+- Latest-main integration: 98 passed (10.73s), including #918 diagnostic
+  provenance. The one additive AnnotationIntent merge conflict retains both
+  completed figure strings and keyword-only, equality-neutral anchor provenance.
+- Latest-ready-base S0: 451 mapped documents / 739 probes; L2+L3 43.7s. Four
+  existing invalid documents remain unchanged. Eight proven-stale #849 L1 entries
+  are retired; seven unmerged #927 entries remain. Acceptance validator passes.
+- Exact-head `dc6a02e5` [CI](https://github.com/tya5/chrona/actions/runs/37971453231)
+  passed conformance, MCP, all three pytest shards and newest-Python materializers.
+  Its derived-ready check failed only because main advanced; the branch now
+  ordinarily merges ready `7503e530` and requires fresh checks.
+- [Artifact 11637835377](https://github.com/tya5/chrona/actions/runs/37971453231/artifacts/11637835377):
+  all 149 before/after paths and safe archive members checked; all 140 SVG/Scene
+  bytes unchanged, two inventory/coverage reports changed, no additions/retirements.
+  Digest `sha256:f4aba1bb212eb149390ae29e0f6a58a51ace9d51565a933e9468569f67d2c933`.
+  No authored corpus/preset/flow-engine edits.
 
 ## Architecture conclusion
 
