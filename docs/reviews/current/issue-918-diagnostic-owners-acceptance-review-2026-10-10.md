@@ -5,12 +5,15 @@
 Status: release pending; do not close.
 Source: [issue 918](https://github.com/tya5/chrona/issues/918), observed
 2026-10-10, including the consolidated 919–922 bodies.
-Implementation: `a5a6d3bb`; integrated head:
-`2aeb13589d4f764bf5f7234090c512c11c7f12e9` in
-[PR 1276](https://github.com/tya5/chrona/pull/1276), based on ready main
-`01d478425113ca7ea7d969cabeaf5201d4f5df04`.
-[PR CI](https://github.com/tya5/chrona/actions/runs/37952231069) is pending;
-exact-main release and public-materializer evidence are not yet acceptance.
+Implementation: `a5a6d3bb`; row-by-row proof: `afd37958`; latest ready-main
+merge: `1ce7a83248850298d5dd74f20192ccbe2cb07804`, incorporating
+`5ebc493b6fbaeb7910889b5e4d487a633c70f739` in
+[PR 1276](https://github.com/tya5/chrona/pull/1276).
+[Initial PR CI](https://github.com/tya5/chrona/actions/runs/37952231069)
+exposed four Scene negative-probe equivalence failures: its consumer treated
+owner detail as part of the code. The corrected consumer retains the leading
+code; schemas, baseline probes and expected deltas are unchanged. Updated PR
+CI, exact-main release and public-materializer evidence remain required.
 Authorities: [design](../../design/issue-918-diagnostic-owners-design-2026-10-09.md)
 and [work record](../../planning/active/issue-918-diagnostic-owners-design-plan-2026-10-09.md).
 
@@ -45,7 +48,8 @@ None; the literal issue and release gates above control acceptance.
 Python 3.11 integrated owner/provenance/inventory/CLI tests: 220 passed;
 renderer value assertions: 15 passed; latest-main overlapping Layout tests:
 26 passed; complete golden-row MCP projection plus real-render parity:
-20 passed; same-pass recording/full-envelope maintenance tests: 2 passed.
+20 passed; same-pass recording/full-envelope maintenance tests: 2 passed;
+schema-equivalence consumer/regression suite: 32 passed.
 These are focused checks, not a substitute for full release CI.
 
 The MCP projection test supplies the characterized ledger rows to the real
@@ -131,5 +135,8 @@ owners. Owner error text uses bounded operands separately.
 Local conformance found stale bot-owned diagnostic/declared-value inventories;
 CI derived preview owns those refreshes. Policy-shape and Scene-field delivery
 registration failures were corrected and individually checked. Do not edit
-generated inventories manually or count this local run as green. The issue
+generated inventories manually or count this local run as green. The CI
+schema-equivalence fix only separates code from owner detail; it does not
+reclassify the four known invalid corpus documents or relax an expected delta.
+The issue
 stays open until every row and the required release gate are met.

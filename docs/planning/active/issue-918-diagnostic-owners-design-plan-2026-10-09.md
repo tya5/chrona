@@ -77,7 +77,9 @@ keeps the issue open without an approved successor disposition.
 
 ## Integrated implementation evidence
 
-S1 is published at `9125ca33`; S2–S4 are ready for integrated publication.
+S1 is published at `9125ca33`; S2–S4 are published in
+[PR 1276](https://github.com/tya5/chrona/pull/1276). The current candidate
+ordinarily merges ready main `5ebc493b`; no published branch was rebased.
 Python 3.11 focused integration: 220 passed. The inventory validates 1,609
 sites with zero bare reachable constructors; the policy retains its unrelated
 declared-value and corpus rules. Owner tests include detail-removal mutations.
@@ -87,6 +89,10 @@ owner-error messages change; 22 warning rows preserve identity and multiplicity.
 Relation-only and field/entity-group findings retain their real source, not
 invented endpoint/member ownership. Provenance keeps canonical pointers and
 known titles; it is excluded from Scene serialization and geometry.
+CI identified a schema-equivalence consumer treating Scene error detail as
+part of its code; the fix splits the leading code without changing validators,
+baseline probes or expected deltas. Complete golden-to-MCP projection checks
+cover all 19 success cases and 22 warning rows (20 focused tests passed).
 CI full release and public-materializer acceptance remain pending. The local
 conformance review found stale bot-owned inventory reports; its policy-shape
 and Scene-field ownership failures were corrected and individually rechecked.

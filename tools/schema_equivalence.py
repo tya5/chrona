@@ -881,7 +881,9 @@ def _ingress_scene(document: Mapping[str, Any], _schema: str) -> dict[str, str] 
     try:
         validate_scene_document(deepcopy(dict(document)))
     except SceneSerializationError as error:
-        return _diagnostic(str(error), "", "", "")
+        # SceneSerializationError now carries owner-local detail, but L3's
+        # diagnostic contract records its stable leading code only.
+        return _diagnostic(str(error).partition(":")[0], "", "", "")
     return None
 
 
