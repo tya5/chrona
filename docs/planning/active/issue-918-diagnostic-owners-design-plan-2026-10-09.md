@@ -1,11 +1,11 @@
 # Issue 918 — diagnostic owners: design plan
 
 Status: PR 1276 merged at `484657736a8fa7dbc5c8668ffc20d57f6c5f23ab`;
-additional review requirements are in design correction, not accepted.
+review follow-up implemented at `e66136cf`, release acceptance pending.
 Selected [design](../../design/issue-918-diagnostic-owners-design-2026-10-09.md),
 [architecture review](../../reviews/current/issue-918-diagnostic-owners-architecture-review-2026-10-09.md)
 and [implementation plan](issue-918-diagnostic-owners-implementation-plan-2026-10-09.md)
-are published through `1316b8e02694f7179c765fc4847b5583223f253d`.
+include published follow-up phases `32cb2940`, `dca58ecb` and `bce9556f`.
 Authority: [issue 918](https://github.com/tya5/chrona/issues/918), including
 consolidated issues 919–922. Public baseline:
 `546f7c3f9e700afa7553632d8dd6ac0c94a348a0` (`derived-main` successful).
@@ -18,8 +18,8 @@ Predecessor: [issue 829 work record](../../archive/planning/issue-829-diagnostic
 - CLI render warnings now use the documented stdout envelope; MCP parity and
   producer provenance tests passed in PR CI. Scene identities/counts and all
   140 public SVG/Scene files are unchanged in artifact 11630069335.
-- The follow-up below remains unimplemented; original exact-main release
-  acceptance and new pointer/failure-path evidence are not yet complete.
+- Follow-up focused integration passes 124 tests on ready base `2487d752`;
+  exact-main release and the follow-up public artifact audit remain pending.
 
 ## Design questions and review scope
 

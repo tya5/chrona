@@ -2,14 +2,16 @@
 
 # Issue 918 — diagnostic owner acceptance
 
-Status: release pending; do not close.
+Status: follow-up focused acceptance recorded; release pending, do not close.
 Source: [issue 918](https://github.com/tya5/chrona/issues/918), observed
 2026-10-10, including the consolidated 919–922 bodies.
-Implementation: `a5a6d3bb`; row-by-row proof: `afd37958`; consumer correction:
-`8daa8ae3`; latest ready-main merge:
-`a07516c3944cd18c6a692b32414c562b08f1ae07`, incorporating
-`e1a6f8122aa14b57392ac0363a35e09ff5ab1cbe` in
-[PR 1276](https://github.com/tya5/chrona/pull/1276).
+Merged implementation: `484657736a8fa7dbc5c8668ffc20d57f6c5f23ab` in
+[PR 1276](https://github.com/tya5/chrona/pull/1276), accepted head
+`ab2650030bb55b95d4cc6f34dc5c97dde1cb2e8a` on ready base
+`e1a6f8122aa14b57392ac0363a35e09ff5ab1cbe`.
+Follow-up source: `e66136cfe72e5c44a67a89c7d286d7ee49f82123` on ready
+main `2487d752ed45b6c8c55fe9d183a20ccaf3abadea`; public artifact and
+exact-main release proof for this follow-up remain required.
 [Initial PR CI](https://github.com/tya5/chrona/actions/runs/37952231069)
 exposed four Scene negative-probe equivalence failures: its consumer treated
 owner detail as part of the code. The corrected consumer retains the leading
@@ -20,7 +22,10 @@ All three pytest shards failed on remaining test consumers of the old bare-code
 and stderr contracts, removed-helper imports and an archived-schema fixture.
 Two JSON parsing failures capture two CLI invocations without draining the first
 success envelope; they do not demonstrate duplicate emission by one command.
-Consumer corrections and a fresh full CI/exact-main gate remain required.
+Consumer corrections were verified by
+[corrected PR CI](https://github.com/tya5/chrona/actions/runs/37959980414):
+all three pytest shards, conformance, MCP floor, newest-Python reproduction
+and derived-ready passed. Exact-main three-OS/wheel release remains required.
 Authorities: [design](../../design/issue-918-diagnostic-owners-design-2026-10-09.md)
 and [work record](../../planning/active/issue-918-diagnostic-owners-design-plan-2026-10-09.md).
 
@@ -45,6 +50,9 @@ and [work record](../../planning/active/issue-918-diagnostic-owners-design-plan-
 | 10 | Every `W_LAYOUT_*` and `W_SCENE_*` row names the Project object it is about (`sourceRef` and the title in the message) where the placement belongs to one. | met | [Scene producer tests](../../../tests/unit/chrona/presentation/scene/test_diagnostic_provenance.py), Layout icon/shape producer tests and [ledger tests](../../../tests/unit/chrona/usecases/test_warning_provenance.py) cover explicit typed joins, escaped IDs, suppression, multiple subjects and ownerless findings; golden rows below. | — |
 | 11 | Scene diagnostics, SVG and PNG bytes and the multiplicity invariant are unchanged (existing tests). | not met | [Local 114-case comparison](../../../tests/cli/test_cli_characterization.py): all 37 generated files byte-identical, warning identities/counts unchanged. Candidate public artifact below preserves all 140 SVG/Scene files and newest-Python reproduction passed; full pytest and exact-main release remain required. | — |
 | 12 | The CLI golden and the MCP `render_draft` warnings agree and are reviewed row by row. | met | [CLI/MCP tests](../../../tests/unit/chrona/app/test_agent_tools.py) retain real-render parity and exercise the actual MCP envelope projection for every successful golden case: 19 cases, all 22 rows, including empty/info/multi-owner detail. Complete CLI row audit below. | — |
+| 13 | Expected detail: `scale=owner, missing=[m0,…], extra=[bus,…], at /body/scales/owner/slots`. | met | [Synthetic production tests](../../../tests/integration/test_color_scale_failure_provenance.py) prove stable code, scale/missing/extra keys and escaped canonical `/body/colorScales/<id>/slots` for both callers; the actual schema uses `colorScales`, not the example's `scales`. Late value errors retain the View pointer. | — |
+| 14 | Expected detail: the View pointer `/body/annotations/<i>/anchor` and the reason, e.g. "object titlecard has no completed actual mark". | met | [Synthetic render transport](../../../tests/integration/test_annotation_anchor_failure_transport.py) proves unobserved/in-progress actual rejection, annotation/object/reason and canonical View pointer; [owner tests](../../../tests/unit/chrona/presentation/layout/test_annotation_routing_diagnostic_details.py) cover absent endpoint/invalid fields/post-resolution provenance and bounded text without truncating pointers. | — |
+| 15 | The "readable render-warning transport" part of this issue should include the materializer's failure path. | met | [Standalone adapter tests](../../../tests/unit/tools/test_materialize_example_failure_transport.py) preserve all typed rejected/failed diagnostics and details through the shared mapper; success/library silence remains. [Cache test](../../../tests/integration/test_render_cache.py) proves nonempty stdout warnings and nested mutation isolation without stderr fallback. | — |
 
 ## Programme-level criteria (optional)
 
@@ -67,6 +75,17 @@ the skill-envelope node passed separately. Updated collision, legend, attachment
 and platform-specific font consumers await CI; no complete corpus run is claimed.
 Latest-main lane/inventory/render-envelope focused batch: 29 passed (8.57s).
 These are focused checks, not a substitute for full release CI.
+
+Follow-up integrated batch: 124 passed (11.42s), including inventory,
+View normalization, anchor/model owner tests, real synthetic render failures,
+materializer transport and nonempty warning-cache isolation. Owner batches:
+scale/separability/group tint 45 passed; annotation/projection 84 passed;
+adapter/cache 14 passed. Detail-removal mutations killed scale-value and both
+anchor-code operand assertions; materializer diagnostic-detail loss and cache
+stderr fallback also failed their synthetic assertions. All mutations were
+restored before the integrated run. Bounded long-input anchor tests preserve
+the complete pointer and cap message operands. Scale resolver codes remain
+unchanged; upstream Scheme ingress retains its own schema code/pointer.
 
 The MCP projection test supplies the characterized ledger rows to the real
 `render_draft` tool envelope without rerendering 19 images; the retained
@@ -120,18 +139,19 @@ and feature worktrees with their own Python 3.11 venvs; compare file hashes,
 exit codes and ordered warning identities/counts. Logs are local evidence,
 not committed resources.
 
-Audited pre-correction candidate public artifact:
-[11628895137](https://github.com/tya5/chrona/actions/runs/37955021163/artifacts/11628895137),
-`derived-snapshot-bac5bef2f40d2eaad6f235e5dd46fe63c66ea544`, provider digest
-`sha256:c0c144e8be2e701e0dd0d45c8c9f1d4fcc68f00b93b9280fffdbc7e680650ce2`.
-Downloaded with `gh run download 37955021163 --repo tya5/chrona --name
-derived-snapshot-bac5bef2f40d2eaad6f235e5dd46fe63c66ea544`.
+Audited corrected candidate public artifact:
+[11630069335](https://github.com/tya5/chrona/actions/runs/37959980414/artifacts/11630069335),
+`derived-snapshot-ab2650030bb55b95d4cc6f34dc5c97dde1cb2e8a`, provider digest
+`sha256:daccd1844013f06a66c83f63476d4d04404dc5c55fc64ac2ff72d0aacdb9bd2e`.
+Downloaded with `gh run download 37959980414 --repo tya5/chrona --name
+derived-snapshot-ab2650030bb55b95d4cc6f34dc5c97dde1cb2e8a`.
 The before/after archives have 149 paths each, no retirements, and all 140
 SVG/Scene files are byte-identical. Every before-file matches ready main
-`5ebc493b`; the only changes are the diagnostic and declared-value inventory
+`e1a6f812`; the only changes are the diagnostic and declared-value inventory
 reports. Archive members and the declared changed-path list were checked as
-a batch without extracting into the worktree. Newest-Python reproduction passed;
-full pytest and exact-main release remain incomplete.
+a batch without extracting into the worktree. Corrected-head newest-Python
+reproduction and all pytest shards passed; exact-main three-OS release remains
+incomplete.
 
 ### Every successful-render warning row
 
