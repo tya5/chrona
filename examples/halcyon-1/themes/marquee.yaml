@@ -500,7 +500,7 @@ body:
       glowBlur: glow.title-blur
       glowOpacity: glow.title-opacity
     kicker:
-      horizontalScale: squeeze.none
+      horizontalScale: squeeze.label
       blockGap: gap.kicker
       fontFamily: editorial
       fontWeight: weight.bold
