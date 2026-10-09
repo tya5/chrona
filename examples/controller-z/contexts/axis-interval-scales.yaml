@@ -15,10 +15,10 @@ body:
     address: views/axis-interval-scales.yaml
     revision: {token: example-v1}
   theme:
-    id: axis-tiers
+    id: axis-color-scales
     kind: theme
     store: {provider: local, identity: controller-z-example}
-    address: themes/axis-tiers.yaml
+    address: themes/axis-color-scales.yaml
     revision: {token: example-v1}
   colorScheme:
     id: executive-light
