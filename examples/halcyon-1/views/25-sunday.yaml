@@ -1,0 +1,308 @@
+version: chrona/view/v0.28
+kind: view
+id: halcyon-25-sunday
+body:
+  surface: table-timeline
+  heading:
+    kicker: The programme board,
+    title: '{project}'
+    subtitle: "in six panels \xB7 by the Programme Office"
+    dateForm: day-month-year
+  rows:
+    mode: automatic
+  window:
+    mode: explicit
+    start: '2027-03-01'
+    end: '2027-12-01'
+  periods:
+  - id: launch-window
+    label:
+      placement: top
+      text: LAUNCH WINDOW
+  comparison:
+    baseline: snapshot
+    baselineMarks: ghost-when-changed
+    missingActualScope: in-progress
+    actual: required
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets:
+    - planned
+    - actual
+    - finishDelta
+    - missingActual
+    - unmatchedActual
+  visibility:
+    labels:
+      placement: table
+      content:
+      - title
+      - finishDelta
+      side: end
+      overflow: suppress
+    relations:
+      mode: semantic
+      overflow: suppress
+    annotations:
+      mode: presentation
+      marker: none
+  annotations:
+  - id: tvac-note
+    purpose: note
+    anchor:
+      kind: object
+      id: payload-tvac
+      facet: actual
+      endpoint: body
+    projectAnnotation: tvac
+    candidates:
+    - id: plot-near
+      region:
+        kind: plot
+      search:
+        kind: nearest-free
+        maxPositions: 1024
+        maxInlineEm: 12
+      obstacles: &id001
+        classes:
+        - mark
+        - text
+        - label-visual
+        - dependency-route
+        - leader-route
+        - annotation-box
+        - port
+        - rule
+      connector:
+        kind: tail
+    - id: plot-narrow
+      region:
+        kind: plot
+      search:
+        kind: nearest-free
+        maxPositions: 1024
+        maxInlineEm: 8
+      obstacles: *id001
+      connector:
+        kind: tail
+    - id: plot-wide
+      region:
+        kind: plot
+      search:
+        kind: nearest-free
+        maxPositions: 1024
+        maxInlineEm: 16
+      obstacles: *id001
+      connector:
+        kind: tail
+  - id: station-note
+    purpose: note
+    anchor:
+      kind: object
+      id: station
+      facet: planned
+      endpoint: body
+    projectAnnotation: station
+    candidates:
+    - id: plot-near
+      region:
+        kind: plot
+      search:
+        kind: nearest-free
+        maxPositions: 1024
+        maxInlineEm: 12
+      obstacles: *id001
+      connector:
+        kind: tail
+    - id: plot-narrow
+      region:
+        kind: plot
+      search:
+        kind: nearest-free
+        maxPositions: 1024
+        maxInlineEm: 8
+      obstacles: *id001
+      connector:
+        kind: tail
+    - id: plot-wide
+      region:
+        kind: plot
+      search:
+        kind: nearest-free
+        maxPositions: 1024
+        maxInlineEm: 16
+      obstacles: *id001
+      connector:
+        kind: tail
+  - id: window-note
+    purpose: note
+    anchor:
+      kind: object
+      id: launch
+      facet: planned
+      endpoint: at
+    projectAnnotation: window
+    candidates:
+    - id: plot-near
+      region:
+        kind: plot
+      search:
+        kind: nearest-free
+        maxPositions: 1024
+        maxInlineEm: 12
+      obstacles: *id001
+      connector:
+        kind: tail
+    - id: plot-narrow
+      region:
+        kind: plot
+      search:
+        kind: nearest-free
+        maxPositions: 1024
+        maxInlineEm: 8
+      obstacles: *id001
+      connector:
+        kind: tail
+    - id: plot-wide
+      region:
+        kind: plot
+      search:
+        kind: nearest-free
+        maxPositions: 1024
+        maxInlineEm: 16
+      obstacles: *id001
+      connector:
+        kind: tail
+  axis:
+    tiers:
+    - unit: quarter
+      every: 1
+      role: band
+      typographyRole: axisQuarter
+    - unit: quarter
+      every: 1
+      role: grid-major
+    - unit: quarter
+      every: 1
+      role: labels
+      label:
+        form: quarter-year
+        align: center
+        overflow: visible-overflow
+        orientation: horizontal
+      typographyRole: axisQuarter
+    - unit: month
+      every: 1
+      role: band
+      typographyRole: axisMonth
+    - unit: month
+      every: 1
+      role: labels
+      label:
+        form: short-month
+        align: start
+        overflow: visible-overflow
+        orientation: horizontal
+      typographyRole: axisMonth
+    - unit: month
+      every: 1
+      role: grid-minor
+  markers:
+  - kind: asOf
+    source: actual
+    label: TODAY!
+    placement: below-plot
+    date:
+      form: day-month
+  shading:
+    nonWorking: true
+    exceptions: true
+  backgroundDecoration:
+    rows: none
+    groups: all
+  hierarchyColumn: What
+  tableColumns:
+  - id: What
+    source: title
+    missing: em-dash
+    align: start
+    width:
+      minmax:
+        min: content
+        max:
+          fr: 1
+    headerOrientation: horizontal
+  - id: Phase
+    source:
+      field: phase
+    textRole: table-cell-secondary
+    missing: em-dash
+    align: start
+    width: content
+    headerOrientation: horizontal
+  - id: Late?
+    source:
+      facet: finishDelta
+    format: signedNumber
+    missing: blank
+    missingBy:
+      inProgress: em-dash
+      dueUnobserved: blank
+      notYetDue: blank
+    align: end
+    width: content
+    headerOrientation: horizontal
+    affixes:
+      slip:
+        suffix: '!'
+  selection:
+    include:
+      ids:
+      - pdr
+      - structure
+      - avionics
+      - eps
+      - bus-test
+      - cdr
+      - optics
+      - detector
+      - payload-tvac
+      - payload-delivery
+      - integration
+      - vibration
+      - tvac
+      - emc
+      - psr
+      - mcs
+      - station
+      - comms-test
+      - launch-contract
+      - shipment
+      - campaign
+      - frr
+      - launch
+      - rehearsals
+      - leop
+      - first-light
+      types:
+      - span
+      - point
+  grouping:
+    by: field
+    field: owner
+    missing: ungrouped
+    order:
+    - bus
+    - payload
+    - ait
+    - ground
+    - launch
+    - ops
+    presentation: header
+    header:
+      text: "Meanwhile, in the {title}\u2026"
+      first: "In the {title}\u2026"
+  ordering:
+    by: source
+    direction: ascending
+    tieBreak: id

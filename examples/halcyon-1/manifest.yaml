@@ -123,3 +123,8 @@ slides:
     context: contexts/24-marquee.yaml
     expectedSvg: generated/24-marquee.svg
     expectedScene: generated/24-marquee.scene.json
+  - id: sunday
+    evidence: "Issue #1269: YAML-only assembly of the owner-approved hand-drawn Sunday Strip target (newsprint canvas, inked panels, caption-box group headers, in-plot speech balloons, Ben-Day dots, as-of starburst)."
+    context: contexts/25-sunday.yaml
+    expectedSvg: generated/25-sunday.svg
+    expectedScene: generated/25-sunday.scene.json
