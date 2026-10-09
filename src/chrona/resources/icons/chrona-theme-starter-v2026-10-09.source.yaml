@@ -1,0 +1,101 @@
+version: chrona/theme-asset-source/v0.2
+kind: theme-asset-source
+id: chrona-theme-starter-v2026-10-09
+body:
+  set: chrona-starter
+  aliases: [chrona-theme-starter]
+  license:
+    spdx: MIT
+    notice: |
+      MIT License
+
+      Copyright (c) 2026 Chrona Contributors
+
+      Permission is hereby granted, free of charge, to any person obtaining a copy
+      of this software and associated documentation files (the "Software"), to deal
+      in the Software without restriction, including without limitation the rights
+      to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+      copies of the Software, and to permit persons to whom the Software is
+      furnished to do so, subject to the following conditions:
+
+      The above copyright notice and this permission notice shall be included in all
+      copies or substantial portions of the Software.
+
+      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+      IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+      FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+      AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+      LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+      SOFTWARE.
+  glyphs:
+    pin:
+      viewport: {inlineSize: 24, blockSize: 24}
+      parts:
+        - {paint: fill, d: "M 12 1 Q 3.5 1 3.5 9.3 Q 3.5 14.6 12 23 Q 20.5 14.6 20.5 9.3 Q 20.5 1 12 1 Z M 12 5.5 Q 15.8 5.5 15.8 9.3 Q 15.8 13.1 12 13.1 Q 8.2 13.1 8.2 9.3 Q 8.2 5.5 12 5.5 Z"}
+    lantern:
+      viewport: {inlineSize: 24, blockSize: 24}
+      parts:
+        - {paint: stroke, strokeWidth: 1.5, lineCap: round, lineJoin: round, d: "M 8 2 L 16 2 M 12 2 L 12 4 M 6 7 Q 12 4 18 7 L 17 18 Q 12 21 7 18 Z M 8 10 L 16 10 M 8 14 L 16 14 M 12 7 L 12 19 M 9 18 L 8 22 L 16 22 L 15 18"}
+    hexagon:
+      viewport: {inlineSize: 24, blockSize: 24}
+      parts:
+        - {paint: fill, d: "M 7 2 L 17 2 L 22 12 L 17 22 L 7 22 L 2 12 Z"}
+    star:
+      viewport: {inlineSize: 24, blockSize: 24}
+      parts:
+        - {paint: fill, d: "M 12 1 L 14.8 8.2 L 22.5 8.7 L 16.6 13.7 L 18.5 21.3 L 12 17.1 L 5.5 21.3 L 7.4 13.7 L 1.5 8.7 L 9.2 8.2 Z"}
+    chest:
+      viewport: {inlineSize: 24, blockSize: 24}
+      parts:
+        - {paint: stroke, strokeWidth: 1.5, lineCap: round, lineJoin: round, d: "M 3 8 L 21 8 L 20 21 L 4 21 Z M 2 5 L 22 5 L 22 9 L 2 9 Z M 12 9 L 12 14 M 10 14 L 14 14 M 6 5 L 7 2 L 17 2 L 18 5"}
+    ticked-circle:
+      viewport: {inlineSize: 24, blockSize: 24}
+      parts:
+        - {paint: stroke, strokeWidth: 2, lineCap: round, lineJoin: round, d: "M 20.2 9 Q 21 12 19.2 15 Q 17.4 19 13 20.2 Q 8.6 21.4 5 18.5 Q 1.4 15.6 1.2 11 Q 1 6.4 4.2 3.4 Q 7.4 0.4 12 1.2 Q 15 1.7 17.2 3.5 M 8 12.5 L 11 15.5 L 21.5 4.5"}
+    diamond:
+      viewport: {inlineSize: 24, blockSize: 24}
+      parts:
+        - {paint: fill, d: "M 12 1 L 23 12 L 12 23 L 1 12 Z"}
+  patterns:
+    halftone:
+      tile: {inlineSize: 8, blockSize: 8}
+      angle: 0
+      densityBasisPoints: 1279
+      primitives:
+        - {kind: circle, cx: 2, cy: 2, radius: 0.8}
+        - {kind: circle, cx: 6, cy: 2, radius: 0.8}
+        - {kind: circle, cx: 2, cy: 6, radius: 0.8}
+        - {kind: circle, cx: 6, cy: 6, radius: 0.8}
+    seigaiha:
+      tile: {inlineSize: 8, blockSize: 8}
+      angle: 0
+      densityBasisPoints: 1917
+      primitives:
+        - {kind: arc, cx: 4, cy: 4, radius: 3, startAngle: 180, endAngle: 360, strokeWidth: 0.6}
+        - {kind: arc, cx: 4, cy: 4, radius: 2, startAngle: 180, endAngle: 360, strokeWidth: 0.6}
+        - {kind: arc, cx: 4, cy: 4, radius: 1, startAngle: 180, endAngle: 360, strokeWidth: 0.6}
+    ordered-dither-12-5:
+      tile: {inlineSize: 8, blockSize: 8}
+      angle: 0
+      densityBasisPoints: 1250
+      primitives: [{kind: rect, x: 0, y: 0, inlineSize: 8, blockSize: 1}]
+    ordered-dither-25:
+      tile: {inlineSize: 8, blockSize: 8}
+      angle: 0
+      densityBasisPoints: 2500
+      primitives: [{kind: rect, x: 0, y: 0, inlineSize: 8, blockSize: 2}]
+    ordered-dither-50:
+      tile: {inlineSize: 8, blockSize: 8}
+      angle: 0
+      densityBasisPoints: 5000
+      primitives: [{kind: rect, x: 0, y: 0, inlineSize: 8, blockSize: 4}]
+    dense-hatch:
+      tile: {inlineSize: 8, blockSize: 8}
+      angle: 0
+      densityBasisPoints: 5610
+      primitives:
+        - {kind: line, x1: 0, y1: 1, x2: 7, y2: 8, strokeWidth: 1}
+        - {kind: line, x1: 1, y1: 0, x2: 8, y2: 7, strokeWidth: 1}
+        - {kind: line, x1: 0, y1: 7, x2: 7, y2: 0, strokeWidth: 1}
+        - {kind: line, x1: 1, y1: 8, x2: 8, y2: 1, strokeWidth: 1}

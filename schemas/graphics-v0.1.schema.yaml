@@ -52,6 +52,21 @@ $defs:
       cx: {description: "Center x coordinate within the tile.", type: number, minimum: 0, maximum: 256}
       cy: {description: "Center y coordinate within the tile.", type: number, minimum: 0, maximum: 256}
       radius: {description: "Positive circle radius.", type: number, exclusiveMinimum: 0, maximum: 128}
+  patternCirclePrimitive:
+    description: "Ordered pattern circle with colourless fill channel and optional ink stroke; clip to the tile before repetition."
+    examples: [{kind: circle, cx: 4, cy: 4, radius: 1}, {kind: circle, cx: 4, cy: 4, radius: 3, fillChannel: substrate, strokeWidth: 1}]
+    type: object
+    required: [kind, cx, cy, radius]
+    additionalProperties: false
+    properties:
+      kind: {description: "Circle primitive kind.", const: circle}
+      cx: {description: "Center x coordinate within the tile.", $ref: "#/$defs/circlePrimitive/properties/cx"}
+      cy: {description: "Center y coordinate within the tile.", $ref: "#/$defs/circlePrimitive/properties/cy"}
+      radius: {description: "Positive circle radius.", $ref: "#/$defs/circlePrimitive/properties/radius"}
+      fillChannel: {description: "Fill channel before ink stroke; omission means ink. Substrate requires opaque completed pattern fill.", enum: [ink, substrate, none]}
+      strokeWidth: {description: "Positive tile-unit width of the circle's ink stroke.", type: number, exclusiveMinimum: 0, maximum: 16}
+    if: {properties: {fillChannel: {const: none}}, required: [fillChannel]}
+    then: {required: [strokeWidth]}
   rectanglePrimitive:
     description: "One filled rectangle inside a pattern tile."
     examples: [{kind: rect, x: 0, y: 0, inlineSize: 4, blockSize: 4}]

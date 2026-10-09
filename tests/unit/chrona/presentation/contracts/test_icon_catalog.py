@@ -5,7 +5,7 @@ import jsonschema
 import pytest
 
 from chrona.presentation.contracts import ClosureIdentity, SchemaContractError, parse_contract, validate_icon_catalog_entry
-from chrona.presentation.contracts.resources import _compact_commands
+from chrona.presentation.contracts.resources import UnsupportedResourceVersionError, _compact_commands
 from chrona.presentation.model.closure import ClosureError, _selected_catalog_entries
 from chrona.resources import schema_document, validator_for_schema
 
@@ -22,9 +22,9 @@ def _catalog(source: str = "assets/risk.png"):
     }
 
 
-def _catalog_v04():
+def _catalog_v05():
     return {
-        "version": "chrona/icon-catalog/v0.4", "kind": "icon-catalog", "id": "theme-assets",
+        "version": "chrona/icon-catalog/v0.5", "kind": "icon-catalog", "id": "theme-assets",
         "body": {
             "set": "starter", "aliases": [],
             "provenance": {"sourceKind": "theme-asset-source", "sourceContentIdentity": "sha256:" + "b" * 64,
@@ -45,12 +45,16 @@ def test_icon_catalog_contract_keeps_set_name_and_closed_raster_source():
     assert contract.set_name == "acme"
     assert contract.entry_names == ("risk",)
     validate_icon_catalog_entry(contract, "risk")
+    with pytest.raises(ValueError, match="E_ICON_CATALOG_SCHEMA") as error:
+        validate_icon_catalog_entry(contract, "poster")
+    assert "catalog='acme-icons', icon='poster'" in error.value.detail
+    assert "expected selected canonical entry" in error.value.detail
 
 
-def test_icon_catalog_v04_accepts_glyph_and_pattern_only_catalogues():
-    value = _catalog_v04()
+def test_icon_catalog_v05_accepts_glyph_and_pattern_only_catalogues():
+    value = _catalog_v05()
     contract = parse_contract(ClosureIdentity("icon-catalog", "theme-assets", "r1", "sha256:" + "c" * 64), value)
-    assert contract.version == "chrona/icon-catalog/v0.4"
+    assert contract.version == "chrona/icon-catalog/v0.5"
     assert contract.entry_names == ()
     assert tuple(contract.raw_glyphs) == ("pin",)
     assert tuple(contract.raw_patterns) == ("dots",)
@@ -62,17 +66,27 @@ def test_icon_catalog_v04_accepts_glyph_and_pattern_only_catalogues():
         {"kind": "arc", "cx": 1, "cy": 1, "radius": 1, "startAngle": 0, "endAngle": 90, "strokeWidth": 1}),
     lambda value: value["body"]["glyphs"]["pin"].update(parts=[{"paint": "fill", "data": "M 0 0 Z"}] * 33),
 ])
-def test_icon_catalog_v04_rejects_invalid_density_raw_arc_and_part_limit(mutate):
-    value = _catalog_v04()
+def test_icon_catalog_v05_rejects_invalid_density_raw_arc_and_part_limit(mutate):
+    value = _catalog_v05()
     mutate(value)
     with pytest.raises(SchemaContractError):
         parse_contract(ClosureIdentity("icon-catalog", "theme-assets", "r1", "sha256:" + "c" * 64), value)
 
 
+def test_retired_asset_catalog_v04_is_not_reinterpreted():
+    value = _catalog_v05()
+    value["version"] = "chrona/icon-catalog/v0.4"
+    with pytest.raises(UnsupportedResourceVersionError) as error:
+        parse_contract(ClosureIdentity("icon-catalog", "theme-assets", "r1", "sha256:" + "c" * 64), value)
+    assert error.value.diagnostic_id == "E_RESOURCE_VERSION_UNSUPPORTED"
+    assert error.value.source_ref == "/version"
+    assert error.value.supported_versions == ("chrona/icon-catalog/v0.3", "chrona/icon-catalog/v0.5")
+
+
 def test_theme_asset_source_schema_accepts_one_kind_and_requires_declared_density():
-    schema = schema_document("theme-asset-source-v0.1.schema.yaml")
+    schema = schema_document("theme-asset-source-v0.2.schema.yaml")
     source = {
-        "version": "chrona/theme-asset-source/v0.1", "kind": "theme-asset-source", "id": "local-assets",
+        "version": "chrona/theme-asset-source/v0.2", "kind": "theme-asset-source", "id": "local-assets",
         "body": {"set": "local", "aliases": [], "license": {"spdx": "MIT", "notice": "MIT notice"},
                  "glyphs": {}, "patterns": {"hatch": {
                      "tile": {"inlineSize": 8, "blockSize": 8}, "angle": 0, "densityBasisPoints": 1250,

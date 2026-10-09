@@ -77,15 +77,15 @@ body:
       revision:
         token: example-v1
     iconCatalogs:
-    - id: chrona-target-parts-v2026-10
+    - id: chrona-target-parts-v2026-10-09
       kind: icon-catalog
       store:
         provider: local
         identity: halcyon-1-example
-      address: catalogs/chrona-target-parts-v2026-10.yaml
+      address: catalogs/chrona-target-parts-v2026-10-09.yaml
       revision:
         token: example-v1
-      contentIdentity: sha256:22fb3e80b35568bf3cbd55f94c0af715b8606322547b5e81a0254009ca45d1dc
+      contentIdentity: sha256:139be42bed11eaa9809ef98bb427eb74f8f0862c3d5c4ccfd9eba2b23185acee
   environment:
     viewport:
       inlineSize: 1600

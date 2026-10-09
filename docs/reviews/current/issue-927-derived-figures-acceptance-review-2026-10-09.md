@@ -2,7 +2,7 @@
 
 # Issue #927 — derived figures acceptance
 
-Public base: `c43a63ba10cad750c2224cde800fec15c34e1c7b`. Design, architecture review and
+Public base: `5360a127bc8dcee13b1e5ae137475f6c9f12c704`. Design, architecture review and
 implementation plan: [issue Status](https://github.com/tya5/chrona/issues/927#issuecomment-6071114520).
 Implementation is on `dev-a/927-derived-figures-20261009`, not yet released.
 
@@ -34,9 +34,12 @@ Implementation is on `dev-a/927-derived-figures-20261009`, not yet released.
   No corpus/preset source edits. Run 37866368343 passed conformance, MCP-floor,
   newest-Python reproduction, all three pytest shards and derived-ready. CI is not
   the scope blocker; refreshed-head PR and exact-main release evidence remain required.
-- Reconciled ready base `c43a63ba`: 199 focused figure/label tests passed (33.13s).
-  S0 passed 443 mapped documents/739 probes; L2+L3 43.5s, four invalid fixtures
-  unchanged. Ordinary main merge introduces no figure-policy change.
+- Reconciled ready base `5360a127`: 232 focused figure/label tests passed (38.25s).
+  S0 passed 451 mapped documents/739 probes; L2+L3 47.9s, four invalid fixtures
+  unchanged. Eight landed #849 L1 entries were proven stale and pruned; the
+  seven unmerged #927 entries remain. The ordinary merge preserves both
+  axis-band scale completion and annotation-header completion before text
+  measurement. No figure-policy change; fresh-head artifact/CI proof remains.
 
 ## Architecture conclusion
 

@@ -7,6 +7,14 @@ from chrona.presentation.layout.labels import LabelPlacement, LabelRect
 from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacleIndex
 
 
+def _asof_error(code: str, owner: str, **operands: object) -> ValueError:
+    fields = []
+    for name, value in operands.items():
+        shown = repr(value).replace("\n", " ").replace("\r", " ")[:96]
+        fields.append(f"{name}={shown}")
+    return ValueError(f"{code}: {owner} " + ", ".join(fields))
+
+
 def find_asof_label_candidate(
     plot_bounds: LabelRect,
     footprint: tuple[float, float],
@@ -37,9 +45,11 @@ def find_asof_label_candidate(
                                       width, height, rule_x, gap))
             or plot_bounds.width <= 0 or plot_bounds.height <= 0
             or width <= 0 or height <= 0 or gap < 0):
-        raise ValueError("E_LAYOUT_ASOF_LABEL_GEOMETRY")
+        raise _asof_error("E_LAYOUT_ASOF_LABEL_GEOMETRY", "as-of chip geometry",
+                          plot_bounds=plot_bounds, footprint=footprint, rule_x=rule_x, gap=gap)
     if not rule_host_id:
-        raise ValueError("E_LAYOUT_ASOF_LABEL_RULE_HOST")
+        raise _asof_error("E_LAYOUT_ASOF_LABEL_RULE_HOST", "as-of rule exemption",
+                          rule_host_id=rule_host_id, placement=placement)
 
     selected = obstacles.select(classes=obstacle_classes)
     plot_left, plot_top = plot_bounds.x, plot_bounds.y

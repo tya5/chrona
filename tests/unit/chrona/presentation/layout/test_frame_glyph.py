@@ -148,7 +148,7 @@ def test_invalid_geometry_has_exact_binding_pointer(size, pitch, prop):
 def test_reusable_marquee_yaml_completes_the_actual_packaged_bulb_parts():
     root = Path(__file__).resolve().parents[5]
     declaration = yaml.safe_load((root / "tests/fixtures/surface-decoration/marquee-glyph-frame.yaml").read_text())
-    catalogue = yaml.safe_load((root / "src/chrona/resources/icons/chrona-target-parts-v2026-10.yaml").read_text())
+    catalogue = yaml.safe_load((root / "src/chrona/resources/icons/chrona-target-parts-v2026-10-09.yaml").read_text())
     parts = sr.bundle()
     theme_patch, scheme_patch = declaration["themePatch"], declaration["schemePatch"]
     parts["theme"]["version"] = theme_patch["version"]

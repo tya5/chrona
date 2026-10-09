@@ -19,8 +19,8 @@ SCHEMAS = ROOT / "schemas"
 GRAPHICS = "graphics-v0.1.schema.yaml"
 GRAPHICS_ID = "urn:chrona:graphics-v0.1"
 COMMON_ID = "urn:chrona:common-v0.1"
-CATALOG = "icon-catalog-v0.4.schema.yaml"
-SOURCE = "theme-asset-source-v0.1.schema.yaml"
+CATALOG = "icon-catalog-v0.5.schema.yaml"
+SOURCE = "theme-asset-source-v0.2.schema.yaml"
 SCENE = "scene-v0.7.schema.yaml"
 ENTRIES = load_inventory(SCHEMAS / "schema-inventory-v0.1.yaml")
 LIVE = tuple(entry["file"] for entry in ENTRIES if entry["state"] == "live")
@@ -106,7 +106,9 @@ ADOPTION: dict[str, dict[str, int]] = {
     "tile": {CATALOG: 1, SOURCE: 1},
     "tileAngle": {CATALOG: 1, SOURCE: 1, SCENE: 1, THEME: 1},
     "densityBasisPoints": {CATALOG: 1, SOURCE: 1, SCENE: 1},
-    "circlePrimitive": {CATALOG: 1, SOURCE: 1},
+    # The frozen predecessor is reused through its coordinate/radius properties.
+    "circlePrimitive": {},
+    "patternCirclePrimitive": {CATALOG: 1, SOURCE: 1},
     "rectanglePrimitive": {CATALOG: 1, SOURCE: 1},
     "paintMode": {CATALOG: 3, SOURCE: 1, SCENE: 2},
     "lineCap": {CATALOG: 3, SOURCE: 1, SCENE: 1},
@@ -157,6 +159,26 @@ PROBES: dict[str, tuple[list[Any], list[Any]]] = {
         [{"paint": "fill"}, {"paint": "stroke", "strokeWidth": 1}, {}, {"strokeWidth": 1}],
         [{"paint": "fill", "strokeWidth": 1}, {"paint": "fill", "lineCap": "round"}, {"paint": "fill", "lineJoin": "bevel"}]),
 }
+
+
+PROBES["patternCirclePrimitive"] = (
+    [*PROBES["circlePrimitive"][0],
+     {"kind": "circle", "cx": 4, "cy": 4, "radius": 3, "fillChannel": "substrate", "strokeWidth": 0.8},
+     {"kind": "circle", "cx": 4, "cy": 4, "radius": 3, "fillChannel": "none", "strokeWidth": 0.125}],
+    [*PROBES["circlePrimitive"][1],
+     {"kind": "circle", "cx": 4, "cy": 4, "radius": 3, "fillChannel": "none"},
+     {"kind": "circle", "cx": 4, "cy": 4, "radius": 3, "fillChannel": "red"},
+     {"kind": "circle", "cx": 4, "cy": 4, "radius": 3, "strokeWidth": 0},
+     {"kind": "circle", "cx": 4, "cy": 4, "radius": 3, "strokeWidth": 16.01}],
+)
+
+
+def test_pattern_circle_reuses_frozen_coordinates_and_scene_reuses_new_fields():
+    for field in ("cx", "cy", "radius"):
+        assert _defs()["patternCirclePrimitive"]["properties"][field]["$ref"] == f"#/$defs/circlePrimitive/properties/{field}"
+    circle = _scene_defs()["catalogPatternPrimitive"]["oneOf"][0]
+    for field in ("fillChannel", "strokeWidth"):
+        assert circle["properties"][field]["$ref"] == f"{GRAPHICS_ID}#/$defs/patternCirclePrimitive/properties/{field}"
 
 
 def test_every_definition_has_a_probe_row():
@@ -271,7 +293,7 @@ def test_scene_circle_and_rectangle_stay_unbounded_siblings():
 def test_every_valid_catalog_primitive_is_valid_scene_geometry_and_the_kind_sets_are_equal():
     scene = _scene_validator("catalogPatternPrimitive")
     catalog = _catalog_primitive_validator()
-    valid = [*PROBES["circlePrimitive"][0], *PROBES["rectanglePrimitive"][0],
+    valid = [*PROBES["patternCirclePrimitive"][0], *PROBES["rectanglePrimitive"][0],
              {"kind": "path", "paint": "fill", "commands": [{"kind": "move", "points": [0, 0]}, {"kind": "line", "points": [4, 4]}, {"kind": "close", "points": []}]},
              {"kind": "path", "paint": "stroke", "strokeWidth": 1, "lineCap": "round", "lineJoin": "bevel",
               "commands": [{"kind": "move", "points": [0, 0]}, {"kind": "quadratic", "points": [1, 1, 2, 2]}]}]
@@ -343,7 +365,7 @@ def _source_cases() -> list[Any]:
 
 
 def _catalog_cases() -> list[Any]:
-    base = _load("tests/fixtures/icons/theme-assets-valid.normalized-v0.4.yaml")
+    base = _load("tests/fixtures/icons/theme-assets-valid.normalized-v0.5.yaml")
     pattern = ("body", "patterns", "dither-12-5")
     cases: list[Any] = [base]
     cases += [_set(base, ("body", "glyphs", "pin", "viewport"), value) for value in BAD_VIEWPORTS]

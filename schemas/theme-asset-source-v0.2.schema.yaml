@@ -1,0 +1,111 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "urn:chrona:theme-asset-source-v0.2"
+title: "Chrona Theme Asset Source v0.2"
+description: "Local declarative YAML ingress for licensed glyph and pattern entries; the importer validates and normalizes the entire source before writing a catalog."
+type: object
+required: [version, kind, id, body]
+additionalProperties: false
+properties:
+  version: {description: "Declarative Theme asset source contract version.", const: "chrona/theme-asset-source/v0.2"}
+  kind: {description: "Source document family.", const: theme-asset-source}
+  id: {description: "Stable identifier for this local source document.", $ref: "#/$defs/name"}
+  body:
+    type: object
+    description: "A complete licensed source with at least one glyph or pattern."
+    examples: [{set: fixture, aliases: [], license: {spdx: MIT, notice: Test notice}, glyphs: {pin: {viewport: {inlineSize: 8, blockSize: 8}, parts: [{paint: fill, d: "M 0 0 L 8 0 L 4 8 Z"}]}}, patterns: {}}]
+    required: [set, aliases, license, glyphs, patterns]
+    additionalProperties: false
+    properties:
+      set: {description: "Canonical namespace used by `set:name` references in the output catalog.", $ref: "#/$defs/name"}
+      aliases: {description: "Additional namespaces resolving to this catalog set.", type: array, uniqueItems: true, items: {$ref: "#/$defs/name"}}
+      license: {description: "Required explicit licensing details copied into catalog provenance; the importer does not infer policy.", $ref: "urn:chrona:common-v0.1#/$defs/license"}
+      glyphs:
+        description: "Named source glyphs, normalized into ordered renderer-neutral path parts."
+        type: object
+        propertyNames: {$ref: "#/$defs/name"}
+        additionalProperties: {$ref: "#/$defs/glyph"}
+      patterns:
+        description: "Named source patterns, normalized into bounded repeat tiles."
+        type: object
+        propertyNames: {$ref: "#/$defs/name"}
+        additionalProperties: {$ref: "#/$defs/pattern"}
+    anyOf:
+      - description: "A source may contain glyphs without patterns."
+        properties: {glyphs: {minProperties: 1}}
+      - description: "A source may contain patterns without glyphs."
+        properties: {patterns: {minProperties: 1}}
+$defs:
+  name:
+    description: "Portable identifier component used in a set, alias, or entry name."
+    examples: [fixture]
+    $ref: "urn:chrona:common-v0.1#/$defs/portableName"
+  glyph:
+    description: "A positive viewport and ordered source path parts in the supported SVG path subset."
+    type: object
+    required: [viewport, parts]
+    additionalProperties: false
+    properties:
+      viewport: {description: "Positive integer glyph viewport.", $ref: "urn:chrona:graphics-v0.1#/$defs/viewport"}
+      parts:
+        description: "Ordered renderer-neutral glyph path parts."
+        type: array
+        minItems: 1
+        maxItems: 32
+        items:
+          description: "One glyph path part."
+          type: object
+          required: [paint, d]
+          additionalProperties: false
+          properties:
+            paint: {description: "Theme-owned paint mode.", $ref: "urn:chrona:graphics-v0.1#/$defs/paintMode"}
+            d: {description: "Source SVG path-data accepted by the bounded glyph path normalizer; XML and style syntax are not accepted.", type: string, minLength: 1, maxLength: 65536}
+            strokeWidth: {description: "Positive source-unit stroke width, required for stroke paths.", type: number, exclusiveMinimum: 0, maximum: 1024}
+            lineCap: {description: "Stroke endpoint shape.", $ref: "urn:chrona:graphics-v0.1#/$defs/lineCap"}
+            lineJoin: {description: "Stroke corner shape.", $ref: "urn:chrona:graphics-v0.1#/$defs/lineJoin"}
+          allOf:
+            - {description: "Stroke glyph parts require width, cap, and join.", $ref: "urn:chrona:graphics-v0.1#/$defs/strokePaintRequiresStrokeFields"}
+            - {description: "Fill glyph parts cannot carry stroke-only fields.", $ref: "urn:chrona:graphics-v0.1#/$defs/fillPaintForbidsStrokeFields"}
+  pattern:
+    description: "A positive bounded tile, clockwise rotation, and ordered declarative shapes."
+    type: object
+    required: [tile, angle, densityBasisPoints, primitives]
+    additionalProperties: false
+    properties:
+      tile: {description: "Positive finite repeat tile size.", $ref: "urn:chrona:graphics-v0.1#/$defs/tile"}
+      angle: {description: "Clockwise rotation about tile center in degrees.", $ref: "urn:chrona:graphics-v0.1#/$defs/tileAngle"}
+      densityBasisPoints: {description: "Declared final visible ink fraction of the fixed rotated 128x128 center grid, in basis points (100 basis points = 1%); importer recomputes with clipped painter-order composition and half-up rounding and rejects a mismatch.", $ref: "urn:chrona:graphics-v0.1#/$defs/densityBasisPoints"}
+      primitives:
+        description: "Ordered circles, rectangles, stroked lines, or stroked arcs. Coordinates must lie within the declared tile; importer computes density and lowers arcs."
+        type: array
+        minItems: 1
+        maxItems: 64
+        items: {$ref: "#/$defs/patternPrimitive"}
+  patternPrimitive:
+    description: "A closed filled circle/rectangle or stroked line/arc."
+    examples: [{kind: circle, cx: 4, cy: 4, radius: 1}]
+    oneOf:
+      - {description: "One filled source circle.", $ref: "urn:chrona:graphics-v0.1#/$defs/patternCirclePrimitive"}
+      - {description: "One filled source rectangle.", $ref: "urn:chrona:graphics-v0.1#/$defs/rectanglePrimitive"}
+      - description: "One stroked source line."
+        type: object
+        required: [kind, x1, y1, x2, y2, strokeWidth]
+        additionalProperties: false
+        properties:
+          kind: {description: "Line source kind.", const: line}
+          x1: {description: "Line start inline coordinate.", type: number, minimum: 0, maximum: 256}
+          y1: {description: "Line start block coordinate.", type: number, minimum: 0, maximum: 256}
+          x2: {description: "Line end inline coordinate.", type: number, minimum: 0, maximum: 256}
+          y2: {description: "Line end block coordinate.", type: number, minimum: 0, maximum: 256}
+          strokeWidth: {description: "Positive source stroke width.", type: number, exclusiveMinimum: 0, maximum: 16}
+      - description: "One stroked source arc."
+        type: object
+        required: [kind, cx, cy, radius, startAngle, endAngle, strokeWidth]
+        additionalProperties: false
+        properties:
+          kind: {description: "Arc source kind.", const: arc}
+          cx: {description: "Arc center inline coordinate.", type: number, minimum: 0, maximum: 256}
+          cy: {description: "Arc center block coordinate.", type: number, minimum: 0, maximum: 256}
+          radius: {description: "Positive arc radius.", type: number, exclusiveMinimum: 0, maximum: 256}
+          startAngle: {description: "Clockwise start angle in degrees.", type: number}
+          endAngle: {description: "Clockwise end angle in degrees.", type: number}
+          strokeWidth: {description: "Positive source stroke width.", type: number, exclusiveMinimum: 0, maximum: 16}

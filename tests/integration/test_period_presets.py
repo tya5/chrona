@@ -28,7 +28,7 @@ from tests.support import synthetic_review as sr
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
 BUNDLES = ROOT / "src/chrona/resources/presets/bundles"
 THEMES = sorted(path.parent.name for path in BUNDLES.glob("*/theme.yaml"))
-STARTER_CATALOG = ROOT / "src/chrona/resources/icons/chrona-theme-starter-v2026-09-29.yaml"
+STARTER_CATALOG = ROOT / "src/chrona/resources/icons/chrona-theme-starter-v2026-10-09.yaml"
 INTENTS = {"surface", "surfaceRaised", "text", "textMuted", "accent", "positive", "negative", "warning", "neutral"}
 
 

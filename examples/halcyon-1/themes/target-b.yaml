@@ -186,10 +186,13 @@ body:
       value: 2
     timeline-row-height:
       type: number
-      value: 22
+      value: 21.846
     timeline-row-padding:
       type: number
       value: 3
+    timeline-mark-size:
+      type: number
+      value: 16
     timeline-axis-height:
       type: number
       value: {expr: "{axis-lane-quarter} + {axis-lane-month}"}
@@ -781,6 +784,7 @@ body:
     timeline.calendarClosed.minimumDayWidth: timeline-calendar-closed-min-day-width
     timeline.row.minBlockSize: timeline-row-height
     timeline.row.paddingBlock: timeline-row-padding
+    timeline.mark.blockSize: timeline-mark-size
     timeline.axis.blockSize: timeline-axis-height
     network.node.minInlineSize: network-node-min-inline
     network.node.minBlockSize: network-node-min-block

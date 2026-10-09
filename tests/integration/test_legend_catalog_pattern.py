@@ -14,7 +14,7 @@ import pytest
 from tests.support import synthetic_review as sr
 
 ROOT = Path(__file__).resolve().parents[2]
-CATALOGUE = ROOT / "src/chrona/resources/icons/chrona-target-parts-v2026-10.yaml"
+CATALOGUE = ROOT / "src/chrona/resources/icons/chrona-target-parts-v2026-10-09.yaml"
 ACTUAL = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "observed",
           "body": {"asOf": "2026-07-01", "observations": []}}
 DETAIL = {"version": "chrona/review-detail-profile/v0.1", "id": "legend-detail", "body": {"legend": [

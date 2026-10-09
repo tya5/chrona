@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Write the `theme-asset-source/v0.1` document of the `chrona-target-parts` catalogue (#718).
+"""Write the `theme-asset-source/v0.2` document of the `chrona-target-parts` catalogue (#718/#849).
 
 The paths in the source YAML are drawn by the formulas below, from the structure of the hand-drawn target pages in
 the sibling folders (the Yuya lantern and scroll, the Title Card hexagon and hazard tab, the Tenth Frame pin, the
@@ -373,6 +373,11 @@ def circ(cx, cy, r):
     return {"kind": "circle", "cx": cx, "cy": cy, "radius": r}
 
 
+def seigaiha_circle(cx, cy, radius, fill_channel):
+    return {"kind": "circle", "cx": cx, "cy": cy, "radius": radius,
+            "fillChannel": fill_channel, "strokeWidth": 0.8}
+
+
 # hatch family: one centred stripe per tile, 45 degrees (a stripe on the tile edge would be clipped to half width)
 pattern("hatch-fine", 4, 4, 45, [line(2, 0, 2, 4, 1.3)])
 pattern("hatch", 5, 5, 45, [line(2.5, 0, 2.5, 5, 2)])
@@ -398,6 +403,17 @@ def hexlattice(name, r, sw):
 
 hexlattice("hexagon-lattice", 7, 0.9)
 hexlattice("hexagon-lattice-wide", 16, 0.8)
+pattern("seigaiha", 20, 10, 0, [
+    seigaiha_circle(0, 10, 10, "substrate"),
+    seigaiha_circle(0, 10, 7, "none"),
+    seigaiha_circle(0, 10, 4, "none"),
+    seigaiha_circle(20, 10, 10, "substrate"),
+    seigaiha_circle(20, 10, 7, "none"),
+    seigaiha_circle(20, 10, 4, "none"),
+    seigaiha_circle(10, 5, 10, "substrate"),
+    seigaiha_circle(10, 5, 7, "none"),
+    seigaiha_circle(10, 5, 4, "none"),
+])
 
 
 # ------------------------------------------------------------------- output
@@ -408,7 +424,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
 ICONS = ROOT / "src/chrona/resources/icons"
-SOURCE = ICONS / "chrona-target-parts-v2026-10.source.yaml"
+SOURCE = ICONS / "chrona-target-parts-v2026-10-09.source.yaml"
 NOTICE = ICONS / "chrona-target-parts.NOTICE"
 
 
@@ -449,7 +465,7 @@ def render_source() -> str:
             pattern_lines.append("        - {" + ", ".join(f"{k}: {_num(v)}" for k, v in primitive.items()) + "}")
     notice = NOTICE.read_text(encoding="utf-8").rstrip("\n").split("\n")
     notice_block = "\n".join(("      " + line) if line else "" for line in notice)
-    return ("version: chrona/theme-asset-source/v0.1\nkind: theme-asset-source\nid: chrona-target-parts-v2026-10\nbody:\n"
+    return ("version: chrona/theme-asset-source/v0.2\nkind: theme-asset-source\nid: chrona-target-parts-v2026-10-09\nbody:\n"
             "  set: chrona-target-parts\n  aliases: [target-parts]\n  license:\n    spdx: MIT\n    notice: |\n"
             f"{notice_block}\n  glyphs:\n" + "\n".join(glyph_lines) + "\n  patterns:\n" + "\n".join(pattern_lines) + "\n")
 

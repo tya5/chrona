@@ -309,8 +309,18 @@ admitted miter limits up to ten (section 7). This is an observer envelope, not
 an adapter miter-limit setting. It changes no annotation/frame contact rule.
 
 Pattern contact uses completed tile primitives, repeat phase, rotation and clip,
-not the full canvas bounds. Overlapping primitives in one tile paint the same
-opaque ink before the layer opacity is applied once. Bound contact work to 4096
+not the full canvas bounds. The sparse-contact path admits fill-less patterns
+only: substrate operations require opaque fill and are rejected during paint
+completion. Opaque patterns instead retain conservative substrate/ink contrast
+using the positive final visible-ink density (Specification 64 section 8).
+Overlapping sparse primitives paint the same opaque ink before the layer
+opacity is applied once. Circle strokes contact a clipped convex query polygon
+when its radial-distance range intersects
+`[max(0,radius-width/2), radius+width/2]`. Minimum distance is zero for an
+enclosed centre, otherwise the minimum centre-to-edge distance; maximum
+distance is attained at a vertex. An ink-filled stroked circle is the outer
+disk. This is analytic contact, not density-grid sampling. An unexpected
+substrate operation at this observer fails closed. Bound contact work to 4096
 candidate tile copies per subject/layer; unreadable geometry/paint or exceeding
 that bound fails closed as `E_SCENE_CONTRAST_GROUND_UNSUPPORTED`. Findings use
 `overlay-blend` and the last applicable overlay identity, with sampled colours.

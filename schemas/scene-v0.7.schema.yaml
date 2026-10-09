@@ -238,11 +238,20 @@ $defs:
     description: "One completed circle, rectangle, or normalized path."
     examples: [{kind: circle, cx: 2, cy: 2, radius: 1}]
     oneOf:
-      - description: "One filled ink circle."
+      - description: "One completed channel-filled and/or ink-stroked circle."
+        examples: [{kind: circle, cx: 2, cy: 2, radius: 1}, {kind: circle, cx: 2, cy: 2, radius: 1, fillChannel: none, strokeWidth: 0.8}]
         type: object
         required: [kind, cx, cy, radius]
         additionalProperties: false
-        properties: {kind: {description: "Circle primitive discriminator.", const: circle}, cx: {$ref: "#/$defs/number"}, cy: {$ref: "#/$defs/number"}, radius: {$ref: "#/$defs/positive"}}
+        properties:
+          kind: {description: "Circle primitive discriminator.", const: circle}
+          cx: {$ref: "#/$defs/number"}
+          cy: {$ref: "#/$defs/number"}
+          radius: {$ref: "#/$defs/positive"}
+          fillChannel: {$ref: "urn:chrona:graphics-v0.1#/$defs/patternCirclePrimitive/properties/fillChannel"}
+          strokeWidth: {$ref: "urn:chrona:graphics-v0.1#/$defs/patternCirclePrimitive/properties/strokeWidth"}
+        if: {properties: {fillChannel: {const: none}}, required: [fillChannel]}
+        then: {required: [strokeWidth]}
       - description: "One filled ink rectangle."
         type: object
         required: [kind, x, y, inlineSize, blockSize]

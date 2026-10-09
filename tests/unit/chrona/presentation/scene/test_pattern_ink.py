@@ -1,5 +1,6 @@
 import json
 import math
+from dataclasses import replace
 
 import pytest
 
@@ -38,6 +39,66 @@ def test_circle_contact_repeats_and_noncontact_in_same_tile_is_false():
     assert pattern_ink_touches(scene_primitive, (1.5, 1.5, 0.2, 0.2))
     assert not pattern_ink_touches(scene_primitive, (4, 4, 1, 1))
     assert pattern_ink_touches(scene_primitive, (12, 2, 0.2, 0.2))
+
+
+def test_circle_stroke_contact_uses_closed_annulus_and_preserves_its_hole():
+    primitive = _primitive(primitives=[{
+        "kind": "circle", "cx": 5, "cy": 5, "radius": 2,
+        "fillChannel": "none", "strokeWidth": 0.2,
+    }])
+    assert not pattern_ink_touches(primitive, (4.95, 4.95, 0.1, 0.1))
+    assert pattern_ink_touches(primitive, (7.09, 4.95, 0.1, 0.1))
+    assert not pattern_ink_touches(primitive, (7.11, 4.95, 0.1, 0.1))
+    # A query exactly tangent to the outer annulus boundary is included.
+    assert pattern_ink_touches(primitive, (7.1, 5.0, 0, 0))
+
+
+def test_filled_and_substrate_circle_operations_have_distinct_sparse_contact_policy():
+    filled = _primitive(primitives=[{
+        "kind": "circle", "cx": 5, "cy": 5, "radius": 2, "strokeWidth": 0.2,
+    }])
+    assert pattern_ink_touches(filled, (4.95, 4.95, 0.1, 0.1))
+    substrate = _primitive(primitives=[{
+        "kind": "circle", "cx": 5, "cy": 5, "radius": 2,
+        "fillChannel": "substrate", "strokeWidth": 0.2,
+    }])
+    with pytest.raises(InkTouchError, match="substrate circle reached sparse-ink observer"):
+        pattern_ink_touches(substrate, (7, 5, 0, 0))
+    unpainted = _primitive(primitives=[{
+        "kind": "circle", "cx": 5, "cy": 5, "radius": 2, "fillChannel": "none",
+    }])
+    with pytest.raises(InkTouchError, match="unpainted pattern circle"):
+        pattern_ink_touches(unpainted, (7, 5, 0, 0))
+
+
+def test_stroked_circle_contact_uses_inverse_rotation_and_closed_tile_seam():
+    scene_primitive = _primitive(
+        tile=(10, 10), angle=90, origin=(12, 14), region=(12, 14, 30, 30),
+        primitives=[{"kind": "circle", "cx": 2, "cy": 3, "radius": 1,
+                     "fillChannel": "none", "strokeWidth": 0.2}],
+    )
+    # The transformed center is (19, 16); a 90-degree rotation preserves the annulus.
+    assert pattern_ink_touches(scene_primitive, (20.08, 15.99, 0.04, 0.02))
+    assert not pattern_ink_touches(scene_primitive, (18.99, 15.99, 0.02, 0.02))
+    # Circle paint is clipped at the tile boundary before repetition; a protruding
+    # stroke from the first copy cannot leak into the neighboring tile.
+    seam = _primitive(tile=(10, 10), primitives=[{
+        "kind": "circle", "cx": 9.5, "cy": 5, "radius": 0.2,
+        "fillChannel": "none", "strokeWidth": 0.4,
+    }])
+    assert pattern_ink_touches(seam, (9.89, 4.99, 0.05, 0.02))
+    assert not pattern_ink_touches(seam, (10.11, 4.99, 0.05, 0.02))
+
+
+def test_extreme_circle_radial_arithmetic_fails_closed():
+    scene_primitive = _primitive(tile=(1e308, 10), origin=(1e308, 0),
+                                 region=(1e308, 0, 2e292, 1),
+                                 primitives=[{
+        "kind": "circle", "cx": -1.797e308, "cy": 5, "radius": 1,
+        "fillChannel": "none", "strokeWidth": 1,
+    }])
+    with pytest.raises(InkTouchError, match="non-finite pattern circle radial range"):
+        pattern_ink_touches(scene_primitive, (1e308, 0, 2e292, 1))
 
 
 def test_filled_tile_rect_uses_its_actual_ink_footprint():
@@ -193,6 +254,14 @@ def test_unreadable_paint_and_nonfinite_subject_fail_closed():
         pattern_ink_touches(scene_primitive, (0, 0, math.inf, 1))
 
 
+def test_explicit_null_circle_operation_field_fails_closed():
+    scene_primitive = _primitive(primitives=[{
+        "kind": "circle", "cx": 2, "cy": 2, "radius": 1, "strokeWidth": None,
+    }])
+    with pytest.raises(InkTouchError, match="invalid pattern circle stroke width"):
+        pattern_ink_touches(scene_primitive, (1, 1, 2, 2))
+
+
 def test_serialized_scene_mapping_uses_public_bounds_and_projected_pattern_shapes():
     bounds = Rect(12, 14, 60, 60)
     completed = complete_pattern_placement({
@@ -213,4 +282,33 @@ def test_serialized_scene_mapping_uses_public_bounds_and_projected_pattern_shape
     document = json.loads(serialize_scene(scene))
     mapping = document["surfaces"][0]["primitives"][0]
     assert isinstance(mapping["bounds"], dict)
+    assert mapping["pattern"]["primitives"] == [{"kind": "circle", "cx": 2.0, "cy": 3.0, "radius": 0.75}]
     assert pattern_ink_touches(mapping, (18.5, 15.5, 1, 1))
+
+
+def test_nondefault_circle_operations_are_serialized_but_default_fields_are_omitted():
+    bounds = Rect(0, 0, 20, 20)
+    completed = complete_pattern_placement({
+        "tile": {"inlineSize": 10, "blockSize": 10}, "angle": 0,
+        "densityBasisPoints": 5000,
+        "primitives": [
+            {"kind": "circle", "cx": 2, "cy": 2, "radius": 1},
+            {"kind": "circle", "cx": 5, "cy": 5, "radius": 2,
+             "fillChannel": "substrate", "strokeWidth": 0.5},
+        ],
+    }, bounds)
+    pattern = project_pattern_placement(completed)
+    slot = SceneSlot("slot", "source", None, (0, 0, 20, 20))
+    patterned = ScenePrimitive("patterned", "Rect", "source", "test", "decoration", "test",
+                               (0, 0, 20, 20), slot_id="slot", pattern=pattern,
+                               paint=ScenePaint("#FFFFFF", "#202020", None, (), 1))
+    surface = SceneSurface("surface", (slot,), (), (), None, (patterned,), canvas_bounds=(0, 0, 20, 20))
+    manifest = SceneManifest("chrona/scene-manifest/v0.1", "test", (20, 20), (), (),
+                             ContentFamilyCounts(0, 0, 0, 0, 0), ())
+    scene = InspectionScene(SceneProvenance("draft", "test", ()), (20, 20), (), (surface,), manifest, ())
+    primitives = json.loads(serialize_scene(scene))["surfaces"][0]["primitives"][0]["pattern"]["primitives"]
+    assert primitives == [
+        {"kind": "circle", "cx": 2.0, "cy": 2.0, "radius": 1.0},
+        {"kind": "circle", "cx": 5.0, "cy": 5.0, "radius": 2.0,
+         "fillChannel": "substrate", "strokeWidth": 0.5},
+    ]

@@ -10,9 +10,9 @@ schemas:
   - {file: color-scheme-v0.2.schema.yaml, kind: color-scheme, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
   - {file: command-request-v0.3.schema.yaml, kind: command-request, state: live, consumers: [src/chrona/operational/resources.py]}
   - {file: layout-profile-v0.10.schema.yaml, kind: layout-profile, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
-  - {file: icon-catalog-v0.3.schema.yaml, kind: icon-catalog, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: icon-catalog-v0.4.schema.yaml, removalSlice: issue-496-v03-retirement-after-resource-migration, reason: "Kept for the bundled Material catalog on purpose (#715, owner decision 2026-10-01): that catalog is vector-only, so no raster address exists for the loose v0.3 address pattern to check; it is trusted packaged data; and the v0.4 parse-time storeAddress check already covers every v0.4 catalog. Migrating it to v0.4 would change 4,015 packaged entries and their manifest, notice and hash pins for no observable effect."}
-  - {file: icon-catalog-v0.4.schema.yaml, kind: icon-catalog, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
-  - {file: theme-asset-source-v0.1.schema.yaml, kind: theme-asset-source, state: live, consumers: [src/chrona/presentation/icons/importer.py]}
+  - {file: icon-catalog-v0.3.schema.yaml, kind: icon-catalog, state: transitioning, consumers: [src/chrona/presentation/contracts/resources.py], successor: icon-catalog-v0.5.schema.yaml, removalSlice: issue-496-v03-retirement-after-resource-migration, reason: "Kept for the bundled Material catalog on purpose (#715, owner decision 2026-10-01): it is vector-only, trusted packaged data. The v0.5 parse-time storeAddress check covers current catalogues. Migrating 4,015 Material entries and their manifest, notice and hash pins has no observable effect; #849 retires v0.4, not this exception."}
+  - {file: icon-catalog-v0.5.schema.yaml, kind: icon-catalog, state: live, consumers: [src/chrona/presentation/contracts/resources.py]}
+  - {file: theme-asset-source-v0.2.schema.yaml, kind: theme-asset-source, state: live, consumers: [src/chrona/presentation/icons/importer.py]}
   - file: presentation-resource-v0.1.schema.yaml
     kind: presentation-resource-foundation
     state: live
@@ -88,6 +88,7 @@ schemas:
       tileAngle: "sha256:ec291ed8238f95188034ffde5721f1ff1491a75804458e850b5130cc224b4149"
       densityBasisPoints: "sha256:906b40adf99fd9b61dc5b5b1b5346ec9d68a2d5281ad37d8b4258f4ab3a172d9"
       circlePrimitive: "sha256:3951ee6eedb963af2d49b4724dedfd927bd666274cde643c9f53f3d89642eef0"
+      patternCirclePrimitive: "sha256:ec3cc9872f79ec9dd7098cf19ffe65ec5a094ed0903418c8ec22096409e045e5"
       rectanglePrimitive: "sha256:a2ac233755d3628e8ed4c1b1cddf62395d91e1f1d1b31a29e0af2f31ae5ea6ee"
       paintMode: "sha256:476cd8a51a54d57c9f7766ecee7a9847e503af90694281af8a533d2f68817986"
       lineCap: "sha256:820934abad2dd1b8b43fec9cf215695b9438f661c2f124c58942fda31655bf04"

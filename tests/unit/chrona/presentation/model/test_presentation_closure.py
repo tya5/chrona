@@ -32,7 +32,7 @@ def test_closure_rejects_path_escape_before_reading_snapshot(tmp_path):
 def _catalog_resource(*, glyphs=None, patterns=None):
     contract = IconCatalogContract(
         ClosureIdentity("icon-catalog", "local-assets", "snapshot-1", "sha256:" + "a" * 64),
-        "chrona/icon-catalog/v0.4", "local", (), freeze({
+        "chrona/icon-catalog/v0.5", "local", (), freeze({
             "sourceKind": "theme-asset-source", "sourceContentIdentity": "sha256:" + "b" * 64,
             "license": {"spdx": "MIT", "notice": "test"}}),
         freeze({}), (), (), freeze({}), freeze(glyphs or {}), freeze(patterns or {}))

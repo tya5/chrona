@@ -13,7 +13,7 @@ from tests.support import synthetic_review as sr
 from tests.support import text_treatments as tt
 
 ROOT = tt.ROOT
-CATALOGUE = ROOT / "src/chrona/resources/icons/chrona-target-parts-v2026-10.yaml"
+CATALOGUE = ROOT / "src/chrona/resources/icons/chrona-target-parts-v2026-10-09.yaml"
 STRIPES = "chrona-target-parts:hazard-stripes"
 GROUPS = ("team-0", "team-1", "team-2")
 FONT_SIZE = 22

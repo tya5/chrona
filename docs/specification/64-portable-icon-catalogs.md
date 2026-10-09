@@ -1,6 +1,6 @@
 # Portable Icon Catalogs and Theme Assets
 
-**Status:** v0.3 implemented; v0.4 asset-catalog successor designed in #496
+**Status:** icon-only v0.3 retained; asset-catalog v0.5 contract selected in #849
 **Owns:** local Iconify ingestion, licensed normalized icon/glyph/pattern
 catalog entries, catalog-set closure, visual selection, completed Scene
 primitives and paint, accessibility, and SVG/PNG target capability.
@@ -214,12 +214,13 @@ the same `set:name` reference form is reused, but the *consumer* differs.
 
 ## 8. Theme glyph and pattern assets (#496 successor)
 
-The v0.4 successor retains resource kind `icon-catalog`, Context input
+The v0.5 asset catalogue retains resource kind `icon-catalog`, Context input
 `iconCatalogs`, catalogue set names, `set:name` references, and the existing
 identity/notice closure. It adds closed `glyphs` and `patterns` entry maps;
-v0.3 is not reinterpreted and migration to v0.4 is explicit. All entries share
+the independent icon-only v0.3 contract is not reinterpreted. All entries share
 catalogue provenance with a declared SPDX identifier and complete notice.
-Normalization profile is `chrona/theme-asset-normalization/v0.1`. A glyph
+Declarative sources use `chrona/theme-asset-source/v0.2`; the normalization
+profile is `chrona/theme-asset-normalization/v0.2`. A glyph
 viewport side is an integer from 1 through 4096; a glyph has 1–32 normalized
 paths, each no longer than 65,536 characters. A pattern tile side is 1–256
 units and contains 1–64 ordered primitives. Coordinates are finite and within
@@ -239,49 +240,66 @@ Inline #464 glyphs retain their existing Theme-width behavior.
 
 A pattern is a finite repeat tile with positive dimensions, an angle in
 `[0,360)` clockwise about tile center, and an ordered list of at most 64
-bounded primitives: filled circles/rectangles and stroked lines/arcs. Arc
+bounded primitives: circles, filled rectangles and stroked lines/arcs. A circle
+has `fillChannel: ink | substrate | none` (omitted: `ink`) and an optional
+positive ink `strokeWidth`. `none` requires a stroke. Within a circle, fill
+precedes stroke; the primitive list is painter order. Circle centres satisfy
+the existing tile bounds, but radii and strokes may cross tile edges. Arc
 input is approximated by quadratic segments with maximum 0.001 tile-unit
 deviation, then discarded. One basis point is 0.01%. The importer counts
-covered centers on a fixed 128×128 grid in the tile-local fundamental cell,
-with periodic wrap at tile edges. For density only, each normalized quadratic
+final visible ink at centres on a fixed 128×128 grid in the tile-local cell.
+Clip each tile's primitive stack to that tile before repetition; neighbouring
+tile translations do not contribute to its density. For density only, each normalized quadratic
 is expanded to exactly 16
 equal-parameter chords; straight commands remain straight. Source lines and
 arcs use round caps and joins. A center is covered by a stroke when its
 distance to any chord is at most half the stroke width; circle boundaries are
-included and rectangles include left/top but exclude right/bottom. Coverage
-is the union over primitives and all periodic integer tile translations.
+included and rectangles include left/top but exclude right/bottom. At each
+centre, an ink operation sets coverage and a substrate operation clears it;
+`none` performs no fill. Circle strokes cover radial distances from
+`max(0,radius-strokeWidth/2)` through `radius+strokeWidth/2`, inclusively.
 Clockwise rotation applies to both the tile geometry and this fundamental
 cell for rendering, so intrinsic `densityBasisPoints` is invariant to angle;
 sampling an unrotated axis-aligned viewport instead is not equivalent.
 The fixed chords define density measurement only: Scene and adapters retain
 the normalized quadratic geometry. Its required `densityBasisPoints` field is
-an integer from 1 through 10,000 and must equal the covered fraction rounded
-half-up to the nearest basis point. Thus the starter's 12.5% dither uses 1,250 basis
+an integer from 1 through 10,000 and must equal the final ink fraction rounded
+half-up to the nearest basis point. A zero-ink result refuses normalization as
+`E_THEME_ASSET_SOURCE_DENSITY`, even if positive density was declared.
+Thus the starter's 12.5% dither uses 1,250 basis
 points exactly; it is never rounded to a whole percent. Stroke widths are finite,
 positive, and at most 16 units. It has no paint, target syntax, executable
 content, or arbitrary transform data. Theme's existing role `pattern`
 property names a typed pattern token whose value is
 `{kind: catalog, ref: set:name}` on one of the exact registered role/property
 pairs in Specification 07. Theme `fill` is the opaque substrate and Theme
-`stroke` is opaque ink; pattern roles require opacity 1.0. Catalogue
+`stroke` is opaque ink; opaque pattern roles require opacity 1.0. A substrate
+operation requires that completed opaque fill; ink-only surface patterns
+cannot contain one and refuse paint completion as `E_PRESENTATION_PAINT_INVALID`.
+Per-primitive colours and opacity are not admitted. Catalogue
 references resolve after Theme inheritance
 and before Layout; unknown set/name or wrong entry kind reports the exact Theme
 pointer and authored `set:name`.
 
-Authored Theme v0.13 adds catalog glyph references and catalog-valued pattern
-tokens; derived Theme v0.14 carries inherited resolved declarations. Existing
-Theme v0.11/v0.12 documents remain unchanged. Layout owns repeated-region
+Current authored Theme v0.15 and derived Theme v0.16 carry catalog glyph
+references and catalog-valued pattern tokens. Layout owns repeated-region
 bounds, clipping, and tile origin. Scene v0.7 extends the completed pattern
 value with normalized tile primitives, angle, density, tile origin, and clip
 bounds. `ScenePaint.fill` is the substrate and `ScenePaint.stroke` is the ink;
 PatternGeometry carries no colors. Scene does not read catalogue or Theme
-resources. An adapter may serialize periodic repetition using target-native
+resources. Optional circle channel/width fields are completed geometry;
+their absence preserves filled-ink circles. No normalization-profile field or
+second density field is added to Scene. An adapter may serialize repetition using target-native
 syntax, but the completed tile, angle, origin, and clip bounds determine it.
 Contrast evaluates substrate against the actual host ground and ink against
 both substrate and host ground. The lowest applicable ratio must meet the
 semantic floor: 3.0:1 for mark roles (an error below it), 1.10:1 for decoration
 roles (a warning below it, Specification 46 section 8). All
 channels are opaque under the existing representative-ground contract.
+Opaque patterned hosts retain conservative two-colour contrast even when some
+ink is occluded; positive post-composition density proves surviving ink.
+Fill-less surface patterns use actual sparse-ink contact (Spec 46); substrate
+operations are never admitted to that path. No contrast floor is weakened.
 Perceptibility inspection receives the same channels and tile/density facts;
 neither gate infers color from a catalogue. SVG serializes completed geometry;
 PNG is generated from that SVG by the pinned resvg route. Other targets reject
@@ -292,12 +310,22 @@ is deferred.
 
 Render Context keeps its current schema because its `iconCatalogs` field and
 reference shape do not change; closure resolution is extended to validate and
-pin catalogue v0.4. The existing presentation-preset v0.1 already pins
+pin catalogue v0.5. The existing presentation-preset v0.1 already pins
 `iconCatalogs` and an optional detail profile. Builtin-library v0.2 adds catalogue members. Copy
 preserves exact catalogue bytes and notices and writes
 their pinned references into the preset; `render --preset` uses that closure.
-This does not define package acquisition. Spec 62 may admit v0.4 as an
+This does not define package acquisition. Spec 62 may admit v0.5 as an
 ordinary verified static asset member under its existing package boundary.
+
+**Migration (#849).** Source v0.1/catalogue v0.4 use periodic-union density,
+which differs at tile edges and cannot represent knockouts. Retire their live
+authoring readers after atomically migrating first-party resources and pins to
+v0.2/v0.5; do not silently reinterpret them or infer a legacy mode from field
+absence. Publish successor source/catalogue/manifest identities, never overwrite
+an immutable published asset. Keep the independently supported Material
+icon-only v0.3 catalogue unchanged. The fifteen existing packaged patterns
+retain their density under the corrected rule; this is not a compatibility
+promise for arbitrary old boundary-crossing tiles.
 
 ## 9. Acceptance and evolution
 

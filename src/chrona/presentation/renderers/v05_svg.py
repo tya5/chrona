@@ -11,6 +11,19 @@ from chrona.presentation.scene.model import (
 )
 
 
+def _failure(code: str, detail: str) -> ValueError:
+    return ValueError(f"{code}: {detail}")
+
+
+def _brief(value: object) -> str:
+    if isinstance(value, str):
+        clipped = value[:64]
+        return repr(clipped + ("…" if len(value) > len(clipped) else ""))
+    if value is None or isinstance(value, (bool, int, float)):
+        return repr(value)
+    return f"<{type(value).__name__}>"
+
+
 def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
     """Serialize completed primitives only; Theme and Scheme are not renderer inputs.
 
@@ -19,13 +32,13 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
     produced with it off, and then every Scene fact is ignored: the result is the ``raw`` serialization.
     """
     if surface.canvas_paint is None or surface.canvas_paint.fill is None:
-        raise ValueError("E_PRESENTATION_PAINT_INVALID")
+        raise _failure("E_PRESENTATION_PAINT_INVALID", "canvasPaint.fill is required for the SVG canvas background")
     if surface.canvas_bounds is None:
-        raise ValueError("E_PRESENTATION_RENDER_INPUT")
+        raise _failure("E_PRESENTATION_RENDER_INPUT", "SceneSurface.canvasBounds is required for SVG viewBox and viewport")
     canvas_inline, canvas_block, width, height = surface.canvas_bounds
     def number(value: float) -> str: return f"{value:.3f}".rstrip("0").rstrip(".")
     def completed(node: ScenePrimitive) -> ScenePaint:
-        if node.paint is None: raise ValueError("E_PRESENTATION_PAINT_INVALID")
+        if node.paint is None: raise _failure("E_PRESENTATION_PAINT_INVALID", f"scene_id={node.scene_id!r} has no completed paint")
         return node.paint
     def path_data(node: ScenePrimitive) -> str:
         if not node.path_commands: return "M" + "L".join(f"{number(px)} {number(py)}" for px, py in node.points)
@@ -34,7 +47,7 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
             if command.kind == "move": parts.append("M" + " ".join(number(value) for value in command.points[0]))
             elif command.kind == "line": parts.append("L" + " ".join(number(value) for value in command.points[0]))
             elif command.kind == "quadratic": parts.append("Q" + " ".join(number(value) for point in command.points for value in point))
-            else: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            else: raise _failure("E_PRESENTATION_PRIMITIVE_INVALID", f"scene_id={node.scene_id!r} path command={command.kind!r}; expected move, line, or quadratic")
         return "".join(parts)
     def polyline_data(points: tuple[tuple[float, float], ...]) -> str:
         return "M" + "L".join(f"{number(px)} {number(py)}" for px, py in points)
@@ -43,7 +56,7 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
               effects: bool = True) -> str:
         result = [f'opacity="{number(paint.opacity)}"'] if opacity else []
         if fill:
-            if paint.fill is None: raise ValueError("E_PRESENTATION_PAINT_INVALID")
+            if paint.fill is None: raise _failure("E_PRESENTATION_PAINT_INVALID", "SVG fill serialization was requested but completed paint.fill is absent")
             value = paint.fill
             if paint.gradient is not None:
                 value = f"url(#{gradient_id(paint)})"
@@ -53,7 +66,7 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
             value = fill_override if fill_override is not None else "none"
         result.append(f'fill="{escape(value, quote=True)}"')
         if stroke:
-            if paint.stroke is None or paint.stroke_width is None: raise ValueError("E_PRESENTATION_PAINT_INVALID")
+            if paint.stroke is None or paint.stroke_width is None: raise _failure("E_PRESENTATION_PAINT_INVALID", f"SVG stroke serialization requires paint.stroke and paint.stroke_width; received stroke={_brief(paint.stroke)}, stroke_width={_brief(paint.stroke_width)}")
             result.extend((f'stroke="{escape(paint.stroke, quote=True)}"', f'stroke-width="{number(paint.stroke_width)}"'))
             if paint.dash: result.append(f'stroke-dasharray="{" ".join(number(value) for value in paint.dash)}"')
             if paint.stroke_finish is not None:
@@ -93,7 +106,7 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
             if command.kind == "move": parts.append("M" + " ".join(number(value) for value in command.points[0]))
             elif command.kind == "line": parts.append("L" + " ".join(number(value) for value in command.points[0]))
             elif command.kind == "quadratic": parts.append("Q" + " ".join(number(value) for point in command.points for value in point))
-            else: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            else: raise _failure("E_PRESENTATION_PRIMITIVE_INVALID", f"Scene path command={command.kind!r}; expected move, line, or quadratic")
         return "".join(parts)
     def marker_id(color: str, geometry: object) -> str:
         identity = ((color, geometry) if geometry.angle_degrees is None
@@ -114,7 +127,7 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
         return "pattern-" + sha256(payload.encode()).hexdigest()[:12]
     def catalog_pattern_body(pattern: object, paint: ScenePaint) -> str:
         if paint.stroke is None or (paint.fill is not None and paint.opacity != 1):
-            raise ValueError("E_PRESENTATION_PAINT_INVALID")
+            raise _failure("E_PRESENTATION_PAINT_INVALID", f"catalogue pattern requires a stroke color and opaque substrate when fill is present; stroke={_brief(paint.stroke)}, fill_present={paint.fill is not None}, opacity={_brief(paint.opacity)}")
         ink = escape(paint.stroke, quote=True)
         parts = []
         if paint.fill is not None:
@@ -122,7 +135,33 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
             parts.append(f'<rect x="0" y="0" width="{number(pattern.tile_inline_size)}" height="{number(pattern.tile_block_size)}" fill="{substrate}"/>')
         for item in pattern.primitives:
             if item.kind == "circle":
-                parts.append(f'<circle cx="{number(item.cx)}" cy="{number(item.cy)}" r="{number(item.radius)}" fill="{ink}"/>')
+                channel = item.fill_channel or "ink"
+                if channel == "ink":
+                    fill = ink
+                elif channel == "substrate":
+                    if paint.fill is None:
+                        raise ValueError(
+                            f"E_PRESENTATION_PAINT_INVALID: pattern circle at ({number(item.cx)}, {number(item.cy)}) "
+                            "requests fillChannel='substrate' but its completed ScenePaint has no fill; bind a role fill"
+                        )
+                    fill = escape(paint.fill, quote=True)
+                elif channel == "none":
+                    fill = "none"
+                else:
+                    raise ValueError(
+                        f"E_PRESENTATION_PRIMITIVE_INVALID: pattern circle at ({number(item.cx)}, {number(item.cy)}) "
+                        f"has unsupported fillChannel {channel!r}; expected 'ink', 'substrate', or 'none'"
+                    )
+                appearance = f'fill="{fill}"'
+                if item.stroke_width is not None:
+                    if paint.stroke is None:
+                        raise ValueError(
+                            f"E_PRESENTATION_PAINT_INVALID: pattern circle at ({number(item.cx)}, {number(item.cy)}) "
+                            f"has strokeWidth={number(item.stroke_width)} but its completed ScenePaint has no stroke; "
+                            "bind a role stroke or omit strokeWidth"
+                        )
+                    appearance += (f' stroke="{ink}" stroke-width="{number(item.stroke_width)}"')
+                parts.append(f'<circle cx="{number(item.cx)}" cy="{number(item.cy)}" r="{number(item.radius)}" {appearance}/>')
             elif item.kind == "rect":
                 parts.append(f'<rect x="{number(item.x)}" y="{number(item.y)}" width="{number(item.inline_size)}" height="{number(item.block_size)}" fill="{ink}"/>')
             elif item.kind == "path":
@@ -136,16 +175,16 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
                     elif command.kind == "quadratic":
                         commands.append("Q" + " ".join(number(value) for point in command.points for value in point))
                     else:
-                        raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                        raise _failure("E_PRESENTATION_PRIMITIVE_INVALID", f"catalogue pattern path command={command.kind!r}; expected close, move, line, or quadratic")
                 shape = f'd="{"".join(commands)}"'
                 if item.paint == "fill":
                     parts.append(f'<path {shape} fill="{ink}"/>')
                 elif item.paint == "stroke":
                     parts.append(f'<path {shape} fill="none" stroke="{ink}" stroke-width="{number(item.stroke_width)}" stroke-linecap="{item.line_cap}" stroke-linejoin="{item.line_join}"/>')
                 else:
-                    raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                    raise _failure("E_PRESENTATION_PRIMITIVE_INVALID", f"catalogue pattern path paint={_brief(item.paint)}; expected 'fill' or 'stroke'")
             else:
-                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                raise _failure("E_PRESENTATION_PRIMITIVE_INVALID", f"catalogue pattern primitive kind={item.kind!r}; expected circle, rect, or path")
         return "".join(parts)
     marker_pairs = {(completed(node).stroke, marker) for node in surface.primitives if node.kind == "Path"
                     for marker in (node.marker_start, node.marker_end) if marker}
@@ -184,7 +223,7 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
         for color, marker in sorted(marker_pairs, key=lambda pair: (
                 repr(pair), pair[1].angle_degrees is not None, pair[1].angle_degrees or 0.0,
                 pair[1].physical_units, pair[1].stroke_width or 0.0)):
-            if color is None or marker is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            if color is None or marker is None: raise _failure("E_PRESENTATION_PRIMITIVE_INVALID", f"Path marker requires completed stroke color and marker geometry; color={color!r}, marker_present={marker is not None}")
             appearance = (f'fill="{escape(color, quote=True)}"' if marker.paint_mode == "fill"
                           else f'fill="none" stroke="{escape(color, quote=True)}"')
             units = ''
@@ -198,13 +237,13 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
         for pattern, paint in sorted(patterns, key=repr):
             if pattern.primitives:
                 if pattern.origin is None or pattern.clip_bounds is None:
-                    raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                    raise _failure("E_PRESENTATION_PRIMITIVE_INVALID", "catalogue pattern requires completed origin and clip_bounds")
                 transform = (f'translate({number(pattern.origin[0])} {number(pattern.origin[1])}) '
                              f'rotate({number(pattern.angle_degrees)} '
                              f'{number(pattern.tile_inline_size / 2)} {number(pattern.tile_block_size / 2)})')
                 definitions.append(f'<pattern id="{pattern_id(pattern, paint)}" patternUnits="userSpaceOnUse" x="0" y="0" width="{number(pattern.tile_inline_size)}" height="{number(pattern.tile_block_size)}" patternTransform="{transform}">{catalog_pattern_body(pattern, paint)}</pattern>')
             else:
-                if paint.stroke is None or paint.stroke_width is None: raise ValueError("E_PRESENTATION_PAINT_INVALID")
+                if paint.stroke is None or paint.stroke_width is None: raise _failure("E_PRESENTATION_PAINT_INVALID", f"legacy line pattern requires paint.stroke and paint.stroke_width; received stroke={_brief(paint.stroke)}, stroke_width={_brief(paint.stroke_width)}")
                 strokes = "".join(f'<line x1="{number(stroke.start[0])}" y1="{number(stroke.start[1])}" x2="{number(stroke.end[0])}" y2="{number(stroke.end[1])}" opacity="{number(paint.opacity)}" fill="none" stroke="{escape(paint.stroke, quote=True)}" stroke-width="{number(stroke.width)}"/>' for stroke in pattern.strokes)
                 definitions.append(f'<pattern id="{pattern_id(pattern, paint)}" patternUnits="userSpaceOnUse" width="{number(pattern.tile_inline_size)}" height="{number(pattern.tile_block_size)}" patternTransform="rotate({number(pattern.angle_degrees)})">{strokes}</pattern>')
         for identifier, gradient in sorted(gradients.items()):
@@ -255,14 +294,14 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
                 '<feMerge><feMergeNode in="bg"/><feMergeNode in="SourceGraphic"/></feMerge></filter>')
         for identifier, host in sorted(clip_hosts.items()):
             if host.kind not in {"Rect", "Symbol"}:
-                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                raise _failure("E_PRESENTATION_PRIMITIVE_INVALID", f"clip host scene_id={host.scene_id!r} kind={host.kind!r}; expected Rect or Symbol")
             if host.kind == "Rect":
                 x, y, w, h = host.bounds
                 radius = f' rx="{number(host.corner_radius)}" ry="{number(host.corner_radius)}"' if host.corner_radius else ""
                 clip_content = f'<rect x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}"{radius}/>'
             else:
                 if host.symbol is None:
-                    raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                    raise _failure("E_PRESENTATION_PRIMITIVE_INVALID", f"clip host scene_id={host.scene_id!r} has no completed Symbol geometry")
                 clip_content = f'<path d="{commands_data(host.symbol.outline)}"/>'
             definitions.append(f'<clipPath id="clip-{escape(identifier, quote=True)}">{clip_content}</clipPath>')
         parts.append("<defs>" + "".join(definitions) + "</defs>")
@@ -278,7 +317,7 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
         values: list[str] = []
         for kind, points in path.commands:
             glyph = {"move": "M", "line": "L", "quadratic": "Q", "cubic": "C", "close": "Z"}.get(kind)
-            if glyph is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            if glyph is None: raise _failure("E_PRESENTATION_PRIMITIVE_INVALID", f"icon path command={kind!r}; expected move, line, quadratic, cubic, or close")
             values.append(glyph if glyph == "Z" else glyph + " ".join(f"{number(px)} {number(py)}" for px, py in points))
         return "".join(values)
 
@@ -288,7 +327,7 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
         if path.fill is None and path.stroke is not None and path.stroke_width is not None:
             return (f'fill="none" opacity="{number(path.opacity)}" stroke="{escape(path.stroke, quote=True)}" '
                     f'stroke-width="{number(path.stroke_width)}" stroke-linecap="{path.line_cap}" stroke-linejoin="{path.line_join}"')
-        raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        raise _failure("E_PRESENTATION_PRIMITIVE_INVALID", f"icon path requires fill-only or stroke-plus-width paint; fill_present={path.fill is not None}, stroke_present={path.stroke is not None}, stroke_width={_brief(path.stroke_width)}")
 
     def image_tiles_markup(node: ScenePrimitive, image: ImageFill) -> str:
         """One nested clipping ``<svg>`` per completed nine-slice tile (#465).
@@ -416,7 +455,7 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
         elif node.kind == "Rect" and viewer_fit and node.viewer_fit == BOX_FOLLOWS_TEXT:
             text_node = followed_by.get(node.scene_id)
             if text_node is None or text_node.baseline is None:
-                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID", "a box that follows its text has no text")
+                raise _failure("E_PRESENTATION_PRIMITIVE_INVALID", f"box-follows-text Rect scene_id={node.scene_id!r} has no linked Text baseline")
             # The invisible rect pins the start, top and bottom to the measured box; the viewer's own text advance and
             # the trailing spaces of every line set the end edge (the filter region is the group's bounding box).
             pin = (f'<rect data-scene-id="{escape(node.scene_id)}-extent" x="{number(x)}" y="{number(y)}" '
@@ -427,7 +466,7 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
             if node.pattern is not None and node.pattern.primitives:
                 if (node.pattern.region_bounds != node.bounds or node.pattern.clip_bounds != node.bounds
                         or node.pattern.corner_radius != (node.corner_radius or 0.0)):
-                    raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                    raise _failure("E_PRESENTATION_PRIMITIVE_INVALID", f"Rect scene_id={node.scene_id!r} catalogue pattern region/clip/radius must match bounds={node.bounds!r}, radius={node.corner_radius!r}")
             appearance = (attrs(paint, fill=False, stroke=not bool(node.pattern.primitives),
                                 fill_override=f"url(#{pattern_id(node.pattern, paint)})")
                           if node.pattern is not None else attrs(paint, fill=paint.fill is not None or paint.radial_gradient is not None, stroke=paint.stroke is not None))
@@ -436,8 +475,7 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
             if paint.wobble is not None and paint.wobble.outline:
                 # A completed hand-wobble (#588): the outline is drawn verbatim as one closed path.
                 if node.pattern is not None or paint.image is not None or node.clip_source_id or not paint.wobble.closed:
-                    raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID",
-                                     "a wobbled Rect carries one closed outline and no pattern, image or clip")
+                    raise _failure("E_PRESENTATION_PRIMITIVE_INVALID", f"wobbled Rect scene_id={node.scene_id!r} requires a closed outline and no pattern, image, clip, or open outline")
                 rect_markup = f'<path {common} d="{polyline_data(paint.wobble.outline[0])}Z" {appearance}/>'
             else:
                 rect_markup = f'<rect {common} x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}"{radius}{clip} {appearance}/>'
@@ -446,16 +484,16 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
             else:
                 append(node, rect_markup)
         elif node.kind == "Text":
-            if node.text is None or node.text_layout is None or node.baseline is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            if node.text is None or node.text_layout is None or node.baseline is None: raise _failure("E_PRESENTATION_PRIMITIVE_INVALID", f"Text scene_id={node.scene_id!r} requires text, text_layout, and baseline")
             if viewer_fit and node.text_layout.fit is not None and node.text_layout.fit.mode == BOX_FOLLOWS_TEXT:
                 continue  # serialised inside its box's group, above
             append(node, text_markup(node))
         elif node.kind == "Symbol":
-            if node.symbol is None or paint.image is not None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            if node.symbol is None or paint.image is not None: raise _failure("E_PRESENTATION_PRIMITIVE_INVALID", f"Symbol scene_id={node.scene_id!r} requires completed symbol geometry and no image paint")
             appearance = attrs(paint, fill=paint.fill is not None, stroke=paint.stroke is not None)
             append(node, f'<path {common} d="{commands_data(node.symbol.outline)}" {appearance}/>')
         elif node.kind == "Path":
-            if len(node.points) < 2 or paint.stroke is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            if len(node.points) < 2 or paint.stroke is None: raise _failure("E_PRESENTATION_PRIMITIVE_INVALID", f"Path scene_id={node.scene_id!r} requires at least two points and completed stroke; points={len(node.points)}, stroke_present={paint.stroke is not None}")
             start = f' marker-start="url(#{marker_id(paint.stroke, node.marker_start)})"' if node.marker_start else ""
             end = f' marker-end="url(#{marker_id(paint.stroke, node.marker_end)})"' if node.marker_end else ""
             data = ("".join(polyline_data(polyline) for polyline in paint.wobble.outline)
@@ -463,18 +501,18 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
             append(node, f'<path {common} d="{data}" {attrs(paint, fill=False, stroke=True)}{start}{end}/>')
         elif node.kind == "Icon":
             if node.icon_kind not in {"vector", "raster"} or node.icon_asset_identity is None:
-                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                raise _failure("E_PRESENTATION_PRIMITIVE_INVALID", f"Icon scene_id={node.scene_id!r} requires kind vector/raster and asset identity; kind={node.icon_kind!r}, identity_present={node.icon_asset_identity is not None}")
             accessible = " aria-hidden=\"true\"" if node.icon_decorative else f' role="img" aria-label="{escape(node.icon_alternative or "", quote=True)}"'
-            if not node.icon_decorative and not node.icon_alternative: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            if not node.icon_decorative and not node.icon_alternative: raise _failure("E_PRESENTATION_PRIMITIVE_INVALID", f"Icon scene_id={node.scene_id!r} is non-decorative but has no alternative text")
             if node.icon_kind == "vector":
-                if not node.icon_paths: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                if not node.icon_paths: raise _failure("E_PRESENTATION_PRIMITIVE_INVALID", f"vector Icon scene_id={node.scene_id!r} requires at least one completed icon path")
                 paths = "".join(f'<path d="{icon_path(path)}" {icon_appearance(path)}/>' for path in node.icon_paths)
                 append(node, f'<g {common}{accessible} data-asset-identity="{escape(node.icon_asset_identity, quote=True)}">{paths}</g>')
             else:
-                if node.icon_raster is None: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                if node.icon_raster is None: raise _failure("E_PRESENTATION_PRIMITIVE_INVALID", f"raster Icon scene_id={node.scene_id!r} requires PNG bytes")
                 encoded = b64encode(node.icon_raster).decode("ascii")
                 append(node, f'<image {common}{accessible} data-asset-identity="{escape(node.icon_asset_identity, quote=True)}" x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}" href="data:image/png;base64,{encoded}"/>')
-        else: raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        else: raise _failure("E_PRESENTATION_PRIMITIVE_INVALID", f"scene_id={node.scene_id!r} has unsupported primitive kind={node.kind!r}")
     for node, content in rendered:
         parts.append(link(node, content))
     mark_purposes = {"planned", "actual", "snapshot", "missingActual", "progress-fill", "icon-mark"}
@@ -498,6 +536,6 @@ class V05SvgRenderer:
         self._viewer_fit = viewer_fit
 
     def render(self, surface: object) -> RenderArtifact:
-        if not isinstance(surface, SceneSurface): raise ValueError("E_PRESENTATION_RENDER_INPUT")
+        if not isinstance(surface, SceneSurface): raise _failure("E_PRESENTATION_RENDER_INPUT", f"SVG renderer requires SceneSurface; received {type(surface).__name__}")
         return RenderArtifact("svg", "image/svg+xml", render_v05_svg(surface, viewer_fit=self._viewer_fit).encode("utf-8"),
                               "chrona-svg-v0.5")

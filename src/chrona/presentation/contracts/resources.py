@@ -495,7 +495,7 @@ class CompactIconCommand:
 def _compact_commands(value: object) -> tuple[CompactIconCommand, ...]:
     """Decode the v0.3 canonical primitive stream at the contract boundary."""
     if not isinstance(value, str):
-        raise ContractError("E_ICON_CATALOG_GEOMETRY")
+        raise ContractError("E_ICON_CATALOG_GEOMETRY", f"command stream type={type(value).__name__}; expected compact path string")
     tokens = value.split()
     commands: list[CompactIconCommand] = []
     index = 0
@@ -503,19 +503,20 @@ def _compact_commands(value: object) -> tuple[CompactIconCommand, ...]:
         kind = tokens[index]
         count = _COMPACT_ARITY.get(kind)
         if count is None or index + count >= len(tokens):
-            raise ContractError("E_ICON_CATALOG_GEOMETRY")
+            raise ContractError("E_ICON_CATALOG_GEOMETRY", f"tokenIndex={index}, command={kind!r}; expected M/L/Q/Z with complete coordinate arity")
         raw_points = tokens[index + 1:index + 1 + count]
         if any(not _COMPACT_NUMBER.fullmatch(token) for token in raw_points):
-            raise ContractError("E_ICON_CATALOG_GEOMETRY")
+            bad = next(token for token in raw_points if not _COMPACT_NUMBER.fullmatch(token))
+            raise ContractError("E_ICON_CATALOG_GEOMETRY", f"tokenIndex={index + 1 + raw_points.index(bad)}, coordinate={bad[:32]!r}; expected finite compact decimal")
         points = tuple(float(token) for token in raw_points)
         if not all(math.isfinite(point) for point in points):
-            raise ContractError("E_ICON_CATALOG_GEOMETRY")
+            raise ContractError("E_ICON_CATALOG_GEOMETRY", f"tokenIndex={index + 1}, command={kind!r}; expected finite coordinates")
         commands.append(CompactIconCommand({"M": "move", "L": "line", "Q": "quadratic", "Z": "close"}[kind],
                                            tuple((points[offset], points[offset + 1])
                                                  for offset in range(0, len(points), 2))))
         index += count + 1
     if not commands or commands[0].kind != "move":
-        raise ContractError("E_ICON_CATALOG_GEOMETRY")
+        raise ContractError("E_ICON_CATALOG_GEOMETRY", f"first command={commands[0].kind if commands else None!r}; expected initial move command")
     return tuple(commands)
 
 
@@ -553,7 +554,7 @@ class IconCatalogContract(ResourceContract):
 
 
 def _check_raster_addresses(raw_icons: Mapping[str, Any]) -> None:
-    """Refuse a v0.4 catalog that declares a raster ``source.address`` the shared guard refuses (#731).
+    """Refuse a v0.5 catalog that declares a raster ``source.address`` the shared guard refuses (#731).
 
     Entries are decoded lazily and schema-checked only when selected, so the schema's ``storeAddress`` alone never
     sees an entry nothing selects. Checking every declared address here keeps "the consumer refuses everything the
@@ -580,7 +581,7 @@ def _icon_catalog_contract(identity: ClosureIdentity, version: str, body: Frozen
     raw_patterns = body.get("patterns", FrozenDict())
     if not isinstance(raw_glyphs, FrozenDict) or not isinstance(raw_patterns, FrozenDict):
         raise _closure_kind_error(identity, "glyphs and patterns objects", {"glyphs": raw_glyphs, "patterns": raw_patterns})
-    if version == "chrona/icon-catalog/v0.4":
+    if version == "chrona/icon-catalog/v0.5":
         _check_raster_addresses(raw_icons)
     return IconCatalogContract(identity, version, str(body["set"]), tuple(str(alias) for alias in aliases), provenance,
                                entry_aliases, (), tuple(sorted(str(name) for name in raw_icons)), raw_icons,
@@ -710,7 +711,7 @@ _SCHEMAS = {
     ("color-scheme", "chrona/color-scheme/v0.2"): "color-scheme-v0.2.schema.yaml",
     ("layout-profile", "chrona/layout-profile/v0.10"): "layout-profile-v0.10.schema.yaml",
     ("icon-catalog", "chrona/icon-catalog/v0.3"): "icon-catalog-v0.3.schema.yaml",
-    ("icon-catalog", "chrona/icon-catalog/v0.4"): "icon-catalog-v0.4.schema.yaml",
+    ("icon-catalog", "chrona/icon-catalog/v0.5"): "icon-catalog-v0.5.schema.yaml",
     ("actual-set", "chrona/actual-set/v0.3"): "actual-set-v0.3.schema.yaml",
     ("snapshot-ref", "chrona/snapshot-ref/v0.2"): "snapshot-ref-v0.2.schema.yaml",
     ("snapshot-ref", "chrona/snapshot-ref/v0.3"): "snapshot-ref-v0.3.schema.yaml",
@@ -803,7 +804,7 @@ def _icon_catalog_envelope(value: Mapping[str, Any]) -> dict[str, Any]:
     envelope = dict(value)
     envelope_body = dict(body)
     envelope_body["icons"] = {name: entry} if name is not None else {}
-    if value.get("version") == "chrona/icon-catalog/v0.4":
+    if value.get("version") == "chrona/icon-catalog/v0.5":
         for collection in ("glyphs", "patterns"):
             entries = body.get(collection)
             if not isinstance(entries, dict):
@@ -819,13 +820,13 @@ def validate_icon_catalog_entry(catalog: IconCatalogContract, name: str) -> None
     """Schema-check one selected raw entry, then let closure expand its commands."""
     raw = catalog.raw_icons.get(name)
     if raw is None:
-        raise ContractError("E_ICON_CATALOG_SCHEMA")
+        raise ContractError("E_ICON_CATALOG_SCHEMA", f"catalog={catalog.identity.id!r}, icon={name!r}; expected selected canonical entry")
     source = {
         "version": catalog.version, "kind": "icon-catalog", "id": catalog.identity.id,
         "body": {"set": catalog.set_name, "aliases": list(catalog.aliases),
                  "provenance": dict(catalog.provenance), "entryAliases": dict(catalog.entry_aliases),
                  **({"glyphs": dict(catalog.raw_glyphs), "patterns": dict(catalog.raw_patterns)}
-                    if catalog.version == "chrona/icon-catalog/v0.4" else {}),
+                    if catalog.version == "chrona/icon-catalog/v0.5" else {}),
                  "icons": {name: raw}},
     }
     errors = tuple(schema_validator(_SCHEMAS[("icon-catalog", catalog.version)]).iter_errors(_schema_value(source)))
@@ -837,10 +838,10 @@ def validate_icon_catalog_entry(catalog: IconCatalogContract, name: str) -> None
 def validate_theme_asset_entry(catalog: IconCatalogContract, asset_kind: str, name: str) -> Any:
     """Schema-check one selected normalized glyph or pattern entry."""
     collection = {"glyph": catalog.raw_glyphs, "pattern": catalog.raw_patterns}.get(asset_kind)
-    if catalog.version != "chrona/icon-catalog/v0.4" or collection is None:
+    if catalog.version != "chrona/icon-catalog/v0.5" or collection is None:
         raise ContractError("E_THEME_ASSET_REFERENCE",
                             f"catalog {catalog.identity.id!r} ({catalog.version}) cannot serve a {asset_kind} reference; "
-                            "only chrona/icon-catalog/v0.4 declares glyphs and patterns")
+                            "only chrona/icon-catalog/v0.5 declares glyphs and patterns")
     raw = collection.get(name)
     if raw is None:
         raise ContractError("E_THEME_ASSET_REFERENCE", f"catalog {catalog.identity.id!r} declares no {asset_kind} {name!r}")

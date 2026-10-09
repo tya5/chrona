@@ -15,7 +15,7 @@ from chrona.presentation.icons.importer import import_theme_assets
 
 ROOT = Path(__file__).resolve().parents[5]
 RESOURCE_DIR = ROOT / "src/chrona/resources/icons"
-MANIFEST = RESOURCE_DIR / "chrona-annotation-parts-v2026-10.manifest"
+MANIFEST = RESOURCE_DIR / "chrona-annotation-parts-v2026-10-09.manifest"
 
 
 def _manifest() -> dict:
@@ -37,8 +37,8 @@ def test_annotation_parts_catalogue_is_identity_closed_and_regenerable(tmp_path:
 
     catalogue = json.loads(catalog_bytes)
     body = catalogue["body"]
-    assert catalogue["version"] == manifest["catalog"]["version"] == "chrona/icon-catalog/v0.4"
-    assert catalogue["id"] == "chrona-annotation-parts-v2026-10"
+    assert catalogue["version"] == manifest["catalog"]["version"] == "chrona/icon-catalog/v0.5"
+    assert catalogue["id"] == "chrona-annotation-parts-v2026-10-09"
     assert body["set"] == manifest["catalog"]["set"] == "chrona-annotation-parts"
     assert body["aliases"] == manifest["catalog"]["aliases"] == ["annotation-parts"]
     assert sorted(body["glyphs"]) == manifest["entries"]["glyphs"] == ["scroll-mounting", "scroll-rods"]
@@ -66,7 +66,7 @@ def test_annotation_parts_are_packaged_and_split_the_existing_scroll_geometry() 
     ):
         assert icons.joinpath(name).is_file()
 
-    old_path = RESOURCE_DIR / "chrona-target-parts-v2026-10.yaml"
+    old_path = ROOT / "docs/archive/resources/icons/chrona-target-parts-v2026-10.yaml"
     old = json.loads(old_path.read_bytes())["body"]["glyphs"]["scroll-frame"]["parts"]
     new = json.loads((RESOURCE_DIR / _manifest()["catalog"]["file"]).read_bytes())["body"]["glyphs"]
     assert new["scroll-mounting"]["viewport"] == new["scroll-rods"]["viewport"] == {"inlineSize": 48, "blockSize": 64}

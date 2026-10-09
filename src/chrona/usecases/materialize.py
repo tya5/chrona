@@ -43,18 +43,40 @@ class MaterializationError(ValueError):
 
 
 def _context_error(scope: str, expected: str, actual: object) -> MaterializationError:
-    return MaterializationError("E_MATERIALIZER_CONTEXT", f"{scope}; expected {expected}; found {actual!r}")
+    if isinstance(actual, dict):
+        found = f"object with keys {sorted(_label(key) for key in actual)}"
+    elif isinstance(actual, (list, tuple)):
+        found = f"{type(actual).__name__} of length {len(actual)}"
+    else:
+        found = _label(actual)
+    return MaterializationError("E_MATERIALIZER_CONTEXT", f"{scope}; expected {expected}; found {found}")
 
 
 def _inside(root: Path, relative: str) -> Path:
     try:
         return resolve_store_address(root, relative)
     except StoreAddressError as error:
-        raise ValueError("E_MATERIALIZER_PATH") from error
+        raise ValueError(f"E_MATERIALIZER_PATH: invalid relative store address {_label(relative)}") from error
 
 
 def _identity(payload: bytes) -> str:
     return "sha256:" + sha256(payload).hexdigest()
+
+
+def _label(value: object, *, limit: int = 120) -> str:
+    """Render a bounded identifier/address without exposing resource payloads."""
+    if isinstance(value, str):
+        return value if len(value) <= limit else value[:limit - 1] + "…"
+    if isinstance(value, Path):
+        rendered = value.as_posix()
+        return rendered if len(rendered) <= limit else "…" + rendered[-(limit - 1):]
+    if value is None or isinstance(value, (int, float, bool)):
+        return repr(value)
+    return f"<{type(value).__name__}>"
+
+
+def _code(error: BaseException) -> str:
+    return str(error).partition(":")[0]
 
 
 def _reference_key(reference: dict[str, Any]) -> str:
@@ -78,14 +100,14 @@ class MaterializedResourceOverlay:
         try:
             path, expected, staged_identity = self._references[_reference_key(reference)]
         except KeyError as error:
-            raise SnapshotReadError("E_STORE_REFERENCE", "reference is not present in the verified materialization overlay") from error
+            raise SnapshotReadError("E_STORE_REFERENCE", f"{_label(reference.get('kind'))}:{_label(reference.get('id'))} at {_label(reference.get('address'))} is not staged") from error
         try:
             payload = path.read_bytes()
         except OSError as error:
-            raise SnapshotReadError("E_STORE_REFERENCE", "verified overlay resource is missing") from error
+            raise SnapshotReadError("E_STORE_REFERENCE", f"staged {_label(reference.get('kind'))}:{_label(reference.get('id'))} at {_label(reference.get('address'))} is missing") from error
         actual = _identity(payload)
         if actual != staged_identity or (expected is not None and actual != expected):
-            raise SnapshotReadError("E_CONTENT_IDENTITY")
+            raise SnapshotReadError("E_CONTENT_IDENTITY", f"{_label(reference.get('kind'))}:{_label(reference.get('id'))} at {_label(reference.get('address'))}; expected {_label(expected or staged_identity)}, found {actual}")
         return payload
 
     def resolve_asset(self, locator: dict[str, Any], expected_identity: str | None) -> Path:
@@ -93,7 +115,7 @@ class MaterializedResourceOverlay:
         payload = path.read_bytes()
         actual = _identity(payload)
         if actual != staged_identity or (identity is not None and actual != identity):
-            raise ValueError("E_CONTENT_IDENTITY")
+            raise ValueError(f"E_CONTENT_IDENTITY: asset {_label(locator.get('provider'))}:{_label(locator.get('identity'))} at {_label(locator.get('address'))}; expected {_label(identity or staged_identity)}, found {actual}")
         return path
 
 
@@ -109,7 +131,7 @@ class _OverlayBuilder:
         staged_identity = _identity(payload)
         if path.exists():
             if _identity(path.read_bytes()) != staged_identity:
-                raise ValueError("E_MATERIALIZER_OVERLAY_COLLISION")
+                raise ValueError(f"E_MATERIALIZER_OVERLAY_COLLISION: staging key sha256:{sha256(key.encode()).hexdigest()}; existing {_identity(path.read_bytes())}, attempted {staged_identity}")
         else:
             path.write_bytes(payload)
         return path
@@ -117,29 +139,29 @@ class _OverlayBuilder:
     def add_reference(self, reference: dict[str, Any], payload: bytes, *, staged_path: Path | None = None) -> None:
         expected = reference.get("contentIdentity")
         if expected is not None and expected != _identity(payload):
-            raise ValueError("E_CONTENT_IDENTITY")
+            raise ValueError(f"E_CONTENT_IDENTITY: reference {_label(reference.get('kind'))}:{_label(reference.get('id'))} at {_label(reference.get('address'))}; expected {_label(expected)}, found {_identity(payload)}")
         key = _reference_key(reference)
         path = staged_path if staged_path is not None else self._stage("ref:" + key, payload)
         if path.read_bytes() != payload:
-            raise ValueError("E_MATERIALIZER_OVERLAY_COLLISION")
+            raise ValueError(f"E_MATERIALIZER_OVERLAY_COLLISION: reference {_label(reference.get('kind'))}:{_label(reference.get('id'))} at {_label(reference.get('address'))}; staged path bytes differ from supplied {_identity(payload)}")
         staged_identity = _identity(payload)
         previous = self.references.get(key)
         if previous is not None and previous[2] != staged_identity:
-            raise ValueError("E_MATERIALIZER_OVERLAY_COLLISION")
+            raise ValueError(f"E_MATERIALIZER_OVERLAY_COLLISION: reference {_label(reference.get('kind'))}:{_label(reference.get('id'))} at {_label(reference.get('address'))}; existing {previous[2]}, attempted {staged_identity}")
         self.references[key] = (path, expected, staged_identity)
 
     def add_asset(self, locator: dict[str, Any], expected: str | None, payload: bytes,
                   *, staged_path: Path | None = None) -> None:
         if expected is not None and expected != _identity(payload):
-            raise ValueError("E_MATERIALIZER_FONT_IDENTITY")
+            raise ValueError(f"E_MATERIALIZER_FONT_IDENTITY: asset {_label(locator.get('provider'))}:{_label(locator.get('identity'))} at {_label(locator.get('address'))}; expected {_label(expected)}, found {_identity(payload)}")
         key = _asset_key(locator, expected)
         path = staged_path if staged_path is not None else self._stage("asset:" + key, payload)
         if path.read_bytes() != payload:
-            raise ValueError("E_MATERIALIZER_OVERLAY_COLLISION")
+            raise ValueError(f"E_MATERIALIZER_OVERLAY_COLLISION: asset {_label(locator.get('provider'))}:{_label(locator.get('identity'))} at {_label(locator.get('address'))}; staged path bytes differ from supplied {_identity(payload)}")
         staged_identity = _identity(payload)
         previous = self.assets.get(key)
         if previous is not None and previous[2] != staged_identity:
-            raise ValueError("E_MATERIALIZER_OVERLAY_COLLISION")
+            raise ValueError(f"E_MATERIALIZER_OVERLAY_COLLISION: asset {_label(locator.get('provider'))}:{_label(locator.get('identity'))} at {_label(locator.get('address'))}; existing {previous[2]}, attempted {staged_identity}")
         self.assets[key] = (path, expected, staged_identity)
 
     def finish(self) -> MaterializedResourceOverlay:
@@ -151,10 +173,10 @@ def _package_resource(address: str):
     try:
         segments = check_store_address(address)
     except StoreAddressError as error:
-        raise ValueError("E_MATERIALIZER_PATH") from error
+        raise ValueError(f"E_MATERIALIZER_PATH: invalid package resource address {_label(address)}") from error
     resource = files("chrona.resources").joinpath(*segments)
     if not resource.is_file():
-        raise ValueError("E_MATERIALIZER_PACKAGE_RESOURCE")
+        raise ValueError(f"E_MATERIALIZER_PACKAGE_RESOURCE: package resource {_label(address)} was not found")
     return resource
 
 
@@ -164,13 +186,13 @@ def _reference_payload(example: Path, reference: dict[str, Any]) -> bytes:
         raise _context_error("reference", "string address", address)
     if reference.get("store", {}).get("provider") == "package":
         if reference.get("store", {}).get("identity") != "chrona.resources":
-            raise ValueError("E_MATERIALIZER_PACKAGE_RESOURCE")
+            raise ValueError(f"E_MATERIALIZER_PACKAGE_RESOURCE: {_label(address)} requires store identity chrona.resources, found {_label(reference.get('store', {}).get('identity'))}")
         payload = _package_resource(address).read_bytes()
         if reference.get("contentIdentity") != _identity(payload):
-            raise ValueError("E_MATERIALIZER_PACKAGE_IDENTITY")
+            raise ValueError(f"E_MATERIALIZER_PACKAGE_IDENTITY: package reference {_label(reference.get('id'))} at {_label(address)}; expected {_label(reference.get('contentIdentity'))}, found {_identity(payload)}")
         return payload
     if reference.get("store", {}).get("provider") != "local":
-        raise ValueError("E_MATERIALIZER_PROVIDER")
+        raise ValueError(f"E_MATERIALIZER_PROVIDER: reference {_label(reference.get('kind'))}:{_label(reference.get('id'))} at {_label(address)} requires local or package provider, found {_label(reference.get('store', {}).get('provider'))}")
     return _inside(example, address).read_bytes()
 
 
@@ -181,7 +203,7 @@ def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path, *,
         raise _context_error("reference", "string revision token and address", {"token": token, "address": address})
     payload = _reference_payload(example, reference)
     if reference.get("contentIdentity") not in (None, _identity(payload)):
-        raise ValueError("E_CONTENT_IDENTITY")
+        raise ValueError(f"E_CONTENT_IDENTITY: reference {_label(reference.get('kind'))}:{_label(reference.get('id'))} at {_label(address)}; expected {_label(reference.get('contentIdentity'))}, found {_identity(payload)}")
     package_reference = reference.get("store", {}).get("provider") == "package"
     if not (overlay is not None and package_reference):
         target = _inside(snapshot_directory(snapshot, target_token or token), address)
@@ -193,7 +215,7 @@ def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path, *,
         value = safe_load(payload)
         if is_derived_theme(value):
             if address in theme_stack:
-                raise ValueError("E_THEME_INHERITANCE_CYCLE")
+                raise ValueError(f"E_THEME_INHERITANCE_CYCLE: theme reference {_label(reference.get('id'))} repeats address {_label(address)}")
             try:
                 base = theme_base_reference(reference, value)
             except ThemeInheritanceError as error:
@@ -201,11 +223,11 @@ def _copy_reference(example: Path, reference: dict[str, Any], snapshot: Path, *,
             try:
                 _copy_reference(example, base, snapshot, theme_stack=(*theme_stack, address), overlay=overlay)
             except ValueError as error:
-                if str(error) == "E_CONTENT_IDENTITY":
-                    raise ValueError("E_THEME_INHERITANCE_SOURCE_IDENTITY") from error
+                if _code(error) == "E_CONTENT_IDENTITY":
+                    raise ValueError(f"E_THEME_INHERITANCE_SOURCE_IDENTITY: base theme for {_label(reference.get('id'))} at {_label(address)} failed identity verification ({error})") from error
                 raise
             except FileNotFoundError as error:
-                raise ValueError("E_THEME_INHERITANCE_BASE_MISSING") from error
+                raise ValueError(f"E_THEME_INHERITANCE_BASE_MISSING: base theme for {_label(reference.get('id'))} at {_label(address)} is unavailable") from error
     if reference.get("kind") == "snapshot-ref":
         nested = safe_load(payload).get("body", {}).get("project")
         if not isinstance(nested, dict):
@@ -223,7 +245,7 @@ def _copy_icon_assets(example: Path, catalog_reference: dict[str, Any], snapshot
     catalog = safe_load(catalog_payload)
     icons = catalog.get("body", {}).get("icons") if isinstance(catalog, dict) else None
     if not isinstance(icons, dict):
-        raise ValueError("E_ICON_CATALOG_SCHEMA")
+        raise ValueError(f"E_ICON_CATALOG_SCHEMA: catalog {_label(catalog_reference.get('id'))} at {_label(address)} must contain an icons object")
     for icon_id, entry in sorted(icons.items()):
         if not isinstance(entry, dict) or entry.get("kind") == "vector":
             continue
@@ -233,16 +255,16 @@ def _copy_icon_assets(example: Path, catalog_reference: dict[str, Any], snapshot
         try:
             check_store_address(asset_address)
         except StoreAddressError as error:
-            raise ValueError("E_ICON_ASSET_PATH") from error
+            raise ValueError(f"E_ICON_ASSET_PATH: icon {_label(icon_id)} has invalid asset address {_label(asset_address)}") from error
         if catalog_reference.get("store", {}).get("provider") == "package":
             payload = _package_resource(asset_address).read_bytes()
         else:
             source_path = _inside(example, asset_address)
             if source_path.is_symlink():
-                raise ValueError("E_ICON_ASSET_PATH")
+                raise ValueError(f"E_ICON_ASSET_PATH: icon {_label(icon_id)} asset at {_label(asset_address)} must not be a symlink")
             payload = source_path.read_bytes()
         if expected != _identity(payload):
-            raise ValueError("E_ICON_ASSET_IDENTITY")
+            raise ValueError(f"E_ICON_ASSET_IDENTITY: icon {_label(icon_id)} asset at {_label(asset_address)}; expected {_label(expected)}, found {_identity(payload)}")
         package_asset = catalog_reference.get("store", {}).get("provider") == "package"
         staged_path = None
         if not (overlay is not None and package_asset):
@@ -309,17 +331,17 @@ def copy_context_closure(example: Path, context_path: Path, snapshot: Path,
         for key in keys:
             record = asset.get(key, {})
             if not isinstance(record, dict) or not isinstance(record.get("locator"), dict):
-                raise ValueError("E_MATERIALIZER_FONT")
+                raise ValueError(f"E_MATERIALIZER_FONT: fontMetrics asset {_label(asset.get('id', '<unknown>'))} field {key} requires a locator object")
             try:
                 source = resolve_font_resource(record["locator"], asset_root=example)
             except FontResourceError as error:
-                raise ValueError("E_MATERIALIZER_FONT") from error
+                raise ValueError(f"E_MATERIALIZER_FONT: cannot resolve {key} asset for {_label(asset.get('id', '<unknown>'))} at {_label(record['locator'].get('address'))}: {error}; {_label(error.detail)}") from error
             payload = source.read_bytes()
             if record.get("contentIdentity") != _identity(payload):
-                raise ValueError("E_MATERIALIZER_FONT_IDENTITY")
+                raise ValueError(f"E_MATERIALIZER_FONT_IDENTITY: fontMetrics asset {_label(asset.get('id', '<unknown>'))} field {key} at {_label(record['locator'].get('address'))}; expected {_label(record.get('contentIdentity'))}, found {_identity(payload)}")
             address = record["locator"].get("address")
             if not isinstance(address, str):
-                raise ValueError("E_MATERIALIZER_FONT")
+                raise ValueError(f"E_MATERIALIZER_FONT: fontMetrics asset {_label(asset.get('id', '<unknown>'))} field {key} locator requires string address, found {_label(address)}")
             locator_provider = record["locator"].get("provider")
             asset_target = None
             if not (overlay_builder is not None and locator_provider == "package"):
@@ -344,13 +366,13 @@ def materialize(manifest_path: Path, slide_id: str, output: Path, *, write: bool
     example = manifest_path.parent.resolve()
     manifest = safe_load(manifest_path.read_text(encoding="utf-8"))
     if manifest.get("version") != "chrona/example-materializer/v0.1" or manifest.get("role") != "regression-corpus":
-        raise ValueError("E_MATERIALIZER_MANIFEST")
+        raise ValueError(f"E_MATERIALIZER_MANIFEST: {_label(manifest_path)} requires version chrona/example-materializer/v0.1 and role regression-corpus; found version={_label(manifest.get('version'))}, role={_label(manifest.get('role'))}")
     slide = next((item for item in manifest.get("slides", ()) if item.get("id") == slide_id), None)
     if slide is None or not isinstance(slide.get("evidence"), str) or not slide["evidence"].strip():
-        raise ValueError("E_MATERIALIZER_SLIDE")
+        raise ValueError(f"E_MATERIALIZER_SLIDE: slide {_label(slide_id)} is missing or has no non-empty evidence path")
     expected = _inside(example, str(slide["expectedSvg"]))
     if output.exists() and any(output.iterdir()):
-        raise ValueError("E_MATERIALIZER_OUTPUT")
+        raise ValueError(f"E_MATERIALIZER_OUTPUT: output directory {_label(output)} is not empty")
     output.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as temporary:
         snapshot = Path(temporary) / "snapshot"; snapshot.mkdir()

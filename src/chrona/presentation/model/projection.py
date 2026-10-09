@@ -293,8 +293,6 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
     scenario_items = {scenario_id: _snapshot_items(value[0], value[1], None, source_kind="scenario")
                       for scenario_id, value in (scenarios or {}).items()}
     if view.comparison.missing_actual_scope == "in-progress":
-        if view.rows.mode == "lanes":
-            raise ValueError("E_REVIEW_MISSING_ACTUAL_SCOPE_LANES: comparison.missingActualScope in-progress is not available with lane rows")
         selected = [replace(item, missing_actual_mark=_in_progress_mark(item, as_of)) for item in selected]
     rows, folded_points = _compose_rows(view, selected, snapshots, scenario_items, project)
     lane_membership = _project_lane_membership(project, rows, view) if view.rows.mode == "lanes" else None

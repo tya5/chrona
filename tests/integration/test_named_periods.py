@@ -28,7 +28,7 @@ from chrona.usecases.render_review import RenderFailed
 from tests.support import synthetic_review as sr
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file())
-STARTER_CATALOG = ROOT / "src/chrona/resources/icons/chrona-theme-starter-v2026-09-29.yaml"
+STARTER_CATALOG = ROOT / "src/chrona/resources/icons/chrona-theme-starter-v2026-10-09.yaml"
 WINDOW = {"mode": "explicit", "start": "2026-01-01", "end": "2026-04-01"}
 # Every View member the dependency-network surface forbids because it has no timeline.
 _TIMELINE_ONLY = ("tableColumns", "hierarchyColumn", "backgroundDecoration", "axis", "markers", "periods", "shading",

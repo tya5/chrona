@@ -15,7 +15,7 @@ from chrona.usecases.preset_library import copy_builtin_preset
 
 ROOT = Path(__file__).resolve().parents[2]
 PROJECT = ROOT / "examples/controller-z/project.yaml"
-CATALOGUE = ROOT / "src/chrona/resources/icons/chrona-target-parts-v2026-10.yaml"
+CATALOGUE = ROOT / "src/chrona/resources/icons/chrona-target-parts-v2026-10-09.yaml"
 STARTER_GLYPH = "shape: {catalog: 'chrona-starter:pin'}"
 STARTER_PATTERN = "ref: 'chrona-starter:halftone'"
 
@@ -26,7 +26,8 @@ def test_catalogue_parses_as_an_icon_catalog_contract_with_every_entry() -> None
     contract = parse_contract(ClosureIdentity("icon-catalog", value["id"], "packaged", "sha256:" + sha256(payload).hexdigest()), value)
     assert isinstance(contract, IconCatalogContract)
     assert value["body"]["set"] == "chrona-target-parts"
-    assert len(value["body"]["glyphs"]) == 17 and len(value["body"]["patterns"]) == 9
+    assert len(value["body"]["glyphs"]) == 17 and len(value["body"]["patterns"]) == 10
+    assert value["body"]["patterns"]["seigaiha"]["densityBasisPoints"] == 2606
 
 
 def test_a_theme_gate_glyph_and_pattern_from_the_catalogue_reach_the_scene_and_the_svg(tmp_path, monkeypatch):

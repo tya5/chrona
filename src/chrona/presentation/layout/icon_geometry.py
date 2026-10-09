@@ -17,11 +17,12 @@ class IconPathPlacement:
 def complete_icon_paths(payload: Any, bounds: tuple[float, float, float, float],
                         stroke_scale: float) -> tuple[IconPathPlacement, ...]:
     if payload is None or not hasattr(payload, "viewport") or not hasattr(payload, "paths"):
-        raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        missing = tuple(name for name in ("viewport", "paths") if payload is None or not hasattr(payload, name))
+        raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: icon payload type={type(payload).__name__} missing required normalized fields={missing!r}")
     vx, vy = payload.viewport
     x, y, width, height = bounds
     if vx <= 0 or vy <= 0:
-        raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+        raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: icon viewport dimensions ({vx!r}, {vy!r}) must be positive")
     result = []
     for path in payload.paths:
         commands = tuple((command.kind, tuple((x + px * width / vx, y + py * height / vy)

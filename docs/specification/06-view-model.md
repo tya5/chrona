@@ -202,6 +202,10 @@ A `table-timeline` View MAY select named Project periods (Spec 05 §12.1) with `
 
 A selected period may carry `label: {placement, overflow?, text?}`. `placement` is `top` (at the plot's top edge), `bottom` (at its bottom edge) or `inside` (centred in the band); the label is the View's `text` override when it declares one (#871; one to eighty characters, shown for this View only), else the period's `title` (its identifier when absent), centred on the band's visible extent. `overflow` is `suppress` (omit the label and record `W_LAYOUT_LABEL_SUPPRESSED`) or `visible-overflow` (the default: place it at the preferred position and record `W_LAYOUT_LABEL_OVERFLOW`) when no collision-free position exists; a label never silently overprints a mark. Absent `label` draws the band alone.
 
+### 7.2 Axis band fills (#490)
+
+A `table-timeline` View MAY give a fixed-unit `axis.tiers[]` band tier `fillScale: {scale, key, containingTier?}`. `key: alternating` selects Theme slots `"0"` and `"1"` by the natural interval ordinal's parity; `key: interval` selects its canonical decimal ordinal. An optional `containingTier` names another declared, coarser fixed-unit band tier and selects by the unique natural interval containing this interval. The View names the Theme scale and the source rule; Layout resolves interval identity, and Scene receives the resolved paint without changing geometry. A tier without `fillScale` renders as before. See Presentation Specification 60 for interval, Theme mapping, and diagnostic rules.
+
 ### 7.3 Deadline marks (#822)
 
 A `table-timeline` View MAY declare `deadlines: {show: slipped | all}` to draw each object's Project `deadline` (Spec 05 section 9). A deadline is drawn as a **tick** at its date, centred on the object's planned mark, and, when the planned finish is later than the deadline, a **run** from the tick to that finish (`at` of a point, `end` of a span, the date `W_DEADLINE` compares: Spec 04 section 10). `slipped` draws only the deadlines the plan misses; `all` draws every deadline, the missed ones with their run, so a kept promise reads as slack. Slipped and kept differ by shape (the run), not only by colour. The Core decides which deadlines slipped (`deadline_statuses`); a deadline equal to the finish is kept. The View selects; the Project owns the date; the Theme owns paint and reach (Spec 07, role `deadline-mark`); Layout owns the geometry (Spec 50 section 3.4). No text is drawn.
@@ -324,8 +328,9 @@ owner's rule: an observed span with a `start` on or before `asOf`, no `finish`, 
 that is absent or below 1; `openUntil: asOf` stays a sufficient explicit signal, even at progress 1;
 a span at progress 1 without a finish or `openUntil`, or one that has not started, is not in
 progress), drawn as a span from that start to `asOf` in place of its open Actual, and puts no mark
-on a due-unobserved span or on a gate. It is `E_REVIEW_MISSING_ACTUAL_SCOPE_LANES`
-with lane rows, whose expected-mark inventory is closed.
+on a due-unobserved span or on a gate. With lane rows the lane expected-mark inventory lists that
+mark (`missing-actual`) in place of the span's `actual` mark when the `missingActual` facet is
+selected, and a typed absence (`in-progress-empty-at-cutoff`) when `asOf` is not after the start (#1027).
 
 ## 9. Annotations and Layout Intent
 

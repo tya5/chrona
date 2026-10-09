@@ -18,6 +18,7 @@ from chrona.presentation.layout.presentation import TrackPlacement
 from chrona.presentation.layout.rounded_outline import resolve_corner_radius
 from chrona.presentation.layout.chip_geometry import chip_padding
 from chrona.presentation.model.semantic_registry import label_chip_semantic, semantic_binding
+from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.layout.surface_quality import (
     CollisionDomain, GroupPlacement, IconPlacement, LaneLabelSuppression,
     MarkPlacement, PlacementDecision, RowPlacement, ScalePlacement, ShapePlacement,
@@ -68,6 +69,8 @@ class SurfaceMemberLabelsBatch:
     diagnostics: tuple[str, ...]
     lane_label_suppressions: tuple[LaneLabelSuppression, ...]
     handled_visual_sources: frozenset[str]
+    diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
+    visible_overflow_subjects: tuple[tuple[str, tuple[DiagnosticSubject, ...]], ...] = ()
 
 
 def _lane_label_candidates(side: str, fallback: tuple[str, ...], preferred: str | None) -> tuple[str, ...]:
@@ -205,7 +208,8 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                     inside_host_obstacle_id=host_mark_id if mark is not None else None,
                     semantic_id="memberLabel", lane_row_id=lane[0] if lane else None,
                     lane_member_id=lane[1] if lane else None,
-                    lane_source_kind=item.source_kind if lane else None))
+                    lane_source_kind=item.source_kind if lane else None,
+                subjects=(DiagnosticSubject.project_object(item.object_id, item.title),)))
         for folded in getattr(projection, "folded_points", ()):
             instance_id = f"group-header:{folded.group_id}:{folded.item.item_id or folded.item.object_id}"
             host_kind = "actual" if folded.item.source_kind == "actual" else "planned"
@@ -221,7 +225,8 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                 folded.item.title, LabelRect(*bounds_from_rect(mark.bounds)), ladder, "groupHeader",
                 "group-header-point", CollisionDomain("group-header", folded.group_id),
                 "visible-overflow", bounds=LabelRect(*bounds_from_rect(group.header_bounds)),
-                inside_host_obstacle_id=mark.placement_id, semantic_id="memberLabel"))
+                inside_host_obstacle_id=mark.placement_id, semantic_id="memberLabel",
+                subjects=(DiagnosticSubject.project_object(folded.item.object_id, folded.item.title),)))
     for review_row in context.review_rows:
         for item in review_row.items:
             layout_id = f"{review_row.row_id}:{item.item_id or item.object_id}"
@@ -242,7 +247,8 @@ def build_member_label_requests(context: SurfaceMemberLabelContext) -> SurfaceMe
                 requests.append(LabelRequest(f"variance:{instance_id}", item.object_id,
                     f"{item.finish_delta:+d}d", anchor, ("above", "below", "end", "start"),
                     "summary", f"variance:{instance_id}", CollisionDomain("timeline", "overlay"),
-                    request.surface_content.label_overflow, semantic_id="finishDelta"))
+                    request.surface_content.label_overflow, semantic_id="finishDelta",
+                    subjects=(DiagnosticSubject.project_object(item.object_id, item.title),)))
     pre_route = tuple(item for item in requests if item.rule_host_obstacle_id is not None or
         (projection.lane_membership is not None and item.semantic_id == "memberLabel"))
     pre_ids = {id(item) for item in pre_route}
@@ -271,6 +277,8 @@ def place_member_labels(context: SurfaceMemberLabelContext,
     overflows: list[tuple[TextPlacement, LabelRect]] = []
     decisions: list[PlacementDecision] = []
     diagnostics: list[str] = []
+    diagnostic_provenance: list[DiagnosticProvenance] = []
+    visible_overflow_subjects: list[tuple[str, tuple[DiagnosticSubject, ...]]] = []
     suppressions: list[LaneLabelSuppression] = []
     handled: set[str] = set()
 
@@ -382,7 +390,10 @@ def place_member_labels(context: SurfaceMemberLabelContext,
                                 fallback_ladder=suppression_ladder, selected_rung="suppress"))
             decisions.append(PlacementDecision(label_request.placement_id, label_request.source_ref,
                                                suppression_ladder, "suppress", "suppressed"))
-            diagnostics.append(f"W_LAYOUT_LABEL_SUPPRESSED:{label_request.placement_id}")
+            diagnostic = f"W_LAYOUT_LABEL_SUPPRESSED:{label_request.placement_id}"
+            diagnostics.append(diagnostic)
+            if label_request.subjects:
+                diagnostic_provenance.append(DiagnosticProvenance(diagnostic, label_request.subjects))
             if label_request.lane_row_id is not None and label_request.lane_member_id is not None:
                 lane_row = rows[label_request.lane_row_id]
                 remaining = max(Decimal(0), lane_row.bounds.block_size - Decimal(str(
@@ -432,9 +443,12 @@ def place_member_labels(context: SurfaceMemberLabelContext,
                 corner_radius=resolve_corner_radius(request.theme_tokens.optional_token(
                     semantic_binding(chip_semantic).theme_role, "cornerRadius", "radius"),
                     width=chip_box.width, height=chip_box.height, legacy_radius=float(chip[1]) * chip_box.height),
-                lane_row_id=placed_text.lane_row_id, lane_member_id=placed_text.lane_member_id))
+                lane_row_id=placed_text.lane_row_id, lane_member_id=placed_text.lane_member_id,
+                subjects=label_request.subjects))
         if visible_overflow:
             overflows.append((placed_text, slot_bounds))
+            if label_request.subjects:
+                visible_overflow_subjects.append((placed_text.placement_id, label_request.subjects))
         if visuals:
             if not hasattr(label_metrics, "cap_height_at"):
                 raise LayoutError("E_FONT_METRICS_CAP_HEIGHT", next(v.source_ref for v, _, _, _ in visuals))
@@ -453,4 +467,5 @@ def place_member_labels(context: SurfaceMemberLabelContext,
         decisions.append(PlacementDecision(label_request.placement_id, label_request.source_ref,
                                            ladder, candidate.side, "placed", candidate.search_count))
     return SurfaceMemberLabelsBatch(tuple(text), tuple(shapes), tuple(icons),
-        tuple(overflows), tuple(decisions), tuple(diagnostics), tuple(suppressions), frozenset(handled))
+        tuple(overflows), tuple(decisions), tuple(diagnostics), tuple(suppressions), frozenset(handled),
+        tuple(diagnostic_provenance), tuple(visible_overflow_subjects))

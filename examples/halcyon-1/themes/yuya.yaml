@@ -387,7 +387,7 @@ body:
       type: pattern
       value:
         kind: catalog
-        ref: chrona-starter:seigaiha
+        ref: chrona-target-parts:seigaiha
     kind-stamp-placement:
       type: stampPlacement
       value:

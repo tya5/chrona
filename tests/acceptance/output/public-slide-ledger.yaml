@@ -17,7 +17,9 @@ slides:
   controller-z/as-of-below-plot: {axisLabels: 7, dvtHosted: true}
   controller-z/as-of-cone: {axisLabels: 7, dvtHosted: true, chips: ['chip:as-of-label']}
   controller-z/as-of-foot: {axisLabels: 7, dvtHosted: true}
+  controller-z/axis-alternating: {axisLabels: 7, dvtHosted: true}
   controller-z/axis-cell-corners: {axisLabels: 7, dvtHosted: true}
+  controller-z/axis-interval-scales: {axisLabels: 7, dvtHosted: true}
   controller-z/axis-ticks: {axisLabels: 7, dvtHosted: true}
   controller-z/axis-tiers: {axisLabels: 7, dvtHosted: true}
   controller-z/baseline-ghosts: {axisLabels: 7, dvtHosted: true}

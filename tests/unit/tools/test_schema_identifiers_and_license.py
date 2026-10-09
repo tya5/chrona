@@ -79,7 +79,7 @@ ID_SITES: dict[tuple[str, str], int] = {
     ("scene-v0.7.schema.yaml", "scene-text"): 31,
     ("snapshot-ref-v0.3.schema.yaml", "non-empty-string"): 1,
     ("summary-profile-v0.2.schema.yaml", "non-empty-string"): 3,
-    ("theme-asset-source-v0.1.schema.yaml", "portable-name"): 1,
+    ("theme-asset-source-v0.2.schema.yaml", "portable-name"): 1,
     ("theme-v0.15.schema.yaml", "non-empty-string"): 1,
     ("theme-v0.16.schema.yaml", "non-empty-string"): 2,
     ("view-v0.28.schema.yaml", "figure-identity"): 3,
@@ -153,7 +153,7 @@ def test_the_resource_envelope_id_of_a_part_consumer_is_the_part_not_an_inline_c
     # View, both icon catalogs and summary-profile take `id` from presentation-resource; they declare no inline envelope id.
     part = schema_document("presentation-resource-v0.1.schema.yaml")["$defs"]
     assert "resourceRef" in part
-    for name in ("view-v0.28.schema.yaml", "icon-catalog-v0.4.schema.yaml", "summary-profile-v0.2.schema.yaml"):
+    for name in ("view-v0.28.schema.yaml", "icon-catalog-v0.5.schema.yaml", "summary-profile-v0.2.schema.yaml"):
         assert "urn:chrona:presentation-resource-v0.1" in (SCHEMAS / name).read_text(encoding="utf-8")
 
 
@@ -213,8 +213,8 @@ def test_committed_schemes_keep_their_project_pending_license():
 
 
 def test_the_asset_schemas_share_the_license_object_and_color_scheme_does_not():
-    assert COMMON_ID + "#/$defs/license" in (SCHEMAS / "icon-catalog-v0.4.schema.yaml").read_text(encoding="utf-8")
-    assert COMMON_ID + "#/$defs/license" in (SCHEMAS / "theme-asset-source-v0.1.schema.yaml").read_text(encoding="utf-8")
+    assert COMMON_ID + "#/$defs/license" in (SCHEMAS / "icon-catalog-v0.5.schema.yaml").read_text(encoding="utf-8")
+    assert COMMON_ID + "#/$defs/license" in (SCHEMAS / "theme-asset-source-v0.2.schema.yaml").read_text(encoding="utf-8")
     assert "common-v0.1#/$defs/license" not in (SCHEMAS / COLOR_SCHEME).read_text(encoding="utf-8")
     license_field = next(node["properties"]["license"] for node in _walk(_schema(COLOR_SCHEME))
                          if isinstance(node, dict) and isinstance(node.get("properties"), dict) and "license" in node["properties"])

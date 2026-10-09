@@ -1,4 +1,4 @@
-version: chrona/theme-asset-source/v0.1
+version: chrona/theme-asset-source/v0.2
 kind: theme-asset-source
 id: test-assets
 body:

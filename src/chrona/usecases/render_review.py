@@ -19,6 +19,7 @@ from typing import Any, Mapping
 from chrona.core.diagnostics import Diagnostic
 from chrona.usecases.diagnostic_messages import error_message
 from chrona.usecases.warning_ledger import RenderWarning, collect_render_warnings
+from chrona.presentation.model.diagnostic_sources import DiagnosticSubject, PrimitiveProvenance
 from chrona.presentation.scene.viewer_fit import viewer_fit_fallbacks
 from chrona.core.ports import RenderArtifact, Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
@@ -50,6 +51,9 @@ from chrona.core.figures import FigureCounts, resolve_figures
 from chrona.core.periods import period_range_diagnostics, resolve_periods
 from chrona.core.temporal import Calendar
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
+from chrona.presentation.model.axis_color_scale import (
+    AxisBandScaleError, resolve_axis_band_scales, validate_axis_band_fill_targets,
+)
 from chrona.presentation.model.projection import ReviewDeadline, ReviewPeriod, build_review_projection
 from chrona.presentation.model.surface_content import HeadingContent, SummaryContent, SurfaceContentInput, TableContent
 from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput, ViewRowMode
@@ -164,6 +168,7 @@ class ScenePerceptibilityWarning:
     slot_id: str | None
     measured_facts: tuple[tuple[str, float | str], ...]
     disposition: str | None
+    subjects: tuple[DiagnosticSubject, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -176,6 +181,7 @@ class SceneContrastWarning:
     primitive_ids: tuple[str, ...]
     measured_facts: tuple[tuple[str, float | str], ...]
     disposition: str | None
+    subjects: tuple[DiagnosticSubject, ...] = ()
 
 
 class ClosureReadLedger:
@@ -234,9 +240,9 @@ def admit_v05_detail_content(content: SurfaceContentInput, *, detail: ReviewDeta
     }
     for source in ("group-details", "milestones", "observations"):
         if declared[source] and source not in available:
-            raise ReviewDetailError("E_DETAIL_SLOT_REQUIRED")
+            raise ReviewDetailError(f"E_DETAIL_SLOT_REQUIRED: Detail content source {source!r} requires a declared Layout slot")
         if not declared[source] and source in required:
-            raise ReviewDetailError("E_LAYOUT_SOURCE_UNAVAILABLE")
+            raise ReviewDetailError(f"E_LAYOUT_SOURCE_UNAVAILABLE: required Layout source {source!r} has no Detail content declaration")
     return content
 
 
@@ -311,6 +317,16 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         summary=summary, locale=environment.locale, color_scale=color_scale, table=table_content,
         group_tints=group_tints, annotation_kind_colors=_annotation_kind_colors(theme),
         annotation_kind_also=_annotation_kind_also(theme))
+    try:
+        validate_axis_band_fill_targets(selected_content.axis_tiers, ThemeTokenView(theme))
+        axis_band_scale = resolve_axis_band_scales(
+            selected_content.axis_tiers, window=projection.window,
+            fiscal_start_month=selected_content.axis_fiscal_start_month,
+            scales=theme["body"].get("colorScales", {}), categories=theme["body"].get("categorySlots", {}),
+            color_vision=tuple(theme["body"].get("colorVision", ())))
+    except AxisBandScaleError as error:
+        raise RenderFailed(error.code, error.detail, "presentation", error.path) from error
+    selected_content = replace(selected_content, axis_band_paints=axis_band_scale.paints)
     selected_content = _complete_annotation_headers(selected_content, theme, projection)
     heading_content = (compose_heading(view, project, actual_observations, environment.locale)
                        if view.surface == "table-timeline" else None)
@@ -459,14 +475,15 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         validate_surface_visual_profile(surface, visual_profile)
     except VisualCapabilityError as error:
         raise RenderFailed(error.diagnostic_id, error.message, "presentation", error.path) from error
-    collisions = (color_scale.collisions if color_scale is not None else ()) + group_tint_collisions
+    collisions = ((color_scale.collisions if color_scale is not None else ())
+                  + group_tint_collisions + axis_band_scale.collisions)
     scene = _inspection_scene(render_closure, surface, projection, surface_content,
                               (surface.canvas_bounds[2], surface.canvas_bounds[3]),
                               resolution.tabular_warnings if resolution is not None else (),
                               ())
-    perceptibility_warnings = (_scene_perceptibility_warnings(scene)
+    perceptibility_warnings = (_scene_perceptibility_warnings(scene, surface.primitive_provenance)
                                if render_closure.context.identity.revision == "draft" else ())
-    contrast_warnings = _scene_contrast_warnings(scene, theme)
+    contrast_warnings = _scene_contrast_warnings(scene, theme, surface.primitive_provenance)
     renderer = request.renderer or renderer_for(
         {"kind": render_closure.context.target.kind, "capabilities": list(render_closure.context.target.capabilities)},
         environment.renderer_environment(),
@@ -490,6 +507,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         perceptibility_warnings=perceptibility_warnings, scale_collisions=collisions,
         attachment_warnings=attachments, deadline_warnings=deadlines,
         contrast_warnings=contrast_warnings,
+        surface_provenance=surface.diagnostic_provenance,
     )
     # Surface diagnostics are already in the preliminary Scene. Append only
     # the post-composition families, preserving duplicates and their order.
@@ -564,12 +582,16 @@ def _font_warnings(substitutions: tuple[FontGlyphSubstitution, ...], target_kind
     ) for item in substitutions)
 
 
-def _scene_perceptibility_warnings(scene: InspectionScene) -> tuple[ScenePerceptibilityWarning, ...]:
+def _scene_perceptibility_warnings(
+    scene: InspectionScene, provenance: tuple[PrimitiveProvenance, ...] = (),
+) -> tuple[ScenePerceptibilityWarning, ...]:
     """Project only evaluator errors into ordered draft feedback facts."""
-    return _warnings_from_findings(evaluate_scene_perceptibility(scene_document(scene)))
+    return _warnings_from_findings(evaluate_scene_perceptibility(scene_document(scene)), provenance)
 
 
-def _scene_contrast_warnings(scene: InspectionScene, theme: Mapping[str, Any]) -> tuple[SceneContrastWarning, ...]:
+def _scene_contrast_warnings(
+    scene: InspectionScene, theme: Mapping[str, Any], provenance: tuple[PrimitiveProvenance, ...] = (),
+) -> tuple[SceneContrastWarning, ...]:
     """Report the contrast findings under the Theme's `contrastPolicy` (#995, #1126).
 
     Contrast constraints are an opt-in design option: a class the Theme does not declare is `warning` (a typed
@@ -586,10 +608,22 @@ def _scene_contrast_warnings(scene: InspectionScene, theme: Mapping[str, Any]) -
         more = f" and {len(blocking) - 1} more" if len(blocking) > 1 else ""
         raise RenderFailed(first.code, f"{first.primitive_id} ({first.visual_role}){ratio}{more}; the Theme declares "
                            f"contrastPolicy.{member}: error", "presentation", f"/body/contrastPolicy/{member}")
-    return _contrast_warnings_from_findings(findings)
+    return _contrast_warnings_from_findings(findings, provenance)
 
 
-def _contrast_warnings_from_findings(findings: tuple[SceneContrastFinding, ...]) -> tuple[SceneContrastWarning, ...]:
+def _finding_subjects(
+    primitive_ids: tuple[str, ...], provenance: tuple[PrimitiveProvenance, ...],
+) -> tuple[DiagnosticSubject, ...]:
+    """Join exact producer identities, preserving finding and subject order."""
+    by_id: dict[str, list[DiagnosticSubject]] = {}
+    for item in provenance:
+        by_id.setdefault(item.primitive_id, []).extend(item.subjects)
+    return tuple(dict.fromkeys(subject for identity in primitive_ids for subject in by_id.get(identity, ())))
+
+
+def _contrast_warnings_from_findings(
+    findings: tuple[SceneContrastFinding, ...], provenance: tuple[PrimitiveProvenance, ...] = (),
+) -> tuple[SceneContrastWarning, ...]:
     warnings = []
     for finding in findings:
         if finding.severity != "warning":
@@ -602,14 +636,18 @@ def _contrast_warnings_from_findings(findings: tuple[SceneContrastFinding, ...])
                 facts.append((name, value))
         warnings.append(SceneContrastWarning(
             finding.code, WARNING_BLOCKING_CODES[finding.code], finding.scene_path,
-            (finding.primitive_id,) if finding.primitive_id is not None else (), tuple(facts), finding.disposition))
+            (finding.primitive_id,) if finding.primitive_id is not None else (), tuple(facts), finding.disposition,
+            _finding_subjects((finding.primitive_id,) if finding.primitive_id is not None else (), provenance)))
     return tuple(warnings)
 
 
-def _warnings_from_findings(findings: tuple[ScenePerceptibilityFinding, ...]) -> tuple[ScenePerceptibilityWarning, ...]:
+def _warnings_from_findings(
+    findings: tuple[ScenePerceptibilityFinding, ...], provenance: tuple[PrimitiveProvenance, ...] = (),
+) -> tuple[ScenePerceptibilityWarning, ...]:
     return tuple(ScenePerceptibilityWarning(
         "W_" + finding.code.removeprefix("E_"), finding.code, finding.scene_path,
         finding.primitive_ids, finding.slot_id, finding.measured_facts, finding.disposition,
+        _finding_subjects(finding.primitive_ids, provenance),
     ) for finding in findings if finding.severity == "error")
 
 

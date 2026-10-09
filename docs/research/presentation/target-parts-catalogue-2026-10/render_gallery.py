@@ -20,7 +20,7 @@ import sys
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[3]
-CATALOGUE = ROOT / "src/chrona/resources/icons/chrona-target-parts-v2026-10.yaml"
+CATALOGUE = ROOT / "src/chrona/resources/icons/chrona-target-parts-v2026-10-09.yaml"
 FONT = ROOT / "src/chrona/resources/fonts/noto-sans-regular-v1.ttf"
 BOLD = ROOT / "src/chrona/resources/fonts/noto-sans-bold-v1.ttf"
 
@@ -34,7 +34,7 @@ GROUPS = [
     ("Gate glyphs", ["lantern", "lantern-outline", "hexagon", "hexagon-outline", "pin", "pin-outline", "star", "star-outline", "diamond", "diamond-outline"]),
     ("Frames and borders", ["scroll-frame", "clipping-edge", "bulb", "panel-corner", "hazard-tab"]),
     ("Marks", ["seal-risk", "seal-note"]),
-    ("Patterns", ["hatch-fine", "hatch", "hatch-wide", "hazard-stripes", "ben-day-dots", "ben-day-dots-fine", "bulb-row", "hexagon-lattice", "hexagon-lattice-wide"]),
+    ("Patterns", ["hatch-fine", "hatch", "hatch-wide", "hazard-stripes", "ben-day-dots", "ben-day-dots-fine", "bulb-row", "hexagon-lattice", "hexagon-lattice-wide", "seigaiha"]),
 ]
 
 COLUMNS = 6
@@ -75,7 +75,10 @@ def pattern_def(pid: str, entry: dict, token: dict, scale: float) -> str:
     body = [f'<rect width="{num(width)}" height="{num(height)}" fill="{token["substrate"]}"/>']
     for primitive in entry["primitives"]:
         if primitive["kind"] == "circle":
-            body.append(f'<circle cx="{num(primitive["cx"])}" cy="{num(primitive["cy"])}" r="{num(primitive["radius"])}" fill="{token["ink"]}"/>')
+            channel = primitive.get("fillChannel", "ink")
+            fill = {"ink": token["ink"], "substrate": token["substrate"], "none": "none"}[channel]
+            stroke = f' stroke="{token["ink"]}" stroke-width="{num(primitive["strokeWidth"])}"' if "strokeWidth" in primitive else ""
+            body.append(f'<circle cx="{num(primitive["cx"])}" cy="{num(primitive["cy"])}" r="{num(primitive["radius"])}" fill="{fill}"{stroke}/>')
         elif primitive["kind"] == "rect":
             body.append(f'<rect x="{num(primitive["x"])}" y="{num(primitive["y"])}" width="{num(primitive["inlineSize"])}" '
                         f'height="{num(primitive["blockSize"])}" fill="{token["ink"]}"/>')
@@ -134,7 +137,7 @@ def render() -> str:
     head = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" '
             f'role="img" aria-label="chrona-target-parts catalogue: every glyph and pattern at two sizes in two Themes">')
     title = (f'<rect width="{width}" height="{height}" fill="#fafafa"/>'
-             f'<text x="24" y="34" font-family="Noto Sans" font-weight="700" font-size="22" fill="#111">chrona-target-parts-v2026-10</text>'
+             f'<text x="24" y="34" font-family="Noto Sans" font-weight="700" font-size="22" fill="#111">chrona-target-parts-v2026-10-09</text>'
              f'<text x="24" y="56" font-family="Noto Sans" font-size="12.5" fill="#444">{len(glyphs)} glyphs and {len(patterns)} patterns, MIT. '
              f'Glyphs are drawn at 64 and 20 px, patterns at 1x and 2x, each in two Themes; the catalogue carries no colour, the Theme tokens supply ink and substrate.</text>')
     return head + title + "<defs>" + "".join(defs) + "</defs>" + "".join(body) + "</svg>\n"

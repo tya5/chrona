@@ -10,7 +10,7 @@ import yaml
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[3]
 ICONS = ROOT / "src/chrona/resources/icons"
-SOURCE = ICONS / "chrona-annotation-parts-v2026-10.source.yaml"
+SOURCE = ICONS / "chrona-annotation-parts-v2026-10-09.source.yaml"
 NOTICE = ICONS / "chrona-annotation-parts.NOTICE"
 
 RODS = [
@@ -28,9 +28,9 @@ MOUNTING = [
 def render_source() -> str:
     notice = NOTICE.read_text(encoding="utf-8")
     document = {
-        "version": "chrona/theme-asset-source/v0.1",
+        "version": "chrona/theme-asset-source/v0.2",
         "kind": "theme-asset-source",
-        "id": "chrona-annotation-parts-v2026-10",
+        "id": "chrona-annotation-parts-v2026-10-09",
         "body": {
             "set": "chrona-annotation-parts",
             "aliases": ["annotation-parts"],

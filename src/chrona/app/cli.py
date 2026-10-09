@@ -70,9 +70,10 @@ def _emit_failure(failure: CliFailure) -> NoReturn:
     _emit_report(report_failure(failure))
 
 
-def _emit_render_warnings(rendered: RenderedReview) -> None:
-    for payload in warning_payloads(rendered):
-        print(json.dumps(payload, ensure_ascii=False, sort_keys=True), file=sys.stderr)
+def _emit_render_result(rendered: RenderedReview) -> None:
+    """One machine-readable success channel; warnings never change exit 0."""
+    print(json.dumps({"status": "ok", "diagnostics": [], "warnings": warning_payloads(rendered)},
+                     ensure_ascii=False, sort_keys=True))
 
 
 def _reject(diagnostics: list[Diagnostic], component: str = "core") -> NoReturn:
@@ -197,8 +198,8 @@ def _parser() -> JsonArgumentParser:
     icon_sub = icon.add_subparsers(dest="icon_command", required=True, parser_class=JsonArgumentParser)
     command = icon_sub.add_parser("import", help="import a local Iconify JSON collection or declared Theme assets")
     command.add_argument("source", nargs="?", help="local Iconify JSON collection (omit with --theme-assets)")
-    command.add_argument("--theme-assets", help="local chrona/theme-asset-source/v0.1 YAML")
-    command.add_argument("--output", required=True, help="new v0.3 or v0.4 catalog YAML")
+    command.add_argument("--theme-assets", help="local chrona/theme-asset-source/v0.2 YAML")
+    command.add_argument("--output", required=True, help="new v0.3 icon-only or v0.5 Theme asset catalog YAML")
     command.add_argument("--license-spdx", help="declared upstream SPDX identifier for Iconify input")
     command.add_argument("--notice-file", help="local complete upstream license notice for Iconify input")
     command.add_argument("--set", dest="icon_set", help="canonical set name (defaults to collection prefix)")
@@ -364,7 +365,7 @@ def _run_render_review(args: argparse.Namespace) -> None:
     _resolve_output_target(args.output, closure.context.target.kind)
     rendered = render_context_closure(closure, Path(args.snapshot_root), reject_unused_inputs=args.reject_unused_closure_inputs)
     _write_render_outputs(rendered, args)
-    _emit_render_warnings(rendered)
+    _emit_render_result(rendered)
 
 
 def _store_reader(args: argparse.Namespace):
@@ -509,7 +510,7 @@ def _run_draft_render(args: argparse.Namespace) -> None:
         typesetter_adapter_grammar=args.typesetter_adapter_grammar,
     ))
     _write_render_outputs(result.rendered, args)
-    _emit_render_warnings(result.rendered)
+    _emit_render_result(result.rendered)
 
 
 def _write_render_outputs(rendered: RenderedReview, args: argparse.Namespace) -> None:
@@ -544,7 +545,6 @@ def _run_guided_draft_render(args: argparse.Namespace) -> None:
     args.draft_auto_block = draft.auto_block
     rendered = _render_review(draft.closure, args, asset_root=draft.asset_root)
     Path(args.output).write_bytes(rendered.artifact.content)
-    _emit_render_warnings(rendered)
     if args.provenance:
         provenance = draft.closure.guided_provenance
         if provenance is None:  # defensive: this route must never become an explicit Draft alias
@@ -557,6 +557,7 @@ def _run_guided_draft_render(args: argparse.Namespace) -> None:
             "presetContentIdentity": provenance.preset_identity, "bindingContentIdentity": provenance.binding_identity,
             "normalizerVersion": provenance.normalizer_version,
         }, sort_keys=True) + "\n", encoding="utf-8")
+    _emit_render_result(rendered)
 
 
 def _run_authoring_command(args: argparse.Namespace) -> None:

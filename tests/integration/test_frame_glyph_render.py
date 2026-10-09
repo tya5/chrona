@@ -16,7 +16,7 @@ from chrona.usecases.render_review import RenderFailed, RenderRequest, render_re
 from tests.support import synthetic_review as sr
 
 ROOT = Path(__file__).resolve().parents[2]
-CATALOGUE = ROOT / "src/chrona/resources/icons/chrona-target-parts-v2026-10.yaml"
+CATALOGUE = ROOT / "src/chrona/resources/icons/chrona-target-parts-v2026-10-09.yaml"
 FIXTURE = ROOT / "tests/fixtures/surface-decoration/marquee-glyph-frame.yaml"
 SVG = "chrona-output/visual/v0.6-svg"
 PNG = "chrona-output/visual/v0.6-png"

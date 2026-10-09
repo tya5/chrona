@@ -77,33 +77,33 @@ body:
       revision:
         token: example-v1
     iconCatalogs:
-    - id: chrona-target-parts-v2026-10
+    - id: chrona-target-parts-v2026-10-09
       kind: icon-catalog
       store:
         provider: local
         identity: halcyon-1-example
-      address: catalogs/chrona-target-parts-v2026-10.yaml
+      address: catalogs/chrona-target-parts-v2026-10-09.yaml
       revision:
         token: example-v1
-      contentIdentity: sha256:22fb3e80b35568bf3cbd55f94c0af715b8606322547b5e81a0254009ca45d1dc
-    - id: chrona-annotation-parts-v2026-10
+      contentIdentity: sha256:139be42bed11eaa9809ef98bb427eb74f8f0862c3d5c4ccfd9eba2b23185acee
+    - id: chrona-annotation-parts-v2026-10-09
       kind: icon-catalog
       store:
         provider: local
         identity: halcyon-1-example
-      address: catalogs/chrona-annotation-parts-v2026-10.yaml
+      address: catalogs/chrona-annotation-parts-v2026-10-09.yaml
       revision:
         token: example-v1
-      contentIdentity: sha256:c92700cdd10b4d2f1096ded9853fdd1d0d14123526e91b4c2fe9b2ba11d7ac9d
-    - id: chrona-theme-starter-v2026-09-29
+      contentIdentity: sha256:6cd6591036f927a7df4fe2ee75274bcb38dd90790e4823e9121ff0d2be55f5c9
+    - id: chrona-theme-starter-v2026-10-09
       kind: icon-catalog
       store:
         provider: local
         identity: halcyon-1-example
-      address: catalogs/chrona-theme-starter-v2026-09-29.yaml
+      address: catalogs/chrona-theme-starter-v2026-10-09.yaml
       revision:
         token: example-v1
-      contentIdentity: sha256:9e7328de7c437fb927ecd0522431f7ef0efe82ea4bdab9774e3264330ec171f1
+      contentIdentity: sha256:2945f6d2767ca0cc2c8a4a6045055c6f1ee944f5097269ee45340904856b0ec0
   environment:
     viewport:
       inlineSize: 1600

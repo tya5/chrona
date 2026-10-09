@@ -145,6 +145,15 @@ def test_scene_documents_are_mapped_to_their_declared_versions(committed):
     assert all(record["valid"] for record in scenes)
 
 
+def test_scene_ingress_keeps_serialization_detail_out_of_the_diagnostic_code():
+    document = {"version": "chrona/scene/v0.6", "kind": "bogus"}
+
+    diagnostic = gate._ingress_scene(document, "scene-v0.6.schema.yaml")
+
+    assert diagnostic is not None
+    assert diagnostic == {"code": "E_SCENE_SERIALIZATION", "pointer": "", "rule": "", "message": ""}
+
+
 def test_registry_holds_every_schema_id_and_resolves_urn_references(base_schemas):
     registry = gate.build_registry(base_schemas)
 

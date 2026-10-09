@@ -139,6 +139,13 @@ for the CLI rows; `message` is an optional schema property, so no version change
 Accepted mutations also name `resultTarget`;
 checks and rejections do not fabricate it. Console text is never an automation API.
 
+Actual/intake/snapshot command result diagnostic strings preserve their leading
+stable code and carry owner detail as `E_X: detail` (#918). The owner names
+the conflicting revision, external key, observation, snapshot or identity
+operand when available; automation rows use the existing leading-code split.
+This enriches messages without changing atomic rejection, replay or Store
+publication behavior, and does not introduce a result schema version.
+
 The CLI exits `0` for accepted work (including an accepted replay), `2` for a declared
 rejection, and `3` only when the runner cannot construct or write its requested result
 artifact. Schema-valid results are still written for exit `2`; no result is promised

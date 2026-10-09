@@ -20,7 +20,7 @@ from tests.support import synthetic_review as sr
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = ROOT / "tests/fixtures/surface-decoration"
-CATALOGUE = ROOT / "src/chrona/resources/icons/chrona-target-parts-v2026-10.yaml"
+CATALOGUE = ROOT / "src/chrona/resources/icons/chrona-target-parts-v2026-10-09.yaml"
 SCANLINE_SOURCE = FIXTURES / "scanlines-theme-assets.yaml"
 RICH_SVG = "chrona-output/visual/v0.6-svg"
 RICH_PNG = "chrona-output/visual/v0.6-png"

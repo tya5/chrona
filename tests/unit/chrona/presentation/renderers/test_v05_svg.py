@@ -83,6 +83,66 @@ def test_catalogue_pattern_uses_completed_origin_substrate_and_ink_in_svg_and_pn
     assert image.getpixel((4, 3)) == (255, 255, 255)
 
 
+def test_catalogue_circle_channels_render_in_declared_order_with_native_stroke():
+    pattern = PatternGeometry(
+        10, 10, 0, density_basis_points=4000,
+        primitives=(
+            PatternTilePrimitive("circle", cx=5, cy=5, radius=4, fill_channel="substrate"),
+            PatternTilePrimitive("circle", cx=5, cy=5, radius=3,
+                                 fill_channel="none", stroke_width=0.5),
+        ),
+        origin=(0, 0), region_bounds=(0, 0, 10, 10), clip_bounds=(0, 0, 10, 10),
+        corner_radius=0,
+    )
+    rect = ScenePrimitive("circles", "Rect", "a", "object", "planned", "planned", (0, 0, 10, 10),
+                          paint=ScenePaint("#FFFFFF", "#202020", None, (), 1), pattern=pattern)
+    output = render_v05_svg(_surface(rect))
+    first = '<circle cx="5" cy="5" r="4" fill="#FFFFFF"/>'
+    second = '<circle cx="5" cy="5" r="3" fill="none" stroke="#202020" stroke-width="0.5"/>'
+    assert first in output and second in output and output.index(first) < output.index(second)
+
+
+def test_catalogue_circle_substrate_requires_completed_fill_with_actionable_detail():
+    pattern = PatternGeometry(
+        4, 4, 0, density_basis_points=1000,
+        primitives=(PatternTilePrimitive("circle", cx=2, cy=2, radius=1,
+                                         fill_channel="substrate"),),
+        origin=(0, 0), region_bounds=(0, 0, 4, 4), clip_bounds=(0, 0, 4, 4),
+        corner_radius=0,
+    )
+    primitive = ScenePrimitive(
+        "substrate", "Rect", "a", "object", "planned", "planned", (0, 0, 4, 4),
+        paint=ScenePaint(None, "#202020", None, (), 1), pattern=pattern,
+    )
+    with pytest.raises(ValueError) as error:
+        render_v05_svg(_surface(primitive))
+    assert str(error.value).startswith("E_PRESENTATION_PAINT_INVALID:")
+    assert "pattern circle at (2, 2)" in str(error.value)
+    assert "fillChannel='substrate'" in str(error.value)
+    assert "completed ScenePaint has no fill" in str(error.value)
+
+
+def test_catalogue_circle_invalid_channel_reports_value_and_allowed_channels():
+    # Deliberately bypass the validated Layout DTO to exercise the SVG
+    # adapter's defensive branch for an impossible completed Scene value.
+    item = PatternTilePrimitive("circle", cx=2, cy=2, radius=1)
+    object.__setattr__(item, "fill_channel", "other")
+    pattern = PatternGeometry(
+        4, 4, 0, density_basis_points=1000,
+        primitives=(item,), origin=(0, 0), region_bounds=(0, 0, 4, 4),
+        clip_bounds=(0, 0, 4, 4), corner_radius=0,
+    )
+    primitive = ScenePrimitive(
+        "bad-channel", "Rect", "a", "object", "planned", "planned", (0, 0, 4, 4),
+        paint=ScenePaint("#FFFFFF", "#202020", None, (), 1), pattern=pattern,
+    )
+    with pytest.raises(ValueError) as error:
+        render_v05_svg(_surface(primitive))
+    assert str(error.value).startswith("E_PRESENTATION_PRIMITIVE_INVALID:")
+    assert "fillChannel 'other'" in str(error.value)
+    assert "expected 'ink', 'substrate', or 'none'" in str(error.value)
+
+
 def test_svg_serializes_the_completed_canvas_not_a_caller_supplied_viewport():
     surface = replace(_surface(), canvas_bounds=(3, 4, 17, 19))
     output = render_v05_svg(surface)
@@ -175,7 +235,8 @@ def test_svg_rejects_primitive_without_completed_paint():
     try:
         render_v05_svg(_surface(primitive))
     except ValueError as error:
-        assert str(error) == "E_PRESENTATION_PAINT_INVALID"
+        assert str(error).startswith("E_PRESENTATION_PAINT_INVALID:")
+        assert "scene_id='p'" in str(error) and "no completed paint" in str(error)
     else:
         raise AssertionError("expected completed-paint rejection")
 

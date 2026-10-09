@@ -391,8 +391,8 @@ def _normalise(text: str, root: pathlib.Path) -> str:
     return re.sub(r"\\{2,}", "/", text)
 
 
-def _stream(text: str) -> object:
-    if len(text) <= 3000:
+def _stream(text: str, *, preserve: bool = False) -> object:
+    if preserve or len(text) <= 3000:
         return text
     return {"sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(), "lines": text.count("\n"), "length": len(text)}
 
@@ -447,7 +447,9 @@ def run_case(case: Case) -> tuple[dict[str, object], dict[str, object]]:
         }
         golden = {
             "argv": list(case.argv), "exit": code,
-            "stdout": _stream(_normalise(stdout, root)), "stderr": _warning_stream(stderr) if code == 0 and stderr else _stream(_normalise(stderr, root)),
+            "stdout": _stream(_normalise(stdout, root), preserve=(code == 0 and case.argv[0] in {
+                "render", "render-review", "render-workspace"})),
+            "stderr": _warning_stream(stderr) if code == 0 and stderr else _stream(_normalise(stderr, root)),
             "files": files,
         }
         raw = {"argv": list(case.argv), "exit": code, "stdout": stdout.replace(str(root), "<tmp>"),
@@ -484,10 +486,49 @@ def test_golden_holds_no_host_path():
         assert needle not in text, needle
 
 
-def _record() -> None:  # pragma: no cover - maintenance entry point
-    records = {case.id: run_case(case)[0] for case in CASES}
+def _record() -> None:
+    records = {}
+    # Capture exact artifacts in the same pass as the golden, not a second
+    # round of expensive renders just to recover their byte evidence.
+    with contextlib.ExitStack() as stack:
+        target = os.environ.get("CHRONA_CHARACTERIZATION_RAW")
+        raw_stream = stack.enter_context(open(target, "w", encoding="utf-8")) if target else None
+        for case in CASES:
+            golden, raw = run_case(case)
+            records[case.id] = golden
+            if raw_stream is not None:
+                raw_stream.write(json.dumps({"id": case.id, **raw}, sort_keys=True, ensure_ascii=False) + "\n")
     GOLDEN.write_text(json.dumps(records, indent=1, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"recorded {len(records)} cases to {GOLDEN}")
+
+
+def test_successful_render_envelopes_remain_auditable_above_the_stream_digest_limit():
+    envelope = json.dumps({"status": "ok", "diagnostics": [], "warnings": [
+        {"code": "W_LAYOUT_LABEL_SUPPRESSED", "message": "x" * 4000}
+    ]})
+    assert _stream(envelope, preserve=True) == envelope
+    assert isinstance(_stream(envelope), dict)
+
+
+def test_record_captures_golden_and_byte_evidence_in_one_pass(tmp_path, monkeypatch):
+    target = tmp_path / "raw.jsonl"
+    golden_path = tmp_path / "golden.json"
+    cases = (Case("first", ("render",)), Case("second", ("render",)))
+    calls = []
+
+    def invoke(case):
+        calls.append(case.id)
+        return {"exit": 0}, {"files": {"output.svg": {"sha256": case.id}}}
+
+    monkeypatch.setattr(sys.modules[__name__], "GOLDEN", golden_path)
+    monkeypatch.setattr(sys.modules[__name__], "CASES", cases)
+    monkeypatch.setattr(sys.modules[__name__], "run_case", invoke)
+    monkeypatch.setenv("CHRONA_CHARACTERIZATION_RAW", str(target))
+    _record()
+    assert calls == ["first", "second"]
+    assert json.loads(golden_path.read_text()) == {"first": {"exit": 0}, "second": {"exit": 0}}
+    assert [json.loads(line)["files"]["output.svg"]["sha256"]
+            for line in target.read_text().splitlines()] == calls
 
 
 if __name__ == "__main__":  # pragma: no cover

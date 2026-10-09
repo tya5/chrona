@@ -1,7 +1,7 @@
 # Reusable horizon, ink-only rain underlay and scanline overlay fragments
 # (#888). Merge values, roles, and colorBindings into Theme v0.15; merge
 # categories into the Color Scheme. The scanline ref is supplied by the
-# adjacent neutral source fixture, imported with theme-asset-source/v0.1.
+# adjacent neutral source fixture, imported with theme-asset-source/v0.2.
 themePatch:
   version: chrona/theme/v0.15
   values:

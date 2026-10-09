@@ -20,7 +20,7 @@ from tests.support import annotation_artwork as aw
 from tests.support import annotation_kinds as ak
 
 ROOT = Path(__file__).resolve().parents[2]
-ANNOTATION_CATALOG = ROOT / "src/chrona/resources/icons/chrona-annotation-parts-v2026-10.yaml"
+ANNOTATION_CATALOG = ROOT / "src/chrona/resources/icons/chrona-annotation-parts-v2026-10-09.yaml"
 
 
 def _failure_code(error):

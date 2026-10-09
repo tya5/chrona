@@ -21,7 +21,7 @@ root:
       inlineSize: fill
       blockSize: fill
       gap: {token: spacing.m}
-      padding: {token: spacing.l}
+      padding: {inlineStart: {token: spacing.l}, inlineEnd: {token: spacing.l}, blockStart: {token: spacing.l}, blockEnd: {token: spacing.m}}
       alignItems: stretch
       justifyContent: start
       frame: {inset: 0, paint: inner}

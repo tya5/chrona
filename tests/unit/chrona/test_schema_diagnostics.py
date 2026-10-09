@@ -262,3 +262,28 @@ def test_the_view_table_width_unions_explain_as_their_inlined_twin_did():
             if results[0] != ("valid",):
                 messages.add(results[0][0].message)
     assert "expected one permitted form: properties fr; properties minmax" in messages
+
+
+def test_view_axis_fill_scale_is_closed_and_band_only():
+    from jsonschema import Draft202012Validator
+    from referencing import Resource
+
+    from chrona.resources import schema_document, schema_registry
+
+    schema = schema_document("view-v0.28.schema.yaml")
+    registry = schema_registry().with_resource(schema["$id"], Resource.from_contents(schema))
+    pointer = "/allOf/1/properties/body/properties/axis/properties/tiers/items"
+    validator = Draft202012Validator({"$ref": f"{schema['$id']}#{pointer}"}, registry=registry)
+
+    assert validator.is_valid({"unit": "quarter", "every": 1, "role": "band",
+                               "fillScale": {"scale": "phase", "key": "interval", "containingTier": 0}})
+    assert not validator.is_valid({"unit": "month", "every": 1, "role": "labels",
+                                   "fillScale": {"scale": "phase", "key": "alternating"}})
+    assert not validator.is_valid({"unit": "auto", "every": 1, "role": "band",
+                                   "fillScale": {"scale": "phase", "key": "alternating"}})
+    assert not validator.is_valid({"unit": "month", "every": 1, "role": "band",
+                                   "fillScale": {"scale": "phase", "key": "alternating", "extra": True}})
+    assert not validator.is_valid({"unit": "month", "every": 1, "role": "band",
+                                   "fillScale": {"scale": "phase", "key": "other"}})
+    assert not validator.is_valid({"unit": "month", "every": 1, "role": "band",
+                                   "fillScale": {"scale": "phase", "key": "interval", "containingTier": -1}})

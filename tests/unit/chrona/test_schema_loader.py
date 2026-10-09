@@ -16,7 +16,7 @@ FACTORY = ROOT / "src" / "chrona" / "resources" / "__init__.py"
 # The S0 equivalence gate is independent of the loader on purpose: a loader bug
 # must not be able to hide itself from the gate that checks the loader.
 INDEPENDENT = (ROOT / "tools" / "schema_equivalence.py",)
-PART_REFERENCE_SCHEMAS = ("view-v0.28.schema.yaml", "command-request-v0.3.schema.yaml", "icon-catalog-v0.4.schema.yaml")
+PART_REFERENCE_SCHEMAS = ("view-v0.28.schema.yaml", "command-request-v0.3.schema.yaml", "icon-catalog-v0.5.schema.yaml")
 
 
 def _contains_part_reference(node) -> bool:

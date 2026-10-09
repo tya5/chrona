@@ -73,6 +73,7 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
                         part_mode: str | None = None, part_color: str | None = None,
                         catalog_pattern: bool = False,
                         ink_only_pattern: bool = False,
+                        pattern_has_substrate: bool = False,
                         catalog_glyph_stroke_width: float | None = None,
                         catalog_glyph_line_cap: str | None = None,
                         catalog_glyph_line_join: str | None = None) -> PaintResolution:
@@ -102,6 +103,9 @@ def resolve_scene_paint(tokens: ThemeTokenView, role: str, family: PaintFamily,
         raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/strokeWidth")
     if ink_only_pattern and (not catalog_pattern or fill is not None):
         raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", path)
+    if ink_only_pattern and pattern_has_substrate:
+        raise ScenePaintError("E_PRESENTATION_PAINT_INVALID", path,
+                              "ink-only pattern cannot contain substrate operations")
     if catalog_pattern and fill is None and not ink_only_pattern:
         raise ScenePaintError("E_THEME_ROLE_REQUIRED", f"{path}/fill")
     if catalog_pattern and not ink_only_pattern and opacity not in (None, 1, 1.0):

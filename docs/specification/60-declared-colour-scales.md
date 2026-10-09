@@ -6,18 +6,18 @@
 
 ## 1. Boundary
 
-A declared colour scale is a total, reviewable mapping from one selected
-object-field value to one concrete Scheme colour.  It is not an ordered rule
+A declared colour scale is a total, reviewable mapping from one declared
+source-domain value to one concrete Scheme colour. It is not an ordered rule
 engine, a predicate language, a per-object literal, or a renderer callback.
 The three owners remain separate:
 
 | Owner | Declares |
 | --- | --- |
-| View | eligible mark semantic role, tagged field source, scale ID, and ordered domain |
+| View | eligible target, field source or closed derived interval key, scale ID, and ordered domain |
 | Theme | exact mapping from each scale-domain value to a named Scheme category slot |
 | Color Scheme | named category slot to `#RRGGBB` literal |
 
-The View's tagged source is `{field: <declared Project field>}`; strings are
+For mark encodings, the View's tagged source is `{field: <declared Project field>}`; strings are
 never interpreted as either fields or colours.  An encoding may target only a
 standard mark semantic role declared eligible by this version.  The initial
 eligible role is `planned` member marks.  A scale domain is non-empty, unique,
@@ -46,7 +46,8 @@ the evaluated presentation closure explicitly.
 ## 3. Evaluation and Scene boundary
 
 Closure validation resolves the typed scale table from the pinned View, Theme,
-and Scheme.  Projection supplies selected field values.  Semantic projection
+and Scheme. Projection supplies selected field values; axis encodings use the
+neutral temporal source of section 7 instead. Semantic projection
 first establishes each standard mark role; appearance completion then looks up
 the resolved scale value for an eligible primitive's source object and replaces
 only that paint channel.  Layout never reads a Scheme or field value, and Scene
@@ -98,3 +99,32 @@ A per-group band tint (View `grouping.tint`, [Specification 50](50-constraint-dr
 section 3.4) is a second, separately named scale over the grouping field's
 values. It reuses sections 2, 3 and 5.1 unchanged and does not widen the
 single mark encoding above.
+
+## 7. Axis-band interval scales (#490)
+
+A fixed-unit View band tier may opt into `fillScale: {scale, key, containingTier?}`.
+`key: alternating` uses the complete ordered domain `["0", "1"]`, selecting the
+natural interval ordinal modulo two. `key: interval` uses decimal-string ordinals
+of all retained intervals of the selected source tier. Ordinals start at zero for
+the first natural bucket intersecting the View window; clipping and `every` never
+renumber retained buckets. They are not labels, dates or Project fields.
+
+`containingTier` may name any declared, strictly coarser fixed-unit band tier,
+including one declared later. Each child's full natural interval must have exactly
+one retained parent container; window clipping does not create containment. Gaps,
+crossing intervals, self/finer/labels/auto parents refuse with
+`E_PRESENTATION_AXIS_SCALE_PARENT` at the tier's `fillScale/containingTier`.
+
+Theme supplies an exact `slots` mapping for the whole source domain, even unused
+parent values; palettes and missing/extra keys are `E_PRESENTATION_SCALE_MAPPING`.
+Section 5.1 checks distinct domain entries, not repeated physical band cells.
+The opted-in band role must be drawable with `backgroundTreatment: fill` and no
+covering gradient; otherwise `E_PRESENTATION_AXIS_SCALE_TARGET` identifies the
+View tier. Existing opacity, pattern ink, borders and paint order are retained.
+There is no axis-scale-derived legend or implicit fallback.
+
+Presentation resolves finite temporal values from the same neutral interval
+function/window/fiscal inputs as Layout, completing Scheme colours keyed by
+canonical band placement identity. Layout still owns interval geometry and text.
+Scene only attaches those passive colours to completed primitives; adapters
+neither select an interval nor evaluate a scale. Omission preserves existing output.

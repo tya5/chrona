@@ -152,7 +152,7 @@ allOf:
               baseline: {description: "Comparison baseline source.", enum: [primary, snapshot, scenario]}
               scenario: {description: "Scenario identifier when scenario is the baseline.", type: string, minLength: 1}
               baselineMarks: {description: "With a snapshot baseline in automatic or lane rows, `ghost` draws the baseline snapshot of each selected item as a ghost mark beside the current one, also under field grouping; `ghost-when-changed` draws it only for an item whose baseline placement differs from its current one. Omitted, no ghost is drawn; explicit rows name their snapshot items themselves.", enum: [ghost, ghost-when-changed], examples: [ghost]}
-              missingActualScope: {description: "Which work the missing-actual mark covers. `due-unobserved` (the default) marks a planned finish that has passed with no observation. `in-progress` marks a span that has an actual start and no finish up to the as-of date, drawn as a span in place of its open actual, and marks nothing else (a gate or a span with no observation gets no mark). Not available with lane rows.", enum: [due-unobserved, in-progress], examples: [in-progress]}
+              missingActualScope: {description: "Which work the missing-actual mark covers. `due-unobserved` (the default) marks a planned finish that has passed with no observation. `in-progress` marks a span that has an actual start and no finish up to the as-of date, drawn as a span in place of its open actual, and marks nothing else (a gate or a span with no observation gets no mark).", enum: [due-unobserved, in-progress], examples: [in-progress]}
               actual: {description: "Requiredness of actual observations.", enum: [forbidden, optional, required]}
               observationSelection: {description: "Only the latest observation is selected.", const: latest}
               deltaUnit: {description: "Comparison delta unit.", const: calendar-days}
@@ -217,8 +217,15 @@ allOf:
                     unit: {enum: [auto, day, week, month, quarter, half, year]}
                     every: {type: integer, minimum: 1}
                     role: {enum: [band, labels, grid-major, grid-minor]}
+                    fillScale: {$ref: "#/$defs/axisBandFillScale"}
                     label: {}
                     typographyRole: {description: "Named Theme text-treatment role used to measure this tier and size its lane. Visual paint for a labels tier uses its ordinal axisLabel role, independently of this measurement role. Defaults to axis.", type: string, minLength: 1}
+                  dependentSchemas:
+                    fillScale:
+                      description: "Only a fixed-unit band tier can declare interval paint."
+                      properties:
+                        role: {const: band}
+                        unit: {enum: [day, week, month, quarter, half, year]}
                   allOf:
                     - description: "Only a band or labels tier may bind a typography role for lane sizing."
                       examples: [{unit: quarter, every: 1, role: band, typographyRole: axisQuarter}]
@@ -775,6 +782,16 @@ allOf:
                   - {required: [annotations]}
                   - {required: [annotationPresentation]}
 $defs:
+  axisBandFillScale:
+    description: "Optional Theme colour scale used to fill a fixed-unit band tier."
+    examples: [{scale: phase, key: interval, containingTier: 0}]
+    type: object
+    required: [scale, key]
+    additionalProperties: false
+    properties:
+      scale: {description: "Exact Theme colour-scale identifier.", type: string, minLength: 1}
+      key: {description: "Derive paint from this tier's alternating parity or interval ordinal.", enum: [alternating, interval]}
+      containingTier: {description: "Optional index of the declared coarser fixed-unit band tier whose natural interval contains this one.", type: integer, minimum: 0}
   columnAffix:
     description: "A literal prefix and suffix of one to eight characters wrapped around a table cell's text in one state (#588); at least one is declared."
     examples: [{suffix: "!"}]

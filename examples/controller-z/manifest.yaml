@@ -52,6 +52,16 @@ slides:
     context: contexts/axis-tiers.yaml
     expectedSvg: generated/axis-tiers.svg
     expectedScene: generated/axis-tiers.scene.json
+  - id: axis-alternating
+    evidence: "Quarter and month band fills alternate by each tier's natural interval ordinal from exact Theme Scheme-slot mappings (#490)."
+    context: contexts/axis-alternating.yaml
+    expectedSvg: generated/axis-alternating.svg
+    expectedScene: generated/axis-alternating.scene.json
+  - id: axis-interval-scales
+    evidence: "Quarter interval fills and month fills keyed by their containing quarter use the same exact Theme scale over the February–July window (#490)."
+    context: contexts/axis-interval-scales.yaml
+    expectedSvg: generated/axis-interval-scales.svg
+    expectedScene: generated/axis-interval-scales.scene.json
   - id: axis-ticks
     evidence: "Week ticks standing on the axis rule at every week start, under month labels and quarter bands, from a Theme-declared tick length (#492)."
     context: contexts/axis-ticks.yaml

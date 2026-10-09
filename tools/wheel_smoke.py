@@ -66,9 +66,9 @@ def run() -> None:
     assert (store_reference.is_valid(reference)
             and not store_reference.is_valid({**reference, "address": "../x"})), "revision-store-resource-ref v0.2 not reachable"
     icons = builtin_preset_source_root("icons")
-    for name in ("chrona-theme-starter-v2026-09-29.source.yaml",
-                 "chrona-theme-starter-v2026-09-29.yaml",
-                 "chrona-theme-starter-v2026-09-29.manifest",
+    for name in ("chrona-theme-starter-v2026-10-09.source.yaml",
+                 "chrona-theme-starter-v2026-10-09.yaml",
+                 "chrona-theme-starter-v2026-10-09.manifest",
                  "chrona-theme-starter.NOTICE"):
         assert icons.joinpath(name).is_file(), name
     try:
@@ -128,7 +128,7 @@ def run() -> None:
         assert (skill / "SKILL.md").read_text(encoding="utf-8").startswith("---\nname: chrona\n"), "skill front matter"
         if not skill_svg.read_bytes().startswith(b"<svg"):
             raise AssertionError("the skill's worked example did not render from the installed copy")
-        if not (asset_preset / "catalogs/chrona-theme-starter-v2026-09-29.NOTICE").is_file():
+        if not (asset_preset / "catalogs/chrona-theme-starter-v2026-10-09.NOTICE").is_file():
             raise AssertionError("wheel-owned catalogue notice was not copied")
         catalog_value = safe_load(catalog.read_bytes())
         catalog_body = catalog_value.get("body") if isinstance(catalog_value, dict) else None

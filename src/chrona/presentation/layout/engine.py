@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from collections import Counter
 from decimal import ROUND_CEILING, Decimal, getcontext
 from typing import Any, Callable, Mapping
 
@@ -207,7 +208,7 @@ def _flow_lines(node: Mapping[str, Any], path: str, measurements: Mapping[str, M
         child_path = f"{path}/children/{index}"
         measured = _measure_node(child, child_path, measurements, profile)
         width = max(minimum, measured.preferred_inline)
-        height = height_for(child, child_path, min(inline_size, width))
+        height = height_for(child, child_path, width)  # the extent it is arranged at: natural sizes are kept (Spec 33 section 13)
         block_spec = child["blockSize"]
         if not (isinstance(block_spec, dict) and "aspectRatio" in block_spec):
             block_minimum, block_target, block_weight = _spec_base(
@@ -776,7 +777,11 @@ class ShortContentSource:
         if (not self.source_id or not self.required_block.is_finite()
                 or not self.allocated_block.is_finite()
                 or self.allocated_block >= self.required_block):
-            raise ValueError("E_LAYOUT_CONTENT_SHORTFALL_INVALID")
+            raise ValueError(
+                f"E_LAYOUT_CONTENT_SHORTFALL_INVALID: source_id={repr(self.source_id[:160]) if isinstance(self.source_id, str) else type(self.source_id).__name__}, "
+                f"required_block={self.required_block!r}, allocated_block={self.allocated_block!r}; "
+                "expected a non-empty source with finite required and allocated blocks, allocated below required"
+            )
 
 
 @dataclass(frozen=True)
@@ -788,9 +793,18 @@ class ContentBlockResolution:
 
     def __post_init__(self) -> None:
         if self.extent <= 0 or tuple(sorted(self.short_sources, key=lambda item: item.source_id)) != self.short_sources:
-            raise ValueError("E_LAYOUT_CONTENT_RESOLUTION_INVALID")
+            source_ids = tuple(item.source_id[:160] for item in self.short_sources[:8])
+            raise ValueError(
+                f"E_LAYOUT_CONTENT_RESOLUTION_INVALID: extent={self.extent!r}, source_ids={source_ids!r}, source_count={len(self.short_sources)}; "
+                "expected a positive extent and short sources ordered by source_id"
+            )
         if len({item.source_id for item in self.short_sources}) != len(self.short_sources):
-            raise ValueError("E_LAYOUT_CONTENT_RESOLUTION_INVALID")
+            counts = Counter(item.source_id for item in self.short_sources)
+            duplicates = tuple(source_id[:160] for source_id, count in counts.items() if count > 1)[:8]
+            raise ValueError(
+                f"E_LAYOUT_CONTENT_RESOLUTION_INVALID: extent={self.extent!r}, duplicate_source_ids={duplicates!r}, source_count={len(self.short_sources)}; "
+                "expected each short source_id to occur once"
+            )
 
 
 def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inline: int,
