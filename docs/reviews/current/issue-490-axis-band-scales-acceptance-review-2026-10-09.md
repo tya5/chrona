@@ -23,7 +23,14 @@ Theme isolation. S0 after isolation: 448 mapped documents, 739 probes, PASS
 (L2+L3 40.1s; four existing invalid fixtures unchanged).
 The two disposable SVG/Scene renders exist, but materializer comparison reports
 the expected mismatch because their generated repository evidence is not yet published.
-PR snapshot audit and exact-main three-OS release checks remain pending; keep the issue open.
+[PR #1263 snapshot](https://github.com/tya5/chrona/actions/runs/37868811432),
+head `77c8e092`: 149 paths audited, all 136 existing SVG/Scene files byte-identical,
+four new SVG/Scene files, four report changes, no retirements. Both new SVGs
+match the local rendered bytes; packaged-font raster inspection confirms
+alternating months and months following their quarter's fill. The inherited
+footer-overflow warning is disclosed, not absorbed by unrelated data/style edits.
+Committed generated evidence and exact-main three-OS release remain pending;
+keep the issue open.
 
 ## Architecture conclusion
 
