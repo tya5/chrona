@@ -4,6 +4,7 @@ from datetime import date
 import pytest
 
 from chrona.presentation.model.color_scale import ResolvedColorScale
+from chrona.presentation.model.axis_color_scale import AxisBandFillSpec, AxisBandScaleError
 from chrona.presentation.model.projection import (
     ObservationState, ReviewItem, ReviewProjection, ReviewRowProjection, ReviewLaneRowProjection,
 )
@@ -11,7 +12,7 @@ from chrona.presentation.model.surface_content import HeadingContent, SummaryCon
 from chrona.presentation.review.lane_membership import Lane, LaneAssignment, LaneMembership
 from chrona.presentation.table_presentation import BooleanPresencePresentation
 from chrona.presentation.review.v05_content import (
-    compose_heading, legend_entries, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content,
+    compose_heading, legend_entries, normalize_axis_tiers, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content,
 )
 from chrona.presentation.contracts.resources import (
     LegendEntry, ReviewDetailInput, SummaryMetric, SummaryPanelInput, SummaryProfileInput, TableColumn, ViewComparison, ViewGrouping, ViewInput,
@@ -20,6 +21,32 @@ from chrona.presentation.contracts.resources import (
 
 
 EMPTY_SUMMARY = SummaryContent(())
+
+
+def test_axis_band_fill_scale_is_retained_as_typed_intent_and_absence_stays_none():
+    view = typed_view({"body": {"tableColumns": (), "visibility": {}, "axis": {"tiers": [
+        {"unit": "quarter", "every": 1, "role": "band",
+         "fillScale": {"scale": "phase", "key": "interval", "containingTier": 2}},
+        {"unit": "month", "every": 1, "role": "band"},
+    ]}}})
+
+    tiers = normalize_axis_tiers(view, locale="en-US")
+
+    assert tiers[0].fill_scale == AxisBandFillSpec("phase", "interval", 2)
+    assert tiers[1].fill_scale is None
+
+
+def test_axis_fill_scale_on_wrong_tier_uses_the_scale_target_diagnostic_and_tier_pointer():
+    view = typed_view({"body": {"tableColumns": (), "visibility": {}, "axis": {"tiers": [
+        {"unit": "month", "every": 1, "role": "band"},
+        {"unit": "month", "every": 1, "role": "labels",
+         "fillScale": {"scale": "phase", "key": "alternating"}},
+    ]}}})
+
+    with pytest.raises(AxisBandScaleError, match="E_PRESENTATION_AXIS_SCALE_TARGET") as error:
+        normalize_axis_tiers(view, locale="en-US")
+    assert error.value.path == "/view/body/axis/tiers/1/fillScale"
+    assert error.value.detail == "target must be a fixed-unit band tier"
 
 
 def test_compose_heading_returns_immutable_named_content_and_keeps_project_title_default():
