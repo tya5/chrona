@@ -12,7 +12,8 @@ contains every literal acceptance criterion.
 | 2. Completion and report | Capture declaration in `usecases/render_review.py`; both Layout completion paths; Scene projection; `warning_ledger.py` / `diagnostic_messages.py`; integration/report tests | One shared warning identity/payload, real negative-origin/overflow/fitting/auto and both surfaces. All geometry preserved; existing network warning retained. One product PR contains slices 1–2. |
 | 3. Acceptance | One batched current-main/materializer comparison, CI artifact audit, concise acceptance review | Every SVG/viewBox checked, exact warning-slide list in PR, geometry unchanged and no authored examples/derived files. PR matrix then automatic exact-main three-OS release; only then close. |
 
-Focused tests: new `test_canvas_viewport_warning.py` helper/integration suites,
+Focused tests: new `test_canvas_viewport_warning.py` helper and
+`test_canvas_viewport_warning_render.py` integration suites,
 existing dependency-network/canvas/auto-block/Scene projection and warning-ledger
 tests, Scene delivery and literal acceptance validators. Run S0/conformance only
 where changed transport delivery requires it; CI supplies full pytest/conformance,

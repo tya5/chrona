@@ -6,7 +6,9 @@ from chrona.presentation.layout.stroke_alignment import complete_aligned_strokes
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
 from decimal import Decimal
+from itertools import chain
 from typing import Any
+from chrona.presentation.layout.canvas_viewport import canvas_viewport_warning
 from chrona.presentation.layout.icon_geometry import complete_icon_paths
 from chrona.presentation.layout.mark_geometry import MarkFacetAbsence
 from chrona.presentation.layout.model import (LayoutError, Rect)
@@ -333,17 +335,28 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
     # Region frames (#889) are completed from the arranged profile; the canvas grows to contain one, never the reverse.
     frames = complete_region_frames(request.theme_tokens, layout_manifest.decisions)
     glyph_frames = complete_frame_glyphs(request.theme_tokens, layout_manifest.decisions)
+    canvas_rectangles = (
+        tuple((slot.slot_id, slot.bounds) for slot in slots)
+        + tuple((timeline.slot_id, row.bounds) for row in rows)
+        + tuple((slot.slot_id, extent) for slot, extent in zip(frames.slots, frames.extents, strict=True))
+        + tuple((slot.slot_id, extent) for slot, extent in zip(glyph_frames.slots, glyph_frames.extents, strict=True))
+        + tuple((table.slot_id, column.bounds) for column in column_placements)
+        + tuple((timeline.slot_id, group.content_bounds) for group in groups)
+        + tuple((table.slot_id, group.header_bounds) for group in groups if group.header_bounds is not None)
+        + tuple((item.slot_id, item.bounds) for item in text)
+        + tuple((item.slot_id, item.bounds) for item in marks)
+        + tuple((item.slot_id, item.bounds) for item in shapes)
+        + tuple((item.slot_id, item.bounds) for item in icons))
     canvas = completed_canvas(
         requested=request.layout_manifest.viewport,
-        rectangles=(tuple(slot.bounds for slot in slots) + tuple(row.bounds for row in rows)
-                    + frames.extents + glyph_frames.extents
-                    + tuple(column.bounds for column in column_placements)
-                    + tuple(group.content_bounds for group in groups)
-                    + tuple(group.header_bounds for group in groups if group.header_bounds is not None)
-                    + tuple(item.bounds for item in text) + tuple(item.bounds for item in marks)
-                    + tuple(item.bounds for item in shapes) + tuple(item.bounds for item in icons)),
+        rectangles=tuple(bounds for _, bounds in canvas_rectangles),
         paths=tuple(item.points for item in relations),
     )
+    canvas_warning = canvas_viewport_warning(
+        surface_id="table-timeline", declared=request.declared_viewport, actual=canvas,
+        contributors=chain(canvas_rectangles,
+                           ((relation.slot_id, Rect(Decimal(str(inline)), Decimal(str(block)), Decimal(0), Decimal(0)))
+                            for relation in relations for inline, block in relation.points)))
     suppressed_plot_labels = sum(item.semantic_id == "memberLabel" and item.overflow == "suppressed" for item in text)
     completed_icons = tuple(replace(icon, completed_paths=complete_icon_paths(
         icon.payload, (float(icon.bounds.inline), float(icon.bounds.block),
@@ -404,6 +417,7 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
                                  aligned_strokes=complete_aligned_strokes(tuple(marks), tuple(shapes),
                                                                         lane_emissions, request.theme_tokens),
                                  canvas_overlays=canvas_overlays,
-                                 diagnostic_provenance=context.diagnostic_provenance)
+                                 diagnostic_provenance=context.diagnostic_provenance,
+                                 canvas_warning=canvas_warning)
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks, tuple(mark_absences))
