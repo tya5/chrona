@@ -216,6 +216,13 @@ def complete_footer_band(*, provisional_slots: tuple[SlotPlacement, ...],
                              if source in _FOOTER_SOURCES and slot.bounds.block >= panel_start)
     completed_end = max(slot.bounds.block + slot.bounds.block_size for slot in completed_footer)
     annotation = completed_by_source.get("annotations")
+    # A footer Flow allocated its whole wrapped stack (#1219) already placed the successor after every line, so the
+    # reference end is the provisional end of all footer lines and only what panel completion adds on top moves it.
+    all_lines_end = max((slot.bounds.block + slot.bounds.block_size
+                         for source, slot in provisional_by_source.items()
+                         if source in _FOOTER_SOURCES and slot.bounds.block >= panel_start), default=provisional_end)
+    if annotation is not None and annotation.bounds.block >= all_lines_end - GEOMETRY_TOLERANCE:
+        provisional_end = all_lines_end
     overlaps_footer_inline = annotation is not None and any(
         annotation.bounds.inline < slot.bounds.inline + slot.bounds.inline_size
         and slot.bounds.inline < annotation.bounds.inline + annotation.bounds.inline_size
