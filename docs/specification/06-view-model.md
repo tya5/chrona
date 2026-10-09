@@ -300,8 +300,9 @@ owner's rule: an observed span with a `start` on or before `asOf`, no `finish`, 
 that is absent or below 1; `openUntil: asOf` stays a sufficient explicit signal, even at progress 1;
 a span at progress 1 without a finish or `openUntil`, or one that has not started, is not in
 progress), drawn as a span from that start to `asOf` in place of its open Actual, and puts no mark
-on a due-unobserved span or on a gate. It is `E_REVIEW_MISSING_ACTUAL_SCOPE_LANES`
-with lane rows, whose expected-mark inventory is closed.
+on a due-unobserved span or on a gate. With lane rows the lane expected-mark inventory lists that
+mark (`missing-actual`) in place of the span's `actual` mark when the `missingActual` facet is
+selected, and a typed absence (`in-progress-empty-at-cutoff`) when `asOf` is not after the start (#1027).
 
 ## 9. Annotations and Layout Intent
 
