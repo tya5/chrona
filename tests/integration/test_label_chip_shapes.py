@@ -11,6 +11,7 @@ import pytest
 import yaml
 
 from chrona.presentation.scene.serialization import serialize_scene
+from chrona.usecases.render_review import RenderFailed
 from tests.support import synthetic_review as sr
 
 
@@ -316,3 +317,25 @@ def test_tabular_asof_text_is_measured_inside_nonrect_chip_and_reserved_before_r
         tabular_chip.bounds[3] - proportional_chip.bounds[3], abs=1)
     assert tabular_footer.bounds[1] - proportional_footer.bounds[1] == pytest.approx(
         tabular_chip.bounds[3] - proportional_chip.bounds[3], abs=1)
+
+
+def test_burst_chip_fill_is_the_asof_text_contrast_ground(tmp_path):
+    shape = {"kind": "burst", "points": 7, "innerRatio": .45}
+    readable = _asof_parts(shape)
+    readable["theme"]["body"]["contrastPolicy"] = {"groundText": "error"}
+    (tmp_path / "readable").mkdir()
+    control = sr.render(tmp_path / "readable", _source(), presentation=readable, actual=ACTUAL,
+                        viewport=(1200, 760))
+    assert control.artifact.content
+
+    unreadable = _asof_parts(shape)
+    theme = unreadable["theme"]["body"]
+    theme["colorBindings"]["as-of-label-chip.fill"] = "text"
+    theme["contrastPolicy"] = {"groundText": "error"}
+    (tmp_path / "same-ink").mkdir()
+    with pytest.raises(RenderFailed) as raised:
+        sr.render(tmp_path / "same-ink", _source(), presentation=unreadable, actual=ACTUAL,
+                  viewport=(1200, 760))
+    assert raised.value.code == "E_SCENE_STATE_TEXT_CONTRAST"
+    assert raised.value.source_ref == "/body/contrastPolicy/groundText"
+    assert "as-of-label" in raised.value.message
