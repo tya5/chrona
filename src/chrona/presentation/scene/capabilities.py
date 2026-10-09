@@ -289,6 +289,8 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              scene_kinds=frozenset(("Icon",)))
     register("axis-major axis-minor", "Layout axis grid or tick and Scene Path", _PATH_PAINT | _AXIS_TICK,
              scene_kinds=frozenset(("Path",)))
+    register("row-rule", "Layout row rule and Scene Path",
+             frozenset(("stroke", "strokeWidth", "opacity")), scene_kinds=frozenset(("Path",)))
     register("dependency-critical network-edge critical-edge axis-rule axis-cell-separator as-of",
              "Layout relation and Scene Path", _PATH_PAINT, scene_kinds=frozenset(("Path",)))
     register("dependency", "Scene Path and Layout legend swatch marker", _PATH_PAINT | frozenset(("marker",)),

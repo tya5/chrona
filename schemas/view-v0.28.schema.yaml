@@ -394,7 +394,7 @@ allOf:
             required: [rows, groups]
             additionalProperties: false
             properties:
-              rows: {enum: [none, alternate]}
+              rows: {enum: [none, alternate, rules]}
               groups: {enum: [none, all, alternate]}
           tableColumns:
             type: array
