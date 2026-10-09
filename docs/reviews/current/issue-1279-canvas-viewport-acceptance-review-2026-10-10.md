@@ -2,8 +2,8 @@
 
 # Issue #1279 — canvas viewport acceptance
 
-Implementation: `43e30d82`, published at `10d66591` on ready main
-`7503e53076e4e0b924051b89759a9ece6ca9d038`. PR and exact-main release
+Implementation: `43e30d82`, refreshed by ordinary merge `4b75b1af` on ready main
+`0617e671c51ed14fe0d242a37a18a744bd85b7e8`. PR and exact-main release
 remain pending; do not close.
 Authority: [design](../../design/issue-1279-canvas-viewport-design-2026-10-10.md)
 and [implementation plan](../../planning/active/issue-1279-canvas-viewport-implementation-plan-2026-10-10.md).
@@ -37,6 +37,12 @@ missing the typed request's optional `declared_viewport` field. Both now declare
 `None`; no production fallback or contract change. The two fixture files plus
 viewport render/transport tests pass together: 23 passed (7.16s). The superseded
 red run is not release evidence; replacement exact-head CI remains required.
+Replacement run 37979100227 passes all source checks; only derived-ready fails
+because its old base advanced. [Fresh artifact audit](https://github.com/tya5/chrona/pull/1311#issuecomment-6088023784)
+proves 70 unchanged SVGs, 21 unchanged Scenes and 49 warning-only Scene changes.
+After merging ready `0617e671`, the viewport, stale-fixture, provenance and
+figure-label suites pass together: 36 passed (15.23s). Fresh exact-head gates
+remain required; no product-policy correction was needed.
 Scene delivery registry: 31 dataclasses / 226 fields have explicit owners.
 
 Independent review found no ownership breach: Layout compares the immutable
