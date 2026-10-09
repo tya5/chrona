@@ -1,0 +1,115 @@
+# Issue 918 — diagnostic owners: design plan
+
+Status: implementation in progress; no issue acceptance or release claimed.
+Selected [design](../../design/issue-918-diagnostic-owners-design-2026-10-09.md),
+[architecture review](../../reviews/current/issue-918-diagnostic-owners-architecture-review-2026-10-09.md)
+and [implementation plan](issue-918-diagnostic-owners-implementation-plan-2026-10-09.md)
+are published through `1316b8e02694f7179c765fc4847b5583223f253d`.
+Authority: [issue 918](https://github.com/tya5/chrona/issues/918), including
+consolidated issues 919–922. Public baseline:
+`546f7c3f9e700afa7553632d8dd6ac0c94a348a0` (`derived-main` successful).
+Predecessor: [issue 829 work record](../../archive/planning/issue-829-diagnostic-owner-detail-work-record-2026-10-02.md).
+
+## Published facts and remaining verification
+
+- The inventory/policy records 488 bare reachable sites across 151 codes:
+  Layout/renderers/Scene 272, icon/model/review/related owners 171, and
+  usecases/operational 45. Historical issue counts are not current evidence.
+- Actual and snapshot result constructors contain code-only diagnostic tuples
+  outside the current inventory's call-argument coverage.
+- CLI render success emits warning JSON lines on stderr; Spec 66 and the
+  agent diagnostic reference describe that channel. MCP returns warning rows.
+- Layout identity strings and Scene findings do not consistently carry Project
+  ownership/title. Collapse preserves the first payload and aggregates by
+  code, severity and cause; serialized Scene facts must remain unchanged.
+- Every site disposition, mutation-sensitive coverage per changed code,
+  complete warning provenance coverage and artifact identity remain unverified.
+
+## Design questions and review scope
+
+Use cases: an author identifies the invalid operand; an automation client sees
+the conflicting revision/key/observation; an agent finds the Project object
+behind a successful-render warning without inspecting multiple machine channels.
+
+1. Owner-local detail: establish when the identifier alone is sufficient and
+   when the owner must name the operand/expected form. Review shared helpers
+   only within an owner; no generic Core catalogue may guess missing context.
+2. Result tuples: design inventory coverage for Actual/intake/snapshot results,
+   using the existing leading-code parsing and automation-result contracts.
+   Review consumers that compare an entire diagnostic string.
+3. CLI: compare optional stdout JSON, unconditional stdout envelope with human
+   stderr, and documented existing stderr JSON. Record the selected channel,
+   exit semantics, migration and reversal before product changes.
+4. Provenance: define typed producer-side Project pointer/title metadata,
+   its connection through Layout/Scene warning production and the ledger, and
+   handling of relation, View, global and multi-owner findings. Do not infer
+   ownership by parsing a placement ID in transport. Preserve Scene strings,
+   primitive facts, collapse keys, multiplicity and image bytes.
+
+Architecture review must cover Specs 05/06/08/35/50/56/66 and the issue 782/829
+diagnostic contracts: Core/domain intent, View declarations, Theme resources,
+Layout completed geometry, Scene completed primitives, adapter serialization,
+usecase orchestration and CLI/MCP transport. No geometry, font policy, corpus
+or preset tuning is in scope. Check extension points, pointer escaping,
+missing titles, failure behavior and any intended incompatibility.
+
+## Design and publication order
+
+Publish this plan first. Complete the selected design and whole-architecture
+review next; update normative specifications for CLI/provenance changes.
+Publish the implementation plan before product code. Its independently
+reviewable slices will cover inventory/result tuples, owner-local detail,
+producer provenance, and transport integration. Exact files and tests depend
+on the completed design; do not treat this outline as implementation approval.
+
+One coordinating dev A publishes serially. Read-only Luna audits may run in
+parallel. Coordinate on the issue before touching any dev B-owned open-PR
+file, particularly `presentation/layout/engine.py`; wait for that PR to merge.
+#927 stays parked on its unresolved critical-path scope decision.
+
+Evidence: focused tests including value-assertion mutations per fixed code;
+inventory ratchet; tuple-to-automation tests; pointer/title and first-occurrence
+collapse tests; CLI golden and MCP row-by-row parity; unchanged Scene warning
+facts, SVG and PNG bytes; batched public-materializer artifact comparison;
+CI full three-OS release including the literal acceptance review. Derived
+public evidence is bot-owned, not hand-edited. A remaining or deferred row
+keeps the issue open without an approved successor disposition.
+
+## Integrated implementation evidence
+
+S1 is published at `9125ca33`; S2–S4 are published in
+[PR 1276](https://github.com/tya5/chrona/pull/1276). The current candidate
+ordinarily merges ready main `5ebc493b`; no published branch was rebased.
+Python 3.11 focused integration: 220 passed. The inventory validates 1,609
+sites with zero bare reachable constructors; the policy retains its unrelated
+declared-value and corpus rules. Owner tests include detail-removal mutations.
+The 114-case CLI comparison against the baseline preserves all exit codes and
+37 generated files byte-for-byte: 19 successful-render envelopes and four
+owner-error messages change; 22 warning rows preserve identity and multiplicity.
+Relation-only and field/entity-group findings retain their real source, not
+invented endpoint/member ownership. Provenance keeps canonical pointers and
+known titles; it is excluded from Scene serialization and geometry.
+CI identified a schema-equivalence consumer treating Scene error detail as
+part of its code; the fix splits the leading code without changing validators,
+baseline probes or expected deltas. Complete golden-to-MCP projection checks
+cover all 19 success cases and 22 warning rows (20 focused tests passed).
+CI full release and public-materializer acceptance remain pending. The local
+conformance review found stale bot-owned inventory reports; its policy-shape
+and Scene-field ownership failures were corrected and individually rechecked.
+
+## Literal acceptance (release evidence pending)
+
+| ID | Criterion | Evidence owner |
+| --- | --- | --- |
+| A1 | Every code of these three packages is either raised with detail at every site or has a `sufficient` entry with a reason; their `sites` counts in the policy are gone (the ratchet `tests/unit/tools/test_diagnostic_inventory.py` enforces it; each fix lowers its count in the same PR). | Layout/Scene/renderers and inventory |
+| A2 | Each fixed code has a test that provokes it and asserts the value is named (mutation-checked). | Layout/Scene/renderers tests |
+| A3 | Every code of these packages is raised with detail at every site or has a `sufficient` entry with a reason; their `sites` counts in the policy are gone (the ratchet enforces it; each fix lowers its count in the same PR). | Icon/model/review/related owners and inventory |
+| A4 | Each fixed code has a test that provokes it and asserts the value is named (mutation-checked). | Icon/model/review/related tests |
+| A5 | `usecases` and `operational` codes are raised with detail or classified `sufficient` with a reason; their policy `sites` counts are gone. | Usecases/operational and inventory |
+| A6 | The Actual-command and snapshot result tuples carry `"E_X: detail"` strings (or a detail field), and the automation-result rows built from them name the revision, key or observation; tests that compared whole tuples are updated. The inventory is extended to read these tuple literals so the ratchet covers them. | Commands/storage/automation/inventory tests |
+| A7 | The options and the choice are recorded with how to reverse it. | CLI design and migration |
+| A8 | `render` has one documented machine channel for warnings that matches the other commands, or the disposition (keep stderr) is recorded with its reason. | CLI contract and tests |
+| A9 | Goldens, the skill reference and Spec 66 agree; the MCP `render_draft` rows equal the CLI rows (existing test). | CLI/MCP integration and reference |
+| A10 | Every `W_LAYOUT_*` and `W_SCENE_*` row names the Project object it is about (`sourceRef` and the title in the message) where the placement belongs to one. | Producer provenance and ledger tests |
+| A11 | Scene diagnostics, SVG and PNG bytes and the multiplicity invariant are unchanged (existing tests). | Scene/adapters and artifact comparison |
+| A12 | The CLI golden and the MCP `render_draft` warnings agree and are reviewed row by row. | Transport acceptance audit |

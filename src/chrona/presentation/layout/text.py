@@ -8,6 +8,14 @@ from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.surface_quality import AnnotationPresentation, CollisionDomain, TextPlacement
 
 
+def _text_error(code: str, owner: str, **operands: object) -> ValueError:
+    fields = []
+    for name, value in operands.items():
+        shown = repr(value).replace("\n", " ").replace("\r", " ")[:96]
+        fields.append(f"{name}={shown}")
+    return ValueError(f"{code}: {owner} " + ", ".join(fields))
+
+
 def paint_text(content: str, *, text_transform: str = "none") -> str:
     """Apply the finite treatment before it becomes measured display text."""
     return {
@@ -145,7 +153,9 @@ def wrap_text(content: str, *, available_inline: float, font_size: float, font_m
               numeric_spacing: str = "proportional") -> tuple[str, ...]:
     """Greedily wrap words and declared CJK character boundaries by measurement."""
     if available_inline <= 0:
-        raise ValueError("E_PRESENTATION_WRAP_INPUT")
+        raise _text_error("E_PRESENTATION_WRAP_INPUT", "text wrapping",
+                          available_inline=available_inline, font_size=font_size,
+                          letter_spacing=letter_spacing, numeric_spacing=numeric_spacing)
     lines: list[str] = []
     current = ""
     for word in _wrap_units(content):
@@ -205,7 +215,9 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
     scale = float(treatment.horizontal_scale)
     rotation = {"horizontal": 0, "rotate-cw": 90, "rotate-ccw": -90}.get(orientation)
     if rotation is None:
-        raise ValueError("E_PRESENTATION_TEXT_ORIENTATION")
+        raise _text_error("E_PRESENTATION_TEXT_ORIENTATION", "text placement",
+                          placement_id=placement_id, orientation=orientation,
+                          typography_role=typography_role)
     height = font_size * leading * len(resolved_lines)
     bounds = measured_text_bounds(inline=inline, baseline_block=baseline_block, width=width,
                                   height=height, font_size=font_size, rotation=rotation)

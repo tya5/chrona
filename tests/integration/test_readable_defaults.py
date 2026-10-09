@@ -131,7 +131,11 @@ def test_cli_names_colliding_scale_values(tmp_path, monkeypatch, capsys) -> None
     _render(tmp_path, monkeypatch, "collide", "--view", str(ROOT / "examples/halcyon-1/views/02-programme-board.yaml"),
             "--theme", str(ROOT / "examples/halcyon-1/themes/wallboard.yaml"), "--scheme", str(scheme_path),
             "--layout", str(ROOT / "examples/halcyon-1/layouts/wallboard.yaml"))
-    warnings = [json.loads(line) for line in capsys.readouterr().err.splitlines() if line.startswith("{")]
+    output = capsys.readouterr()
+    assert output.err == ""
+    envelope = json.loads(output.out)
+    assert envelope["status"] == "ok" and envelope["diagnostics"] == []
+    warnings = envelope["warnings"]
     collisions = [item for item in warnings if item["code"] == "W_PRESENTATION_SCALE_NOT_SEPARABLE"]
     assert [(item["values"], item["vision"], item["deltaE"]) for item in collisions] == [(["bus", "launch"], "normal", 0.0)]
 

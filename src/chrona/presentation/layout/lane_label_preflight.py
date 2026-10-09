@@ -9,6 +9,14 @@ from chrona.presentation.layout.model import geometry_sum
 from chrona.presentation.layout.obstacles import obstacle_envelope
 
 
+def _preflight_error(owner: str, **operands: object) -> ValueError:
+    fields = []
+    for name, value in operands.items():
+        shown = repr(value).replace("\n", " ").replace("\r", " ")[:96]
+        fields.append(f"{name}={shown}")
+    return ValueError("E_LAYOUT_LANE_LABEL_PREFLIGHT_INPUT: " + owner + " " + ", ".join(fields))
+
+
 def lane_label_row_requirements(
     measured_labels: tuple[Any, ...],
     scale: Any,
@@ -30,20 +38,28 @@ def lane_label_row_requirements(
             or not isfinite(row_padding) or row_padding < 0
             or not isinstance(subtracks, LaneSubtrackPlan)
             or not isinstance(mark_footprints, tuple) or not isinstance(measured_labels, tuple)):
-        raise ValueError("E_LAYOUT_LANE_LABEL_PREFLIGHT_INPUT")
+        raise _preflight_error("preflight arguments", timeline_bounds=(left, right),
+                               row_padding=row_padding,
+                               subtracks_type=type(subtracks).__name__,
+                               mark_footprints_type=type(mark_footprints).__name__,
+                               measured_labels_type=type(measured_labels).__name__)
     # The completed scale is an explicit dependency: reject incomplete or
     # malformed scale records before using any geometry derived from it.
     if (not all(hasattr(scale, field) for field in
                 ("scale_id", "origin", "unit_ratio", "range_start", "range_end"))
             or not isfinite(float(scale.origin)) or not isfinite(float(scale.unit_ratio))
             or float(scale.unit_ratio) <= 0):
-        raise ValueError("E_LAYOUT_LANE_LABEL_PREFLIGHT_INPUT")
+        raise _preflight_error("scale metrics", scale_id=getattr(scale, "scale_id", None),
+                               origin=getattr(scale, "origin", None),
+                               unit_ratio=getattr(scale, "unit_ratio", None))
 
     lane_by_item = {item.item_id: item.lane_id for item in subtracks.items}
     marks_by_item: dict[str, list[tuple[float, float]]] = {}
     for unit in mark_footprints:
         if not isinstance(unit, LaneItemFootprints) or unit.item_id not in lane_by_item:
-            raise ValueError("E_LAYOUT_LANE_LABEL_PREFLIGHT_INPUT")
+            raise _preflight_error("mark footprint owner", item_id=getattr(unit, "item_id", None),
+                                   lane_id=lane_by_item.get(getattr(unit, "item_id", None)),
+                                   footprint_type=type(unit).__name__)
         for facet in unit.facets:
             x1, _, x2, _ = obstacle_envelope(facet.footprint)
             marks_by_item.setdefault(unit.item_id, []).append((x1, x2))
@@ -65,12 +81,17 @@ def lane_label_row_requirements(
             gap = float(label.gap)
             candidates = tuple(label.candidates)
         except (AttributeError, TypeError, ValueError) as error:
-            raise ValueError("E_LAYOUT_LANE_LABEL_PREFLIGHT_INPUT") from error
+            raise _preflight_error("measured lane label", placement_id=getattr(label, "placement_id", None),
+                                   member_id=getattr(label, "member_id", None),
+                                   lane_id=getattr(label, "lane_id", None),
+                                   invalid_field=type(error).__name__) from error
         if (lane_id not in lanes or lane_by_item.get(item_id) != lane_id
                 or not member_id or not all(isfinite(value) for value in (width, height, gap))
                 or width <= 0 or height <= 0 or gap < 0
                 or not candidates):
-            raise ValueError("E_LAYOUT_LANE_LABEL_PREFLIGHT_INPUT")
+            raise _preflight_error("measured lane label", placement_id=getattr(label, "placement_id", None),
+                                   member_id=member_id, lane_id=lane_id,
+                                   width=width, height=height, gap=gap, candidates=candidates)
         anchors = marks_by_item.get(item_id, ())
         if not anchors:
             # There may be an intentionally unmarked member; the temporal

@@ -9,6 +9,12 @@ from chrona.commands.actual_commands import (
 from chrona.storage.snapshot_paths import snapshot_directory
 
 
+def _assert_diagnostic(result, code, detail):
+    assert result.diagnostics
+    assert result.diagnostics[0].startswith(code + ": ")
+    assert detail in result.diagnostics[0]
+
+
 def _actual_set_v02():
     return {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "supplier-observed", "body": {"observations": []}}
 
@@ -51,11 +57,16 @@ def test_explicit_actual_resolution_is_cas_bound_and_preserves_provenance():
 def test_actual_resolution_rejects_stale_unknown_or_non_unmatched_observation():
     store = MemoryActualStore(_actual_set())
     base, _ = store.read()
-    assert resolve_actual_observation(store, "actual:old", "supplier:42", "firmware", {"firmware"}).diagnostics == ("E_CONFLICT",)
-    assert resolve_actual_observation(store, base, "supplier:42", "unknown", {"firmware"}).diagnostics == ("E_REFERENCE",)
+    stale = resolve_actual_observation(store, "actual:old", "supplier:42", "firmware", {"firmware"})
+    _assert_diagnostic(stale, "E_CONFLICT", "base revision 'actual:old'")
+    assert "current revision 'actual:0'" in stale.diagnostics[0]
+    _assert_diagnostic(resolve_actual_observation(store, base, "supplier:42", "unknown", {"firmware"}),
+                       "E_REFERENCE", "projectObjectId 'unknown'")
     accepted = resolve_actual_observation(store, base, "supplier:42", "firmware", {"firmware"})
     assert accepted.status == "accepted"
-    assert resolve_actual_observation(store, accepted.result_revision, "supplier:42", "firmware", {"firmware"}).diagnostics == ("E_ACTUAL_ALIGNMENT",)
+    _assert_diagnostic(
+        resolve_actual_observation(store, accepted.result_revision, "supplier:42", "firmware", {"firmware"}),
+        "E_ACTUAL_ALIGNMENT", "supplier:42")
 
 
 def test_actual_undo_redo_create_new_revisions_without_rewriting_history():
@@ -94,11 +105,12 @@ def test_intake_rejects_duplicate_or_conflicting_records_without_partial_write()
     store = MemoryActualStore(_actual_set_v02())
     base, original = store.read()
     duplicate = _batch([{ "externalKey": "x", "actual": {"finish": "2026-04-18"}}, {"externalKey": "x", "actual": {"finish": "2026-04-19"}}])
-    assert apply_actual_intake_batch(store, base, duplicate, set()).diagnostics == ("E_INTAKE_DUPLICATE_KEY",)
+    _assert_diagnostic(apply_actual_intake_batch(store, base, duplicate, set()),
+                       "E_INTAKE_DUPLICATE_KEY", "records[1].externalKey 'x'")
     accepted = apply_actual_intake_batch(store, base, _batch([{ "externalKey": "x", "actual": {"finish": "2026-04-18"}}]), set())
     conflict = _batch([{ "externalKey": "x", "actual": {"finish": "2026-04-19"}}])
     rejected = apply_actual_intake_batch(store, accepted.result_revision, conflict, set())
-    assert rejected.diagnostics == ("E_ACTUAL_EXTERNAL_CONFLICT",)
+    _assert_diagnostic(rejected, "E_ACTUAL_EXTERNAL_CONFLICT", "external key 'x'")
     assert store.read()[1] == accepted.actual_set and original != accepted.actual_set
 
 
@@ -121,3 +133,26 @@ def test_local_actual_store_publishes_new_immutable_token_and_reopens(tmp_path):
     reopened = LocalActualStore(tmp_path, _actual_set_v02())
     assert reopened.read()[0] == accepted.result_revision
     assert (snapshot_directory(tmp_path, accepted.result_revision) / "actuals" / "supplier-observed.yaml").is_file()
+
+
+def test_actual_result_diagnostics_name_expected_operand_without_echoing_record():
+    store = MemoryActualStore(_actual_set_v02())
+    base, _ = store.read()
+    bad_batch = {"source": {"system": "supplier", "contentIdentity": "sha256:x"},
+                 "records": [{"externalKey": "private-key", "actual": {}}]}
+    schema = apply_actual_intake_batch(store, base, bad_batch, set())
+    _assert_diagnostic(schema, "E_INTAKE_SCHEMA", "records[0].actual")
+    assert "private-key" not in schema.diagnostics[0]
+
+    stale = apply_actual_intake_batch(store, "actual:stale", _batch([]), set())
+    _assert_diagnostic(stale, "E_CONFLICT", "base revision 'actual:stale'")
+    assert "current revision 'actual:0'" in stale.diagnostics[0]
+
+    unresolved = resolve_actual_observation(store, base, "missing-observation", "firmware", {"firmware"})
+    _assert_diagnostic(unresolved, "E_REFERENCE", "missing-observation")
+
+    undo = undo_actual_command(store, base, "missing-command")
+    _assert_diagnostic(undo, "E_CONFLICT", "missing-command")
+
+    redo = redo_actual_command(store, base, "missing-command")
+    _assert_diagnostic(redo, "E_CONFLICT", "missing-command")

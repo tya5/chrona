@@ -8,6 +8,11 @@ from typing import Any
 from chrona.presentation.model.axis_color_scale import AxisBandFillSpec
 from chrona.presentation.model.placement_candidates import PlacementCandidate
 from chrona.presentation.model.projection import ObservationState, ReviewItem
+
+
+def _diagnostic_error(code: str, detail: str) -> ValueError:
+    """Build a stable surface-content error with the invalid operand detail."""
+    return ValueError(f"{code}: {detail}")
 from chrona.presentation.table_presentation import BooleanPresencePresentation
 
 
@@ -303,9 +308,9 @@ def display_value(value: Any, missing: str, formatter: str | BooleanPresencePres
     if isinstance(value, bool):
         if isinstance(formatter, BooleanPresencePresentation):
             return formatter.when_true if value else formatter.when_false
-        raise ValueError("E_VIEW_BOOLEAN_PRESENTATION")
+        raise _diagnostic_error("E_VIEW_BOOLEAN_PRESENTATION", f"valueType=bool, formatter={type(formatter).__name__}; expected presence mapping for boolean values")
     if isinstance(formatter, BooleanPresencePresentation):
-        raise ValueError("E_VIEW_BOOLEAN_PRESENTATION")
+        raise _diagnostic_error("E_VIEW_BOOLEAN_PRESENTATION", f"valueType={type(value).__name__}, formatter=presence; expected boolean value")
     if formatter == "date":
         if isinstance(value, date):
             return value.isoformat()
@@ -340,7 +345,7 @@ def _format_compact_date(value: date, *, include_year: bool, locale: str) -> str
         rendered = f"{value.month}月{value.day}日"
         return f"{value.year}年{rendered}" if include_year else rendered
     if locale != "en-US":
-        raise ValueError("E_PRESENTATION_LOCALE_UNSUPPORTED")
+        raise _diagnostic_error("E_PRESENTATION_LOCALE_UNSUPPORTED", f"locale={locale!r}; expected one of ('en-US', 'ja-JP')")
     months = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
     rendered = f"{value.day:02d} {months[value.month - 1]}"
     return f"{rendered} {value.year}" if include_year else rendered

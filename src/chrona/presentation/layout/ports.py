@@ -47,7 +47,7 @@ def connector_boundary_ports(mark: MarkPlacement, endpoint: str,
     if endpoint in {"finish", "end"} and mark.mark_shape != "point":
         return (("end", mark.end_port),)
     if endpoint not in {"at", "body", "start", "finish", "end"}:
-        raise ValueError("E_PRESENTATION_ANCHOR_MISSING")
+        raise ValueError(f"E_PRESENTATION_ANCHOR_MISSING: connector endpoint={endpoint!r}; expected at, body, start, finish, or end")
     bounds = mark.bounds
     left, top = float(bounds.inline), float(bounds.block)
     right, bottom = left + float(bounds.inline_size), top + float(bounds.block_size)
@@ -78,7 +78,7 @@ def connector_egress_candidates(mark: MarkPlacement, endpoint: str,
     order follows it unchanged, so a stub that cannot be routed falls back to today's order.
     """
     if endpoint not in {"start", "finish", "end", "at", "body"}:
-        raise ValueError("E_PRESENTATION_ANCHOR_MISSING")
+        raise ValueError(f"E_PRESENTATION_ANCHOR_MISSING: connector endpoint={endpoint!r}; expected start, finish, end, at, or body")
     connected = {mark.placement_id: mark}
     pending = [mark]
     while pending:

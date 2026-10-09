@@ -40,7 +40,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_FONT_IMPORT_INPUT\", \"severity\": \"error\", \"component\": \"font-import\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"font import input: no further detail is recorded for this code (E_FONT_IMPORT_INPUT)\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_FONT_IMPORT_INPUT\", \"severity\": \"error\", \"component\": \"font-import\", \"sourceRef\": \"/source\", \"revisionRefs\": [], \"message\": \"E_FONT_IMPORT_INPUT source=/source; sourceReadOrFaceSelectionError=FileNotFoundError, collectionIndex=0; expected readable font face\"}]}\n"
  },
  "font-import-not-a-font": {
   "argv": [
@@ -57,7 +57,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_FONT_IMPORT_FORMAT\", \"severity\": \"error\", \"component\": \"font-import\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"font import format: no further detail is recorded for this code (E_FONT_IMPORT_FORMAT)\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_FONT_IMPORT_FORMAT\", \"severity\": \"error\", \"component\": \"font-import\", \"sourceRef\": \"/source\", \"revisionRefs\": [], \"message\": \"E_FONT_IMPORT_FORMAT source=/source; fontParserError=TTLibError; expected supported TrueType/OpenType font\"}]}\n"
  },
  "icon-catalog-import-missing-licence": {
   "argv": [
@@ -87,7 +87,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_ICON_IMPORT_IO\", \"severity\": \"error\", \"component\": \"icon-import\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"icon import io: no further detail is recorded for this code (E_ICON_IMPORT_IO)\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_ICON_IMPORT_IO\", \"severity\": \"error\", \"component\": \"icon-import\", \"sourceRef\": \"missing.json\", \"revisionRefs\": [], \"message\": \"E_ICON_IMPORT_IO source=missing.json detail=read failed: FileNotFoundError\"}]}\n"
  },
  "identity-bytes-missing": {
   "argv": [
@@ -214,41 +214,8 @@
     "root": "{http://www.w3.org/2000/svg}svg"
    }
   },
-  "stderr": {
-   "codes": {
-    "W_LAYOUT_ACTUAL_INCOMPLETE": {
-     "count": 1,
-     "keys": [
-      "code",
-      "count",
-      "diagnostic",
-      "message",
-      "occurrences",
-      "severity"
-     ],
-     "sortedKeyLines": true
-    },
-    "W_SCENE_DECORATION_CONTRAST": {
-     "count": 1,
-     "keys": [
-      "code",
-      "count",
-      "diagnostic",
-      "disposition",
-      "findingCode",
-      "measuredFacts",
-      "message",
-      "occurrences",
-      "primitiveIds",
-      "scenePath",
-      "severity"
-     ],
-     "sortedKeyLines": true
-    }
-   },
-   "endsWithNewline": true
-  },
-  "stdout": ""
+  "stderr": "",
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_ACTUAL_INCOMPLETE\", \"count\": 2, \"diagnostic\": \"W_LAYOUT_ACTUAL_INCOMPLETE:design\", \"message\": \"an actual observation is incomplete, so its actual bar is not drawn: 'Design' (/objects/design); design and 1 more\", \"occurrences\": [\"W_LAYOUT_ACTUAL_INCOMPLETE:design\", \"W_LAYOUT_ACTUAL_INCOMPLETE:build\"], \"severity\": \"warning\", \"sourceRef\": \"/objects/design\", \"sourceTitle\": \"Design\"}, {\"code\": \"W_SCENE_DECORATION_CONTRAST\", \"count\": 2, \"diagnostic\": \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:design\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"disposition\": \"enabled\", \"findingCode\": \"E_SCENE_DECORATION_CONTRAST\", \"measuredFacts\": {\"contrastRatio\": 1.0134674108073656, \"floor\": 1.1, \"groundId\": \"canvas\", \"groundKind\": \"canvas\", \"paintChannel\": \"fill\"}, \"message\": \"a background decoration is fainter than its visibility floor against the ground it lies on: 'Design' (/objects/design); row-band:design and 1 more\", \"occurrences\": [\"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:design\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:release\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\"], \"primitiveIds\": [\"row-band:design\"], \"scenePath\": \"/surfaces/0:table-timeline\", \"severity\": \"warning\", \"sourceRef\": \"/objects/design\", \"sourceTitle\": \"Design\"}]}\n"
  },
  "render-actual-missing": {
   "argv": [
@@ -372,43 +339,8 @@
     "root": "{http://www.w3.org/2000/svg}svg"
    }
   },
-  "stderr": {
-   "codes": {
-    "W_DEADLINE": {
-     "count": 2,
-     "keys": [
-      "code",
-      "daysLate",
-      "deadline",
-      "diagnostic",
-      "endpoint",
-      "finish",
-      "message",
-      "object",
-      "severity",
-      "sourceRef"
-     ],
-     "sortedKeyLines": true
-    },
-    "W_SCENE_DECORATION_CONTRAST": {
-     "count": 1,
-     "keys": [
-      "code",
-      "diagnostic",
-      "disposition",
-      "findingCode",
-      "measuredFacts",
-      "message",
-      "primitiveIds",
-      "scenePath",
-      "severity"
-     ],
-     "sortedKeyLines": true
-    }
-   },
-   "endsWithNewline": true
-  },
-  "stdout": ""
+  "stderr": "",
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_SCENE_DECORATION_CONTRAST\", \"diagnostic\": \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:qa\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"disposition\": \"enabled\", \"findingCode\": \"E_SCENE_DECORATION_CONTRAST\", \"measuredFacts\": {\"contrastRatio\": 1.0134674108073656, \"floor\": 1.1, \"groundId\": \"canvas\", \"groundKind\": \"canvas\", \"paintChannel\": \"fill\"}, \"message\": \"a background decoration is fainter than its visibility floor against the ground it lies on: 'QA' (/objects/qa); row-band:qa\", \"primitiveIds\": [\"row-band:qa\"], \"scenePath\": \"/surfaces/0:table-timeline\", \"severity\": \"warning\", \"sourceRef\": \"/objects/qa\", \"sourceTitle\": \"QA\"}, {\"code\": \"W_DEADLINE\", \"daysLate\": 3, \"deadline\": \"2026-10-05\", \"diagnostic\": \"W_DEADLINE:{\\\"sourceRef\\\":\\\"/objects/qa/deadline\\\"}\", \"endpoint\": \"end\", \"finish\": \"2026-10-08\", \"message\": \"qa finishes 2026-10-08, 3 days after its deadline 2026-10-05\", \"object\": \"qa\", \"severity\": \"warning\", \"sourceRef\": \"/objects/qa/deadline\"}, {\"code\": \"W_DEADLINE\", \"daysLate\": 2, \"deadline\": \"2026-10-08\", \"diagnostic\": \"W_DEADLINE:{\\\"sourceRef\\\":\\\"/objects/launch/deadline\\\"}\", \"endpoint\": \"at\", \"finish\": \"2026-10-10\", \"message\": \"launch finishes 2026-10-10, 2 days after its deadline 2026-10-08\", \"object\": \"launch\", \"severity\": \"warning\", \"sourceRef\": \"/objects/launch/deadline\"}]}\n"
  },
  "render-default-no-suffix": {
   "argv": [
@@ -423,29 +355,8 @@
     "kind": "file"
    }
   },
-  "stderr": {
-   "codes": {
-    "W_SCENE_DECORATION_CONTRAST": {
-     "count": 1,
-     "keys": [
-      "code",
-      "count",
-      "diagnostic",
-      "disposition",
-      "findingCode",
-      "measuredFacts",
-      "message",
-      "occurrences",
-      "primitiveIds",
-      "scenePath",
-      "severity"
-     ],
-     "sortedKeyLines": true
-    }
-   },
-   "endsWithNewline": true
-  },
-  "stdout": ""
+  "stderr": "",
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_SCENE_DECORATION_CONTRAST\", \"count\": 2, \"diagnostic\": \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:design\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"disposition\": \"enabled\", \"findingCode\": \"E_SCENE_DECORATION_CONTRAST\", \"measuredFacts\": {\"contrastRatio\": 1.0134674108073656, \"floor\": 1.1, \"groundId\": \"canvas\", \"groundKind\": \"canvas\", \"paintChannel\": \"fill\"}, \"message\": \"a background decoration is fainter than its visibility floor against the ground it lies on: 'Design' (/objects/design); row-band:design and 1 more\", \"occurrences\": [\"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:design\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:release\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\"], \"primitiveIds\": [\"row-band:design\"], \"scenePath\": \"/surfaces/0:table-timeline\", \"severity\": \"warning\", \"sourceRef\": \"/objects/design\", \"sourceTitle\": \"Design\"}]}\n"
  },
  "render-default-png": {
   "argv": [
@@ -461,29 +372,8 @@
     "signature": true
    }
   },
-  "stderr": {
-   "codes": {
-    "W_SCENE_DECORATION_CONTRAST": {
-     "count": 1,
-     "keys": [
-      "code",
-      "count",
-      "diagnostic",
-      "disposition",
-      "findingCode",
-      "measuredFacts",
-      "message",
-      "occurrences",
-      "primitiveIds",
-      "scenePath",
-      "severity"
-     ],
-     "sortedKeyLines": true
-    }
-   },
-   "endsWithNewline": true
-  },
-  "stdout": ""
+  "stderr": "",
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_SCENE_DECORATION_CONTRAST\", \"count\": 2, \"diagnostic\": \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:design\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"disposition\": \"enabled\", \"findingCode\": \"E_SCENE_DECORATION_CONTRAST\", \"measuredFacts\": {\"contrastRatio\": 1.0134674108073656, \"floor\": 1.1, \"groundId\": \"canvas\", \"groundKind\": \"canvas\", \"paintChannel\": \"fill\"}, \"message\": \"a background decoration is fainter than its visibility floor against the ground it lies on: 'Design' (/objects/design); row-band:design and 1 more\", \"occurrences\": [\"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:design\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:release\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\"], \"primitiveIds\": [\"row-band:design\"], \"scenePath\": \"/surfaces/0:table-timeline\", \"severity\": \"warning\", \"sourceRef\": \"/objects/design\", \"sourceTitle\": \"Design\"}]}\n"
  },
  "render-default-svg": {
   "argv": [
@@ -499,29 +389,8 @@
     "root": "{http://www.w3.org/2000/svg}svg"
    }
   },
-  "stderr": {
-   "codes": {
-    "W_SCENE_DECORATION_CONTRAST": {
-     "count": 1,
-     "keys": [
-      "code",
-      "count",
-      "diagnostic",
-      "disposition",
-      "findingCode",
-      "measuredFacts",
-      "message",
-      "occurrences",
-      "primitiveIds",
-      "scenePath",
-      "severity"
-     ],
-     "sortedKeyLines": true
-    }
-   },
-   "endsWithNewline": true
-  },
-  "stdout": ""
+  "stderr": "",
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_SCENE_DECORATION_CONTRAST\", \"count\": 2, \"diagnostic\": \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:design\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"disposition\": \"enabled\", \"findingCode\": \"E_SCENE_DECORATION_CONTRAST\", \"measuredFacts\": {\"contrastRatio\": 1.0134674108073656, \"floor\": 1.1, \"groundId\": \"canvas\", \"groundKind\": \"canvas\", \"paintChannel\": \"fill\"}, \"message\": \"a background decoration is fainter than its visibility floor against the ground it lies on: 'Design' (/objects/design); row-band:design and 1 more\", \"occurrences\": [\"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:design\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:release\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\"], \"primitiveIds\": [\"row-band:design\"], \"scenePath\": \"/surfaces/0:table-timeline\", \"severity\": \"warning\", \"sourceRef\": \"/objects/design\", \"sourceTitle\": \"Design\"}]}\n"
  },
  "render-emit-scene-exists": {
   "argv": [
@@ -584,29 +453,8 @@
     "kind": "pdf"
    }
   },
-  "stderr": {
-   "codes": {
-    "W_SCENE_DECORATION_CONTRAST": {
-     "count": 1,
-     "keys": [
-      "code",
-      "count",
-      "diagnostic",
-      "disposition",
-      "findingCode",
-      "measuredFacts",
-      "message",
-      "occurrences",
-      "primitiveIds",
-      "scenePath",
-      "severity"
-     ],
-     "sortedKeyLines": true
-    }
-   },
-   "endsWithNewline": true
-  },
-  "stdout": ""
+  "stderr": "",
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_SCENE_DECORATION_CONTRAST\", \"count\": 2, \"diagnostic\": \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:design\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"disposition\": \"enabled\", \"findingCode\": \"E_SCENE_DECORATION_CONTRAST\", \"measuredFacts\": {\"contrastRatio\": 1.0134674108073656, \"floor\": 1.1, \"groundId\": \"canvas\", \"groundKind\": \"canvas\", \"paintChannel\": \"fill\"}, \"message\": \"a background decoration is fainter than its visibility floor against the ground it lies on: 'Design' (/objects/design); row-band:design and 1 more\", \"occurrences\": [\"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:design\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:release\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\"], \"primitiveIds\": [\"row-band:design\"], \"scenePath\": \"/surfaces/0:table-timeline\", \"severity\": \"warning\", \"sourceRef\": \"/objects/design\", \"sourceTitle\": \"Design\"}]}\n"
  },
  "render-format-png-no-suffix": {
   "argv": [
@@ -623,29 +471,8 @@
     "kind": "file"
    }
   },
-  "stderr": {
-   "codes": {
-    "W_SCENE_DECORATION_CONTRAST": {
-     "count": 1,
-     "keys": [
-      "code",
-      "count",
-      "diagnostic",
-      "disposition",
-      "findingCode",
-      "measuredFacts",
-      "message",
-      "occurrences",
-      "primitiveIds",
-      "scenePath",
-      "severity"
-     ],
-     "sortedKeyLines": true
-    }
-   },
-   "endsWithNewline": true
-  },
-  "stdout": ""
+  "stderr": "",
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_SCENE_DECORATION_CONTRAST\", \"count\": 2, \"diagnostic\": \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:design\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"disposition\": \"enabled\", \"findingCode\": \"E_SCENE_DECORATION_CONTRAST\", \"measuredFacts\": {\"contrastRatio\": 1.0134674108073656, \"floor\": 1.1, \"groundId\": \"canvas\", \"groundKind\": \"canvas\", \"paintChannel\": \"fill\"}, \"message\": \"a background decoration is fainter than its visibility floor against the ground it lies on: 'Design' (/objects/design); row-band:design and 1 more\", \"occurrences\": [\"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:design\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:release\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\"], \"primitiveIds\": [\"row-band:design\"], \"scenePath\": \"/surfaces/0:table-timeline\", \"severity\": \"warning\", \"sourceRef\": \"/objects/design\", \"sourceTitle\": \"Design\"}]}\n"
  },
  "render-format-svg-explicit": {
   "argv": [
@@ -663,29 +490,8 @@
     "root": "{http://www.w3.org/2000/svg}svg"
    }
   },
-  "stderr": {
-   "codes": {
-    "W_SCENE_DECORATION_CONTRAST": {
-     "count": 1,
-     "keys": [
-      "code",
-      "count",
-      "diagnostic",
-      "disposition",
-      "findingCode",
-      "measuredFacts",
-      "message",
-      "occurrences",
-      "primitiveIds",
-      "scenePath",
-      "severity"
-     ],
-     "sortedKeyLines": true
-    }
-   },
-   "endsWithNewline": true
-  },
-  "stdout": ""
+  "stderr": "",
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_SCENE_DECORATION_CONTRAST\", \"count\": 2, \"diagnostic\": \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:design\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"disposition\": \"enabled\", \"findingCode\": \"E_SCENE_DECORATION_CONTRAST\", \"measuredFacts\": {\"contrastRatio\": 1.0134674108073656, \"floor\": 1.1, \"groundId\": \"canvas\", \"groundKind\": \"canvas\", \"paintChannel\": \"fill\"}, \"message\": \"a background decoration is fainter than its visibility floor against the ground it lies on: 'Design' (/objects/design); row-band:design and 1 more\", \"occurrences\": [\"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:design\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:release\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\"], \"primitiveIds\": [\"row-band:design\"], \"scenePath\": \"/surfaces/0:table-timeline\", \"severity\": \"warning\", \"sourceRef\": \"/objects/design\", \"sourceTitle\": \"Design\"}]}\n"
  },
  "render-halcyon-default": {
   "argv": [
@@ -703,62 +509,8 @@
     "root": "{http://www.w3.org/2000/svg}svg"
    }
   },
-  "stderr": {
-   "codes": {
-    "I_LAYOUT_PLOT_LABELS_SUPPRESSED": {
-     "count": 1,
-     "keys": [
-      "code",
-      "count",
-      "message",
-      "severity",
-      "surfaceId"
-     ],
-     "sortedKeyLines": true
-    },
-    "W_LAYOUT_ACTUAL_INCOMPLETE": {
-     "count": 1,
-     "keys": [
-      "code",
-      "diagnostic",
-      "message",
-      "severity"
-     ],
-     "sortedKeyLines": true
-    },
-    "W_LAYOUT_LABEL_SUPPRESSED": {
-     "count": 1,
-     "keys": [
-      "code",
-      "count",
-      "diagnostic",
-      "message",
-      "occurrences",
-      "severity"
-     ],
-     "sortedKeyLines": true
-    },
-    "W_SCENE_DECORATION_CONTRAST": {
-     "count": 1,
-     "keys": [
-      "code",
-      "count",
-      "diagnostic",
-      "disposition",
-      "findingCode",
-      "measuredFacts",
-      "message",
-      "occurrences",
-      "primitiveIds",
-      "scenePath",
-      "severity"
-     ],
-     "sortedKeyLines": true
-    }
-   },
-   "endsWithNewline": true
-  },
-  "stdout": ""
+  "stderr": "",
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_ACTUAL_INCOMPLETE\", \"diagnostic\": \"W_LAYOUT_ACTUAL_INCOMPLETE:tvac\", \"message\": \"an actual observation is incomplete, so its actual bar is not drawn: 'System thermal-vacuum' (/objects/tvac); tvac\", \"severity\": \"warning\", \"sourceRef\": \"/objects/tvac\", \"sourceTitle\": \"System thermal-vacuum\"}, {\"code\": \"W_LAYOUT_LABEL_SUPPRESSED\", \"count\": 6, \"diagnostic\": \"W_LAYOUT_LABEL_SUPPRESSED:member-label:eps:eps\", \"message\": \"a label was left out of the picture because it does not fit: 'Power system qualification' (/objects/eps); member-label:eps:eps and 5 more\", \"occurrences\": [\"W_LAYOUT_LABEL_SUPPRESSED:member-label:eps:eps\", \"W_LAYOUT_LABEL_SUPPRESSED:member-label:launch-contract:launch-contract\", \"W_LAYOUT_LABEL_SUPPRESSED:member-label:payload-tvac:payload-tvac\", \"W_LAYOUT_LABEL_SUPPRESSED:member-label:station:station\", \"W_LAYOUT_LABEL_SUPPRESSED:member-label:bus-test:bus-test\", \"W_LAYOUT_LABEL_SUPPRESSED:member-label:comms-test:comms-test\"], \"severity\": \"warning\", \"sourceRef\": \"/objects/eps\", \"sourceTitle\": \"Power system qualification\"}, {\"code\": \"W_SCENE_DECORATION_CONTRAST\", \"count\": 13, \"diagnostic\": \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:avionics\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"disposition\": \"enabled\", \"findingCode\": \"E_SCENE_DECORATION_CONTRAST\", \"measuredFacts\": {\"contrastRatio\": 1.0134674108073656, \"floor\": 1.1, \"groundId\": \"canvas\", \"groundKind\": \"canvas\", \"paintChannel\": \"fill\"}, \"message\": \"a background decoration is fainter than its visibility floor against the ground it lies on: 'Avionics integration' (/objects/avionics); row-band:avionics and 12 more\", \"occurrences\": [\"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:avionics\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:bus-test\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:comms-test\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:eps\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:frr\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:integration\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:leop\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:optics\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:payload-tvac\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:pdr\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:rehearsals\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:shipment\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:tvac\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\"], \"primitiveIds\": [\"row-band:avionics\"], \"scenePath\": \"/surfaces/0:table-timeline\", \"severity\": \"warning\", \"sourceRef\": \"/objects/avionics\", \"sourceTitle\": \"Avionics integration\"}, {\"code\": \"I_LAYOUT_PLOT_LABELS_SUPPRESSED\", \"count\": 6, \"message\": \"6 plot labels on table-timeline were left out because they do not fit\", \"severity\": \"info\", \"surfaceId\": \"table-timeline\"}]}\n"
  },
  "render-halcyon-emit-scene": {
   "argv": [
@@ -799,22 +551,8 @@
     "kind": "json"
    }
   },
-  "stderr": {
-   "codes": {
-    "W_LAYOUT_ACTUAL_INCOMPLETE": {
-     "count": 1,
-     "keys": [
-      "code",
-      "diagnostic",
-      "message",
-      "severity"
-     ],
-     "sortedKeyLines": true
-    }
-   },
-   "endsWithNewline": true
-  },
-  "stdout": ""
+  "stderr": "",
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_ACTUAL_INCOMPLETE\", \"diagnostic\": \"W_LAYOUT_ACTUAL_INCOMPLETE:tvac\", \"message\": \"an actual observation is incomplete, so its actual bar is not drawn: 'System thermal-vacuum' (/objects/tvac); tvac\", \"severity\": \"warning\", \"sourceRef\": \"/objects/tvac\", \"sourceTitle\": \"System thermal-vacuum\"}]}\n"
  },
  "render-halcyon-resources-png": {
   "argv": [
@@ -840,22 +578,8 @@
     "signature": true
    }
   },
-  "stderr": {
-   "codes": {
-    "W_LAYOUT_ACTUAL_INCOMPLETE": {
-     "count": 1,
-     "keys": [
-      "code",
-      "diagnostic",
-      "message",
-      "severity"
-     ],
-     "sortedKeyLines": true
-    }
-   },
-   "endsWithNewline": true
-  },
-  "stdout": ""
+  "stderr": "",
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_ACTUAL_INCOMPLETE\", \"diagnostic\": \"W_LAYOUT_ACTUAL_INCOMPLETE:tvac\", \"message\": \"an actual observation is incomplete, so its actual bar is not drawn: 'System thermal-vacuum' (/objects/tvac); tvac\", \"severity\": \"warning\", \"sourceRef\": \"/objects/tvac\", \"sourceTitle\": \"System thermal-vacuum\"}]}\n"
  },
  "render-halcyon-view-theme-scheme-layout": {
   "argv": [
@@ -881,22 +605,8 @@
     "root": "{http://www.w3.org/2000/svg}svg"
    }
   },
-  "stderr": {
-   "codes": {
-    "W_LAYOUT_ACTUAL_INCOMPLETE": {
-     "count": 1,
-     "keys": [
-      "code",
-      "diagnostic",
-      "message",
-      "severity"
-     ],
-     "sortedKeyLines": true
-    }
-   },
-   "endsWithNewline": true
-  },
-  "stdout": ""
+  "stderr": "",
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_LAYOUT_ACTUAL_INCOMPLETE\", \"diagnostic\": \"W_LAYOUT_ACTUAL_INCOMPLETE:tvac\", \"message\": \"an actual observation is incomplete, so its actual bar is not drawn: 'System thermal-vacuum' (/objects/tvac); tvac\", \"severity\": \"warning\", \"sourceRef\": \"/objects/tvac\", \"sourceTitle\": \"System thermal-vacuum\"}]}\n"
  },
  "render-icon-catalog-missing": {
   "argv": [
@@ -1070,7 +780,7 @@
    }
   },
   "stderr": "",
-  "stdout": ""
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": []}\n"
  },
  "render-preset-builtin-id-png": {
   "argv": [
@@ -1121,7 +831,7 @@
    }
   },
   "stderr": "",
-  "stdout": ""
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": []}\n"
  },
  "render-preset-path-missing": {
   "argv": [
@@ -1203,7 +913,7 @@
    }
   },
   "stderr": "",
-  "stdout": ""
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": []}\n"
  },
  "render-reference-error-project": {
   "argv": [
@@ -1320,29 +1030,8 @@
     "kind": "json"
    }
   },
-  "stderr": {
-   "codes": {
-    "W_SCENE_DECORATION_CONTRAST": {
-     "count": 1,
-     "keys": [
-      "code",
-      "count",
-      "diagnostic",
-      "disposition",
-      "findingCode",
-      "measuredFacts",
-      "message",
-      "occurrences",
-      "primitiveIds",
-      "scenePath",
-      "severity"
-     ],
-     "sortedKeyLines": true
-    }
-   },
-   "endsWithNewline": true
-  },
-  "stdout": ""
+  "stderr": "",
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_SCENE_DECORATION_CONTRAST\", \"count\": 2, \"diagnostic\": \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:design\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"disposition\": \"enabled\", \"findingCode\": \"E_SCENE_DECORATION_CONTRAST\", \"measuredFacts\": {\"contrastRatio\": 1.0134674108073656, \"floor\": 1.1, \"groundId\": \"canvas\", \"groundKind\": \"canvas\", \"paintChannel\": \"fill\"}, \"message\": \"a background decoration is fainter than its visibility floor against the ground it lies on: 'Design' (/objects/design); row-band:design and 1 more\", \"occurrences\": [\"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:design\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:release\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\"], \"primitiveIds\": [\"row-band:design\"], \"scenePath\": \"/surfaces/0:table-timeline\", \"severity\": \"warning\", \"sourceRef\": \"/objects/design\", \"sourceTitle\": \"Design\"}]}\n"
  },
  "render-theme-is-a-view": {
   "argv": [
@@ -1384,7 +1073,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_SCHEME_INTENT_UNKNOWN\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"a Color Scheme colorBindings entry is not ROLE.PROPERTY bound to a known intent or a declared color; check every target name and value in colorBindings\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_SCHEME_INTENT_UNKNOWN\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/body/colorBindings/group:bus.fill\", \"revisionRefs\": [], \"message\": \"target='group:bus.fill', intent='category:bus'; expected role.property and a declared intent/category\"}]}\n"
  },
  "render-theme-schema-error": {
   "argv": [
@@ -1518,29 +1207,8 @@
     "root": "{http://www.w3.org/2000/svg}svg"
    }
   },
-  "stderr": {
-   "codes": {
-    "W_SCENE_DECORATION_CONTRAST": {
-     "count": 1,
-     "keys": [
-      "code",
-      "count",
-      "diagnostic",
-      "disposition",
-      "findingCode",
-      "measuredFacts",
-      "message",
-      "occurrences",
-      "primitiveIds",
-      "scenePath",
-      "severity"
-     ],
-     "sortedKeyLines": true
-    }
-   },
-   "endsWithNewline": true
-  },
-  "stdout": ""
+  "stderr": "",
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_SCENE_DECORATION_CONTRAST\", \"count\": 2, \"diagnostic\": \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:design\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"disposition\": \"enabled\", \"findingCode\": \"E_SCENE_DECORATION_CONTRAST\", \"measuredFacts\": {\"contrastRatio\": 1.0134674108073656, \"floor\": 1.1, \"groundId\": \"canvas\", \"groundKind\": \"canvas\", \"paintChannel\": \"fill\"}, \"message\": \"a background decoration is fainter than its visibility floor against the ground it lies on: 'Design' (/objects/design); row-band:design and 1 more\", \"occurrences\": [\"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:design\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:release\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\"], \"primitiveIds\": [\"row-band:design\"], \"scenePath\": \"/surfaces/0:table-timeline\", \"severity\": \"warning\", \"sourceRef\": \"/objects/design\", \"sourceTitle\": \"Design\"}]}\n"
  },
  "render-viewport-width-only": {
   "argv": [
@@ -1558,29 +1226,8 @@
     "root": "{http://www.w3.org/2000/svg}svg"
    }
   },
-  "stderr": {
-   "codes": {
-    "W_SCENE_DECORATION_CONTRAST": {
-     "count": 1,
-     "keys": [
-      "code",
-      "count",
-      "diagnostic",
-      "disposition",
-      "findingCode",
-      "measuredFacts",
-      "message",
-      "occurrences",
-      "primitiveIds",
-      "scenePath",
-      "severity"
-     ],
-     "sortedKeyLines": true
-    }
-   },
-   "endsWithNewline": true
-  },
-  "stdout": ""
+  "stderr": "",
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_SCENE_DECORATION_CONTRAST\", \"count\": 2, \"diagnostic\": \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:design\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"disposition\": \"enabled\", \"findingCode\": \"E_SCENE_DECORATION_CONTRAST\", \"measuredFacts\": {\"contrastRatio\": 1.0134674108073656, \"floor\": 1.1, \"groundId\": \"canvas\", \"groundKind\": \"canvas\", \"paintChannel\": \"fill\"}, \"message\": \"a background decoration is fainter than its visibility floor against the ground it lies on: 'Design' (/objects/design); row-band:design and 1 more\", \"occurrences\": [\"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:design\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:release\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\"], \"primitiveIds\": [\"row-band:design\"], \"scenePath\": \"/surfaces/0:table-timeline\", \"severity\": \"warning\", \"sourceRef\": \"/objects/design\", \"sourceTitle\": \"Design\"}]}\n"
  },
  "render-visual-profile": {
   "argv": [
@@ -1598,29 +1245,8 @@
     "root": "{http://www.w3.org/2000/svg}svg"
    }
   },
-  "stderr": {
-   "codes": {
-    "W_SCENE_DECORATION_CONTRAST": {
-     "count": 1,
-     "keys": [
-      "code",
-      "count",
-      "diagnostic",
-      "disposition",
-      "findingCode",
-      "measuredFacts",
-      "message",
-      "occurrences",
-      "primitiveIds",
-      "scenePath",
-      "severity"
-     ],
-     "sortedKeyLines": true
-    }
-   },
-   "endsWithNewline": true
-  },
-  "stdout": ""
+  "stderr": "",
+  "stdout": "{\"diagnostics\": [], \"status\": \"ok\", \"warnings\": [{\"code\": \"W_SCENE_DECORATION_CONTRAST\", \"count\": 2, \"diagnostic\": \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:design\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"disposition\": \"enabled\", \"findingCode\": \"E_SCENE_DECORATION_CONTRAST\", \"measuredFacts\": {\"contrastRatio\": 1.0134674108073656, \"floor\": 1.1, \"groundId\": \"canvas\", \"groundKind\": \"canvas\", \"paintChannel\": \"fill\"}, \"message\": \"a background decoration is fainter than its visibility floor against the ground it lies on: 'Design' (/objects/design); row-band:design and 1 more\", \"occurrences\": [\"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:design\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\", \"W_SCENE_DECORATION_CONTRAST:{\\\"primitiveIds\\\":[\\\"row-band:release\\\"],\\\"scenePath\\\":\\\"/surfaces/0:table-timeline\\\"}\"], \"primitiveIds\": [\"row-band:design\"], \"scenePath\": \"/surfaces/0:table-timeline\", \"severity\": \"warning\", \"sourceRef\": \"/objects/design\", \"sourceTitle\": \"Design\"}]}\n"
  },
  "render-workspace-bad-viewport": {
   "argv": [

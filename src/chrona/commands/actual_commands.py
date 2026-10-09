@@ -155,13 +155,24 @@ def apply_actual_intake_batch(
     system = source.get("system")
     source_identity = source.get("contentIdentity")
     records = batch.get("records") if isinstance(batch, dict) else None
-    if not isinstance(system, str) or not system or not isinstance(source_identity, str) or not source_identity or not isinstance(records, list):
-        return ActualIntakeCommandResult("rejected", None, ("E_INTAKE_SCHEMA",), ())
+    if not isinstance(system, str) or not system:
+        return ActualIntakeCommandResult("rejected", None,
+                                         ("E_INTAKE_SCHEMA: source.system must be a non-empty string",), ())
+    if not isinstance(source_identity, str) or not source_identity:
+        return ActualIntakeCommandResult("rejected", None,
+                                         ("E_INTAKE_SCHEMA: source.contentIdentity must be a non-empty string",), ())
+    if not isinstance(records, list):
+        return ActualIntakeCommandResult("rejected", None,
+                                         ("E_INTAKE_SCHEMA: records must be an array",), ())
     revision, current = store.read()
     if revision != base_revision:
-        return ActualIntakeCommandResult("rejected", None, ("E_CONFLICT",), ())
+        return ActualIntakeCommandResult(
+            "rejected", None,
+            (f"E_CONFLICT: base revision {base_revision!r} does not match current revision {revision!r}",), ())
     if current.get("version") != "chrona/actual-set/v0.3" or current.get("kind") != "actual-set":
-        return ActualIntakeCommandResult("rejected", None, ("E_INTAKE_SCHEMA",), ())
+        return ActualIntakeCommandResult(
+            "rejected", None,
+            ("E_INTAKE_SCHEMA: current Actual set must have version chrona/actual-set/v0.3 and kind actual-set",), ())
 
     def identity(value: Any) -> tuple[str, str]:
         return (type(value).__name__, json.dumps(value, sort_keys=True, separators=(",", ":")))
@@ -169,12 +180,24 @@ def apply_actual_intake_batch(
     known_ids = frozenset(project_object_ids)
     seen: set[tuple[str, str]] = set()
     normalized: list[tuple[Any, dict[str, Any], tuple[str, str]]] = []
-    for record in records:
-        if not isinstance(record, dict) or not isinstance(record.get("externalKey"), (str, int)) or isinstance(record.get("externalKey"), bool) or not isinstance(record.get("actual"), dict) or not record["actual"]:
-            return ActualIntakeCommandResult("rejected", None, ("E_INTAKE_SCHEMA",), ())
+    for index, record in enumerate(records):
+        if not isinstance(record, dict):
+            return ActualIntakeCommandResult("rejected", None,
+                                             (f"E_INTAKE_SCHEMA: records[{index}] must be an object",), ())
+        external_key = record.get("externalKey")
+        if not isinstance(external_key, (str, int)) or isinstance(external_key, bool):
+            return ActualIntakeCommandResult(
+                "rejected", None,
+                (f"E_INTAKE_SCHEMA: records[{index}].externalKey must be a string or integer (not boolean)",), ())
+        if not isinstance(record.get("actual"), dict) or not record["actual"]:
+            return ActualIntakeCommandResult(
+                "rejected", None,
+                (f"E_INTAKE_SCHEMA: records[{index}].actual must be a non-empty object",), ())
         key = identity(record["externalKey"])
         if key in seen:
-            return ActualIntakeCommandResult("rejected", None, ("E_INTAKE_DUPLICATE_KEY",), ())
+            return ActualIntakeCommandResult(
+                "rejected", None,
+                (f"E_INTAKE_DUPLICATE_KEY: records[{index}].externalKey {external_key!r} duplicates an earlier batch key",), ())
         seen.add(key)
         normalized.append((record["externalKey"], deepcopy(record), key))
 
@@ -186,7 +209,9 @@ def apply_actual_intake_batch(
         if isinstance(external, dict) and external.get("system") == system and "key" in external:
             key = identity(external["key"])
             if key in existing:
-                return ActualIntakeCommandResult("rejected", None, ("E_INTAKE_DUPLICATE_KEY",), ())
+                return ActualIntakeCommandResult(
+                    "rejected", None,
+                    (f"E_INTAKE_DUPLICATE_KEY: existing observations contain duplicate external key {external.get('key')!r}",), ())
             existing[key] = observation
 
     dispositions: list[str] = []
@@ -197,10 +222,16 @@ def apply_actual_intake_batch(
             if prior.get("actual") == record["actual"] and prior.get("sourceContentIdentity") == source_identity:
                 dispositions.append("alreadyPresent")
                 continue
-            return ActualIntakeCommandResult("rejected", None, ("E_ACTUAL_EXTERNAL_CONFLICT",), tuple(dispositions))
+            return ActualIntakeCommandResult(
+                "rejected", None,
+                (f"E_ACTUAL_EXTERNAL_CONFLICT: external key {external_key!r} already has different actual facts or sourceContentIdentity",),
+                tuple(dispositions))
         observation_id = f"{system}:{external_key}"
         if any(item.get("id") == observation_id for item in observations):
-            return ActualIntakeCommandResult("rejected", None, ("E_INTAKE_DUPLICATE_KEY",), tuple(dispositions))
+            return ActualIntakeCommandResult(
+                "rejected", None,
+                (f"E_INTAKE_DUPLICATE_KEY: observation id {observation_id!r} for external key {external_key!r} is already in use",),
+                tuple(dispositions))
         observation: dict[str, Any] = {
             "id": observation_id,
             "sequence": next_sequence,
@@ -221,7 +252,10 @@ def apply_actual_intake_batch(
         return ActualIntakeCommandResult("accepted", current, (), tuple(dispositions), revision)
     persisted = store.write(base_revision, candidate)
     if persisted is None:
-        return ActualIntakeCommandResult("rejected", None, ("E_CONFLICT",), tuple(dispositions))
+        return ActualIntakeCommandResult(
+            "rejected", None,
+            (f"E_CONFLICT: Actual set changed after base revision {base_revision!r}; compare-and-swap write was not applied",),
+            tuple(dispositions))
     result_revision, result = persisted
     store.record_command(command_id, current, result)
     return ActualIntakeCommandResult("accepted", result, (), tuple(dispositions), result_revision)
@@ -237,17 +271,25 @@ def resolve_actual_observation(
 ) -> ActualCommandResult:
     """Explicitly align one imported observation without mutating planned data."""
     if project_object_id not in project_object_ids:
-        return ActualCommandResult("rejected", None, ("E_REFERENCE",))
+        return ActualCommandResult(
+            "rejected", None,
+            (f"E_REFERENCE: projectObjectId {project_object_id!r} is not present in the Project object ids",))
     revision, current = store.read()
     if revision != base_revision:
-        return ActualCommandResult("rejected", None, ("E_CONFLICT",))
+        return ActualCommandResult(
+            "rejected", None,
+            (f"E_CONFLICT: base revision {base_revision!r} does not match current revision {revision!r}",))
     candidate = deepcopy(current)
     observations = candidate.get("body", {}).get("observations", [])
     observation = next((item for item in observations if item.get("id") == observation_id), None)
     if observation is None:
-        return ActualCommandResult("rejected", None, ("E_REFERENCE",))
+        return ActualCommandResult(
+            "rejected", None,
+            (f"E_REFERENCE: observation id {observation_id!r} was not found in the Actual set",))
     if observation.get("alignment") != "unmatched" or "externalIdentity" not in observation:
-        return ActualCommandResult("rejected", None, ("E_ACTUAL_ALIGNMENT",))
+        return ActualCommandResult(
+            "rejected", None,
+            (f"E_ACTUAL_ALIGNMENT: observation {observation_id!r} must have unmatched alignment and externalIdentity before resolution",))
 
     provenance = {"externalIdentity": deepcopy(observation["externalIdentity"])}
     observation.pop("alignment")
@@ -256,7 +298,9 @@ def resolve_actual_observation(
     observation["projectObjectId"] = project_object_id
     persisted = store.write(base_revision, candidate)
     if persisted is None:
-        return ActualCommandResult("rejected", None, ("E_CONFLICT",))
+        return ActualCommandResult(
+            "rejected", None,
+            (f"E_CONFLICT: Actual set changed after base revision {base_revision!r}; compare-and-swap write was not applied",))
     result_revision, result = persisted
     store.record_command(command_id, current, result)
     return ActualCommandResult("accepted", result, (), result_revision, provenance)
@@ -265,7 +309,9 @@ def resolve_actual_observation(
 def undo_actual_command(store: ActualStore, base_revision: str, command_id: str) -> ActualCommandResult:
     persisted = store.undo(base_revision, command_id)
     if persisted is None:
-        return ActualCommandResult("rejected", None, ("E_CONFLICT",))
+        return ActualCommandResult(
+            "rejected", None,
+            (f"E_CONFLICT: command {command_id!r} cannot be undone at base revision {base_revision!r}",))
     revision, actual_set = persisted
     return ActualCommandResult("accepted", actual_set, (), revision)
 
@@ -273,6 +319,8 @@ def undo_actual_command(store: ActualStore, base_revision: str, command_id: str)
 def redo_actual_command(store: ActualStore, base_revision: str, command_id: str) -> ActualCommandResult:
     persisted = store.redo(base_revision, command_id)
     if persisted is None:
-        return ActualCommandResult("rejected", None, ("E_CONFLICT",))
+        return ActualCommandResult(
+            "rejected", None,
+            (f"E_CONFLICT: command {command_id!r} cannot be redone at base revision {base_revision!r}",))
     revision, actual_set = persisted
     return ActualCommandResult("accepted", actual_set, (), revision)

@@ -235,7 +235,8 @@ def test_svg_rejects_primitive_without_completed_paint():
     try:
         render_v05_svg(_surface(primitive))
     except ValueError as error:
-        assert str(error) == "E_PRESENTATION_PAINT_INVALID"
+        assert str(error).startswith("E_PRESENTATION_PAINT_INVALID:")
+        assert "scene_id='p'" in str(error) and "no completed paint" in str(error)
     else:
         raise AssertionError("expected completed-paint rejection")
 
