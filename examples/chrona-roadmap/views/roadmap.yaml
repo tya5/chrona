@@ -1,0 +1,226 @@
+version: chrona/view/v0.28
+kind: view
+id: chrona-roadmap-board
+body:
+  surface: table-timeline
+  heading:
+    title: '{project} · Road to a product'
+    subtitle: Milestones from the design targets to a release candidate · plan as
+      of {asOf} · dates are the reviewer's estimates
+    dateForm: day-month-year
+  rows:
+    mode: automatic
+  window:
+    mode: explicit
+    start: '2026-10-01'
+    end: '2026-12-16'
+  comparison:
+    baseline: snapshot
+    baselineMarks: ghost-when-changed
+    missingActualScope: in-progress
+    actual: required
+    observationSelection: latest
+    deltaUnit: calendar-days
+    facets:
+    - planned
+    - actual
+    - finishDelta
+    - missingActual
+    - unmatchedActual
+  visibility:
+    labels:
+      placement: table
+      content:
+      - title
+      - finishDelta
+      side: end
+      overflow: suppress
+    relations:
+      mode: semantic
+      overflow: suppress
+    annotations:
+      mode: presentation
+      marker: none
+  annotations:
+  - id: window-note
+    purpose: note
+    anchor:
+      kind: object
+      id: titlecard
+      facet: planned
+      endpoint: finish
+    projectAnnotation: signoff
+    candidates:
+    - id: rail
+      region:
+        kind: slot
+        source: annotations
+      search:
+        kind: row-aligned
+      obstacles:
+        classes: &id001
+        - mark
+        - text
+        - label-visual
+        - dependency-route
+        - leader-route
+        - annotation-box
+        - port
+        - rule
+      connector:
+        kind: leader
+  - id: tvac-note
+    purpose: note
+    anchor:
+      kind: object
+      id: route-bound
+      facet: planned
+      endpoint: finish
+    projectAnnotation: route
+    candidates:
+    - id: rail
+      region:
+        kind: slot
+        source: annotations
+      search:
+        kind: row-aligned
+      obstacles:
+        classes: *id001
+      connector:
+        kind: leader
+  - id: station-note
+    purpose: note
+    anchor:
+      kind: object
+      id: japanese
+      facet: planned
+      endpoint: finish
+    projectAnnotation: ja
+    candidates:
+    - id: rail
+      region:
+        kind: slot
+        source: annotations
+      search:
+        kind: row-aligned
+      obstacles:
+        classes: *id001
+      connector:
+        kind: leader
+  axis:
+    tiers:
+    - unit: month
+      every: 1
+      role: band
+      typographyRole: axisQuarter
+    - unit: month
+      every: 1
+      role: grid-major
+    - unit: month
+      every: 1
+      role: labels
+      label:
+        form: long-month-year
+        align: center
+        overflow: visible-overflow
+        orientation: horizontal
+      typographyRole: axisQuarter
+    - unit: week
+      every: 1
+      role: grid-minor
+  markers:
+  - kind: asOf
+    source: actual
+    label: as of
+    placement: below-plot
+    date:
+      form: day-month
+  shading:
+    nonWorking: true
+    exceptions: true
+  backgroundDecoration:
+    rows: none
+    groups: all
+  hierarchyColumn: Work item
+  tableColumns:
+  - id: Work item
+    source: title
+    missing: em-dash
+    align: start
+    width:
+      minmax:
+        min: content
+        max:
+          fr: 1
+    headerOrientation: horizontal
+  - id: Lane
+    source:
+      field: lane
+    textRole: table-cell-secondary
+    missing: em-dash
+    align: start
+    width: content
+    headerOrientation: horizontal
+  - id: Δ finish
+    source:
+      facet: finishDelta
+    format: signedDays
+    missing: blank
+    missingBy:
+      inProgress: em-dash
+      dueUnobserved: blank
+      notYetDue: blank
+    align: end
+    width: content
+    headerOrientation: horizontal
+  selection:
+    include:
+      ids:
+      - target-b
+      - yuya
+      - titlecard
+      - marquee
+      - sunday
+      - m0-gate
+      - canvas-fit
+      - flow-bugs
+      - legend-warning
+      - rows-headers
+      - scene-checks
+      - m1-gate
+      - route-bound
+      - tall-canvas
+      - japanese
+      - m2-gate
+      - docs-ci
+      - defaults
+      - errors
+      - m3-gate
+      - presets
+      - ai-design
+      - io
+      - m4-gate
+      - rerun
+      - rc-gate
+      types:
+      - span
+      - point
+  grouping:
+    by: field
+    field: owner
+    missing: ungrouped
+    order:
+    - m0
+    - m1
+    - m2
+    - m3
+    - m4
+    - rc
+    presentation: header
+    tint:
+      scale: owner
+      domain: firstAppearance
+  ordering:
+    by: source
+    direction: ascending
+    tieBreak: id

@@ -1,0 +1,175 @@
+version: timeline/v0.7
+project:
+  id: chrona-roadmap
+  title: chrona
+  calendar: working
+calendars:
+  working:
+    working_days: [mon, tue, wed, thu, fri]
+    exceptions: []
+entities:
+  m0: {type: team, title: 'M0 · Reach the design targets'}
+  m1: {type: team, title: 'M1 · Basic finish, checked by machine'}
+  m2: {type: team, title: 'M2 · Works at real scale'}
+  m3: {type: team, title: 'M3 · First-run experience'}
+  m4: {type: team, title: 'M4 · More authors'}
+  rc: {type: team, title: 'RC · Release candidate'}
+objects:
+  target-b:
+    type: task
+    title: 'Target B (#987)'
+    fields: {owner: m0, lane: reviewer}
+    schedule: {mode: fixed-span, start: '2026-10-02', end: '2026-10-06'}
+  yuya:
+    type: task
+    title: 'Yuya (#1116)'
+    fields: {owner: m0, lane: reviewer}
+    schedule: {mode: fixed-span, start: '2026-10-05', end: '2026-10-07'}
+  titlecard:
+    type: task
+    title: 'Title Card (#1182)'
+    fields: {owner: m0, lane: reviewer}
+    schedule: {mode: fixed-span, start: '2026-10-06', end: '2026-10-13'}
+  marquee:
+    type: task
+    title: 'Marquee (#1233)'
+    fields: {owner: m0, lane: reviewer}
+    schedule: {mode: fixed-span, start: '2026-10-08', end: '2026-10-14'}
+  sunday:
+    type: task
+    title: 'Sunday Strip (#1269)'
+    fields: {owner: m0, lane: reviewer}
+    schedule: {mode: fixed-span, start: '2026-10-09', end: '2026-10-20'}
+  m0-gate:
+    type: gate
+    title: 'Targets signed off'
+    fields: {owner: m0, lane: owner}
+    schedule: {mode: fixed-point, at: '2026-10-20'}
+  canvas-fit:
+    type: task
+    title: 'Targets fit 1600x900 (#1272)'
+    fields: {owner: m1, lane: reviewer}
+    schedule: {mode: fixed-span, start: '2026-10-09', end: '2026-10-12'}
+  flow-bugs:
+    type: task
+    title: 'Flow layout bugs (#1206 #1219 #1214)'
+    fields: {owner: m1, lane: dev B}
+    schedule: {mode: fixed-span, start: '2026-10-07', end: '2026-10-16'}
+  legend-warning:
+    type: task
+    title: 'False legend overflow (#1273)'
+    fields: {owner: m1, lane: dev B}
+    schedule: {mode: fixed-span, start: '2026-10-16', end: '2026-10-21'}
+  rows-headers:
+    type: task
+    title: 'Row rules, header centring (#1270 #1271)'
+    fields: {owner: m1, lane: dev A}
+    schedule: {mode: fixed-span, start: '2026-10-13', end: '2026-10-21'}
+  scene-checks:
+    type: task
+    title: 'Scene checks over the corpus'
+    fields: {owner: m1, lane: dev A}
+    schedule: {mode: fixed-span, start: '2026-10-21', end: '2026-10-27'}
+  m1-gate:
+    type: gate
+    title: 'Zero check violations'
+    fields: {owner: m1, lane: reviewer}
+    schedule: {mode: fixed-point, at: '2026-10-27'}
+  route-bound:
+    type: task
+    title: 'Bounded route search'
+    fields: {owner: m2, lane: dev B}
+    schedule: {mode: fixed-span, start: '2026-10-21', end: '2026-11-04'}
+  tall-canvas:
+    type: task
+    title: 'Progress, paging for tall charts'
+    fields: {owner: m2, lane: dev A}
+    schedule: {mode: fixed-span, start: '2026-10-27', end: '2026-11-07'}
+  japanese:
+    type: task
+    title: 'Installed fonts, Japanese (#1281)'
+    fields: {owner: m2, lane: dev B}
+    schedule: {mode: fixed-span, start: '2026-11-04', end: '2026-11-10'}
+  m2-gate:
+    type: gate
+    title: '1000 items within budget'
+    fields: {owner: m2, lane: reviewer}
+    schedule: {mode: fixed-point, at: '2026-11-10'}
+  docs-ci:
+    type: task
+    title: 'User quick start, docs run in CI'
+    fields: {owner: m3, lane: dev A}
+    schedule: {mode: fixed-span, start: '2026-10-28', end: '2026-11-06'}
+  defaults:
+    type: task
+    title: 'Clean defaults, groups shown'
+    fields: {owner: m3, lane: dev A}
+    schedule: {mode: fixed-span, start: '2026-11-06', end: '2026-11-14'}
+  errors:
+    type: task
+    title: 'Errors name the value; --version'
+    fields: {owner: m3, lane: dev B}
+    schedule: {mode: fixed-span, start: '2026-11-10', end: '2026-11-17'}
+  m3-gate:
+    type: gate
+    title: 'New user reaches a grouped chart'
+    fields: {owner: m3, lane: reviewer}
+    schedule: {mode: fixed-point, at: '2026-11-17'}
+  presets:
+    type: task
+    title: 'Preset catalogue (#429)'
+    fields: {owner: m4, lane: reviewer}
+    schedule: {mode: fixed-span, start: '2026-11-10', end: '2026-11-27'}
+  ai-design:
+    type: task
+    title: 'AI design procedure'
+    fields: {owner: m4, lane: reviewer}
+    schedule: {mode: fixed-span, start: '2026-11-17', end: '2026-12-04'}
+  io:
+    type: task
+    title: 'CSV import, Typst/TikZ (#982)'
+    fields: {owner: m4, lane: dev B}
+    schedule: {mode: fixed-span, start: '2026-11-18', end: '2026-12-08'}
+  m4-gate:
+    type: gate
+    title: 'New design built in YAML only'
+    fields: {owner: m4, lane: reviewer}
+    schedule: {mode: fixed-point, at: '2026-12-08'}
+  rerun:
+    type: task
+    title: 'Re-run the 10-09 trial'
+    fields: {owner: rc, lane: reviewer}
+    schedule: {mode: fixed-span, start: '2026-12-08', end: '2026-12-12'}
+  rc-gate:
+    type: gate
+    title: 'Release candidate'
+    fields: {owner: rc, lane: owner}
+    schedule: {mode: fixed-point, at: '2026-12-14'}
+relations:
+  - {id: sunday-m0, type: dependency, from: {object: sunday, endpoint: end}, to: {object: m0-gate, endpoint: at}, lag: 0d}
+  - {id: flow-legend, type: dependency, from: {object: flow-bugs, endpoint: end}, to: {object: legend-warning, endpoint: start}, lag: 0d}
+  - {id: rows-checks, type: dependency, from: {object: rows-headers, endpoint: end}, to: {object: scene-checks, endpoint: start}, lag: 0d}
+  - {id: checks-m1, type: dependency, from: {object: scene-checks, endpoint: end}, to: {object: m1-gate, endpoint: at}, lag: 0d}
+  - {id: legend-route, type: dependency, from: {object: legend-warning, endpoint: end}, to: {object: route-bound, endpoint: start}, lag: 0d}
+  - {id: route-ja, type: dependency, from: {object: route-bound, endpoint: end}, to: {object: japanese, endpoint: start}, lag: 0d}
+  - {id: ja-m2, type: dependency, from: {object: japanese, endpoint: end}, to: {object: m2-gate, endpoint: at}, lag: 0d}
+  - {id: docs-defaults, type: dependency, from: {object: docs-ci, endpoint: end}, to: {object: defaults, endpoint: start}, lag: 0d}
+  - {id: errors-m3, type: dependency, from: {object: errors, endpoint: end}, to: {object: m3-gate, endpoint: at}, lag: 0d}
+  - {id: m0-presets, type: dependency, from: {object: m0-gate, endpoint: at}, to: {object: presets, endpoint: start}, lag: 0d}
+  - {id: m3-ai, type: dependency, from: {object: m3-gate, endpoint: at}, to: {object: ai-design, endpoint: start}, lag: 0d}
+  - {id: io-m4, type: dependency, from: {object: io, endpoint: end}, to: {object: m4-gate, endpoint: at}, lag: 0d}
+  - {id: m4-rerun, type: dependency, from: {object: m4-gate, endpoint: at}, to: {object: rerun, endpoint: start}, lag: 0d}
+  - {id: rerun-rc, type: dependency, from: {object: rerun, endpoint: end}, to: {object: rc-gate, endpoint: at}, lag: 0d}
+annotations:
+  signoff:
+    kind: note
+    text: 'Title Card and Marquee await owner sign-off.'
+    anchor: {object: titlecard}
+  route:
+    kind: risk
+    text: '95% of render time is route search (trial 10-09).'
+    anchor: {object: route-bound}
+  ja:
+    kind: note
+    text: 'Owner: installed fonts are a normal source (#1281).'
+    anchor: {object: japanese}
