@@ -32,6 +32,11 @@ Focused batch: 152 passed (23.67s). Expanded both-surface geometry/transport
 batch: 11 passed (7.61s). Independent frame, texture, overlay, PNG and auto-block
 regressions: 83 passed (17.34s). Latest-main #918/#1279 integration: 19 passed
 (9.94s). These overlapping focused runs are not a full-suite claim.
+PR #1311 run 37976489537 found two stale `SimpleNamespace` completion fixtures
+missing the typed request's optional `declared_viewport` field. Both now declare
+`None`; no production fallback or contract change. The two fixture files plus
+viewport render/transport tests pass together: 23 passed (7.16s). The superseded
+red run is not release evidence; replacement exact-head CI remains required.
 Scene delivery registry: 31 dataclasses / 226 fields have explicit owners.
 
 Independent review found no ownership breach: Layout compares the immutable
