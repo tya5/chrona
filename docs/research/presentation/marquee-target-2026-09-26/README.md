@@ -53,3 +53,26 @@ The reusable parts of this target are extracted as monochrome assets in the pack
 | Hatch for unobserved work | `chrona-target-parts:hatch-wide` | in the catalogue; bindable as a pattern on the Rect roles today |
 
 Still needed before this target's preset can be assembled: #582 (the opening-night range), #583 (the `ACT n` prefix), #584 (a deterministic tilt for clippings), #587 (the bulb border on the title slot, the light cone, glow). #848 for the clipping as artwork.
+
+## Reproduction (#1233)
+
+![Marquee mock (top) and chrona output (bottom)](marquee-reproduction-2026-10-10.png)
+
+**Signed off by the product owner on 2026-10-10.** The bottom image is the HALCYON-1 slide `marquee` (`examples/halcyon-1`), rendered from YAML alone: View `views/24-marquee.yaml`, Theme `themes/marquee.yaml`, scheme `schemes/marquee.yaml`, Layout `layouts/marquee.yaml`, profile `profiles/marquee-detail.yaml` and Context `contexts/24-marquee.yaml`.
+
+### Gap table
+
+Classification: (a) tuned in YAML; (b) a missing general knob, filed and delivered; (c) a deliberate difference.
+
+| Element | Result | Class | Through |
+|---|---|---|---|
+| Bulb-bordered sign, ACT group headers, spotlight as-of, newspaper-extra notes, ticket legend | matches | a | #1235 |
+| Sign holds the title only; THE PROGRAMME BOARD kicker beside it, squeezed | matches | b | #1239, #1268 |
+| Glow on the title and the bulbs | matches | b | #1237, #1261 |
+| `ACT {ordinal} · {title}` headers, the whole header in gold | matches | b | #1238, #1244 |
+| `OPENING NIGHT` label on the launch window | matches | b | #871 |
+| Canvas fits 1600 × 900 | matches (row pitch from the mock) | a | #1272 |
+| Group header text sits high in its band | open | b | #1271 |
+| Hairline rule under each row | open | b | #1270 |
+| Display face, editorial note headings, fan corners, dotted rule above the legend | differs | c | font policy, data, ornament |
+

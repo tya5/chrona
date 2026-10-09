@@ -59,7 +59,9 @@ Still needed before this target's preset can be assembled: #582 (launch window a
 
 ## Reproduction (#1182)
 
-![Title Card mock (top) and chrona output (bottom)](titlecard-reproduction-2026-10-08.png)
+![Title Card mock (top) and chrona output (bottom)](titlecard-reproduction-2026-10-10.png)
+
+**Signed off by the product owner on 2026-10-10.** The image shows main after the owner's 2026-10-08 review (font, label frame, annotation bar and stripe flush with the panel border, quarter label margin, month boundaries) and after fitting the slide to 1600 × 900 (PR #1272).
 
 The bottom image is the HALCYON-1 slide `titlecard` (`examples/halcyon-1`), rendered from YAML alone: View `views/23-titlecard.yaml`, Theme `themes/titlecard.yaml`, scheme `schemes/titlecard.yaml`, Layout and profiles `layouts/titlecard.yaml`, `profiles/titlecard-detail.yaml` and `profiles/titlecard-countdown.yaml`, and Context `contexts/23-titlecard.yaml`.
 
@@ -76,6 +78,9 @@ Classification: (a) tuned in YAML; (b) a missing general knob, filed and deliver
 | Hazard-stripe group tabs with an orange ordinal | matches | b | #882, #1192 |
 | Hexagon gates, with an outlined baseline gate | matches | b | #464 |
 | Plan, ghost, actual and hatch marks | matches | a | |
+| Kind bar and hazard stripe flush with the panel border | matches | b | #1242 |
+| Quarter labels inset from the tier edge; month boundaries drawn | matches | a | owner review 2026-10-08 |
+| Canvas fits 1600 × 900 | matches (row pitch from the mock) | a | #1272 |
 | `現在 NOW` as-of line and chip | matches | b | #1063, #1110 |
 | Hexagon-lattice launch window | matches | b | #582, #911 |
 | `警告 WARNING` / `報告 REPORT` panels: full-width title bar, 22 px heading, body | matches | b | #1191, #1201 |
