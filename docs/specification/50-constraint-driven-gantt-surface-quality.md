@@ -373,6 +373,10 @@ group header rows have no rule. Layout spans the full table-to-timeline extent,
 independent of zebra-band extent. The `rowRule` semantic resolves the `row-rule`
 Theme role's scheme stroke, opacity and strokeWidth; absent paint raises
 `E_THEME_ROLE_REQUIRED`. This is a `DECORATION` with warning-only contrast.
+For presentation-contrast corpus coverage, `row-band` and `row-rule` are the
+two emitted alternatives for the required row-decoration concept; each emitted
+role is still evaluated, absence of both remains a coverage error, and other
+required decoration roles keep their independent coverage requirement.
 Layout completes order 10 (not a Theme order knob), below grids at 11 and marks
 at or above 100. Only actually emitted row/group/header bands must have order
 below 10; a conflict raises `E_LAYOUT_ROW_RULE_ORDER` at
