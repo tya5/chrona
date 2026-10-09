@@ -10,8 +10,11 @@ Merged implementation: `484657736a8fa7dbc5c8668ffc20d57f6c5f23ab` in
 `ab2650030bb55b95d4cc6f34dc5c97dde1cb2e8a` on ready base
 `e1a6f8122aa14b57392ac0363a35e09ff5ab1cbe`.
 Follow-up source: `e66136cfe72e5c44a67a89c7d286d7ee49f82123` on ready
-main `2487d752ed45b6c8c55fe9d183a20ccaf3abadea`; public artifact and
-exact-main release proof for this follow-up remain required.
+main `2487d752ed45b6c8c55fe9d183a20ccaf3abadea`; characterized candidate
+`02c4cb5c98522b7d2a9b3cb94c31fc413b07a90f` has the artifact proof below;
+terminal PR and exact-main release proof remain required.
+The branch now includes ready main `5360a127` by ordinary merge; fresh
+exact-head PR checks are required before merge acceptance.
 [Initial PR CI](https://github.com/tya5/chrona/actions/runs/37952231069)
 exposed four Scene negative-probe equivalence failures: its consumer treated
 owner detail as part of the code. The corrected consumer retains the leading
@@ -88,6 +91,14 @@ the complete pointer and cap message operands. Scale resolver codes remain
 unchanged; upstream Scheme ingress retains its own schema code/pointer.
 Invalid id/facet/endpoint assertions and the single-capture success-silence
 assertion are verified in the final owner/adapter batch: 31 passed (1.11s).
+
+Follow-up [artifact 11634791315](https://github.com/tya5/chrona/actions/runs/37967945467/artifacts/11634791315)
+from exact head `02c4cb5c` has 149 before/after paths, no additions/retirements,
+all 140 SVG/Scene files byte-identical and only `docs/diagnostics/inventory.md`
+changed. Safe regular archive paths and manifest changes were verified against
+the actual tar bytes; every before-file matches both ready base `2487d752`
+and documentation-only main `5360a127`. Archive digest:
+`sha256:3b938f2d61a33f20e6cde5453651909f77d403b83e27957ad98d67ac2da39815`.
 
 The MCP projection test supplies the characterized ledger rows to the real
 `render_draft` tool envelope without rerendering 19 images; the retained
