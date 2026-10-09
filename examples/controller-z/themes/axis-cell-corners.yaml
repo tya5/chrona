@@ -161,6 +161,10 @@ body:
     timeline-axis-height:
       type: number
       value: 48
+    # Axis ticks (#492): a grid-minor tier draws a tick of this length standing on the axis rule.
+    axis-tick-length:
+      type: number
+      value: 8
     network-node-min-inline:
       type: number
       value: 120
@@ -404,6 +408,7 @@ body:
       strokeWidth: stroke-width
     axis-minor:
       strokeWidth: stroke-width
+      tickLength: axis-tick-length
     network-edge:
       strokeWidth: stroke-width
     critical-edge:
@@ -475,7 +480,7 @@ body:
     member-label-inside-snapshot.fill: insideLabelSnapshot
     member-label-inside-scenario.fill: insideLabelScenario
     axis-major.stroke: neutral
-    axis-minor.stroke: surfaceRaised
+    axis-minor.stroke: text
     axis-band-decoration.fill: accent
     axis-band-decoration2.fill: surfaceRaised
     axis-label2.fill: insideLabelPlanned
