@@ -6,6 +6,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Any, Callable, Mapping
 
+from chrona.presentation.axis_intervals import axis_band_placement_id
 from chrona.presentation.layout.axis import (
     AxisInterval, axis_intervals, axis_label_fits, format_axis_tier_label, thinning_schedule,
 )
@@ -770,7 +771,7 @@ def prepare_surface_axis(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame,
                 # outer edge of that cell takes no gap and ends where the axis rule ends.
                 edge, edge2 = extend_to_plot_edges(raw, raw2, scale=scale, plot=timeline.bounds)
                 x, x2 = (edge if edge != raw else x), (edge2 if edge2 != raw2 else x2)
-                placement_id = f"axis-band-rect:{tier_index}:{interval.index}"
+                placement_id = axis_band_placement_id(tier_index, interval.index)
                 treatment_bg, paint_order = tokens.background(semantic_binding(semantic_id).scene_role)
                 if treatment_bg != "none":
                     band_targets[("axis-band", interval.level, str(interval.index))] = placement_id
