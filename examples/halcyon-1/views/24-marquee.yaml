@@ -18,6 +18,7 @@ body:
   - id: launch-window
     label:
       placement: top
+      text: OPENING NIGHT
   comparison:
     baseline: snapshot
     baselineMarks: ghost-when-changed
@@ -251,7 +252,7 @@ body:
     - ops
     presentation: header
     header:
-      text: 'ACT  {ordinal|group-ordinal}  · {title}'
+      text: 'ACT {ordinal|group-ordinal} · {title}'
       ordinal: roman
   ordering:
     by: source

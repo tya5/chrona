@@ -429,7 +429,7 @@ body:
     kind-stamp-placement:
       type: stampPlacement
       value:
-        corner: end-top
+        placement: bar-end
         size: 1.5
     frame.radius:
       type: number
@@ -951,6 +951,7 @@ body:
     annotation-kind-bar:
       chipPadding: kind-bar-padding
       barWidth: fill
+      barBleed: border
     annotation-kind-accent: {}
     region-frame-stripe:
       pattern: tab-pattern
