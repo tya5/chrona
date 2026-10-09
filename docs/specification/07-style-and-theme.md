@@ -262,6 +262,20 @@ references fail before Layout with `E_THEME_ASSET_REFERENCE` at the Theme
 property pointer, including the authored reference. Inline glyphs remain a
 valid migration form.
 
+For a filled inline or catalogue point glyph, binding both `stroke` and a
+positive `strokeWidth` on its concrete paint role adds one outline of the
+filled region (#1287). Layout simplifies each part under nonzero winding,
+unions the filled parts, and appends that completed contour after the original
+parts. Original fills and intrinsic strokes retain their geometry and finish;
+Scene resolves the added contour's role ink and the legend uses the same paint.
+The primary planned point uses `gate` when declared; other variants retain
+their own roles. Existing `pattern: outline` takes precedence and remains the
+every-part stroke treatment above, without an additional filled-region edge.
+Missing either binding, stroke-only glyphs, and built-in symbols retain their
+existing output. Ordinary stroke alignment applies to the completed contour.
+Failed or invalid contour completion is `E_LAYOUT_POINT_OUTLINE_INVALID` at
+the concrete role's `strokeWidth` pointer; there is no raw-path fallback.
+
 This authoring form is Theme v0.15; derived Theme inheritance is v0.16.
 v0.11/v0.12/v0.13/v0.14 are retired after the first-party migration (#1088;
 Specification 56 §3.2), not silently upgraded. Theme v0.15 admits
