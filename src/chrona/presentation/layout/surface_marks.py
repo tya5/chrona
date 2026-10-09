@@ -18,6 +18,7 @@ from chrona.presentation.layout.mark_geometry import MarkFacetAbsence, compose_i
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.layout.surface_geometry import coordinate_for_date
 from chrona.presentation.layout.lane_projection import lane_missing_actual_visible
+from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 
 if TYPE_CHECKING:
     from chrona.presentation.layout.surface_base import SurfaceBaseGeometry
@@ -104,6 +105,7 @@ class SurfaceMarksBatch:
     diagnostics: tuple[str, ...]
     absences: tuple[MarkFacetAbsence, ...]
     visible_group_header_overflows: tuple[tuple[str, Rect, float], ...]
+    diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
 
 
 def progress_fill_bounds(host: Rect, fraction: float,
@@ -134,6 +136,7 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
     mark_block_size = base.mark_block_size
     contract = request.presentation_contract
     diagnostics: list[str] = []
+    diagnostic_provenance: list[DiagnosticProvenance] = []
     absences: list[MarkFacetAbsence] = []
     marks: list[MarkPlacement] = []
     track_by_id = {item.instance_id: item for item in tracks}
@@ -161,6 +164,7 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
                                  lane_source_kind=source_kind) if owner is not None else mark
                          for mark in composition.marks)
             diagnostics.extend(composition.diagnostics)
+            diagnostic_provenance.extend(composition.diagnostic_provenance)
             absences.extend(composition.absences)
 
     groups = tuple(base.groups)
@@ -207,6 +211,7 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
                 )
                 marks.extend(composition.marks)
                 diagnostics.extend(composition.diagnostics)
+                diagnostic_provenance.extend(composition.diagnostic_provenance)
                 absences.extend(composition.absences)
 
     mark_by_id = {item.placement_id: item for item in marks}
@@ -237,7 +242,8 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
                         required=False, slot_id=host.slot_id, clip_host_id=host.placement_id,
                         paint_order=host.paint_order + 1, corner_radius=radius,
                         semantic_id="progressFill", lane_row_id=owner[0] if owner else None,
-                        lane_member_id=owner[1] if owner else None))
+                        lane_member_id=owner[1] if owner else None,
+                        subjects=(DiagnosticSubject.project_object(item.object_id, item.title),)))
 
     summary_shapes: list[ShapePlacement] = []
     for review_row, row in zip(review_rows, rows, strict=True):
@@ -259,4 +265,4 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
             semantic_id="summaryBar"))
     return SurfaceMarksBatch(tuple(marks), tuple(progress_shapes), tuple(summary_shapes), groups,
                              tuple(updates), tuple(diagnostics), tuple(absences),
-                             tuple(visible_header_overflows))
+                             tuple(visible_header_overflows), tuple(diagnostic_provenance))

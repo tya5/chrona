@@ -12,6 +12,7 @@ from chrona.presentation.model.surface_content import (
 )
 from chrona.presentation.table_presentation import affix_state
 from chrona.presentation.review.detail import normalize_v05_review_detail_profile
+from chrona.presentation.review.figure_facts import projected_counts
 from chrona.presentation.model.placement_candidates import legacy_candidate_order, parse_candidates
 from chrona.presentation.contracts.resources import ReviewDetailInput, SummaryProfileInput, ViewInput
 from chrona.presentation.group_header_text import GroupHeaderTextError, compose_group_header_runs, compose_group_headers
@@ -19,6 +20,17 @@ from chrona.presentation.heading_text import render_heading
 from chrona.presentation.model.color_scale import ResolvedColorScale
 from chrona.presentation.model.axis_names import axis_name_table
 from chrona.presentation.model.axis_color_scale import AxisBandFillSpec, AxisBandScaleError
+
+
+def _diagnostic_value(value: object) -> str:
+    """Bound diagnostic operands; avoid including arbitrary resource bodies."""
+    if isinstance(value, (str, int, float, bool, type(None))):
+        text = repr(value)
+        return text if len(text) <= 96 else text[:93] + "..."
+    if isinstance(value, (tuple, list)):
+        parts = [_diagnostic_value(part) for part in value[:8]]
+        return "[" + ", ".join(parts) + (", ..." if len(value) > 8 else "") + "]"
+    return f"<{type(value).__name__}>"
 
 
 def cell_typography_role(column: Any) -> str:
@@ -105,7 +117,7 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
     """Build exact lane summary cells solely from the immutable membership projection."""
     lane_table = view.rows.lane_table
     if projection.lane_membership is None or not projection.lane_rows or lane_table is None:
-        raise ValueError("E_REVIEW_LANE_TABLE_PROJECTION")
+        raise ValueError(f"E_REVIEW_LANE_TABLE_PROJECTION: laneMembership={projection.lane_membership is not None}, laneRows={len(projection.lane_rows)}, laneTable={lane_table is not None}")
     columns = (TableColumnContent("Lane", "Lane", "start", TableColumnWidth("content", "content")),)
     if lane_table.count:
         columns += (TableColumnContent("Items", "Items", "end", TableColumnWidth("content", "content")),)
@@ -129,25 +141,25 @@ def _lane_table_content(projection: ReviewProjection, project: Mapping[str, Any]
             title = next((item.group_label for item in row.items
                           if item.group_label and item.group_label != group_id), None)
         if not isinstance(title, str) or not title.strip():
-            raise ValueError(f"E_REVIEW_LANE_TITLE_MISSING:{group_id}")
+            raise ValueError(f"E_REVIEW_LANE_TITLE_MISSING:{group_id}: /entities/{_diagnostic_value(group_id)}/title is missing or aliases its id; expected nonblank display title")
         return title
 
     def member_title(member_id: str, row: Any) -> str:
         item = next((item for item in row.items if item.item_id == member_id), None)
         if item is None or not item.title.strip() or item.title in {item.object_id, item.item_id}:
-            raise ValueError(f"E_REVIEW_LANE_TITLE_MISSING:{member_id}")
+            raise ValueError(f"E_REVIEW_LANE_TITLE_MISSING:{member_id}: /items/{_diagnostic_value(member_id)}/title={_diagnostic_value(None if item is None else item.title)}; expected distinct nonblank display title")
         return item.title
 
     for row in projection.lane_rows:
         lane = lanes_by_id.get(row.lane_id)
         if lane is None:
-            raise ValueError("E_REVIEW_LANE_TABLE_PROJECTION")
+            raise ValueError(f"E_REVIEW_LANE_TABLE_PROJECTION: laneId={_diagnostic_value(row.lane_id)} is absent from membership lanes")
         if lane_table.label.value == "group":
             label = group_title(row.group_id, row) if row.group_id and row.group_id not in seen_groups else ""
             seen_groups.add(row.group_id)
         else:
             if not lane.member_item_ids:
-                raise ValueError("E_REVIEW_LANE_TABLE_PROJECTION")
+                raise ValueError(f"E_REVIEW_LANE_TABLE_PROJECTION: laneId={_diagnostic_value(lane.lane_id)} has no memberItemIds for label={_diagnostic_value(lane_table.label.value)}")
             first_title = member_title(lane.member_item_ids[0], row)
             if len(lane.member_item_ids) == 1:
                 label = first_title
@@ -285,7 +297,7 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
         source = project_notes.get(reference) if isinstance(project_notes, Mapping) else None
         text = source.get("text") if isinstance(source, Mapping) else None
         if not isinstance(text, str) or not text:
-            raise ValueError(f"E_PRESENTATION_ANNOTATION_REFERENCE_MISSING:{reference}")
+            raise ValueError(f"E_PRESENTATION_ANNOTATION_REFERENCE_MISSING:{reference}: /annotations/{_diagnostic_value(reference)}/text is missing or empty; expected nonempty text")
         consumed_note_ids.add(str(reference))
         return text
 
@@ -311,13 +323,15 @@ def normalize_v05_surface_content(projection: ReviewProjection, project: Mapping
             # the first declared candidate if every one is exhausted.
             return AnnotationIntent(str(annotation["id"]), purpose, anchor, "rail", "center",
                                     content, number, (), parse_candidates(declared_candidates),
-                                    kind=kind, subject=subject, subject_id=subject_id)
+                                    kind=kind, subject=subject, subject_id=subject_id,
+                                    anchor_source_ref=f"/body/annotations/{index}/anchor")
         placement = annotation["placement"]
         return AnnotationIntent(str(annotation["id"]), purpose, anchor,
                                 str(placement["side"]), str(placement["alignment"]),
                                 content, number, annotation_fallback or ("rail",),
                                 legacy_candidate_order(purpose, annotation_fallback)[0],
-                                kind=kind, subject=subject, subject_id=subject_id)
+                                kind=kind, subject=subject, subject_id=subject_id,
+                                anchor_source_ref=f"/body/annotations/{index}/anchor")
 
     annotations = tuple(_annotation(index, annotation) for index, annotation in enumerate(raw_annotations))
     # A selected Project annotation is consumed once: it is presented through
@@ -394,10 +408,11 @@ def _group_header_facts(projection: ReviewProjection, project: Mapping[str, Any]
             fields = entity.get("fields", {}) if isinstance(entity, Mapping) else {}
             value = fields.get(declared.secondary_field) if isinstance(fields, Mapping) else None
             if not isinstance(value, str) or not value.strip():
-                raise ValueError(f"E_REVIEW_GROUP_HEADER_SECONDARY:{group_id}:{declared.secondary_field}")
+                raise ValueError(f"E_REVIEW_GROUP_HEADER_SECONDARY:{group_id}:{declared.secondary_field}: /entities/{_diagnostic_value(group_id)}/fields/{_diagnostic_value(declared.secondary_field)}={_diagnostic_value(value)}; expected nonblank string")
             secondaries[group_id] = value
     return dict(group_ids=group_ids, titles=titles, secondaries=secondaries, text=declared.text,
-                first=declared.first, ordinal=declared.ordinal, figures=dict(projection.figures))
+                first=declared.first, ordinal=declared.ordinal, figures=dict(projection.figures),
+                group_figures={group_id: dict(values) for group_id, values in projection.group_figures})
 
 
 def _group_headers(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput) -> tuple[tuple[str, str], ...]:
@@ -408,7 +423,7 @@ def _group_headers(projection: ReviewProjection, project: Mapping[str, Any], vie
     try:
         return compose_group_headers(**facts)
     except GroupHeaderTextError as error:
-        raise ValueError(f"{error.code}:{error.detail}") from error
+        raise ValueError(f"{error.code}: {error.detail}; groups={_diagnostic_value(facts['group_ids'])}, ordinal={_diagnostic_value(facts['ordinal'])}, first={_diagnostic_value(facts['first'])}") from error
 
 
 def _group_header_runs(projection: ReviewProjection, project: Mapping[str, Any], view: ViewInput
@@ -421,7 +436,7 @@ def _group_header_runs(projection: ReviewProjection, project: Mapping[str, Any],
         return tuple((group_id, tuple((run.text, run.role) for run in runs))
                      for group_id, runs in compose_group_header_runs(**facts))
     except GroupHeaderTextError as error:
-        raise ValueError(f"{error.code}:{error.detail}") from error
+        raise ValueError(f"{error.code}: {error.detail}; groups={_diagnostic_value(facts['group_ids'])}, ordinal={_diagnostic_value(facts['ordinal'])}, first={_diagnostic_value(facts['first'])}") from error
 
 
 def _attached_labels(projection: ReviewProjection, locale: str) -> tuple[tuple[str, str], ...]:
@@ -563,7 +578,8 @@ def _column_width(value: object) -> TableColumnWidth:
             return TableColumnWidth("content", "fill", 1.0)
         if isinstance(maximum, Mapping) and "fr" in maximum:
             return TableColumnWidth("content", "fr", float(maximum["fr"]))
-    raise ValueError("E_VIEW_TABLE_WIDTH")
+    width_fields = tuple(value.keys()) if isinstance(value, Mapping) else ()
+    raise ValueError(f"E_VIEW_TABLE_WIDTH: width type={type(value).__name__}, fields={_diagnostic_value(width_fields)}; expected content, fill, fr, or minmax width descriptor")
 
 
 def calendar_closures(project: Mapping[str, Any], projection: ReviewProjection,
@@ -610,7 +626,7 @@ def _resource_body(value: Mapping[str, Any] | None, name: str) -> Mapping[str, A
         return {}
     body = value.get("body") if isinstance(value, Mapping) else None
     if not isinstance(body, Mapping):
-        raise ValueError(f"E_PRESENTATION_{name}_SHAPE")
+        raise ValueError(f"E_PRESENTATION_{name}_SHAPE: /{name.lower()}/body has type={type(body).__name__}; expected mapping envelope body")
     return body
 
 
@@ -649,13 +665,13 @@ def normalize_summary_content(summary: SummaryProfileInput | None, projection: R
     points = sorted(item.planned["at"] for item in projection.items
                     if item.source_type == "point" and isinstance(item.planned.get("at"), date))
     as_of_value = ((actual_set or {}).get("body") or {}).get("asOf")
+    counts = projected_counts(projection.items, as_of_available=as_of_value is not None)
     values: dict[str, Any] = {
         "actual.asOf": date.fromisoformat(as_of_value) if isinstance(as_of_value, str) else None,
         "planned.nextPoint": points[0] if points else None,
-        "count.selected": len(projection.items),
-        "count.missingActual": (sum(item.observation_state == ObservationState.DUE_UNOBSERVED
-                                    for item in projection.items) if as_of_value is not None else None),
-        "count.knownFinishVariance": sum(item.finish_delta is not None for item in projection.items),
+        "count.selected": counts.selected,
+        "count.missingActual": counts.missing_actual,
+        "count.knownFinishVariance": counts.known_finish_variance,
     }
     panels: list[SummaryPanel] = []
     grouped_ids = bool(summary and any(panel.arrangement == "inline" for panel in summary.panels))
@@ -674,9 +690,7 @@ def normalize_summary_content(summary: SummaryProfileInput | None, projection: R
                     if source.get("actual") == "asOf":
                         source = "actual.asOf"
                     elif source.get("counts") == "finishDelta":
-                        behind = sum(item.finish_delta > 0 for item in projection.items if item.finish_delta is not None)
-                        ahead = sum(item.finish_delta < 0 for item in projection.items if item.finish_delta is not None)
-                        values["counts.finishDelta"] = f"{behind} / {ahead}"
+                        values["counts.finishDelta"] = f"{counts.behind} / {counts.ahead}"
                         source = "counts.finishDelta"
                     elif source.get("scenario") in {"id", "title"}:
                         values[f"scenario.{source['scenario']}"] = _scenario_summary_value(
@@ -695,9 +709,9 @@ def normalize_summary_content(summary: SummaryProfileInput | None, projection: R
                             values[f"object.{source['object']}.planned"] = planned.get("at", planned.get("end"))
                         source = f"object.{source['object']}.planned"
                 if source not in values:
-                    raise ValueError("E_PRESENTATION_SUMMARY_SOURCE")
+                    raise ValueError(f"E_PRESENTATION_SUMMARY_SOURCE: {metric_path}/source={_diagnostic_value(source)} is not a resolved summary value; expected a supported source")
                 if formatter not in {"text", "date", "count", "signedDays"}:
-                    raise ValueError("E_PRESENTATION_SUMMARY_FORMAT")
+                    raise ValueError(f"E_PRESENTATION_SUMMARY_FORMAT: {metric_path}/format={_diagnostic_value(formatter)}; expected text, date, count, or signedDays")
                 raw = values[source]
                 rendered = "unknown" if raw is None else (
                     raw.isoformat() if formatter == "date" and isinstance(raw, date)
@@ -756,16 +770,16 @@ def _scenario_summary_value(projection: ReviewProjection, project: Mapping[str, 
 def _subtree_planned_completion(projection: ReviewProjection, root_id: str) -> date:
     """Normalize one View-selected primary subtree into its planned completion."""
     if not projection.hierarchy_grouping:
-        raise ValueError("E_PRESENTATION_SUMMARY_SOURCE")
+        raise ValueError(f"E_PRESENTATION_SUMMARY_SOURCE: subtree objectId={_diagnostic_value(root_id)} requires hierarchy grouping; current={projection.hierarchy_grouping!r}")
     root = next((item for item in projection.items
                  if item.object_id == root_id and item.source_kind == "primary"), None)
     if root is None or not root.hierarchy_path:
-        raise ValueError("E_PRESENTATION_SUMMARY_SOURCE")
+        raise ValueError(f"E_PRESENTATION_SUMMARY_SOURCE: subtree objectId={_diagnostic_value(root_id)} is not a selected primary hierarchy root with a path")
     prefix = root.hierarchy_path
     members = tuple(item for item in projection.items
                     if item.source_kind == "primary" and item.hierarchy_path[:len(prefix)] == prefix)
     endpoints = tuple(item.planned.get("at", item.planned.get("end")) for item in members)
     known = tuple(value for value in endpoints if isinstance(value, date))
     if not known:
-        raise ValueError("E_PRESENTATION_SUMMARY_SOURCE")
+        raise ValueError(f"E_PRESENTATION_SUMMARY_SOURCE: subtree objectId={_diagnostic_value(root_id)} has no selected member with a date endpoint; members={len(members)}")
     return max(known)

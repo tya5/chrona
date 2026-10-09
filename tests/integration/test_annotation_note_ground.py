@@ -61,7 +61,7 @@ def test_ink_too_close_to_its_box_is_refused_at_theme_resolution_naming_role_and
         sr.render(tmp_path, source, presentation=parts)
     assert error.value.diagnostic_id == "E_SCHEME_STATE_TEXT_CONTRAST"
     assert error.value.source_ref == "/body/roles/annotation-note-text/fill"
-    assert error.value.detail.startswith("annotation-note-text:annotation-note-box:")
+    assert error.value.detail.startswith("'annotation-note-text':'annotation-note-box':")
 
 
 def test_a_light_ink_on_a_dark_box_still_renders_as_before(tmp_path):

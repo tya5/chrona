@@ -152,7 +152,7 @@ allOf:
               baseline: {description: "Comparison baseline source.", enum: [primary, snapshot, scenario]}
               scenario: {description: "Scenario identifier when scenario is the baseline.", type: string, minLength: 1}
               baselineMarks: {description: "With a snapshot baseline in automatic or lane rows, `ghost` draws the baseline snapshot of each selected item as a ghost mark beside the current one, also under field grouping; `ghost-when-changed` draws it only for an item whose baseline placement differs from its current one. Omitted, no ghost is drawn; explicit rows name their snapshot items themselves.", enum: [ghost, ghost-when-changed], examples: [ghost]}
-              missingActualScope: {description: "Which work the missing-actual mark covers. `due-unobserved` (the default) marks a planned finish that has passed with no observation. `in-progress` marks a span that has an actual start and no finish up to the as-of date, drawn as a span in place of its open actual, and marks nothing else (a gate or a span with no observation gets no mark). Not available with lane rows.", enum: [due-unobserved, in-progress], examples: [in-progress]}
+              missingActualScope: {description: "Which work the missing-actual mark covers. `due-unobserved` (the default) marks a planned finish that has passed with no observation. `in-progress` marks a span that has an actual start and no finish up to the as-of date, drawn as a span in place of its open actual, and marks nothing else (a gate or a span with no observation gets no mark).", enum: [due-unobserved, in-progress], examples: [in-progress]}
               actual: {description: "Requiredness of actual observations.", enum: [forbidden, optional, required]}
               observationSelection: {description: "Only the latest observation is selected.", const: latest}
               deltaUnit: {description: "Comparison delta unit.", const: calendar-days}
@@ -333,14 +333,16 @@ allOf:
                     placement: {description: "Where the label sits: at the plot's top edge, at its bottom edge, or centred in the band.", enum: [top, bottom, inside]}
                     overflow: {description: "What happens when no collision-free position exists: suppress the label with a recorded warning, or place it anyway with a recorded overflow. Defaults to visible-overflow.", enum: [suppress, visible-overflow]}
                     text: {description: "Optional display text of the label, replacing the Project period title for this View only (the Theme role's text transform styles it); absent shows the period title.", $ref: "urn:chrona:common-v0.1#/$defs/literalCaption", examples: [OPENING NIGHT]}
+                    template: {description: "Optional closed figure template instead of literal text: {figure:id} reads a global View figure; {{ and }} escape braces. Mutually exclusive with text.", $ref: "urn:chrona:common-v0.1#/$defs/literalCaption", examples: ["WINDOW CLOSES IN {figure:closing} DAYS"]}
           figures:
-            description: "Derived figures: signed whole numbers of days the Core computes from declared facts, each shown by name from a Summary Profile metric (source figure) or a group-header placeholder; absent declares none."
+            description: "Derived integer figures: signed days from declared dates or neutral projected counts, shown by name in Summary, group headers and declared label templates; absent declares none."
             examples: [[{id: launch-countdown, kind: daysUntil, to: {period: launch-window, side: start}}]]
             type: array
             items:
               oneOf:
                 - $ref: "#/$defs/figureDaysUntil"
                 - $ref: "#/$defs/figureDaysIn"
+                - $ref: "#/$defs/figureCount"
           heading:
             description: "The optional kicker above the title, the title, and optional subtitle lines of a table-timeline surface (a dependency network ignores it), each a template of literal text and the placeholders {project} (the Project title), {asOf} (the Actual Set's as-of date in dateForm) and {calendar} (the Project's default calendar title, else its id); {{ and }} are literal braces. Absent, the title is the Project title and there is no kicker or subtitle."
             examples: [{kicker: "Episode {asOf}", title: "{project}", subtitle: "Every work package by owning team, as of {asOf}, calendar {calendar}"}]
@@ -392,7 +394,7 @@ allOf:
             required: [rows, groups]
             additionalProperties: false
             properties:
-              rows: {enum: [none, alternate]}
+              rows: {enum: [none, alternate, rules]}
               groups: {enum: [none, all, alternate]}
           tableColumns:
             type: array
@@ -811,17 +813,17 @@ $defs:
       typographyRole: {description: "Named Theme text-treatment role measuring and sizing the secondary text; its colour is the tier's.", type: string, minLength: 1}
       placement: {description: "stacked draws it on the line below the main label; inline draws it after the main label on the same baseline.", enum: [stacked, inline]}
   figureFact:
-    description: "One fact a figure reads: the Actual Set as-of, a named period's start or end (end is exclusive), or the placed date of an object endpoint."
-    examples: [asOf, {period: launch-window, side: start}, {object: tvac, endpoint: end}]
+    description: "One fact a figure reads: the Actual Set as-of, a named period's start, exclusive end or final covered day, an object's placed endpoint, or the current selected group's first planned start."
+    examples: [asOf, {period: launch-window, side: start}, {period: launch-window, side: last}, {object: tvac, endpoint: end}]
     oneOf:
       - {description: "The Actual Set as-of date.", const: asOf}
-      - description: "One boundary of a named Project period."
+      - description: "A named Project period's boundary or final covered calendar day."
         type: object
         required: [period, side]
         additionalProperties: false
         properties:
           period: {description: "Identifier of a period declared in the Project's `periods`.", type: string, minLength: 1}
-          side: {description: "The period's start, or its exclusive end.", enum: [start, end]}
+          side: {description: "The period's start, exclusive end, or last covered calendar day (end minus one day).", enum: [start, end, last]}
       - description: "The completed (placed) date of one endpoint of a Project object."
         type: object
         required: [object, endpoint]
@@ -829,6 +831,17 @@ $defs:
         properties:
           object: {description: "Identifier of a Project object.", type: string, minLength: 1}
           endpoint: {description: "The endpoint the object's schedule offers: at for a point, start or end for a span.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/dateEndpoint"}
+      - description: "The earliest selected Primary planned start or point of the current group; requires figure scope group."
+        examples: [{group: firstPlannedStart}]
+        type: object
+        required: [group]
+        additionalProperties: false
+        properties:
+          group: {description: "The current group's first planned start or point, gathered by View projection.", const: firstPlannedStart}
+  figureIdentity:
+    description: "A non-empty identifier local to a declared View figure; preserves the existing string acceptance grammar."
+    type: string
+    minLength: 1
   figureDaysUntil:
     description: "Signed days from one fact to another; negative once the target has passed."
     examples: [{id: launch-countdown, kind: daysUntil, to: {period: launch-window, side: start}}]
@@ -836,8 +849,9 @@ $defs:
     required: [id, kind, to]
     additionalProperties: false
     properties:
-      id: {description: "Figure identifier, unique in this View and named by consumers; no braces or whitespace.", type: string, minLength: 1}
+      id: {description: "Figure identifier, unique in this View and named by consumers; no braces or whitespace.", $ref: "#/$defs/figureIdentity"}
       kind: {description: "Days from `from` to `to`.", const: daysUntil}
+      scope: {description: "Resolve once globally (default), or once for each current View group; group results are shown by group headers only.", enum: [global, group]}
       from: {description: "The starting fact; the as-of when omitted.", $ref: "#/$defs/figureFact"}
       to: {description: "The target fact.", $ref: "#/$defs/figureFact"}
       days: {description: "Count calendar days (the default) or working days of the figure's calendar.", enum: [calendar, working]}
@@ -849,11 +863,22 @@ $defs:
     required: [id, kind, period]
     additionalProperties: false
     properties:
-      id: {description: "Figure identifier, unique in this View and named by consumers; no braces or whitespace.", type: string, minLength: 1}
+      id: {description: "Figure identifier, unique in this View and named by consumers; no braces or whitespace.", $ref: "#/$defs/figureIdentity"}
       kind: {description: "Days covered by `period`.", const: daysIn}
       period: {description: "Identifier of a period declared in the Project's `periods`.", type: string, minLength: 1}
       days: {description: "Count calendar days (the default) or working days of the figure's calendar.", enum: [calendar, working]}
       calendar: {description: "Project calendar for working days; the Project default calendar when omitted. Only with days working.", type: string, minLength: 1}
+  figureCount:
+    description: "An integer count of selected Primary review facts, globally or in the current group."
+    examples: [{id: overdue, kind: count, source: missingActual}, {id: group-late, kind: count, source: behind, scope: group}]
+    type: object
+    required: [id, kind, source]
+    additionalProperties: false
+    properties:
+      id: {description: "Figure identifier, unique in this View and named by consumers; no braces or whitespace.", $ref: "#/$defs/figureIdentity"}
+      kind: {description: "Select an already-projected integer count, without inferring dates or state.", const: count}
+      source: {description: "Closed selected-item/state/known-variance or observed behind/ahead count; missingActual requires an explicit as-of.", enum: [selected, recorded, dueUnobserved, notYetDue, unavailable, missingActual, knownFinishVariance, behind, ahead]}
+      scope: {description: "Resolve once globally (default), or once for each current View group; group results are shown by group headers only.", enum: [global, group]}
   visual:
     description: "One direct or data-encoded icon request for an admitted occurrence."
     examples:

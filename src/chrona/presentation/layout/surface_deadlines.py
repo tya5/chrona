@@ -76,11 +76,11 @@ def compose_deadline_marks(*, base: SurfaceBaseGeometry, theme_tokens: object, d
                 f"{TICK_PREFIX}{instance}", deadline.object_id, "Path",
                 Rect(Decimal(str(x)), Decimal(str(top)), Decimal(0), Decimal(str(bottom - top))),
                 ((x, top), (x, bottom)), slot_id=host.slot_id, paint_order=paint_order_base + order,
-                semantic_id=DEADLINE_SEMANTIC))
+                semantic_id=DEADLINE_SEMANTIC, subjects=host.subjects))
             if deadline.slipped:
                 shapes.append(ShapePlacement(
                     f"{RUN_PREFIX}{instance}", deadline.object_id, "Path",
                     Rect(Decimal(str(x)), Decimal(str(bottom)), Decimal(str(finish - x)), Decimal(0)),
                     ((x, bottom), (finish, bottom)), slot_id=host.slot_id, paint_order=paint_order_base + order,
-                    semantic_id=DEADLINE_SEMANTIC))
+                    semantic_id=DEADLINE_SEMANTIC, subjects=host.subjects))
     return DeadlineBatch(tuple(shapes), tuple(diagnostics))

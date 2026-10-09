@@ -245,9 +245,37 @@ or with an empty map, the profile's copy and output remain unchanged.
 
 ### 7.2 Derived figures (#586)
 
-A View MAY declare `figures`, an array of derived figures that the Core computes (Spec 05 §12.2) and a consumer shows by name. Each has a unique `id` (no braces, whitespace or control characters: `E_VIEW_FIGURE_INVALID`; a repeat is `E_VIEW_FIGURE_DUPLICATE`) and one closed `kind`: `daysUntil {from?, to, days?, calendar?}` or `daysIn {period, days?, calendar?}`. A fact (`from`, `to`) is exactly one of `asOf`, `{period, side: start | end}` or `{object, endpoint: at | start | end}`; `from` defaults to `asOf`. `days` is `calendar` (the default) or `working`; `calendar` names the Project calendar a working count uses (the Project default when omitted) and is a dead declaration, `E_VIEW_FIGURE_INVALID`, with calendar days. Nothing else is accepted: no expression, no operator, no field name, no other kind or fact.
+A View MAY declare `figures`, an array of derived figures that the Core resolves (Spec 05 §12.2) and a consumer shows by name. Each has a unique `id` (no braces, whitespace or control characters: `E_VIEW_FIGURE_INVALID`; a repeat is `E_VIEW_FIGURE_DUPLICATE`) and one closed `kind`: `daysUntil {from?, to, days?, calendar?}`, `daysIn {period, days?, calendar?}` or `count {source, scope?}`. A fact (`from`, `to`) is exactly one of `asOf`, `{period, side: start | end | last}` or `{object, endpoint: at | start | end}`; `from` defaults to `asOf`. `last` is the period's exclusive end minus one calendar day, not its last working day (Spec 05 §12.2). `days` is `calendar` (the default) or `working`; `calendar` names the Project calendar a working count uses (the Project default when omitted) and is a dead declaration, `E_VIEW_FIGURE_INVALID`, with calendar days. Nothing else is accepted: no expression, no operator, no field name, no other kind or fact.
 
 Every declared figure is resolved after scheduling, whether or not a consumer shows it. A fact that cannot be read refuses the render with all findings (`E_FIGURE_PERIOD_UNKNOWN`, `E_FIGURE_OBJECT_UNKNOWN`, `E_FIGURE_ENDPOINT_UNAVAILABLE`, `E_FIGURE_ASOF_MISSING`, `E_FIGURE_CALENDAR_UNAVAILABLE`; the message names the figure, the fact and what is declared): a figure is never blank, zero or guessed. A Summary Profile metric shows a figure with `source: {figure: <id>}` (Spec 46); a metric naming an id the View does not declare is `E_VIEW_FIGURE_UNKNOWN`. The member is optional and additive in `chrona/view/v0.28`; a View without `figures` renders as before.
+
+A `daysUntil` figure MAY declare `scope: group` (omission or `global` resolves once).
+The additional fact `{group: firstPlannedStart}` requires that scope. View projection gathers
+the earliest selected Primary planned start or point in each rendered group; Core receives only
+that date, not projection objects. Group figures are keyed by group identity and figure identity,
+separately from global values. Plain and role-marked group headers resolve `{figure:<id>}` in their
+current group. A global consumer such as a Summary Profile cannot select a group-only value
+(`E_FIGURE_SCOPE_UNAVAILABLE`). No projected groups is `E_FIGURE_GROUP_UNAVAILABLE`; a group
+without a selected Primary start/point is `E_FIGURE_GROUP_START_MISSING`, not zero. Neither
+comparison ghosts nor duplicate lane appearances change the selected dates.
+
+`kind: count` selects one closed `source`: `selected`, `recorded`, `dueUnobserved`,
+`notYetDue`, `unavailable`, `missingActual`, `knownFinishVariance`, `behind` or `ahead`.
+It accepts `scope: global | group` (global when omitted), but no date facts, calendar or day unit.
+One projection-owned producer supplies these facts to both figures and existing Summary metrics:
+selected Primary items, not row occurrences or comparison ghosts. The four state sources count
+the already-projected observation state. `missingActual` counts due-unobserved items but is
+unavailable without explicit Actual as-of; that is `E_FIGURE_COUNT_UNAVAILABLE`, not zero.
+Known finish variance counts non-absent deltas, including zero; behind/ahead count strictly
+positive/negative observed deltas. They are not critical-path membership, forecast or project
+slippage. Count figures accept Summary `count` or `text`, never `date` or `signedDays`.
+
+A period label MAY declare `template` instead of its literal `text`: a closed grammar of
+`{figure:<id>}` and `{{`/`}}` brace escapes. Both sources together are `E_VIEW_PERIOD_LABEL_SOURCE`.
+Literal `text`, including figure-like strings, is unchanged. A malformed template is
+`E_VIEW_FIGURE_TEMPLATE`; an undeclared figure is `E_VIEW_FIGURE_UNKNOWN`; a group-scoped
+reference is `E_FIGURE_SCOPE_UNAVAILABLE`, all at `/body/periods/<index>/label/template`.
+Presentation resolves the global integer before Layout measures and places the caption.
 
 ## 8. Comparison Views
 
@@ -300,8 +328,9 @@ owner's rule: an observed span with a `start` on or before `asOf`, no `finish`, 
 that is absent or below 1; `openUntil: asOf` stays a sufficient explicit signal, even at progress 1;
 a span at progress 1 without a finish or `openUntil`, or one that has not started, is not in
 progress), drawn as a span from that start to `asOf` in place of its open Actual, and puts no mark
-on a due-unobserved span or on a gate. It is `E_REVIEW_MISSING_ACTUAL_SCOPE_LANES`
-with lane rows, whose expected-mark inventory is closed.
+on a due-unobserved span or on a gate. With lane rows the lane expected-mark inventory lists that
+mark (`missing-actual`) in place of the span's `actual` mark when the `missingActual` facet is
+selected, and a typed absence (`in-progress-empty-at-cutoff`) when `asOf` is not after the start (#1027).
 
 ## 9. Annotations and Layout Intent
 

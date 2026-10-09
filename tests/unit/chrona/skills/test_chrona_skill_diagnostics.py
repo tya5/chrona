@@ -182,13 +182,15 @@ def test_existing_output_directories_are_refused_by_init_preset_copy_and_skill_c
         assert all(not is_bare(item["code"], item["message"]) for item in rows)
 
 
-def test_a_cramped_viewport_prints_the_warnings_and_note_the_skill_lists_on_standard_error(tmp_path, monkeypatch, capsys):
+def test_a_cramped_viewport_prints_the_warnings_and_note_the_skill_lists_in_stdout_envelope(tmp_path, monkeypatch, capsys):
     plan = _write(tmp_path, "plan.yaml", _project())
 
     status, out, err = run_cli(monkeypatch, capsys, "render", plan, "--viewport", "300x200", "--output", str(tmp_path / "plan.svg"))
 
-    assert status == 0 and out == ""
-    codes = {json.loads(line)["code"] for line in err.splitlines() if line.startswith("{")}
+    assert status == 0 and err == ""
+    envelope = json.loads(out)
+    assert envelope["status"] == "ok" and envelope["diagnostics"] == []
+    codes = {item["code"] for item in envelope["warnings"]}
     assert {"W_LAYOUT_LABEL_SUPPRESSED", "W_LAYOUT_LABEL_OVERFLOW", "W_SCENE_TEXT_INTERSECTION",
             "I_LAYOUT_PLOT_LABELS_SUPPRESSED"} <= codes
     assert (tmp_path / "plan.svg").is_file()

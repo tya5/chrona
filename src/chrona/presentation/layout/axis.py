@@ -11,6 +11,14 @@ from typing import Any
 from chrona.presentation.axis_intervals import AxisInterval, AxisLevel, axis_intervals
 
 
+def _axis_error(code: str, owner: str, **operands: object) -> ValueError:
+    fields = []
+    for name, value in operands.items():
+        shown = repr(value).replace("\n", " ").replace("\r", " ")[:96]
+        fields.append(f"{name}={shown}")
+    return ValueError(f"{code}: {owner} " + ", ".join(fields))
+
+
 @dataclass(frozen=True)
 class AxisThinningSchedule:
     """Deterministic retained/thinned positions for one measured label sequence."""
@@ -30,7 +38,8 @@ def thinning_schedule(label_fits: tuple[bool, ...]) -> AxisThinningSchedule:
     """
     retained = tuple(index for index, fits in enumerate(label_fits) if fits)
     if not retained:
-        raise ValueError("E_PRESENTATION_AXIS_OVERFLOW")
+        raise _axis_error("E_PRESENTATION_AXIS_OVERFLOW", "axis tier labels",
+                          candidate_count=len(label_fits), fit_results=label_fits)
     thinned = tuple(index for index, fits in enumerate(label_fits) if not fits)
     return AxisThinningSchedule(retained, thinned)
 
@@ -49,7 +58,9 @@ _FORMS_BY_LEVEL = {
 def format_axis_tier_label(interval: AxisInterval, form: str, table: AxisNameTable) -> str:
     """Format a natural bucket from a selected table, never from a locale code."""
     if form not in _FORMS_BY_LEVEL[interval.level]:
-        raise ValueError("E_PRESENTATION_AXIS_FORMAT")
+        raise _axis_error("E_PRESENTATION_AXIS_FORMAT", "axis interval label",
+                          level=interval.level, form=form,
+                          allowed_forms=tuple(sorted(_FORMS_BY_LEVEL[interval.level])))
     value = interval.natural_start
     iso_year, iso_week, _ = value.isocalendar()
     fiscal_year = int(interval.label.split("-", 1)[0])
@@ -79,5 +90,7 @@ def axis_label_fits(*, content: str, available_inline: float, font_size: float,
     elif orientation in {"rotate-cw", "rotate-ccw"}:
         occupied_inline = font_size * line_height
     else:
-        raise ValueError("E_PRESENTATION_TEXT_ORIENTATION")
+        raise _axis_error("E_PRESENTATION_TEXT_ORIENTATION", "axis label measurement",
+                          orientation=orientation, available_inline=available_inline,
+                          font_size=font_size)
     return occupied_inline <= available_inline

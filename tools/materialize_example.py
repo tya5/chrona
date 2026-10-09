@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 from hashlib import sha256
 from importlib.resources import files
+import json
 import shutil
 import subprocess
 import sys
@@ -13,6 +14,7 @@ from typing import Any
 import yaml
 from chrona.resources import safe_load
 from chrona.usecases.materialize import copy_context_closure, materialize as _materialize
+from chrona.usecases.failure_report import report_failure
 from chrona.storage.snapshot_paths import snapshot_directory
 
 
@@ -138,7 +140,12 @@ def main() -> None:
     parser.add_argument("--output", required=True)
     parser.add_argument("--write", action="store_true")
     args = parser.parse_args()
-    materialize(Path(args.manifest), args.slide, Path(args.output), write=args.write)
+    try:
+        materialize(Path(args.manifest), args.slide, Path(args.output), write=args.write)
+    except Exception as error:
+        report = report_failure(error)
+        print(json.dumps(report.payload(), ensure_ascii=False))
+        raise SystemExit(report.exit_code)
 
 
 if __name__ == "__main__":

@@ -101,16 +101,24 @@ def _emit_warning_case(**families):
             "perceptibility_warnings", "scale_collisions", "attachment_warnings",
         )
     })
-    cli._emit_render_warnings(SimpleNamespace(warning_records=records, info_diagnostics=()))
+    cli._emit_render_result(SimpleNamespace(warning_records=records, info_diagnostics=()))
+
+
+def _success_warning_payloads(capsys):
+    captured = capsys.readouterr()
+    assert captured.err == ""
+    envelope = json.loads(captured.out)
+    assert envelope["status"] == "ok" and envelope["diagnostics"] == []
+    return envelope["warnings"]
 
 
 def _warning_payload(capsys):
-    payload = json.loads(capsys.readouterr().err)
+    (payload,) = _success_warning_payloads(capsys)
     assert payload.pop("diagnostic").startswith(payload["code"] + ":")
     return payload
 
 
-def test_cli_emits_draft_font_substitution_warning_to_stderr(capsys):
+def test_cli_emits_draft_font_substitution_warning_in_stdout_envelope(capsys):
     _emit_warning_case(glyph_warnings=(FontGlyphWarning(
         "Noto Sans", "Noto Color Emoji Check", 400, 0x2705, "General Availability ✅", False,
     ),))
@@ -127,10 +135,11 @@ def test_cli_omits_draw_result_for_svg_font_substitution_warning(capsys):
     _emit_warning_case(glyph_warnings=(FontGlyphWarning(
         "Noto Sans", "Noto Color Emoji Check", 400, 0x2705, "General Availability ✅",
     ),))
-    assert "drawn" not in json.loads(capsys.readouterr().err)
+    (payload,) = _success_warning_payloads(capsys)
+    assert "drawn" not in payload
 
 
-def test_cli_emits_exact_face_tabular_degradation_warning(capsys):
+def test_cli_emits_exact_face_tabular_degradation_warning_in_stdout_envelope(capsys):
     _emit_warning_case(tabular_warnings=(FontTabularWarning("numeric", "Georgia", 400),))
     assert _warning_payload(capsys) == {
         "code": "W_FONT_TABULAR_UNAVAILABLE", "severity": "warning",
@@ -140,7 +149,7 @@ def test_cli_emits_exact_face_tabular_degradation_warning(capsys):
     }
 
 
-def test_cli_emits_structured_scene_perceptibility_warning_to_stderr(capsys):
+def test_cli_emits_structured_scene_perceptibility_warning_in_stdout_envelope(capsys):
     _emit_warning_case(perceptibility_warnings=(ScenePerceptibilityWarning(
         "W_SCENE_TEXT_OCCLUDED", "E_SCENE_TEXT_OCCLUDED", "/surfaces/0:review", ("text", "cover"),
         "timeline", (("coverageRatio", 1.0),), None,
@@ -153,7 +162,7 @@ def test_cli_emits_structured_scene_perceptibility_warning_to_stderr(capsys):
     }
 
 
-def test_cli_emits_completed_fit_warning_to_stderr(capsys):
+def test_cli_emits_completed_fit_warning_in_stdout_envelope(capsys):
     _emit_warning_case(fit_warnings=(FitWarning(
         "W_LAYOUT_ROW_DENSITY", "row:delivery", "delivery", "review-row-density",
         "visible-overflow", 120, 72, 120, 40,
@@ -190,7 +199,7 @@ def test_cli_warning_rows_account_for_every_scene_diagnostic_for_attached_milest
         "--output", str(tmp_path / "attached.svg"), "--emit-scene", str(scene_path),
     ])
     main()
-    emitted = [json.loads(line) for line in capsys.readouterr().err.splitlines() if line.startswith("{")]
+    emitted = _success_warning_payloads(capsys)
     scene = json.loads(scene_path.read_text(encoding="utf-8"))["diagnostics"]
     rows = _warning_multiplicity(emitted, scene)
     assert sum(row.get("count", 1) for row in rows if row["code"] == "W_LAYOUT_LABEL_OVERFLOW") == 2
@@ -204,10 +213,10 @@ def test_cli_collapses_a_warning_that_repeats_with_the_same_cause_into_one_row_w
         surface_diagnostics=scene_diagnostics, tabular_warnings=(), glyph_warnings=(), fit_warnings=(),
         perceptibility_warnings=(), scale_collisions=(), attachment_warnings=(),
     )
-    cli._emit_render_warnings(SimpleNamespace(
+    cli._emit_render_result(SimpleNamespace(
         warning_records=records, info_diagnostics=(SuppressedPlotLabels("table-timeline", 7),),
     ))
-    emitted = [json.loads(line) for line in capsys.readouterr().err.splitlines() if line.startswith("{")]
+    emitted = _success_warning_payloads(capsys)
     rows = _warning_multiplicity(emitted, scene_diagnostics)
     (suppressed,) = [row for row in rows if row["code"] == "W_LAYOUT_LABEL_SUPPRESSED"]
     assert suppressed["count"] == 7 and len(suppressed["occurrences"]) == 7
@@ -324,6 +333,7 @@ def test_cli_infers_png_bytes_and_rejects_explicit_svg_png_mismatch(tmp_path, mo
     ])
     main()
     assert output.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
+    _success_warning_payloads(capsys)
 
     mismatch = tmp_path / "mismatch.png"
     monkeypatch.setattr(sys, "argv", [
@@ -359,9 +369,9 @@ def test_cli_halcyon_default_draft_has_coherent_slots_and_month_axis(tmp_path, m
     monkeypatch.setattr(sys, "argv", argv)
     main()
 
-    stderr = capsys.readouterr().err
-    assert not any(code in stderr for code in (
-        "W_LAYOUT_MARK_OVERFLOW", "W_LAYOUT_ROW_DENSITY", "W_SCENE_TEXT_INTERSECTION"))
+    warnings = _success_warning_payloads(capsys)
+    assert not any(item["code"] in (
+        "W_LAYOUT_MARK_OVERFLOW", "W_LAYOUT_ROW_DENSITY", "W_SCENE_TEXT_INTERSECTION") for item in warnings)
     svg = output.read_text(encoding="utf-8")
     assert 'data-scene-id="axis-label:2:' in svg
     # #383/#429: the bundled default is now the Editorial preset, whose axis
@@ -564,7 +574,7 @@ def _axis_warnings(tmp_path, monkeypatch, capsys, preset_id, preset, label, proj
     ])
     capsys.readouterr()
     main()
-    warnings = [json.loads(line) for line in capsys.readouterr().err.splitlines() if line.startswith("{")]
+    warnings = _success_warning_payloads(capsys)
     axis_overflow = [item for item in warnings if item.get("code") == "W_LAYOUT_LABEL_OVERFLOW"
                       and (item.get("sourceRef") == "timeline-axis" or str(item.get("placementId", "")).startswith("axis-label:"))]
     intersections = [item for item in warnings if item.get("code") == "W_SCENE_TEXT_INTERSECTION"
@@ -632,7 +642,7 @@ def test_cli_content_sized_table_slot_holds_the_print_theme_delta_column(tmp_pat
     ])
     main()
 
-    warnings = [json.loads(line) for line in capsys.readouterr().err.splitlines() if line.startswith("{")]
+    warnings = _success_warning_payloads(capsys)
     assert not [item for item in warnings if item["code"] == "W_LAYOUT_VISIBLE_OVERFLOW"]
     primitives = {}
 
@@ -669,7 +679,7 @@ def test_cli_row_height_is_derived_from_the_table_text_it_holds(tmp_path, monkey
     ])
     main()
 
-    codes = {json.loads(line)["code"] for line in capsys.readouterr().err.splitlines() if line.startswith("{")}
+    codes = {item["code"] for item in _success_warning_payloads(capsys)}
     assert not codes & {"W_LAYOUT_VISIBLE_OVERFLOW", "W_SCENE_TEXT_INTERSECTION", "W_LAYOUT_ROW_DENSITY",
                         "W_LAYOUT_MARK_OVERFLOW"}
     scene = scene_path.read_text(encoding="utf-8")
@@ -865,6 +875,7 @@ def test_cli_guided_draft_infers_png_and_rejects_mismatch(tmp_path, monkeypatch,
     monkeypatch.setattr(sys, "argv", ["chrona", "render-workspace", str(workspace), "--output", str(output)])
     main()
     assert output.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
+    _success_warning_payloads(capsys)
 
     mismatch = tmp_path / "mismatch.png"
     monkeypatch.setattr(sys, "argv", [
@@ -993,7 +1004,8 @@ def test_cli_icon_import_diagnostic_identifies_the_rejected_icon_source(tmp_path
     assert diagnostic == {
         "code": "E_ICON_IMPORT_ELEMENT", "severity": "error", "component": "icon-import",
         "sourceRef": "/defs", "revisionRefs": [],
-        "message": "E_ICON_IMPORT_ELEMENT icon=demo:bad source=/defs",
+        "message": "E_ICON_IMPORT_ELEMENT icon=demo:bad source=/defs detail=element is unsupported; "
+                   "expected svg/g/path/line/polyline/polygon/rect/circle/ellipse, got 'defs'",
     }
 
 
@@ -1516,6 +1528,7 @@ def test_cli_render_review_uses_only_an_immutable_v05_context(tmp_path, monkeypa
         "--snapshot-root", str(tmp_path), "--store-identity", "cli-test", "--output", str(output),
     ])
     main()
+    review_warnings = _success_warning_payloads(capsys)
     rendered = output.read_text(encoding="utf-8")
     assert 'data-source-ref="firmware"' in rendered
     assert 'data-presentation-adapter="legacy-v0.1"' not in rendered
@@ -1542,6 +1555,7 @@ def test_cli_render_review_uses_only_an_immutable_v05_context(tmp_path, monkeypa
     ])
     main()
     assert draft_output.read_text(encoding="utf-8") == rendered
+    assert _success_warning_payloads(capsys) == review_warnings
 
 
 def test_cli_draft_render_rejects_invalid_viewport(monkeypatch, capsys):

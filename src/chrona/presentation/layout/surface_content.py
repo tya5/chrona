@@ -20,6 +20,7 @@ from chrona.presentation.layout.surface_quality import (
 from chrona.presentation.layout.surface_geometry import (
     GEOMETRY_TOLERANCE,
 )
+from chrona.presentation.model.diagnostic_sources import DiagnosticSubject
 
 
 @dataclass(frozen=True)
@@ -87,6 +88,17 @@ def compose_detail_panel_blocks(*, slots: tuple[SlotPlacement, ...], request: Su
     metrics = metric_for_role(request.theme_tokens, "text", request.font_metrics)
     requested_end = requested_canvas.block + requested_canvas.block_size
 
+    # Review Detail's milestone IDs are validated Project-object references
+    # before they reach this module. Join only those explicit references to
+    # typed projection objects; group and observation row IDs are not objects.
+    projection_items = {str(item.object_id): item for item in getattr(request.projection, "items", ())}
+    milestone_ids = tuple(object_id for object_id, _, _ in request.surface_content.milestones)
+
+    def milestone_subjects(source_ref: str | None = None) -> tuple[DiagnosticSubject, ...]:
+        selected = (source_ref,) if source_ref in milestone_ids else milestone_ids if source_ref is None else ()
+        return tuple(DiagnosticSubject.project_object(object_id, getattr(projection_items[object_id], "title", None))
+                     for object_id in selected if object_id in projection_items)
+
     for source, values, prefix in sources:
         slot = slot_by_source.get(source)
         if slot is None or not values:
@@ -152,7 +164,8 @@ def compose_detail_panel_blocks(*, slots: tuple[SlotPlacement, ...], request: Su
                     warnings.append(FitWarning("W_LAYOUT_DETAIL_PANEL_CLIPPED", placement_id, source_ref,
                                                "detail-panel", "clip-optional", natural_width,
                                                float(suppressed.bounds.block_size), text_available,
-                                               float(slot.bounds.block_size)))
+                                               float(slot.bounds.block_size),
+                                               subjects=milestone_subjects(source_ref) if source == "milestones" else ()))
                     continue
                 else:
                     disposition = "visible-overflow"
@@ -177,12 +190,14 @@ def compose_detail_panel_blocks(*, slots: tuple[SlotPlacement, ...], request: Su
         for placed, required_inline, available_inline in item_overflows:
             warnings.append(FitWarning("W_LAYOUT_VISIBLE_OVERFLOW", placed.placement_id, placed.source_ref,
                                        "detail-panel", "visible-overflow", required_inline,
-                                       float(placed.bounds.block_size), available_inline, float(final_size)))
+                                       float(placed.bounds.block_size), available_inline, float(final_size),
+                                       subjects=milestone_subjects(placed.source_ref) if source == "milestones" else ()))
         if final_slot.bounds.block + final_slot.bounds.block_size > requested_end + GEOMETRY_TOLERANCE:
             warnings.append(FitWarning("W_LAYOUT_VISIBLE_OVERFLOW", f"detail-panel:{source}", source,
                                        "detail-panel", "visible-overflow", float(final_slot.bounds.inline_size),
                                        float(final_slot.bounds.block_size), float(final_slot.bounds.inline_size),
-                                       max(0.0, float(requested_end - final_slot.bounds.block))))
+                                       max(0.0, float(requested_end - final_slot.bounds.block)),
+                                       subjects=milestone_subjects() if source == "milestones" else ()))
     final_slots = tuple(replacements.get(slot.source_ref, slot) for slot in slots)
     return final_slots, completed, warnings, frozenset(pre_reserved)
 

@@ -12,10 +12,10 @@ from chrona.presentation.model.surface_content import HeadingContent, SummaryCon
 from chrona.presentation.review.lane_membership import Lane, LaneAssignment, LaneMembership
 from chrona.presentation.table_presentation import BooleanPresencePresentation
 from chrona.presentation.review.v05_content import (
-    compose_heading, legend_entries, normalize_axis_tiers, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content,
+    _column_width, _group_headers, _resource_body, compose_heading, legend_entries, normalize_axis_tiers, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content,
 )
 from chrona.presentation.contracts.resources import (
-    LegendEntry, ReviewDetailInput, SummaryMetric, SummaryPanelInput, SummaryProfileInput, TableColumn, ViewComparison, ViewGrouping, ViewInput,
+    LegendEntry, ReviewDetailInput, SummaryMetric, SummaryPanelInput, SummaryProfileInput, TableColumn, ViewComparison, ViewGroupHeader, ViewGrouping, ViewInput,
     ViewHeading, ViewLaneLabel, ViewLaneTable, ViewRows, ViewVisibility, ViewWindow, freeze,
 )
 
@@ -224,8 +224,9 @@ def test_lane_table_fails_when_project_titles_are_missing_instead_of_showing_ids
     view = replace(typed_view({"body": {"tableColumns": (), "visibility": {}}}),
                    rows=ViewRows("lanes", (), lane_table=ViewLaneTable(ViewLaneLabel.LANE, False)))
 
-    with pytest.raises(ValueError, match="E_REVIEW_LANE_TITLE_MISSING:object-id"):
+    with pytest.raises(ValueError, match="E_REVIEW_LANE_TITLE_MISSING:object-id") as error:
         normalize_v05_table_content(projection, {}, view)
+    assert "/items/'object-id'/title='object-id'" in str(error.value)
 
 
 def typed_view(value):
@@ -308,6 +309,7 @@ def test_view_annotation_ladder_normalizes_to_typed_candidates() -> None:
     }})
     value = normalize_v05_surface_content(projection, {}, view, summary=EMPTY_SUMMARY)
     assert value.annotations[0].fallback_ladder == ("rail",)
+    assert value.annotations[0].anchor_source_ref == "/body/annotations/0/anchor"
     assert value.annotations[0].candidates[0].region.kind == "slot"
     assert value.annotations[0].candidates[0].search.kind == "row-aligned"
     assert value.annotations[0].candidates[0].connector.kind == "leader"
@@ -495,6 +497,7 @@ def test_structured_temporal_and_annotation_presentation_is_normalized():
     assert value.annotations[0].annotation_id == "note"
     assert value.annotations[0].content == "Watch this"
     assert value.annotations[0].number == 1
+    assert value.annotations[0].anchor_source_ref == "/body/annotations/0/anchor"
 
 
 def test_annotation_anchor_end_is_normalized_to_finish_at_ingress():
@@ -656,8 +659,94 @@ def test_subtree_summary_rejects_non_hierarchy_or_unselected_root(projection):
     summary = {"body": {"panels": [{"id": "completion", "metrics": {
         "planned": {"source": {"object": "programme", "facet": "planned"}, "scope": "subtree", "format": "date"},
     }}]}}
-    with pytest.raises(ValueError, match="E_PRESENTATION_SUMMARY_SOURCE"):
+    with pytest.raises(ValueError, match="E_PRESENTATION_SUMMARY_SOURCE") as error:
         normalize_summary_content(typed_summary(summary), projection, None)
+    assert "subtree objectId='programme'" in str(error.value)
+
+
+def test_summary_format_diagnostic_names_metric_path_and_format_value():
+    projection = ReviewProjection((), (date(2026, 3, 1), date(2026, 3, 4)), (), ())
+    summary = typed_summary({"body": {"panels": [{"id": "pulse", "metrics": {
+        "forecast": {"source": "count.selected", "format": "romanNumeral"},
+    }}]}})
+    with pytest.raises(ValueError, match="E_PRESENTATION_SUMMARY_FORMAT") as error:
+        normalize_summary_content(summary, projection, None)
+    assert "/panels/0/metrics/0/format='romanNumeral'" in str(error.value)
+
+
+def test_table_width_and_resource_shape_diagnostics_name_invalid_operands():
+    with pytest.raises(ValueError, match="E_VIEW_TABLE_WIDTH") as width_error:
+        _column_width({"fixedPx": 137})
+    assert "fields=['fixedPx']" in str(width_error.value)
+    with pytest.raises(ValueError, match="E_PRESENTATION_ACTUAL_SET_SHAPE") as shape_error:
+        _resource_body({"asOf": "2026-03-04"}, "ACTUAL_SET")
+    assert "/actual_set/body" in str(shape_error.value)
+
+
+def test_summary_unknown_source_names_metric_pointer_and_requested_source():
+    projection = ReviewProjection((), (date(2026, 3, 1), date(2026, 3, 4)), (), ())
+    summary = typed_summary({"body": {"panels": [{"id": "pulse", "metrics": {
+        "forecast": {"source": "vendor.opaque", "format": "text"},
+    }}]}})
+    with pytest.raises(ValueError, match="E_PRESENTATION_SUMMARY_SOURCE") as error:
+        normalize_summary_content(summary, projection, None)
+    assert "/panels/0/metrics/0/source='vendor.opaque'" in str(error.value)
+
+
+def test_group_header_secondary_diagnostic_names_entity_field_and_value():
+    item = ReviewItem("obj", "Object", "span", {}, None, None, (), group_id="team-omega",
+                      group_label="Omega", item_id="obj")
+    projection = ReviewProjection((item,), (date(2026, 3, 1), date(2026, 3, 4)), (), (),
+                                  rows=(ReviewRowProjection("row", "Omega", "team-omega", "obj", (item,)),))
+    grouping = ViewGrouping("field", "team", (), None, "header", None, None,
+                            header=ViewGroupHeader("{title} · {secondary}", secondary_field="division"))
+    view = replace(typed_view({"body": {"tableColumns": (), "visibility": {}}}), grouping=grouping)
+    with pytest.raises(ValueError, match="E_REVIEW_GROUP_HEADER_SECONDARY") as error:
+        _group_headers(projection, {"entities": {"team-omega": {"fields": {"division": "  "}}}}, view)
+    assert "/entities/'team-omega'/fields/'division'='  '" in str(error.value)
+
+
+def test_group_header_ordinal_error_names_form_and_group_inventory():
+    groups = tuple(f"group-{index}" for index in range(1, 4001))
+    items = tuple(ReviewItem(f"obj-{index}", f"Object {index}", "span", {}, None, None, (),
+                             group_id=group, item_id=f"obj-{index}")
+                  for index, group in enumerate(groups, start=1))
+    rows = tuple(ReviewRowProjection(f"row-{index}", item.title, group, item.item_id, (item,))
+                 for index, (group, item) in enumerate(zip(groups, items, strict=True), start=1))
+    projection = ReviewProjection(items, (date(2026, 3, 1), date(2026, 3, 4)), (), (), rows=rows)
+    grouping = ViewGrouping("field", "team", (), None, "header", None, None,
+                            header=ViewGroupHeader("{ordinal} {title}", ordinal="roman"))
+    view = replace(typed_view({"body": {"tableColumns": (), "visibility": {}}}), grouping=grouping)
+    with pytest.raises(ValueError, match="E_REVIEW_GROUP_ORDINAL_RANGE") as error:
+        _group_headers(projection, {}, view)
+    assert "groups=['group-1'" in str(error.value) and "ordinal='roman'" in str(error.value)
+
+
+def test_lane_table_projection_diagnostic_names_missing_membership_operand():
+    projection = ReviewProjection((), (date(2026, 3, 1), date(2026, 3, 4)), (), (),
+                                  lane_rows=(ReviewLaneRowProjection("lane-ghost", "group", ()),))
+    view = replace(typed_view({"body": {"tableColumns": (), "visibility": {}}}),
+                   rows=ViewRows("lanes", (), lane_table=ViewLaneTable(ViewLaneLabel.LANE, False)))
+    with pytest.raises(ValueError, match="E_REVIEW_LANE_TABLE_PROJECTION") as error:
+        normalize_v05_table_content(projection, {}, view)
+    assert "laneMembership=False, laneRows=1, laneTable=True" in str(error.value)
+
+
+@pytest.mark.parametrize(("membership", "lane_row", "operand"), [
+    (LaneMembership((), ()), ReviewLaneRowProjection("lane-ghost", "team-z", ()),
+     "laneId='lane-ghost' is absent from membership lanes"),
+    (LaneMembership((Lane("lane-empty", "team-z", ()),), ()),
+     ReviewLaneRowProjection("lane-empty", "team-z", ()),
+     "laneId='lane-empty' has no memberItemIds"),
+])
+def test_lane_table_projection_diagnostic_names_invalid_lane_identity_or_membership(membership, lane_row, operand):
+    projection = ReviewProjection((), (date(2026, 3, 1), date(2026, 3, 4)), (), (),
+                                  lane_membership=membership, lane_rows=(lane_row,))
+    view = replace(typed_view({"body": {"tableColumns": (), "visibility": {}}}),
+                   rows=ViewRows("lanes", (), lane_table=ViewLaneTable(ViewLaneLabel.LANE, False)))
+    with pytest.raises(ValueError, match="E_REVIEW_LANE_TABLE_PROJECTION") as error:
+        normalize_v05_table_content(projection, {}, view)
+    assert operand in str(error.value)
 
 
 def test_target_view_contract_normalizes_plot_labels_marker_and_axis():
@@ -681,9 +770,10 @@ def test_target_view_contract_normalizes_plot_labels_marker_and_axis():
 def test_actual_set_requires_the_current_body_envelope():
     projection = ReviewProjection((), (date(2026, 3, 1), date(2026, 3, 8)), (), ())
     view = {"body": {"tableColumns": (), "visibility": {"labels": False, "relations": "none", "annotations": "none"}}}
-    with pytest.raises(ValueError, match="E_PRESENTATION_ACTUAL_SET_SHAPE"):
+    with pytest.raises(ValueError, match="E_PRESENTATION_ACTUAL_SET_SHAPE") as error:
         normalize_v05_surface_content(projection, {"relations": (), "annotations": {}}, typed_view(view),
                                       summary=EMPTY_SUMMARY, actual_set={"asOf": "2026-03-04"})
+    assert "/actual_set/body" in str(error.value) and "type=NoneType" in str(error.value)
 
 
 def test_project_annotation_reference_selects_text_once_and_leaves_notes_slot() -> None:
@@ -712,8 +802,9 @@ def test_project_annotation_reference_to_a_missing_id_is_a_stable_ingress_error(
                          "placement": {"side": "above", "alignment": "center"},
                          "projectAnnotation": "missing"},),
     }})
-    with pytest.raises(ValueError, match="E_PRESENTATION_ANNOTATION_REFERENCE_MISSING"):
+    with pytest.raises(ValueError, match="E_PRESENTATION_ANNOTATION_REFERENCE_MISSING") as error:
         normalize_v05_surface_content(projection, {"annotations": {}}, view, summary=EMPTY_SUMMARY)
+    assert "/annotations/'missing'/text" in str(error.value)
 
 
 def test_as_of_label_is_the_declared_text_and_a_date_only_in_a_declared_form():

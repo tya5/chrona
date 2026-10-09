@@ -15,6 +15,7 @@ import subprocess
 import sys
 import textwrap
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from jsonschema import Draft202012Validator, FormatChecker
@@ -26,6 +27,7 @@ from chrona.app.agent_tools import (
 from chrona.app.agent_workspace import WorkspaceScope
 from chrona.app.cli import main
 from chrona.core.diagnostics import Diagnostic
+from chrona.core.ports import RenderArtifact
 from chrona.usecases.preset_library import copy_builtin_preset
 from chrona.usecases.project_checks import ProjectValidation
 
@@ -450,11 +452,13 @@ def test_warning_records_keep_their_fields_sorted_and_scrubbed(scope, monkeypatc
     assert "count" not in first and "occurrences" not in first
 
 
-def test_warnings_equal_what_the_cli_prints_to_stderr(scope, monkeypatch, capsys, workspace):
+def test_warnings_equal_the_cli_stdout_success_envelope(scope, monkeypatch, capsys, workspace):
     result = run(scope, "render_draft", project="launch.yaml", viewport="300x300", inline="none")
-    rc, _, err = cli(monkeypatch, capsys, workspace, "render", "launch.yaml", "--viewport", "300x300", "--output", "o.svg")
-    printed = [json.loads(line) for line in err.splitlines()]
-    assert rc == 0 and len(printed) == len(result.structured["warnings"]) > 0
+    rc, out, err = cli(monkeypatch, capsys, workspace, "render", "launch.yaml", "--viewport", "300x300", "--output", "o.svg")
+    envelope = json.loads(out)
+    printed = envelope["warnings"]
+    assert rc == 0 and err == "" and envelope["status"] == "ok" and envelope["diagnostics"] == []
+    assert len(printed) == len(result.structured["warnings"]) > 0
     for line, item in zip(printed, result.structured["warnings"], strict=True):
         warning = line["severity"] == "warning"  # an info record's own `count` is a number of labels, not a merge count
         top = {"code", "severity", "component", "sourceRef", "message"} | ({"count", "occurrences"} if warning else set())
@@ -463,6 +467,59 @@ def test_warnings_equal_what_the_cli_prints_to_stderr(scope, monkeypatch, capsys
         assert item.get("count") == (line.get("count") if warning else None)
         assert item.get("occurrences") == (line.get("occurrences") if warning else None)
         assert item["detail"] == {key: value for key, value in line.items() if key not in top}
+
+
+def _successful_render_warning_cases():
+    golden = json.loads((REPO / "tests/fixtures/cli_characterization/golden.json").read_text(encoding="utf-8"))
+    cases = []
+    for name, record in golden.items():
+        argv = record.get("argv", ())
+        if not argv or argv[0] not in {"render", "render-review", "render-workspace"} or record.get("exit") != 0:
+            continue
+        stdout = record.get("stdout")
+        assert isinstance(stdout, str), f"successful render {name} must retain its full CLI stdout envelope"
+        envelope = json.loads(stdout)
+        assert envelope.get("status") == "ok" and isinstance(envelope.get("warnings"), list), name
+        warnings = envelope["warnings"]
+        cases.append((name, warnings))
+    assert cases
+    return cases
+
+
+@pytest.mark.parametrize(("case_name", "golden_warnings"), _successful_render_warning_cases(),
+                         ids=lambda value: value if isinstance(value, str) else None)
+def test_mcp_render_warning_projection_preserves_every_successful_cli_golden_row(
+        scope, monkeypatch, case_name, golden_warnings):
+    """Exercise the real MCP tool envelope against each checked-in successful CLI warning row."""
+    artifact = RenderArtifact("svg", "image/svg+xml", b"<svg/>", "test-agent-transport")
+    rendered = SimpleNamespace(artifact=artifact, rendered=object())
+    monkeypatch.setattr(agent_tools, "render_draft", lambda request: rendered)
+    monkeypatch.setattr(agent_tools, "warning_payloads", lambda _rendered: golden_warnings)
+
+    result = run(scope, "render_draft", project="small.yaml", inline="none")
+    actual = result.structured["warnings"]
+    assert result.structured["status"] == "ok" and result.structured["diagnostics"] == []
+    assert len(actual) == len(golden_warnings), case_name
+    for source, output in zip(golden_warnings, actual, strict=True):
+        is_warning = source.get("severity") != "info"
+        known = {"code", "severity", "component", "sourceRef", "message"}
+        if is_warning:
+            known |= {"count", "occurrences"}
+        assert (output["code"], output["severity"], output["component"], output["sourceRef"], output["message"]) == (
+            source["code"], source.get("severity", "warning"), source.get("component", "render"),
+            source.get("sourceRef", "/"), scope.scrub(str(source["message"])))
+        assert output["detail"] == {
+            key: value for key, value in source.items() if key not in known
+        }
+        if is_warning:
+            if "count" in source:
+                assert output["count"] == source["count"]
+                assert output["occurrences"] == source.get("occurrences", [])
+            else:
+                assert "count" not in output and "occurrences" not in output
+        else:
+            # Info count is meaningful detail, not the warning-ledger merge count.
+            assert output.get("count") is None and output["detail"].get("count") == source.get("count")
 
 
 def test_without_the_rasterizer_png_is_reported_not_substituted(scope, monkeypatch):

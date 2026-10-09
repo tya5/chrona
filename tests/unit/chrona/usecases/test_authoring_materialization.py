@@ -84,6 +84,29 @@ def test_materialization_ejects_to_a_closed_explicit_bundle_with_identical_bytes
     assert "binding" not in explicit["body"]["presentation"]
     assert (tmp_path / "presentation/receipt.yaml").is_file()
     assert _explicit_bytes(tmp_path) == guided_bytes
+    from chrona.usecases.authoring_materialization import materialization_candidate
+    with pytest.raises(ValueError) as raised:
+        materialization_candidate(workspace, explicit, directory="presentation")
+    assert str(raised.value).startswith("E_AUTHORING_EXPLICIT_MODE:")
+    assert "workspace.yaml" in str(raised.value)
+
+
+def test_materialization_names_preset_for_an_unexpected_contract_type(tmp_path, monkeypatch):
+    from chrona.usecases import authoring_materialization as owner
+    workspace = _workspace(tmp_path)
+    document = yaml.safe_load(workspace.read_text(encoding="utf-8"))
+    original_parse = owner.parse_contract
+
+    def parse(identity, value):
+        return object() if identity.kind == "presentation-preset" else original_parse(identity, value)
+
+    monkeypatch.setattr(owner, "parse_contract", parse)
+    monkeypatch.setattr(owner, "_render_bytes", lambda _: b"unchanged")
+    monkeypatch.setattr(owner, "resolve_guided_draft_render", lambda **_: object())
+    with pytest.raises(ValueError) as raised:
+        owner.materialization_candidate(workspace, document, directory="presentation")
+    assert str(raised.value).startswith("E_AUTHORING_PRESET_SCHEMA:")
+    assert "starter.yaml" in str(raised.value)
 
 
 def test_materialization_rejection_does_not_switch_workspace_or_publish_bundle(tmp_path, monkeypatch):
@@ -94,7 +117,8 @@ def test_materialization_rejection_does_not_switch_workspace_or_publish_bundle(t
 
     result = _materialize(workspace)
 
-    assert result["diagnostics"] == [{"code": "E_AUTHORING_MATERIALIZE_OUTPUT_PROOF"}]
+    assert result["diagnostics"][0]["code"] == "E_AUTHORING_MATERIALIZE_OUTPUT_PROOF"
+    assert "workspace.yaml" in result["diagnostics"][0]["detail"]
     assert workspace.read_bytes() == original
     assert not (tmp_path / "presentation").exists()
 
@@ -106,7 +130,8 @@ def test_materialization_rejects_existing_destination_without_switching_workspac
 
     result = _materialize(workspace)
 
-    assert result["diagnostics"] == [{"code": "E_AUTHORING_MATERIALIZE_COLLISION"}]
+    assert result["diagnostics"][0]["code"] == "E_AUTHORING_MATERIALIZE_COLLISION"
+    assert "presentation" in result["diagnostics"][0]["detail"]
     assert workspace.read_bytes() == original
 
 

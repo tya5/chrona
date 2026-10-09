@@ -8,7 +8,8 @@ from typing import Any
 from chrona.presentation.layout.group_header_runs import place_group_header_runs
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, GroupPlacement, TextPlacement
-from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_role, place_text
+from chrona.presentation.layout.text import (centred_text_baseline, ellipsize_text, measure_text_width,
+                                             metric_for_role, place_text)
 from chrona.presentation.layout.vertical_text import place_vertical_label_fit
 from chrona.presentation.model.theme_tokens import ThemeTokenError
 
@@ -159,8 +160,12 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
         # `align` places a vertical tag in its rows; on a horizontal header it would be silently ignored (#981).
         raise LayoutError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", "/body/roles/groupHeader/align",
                           detail="align on groupHeader needs a vertical writingMode")
-    group_header_font_size = (float(request.theme_tokens.text_treatment("groupHeader").font_size)
-                              if any(group.header_bounds is not None for group in groups) else body_size)
+    group_header_treatment = (request.theme_tokens.text_treatment("groupHeader")
+                              if any(group.header_bounds is not None for group in groups) else None)
+    def group_header_baseline(bounds: Rect) -> float:
+        assert group_header_treatment is not None
+        return centred_text_baseline(bounds, font_size=group_header_treatment.font_size,
+                                     line_height=group_header_treatment.line_height)
     text, warnings = [], []
     tab = resolve_group_tab(request.theme_tokens) if any(group.header_bounds is not None for group in groups) else None
     for group in groups:
@@ -175,7 +180,7 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
                 # Role-marked runs share the header's baseline, each measured with its own role (#1192).
                 placed, run_warnings = place_group_header_runs(
                     group_id=group.group_id, runs=marked[group.group_id], start=start, size=size, bounded=tab is not None,
-                    baseline_block=float(group.header_bounds.block) + group_header_font_size,
+                    baseline_block=group_header_baseline(group.header_bounds),
                     header_block_size=float(group.header_bounds.block_size), theme_tokens=request.theme_tokens,
                     font_metrics=request.font_metrics)
                 text.extend(placed)
@@ -200,7 +205,7 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
             text.append(place_text(
                 placement_id=f"group-header:{group.group_id}", source_ref=group.group_id,
                 content=content, overflow=disposition, inline=float(start),
-                baseline_block=float(group.header_bounds.block) + group_header_font_size,
+                baseline_block=group_header_baseline(group.header_bounds),
                 typography_role="groupHeader", theme_tokens=request.theme_tokens,
                 font_metrics=request.font_metrics, collision_region=f"group:{group.group_id}",
                 collision_domain=CollisionDomain("group-header", group.group_id),
@@ -215,3 +220,18 @@ def replace_group_header_extent(groups: tuple[GroupPlacement, ...],
     """Return a group tuple with one folded-point header extent replaced."""
     index = groups.index(update.source)
     return groups[:index] + (replace(update.source, header_bounds=update.header_bounds),) + groups[index + 1:]
+
+
+def translate_group_header_text(text: tuple[TextPlacement, ...], *, group_id: str,
+                                block_delta: float) -> tuple[TextPlacement, ...]:
+    """Translate already-measured horizontal header runs with their finalized band."""
+    prefix = f"group-header:{group_id}"
+    return tuple(
+        replace(item,
+                bounds=Rect(item.bounds.inline, item.bounds.block + Decimal(str(block_delta)),
+                            item.bounds.inline_size, item.bounds.block_size),
+                baseline=(item.baseline[0], item.baseline[1] + block_delta))
+        if item.baseline is not None and (item.placement_id == prefix or item.placement_id.startswith(prefix + "#run"))
+        else item
+        for item in text
+    )

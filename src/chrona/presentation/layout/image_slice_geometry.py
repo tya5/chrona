@@ -25,10 +25,10 @@ def image_slice_tiles(box: Rect, *, viewport: tuple[int, int],
     top, right, bottom, left = slice_insets
     if (view_width <= 0 or view_height <= 0
             or min(top, right, bottom, left) < 0):
-        raise ValueError("E_LAYOUT_IMAGE_SLICE_GEOMETRY")
+        raise ValueError(f"E_LAYOUT_IMAGE_SLICE_GEOMETRY: viewport={viewport!r} requires positive dimensions and sliceInsets={slice_insets!r} nonnegative")
     x, y, width, height = box
     if width <= 0 or height <= 0:
-        raise ValueError("E_LAYOUT_IMAGE_SLICE_GEOMETRY")
+        raise ValueError(f"E_LAYOUT_IMAGE_SLICE_GEOMETRY: destination box width={width!r}, height={height!r} must be positive")
     # Clamp the fixed border so it never exceeds the destination box: a paint
     # box smaller than the declared border scales the border down uniformly
     # rather than inverting or overlapping a tile.
@@ -53,5 +53,5 @@ def image_slice_tiles(box: Rect, *, viewport: tuple[int, int],
                 continue
             tiles.append(((sx0, sy0, source_width, source_height), (dx0, dy0, dest_width, dest_height)))
     if not tiles:
-        raise ValueError("E_LAYOUT_IMAGE_SLICE_GEOMETRY")
+        raise ValueError(f"E_LAYOUT_IMAGE_SLICE_GEOMETRY: box={box!r}, viewport={viewport!r}, sliceInsets={slice_insets!r} produce no positive-area source/destination tile")
     return tuple(tiles)

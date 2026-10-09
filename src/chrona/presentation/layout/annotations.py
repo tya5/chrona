@@ -7,9 +7,27 @@ from typing import Iterable
 
 from chrona.presentation.layout.comparison_marks import ComparisonMark
 from chrona.presentation.layout.labels import LabelPlacement, LabelRect, place_label
+from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacleIndex
 from chrona.presentation.layout.routing import route_orthogonal
 from chrona.presentation.model.surface_content import AnnotationIntent
+
+
+def _annotation_error(code: str, owner: str, **operands: object) -> ValueError:
+    fields = []
+    for name, value in operands.items():
+        shown = repr(value).replace("\n", " ").replace("\r", " ")[:96]
+        fields.append(f"{name}={shown}")
+    return ValueError(f"{code}: {owner} " + ", ".join(fields))
+
+
+def _anchor_error(annotation: AnnotationIntent, code: str, owner: str, **operands: object) -> LayoutError:
+    """Keep anchor diagnostics typed and attached to the declared View pointer."""
+    fields = []
+    for name, value in operands.items():
+        shown = repr(value).replace("\n", " ").replace("\r", " ")[:96]
+        fields.append(f"{name}={shown}")
+    return LayoutError(code, annotation.anchor_source_ref, detail=f"{owner}: " + ", ".join(fields))
 
 
 @dataclass(frozen=True)
@@ -41,7 +59,8 @@ def route_annotation_leader(source: tuple[float, float], target: tuple[float, fl
                             port_ids: tuple[str, ...] = ()) -> tuple[tuple[float, float], ...]:
     """Return a bounded deterministic orthogonal visibility-grid leader route."""
     if limit < 1:
-        raise ValueError("E_PRESENTATION_ROUTE_LIMIT")
+        raise _annotation_error("E_PRESENTATION_ROUTE_LIMIT", "leader route search",
+                                state_limit=limit, source=source, target=target)
     index = obstacles if isinstance(obstacles, SurfaceObstacleIndex) else None
     if index is not None:
         return route_orthogonal(source, target, index, limit=limit, port_ids=port_ids)
@@ -53,7 +72,9 @@ def route_annotation_leader(source: tuple[float, float], target: tuple[float, fl
     while queue:
         _, node = heappop(queue); states += 1
         if states > limit:
-            raise ValueError("E_PRESENTATION_ROUTE_LIMIT")
+            raise _annotation_error("E_PRESENTATION_ROUTE_LIMIT", "leader route search",
+                                    state_limit=limit, examined_states=states,
+                                    source=source, target=target)
         if node == end:
             break
         for nxt in ((node[0]-1, node[1]), (node[0]+1, node[1]), (node[0], node[1]-1), (node[0], node[1]+1)):
@@ -69,7 +90,9 @@ def route_annotation_leader(source: tuple[float, float], target: tuple[float, fl
             seen.add(nxt); parents[nxt] = node
             heappush(queue, (abs(xs[nxt[0]]-target[0]) + abs(ys[nxt[1]]-target[1]), nxt))
     if end not in seen:
-        raise ValueError("E_PRESENTATION_ROUTE_LIMIT")
+        raise _annotation_error("E_PRESENTATION_ROUTE_LIMIT", "leader route search",
+                                state_limit=limit, source=source, target=target,
+                                obstacle_count=len(boxes))
     path, node = [], end
     while node != start:
         path.append((xs[node[0]], ys[node[1]])); node = parents[node]
@@ -92,20 +115,36 @@ def resolve_annotation_anchor(annotation: AnnotationIntent, marks: Iterable[Comp
     """Resolve only the named object target; never substitute an absent actual."""
     anchor = annotation.anchor
     if anchor.get("kind") != "object":
-        raise ValueError("E_PRESENTATION_ANCHOR_UNSUPPORTED")
+        raise _anchor_error(annotation, "E_PRESENTATION_ANCHOR_UNSUPPORTED", "annotation anchor",
+                            annotation_id=annotation.annotation_id,
+                            anchor_kind=anchor.get("kind"), expected="object anchor")
     object_id, facet, endpoint = anchor.get("id"), anchor.get("facet"), anchor.get("endpoint")
     if not isinstance(object_id, str) or facet not in {"planned", "actual"} or endpoint not in {"start", "end", "finish", "at", "body"}:
-        raise ValueError("E_PRESENTATION_ANCHOR_MISSING")
+        field = ("id" if not isinstance(object_id, str) else
+                 "facet" if facet not in {"planned", "actual"} else "endpoint")
+        raise _anchor_error(annotation, "E_PRESENTATION_ANCHOR_MISSING", "annotation anchor fields",
+                            annotation_id=annotation.annotation_id, object_id=object_id,
+                            facet=facet, endpoint=endpoint, missing_or_invalid=field,
+                            expected="id string, facet planned|actual, endpoint start|end|finish|at|body")
     candidates = [mark for mark in marks if mark.source_id == object_id and mark.facet == facet]
     if not candidates:
-        raise ValueError("E_PRESENTATION_ANCHOR_MISSING")
+        raise _anchor_error(annotation, "E_PRESENTATION_ANCHOR_MISSING", "annotation target mark",
+                            annotation_id=annotation.annotation_id, object_id=object_id,
+                            facet=facet, endpoint=endpoint,
+                            reason=f"no completed {facet} mark exists for this object")
     mark = candidates[0]
     if endpoint == "start" and mark.start is None:
-        raise ValueError("E_PRESENTATION_ANCHOR_MISSING")
+        raise _anchor_error(annotation, "E_PRESENTATION_ANCHOR_MISSING", "mark endpoint",
+                            annotation_id=annotation.annotation_id, object_id=object_id,
+                            facet=facet, endpoint=endpoint, reason="selected mark has no start date")
     if endpoint in {"finish", "end"} and mark.end is None:
-        raise ValueError("E_PRESENTATION_ANCHOR_MISSING")
+        raise _anchor_error(annotation, "E_PRESENTATION_ANCHOR_MISSING", "mark endpoint",
+                            annotation_id=annotation.annotation_id, object_id=object_id,
+                            facet=facet, endpoint=endpoint, reason="selected mark has no finish date")
     if endpoint == "at" and mark.at is None:
-        raise ValueError("E_PRESENTATION_ANCHOR_MISSING")
+        raise _anchor_error(annotation, "E_PRESENTATION_ANCHOR_MISSING", "mark endpoint",
+                            annotation_id=annotation.annotation_id, object_id=object_id,
+                            facet=facet, endpoint=endpoint, reason="selected mark has no point date")
     return AnnotationAnchor(annotation.annotation_id, object_id, facet, "finish" if endpoint == "end" else endpoint, mark)  # `end` aliases `finish`: the text is in Scene ids
 
 
@@ -116,14 +155,17 @@ def project_annotation_box(annotation: AnnotationIntent, resolved: AnnotationAnc
     """Place one measured annotation box without assigning renderer semantics."""
     purpose = annotation.purpose
     if purpose not in {"callout", "note", "highlight", "explanatory-arrow"}:
-        raise ValueError("E_PRESENTATION_ANCHOR_UNSUPPORTED")
+        raise _annotation_error("E_PRESENTATION_ANCHOR_UNSUPPORTED", "annotation purpose",
+                                annotation_id=annotation.annotation_id, purpose=purpose)
     placement = place_label(anchor_bounds, text_size, candidate_sides, bounds=viewport,
                             obstacles=obstacles, required=required, overflow=overflow)
     if placement is None:
         return None
     alignment = annotation.alignment
     if alignment not in {"start", "center", "end"}:
-        raise ValueError("E_PRESENTATION_LABEL_INPUT")
+        raise _annotation_error("E_PRESENTATION_LABEL_INPUT", "annotation alignment",
+                                annotation_id=annotation.annotation_id, alignment=alignment,
+                                purpose=purpose)
     box = placement.bounds
     if alignment != "center":
         if placement.side in {"above", "below"}:

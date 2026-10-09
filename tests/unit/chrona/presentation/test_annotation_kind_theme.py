@@ -75,7 +75,7 @@ def test_header_text_too_close_to_one_kind_colour_names_the_kind_and_the_role():
         resolve_theme(parts["theme"], parts["scheme"], scheme_content_identity="sha256:test")
     assert failure.value.diagnostic_id == "E_SCHEME_ANNOTATION_KIND_CONTRAST"
     assert failure.value.source_ref == "/body/roles/annotation-kind-label/fill"
-    assert failure.value.detail.startswith("annotation-kind-label:note:")
+    assert failure.value.detail.startswith("'annotation-kind-label':'note':")
 
 
 def test_without_a_bar_the_header_text_is_judged_on_the_note_box_fill():
@@ -84,7 +84,7 @@ def test_without_a_bar_the_header_text_is_judged_on_the_note_box_fill():
     with pytest.raises(ColorSchemeError) as failure:
         resolve_theme(parts["theme"], parts["scheme"], scheme_content_identity="sha256:test")
     assert failure.value.diagnostic_id == "E_SCHEME_ANNOTATION_KIND_CONTRAST"
-    assert "annotation-" in failure.value.detail and "-box:" in failure.value.detail
+    assert failure.value.detail.startswith("'annotation-kind-label':'annotation-callout-box':")
 
 
 def test_a_declared_header_text_role_needs_its_contrast_treatment():

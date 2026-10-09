@@ -45,6 +45,10 @@ def test_icon_catalog_contract_keeps_set_name_and_closed_raster_source():
     assert contract.set_name == "acme"
     assert contract.entry_names == ("risk",)
     validate_icon_catalog_entry(contract, "risk")
+    with pytest.raises(ValueError, match="E_ICON_CATALOG_SCHEMA") as error:
+        validate_icon_catalog_entry(contract, "poster")
+    assert "catalog='acme-icons', icon='poster'" in error.value.detail
+    assert "expected selected canonical entry" in error.value.detail
 
 
 def test_icon_catalog_v05_accepts_glyph_and_pattern_only_catalogues():

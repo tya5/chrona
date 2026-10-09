@@ -10,6 +10,7 @@ from chrona.presentation.layout.surface_quality import FitWarning, MarkerGeometr
 from chrona.presentation.layout.pattern_placement import PatternTilePrimitive
 from chrona.presentation.model.font_metrics import FontTabularWarning
 from chrona.presentation.model.info_diagnostics import PresentationInfo
+from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, PrimitiveProvenance
 from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding, semantic_binding
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, TEXT_FOLLOWS_BOX, VIEWER_FIT_MODES
 
@@ -36,6 +37,29 @@ _LANE_PURPOSE_KINDS = frozenset(
 
 def _finite_number(value: object) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+
+
+def _brief(value: object, *, limit: int = 72) -> str:
+    """Describe a scalar or tuple shape without dumping Scene payloads."""
+    if isinstance(value, str):
+        return repr(value if len(value) <= limit else value[:limit - 1] + "…")
+    if value is None or isinstance(value, (int, float, bool)):
+        return repr(value)
+    if isinstance(value, (tuple, list)):
+        members = ", ".join(_brief(item, limit=24) for item in value[:8])
+        suffix = ", …" if len(value) > 8 else ""
+        return f"{type(value).__name__}(len={len(value)}, [{members}{suffix}])"
+    return f"<{type(value).__name__}>"
+
+
+def _pair_brief(value: object) -> str:
+    if isinstance(value, (tuple, list)) and len(value) == 2:
+        return f"({_brief(value[0])}, {_brief(value[1])})"
+    return _brief(value)
+
+
+def _invalid(field: str, value: object, expected: str, *, owner: str = "Scene") -> ValueError:
+    return ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: {owner}.{field}; expected {expected}; found {_brief(value)}")
 
 
 def requires_lane_member_provenance(kind: str, purpose: str) -> bool:
@@ -89,7 +113,7 @@ class ImageFill:
 
     def __post_init__(self) -> None:
         if not self.tiles or self.viewport[0] <= 0 or self.viewport[1] <= 0:
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            raise _invalid("tiles/viewport", (self.tiles, self.viewport), "non-empty tiles and positive viewport dimensions", owner="ImageFill")
 
 
 @dataclass(frozen=True)
@@ -134,7 +158,7 @@ class RadialGradient:
             raise ValueError(
                 f"E_PRESENTATION_PRIMITIVE_INVALID: radial geometry requires a finite center pair, positive finite "
                 f"radii pair, 2 or 3 stops, and fidelity 'required' or 'decorative-optional'; received "
-                f"center={self.center!r}, radii={self.radii!r}, stopCount={len(self.stops)}, fidelity={self.fidelity!r}")
+                f"center={_pair_brief(self.center)}, radii={_pair_brief(self.radii)}, stopCount={len(self.stops)}, fidelity={_brief(self.fidelity)}")
         if (self.stops[0].offset != 0 or self.stops[-1].offset != 1
                 or any(not _finite_number(stop.offset) or not 0 <= stop.offset <= 1
                        or not _finite_number(stop.opacity) or not 0 <= stop.opacity <= 1
@@ -147,9 +171,9 @@ class RadialGradient:
             raise ValueError(
                 f"E_PRESENTATION_PRIMITIVE_INVALID: radial stops require strictly increasing finite offsets from 0 "
                 f"to 1, one shared color, opacity 0 at the first and optional middle stop, and opacity 1 at the last; "
-                f"received offsets={tuple(stop.offset for stop in self.stops)!r}, "
-                f"colors={tuple(stop.color for stop in self.stops)!r}, "
-                f"opacities={tuple(stop.opacity for stop in self.stops)!r}")
+                f"received offsets={_brief(tuple(stop.offset for stop in self.stops))}, "
+                f"colors={_brief(tuple(stop.color for stop in self.stops))}, "
+                f"opacities={_brief(tuple(stop.opacity for stop in self.stops))}")
 
 
 @dataclass(frozen=True)
@@ -235,13 +259,13 @@ class TextLayout:
         if (self.numeric_spacing not in {"proportional", "tabular"}
                 or not (tilted or (self.orientation, self.rotation_degrees) in {
                     ("horizontal", 0), ("rotate-cw", 90), ("rotate-ccw", -90)})):
-            raise ValueError("E_PRESENTATION_TEXT_LAYOUT_INVALID")
+            raise ValueError(f"E_PRESENTATION_TEXT_LAYOUT_INVALID: TextLayout.numeric_spacing/orientation/rotation_degrees; expected proportional or tabular spacing and horizontal/0, rotate-cw/90, rotate-ccw/-90, or tilt within 15 degrees; found {_brief((self.numeric_spacing, self.orientation, self.rotation_degrees))}")
         if (isinstance(self.horizontal_scale, bool) or not isinstance(self.horizontal_scale, (int, float))
                 or not 0.5 <= self.horizontal_scale <= 1):
-            raise ValueError("E_PRESENTATION_TEXT_LAYOUT_INVALID: horizontal scale outside 0.5 to 1")
+            raise ValueError(f"E_PRESENTATION_TEXT_LAYOUT_INVALID: TextLayout.horizontal_scale; expected finite numeric value in [0.5, 1]; found {_brief(self.horizontal_scale)}")
         if self.fit is not None and (not isinstance(self.fit, TextFit) or (
                 self.fit.mode == TEXT_FOLLOWS_BOX and len(self.fit.line_inline_sizes) != len(self.lines))):
-            raise ValueError("E_PRESENTATION_TEXT_LAYOUT_INVALID: viewer fit lines")
+            raise ValueError(f"E_PRESENTATION_TEXT_LAYOUT_INVALID: TextLayout.fit.line_inline_sizes; expected a TextFit with one fit size per line when box-follows-text; found fit={_brief(self.fit)}, lineCount={len(self.lines)}")
 
 
 @dataclass(frozen=True)
@@ -265,7 +289,7 @@ class PatternStroke:
 
     def __post_init__(self) -> None:
         if self.width <= 0:
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            raise _invalid("width", self.width, "a positive stroke width", owner="PatternStroke")
 
 
 @dataclass(frozen=True)
@@ -294,7 +318,11 @@ class PatternGeometry:
                 or (not catalog and (not self.strokes or self.density_basis_points is not None
                                      or self.origin is not None or self.region_bounds is not None
                                      or self.clip_bounds is not None or self.corner_radius is not None))):
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            raise _invalid("tile_inline_size/tile_block_size/angle_degrees/density_basis_points/strokes/origin/region_bounds/clip_bounds/corner_radius",
+                           (self.tile_inline_size, self.tile_block_size, self.angle_degrees, self.density_basis_points,
+                            self.strokes, self.origin, self.region_bounds, self.clip_bounds, self.corner_radius),
+                           "positive tile sizes, angle in [0,360), and either catalog primitives with complete region facts or legacy strokes without catalog facts",
+                           owner="PatternGeometry")
 
 
 @dataclass(frozen=True)
@@ -305,7 +333,7 @@ class SymbolGeometry:
 
     def __post_init__(self) -> None:
         if not self.outline:
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            raise _invalid("outline", self.outline, "a non-empty tuple of completed path commands", owner="SymbolGeometry")
 
 
 @dataclass(frozen=True)
@@ -370,14 +398,13 @@ class ScenePrimitive:
                 or self.viewer_fit == BOX_FOLLOWS_TEXT
                 or (self.paint is not None and (self.paint.stroke is None
                     or self.paint.stroke_width != self.stroke_clip.stroke_width))):
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID", "inconsistent completed stroke clip")
+            raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} stroke_clip; expected a Rect, or a non-empty clipped Symbol/Path stroke outside box-follows-text with matching stroke paint; found kind={_brief(self.kind)}, viewer_fit={_brief(self.viewer_fit)}, stroke_width={_brief(getattr(self.paint, 'stroke_width', self.paint) if self.paint is not None else None)}, clip_width={_brief(getattr(self.stroke_clip, 'stroke_width', self.stroke_clip))}")
         if (self.viewer_fit not in VIEWER_FIT_MODES
                 or (self.viewer_fit != "raw" and self.kind not in {"Rect", "Symbol"})
                 or (self.viewer_fit == BOX_FOLLOWS_TEXT and (
                     self.kind != "Rect" or (self.pattern is not None and self.pattern.primitives)
                     or self.clip_source_id is not None or self.image_fill_pending is not None))):
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID",
-                             "a viewer-fit mode is one of three, on a Rect or Symbol box; box-follows-text only on a plain Rect")
+            raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} viewer_fit/pattern/clip_source_id/image_fill_pending; expected a known fit mode on Rect or Symbol, with box-follows-text only on a plain Rect; found mode={_brief(self.viewer_fit)}, kind={_brief(self.kind)}, pattern={_brief(self.pattern)}, clip_source_id={_brief(self.clip_source_id)}, image_fill_pending={_brief(self.image_fill_pending)}")
         if (((self.marker_start is not None or self.marker_end is not None) and self.kind != "Path")
                 or (self.pattern is not None and self.kind != "Rect")
                 or (self.image_fill_pending is not None and self.kind not in {"Rect", "Symbol"})
@@ -421,20 +448,20 @@ class ScenePrimitive:
                                                or self.icon_viewport is None
                                                or any(item <= 0 for item in self.icon_viewport)))
                 or (self.kind != "Icon" and self.icon_viewport is not None)):
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} has incompatible completed fields; expected marker_start/marker_end only on Path, pattern only on Rect, symbol exactly on Symbol, radial paint only on plain filled Rect, glyph paint only on Symbol, table/lane/relation fields consistent with purpose/kind, and icon viewport only on Icon; found sourceRef={_brief(self.source_ref)}, kind={_brief(self.kind)}, purpose={_brief(self.purpose)}, marker_start={_brief(self.marker_start)}, marker_end={_brief(self.marker_end)}, pattern={_brief(self.pattern)}, symbol={_brief(self.symbol)}, radial_gradient={_brief(getattr(self.paint, 'radial_gradient', self.paint) if self.paint is not None else None)}, glyph_mode={_brief(self.glyph_paint_mode)}, table_row_id={_brief(self.table_row_id)}, table_column_id={_brief(self.table_column_id)}, lane_row_id={_brief(self.lane_row_id)}, lane_member_id={_brief(self.lane_member_id)}, from_instance_id={_brief(self.from_instance_id)}, to_instance_id={_brief(self.to_instance_id)}, icon_kind={_brief(self.icon_kind)}, icon_viewport={_brief(self.icon_viewport)}")
         if self.end_treatment not in {"closed", "open"}:
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} end_treatment; expected 'closed' or 'open'; found {_brief(self.end_treatment)}")
         classified = contrast_binding(self.visual_role)
         if ((classified is not None and classified.contrast_class == ContrastClass.STATE_TEXT
              and self.contrast_treatment not in {"required", "deemphasized"})
                 or (self.visual_role == "annotation-note-text" and self.contrast_treatment != "required")
                 or ((classified is None or classified.contrast_class != ContrastClass.STATE_TEXT)
                     and self.contrast_treatment is not None)):
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} visual_role/contrast_treatment; expected required or deemphasized for state text, required for annotation-note-text, and absent otherwise; found role={_brief(self.visual_role)}, treatment={_brief(self.contrast_treatment)}")
         if self.paint_order < 0:
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} paint_order; expected a non-negative integer; found {_brief(self.paint_order)}")
         if self.end_treatment == "open" and (self.kind != "Symbol" or self.symbol is None or self.purpose != "actual"):
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} end_treatment/kind/symbol/purpose; expected open treatment only on an actual Symbol with completed symbol geometry; found treatment={_brief(self.end_treatment)}, kind={_brief(self.kind)}, symbol={_brief(self.symbol)}, purpose={_brief(self.purpose)}")
 
 @dataclass(frozen=True)
 class SceneSlot:
@@ -463,7 +490,7 @@ class SceneRow:
                     or not math.isfinite(block) or not math.isfinite(block_size)
                     or self.lane_mark_band_block < block
                     or self.lane_mark_band_block > block + block_size):
-                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: SceneRow { _brief(self.row_id or self.object_id)} lane_mark_band_block; expected a finite block coordinate inside bounds {_brief(self.bounds)}; found {_brief(self.lane_mark_band_block)}")
 
 
 @dataclass(frozen=True)
@@ -502,7 +529,10 @@ class SceneLaneMember:
                 or len(set(self.emitted_primitive_ids)) != len(self.emitted_primitive_ids)
                 or len(set(self.primary_mark_ids)) != len(self.primary_mark_ids)
                 or not set(self.primary_mark_ids) <= set(self.emitted_primitive_ids)):
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            raise _invalid("row_id/member_id/emitted_primitive_ids/primary_mark_ids",
+                           (self.row_id, self.member_id, self.emitted_primitive_ids, self.primary_mark_ids),
+                           "non-empty row/member IDs, non-empty unique tuple IDs, and primary marks drawn from emitted IDs",
+                           owner="SceneLaneMember")
 
 
 @dataclass(frozen=True)
@@ -517,7 +547,8 @@ class SceneLaneRectObstacle:
     def __post_init__(self) -> None:
         if (not all(_finite_number(value) for value in (self.left, self.top, self.right, self.bottom))
                 or self.right <= self.left or self.bottom <= self.top):
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            raise _invalid("left/top/right/bottom", (self.left, self.top, self.right, self.bottom),
+                           "finite edges with right > left and bottom > top", owner="SceneLaneRectObstacle")
 
 
 @dataclass(frozen=True)
@@ -533,7 +564,8 @@ class SceneLaneSegmentObstacle:
                 or not isinstance(self.end, tuple) or len(self.end) != 2
                 or not all(_finite_number(value) for value in (*self.start, *self.end, self.stroke_width))
                 or self.start == self.end or self.stroke_width < 0):
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            raise _invalid("start/end/stroke_width", (self.start, self.end, self.stroke_width),
+                           "finite point pairs, distinct endpoints, and non-negative stroke width", owner="SceneLaneSegmentObstacle")
 
 
 @dataclass(frozen=True)
@@ -552,7 +584,10 @@ class SceneLaneObstacle:
                     (self.facet_id, self.primitive_id, self.row_id, self.member_id))
                 or self.obstacle_class not in {"mark", "required-label"}
                 or not isinstance(self.geometry, (SceneLaneRectObstacle, SceneLaneSegmentObstacle))):
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            raise _invalid("facet_id/primitive_id/row_id/member_id/obstacle_class/geometry",
+                           (self.facet_id, self.primitive_id, self.row_id, self.member_id, self.obstacle_class, self.geometry),
+                           "non-empty identifiers, class mark or required-label, and a completed lane obstacle geometry",
+                           owner="SceneLaneObstacle")
 
 
 @dataclass(frozen=True)
@@ -604,7 +639,7 @@ class DecorationDisposition:
 
     def __post_init__(self) -> None:
         if self.disposition != "absent":
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            raise _invalid("disposition", self.disposition, "'absent'", owner=f"DecorationDisposition({self.visual_role})")
 
 
 @dataclass(frozen=True)
@@ -628,24 +663,32 @@ class SceneSurface:
     lane_members: tuple[SceneLaneMember, ...] = ()
     lane_obstacles: tuple[SceneLaneObstacle, ...] = ()
     lane_clearance: float | None = None
+    diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
+    primitive_provenance: tuple[PrimitiveProvenance, ...] = ()
 
     def __post_init__(self) -> None:
         """Reject incomplete clip references before any adapter can serialize them."""
         if (self.canvas_paint is not None and self.canvas_paint.radial_gradient is not None
                 or (self.canvas_bounds is not None and (len(self.canvas_bounds) != 4
                     or self.canvas_bounds[2] <= 0 or self.canvas_bounds[3] <= 0))):
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            raise _invalid("canvas_paint/canvas_bounds", (self.canvas_paint, self.canvas_bounds),
+                           "no radial-gradient canvas paint and, when supplied, positive-size four-value canvas bounds",
+                           owner=f"SceneSurface({_brief(self.surface_id)})")
         by_id = {item.scene_id: (index, item) for index, item in enumerate(self.primitives)}
         if len(by_id) != len(self.primitives):
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            duplicates = tuple(key for key in by_id if sum(item.scene_id == key for item in self.primitives) > 1)
+            raise _invalid("primitives.scene_id", duplicates, "unique primitive identities", owner=f"SceneSurface({_brief(self.surface_id)})")
         if len({item.visual_role for item in self.decoration_dispositions}) != len(self.decoration_dispositions):
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            duplicates = tuple(role for role in {item.visual_role for item in self.decoration_dispositions}
+                               if sum(item.visual_role == role for item in self.decoration_dispositions) > 1)
+            raise _invalid("decoration_dispositions.visual_role", duplicates, "one disposition per visual role", owner=f"SceneSurface({_brief(self.surface_id)})")
         lane_rows = {item.row_id: item for item in self.rows if item.row_id}
         if self.lane_mode not in (None, "lanes"):
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+            raise _invalid("lane_mode", self.lane_mode, "None or 'lanes'", owner=f"SceneSurface({_brief(self.surface_id)})")
         if self.lane_mode is None:
             if self.lane_members or self.lane_obstacles or self.lane_clearance is not None:
-                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                raise _invalid("lane_members/lane_obstacles/lane_clearance", (self.lane_members, self.lane_obstacles, self.lane_clearance),
+                               "empty lane facts when lane_mode is None", owner=f"SceneSurface({_brief(self.surface_id)})")
         else:
             if (not self.lane_members or not self.lane_obstacles
                     or not _finite_number(self.lane_clearance)
@@ -654,17 +697,22 @@ class SceneSurface:
                     not member.row_id or member.row_id not in lane_rows
                     or lane_rows[member.row_id].lane_mark_band_block is None
                     for member in self.lane_members)):
-                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                raise _invalid("lane_members/lane_obstacles/lane_clearance/rows", (self.lane_members, self.lane_obstacles, self.lane_clearance, self.rows),
+                               "non-empty typed lane facts, finite non-negative clearance, and member rows with lane bands",
+                               owner=f"SceneSurface({_brief(self.surface_id)})")
             if (len(lane_rows) != len(self.rows)
                     or any(row.lane_mark_band_block is None for row in self.rows)):
-                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                raise _invalid("rows.lane_mark_band_block", tuple((row.row_id, row.lane_mark_band_block) for row in self.rows),
+                               "a lane mark band for every row in lane mode", owner=f"SceneSurface({_brief(self.surface_id)})")
             member_keys = [(member.row_id, member.member_id) for member in self.lane_members]
             emitted_ids = [primitive_id for member in self.lane_members
                            for primitive_id in member.emitted_primitive_ids]
             if len(set(member_keys)) != len(member_keys) or len(set(emitted_ids)) != len(emitted_ids):
-                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                raise _invalid("lane_members.row_id/member_id/emitted_primitive_ids", (member_keys, emitted_ids),
+                               "unique (row, member) keys and unique emitted primitive IDs", owner=f"SceneSurface({_brief(self.surface_id)})")
             if {row_id for row_id, _member_id in member_keys} != set(lane_rows):
-                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                raise _invalid("lane_members.row_id", tuple(sorted({row_id for row_id, _ in member_keys})),
+                               f"exactly the row IDs {tuple(sorted(lane_rows))!r}", owner=f"SceneSurface({_brief(self.surface_id)})")
             expected = {primitive_id: (member.row_id, member.member_id)
                         for member in self.lane_members
                         for primitive_id in member.emitted_primitive_ids}
@@ -672,45 +720,58 @@ class SceneSurface:
                       for item in self.primitives if item.lane_row_id is not None}
             if expected != tagged or any(
                     primitive_id not in by_id for primitive_id in expected):
-                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                raise _invalid("lane_members.emitted_primitive_ids/lane_row_id/lane_member_id", (tuple(expected.items()), tuple(tagged.items())),
+                               "emitted IDs to match primitive lane tags and all IDs to exist in primitives",
+                               owner=f"SceneSurface({_brief(self.surface_id)})")
             primary_ids = {primitive_id for member in self.lane_members
                            for primitive_id in member.primary_mark_ids}
             if any(by_id[primitive_id][1].purpose not in PRIMARY_LANE_MARK_PURPOSES
                    for primitive_id in primary_ids):
-                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                bad_primary = tuple((primitive_id, by_id[primitive_id][1].purpose) for primitive_id in primary_ids
+                                    if by_id[primitive_id][1].purpose not in PRIMARY_LANE_MARK_PURPOSES)
+                raise _invalid("lane_members.primary_mark_ids", bad_primary, f"mark purposes in {tuple(sorted(PRIMARY_LANE_MARK_PURPOSES))!r}",
+                               owner=f"SceneSurface({_brief(self.surface_id)})")
             if any(requires_lane_member_provenance(item.kind, item.purpose)
                    and item.lane_row_id is None for item in self.primitives):
-                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                missing = tuple(item.scene_id for item in self.primitives
+                                if requires_lane_member_provenance(item.kind, item.purpose) and item.lane_row_id is None)
+                raise _invalid("primitives.lane_row_id/lane_member_id", missing,
+                               "lane ownership tags for every lane-member semantic", owner=f"SceneSurface({_brief(self.surface_id)})")
             obstacle_facets = [item.facet_id for item in self.lane_obstacles]
             obstacle_owners: dict[str, tuple[str, str]] = {}
             for obstacle in self.lane_obstacles:
                 if obstacle.primitive_id in obstacle_owners and obstacle_owners[obstacle.primitive_id] != (
                         obstacle.row_id, obstacle.member_id):
-                    raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                    raise _invalid("lane_obstacles.primitive_id/row_id/member_id", (obstacle.primitive_id, obstacle.row_id, obstacle.member_id),
+                                   f"one owner per obstacle primitive; existing owner {_brief(obstacle_owners.get(obstacle.primitive_id))}",
+                                   owner=f"SceneSurface({_brief(self.surface_id)})")
                 obstacle_owners[obstacle.primitive_id] = (obstacle.row_id, obstacle.member_id)
                 if expected.get(obstacle.primitive_id) != (obstacle.row_id, obstacle.member_id):
-                    raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                    raise _invalid("lane_obstacles.primitive_id/row_id/member_id", (obstacle.primitive_id, obstacle.row_id, obstacle.member_id),
+                                   f"owner matching lane member {_brief(expected.get(obstacle.primitive_id))}",
+                                   owner=f"SceneSurface({_brief(self.surface_id)})")
             if (len(set(obstacle_facets)) != len(obstacle_facets)
                     or set(obstacle_owners) != set(expected)):
-                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                raise _invalid("lane_obstacles.facet_id/primitive_id", (tuple(obstacle_facets), tuple(obstacle_owners)),
+                               "unique facet IDs and one obstacle owner for each emitted primitive",
+                               owner=f"SceneSurface({_brief(self.surface_id)})")
         followers = [item for item in self.primitives if item.text_layout is not None
                      and item.text_layout.fit is not None and item.text_layout.fit.mode == BOX_FOLLOWS_TEXT]
         if ({item.text_layout.fit.box_id for item in followers} != {
                 item.scene_id for item in self.primitives if item.viewer_fit == BOX_FOLLOWS_TEXT}
                 or len({item.text_layout.fit.box_id for item in followers}) != len(followers)):
             # A box that follows its text and that text name each other, one to one (#1050).
-            raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID",
-                             "a box that follows its text and that text must name each other one to one")
+            raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: SceneSurface({_brief(self.surface_id)}).viewer_fit; expected one-to-one reciprocal box/text IDs for box-follows-text; found box_ids={_brief(tuple(item.scene_id for item in self.primitives if item.viewer_fit == BOX_FOLLOWS_TEXT))}, text_box_ids={_brief(tuple(item.text_layout.fit.box_id for item in followers))}")
         for index, item in enumerate(self.primitives):
             if item.lane_row_id is not None:
                 row = lane_rows.get(item.lane_row_id)
                 if row is None or row.lane_mark_band_block is None:
-                    raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                    raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(item.scene_id)} lane_row_id; expected a SceneRow with lane_mark_band_block; found {_brief(item.lane_row_id)}")
             if item.host_placement_id is not None:
                 host = by_id.get(item.host_placement_id)
                 if (item.kind != "Text" or host is None or host[1].slot_id != item.slot_id
                         or host[1].paint_order >= item.paint_order):
-                    raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                    raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(item.scene_id)} host_placement_id; expected an earlier same-slot non-text host; found host={_brief(item.host_placement_id)}, kind={_brief(item.kind)}, slot={_brief(item.slot_id)}, paint_order={_brief(item.paint_order)}, host_found={_brief(host[1].scene_id if host else None)}, host_slot={_brief(host[1].slot_id if host else None)}, host_order={_brief(host[1].paint_order if host else None)}")
             if item.clip_source_id is None:
                 continue
             source = by_id.get(item.clip_source_id)
@@ -719,7 +780,7 @@ class SceneSurface:
                     or source[1].kind not in {"Rect", "Symbol"}
                     or (source[1].kind == "Symbol" and source[1].symbol is None)
                     or source[1].slot_id != item.slot_id):
-                raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(item.scene_id)} clip_source_id; expected an earlier-or-equal Rect/Symbol source in the same slot; found source={_brief(item.clip_source_id)}, paint_order={_brief(item.paint_order)}, source_kind={_brief(source[1].kind if source else None)}, source_slot={_brief(source[1].slot_id if source else None)}, item_slot={_brief(item.slot_id)}")
 
 
 @dataclass(frozen=True)
