@@ -6,7 +6,7 @@ PNG, Typst and TikZ draw it as they draw any horizontal or quarter-turn Text.
 """
 from __future__ import annotations
 
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from decimal import Decimal
 from typing import Any
 
@@ -41,11 +41,26 @@ def segment_vertical(text: str) -> tuple[tuple[str, str], ...]:
     return tuple(result)
 
 
-def place_vertical_label(*, label: str, placement_prefix: str, source_ref: str, column_inline: float,
-                         column_size: float, block_start: float, available_block: float, typography_role: str,
-                         theme_tokens: Any, font_metrics: Any, collision_region: str,
-                         collision_domain: CollisionDomain, semantic_id: str) -> tuple[TextPlacement, ...]:
+@dataclass(frozen=True)
+class VerticalLabel:
+    """The placements of one vertical label and what it needed against what it had (#981)."""
+
+    placements: tuple[TextPlacement, ...]
+    required_block: float   # the natural extent of the whole label
+    available_block: float  # the room between the two clear-space insets
+
+
+def place_vertical_label(**kwargs: Any) -> tuple[TextPlacement, ...]:
     """Place `label` as one column centred in `column_size`, from `block_start`, cut to `available_block`."""
+    return place_vertical_label_fit(**kwargs).placements
+
+
+def place_vertical_label_fit(*, label: str, placement_prefix: str, source_ref: str, column_inline: float,
+                             column_size: float, block_start: float, available_block: float, typography_role: str,
+                             theme_tokens: Any, font_metrics: Any, collision_region: str,
+                             collision_domain: CollisionDomain, semantic_id: str,
+                             align: str = "start") -> VerticalLabel:
+    """Place `label` as one column; `align` (start, center or end) sets where a label shorter than its room stands."""
     treatment = theme_tokens.text_treatment(typography_role)
     metric = metric_for_role(theme_tokens, typography_role, font_metrics)
     size, spacing = float(treatment.font_size), float(treatment.letter_spacing)
@@ -68,7 +83,11 @@ def place_vertical_label(*, label: str, placement_prefix: str, source_ref: str, 
     block_start, available_block = block_start + inset, available_block - 2 * inset
     segments = segment_vertical(painted)
     overflow = "fit"
-    if extent(segments) > available_block:
+    required = extent(segments)
+    if required <= available_block and align != "start":
+        # A label that fits stands at the start, middle or end of the room the clear space leaves (#981).
+        block_start += (available_block - required) / (2 if align == "center" else 1)
+    if required > available_block:
         marker = segment_vertical("…")
         prefix = painted
         while prefix and extent(segment_vertical(prefix) + marker) > available_block:
@@ -102,4 +121,4 @@ def place_vertical_label(*, label: str, placement_prefix: str, source_ref: str, 
                           Decimal(str(step)))
         placements.append(replace(placed, bounds=bounds))
         cursor += step + spacing
-    return tuple(placements)
+    return VerticalLabel(tuple(placements), required, available_block)

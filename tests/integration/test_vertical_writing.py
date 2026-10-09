@@ -226,3 +226,57 @@ def test_the_png_draws_the_cjk_characters_in_their_cells(tmp_path):
         x, y, w, h = item.bounds
         box = _ink(image, (x - 1, y - 1, x + w + 1, y + h + 1))
         assert box is not None and (box[2] - box[0]) > 0.5 * SIZE and (box[3] - box[1]) > 0.5 * SIZE, item.text  # a glyph, in its cell
+
+
+# --- #981: truncation is reported; a short tag can be aligned ----------------------------------------------
+
+SHORT = "{ordinal}"
+LONG = "An exceptionally long programme group title that cannot fit its rows"
+
+
+def _align(value):
+    def mutate(parts):
+        parts["theme"]["body"]["roles"]["groupHeader"]["align"] = value
+    return mutate
+
+
+def test_a_tag_cut_to_its_rows_is_reported_with_its_source(tmp_path):
+    rendered = _render(tmp_path, header_text=LONG)
+    warnings = [item for item in rendered.surface.fit_warnings if item.failure_kind == "group-tag-text"]
+
+    assert {item.source_ref for item in warnings} == {"team-0", "team-1", "team-2"}
+    assert all(item.code == "W_LAYOUT_TEXT_ELLIPSIZED" and item.behaviour == "ellipsize-with-source"
+               and item.required_block > item.available_block for item in warnings)
+    assert all(item.placement_id.startswith("group-tag:") for item in warnings)
+
+
+def test_a_tag_that_fits_reports_nothing(tmp_path):
+    rendered = _render(tmp_path, header_text=SHORT)
+
+    assert not [item for item in rendered.surface.fit_warnings if item.failure_kind == "group-tag-text"]
+
+
+def test_align_places_a_short_tag_at_the_start_the_middle_or_the_end_of_its_rows(tmp_path):
+    starts = {}
+    for name in ("start", "center", "end"):
+        rendered = _render(_sub(tmp_path, name), header_text=SHORT, mutate=_align(name))
+        tags = _tags(rendered)
+        top, bottom = _group_rows(rendered, "team-0")
+        starts[name] = (tags[0].bounds[1] - top, bottom - (tags[-1].bounds[1] + tags[-1].bounds[3]))
+
+    assert starts["center"][0] == pytest.approx(starts["center"][1], abs=1e-6)
+    assert starts["start"][0] < starts["center"][0] < starts["end"][0]
+
+
+def test_without_align_the_tag_is_start_aligned_as_before(tmp_path):
+    plain = _render(_sub(tmp_path, "plain"), header_text=SHORT)
+    start = _render(_sub(tmp_path, "start"), header_text=SHORT, mutate=_align("start"))
+
+    assert plain.artifact.content == start.artifact.content
+
+
+def test_align_on_a_horizontal_group_header_is_refused(tmp_path):
+    with pytest.raises(Exception) as failure:
+        _render(tmp_path, vertical=False, mutate=_align("end"))
+
+    assert "E_THEME_ROLE_PROPERTY_UNSUPPORTED" in str(failure.value) + repr(getattr(failure.value, "__cause__", ""))
