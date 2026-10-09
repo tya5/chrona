@@ -169,7 +169,7 @@ body:
       value: 18
     timeline-row-padding:
       type: number
-      value: 2
+      value: 1
     timeline-mark-size:
       type: number
       value: 16

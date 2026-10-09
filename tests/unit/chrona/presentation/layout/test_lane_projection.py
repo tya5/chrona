@@ -115,6 +115,27 @@ def test_open_actual_is_bound_to_selected_cutoff_and_incomplete_payload_is_typed
         close_lane_projection(missing_start_projection, as_of=None)
 
 
+def test_in_progress_span_expects_the_missing_actual_mark_in_place_of_the_actual_mark():
+    start = date(2026, 1, 3)
+    item = replace(_item("item", source_kind="combined", actual={"start": start},
+                         state=ObservationState.RECORDED), missing_actual_mark="in-progress")
+    projection = _projection(ReviewRowProjection("row", "Row", "g", "item", (item,)))
+    with pytest.raises(LayoutError, match="E_LAYOUT_LANE_AS_OF_REQUIRED"):
+        close_lane_projection(projection, as_of=None)
+    closure = close_lane_projection(projection, as_of=date(2026, 1, 10))
+    assert [(mark.role, mark.purpose) for mark in closure.expected_marks] == [
+        ("planned", "planned"), ("missing-actual", "missing-actual")]
+    assert closure.expected_marks[1].placement_id.startswith("missing-actual:")
+    assert not closure.intentional_absences
+    empty = close_lane_projection(projection, as_of=start)
+    assert [(entry.role, entry.reason) for entry in empty.intentional_absences] == [
+        ("missing-actual", "in-progress-empty-at-cutoff")]
+    # Without the in-progress mark the same Actual stays an incomplete payload, as before.
+    unmarked = _projection(ReviewRowProjection("row", "Row", "g", "item", (replace(item, missing_actual_mark="due-end"),)))
+    assert [(entry.role, entry.reason) for entry in close_lane_projection(unmarked, as_of=date(2026, 1, 10)).intentional_absences] == [
+        ("actual", "incomplete-actual-payload")]
+
+
 def test_primary_recorded_actual_is_an_explicit_absence():
     item = _item("item", actual={"start": date(2026, 1, 1), "finish": date(2026, 1, 2)},
                  state=ObservationState.RECORDED)

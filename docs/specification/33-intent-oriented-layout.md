@@ -731,7 +731,10 @@ Natural normal-flow measurement MUST use the same track allocation rules as
 final arrangement: grid row-track bases are summed with gaps and padding;
 only single-span children contribute to those bases under the current grid
 allocation rule, while multi-span shortage retains its visible fallback.
-Flow uses lines at the resolved inline extent, and anchored overlay
+Flow uses lines at the resolved inline extent, a flow item is measured at the
+inline extent it is arranged at (its natural width, never shrunk to the line:
+section 13 keeps natural sizes and diagnoses the overflow), so a content-sized
+nested flow wraps the same way in measurement and in arrangement (#1206), and anchored overlay
 decoration does not enlarge the normal-flow minimum. A fixed or capped track
 contributes its declared capacity rather than a promise to absorb more
 content; its shortage follows the visible fallback above.
