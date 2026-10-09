@@ -21,7 +21,7 @@ samples (625bp). All 15 packaged pattern declarations retain their declared
 density when independently measured with clipped-cell sampling. This does not
 prove all user-authored boundary-crossing patterns remain compatible.
 
-## Design plan
+## Selected design
 
 Use cases are general ordered knockouts and outlined circles, including
 overlapping concentric scales. The source/catalog carry geometry and paint
@@ -29,9 +29,10 @@ channel identities, never colours. Theme/Scheme complete substrate and ink;
 Layout completes repeat phase and region/clip; Scene carries the completed
 ordered stack; adapters serialize it. Analysis must see the same final stack.
 
-Candidate extension: circle `fillChannel: ink | substrate | none` (omitted:
+Extension: circle `fillChannel: ink | substrate | none` (omitted:
 ink) and optional positive ink `strokeWidth`. Fill precedes stroke within a
-circle, and list order is painter order. A substrate channel requires the
+circle, and list order is painter order. `none` requires a positive stroke.
+A substrate channel requires the
 existing opaque completed pattern substrate. No-ink results retain the
 declared density/perceptibility refusal rather than becoming silent decoration.
 
@@ -40,38 +41,64 @@ repeating, matching actual SVG and existing Scene contact. Density measures
 the final visible ink on the existing 128×128 centre grid with half-up rounding,
 not the union of hidden ink or translated neighbouring shapes.
 
-Contact must not use that density grid as a visibility oracle. Review a bounded
-vertical arrangement of circle and linear observer boundaries: extrema,
-vertices and pairwise intersections partition x; y-boundaries partition each
-slab and event line; witness membership follows the ordered paint stack and
-clipped subject. This must retain thin visible remnants and boundary contact.
-Reuse the existing eight-chord quadratic observer contract, stroke bodies,
-caps and joins. Prune irrelevant shapes; preserve the existing ink-only fast
-path. Bound cumulative work across the existing 4096 tile-copy limit and fail
-closed on exhaustion or unresolved numeric predicates, never report no ink.
+Contact does not use the density grid as a visibility oracle. The two production
+sparse-contact callers (`contrast_policy._frame_tinted` and `surface_overprint`)
+only admit fill-less patterns. Substrate operations require an opaque substrate,
+so paint completion rejects them on ink-only roles before returning a Scene.
+Opaque patterned hosts retain the existing conservative two-colour contrast
+policy, not a new point-local policy. Final positive density ensures ink survives;
+no surviving ink is refused, rather than retaining hidden ink in reported density.
 
-## Decisions and architecture review still required
+Sparse patterns therefore remain unions of ink shapes. Extend their exact contact
+only for circle strokes: a clipped convex query polygon's radial-distance range
+must intersect `[max(0,r-width/2), r+width/2]`. Minimum distance is zero if the
+centre is inside, otherwise the minimum edge distance; maximum is over vertices.
+Filled ink plus stroke is the outer disk. Keep inverse phase/rotation, closed
+boundary contact, existing path/cap/join rules and the 4096-copy bound. A substrate
+operation reaching the sparse observer is an unsupported-geometry failure,
+never invisible ink. A general boolean-geometry arrangement is not needed by
+any admitted paint path.
 
-- Prove the contact arrangement and numeric/degenerate-boundary rules with
-  synthetic geometry before finalizing its implementation plan.
-- Specify source/catalog version evolution for the changed density boundary
-  contract under Spec 56, plus Scene capability/version handling. Do not keep
-  contradictory legacy density semantics implicitly when a new field appears.
-- Check Specs 08/46/56/64, existing catalogue import, pattern placement,
-  serialization/identity, perceptibility and touched-ink contrast together.
-  Preserve the existing opaque channel contrast floors; geometry occlusion is
-  not permission to weaken colour contrast.
-- Determine atomic resource migration from the actual chosen schema changes.
-  Existing package densities need no value edits; generated mirrors still
-  require normal regeneration and identity verification if their contract changes.
-  Spec 64's pinned catalogues are immutable: publish successor identities and
-  update Context/package pins, not the bytes of an existing pinned resource.
-  Density's existing quadratic measurement uses 16 chords; contact uses eight.
+## Architecture review and migration decision
+
+- Specs 08/46: opaque hosts have two role colours; sparse contact only concerns
+  fill-less overlays/textures. Rejecting missing substrate is the existing paint
+  contract, not a project/role exception. Density and pairwise contrast now see
+  the completed visible result. No contrast floor or candidate geometry changes.
+- Spec 64 explicitly gives v0.1 sources/v0.4 catalogues periodic-union density.
+  Use source v0.2, catalogue v0.5 and normalization profile v0.2 for the corrected
+  clipped painter-order contract; do not reinterpret v0.1/v0.4 in place. Retire
+  their current authoring readers after atomic first-party pin migration. Keep
+  the independently supported icon-only v0.3 Material catalogue unchanged.
+- Scene v0.7 gains optional circle channel/width fields: omission still means
+  filled ink. `densityBasisPoints` remains the completed intrinsic ink fraction;
+  the current producer supplies verified post-composition coverage, not source
+  policy or a second density field. No catalog/profile identity crosses to Scene.
+- New schema properties reference one shared graphics definition. Existing
+  circle coordinate/radius rules, arc/control-point bounds and path observers
+  stay unchanged. Density uses 16 quadratic chords; contact uses eight.
+- Spec 64's pinned catalogues are immutable. Publish successor source/catalog/
+  manifest identities, update Context/library pins, and regenerate mirrors with
+  normal tools. All 15 current package density numbers remain unchanged. Retire
+  superseded live resources without overwriting their published identities.
+- Source normalization owns finite channel composition, Layout geometry/phase,
+  Scene complete geometry/paint relations, observers inspection and adapters
+  serialization. No dependency, new layer, authored colour, mask or scheduling
+  policy is introduced. Catalog SVG definition identifiers may change as their
+  completed primitive representation evolves; disclose these nonvisual diffs.
+
+Resource selection: successor starter, target-parts and annotation-parts IDs
+use `v2026-10-09`, retaining their set names and notices. Add the exact nine-circle
+`seigaiha` to target-parts; Yuya selects `chrona-target-parts:seigaiha` instead
+of the retained starter approximation. This is the issue's required target
+evidence, not compensation for a core side effect. Keep all other target
+styling unchanged. The reference's per-circle opacity 0.9 is not a new asset
+channel: the exact geometry uses the existing opaque pattern contract.
 
 ## Implementation and release planning boundary
 
-Finalize owned files and schema/resource migrations only after the design and
-architecture review above are published. Expected seams: source/catalog/Scene
+Finalize owned files and schema/resource migrations only after this reviewed
+design and the normative specification updates are published. Expected seams: source/catalog/Scene
 schemas, icon normalization/import, PatternTilePrimitive/placement, Scene
 serialization/contact, SVG emission and relevant living specifications.
 Keep one work record and one coherent product PR, with separately published
@@ -85,5 +112,5 @@ report all unintended corpus changes rather than tuning data to absorb them.
 Focused local tests precede PR S0/conformance/materializers and exact-main
 three-OS release. Keep the issue open until both literal rows have direct proof.
 
-Status: design plan; reviewed design and implementation plan remain outstanding.
-No #849 product implementation or acceptance claim.
+Status: reviewed design; publish with normative specifications before finalizing
+the implementation plan. No #849 product implementation or acceptance claim.
