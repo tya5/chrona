@@ -42,4 +42,3 @@ def test_controller_baseline_ghosts_emits_start_start_label_without_shared_node_
     incoming_approach = ObstacleSegment(incoming.points[-2], incoming.points[-1])
     outgoing_approach = ObstacleSegment(outgoing.points[0], outgoing.points[1])
     assert not obstacles_intersect(incoming_approach, outgoing_approach)
-
