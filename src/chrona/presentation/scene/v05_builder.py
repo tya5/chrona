@@ -166,7 +166,8 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
                             scale_paints: Mapping[str, str] | None = None,
                             scale_legend_paints: Mapping[str, str] | None = None,
                             group_tints: Mapping[str, str] | None = None,
-                            annotation_kind_paints: Mapping[str, str] | None = None) -> SceneSurface:
+                            annotation_kind_paints: Mapping[str, str] | None = None,
+                            axis_band_paints: Mapping[str, str] | None = None) -> SceneSurface:
     """Attach the sole adapter-ready paint payload to every completed primitive."""
     # Layer admission has already happened at the typed placement boundary.
     # Keep the existing canvas/artwork/part omission order and deduplication.
@@ -179,7 +180,7 @@ def _complete_surface_paint(surface: SceneSurface, tokens: ThemeTokenView, visua
         resolved = tuple(_complete_primitive_paint(
             primitive, tokens, visual_profile, scale_target_role, scale_paints or {}, scale_legend_paints or {},
             group_tints or {}, surface.canvas_bounds or (0.0, 0.0, *viewport), annotation_kind_paints or {},
-            clip_hosts)
+            clip_hosts, axis_band_paints or {})
                          for primitive in surface.primitives)
         canvas = resolve_scene_paint(tokens, "background", PaintFamily.CANVAS,
                                      visual_profile=visual_profile,
@@ -272,6 +273,7 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
                               canvas: tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0),
                               annotation_kind_paints: Mapping[str, str] = {},
                               clip_hosts: frozenset[str] = frozenset(),
+                              axis_band_paints: Mapping[str, str] = {},
                               ) -> tuple[ScenePrimitive | None, tuple[PaintOmission, ...]]:
     if primitive.visual_role == AS_OF_CONE_ROLE:
         # The cone's paint is its gradient; a profile that cannot paint one omits the whole cone (#890).
@@ -313,6 +315,9 @@ def _complete_primitive_paint(primitive: ScenePrimitive, tokens: ThemeTokenView,
     if tint is not None:
         # A group's tint replaces only the band's visible channel (#583).
         completed = replace(completed, stroke=tint) if family == PaintFamily.OUTLINE else replace(completed, fill=tint)
+    axis_fill = axis_band_paints.get(primitive.scene_id)
+    if axis_fill is not None:
+        completed = replace(completed, fill=axis_fill)
     # A bar-end stamp lies on the kind-coloured bar, so its declared role ink
     # must remain independently selectable. Column stamps keep their legacy tint.
     kind_painted = (primitive.purpose in {"annotation-kind-bar", "annotation-kind-accent"}
@@ -404,7 +409,8 @@ def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
                                        scale_paints=dict(value.surface_content.scale_paints),
                                        scale_legend_paints=dict(value.surface_content.scale_legend_paints),
                                        group_tints=dict(value.surface_content.group_tints),
-                                       annotation_kind_paints=dict(value.surface_content.annotation_kind_paints))
+                                       annotation_kind_paints=dict(value.surface_content.annotation_kind_paints),
+                                       axis_band_paints=dict(value.surface_content.axis_band_paints))
     if surface == "dependency-network":
         return _complete_surface_paint(_compose_dependency_network_surface(value), value.theme_tokens, value.visual_profile, value.viewport)
     raise SceneBuildError("E_PRESENTATION_SURFACE_UNSUPPORTED", "/projection/surface")

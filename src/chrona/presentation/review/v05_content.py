@@ -18,6 +18,7 @@ from chrona.presentation.group_header_text import GroupHeaderTextError, compose_
 from chrona.presentation.heading_text import render_heading
 from chrona.presentation.model.color_scale import ResolvedColorScale
 from chrona.presentation.model.axis_names import axis_name_table
+from chrona.presentation.model.axis_color_scale import AxisBandFillSpec, AxisBandScaleError
 
 
 def cell_typography_role(column: Any) -> str:
@@ -506,16 +507,28 @@ def compose_heading(view: ViewInput, project: Mapping[str, Any], actual_set: Map
 def normalize_axis_tiers(view: Any, *, locale: str) -> tuple[AxisTier, ...]:
     """The View's declared axis tiers as Layout-owned intent; measurement and placement read the same tiers."""
     axis = view.axis or {}
-    return tuple(_axis_tier(item, locale=locale) for item in axis.get("tiers", ()))
+    return tuple(_axis_tier(item, locale=locale, tier_index=index)
+                 for index, item in enumerate(axis.get("tiers", ())))
 
 
-def _axis_tier(value: Mapping[str, Any], *, locale: str) -> AxisTier:
+def _axis_tier(value: Mapping[str, Any], *, locale: str, tier_index: int = 0) -> AxisTier:
     """Detach one schema-validated View tier into Layout-owned typed intent."""
     role, unit = str(value["role"]), str(value["unit"])
     typography_role = str(value["typographyRole"]) if "typographyRole" in value else None
+    raw_fill_scale = value.get("fillScale")
+    fill_scale = None
+    if raw_fill_scale is not None:
+        if role != "band" or unit == "auto" or not isinstance(raw_fill_scale, Mapping):
+            raise AxisBandScaleError(
+                "E_PRESENTATION_AXIS_SCALE_TARGET", "target must be a fixed-unit band tier",
+                f"/view/body/axis/tiers/{tier_index}/fillScale",
+            )
+        fill_scale = AxisBandFillSpec(
+            raw_fill_scale["scale"], raw_fill_scale["key"], raw_fill_scale.get("containingTier"),
+        )
     raw_label = value.get("label")
     if role != "labels" or not isinstance(raw_label, Mapping):
-        return AxisTier(unit, int(value["every"]), role, typography_role=typography_role)
+        return AxisTier(unit, int(value["every"]), role, typography_role=typography_role, fill_scale=fill_scale)
     candidates = raw_label.get("forms", {})
     candidate_forms = tuple((str(candidate), str(form)) for candidate, form in candidates.items()) if isinstance(candidates, Mapping) else ()
     table_id = str(raw_label.get("nameTable", locale))
@@ -531,7 +544,7 @@ def _axis_tier(value: Mapping[str, Any], *, locale: str) -> AxisTier:
                     AxisLabelIntent(str(raw_label["form"]) if "form" in raw_label else None,
                                     candidate_forms, str(raw_label["align"]), str(raw_label["overflow"]),
                                     str(raw_label["orientation"]), table_id, secondary),
-                    typography_role=typography_role)
+                    typography_role=typography_role, fill_scale=fill_scale)
 
 
 def _column_width(value: object) -> TableColumnWidth:

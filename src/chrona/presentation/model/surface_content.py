@@ -5,6 +5,7 @@ from datetime import date
 from dataclasses import dataclass
 from typing import Any
 
+from chrona.presentation.model.axis_color_scale import AxisBandFillSpec
 from chrona.presentation.model.placement_candidates import PlacementCandidate
 from chrona.presentation.model.projection import ObservationState, ReviewItem
 from chrona.presentation.table_presentation import BooleanPresencePresentation
@@ -179,6 +180,7 @@ class AxisTier:
     role: str
     label: AxisLabelIntent | None = None
     typography_role: str | None = None
+    fill_scale: AxisBandFillSpec | None = None
 
 
 @dataclass(frozen=True)
@@ -250,6 +252,8 @@ class SurfaceContentInput:
     attached_labels: tuple[tuple[str, str], ...] = ()
     # View-selected literal caption copy, keyed by an already headed Layout slot node.
     slot_heading_text: tuple[tuple[str, str], ...] = ()
+    # Completed Scheme colours keyed by neutral axis-band placement identity (#490).
+    axis_band_paints: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True)
