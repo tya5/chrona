@@ -391,8 +391,8 @@ def _normalise(text: str, root: pathlib.Path) -> str:
     return re.sub(r"\\{2,}", "/", text)
 
 
-def _stream(text: str) -> object:
-    if len(text) <= 3000:
+def _stream(text: str, *, preserve: bool = False) -> object:
+    if preserve or len(text) <= 3000:
         return text
     return {"sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(), "lines": text.count("\n"), "length": len(text)}
 
@@ -447,7 +447,9 @@ def run_case(case: Case) -> tuple[dict[str, object], dict[str, object]]:
         }
         golden = {
             "argv": list(case.argv), "exit": code,
-            "stdout": _stream(_normalise(stdout, root)), "stderr": _warning_stream(stderr) if code == 0 and stderr else _stream(_normalise(stderr, root)),
+            "stdout": _stream(_normalise(stdout, root), preserve=(code == 0 and case.argv[0] in {
+                "render", "render-review", "render-workspace"})),
+            "stderr": _warning_stream(stderr) if code == 0 and stderr else _stream(_normalise(stderr, root)),
             "files": files,
         }
         raw = {"argv": list(case.argv), "exit": code, "stdout": stdout.replace(str(root), "<tmp>"),
@@ -498,6 +500,14 @@ def _record() -> None:
                 raw_stream.write(json.dumps({"id": case.id, **raw}, sort_keys=True, ensure_ascii=False) + "\n")
     GOLDEN.write_text(json.dumps(records, indent=1, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"recorded {len(records)} cases to {GOLDEN}")
+
+
+def test_successful_render_envelopes_remain_auditable_above_the_stream_digest_limit():
+    envelope = json.dumps({"status": "ok", "diagnostics": [], "warnings": [
+        {"code": "W_LAYOUT_LABEL_SUPPRESSED", "message": "x" * 4000}
+    ]})
+    assert _stream(envelope, preserve=True) == envelope
+    assert isinstance(_stream(envelope), dict)
 
 
 def test_record_captures_golden_and_byte_evidence_in_one_pass(tmp_path, monkeypatch):
