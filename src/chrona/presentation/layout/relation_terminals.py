@@ -16,6 +16,15 @@ ROUNDED_CORNER = 0.12        # corner radius of `rounded-triangle`, as a fractio
 CHEVRON_STEP = 0.4           # `double-chevron`: the back chevron is offset by this fraction of the length
 
 
+def _brief(value: object) -> str:
+    if isinstance(value, str):
+        clipped = value[:64]
+        return repr(clipped + ("…" if len(value) > len(clipped) else ""))
+    if value is None or isinstance(value, (bool, int, float)):
+        return repr(value)
+    return f"<{type(value).__name__}>"
+
+
 def marker_geometry(value: Mapping[str, object], *, stroke_width: float = 1.0) -> MarkerGeometry | None:
     """Resolve a closed terminal token before Scene receives the relation.
 
@@ -27,10 +36,10 @@ def marker_geometry(value: Mapping[str, object], *, stroke_width: float = 1.0) -
     derived = "attachmentOffset" not in value
     offset = 0.0 if derived else _number(value, "attachmentOffset")
     if length <= 0 or width <= 0 or not 0 <= offset <= length:
-        raise ValueError("E_THEME_TOKEN_TYPE")
+        raise ValueError(f"E_THEME_TOKEN_TYPE: terminal shape={shape!r} requires positive headLength/headWidth and attachmentOffset in [0, headLength]; headLength={length!r}, headWidth={width!r}, attachmentOffset={offset!r}")
     if derived and (isinstance(stroke_width, bool) or not isinstance(stroke_width, (int, float))
                     or not isfinite(stroke_width) or stroke_width < 0):
-        raise ValueError(f"E_THEME_TOKEN_TYPE: derived terminal stroke width must be finite and nonnegative, got {stroke_width!r}")
+        raise ValueError(f"E_THEME_TOKEN_TYPE: derived terminal stroke width={_brief(stroke_width)} must be finite and nonnegative")
     if shape == "none":
         return None
     if shape in ROUND_SHAPES:
@@ -233,12 +242,12 @@ def _rounded_polygon(points: tuple[tuple[float, float], ...], radius: float) -> 
 def _choice(value: Mapping[str, object], name: str, choices: set[str]) -> str:
     result = value.get(name)
     if not isinstance(result, str) or result not in choices:
-        raise ValueError("E_THEME_TOKEN_TYPE")
+        raise ValueError(f"E_THEME_TOKEN_TYPE: terminal {name}={_brief(result)}; expected one of {sorted(choices)!r}")
     return result
 
 
 def _number(value: Mapping[str, object], name: str) -> float:
     raw = value.get(name)
     if not isinstance(raw, (int, float)) or isinstance(raw, bool) or not isfinite(float(raw)):
-        raise ValueError("E_THEME_TOKEN_TYPE")
+        raise ValueError(f"E_THEME_TOKEN_TYPE: terminal {name}={_brief(raw)}; expected a finite number")
     return float(raw)

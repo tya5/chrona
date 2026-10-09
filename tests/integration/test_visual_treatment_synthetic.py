@@ -15,7 +15,7 @@ from pathlib import Path
 
 import yaml
 
-from chrona.app.cli import _emit_render_warnings
+from chrona.app.cli import _emit_render_result
 from chrona.presentation.model.closure import resolve_draft_render
 from chrona.presentation.model.info_diagnostics import PaintOmission
 from chrona.presentation.renderers.v05_svg import V05SvgRenderer
@@ -65,9 +65,12 @@ def test_elevated_preset_reports_default_profile_omissions_and_rich_svg_paints_t
     assert all(item.source_ref.startswith("/body/roles/group-band/") for item in omissions)
     assert sum(item.startswith("I_VISUAL_TREATMENT_OMITTED:") for item in baseline.scene.diagnostics) == 2
     assert len([item for item in baseline.surface.primitives if item.visual_role == "group-band"]) == len(OWNERS)
-    _emit_render_warnings(baseline)
-    notices = [json.loads(line) for line in capsys.readouterr().err.splitlines()
-               if '"I_VISUAL_TREATMENT_OMITTED"' in line]
+    _emit_render_result(baseline)
+    output = capsys.readouterr()
+    assert output.err == ""
+    envelope = json.loads(output.out)
+    assert envelope["status"] == "ok" and envelope["diagnostics"] == []
+    notices = [item for item in envelope["warnings"] if item["code"] == "I_VISUAL_TREATMENT_OMITTED"]
     assert len(notices) == 2
     assert all(item["severity"] == "info" and item["paintableProfile"] == RICH for item in notices)
 

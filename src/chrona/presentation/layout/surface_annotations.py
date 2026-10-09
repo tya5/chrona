@@ -59,6 +59,7 @@ from chrona.presentation.layout.surface_quality import (
     IconPlacement, LayoutImageFill, ShapePlacement, SurfaceLayoutRequest,
     SlotPlacement, TextPlacement, annotation_presentation,
 )
+from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.layout.image_slice_geometry import image_slice_tiles
 from chrona.presentation.layout.surface_geometry import (
     HOSTED_TEXT_PAINT_ORDER,
@@ -67,6 +68,35 @@ from chrona.presentation.layout.surface_geometry import (
 
 
 ANNOTATION_PAINT_ORDER = 400
+
+
+def _anchor_operand(value: object) -> str:
+    """Keep one diagnostic operand bounded without shortening its source pointer."""
+    return repr(value).replace("\n", " ").replace("\r", " ")[:96]
+
+
+def _anchor_failure(annotation: Any, reason: str, *, code: str = "E_PRESENTATION_ANCHOR_MISSING",
+                    **operands: object) -> LayoutError:
+    """Attach a post-resolution anchor failure to its declared View source."""
+    anchor = annotation.anchor
+    values = {
+        "annotation_id": annotation.annotation_id,
+        "object_id": anchor.get("id"),
+        "facet": anchor.get("facet"),
+        "endpoint": anchor.get("endpoint"),
+        **operands,
+    }
+    fields = []
+    for name, value in values.items():
+        fields.append(f"{name}={_anchor_operand(value)}")
+    return LayoutError(code, annotation.anchor_source_ref, detail=f"{reason}: " + ", ".join(fields))
+
+
+def _annotation_icon_subjects(annotation: Any) -> tuple[DiagnosticSubject, ...]:
+    """Keep visual provenance tied to the normalized Project-object claim."""
+    if not annotation.subject_id:
+        return ()
+    return (DiagnosticSubject.project_object(annotation.subject_id, annotation.subject or None),)
 
 
 def _container_radius(value: Any, container: Any, text_size: float,
@@ -172,6 +202,7 @@ class SurfaceAnnotationBatch:
     handled_visual_sources: frozenset[str]
     suppressed_index_ids: frozenset[str]
     suppressed_callout_ids: frozenset[str]
+    diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
 
 
 def place_annotations(context: SurfaceAnnotationContext) -> SurfaceAnnotationBatch:
@@ -243,6 +274,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
     candidate_icons: list[IconPlacement] = []
     placement_decisions: list[PlacementDecision] = []
     diagnostics: list[str] = []
+    diagnostic_provenance: list[DiagnosticProvenance] = []
     visible_label_overflows: list[Any] = []
     visible_route_fallbacks: list[RelationPlacement] = []
     handled_candidate_visuals: set[str] = set()
@@ -254,6 +286,14 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
     # Full callout footprints govern exhausted-rail completion, independently
     # of the numbered list's ordering and its body-only text records.
     rail_boxes: list[LabelRect] = []
+
+    def add_diagnostic(value: str, annotation: Any) -> None:
+        diagnostics.append(value)
+        # `subject_id` is set only when normalized View annotation ingress
+        # resolved its explicit Project-object anchor.
+        if annotation.subject_id:
+            diagnostic_provenance.append(DiagnosticProvenance(value, (
+                DiagnosticSubject.project_object(annotation.subject_id, annotation.subject or None),)))
 
     def ordered_rail_candidates(annotation: Any, resolved: Any, *, anchor_y: float,
                                 text_size: tuple[float, float], rail: LabelRect,
@@ -357,9 +397,15 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                   if (row_id is None or row_id == f"group-header:{folded.group_id}:{folded.item.object_id}")
                                   and (item_id is None or item_id == folded.item.item_id)]
             if len(matching) + len(folded_matches) > 1:
-                raise LayoutError("E_PRESENTATION_ROW_ANCHOR_AMBIGUOUS", f"/annotations/{index}/anchor")
+                raise _anchor_failure(annotation, "anchor matches multiple rows or folded points",
+                                      code="E_PRESENTATION_ROW_ANCHOR_AMBIGUOUS",
+                                      row_id=row_id, item_id=item_id,
+                                      match_count=len(matching) + len(folded_matches))
             if matching:
-                anchor_bounds = annotation_anchor_bounds(resolved.mark, resolved.endpoint, matching[0][1], scale)
+                anchor_bounds = annotation_anchor_bounds(
+                    resolved.mark, resolved.endpoint, matching[0][1], scale,
+                    source_ref=annotation.anchor_source_ref,
+                    annotation_id=annotation.annotation_id)
                 selected_items = tuple(item for item in matching[0][0].items
                                        if item.object_id == resolved.object_id and (item_id is None or item.item_id == item_id))
                 anchor_item = selected_items[0] if selected_items else None
@@ -373,7 +419,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                 selected_items = (folded.item,)
                 anchor_host = mark
             else:
-                raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
+                raise _anchor_failure(annotation, "selected mark has no matching rendered row or folded point")
             as_of_side_constraint: tuple[float, str] | None = None
             if contract.time.as_of is not None and start <= contract.time.as_of < end:
                 as_of_x = _coordinate(contract.time.as_of, scale)
@@ -424,7 +470,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                 if not candidate_box.leader_required or presentation.leader_semantic_id is None:
                     return None
                 if anchor_host is None:
-                    raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
+                    raise _anchor_failure(annotation, "selected mark has no placed leader host")
                 candidate_bounds = candidate_box.placement.bounds
                 anchor_center = (anchor_bounds.x + anchor_bounds.width / 2,
                                  anchor_bounds.y + anchor_bounds.height / 2)
@@ -537,7 +583,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                         kind=kind_token, subject=annotation.subject, subject_id=annotation.subject_id,
                         frame=kind_theme, theme_tokens=request.theme_tokens, metric_for=metric_for,
                         outline=container.outline if container is not None else None,
-                        pointer=f"/annotations/{index}", text_size=size)
+                        pointer=f"/annotations/{index}", text_size=size,
+                        header_texts=annotation.kind_header_lines, heading_content=annotation.kind_heading_text)
                     require_followable_content(viewer_fit, has_kind_frame=not kind_measure.empty,
                                                has_visual=bool(annotation_visuals), pointer=f"/annotations/{index}")
                     wrap_available = max(1.0, wrap_available - kind_measure.inline_insets)
@@ -734,8 +781,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                     tail_route_states_examined = routed.route_states
                                     tail_route_search_exhausted = routed.exhausted and routed.box is None
                                     if routed.exhausted and routed.box is None:
-                                        diagnostics.append(
-                                            f"W_LAYOUT_ANNOTATION_ROUTE_SEARCH_EXHAUSTED:{annotation_id}:{rung}")
+                                        add_diagnostic(
+                                            f"W_LAYOUT_ANNOTATION_ROUTE_SEARCH_EXHAUSTED:{annotation_id}:{rung}", annotation)
                                     if routed.box is not None and routed.egress is not None and routed.route is not None:
                                         box = AnnotationBox(resolved, LabelPlacement(rung, routed.box, False), False)
                                         selected_rung, tail_tip = rung, routed.tip
@@ -778,14 +825,14 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                             break
                     if (box is not None and annotation.candidates
                             and selected_rung != candidates[0].candidate_id):
-                        diagnostics.append(
-                            f"W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK:{annotation_id}:{selected_rung}")
+                        add_diagnostic(
+                            f"W_LAYOUT_ANNOTATION_CANDIDATE_FALLBACK:{annotation_id}:{selected_rung}", annotation)
                     if box is None:
                         if annotation_id in suppressed_callout_ids:
                             placement_decisions.append(PlacementDecision(
                                 f"annotation:{annotation_id}", annotation_id, tuple(ladder),
                                 "suppress", "suppressed", search_count=annotation_search_count))
-                            diagnostics.append(f"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:{annotation_id}")
+                            add_diagnostic(f"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:{annotation_id}", annotation)
                             discovered_callout_suppressions.add(annotation_id)
                             if annotation_slot is not None and annotation.number is not None:
                                 summary_content = (f"{annotation.number}. {annotation.content} "
@@ -815,7 +862,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                             placement_decisions.append(PlacementDecision(f"annotation:{annotation_id}", annotation_id,
                                                                          tuple(ladder), "suppress", "suppressed",
                                                                          search_count=annotation_search_count))
-                            diagnostics.append(f"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:{annotation_id}")
+                            add_diagnostic(f"W_LAYOUT_ANNOTATION_SUPPRESSED:annotation:{annotation_id}", annotation)
                             discovered_callout_suppressions.add(annotation_id)
                             continue
                         # A normal annotation is never silently suppressed or
@@ -884,7 +931,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                         text_width = (frame_width - annotation_leading - annotation_trailing - kind_measure.inline_insets
                                       - content_left - content_right)
                     elif fill_declared:
-                        diagnostics.append(f"W_LAYOUT_ANNOTATION_FILL_NOT_SLOT:{annotation_id}:{selected_rung or 'none'}")
+                        add_diagnostic(f"W_LAYOUT_ANNOTATION_FILL_NOT_SLOT:{annotation_id}:{selected_rung or 'none'}", annotation)
                 else:
                     if has_index_suppression and annotation.number is not None:
                         content = list_content
@@ -1051,7 +1098,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                                          icon.content_identity, icon.viewport, icon.payload, icon.alternative,
                                                          visual.decorative, icon_bounds, "labelVisual",
                                                          icon_width / icon.viewport[0], annotation_slot_id,
-                                                         paint_order=placed_annotation.paint_order))
+                                                         paint_order=placed_annotation.paint_order,
+                                                         subjects=_annotation_icon_subjects(annotation)))
             if annotation.number is not None:
                 note_index_visuals = measure_candidate_visuals(
                     f"note-index:{annotation_id}", "annotation", request).visuals
@@ -1071,7 +1119,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                     gap=max(1.0, size * 0.25), required=False, overflow="suppress",
                 ))
                 if note_index is None:
-                    diagnostics.append(f"W_LAYOUT_NOTE_INDEX_SUPPRESSED:{annotation_id}")
+                    add_diagnostic(f"W_LAYOUT_NOTE_INDEX_SUPPRESSED:{annotation_id}", annotation)
                     discovered_index_suppressions.add(annotation_id)
                 else:
                     note_index_inline = note_index.bounds.x
@@ -1102,7 +1150,8 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                                                                  icon.content_identity, icon.viewport, icon.payload, icon.alternative,
                                                                  visual.decorative, icon_bounds, "labelVisual",
                                                                  icon_width / icon.viewport[0], annotation_slot_id,
-                                                                 paint_order=note_index_text.paint_order))
+                                                                 paint_order=note_index_text.paint_order,
+                                                                 subjects=_annotation_icon_subjects(annotation)))
                 if (has_index_suppression and annotation_slot is not None and annotation.number is not None
                         and not status_in_list):
                     status_content = f"{annotation.number}. index not shown on plot"
@@ -1134,7 +1183,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
                 target = (routed_tail_tip if routed_tail_tip is not None else
                           _radius_aware_box_port(bounds, anchor_center, leader_radius))
                 if anchor_host is None:
-                    raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", f"/annotations/{index}/anchor")
+                    raise _anchor_failure(annotation, "selected mark has no placed leader host")
                 target_port_obstacle_id = f"port:annotation:{annotation_id}:target"
                 leader_fallback = selected_leader is None
                 if leader_fallback:
@@ -1191,7 +1240,7 @@ def _place_annotations_once(context: SurfaceAnnotationContext,
         tuple(text), tuple(shapes), tuple(relations), tuple(candidate_icons), tuple(placement_decisions),
         tuple(diagnostics), tuple(visible_label_overflows), tuple(visible_route_fallbacks),
         frozenset(handled_candidate_visuals), frozenset(discovered_index_suppressions),
-        frozenset(discovered_callout_suppressions))
+        frozenset(discovered_callout_suppressions), tuple(diagnostic_provenance))
 
 
 def comparison_marks(projection: Any) -> tuple[ComparisonMark, ...]:
@@ -1208,7 +1257,8 @@ def comparison_marks(projection: Any) -> tuple[ComparisonMark, ...]:
 
 
 def annotation_anchor_bounds(mark: ComparisonMark, endpoint: str, row: RowPlacement,
-                              scale: ScalePlacement) -> LabelRect:
+                              scale: ScalePlacement, *, source_ref: str = "/",
+                              annotation_id: str = "") -> LabelRect:
     if endpoint == "start":
         at = mark.start
     elif endpoint in {"finish", "end"}:
@@ -1220,6 +1270,11 @@ def annotation_anchor_bounds(mark: ComparisonMark, endpoint: str, row: RowPlacem
     else:
         at = None
     if not isinstance(at, date):
-        raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", "/annotations/anchor")
+        raise LayoutError("E_PRESENTATION_ANCHOR_MISSING", source_ref,
+                          detail=f"annotation_id={_anchor_operand(annotation_id)}, "
+                                 f"object_id={_anchor_operand(mark.source_id)}, "
+                                 f"facet={_anchor_operand(mark.facet)}, "
+                                 f"endpoint={_anchor_operand(endpoint)}, "
+                                 "reason=selected mark has no resolved endpoint date")
     return LabelRect(_coordinate(at, scale), float(row.bounds.block + row.bounds.block_size * Decimal("0.35")),
                      1.0, max(2.0, float(row.bounds.block_size) * 0.2))

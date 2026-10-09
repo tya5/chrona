@@ -31,6 +31,20 @@ def test_the_title_defaults_to_the_label():
     assert header_lines(header, subject="Task 1") == ("RISK",)
 
 
+def test_title_and_separate_heading_read_only_injected_global_figure_values():
+    from chrona.presentation.annotation_kind_text import heading_text
+    header = kind_header("risk", {"label": "RISK", "title": "{label} {figure:n}",
+                                  "heading": "{subjectId}: {figure:past}"})
+    assert header.figure_ids == {"n", "past"}
+    values = {"n": 0, "past": -3}
+    assert header_lines(header, subject="Task", figures=values) == ("RISK 0",)
+    assert heading_text(header, subject="Task", subject_id="t1", figures=values) == "t1: -3"
+    assert values == {"n": 0, "past": -3}
+    with pytest.raises(AnnotationKindTextError) as failure:
+        header_lines(header, subject="Task")
+    assert failure.value.code == "E_VIEW_FIGURE_UNKNOWN"
+
+
 def test_separate_heading_uses_the_closed_title_grammar_without_changing_bar_lines():
     from chrona.presentation.annotation_kind_text import heading_text
     header = kind_header("risk", {"label": "RISK", "heading": "{{{subjectId}}} {subject}"})

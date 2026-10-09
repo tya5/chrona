@@ -119,21 +119,43 @@ def capture_snapshot(
 ) -> SnapshotCaptureResult:
     """Publish one immutable baseline reference after exact revision verification."""
     if not snapshot_id or target_reference.get("kind") != "project":
-        return SnapshotCaptureResult("rejected", None, ("E_STORE_REFERENCE",))
+        return SnapshotCaptureResult(
+            "rejected", None,
+            (f"E_STORE_REFERENCE: snapshot {snapshot_id!r} needs a project reference; "
+             f"got reference id {target_reference.get('id')!r} with kind {target_reference.get('kind')!r}",),
+        )
     snapshot: ProjectSnapshot = project_store.read()
     if snapshot.revision != base_revision:
-        return SnapshotCaptureResult("rejected", None, ("E_CONFLICT",))
+        return SnapshotCaptureResult(
+            "rejected", None,
+            (f"E_CONFLICT: snapshot {snapshot_id!r} expected base revision {base_revision!r}, "
+             f"current project revision is {snapshot.revision!r}",),
+        )
     revision = target_reference.get("revision", {}).get("token")
     expected_identity = target_reference.get("contentIdentity")
     if revision != snapshot.revision or (expected_identity is not None and expected_identity != snapshot.content_identity):
-        return SnapshotCaptureResult("rejected", None, ("E_CONTENT_IDENTITY",))
+        return SnapshotCaptureResult(
+            "rejected", None,
+            (f"E_CONTENT_IDENTITY: snapshot {snapshot_id!r} reference {target_reference.get('id')!r} "
+             f"has revision {revision!r} (current {snapshot.revision!r}) and identity {expected_identity!r} "
+             f"(current {snapshot.content_identity!r})",),
+        )
     project_id = snapshot.project.get("project", {}).get("id")
     if target_reference.get("id") != project_id or not target_reference.get("address") or not target_reference.get("store"):
-        return SnapshotCaptureResult("rejected", None, ("E_STORE_REFERENCE",))
+        return SnapshotCaptureResult(
+            "rejected", None,
+            (f"E_STORE_REFERENCE: snapshot {snapshot_id!r} reference {target_reference.get('id')!r} "
+             f"must name current project {project_id!r} and include address/store "
+             f"(address present={bool(target_reference.get('address'))}, store present={bool(target_reference.get('store'))})",),
+        )
     verified_reference = deepcopy(target_reference) | {"contentIdentity": snapshot.content_identity}
     resource = snapshot_store.publish(snapshot_id, verified_reference)
     if resource is None:
-        return SnapshotCaptureResult("rejected", None, ("E_SNAPSHOT_EXISTS",))
+        return SnapshotCaptureResult(
+            "rejected", None,
+            (f"E_SNAPSHOT_EXISTS: snapshot {snapshot_id!r} already has a published immutable resource "
+             f"for project reference {target_reference.get('id')!r}",),
+        )
     return SnapshotCaptureResult("accepted", resource, ())
 
 
@@ -147,12 +169,36 @@ def capture_baseline_v02(
     """Capture one exact Project reference in an append-only v0.2 registry."""
     snapshot: ProjectSnapshot = project_store.read()
     if snapshot.revision != base_revision:
-        return SnapshotCaptureResult("rejected", None, ("E_CONFLICT",))
+        return SnapshotCaptureResult(
+            "rejected", None,
+            (f"E_CONFLICT: baseline {snapshot_id!r} expected base revision {base_revision!r}, "
+             f"current project revision is {snapshot.revision!r}",),
+        )
     expected_identity = target_reference.get("contentIdentity")
-    if target_reference.get("kind") != "project" or target_reference.get("revision", {}).get("token") != snapshot.revision or (expected_identity is not None and expected_identity != snapshot.content_identity) or target_reference.get("id") != snapshot.project.get("project", {}).get("id"):
-        return SnapshotCaptureResult("rejected", None, ("E_BASELINE_REFERENCE",))
+    revision = target_reference.get("revision", {}).get("token")
+    project_id = snapshot.project.get("project", {}).get("id")
+    if (target_reference.get("kind") != "project" or revision != snapshot.revision
+            or (expected_identity is not None and expected_identity != snapshot.content_identity)
+            or target_reference.get("id") != project_id):
+        return SnapshotCaptureResult(
+            "rejected", None,
+            (f"E_BASELINE_REFERENCE: baseline {snapshot_id!r} needs project reference {project_id!r} "
+             f"at revision {snapshot.revision!r} with identity {snapshot.content_identity!r}; "
+             f"got reference {target_reference.get('id')!r}, kind {target_reference.get('kind')!r}, "
+             f"revision {revision!r}, identity {expected_identity!r}",),
+        )
     verified_reference = deepcopy(target_reference) | {"contentIdentity": snapshot.content_identity}
     reference = registry.publish(snapshot_id, verified_reference)
     if reference is None:
-        return SnapshotCaptureResult("rejected", None, ("E_BASELINE_EXISTS",))
+        try:
+            check_store_segment(snapshot_id)
+        except StoreAddressError:
+            reason = f"baseline id {snapshot_id!r} is not one safe Store segment"
+        else:
+            reason = (f"baseline id {snapshot_id!r} already exists or could not be atomically published "
+                      f"at snapshots/{snapshot_id}.yaml")
+        return SnapshotCaptureResult(
+            "rejected", None,
+            (f"E_BASELINE_EXISTS: {reason} for project reference {target_reference.get('id')!r}",),
+        )
     return SnapshotCaptureResult("accepted", reference, ())

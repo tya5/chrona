@@ -48,14 +48,18 @@ def test_typed_view_rejects_out_of_range_or_non_finite_role_opacity(value):
     theme = _theme()
     theme["body"]["values"]["alpha"] = {"type": "number", "value": value}
     theme["body"]["roles"]["decoration"] = {"opacity": "alpha"}
-    with pytest.raises(ThemeTokenError, match="E_THEME_TOKEN_TYPE"):
+    with pytest.raises(ThemeTokenError, match="E_THEME_TOKEN_TYPE") as error:
         ThemeTokenView(theme).opacity("decoration")
+    assert error.value.path == "/body/roles/decoration/opacity"
+    assert f"value={value}" in error.value.detail or "valueType=str" in error.value.detail
+    assert "expected" in error.value.detail
 
 
 def test_missing_role_property_is_a_stable_diagnostic():
     with pytest.raises(ThemeTokenError, match="E_THEME_ROLE_REQUIRED") as error:
         ThemeTokenView(_theme()).color("planned")
     assert error.value.path == "/body/roles/planned/fill"
+    assert "role='planned', property='fill'" in error.value.detail
 
 
 def test_background_treatment_preserves_explicit_nondrawable_absence():
@@ -82,8 +86,21 @@ def test_optional_background_preserves_partial_binding_error():
 
 
 def test_declared_token_type_must_match_the_requested_property():
-    with pytest.raises(ThemeTokenError, match="E_THEME_TOKEN_TYPE"):
+    with pytest.raises(ThemeTokenError, match="E_THEME_TOKEN_TYPE") as error:
         ThemeTokenView(_theme()).color("text", "fontFamily")
+    assert error.value.path == "/body/roles/text/fontFamily"
+    assert "role='text', property='fontFamily', token='body'" in error.value.detail
+    assert "declaredType=str, expectedType='color'" in error.value.detail
+
+
+def test_dash_segment_diagnostic_names_role_index_and_numeric_expectation():
+    theme = _theme()
+    theme["body"]["values"]["dash"] = {"type": "dashPattern", "value": [2, 0]}
+    theme["body"]["roles"]["dependency"] = {"dash": "dash"}
+    with pytest.raises(ThemeTokenError, match="E_THEME_TOKEN_TYPE") as error:
+        ThemeTokenView(theme).dash("dependency")
+    assert error.value.path == "/body/roles/dependency/dash/1"
+    assert "property='dash[1]'" in error.value.detail and "expected positive finite number" in error.value.detail
 
 
 @pytest.mark.parametrize("value", [0, -1, 1.1])
@@ -154,6 +171,19 @@ def test_catalogued_pattern_token_resolves_by_exact_authored_reference():
     theme["body"]["catalogAssets"] = {"glyphs": {}, "patterns": {"local:hatch": entry}}
     assert ThemeTokenView(theme).optional_pattern("summary-bar") == {
         "kind": "catalog", "ref": "local:hatch", **entry}
+
+
+def test_missing_pattern_reference_diagnostic_is_bounded():
+    reference = "private-pattern-" + "x" * 10000
+    theme = _theme()
+    theme["body"]["values"]["hatch"] = {"type": "pattern", "value": {"kind": "catalog", "ref": reference}}
+    theme["body"]["roles"]["summary-bar"] = {"pattern": "hatch"}
+    theme["body"]["catalogAssets"] = {"glyphs": {}, "patterns": {}}
+    with pytest.raises(ThemeTokenError, match="E_THEME_ASSET_REFERENCE") as error:
+        ThemeTokenView(theme).optional_pattern("summary-bar")
+    assert "private-pattern-" in error.value.detail
+    assert "..." in error.value.detail
+    assert len(error.value.detail) < 180
 
 
 @pytest.mark.parametrize(("inset", "radius", "expected"), [

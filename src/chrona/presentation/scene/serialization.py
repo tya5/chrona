@@ -19,6 +19,19 @@ class SceneSerializationError(ValueError):
     """The completed Scene cannot truthfully become its public document."""
 
 
+def _scene_error(detail: str) -> SceneSerializationError:
+    return SceneSerializationError(f"E_SCENE_SERIALIZATION: {detail}")
+
+
+def _brief(value: object) -> str:
+    if isinstance(value, str):
+        clipped = value[:64]
+        return repr(clipped + ("…" if len(value) > len(clipped) else ""))
+    if value is None or isinstance(value, (bool, int, float)):
+        return repr(value)
+    return f"<{type(value).__name__}>"
+
+
 def serialize_scene(scene: InspectionScene) -> bytes:
     """Return canonical UTF-8 scene-v0.6 JSON after typed and schema validation."""
     document = scene_document(scene)
@@ -27,7 +40,7 @@ def serialize_scene(scene: InspectionScene) -> bytes:
         return (json.dumps(document, ensure_ascii=False, separators=(",", ":"),
                            allow_nan=False) + "\n").encode("utf-8")
     except (TypeError, ValueError) as error:
-        raise SceneSerializationError("E_SCENE_SERIALIZATION") from error
+        raise _scene_error(f"canonical JSON encoding rejected the completed Scene document ({type(error).__name__})") from error
 
 
 def scene_document(scene: InspectionScene) -> dict[str, Any]:
@@ -100,17 +113,25 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
 
 def validate_scene_document(document: Mapping[str, Any]) -> None:
     """Validate schema shape plus cross-reference invariants JSON Schema cannot state."""
+    schema_name = None
     try:
         version = document.get("version")
         schema_name = {"chrona/scene/v0.6": "scene-v0.6.schema.yaml",
                        "chrona/scene/v0.7": "scene-v0.7.schema.yaml"}.get(version)
         if schema_name is None:
-            raise SceneSerializationError("E_SCENE_SERIALIZATION")
+            raise _scene_error(f"document.version={_brief(version)}; expected chrona/scene/v0.6 or chrona/scene/v0.7")
         errors = tuple(schema_validator(schema_name).iter_errors(document))
     except Exception as error:  # schema resource failures have no public partial document
-        raise SceneSerializationError("E_SCENE_SERIALIZATION") from error
-    if errors or not _finite(document) or not _references_are_closed(document):
-        raise SceneSerializationError("E_SCENE_SERIALIZATION")
+        nested = str(error).split(": ", 1)[-1] if isinstance(error, SceneSerializationError) else type(error).__name__
+        raise _scene_error(f"{schema_name or 'Scene schema'} validation could not complete: {_brief(nested)}") from error
+    if errors:
+        first = errors[0]
+        path = "/" + "/".join(str(part)[:64] for part in first.absolute_path)
+        raise _scene_error(f"{schema_name} rejected the document: {len(errors)} schema error(s), first at {path or '/'}")
+    if not _finite(document):
+        raise _scene_error("document contains a non-finite numeric Scene fact; check completed bounds, paint, or measurement fields")
+    if not _references_are_closed(document):
+        raise _scene_error("surface cross-references must resolve among declared slots, rows, columns, primitives, and lane facts")
 
 
 def _references_are_closed(document: Mapping[str, Any]) -> bool:
@@ -366,7 +387,7 @@ def _surface(surface: SceneSurface) -> dict[str, Any]:
     # A public Scene is a completed render contract: consumers must never
     # infer an extent from primitive geometry or their own target viewport.
     if surface.canvas_bounds is None:
-        raise SceneSerializationError("E_SCENE_SERIALIZATION")
+        raise _scene_error(f"surface { _brief(surface.surface_id) } has no completed canvasBounds")
     result["canvasBounds"] = _bounds(surface.canvas_bounds)
     if surface.fit_warnings:
         result["fitWarnings"] = [_fit_warning(item) for item in surface.fit_warnings]
@@ -398,7 +419,7 @@ def _lane_obstacle(item: SceneLaneObstacle) -> dict[str, Any]:
         geometry = {"kind": "stroked-segment", "start": list(item.geometry.start),
                     "end": list(item.geometry.end), "strokeWidth": item.geometry.stroke_width}
     else:
-        raise SceneSerializationError("E_SCENE_SERIALIZATION")
+        raise _scene_error(f"lane obstacle primitive_id={_brief(item.primitive_id)} has unsupported geometry type {type(item.geometry).__name__}; expected rectangle or stroked segment")
     return {"facetId": item.facet_id, "primitiveId": item.primitive_id,
             "rowId": item.row_id, "memberId": item.member_id,
             "class": item.obstacle_class, "geometry": geometry}
@@ -465,7 +486,10 @@ def _primitive(item: ScenePrimitive) -> dict[str, Any]:
 
 def _icon(item: ScenePrimitive) -> dict[str, Any]:
     if item.icon_kind is None or item.icon_asset_identity is None or item.icon_viewport is None:
-        raise SceneSerializationError("E_SCENE_SERIALIZATION")
+        missing = tuple(name for name, value in (("icon_kind", item.icon_kind),
+                                                  ("icon_asset_identity", item.icon_asset_identity),
+                                                  ("icon_viewport", item.icon_viewport)) if value is None)
+        raise _scene_error(f"Icon primitive {_brief(item.scene_id)} is missing required Scene fields {missing!r}")
     result: dict[str, Any] = {
         "kind": item.icon_kind, "assetIdentity": item.icon_asset_identity,
         "viewport": {"inlineSize": item.icon_viewport[0], "blockSize": item.icon_viewport[1]},

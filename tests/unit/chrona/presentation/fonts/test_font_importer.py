@@ -54,14 +54,26 @@ def test_import_rejects_duplicate_without_mutating_existing_descriptor_or_assets
     import_font(_source(), tmp_path, family="Private Sans", weight=400)
     before = {path.name: path.read_bytes() for path in tmp_path.iterdir()}
 
-    with pytest.raises(FontImportError, match="E_FONT_IMPORT_DUPLICATE"):
+    with pytest.raises(FontImportError, match="E_FONT_IMPORT_DUPLICATE") as error:
         import_font(_source(), tmp_path, family="Private Sans", weight=400)
+    assert "family='Private Sans', weight=400" in error.value.detail
+    assert "unique family/weight face" in error.value.detail
 
     assert {path.name: path.read_bytes() for path in tmp_path.iterdir()} == before
 
 
+def test_axis_diagnostic_bounds_oversized_tag():
+    with pytest.raises(FontImportError, match="E_FONT_IMPORT_AXIS") as error:
+        importer._axes(("A" * 10000 + "=12",))
+    assert "tag='AAA" in error.value.detail
+    assert "..." in error.value.detail
+    assert len(error.value.detail) < 250
+
+
 @pytest.mark.parametrize("axis", [("weight=400",), ("wght=bad",), ("wght=400", "wght=500")])
 def test_import_rejects_invalid_axis_before_creating_output(tmp_path, axis):
-    with pytest.raises(FontImportError, match="E_FONT_IMPORT_AXIS"):
+    with pytest.raises(FontImportError, match="E_FONT_IMPORT_AXIS") as error:
         import_font(_source(), tmp_path / "output", family="Private Sans", weight=400, axis=axis)
+    assert "source=/axis" in error.value.detail
+    assert "expected" in error.value.detail
     assert not (tmp_path / "output").exists()

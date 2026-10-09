@@ -1,6 +1,7 @@
 """The shared render cache renders each committed input once and isolates its readers (#657)."""
 from __future__ import annotations
 
+import json
 import threading
 import time
 from pathlib import Path
@@ -8,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from tests.support.render_cache import (
-    RenderCache, RenderCacheError, digest_files, make_key, render_uncached,
+    RenderCache, RenderCacheError, RenderResult, digest_files, make_key, render_uncached,
 )
 
 HALCYON = "examples/halcyon-1/project.yaml"
@@ -27,6 +28,8 @@ def test_each_render_key_renders_at_most_once(render_cache):
 
 def test_readers_cannot_change_what_another_reader_sees(render_cache):
     first = render_cache.render(HALCYON, HALCYON_ACTUAL)
+    assert first.stderr == ""
+    assert json.loads(first.stdout)["status"] == "ok"
     scene = first.scene
     scene["surfaces"].clear()
     warnings = first.warnings
@@ -36,6 +39,28 @@ def test_readers_cannot_change_what_another_reader_sees(render_cache):
     assert {"code": "X_INJECTED"} not in second.warnings
     assert first.scene["surfaces"], "a fresh access parses afresh"
     assert isinstance(second.svg, bytes) and isinstance(second.scene_text, str)
+
+
+def test_render_result_warnings_parse_stdout_envelope_afresh_without_stderr_fallback():
+    warning = {
+        "code": "W_LAYOUT_TEXT_ELLIPSIZED", "severity": "warning",
+        "sourceRef": "/objects/titlecard", "detail": {"facts": {"requiredInline": 125.5}},
+        "occurrences": ["W_LAYOUT_TEXT_ELLIPSIZED:member-label:titlecard:titlecard"],
+    }
+    result = RenderResult(
+        svg=b"<svg/>", scene_text="{}",
+        stdout=json.dumps({"status": "ok", "diagnostics": [], "warnings": [warning]}),
+        stderr='{"code":"W_LEGACY_STDERR_SHOULD_NOT_BE_READ"}\n',
+    )
+
+    warnings = result.warnings
+    assert warnings == [warning]
+    assert warnings[0]["sourceRef"] == "/objects/titlecard"
+    warnings[0]["detail"]["facts"]["requiredInline"] = 0
+    warnings[0]["occurrences"].append("mutated")
+    warnings.append({"code": "X_INJECTED"})
+
+    assert result.warnings == [warning]
 
 
 def test_key_covers_every_input_byte_and_every_flag():

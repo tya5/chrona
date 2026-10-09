@@ -41,20 +41,23 @@ def cas_write_authoring_aggregate(path: Path, expected_identity: str, candidates
     root = path.parent.resolve()
     workspace_name = path.name
     if workspace_name not in candidates or not all(isinstance(value, bytes) for value in candidates.values()):
-        raise OperationalResourceError("E_AUTHORING_AGGREGATE_CANDIDATE")
+        raise OperationalResourceError("E_AUTHORING_AGGREGATE_CANDIDATE",
+                                       f"aggregate requires workspace {workspace_name!r} and bytes for every candidate")
     resources = [name for name in candidates if name != workspace_name]
     # The workspace is one operator file name (`my plan.yaml`, `計画.yaml`: the schema's `fileName`, #693); every
     # resource is `<directory>/<fixed name>` under a `safeRelativePath` directory and follows the address rule (#731).
     if not resources or any(not _relative(name, charset="file-name" if name == workspace_name else "address") for name in candidates):
-        raise OperationalResourceError("E_AUTHORING_AGGREGATE_PATH")
+        raise OperationalResourceError("E_AUTHORING_AGGREGATE_PATH",
+                                       f"workspace {workspace_name!r} requires non-empty resources with safe relative paths")
     top_levels = {Path(name).parts[0] for name in resources}
     if len(top_levels) != 1 or any(len(Path(name).parts) < 2 for name in resources):
-        raise OperationalResourceError("E_AUTHORING_AGGREGATE_PATH")
+        raise OperationalResourceError("E_AUTHORING_AGGREGATE_PATH",
+                                       f"workspace {workspace_name!r} resources must share one directory; found {sorted(top_levels)!r}")
     target = root / next(iter(top_levels))
     with _aggregate_lock(path):
         _recover_incomplete_aggregate(path)
         if target.exists():
-            raise FileExistsError("E_AUTHORING_MATERIALIZE_COLLISION")
+            raise FileExistsError(f"E_AUTHORING_MATERIALIZE_COLLISION: destination directory {target.name!r} already exists")
         if content_identity(_load_workspace(path)) != expected_identity:
             return None
         with tempfile.TemporaryDirectory(dir=root) as temporary:
@@ -85,7 +88,8 @@ def cas_write_authoring_aggregate(path: Path, expected_identity: str, candidates
 def _load_workspace(path: Path) -> dict[str, Any]:
     value = safe_load(path.read_text(encoding="utf-8"))
     if not isinstance(value, dict):
-        raise OperationalResourceError("E_AUTHORING_WORKSPACE_SCHEMA")
+        raise OperationalResourceError("E_AUTHORING_WORKSPACE_SCHEMA",
+                                       f"workspace {path.name!r} must be a mapping, not {type(value).__name__}")
     return value
 
 
@@ -192,7 +196,8 @@ def _recover_incomplete_aggregate(path: Path) -> None:
             _remove_published(target)
         marker.unlink(missing_ok=True)
     except (OSError, ValueError, TypeError, json.JSONDecodeError):
-        raise OperationalResourceError("E_AUTHORING_AGGREGATE_RECOVERY")
+        raise OperationalResourceError("E_AUTHORING_AGGREGATE_RECOVERY",
+                                       f"transaction marker {marker.name!r} cannot be validated or recovered")
 
 
 def _remove_published(target: Path) -> None:

@@ -32,7 +32,10 @@ def geometry_sum(values: Iterable[float]) -> float:
     """
     result = tuple(values)
     if any(isinstance(value, bool) or not isinstance(value, (int, float)) for value in result):
-        raise TypeError("E_LAYOUT_GEOMETRY_SUM_INPUT")
+        index = next(position for position, value in enumerate(result)
+                     if isinstance(value, bool) or not isinstance(value, (int, float)))
+        raise TypeError(f"E_LAYOUT_GEOMETRY_SUM_INPUT: item_index={index}, "
+                        f"actual_type={type(result[index]).__name__}, expected=int-or-float")
     return fsum(result)
 
 

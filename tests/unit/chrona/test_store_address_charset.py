@@ -157,7 +157,10 @@ def test_the_aggregate_writer_holds_a_resource_name_to_the_address_rule(tmp_path
     candidates = {path.name: yaml.safe_dump(workspace).encode(), resource: b"x"}
     with pytest.raises(OperationalResourceError) as error:
         cas_write_authoring_aggregate(path, content_identity(workspace), candidates)
-    assert error.value.args[0] == "E_AUTHORING_AGGREGATE_PATH"
+    assert error.value.code == "E_AUTHORING_AGGREGATE_PATH"
+    assert str(error.value).startswith("E_AUTHORING_AGGREGATE_PATH: ")
+    assert "workspace 'my plan.yaml'" in error.value.detail
+    assert "safe relative paths" in error.value.detail
     assert not (tmp_path / resource.split("/")[0]).exists()
 
 
