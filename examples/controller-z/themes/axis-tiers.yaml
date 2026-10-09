@@ -524,3 +524,12 @@ body:
     table.column.gutter.inlineSize: table-column-gutter
     table.indent.inlineSize: table-indent
     table.header.blockSize: table-header-height
+  colorScales:
+    axis-alternating:
+      slots:
+        "0": default
+        "1": capabilities-band
+    axis-interval:
+      slots:
+        "0": default
+        "1": capabilities-band

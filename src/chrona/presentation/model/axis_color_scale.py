@@ -15,6 +15,7 @@ from chrona.presentation.model.color_separability import ScaleCollision, scale_c
 
 if TYPE_CHECKING:
     from chrona.presentation.model.surface_content import AxisTier
+    from chrona.presentation.model.theme_tokens import ThemeTokenView
 
 
 _UNIT_ORDER = {"year": 6, "half": 5, "quarter": 4, "month": 3, "week": 2, "day": 1}
@@ -44,6 +45,28 @@ class AxisBandScaleError(ValueError):
     def __init__(self, code: str, detail: str, path: str):
         self.code, self.detail, self.path = code, detail, path
         super().__init__(f"{code}:{path}:{detail}")
+
+
+def validate_axis_band_fill_targets(tiers: Sequence[AxisTier], tokens: ThemeTokenView) -> None:
+    """An opted-in scale must paint an existing visible solid-fill band channel."""
+    from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, semantic_binding
+
+    semantic_ids = axis_band_semantic_ids()
+    ordinal = 0
+    for index, tier in enumerate(tiers):
+        if tier.fill_scale is not None:
+            path = f"/view/body/axis/tiers/{index}/fillScale"
+            if tier.role != "band" or ordinal >= len(semantic_ids):
+                raise AxisBandScaleError("E_PRESENTATION_AXIS_SCALE_TARGET", "target has no declared band role", path)
+            role = semantic_binding(semantic_ids[ordinal]).scene_role
+            if (tokens.background(role)[0] != "fill"
+                    or tokens.optional_color(role, "gradientStart") is not None
+                    or tokens.optional_color(role, "gradientEnd") is not None
+                    or tokens.optional_number(role, "gradientAngle") is not None):
+                raise AxisBandScaleError("E_PRESENTATION_AXIS_SCALE_TARGET",
+                                         "target requires a visible solid-fill band without a covering gradient", path)
+        if tier.role == "band":
+            ordinal += 1
 
 
 def resolve_axis_band_scales(

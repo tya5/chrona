@@ -252,6 +252,8 @@ class SurfaceContentInput:
     attached_labels: tuple[tuple[str, str], ...] = ()
     # View-selected literal caption copy, keyed by an already headed Layout slot node.
     slot_heading_text: tuple[tuple[str, str], ...] = ()
+    # Completed Scheme colours keyed by neutral axis-band placement identity (#490).
+    axis_band_paints: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True)
