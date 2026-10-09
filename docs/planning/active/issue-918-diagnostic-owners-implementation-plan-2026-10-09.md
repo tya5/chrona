@@ -3,7 +3,7 @@
 Base: published design `e6b02ac2a84f65cf82e0c48821c6482dffbfe89c`.
 Authorities: [design](../../design/issue-918-diagnostic-owners-design-2026-10-09.md),
 [architecture review](../../reviews/current/issue-918-diagnostic-owners-architecture-review-2026-10-09.md),
-and [literal A1–A12 checklist](issue-918-diagnostic-owners-design-plan-2026-10-09.md).
+and [literal A1–A15 checklist](issue-918-diagnostic-owners-design-plan-2026-10-09.md).
 Product implementation starts only after this plan is published.
 
 | Slice | Files / owners | Acceptance and focused evidence |
@@ -29,3 +29,25 @@ intentional message/console changes. Close only when A1–A12 are directly prove
 and the exact-main release containing the acceptance review is green; archive
 closed records separately. Stop for design correction before implementing a
 new rule outside the published contract.
+
+## Review follow-up: one integrated publication
+
+S1–S4 are merged in PR 1276 at `48465773`. Publish the amended design plan,
+selected design/architecture review with Specs 40/66, and this implementation
+amendment before source edits. Reconcile the next successful derived-main tip
+without rewriting published history. The new slice has three parallel owners:
+
+| Owner | Files | Focused acceptance |
+| --- | --- | --- |
+| Scale model/application | `model/color_scale.py`, `usecases/render_review.py`, color-scale unit and group-tint integration tests | A13: structured stable code/detail/pointer, RFC6901 scale IDs, both View encoding and grouping tint failures; outer use-case conversion also catches later value selection from valid mappings; preserve Scheme category provenance. |
+| View/Layout annotations | `model/surface_content.py`, `review/v05_content.py`, `layout/annotations.py`, `layout/surface_annotations.py`, anchor/projection tests | A14: canonical source capture, metadata excluded from equality/repr, invalid facet/endpoint versus unavailable actual mark reason, direct and application failure paths; no changed eligibility/fallback. |
+| Materializer/cache adapter | `tools/materialize_example.py`, adapter unit tests, `tests/support/render_cache.py`, cache tests | A15: all real rejected/failed rows preserved by existing report mapper, exit/status/pointer/details, silent success and typed silent library failure; nonempty stdout warning mutation isolation. |
+
+Root owns specification/review files, integration tests where shared, all Git
+publication and release acceptance. No agent commits or edits another owner's
+files. Use distinctive synthetic inputs and detail-removal assertions; batch
+focused tests, inventory, acceptance-review validation and PR artifact audits
+after integration. CI supplies full pytest/public reproduction and the final
+automatically dispatched exact-main three-OS/wheel gate. Do not duplicate that
+dispatch or author generated reports/SVG/Scene. Re-read issue comments before
+matching-head merge and before closure; all A1–A15 remain required.
