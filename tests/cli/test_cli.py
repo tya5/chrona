@@ -1012,7 +1012,7 @@ def test_cli_imports_a_declared_theme_asset_source_without_iconify_flags(tmp_pat
     assert result["set"] == "fixture"
     assert result["glyphs"] == 1
     assert result["patterns"] == 4
-    assert catalog["version"] == "chrona/icon-catalog/v0.4"
+    assert catalog["version"] == "chrona/icon-catalog/v0.5"
 
 
 def test_cli_theme_asset_import_reports_density_pointer_and_keeps_existing_output(tmp_path, monkeypatch, capsys):

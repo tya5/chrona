@@ -82,6 +82,25 @@ def test_catalogue_pattern_uses_completed_origin_substrate_and_ink_in_svg_and_pn
     assert image.getpixel((4, 3)) == (255, 255, 255)
 
 
+def test_catalogue_circle_channels_render_in_declared_order_with_native_stroke():
+    pattern = PatternGeometry(
+        10, 10, 0, density_basis_points=4000,
+        primitives=(
+            PatternTilePrimitive("circle", cx=5, cy=5, radius=4, fill_channel="substrate"),
+            PatternTilePrimitive("circle", cx=5, cy=5, radius=3,
+                                 fill_channel="none", stroke_width=0.5),
+        ),
+        origin=(0, 0), region_bounds=(0, 0, 10, 10), clip_bounds=(0, 0, 10, 10),
+        corner_radius=0,
+    )
+    rect = ScenePrimitive("circles", "Rect", "a", "object", "planned", "planned", (0, 0, 10, 10),
+                          paint=ScenePaint("#FFFFFF", "#202020", None, (), 1), pattern=pattern)
+    output = render_v05_svg(_surface(rect))
+    first = '<circle cx="5" cy="5" r="4" fill="#FFFFFF"/>'
+    second = '<circle cx="5" cy="5" r="3" fill="none" stroke="#202020" stroke-width="0.5"/>'
+    assert first in output and second in output and output.index(first) < output.index(second)
+
+
 def test_svg_serializes_the_completed_canvas_not_a_caller_supplied_viewport():
     surface = replace(_surface(), canvas_bounds=(3, 4, 17, 19))
     output = render_v05_svg(surface)

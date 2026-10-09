@@ -17,7 +17,7 @@ from chrona.usecases.render_review import RenderRequest, RenderedReview, render_
 from tests.support import synthetic_review as sr
 
 TARGET_PARTS = next(parent for parent in Path(__file__).resolve().parents if (parent / "pyproject.toml").is_file()
-                    ) / "src/chrona/resources/icons/chrona-target-parts-v2026-10.yaml"
+                    ) / "src/chrona/resources/icons/chrona-target-parts-v2026-10-09.yaml"
 STAMPS = {"risk": "chrona-target-parts:seal-risk", "note": "chrona-target-parts:seal-note"}
 KIND_COLORS = {"kind-alert": "#8E1B12", "kind-report": "#1D3F73"}
 KINDS = {

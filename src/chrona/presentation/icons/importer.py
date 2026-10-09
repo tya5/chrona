@@ -47,7 +47,7 @@ def _write_catalog(destination: Path, catalog: dict[str, object]) -> str:
 
 
 def import_theme_assets(source: Path, destination: Path) -> dict[str, object]:
-    """Import a closed declarative glyph/pattern source as a v0.4 catalogue."""
+    """Import a closed declarative glyph/pattern source as a v0.5 catalogue."""
     try:
         source_bytes = source.read_bytes()
         if not source_bytes or len(source_bytes) > 4_000_000:
@@ -61,11 +61,11 @@ def import_theme_assets(source: Path, destination: Path) -> dict[str, object]:
         raise IconImportError("E_THEME_ASSET_SOURCE_YAML") from error
     if not isinstance(document, dict) or set(document) != {"version", "kind", "id", "body"}:
         raise IconImportError("E_THEME_ASSET_SOURCE_SCHEMA")
-    if document["version"] != "chrona/theme-asset-source/v0.1" or document["kind"] != "theme-asset-source":
+    if document["version"] != "chrona/theme-asset-source/v0.2" or document["kind"] != "theme-asset-source":
         raise IconImportError("E_THEME_ASSET_SOURCE_SCHEMA", source_ref="/version")
     if not isinstance(document["id"], str) or not _THEME_ASSET_NAME.fullmatch(document["id"]):
         raise IconImportError("E_THEME_ASSET_SOURCE_SCHEMA", source_ref="/id")
-    validation = tuple(schema_validator("theme-asset-source-v0.1.schema.yaml").iter_errors(document))
+    validation = tuple(schema_validator("theme-asset-source-v0.2.schema.yaml").iter_errors(document))
     if validation:
         error = min(validation, key=lambda item: (tuple(str(part) for part in item.absolute_path), item.message))
         pointer = "/" + "/".join(str(part).replace("~", "~0").replace("/", "~1") for part in error.absolute_path)
@@ -107,7 +107,7 @@ def import_theme_assets(source: Path, destination: Path) -> dict[str, object]:
     normalized_glyphs = normalize_entries(glyphs, normalize_glyph_entry, "/body/glyphs")
     normalized_patterns = normalize_entries(patterns, normalize_pattern_entry, "/body/patterns")
     catalog: dict[str, object] = {
-        "version": "chrona/icon-catalog/v0.4", "kind": "icon-catalog", "id": document["id"],
+        "version": "chrona/icon-catalog/v0.5", "kind": "icon-catalog", "id": document["id"],
         "body": {
             "set": set_name, "aliases": sorted(aliases),
             "provenance": {

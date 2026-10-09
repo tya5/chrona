@@ -122,7 +122,23 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
             parts.append(f'<rect x="0" y="0" width="{number(pattern.tile_inline_size)}" height="{number(pattern.tile_block_size)}" fill="{substrate}"/>')
         for item in pattern.primitives:
             if item.kind == "circle":
-                parts.append(f'<circle cx="{number(item.cx)}" cy="{number(item.cy)}" r="{number(item.radius)}" fill="{ink}"/>')
+                channel = item.fill_channel or "ink"
+                if channel == "ink":
+                    fill = ink
+                elif channel == "substrate":
+                    if paint.fill is None:
+                        raise ValueError("E_PRESENTATION_PAINT_INVALID")
+                    fill = escape(paint.fill, quote=True)
+                elif channel == "none":
+                    fill = "none"
+                else:
+                    raise ValueError("E_PRESENTATION_PRIMITIVE_INVALID")
+                appearance = f'fill="{fill}"'
+                if item.stroke_width is not None:
+                    if paint.stroke is None:
+                        raise ValueError("E_PRESENTATION_PAINT_INVALID")
+                    appearance += (f' stroke="{ink}" stroke-width="{number(item.stroke_width)}"')
+                parts.append(f'<circle cx="{number(item.cx)}" cy="{number(item.cy)}" r="{number(item.radius)}" {appearance}/>')
             elif item.kind == "rect":
                 parts.append(f'<rect x="{number(item.x)}" y="{number(item.y)}" width="{number(item.inline_size)}" height="{number(item.block_size)}" fill="{ink}"/>')
             elif item.kind == "path":

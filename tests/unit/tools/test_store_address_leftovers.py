@@ -27,7 +27,7 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "
 COMMON_ID = "urn:chrona:common-v0.1"
 STORE_ADDRESS = validator_for_schema({"$ref": f"{COMMON_ID}#/$defs/storeAddress"})
 PRESET_ADDRESS = validator_for_schema({"$defs": schema_document("preset-library-v0.2.schema.yaml")["$defs"], "$ref": "#/$defs/address"})
-RASTER_SOURCE = validator_for_schema({"$defs": schema_document("icon-catalog-v0.4.schema.yaml")["$defs"], "$ref": "#/$defs/rasterSource"})
+RASTER_SOURCE = validator_for_schema({"$defs": schema_document("icon-catalog-v0.5.schema.yaml")["$defs"], "$ref": "#/$defs/rasterSource"})
 IDENTITY = "sha256:" + "a" * 64
 
 # Inputs the old site accepted (or already refused) and `storeAddress` refuses: id -> text.
@@ -72,7 +72,7 @@ def _catalog_v04(addresses: dict[str, object]) -> dict[str, Any]:
     icons |= {name: {"kind": "raster", "source": _raster(address), "viewport": {"inlineSize": 24, "blockSize": 24},
                     "alternative": name} for name, address in addresses.items()}
     return {
-        "version": "chrona/icon-catalog/v0.4", "kind": "icon-catalog", "id": "theme-assets",
+        "version": "chrona/icon-catalog/v0.5", "kind": "icon-catalog", "id": "theme-assets",
         "body": {
             "set": "starter", "aliases": [],
             "provenance": {"sourceKind": "theme-asset-source", "sourceContentIdentity": "sha256:" + "b" * 64,
@@ -250,7 +250,7 @@ def test_every_committed_and_packaged_v04_catalog_still_parses():
     parsed = 0
     for path in [*(ROOT / "src/chrona/resources/icons").glob("*.yaml"), *(ROOT / "tests/fixtures/icons").glob("*.yaml")]:
         value = yaml.safe_load(path.read_text(encoding="utf-8"))
-        if isinstance(value, dict) and value.get("version") == "chrona/icon-catalog/v0.4" and value.get("kind") == "icon-catalog":
+        if isinstance(value, dict) and value.get("version") == "chrona/icon-catalog/v0.5" and value.get("kind") == "icon-catalog":
             _parse(value)
             parsed += 1
     assert parsed >= 2
