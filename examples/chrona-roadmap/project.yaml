@@ -77,8 +77,8 @@ objects:
     schedule: {mode: fixed-point, at: '2026-10-27'}
   route-bound:
     type: task
-    title: 'Bounded route search'
-    fields: {owner: m2, lane: dev B}
+    title: 'Bounded route search (#1298)'
+    fields: {owner: m2, lane: dev A}
     schedule: {mode: fixed-span, start: '2026-10-21', end: '2026-11-04'}
   tall-canvas:
     type: task

@@ -9,7 +9,7 @@ body:
       provider: local
       identity: chrona-roadmap-example
     address: project.yaml
-    contentIdentity: sha256:9a4a8c99db5b175d95c2722cfebcc50665677231b6ebad137671999657e5201b
+    contentIdentity: sha256:b60c09654343b3e8657edc428422e86b24d61fa536afe06e36b7cfcf10f1abae
     revision:
       token: example-v4
   view:
