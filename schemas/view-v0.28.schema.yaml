@@ -821,6 +821,10 @@ $defs:
         additionalProperties: false
         properties:
           group: {description: "The current group's first planned start or point, gathered by View projection.", const: firstPlannedStart}
+  figureIdentity:
+    description: "A non-empty identifier local to a declared View figure; preserves the existing string acceptance grammar."
+    type: string
+    minLength: 1
   figureDaysUntil:
     description: "Signed days from one fact to another; negative once the target has passed."
     examples: [{id: launch-countdown, kind: daysUntil, to: {period: launch-window, side: start}}]
@@ -828,7 +832,7 @@ $defs:
     required: [id, kind, to]
     additionalProperties: false
     properties:
-      id: {description: "Figure identifier, unique in this View and named by consumers; no braces or whitespace.", type: string, minLength: 1}
+      id: {description: "Figure identifier, unique in this View and named by consumers; no braces or whitespace.", $ref: "#/$defs/figureIdentity"}
       kind: {description: "Days from `from` to `to`.", const: daysUntil}
       scope: {description: "Resolve once globally (default), or once for each current View group; group results are shown by group headers only.", enum: [global, group]}
       from: {description: "The starting fact; the as-of when omitted.", $ref: "#/$defs/figureFact"}
@@ -842,7 +846,7 @@ $defs:
     required: [id, kind, period]
     additionalProperties: false
     properties:
-      id: {description: "Figure identifier, unique in this View and named by consumers; no braces or whitespace.", type: string, minLength: 1}
+      id: {description: "Figure identifier, unique in this View and named by consumers; no braces or whitespace.", $ref: "#/$defs/figureIdentity"}
       kind: {description: "Days covered by `period`.", const: daysIn}
       period: {description: "Identifier of a period declared in the Project's `periods`.", type: string, minLength: 1}
       days: {description: "Count calendar days (the default) or working days of the figure's calendar.", enum: [calendar, working]}
@@ -854,7 +858,7 @@ $defs:
     required: [id, kind, source]
     additionalProperties: false
     properties:
-      id: {description: "Figure identifier, unique in this View and named by consumers; no braces or whitespace.", type: string, minLength: 1}
+      id: {description: "Figure identifier, unique in this View and named by consumers; no braces or whitespace.", $ref: "#/$defs/figureIdentity"}
       kind: {description: "Select an already-projected integer count, without inferring dates or state.", const: count}
       source: {description: "Closed selected-item/state/known-variance or observed behind/ahead count; missingActual requires an explicit as-of.", enum: [selected, recorded, dueUnobserved, notYetDue, unavailable, missingActual, knownFinishVariance, behind, ahead]}
       scope: {description: "Resolve once globally (default), or once for each current View group; group results are shown by group headers only.", enum: [global, group]}
