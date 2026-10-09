@@ -23,17 +23,20 @@ Theme isolation. S0 after isolation: 448 mapped documents, 739 probes, PASS
 (L2+L3 40.1s; four existing invalid fixtures unchanged).
 The two disposable SVG/Scene renders exist, but materializer comparison reports
 the expected mismatch because their generated repository evidence is not yet published.
-[Latest pre-correction snapshot](https://github.com/tya5/chrona/actions/runs/37870709799),
-head `9ae297cf`: 149 paths audited, all 136 existing SVG/Scene files byte-identical,
-four new SVG/Scene files, four report changes, no retirements. Its pytest failed
-two new-slide band-contrast cases and the missing slide-ledger rows;
-derived-ready failed transitively. These were slice-introduced failures.
-The new Theme now declares two dedicated Scheme categories, without changing
-existing category values: both fills clear every group/row ground by at least
+[Pre-isolation CI](https://github.com/tya5/chrona/actions/runs/37874047420),
+head `50246dfd`: conformance, materializer reproduction and two pytest shards
+passed. The only test failure was the packaged/example Scheme equality guard;
+derived-ready failed transitively. The correction isolates the same two demo
+categories in `schemes/axis-color-scales.yaml`, referenced only by the two new
+Contexts. `executive-light.yaml` is restored byte-identically to ready main;
+no preset bundle or test allowance changes. Both fills clear every group/row ground by at least
 1.221 and 1.365 respectively (required 1.15). The two source-ledger rows record
 seven axis labels and a hosted DVT. Root reran the original readability
 assertions against copied-project public renders; both pass. The focused
-axis-scale suite passed 72 tests. Updated-head snapshot/CI remain required.
+axis-scale suite passed 72 tests. After Scheme isolation, the original preset
+equality guard and SVG suite pass (nine tests); both copied-project public SVGs
+are byte-identical to the inspected corrected renders, with seven labels,
+hosted DVT and no resource errors. Updated-head snapshot/CI remain required.
 Packaged-font raster inspection confirms alternating months and months
 following their quarter's fill. The inherited footer-overflow warning is
 disclosed, not absorbed by unrelated data/style edits.
@@ -45,6 +48,6 @@ keep the issue open.
 View declares the source; Presentation resolves neutral calendar interval keys
 and complete Scheme paints. Layout retains geometry and measurement ownership;
 Scene applies completed paints by placement identity. Adapters add no policy.
-The dedicated example Theme leaves the existing axis-tier Theme byte-identical
+The dedicated example Theme and Scheme leave existing resources byte-identical
 to the public base. No project data, defaults, preset bundles or generated files
 are edited to absorb side effects.

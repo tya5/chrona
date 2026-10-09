@@ -21,10 +21,10 @@ body:
     address: themes/axis-color-scales.yaml
     revision: {token: example-v1}
   colorScheme:
-    id: executive-light
+    id: axis-color-scales
     kind: color-scheme
     store: {provider: local, identity: controller-z-example}
-    address: schemes/executive-light.yaml
+    address: schemes/axis-color-scales.yaml
     revision: {token: example-v1}
   layout:
     id: executive-review
