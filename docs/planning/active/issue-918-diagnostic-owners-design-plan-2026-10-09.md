@@ -1,10 +1,11 @@
 # Issue 918 — diagnostic owners: design plan
 
-Status: implementation in progress; no issue acceptance or release claimed.
+Status: PR 1276 merged at `484657736a8fa7dbc5c8668ffc20d57f6c5f23ab`;
+review follow-up implemented at `e66136cf`, release acceptance pending.
 Selected [design](../../design/issue-918-diagnostic-owners-design-2026-10-09.md),
 [architecture review](../../reviews/current/issue-918-diagnostic-owners-architecture-review-2026-10-09.md)
 and [implementation plan](issue-918-diagnostic-owners-implementation-plan-2026-10-09.md)
-are published through `1316b8e02694f7179c765fc4847b5583223f253d`.
+include published follow-up phases `32cb2940`, `dca58ecb` and `bce9556f`.
 Authority: [issue 918](https://github.com/tya5/chrona/issues/918), including
 consolidated issues 919–922. Public baseline:
 `546f7c3f9e700afa7553632d8dd6ac0c94a348a0` (`derived-main` successful).
@@ -12,18 +13,13 @@ Predecessor: [issue 829 work record](../../archive/planning/issue-829-diagnostic
 
 ## Published facts and remaining verification
 
-- The inventory/policy records 488 bare reachable sites across 151 codes:
-  Layout/renderers/Scene 272, icon/model/review/related owners 171, and
-  usecases/operational 45. Historical issue counts are not current evidence.
-- Actual and snapshot result constructors contain code-only diagnostic tuples
-  outside the current inventory's call-argument coverage.
-- CLI render success emits warning JSON lines on stderr; Spec 66 and the
-  agent diagnostic reference describe that channel. MCP returns warning rows.
-- Layout identity strings and Scene findings do not consistently carry Project
-  ownership/title. Collapse preserves the first payload and aggregates by
-  code, severity and cause; serialized Scene facts must remain unchanged.
-- Every site disposition, mutation-sensitive coverage per changed code,
-  complete warning provenance coverage and artifact identity remain unverified.
+- PR 1276 closes the original inventory's 488 bare sites across 151 codes;
+  the current ratchet covers 1,609 sites including Actual/snapshot tuples.
+- CLI render warnings now use the documented stdout envelope; MCP parity and
+  producer provenance tests passed in PR CI. Scene identities/counts and all
+  140 public SVG/Scene files are unchanged in artifact 11630069335.
+- Follow-up focused integration passes 124 tests on ready base `2487d752`;
+  exact-main release and the follow-up public artifact audit remain pending.
 
 ## Design questions and review scope
 
@@ -113,3 +109,24 @@ and Scene-field ownership failures were corrected and individually rechecked.
 | A10 | Every `W_LAYOUT_*` and `W_SCENE_*` row names the Project object it is about (`sourceRef` and the title in the message) where the placement belongs to one. | Producer provenance and ledger tests |
 | A11 | Scene diagnostics, SVG and PNG bytes and the multiplicity invariant are unchanged (existing tests). | Scene/adapters and artifact comparison |
 | A12 | The CLI golden and the MCP `render_draft` warnings agree and are reviewed row by row. | Transport acceptance audit |
+| A13 | Expected detail: `scale=owner, missing=[m0,…], extra=[bus,…], at /body/scales/owner/slots`. | Scale owner and typed render-failure transport; verify the actual schema pointer rather than inventing the example's `scales` property. |
+| A14 | Expected detail: the View pointer `/body/annotations/<i>/anchor` and the reason, e.g. "object titlecard has no completed actual mark". | View normalization, Layout anchor resolution and typed render failure. |
+| A15 | The "readable render-warning transport" part of this issue should include the materializer's failure path. | Standalone materializer adapter and shared failure report. |
+
+## Review follow-up design scope
+
+Source: [review comment](https://github.com/tya5/chrona/issues/918#issuecomment-6085291520).
+Published scale/anchor messages already name operands, but scale conversion
+puts the entire message in `RenderFailed.code`; neither owner preserves the
+required resource pointer. The standalone materializer does not serialize
+typed failure diagnostics. The test render cache still reads stderr warnings.
+
+Decisions to complete before code: structured scale errors and their canonical
+Theme/View ownership; annotation pointer capture before Layout (including
+identity/cache exclusion); one adapter failure mapping without library prints.
+Review against Specs 06/08/40/50/56/66 and existing typed failure reporting.
+Do not change anchor eligibility, color mapping, geometry, success output or
+resource syntax. Amend the selected design/architecture review, then publish
+the implementation amendment. Three non-overlapping source owners may work
+after publication; root integrates once, with one follow-up PR and batched
+artifact/full-CI evidence. No issue closure until A1–A15 are directly proven.

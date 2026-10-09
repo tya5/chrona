@@ -7,6 +7,7 @@ from typing import Iterable
 
 from chrona.presentation.layout.comparison_marks import ComparisonMark
 from chrona.presentation.layout.labels import LabelPlacement, LabelRect, place_label
+from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.obstacles import ObstacleRect, SurfaceObstacleIndex
 from chrona.presentation.layout.routing import route_orthogonal
 from chrona.presentation.model.surface_content import AnnotationIntent
@@ -18,6 +19,15 @@ def _annotation_error(code: str, owner: str, **operands: object) -> ValueError:
         shown = repr(value).replace("\n", " ").replace("\r", " ")[:96]
         fields.append(f"{name}={shown}")
     return ValueError(f"{code}: {owner} " + ", ".join(fields))
+
+
+def _anchor_error(annotation: AnnotationIntent, code: str, owner: str, **operands: object) -> LayoutError:
+    """Keep anchor diagnostics typed and attached to the declared View pointer."""
+    fields = []
+    for name, value in operands.items():
+        shown = repr(value).replace("\n", " ").replace("\r", " ")[:96]
+        fields.append(f"{name}={shown}")
+    return LayoutError(code, annotation.anchor_source_ref, detail=f"{owner}: " + ", ".join(fields))
 
 
 @dataclass(frozen=True)
@@ -105,32 +115,36 @@ def resolve_annotation_anchor(annotation: AnnotationIntent, marks: Iterable[Comp
     """Resolve only the named object target; never substitute an absent actual."""
     anchor = annotation.anchor
     if anchor.get("kind") != "object":
-        raise _annotation_error("E_PRESENTATION_ANCHOR_UNSUPPORTED", "annotation anchor",
-                                annotation_id=annotation.annotation_id,
-                                anchor_kind=anchor.get("kind"))
+        raise _anchor_error(annotation, "E_PRESENTATION_ANCHOR_UNSUPPORTED", "annotation anchor",
+                            annotation_id=annotation.annotation_id,
+                            anchor_kind=anchor.get("kind"), expected="object anchor")
     object_id, facet, endpoint = anchor.get("id"), anchor.get("facet"), anchor.get("endpoint")
     if not isinstance(object_id, str) or facet not in {"planned", "actual"} or endpoint not in {"start", "end", "finish", "at", "body"}:
-        raise _annotation_error("E_PRESENTATION_ANCHOR_MISSING", "annotation anchor fields",
-                                annotation_id=annotation.annotation_id, object_id=object_id,
-                                facet=facet, endpoint=endpoint)
+        field = ("id" if not isinstance(object_id, str) else
+                 "facet" if facet not in {"planned", "actual"} else "endpoint")
+        raise _anchor_error(annotation, "E_PRESENTATION_ANCHOR_MISSING", "annotation anchor fields",
+                            annotation_id=annotation.annotation_id, object_id=object_id,
+                            facet=facet, endpoint=endpoint, missing_or_invalid=field,
+                            expected="id string, facet planned|actual, endpoint start|end|finish|at|body")
     candidates = [mark for mark in marks if mark.source_id == object_id and mark.facet == facet]
     if not candidates:
-        raise _annotation_error("E_PRESENTATION_ANCHOR_MISSING", "annotation target mark",
-                                annotation_id=annotation.annotation_id, object_id=object_id,
-                                facet=facet)
+        raise _anchor_error(annotation, "E_PRESENTATION_ANCHOR_MISSING", "annotation target mark",
+                            annotation_id=annotation.annotation_id, object_id=object_id,
+                            facet=facet, endpoint=endpoint,
+                            reason=f"no completed {facet} mark exists for this object")
     mark = candidates[0]
     if endpoint == "start" and mark.start is None:
-        raise _annotation_error("E_PRESENTATION_ANCHOR_MISSING", "mark endpoint",
-                                annotation_id=annotation.annotation_id, object_id=object_id,
-                                facet=facet, endpoint=endpoint)
+        raise _anchor_error(annotation, "E_PRESENTATION_ANCHOR_MISSING", "mark endpoint",
+                            annotation_id=annotation.annotation_id, object_id=object_id,
+                            facet=facet, endpoint=endpoint, reason="selected mark has no start date")
     if endpoint in {"finish", "end"} and mark.end is None:
-        raise _annotation_error("E_PRESENTATION_ANCHOR_MISSING", "mark endpoint",
-                                annotation_id=annotation.annotation_id, object_id=object_id,
-                                facet=facet, endpoint=endpoint)
+        raise _anchor_error(annotation, "E_PRESENTATION_ANCHOR_MISSING", "mark endpoint",
+                            annotation_id=annotation.annotation_id, object_id=object_id,
+                            facet=facet, endpoint=endpoint, reason="selected mark has no finish date")
     if endpoint == "at" and mark.at is None:
-        raise _annotation_error("E_PRESENTATION_ANCHOR_MISSING", "mark endpoint",
-                                annotation_id=annotation.annotation_id, object_id=object_id,
-                                facet=facet, endpoint=endpoint)
+        raise _anchor_error(annotation, "E_PRESENTATION_ANCHOR_MISSING", "mark endpoint",
+                            annotation_id=annotation.annotation_id, object_id=object_id,
+                            facet=facet, endpoint=endpoint, reason="selected mark has no point date")
     return AnnotationAnchor(annotation.annotation_id, object_id, facet, "finish" if endpoint == "end" else endpoint, mark)  # `end` aliases `finish`: the text is in Scene ids
 
 
