@@ -7,7 +7,7 @@ from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.surface_base import SurfaceBaseGeometry
-from chrona.presentation.layout.surface_geometry import extend_to_plot_edges
+from chrona.presentation.layout.surface_geometry import BACKGROUND_PAINT_ORDER, extend_to_plot_edges
 from chrona.presentation.layout.surface_groups import GroupHeaderExtentUpdate, group_tab_bounds, group_tag_bounds, resolve_group_tab
 from chrona.presentation.layout.surface_quality import GroupPlacement, ShapePlacement, intersects
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, semantic_binding
@@ -59,7 +59,7 @@ def _background_shape(*, base: SurfaceBaseGeometry, theme_tokens: Any, placement
 def compose_row_group_backgrounds(*, base: SurfaceBaseGeometry, rows: tuple[Any, ...],
                                   groups: tuple[GroupPlacement, ...], theme_tokens: Any,
                                   row_decoration: str, group_decoration: str) -> tuple[ShapePlacement, ...]:
-    """Complete group bands/header accents and alternating row stripes in legacy order."""
+    """Complete group bands/header accents and the selected row decoration."""
     shapes: list[ShapePlacement] = []
     for index, group in enumerate(groups):
         banded = group_decoration in {"all", "alternate"} and (
@@ -89,6 +89,28 @@ def compose_row_group_backgrounds(*, base: SurfaceBaseGeometry, rows: tuple[Any,
                     source_ref=row.row_id, semantic_id="rowBand", source_bounds=row.bounds)
                 if shape is not None:
                     shapes.append(shape)
+    elif row_decoration == "rules":
+        if not theme_tokens.has_role("row-rule"):
+            raise LayoutError("E_THEME_ROLE_REQUIRED", "/body/backgroundDecoration/rows",
+                              detail="rules need Theme role /body/roles/row-rule")
+        for shape in shapes:
+            if shape.semantic_id not in {"rowBand", "groupBand", "groupHeaderBand"}:
+                continue
+            role = semantic_binding(shape.semantic_id).scene_role
+            if shape.paint_order >= 10:
+                raise LayoutError("E_LAYOUT_ROW_RULE_ORDER", "/body/backgroundDecoration/rows",
+                                  detail=f"{shape.placement_id}: role={role}, order={shape.paint_order}; required <10")
+        table_inline, _, _, _ = base.table_bounds
+        timeline_inline, _, timeline_inline_size, _ = base.timeline_bounds
+        right = timeline_inline + timeline_inline_size
+        left_decimal, right_decimal = Decimal(str(table_inline)), Decimal(str(right))
+        for row in rows:
+            bottom = row.bounds.block + row.bounds.block_size
+            shapes.append(ShapePlacement(
+                f"row-rule:{row.row_id}", row.row_id, "Path",
+                Rect(left_decimal, bottom, right_decimal - left_decimal, Decimal(0)),
+                ((float(left_decimal), float(bottom)), (float(right_decimal), float(bottom))),
+                slot_id="review-surface", paint_order=BACKGROUND_PAINT_ORDER, semantic_id="rowRule"))
     return tuple(shapes)
 
 

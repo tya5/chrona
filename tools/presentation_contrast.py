@@ -111,7 +111,7 @@ def report_document(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
         if finding["visualRole"] in decoration_roles and finding["disposition"] == "enabled":
             by_scene.setdefault(record["scene"], set()).add(finding["visualRole"])
             corpus_roles.add(finding["visualRole"])
-    # A single scene need not carry every decoration role at once, and two
+    # A single scene need not carry every decoration role at once, and some
     # roles are never both required: Issue #481 makes groupBand and
     # groupHeaderBand mutually exclusive by design (a group's own band
     # already includes its own header row, so painting a separate header
@@ -119,10 +119,14 @@ def report_document(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
     # colours were never chosen against — see the #481 design correction).
     # The witness is corpus-wide (every decoration role evaluated with
     # disposition "enabled" somewhere in the committed public evidence, not
-    # all in one scene), and treats {group-band, group-header-band} as one
-    # required concept (a group's decoration, painted as a body band or a
-    # header-only accent) rather than two independently required roles.
-    mutually_exclusive_groups = ({"group-band", "group-header-band"},)
+    # all in one scene). Mutually exclusive render alternatives form one
+    # required concept: group-band/group-header-band paint a group's body or
+    # header, while row-band/row-rule paint the row-decoration choice selected
+    # by the View. Every emitted role remains in the findings above.
+    mutually_exclusive_groups = (
+        {"group-band", "group-header-band"},
+        {"row-band", "row-rule"},
+    )
     exclusive_members = frozenset().union(*mutually_exclusive_groups)
     required_singly = decoration_roles - exclusive_members
     witnesses = sorted(scene for scene, roles in by_scene.items() if roles == decoration_roles)
@@ -190,7 +194,8 @@ def render_markdown(report: Mapping[str, Any]) -> str:
                     for row in report.get("notOptedIn", ()))))
     lines.extend(("", "## Decoration corpus witness", "",
                   "Every non-exclusive decoration role is enabled in committed Scene evidence; "
-                  "group-band or group-header-band supplies the group concept when there are no corpus errors.", "",
+                  "group-band or group-header-band supplies the group concept, and row-band or row-rule supplies "
+                  "the row concept when there are no corpus errors.", "",
                   *(f"- `{scene}`" for scene in report["witnessScenes"]),
                   *(f"- ERROR `{code}`" for code in report["corpusErrors"]),
                   "", f"Findings: {report['findingCount']}; errors: {report['errorCount']}; "

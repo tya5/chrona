@@ -367,6 +367,23 @@ Scene/SVG bytes remain unchanged. See the [L3b route-evidence correction](../des
 
 ### 3.4 Groups and legend
 
+**Row rules (#1270).** View `backgroundDecoration.rows: rules` opts in to one
+horizontal rule at every item row's bottom, including each group's last row;
+group header rows have no rule. Layout spans the full table-to-timeline extent,
+independent of zebra-band extent. The `rowRule` semantic resolves the `row-rule`
+Theme role's scheme stroke, opacity and strokeWidth; absent paint raises
+`E_THEME_ROLE_REQUIRED`. This is a `DECORATION` with warning-only contrast.
+For presentation-contrast corpus coverage, `row-band` and `row-rule` are the
+two emitted alternatives for the required row-decoration concept; each emitted
+role is still evaluated, absence of both remains a coverage error, and other
+required decoration roles keep their independent coverage requirement.
+Layout completes order 10 (not a Theme order knob), below grids at 11 and marks
+at or above 100. Only actually emitted row/group/header bands must have order
+below 10; a conflict raises `E_LAYOUT_ROW_RULE_ORDER` at
+`/body/backgroundDecoration/rows`, with the conflicting role, actual order and
+required bound. Unused roles are not rejected and Theme orders are never
+silently rewritten. Undeclared row rules leave existing output unchanged.
+
 View grouping gains `presentation: band | header`; `header` requires a non-zero resolved `timeline.groupHeader.blockSize`. Layout reserves one header block before the group's first row and supplies measured header text bounds spanning the selected table/timeline surface. Missing capacity completes visible stacked geometry and `W_LAYOUT_GROUP_HEADER_OVERFLOW`.
 
 **Header text (#583).** `grouping.header` is an optional View template for the header text. It is usable only with `presentation: header` and grouping by `field` or `objectType` (`E_VIEW_GROUP_HEADER_UNUSABLE`). `text` (and the optional `first`, used for the first group in display order) is literal text with the closed placeholders `{ordinal}`, `{title}`, `{secondary}` and `{figure:<id>}`; `{{` and `}}` are literal braces and any other brace use is `E_VIEW_GROUP_HEADER_TEMPLATE`. `{ordinal}` is the group's 1-based position in display order in the form `ordinal`: `arabic` (default), `zero-padded` (width: the digit count of the group count, at least 2), `roman` (1 to 3999), `kanji` and `kanji-formal` (daiji; both 1 to 99); a position outside the form's range is `E_REVIEW_GROUP_ORDINAL_RANGE`, never a fallback. `{title}` is the group's entity title. `{secondary}` is the string in `entities.<group>.fields.<secondary.entityField>`, and the declaration and the placeholder must appear together (`E_VIEW_GROUP_HEADER_TEMPLATE`); a missing or empty value is `E_REVIEW_GROUP_HEADER_SECONDARY`. `{figure:<id>}` (#586) is the integer value of the derived figure of that id in the View's `figures` (Specification 06 section 7.2), in ASCII digits with a minus sign when negative and with no format specification; a global figure shows the same number in every header, while a `scope: group` figure resolves in the current group (Spec 06 §7.2), an id the View does not declare is `E_VIEW_GROUP_HEADER_TEMPLATE` (the message lists the declared ids), and a figure whose fact is missing refuses the render (Specification 05 section 12.2) rather than showing a blank. Content normalization composes the final text once and Layout places it as it places the title, so overflow follows the existing header rules. A View without `header` renders the entity title unchanged.
