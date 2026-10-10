@@ -135,7 +135,7 @@ def test_the_command_writes_files_reports_cells_and_never_overwrites(tmp_path):
     (tmp_path / "plan.csv").write_text(TABLE, encoding="utf-8")
     (tmp_path / "bad.csv").write_text("id,start,end\na,2027-13-01,2027-03-05\n", encoding="utf-8")
     first = chrona("import", "plan.csv", "-o", "project.yaml", "--calendar", CALENDAR[0], "--project-id", "my-plan", "--title", "My plan")
-    assert first.returncode == 0 and json.loads(first.stdout) == {"status": "ok", "project": "project.yaml", "actual": None}
+    assert first.returncode == 0 and json.loads(first.stdout) == {"status": "ok", "project": "project.yaml", "actual": None, "created": ["project.yaml"]}
     assert (tmp_path / "project.yaml").read_bytes() == compile_plan(PLAN.encode("utf-8")).yaml
 
     again = chrona("import", "plan.csv", "-o", "project.yaml", "--calendar", CALENDAR[0])
