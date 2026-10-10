@@ -410,10 +410,11 @@ def _compose_mark_icons(marks: Sequence[MarkPlacement],
 def _compose_progress(closure: LaneProjectionClosure, items: Mapping[LaneProjectionInstance, Any],
                       marks: Mapping[LaneProjectionInstance, tuple[MarkPlacement, ...]],
                       source: str | None, theme: Any,
+                      *, original_marks: Mapping[str, MarkPlacement] | None = None,
                       ) -> dict[str, tuple[Any, ...]]:
     if source is None:
         return {}
-    from chrona.presentation.layout.surface_marks import progress_fill_bounds
+    from chrona.presentation.layout.surface_marks import complete_progress_shape
 
     try:
         inset, radius = theme.progress_track("progress-fill")
@@ -436,14 +437,14 @@ def _compose_progress(closure: LaneProjectionClosure, items: Mapping[LaneProject
             continue
         if host is None:
             continue
-        bounds = progress_fill_bounds(host.bounds, float(fraction), inset)
-        if bounds is None:
+        if host.paint_clip is not None and (original_marks is None or host.placement_id not in original_marks):
+            raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/body/progressFill",
+                              detail="stage=progress; reason=missing-original-host")
+        original_host = original_marks.get(host.placement_id, host) if original_marks is not None else host
+        shape = complete_progress_shape(host, original_host=original_host,
+            fraction=float(fraction), inset_ratio=inset, radius_ratio=radius)
+        if shape is None:
             continue
-        shape = ShapePlacement(
-            f"progress-fill:{host.placement_id}", item.object_id, "Rect", bounds,
-            clip_host_id=host.placement_id, paint_order=host.paint_order + 1,
-            semantic_id="progressFill", corner_radius=float(radius),
-        )
         if not _rect_contains(host.bounds, shape.bounds):
             raise LayoutError("E_LAYOUT_LANE_PROGRESS_INVALID", shape.placement_id)
         result.setdefault(host.placement_id, []).append(shape)

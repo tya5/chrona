@@ -133,6 +133,30 @@ def progress_fill_bounds(host: Rect, fraction: float,
                 host.block_size - 2 * block_inset)
 
 
+def complete_progress_shape(host: MarkPlacement, *, original_host: MarkPlacement,
+                            fraction: float, inset_ratio: Decimal,
+                            radius_ratio: Decimal) -> ShapePlacement | None:
+    """The same original-host progress geometry for preflight and final paint."""
+    bounds = progress_fill_bounds(original_host.bounds, fraction, inset_ratio)
+    if bounds is None or bounds.inline_size <= 0:
+        return None
+    radius = float(radius_ratio) * float(min(bounds.inline_size, bounds.block_size))
+    commands, kind = (), "Rect"
+    if host.paint_clip is not None:
+        original = rounded_rect_commands(tuple(map(float, (
+            bounds.inline, bounds.block, bounds.inline_size, bounds.block_size))), radius)
+        commands = intersect_visible_host_contour(original, host.path_commands, host.bounds,
+                                                  source_ref=host.source_ref, facet="progress")
+        if not commands:
+            return None
+        bounds, kind, radius = host.bounds, "Symbol", 0.0
+    return ShapePlacement(
+        f"progress-fill:{host.placement_id}", host.source_ref, kind, bounds,
+        required=False, slot_id=host.slot_id, clip_host_id=host.placement_id,
+        paint_order=host.paint_order + 1, corner_radius=radius,
+        semantic_id="progressFill", path_commands=commands, paint_clip=host.paint_clip)
+
+
 def compose_surface_marks(base: SurfaceBaseGeometry, *,
                           lane_owner: Callable[[Any, Any], tuple[str, str] | None]) -> SurfaceMarksBatch:
     """Place row and folded marks, then progress fills and summary span bars."""
@@ -294,28 +318,12 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
                 if host is None or fraction == 0:
                     continue
                 original_host = original_mark_by_id.get(host.placement_id, host)
-                bounds = progress_fill_bounds(original_host.bounds, float(fraction), progress_inset)
-                if bounds is not None and bounds.inline_size > 0:
-                    radius = float(progress_radius) * float(min(bounds.inline_size, bounds.block_size))
-                    commands = ()
-                    kind = "Rect"
-                    if host.paint_clip is not None:
-                        original_progress = rounded_rect_commands(
-                            tuple(map(float, (bounds.inline, bounds.block,
-                                              bounds.inline_size, bounds.block_size))), radius)
-                        commands = intersect_visible_host_contour(
-                            original_progress, host.path_commands, host.bounds,
-                            source_ref=host.source_ref, facet="progress")
-                        if not commands:
-                            continue
-                        bounds, kind, radius = host.bounds, "Symbol", 0.0
-                    progress_shapes.append(ShapePlacement(
-                        f"progress-fill:{host.placement_id}", item.object_id, kind, bounds,
-                        required=False, slot_id=host.slot_id, clip_host_id=host.placement_id,
-                        paint_order=host.paint_order + 1, corner_radius=radius,
-                        semantic_id="progressFill", lane_row_id=owner[0] if owner else None,
+                shape = complete_progress_shape(host, original_host=original_host,
+                    fraction=float(fraction), inset_ratio=progress_inset, radius_ratio=progress_radius)
+                if shape is not None:
+                    progress_shapes.append(replace(shape,
+                        lane_row_id=owner[0] if owner else None,
                         lane_member_id=owner[1] if owner else None,
-                        path_commands=commands, paint_clip=host.paint_clip,
                         subjects=(DiagnosticSubject.project_object(item.object_id, item.title),)))
 
     summary_shapes: list[ShapePlacement] = []

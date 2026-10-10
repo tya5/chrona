@@ -1,12 +1,14 @@
 """Real final Layout composition against an independent explicit-window oracle."""
 from dataclasses import replace
 from datetime import date
+from types import SimpleNamespace
 
 import pytest
 
 from chrona.presentation.layout.surface_base import prepare_surface_base
 from chrona.presentation.layout.surface_geometry import coordinate_for_date
 from chrona.presentation.layout.surface_marks import compose_surface_marks
+from chrona.presentation.layout.lane_mark_facets import _compose_progress
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection, ReviewRowProjection, WindowMode
 from chrona.usecases.warning_ledger import collect_render_warnings
@@ -74,6 +76,32 @@ def test_progress_ending_before_visible_host_is_intentionally_unpainted():
     _, batch = _compose(fraction=.2)
     assert len(batch.marks) == 1
     assert batch.progress_shapes == ()
+
+
+@pytest.mark.parametrize("fraction", [.2, .6, 1.0])
+@pytest.mark.parametrize("containing", [False, True])
+def test_lane_and_final_progress_share_original_host_geometry(fraction, containing):
+    window = (date(2026, 1, 1), date(2026, 1, 15)) if containing else (
+        date(2026, 1, 5), date(2026, 1, 9))
+    base, batch = _compose(fraction=fraction, window=window)
+    host = next(mark for mark in batch.marks if mark.source_ref == "across")
+    originals = {record.original.placement_id: record.original for record in batch.window_marks}
+    item = next(item for item in base.request.projection.items if item.object_id == "across")
+    instance = "synthetic-source-instance"
+    result = _compose_progress(SimpleNamespace(instances=(instance,)), {instance: item},
+        {instance: (host,)}, "planned", base.request.theme_tokens, original_marks=originals)
+    expected = tuple(replace(shape, subjects=()) for shape in batch.progress_shapes)
+    assert result.get(host.placement_id, ()) == expected
+
+
+def test_clipped_lane_progress_rejects_missing_original_host_instead_of_rescaling():
+    base, batch = _compose(fraction=.6)
+    host = batch.marks[0]
+    item = base.request.projection.items[1]
+    instance = "synthetic-source-instance"
+    with pytest.raises(LayoutError, match="missing-original-host"):
+        _compose_progress(SimpleNamespace(instances=(instance,)), {instance: item},
+            {instance: (host,)}, "planned", base.request.theme_tokens)
 
 
 def test_fully_containing_explicit_window_preserves_final_mark_and_progress_values():
