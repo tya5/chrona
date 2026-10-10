@@ -9,6 +9,7 @@ from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.surface_mark_visibility import (
     ItemMarkVisibilityIndex, MarkOccurrence, MarkOccurrenceKind,
     build_item_mark_visibility_index,
+    outside_window_provenance,
 )
 from chrona.presentation.model.projection import (
     FoldedPointProjection, ReviewItem, ReviewLaneRowProjection, ReviewProjection,
@@ -97,6 +98,9 @@ def test_lane_source_and_final_alias_share_one_result_and_select_once(monkeypatc
     assert source is final
     assert calls == [item]
     assert source.instance_id == "row%3Asource:item"
+    warning = outside_window_provenance(index)
+    assert warning.diagnostic == "W_LAYOUT_OUTSIDE_WINDOW:table-timeline"
+    assert tuple(subject.source_ref for subject in warning.subjects) == ("/objects/object",)
 
 
 def test_typed_namespaces_prevent_serialized_id_collisions():

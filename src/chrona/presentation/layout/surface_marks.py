@@ -28,7 +28,7 @@ from chrona.presentation.layout.lane_projection import (
     folded_instance_id, lane_missing_actual_visible,
 )
 from chrona.presentation.layout.surface_mark_visibility import (
-    MarkOccurrence, MarkOccurrenceKind,
+    MarkOccurrence, MarkOccurrenceKind, outside_window_provenance,
 )
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 
@@ -177,6 +177,11 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
 
     diagnostics: list[str] = []
     diagnostic_provenance: list[DiagnosticProvenance] = []
+    if visibility_index is not None:
+        outside = outside_window_provenance(visibility_index)
+        if outside is not None:
+            diagnostics.append(outside.diagnostic)
+            diagnostic_provenance.append(outside)
     absences: list[MarkFacetAbsence] = []
     marks: list[MarkPlacement] = []
     track_by_id = {item.instance_id: item for item in tracks}

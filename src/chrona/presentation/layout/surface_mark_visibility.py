@@ -12,11 +12,12 @@ from chrona.presentation.layout.lane_projection import (
     lane_instance_owners, lane_missing_actual_visible,
 )
 from chrona.presentation.layout.mark_facet_visibility import (
-    ItemMarkVisibility, complete_item_visibility,
+    FacetDisposition, ItemMarkVisibility, complete_item_visibility,
 )
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.semantic_mark_facets import select_item_mark_facets
-from chrona.presentation.model.projection import ReviewProjection
+from chrona.presentation.model.projection import ReviewProjection, WindowMode
+from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 
 if TYPE_CHECKING:
     from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
@@ -62,6 +63,25 @@ class ItemMarkVisibilityIndex:
                as_of: date | None) -> ItemMarkVisibility:
         self.require_match(projection, as_of)
         return self.entries[occurrence]
+
+
+def outside_window_provenance(index: ItemMarkVisibilityIndex) -> DiagnosticProvenance | None:
+    """One source-keyed finding for the explicit surface, independent of paint.
+
+    Source/final lane aliases and repeated comparison facets never multiply
+    the warning or its Project object subjects. No geometry is re-inspected.
+    """
+    if index.projection.window_mode != WindowMode.EXPLICIT:
+        return None
+    objects = sorted({occurrence.object_id for occurrence, visibility in index.entries.items()
+                      if any(facet.disposition != FacetDisposition.CONTAINED
+                             for facet in visibility.facets)})
+    if not objects:
+        return None
+    return DiagnosticProvenance(
+        "W_LAYOUT_OUTSIDE_WINDOW:table-timeline",
+        tuple(DiagnosticSubject.project_object(object_id) for object_id in objects),
+    )
 
 
 def _pointer_part(value: str) -> str:

@@ -9,6 +9,8 @@ from chrona.presentation.layout.surface_geometry import coordinate_for_date
 from chrona.presentation.layout.surface_marks import compose_surface_marks
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection, WindowMode
+from chrona.usecases.warning_ledger import collect_render_warnings
+from chrona.usecases.diagnostic_messages import describe_warning
 from tests.unit.chrona.presentation.layout.test_surface_axis_tier_geometry import _axis_request
 
 
@@ -43,6 +45,11 @@ def test_final_marks_omit_outside_sources_and_complete_across_contour_and_origin
     assert original.bounds.inline + original.bounds.inline_size > mark.bounds.inline + mark.bounds.inline_size
     assert original.paint_clip is None
     assert base.request.projection.items[1].planned["start"] == date(2026, 1, 1)
+    assert batch.diagnostics.count("W_LAYOUT_OUTSIDE_WINDOW:table-timeline") == 1
+    warning = next(item for item in batch.diagnostic_provenance
+                   if item.diagnostic == "W_LAYOUT_OUTSIDE_WINDOW:table-timeline")
+    assert tuple(subject.source_ref for subject in warning.subjects) == (
+        "/objects/across", "/objects/after", "/objects/before")
 
 
 def test_progress_uses_original_fraction_and_intersects_visible_notched_host():
@@ -73,6 +80,8 @@ def test_fully_containing_explicit_window_preserves_final_mark_and_progress_valu
     assert explicit.marks == derived.marks
     assert explicit.progress_shapes == derived.progress_shapes
     assert all(mark.paint_clip is None for mark in explicit.marks)
+    assert not any("W_LAYOUT_OUTSIDE_WINDOW" in diagnostic for diagnostic in explicit.diagnostics)
+    assert not any("W_LAYOUT_OUTSIDE_WINDOW" in diagnostic for diagnostic in derived.diagnostics)
 
 
 def test_explicit_final_composition_cannot_fall_back_to_raw_source_geometry():
@@ -80,3 +89,21 @@ def test_explicit_final_composition_cannot_fall_back_to_raw_source_geometry():
     invalid = replace(base, request=replace(base.request, mark_visibility_index=None))
     with pytest.raises(LayoutError, match="missing-visibility-index"):
         compose_surface_marks(invalid, lane_owner=lambda _row, _item: None)
+
+
+def test_outside_warning_transport_names_exact_objects_once_with_actionable_cause():
+    _, batch = _compose()
+    records = collect_render_warnings(
+        surface_diagnostics=batch.diagnostics, surface_provenance=batch.diagnostic_provenance,
+        tabular_warnings=(), glyph_warnings=(), fit_warnings=(), perceptibility_warnings=(),
+        scale_collisions=(), attachment_warnings=(),
+    )
+    outside = tuple(record for record in records if record.payload["code"] == "W_LAYOUT_OUTSIDE_WINDOW")
+    assert len(outside) == 1
+    payload = outside[0].payload
+    assert tuple(subject["sourceRef"] for subject in payload["sourceSubjects"]) == (
+        "/objects/across", "/objects/after", "/objects/before")
+    text = describe_warning(payload)
+    assert "explicit window" in text.cause
+    assert "source data is unchanged" in text.cause
+    assert all(ref in text.subject for ref in ("/objects/across", "/objects/after", "/objects/before"))

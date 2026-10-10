@@ -81,6 +81,7 @@ def error_message(code: str, message: str | None) -> str:
 # severity and cause are one finding that happened more than once, and collapse into one row (design D1).
 
 _SURFACE_CAUSES: Mapping[str, str] = {
+    "W_LAYOUT_OUTSIDE_WINDOW": "objects outside the explicit window were clipped or left out of the plot; their source data is unchanged",
     "W_LAYOUT_MARK_STACK_OVERFLOW": "a comparison stack exceeds its nominal track; row space was expanded",
     "W_LAYOUT_LABEL_SUPPRESSED": "a label was left out of the picture because it does not fit",
     "W_THEME_ROLE_UNREAD": "a Theme role or colour binding is declared but no registered role, group colour or document of the render reads it",
