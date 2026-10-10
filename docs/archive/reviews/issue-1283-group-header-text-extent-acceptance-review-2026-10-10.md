@@ -2,7 +2,7 @@
 
 # Issue #1283 — text-sized group-header band acceptance
 
-Validation source: `33596cc65e3cba43439cffedc18d3cfcb853c62e`, ordinarily adopting exact ready main `fed9727461e6fefa5b092cdea638bf3a722dfcef` ([trusted gate](https://github.com/tya5/chrona/actions/runs/38017276223)) and the batched final acceptance records. [Selected design, architecture review and publication plan](https://github.com/tya5/chrona/issues/1283#issuecomment-6087767756). Layout consumes completed geometry; Scene/adapters do not measure or fit bands. Fresh 45-pair PR artifact/checks and final-review-containing exact-main release remain pending; do not close.
+Closed after [exact-main release](https://github.com/tya5/chrona/actions/runs/38020427654) succeeded on `0fd085d17422fd332c49b4b75ebdf43fe9459f93`, containing every literal acceptance row below. [PR #1320](https://github.com/tya5/chrona/pull/1320) and [fresh artifact audit](https://github.com/tya5/chrona/pull/1320#issuecomment-6093028210) verify all 45 SVG/Scene pairs unchanged; only two reports changed. [Design, architecture review and publication plan](https://github.com/tya5/chrona/issues/1283#issuecomment-6087767756). Layout consumes completed geometry; Scene/adapters do not measure or fit bands.
 
 ## Literal issue acceptance
 
@@ -20,4 +20,4 @@ Validation source: `33596cc65e3cba43439cffedc18d3cfcb853c62e`, ordinarily adopti
 
 ## Programme-level criteria (optional)
 
-None. Source-adoption header/group/vocabulary and workflow/trusted-gate batch: 117 passed (51.48s). Ready bot adoption changes no product, schema, tool or test bytes from that tested source. L1 against exact ready fed97274: 37 equal and one declared group-header extent delta. Direct legacy-byte replay remains in the integration tests. Final records for #1270/#1271/#1284/#1321 and completed #918/#927 archives are documentation-only publication units in this PR. Required next gates: fresh exact-head 45-pair artifact/checks, then final-review-containing main three-OS release. No local full pytest or authored corpus regeneration.
+None. Source-adoption header/group/vocabulary and workflow/trusted-gate batch: 117 passed (51.48s). Ready bot adoption changes no product, schema, tool or test bytes from that tested source. L1 against exact ready fed97274: 37 equal and one declared group-header extent delta. Direct legacy-byte replay remains in the integration tests. Final records for #1270/#1271/#1284/#1321 and completed #918/#927 archives were separate documentation units. The exact-main run above passed three-OS pytest, conformance and wheel/smoke, newest-Python materializers and MCP. No local full pytest or authored corpus regeneration.

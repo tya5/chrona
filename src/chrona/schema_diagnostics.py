@@ -44,12 +44,18 @@ def explain_errors(
 
 def explain_all_errors(
     errors: Iterable[ValidationError], *, resource_kind: str | None = None, resource_identity: str | None = None,
+    select_branches: bool = False, echo_values: bool = False,
 ) -> tuple[SchemaViolation, ...]:
-    """Explain every independent leaf violation in deterministic order."""
-    candidates = tuple(_leaf_errors(tuple(errors)))
+    """Explain every independent leaf violation in deterministic order.
+
+    `select_branches` reports, for a union whose discriminator (a `const` member such as `mode`) selects exactly one
+    branch, that branch's own violations instead of the union wrapper; the wrapper stays when the tag is missing or
+    unknown. `echo_values` names a short offending scalar in a pattern or format message (Project validation, #1303).
+    """
+    candidates = tuple(_leaf_errors(tuple(errors), select_branches))
     if not candidates:
         raise _empty_error("leafErrors")
-    explained = [replace(_explain(error), resource_kind=resource_kind, resource_identity=resource_identity)
+    explained = [replace(_explain(error, echo_values), resource_kind=resource_kind, resource_identity=resource_identity)
                  for error in sorted(candidates, key=_aggregate_error_key)]
     unique: dict[tuple[object, ...], SchemaViolation] = {}
     for violation in explained:
@@ -58,13 +64,40 @@ def explain_all_errors(
     return tuple(unique.values())
 
 
-def _leaf_errors(errors: Iterable[ValidationError]) -> Iterable[ValidationError]:
+def _leaf_errors(errors: Iterable[ValidationError], select_branches: bool = False) -> Iterable[ValidationError]:
     """Replace diagnostic-unhelpful union wrappers with their actual leaves."""
     for error in errors:
         if error.validator in {"oneOf", "anyOf"} and error.context:
-            yield from _leaf_errors(error.context)
+            if select_branches:
+                selected = _selected_branch(error)
+                if selected is not None:
+                    yield from _leaf_errors(selected, select_branches)
+                else:
+                    yield error
+            else:
+                yield from _leaf_errors(error.context)
         else:
             yield error
+
+
+def _selected_branch(error: ValidationError) -> list[ValidationError] | None:
+    """The violations of the one union branch the instance's discriminator selects, else None.
+
+    A branch is selected when no `const` member of the instance's own object fails in it and every other failing branch
+    does; a missing or unknown tag fails every branch (or none by a `const`), so the union wrapper is reported.
+    """
+    by_branch: dict[Any, list[ValidationError]] = {}
+    for child in error.context or ():
+        by_branch.setdefault(child.schema_path[0] if child.schema_path else None, []).append(child)
+    total = len(error.validator_value) if isinstance(error.validator_value, Sequence) else 0
+    if len(by_branch) < total:
+        return None  # a branch the instance satisfies: not a failed selection
+    tag_failed = {index for index, children in by_branch.items()
+                  if any(child.validator == "const" and len(child.relative_path) == 1 for child in children)}
+    selected = [index for index in by_branch if index not in tag_failed]
+    if len(selected) != 1 or not tag_failed:
+        return None
+    return by_branch[selected[0]]
 
 
 def json_pointer(path: Iterable[Any]) -> str:
@@ -117,14 +150,20 @@ def _with_article(description: str) -> str:
     return ("an " if description[:1] in "AEIOUaeiou" else "a ") + description
 
 
-def _explain(error: ValidationError) -> SchemaViolation:
+def _echo(instance: Any, echo: bool) -> str:
+    """`, got 'value'` for a short scalar string when the caller allows it (a Project's own date or id, #1303)."""
+    return f", got {instance!r}" if echo and isinstance(instance, str) and len(instance) <= 64 else ""
+
+
+def _explain(error: ValidationError, echo_values: bool = False) -> SchemaViolation:
     rule = str(error.validator or "schema")
     pointer = json_pointer(error.absolute_path)
     actual_kind = _kind(error.instance)
     if rule in {"enum", "const"}:
         values = tuple(_literal(value) for value in (error.validator_value if rule == "enum" else (error.validator_value,)))
         noun = "one of" if rule == "enum" else "exactly"
-        return SchemaViolation(pointer, rule, values, actual_kind, f"expected {noun} {', '.join(values)}")
+        return SchemaViolation(pointer, rule, values, actual_kind,
+                               f"expected {noun} {', '.join(values)}" + _echo(error.instance, echo_values))
     if rule == "required":
         missing = _quoted_member(error.message)
         expected = (missing,) if missing else ()
@@ -147,12 +186,18 @@ def _explain(error: ValidationError) -> SchemaViolation:
         return SchemaViolation(pointer, rule, (bound,), actual_kind, f"expected {rule} {bound}")
     if rule == "pattern":
         pattern = str(error.validator_value)
-        return SchemaViolation(pointer, rule, (pattern,), actual_kind, f"expected value matching pattern {pattern!r}")
+        if echo_values and pattern == r"^\d{4}-\d{2}-\d{2}$":  # an ISO date written another way: say so, not the regex (#1303)
+            expected = _FORMAT_DESCRIPTIONS["date"]
+            return SchemaViolation(pointer, rule, (expected,), actual_kind,
+                                   f"expected {_with_article(expected)}" + _echo(error.instance, True))
+        return SchemaViolation(pointer, rule, (pattern,), actual_kind,
+                               f"expected value matching pattern {pattern!r}" + _echo(error.instance, echo_values))
     if rule == "format":
         # Never echo the value (Spec 56 section 3): name the declared format only.
         name = str(error.validator_value)
         expected = _FORMAT_DESCRIPTIONS.get(name, f"value in format '{name}'")
-        return SchemaViolation(pointer, rule, (expected,), actual_kind, f"expected {_with_article(expected)}")
+        return SchemaViolation(pointer, rule, (expected,), actual_kind,
+                               f"expected {_with_article(expected)}" + _echo(error.instance, echo_values))
     if rule in {"oneOf", "anyOf"}:
         forms = _union_forms(error)
         return SchemaViolation(pointer, "union", forms, actual_kind, "expected one permitted form" + (": " + "; ".join(forms) if forms else ""))

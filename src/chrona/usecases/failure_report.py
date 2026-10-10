@@ -57,7 +57,7 @@ class FailureReport:
 def diagnostic_record(
     code: str, message: str, component: str, source_ref: str = "/",
     revision_refs: list[str] | None = None, details: Mapping[str, Any] | None = None,
-    severity: str = "error",
+    severity: str = "error", source_range: Mapping[str, int] | None = None,
 ) -> dict[str, Any]:
     """The one diagnostic record: six fixed keys, then ``details`` only for a code that has one.
 
@@ -69,6 +69,8 @@ def diagnostic_record(
     }
     if details is not None:
         record["details"] = dict(details)
+    if source_range is not None:
+        record["sourceRange"] = dict(source_range)
     return record
 
 
@@ -97,7 +99,8 @@ def version_message(detail: str) -> str:
 def rejection_report(diagnostics: Sequence[Diagnostic], component: str = "core") -> FailureReport:
     """Report Core diagnostics (a rejected Project or schedule) as one rejected payload."""
     return FailureReport(
-        "rejected", collapse_records(diagnostic_record(item.id, item.message, component, item.path, details=item.details)
+        "rejected", collapse_records(diagnostic_record(item.id, item.message, component, item.path, details=item.details,
+                                                           source_range=item.source_range)
                                      for item in diagnostics), 1,
     )
 

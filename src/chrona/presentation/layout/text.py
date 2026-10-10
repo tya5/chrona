@@ -262,7 +262,7 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
     caps = small_caps_scale(treatment.transform)
     width = max(measure_text_width(line, font_size=font_size, font_metrics=font_metrics,
                                    letter_spacing=letter_spacing,
-                                   text_transform=treatment.transform if caps is not None else "none",
+                                   text_transform=treatment.transform,
                                    numeric_spacing=treatment.numeric_spacing)
                 for line in (lines or (content,)))
     runs: tuple[tuple[TextRunPlacement, ...], ...] = ()
