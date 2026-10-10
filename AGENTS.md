@@ -74,7 +74,14 @@ compatibility promise:
 
 ### Merge coordination
 
-There is no repository merge lock. Before the final push, the base must be the
+There is no repository merge lock. Docs-only PRs classified as `docs` may land
+on any previously ready main base when their own checks pass, their head is
+current and GitHub confirms a clean merge. They do not wait for a new sync or
+require the current main tip. Derived-owned reports are never docs-only;
+the classifier shares the bot's report inventory. Code and generated-evidence
+PRs retain the strict rule below. Release acceptance is unchanged.
+
+For code and generated-evidence PRs, before the final push, the base must be the
 `origin/main` tip whose `derived-main` check run is `completed`/`success`
 (`gh api --method GET repos/tya5/chrona/commits/<sha>/check-runs -f check_name=derived-main -f filter=all`).
 If `main` advances while checks run, rebase onto the new ready tip and re-run;
@@ -247,8 +254,11 @@ the same non-cancelling, multi-pending concurrency queue. Cleanup preserves
 unknown or active gates and never changes commit check runs or release evidence;
 an already-absent ref is harmless. Release checkout uses the dispatched SHA.
 
-The `derived-ready` PR check waits (boundedly) for `derived-main` on the
-current exact `main` tip and rechecks that tip before success. Production
+For code and generated-evidence PRs, `derived-ready` waits (boundedly) for
+`derived-main` on the current exact `main` tip and rechecks that tip before
+success. Docs-only PRs check trusted readiness of their event base once and
+require a current head and affirmative clean mergeability, without waiting.
+Production
 status-only strict branch protection is a separate deployment step: do not
 claim that failed syncs block merges until the Actions check source and bot
 fast-forward route have been proven on a disposable protected branch and the
