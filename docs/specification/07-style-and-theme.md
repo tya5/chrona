@@ -262,6 +262,20 @@ references fail before Layout with `E_THEME_ASSET_REFERENCE` at the Theme
 property pointer, including the authored reference. Inline glyphs remain a
 valid migration form.
 
+For a filled inline or catalogue point glyph, binding both `stroke` and a
+positive `strokeWidth` on its concrete paint role adds one outline of the
+filled region (#1287). Layout simplifies each part under nonzero winding,
+unions the filled parts, and appends that completed contour after the original
+parts. Original fills and intrinsic strokes retain their geometry and finish;
+Scene resolves the added contour's role ink and the legend uses the same paint.
+The primary planned point uses `gate` when declared; other variants retain
+their own roles. Existing `pattern: outline` takes precedence and remains the
+every-part stroke treatment above, without an additional filled-region edge.
+Missing either binding, stroke-only glyphs, and built-in symbols retain their
+existing output. Ordinary stroke alignment applies to the completed contour.
+Failed or invalid contour completion is `E_LAYOUT_POINT_OUTLINE_INVALID` at
+the concrete role's `strokeWidth` pointer; there is no raw-path fallback.
+
 This authoring form is Theme v0.15; derived Theme inheritance is v0.16.
 v0.11/v0.12/v0.13/v0.14 are retired after the first-party migration (#1088;
 Specification 56 §3.2), not silently upgraded. Theme v0.15 admits
@@ -287,9 +301,33 @@ primitive is always Rect: `missing-actual.pattern`, `network-node.pattern`,
 `progress-fill.pattern`, `summary-bar.pattern`,
 `annotation-highlight-box.pattern`, `axis-band-decoration.pattern`,
 `axis-band-decoration2.pattern`, `period-band.pattern` (#582), `group-tab.pattern` (#882),
+`group-band.pattern`, `row-band.pattern` and `group-header-band.pattern` (#1282: each band is always one Rect; the pattern's ink is the
+role's `stroke`, the `fill` is the substrate, and the pattern is clipped to the band extent `backgroundExtents` chose),
 `as-of-label-chip.pattern`, `member-label-chip.pattern`, and
 `finish-delta-chip.pattern`. Other pattern values and all other
 role/property pairs retain their current contracts.
+
+**Label-chip shapes (#1286).** The four chip roles (`as-of-label-chip`,
+`member-label-chip`, `finish-delta-chip`, `period-label-chip`) MAY name a
+`chipShape` token. Its closed value is `{kind: rectangle}`, `{kind: burst,
+points: N, innerRatio: q}`, or `{kind: catalog, glyph, sliceInsets, unitEm}`.
+Absent and explicit rectangle retain the existing chip geometry, paint and
+SVG output; Scene provenance still records each authored Theme's real content
+identity. Absent-token backward byte checks use unchanged resource inputs.
+Shape selection does not activate a chip without `backgroundTreatment: fill`.
+Burst requires integer `N >= 2` and finite `0 < q <= 1`. Its `2N` alternating
+vertices have outer/inner radii `R`/`qR`, with an outer tip at the top. Layout
+encloses the padded text in the polygon's inscribed disk, retains the actual
+vertex envelope and asymmetric text inset, and uses that completed geometry
+for allocation, candidate placement and collision obstacles. Catalogue chips
+use the existing nine-slice geometry over padded text plus fixed borders;
+the nonzero union of their completed fill paths MUST cover the padded text
+rectangle (`E_LAYOUT_CHIP_TEXT_GROUND_INVALID` at the selected `chipShape`
+property otherwise). No implicit rectangular substrate is added. Nonrect
+chips exclude patterned paint, nonzero/capsule corner rounding and
+`box-follows-text` (`E_THEME_TOKEN_TYPE` at the conflicting property);
+`text-follows-box` remains valid. Scene projects completed Symbol parts and
+Text, and contrast reads their actual fill rather than their enclosing bounds.
 
 **Group header runs (#1192).** A View's group-header template may mark a placeholder with a Theme text role (`{ordinal|group-ordinal}`); the role is an ordinary declared text role (typography properties and a `fill` binding, as a View-named `textRole`) and is a consumer for the #1117 check. Header ink (#1244): a Theme MAY bind `group-header.fill`; the header text that is not a marked span (the unmarked runs of a marked template, an unmarked template's whole header and a vertical tag) is then painted with it in scene role `group-header`, so the ground-text contrast gate judges it over the header band under the Theme contrast policy, and a marked span keeps its own role ink. Without the binding the header takes the `text` ink as before. No Theme schema changes: `group-header` was already a registered role whose `fill` nothing read. The rule is Specification 50 section 3.4.
 

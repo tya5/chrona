@@ -12,7 +12,8 @@ from chrona.core.periods import period_diagnostics
 from chrona.core.temporal import (Calendar, TemporalError, as_date, is_scheduled_amount,
                        parse_amount, requires_working_calendar)
 from chrona.resources import safe_load, schema_resource, schema_validator, validator_for_schema
-from chrona.schema_diagnostics import explain_errors
+from chrona.core.suggestions import unknown_id_message
+from chrona.schema_diagnostics import explain_all_errors
 
 
 SCHEMA_PATH = schema_resource("project-v0.7.schema.yaml")
@@ -47,16 +48,24 @@ def validate_project(
     # describes the canonical JSON-compatible representation as strings. Keep
     # the semantic value intact for scheduling, but validate its serialization.
     errors = tuple(validator.iter_errors(_schema_value(project)))
+    failed_objects: frozenset[str] = frozenset()
+    failed_relations: frozenset[int] = frozenset()
     if errors:
+        # Every independent schema error, in pointer order (a union is reported as the one branch its `mode` selects),
+        # then the Core rules for the parts that passed the schema when the errors are confined to objects and
+        # relations (#1303).
         project_id = project.get("project", {}).get("id")
-        violation = explain_errors(errors, resource_kind="project", resource_identity=project_id if isinstance(project_id, str) else None)
-        diagnostics.append(Diagnostic("E_SCHEMA", violation.message, violation.pointer))
-    if diagnostics:
-        return diagnostics
-
+        violations = explain_all_errors(
+            errors, resource_kind="project", resource_identity=project_id if isinstance(project_id, str) else None,
+            select_branches=True, echo_values=True)
+        diagnostics.extend(Diagnostic("E_SCHEMA", item.message, item.pointer) for item in violations)
+        confined = _confined_failures(item.pointer for item in violations)
+        if confined is None:
+            return diagnostics
+        failed_objects, failed_relations = confined
     calendars = project.get("calendars", {})
     objects = project.get("objects", {})
-    children_by_parent = _validate_hierarchy(objects, diagnostics)
+    children_by_parent = _validate_hierarchy(objects, diagnostics, skip=failed_objects)
     for calendar_id, raw in calendars.items():
         try:
             Calendar.from_mapping(raw)
@@ -68,6 +77,8 @@ def validate_project(
         diagnostics.append(Diagnostic("E_REFERENCE", "Unknown project calendar", "/project/calendar"))
 
     for object_id, item in objects.items():
+        if object_id in failed_objects:
+            continue
         path = f"/objects/{object_id}"
         if item.get("calendar") and item["calendar"] not in calendars:
             diagnostics.append(Diagnostic("E_REFERENCE", "Unknown object calendar", path + "/calendar"))
@@ -103,11 +114,16 @@ def validate_project(
             diagnostics.append(Diagnostic("E_ROLLUP_EMPTY", "Rollup must have scheduled descendants", path + "/schedule"))
 
     for index, relation in enumerate(project.get("relations", [])):
+        if index in failed_relations:
+            continue
         path = f"/relations/{index}"
         for side in ("from", "to"):
             ref = relation[side]
             if ref["object"] not in objects:
-                diagnostics.append(Diagnostic("E_REFERENCE", f"Unknown {side} object", path + f"/{side}/object"))
+                diagnostics.append(Diagnostic("E_REFERENCE", unknown_id_message(f"{side} object", ref["object"], tuple(objects)),
+                                              path + f"/{side}/object"))
+            elif ref["object"] in failed_objects:
+                continue  # its schedule failed the schema: no endpoint to check
             elif ref["endpoint"] not in _schedule_endpoints(objects[ref["object"]]["schedule"]):
                 diagnostics.append(Diagnostic(
                     "E_ENDPOINT_MODE_MISMATCH",
@@ -122,12 +138,15 @@ def validate_project(
                 if requires_working_calendar(value):
                     lag_calendar = lag.get("calendar") if isinstance(lag, dict) else None
                     target = objects.get(relation["to"]["object"], {})
+                    target = {} if relation["to"]["object"] in failed_objects else target
                     if lag_calendar and lag_calendar not in calendars:
                         diagnostics.append(Diagnostic("E_REFERENCE", "Unknown relation calendar", path + "/lag/calendar"))
                     elif not lag_calendar and not _resolve_calendar_id(target, project):
                         diagnostics.append(Diagnostic("E_CALENDAR_REQUIRED", "WorkPeriod lag has no calendar", path + "/lag"))
             except TemporalError as exc:
                 diagnostics.append(Diagnostic("E_INVALID_AMOUNT", str(exc), path + "/lag"))
+    if failed_objects or failed_relations:
+        return diagnostics  # attachments and periods read whole objects: only for a Project that passed the schema
     diagnostics.extend(attachment_diagnostics(objects))
     diagnostics.extend(period_diagnostics(project, _schedule_endpoints))
     if any(isinstance(item, str) for item in project.get("extensions", [])):
@@ -141,16 +160,36 @@ def validate_project(
     return diagnostics
 
 
-def _validate_hierarchy(objects: dict[str, Any], diagnostics: list[Diagnostic]) -> dict[str, list[str]]:
-    """Validate the single Project containment graph and return its ordered children."""
+def _confined_failures(pointers: Any) -> tuple[frozenset[str], frozenset[int]] | None:
+    """The objects and relations holding schema errors, or None when an error lies elsewhere (no Core rules then)."""
+    objects: set[str] = set()
+    relations: set[int] = set()
+    for pointer in pointers:
+        parts = pointer.split("/")
+        if len(parts) >= 3 and parts[1] == "objects":
+            objects.add(parts[2].replace("~1", "/").replace("~0", "~"))
+        elif len(parts) >= 3 and parts[1] == "relations" and parts[2].isdigit():
+            relations.add(int(parts[2]))
+        else:
+            return None
+    return frozenset(objects), frozenset(relations)
+
+
+def _validate_hierarchy(objects: dict[str, Any], diagnostics: list[Diagnostic],
+                        skip: frozenset[str] = frozenset()) -> dict[str, list[str]]:
+    """Validate the single Project containment graph and return its ordered children.
+
+    An object in `skip` failed the schema: it stays a known id but its own fields are not read."""
     children: dict[str, list[str]] = {object_id: [] for object_id in objects}
     for object_id, item in objects.items():
+        if object_id in skip:
+            continue
         parent = item.get("parent")
         if parent is None:
             continue
         path = f"/objects/{object_id}/parent"
         if parent not in objects:
-            diagnostics.append(Diagnostic("E_PARENT_NOT_FOUND", "Unknown parent object", path))
+            diagnostics.append(Diagnostic("E_PARENT_NOT_FOUND", unknown_id_message("parent object", parent, tuple(objects)), path))
             continue
         if parent == object_id:
             diagnostics.append(Diagnostic("E_SELF_PARENT", "Object cannot be its own parent", path))
@@ -159,6 +198,8 @@ def _validate_hierarchy(objects: dict[str, Any], diagnostics: list[Diagnostic]) 
 
     codes: dict[str, str] = {}
     for object_id, item in objects.items():
+        if object_id in skip:
+            continue
         code = item.get("wbsCode")
         if code is None:
             continue
@@ -180,7 +221,7 @@ def _validate_hierarchy(objects: dict[str, Any], diagnostics: list[Diagnostic]) 
         if state == 2:
             return
         states[object_id] = 1
-        parent = objects[object_id].get("parent")
+        parent = None if object_id in skip else objects[object_id].get("parent")
         if parent in objects and parent != object_id:
             visit(parent)
         states[object_id] = 2

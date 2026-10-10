@@ -79,6 +79,32 @@ $defs:
       y: {description: "Rectangle top coordinate within the tile.", type: number, minimum: 0, maximum: 256}
       inlineSize: {description: "Positive rectangle width.", type: number, exclusiveMinimum: 0, maximum: 256}
       blockSize: {description: "Positive rectangle height.", type: number, exclusiveMinimum: 0, maximum: 256}
+  catalogNineSliceGeometry:
+    description: "One normalized catalogue glyph reference and its nine-slice geometry, reusable by artwork and label chips."
+    type: object
+    required: [glyph, sliceInsets, unitEm]
+    properties:
+      glyph:
+        description: "Authored set:name reference to a normalized catalogue glyph."
+        examples: ["chrona-annotation-parts:scroll-rods"]
+        type: string
+        pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"
+      sliceInsets:
+        description: "Fixed top/right/bottom/left borders in glyph viewport units."
+        examples: [{top: 1, right: 2, bottom: 3, left: 4}]
+        type: object
+        additionalProperties: false
+        required: [top, right, bottom, left]
+        properties:
+          top: {description: "Fixed top border in glyph viewport units.", type: number, minimum: 0}
+          right: {description: "Fixed right border in glyph viewport units.", type: number, minimum: 0}
+          bottom: {description: "Fixed bottom border in glyph viewport units.", type: number, minimum: 0}
+          left: {description: "Fixed left border in glyph viewport units.", type: number, minimum: 0}
+      unitEm:
+        description: "Positive size of one glyph viewport unit in annotation text em."
+        examples: [0.1]
+        type: number
+        exclusiveMinimum: 0
   paintMode:
     description: "Theme-owned paint mode of a path: filled or stroked."
     examples: [fill]

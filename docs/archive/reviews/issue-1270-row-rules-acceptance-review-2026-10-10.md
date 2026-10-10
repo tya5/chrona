@@ -2,7 +2,7 @@
 
 # Issue #1270 — row rules acceptance
 
-Ready source base: `d4c93f64ae888d335c0aa4b412e05686894bf76b`. [PR #1314](https://github.com/tya5/chrona/pull/1314), reviewed head `4da0b28c243094af931ed13cff3589d8627be29a`, merged at `8915b4598c35b89561ac07b7edaf7af3d018f7cb`. [Published design and architecture review](https://github.com/tya5/chrona/issues/1270#issuecomment-6088015312). Layout completes row-bottom paths; Scene projects them; Theme supplies decoration paint. No corpus or derived output was authored. Final review publication and exact-main release remain pending; do not close.
+Closed after [exact-main release](https://github.com/tya5/chrona/actions/runs/38020427654) succeeded on `0fd085d17422fd332c49b4b75ebdf43fe9459f93`, containing every literal acceptance row below. [PR #1314](https://github.com/tya5/chrona/pull/1314) merged at `8915b4598c35b89561ac07b7edaf7af3d018f7cb`. [Design and architecture review](https://github.com/tya5/chrona/issues/1270#issuecomment-6088015312). Layout completes row-bottom paths; Scene projects them; Theme supplies decoration paint. No corpus or derived output was authored.
 
 ## Literal issue acceptance
 
@@ -24,4 +24,4 @@ None. Focused batch: 100 passed (19.59s), including semantic registry, capabilit
 
 [Exact-head CI](https://github.com/tya5/chrona/actions/runs/37988094523) passed every check, including all three PR pytest shards, conformance, newest-Python materializers and derived-ready. The [published coverage correction](https://github.com/tya5/chrona/issues/1270#issuecomment-6088015312) treats row-band/row-rule as alternatives while retaining all emitted contrast findings; focused correction tests: 19 passed, diagnostic ratchet: one passed. The original witness failure and consequent missing-artifact failures are resolved, not waived.
 
-Required release evidence: automatic derived sync, publication of this final review, then successful three-OS pytest/conformance/wheel on the exact published main containing it.
+Release evidence: the exact-main run above passed three-OS pytest, conformance and wheel/smoke, newest-Python materializers and MCP.

@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from chrona.presentation.layout.chip_geometry import chip_padding
+from chrona.presentation.layout.label_chip_measurement import MeasuredLabelChip, measure_label_chip
 from chrona.presentation.layout.label_visual_measurement import resolve_label_visual_advances
 from chrona.presentation.layout.model import geometry_sum
 from chrona.presentation.layout.text import measure_text_width, metric_for_role, wrap_text
@@ -40,6 +41,7 @@ class MeasuredLaneMemberLabel:
     letter_spacing: float
     text_transform: str
     numeric_spacing: str
+    chip_measurement: MeasuredLabelChip | None = None
 
 
 def _candidates(side: str, fallback: tuple[str, ...], preferred: str | None) -> tuple[str, ...]:
@@ -122,16 +124,22 @@ def measure_lane_member_labels(projection: Any, surface_content: Any, *,
             text_height = (float(treatment.font_size) * float(treatment.line_height) * len(lines))
             chip_pad = chip_padding(theme_tokens, label_chip_semantic("memberLabel"),
                                     float(treatment.font_size), text_height)
+            chip_measurement = measure_label_chip(theme_tokens, "memberLabel",
+                text_inline=leading + text_width + trailing, text_block=text_height,
+                font_size=float(treatment.font_size), padding=chip_pad)
+            width = (float(chip_measurement.footprint.inline_size) if chip_measurement is not None
+                     else leading + text_width + trailing + 2 * chip_pad[0])
+            height = (float(chip_measurement.footprint.block_size) if chip_measurement is not None
+                      else text_height + 2 * chip_pad[1])
+            text_inset = (chip_measurement.text_inline_inset if chip_measurement is not None else chip_pad[0])
             labels.append(MeasuredLaneMemberLabel(
                 placement_id, item.object_id, lane_row.lane_id, member_id,
                 item.source_kind, content, candidates, wrap, lines,
-                leading + text_width + trailing + 2 * chip_pad[0],
-                text_height + 2 * chip_pad[1],
-                chip_pad[0] + leading,
+                width, height, text_inset + leading,
                 max(1.0, float(treatment.font_size) * 0.25),
                 visuals, chip_pad, leading, trailing, text_width,
                 treatment.family, int(treatment.weight), float(treatment.font_size),
                 float(treatment.line_height), float(treatment.letter_spacing),
-                treatment.transform, treatment.numeric_spacing,
+                treatment.transform, treatment.numeric_spacing, chip_measurement,
             ))
     return tuple(labels)

@@ -224,8 +224,8 @@ it, and `apply_command` writes a Store below it. A filesystem root is refused (`
 ## 5. Determinism
 
 A result is a pure function of the workspace file bytes, the arguments, the chrona version and the pinned renderer
-versions: no timestamp, duration, process id or host path; locale is `en-US` unless given; system fonts are never
-consulted; every mapping the tool returns is sorted by key (`placements`, `totalFloat`, `detail`), and a result does
+versions: no timestamp, duration, process id or host path; locale is `en-US` unless given; installed fonts are consulted only for a Theme family the workspace's declared fonts do not
+cover (#1281), so a workspace that declares every font it uses is host-independent; every mapping the tool returns is sorted by key (`placements`, `totalFloat`, `detail`), and a result does
 not depend on the hash seed. The SVG bytes equal those of the command's output file. PNG bytes depend on the pinned
 rasterizer of the `render` extra.
 

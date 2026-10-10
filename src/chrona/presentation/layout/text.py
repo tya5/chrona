@@ -5,6 +5,7 @@ from decimal import Decimal
 from typing import Any, Literal
 
 from chrona.presentation.layout.model import Rect, geometry_sum
+from chrona.presentation.model.font_metrics import named_families
 from chrona.presentation.layout.surface_quality import (AnnotationPresentation, CollisionDomain, TextPlacement,
                                                         TextRunPlacement)
 
@@ -228,6 +229,15 @@ def measured_text_bounds(*, inline: float, baseline_block: float, width: float,
                 Decimal(str(height)), Decimal(str(width)))
 
 
+def _resolved_family(stack: str, font_metrics: Any) -> str:
+    """The declared family text, or the face a font stack resolved to when that is not the one the Theme named (#1281)."""
+    named = named_families(stack)
+    resolved = getattr(font_metrics, "family", None)
+    if resolved and (len(named) > 1 or (named and named[0].casefold() != str(resolved).casefold())):
+        return str(resolved)
+    return stack
+
+
 def place_text(*, placement_id: str, source_ref: str, content: str,
                inline: float, baseline_block: float, typography_role: str,
                theme_tokens: Any, font_metrics: Any, overflow: str = "fit",
@@ -252,7 +262,7 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
     caps = small_caps_scale(treatment.transform)
     width = max(measure_text_width(line, font_size=font_size, font_metrics=font_metrics,
                                    letter_spacing=letter_spacing,
-                                   text_transform=treatment.transform if caps is not None else "none",
+                                   text_transform=treatment.transform,
                                    numeric_spacing=treatment.numeric_spacing)
                 for line in (lines or (content,)))
     runs: tuple[tuple[TextRunPlacement, ...], ...] = ()
@@ -275,7 +285,9 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
         placement_id, source_ref, painted_content,
         bounds,
         typography_role, overflow, required,
-        baseline=(inline, baseline_block), lines=resolved_lines, font_family=treatment.family,
+        # A font stack records the face it resolved to (#1281); a single family keeps its declared name.
+        baseline=(inline, baseline_block), lines=resolved_lines,
+        font_family=_resolved_family(treatment.family, font_metrics),
         font_weight=int(treatment.weight), font_size=font_size, line_height=leading,
         letter_spacing=letter_spacing, text_transform=treatment.transform, numeric_spacing=treatment.numeric_spacing,
         orientation=orientation, rotation_degrees=rotation, horizontal_scale=scale,

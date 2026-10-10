@@ -25,6 +25,18 @@ def test_typed_view_reads_current_resolved_theme_roles_only():
     assert tokens.text_treatment("text").font_size == Decimal(14)
 
 
+def test_has_binding_checks_exact_role_property_without_resolving_or_falling_back():
+    theme = _theme()
+    theme["body"]["roles"]["gate"] = {"stroke": "missing-color"}
+    theme["body"]["roles"]["malformed"] = None
+    tokens = ThemeTokenView(theme)
+
+    assert tokens.has_binding("gate", "stroke")
+    assert not tokens.has_binding("gate", "fill")
+    assert not tokens.has_binding("absent", "stroke")
+    assert not tokens.has_binding("malformed", "stroke")
+
+
 def test_draft_numeric_overlay_changes_only_selected_effective_role():
     declared = _theme()
     declared["body"]["values"]["numeric"]["value"] = "tabular"
