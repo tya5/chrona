@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
+from bisect import bisect_left, bisect_right
+from dataclasses import dataclass
 from heapq import heappop, heappush
 from itertools import count
-from math import hypot, isfinite
+from math import hypot, isfinite, nextafter
 
 from chrona.presentation.layout.obstacles import (
     ObstacleRect,
@@ -31,6 +33,50 @@ SparseGraph = tuple[
     tuple[tuple[Edge, ...], ...],
     tuple[tuple[tuple[int, int], tuple[int, float]], ...],
 ]
+
+HistoryEntry = tuple[float, float, float, tuple[Point, Point]]
+
+
+@dataclass(frozen=True, slots=True)
+class _HistoryIndex:
+    """Branch-local completed prefix; the current terminal is not indexed.
+
+    Coordinates select nearby lines, intervals reject distant segments, and
+    the existing exact predicate alone decides intersection. Immutable tuples
+    let straight extensions reuse a prefix without changing sibling branches.
+    """
+
+    horizontal: tuple[HistoryEntry, ...] = ()
+    vertical: tuple[HistoryEntry, ...] = ()
+
+    def add(self, segment: tuple[Point, Point]) -> _HistoryIndex:
+        a, b = segment
+        horizontal = a[1] == b[1]
+        axis = 0 if horizontal else 1
+        entry = (a[1 - axis], min(a[axis], b[axis]),
+                 max(a[axis], b[axis]), segment)
+        entries = self.horizontal if horizontal else self.vertical
+        position = bisect_right(entries, entry)
+        updated = (*entries[:position], entry, *entries[position:])
+        return (type(self)(updated, self.vertical) if horizontal
+                else type(self)(self.horizontal, updated))
+
+    def intersects(self, segment: tuple[Point, Point]) -> bool:
+        a, b = segment
+        for entries, axis in ((self.horizontal, 0), (self.vertical, 1)):
+            # Round the broad phase outwards; never discard an exact hit at
+            # a floating-point boundary. This does not relax the oracle.
+            line_low = nextafter(min(a[1 - axis], b[1 - axis]) - 1e-9, -float("inf"))
+            line_high = nextafter(max(a[1 - axis], b[1 - axis]) + 1e-9, float("inf"))
+            low = nextafter(min(a[axis], b[axis]) - 1e-9, -float("inf"))
+            high = nextafter(max(a[axis], b[axis]) + 1e-9, float("inf"))
+            first = bisect_left(entries, line_low, key=lambda entry: entry[0])
+            last = bisect_right(entries, line_high, key=lambda entry: entry[0])
+            for index in range(first, last):
+                _, start, end, previous = entries[index]
+                if end >= low and start <= high and _history_segments_intersect(segment, previous):
+                    return True
+        return False
 
 
 def _history_segments_intersect(
@@ -305,7 +351,7 @@ def orthogonal_route_candidates(
     # Completed-route callbacks are path-dependent. Only the same canonical
     # prefix can dominate another constrained label; a cheaper different path
     # may fail terminal preparation or whole-route acceptance later.
-    initial = (source, initial_direction, 0, 0.0, (source,))
+    initial = (source, initial_direction, 0, 0.0, (source,), _HistoryIndex())
     histories = {(source,): 0.0}
     weighted_best: dict[tuple[int, int], float] = {(source, initial_direction): 0.0}
     queue: list[tuple[float, ...] | tuple] = []
@@ -324,8 +370,8 @@ def orthogonal_route_candidates(
         ]
         return min(candidates, default=(float("inf"), float("inf")))
 
-    def priority(state: tuple[int, int, int, float, tuple[int, ...]]):
-        node, direction, bends, length, path = state
+    def priority(state: tuple[int, int, int, float, tuple[int, ...], _HistoryIndex]):
+        node, direction, bends, length, path, history = state
         if bend_penalty is None:
             lower_bends, lower_length = lower_bound(node, direction)
             return (bends + lower_bends, length + lower_length,
@@ -346,7 +392,7 @@ def orthogonal_route_candidates(
     while queue:
         entry = heappop(queue)
         state = entry[-1]
-        node, direction, bends, length, path = state
+        node, direction, bends, length, path, history = state
         key = (node, direction)
         if bend_penalty is None:
             if length != histories.get(path):
@@ -383,9 +429,7 @@ def orthogonal_route_candidates(
             if bend_penalty is None and (neighbor, next_direction) not in remaining:
                 continue
             segment = (ordered[node], ordered[neighbor])
-            if any(_history_segments_intersect(segment,
-                    (ordered[path[index_]], ordered[path[index_ + 1]]))
-                    for index_ in range(len(path) - 2)):
+            if history.intersects(segment):
                 continue
             next_bends = bends + int(direction not in (-1, next_direction))
             next_length = length + distance
@@ -406,7 +450,10 @@ def orthogonal_route_candidates(
                 if previous_score is not None and score >= previous_score:
                     continue
                 weighted_best[next_key] = score
-            child = (neighbor, next_direction, next_bends, next_length, next_path)
+            next_history = history
+            if len(path) > 1 and len(next_path) > len(path):
+                next_history = history.add((ordered[path[-2]], ordered[node]))
+            child = (neighbor, next_direction, next_bends, next_length, next_path, next_history)
             heappush(queue, priority(child))
     if not yielded:
         raise RouteSearchFailure(
