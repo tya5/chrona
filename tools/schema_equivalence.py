@@ -575,7 +575,12 @@ def prune_stale(root: Path, base_rev: str, *, deltas_path: Path | None = None) -
             result.removed.append(item)  # a repair: the result already held in the base it was recorded for
             result.proofs[delta_key(item)] = f"after already held at {parent[:8]}, the base it was recorded for"
         elif not _applies(trees(parent), item):
-            result.kept.append((item, f"neither its before nor its after value holds at {parent[:8]}, the base it was recorded for"))
+            result.kept.append((item, f"neither its before nor its after value holds at {parent[:8]}, the base it was recorded for; "
+                               f"inspect {item.subject} {item.pointer or '<file>'} at {parent[:8]} and {item.landing[:8]}, "
+                               "before merging, restate the recorded before/after values to match the actual schema change; "
+                               "this entry is already merged, so manually retire it only after verifying the accepted historical "
+                               "transition and subsequent schema changes. Rewriting a merged entry changes its landing identity "
+                               "and cannot repair its --prune-stale proof"))
         elif not _landed(trees(item.landing), item):
             result.kept.append((item, f"its after value does not hold at the landing commit {item.landing[:8]}"))
         else:
