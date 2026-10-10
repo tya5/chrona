@@ -82,13 +82,23 @@ def check_bounded_axis_cells(scene: dict) -> None:
     bands = [item for key, item in primitives.items() if key.startswith("axis-band-rect:")]
     labels = [item for key, item in primitives.items() if key.startswith("axis-label:")]
     lanes = sorted({(round(band["bounds"]["block"], 3), round(band["bounds"]["blockSize"], 3)) for band in bands})
-    assert len(lanes) == 2  # quarter and month lanes, each band filling exactly its lane
+    assert len(lanes) == 1  # the packaged auto-label tier shares one year-band lane
     assert lanes[0][0] == pytest.approx(axis["block"])
-    assert lanes[1][0] == pytest.approx(lanes[0][0] + lanes[0][1])
-    for label in labels:  # every label's line box is centred in its lane
+    assert lanes[0][1] == pytest.approx(axis["blockSize"])
+    for band in bands:
+        box = band["bounds"]
+        assert box["inlineSize"] > 0 and box["blockSize"] > 0
+        assert box["inline"] >= axis["inline"] - 0.01
+        assert box["inline"] + box["inlineSize"] <= axis["inline"] + axis["inlineSize"] + 0.01
+    for label in labels:  # every label stays inside its completed painted host
         box = label["bounds"]
-        lane = next(lane for lane in lanes if lane[0] - 0.01 <= box["block"] <= lane[0] + lane[1])
-        assert box["block"] - lane[0] == pytest.approx(lane[0] + lane[1] - (box["block"] + box["blockSize"]), abs=0.01)
+        host = primitives[label["hostPlacementId"]]
+        assert host in bands
+        assert box["inline"] >= host["bounds"]["inline"] - 0.01
+        assert box["inline"] + box["inlineSize"] <= host["bounds"]["inline"] + host["bounds"]["inlineSize"] + 0.01
+        lane = (host["bounds"]["block"], host["bounds"]["blockSize"])
+        assert box["block"] >= lane[0] - 0.01
+        assert box["block"] + box["blockSize"] <= lane[0] + lane[1] + 0.01
     by_lane: dict[float, list[dict]] = {}
     for band in bands:
         by_lane.setdefault(round(band["bounds"]["block"], 3), []).append(band["bounds"])
@@ -98,6 +108,17 @@ def check_bounded_axis_cells(scene: dict) -> None:
     assert any(key.startswith("axis-separator:") for key in primitives)
     rule = primitives["axis-rule"]
     assert rule["visualRole"] == "axis-rule" and rule["bounds"]["block"] == pytest.approx(axis["block"] + axis["blockSize"])
+
+
+def check_centered_fixed_axis_labels(scene: dict) -> None:
+    """The fixed quarter/month fixture's centering rule, not an auto-axis policy."""
+    surface = scene["surfaces"][0]
+    primitives = {item["id"]: item for item in surface["primitives"]}
+    for label in (item for key, item in primitives.items() if key.startswith("axis-label:")):
+        host = primitives[label["hostPlacementId"]]["bounds"]
+        box = label["bounds"]
+        assert box["block"] - host["block"] == pytest.approx(
+            host["block"] + host["blockSize"] - (box["block"] + box["blockSize"]), abs=0.01)
 
 
 def check_start_aligned_month_labels(scene: dict) -> None:
