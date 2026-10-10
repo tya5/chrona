@@ -118,6 +118,7 @@ schemas:
       tableColumnScalarFormat: "sha256:032cc0a5d0ec7003e96fdcee9612a8386ad7b210a2384bfec4c9784d73d1332b"
       summaryMetricFormat: "sha256:8175fade1931dc061668e081a3e315d65b1f57ea349abaff0d239cd9b8307e9f"
       summaryArrangement: "sha256:a2c6742fcfa6c52031c2aad95162ec855c26f5cf67bfa210988a0c515f695946"
+      backgroundExtent: "sha256:1719a0427886b43f41f3e03d2225887fbad96e145ba84a9e18667d6134aa85d7"
       dateEndpoint: "sha256:810a101b6fa57c83ae9456e6351bbf4111a4d52930701187df91cdf1011be451"
       anchorEndpoint: "sha256:363fdf1525d49d68653a6782cb42322dc5053687b671c5e541ff9a125fd3c34f"
       annotationBarWidth: "sha256:80c91e191e2141b84d909db19d96a5fae1e69325c89660f09398c2c19910f6e1"

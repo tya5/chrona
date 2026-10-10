@@ -125,6 +125,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     shapes: list[ShapePlacement] = []
     shapes.extend(compose_row_group_backgrounds(
         base=base, rows=rows, groups=groups, theme_tokens=request.theme_tokens,
+        group_presentation=group_batch,
         row_decoration=request.surface_content.row_decoration,
         group_decoration=request.surface_content.group_decoration))
     axis = by_source["timeline-axis"]
@@ -174,7 +175,8 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
                            + (float(final_bounds.block_size - old_bounds.block_size) / 2))
             text = list(translate_group_header_text(tuple(text), group_id=update.source.group_id,
                                                    block_delta=block_delta))
-        shapes = list(replace_group_header_band(tuple(shapes), update))
+        shapes = list(replace_group_header_band(
+            tuple(shapes), update, extent=base.layout_manifest.background_extents.get("groupHeaderBand", "")))
     shapes.extend(compose_group_tabs(
         groups=tuple(groups), theme_tokens=request.theme_tokens,
         tag_column=(base.table_bounds[0], base.group_tag_inline_size) if base.group_tag_inline_size else None))

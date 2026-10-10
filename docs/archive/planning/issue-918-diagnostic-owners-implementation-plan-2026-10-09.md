@@ -2,7 +2,7 @@
 
 Base: published design `e6b02ac2a84f65cf82e0c48821c6482dffbfe89c`.
 Authorities: [design](../../design/issue-918-diagnostic-owners-design-2026-10-09.md),
-[architecture review](../../reviews/current/issue-918-diagnostic-owners-architecture-review-2026-10-09.md),
+[architecture review](../reviews/issue-918-diagnostic-owners-architecture-review-2026-10-09.md),
 and [literal A1–A15 checklist](issue-918-diagnostic-owners-design-plan-2026-10-09.md).
 Product implementation starts only after this plan is published.
 
