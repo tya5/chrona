@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from tools.presentation_contrast import evaluate_committed_scenes, render_markdown, report_document
 
 
@@ -117,6 +119,31 @@ def test_each_row_decoration_alternative_satisfies_coverage_without_ignoring_fin
         finding_roles = {item["finding"]["visualRole"] for item in records}
         assert present in finding_roles
         assert omitted.isdisjoint(finding_roles)
+
+
+@pytest.mark.parametrize("present", ("group-band", "group-header-band", "group-header-strip"))
+def test_each_group_ground_member_satisfies_coverage_and_is_reported(tmp_path, monkeypatch, present):
+    omitted = {"group-band", "group-header-band", "group-header-strip"} - {present}
+    tool = _corpus(tmp_path, monkeypatch, omit_roles=omitted)
+    records = tool.evaluate_committed_scenes(tool.committed_scene_paths(tmp_path), root=tmp_path)
+    assert tool.report_document(records)["corpusErrors"] == []
+    roles = {item["finding"]["visualRole"] for item in records}
+    assert present in roles and omitted.isdisjoint(roles)
+
+
+def test_missing_entire_group_ground_concept_is_a_coverage_error(tmp_path, monkeypatch):
+    tool = _corpus(tmp_path, monkeypatch,
+                   omit_roles={"group-band", "group-header-band", "group-header-strip"})
+    records = tool.evaluate_committed_scenes(tool.committed_scene_paths(tmp_path), root=tmp_path)
+    assert tool.report_document(records)["corpusErrors"] == ["E_PRESENTATION_CONTRAST_DECORATION_WITNESS"]
+
+
+def test_coexisting_group_grounds_are_all_reported(tmp_path, monkeypatch):
+    tool = _corpus(tmp_path, monkeypatch)
+    records = tool.evaluate_committed_scenes(tool.committed_scene_paths(tmp_path), root=tmp_path)
+    assert tool.report_document(records)["corpusErrors"] == []
+    assert {"group-band", "group-header-band", "group-header-strip"} <= {
+        item["finding"]["visualRole"] for item in records}
 
 
 def test_absent_both_row_decoration_alternatives_is_a_coverage_error(tmp_path, monkeypatch):
