@@ -303,13 +303,23 @@ def build_review_projection(project: dict[str, Any], placements: dict[str, dict[
         dates += [v for row in rows for item in row.items for v in (item.actual or {}).values() if isinstance(v, date)]
     start, end = min(dates), max(dates)
     margin = view.window.margin_days
+    if view.window.mode == "selected-planned":
+        # View owns temporal breathing room; schedules remain half-open facts.
+        margin = max(margin, ((end - start).days + 9) // 10, 1)
     if view.window.mode == "explicit":
         start, end = (_date_or_number(value) for value in (view.window.start, view.window.end))
         margin = 0
         if start >= end:
             raise ValueError(f"E_REVIEW_WINDOW: window.start {view.window.start} is not before window.end {view.window.end}")
+    try:
+        window = (date.fromordinal(start.toordinal() - margin),
+                  date.fromordinal(end.toordinal() + margin))
+    except ValueError as error:
+        ids = tuple(item.object_id for item in selected)
+        raise ValueError(f"E_REVIEW_WINDOW: cannot pad selected dates {start}..{end} "
+                         f"by {margin} days within the Date domain; selected objects={ids!r}") from error
     return ReviewProjection(tuple(selected),
-        (date.fromordinal(start.toordinal() - margin), date.fromordinal(end.toordinal() + margin)),
+        window,
         tuple(sorted(unmatched)), tuple("E_ACTUAL_UNMATCHED" for _ in unmatched), rows,
         view.comparison.facets, hierarchy, view.surface,
         _dependency_network_projection(project, selected, view),

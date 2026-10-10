@@ -206,7 +206,10 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
     decisions = {item.source: item for item in allocation.decisions}
     start, end = projection.window
     if not isinstance(start, date) or not isinstance(end, date) or start >= end:
-        raise LayoutError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection/window")
+        ids = tuple(item.object_id for item in projection.items)
+        raise LayoutError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection/window",
+                          detail=f"expected a positive Date window; start={start!r}, end={end!r}; "
+                                 f"selected objects={ids!r}")
     if projection.lane_membership is not None:
         preflight = request.fixed_lane_preflight
         if (preflight is None or preflight.as_of != request.surface_content.as_of
