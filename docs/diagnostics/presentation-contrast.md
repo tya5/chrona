@@ -6,64 +6,64 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 
 | Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors | Warnings |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| actual | `actual` | required | 3.000 | 42 | 282 | 1.000 | 7.583 | 0 | 4 |
+| actual | `actual` | required | 3.000 | 43 | 284 | 1.000 | 7.583 | 0 | 4 |
 | annotation-artwork | `annotation-artwork` | enabled | 1.100 | 3 | 19 | 1.493 | 5.241 | 0 | 0 |
 | annotation-artwork | `annotation-artwork-rods` | enabled | 1.100 | 1 | 12 | 2.262 | 2.262 | 0 | 0 |
 | annotation-border-bottom | `annotation-border-bottom` | enabled | 1.100 | 2 | 3 | 15.434 | 15.434 | 0 | 0 |
 | annotation-border-end | `annotation-border-end` | enabled | 1.100 | 2 | 2 | 15.434 | 15.434 | 0 | 0 |
 | annotation-border-start | `annotation-border-start` | enabled | 1.100 | 2 | 2 | 15.434 | 15.434 | 0 | 0 |
 | annotation-border-top | `annotation-border-top` | enabled | 1.100 | 2 | 2 | 15.434 | 15.434 | 0 | 0 |
-| annotation-box | `annotation-note-box` | enabled | 1.100 | 14 | 34 | 1.000 | 1.435 | 0 | 1 |
+| annotation-box | `annotation-note-box` | enabled | 1.100 | 15 | 37 | 1.000 | 1.435 | 0 | 1 |
 | annotation-heading | `annotation-heading` | required | 4.500 | 3 | 9 | 4.747 | 15.382 | 0 | 0 |
-| annotation-kind-accent | `annotation-kind-accent` | enabled | 1.100 | 5 | 19 | 4.837 | 6.720 | 0 | 0 |
+| annotation-kind-accent | `annotation-kind-accent` | enabled | 1.100 | 6 | 22 | 4.837 | 6.720 | 0 | 0 |
 | annotation-kind-bar | `annotation-kind-bar` | enabled | 1.100 | 4 | 9 | 5.258 | 6.833 | 0 | 0 |
-| annotation-kind-label | `annotation-kind-label` | required | 4.500 | 8 | 21 | 4.747 | 7.583 | 0 | 0 |
+| annotation-kind-label | `annotation-kind-label` | required | 4.500 | 9 | 24 | 4.747 | 7.583 | 0 | 0 |
 | annotation-kind-secondary | `annotation-kind-secondary` | required | 4.500 | 3 | 6 | 7.583 | 7.583 | 0 | 0 |
 | annotation-kind-stamp | `annotation-kind-stamp` | enabled | 1.100 | 5 | 97 | 5.675 | 6.833 | 0 | 0 |
 | annotation-list-text | `text` | required | 4.500 | 2 | 5 | 11.935 | 11.935 | 0 | 0 |
 | annotation-text | `annotation-arrow-text` | required | 4.500 | 1 | 2 | 14.191 | 14.191 | 0 | 0 |
 | annotation-text | `annotation-callout-text` | required | 4.500 | 5 | 6 | 14.191 | 15.434 | 0 | 0 |
 | annotation-text | `annotation-highlight-text` | required | 4.500 | 2 | 2 | 16.268 | 16.698 | 0 | 0 |
-| annotation-text | `annotation-note-text` | required | 4.500 | 14 | 34 | 5.859 | 13.973 | 0 | 0 |
-| as-of-label | `as-of-label` | required | 4.500 | 5 | 5 | 3.717 | 5.112 | 0 | 1 |
+| annotation-text | `annotation-note-text` | required | 4.500 | 15 | 37 | 5.859 | 13.973 | 0 | 0 |
+| as-of-label | `as-of-label` | required | 4.500 | 6 | 6 | 3.717 | 4.929 | 0 | 2 |
 | as-of-label | `text` | required | 4.500 | 35 | 35 | 9.223 | 14.573 | 0 | 0 |
-| axis-band | `axis-band-decoration` | enabled | 1.100 | 44 | 118 | 1.053 | 1.579 | 0 | 4 |
-| axis-band | `axis-band-decoration2` | absent | 1.100 | 5 | 0 | — | — | 0 | 0 |
+| axis-band | `axis-band-decoration` | enabled | 1.100 | 45 | 121 | 1.053 | 1.579 | 0 | 4 |
+| axis-band | `axis-band-decoration2` | absent | 1.100 | 6 | 0 | — | — | 0 | 0 |
 | axis-band | `axis-band-decoration2` | enabled | 1.100 | 5 | 33 | 1.146 | 1.154 | 0 | 0 |
-| axis-label | `axis-label2` | required | 4.500 | 10 | 34 | 5.727 | 10.019 | 0 | 0 |
+| axis-label | `axis-label2` | required | 4.500 | 11 | 37 | 5.727 | 10.019 | 0 | 0 |
 | axis-label | `axis-label3` | required | 4.500 | 10 | 87 | 5.448 | 8.683 | 0 | 0 |
 | axis-label | `text` | required | 4.500 | 34 | 289 | 8.629 | 10.306 | 0 | 0 |
 | calendar-closed | `calendar-closed` | absent | 1.100 | 1 | 0 | — | — | 0 | 0 |
-| calendar-closed | `calendar-closed` | enabled | 1.100 | 43 | 1858 | 1.050 | 1.414 | 0 | 234 |
+| calendar-closed | `calendar-closed` | enabled | 1.100 | 44 | 1880 | 1.050 | 1.414 | 0 | 256 |
 | calendar-exception | `calendar-exception` | enabled | 1.100 | 5 | 20 | 1.216 | 1.270 | 0 | 0 |
 | finish-delta | `variance-ahead` | deemphasized | 3.000 | 1 | 3 | 7.708 | 7.708 | 0 | 0 |
 | finish-delta | `variance-behind` | required | 4.500 | 26 | 54 | 4.562 | 5.571 | 0 | 0 |
 | finish-delta | `variance-on-track` | required | 4.500 | 2 | 5 | 5.692 | 5.692 | 0 | 0 |
-| group-decoration | `group-band` | absent | 1.100 | 11 | 0 | — | — | 0 | 0 |
+| group-decoration | `group-band` | absent | 1.100 | 12 | 0 | — | — | 0 | 0 |
 | group-decoration | `group-band` | enabled | 1.100 | 32 | 96 | 1.116 | 1.116 | 0 | 0 |
 | group-detail | `text` | required | 4.500 | 24 | 72 | 11.935 | 16.268 | 0 | 0 |
 | group-header | `group-gloss` | required | 4.500 | 1 | 3 | 9.402 | 9.402 | 0 | 0 |
 | group-header | `group-header` | required | 4.500 | 1 | 12 | 7.627 | 7.627 | 0 | 0 |
 | group-header | `group-ordinal` | required | 4.500 | 3 | 15 | 6.982 | 7.583 | 0 | 0 |
-| group-header | `text` | required | 4.500 | 32 | 122 | 6.703 | 16.268 | 0 | 0 |
+| group-header | `text` | required | 4.500 | 33 | 128 | 6.703 | 16.268 | 0 | 0 |
 | group-header-band | `group-header-band` | absent | 1.100 | 6 | 0 | — | — | 0 | 0 |
-| group-header-band | `group-header-band` | enabled | 1.100 | 4 | 24 | 1.119 | 1.194 | 0 | 0 |
+| group-header-band | `group-header-band` | enabled | 1.100 | 5 | 30 | 1.119 | 1.183 | 0 | 0 |
 | group-tab | `group-tab` | enabled | 1.100 | 3 | 30 | 1.119 | 6.982 | 0 | 0 |
 | kicker-text | `kicker` | required | 4.500 | 3 | 3 | 9.106 | 15.260 | 0 | 0 |
-| legend-label | `legend` | required | 4.500 | 6 | 40 | 5.448 | 13.415 | 0 | 0 |
+| legend-label | `legend` | required | 4.500 | 7 | 48 | 5.448 | 7.557 | 0 | 0 |
 | legend-label | `text` | required | 4.500 | 32 | 108 | 10.019 | 16.268 | 0 | 0 |
-| legend-swatch | `actual` | required | 3.000 | 37 | 37 | 4.747 | 16.268 | 0 | 0 |
-| legend-swatch | `calendar-closed` | enabled | 1.100 | 6 | 6 | 1.050 | 1.297 | 0 | 2 |
-| legend-swatch | `calendar-exception` | enabled | 1.100 | 4 | 4 | 1.216 | 1.255 | 0 | 0 |
-| legend-swatch | `gate` | required | 3.000 | 5 | 5 | 1.539 | 6.667 | 0 | 1 |
-| legend-swatch | `missing-actual` | required | 3.000 | 6 | 10 | 1.000 | 5.227 | 0 | 2 |
+| legend-swatch | `actual` | required | 3.000 | 38 | 38 | 4.747 | 16.268 | 0 | 0 |
+| legend-swatch | `calendar-closed` | enabled | 1.100 | 7 | 7 | 1.050 | 1.134 | 0 | 3 |
+| legend-swatch | `calendar-exception` | enabled | 1.100 | 5 | 5 | 1.216 | 1.240 | 0 | 0 |
+| legend-swatch | `gate` | required | 3.000 | 6 | 6 | 1.539 | 7.886 | 0 | 1 |
+| legend-swatch | `missing-actual` | required | 3.000 | 7 | 11 | 1.000 | 5.817 | 0 | 2 |
 | legend-swatch | `period-band` | enabled | 1.100 | 1 | 3 | 1.163 | 2.217 | 0 | 0 |
-| legend-swatch | `planned` | required | 3.000 | 38 | 65 | 4.637 | 16.268 | 0 | 0 |
-| legend-swatch | `snapshot` | required | 3.000 | 6 | 6 | 2.594 | 5.663 | 0 | 1 |
+| legend-swatch | `planned` | required | 3.000 | 39 | 66 | 4.637 | 16.268 | 0 | 0 |
+| legend-swatch | `snapshot` | required | 3.000 | 7 | 7 | 2.594 | 5.817 | 0 | 1 |
 | member-label | `member-label-inside-planned` | required | 4.500 | 19 | 19 | 4.651 | 5.727 | 0 | 0 |
 | member-label | `text` | required | 4.500 | 35 | 342 | 10.019 | 14.573 | 0 | 0 |
 | milestone-digest-entry | `text` | required | 4.500 | 24 | 48 | 11.935 | 16.268 | 0 | 0 |
-| missingActual | `missing-actual` | required | 3.000 | 34 | 44 | 1.491 | 13.556 | 0 | 3 |
+| missingActual | `missing-actual` | required | 3.000 | 35 | 49 | 1.491 | 13.556 | 0 | 3 |
 | network-node | `network-node` | required | 3.000 | 1 | 16 | 17.747 | 17.747 | 0 | 0 |
 | note-index | `note-index` | required | 4.500 | 2 | 4 | 6.157 | 6.463 | 0 | 0 |
 | observation-cell | `text` | required | 4.500 | 24 | 72 | 11.935 | 16.268 | 0 | 0 |
@@ -72,16 +72,16 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | observation-source | `text` | required | 4.500 | 24 | 48 | 11.935 | 16.268 | 0 | 0 |
 | period-band | `period-band` | enabled | 1.100 | 9 | 15 | 1.000 | 1.337 | 0 | 1 |
 | period-label | `period-label` | required | 4.500 | 9 | 9 | 1.692 | 10.661 | 0 | 3 |
-| planned | `gate` | required | 3.000 | 5 | 40 | 1.000 | 6.667 | 0 | 10 |
-| planned | `planned` | required | 3.000 | 44 | 530 | 1.163 | 13.238 | 0 | 2 |
+| planned | `gate` | required | 3.000 | 6 | 46 | 1.000 | 6.667 | 0 | 10 |
+| planned | `planned` | required | 3.000 | 45 | 550 | 1.163 | 13.238 | 0 | 2 |
 | progress-fill | `progress-fill` | required | 3.000 | 30 | 94 | 3.216 | 4.789 | 0 | 0 |
 | project-note | `text` | required | 4.500 | 28 | 62 | 10.019 | 16.268 | 0 | 0 |
 | relation-label | `text` | required | 4.500 | 16 | 107 | 11.934 | 14.573 | 0 | 0 |
-| row-decoration | `row-band` | absent | 1.100 | 11 | 0 | — | — | 0 | 0 |
+| row-decoration | `row-band` | absent | 1.100 | 12 | 0 | — | — | 0 | 0 |
 | row-decoration | `row-band` | enabled | 1.100 | 14 | 56 | 1.000 | 1.116 | 0 | 4 |
-| slot-heading | `slot-heading` | required | 4.500 | 6 | 6 | 5.448 | 7.886 | 0 | 0 |
+| slot-heading | `slot-heading` | required | 4.500 | 7 | 7 | 5.448 | 6.667 | 0 | 0 |
 | snapshot | `snapshot` | required | 3.000 | 8 | 48 | 2.469 | 6.091 | 0 | 6 |
-| subtitle-text | `subtitle` | required | 4.500 | 5 | 5 | 4.747 | 6.667 | 0 | 0 |
+| subtitle-text | `subtitle` | required | 4.500 | 6 | 6 | 4.747 | 6.058 | 0 | 0 |
 | subtitle-text | `text` | required | 4.500 | 1 | 1 | 16.268 | 16.268 | 0 | 0 |
 | summary-bar | `summary-bar` | required | 3.000 | 2 | 2 | 5.817 | 6.712 | 0 | 0 |
 | summary-caption | `summary-caption` | required | 4.500 | 1 | 1 | 15.382 | 15.382 | 0 | 0 |
@@ -91,15 +91,15 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | summary-metric | `text` | required | 4.500 | 1 | 1 | 16.354 | 16.354 | 0 | 0 |
 | summary-unit | `summary-unit` | required | 4.500 | 1 | 1 | 6.720 | 6.720 | 0 | 0 |
 | table-cell | `missing-actual-cell` | required | 4.500 | 1 | 1 | 5.448 | 5.448 | 0 | 0 |
-| table-cell | `table-cell-secondary` | required | 4.500 | 6 | 138 | 5.184 | 7.149 | 0 | 0 |
-| table-cell | `text` | required | 4.500 | 44 | 866 | 8.683 | 16.268 | 0 | 0 |
-| table-cell | `variance-ahead` | deemphasized | 3.000 | 6 | 18 | 4.312 | 7.940 | 0 | 0 |
+| table-cell | `table-cell-secondary` | required | 4.500 | 7 | 164 | 5.184 | 6.959 | 0 | 0 |
+| table-cell | `text` | required | 4.500 | 45 | 916 | 8.683 | 16.268 | 0 | 0 |
+| table-cell | `variance-ahead` | deemphasized | 3.000 | 7 | 20 | 4.312 | 6.357 | 0 | 0 |
 | table-cell | `variance-behind` | required | 4.500 | 11 | 48 | 5.022 | 5.669 | 0 | 0 |
 | table-cell | `variance-on-track` | required | 4.500 | 8 | 24 | 5.184 | 7.032 | 0 | 0 |
-| table-column-label | `tableColumnLabel` | required | 4.500 | 5 | 15 | 5.184 | 6.667 | 0 | 0 |
+| table-column-label | `tableColumnLabel` | required | 4.500 | 6 | 18 | 5.184 | 6.058 | 0 | 0 |
 | table-column-label | `text` | required | 4.500 | 39 | 69 | 10.019 | 16.268 | 0 | 0 |
 | title-text | `heading` | required | 4.500 | 4 | 4 | 7.959 | 14.219 | 0 | 0 |
-| title-text | `text` | required | 4.500 | 41 | 57 | 10.019 | 16.268 | 0 | 0 |
+| title-text | `text` | required | 4.500 | 42 | 58 | 10.019 | 16.268 | 0 | 0 |
 
 ## Per-primitive grounds
 
@@ -233,6 +233,191 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/aster-ssd/generated/overview.scene.json` | `cell:security-exit:Work package / gate` | `text` | 77.186, 256.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/aster-ssd/generated/overview.scene.json` | `column:Work package / gate` | `text` | 91.655, 78.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/aster-ssd/generated/overview.scene.json` | `title` | `text` | 800.000, 42.456 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `actual:target-b:target-b` | `actual` | 481.921, 164.752 | `canvas` | canvas | `#FFFFFF` | stroke | 17.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `actual:yuya:yuya` | `actual` | 509.224, 186.606 | `calendar-closed:2026-10-04` | flat | `#F4F6F9` | fill | 16.392 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-box:station-note` | `annotation-note-box` | 1447.000, 567.263 | `canvas` | canvas | `#FFFFFF` | fill | 1.124 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-box:tvac-note` | `annotation-note-box` | 1447.000, 461.505 | `canvas` | canvas | `#FFFFFF` | fill | 1.124 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-box:window-note` | `annotation-note-box` | 1447.000, 202.967 | `canvas` | canvas | `#FFFFFF` | fill | 1.124 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-border:station-note:start` | `annotation-kind-accent` | 1323.500, 567.263 | `annotation-box:station-note` | flat | `#EEF2F7` | fill | 5.175 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-border:tvac-note:start` | `annotation-kind-accent` | 1323.500, 461.505 | `annotation-box:tvac-note` | flat | `#EEF2F7` | fill | 4.837 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-border:window-note:start` | `annotation-kind-accent` | 1323.500, 202.967 | `annotation-box:window-note` | flat | `#EEF2F7` | fill | 5.175 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-kind-text:station-note:0` | `annotation-kind-label` | 1381.014, 550.588 | `annotation-box:station-note` | flat | `#EEF2F7` | fill | 5.175 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-kind-text:tvac-note:0` | `annotation-kind-label` | 1389.136, 444.830 | `annotation-box:tvac-note` | flat | `#EEF2F7` | fill | 4.837 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-kind-text:window-note:0` | `annotation-kind-label` | 1380.289, 186.292 | `annotation-box:window-note` | flat | `#EEF2F7` | fill | 5.175 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-text:station-note` | `annotation-note-text` | 1448.148, 573.563 | `annotation-box:station-note` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-text:tvac-note` | `annotation-note-text` | 1440.075, 467.805 | `annotation-box:tvac-note` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-text:window-note` | `annotation-note-text` | 1431.185, 209.267 | `annotation-box:window-note` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `as-of-label` | `as-of-label` | 569.289, 828.125 | `chip:as-of-label` | flat | `#B8761F` | fill | 3.717 | 4.500 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 636.526, 96.425 | `canvas` | canvas | `#FFFFFF` | fill | 1.124 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-band-rect:0:1` | `axis-band-decoration` | 973.368, 96.425 | `canvas` | canvas | `#FFFFFF` | fill | 1.124 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-band-rect:0:2` | `axis-band-decoration` | 1222.842, 96.425 | `canvas` | canvas | `#FFFFFF` | fill | 1.124 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-label:2:0` | `axis-label2` | 640.276, 96.425 | `axis-band-rect:0:0` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-label:2:1` | `axis-label2` | 973.368, 96.425 | `axis-band-rect:0:1` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-label:2:2` | `axis-label2` | 1219.092, 96.425 | `axis-band-rect:0:2` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-10-03` | `calendar-closed` | 498.303, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-10-04` | `calendar-closed` | 509.224, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-10-10` | `calendar-closed` | 574.750, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-10-11` | `calendar-closed` | 585.671, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-10-17` | `calendar-closed` | 651.197, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-10-18` | `calendar-closed` | 662.118, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-10-24` | `calendar-closed` | 727.645, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-10-25` | `calendar-closed` | 738.566, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-10-31` | `calendar-closed` | 804.092, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-11-01` | `calendar-closed` | 815.013, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-11-07` | `calendar-closed` | 880.539, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-11-08` | `calendar-closed` | 891.461, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-11-14` | `calendar-closed` | 956.987, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-11-15` | `calendar-closed` | 967.908, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-11-21` | `calendar-closed` | 1033.434, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-11-22` | `calendar-closed` | 1044.355, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-11-28` | `calendar-closed` | 1109.882, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-11-29` | `calendar-closed` | 1120.803, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-12-05` | `calendar-closed` | 1186.329, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-12-06` | `calendar-closed` | 1197.250, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-12-12` | `calendar-closed` | 1262.776, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-12-13` | `calendar-closed` | 1273.697, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `group-header:m0` | `text` | 116.704, 139.425 | `group-header-band:m0` | flat | `#E8EFFA` | fill | 15.345 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `group-header:m1` | `text` | 139.426, 290.548 | `group-header-band:m1` | flat | `#E4F4EE` | fill | 15.612 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `group-header:m2` | `text` | 98.380, 441.671 | `group-header-band:m2` | flat | `#FBF0E1` | fill | 15.763 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `group-header:m3` | `text` | 102.304, 549.087 | `group-header-band:m3` | flat | `#F1E9F8` | fill | 15.001 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `group-header:m4` | `text` | 82.624, 656.502 | `group-header-band:m4` | flat | `#FDEBEA` | fill | 15.421 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `group-header:rc` | `text` | 94.978, 763.917 | `group-header-band:rc` | flat | `#D2E9F2` | fill | 14.094 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `group-header-band:m0` | `group-header-band` | 668.000, 139.425 | `canvas` | canvas | `#FFFFFF` | fill | 1.157 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `group-header-band:m1` | `group-header-band` | 668.000, 290.548 | `canvas` | canvas | `#FFFFFF` | fill | 1.137 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `group-header-band:m2` | `group-header-band` | 668.000, 441.671 | `canvas` | canvas | `#FFFFFF` | fill | 1.126 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `group-header-band:m3` | `group-header-band` | 668.000, 549.087 | `canvas` | canvas | `#FFFFFF` | fill | 1.183 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `group-header-band:m4` | `group-header-band` | 668.000, 656.502 | `canvas` | canvas | `#FFFFFF` | fill | 1.151 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `group-header-band:rc` | `group-header-band` | 668.000, 763.917 | `canvas` | canvas | `#FFFFFF` | fill | 1.259 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend:actual` | `legend` | 297.386, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend:calendar-closed` | `legend` | 704.248, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend:calendar-exception` | `legend` | 859.420, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend:dependency` | `legend` | 1001.542, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend:milestone` | `legend` | 590.014, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend:missing-actual` | `legend` | 450.914, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend:planned` | `legend` | 191.678, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend:snapshot` | `legend` | 79.502, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend-swatch:actual` | `actual` | 263.352, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend-swatch:calendar-closed` | `calendar-closed` | 639.620, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend-swatch:calendar-exception` | `calendar-exception` | 788.876, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 1.240 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend-swatch:milestone:part0` | `gate` | 565.408, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 340.420, 858.700 | `canvas` | canvas | `#FFFFFF` | stroke | 5.817 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend-swatch:planned` | `planned` | 129.004, 858.700 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend-swatch:snapshot` | `snapshot` | 28.000, 858.700 | `canvas` | canvas | `#FFFFFF` | stroke | 5.817 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `missing-actual:canvas-fit:canvas-fit` | `missing-actual` | 558.368, 309.395 | `planned:canvas-fit:canvas-fit` | flat | `#C7D6F3` | stroke | 3.973 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `missing-actual:flow-bugs:flow-bugs` | `missing-actual` | 536.526, 331.249 | `planned:flow-bugs:flow-bugs` | flat | `#C7D6F3` | stroke | 3.973 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `missing-actual:marquee:marquee` | `missing-actual` | 547.447, 223.833 | `planned:marquee:marquee` | flat | `#C7D6F3` | stroke | 3.973 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `missing-actual:sunday:sunday` | `missing-actual` | 558.368, 245.687 | `planned:sunday:sunday` | flat | `#C7D6F3` | stroke | 3.973 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `missing-actual:titlecard:titlecard` | `missing-actual` | 525.605, 201.980 | `planned:titlecard:titlecard` | flat | `#C7D6F3` | stroke | 3.973 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:m0-gate:m0-gate:part0` | `gate` | 678.500, 269.621 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:m1-gate:m1-gate:part0` | `gate` | 754.947, 420.744 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:m2-gate:m2-gate:part0` | `gate` | 907.842, 528.160 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:m3-gate:m3-gate:part0` | `gate` | 984.289, 635.575 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:m4-gate:m4-gate:part0` | `gate` | 1213.632, 742.990 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:rc-gate:rc-gate:part0` | `gate` | 1279.158, 806.698 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:ai-design:ai-design` | `planned` | 984.289, 697.203 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:canvas-fit:canvas-fit` | `planned` | 558.368, 309.395 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:defaults:defaults` | `planned` | 864.158, 589.787 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:docs-ci:docs-ci` | `planned` | 765.868, 567.933 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:errors:errors` | `planned` | 907.842, 611.641 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:flow-bugs:flow-bugs` | `planned` | 536.526, 331.249 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:io:io` | `planned` | 995.211, 719.057 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:japanese:japanese` | `planned` | 842.316, 504.226 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:legend-warning:legend-warning` | `planned` | 634.816, 353.103 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:marquee:marquee` | `planned` | 547.447, 223.833 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:presets:presets` | `planned` | 907.842, 675.349 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:rerun:rerun` | `planned` | 1213.632, 782.764 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:route-bound:route-bound` | `planned` | 689.421, 460.518 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:rows-headers:rows-headers` | `planned` | 602.053, 374.957 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:scene-checks:scene-checks` | `planned` | 689.421, 396.810 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:sunday:sunday` | `planned` | 558.368, 245.687 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:tall-canvas:tall-canvas` | `planned` | 754.947, 482.372 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:target-b:target-b` | `planned` | 481.921, 158.272 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:titlecard:titlecard` | `planned` | 525.605, 201.980 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:yuya:yuya` | `planned` | 514.684, 180.126 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `slot-heading:annotations` | `slot-heading` | 1340.541, 107.425 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `subtitle` | `subtitle` | 371.412, 66.037 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:ai-design:Lane` | `table-cell-secondary` | 343.224, 699.283 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:canvas-fit:Lane` | `table-cell-secondary` | 343.224, 311.475 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:defaults:Lane` | `table-cell-secondary` | 334.691, 591.867 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:docs-ci:Lane` | `table-cell-secondary` | 334.691, 570.013 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:errors:Lane` | `table-cell-secondary` | 334.754, 613.721 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:flow-bugs:Lane` | `table-cell-secondary` | 334.754, 333.329 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:io:Lane` | `table-cell-secondary` | 334.754, 721.137 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:japanese:Lane` | `table-cell-secondary` | 334.754, 506.306 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:legend-warning:Lane` | `table-cell-secondary` | 334.754, 355.183 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m0-gate:Lane` | `table-cell-secondary` | 336.991, 269.621 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m1-gate:Lane` | `table-cell-secondary` | 343.224, 420.744 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m2-gate:Lane` | `table-cell-secondary` | 343.224, 528.160 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m3-gate:Lane` | `table-cell-secondary` | 343.224, 635.575 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m4-gate:Lane` | `table-cell-secondary` | 343.224, 742.990 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:marquee:Lane` | `table-cell-secondary` | 343.224, 225.913 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:presets:Lane` | `table-cell-secondary` | 343.224, 677.429 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rc-gate:Lane` | `table-cell-secondary` | 336.991, 806.698 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rerun:Lane` | `table-cell-secondary` | 343.224, 784.844 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:route-bound:Lane` | `table-cell-secondary` | 334.691, 462.598 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rows-headers:Lane` | `table-cell-secondary` | 334.691, 377.037 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:scene-checks:Lane` | `table-cell-secondary` | 334.691, 398.890 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:sunday:Lane` | `table-cell-secondary` | 343.224, 247.767 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:tall-canvas:Lane` | `table-cell-secondary` | 334.691, 484.452 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:target-b:Lane` | `table-cell-secondary` | 343.224, 160.352 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:titlecard:Lane` | `table-cell-secondary` | 343.224, 204.060 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:yuya:Lane` | `table-cell-secondary` | 343.224, 182.206 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:ai-design:Work item` | `text` | 95.588, 699.283 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:ai-design:Δ finish` | `text` | 437.500, 699.283 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:canvas-fit:Work item` | `text` | 117.562, 311.475 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:canvas-fit:Δ finish` | `text` | 431.500, 311.475 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:defaults:Work item` | `text` | 123.075, 591.867 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:defaults:Δ finish` | `text` | 437.500, 591.867 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:docs-ci:Work item` | `text` | 125.812, 570.013 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:docs-ci:Δ finish` | `text` | 437.500, 570.013 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:errors:Work item` | `text` | 129.787, 613.721 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:errors:Δ finish` | `text` | 437.500, 613.721 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:flow-bugs:Work item` | `text` | 144.850, 333.329 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:flow-bugs:Δ finish` | `text` | 431.500, 333.329 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:io:Work item` | `text` | 122.194, 721.137 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:io:Δ finish` | `text` | 437.500, 721.137 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:japanese:Work item` | `text` | 129.844, 506.306 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:japanese:Δ finish` | `text` | 437.500, 506.306 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:legend-warning:Work item` | `text` | 122.269, 355.183 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:legend-warning:Δ finish` | `text` | 437.500, 355.183 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m0-gate:Work item` | `text` | 89.194, 269.621 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m0-gate:Δ finish` | `text` | 437.500, 269.621 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m1-gate:Work item` | `text` | 97.631, 420.744 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m1-gate:Δ finish` | `text` | 437.500, 420.744 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m2-gate:Work item` | `text` | 110.106, 528.160 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m2-gate:Δ finish` | `text` | 437.500, 528.160 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m3-gate:Work item` | `text` | 137.263, 635.575 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m3-gate:Δ finish` | `text` | 437.500, 635.575 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m4-gate:Work item` | `text` | 124.575, 742.990 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m4-gate:Δ finish` | `text` | 437.500, 742.990 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:marquee:Work item` | `text` | 85.300, 225.913 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:marquee:Δ finish` | `text` | 431.500, 225.913 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:presets:Work item` | `text` | 105.213, 677.429 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:presets:Δ finish` | `text` | 437.500, 677.429 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rc-gate:Work item` | `text` | 89.156, 806.698 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rc-gate:Δ finish` | `text` | 437.500, 806.698 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rerun:Work item` | `text` | 97.463, 784.844 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rerun:Δ finish` | `text` | 437.500, 784.844 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:route-bound:Work item` | `text` | 124.400, 462.598 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:route-bound:Δ finish` | `text` | 437.500, 462.598 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rows-headers:Work item` | `text` | 155.413, 377.037 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rows-headers:Δ finish` | `text` | 437.500, 377.037 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:scene-checks:Work item` | `text` | 122.331, 398.890 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:scene-checks:Δ finish` | `text` | 437.500, 398.890 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:sunday:Work item` | `text` | 95.831, 247.767 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:sunday:Δ finish` | `text` | 431.500, 247.767 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:tall-canvas:Work item` | `text` | 126.469, 484.452 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:tall-canvas:Δ finish` | `text` | 437.500, 484.452 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:target-b:Work item` | `text` | 80.738, 160.352 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:titlecard:Work item` | `text` | 86.062, 204.060 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:titlecard:Δ finish` | `text` | 431.500, 204.060 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:yuya:Work item` | `text` | 71.350, 182.206 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:target-b:Δ finish` | `variance-ahead` | 428.356, 160.352 | `canvas` | canvas | `#FFFFFF` | fill | 4.312 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:yuya:Δ finish` | `variance-ahead` | 428.356, 182.206 | `canvas` | canvas | `#FFFFFF` | fill | 4.312 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `column:Lane` | `tableColumnLabel` | 333.610, 93.400 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `column:Work item` | `tableColumnLabel` | 58.250, 93.400 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `column:Δ finish` | `tableColumnLabel` | 415.313, 93.400 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `title` | `text` | 172.914, 43.818 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `actual:evb-arrival:evb-arrival` | `actual` | 1050.112, 408.800 | `planned:evb-arrival:evb-arrival` | flat | `#FF7A1A` | stroke | 7.583 | 3.000 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `actual:firmware:firmware` | `actual` | 602.048, 244.800 | `planned:firmware:firmware` | flat | `#FF7A1A` | stroke | 7.583 | 3.000 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `actual:performance:performance` | `actual` | 1110.907, 480.800 | `planned:performance:performance` | flat | `#FF7A1A` | stroke | 7.583 | 3.000 | info |
@@ -6870,6 +7055,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8): a
 | Theme | Scenes | Warnings | Errors |
 | --- | ---: | ---: | ---: |
 | `axis-color-scales` | 2 | 0 | 0 |
+| `chrona-roadmap` | 1 | 24 | 0 |
 | `group-header-runs` | 1 | 0 | 0 |
 | `marquee` | 1 | 86 | 0 |
 | `sunday` | 1 | 12 | 0 |
@@ -6882,4 +7068,4 @@ Contrast constraints are an opt-in design option (Specification 46 section 8): a
 Every non-exclusive decoration role is enabled in committed Scene evidence; group-band or group-header-band supplies the group concept, and row-band or row-rule supplies the row concept when there are no corpus errors.
 
 
-Findings: 6791; errors: 0; warnings: 279.
+Findings: 6979; errors: 0; warnings: 303.
