@@ -2,7 +2,8 @@
 
 # Issue #1296 — selected-planned window acceptance
 
-Prepared implementation: `d0766a07ca2c50aac7044e39bd327792cef3e5c1`, base `8388f8158da881a3bb1c2d93f0b175a7e3cc0a07`.
+Prepared implementation: `d0766a07ca2c50aac7044e39bd327792cef3e5c1`, adopting
+ready base `4f4ee94ccc21c8d3c85021a1dc50a931d068e044` via `db0eb546`.
 Authority: [current design and plan](https://github.com/tya5/chrona/issues/1296#issuecomment-6094171095).
 Independent architecture/code review found no layer breach. View owns padding;
 Core marks, explicit windows and selected-comparison behavior are unchanged.
@@ -28,6 +29,8 @@ None. Local criteria do not substitute for the required release gate.
 
 Model suite: 471 passed (25.42s). Layout allocation/natural geometry/Scene suite:
 86 passed (7.85s). These are focused checks, not a full-suite claim.
+After adopting #1214, window/model/render and coupled-flow tests: 22 passed
+(4.47s). The subsequent bot adoption changes no product or test bytes.
 Prepared WIP has no PR yet; earlier board publications retain priority.
 Required before closure: fresh current-base corpus count table and PR checks,
 automatic derived publication, and exact-main full release containing this review.
