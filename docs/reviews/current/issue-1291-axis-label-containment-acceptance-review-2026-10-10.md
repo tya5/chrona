@@ -2,9 +2,11 @@
 
 # Issue #1291 — axis label containment acceptance
 
-Prepared implementation `957bc641` includes measurement prerequisite
-`fb77feec`; integration `972a58c5` adopts ready main
-`51bc172e746b878754afcb9209947d96e3bf4979` (#1285 small caps).
+Prepared implementation `957bc641`; ordinary integration `9a00b3d3` and
+generated-only adoption `edc2d4a4` include ready main
+`ddbf4cebfa34cf558edc38746222a7a8b4a41332` (#1281 fonts / #1286 chips).
+The shared measurement prerequisite is now on main; this slice adds no
+redundant `text.py` correction.
 [Design and architecture authority](https://github.com/tya5/chrona/issues/1291#issuecomment-6093419760).
 Local evidence only; no PR, current-corpus snapshot or exact-main release yet.
 
@@ -20,7 +22,7 @@ Local evidence only; no PR, current-corpus snapshot or exact-main release yet.
 | 1 | A test renders a window whose last band segment is narrower than its label. It asserts from the Scene that every axis-label primitive's box lies inside its band segment and inside the plot's inline extent. | met | [Synthetic Scene/SVG end-edge case](../../../tests/integration/test_axis_band_label_containment.py): surviving labels fit their own bands/plot; truncated edge is absent with the thinning diagnostic. | — |
 | 2 | The same test at the plot start (window begins a few days before a quarter ends). | met | [Parameterized start-edge case](../../../tests/integration/test_axis_band_label_containment.py). | — |
 | 3 | No canvas growth for this case: the SVG width equals the requested viewport inline size. | met | [Both real SVG roots](../../../tests/integration/test_axis_band_label_containment.py) remain 1600px. | — |
-| 4 | Existing axis tests pass. Corpus diffs are listed in the PR. | not met | Expanded axis/text suite: 190 passed (18.18s); [Scene projection/axis suite](../../../tests/unit/chrona/presentation/scene/test_axis_secondary.py): 122 passed (8.30s). Fresh whole-corpus PR diff is still required. | — |
+| 4 | Existing axis tests pass. Corpus diffs are listed in the PR. | not met | Latest [axis/index/geometry/text/Scene/edge/font/transform batch](../../../tests/integration/test_axis_band_label_containment.py): 308 passed (32.51s) on `9a00b3d3`; the ready-main adoption changes no source/schema/test bytes. Fresh whole-corpus PR diff is still required. | — |
 | 5 | Do not edit `examples/**`. | met | [Implementation](https://github.com/tya5/chrona/issues/1291#issuecomment-6093419760) owns Layout, synthetic tests and Spec50 only; adopted reviewer/bot outputs are not authored changes. | — |
 
 ## Programme-level criteria (optional)
@@ -35,10 +37,10 @@ cover secondary omission, no false visible target, unpainted hosts, rotation and
 candidate-summary parity. [Shared text tests](../../../tests/unit/chrona/presentation/layout/test_text.py)
 prove transformed asymmetric glyph bounds, multiline text and one compression.
 
-Current integration: 129 axis/index/geometry/text/Scene/end-edge/small-caps
-tests passed (10.49s). The shared-text merge retains declared transform
-measurement on original source lines and small-caps per-run metrics; independent
-Luna review found no ownership, provenance or double-scaling defect.
-Release still requires resolving the adjacent #1294 contract question,
-the current-corpus snapshot/count audit,
+Current integration preserves resolved font-family identity, declared transforms
+on original source lines, small-caps per-run metrics and once-only compression;
+the merged asymmetric text tests retain both regression sets. No layer change.
+The adjacent #1294 long-window cadence/unit policy remains a separate issue,
+not a prerequisite for this boundary fix. Release still requires the
+current-corpus snapshot/count audit,
 exact-head PR gates and acceptance-containing exact-main full release. Do not close.
