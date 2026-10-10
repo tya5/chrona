@@ -1,5 +1,13 @@
 version: chrona/preset-library/v0.2
 entries:
+  - id: chrona-default-draft
+    gallerySet: bundled-default
+    members:
+      view: {id: chrona-preset-editorial-readable-default, kind: view, sourceRoot: presets/bundles/editorial-readable-default, sourcePath: view.yaml}
+      theme: {id: chrona-builtin-editorial-readable-default, kind: theme, sourceRoot: presets/bundles/editorial-readable-default, sourcePath: theme.yaml}
+      colorScheme: {id: chrona-builtin-editorial, kind: color-scheme, sourceRoot: presets/bundles/editorial, sourcePath: scheme.yaml}
+      layout: {id: chrona-builtin-editorial, kind: layout-profile, sourceRoot: presets/bundles/editorial, sourcePath: layout.yaml}
+      detailProfile: {id: chrona-builtin-editorial-detail, kind: review-detail-profile, sourceRoot: presets/bundles/editorial, sourcePath: detail.yaml}
   - id: mission-light
     gallerySet: halcyon-mission-brief-appearance
     members:
