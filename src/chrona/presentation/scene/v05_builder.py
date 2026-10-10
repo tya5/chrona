@@ -28,7 +28,7 @@ from chrona.presentation.model.info_diagnostics import PaintOmission
 from chrona.presentation.model.diagnostic_sources import DiagnosticSubject, PrimitiveProvenance, review_row_subjects
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, ThemeTokenView
 from chrona.presentation.scene.pattern_geometry import pattern_geometry, pattern_kind, project_pattern_placement
-from chrona.presentation.scene.model import DecorationDisposition, ImageFill, ImageTile, SceneColumn, SceneGroup, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, SymbolGeometry, TextLayout
+from chrona.presentation.scene.model import DecorationDisposition, ImageFill, ImageTile, SceneColumn, SceneGroup, ScenePrimitive, SceneRow, SceneSlot, SceneSurface, SurfaceScaleManifest, SymbolGeometry, TextLayout, TextRun
 from chrona.presentation.scene.model import (
     SceneLaneMember, SceneLaneObstacle, SceneLaneRectObstacle, SceneLaneSegmentObstacle,
     requires_lane_member_provenance,
@@ -79,6 +79,15 @@ _REQUIRED_SOURCES = {
     "table-timeline": frozenset(("table", "timeline", "timeline-axis")),
     "dependency-network": frozenset(("network",)),
 }
+
+
+def _scene_transform(text_transform: str) -> str:
+    """The Scene names the transform without its scale: the runs carry every size (#1285)."""
+    return "small-caps" if text_transform.startswith("small-caps") else text_transform
+
+
+def _scene_runs(runs: tuple[Any, ...]) -> tuple[tuple[TextRun, ...], ...]:
+    return tuple(tuple(TextRun(run.text, run.font_size, run.inline_size) for run in line) for line in runs)
 
 
 def _heading_paint_role(tokens: ThemeTokenView, role: str = "heading") -> str:
@@ -569,8 +578,8 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                             placed.baseline or (float(placed.bounds.inline), float(placed.bounds.block)),
                             placed.lines, placed.font_family, placed.font_weight, placed.font_size,
                             placed.line_height, placed.font_asset_identity, placed.letter_spacing,
-                            placed.text_transform, placed.numeric_spacing, placed.orientation, placed.rotation_degrees,
-                            placed.horizontal_scale, placed.fit)
+                            _scene_transform(placed.text_transform), placed.numeric_spacing, placed.orientation,
+                            placed.rotation_degrees, placed.horizontal_scale, placed.fit, _scene_runs(placed.runs))
         classification = contrast_binding(role)
         treatment = (value.theme_tokens.contrast_treatment(role)
                      if classification is not None and classification.contrast_class == ContrastClass.STATE_TEXT else None)
@@ -1227,8 +1236,8 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
                             text.baseline or (float(text.bounds.inline), float(text.bounds.block)),
                             text.lines, text.font_family, text.font_weight, text.font_size,
                             text.line_height, text.font_asset_identity, text.letter_spacing,
-                            text.text_transform, text.numeric_spacing, text.orientation, text.rotation_degrees,
-                            text.horizontal_scale)
+                            _scene_transform(text.text_transform), text.numeric_spacing, text.orientation,
+                            text.rotation_degrees, text.horizontal_scale, None, _scene_runs(text.runs))
         primitives.append(ScenePrimitive(text.placement_id, PrimitiveKind.TEXT, text.source_ref,
                                          text.slot_id if text.slot_id in heading_part_slots else "network",
                                          binding.purpose, paint_role, layout.bounds, text=text.content,

@@ -210,6 +210,15 @@ class TextFit:
 
 
 @dataclass(frozen=True)
+class TextRunPlacement:
+    """One measured run of a line set at its own size: a small-caps line is several (#1285)."""
+
+    text: str
+    font_size: float
+    inline_size: float
+
+
+@dataclass(frozen=True)
 class TextPlacement:
     """One measured text decision made by Layout before Scene emission."""
 
@@ -250,6 +259,8 @@ class TextPlacement:
     lane_source_kind: str | None = None
     # A viewer-fit mode's completed facts for this run (#1050); None is `raw`, today's output.
     fit: TextFit | None = None
+    # One tuple of measured runs per line when the role is `small-caps` (#1285); empty otherwise.
+    runs: tuple[tuple[TextRunPlacement, ...], ...] = ()
 
 
 @dataclass(frozen=True)
