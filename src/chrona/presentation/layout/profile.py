@@ -93,6 +93,13 @@ def _check_frames(profile: Mapping[str, Any]) -> None:
     def visit(node: Any, path: str) -> None:
         if not isinstance(node, Mapping):
             return
+        if "maxInlineShare" in node:
+            value = node["maxInlineShare"]
+            if (node.get("kind") != "slot" or node.get("source") != "table"
+                    or isinstance(value, bool) or not isinstance(value, (int, float))
+                    or not Decimal(str(value)).is_finite() or not 0 < value <= 1):
+                raise LayoutError("E_LAYOUT_SCHEMA", f"{path}/maxInlineShare",
+                                  detail="expected a finite share in (0, 1] on a table slot")
         if "frame" in node:
             _check_frame(node["frame"], f"{path}/frame")
         if "heading" in node:
