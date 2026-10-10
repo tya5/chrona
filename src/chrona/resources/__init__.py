@@ -82,12 +82,21 @@ def template_resource(name: str) -> Traversable:
         raise ValueError(f"E_INIT_EXAMPLE: {name!r} is not registered; available: {', '.join(example_ids())}")
     parts = PurePosixPath(entry["path"]).parts
     packaged = files(__package__).joinpath(*parts)
-    if packaged.is_dir() and packaged.joinpath("manifest.yaml").is_file():
+    if _is_example(packaged):
         return packaged
     source = files(parts[0]).joinpath(*parts[1:])
-    if source.is_dir() and source.joinpath("manifest.yaml").is_file():
+    if _is_example(source):
         return source
-    raise ValueError(f"E_INIT_EXAMPLE: example {name!r} is registered at {entry['path']} but that directory has no manifest.yaml in the wheel or the source tree")
+    raise ValueError(f"E_INIT_EXAMPLE: example {name!r} is registered at {entry['path']} but that directory has neither a manifest.yaml nor stage directories with a project.yaml in the wheel or the source tree")
+
+
+def _is_example(node: Traversable) -> bool:
+    """A corpus (a `manifest.yaml`) or a set of numbered stages (each directory holds a `project.yaml`)."""
+    if not node.is_dir():
+        return False
+    if node.joinpath("manifest.yaml").is_file():
+        return True
+    return any(child.is_dir() and child.joinpath("project.yaml").is_file() for child in node.iterdir())
 
 
 def minimal_template_resource() -> Traversable:
