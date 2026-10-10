@@ -1,6 +1,6 @@
 # Issue 918 — diagnostic owner and transport design
 
-Plan: [design plan](../planning/active/issue-918-diagnostic-owners-design-plan-2026-10-09.md).
+Plan: [design plan](../archive/planning/issue-918-diagnostic-owners-design-plan-2026-10-09.md).
 Normative authorities: Specs 08, 35, 50, 56 and 66.
 
 ## Owner detail and result contracts
