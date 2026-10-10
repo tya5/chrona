@@ -18,6 +18,7 @@ from chrona.presentation.layout.surface_marks import resolve_mark_geometries, re
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.lane_projection import (
     LaneProjectionClosure, LaneProjectionInstance, close_lane_projection,
+    lane_instance_owners as _lane_instance_owners,
 )
 from chrona.presentation.layout.lane_visual_binding import bind_lane_visual_requests
 from chrona.presentation.layout.lane_label_intent import measure_lane_member_labels
@@ -102,29 +103,6 @@ def lane_owner(review_row: Any, item: Any) -> tuple[str, str] | None:
     if len(matches) != 1:
         raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", f"/projection/laneRows/{review_row.row_id}")
     return review_row.row_id, matches[0]
-
-
-def _lane_instance_owners(projection: Any, closure: LaneProjectionClosure) -> dict[LaneProjectionInstance, tuple[str, str]]:
-    """Join original Review occurrences to final lanes without decoding IDs."""
-    lane_rows = {row.lane_id: row for row in projection.lane_rows}
-    source_rows = {row.row_id: row for row in projection.rows}
-    owners: dict[LaneProjectionInstance, tuple[str, str]] = {}
-    for instance in closure.instances:
-        row = source_rows.get(instance.row_id)
-        if row is None or not row.items:
-            raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", "/projection/rows")
-        member_id = row.items[0].item_id or row.items[0].object_id
-        assignment = projection.lane_membership.assignment_for(member_id)
-        lane_row = lane_rows.get(assignment.lane_id)
-        if lane_row is None or not any(
-            candidate_member_id == member_id
-            and (item.item_id or item.object_id, item.object_id, item.source_kind)
-            == (instance.item_id, instance.object_id, instance.source_kind)
-            for item, candidate_member_id in zip(lane_row.items, lane_row.member_item_ids, strict=True)
-        ):
-            raise LayoutError("E_LAYOUT_LANE_PROJECTION_INVALID", "/projection/laneRows")
-        owners[instance] = (lane_row.lane_id, instance.item_id)
-    return owners
 
 
 def resolved_lane_visual_requests(projection: Any, visual_requests: tuple[Any, ...],

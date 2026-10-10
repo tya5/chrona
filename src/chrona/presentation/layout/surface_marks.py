@@ -17,7 +17,9 @@ from chrona.presentation.layout.surface_quality import GroupPlacement, MarkPlace
 from chrona.presentation.layout.mark_geometry import MarkFacetAbsence, compose_item_marks
 from chrona.presentation.model.projection import shared_track_member_key
 from chrona.presentation.layout.surface_geometry import coordinate_for_date
-from chrona.presentation.layout.lane_projection import lane_missing_actual_visible
+from chrona.presentation.layout.lane_projection import (
+    folded_instance_id, lane_missing_actual_visible,
+)
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 
 if TYPE_CHECKING:
@@ -87,11 +89,6 @@ def _default_actual_symbol(actual: MarkGeometry, planned: MarkGeometry) -> MarkG
         else:
             offset = min(max(planned_offset + planned_height / 2 - height / 2, 0.0), 1.0 - height)
     return replace(actual, symbol_height=height, symbol_offset=offset)
-
-
-def folded_instance_id(folded: Any, item: Any) -> str:
-    """Keep a header point's comparison members addressable without inventing rows."""
-    return f"group-header:{folded.group_id}:{item.item_id or item.object_id}"
 
 
 @dataclass(frozen=True)
