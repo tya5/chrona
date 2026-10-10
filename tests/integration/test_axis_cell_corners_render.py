@@ -18,6 +18,7 @@ from chrona.presentation.scene.serialization import scene_document
 from chrona.resources import schema_validator
 from chrona.usecases.render_review import RenderFailed
 from tests.support import synthetic_review as sr
+from tests.support.legacy_axis import use_legacy_six_tier_axis
 
 WINDOW = {"mode": "explicit", "start": "2026-01-01", "end": "2026-07-01"}
 QUARTER, MONTH = "axis-band-decoration", "axis-band-decoration2"
@@ -26,7 +27,7 @@ BANDS = (0, 3)  # the View indexes of the quarter and month band tiers of the bu
 
 def _parts(*, quarter=None, month=None, gap=None) -> dict:
     """The bundle with corner properties on the quarter (first) and month (second) band roles."""
-    parts = sr.bundle("executive-light")
+    parts = use_legacy_six_tier_axis(sr.bundle("executive-light"))
     parts["view"]["body"]["window"] = dict(WINDOW)
     body = parts["theme"]["body"]
     for role, declared in ((QUARTER, quarter), (MONTH, month)):

@@ -13,6 +13,7 @@ import yaml
 from chrona.presentation.scene.serialization import serialize_scene
 from chrona.usecases.render_review import RenderFailed
 from tests.support import synthetic_review as sr
+from tests.support.legacy_axis import use_legacy_six_tier_axis
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -22,7 +23,7 @@ ACTUAL = {"version": "chrona/actual-set/v0.3", "kind": "actual-set", "id": "obse
 
 
 def _asof_parts(shape=None, *, label="TODAY!", catalog_stroke=False, numeric_spacing=None):
-    parts = sr.bundle("executive-light")
+    parts = use_legacy_six_tier_axis(sr.bundle("executive-light"))
     theme = parts["theme"]["body"]
     if numeric_spacing is not None:
         # Exercise a treatment supported by the existing Theme grammar, not a
