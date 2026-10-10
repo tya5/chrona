@@ -26,4 +26,4 @@ None.
 
 ## Architecture conclusion
 
-Layout owns the offset and measured content extent. The exact-main release gate for a commit containing this review is still pending; this review does not claim merge or issue closure.
+Layout owns the offset and measured content extent. Source implementation is merged; the exact-main full release gate for a commit containing this final review remains pending. No issue closure is claimed.
