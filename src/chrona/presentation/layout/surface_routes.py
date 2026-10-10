@@ -9,7 +9,10 @@ from collections.abc import Callable
 from typing import Any, Mapping
 
 from chrona.presentation.layout.labels import LabelRect, place_label
-from chrona.presentation.layout.model import Rect, geometry_sum
+from chrona.presentation.layout.model import LayoutError, Rect, geometry_sum
+from chrona.presentation.layout.surface_mark_visibility import MarkOccurrence, MarkOccurrenceKind
+from chrona.presentation.layout.window_relation_admission import complete_window_relation_endpoint_absence
+from chrona.presentation.model.projection import WindowMode
 from chrona.presentation.layout.obstacles import (
     ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex, obstacles_intersect,
     segment_length_inside_rect, segment_overlap_length,
@@ -124,6 +127,11 @@ def corner_arc_blocker(obstacles: SurfaceObstacleIndex, hosts: frozenset[str], w
 def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     """Complete semantic relation routes and labels against the pre-route index."""
     request, projection, obstacles = context.request, context.projection, context.obstacles
+    explicit_window = getattr(projection, "window_mode", None) == WindowMode.EXPLICIT
+    visibility_index = getattr(request, "mark_visibility_index", None)
+    if explicit_window and visibility_index is None:
+        raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/window",
+                          detail="stage=relation-admission; reason=missing-visibility-index")
     timeline_bounds = context.timeline_bounds
     marks = context.marks
     rows, groups = context.rows, context.groups
@@ -135,6 +143,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     instance_anchors: dict[str, list[tuple[str, tuple[float, float]]]] = {}
     comparison_instances: set[str] = set()
     instance_rows: dict[str, str] = {}
+    instance_occurrences: dict[str, MarkOccurrence] = {}
+    omitted_folded_instances: dict[str, list[tuple[str, None]]] = {}
     row_edges: dict[str, tuple[float, float]] = {}
     for review_row, row in zip(context.review_rows, rows, strict=True):
         row_edges[review_row.row_id] = (float(row.bounds.block), float(row.bounds.block + row.bounds.block_size))
@@ -145,11 +155,32 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
                            if projection.rows else item.object_id)
             instance_anchors.setdefault(item.object_id, []).append((instance_id, fallback))
             instance_rows[instance_id] = review_row.row_id
+            if explicit_window:
+                kind = (MarkOccurrenceKind.LANE_FINAL if projection.lane_membership is not None
+                        else MarkOccurrenceKind.ROW if projection.rows else MarkOccurrenceKind.AUTO)
+                instance_occurrences[instance_id] = MarkOccurrence(
+                    kind, review_row.row_id if projection.rows else item.object_id,
+                    item.item_id or item.object_id, item.object_id,
+                    item.source_kind if projection.rows else "combined")
             if item.source_kind in COMPARISON_SOURCE_KINDS:
                 comparison_instances.add(instance_id)
     for folded in getattr(projection, "folded_points", ()):
         instance_id = f"group-header:{folded.group_id}:{folded.item.item_id or folded.item.object_id}"
         mark = next((item for item in marks if item.placement_id == f"planned:{instance_id}"), None)
+        if explicit_window:
+            occurrence = MarkOccurrence(MarkOccurrenceKind.FOLDED, folded.group_id,
+                folded.item.item_id or folded.item.object_id, folded.item.object_id, folded.item.source_kind)
+            instance_occurrences[instance_id] = occurrence
+            if mark is None:
+                proof = complete_window_relation_endpoint_absence(occurrence, "at",
+                    projection=projection, as_of=request.surface_content.as_of,
+                    visibility_index=visibility_index)
+                if proof is None:
+                    raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/foldedPoints",
+                                      detail="stage=relation-admission; reason=missing-completed-mark")
+                # Keep relation identity, not a fabricated coordinate or a generic label anchor.
+                omitted_folded_instances.setdefault(folded.item.object_id, []).append((instance_id, None))
+                instance_rows[instance_id] = f"group-header:{folded.group_id}"
         if mark is not None:
             instance_anchors.setdefault(folded.item.object_id, []).append((instance_id, mark.end_port))
             instance_rows[instance_id] = f"group-header:{folded.group_id}"
@@ -157,6 +188,8 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
     # An object that has no plan instance at all (a snapshot-only explicit row) keeps its comparison instances.
     relation_anchors = {object_id: [entry for entry in entries if entry[0] not in comparison_instances] or entries
                         for object_id, entries in instance_anchors.items()}
+    for object_id, entries in omitted_folded_instances.items():
+        relation_anchors.setdefault(object_id, []).extend(entries)
     relation_marks = {mark.placement_id.removeprefix("planned:"): mark
                       for mark in marks if mark.placement_id.startswith("planned:")}
     comparison_clusters: dict[tuple[str, str], tuple[MarkPlacement, ...]] = {}
@@ -443,13 +476,28 @@ def compose_surface_routes(context: SurfaceRoutesContext) -> SurfaceRoutesBatch:
         for source_id, source_anchor in relation_anchors.get(str(source), ()):
             for target_id, target_anchor in relation_anchors.get(str(target), ()):
                 source_mark, target_mark = relation_marks.get(source_id), relation_marks.get(target_id)
+                scene_id = (f"relation:{relation_id}:{source_id}:{target_id}"
+                            if projection.rows else f"relation:{relation_id}")
+                declared_order[scene_id] = declared_index
+                if explicit_window:
+                    proofs = tuple(proof for instance, endpoint in (
+                        (source_id, relation.source_endpoint), (target_id, relation.target_endpoint))
+                        if (proof := complete_window_relation_endpoint_absence(
+                            instance_occurrences[instance], endpoint, projection=projection,
+                            as_of=request.surface_content.as_of, visibility_index=visibility_index)) is not None)
+                    if proofs:
+                        relations.append(RelationPlacement(scene_id,
+                            f"{source_id}:{relation.source_endpoint}", f"{target_id}:{relation.target_endpoint}",
+                            suppressed=True, diagnostic="W_LAYOUT_RELATION_SUPPRESSED",
+                            semantic_id=relation.semantic_id, source_ref=relation_id,
+                            from_instance_id=source_id, to_instance_id=target_id,
+                            window_endpoint_absences=proofs))
+                        diagnostics.append(f"W_LAYOUT_RELATION_SUPPRESSED:{scene_id}")
+                        continue
                 source_nominal = (source_mark.start_port if relation.source_endpoint in {"start", "at"}
                                   else source_mark.end_port) if source_mark else source_anchor
                 target_nominal = (target_mark.start_port if relation.target_endpoint in {"start", "at"}
                                   else target_mark.end_port) if target_mark else target_anchor
-                scene_id = (f"relation:{relation_id}:{source_id}:{target_id}"
-                            if projection.rows else f"relation:{relation_id}")
-                declared_order[scene_id] = declared_index
                 source_candidates = (connector_egress_candidates(source_mark, relation.source_endpoint,
                     target_nominal, comparison_clusters.get((source_mark.source_ref,
                         instance_rows[source_id]), ())) if source_mark else

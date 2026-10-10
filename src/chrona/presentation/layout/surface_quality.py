@@ -21,6 +21,7 @@ if TYPE_CHECKING:  # avoid the runtime cycle: canvas_overlays uses SlotPlacement
     from chrona.presentation.layout.canvas_viewport import CanvasViewportWarning, DeclaredViewport
     from chrona.presentation.layout.surface_mark_visibility import ItemMarkVisibilityIndex
     from chrona.presentation.layout.lane_window_marks import LaneWindowPlacementAbsence
+    from chrona.presentation.layout.window_relation_admission import WindowRelationEndpointAbsence
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, FIT_ADJUSTS, TEXT_FOLLOWS_BOX
 from chrona.presentation.layout.window_label_admission import WindowLabelAbsence
 
@@ -496,6 +497,7 @@ class RelationPlacement:
     from_instance_id: str | None = None
     to_instance_id: str | None = None
     fan_in: RelationFanIn | None = None
+    window_endpoint_absences: tuple[WindowRelationEndpointAbsence, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -816,6 +818,14 @@ class SurfacePlacement:
                         and intersects(item.bounds, other.bounds)):
                     raise ValueError(f"E_LAYOUT_TEXT_OVERLAP:{item.placement_id}:{other.placement_id}")
         for relation in self.relations:
+            if relation.window_endpoint_absences:
+                from chrona.presentation.layout.window_relation_admission import WindowRelationEndpointAbsence
+                if (not relation.suppressed or not relation.source_ref
+                        or any(not isinstance(proof, WindowRelationEndpointAbsence)
+                               for proof in relation.window_endpoint_absences)):
+                    raise ValueError(f"E_LAYOUT_RELATION_SUPPRESSION_INVALID:{relation.relation_id}")
+                for proof in relation.window_endpoint_absences:
+                    proof.validate_cache()
             if relation.corner_radius < 0:
                 raise ValueError(f"E_LAYOUT_RELATION_CORNER_RADIUS_INVALID:{relation.relation_id}")
             if relation.suppressed:

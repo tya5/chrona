@@ -31,6 +31,10 @@ class WindowRelationEndpointAbsence:
     reason: str = "outside-window"
 
     def __post_init__(self) -> None:
+        self.validate_cache()
+
+    def validate_cache(self) -> None:
+        """Recheck the original identity at the completed Layout boundary."""
         index = self.visibility_index
         valid = (isinstance(index, ItemMarkVisibilityIndex)
                  and isinstance(self.occurrence, MarkOccurrence)
