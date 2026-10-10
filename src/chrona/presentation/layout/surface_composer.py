@@ -50,6 +50,7 @@ from chrona.presentation.layout.as_of_cone import complete_as_of_cone
 from chrona.presentation.layout.surface_deadlines import compose_deadline_marks
 from chrona.presentation.layout.surface_periods import compose_period_bands, period_label_requests
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
+from chrona.presentation.layout.label_visual_measurement import absent_label_visual_sources
 from chrona.presentation.layout.text import metric_for_role
 from chrona.presentation.layout.labels import (LabelRect, LabelRequest)
 from chrona.presentation.layout.obstacles import (
@@ -215,7 +216,9 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         member_label_requests = replace(member_label_requests,
                                         pre_route=(*period_requests, *member_label_requests.pre_route))
     candidate_icons: list[IconPlacement] = []
-    handled_candidate_visuals: set[str] = set()
+    handled_candidate_visuals: set[str] = set(absent_label_visual_sources(
+        member_label_requests.window_absences, visual_requests=request.visual_requests,
+        icon_assets=request.icon_assets))
     lane_label_suppressions: list[LaneLabelSuppression] = []
     # One monotonically growing Layout inventory is shared by labels, semantic
     # routes and annotations. Background bands deliberately do not enter it.

@@ -54,7 +54,7 @@ class WindowLabelAbsence:
     visibility_index: Any = field(default=None, repr=False, compare=False)
 
     def __post_init__(self) -> None:
-        from chrona.presentation.layout.surface_mark_visibility import MarkOccurrence
+        from chrona.presentation.layout.surface_mark_visibility import MarkOccurrence, MarkOccurrenceKind
         if (not isinstance(self.occurrence, MarkOccurrence)
                 or not isinstance(self.placement_id, str) or not self.placement_id
                 or self.source_ref != self.occurrence.object_id
@@ -68,6 +68,19 @@ class WindowLabelAbsence:
                 or self.reason != "outside-window"):
             raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/items",
                               detail="stage=label-absence; reason=invalid-source-account")
+        if self.occurrence.kind == MarkOccurrenceKind.AUTO:
+            instance = self.occurrence.object_id
+        elif self.occurrence.kind == MarkOccurrenceKind.FOLDED:
+            instance = f"group-header:{self.occurrence.container_id}:{self.occurrence.item_id}"
+        elif self.occurrence.kind in {MarkOccurrenceKind.ROW, MarkOccurrenceKind.LANE_FINAL}:
+            instance = f"{self.occurrence.container_id}:{self.occurrence.item_id}"
+        else:
+            raise LayoutError("E_LAYOUT_WINDOW_CLIP", self.placement_id,
+                              detail="stage=label-absence; reason=invalid-occurrence")
+        prefix = "member-label" if self.semantic_id == "memberLabel" else "variance"
+        if self.placement_id != f"{prefix}:{instance}":
+            raise LayoutError("E_LAYOUT_WINDOW_CLIP", self.placement_id,
+                              detail="stage=label-absence; reason=invalid-label-identity")
         omitted = (self.semantic_id == "memberLabel" and self.admission.host_outside) or (
             self.admission.delta_outside and all(kind == "finishDelta" for kind, _ in self.components))
         if not omitted:

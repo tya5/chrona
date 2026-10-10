@@ -6,6 +6,7 @@ import pytest
 
 from chrona.presentation.layout.surface_composer import compose_surface_layout
 from chrona.presentation.layout.surface_quality import TextPlacement
+from chrona.presentation.layout.surface_quality import VisualRequest
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
@@ -15,6 +16,7 @@ from tests.unit.chrona.presentation.layout.test_lane_item_footprints import _win
 from tests.unit.chrona.presentation.layout.test_surface_axis_tier_geometry import _axis_request
 from chrona.presentation.layout.lane_label_intent import measure_lane_member_labels
 from chrona.presentation.layout.surface_mark_visibility import build_item_mark_visibility_index
+from tests.unit.chrona.presentation.layout.test_label_visual_measurement import _icon
 
 
 def _request(*, content=("title", "finishDelta"), containing=False, mode=WindowMode.EXPLICIT):
@@ -87,6 +89,29 @@ def test_attached_label_on_outside_host_has_no_spatial_overflow_fallback():
                    for item in placement.text)
 
 
+@pytest.mark.parametrize("selector", [(("id", "before"),), (("placementId", "member-label:before"),)])
+def test_visual_on_proven_outside_label_is_unpainted_not_an_invalid_target(selector):
+    request = _request()
+    visual = VisualRequest("plot-label", selector, ref="icon", source_ref="/body/visuals/0")
+    request = replace(request, visual_requests=(visual,), icon_assets={"icon": _icon()})
+    placement = compose_surface_layout(request).placement
+    assert not any(icon.visual_capability_source_ref == visual.source_ref for icon in placement.icons)
+    assert any(absence.source_ref == "before" for absence in placement.window_label_absences)
+
+
+@pytest.mark.parametrize("failure,code", [("missing-icon", "E_ICON_NAME_UNKNOWN"),
+    ("duplicate", "E_LAYOUT_VISUAL_DUPLICATE"), ("invalid-target", "E_LAYOUT_VISUAL_TARGET")])
+def test_omission_does_not_hide_invalid_visual_bindings(failure, code):
+    request = _request()
+    target = "not-a-label" if failure == "invalid-target" else "before"
+    visual = VisualRequest("plot-label", (("id", target),), ref="icon", source_ref="/body/visuals/0")
+    visuals = (visual, replace(visual, source_ref="/body/visuals/1")) if failure == "duplicate" else (visual,)
+    request = replace(request, visual_requests=visuals,
+                      icon_assets={} if failure == "missing-icon" else {"icon": _icon()})
+    with pytest.raises(LayoutError, match=code):
+        compose_surface_layout(request)
+
+
 def test_lane_measurement_uses_the_shared_admission_before_measuring_text():
     projection, _, _ = _window_footprint_fixture()
     across = replace(projection.items[1], planned={
@@ -125,10 +150,12 @@ def test_temporal_label_counts_and_exclusive_emission_are_strict(failure):
         invalid.assert_valid()
 
 
-@pytest.mark.parametrize("failure", ["borrowed", "unproved", "wrong-source"])
+@pytest.mark.parametrize("failure", ["borrowed", "unproved", "wrong-source", "wrong-identity"])
 def test_temporal_absence_cannot_forge_or_borrow_a_source_admission(failure):
     absence = compose_surface_layout(_request()).placement.window_label_absences[0]
     changes = {"admission": replace(absence.admission)} if failure == "borrowed" else (
-        {"visibility_index": None} if failure == "unproved" else {"source_ref": "another-object"})
+        {"visibility_index": None} if failure == "unproved" else
+        {"placement_id": "member-label:another-object"} if failure == "wrong-identity" else
+        {"source_ref": "another-object"})
     with pytest.raises(LayoutError, match="E_LAYOUT_WINDOW_CLIP"):
         replace(absence, **changes)
