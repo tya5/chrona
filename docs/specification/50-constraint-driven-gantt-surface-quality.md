@@ -224,6 +224,30 @@ span terminals use `(start, end]`, point anchors use `[start, end)`. An outside
 anchor suppresses the label through the existing source-associated suppression
 path, without changing its delta fact or falling back to raw coordinates.
 
+Layout normalizes window label admission once, before lane text measurement,
+and final placement consumes the same decision. For a combined title and
+`finishDelta` label, endpoint admission applies only to the delta component:
+retain the title when its completed host is visible, but omit the inadmissible
+delta text. A delta-only candidate is wholly suppressed. Its original anchor
+selection remains Actual finish when available, otherwise the selected Plan
+end or point; neither the clipped edge nor an as-of substitute is an endpoint.
+An omitted label host suppresses its whole hosted label, including attached
+or folded labels, regardless of the ordinary overflow policy.
+
+Such a temporal suppression is a non-spatial typed Layout absence, keyed by
+label placement identity, original source occurrence, host/anchor facet,
+semantic label role and reason `outside-window`, with source subjects. It is
+checked against the immutable visibility closure and normalized label intent;
+it cannot coexist with a placed or spatially suppressed label of that identity.
+Do not fabricate an anchor, measured box, `TextPlacement` or collision obstacle.
+Emit the existing source-associated `W_LAYOUT_LABEL_SUPPRESSED` for a wholly
+suppressed label; removing only a delta component does not count as suppression
+of the remaining title. Member-name absences count once in
+`I_LAYOUT_PLOT_LABELS_SUPPRESSED`; other label roles do not enlarge that count.
+Temporal absences are distinct from lane capacity/obstruction evidence.
+Contained and derived-window label decisions preserve their existing intent,
+measurement, placement and serialized output.
+
 Layout aggregates clipped or omitted object-backed facets into one
 `W_LAYOUT_OUTSIDE_WINDOW` per surface, with deterministic deduplicated object
 subjects and source refs (Spec 66); per-facet reasons remain typed internal

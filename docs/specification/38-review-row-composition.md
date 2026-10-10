@@ -237,7 +237,12 @@ closure in Spec 50; Scene projects that account under Spec 46 §7.1. This is
 not an exemption for an unaccounted missing mark or a geometry-driven lane edit.
 
 Every packed item has a plot-name request; the lane table has no item row to
-carry it. A lane-mode `visibility.labels` object MUST select plot placement
+carry it. The sole temporal exception is an explicit-window omission of its
+host: Spec 50 requires a typed, non-spatial label absence instead of a request
+with an invented anchor. Membership and the table remain unchanged, and the
+source-keyed member suppression count includes that absence exactly once.
+Window-admitted names share the normalized component intent in Spec 50 across
+preflight and final placement. A lane-mode `visibility.labels` object MUST select plot placement
 and `title`; omitted `content` means `[title, finishDelta]`, while a declared
 list may omit `finishDelta`. Omitted `side` means `auto`, and an authored
 `side` and `visibility.fallback.labels` order (including `inside`) are honored.
