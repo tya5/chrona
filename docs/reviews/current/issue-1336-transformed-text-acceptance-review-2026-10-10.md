@@ -4,8 +4,8 @@
 
 Authority: [current design, architecture and implementation plan](https://github.com/tya5/chrona/issues/1336#issuecomment-6094661552).
 Implementation `3a257021`; integrated ready main
-`bf9313bbe19dd9a386f10bda98485f5e8d139c96`
-([trusted gate](https://github.com/tya5/chrona/actions/runs/38033174047)).
+`b1c65cd521fca5a538ccc9863ec355637fe275c2`
+([trusted gate](https://github.com/tya5/chrona/actions/runs/38036901541)).
 Published WIP: `wip/issue-1336-transformed-text`.
 No PR or public-artifact acceptance yet.
 
@@ -57,6 +57,9 @@ After adopting #1289 source main on `0a3e96a8`, the combined group-header,
 six-caller, small-caps and plain-zero integration batch passes **27 tests (16.94s)**.
 The source-to-ready delta changes managed reports only; these are repeat
 integration checks, not additional unique coverage.
+After adopting #1282 on `506064ae`, group-header, six-caller, band-pattern,
+small-caps and plain-zero integration tests pass **33 tests (21.28s)**.
+This is focused integration evidence, not another full-suite or unique-test claim.
 
 Closure requires final focused/caller tests, current-base artifact attribution,
 exact-head PR checks and successful three-OS release CI on the exact published
