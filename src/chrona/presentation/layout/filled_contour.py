@@ -2,22 +2,25 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from decimal import Decimal
 from math import isfinite
+from numbers import Real
 
 import pathops
 
+from chrona.presentation.layout.model import Rect
 from chrona.presentation.layout.surface_quality import PathCommand, is_closed_stroke_contour
 
 
 @dataclass
 class ContourUnionError(ValueError):
-    """A bounded failure while simplifying or unioning filled contours."""
+    """A bounded failure while checking or unioning filled contours."""
 
     stage: str
     reason: str
 
     def __post_init__(self) -> None:
-        if self.stage not in {"input", "simplify", "union", "output"}:
+        if self.stage not in {"input", "simplify", "union", "difference", "output"}:
             object.__setattr__(self, "stage", "output")
         if self.reason not in {"empty", "open", "degenerate", "nonfinite", "unsupported-verb", "operation-failed"}:
             object.__setattr__(self, "reason", "operation-failed")
@@ -189,3 +192,58 @@ def union_filled_contours(
         except Exception as error:
             raise ContourUnionError("union", "operation-failed") from error
     return _from_pathops(result)
+
+
+def _rectangle_commands(rectangle: Rect) -> tuple[PathCommand, ...]:
+    """Validate a positive finite rectangle and express it in the shared path grammar."""
+    try:
+        raw = (rectangle.inline, rectangle.block, rectangle.inline_size, rectangle.block_size)
+    except AttributeError as error:
+        raise ContourUnionError("input", "unsupported-verb") from error
+    if any(isinstance(value, bool) or not isinstance(value, (Real, Decimal)) for value in raw):
+        raise ContourUnionError("input", "unsupported-verb")
+    try:
+        values = tuple(float(value) for value in raw)
+    except (OverflowError, TypeError, ValueError) as error:
+        raise ContourUnionError("input", "nonfinite") from error
+    if not all(isfinite(value) for value in values):
+        raise ContourUnionError("input", "nonfinite")
+    x, y, width, height = values
+    if width <= 0 or height <= 0:
+        raise ContourUnionError("input", "degenerate")
+    right, bottom = x + width, y + height
+    if not isfinite(right) or not isfinite(bottom):
+        raise ContourUnionError("input", "nonfinite")
+    return (PathCommand("move", ((x, y),)), PathCommand("line", ((right, y),)),
+            PathCommand("line", ((right, bottom),)),
+            PathCommand("line", ((x, bottom),)), PathCommand("line", ((x, y),)))
+
+
+def filled_contours_cover_rectangle(
+    operands: tuple[tuple[PathCommand, ...], ...], rectangle: Rect,
+) -> bool:
+    """Return whether nonzero-filled closed operands cover every point of ``rectangle``.
+
+    Coverage is decided by the exact M/L/Q path boolean difference, with no
+    sampling, flattening or bounding-box approximation. An empty operand set
+    covers nothing. Malformed inputs and pathops failures raise bounded
+    ``ContourUnionError`` values so callers can fail closed.
+    """
+    rectangle_commands = _rectangle_commands(rectangle)
+    if not operands:
+        return False
+    # Share the established operand validation, winding normalization, and
+    # deterministic union order with point-outline completion.
+    union = union_filled_contours(operands)
+    try:
+        remainder = pathops.op(_to_pathops(rectangle_commands), _to_pathops(union),
+                               pathops.PathOp.DIFFERENCE,
+                               fix_winding=True, keep_starting_points=True)
+        if not tuple(remainder.segments):
+            return True
+        _from_pathops(remainder)  # Validate a nonempty backend result before refusing coverage.
+        return False
+    except ContourUnionError:
+        raise
+    except Exception as error:
+        raise ContourUnionError("difference", "operation-failed") from error
