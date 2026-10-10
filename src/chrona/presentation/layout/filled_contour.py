@@ -8,7 +8,7 @@ from numbers import Real
 
 import pathops
 
-from chrona.presentation.layout.model import Rect
+from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.surface_quality import PathCommand, is_closed_stroke_contour
 
 
@@ -85,6 +85,126 @@ def _simplify_operand(commands: tuple[PathCommand, ...]):
 def _union_pair(left, right):
     return pathops.op(left, right, pathops.PathOp.UNION,
                       fix_winding=True, keep_starting_points=True)
+
+
+class WindowContourError(LayoutError):
+    """A bounded failure while completing an explicit-window span contour."""
+
+    def __init__(self, source_ref: str, facet: str, stage: str, reason: str) -> None:
+        allowed_stages = {"input", "intersection", "notch", "output"}
+        allowed_reasons = {"empty", "open", "degenerate", "nonfinite", "unsupported-verb",
+                           "operation-failed", "invalid-identity", "outside-host"}
+        self.stage = stage if stage in allowed_stages else "output"
+        self.reason = reason if reason in allowed_reasons else "operation-failed"
+        # These are source identities, not payloads. Bound malformed values
+        # before formatting so backend or caller data cannot produce a dump.
+        def bounded(value):
+            if not isinstance(value, str):
+                return "<invalid>"
+            return value[:120]
+        self.source_ref = bounded(source_ref)
+        self.facet = bounded(facet)
+        detail = (f"source_ref={self.source_ref!r} facet={self.facet!r} "
+                  f"stage={self.stage} reason={self.reason}")
+        super().__init__("E_LAYOUT_WINDOW_CLIP", "/layout/windowContour",
+                         node_id=self.source_ref, detail=detail)
+
+
+def _window_op(left, right, operation, *, source_ref: str, facet: str, stage: str):
+    try:
+        return pathops.op(left, right, operation, fix_winding=True, keep_starting_points=True)
+    except Exception as error:
+        raise WindowContourError(source_ref, facet, stage, "operation-failed") from error
+
+
+def _host_local(commands: tuple[PathCommand, ...], x: float, y: float,
+                width: float, height: float) -> tuple[PathCommand, ...]:
+    return tuple(PathCommand(command.kind, tuple(((point[0] - x) / width,
+                                                   (point[1] - y) / height)
+                                                  for point in command.points))
+                 for command in commands)
+
+
+def _host_world(commands: tuple[PathCommand, ...], x: float, y: float,
+                width: float, height: float) -> tuple[PathCommand, ...]:
+    return tuple(PathCommand(command.kind, tuple((x + point[0] * width,
+                                                  y + point[1] * height)
+                                                 for point in command.points))
+                 for command in commands)
+
+
+def _control_bounds_within(commands: tuple[PathCommand, ...], x: float, y: float,
+                           right: float, bottom: float) -> bool:
+    points = tuple(point for command in commands for point in command.points)
+    return bool(points) and all(x <= px <= right and y <= py <= bottom for px, py in points)
+
+
+def clip_span_contour(
+    contour: tuple[PathCommand, ...],
+    visible_host: Rect,
+    *,
+    cut_start: bool,
+    cut_finish: bool,
+    source_ref: str,
+    facet: str,
+) -> tuple[PathCommand, ...]:
+    """Intersect a closed span fill with its host and complete inward cut notches.
+
+    No-cut contours already contained by the host are returned by identity,
+    preserving their original quadratic commands and rounding exactly.
+    """
+    if not isinstance(cut_start, bool) or not isinstance(cut_finish, bool):
+        raise WindowContourError(source_ref, facet, "input", "invalid-identity")
+    try:
+        _validate(contour, stage="input")
+        _rectangle_commands(visible_host)
+        x, y, width, height = (float(visible_host.inline), float(visible_host.block),
+                               float(visible_host.inline_size), float(visible_host.block_size))
+        if not all(isfinite(value) for value in (x, y, width, height)):
+            raise ContourUnionError("input", "nonfinite")
+        right = x + width
+        bottom = y + height
+        if not isfinite(right) or not isfinite(bottom):
+            raise ContourUnionError("input", "nonfinite")
+        if not cut_start and not cut_finish and _control_bounds_within(contour, x, y, right, bottom):
+            return contour
+        local_contour = _host_local(contour, x, y, width, height)
+        if any(not isfinite(value) for command in local_contour
+               for point in command.points for value in point):
+            raise ContourUnionError("input", "nonfinite")
+        clip_commands = _rectangle_commands(Rect(Decimal(0), Decimal(0), Decimal(1), Decimal(1)))
+        clipped = _window_op(_to_pathops(local_contour), _to_pathops(clip_commands), pathops.PathOp.INTERSECTION,
+                             source_ref=source_ref, facet=facet, stage="intersection")
+        if not tuple(clipped.segments):
+            raise ContourUnionError("intersection", "empty")
+        cuts = int(cut_start) + int(cut_finish)
+        depth = min(height / (4 * width), 1 / (4 * cuts)) if cuts else 0.0
+        notch_opening = 1 / 4  # half of H/2 is measured on either side of center.
+        for at_start in (True, False):
+            if (at_start and not cut_start) or (not at_start and not cut_finish):
+                continue
+            edge = 0.0 if at_start else 1.0
+            apex = edge + depth if at_start else edge - depth
+            triangle = (
+                PathCommand("move", ((edge, 1 / 2 - notch_opening),)),
+                PathCommand("line", ((apex, 1 / 2),)),
+                PathCommand("line", ((edge, 1 / 2 + notch_opening),)),
+                PathCommand("line", ((edge, 1 / 2 - notch_opening),)),
+            )
+            clipped = _window_op(clipped, _to_pathops(triangle), pathops.PathOp.DIFFERENCE,
+                                 source_ref=source_ref, facet=facet, stage="notch")
+        local_result = _from_pathops(clipped)
+        result = _host_world(local_result, x, y, width, height)
+        if not _control_bounds_within(result, x, y, right, bottom):
+            raise WindowContourError(source_ref, facet, "output", "outside-host")
+        return result
+    except WindowContourError:
+        raise
+    except ContourUnionError as error:
+        stage = error.stage if error.stage in {"input", "intersection", "notch", "output"} else "input"
+        raise WindowContourError(source_ref, facet, stage, error.reason) from error
+    except Exception as error:
+        raise WindowContourError(source_ref, facet, "intersection", "operation-failed") from error
 
 
 def _quadratic_commands(current: tuple[float, float], points: tuple[tuple[float, float], ...]
