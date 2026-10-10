@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from chrona.core.diagnostics import Diagnostic
+from chrona.core.suggestions import distance, nearest  # noqa: F401  (the one nearest-name rule, shared with Project validation)
 
 # Compiler-owned codes (Spec 65 section 7). Every code here has a negative fixture; a test fails both ways.
 CODES: Mapping[str, str] = {
@@ -95,33 +96,6 @@ class TerseDiagnostic(Diagnostic):
         if self.hint is not None:
             payload["hint"] = self.hint
         return payload
-
-
-def distance(a: str, b: str) -> int:
-    """Optimal string alignment distance (Levenshtein plus adjacent transposition); hand-written, no dependency."""
-    rows = [list(range(len(b) + 1))]
-    for i, ca in enumerate(a, 1):
-        row = [i]
-        for j, cb in enumerate(b, 1):
-            cost = min(rows[i - 1][j] + 1, row[j - 1] + 1, rows[i - 1][j - 1] + (ca != cb))
-            if i > 1 and j > 1 and ca == b[j - 2] and a[i - 2] == cb:
-                cost = min(cost, rows[i - 2][j - 2] + 1)
-            row.append(cost)
-        rows.append(row)
-    return rows[-1][-1]
-
-
-def nearest(word: str, candidates: "list[str] | tuple[str, ...]") -> str | None:
-    """The closest candidate, ties broken by declaration order; None when nothing is close."""
-    best: tuple[int, int, str] | None = None
-    lowered = word.lower()
-    for order, candidate in enumerate(candidates):
-        d = distance(lowered, candidate.lower())
-        if best is None or (d, order) < (best[0], best[1]):
-            best = (d, order, candidate)
-    if best is None or best[0] > max(1, len(word) // 3):
-        return None
-    return best[2]
 
 
 def suggest_name(word: str) -> str:

@@ -14,13 +14,14 @@ find (a fixed date that contradicts its dependencies, a bound that cannot be met
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Mapping
 
 from chrona.core.deadlines import deadline_warnings
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.periods import period_range_diagnostics
+from chrona.core.source_ranges import attach_ranges
 from chrona.core.validation import load_yaml, validate_project
 from chrona.scheduling.dependency_cycles import dependency_cycle_diagnostics
 from chrona.scheduling.scheduler import schedule
@@ -84,7 +85,8 @@ def validate_project_mapping(project: dict[str, Any]) -> ProjectValidation:
 
 
 def validate_project_file(path: str | Path) -> ProjectValidation:
-    return validate_project_mapping(load_yaml(path))
+    outcome = validate_project_mapping(load_yaml(path))
+    return ProjectValidation(attach_ranges(outcome.diagnostics, Path(path).read_text(encoding="utf-8"))) if outcome.diagnostics else outcome
 
 
 def schedule_project_mapping(project: dict[str, Any]) -> ProjectSchedule:
@@ -110,4 +112,7 @@ def schedule_project_mapping(project: dict[str, Any]) -> ProjectSchedule:
 
 
 def schedule_project_file(path: str | Path) -> ProjectSchedule:
-    return schedule_project_mapping(load_yaml(path))
+    outcome = schedule_project_mapping(load_yaml(path))
+    if not outcome.diagnostics:
+        return outcome
+    return replace(outcome, diagnostics=attach_ranges(outcome.diagnostics, Path(path).read_text(encoding="utf-8")))
