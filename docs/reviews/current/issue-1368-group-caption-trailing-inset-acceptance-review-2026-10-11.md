@@ -14,7 +14,7 @@ Implementation: `dbd88829`. [Current design/architecture/implementation record](
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
 | 1 | In a Scene test, band end = drawn text end + the trailing inset, clamped to the column. | met | [Scene/SVG integration tests](../../../tests/integration/test_group_header_trailing_inset.py) assert plain/mixed-role actual drawn end plus header-font-size ratio, independently computed clamp, genuine ellipsis, unchanged text/content and block bounds. | — |
-| 2 | Do not edit `examples/**`. Refs #1283, #1269. | met | Implementation `dbd88829` changes six schema, Layout/consumer and synthetic-test files only; `git diff --name-only ff749b0b...dbd88829 -- examples` is empty. | — |
+| 2 | Do not edit `examples/**`. Refs #1283, #1269. | met | [Implementation commit](https://github.com/tya5/chrona/commit/dbd88829) changes six schema, Layout/consumer and synthetic-test files only; `git diff --name-only ff749b0b...dbd88829 -- examples` is empty. | — |
 
 ## Programme-level criteria (optional)
 
