@@ -305,9 +305,17 @@ without admitting any new role/property pair: `missing-actual.pattern`, `network
 `axis-band-decoration2.pattern`, `period-band.pattern` (#582), `group-tab.pattern` (#882),
 `group-band.pattern`, `row-band.pattern` and `group-header-band.pattern` (#1282: each band is always one Rect; the pattern's ink is the
 role's `stroke`, the `fill` is the substrate, and the pattern is clipped to the band extent `backgroundExtents` chose),
+`group-header-strip.pattern` (#1367: the independently painted header-row Rect),
 `as-of-label-chip.pattern`, `member-label-chip.pattern`, and
 `finish-delta-chip.pattern`. Other pattern values and all other
 role/property pairs retain their current contracts.
+
+**Header-row strip (#1367).** Optional role `group-header-strip` uses the
+existing background treatment, paint-order and Rect catalogue-pattern contract.
+An absent role, a role with neither background property, or treatment `none`
+emits no strip; partial background declarations retain their existing errors.
+The strip keeps its own paint and is not overridden by `grouping.tint`.
+Layout owns its extent and layer-order validation (Specification 50 §3.4).
 
 **Label-chip shapes (#1286).** The four chip roles (`as-of-label-chip`,
 `member-label-chip`, `finish-delta-chip`, `period-label-chip`) MAY name a

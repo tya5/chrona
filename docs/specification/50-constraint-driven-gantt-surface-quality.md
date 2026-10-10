@@ -444,6 +444,32 @@ Scene/SVG bytes remain unchanged. See the [L3b route-evidence correction](../des
 
 ### 3.4 Groups and legend
 
+**Independent header-row strip (#1367).** A drawable Theme
+`group-header-strip` role emits one `groupHeaderStrip` Rect per completed
+group header, with purpose/visual role `group-header-strip` and identity
+`group-header-strip:<group-id>`. Optional Layout Profile
+`backgroundExtents.groupHeaderStrip` is `table | timeline | both`; omission
+means `both`, and `text` is not admitted. Clip its inline extent to the chosen
+region and use exactly the final header block extent after folded-mark
+completion. No header means no strip; body rows never receive it. Strip
+selection is independent of body-group decoration; existing header-band
+selection and geometry remain unchanged. An absent strip role preserves
+existing Scene/SVG output. Explicit treatment `none` paints no strip and
+preserves SVG output, while retaining Scene's generic declared-decoration
+absence disclosure; it has no strip-specific exception.
+
+For intersecting layers of the same group, declared orders must satisfy
+`groupBand < groupHeaderStrip < groupHeaderBand` wherever each pair exists.
+The strip must also precede hosted header text, including when no caption band
+is emitted. Layout rejects violations with `E_LAYOUT_GROUP_HEADER_STRIP_ORDER`
+at `/body/roles/group-header-strip/backgroundPaintOrder`, naming the conflicting
+placements and orders. A strictly ordered same-group strip/body or
+strip/caption pair may composite translucent fills; this is an additional
+explicit layer relation, not permission for arbitrary same-rank overlaps.
+Existing period/calendar overlay ranks and all unrelated overlap errors remain
+unchanged. Layout completes geometry and clipped pattern placements; Scene
+projects primitives/paint, and adapters never select bounds or layer order.
+
 **Text-sized header bands (#1283).** Layout Profile
 `backgroundExtents.groupHeaderBand: text` uses the completed header-content
 inline interval: band start through the last nonsuppressed measured text/run

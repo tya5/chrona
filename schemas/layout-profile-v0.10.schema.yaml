@@ -32,6 +32,10 @@ properties:
         properties:
           rowBand: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/backgroundExtent"}
           groupBand: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/backgroundExtent"}
+          groupHeaderStrip:
+            description: "Independent completed header-row background; omitted means both."
+            default: both
+            $ref: "urn:chrona:vocabulary-v0.1#/$defs/backgroundExtent"
           groupHeaderBand:
             description: "Physical region for a group-header background; text follows the completed header label within the table column."
             examples: [text]
