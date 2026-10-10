@@ -3,8 +3,9 @@
 # Issue #1318 — temporary gate ref cleanup
 
 Implementation: `d49846566edd3f203fb6d8a9a228b822cbaa4dcc`; preparation
-`9a4510c811dd4ee12c39543c32ee3b14b0072f50` ordinarily adopts ready main
-`600f04b6a79ddd2a4761bc1c586ad0916409db74`.
+`1498192b1e292f0f60aa68c55be6277243685175` ordinarily adopts ready main
+`127392c426010f8381c984d8ff45f6c1e46f3791`. Helper/workflow/procedure/test
+bytes remain unchanged from the tested `9a4510c8` checkpoint.
 [Current design, architecture and plan](https://github.com/tya5/chrona/issues/1318#issuecomment-6093049623).
 WIP only; its PR waits for earlier M0/#1279 work. Do not close.
 
