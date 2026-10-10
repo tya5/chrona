@@ -194,7 +194,7 @@ properties:
               required: [type]
               then:
                 properties:
-                  value: {enum: [none, uppercase, lowercase, capitalize]}
+                  value: {enum: [none, uppercase, lowercase, capitalize, small-caps]}
             - description: "Numeric spacing is finite so Layout can select tabular figures."
               examples: [{type: numericSpacing, value: tabular}]
               if:
@@ -401,6 +401,7 @@ properties:
             blockGap: {description: "Named nonnegative pixel gap below a heading kicker; admitted only on kicker. Absent is zero.", type: string, minLength: 1}
             inlineGap: {description: "Named nonnegative pixel gap after an inline summary run, except the last; admitted on summary-caption, metric and summary-unit. Absent is zero.", type: string, minLength: 1}
             letterSpacing: {description: "Named em-based letter-spacing number token measured by Layout.", type: string, minLength: 1}
+            smallCapsScale: {description: "Named number token, above 0.5 and below 1: the scale of the role size at which a `small-caps` role sets its former lowercase letters as capitals; required with, and only admitted beside, a `textTransform` of `small-caps` (#1285).", type: string, minLength: 1}
             horizontalScale: {description: "Named number token, 0.5 to 1, compressing the role's text along its own inline axis; Layout measures the compressed width (#585). Absent is 1.", type: string, minLength: 1}
             textTransform: {description: "Named finite transform token applied before Layout measurement.", type: string, minLength: 1}
             numericSpacing: {description: "Named finite numeric-spacing token selected before Layout measurement.", type: string, minLength: 1}
