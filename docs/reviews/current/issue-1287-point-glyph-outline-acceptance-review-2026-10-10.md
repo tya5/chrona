@@ -6,8 +6,11 @@ Validation checkpoint: `b68774170089050905c2085250dea889ba3f560f`.
 Preparation ordinarily adopts published main
 `eb4e83fd601f7d5a1621a6fc91323266a7ea50b4`, including merged #1283,
 #1327 and dev B's #1219. The affected regression batch passes on that tree.
-Final PR publication waits for the current main's successful derived gate;
-this is not release acceptance.
+Final preparation `d72e67509295ebe14c2a5b88726bc15956f3e57b` adopts ready main
+`600f04b6a79ddd2a4761bc1c586ad0916409db74`; product/test/schema/tool bytes
+remain identical to the tested checkpoint. [Derived gate](https://github.com/tya5/chrona/actions/runs/38022236107)
+and [sync](https://github.com/tya5/chrona/actions/runs/38021812361) succeeded.
+This is not release acceptance.
 [Selected design and architecture review](https://github.com/tya5/chrona/issues/1287#issuecomment-6088427990).
 Local acceptance is verified; public artifact and release gates remain pending. Do not close.
 
