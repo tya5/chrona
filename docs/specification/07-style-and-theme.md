@@ -287,6 +287,8 @@ primitive is always Rect: `missing-actual.pattern`, `network-node.pattern`,
 `progress-fill.pattern`, `summary-bar.pattern`,
 `annotation-highlight-box.pattern`, `axis-band-decoration.pattern`,
 `axis-band-decoration2.pattern`, `period-band.pattern` (#582), `group-tab.pattern` (#882),
+`group-band.pattern`, `row-band.pattern` and `group-header-band.pattern` (#1282: each band is always one Rect; the pattern's ink is the
+role's `stroke`, the `fill` is the substrate, and the pattern is clipped to the band extent `backgroundExtents` chose),
 `as-of-label-chip.pattern`, `member-label-chip.pattern`, and
 `finish-delta-chip.pattern`. Other pattern values and all other
 role/property pairs retain their current contracts.
