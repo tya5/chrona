@@ -16,7 +16,7 @@ WIP only; its PR waits for earlier M0/#1279 work. Do not close.
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | After a sync completes, its gate branch is gone. The sweep removes a planted stale gate branch and leaves one whose run is in progress. | not met | [Mock-API planted stale/live sweep](../../../tests/unit/tools/test_derived_gate_cleanup.py) and [executed Bash/workflow safeguards](../../../tests/unit/tools/test_derived_gate_cleanup_workflow.py) pass. Normal published sync cleanup and live planted-ref evidence remain pending. | — |
+| 1 | After a sync completes, its gate branch is gone. The sweep removes a planted stale gate branch and leaves one whose run is in progress. | not met | [Mock-API planted stale/live sweep](../../../tests/unit/tools/test_derived_gate_cleanup.py) and [executed Bash/workflow safeguards](../../../tests/unit/tools/test_derived_gate_cleanup_workflow.py) pass. Live candidate-policy checks deleted only the newly planted completed historical ref `e1a6f812` and kept active `0fd085d1` during [trusted run 38020103073](https://github.com/tya5/chrona/actions/runs/38020103073). These do not yet prove the published scheduled sweep or normal sync cleanup. | — |
 | 2 | Do not edit `examples/**`. | met | [Owned implementation](https://github.com/tya5/chrona/commit/d49846566edd3f203fb6d8a9a228b822cbaa4dcc) changes tooling/workflow, contributor procedure and synthetic tests only. | — |
 
 ## Programme-level criteria (optional)
