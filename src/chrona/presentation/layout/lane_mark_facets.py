@@ -13,7 +13,7 @@ from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.obstacles import (
     ObstacleGeometry, ObstacleRect, ObstacleSegment, obstacle_envelope,
 )
-from chrona.presentation.layout.surface_quality import IconPlacement, MarkPlacement, ShapePlacement, VisualRequest
+from chrona.presentation.layout.surface_quality import IconPlacement, MarkPlacement, VisualRequest
 
 
 def _candidate_input_error(owner: str, **operands: object) -> ValueError:
@@ -89,7 +89,7 @@ class LaneGlyphPartProjection:
         if (self.part_index < 0 or not self.semantic_role or self.paint_order < 0
                 or self.paint_mode not in {None, "fill", "stroke"}
                 or (self.paint_color is not None and not isinstance(self.paint_color, str))
-                or self.mark_shape not in {"point", "open-span"}
+                or self.mark_shape not in {"span", "point", "open-span"}
                 or (self.stroke_width is not None and (
                     not isfinite(self.stroke_width) or self.stroke_width <= 0))
                 or (self.line_cap is not None and self.line_cap not in {"butt", "round", "square"})
@@ -351,9 +351,9 @@ class LaneMarkFacet:
                                          projection_types=tuple(type(value).__name__
                                                                 for value in payloads if value is not None),
                                          reason="at most one projection payload is allowed")
-        if ((self.plain_mark_projection is not None and self.primitive_type not in {"Rect", "Path"})
+        if ((self.plain_mark_projection is not None and self.primitive_type not in {"Rect", "Path", "Symbol"})
                 or (self.glyph_part_projection is not None and self.primitive_type != "Symbol")
-                or (self.progress_projection is not None and self.primitive_type != "Rect")):
+                or (self.progress_projection is not None and self.primitive_type not in {"Rect", "Symbol"})):
             raise _candidate_input_error("LaneMarkFacet", facet_id=self.facet_id,
                                          primitive_type=self.primitive_type,
                                          projection_types=tuple(type(value).__name__
@@ -454,18 +454,30 @@ def _compose_progress(closure: LaneProjectionClosure, items: Mapping[LaneProject
 def span_mark_footprint(mark: MarkPlacement, theme: Any) -> ObstacleRect:
     """Complete a span's visible paint bounds without changing semantic ports."""
     width = _stroke_width(theme, mark.semantic_id)
-    return _expanded_rect(_bounds(mark.bounds), width / 2 if width is not None else 0.0, mark.placement_id)
+    footprint = _expanded_rect(_bounds(mark.bounds), width / 2 if width is not None else 0.0, mark.placement_id)
+    return _clip_rect_footprint(footprint, mark.paint_clip)
+
+
+def _clip_rect_footprint(footprint: ObstacleRect, clip: Any) -> ObstacleRect:
+    """Collision paint obeys the same completed clip as the eventual adapter."""
+    if clip is None:
+        return footprint
+    left, top, width, height = clip.bounds
+    return ObstacleRect(max(footprint.left, left), max(footprint.top, top),
+                        min(footprint.right, left + width), min(footprint.bottom, top + height))
 
 
 def _mark_facets(item: Any, instance: LaneProjectionInstance, mark: MarkPlacement,
                  theme: Any) -> tuple[LaneMarkFacet, ...]:
-    if mark.mark_shape == "span":
+    if mark.mark_shape == "span" and not mark.symbol_parts:
         bounds = _bounds(mark.bounds)
         footprint = span_mark_footprint(mark, theme)
         payload = LanePlainMarkProjection(mark.mark_shape, mark.semantic_id, mark.paint_order,
                                           mark.corner_radius, mark.end_treatment)
-        return (_facet(instance, item, mark, mark.placement_id, "Rect",
-                       (("rect", _rect_points(bounds)),), bounds, footprint,
+        kind = "Symbol" if mark.path_commands else "Rect"
+        commands = _commands(mark.path_commands) if mark.path_commands else (("rect", _rect_points(bounds)),)
+        return (_facet(instance, item, mark, mark.placement_id, kind,
+                       commands, bounds, footprint,
                        mark, plain=payload),)
     if not mark.symbol_parts:
         raise LayoutError("E_LAYOUT_LANE_FACET_UNAVAILABLE", mark.placement_id)
@@ -482,6 +494,8 @@ def _mark_facets(item: Any, instance: LaneProjectionInstance, mark: MarkPlacemen
             raise LayoutError("E_LAYOUT_LANE_FACET_UNAVAILABLE", mark.placement_id,
                               detail="stroke glyph has no finite positive Theme width")
         footprint = _path_footprint(points, stroke_width, mark.placement_id)
+        if isinstance(footprint, ObstacleRect):
+            footprint = _clip_rect_footprint(footprint, mark.paint_clip)
         part_payload = LaneGlyphPartProjection(
             index, mark.semantic_id, mark.paint_order + index,
             part.paint_mode, part.paint_color,
@@ -506,15 +520,17 @@ def _with_mark_visuals(item: Any, instance: LaneProjectionInstance, mark: MarkPl
         result[:len(facets)] = list(_with_overlay_targets(tuple(result[:len(facets)]),
                                                          tuple(facet.facet_id for facet in icon_facets)))
     for shape in progress:
-        bounds = _bounds(shape.bounds)
+        commands = _commands(shape.path_commands) if shape.path_commands else (("rect", _rect_points(_bounds(shape.bounds))),)
+        bounds = _point_bounds(tuple(point for _, points in commands for point in points))
         width = _stroke_width(theme, "progress-fill")
         footprint = _expanded_rect(bounds, width / 2 if width is not None else 0.0, shape.placement_id)
+        footprint = _clip_rect_footprint(footprint, shape.paint_clip)
         host = mark
         payload = LaneProgressProjection(host.placement_id, host.bounds, shape.bounds,
                                          shape.semantic_id, shape.paint_order,
                                          shape.corner_radius)
-        result.append(_facet(instance, item, mark, shape.placement_id, "Rect",
-                             (("rect", _rect_points(bounds)),), bounds, footprint, None,
+        result.append(_facet(instance, item, mark, shape.placement_id, shape.kind,
+                             commands, bounds, footprint, None,
                              progress=payload))
         result[-1] = _with_overlay_targets((result[-1],),
                                            tuple(facet.facet_id for facet in facets))[0]

@@ -68,6 +68,56 @@ def _window_footprint_fixture(*, point=False, mode=WindowMode.EXPLICIT, all_outs
     return projection, index, kwargs
 
 
+def test_clipped_lane_preflight_carries_cut_contour_original_progress_and_bounded_paint(monkeypatch):
+    projection, _, kwargs = _window_footprint_fixture()
+    across = replace(projection.items[1], planned={
+        "start": date(2026, 1, 1), "end": date(2026, 1, 9)}, planned_progress=.6)
+    items = (projection.items[0], across, projection.items[2])
+    projection = replace(projection, items=items,
+        rows=tuple(replace(row, items=(item,)) for row, item in zip(projection.rows, items)),
+        lane_rows=(replace(projection.lane_rows[0], items=items),))
+    index = build_item_mark_visibility_index(projection, as_of=None)
+    kwargs.update(projection=projection, mark_visibility_index=index, progress_fill_source="planned")
+    from chrona.presentation.layout import lane_item_footprints as owner
+    original = owner._with_mark_visuals
+    captured = []
+    def checked(item, instance, mark, facets, icons, progress, theme):
+        result = original(item, instance, mark, facets, icons, progress, theme)
+        captured.append((mark, tuple(progress), result))
+        return result
+    monkeypatch.setattr(owner, "_with_mark_visuals", checked)
+    footprints = compose_lane_item_footprints(**kwargs)
+    assert len(captured) == 1
+    host, progress, facets = captured[0]
+    assert host.start_port is host.end_port is None
+    assert host.paint_clip is not None and host.path_commands
+    assert all(facet.primitive_type == "Symbol" for facet in facets)
+    assert facets[0].completed_geometry == tuple((command.kind, command.points)
+                                                for command in host.path_commands)
+    assert len(progress) == 1 and progress[0].kind == "Symbol"
+    # Original Jan1..9 width80, height4, .1 block-relative inset:
+    # original left -20 + inset.4 + remaining79.2*.6 = 27.92, not a
+    # fraction of the shortened Jan3..6 host.
+    right = max(x for command in progress[0].path_commands for x, _ in command.points)
+    assert right == pytest.approx(27.92)
+    for facet in footprints[1].facets:
+        assert 0 <= facet.footprint.left <= facet.footprint.right <= 30
+    assert footprints[0].facets == footprints[2].facets == ()
+    assert across.planned == {"start": date(2026, 1, 1), "end": date(2026, 1, 9)}
+
+
+def test_containing_explicit_lane_preflight_preserves_derived_footprints():
+    projection, _, kwargs = _window_footprint_fixture()
+    projection = replace(projection, window=(date(2026, 1, 1), date(2026, 1, 9)))
+    scale = replace(kwargs["scale"], domain_start=projection.window[0], domain_end=projection.window[1],
+                    range_end=80)
+    def compose(mode):
+        selected = replace(projection, window_mode=mode)
+        return compose_lane_item_footprints(**{**kwargs, "projection": selected, "scale": scale,
+            "mark_visibility_index": build_item_mark_visibility_index(selected, as_of=None)})
+    assert compose(WindowMode.EXPLICIT) == compose(WindowMode.SELECTED_PLANNED)
+
+
 @pytest.mark.parametrize("point", (False, True))
 def test_window_omissions_keep_lane_members_but_never_measure_outside_marks(point, monkeypatch):
     projection, index, kwargs = _window_footprint_fixture(point=point)

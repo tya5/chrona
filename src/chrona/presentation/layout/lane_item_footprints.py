@@ -25,11 +25,11 @@ from chrona.presentation.layout.lane_subtracks import (
     LaneItemFootprints,
 )
 from chrona.presentation.layout.lane_visual_binding import bind_lane_visual_requests
-from chrona.presentation.layout.mark_geometry import compose_item_marks
-from chrona.presentation.layout.mark_facet_visibility import admitted_source_selection
+from chrona.presentation.layout.mark_geometry import compose_item_marks, complete_mark_window_geometry
+from chrona.presentation.layout.mark_facet_visibility import admitted_source_selection, FacetDisposition
 from chrona.presentation.layout.lane_window_marks import complete_lane_window_mark_account
-from chrona.presentation.layout.model import LayoutError
-from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
+from chrona.presentation.layout.model import LayoutError, Rect
+from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment, obstacle_envelope
 from chrona.presentation.layout.presentation import MarkBandFrame
 from chrona.presentation.layout.mark_band_allocation import MarkBandAllocation
 from chrona.presentation.layout.surface_quality import ScalePlacement, VisualRequest
@@ -109,6 +109,7 @@ def compose_lane_item_footprints(
 
     frame = MarkBandFrame.zero_origin(scale, float(mark_band_size), role_geometries, mark_band_allocation)
     marks_by_instance = {}
+    original_marks = {}
     for instance in closure.instances:
         occurrence = MarkOccurrence(
             MarkOccurrenceKind.LANE_SOURCE, instance.row_id, instance.item_id,
@@ -123,10 +124,31 @@ def compose_lane_item_footprints(
             emit_missing_actual=lane_missing_actual_visible(projection), emit_diagnostics=False,
             selection=admitted_source_selection(visibility),
         )
-        marks_by_instance[instance] = composition.marks
+        facets = {f"{facet.source.facet}:{instance.placement_key}": facet for facet in visibility.facets}
+        completed_marks = []
+        for mark in composition.marks:
+            original_marks[mark.placement_id] = mark
+            facet = facets.get(mark.placement_id)
+            if facet is None:
+                raise LayoutError("E_LAYOUT_WINDOW_CLIP", mark.placement_id,
+                                  detail="stage=preflight; reason=unaccounted-mark")
+            if facet.disposition == FacetDisposition.CLIPPED:
+                # Only inline time is clipped in the provisional zero-origin
+                # frame. Its block envelope comes from the original painted
+                # facets, not a guessed final row height or fake geometry.
+                envelopes = tuple(obstacle_envelope(value.visible_footprint)
+                                  for value in _mark_facets(items[instance], instance, mark, theme_tokens))
+                top = min(value[1] for value in envelopes)
+                bottom = max(value[3] for value in envelopes)
+                plot = Rect(scale.range_start, top, scale.range_end - scale.range_start, bottom - top)
+                mark = complete_mark_window_geometry(mark, facet, scale, plot).visible
+            if mark is not None:
+                completed_marks.append(mark)
+        marks_by_instance[instance] = tuple(completed_marks)
     all_marks = tuple(mark for instance in closure.instances for mark in marks_by_instance[instance])
     icons = _compose_mark_icons(all_marks, bound_marks, icon_assets, theme_tokens)
-    progress = _compose_progress(closure, items, marks_by_instance, progress_fill_source, theme_tokens)
+    progress = _compose_progress(closure, items, marks_by_instance, progress_fill_source, theme_tokens,
+                                 original_marks=original_marks)
     collected: dict[LaneProjectionInstance, list[LaneFacetFootprint]] = defaultdict(list)
     facet_purposes: dict[LaneProjectionInstance, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
     hosted_icons: dict[LaneProjectionInstance, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
