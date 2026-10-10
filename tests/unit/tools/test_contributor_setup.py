@@ -1,5 +1,6 @@
 """CI consumes the documented fresh-environment recipe verbatim."""
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 
@@ -29,6 +30,27 @@ def test_release_ci_runs_units_in_the_documented_environment_without_repeating_t
     assert ".venv/bin/python -m pytest tests/unit -n 4" in pytest_step["run"]
     assert "python -m pytest --ignore=tests/unit -n 4" in pytest_step["run"]
     assert pytest_step["shell"] == "bash"
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="workflow shell requires bash")
+@pytest.mark.parametrize("unit_status,remainder_status", [(0, 0), (1, 0), (0, 1), (1, 1)])
+def test_release_ci_attempts_both_suites_and_preserves_either_failure(
+        tmp_path, unit_status, remainder_status):
+    from chrona.resources import safe_load
+
+    root = Path(__file__).resolve().parents[3]
+    workflow = safe_load((root / ".github/workflows/conformance.yml").read_bytes())
+    step = next(step for step in workflow["jobs"]["full-matrix"]["steps"]
+                if step.get("id") == "pytest")
+    script = step["run"].replace("${{ matrix.os }}", "ubuntu-latest")
+    script = script.replace(".venv/bin/python -m pytest tests/unit -n 4",
+                            f"printf 'units\\n' >> calls; (exit {unit_status})")
+    script = script.replace("python -m pytest --ignore=tests/unit -n 4",
+                            f"printf 'remaining\\n' >> calls; (exit {remainder_status})")
+    result = subprocess.run([shutil.which("bash"), "-eo", "pipefail", "-c", script],
+                            cwd=tmp_path, capture_output=True, text=True)
+    assert (tmp_path / "calls").read_text(encoding="utf-8").splitlines() == ["units", "remaining"]
+    assert (result.returncode == 0) == (unit_status == 0 and remainder_status == 0)
 
 
 def test_executes_the_document_commands_and_propagates_errors(tmp_path, monkeypatch):

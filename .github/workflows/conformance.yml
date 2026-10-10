@@ -272,8 +272,11 @@ jobs:
         shell: bash
         run: |
           if [[ '${{ matrix.os }}' == 'ubuntu-latest' ]]; then
-            .venv/bin/python -m pytest tests/unit -n 4
-            python -m pytest --ignore=tests/unit -n 4
+            unit_status=0
+            .venv/bin/python -m pytest tests/unit -n 4 || unit_status=$?
+            remainder_status=0
+            python -m pytest --ignore=tests/unit -n 4 || remainder_status=$?
+            test "$unit_status" = 0 && test "$remainder_status" = 0
           else
             python -m pytest -n 4
           fi
