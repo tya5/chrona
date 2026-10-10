@@ -73,6 +73,69 @@ def test_place_text_measures_the_transformed_spaced_painted_form():
     assert placed.letter_spacing == 3 and placed.numeric_spacing == "tabular"
 
 
+class _AsymmetricFont:
+    """Case changes have different advances; compression applies exactly once."""
+
+    content_identity = "sha256:asymmetric-glyph-widths"
+    _advance = {"m": 1.0, "M": 8.0, "w": 2.0, "W": 9.0}
+
+    def width(self, content, size, letter_spacing=0, numeric_spacing="proportional"):
+        return size * sum(self._advance.get(character, 3.0) for character in content) + max(
+            0, len(content) - 1
+        ) * letter_spacing
+
+
+class _AsymmetricTheme:
+    def __init__(self, *, transform, horizontal_scale, letter_spacing):
+        self.transform = transform
+        self.horizontal_scale = Decimal(str(horizontal_scale))
+        self.letter_spacing = Decimal(str(letter_spacing))
+
+    def text_treatment(self, role):
+        assert role == "text"
+        return TextTreatment(
+            "Asymmetric Sans", 400, Decimal(10), Decimal("1.4"), self.letter_spacing,
+            self.transform, "proportional", self.horizontal_scale,
+        )
+
+
+@pytest.mark.parametrize("transform", ["none", "uppercase", "lowercase"])
+@pytest.mark.parametrize("horizontal_scale", [1.0, 0.5])
+@pytest.mark.parametrize("letter_spacing", [0, 0.05])
+@pytest.mark.parametrize("orientation,rotation", [
+    ("horizontal", 0), ("rotate-cw", 90), ("rotate-ccw", -90),
+])
+@pytest.mark.parametrize("source_lines", [("mW",), ("m", "wM")], ids=("one-line", "multi-line"))
+def test_place_text_bounds_match_transformed_asymmetric_runs_scaled_once(
+    transform, horizontal_scale, letter_spacing, orientation, rotation, source_lines,
+):
+    source = "\n".join(source_lines)
+    font = _AsymmetricFont()
+    treatment = _AsymmetricTheme(transform=transform, horizontal_scale=horizontal_scale,
+                                 letter_spacing=letter_spacing)
+    paint = {"none": lambda text: text, "uppercase": str.upper, "lowercase": str.lower}[transform]
+    painted_lines = tuple(paint(line) for line in source_lines)
+    expected_width = max(font.width(line, 10, letter_spacing * 10) * horizontal_scale
+                         for line in painted_lines)
+    expected_height = 10 * 1.4 * len(painted_lines)
+
+    placed = place_text(
+        placement_id="label:asymmetric", source_ref="subject", content=source,
+        lines=source_lines, inline=17, baseline_block=43, typography_role="text",
+        theme_tokens=treatment, font_metrics=font, orientation=orientation,
+    )
+
+    assert placed.content == paint(source)
+    assert placed.lines == painted_lines
+    assert placed.source_content == source
+    assert placed.font_asset_identity == font.content_identity
+    assert placed.horizontal_scale == horizontal_scale
+    assert placed.bounds == measured_text_bounds(
+        inline=17, baseline_block=43, width=expected_width, height=expected_height,
+        font_size=10, rotation=rotation,
+    )
+
+
 def test_place_text_rotates_the_completed_block_about_its_baseline_pivot():
     clockwise = place_text(placement_id="label:cw", source_ref="a", content="AB",
                            inline=10, baseline_block=30, typography_role="text",

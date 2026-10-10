@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from decimal import Decimal
 import json
 from typing import Any, Iterable, Mapping
 
@@ -18,6 +19,15 @@ class RenderWarning:
 def _record(code: str, identity_fields: Mapping[str, Any], **fields: Any) -> RenderWarning:
     identity = code + ":" + json.dumps(identity_fields, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return RenderWarning(identity, {"code": code, "severity": "warning", "diagnostic": identity, **fields})
+
+
+def _json_number(value: Any) -> int | float:
+    """Keep Layout Decimal facts JSON-safe without stringifying numeric evidence."""
+    if isinstance(value, int) and not isinstance(value, bool):
+        return value
+    if isinstance(value, (Decimal, float)):
+        return float(value)
+    raise TypeError("canvas warning coordinates must be numeric")
 
 
 def _described(record: RenderWarning) -> RenderWarning:
@@ -49,6 +59,7 @@ def collect_render_warnings(
     attachment_warnings: Iterable[Any], deadline_warnings: Iterable[Any] = (),
     contrast_warnings: Iterable[Any] = (),
     surface_provenance: Iterable[DiagnosticProvenance] = (),
+    canvas_warning: Any | None = None,
 ) -> tuple[RenderWarning, ...]:
     """Keep warning multiplicity and stable source identities across transports."""
     records = []
@@ -83,6 +94,44 @@ def collect_render_warnings(
                                requiredInline=item.required_inline, requiredBlock=item.required_block,
                                availableInline=item.available_inline, availableBlock=item.available_block),
                                      getattr(item, "subjects", ())))
+    if canvas_warning is not None:
+        # The viewport declaration is a request fact, not an allocation: keep it
+        # separate from the existing fit-warning dimensions and identity.
+        actual = canvas_warning.actual
+        declared = canvas_warning.declared
+        contributors = []
+        for item in canvas_warning.contributors:
+            bounds, overrun = item.bounds, item.overrun
+            contributors.append({
+                "slotId": item.slot_id,
+                "bounds": {
+                    "inlineStart": _json_number(bounds.inline),
+                    "blockStart": _json_number(bounds.block),
+                    "inlineSize": _json_number(bounds.inline_size),
+                    "blockSize": _json_number(bounds.block_size),
+                },
+                "overrun": {
+                    "inlineStart": _json_number(overrun.inline_start),
+                    "inlineEnd": _json_number(overrun.inline_end),
+                    "blockStart": _json_number(overrun.block_start),
+                    "blockEnd": _json_number(overrun.block_end),
+                },
+            })
+        records.append(_record(
+            canvas_warning.code,
+            {"surfaceId": canvas_warning.surface_id, "sourceRef": canvas_warning.source_ref},
+            surfaceId=canvas_warning.surface_id,
+            sourceRef=canvas_warning.source_ref,
+            declared={"inlineSize": _json_number(declared.inline_size),
+                      "blockSize": _json_number(declared.block_size)
+                      if declared.block_size is not None else None},
+            actual={"inlineStart": _json_number(actual.inline),
+                    "blockStart": _json_number(actual.block),
+                    "inlineSize": _json_number(actual.inline_size),
+                    "blockSize": _json_number(actual.block_size)},
+            contributors=contributors,
+            contributorCount=canvas_warning.contributor_count,
+        ))
     for item in perceptibility_warnings:
         records.append(_with_subjects(_record(item.code, {"scenePath": item.scene_path,
                                            "primitiveIds": list(item.primitive_ids)},

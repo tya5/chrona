@@ -26,4 +26,4 @@ None.
 
 ## Architecture conclusion
 
-Layout owns the offset and measured content extent. Source implementation is merged; the exact-main full release gate for a commit containing this final review remains pending. No issue closure is claimed.
+Layout owns the offset and measured content extent. Closed after [exact-main release](https://github.com/tya5/chrona/actions/runs/38020427654) succeeded on `0fd085d17422fd332c49b4b75ebdf43fe9459f93`, containing this final review: three-OS pytest, conformance and wheel/smoke, newest-Python materializers and MCP passed.

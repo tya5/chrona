@@ -38,9 +38,14 @@ class SlotHeadings:
     reserve: Mapping[str, Decimal] | None = None
     diagnostics: tuple[str, ...] = ()
     warnings: tuple[FitWarning, ...] = ()
+    # Slot source -> inline extent taken from the start of the slot by a `start-column` caption (#1290).
+    inline_reserve: Mapping[str, Decimal] | None = None
 
     def reserved(self, source: str) -> Decimal:
         return (self.reserve or {}).get(source, Decimal(0))
+
+    def reserved_inline(self, source: str) -> Decimal:
+        return (self.inline_reserve or {}).get(source, Decimal(0))
 
 
 def _headed_content_slots(node: Mapping[str, Any]) -> tuple[str, ...]:
@@ -52,6 +57,19 @@ def _headed_content_slots(node: Mapping[str, Any]) -> tuple[str, ...]:
     for child in node.get("children", ()):
         found.extend(_headed_content_slots(child))
     return tuple(found)
+
+
+def _start_column_slots(node: Mapping[str, Any]) -> dict[str, tuple[str, str]]:
+    """Legend slots that declare `columns` and a `start-column` caption: source -> (node id, caption text) (#1290)."""
+    found: dict[str, tuple[str, str]] = {}
+    if node.get("kind") == "slot":
+        heading = node.get("heading")
+        if (isinstance(heading, Mapping) and heading.get("block") == "start-column"
+                and node.get("source") == "legend" and node.get("columns")):
+            found[str(node["source"])] = (str(node["id"]), str(heading["text"]))
+    for child in node.get("children", ()):
+        found.update(_start_column_slots(child))
+    return found
 
 
 def headed_slot_ids(resolved_layout: ResolvedLayoutProfile) -> frozenset[str]:
@@ -69,22 +87,40 @@ def headed_slot_ids(resolved_layout: ResolvedLayoutProfile) -> frozenset[str]:
 
 
 def reserve_slot_heading_blocks(measured: MeasuredSources, resolved_layout: Any, tokens: Any, *,
-                                content: Any) -> MeasuredSources:
+                                content: Any, font_metrics: Any = None) -> MeasuredSources:
     """Add a heading's block to the measurement of each content-sized slot that declares one.
 
     A slot sized by its content is allocated what its content measures, so the caption's line and gap are part
     of that measurement; a fixed or filling slot takes the caption from its allocation. Nothing changes without
     a declared heading.
     """
+    start_column = _start_column_slots(resolved_layout.profile["root"])
     sources = [source for source in _headed_content_slots(resolved_layout.profile["root"])
-               if source in measured.measurements
+               if source in measured.measurements and source not in start_column
                and source_has_content(content, source, measured_inputs=measured.inputs)]
-    if not sources:
+    columns = [source for source in start_column if source in measured.measurements
+               and source_has_content(content, source, measured_inputs=measured.inputs)]
+    if not sources and not columns:
         return measured
     treatment = tokens.text_treatment(tokens.slot_heading_role())
     size = Decimal(str(treatment.font_size))
     reserve = size * Decimal(str(treatment.line_height)) + size * _GAP_EM
     measurements = dict(measured.measurements)
+    overrides = dict(getattr(content, "slot_heading_text", ()) or ())
+    for source in columns:
+        # A start-column caption takes inline room beside the entries, not a block above them (#1290).
+        node_id, text = start_column[source]
+        metrics = metric_for_role(tokens, tokens.slot_heading_role(), font_metrics)
+        width = Decimal(str(measure_text_width(
+            overrides.get(node_id, text), font_size=float(treatment.font_size), font_metrics=metrics,
+            letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
+            numeric_spacing=treatment.numeric_spacing))) + size * _GAP_EM
+        line = size * Decimal(str(treatment.line_height))
+        item = measurements[source]
+        measurements[source] = Measurement(
+            item.min_inline + width, item.preferred_inline + width, item.max_inline + width,
+            max(item.min_block, line), max(item.preferred_block, line), max(item.max_block, line),
+            item.first_baseline, item.last_baseline)
     for source in sources:
         item = measurements[source]
         measurements[source] = Measurement(
@@ -93,6 +129,24 @@ def reserve_slot_heading_blocks(measured: MeasuredSources, resolved_layout: Any,
             None if item.first_baseline is None else item.first_baseline + reserve,
             None if item.last_baseline is None else item.last_baseline + reserve)
     return replace(measured, measurements=measurements)
+
+
+def inline_content_slot(slot: SlotPlacement, reserved: Decimal) -> SlotPlacement:
+    """The slot as its entries see it when a caption holds its inline-start column (#1290)."""
+    if not reserved:
+        return slot
+    bounds = slot.bounds
+    return replace(slot, bounds=Rect(bounds.inline + reserved, bounds.block,
+                                     max(Decimal(0), bounds.inline_size - reserved), bounds.block_size))
+
+
+def inline_full_slot(original: SlotPlacement, completed: SlotPlacement, reserved: Decimal) -> SlotPlacement:
+    """The completed slot with its caption column restored before what its entries completed to."""
+    if not reserved:
+        return completed
+    bounds = completed.bounds
+    return replace(completed, bounds=Rect(original.bounds.inline, bounds.block,
+                                          original.bounds.inline_size, bounds.block_size))
 
 
 def content_slot(slot: SlotPlacement, reserved: Decimal) -> SlotPlacement:
@@ -171,6 +225,7 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
     axis = slots.get("timeline-axis")
     text: list[TextPlacement] = []
     reserve: dict[str, Decimal] = {}
+    inline_reserve: dict[str, Decimal] = {}
     diagnostics: list[str] = []
     warnings: list[FitWarning] = []
     copy_overrides = dict(request.surface_content.slot_heading_text)
@@ -182,6 +237,7 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
             completed = prepared[source]
             text.extend(completed.text)
             reserve.update(completed.reserve or {})
+            inline_reserve.update(completed.inline_reserve or {})
             diagnostics.extend(completed.diagnostics)
             warnings.extend(completed.warnings)
             continue
@@ -196,6 +252,36 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
         top, bottom = bounds.block, bounds.block + bounds.block_size
         line_top, content_start = top, top + line + gap
         aligned_baseline: float | None = None
+        start_column = heading.block == "start-column"
+        if start_column and not (source == "legend" and decision.columns):
+            diagnostics.append(f"I_LAYOUT_SLOT_HEADING_NO_START_COLUMN:{decision.node_id}")
+            start_column = False
+        if start_column:
+            # The caption holds the slot's inline-start column and the entries start after it (#1290).
+            if bounds.inline_size <= 0 or line > bounds.block_size:
+                diagnostics.append(f"I_LAYOUT_SLOT_HEADING_OMITTED:{decision.node_id}:too-small")
+                continue
+            available = float(bounds.inline_size)
+            source_content = copy_overrides.get(decision.node_id, heading.text)
+            content, disposition = source_content, "fit"
+            natural = measure_text_width(content, **shape)
+            if natural > available:
+                content, disposition = ellipsize_text(content, available_inline=available, **shape), "ellipsized"
+                warnings.append(FitWarning(
+                    "W_LAYOUT_TEXT_ELLIPSIZED", f"{SLOT_HEADING_PLACEMENT_PREFIX}{decision.node_id}", source,
+                    "slot-heading-text", "ellipsize-with-source", natural, float(line), available, float(line)))
+            width = measure_text_width(content, **shape)
+            text.append(place_text(
+                placement_id=f"{SLOT_HEADING_PLACEMENT_PREFIX}{decision.node_id}", source_ref=source,
+                content=content, overflow=disposition, inline=float(bounds.inline),
+                baseline_block=float(top) + float(size), typography_role=role,
+                theme_tokens=tokens, font_metrics=request.font_metrics,
+                collision_region=f"slot-heading:{decision.node_id}",
+                collision_domain=CollisionDomain("slot-heading", decision.node_id),
+                source_content=source_content, semantic_id=SLOT_HEADING_SEMANTIC_ID, slot_id=slot.slot_id,
+                available_inline_start=float(bounds.inline), available_inline_size=available))
+            inline_reserve[source] = min(Decimal(str(width)) + gap, bounds.inline_size)
+            continue
         if heading.block in {"header-row", "axis-tier"}:
             beside = (axis is not None and axis.slot_id != slot.slot_id
                       and axis.bounds.block < bottom and top < axis.bounds.block + axis.bounds.block_size)
@@ -240,4 +326,4 @@ def complete_slot_headings(*, request: Any, slots: Mapping[str, SlotPlacement],
             source_content=source_content, semantic_id=SLOT_HEADING_SEMANTIC_ID, slot_id=slot.slot_id,
             available_inline_start=float(bounds.inline), available_inline_size=available))
         reserve[source] = content_start - top
-    return SlotHeadings(tuple(text), reserve, tuple(diagnostics), tuple(warnings))
+    return SlotHeadings(tuple(text), reserve, tuple(diagnostics), tuple(warnings), inline_reserve)
