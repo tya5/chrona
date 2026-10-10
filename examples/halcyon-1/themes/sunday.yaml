@@ -179,9 +179,12 @@ body:
     text-transform:
       type: textTransform
       value: none
-    kind-upper:
+    small-caps:
       type: textTransform
-      value: uppercase
+      value: small-caps
+    small-caps-scale:
+      type: number
+      value: 0.8
     numeric-spacing:
       type: numericSpacing
       value: proportional
@@ -334,9 +337,6 @@ body:
     group-header.inset:
       type: number
       value: 0.8
-    legend-item-min:
-      type: number
-      value: 90
     legend-swatch-inline-size:
       type: number
       value: 22
@@ -545,7 +545,8 @@ body:
       fontSize: size.axis-quarter
       lineHeight: leading.body
       letterSpacing: header-spacing
-      textTransform: kind-upper
+      textTransform: small-caps
+      smallCapsScale: small-caps-scale
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
@@ -558,7 +559,8 @@ body:
       fontSize: size.axis
       lineHeight: leading.body
       letterSpacing: header-spacing
-      textTransform: kind-upper
+      textTransform: small-caps
+      smallCapsScale: small-caps-scale
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
@@ -572,7 +574,8 @@ body:
       fontSize: size.asof
       lineHeight: leading.tight
       letterSpacing: header-spacing
-      textTransform: kind-upper
+      textTransform: small-caps
+      smallCapsScale: small-caps-scale
       numericSpacing: numeric-spacing
       horizontalScale: squeeze.label
     legend:
@@ -624,7 +627,8 @@ body:
       fontSize: size.note-heading
       lineHeight: leading.tight
       letterSpacing: header-spacing
-      textTransform: kind-upper
+      textTransform: small-caps
+      smallCapsScale: small-caps-scale
       numericSpacing: numeric-spacing
       horizontalScale: squeeze.label
     annotation-kind-label:
@@ -652,7 +656,8 @@ body:
       fontSize: header-size
       lineHeight: leading.body
       letterSpacing: header-spacing
-      textTransform: kind-upper
+      textTransform: small-caps
+      smallCapsScale: small-caps-scale
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
@@ -663,7 +668,8 @@ body:
       fontSize: slot-heading-size
       lineHeight: leading.body
       letterSpacing: header-spacing
-      textTransform: kind-upper
+      textTransform: small-caps
+      smallCapsScale: small-caps-scale
       numericSpacing: numeric-spacing
     summary:
       fontFamily: editorial
@@ -693,7 +699,8 @@ body:
       fontSize: size.group
       lineHeight: leading.body
       letterSpacing: header-spacing
-      textTransform: kind-upper
+      textTransform: small-caps
+      smallCapsScale: small-caps-scale
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
@@ -792,7 +799,8 @@ body:
       fontSize: size.period
       lineHeight: leading.body
       letterSpacing: header-spacing
-      textTransform: kind-upper
+      textTransform: small-caps
+      smallCapsScale: small-caps-scale
       numericSpacing: numeric-spacing
     region-frame-title:
       strokeWidth: stroke-width.panel
