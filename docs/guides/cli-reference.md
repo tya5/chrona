@@ -159,7 +159,7 @@ create a new editable project in a new directory
 
 `chrona init --example`
 
-- `--example`: create a full named corpus example instead of the editable minimal starter
+- `--example`: create a named example instead of the editable minimal starter: halcyon-1 is the full corpus, onboarding the seven numbered tutorial stages
 
 ## chrona materialize
 
