@@ -243,6 +243,38 @@ def test_prune_keeps_an_entry_whose_after_does_not_hold_at_its_landing_commit(hi
     assert len(result.kept) == 1 and "after value does not hold at the landing commit" in result.kept[0][1]
 
 
+def test_prune_explains_restatement_after_an_overlapping_schema_merge(tmp_path):
+    repo = Repo(tmp_path)
+    before, after, later = ({"enum": ["old"]}, {"enum": ["old", "new"]}, {"enum": ["latest"]})
+    parent = repo.commit("base", {f"schemas/{THING}": _schema(b=before), DELTAS: _deltas()})
+    # The after-state is real, but before was captured mid-implementation rather than at the landing parent.
+    wrong = _entry("/properties/b", after, before={"enum": ["intermediate"]})
+    landing = repo.commit("schema with an inaccurate record", {
+        f"schemas/{THING}": _schema(b=after), DELTAS: _deltas(_line(wrong))})
+    repo.git("checkout", "-q", "-b", "later-schema")
+    repo.commit("later overlapping schema edit", {f"schemas/{THING}": _schema(b=later)})
+    repo.git("checkout", "-q", "main")
+    repo.git("merge", "--no-ff", "-q", "later-schema", "-m", "later overlapping schema merge")
+
+    result = gate.prune_stale(repo.root, "HEAD")
+
+    assert result.removed == []
+    reason = result.kept[0][1]
+    assert parent[:8] in reason and landing[:8] in reason
+    assert THING in reason and "/properties/b" in reason
+    assert "before merging, restate the recorded before/after" in reason
+    assert "already merged, so manually retire it only after verifying" in reason
+    assert "Rewriting a merged entry changes its landing identity" in reason
+    assert "cannot repair its --prune-stale proof" in reason
+    assert (repo.root / DELTAS).read_text() == _deltas(_line(wrong))
+    corrected = _entry("/properties/b", after, before=before)
+    # The corrected landing values prove the historical transition even though today's value differs.
+    assert gate._applies(gate.fingerprint_schemas(gate.load_schema_rev(repo.root, parent)).trees,
+                         gate.parse_deltas(_deltas(_line(corrected)).encode(), label="corrected")[0])
+    assert gate._landed(gate.fingerprint_schemas(gate.load_schema_rev(repo.root, landing)).trees,
+                       gate.parse_deltas(_deltas(_line(corrected)).encode(), label="corrected")[0])
+
+
 def test_prune_retires_a_repair_entry_whose_result_already_held_where_it_was_recorded(history):
     repo, (c0, c1, c2, c3, c4), entry = history
     already = _entry("/properties/b", B, before={"type": "boolean"})  # recorded after B had landed
