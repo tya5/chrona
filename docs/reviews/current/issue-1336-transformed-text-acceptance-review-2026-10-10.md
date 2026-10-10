@@ -4,10 +4,10 @@
 
 Authority: [current design, architecture and implementation plan](https://github.com/tya5/chrona/issues/1336#issuecomment-6094661552).
 Implementation `3a257021`; integrated ready main
-`14399aabc0daaf110a531a2dc21c5fa152aeb67c`
-([trusted gate](https://github.com/tya5/chrona/actions/runs/38038775824)).
+`48957a0cb9064d2ff76a42c21241843dc8383a5c`
+([trusted gate](https://github.com/tya5/chrona/actions/runs/38041136428)).
 Published WIP: `wip/issue-1336-transformed-text`.
-No PR or public-artifact acceptance yet.
+The feature PR still requires fresh public-artifact attribution and release acceptance.
 
 ## Literal issue acceptance
 
@@ -64,6 +64,9 @@ After adopting #1290, **19 group/header/caller/grid tests pass (11.31s)**.
 One additional synthetic regression closes transformed/compressed grid labels
 and the start-column caption against drawn widths and reserved coordinates;
 unique focused coverage is now **235 tests**. No further product change is needed.
+Source integration `503268a1` adopts #1279: **45 transformed-text/grid/viewport/
+transport tests pass (17.28s)**. Its ready delta changes only generated Scenes
+and diagnostic inventory; product/test bytes are unchanged, so no repeat batch is needed.
 
 Closure requires final focused/caller tests, current-base artifact attribution,
 exact-head PR checks and successful three-OS release CI on the exact published
