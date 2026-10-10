@@ -7,9 +7,45 @@
 
 Axis level selection evaluates each candidate interval by its natural calendar bucket width, before the View window clips its first or last bucket. Rendering geometry remains clipped to the View window. A clipped edge label that cannot fit is omitted; it does not reject an otherwise fitting level. Interior labels continue to require measured fit. The Axis formatter is the sole source of label text.
 
-### 1.1 `thin-with-record` disposition (#482)
+### 1.1 Regular thinning and automatic units (#1294)
 
-The same principle governs one label tier's own thinning: a candidate whose own clipped interval cannot hold its measured label is omitted, on that reason alone, and never causes another candidate to be omitted. `thin-with-record` disposition depends only on each candidate's own measured fit; it does not select a periodic stride or phase across the tier, because axis buckets are contiguous and half-open, so a candidate that fits inside its own bucket cannot reach a neighbour's bucket regardless of any other candidate's disposition. One collision removes exactly one label.
+For `thin-with-record`, Layout measures each primary candidate in its natural
+calendar interval, including declared transform, numeric spacing, typography,
+orientation and label inset. Secondary labels keep their independent omission
+rule below; they never change primary unit or cadence selection. Among
+the candidates already selected by authored `every`, retain positions
+`0, k, 2k, ...` for the smallest positive `k` whose retained candidates all fit
+their own natural intervals. The first natural candidate anchors the phase;
+mapping insertion order never selects a phase. A stride selects candidates, not
+wider intervals: dates, natural indices, band cells and authored `every` do not
+change. If every candidate fits, `k = 1`. If no nonempty subset at that phase
+fits, a fixed-unit tier omits all its labels; it does not restore visible overflow.
+
+A labels tier with `unit: auto` declares its permitted units and forms through
+the existing `label.forms` mapping. For `thin-with-record`, try only declared
+units in canonical order `day`, `week`, `month`, `quarter`, `half`, `year`, and
+choose the first with a viable regular subset by the rule above. Do not depend
+on YAML/JSON key order. If none is viable, keep the coarsest declared unit's
+candidate identities as omitted outcomes, not visible labels. No new form,
+unit, band, text abbreviation or font-size reduction is invented.
+
+Window clipping does not participate in unit or cadence selection. After that
+selection, Layout applies completed logical-interval, painted-host and plot
+containment (Specification 50, #1291). An edge or host that cannot contain a
+selected label suppresses that label without changing the selected unit or
+cadence; painted-host fit does not introduce a second selection loop. A cadence
+never merges painted cells or transfers text to a neighbouring host. Record
+every omitted candidate with `W_LAYOUT_AXIS_LABEL_THINNED`, its source outcome
+and suppression decision, and each affected tier with `W_LAYOUT_AXIS_DENSITY`.
+An omitted label has no visible target or visible-overflow record.
+
+This supersedes #482's prohibition on periodic thinning. `visible-overflow`
+retains its declared policy, subject to the hard containment rule; automatic
+cadence/coarsening above applies to `thin-with-record`. View owns allowed
+units/forms, Theme owns typography/paint, Layout owns selection and completed
+geometry, and Scene/adapters only project/serialize it. Packaged defaults and
+builtin presets use automatic label units with `thin-with-record`; their band
+hosts and paint must be explicitly compatible with their selected labels.
 
 ## 1.2 Axis tier appearance (#426)
 
@@ -65,13 +101,19 @@ primitive remains optional and has no scheduling effect.
 
 ## 3. Dependencies
 
-Dependency paths remain Scene-owned. Their stroke token is Theme-owned by the `dependency` role. Shipped schemes bind that role to `textMuted`, not `neutral`, to meet the examples' visible secondary-ink role. No renderer color fallback or per-example branch is allowed.
+Dependency geometry and routes are Layout-owned; Scene projects the completed
+paths. Their stroke token is Theme-owned by the `dependency` role. Shipped
+schemes bind that role to `textMuted`, not `neutral`, to meet the examples'
+visible secondary-ink role. No renderer color fallback or per-example branch
+is allowed.
 
 ## 4. Acceptance
 
 - a clipped tail cannot downgrade an otherwise fitting axis level;
-- edge labels are omitted only when their clipped geometry cannot fit;
-- `thin-with-record` omits only a label whose own clipped interval cannot hold it, never a label that fits because another candidate does not;
+- an edge retained by the selected cadence is admitted only when its completed clipped interval, host and plot can contain it;
+- `thin-with-record` retains the smallest fitting first-anchored regular subset without enlarging any retained interval;
+- automatic units follow the canonical declared-unit order, independent of mapping order, and exhausted candidates never become visible overflow;
+- clipped edges and completed painted-host admission do not change the selected unit or cadence, and all omissions remain recorded;
 - missing-actual is absent when the facet is not selected or the item is not yet due, and otherwise follows its planned mark;
 - dependency primitives consume the declared dependency role; and
 - no Project, Snapshot, Actual, legacy Settings, or legacy Theme contract changes;
