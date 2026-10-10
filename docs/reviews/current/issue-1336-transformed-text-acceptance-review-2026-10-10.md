@@ -4,8 +4,8 @@
 
 Authority: [current design, architecture and implementation plan](https://github.com/tya5/chrona/issues/1336#issuecomment-6094661552).
 Implementation `3a257021`; integrated ready main
-`b1c65cd521fca5a538ccc9863ec355637fe275c2`
-([trusted gate](https://github.com/tya5/chrona/actions/runs/38036901541)).
+`14399aabc0daaf110a531a2dc21c5fa152aeb67c`
+([trusted gate](https://github.com/tya5/chrona/actions/runs/38038775824)).
 Published WIP: `wip/issue-1336-transformed-text`.
 No PR or public-artifact acceptance yet.
 
@@ -60,6 +60,10 @@ integration checks, not additional unique coverage.
 After adopting #1282 on `506064ae`, group-header, six-caller, band-pattern,
 small-caps and plain-zero integration tests pass **33 tests (21.28s)**.
 This is focused integration evidence, not another full-suite or unique-test claim.
+After adopting #1290, **19 group/header/caller/grid tests pass (11.31s)**.
+One additional synthetic regression closes transformed/compressed grid labels
+and the start-column caption against drawn widths and reserved coordinates;
+unique focused coverage is now **235 tests**. No further product change is needed.
 
 Closure requires final focused/caller tests, current-base artifact attribution,
 exact-head PR checks and successful three-OS release CI on the exact published
