@@ -17,6 +17,7 @@ from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, 
 
 if TYPE_CHECKING:  # avoid the runtime cycle: canvas_overlays uses SlotPlacement.
     from chrona.presentation.layout.canvas_overlays import CanvasOverlays
+    from chrona.presentation.layout.canvas_viewport import CanvasViewportWarning, DeclaredViewport
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, FIT_ADJUSTS, TEXT_FOLLOWS_BOX
 
 
@@ -577,6 +578,7 @@ class SurfaceLayoutRequest:
     visual_requests: tuple[VisualRequest, ...] = ()
     fixed_lane_preflight: FixedLanePreflight | None = None
     capacity_short_sources: tuple[CapacitySourceEvidence, ...] = ()
+    declared_viewport: DeclaredViewport | None = None
 
 
 @dataclass(frozen=True)
@@ -709,6 +711,7 @@ class SurfacePlacement:
     aligned_strokes: tuple[AlignedStrokePlacement, ...] = ()
     canvas_overlays: CanvasOverlays | None = None
     diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
+    canvas_warning: CanvasViewportWarning | None = None
 
     def assert_valid(self) -> None:
         """Reject invalid required geometry before a renderer receives it."""
