@@ -175,36 +175,12 @@ body:
     headerOrientation: horizontal
   selection:
     include:
-      ids:
-      - target-b
-      - yuya
-      - titlecard
-      - marquee
-      - sunday
-      - m0-gate
-      - canvas-fit
-      - flow-bugs
-      - legend-warning
-      - rows-headers
-      - scene-checks
-      - m1-gate
-      - route-bound
-      - tall-canvas
-      - japanese
-      - m2-gate
-      - docs-ci
-      - defaults
-      - errors
-      - m3-gate
-      - presets
-      - ai-design
-      - io
-      - m4-gate
-      - rerun
-      - rc-gate
       types:
       - span
       - point
+    exclude:
+      objectTypes:
+      - group
   grouping:
     by: field
     field: owner
