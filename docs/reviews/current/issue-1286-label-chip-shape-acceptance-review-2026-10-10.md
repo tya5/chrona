@@ -2,13 +2,11 @@
 
 # Issue #1286 — label chip shape acceptance
 
-Validation checkpoint: `6c77dd7b7a076fd088e348ae25d87f04091ab36c`,
-ordinarily adopting main `eb4e83fd601f7d5a1621a6fc91323266a7ea50b4`
-and the prepared #1287 dependency. Neither feature is a merged release base.
-Preparation `135694b04738ba049615f27a142fb089a34dc5eb` adopts published
-#1287 head `64cf66e1ed9b94718e424b028726ed34bf77918c` and ready main
-`600f04b6a79ddd2a4761bc1c586ad0916409db74`; product/test/schema/tool bytes
-remain identical to the validation checkpoint. No chip PR is open.
+Validation checkpoint: `8799fc137edc1db5f87ed0f1b9a7f22bdaa455a8`, ordinarily
+adopting published #1287 head `88729d8e76d34b12ff4144441e29e79f5bf5d9bb`
+and ready main `127392c426010f8381c984d8ff45f6c1e46f3791`, including the
+shared contour correction and dev B's legend fix. #1287 is not yet merged.
+No chip PR is open.
 [Current design, architecture review and plan](https://github.com/tya5/chrona/issues/1286#issuecomment-6088639263).
 Local acceptance only: no PR, public artifact or exact-main release gate is complete. Do not close.
 
@@ -30,14 +28,13 @@ Local acceptance only: no PR, public artifact or exact-main release gate is comp
 
 Synthetic render evidence: 12 cases across both integration files; the final as-of file passed 8 tests and the period/variance file passed 4. Final focused closure/measurement/lane/ground/period batch: 43 passed; builder/geometry/lane/ground batch: 88 passed; legacy chip/as-of/viewer-fit batch: 48 passed. Independent absent-token replay: Scene 22,949 bytes, SHA256 `e5f8b0c395e6b891d065e9152f2aa302d51d4f5162e3680edec12d802f2b93ea`; SVG 6,992 bytes, SHA256 `74bf8d570ca05067f0000a3002520bb237113b11ac682e21ae367ec0e82c3e0b`; root verified both complete streams with `cmp`.
 
-Current prepared-parent render/schema batch: 17 passed (13.39s). Predecessor S0
-against ready main `fed9727461e6fefa5b092cdea638bf3a722dfcef` passed: L1 36 equal,
-two schemas with approved deltas (three own Theme paths and one inherited
-#1283 Layout path); L2 470 documents and L3 739 probes, with expected invalid
-fixtures unchanged. L2+L3 took 36.1s within the existing 60s budget (L1 9.5s).
-The earlier 82.3s run was not waived. Independent adoption audit found no
-unintended scope or resurrected allowances. Final-base L1, CI and public
-artifact evidence remain required after dependency adoption.
+Current adopted-parent batch: 40 passed (12.08s) for chip, contour, hosted-note,
+legend and host-identity tests; remaining period/variance and schema tests:
+9 passed (3.76s). Full S0 against exact ready `127392c4` passes: L1 37 equal,
+one declared Theme expansion; L2 470 tracked/367 mapped/4 unchanged invalid
+documents; L3 739 probes (462 reject/277 accept). L2+L3: 32.5s within 60s.
+The inherited landed group-header allowance remains unchanged and nonblocking.
+Final-base S0, CI and artifact evidence remain required after #1287 merges.
 
 ## Architecture conclusion
 
