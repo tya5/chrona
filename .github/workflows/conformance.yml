@@ -260,13 +260,23 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
       - run: pip install -e '.[dev,render,mcp]' -e packages/chrona-fonts-noto-cjk
+      - name: Verify literal contributor setup in a fresh venv
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: python tools/run_contributor_setup.py
       - id: conformance
         continue-on-error: true
         run: python conformance/run_conformance.py
       - id: pytest
         if: ${{ always() }}
         continue-on-error: true
-        run: pytest -n 4
+        shell: bash
+        run: |
+          if [[ '${{ matrix.os }}' == 'ubuntu-latest' ]]; then
+            .venv/bin/python -m pytest tests/unit -n 4
+            python -m pytest --ignore=tests/unit -n 4
+          else
+            python -m pytest -n 4
+          fi
       - id: os_probe
         if: ${{ always() }}
         continue-on-error: true

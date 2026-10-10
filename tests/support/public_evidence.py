@@ -16,6 +16,7 @@ from xml.etree import ElementTree
 
 import yaml
 
+from chrona.resources import safe_load
 from tools.derived_evidence import ROOT, manifest_targets
 
 LEDGER = ROOT / "tests/acceptance/output/public-slide-ledger.yaml"
@@ -45,8 +46,16 @@ class Observed:
 def declared_slides(root: Path = ROOT) -> tuple[DeclaredSlide, ...]:
     """Every slide the example manifests declare, in manifest order."""
     slides = []
+    # manifest_targets validates the declaration graph. Reuse one decoded
+    # document per manifest rather than reparsing it once for every slide.
+    manifests: dict[Path, Mapping[str, Any]] = {}
     for manifest_path, slide_id in manifest_targets(root):
-        manifest = yaml.safe_load(manifest_path.read_bytes())
+        if manifest_path not in manifests:
+            value = safe_load(manifest_path.read_bytes())
+            if not isinstance(value, Mapping):
+                raise ValueError(f"E_PUBLIC_EVIDENCE_MANIFEST:{manifest_path}")
+            manifests[manifest_path] = value
+        manifest = manifests[manifest_path]
         slide = next(item for item in manifest["slides"] if item["id"] == slide_id)
         base = manifest_path.parent
         scene, context = slide.get("expectedScene"), slide.get("context", manifest.get("context"))
@@ -92,7 +101,7 @@ def observe_all() -> dict[str, Observed]:
 
 
 def load_ledger(path: Path = LEDGER) -> dict[str, dict[str, Any]]:
-    document = yaml.safe_load(path.read_bytes())
+    document = safe_load(path.read_bytes())
     if not isinstance(document, dict) or document.get("version") != LEDGER_VERSION or not isinstance(document.get("slides"), dict):
         raise ValueError(f"E_SLIDE_LEDGER_FORMAT:{path}")
     return document["slides"]

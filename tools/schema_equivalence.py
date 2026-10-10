@@ -1278,8 +1278,14 @@ def run_gate(root: Path, *, layers: Iterable[str] = ("L1", "L2", "L3"), base_rev
              base_schemas: Mapping[str, Any] | None = None, schemas_dir: Path | None = None,
              inventory_path: Path | None = None, documents: Mapping[str, bytes] | None = None,
              baseline_path: Path | None = None, expected_invalid_path: Path | None = None,
-             deltas_path: Path | None = None, sites: Iterable[ProbeSite] = PROBE_SITES) -> GateReport:
-    """Run the requested layers against the baseline (L2, L3) and a base revision (L1)."""
+             deltas_path: Path | None = None, sites: Iterable[ProbeSite] = PROBE_SITES,
+             enforce_runtime_budget: bool = True) -> GateReport:
+    """Run the requested layers against the baseline (L2, L3) and a base revision (L1).
+
+    The CLI keeps the 60-second L2/L3 guard by default. Callers checking semantic
+    results in tests may disable only that host-dependent guard; the validation
+    work and all corpus/probe verdicts remain unchanged.
+    """
     wanted = frozenset(layers)
     report = GateReport()
     schemas_dir = schemas_dir or root / "schemas"
@@ -1394,7 +1400,7 @@ def run_gate(root: Path, *, layers: Iterable[str] = ("L1", "L2", "L3"), base_rev
     if wanted & {"L2", "L3"}:
         report.lines.append("runtime: " + ", ".join(f"{name}={report.timings[name]:.1f}s" for name in sorted(report.timings))
                             + f"; L2+L3={total:.1f}s (budget {RUNTIME_BUDGET_SECONDS:.0f}s)")
-        if total > RUNTIME_BUDGET_SECONDS:
+        if enforce_runtime_budget and total > RUNTIME_BUDGET_SECONDS:
             report.failures.append(f"runtime: L2+L3 took {total:.1f}s, over the {RUNTIME_BUDGET_SECONDS:.0f}s budget")
     return report
 
