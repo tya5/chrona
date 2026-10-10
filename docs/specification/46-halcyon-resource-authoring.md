@@ -26,6 +26,8 @@ A table column source may address a review item facet:
 
 A column declares its display formatter rather than embedding date strings in a renderer. Supported formatters are `dateRange`, `date`, `signedDays` (`+10d`) and `signedNumber` (`+10`, the same sign without the unit); `missing: in-progress` is the HALCYON value for an unavailable actual finish.
 
+**Plain zero (#1289).** A `signedNumber` or `signedDays` column may declare `zero: plain` (default `signed`): a zero value reads `0` (`0d` for days) instead of `+0` (`+0d`); a non-zero value keeps its sign, and an `onTime` affix still wraps the text. `zero` on a column whose format is not signed is `E_VIEW_COLUMN_ZERO`.
+
 **Per-state affixes (#588).** A column may declare `affixes`, a mapping from a state to `{prefix, suffix}`
 (each 1 to 8 characters, literal, no control character, at least one present). The states are `slip`, `onTime`
 and `ahead` (a `signedDays` or `signedNumber` value above, at and below zero) and `missing` (an absent value, of any

@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-import shutil
 import subprocess
 import sys
 import tarfile
@@ -12,6 +11,7 @@ import textwrap
 import pytest
 
 from tools import derived_workflow
+from tests.support.workflow_shell import workflow_bash
 
 
 def _git(root: Path, *args: str) -> None:
@@ -30,19 +30,6 @@ def _init_repo(root: Path) -> None:
     _git(root, "init", "-q")
     _git(root, "config", "user.name", "test")
     _git(root, "config", "user.email", "test@example.invalid")
-
-
-def _workflow_bash() -> str:
-    """Use the Git Bash installed for Actions, not Windows' WSL launcher."""
-    if sys.platform != "win32":
-        return "bash"
-    git = shutil.which("git")
-    assert git is not None
-    for parent in Path(git).resolve().parents:
-        candidate = parent / "bin" / "bash.exe"
-        if candidate.is_file():
-            return str(candidate)
-    pytest.fail("Git Bash is required for workflow shell tests")
 
 
 def test_retired_outputs_are_prior_tracked_generated_files_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -363,7 +350,8 @@ def test_sync_target_gate_validation_runs_before_checkout(tmp_path: Path) -> Non
     assert "derived_workflow" not in script
     assert steps[2]["env"]["TARGET_REF"] == "${{ steps.target.outputs.target_ref }}"
     assert 'git fetch origin "refs/heads/$TARGET_REF"' in steps[2]["run"]
-    assert 'git push origin "$SHA:refs/heads/$TARGET_REF"' in steps[-2]["run"]
+    fast_forward = next(step for step in steps if step.get("name") == "Fast-forward main only if the source tip is unchanged")
+    assert 'git push origin "$SHA:refs/heads/$TARGET_REF"' in fast_forward["run"]
 
     def run_validation(event: str, ref: str, sha: str) -> tuple[int, str]:
         output = tmp_path / "github-output"
@@ -409,7 +397,7 @@ def test_pr_readiness_accepts_only_a_main_base() -> None:
     guard = script.split("ready=false", 1)[0] + "fi\n"
     for ref, expected in (("main", 0), ("derived-proof/smoke-1", 1),
                           ("feature/unsafe", 1), ("derived-proof/Bad", 1)):
-        result = subprocess.run([_workflow_bash(), "-c", guard], capture_output=True, text=True,
+        result = subprocess.run([workflow_bash(), "-c", guard], capture_output=True, text=True,
                                 env={**os.environ, "EVENT_NAME": "pull_request", "PR_BASE_REF": ref,
                                      "PREVIEW": "success", "CONFORMANCE": "success",
                                      "PR_KIND": "docs"})
@@ -425,7 +413,7 @@ def test_pr_classifier_receives_unquoted_commit_ids(tmp_path: Path) -> None:
     sha = subprocess.run(["git", "rev-parse", "HEAD"], check=True, capture_output=True,
                          text=True).stdout.strip()
     output = tmp_path / "github-output"
-    result = subprocess.run([_workflow_bash(), "-c", command], capture_output=True, text=True,
+    result = subprocess.run([workflow_bash(), "-c", command], capture_output=True, text=True,
                             env={**os.environ, "BASE_SHA": sha, "HEAD_SHA": sha,
                                  "GITHUB_OUTPUT": str(output)})
     assert result.returncode == 0, result.stderr

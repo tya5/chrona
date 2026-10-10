@@ -19,7 +19,8 @@ from chrona.presentation.layout.presentation import (
     MarkBandFrame, MarkGeometry, TrackPlacement, place_mark_tracks,
     place_rows, required_row_block_extents, row_block_slack, table_text_line_block,
 )
-from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, below_plot_reserve
+from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, below_plot_reserve, measure_as_of_chip
+from chrona.presentation.layout.label_chip_measurement import MeasuredLabelChip
 from chrona.presentation.layout.surface_lanes import place_lane_mark_tracks
 from chrona.presentation.layout.surface_marks import folded_instance_id, resolve_mark_geometries, resolve_mark_band
 from chrona.presentation.layout.mark_band_allocation import MarkBandAllocation
@@ -88,7 +89,7 @@ def prepare_surface_slots(request: SurfaceLayoutRequest) -> SurfaceSlotAllocatio
         SlotPlacement(source, source, item.bounds, item.priority or "required",
                       item.overflow or "visible-overflow",
                       "primary" if source in {"timeline", "timeline-axis"} else None,
-                      item.direction or "block", item.gap, item.item_min_inline_size)
+                      item.direction or "block", item.gap, item.item_min_inline_size, item.columns)
         for source, item in sorted(decisions.items())
     )
     by_source = {slot.source_ref: slot for slot in slots}
@@ -140,6 +141,7 @@ class SurfaceBaseGeometry:
     as_of_foot_reserve: float = 0.0
     as_of_foot_fallback: bool = False
     mark_band_allocation: MarkBandAllocation | None = None
+    as_of_chip_measurement: MeasuredLabelChip | None = None
 
     def text_slot(self, item: Any) -> str:
         """Resolve a text host against the prepared base slot identities."""
@@ -320,9 +322,15 @@ def prepare_surface_base(request: SurfaceLayoutRequest, *,
     foot_reserve = 0.0
     foot_fallback = False
     content = request.surface_content
+    as_of_chip_measurement = request.as_of_chip_measurement
+    if as_of_chip_measurement is None:
+        as_of_chip_measurement = measure_as_of_chip(content, window=projection.window,
+            theme_tokens=request.theme_tokens, font_metrics=request.font_metrics,
+            visual_requests=request.visual_requests, icon_assets=request.icon_assets)
     if (content.as_of_placement == BELOW_PLOT and content.as_of is not None and content.as_of_label
             and start <= content.as_of < end):
-        wanted = below_plot_reserve(request.theme_tokens)
+        wanted = (below_plot_reserve(request.theme_tokens, chip_measurement=as_of_chip_measurement)
+                  if as_of_chip_measurement is not None else below_plot_reserve(request.theme_tokens))
         slack = row_block_slack(review_rows=review_row_values, timeline_block_size=row_content_bounds[3],
                                 group_header_size=group_header_size, required_block_sizes=requirements)
         if slack >= wanted:
@@ -375,4 +383,5 @@ def prepare_surface_base(request: SurfaceLayoutRequest, *,
         group_tag_inline_size=group_tag_inline_size,
         as_of_foot_reserve=foot_reserve, as_of_foot_fallback=foot_fallback,
         mark_band_allocation=mark_band_allocation,
+        as_of_chip_measurement=as_of_chip_measurement,
     )

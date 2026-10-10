@@ -153,13 +153,14 @@ class TableColumn:
     id: str
     source: str | FrozenDict
     format: str | BooleanPresencePresentation
-    missing: str
+    missing: str | FrozenDict  # an enum spelling, or `{text}` (#1288)
     align: str = "start"
     width: str | FrozenDict = "content"
     header_orientation: str = "horizontal"
     affixes: ColumnAffixes | None = None
     missing_by: FrozenDict | None = None  # the `missing` text by observation state (#991)
     text_role: str | None = None  # the Theme text role of this column's cells (#1062)
+    zero: str = "signed"  # `plain` draws a zero signed value without its sign (#1289)
 
 
 @dataclass(frozen=True)
@@ -919,11 +920,13 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                       for item in row.get("items", ())), row.get("presentation"))
         for row in rows.get("items", ()))
     table_columns = tuple(TableColumn(str(column["id"]), column["source"], _table_format(column.get("format", "text")),
-                                      str(column["missing"]), str(column["align"]), column["width"],
+                                      freeze(column["missing"]) if isinstance(column["missing"], Mapping) else str(column["missing"]),
+                                      str(column["align"]), column["width"],
                                       str(column["headerOrientation"]),
                                       _column_affixes(column["id"], column.get("affixes")),
                                       freeze(column["missingBy"]) if "missingBy" in column else None,
-                                      str(column["textRole"]) if "textRole" in column else None)
+                                      str(column["textRole"]) if "textRole" in column else None,
+                                      str(column.get("zero", "signed")))
                           for column in body.get("tableColumns", ()))
     hierarchy_column = str(body["hierarchyColumn"]) if "hierarchyColumn" in body else None
     _validate_view_table_intent(table_columns, grouping, row_items, hierarchy_column)
@@ -1130,6 +1133,9 @@ def _validate_view_table_intent(table_columns: tuple[TableColumn, ...], grouping
                                 f"column {column.id!r} shows the comparison facet missingActual, so its format must be a presence mapping "
                                 "with whenTrue and whenFalse")
     for column in table_columns:
+        if column.zero != "signed" and column.format not in SIGNED_FORMATS:
+            raise ContractError("E_VIEW_COLUMN_ZERO",
+                                f"column {column.id!r} declares zero: {column.zero}, so its format must be signedDays or signedNumber")
         if column.affixes is not None and column.format not in SIGNED_FORMATS and any(
                 item is not None for item in (column.affixes.slip, column.affixes.on_time, column.affixes.ahead)):
             raise ContractError("E_VIEW_COLUMN_AFFIX",

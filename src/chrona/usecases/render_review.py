@@ -25,6 +25,7 @@ from chrona.core.ports import RenderArtifact, Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
 from chrona.presentation.layout.engine import (measure_natural_normal_flow_block,
                                                resolve_content_block_extent, solve_layout)
+from chrona.presentation.layout.canvas_viewport import DeclaredViewport
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, ResolvedLayoutProfile
 from chrona.presentation.layout.group_header_runs import validate_group_header_roles
 from chrona.presentation.layout.presentation import validate_label_text_role, validate_table_text_roles
@@ -42,6 +43,7 @@ from chrona.presentation.model.font_metrics import FontGlyphSubstitution, FontMe
 from chrona.presentation.model.font_resources import FontAssetResolver
 from chrona.presentation.model.color_separability import ScaleCollision
 from chrona.presentation.model.info_diagnostics import PresentationInfo
+from chrona.presentation.fonts.resolution import resolve_theme_font_stacks
 from chrona.presentation.fonts.system import DraftFontResolution
 from chrona.presentation.model.theme_role_consumers import unread_diagnostics as unread_theme_diagnostics
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView, effective_draft_numeric_theme
@@ -61,7 +63,7 @@ from chrona.presentation.review.detail import ReviewDetailError
 from chrona.presentation.review.figure_facts import projected_counts
 from chrona.presentation.annotation_kind_text import AnnotationKindTextError, header_lines, heading_text
 from chrona.presentation.figure_text import FigureTextError, resolve_figure_text
-from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, below_plot_reserve
+from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, below_plot_reserve, measure_as_of_chip
 from chrona.presentation.review.v05_content import (
     compose_heading, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content)
 from chrona.presentation.scene.model import (
@@ -277,10 +279,11 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     environment = render_closure.context.environment
     asset_root = request.asset_root or snapshot_directory(request.snapshot_root, render_closure.context.identity.revision)
     resolution = request.draft_font_resolution
-    if resolution is not None and render_closure.context.identity.revision != "draft":
-        raise RenderFailed("E_FONT_SYSTEM_IMMUTABLE", "system font resolution cannot render immutable Context", "presentation")
-    if resolution is not None and render_closure.context.target.kind not in {"svg", "png"}:
-        raise RenderFailed("E_FONT_SYSTEM_IMMUTABLE", "system font resolution cannot render this target", "presentation")
+    if resolution is None:
+        # Installed fonts are a normal source on every path (#1281): a role whose font stack is not one declared exact
+        # face resolves to an installed face or the packaged Noto Sans; declared faces keep precedence.
+        resolution = resolve_theme_font_stacks(theme, environment.font_metrics, asset_root=asset_root,
+                                               asset_resolver=request.asset_resolver)
     if resolution is not None and resolution.tabular_warnings:
         theme = effective_draft_numeric_theme(theme, tuple(item.role for item in resolution.tabular_warnings))
     font_metrics = resolution.metrics if resolution is not None else _font_metrics(
@@ -374,16 +377,26 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         raise layout_error
     _check_slot_heading_text(view, resolved_layout)
     # A declared slot heading is part of its content-sized slot's measurement (#1064).
-    measured = reserve_slot_heading_blocks(measured, resolved_layout, ThemeTokenView(theme), content=selected_content)
+    measured = reserve_slot_heading_blocks(measured, resolved_layout, ThemeTokenView(theme), content=selected_content,
+                                           font_metrics=font_metrics)
     viewport = {"inlineSize": environment.viewport_inline, "blockSize": environment.viewport_block}
+    declared_viewport = DeclaredViewport(
+        Decimal(environment.viewport_inline),
+        None if request.draft_auto_block else Decimal(environment.viewport_block))
     measurements = _slot_measurements(resolved_layout.profile["root"], measured)
     natural_block_floor = max(1, int(measure_natural_normal_flow_block(
         resolved_layout, viewport_inline=viewport["inlineSize"], measurements=measurements
     ).to_integral_value(rounding=ROUND_CEILING))) if request.draft_auto_block else viewport["blockSize"]
     capacity_short_sources = ()
     # An as-of chip placed `below-plot` (#1063) needs its block under the last row, so the timeline asks for it too.
+    try:
+        as_of_chip_measurement = measure_as_of_chip(selected_content, window=projection.window,
+            theme_tokens=ThemeTokenView(theme), font_metrics=font_metrics,
+            visual_requests=visual_requests, icon_assets=icon_assets)
+    except FontMetricsError as error:
+        raise _font_failure(error) from error
     foot_reserve = Decimal(str(_below_plot_reserve(view, actual_set=actual_observations, projection=projection,
-                                                   theme_tokens=ThemeTokenView(theme))))
+        theme_tokens=ThemeTokenView(theme), chip_measurement=as_of_chip_measurement)))
 
     def candidate_request(candidate: LayoutManifest, *, short_sources=()) -> SurfaceLayoutRequest:
         content = admit_v05_detail_content(
@@ -398,6 +411,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             capabilities={name: True for name in render_closure.context.target.capabilities},
             icon_assets=icon_assets, visual_requests=visual_requests,
             capacity_short_sources=short_sources,
+            as_of_chip_measurement=as_of_chip_measurement,
+            declared_viewport=declared_viewport,
         )
 
     if view.surface == "table-timeline":
@@ -451,6 +466,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         fixed_lane_preflight=fixed_lane_preflight,
         capacity_short_sources=capacity_short_sources,
         surface_preparation=surface_preparation,
+        declared_viewport=declared_viewport,
     )
 
     unused = ledger.unused()
@@ -470,6 +486,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                         render_closure.summary_profile.summary if render_closure.summary_profile else None))
     if unread_roles:
         surface = replace(surface, diagnostics=(*surface.diagnostics, *unread_roles))
+    if resolution is not None and resolution.notes:
+        surface = replace(surface, diagnostics=(*surface.diagnostics, *resolution.notes))
     try:
         validate_surface_visual_profile(surface, visual_profile)
     except VisualCapabilityError as error:
@@ -507,6 +525,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         attachment_warnings=attachments, deadline_warnings=deadlines,
         contrast_warnings=contrast_warnings,
         surface_provenance=surface.diagnostic_provenance,
+        canvas_warning=surface.canvas_warning,
     )
     # Surface diagnostics are already in the preliminary Scene. Append only
     # the post-composition families, preserving duplicates and their order.
@@ -517,7 +536,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
                           surface.info_diagnostics, collisions, attachments, deadlines, warning_records)
 
 
-def _below_plot_reserve(view: Any, *, actual_set: Any, projection: Any, theme_tokens: Any) -> float:
+def _below_plot_reserve(view: Any, *, actual_set: Any, projection: Any, theme_tokens: Any,
+                        chip_measurement: Any = None) -> float:
     """The block extent a `below-plot` as-of chip needs under the plot; 0 without such a marker in the window."""
     marker = next((item for item in view.markers if item.get("kind") == "asOf" and item.get("source") == "actual"
                    and item.get("placement") == BELOW_PLOT and item.get("label")), None)
@@ -526,7 +546,8 @@ def _below_plot_reserve(view: Any, *, actual_set: Any, projection: Any, theme_to
     if marker is None or not isinstance(as_of_value, str):
         return 0.0
     start, end = projection.window
-    return below_plot_reserve(theme_tokens) if start <= date.fromisoformat(as_of_value) < end else 0.0
+    return (below_plot_reserve(theme_tokens, chip_measurement=chip_measurement)
+            if start <= date.fromisoformat(as_of_value) < end else 0.0)
 
 
 def _inspection_scene(closure: RenderClosure, surface: SceneSurface, projection: Any,

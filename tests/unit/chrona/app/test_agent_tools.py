@@ -194,7 +194,7 @@ def test_validate_ok_carries_the_project_identity_of_the_file_bytes(scope, works
 def test_validate_rejection_is_a_result_not_an_error(scope):
     result = run(scope, "validate_project", project="bad.yaml")
     assert result.structured["status"] == "rejected" and not result.is_error
-    item = result.structured["diagnostics"][0]
+    (item,) = [row for row in result.structured["diagnostics"] if row["sourceRef"] == "/objects/a/schedule"]  # #1303: all of them
     assert (item["code"], item["sourceRef"], item["component"], item["severity"]) == (
         "E_SCHEMA", "/objects/a/schedule", "core", "error")
     assert result.structured["projectIdentity"].startswith("sha256:")
@@ -424,7 +424,8 @@ def test_a_preset_value_with_a_separator_must_be_a_yaml_path(scope):
 def test_a_real_render_warning_is_normalised_into_the_envelope_shape(scope):
     result = run(scope, "render_draft", project="launch.yaml", viewport="300x300", inline="none")
     warnings = result.structured["warnings"]
-    assert {"W_LAYOUT_LABEL_SUPPRESSED", "W_LAYOUT_LABEL_OVERFLOW", "I_LAYOUT_PLOT_LABELS_SUPPRESSED"} <= {
+    # Nonfitting axis labels are thinned, not emitted as visible overflow.
+    assert {"W_LAYOUT_LABEL_SUPPRESSED", "W_LAYOUT_AXIS_LABEL_THINNED", "I_LAYOUT_PLOT_LABELS_SUPPRESSED"} <= {
         item["code"] for item in warnings}
     assert {item["severity"] for item in warnings} == {"warning", "info"}
     assert all(item["component"] == "render" and isinstance(item["detail"], dict) and item["detail"] for item in warnings)
@@ -626,7 +627,7 @@ def test_rows_that_scrubbing_makes_equal_merge_and_their_counts_add(scope, works
 def test_the_tool_rows_equal_the_cli_rows_for_a_malformed_plan(scope, workspace, monkeypatch, capsys):
     status, out, _err = cli(monkeypatch, capsys, workspace, "validate", "not-a-mapping.yaml")
     assert status == 1
-    cli_rows = [{key: value for key, value in row.items() if key != "revisionRefs"}  # the tool omits an empty list
+    cli_rows = [{key: value for key, value in row.items() if key not in {"revisionRefs", "sourceRange"}}  # the tool omits both
                 for row in json.loads(out)["diagnostics"]]
     tool = run(scope, "validate_project", project="not-a-mapping.yaml").structured["diagnostics"]
     assert tool == cli_rows and tool[0]["message"].startswith("a Project must be a YAML mapping")
