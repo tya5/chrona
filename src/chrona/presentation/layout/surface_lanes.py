@@ -313,15 +313,29 @@ def build_lane_emissions(projection: Any, review_rows: tuple[Any, ...], marks: l
             continue
         if shape.lane_member_id is None:
             raise LayoutError("E_LAYOUT_LANE_EMISSION_INVALID", shape.placement_id)
-        left, top, width, height = _bounds(shape.bounds)
+        # A catalog chip remains one Layout placement (and therefore one
+        # viewer-fit/box identity), but Scene emits a Symbol per completed
+        # part. Close every one of those primitives against the same complete
+        # chip obstacle so lane ownership has the same cardinality as Scene.
+        chip_parts = shape.symbol_parts if shape.placement_id.startswith("chip:") else ()
+        footprint = (shape.collision_bounds or shape.bounds) if chip_parts else shape.bounds
+        left, top, width, height = _bounds(footprint)
         if width <= 0 or height <= 0:
             continue
         purpose = semantic_binding(shape.semantic_id).purpose
-        add("shape", shape.placement_id, shape.lane_row_id, shape.lane_member_id,
-            purpose, LaneEmissionFacet(f"shape:{shape.placement_id}", "shape", shape.placement_id,
-                                       shape.placement_id,
-                                       ObstacleRect(left, top, left + width, top + height),
-                                       "required-label"))
+        obstacle = ObstacleRect(left, top, left + width, top + height)
+        if chip_parts:
+            for index, _part in enumerate(chip_parts):
+                primitive_id = (shape.placement_id if index == 0
+                                else f"{shape.placement_id}:part{index}")
+                add("shape", shape.placement_id, shape.lane_row_id, shape.lane_member_id,
+                    purpose, LaneEmissionFacet(f"shape:{shape.placement_id}:part{index}", "shape",
+                                               shape.placement_id, primitive_id, obstacle,
+                                               "required-label", index))
+        else:
+            add("shape", shape.placement_id, shape.lane_row_id, shape.lane_member_id,
+                purpose, LaneEmissionFacet(f"shape:{shape.placement_id}", "shape", shape.placement_id,
+                                           shape.placement_id, obstacle, "required-label"))
     return tuple(LaneEmissionPlacement(kind, placement_id, row_id, member_id, purpose,
                                        tuple(facets))
                  for (kind, placement_id, row_id, member_id, purpose), facets in grouped.items())

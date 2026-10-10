@@ -437,7 +437,11 @@ allOf:
                         kind: {const: presence}
                         whenTrue: {description: "Text rendered for boolean true; an empty string is intentional.", type: string}
                         whenFalse: {description: "Text rendered for boolean false; an empty string is intentional.", type: string}
-                missing: {enum: [blank, em-dash, unknown, in-progress]}
+                missing:
+                  description: "The text of an absent value: `blank`, `em-dash`, `unknown`, `in-progress`, or an author-chosen literal `{text}` shown exactly as written (#1288)."
+                  oneOf:
+                    - {enum: [blank, em-dash, unknown, in-progress]}
+                    - {$ref: "#/$defs/missingText"}
                 missingBy:
                   description: "The text of an absent value by the item's observation state (#991), each taking the values of `missing` that need no actual source; a state not named keeps `missing`. `inProgress` is a span with an actual start and no finish, `dueUnobserved` a due item with no observation, `notYetDue` an item still before its due date, `unavailable` one with no as-of date or due date."
                   examples: [{inProgress: em-dash, dueUnobserved: blank, notYetDue: blank}]
@@ -445,10 +449,22 @@ allOf:
                   minProperties: 1
                   additionalProperties: false
                   properties:
-                    inProgress: {enum: [blank, em-dash, unknown]}
-                    dueUnobserved: {enum: [blank, em-dash, unknown]}
-                    notYetDue: {enum: [blank, em-dash, unknown]}
-                    unavailable: {enum: [blank, em-dash, unknown]}
+                    inProgress:
+                      oneOf:
+                        - {enum: [blank, em-dash, unknown]}
+                        - {$ref: "#/$defs/missingText"}
+                    dueUnobserved:
+                      oneOf:
+                        - {enum: [blank, em-dash, unknown]}
+                        - {$ref: "#/$defs/missingText"}
+                    notYetDue:
+                      oneOf:
+                        - {enum: [blank, em-dash, unknown]}
+                        - {$ref: "#/$defs/missingText"}
+                    unavailable:
+                      oneOf:
+                        - {enum: [blank, em-dash, unknown]}
+                        - {$ref: "#/$defs/missingText"}
                 zero:
                   description: "How a zero value of a `signedNumber` or `signedDays` column reads: `signed` (the default) keeps the sign (`+0`, `+0d`), `plain` draws it without one (`0`, `0d`); non-zero values keep their sign either way (#1289). An `onTime` affix still wraps the text."
                   enum: [signed, plain]
@@ -795,6 +811,14 @@ $defs:
       scale: {description: "Exact Theme colour-scale identifier.", type: string, minLength: 1}
       key: {description: "Derive paint from this tier's alternating parity or interval ordinal.", enum: [alternating, interval]}
       containingTier: {description: "Optional index of the declared coarser fixed-unit band tier whose natural interval contains this one.", type: integer, minimum: 0}
+  missingText:
+    description: "An author-chosen literal for an absent table value: one to eight characters with no control character, drawn exactly as written in the column's text role (#1288). `affixes.missing` still wraps whatever the absent text is, in every absent state."
+    examples: [{text: "?"}]
+    type: object
+    required: [text]
+    additionalProperties: false
+    properties:
+      text: {description: "The literal shown in place of the absent value; no control character.", examples: ["?"], type: string, minLength: 1, maxLength: 8, not: {pattern: "[\\u0000-\\u001f\\u007f]"}}
   columnAffix:
     description: "A literal prefix and suffix of one to eight characters wrapped around a table cell's text in one state (#588); at least one is declared."
     examples: [{suffix: "!"}]

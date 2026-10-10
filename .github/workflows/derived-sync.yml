@@ -3,6 +3,8 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *'
 permissions:
   contents: write
   actions: write
@@ -10,8 +12,10 @@ permissions:
 concurrency:
   group: derived-main-sync
   cancel-in-progress: false
+  queue: max
 jobs:
   synchronize:
+    if: ${{ github.event_name != 'schedule' }}
     runs-on: ubuntu-latest
     steps:
       - id: target
@@ -62,12 +66,14 @@ jobs:
           python -m tools.derived_workflow snapshot "$source_sha" "$RUNNER_TEMP/derived-snapshot.tar.gz"
           python -m tools.derived_workflow prepare-candidate "$source_sha" >> "$GITHUB_OUTPUT"
       - name: Publish immutable candidate ref
+        id: publish
         env:
           GH_TOKEN: ${{ github.token }}
           SHA: ${{ steps.candidate.outputs.candidate_sha }}
         run: |
           git push origin "$SHA:refs/heads/derived-gate/$SHA"
       - name: Dispatch and await trusted exact-SHA derived gate
+        id: gate
         env:
           GH_TOKEN: ${{ github.token }}
           SHA: ${{ steps.candidate.outputs.candidate_sha }}
@@ -88,17 +94,22 @@ jobs:
           done
           test -n "$run_id"
           gate_state=""
+          gate_run_status=""
           for attempt in $(seq 1 120); do
             gate_state="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/jobs" \
               --jq '[.jobs[] | select(.name == "derived-main" or .name == "derived-ready") | .name + ":" + .status + ":" + (.conclusion // "")] | sort | join(",")')"
-            if [[ ("$gate_state" == *"derived-main:completed:"* && "$gate_state" != *"derived-main:completed:success"*) || ("$gate_state" == *"derived-ready:completed:"* && "$gate_state" != *"derived-ready:completed:success"*) ]]; then
+            if [[ "$gate_state" == *":completed:"* ]]; then
+              gate_run_status="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id" --jq .status)"
+            fi
+            if [[ "$gate_run_status" == completed && (("$gate_state" == *"derived-main:completed:"* && "$gate_state" != *"derived-main:completed:success"*) || ("$gate_state" == *"derived-ready:completed:"* && "$gate_state" != *"derived-ready:completed:success"*)) ]]; then
               echo "Trusted gate failed: $gate_state"; exit 1
             fi
-            if [[ "$gate_state" == *"derived-main:completed:success"* && "$gate_state" == *"derived-ready:completed:success"* ]]; then
+            if [[ "$gate_run_status" == completed && "$gate_state" == *"derived-main:completed:success"* && "$gate_state" == *"derived-ready:completed:success"* ]]; then
               break
             fi
             sleep 15
           done
+          test "$gate_run_status" = completed
           [[ "$gate_state" == *"derived-main:completed:success"* && "$gate_state" == *"derived-ready:completed:success"* ]]
       - name: Fast-forward main only if the source tip is unchanged
         if: ${{ steps.candidate.outputs.changed == 'true' }}
@@ -119,3 +130,21 @@ jobs:
           jq -n --arg ref "$REF" --arg sha "$SHA" \
             '{ref:$ref,inputs:{expected_sha:$sha}}' |
             gh api --method POST "repos/$GITHUB_REPOSITORY/actions/workflows/conformance.yml/dispatches" --input -
+      - name: Retire the consumed terminal gate ref
+        if: ${{ !cancelled() && steps.publish.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.candidate.outputs.candidate_sha }}
+        run: python -m tools.derived_gate_cleanup --repo "$GITHUB_REPOSITORY" candidate --sha "$SHA"
+  sweep:
+    if: ${{ github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Retire abandoned terminal gate refs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m tools.derived_gate_cleanup --repo "$GITHUB_REPOSITORY" sweep

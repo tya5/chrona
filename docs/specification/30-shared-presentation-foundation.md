@@ -82,8 +82,18 @@ An explicitly volatile Draft system-font closure is separate from this immutable
 declared-metrics rule. For the exact selected host face, its OS/2 cap height is
 used when positive; otherwise the positive top bound of its uppercase `H`
 outline may supply cap height before Layout. A face without either measure is
-rejected. This never licenses host lookup or derived cap height in an immutable
-Render Context or a persisted declared-metrics artifact.
+rejected. This never licenses derived cap height in a persisted declared-metrics artifact.
+
+Installed fonts are a normal source on every render path (#1281, owner decision 2026-10-10: reproducibility across machines
+is not a design goal of this path, and no packaged font is added). A Theme `fontFamily` is an ordered list; per role,
+Layout uses the first family that the Context declares or the machine has installed, else the packaged Noto Sans at the
+role's weight (reported as `W_FONT_FALLBACK_PACKAGED`; a resolved list is `I_FONT_ROLE_RESOLVED`), and a character the
+face lacks takes the next listed face that has it, the packaged face last, failing with `E_FONT_GLYPH_UNAVAILABLE` only
+when none does. Declared metrics keep precedence and stay exact and pinned: a role whose single family is declared,
+and a Context that declares everything it uses, resolve and render as before. Installed faces are found by scanning the
+platform's font directories (fontconfig's file list on Linux when present) and matching family and weight by the CSS
+rule; they are measured from their own bytes and rasterized from the same files. SVG names the resolved family and embeds
+nothing. Output that uses an installed face depends on the fonts installed where it is rendered.
 
 ## 3. Generalized callouts
 

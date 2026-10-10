@@ -36,6 +36,12 @@ body:
     opacity.group-header-band:
       type: number
       value: 1
+    row-rule.width:
+      type: number
+      value: 0.5
+    opacity.row-rule:
+      type: number
+      value: 0.12
     opacity.calendar-closed:
       type: number
       value: 1
@@ -441,15 +447,18 @@ body:
       backgroundPaintOrder: 10
     group-header-band:
       backgroundTreatment: fill
-      backgroundPaintOrder: 13
+      backgroundPaintOrder: 9
       opacity: opacity.group-header-band
+    row-rule:
+      strokeWidth: row-rule.width
+      opacity: opacity.row-rule
     calendar-closed:
       backgroundTreatment: fill
-      backgroundPaintOrder: 12
+      backgroundPaintOrder: 8
       opacity: opacity.calendar-closed
     calendar-exception:
       backgroundTreatment: fill
-      backgroundPaintOrder: 12
+      backgroundPaintOrder: 8
       opacity: opacity.calendar-exception
     axis-band-decoration:
       backgroundTreatment: fill
@@ -857,6 +866,7 @@ body:
     group-band.fill: category:default
     row-band.fill: category:default
     group-header-band.fill: category:velvetDeep
+    row-rule.stroke: category:gold
     group-tab.fill: category:gold
     group-header.fill: category:gold
     group-ordinal.fill: category:gold

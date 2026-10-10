@@ -200,11 +200,13 @@ def test_system_font_opt_in_closes_multiple_theme_faces_before_layout(tmp_path):
     assert (700, draft.font_resolution.metrics.select("Noto Sans", 700).content_identity) in identities
 
 
-def test_system_font_opt_in_rejects_non_svg_png_draft_target():
+def test_system_font_opt_in_is_accepted_for_every_target():
+    # #1281: installed fonts are a normal source; the draft-only SVG/PNG limit was never required.
     root = _root()
-    with pytest.raises(ClosureError, match="E_FONT_SYSTEM_IMMUTABLE"):
-        resolve_draft_render(**_paths(root), target_kind="pdf", system_fonts=True,
-                             system_font_resolver=_system_resolver(root))
+    draft = resolve_draft_render(**_paths(root), target_kind="pdf", system_fonts=True,
+                                 system_font_resolver=_system_resolver(root))
+
+    assert draft.closure.context.target.kind == "pdf" and draft.font_resolution is not None
 
 
 def test_guided_draft_closure_normalizes_in_memory_and_records_non_scene_provenance(tmp_path):

@@ -938,12 +938,24 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                 primitive_provenance.append(PrimitiveProvenance(placed.placement_id, placed.subjects))
         elif placed.placement_id.startswith("chip:"):
             chip_binding = semantic_binding(placed.semantic_id)
-            primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "review",
+            if placed.symbol_parts:
+                ids = lane_scene_ids("shape", placed.placement_id) or tuple(
+                    placed.placement_id if index == 0 else f"{placed.placement_id}:part{index}"
+                    for index in range(len(placed.symbol_parts)))
+                emitted = _symbol_primitives(placed.placement_id, placed.source_ref, "review",
+                    chip_binding.purpose, chip_binding.scene_role, bounds, placed.symbol_parts,
+                    primitive_ids=ids, slot_id=placed.slot_id, paint_order=placed.paint_order,
+                    part_order_step=0, viewer_fit=placed.viewer_fit)
+                primitives.extend(emitted)
+                if placed.subjects:
+                    primitive_provenance.extend(PrimitiveProvenance(item.scene_id, placed.subjects) for item in emitted)
+            else:
+                primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "review",
                                              chip_binding.purpose, chip_binding.scene_role, bounds, slot_id=placed.slot_id,
                                              paint_order=placed.paint_order,
                                              corner_radius=placed.corner_radius or None, viewer_fit=placed.viewer_fit))
-            if placed.subjects:
-                primitive_provenance.append(PrimitiveProvenance(placed.placement_id, placed.subjects))
+                if placed.subjects:
+                    primitive_provenance.append(PrimitiveProvenance(placed.placement_id, placed.subjects))
         elif placed.placement_id.startswith("summary-bar:"):
             summary_bar = semantic_binding("summaryBar")
             primitives.append(ScenePrimitive(placed.placement_id, PrimitiveKind.RECT, placed.source_ref, "summary",
