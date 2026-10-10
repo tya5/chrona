@@ -82,6 +82,10 @@ $defs:
     description: "Arrangement of a summary panel's ordered text runs."
     examples: [inline]
     enum: [stack, inline]
+  backgroundExtent:
+    description: "Finite completed review-surface background regions; contexts may declare named subsets or extensions."
+    examples: [table]
+    enum: [table, timeline, both]
   dateEndpoint:
     description: "Completed-date endpoint of a Project object: the point `at`, or the `start` or `end` of a span."
     examples: [end]
