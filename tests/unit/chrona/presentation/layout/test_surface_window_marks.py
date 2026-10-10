@@ -8,20 +8,23 @@ from chrona.presentation.layout.surface_base import prepare_surface_base
 from chrona.presentation.layout.surface_geometry import coordinate_for_date
 from chrona.presentation.layout.surface_marks import compose_surface_marks
 from chrona.presentation.layout.model import LayoutError
-from chrona.presentation.model.projection import ReviewItem, ReviewProjection, WindowMode
+from chrona.presentation.model.projection import ReviewItem, ReviewProjection, ReviewRowProjection, WindowMode
 from chrona.usecases.warning_ledger import collect_render_warnings
 from chrona.usecases.diagnostic_messages import describe_warning
 from tests.unit.chrona.presentation.layout.test_surface_axis_tier_geometry import _axis_request
 
 
 def _compose(*, fraction=None, window=(date(2026, 1, 5), date(2026, 1, 9)),
-             mode=WindowMode.EXPLICIT):
+             mode=WindowMode.EXPLICIT, summaries=False):
     request = _axis_request(())
     items = tuple(ReviewItem(
         name, name, "span", {"start": date(2026, 1, start), "end": date(2026, 1, end)},
-        None, None, (), planned_progress=fraction if name == "across" else None,
+        None, None, ("planned",), item_id=name,
+        planned_progress=fraction if name == "across" else None,
     ) for name, start, end in (("before", 1, 3), ("across", 1, 11), ("after", 10, 12)))
-    projection = ReviewProjection(items, window, (), (), window_mode=mode)
+    rows = tuple(ReviewRowProjection(f"row-{item.object_id}", item.title, "group", item.item_id,
+                                     (item,), rollup_presentation="bar") for item in items) if summaries else ()
+    projection = ReviewProjection(items, window, (), (), window_mode=mode, rows=rows)
     content = replace(request.surface_content, progress_fill_source="planned" if fraction is not None else None)
     base = prepare_surface_base(replace(request, projection=projection, surface_content=content))
     return base, compose_surface_marks(base, lane_owner=lambda _row, _item: None)
@@ -107,3 +110,26 @@ def test_outside_warning_transport_names_exact_objects_once_with_actionable_caus
     assert "explicit window" in text.cause
     assert "source data is unchanged" in text.cause
     assert all(ref in text.subject for ref in ("/objects/across", "/objects/after", "/objects/before"))
+
+
+def test_summary_uses_same_clipped_contour_rule_without_inventing_mark_or_ports():
+    base, batch = _compose(summaries=True)
+    assert tuple(shape.source_ref for shape in batch.summary_shapes) == ("across",)
+    summary = batch.summary_shapes[0]
+    assert summary.kind == "Symbol" and summary.paint_clip is not None
+    assert summary.path_commands
+    x, y, width, height = summary.paint_clip.bounds
+    assert all(x <= px <= x + width and y <= py <= y + height
+               for command in summary.path_commands for px, py in command.points)
+    assert float(summary.bounds.inline) == pytest.approx(coordinate_for_date(date(2026, 1, 5), base.scale))
+    assert float(summary.bounds.inline + summary.bounds.inline_size) == pytest.approx(
+        coordinate_for_date(date(2026, 1, 9), base.scale))
+
+
+def test_containing_summary_retains_existing_geometry_and_has_no_clip():
+    window = (date(2026, 1, 1), date(2026, 1, 15))
+    _, explicit = _compose(summaries=True, window=window)
+    _, derived = _compose(summaries=True, window=window, mode=WindowMode.SELECTED_PLANNED)
+    assert explicit.summary_shapes == derived.summary_shapes
+    assert len(explicit.summary_shapes) == 3
+    assert all(shape.kind == "Rect" and shape.paint_clip is None for shape in explicit.summary_shapes)
