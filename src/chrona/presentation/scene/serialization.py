@@ -8,12 +8,10 @@ from typing import Any, Mapping
 
 from chrona.presentation.scene.model import (
     PRIMARY_LANE_MARK_PURPOSES, DecorationDisposition, InspectionScene, LinearGradient, RadialGradient,
-    PatternGeometry, SceneIconPath, SceneLaneObstacle, SceneLaneRectObstacle,
+    PatternGeometry, SceneIconPath, SceneLaneMember, SceneLaneWindowAbsence, SceneLaneObstacle, SceneLaneRectObstacle,
     SceneLaneSegmentObstacle, ScenePaint, ScenePrimitive, SceneSurface, StrokeFinish,
-    TextLayout, requires_lane_member_provenance,
+    TextLayout, requires_lane_member_provenance, MarkerGeometry, PathCommand, completed_marker_outline,
 )
-from chrona.presentation.layout.relation_terminals import project_marker_outline
-from chrona.presentation.layout.surface_quality import MarkerGeometry, PathCommand
 from chrona.resources import schema_validator
 
 
@@ -65,6 +63,7 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
                   for surface in scene.surfaces for primitive in surface.primitives)
     has_stroke_clip = any(primitive.stroke_clip is not None for surface in scene.surfaces for primitive in surface.primitives)
     has_paint_clip = any(primitive.paint_clip is not None for surface in scene.surfaces for primitive in surface.primitives)
+    has_window_absences = any(member.window_absences for surface in scene.surfaces for member in surface.lane_members)
     has_marker_axis = any(marker is not None and (marker.angle_degrees is not None or marker.physical_units)
                          for surface in scene.surfaces for primitive in surface.primitives
                          for marker in (primitive.marker_start, primitive.marker_end))
@@ -73,7 +72,7 @@ def scene_document(scene: InspectionScene) -> dict[str, Any]:
         for surface in scene.surfaces for primitive in surface.primitives)
     return {
         "version": ("chrona/scene/v0.7" if has_catalog_pattern or has_v07_paint or has_tilt or has_scale or has_runs or has_fit or has_marker_axis or has_stroke_clip or has_paint_clip
-                    or has_relation_endpoint_identity
+                    or has_relation_endpoint_identity or has_window_absences
                     else "chrona/scene/v0.6"),
         "kind": "scene",
         "provenance": {
@@ -129,7 +128,14 @@ def validate_scene_document(document: Mapping[str, Any]) -> None:
     except Exception as error:  # schema resource failures have no public partial document
         nested = str(error).split(": ", 1)[-1] if isinstance(error, SceneSerializationError) else type(error).__name__
         raise _scene_error(f"{schema_name or 'Scene schema'} validation could not complete: {_brief(nested)}") from error
+    surfaces = document.get("surfaces")
+    has_window_absences = any("windowAbsences" in member
+        for surface in surfaces if isinstance(surface, Mapping)
+        and isinstance(surface.get("laneMembers"), list)
+        for member in surface["laneMembers"] if isinstance(member, Mapping)) if isinstance(surfaces, list) else False
     if errors:
+        if has_window_absences:
+            raise _scene_error("E_PRESENTATION_PRIMITIVE_INVALID: windowAbsences requires complete valid original mark facts")
         if any("paintClip" in error.absolute_path for error in errors):
             raise _scene_error("E_PRESENTATION_PRIMITIVE_INVALID: paintClip requires completed finite positive bounds")
         first = errors[0]
@@ -142,6 +148,8 @@ def validate_scene_document(document: Mapping[str, Any]) -> None:
     if not _finite(document):
         raise _scene_error("document contains a non-finite numeric Scene fact; check completed bounds, paint, or measurement fields")
     if not _references_are_closed(document):
+        if has_window_absences:
+            raise _scene_error("E_PRESENTATION_PRIMITIVE_INVALID: window omission and emitted lane inventories must be closed")
         raise _scene_error("surface cross-references must resolve among declared slots, rows, columns, primitives, and lane facts")
     if not _paint_clips_are_closed(document):
         raise _scene_error("E_PRESENTATION_PRIMITIVE_INVALID: completed primitive geometry must be contained by its paintClip bounds")
@@ -225,7 +233,7 @@ def _paint_clips_are_closed(document: Mapping[str, Any]) -> bool:
                         physical_units=raw_marker.get("units") == "userSpaceOnUse",
                         stroke_width=raw_marker.get("strokeWidth"),
                     )
-                    projected = project_marker_outline(marker, side=side, points=route_points,
+                    projected = completed_marker_outline(marker, side=side, points=route_points,
                                                        path_commands=route_commands,
                                                        stroke_width=host_stroke_width)
                 except (KeyError, TypeError, ValueError):
@@ -279,7 +287,7 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
         else:
             lane_obstacles = surface.get("laneObstacles", ())
             lane_clearance = surface.get("laneClearance")
-            if (lane_mode != "lanes" or not lane_members or not lane_obstacles
+            if (lane_mode != "lanes" or not lane_members
                     or not _valid_number(lane_clearance) or lane_clearance < 0):
                 return False
             if (len(lane_rows) != len(row_items)
@@ -297,9 +305,17 @@ def _references_are_closed(document: Mapping[str, Any]) -> bool:
                 emitted = member.get("emittedPrimitiveIds")
                 primary = member.get("primaryMarkIds")
                 if (row_id not in lane_rows or not isinstance(member_id, str) or not member_id
-                        or not isinstance(emitted, list) or not emitted
-                        or not isinstance(primary, list) or not primary
+                        or not isinstance(emitted, list)
+                        or not isinstance(primary, list)
                         or not set(primary) <= set(emitted)):
+                    return False
+                try:
+                    absences = tuple(SceneLaneWindowAbsence(
+                        item["placementId"], item["instanceId"], item["facet"], item["sourceRef"],
+                        item["sourceKind"], item["semanticRole"], item["reason"])
+                        for item in member.get("windowAbsences", ()))
+                    SceneLaneMember(row_id, member_id, tuple(emitted), tuple(primary), absences)
+                except (KeyError, TypeError, ValueError):
                     return False
                 key = (row_id, member_id)
                 if key in member_keys or len(set(emitted)) != len(emitted) or len(set(primary)) != len(primary):
@@ -507,12 +523,20 @@ def _surface(surface: SceneSurface) -> dict[str, Any]:
         result["laneMembers"] = [
             {"rowId": item.row_id, "memberId": item.member_id,
              "emittedPrimitiveIds": list(item.emitted_primitive_ids),
-             "primaryMarkIds": list(item.primary_mark_ids)}
+             "primaryMarkIds": list(item.primary_mark_ids),
+             **({"windowAbsences": [_window_absence(absence) for absence in item.window_absences]}
+                if item.window_absences else {})}
             for item in surface.lane_members
         ]
         result["laneObstacles"] = [_lane_obstacle(item) for item in surface.lane_obstacles]
         result["laneClearance"] = surface.lane_clearance
     return result
+
+
+def _window_absence(item: SceneLaneWindowAbsence) -> dict[str, str]:
+    return {"placementId": item.placement_id, "instanceId": item.instance_id,
+            "facet": item.facet, "sourceRef": item.source_ref, "sourceKind": item.source_kind,
+            "semanticRole": item.semantic_role, "reason": item.reason}
 
 
 def _lane_obstacle(item: SceneLaneObstacle) -> dict[str, Any]:

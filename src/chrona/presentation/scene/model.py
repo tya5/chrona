@@ -41,6 +41,19 @@ def _finite_number(value: object) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
 
 
+def completed_marker_outline(marker: MarkerGeometry, *, side: str,
+                             points: tuple[tuple[float, float], ...],
+                             path_commands: tuple[PathCommand, ...],
+                             stroke_width: float | None) -> tuple[PathCommand, ...]:
+    """Scene validation's shared projection of already completed terminal facts.
+
+    No token resolution, routing, endpoint selection or geometry adjustment is
+    performed. Typed and raw Scene validation use the same finite transform.
+    """
+    return project_marker_outline(marker, side=side, points=points,
+                                  path_commands=path_commands, stroke_width=stroke_width)
+
+
 def _brief(value: object, *, limit: int = 72) -> str:
     """Describe a scalar or tuple shape without dumping Scene payloads."""
     if isinstance(value, str):
@@ -565,7 +578,7 @@ class ScenePrimitive:
                 if marker is None:
                     continue
                 try:
-                    projected = project_marker_outline(
+                    projected = completed_marker_outline(
                         marker, side=side, points=self.points, path_commands=self.path_commands,
                         stroke_width=self.paint.stroke_width if self.paint is not None else None)
                 except ValueError as error:
@@ -626,6 +639,32 @@ class SceneGroup:
 
 
 @dataclass(frozen=True)
+class SceneLaneWindowAbsence:
+    """Layout-proven original mark omission; contains no temporal or spatial policy."""
+
+    placement_id: str
+    instance_id: str
+    facet: str
+    source_ref: str
+    source_kind: str
+    semantic_role: str
+    reason: str = "outside-window"
+
+    def __post_init__(self) -> None:
+        if (not all(isinstance(value, str) and value for value in
+                    (self.placement_id, self.instance_id, self.source_ref, self.source_kind))
+                or self.reason != "outside-window"
+                or (self.facet, self.semantic_role) not in {
+                    ("planned", "planned"), ("planned", "snapshot"), ("planned", "scenario"),
+                    ("actual", "actual"), ("missing-actual", "missing-actual")}):
+            raise _invalid("placement_id/instance_id/facet/source_ref/source_kind/semantic_role/reason",
+                           (self.placement_id, self.instance_id, self.facet, self.source_ref,
+                            self.source_kind, self.semantic_role, self.reason),
+                           "opaque original identifiers and a source-mark facet/role omitted outside-window",
+                           owner="SceneLaneWindowAbsence")
+
+
+@dataclass(frozen=True)
 class SceneLaneMember:
     """Closed lane membership and primitive-emission inventory for one member."""
 
@@ -633,13 +672,17 @@ class SceneLaneMember:
     member_id: str
     emitted_primitive_ids: tuple[str, ...]
     primary_mark_ids: tuple[str, ...]
+    window_absences: tuple[SceneLaneWindowAbsence, ...] = ()
 
     def __post_init__(self) -> None:
         if (not isinstance(self.row_id, str) or not self.row_id
                 or not isinstance(self.member_id, str) or not self.member_id
                 or not isinstance(self.emitted_primitive_ids, tuple)
                 or not isinstance(self.primary_mark_ids, tuple)
-                or not self.emitted_primitive_ids or not self.primary_mark_ids
+                or not isinstance(self.window_absences, tuple)
+                or any(not isinstance(item, SceneLaneWindowAbsence) for item in self.window_absences)
+                or ((not self.emitted_primitive_ids or not self.primary_mark_ids)
+                    and not any(item.facet == "planned" for item in self.window_absences))
                 or any(not isinstance(item, str) or not item
                        for item in (*self.emitted_primitive_ids, *self.primary_mark_ids))
                 or len(set(self.emitted_primitive_ids)) != len(self.emitted_primitive_ids)
@@ -647,7 +690,13 @@ class SceneLaneMember:
                 or not set(self.primary_mark_ids) <= set(self.emitted_primitive_ids)):
             raise _invalid("row_id/member_id/emitted_primitive_ids/primary_mark_ids",
                            (self.row_id, self.member_id, self.emitted_primitive_ids, self.primary_mark_ids),
-                           "non-empty row/member IDs, non-empty unique tuple IDs, and primary marks drawn from emitted IDs",
+                           "non-empty row/member IDs, unique tuple IDs, primary marks drawn from emitted IDs, and original primary omission proof for empty inventories",
+                           owner="SceneLaneMember")
+        if (len({item.placement_id for item in self.window_absences}) != len(self.window_absences)
+                or len({(item.instance_id, item.facet) for item in self.window_absences}) != len(self.window_absences)
+                or any(item.placement_id in self.emitted_primitive_ids for item in self.window_absences)):
+            raise _invalid("window_absences", self.window_absences,
+                           "unique original placement and instance/facet keys, not also emitted",
                            owner="SceneLaneMember")
 
 
@@ -807,7 +856,7 @@ class SceneSurface:
                 raise _invalid("lane_members/lane_obstacles/lane_clearance", (self.lane_members, self.lane_obstacles, self.lane_clearance),
                                "empty lane facts when lane_mode is None", owner=f"SceneSurface({_brief(self.surface_id)})")
         else:
-            if (not self.lane_members or not self.lane_obstacles
+            if (not self.lane_members
                     or not _finite_number(self.lane_clearance)
                     or self.lane_clearance < 0
                     or any(not isinstance(item, SceneLaneObstacle) for item in self.lane_obstacles) or any(
