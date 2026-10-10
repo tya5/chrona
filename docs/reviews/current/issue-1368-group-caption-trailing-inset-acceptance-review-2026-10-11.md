@@ -18,7 +18,7 @@ Implementation: `dbd88829`. [Current design/architecture/implementation record](
 
 ## Programme-level criteria (optional)
 
-**Release pending:** ordinarily adopted trusted READY main `39d6cc9a` containing #1367/#1366/#1385. Plain/mixed-role Scene/SVG tests prove the independent strip and every non-caption primitive remain unchanged; post-join focused5 passed. Fresh public snapshot, exact-head gates and acceptance-containing exact-main three-OS release must succeed before closure. Local completion is not published release acceptance.
+**Release pending:** ordinarily adopted reviewer PR #1390 at source main `26dd9f5c`, following trusted READY `39d6cc9a` containing #1367/#1366/#1385. Current caption, text-extent and strip Scene/SVG integration: **61 passed** (68.36s). Fresh READY-base public snapshot, exact-head gates and acceptance-containing exact-main three-OS release must succeed before closure. Local completion is not published release acceptance.
 
 ## Architecture conclusion
 
