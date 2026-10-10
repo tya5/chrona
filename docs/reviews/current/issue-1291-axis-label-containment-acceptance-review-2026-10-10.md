@@ -7,7 +7,21 @@ published main `85ff5e4460cb1827127630467efb2807513186ce` (#1318).
 The shared measurement prerequisite is on main; this slice adds no redundant
 `text.py` correction. Native-lane correction focused tests: 91 passed (5.99s).
 [Design and architecture authority](https://github.com/tya5/chrona/issues/1291#issuecomment-6093419760).
-Local evidence only; no PR, current-corpus snapshot or exact-main release yet.
+[PR #1363](https://github.com/tya5/chrona/pull/1363) is published. Historical
+snapshot `11673770029` on `94a7a88f`/`85ff5e44` accounts for all 46 Scene/SVG
+pairs: 45 byte-identical; flight-readiness removes only two nonfitting month
+labels (3→1), with unchanged viewport, routes and other primitives. All 411
+surviving axis labels satisfy painted-host/plot containment. After reviewer
+PR #1322 advances main, a fresh ready-base snapshot and release are required.
+CI `38060737895` identified three stale assertions: the flight-readiness label
+ledger and CLI/MCP expectations of visible axis overflow. Update the audited
+ledger and use thinned-axis expectations, retaining independently provoked
+overflow/intersection warning coverage. No product exception or corpus edit.
+Repair verification: MCP tool suite 186 passed (37.39s); skill diagnostics
+20 passed (5.34s); unchanged genuine annotation-rail overflow case passed in
+the focused batch; ledger rules 10 passed (2.97s). The intersection fixture
+uses actual Scene evaluation, warning collection and CLI stdout serialization,
+not mocked findings. A fresh snapshot must still verify the corpus ledger.
 
 ## Literal issue acceptance
 
