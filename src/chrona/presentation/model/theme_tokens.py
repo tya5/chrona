@@ -250,6 +250,15 @@ class ThemeTokenView:
         """Whether this resolved Theme declares the exact semantic role."""
         return isinstance(self._body["roles"].get(role), Mapping)
 
+    def has_binding(self, role: str, property_name: str) -> bool:
+        """Whether this exact role declares a property binding.
+
+        This is a presence query only: it does not resolve the binding, inherit
+        from another role, or infer a value from fallback behavior.
+        """
+        binding = self._body["roles"].get(role)
+        return isinstance(binding, Mapping) and property_name in binding
+
     def declares_text_treatment(self, role: str) -> bool:
         """Whether the Theme gives `role` its own text measurement (a `fontSize`), not only a colour binding (#1110)."""
         binding = self._body["roles"].get(role)

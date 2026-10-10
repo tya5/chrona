@@ -10,8 +10,8 @@ substantive check and [independent artifact audit](https://github.com/tya5/chron
 passed. [Sync](https://github.com/tya5/chrona/actions/runs/38016810914) published
 bot-generated main `fed9727461e6fefa5b092cdea638bf3a722dfcef`: all 99 outputs
 match the audited snapshot; exactly 52 retired paths are absent, with no extra
-changes. This final record joins #1283's publication batch; its containing-main
-three-OS full release remains required before closure.
+changes. Closed after [exact-main release](https://github.com/tya5/chrona/actions/runs/38020427654)
+succeeded on `0fd085d17422fd332c49b4b75ebdf43fe9459f93`, containing this final record.
 
 ## Literal issue acceptance
 
@@ -29,10 +29,8 @@ three-OS full release remains required before closure.
 ## Programme-level criteria (optional)
 
 None. The old unready-base PR derived-ready wait was cancelled after recovery merge;
-it is not counted green and no gate was weakened. Full run
-[38017599861](https://github.com/tya5/chrona/actions/runs/38017599861) covers the
-recovered implementation, not this updated final record. Closure waits for the
-successful exact-main full release containing this record.
+it is not counted green and no gate was weakened. The exact-main release above passed
+three-OS pytest, conformance and wheel/smoke, newest-Python materializers and MCP.
 
 ## Architecture conclusion
 
