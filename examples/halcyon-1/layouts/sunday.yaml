@@ -3,7 +3,7 @@ id: sunday
 flowDirection: horizontal
 dependencyNetworkFlowDirection: horizontal
 requiredThemeTokens: [key-panel-block, legend-gap, spacing.frame, spacing.gutter, spacing.l, spacing.m, spacing.none, spacing.s, title-panel-width]
-reviewSurface: {rowDistribution: fill, backgroundExtents: {rowBand: table, groupBand: timeline, groupHeaderBand: text, calendarClosed: timeline}, annotationRouting: {maxBends: 4, maxDetourRatio: 2}}
+reviewSurface: {rowDistribution: fill, backgroundExtents: {rowBand: table, groupBand: timeline, groupHeaderBand: text, groupHeaderStrip: both, calendarClosed: timeline}, annotationRouting: {maxBends: 4, maxDetourRatio: 2}}
 relationRouting: {maxBends: 4, maxDetourRatio: 4, entry: side}
 root:
   id: page
