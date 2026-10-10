@@ -1435,7 +1435,7 @@
   "exit": 2,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_COMMAND_SYNTAX\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"argument command: invalid choice: 'frobnicate' (choose from 'validate', 'schedule', 'render', 'icon-catalog', 'font', 'workspace', 'identity', 'authoring-command-apply', 'materialize-presentation-preset', 'render-workspace', 'render-review', 'materialize', 'compile', 'init', 'skill', 'mcp', 'preset', 'render-review-gallery', 'review', 'baseline-compare', 'command-check', 'command-apply', 'actual-intake', 'actual-resolve', 'baseline-capture')\"}]}\n"
+  "stdout": "{\"status\": \"failed\", \"diagnostics\": [{\"code\": \"E_COMMAND_SYNTAX\", \"severity\": \"error\", \"component\": \"cli\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"argument command: invalid choice: 'frobnicate' (choose from 'validate', 'schedule', 'render', 'icon-catalog', 'font', 'workspace', 'identity', 'authoring-command-apply', 'materialize-presentation-preset', 'render-workspace', 'render-review', 'materialize', 'compile', 'import', 'init', 'skill', 'mcp', 'preset', 'render-review-gallery', 'review', 'baseline-compare', 'command-check', 'command-apply', 'actual-intake', 'actual-resolve', 'baseline-capture')\"}]}\n"
  },
  "validate-broken-yaml": {
   "argv": [

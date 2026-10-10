@@ -46,6 +46,11 @@ class PlanCompilation:
         return any(item.id == "E_TERSE_COMPILER_DEFECT" for item in self.diagnostics)
 
 
+def emit_project_text(project: dict) -> str:
+    """The deterministic Project YAML of a compiled mapping (the one emitter, shared with the table importer)."""
+    return emit_project(project)
+
+
 def compile_plan(data: bytes, source: str | None = None) -> PlanCompilation:
     """Decode, compile and validate one terse plan. Never raises for any input bytes."""
     text, problem = decode(data)
