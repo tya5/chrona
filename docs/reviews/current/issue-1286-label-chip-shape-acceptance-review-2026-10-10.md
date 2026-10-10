@@ -5,6 +5,10 @@
 Validation checkpoint: `6c77dd7b7a076fd088e348ae25d87f04091ab36c`,
 ordinarily adopting main `eb4e83fd601f7d5a1621a6fc91323266a7ea50b4`
 and the prepared #1287 dependency. Neither feature is a merged release base.
+Preparation `135694b04738ba049615f27a142fb089a34dc5eb` adopts published
+#1287 head `64cf66e1ed9b94718e424b028726ed34bf77918c` and ready main
+`600f04b6a79ddd2a4761bc1c586ad0916409db74`; product/test/schema/tool bytes
+remain identical to the validation checkpoint. No chip PR is open.
 [Current design, architecture review and plan](https://github.com/tya5/chrona/issues/1286#issuecomment-6088639263).
 Local acceptance only: no PR, public artifact or exact-main release gate is complete. Do not close.
 
