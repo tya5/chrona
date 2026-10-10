@@ -179,6 +179,36 @@ and routes use the same completed inset scale in lane preflight and final
 composition. Layout diagnoses a non-positive usable range as
 `E_LAYOUT_MARK_OVERFLOW` rather than letting an adapter clip the point.
 
+**Explicit-window visibility closure (#1292).** Before point-inset measurement
+or lane-footprint preflight, Layout derives one immutable visibility result per
+instance and source facet from the projection's explicit-window provenance.
+The same result drives automatic, lane and folded final composition; it does
+not alter data-only lane membership. Disjoint spans and out-of-window points
+are omitted, not mapped beyond the plot. Point insets include only admitted
+facets and retain their existing complete symbol/icon/stroke geometry.
+
+Intersecting spans retain original dates alongside the visible interval.
+Progress is computed over the original span, then intersected with the visible
+host; applying its fraction to an already shortened host is forbidden. Delta
+facts remain original. Summary and missing-Actual geometry use the same
+closure, not separate date-coordinate fallbacks.
+
+Only original temporal endpoints that remain visible provide dependency ports:
+span starts are in `[start, end)`, span exclusive ends in `(start, end]`, and
+points in `[start, end)`. A window cut does not invent a temporal endpoint at
+its edge. A relation lacking a required visible endpoint is suppressed with
+`W_LAYOUT_RELATION_SUPPRESSED` and typed outside-window cause/source facts;
+raw relation-anchor fallback is forbidden. Surviving route paint must remain
+inside the completed plot.
+
+Layout aggregates clipped or omitted object-backed facets into one
+`W_LAYOUT_OUTSIDE_WINDOW` per surface, with deterministic deduplicated object
+subjects and source refs (Spec 66); per-facet reasons remain typed internal
+evidence. Unchanged contained facets and derived-window paths retain existing
+Scene output and produce no outside-window warning. Neither Scene nor an
+adapter chooses visibility, remeasures geometry, or changes the viewport to
+accommodate omitted geometry.
+
 The timeline as-of label is a constrained exception to generic
 visible-overflow behavior. Layout measures its text and any declared chip
 footprint, then tries the plot top margin beside the as-of rule followed by
