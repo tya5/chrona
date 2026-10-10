@@ -226,6 +226,12 @@ sync dispatches the full three-OS pytest/conformance/wheel-smoke run on the
 same immutable ref and SHA. Main pushes do not run that matrix on the stale
 pre-sync source SHA. No-op syncs use the existing main SHA for both checks.
 
+After consuming a terminal trusted gate result and dispatching release CI when
+the sync succeeds, the sync removes its immutable gate ref. A daily sweep uses
+the same non-cancelling, multi-pending concurrency queue. Cleanup preserves
+unknown or active gates and never changes commit check runs or release evidence;
+an already-absent ref is harmless. Release checkout uses the dispatched SHA.
+
 The `derived-ready` PR check waits (boundedly) for `derived-main` on the
 current exact `main` tip and rechecks that tip before success. Production
 status-only strict branch protection is a separate deployment step: do not
