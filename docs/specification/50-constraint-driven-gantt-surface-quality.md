@@ -472,8 +472,12 @@ than its rows the ground and every plot-height overlay still end at the last row
 
 **Axis label containment (#1291).** Layout admits each transformed, measured
 primary/secondary run only inside its clipped logical interval, the axis block
-and the plot inline extent. A painted band for that interval also constrains
-the run to its completed cell, including `cellGap` and the outer-edge rule above.
+and the plot inline extent. A painted band for that interval in the primary's
+native block lane also constrains the run to its completed cell, including
+`cellGap` and the outer-edge rule above. Select that cell by primary block centre,
+then paint/native emission order, independently of inline-centre fit; an inline
+gap cannot bypass its containment guard. An equal calendar interval painted in
+another block lane is not the label's cell and does not constrain it.
 Paint-host attribution may cross units (month labels on a quarter band): the
 topmost painted cell under the primary's centre is its host, ordered by paint
 order then native emission order. Hosted text must fit that host's full box;
