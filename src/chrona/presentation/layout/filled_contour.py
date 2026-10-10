@@ -118,11 +118,24 @@ def _from_pathops(path) -> tuple[PathCommand, ...]:
             if not isinstance(segment, (tuple, list)) or len(segment) != 2:
                 raise ContourUnionError("output", "unsupported-verb")
             verb, raw_points = segment
+            implicit_start = (verb == "qCurveTo" and bool(raw_points)
+                              and raw_points[-1] is None)
+            if implicit_start:
+                raw_points = raw_points[:-1]
             points = tuple(tuple(float(value) for value in point) for point in raw_points)
             if any(len(point) != 2 for point in points):
                 raise ContourUnionError("output", "unsupported-verb")
             if any(not isfinite(value) for point in points for value in point):
                 raise ContourUnionError("output", "nonfinite")
+            if implicit_start:
+                if len(points) < 2:
+                    raise ContourUnionError("output", "unsupported-verb")
+                # The pen protocol's all-off-curve closed contour starts at
+                # the implied midpoint of the last and first controls.
+                current = contour_start = ((points[-1][0] + points[0][0]) / 2,
+                                            (points[-1][1] + points[0][1]) / 2)
+                output.append(PathCommand("move", (current,)))
+                points = (*points, current)
             if verb == "moveTo" and len(points) == 1:
                 current = contour_start = points[0]
                 output.append(PathCommand("move", (current,)))

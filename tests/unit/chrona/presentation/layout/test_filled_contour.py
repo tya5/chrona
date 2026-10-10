@@ -128,6 +128,53 @@ def test_quadratic_boundary_stays_exact_quadratic_without_flattening():
     assert is_closed_stroke_contour(result)
 
 
+def test_closed_all_quadratic_contour_uses_exact_implicit_start():
+    path = SimpleNamespace(segments=(
+        ("qCurveTo", ((0.0, 0.0), (0.0, 8.0), (8.0, 8.0), (8.0, 0.0), None)),
+        ("closePath", ()),
+    ))
+
+    result = contour._from_pathops(path)
+
+    assert result == (
+        C("move", ((4.0, 0.0),)),
+        C("quadratic", ((0.0, 0.0), (0.0, 4.0))),
+        C("quadratic", ((0.0, 8.0), (4.0, 8.0))),
+        C("quadratic", ((8.0, 8.0), (8.0, 4.0))),
+        C("quadratic", ((8.0, 0.0), (4.0, 0.0))),
+    )
+    assert is_closed_stroke_contour(result)
+
+
+def test_real_backend_implicit_quadratic_contours_preserve_the_hole():
+    outer = (
+        C("move", ((10, 0),)), C("quadratic", ((20, 0), (20, 10))),
+        C("quadratic", ((20, 20), (10, 20))),
+        C("quadratic", ((0, 20), (0, 10))),
+        C("quadratic", ((0, 0), (10, 0))), C("line", ((10, 0),)),
+    )
+    hole = (
+        C("move", ((10, 5),)), C("quadratic", ((5, 5), (5, 10))),
+        C("quadratic", ((5, 15), (10, 15))),
+        C("quadratic", ((15, 15), (15, 10))),
+        C("quadratic", ((15, 5), (10, 5))), C("line", ((10, 5),)),
+    )
+    native = contour._simplify_operand(outer + hole)
+    assert any(verb == "qCurveTo" and points[-1] is None
+               for verb, points in native.segments)
+    assert not native.contains((10, 10))
+    assert native.contains((2, 10))
+
+    result = union_filled_contours((outer + hole,))
+
+    assert len(_subpaths(result)) == 2
+    assert is_closed_stroke_contour(result)
+    assert any(command.kind == "quadratic" for command in result)
+    decoded = contour._to_pathops(result)
+    assert not decoded.contains((10, 10))
+    assert decoded.contains((2, 10))
+
+
 def test_multicontrol_qcurve_uses_exact_implied_midpoint(monkeypatch):
     segments = (("moveTo", ((0.0, 0.0),)),
                 ("qCurveTo", ((2.0, 0.0), (4.0, 2.0), (6.0, 0.0))),
