@@ -153,7 +153,7 @@ class TableColumn:
     id: str
     source: str | FrozenDict
     format: str | BooleanPresencePresentation
-    missing: str
+    missing: str | FrozenDict  # an enum spelling, or `{text}` (#1288)
     align: str = "start"
     width: str | FrozenDict = "content"
     header_orientation: str = "horizontal"
@@ -919,7 +919,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
                       for item in row.get("items", ())), row.get("presentation"))
         for row in rows.get("items", ()))
     table_columns = tuple(TableColumn(str(column["id"]), column["source"], _table_format(column.get("format", "text")),
-                                      str(column["missing"]), str(column["align"]), column["width"],
+                                      freeze(column["missing"]) if isinstance(column["missing"], Mapping) else str(column["missing"]),
+                                      str(column["align"]), column["width"],
                                       str(column["headerOrientation"]),
                                       _column_affixes(column["id"], column.get("affixes")),
                                       freeze(column["missingBy"]) if "missingBy" in column else None,
