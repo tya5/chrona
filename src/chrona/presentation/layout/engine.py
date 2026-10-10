@@ -833,6 +833,34 @@ class ContentBlockResolution:
             )
 
 
+def _block_extent_feeds_inline(profile: ResolvedLayoutProfile) -> bool:
+    """True when a node's inline extent is derived from its block extent (an inline `aspectRatio`).
+
+    Without that coupling every allocation is a non-decreasing function of the block extent, so "the required slot
+    fits" is monotone and the first fitting extent follows from the deficit of one probe. With it, a taller
+    extent can widen an aspect-ratio flow so that its items wrap into fewer lines and a slot shrinks: the fit
+    predicate is not monotone and only the first fitting integral extent is the least one (#1214, Spec 33 13.1).
+    """
+    def visit(node: Mapping[str, Any]) -> bool:
+        spec = node.get("inlineSize")
+        if isinstance(spec, dict) and "aspectRatio" in spec:
+            return True
+        return any(visit(child) for child in node.get("children", ()))
+    return visit(profile.profile["root"])
+
+
+def _first_fitting_extent(fits: Callable[[int], bool], minimum_block: int, known_fit: int) -> int:
+    """The least integral extent from the requested minimum up to a verified fitting extent that itself fits.
+
+    The scan is bounded by `known_fit`, an extent already verified against the complete native manifest, so
+    it needs no retry cap; each candidate is judged by its own complete native arrangement.
+    """
+    for extent in range(max(1, minimum_block), known_fit):
+        if fits(extent):
+            return extent
+    return known_fit
+
+
 def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inline: int,
                                  minimum_block: int, measurements: Mapping[str, Measurement],
                                  required_blocks: Mapping[str, Decimal] | Callable[[LayoutManifest], Mapping[str, Decimal]],
@@ -887,6 +915,16 @@ def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inl
             for source in sorted(final_required)
             if final_allocated[source] < final_required[source]
         )
+        if _block_extent_feeds_inline(profile):
+            # A coupled profile: an earlier extent than the deficit probe's may already fit (#1214).
+            def finite_fits(extent: int) -> bool:
+                trial = solve_layout(profile, viewport_inline=viewport_inline,
+                                     viewport_block=extent, measurements=measurements)
+                trial_allocated = allocations(trial)
+                return all(trial_allocated[source] >= required for source, required in requirements(trial).items())
+            earliest = _first_fitting_extent(finite_fits, int(minimum_block), candidate)
+            if earliest != candidate or not short_sources:
+                return ContentBlockResolution(earliest)
         if short_sources:
             short_sources = tuple(
                 ShortContentSource(source, requested_required[source], requested_allocated[source])
@@ -935,6 +973,9 @@ def resolve_content_block_extent(profile: ResolvedLayoutProfile, *, viewport_inl
             for source in sorted(requested_required)
             if requested_allocated[source] < requested_required[source]
         ))
+    if _block_extent_feeds_inline(profile):
+        # Bisection assumes a monotone predicate; a block-to-inline coupling breaks that (#1214).
+        return ContentBlockResolution(_first_fitting_extent(satisfies, int(minimum_block), high))
     while high - low > 1:
         middle = (low + high) // 2
         if satisfies(middle):
