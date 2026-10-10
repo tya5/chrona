@@ -244,6 +244,7 @@ body:
     source:
       facet: finishDelta
     format: signedNumber
+    zero: plain
     missing: blank
     missingBy:
       inProgress: em-dash
