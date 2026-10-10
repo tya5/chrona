@@ -217,6 +217,18 @@ geometry remains and every otherwise empty member has the completed account.
 Absent metadata preserves existing serialization and strict lane validation;
 the additive optional metadata selects Scene v0.7, leaving v0.6 strict.
 
+The inventory is optional `windowAbsences` on each `laneMembers` entry, omitted
+when empty. Each record carries `placementId`, `instanceId`, `facet`, `sourceRef`,
+`sourceKind`, `semanticRole` and `reason: outside-window` from the original
+expected mark. Identifiers are opaque, nonempty and unique within that member;
+Scene does not decode them into dates, members or geometry. Layout joins the
+original occurrence to the final countable member and proves the complete
+expected/admitted/absent partition before projecting these records. Missing
+primary IDs require an absence for an expected primary mark, not merely an
+unrelated Actual or label absence. Empty emitted IDs require this same account;
+empty obstacles additionally require no emitted lane geometry. Malformed or
+unaccounted empty inventories fail `E_PRESENTATION_PRIMITIVE_INVALID`.
+
 An adapter applies the supplied paint clip outside the completed primitive's
 effects, so fill, stroke, terminals, shadow and glow remain inside it. It must
 not substitute the stroke-alignment-only `strokeClip` or a visible host

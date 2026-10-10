@@ -198,6 +198,13 @@ and does not acquire a fake mark, port, obstacle, or minimum footprint. Visuals
 bound to an omitted host are intentionally unpainted, not invalid selectors.
 The same immutable visibility closure supplies this account and final geometry.
 
+Final lane completion validates the original expected/admitted/absent partition
+against that cache before emission. A wholly omitted row retains its allocated
+tracks; its `laneMarkBandBlock` is the minimum completed track block in that
+row, not an invented mark or temporal port. A row with visible marks keeps the
+existing minimum painted-mark block. Missing tracks or an unaccounted missing
+mark remain errors; Scene never chooses this row geometry.
+
 Intersecting spans retain original dates alongside the visible interval.
 Progress is computed over the original span, then intersected with the visible
 host; applying its fraction to an already shortened host is forbidden. Delta
