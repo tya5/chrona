@@ -2,7 +2,9 @@
 
 # Issue #1286 — label chip shape acceptance
 
-Implementation through `6d346344`; public parent checkpoint `2c0f352060fe8021363153d78f4667d790da9fbe` (#1287).
+Published preparation: `d44c51e752c4b28b8c2a44a77d697b301b89749f`;
+public parent checkpoint `d4215dcca0138de90329829caa44f7497bd8b14d` (#1287).
+These are pending dependency preparations, not merged release bases.
 [Current design, architecture review and plan](https://github.com/tya5/chrona/issues/1286#issuecomment-6088639263).
 Local acceptance only: no PR, public artifact or exact-main release gate is complete. Do not close.
 
@@ -24,7 +26,12 @@ Local acceptance only: no PR, public artifact or exact-main release gate is comp
 
 Synthetic render evidence: 12 cases across both integration files; the final as-of file passed 8 tests and the period/variance file passed 4. Final focused closure/measurement/lane/ground/period batch: 43 passed; builder/geometry/lane/ground batch: 88 passed; legacy chip/as-of/viewer-fit batch: 48 passed. Independent absent-token replay: Scene 22,949 bytes, SHA256 `e5f8b0c395e6b891d065e9152f2aa302d51d4f5162e3680edec12d802f2b93ea`; SVG 6,992 bytes, SHA256 `74bf8d570ca05067f0000a3002520bb237113b11ac682e21ae367ec0e82c3e0b`; root verified both complete streams with `cmp`.
 
-S0 L1 passed with only three declared Theme deltas. The earlier full local S0 exceeded its existing 60-second timing budget (82.3 seconds); it is not accepted or waived. Fresh S0 and public artifact evidence remain required after dependency adoption.
+Current prepared-parent render/schema batch: 17 passed (11.15s). Fresh L1
+against ready main `484f5cd83ac24e91b7d435be18dfb5be1ebade04`: 36 equal,
+two schemas with approved deltas (three own Theme paths and one inherited
+#1283 Layout path). The earlier full local S0 exceeded its existing 60-second
+timing budget (82.3 seconds); it is not accepted or waived. Fresh final-base
+L1, CI L2/L3 and public artifact evidence remain required after dependency adoption.
 
 ## Architecture conclusion
 
