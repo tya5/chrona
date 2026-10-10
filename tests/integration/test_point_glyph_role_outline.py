@@ -217,12 +217,41 @@ def test_width_without_ink_keeps_the_existing_scene_paint_refusal(tmp_path, monk
         "E_PRESENTATION_PAINT_INVALID", "/body/roles/gate")
 
 
-@pytest.mark.parametrize("case", ["absent", "stroke-only", "outline-pattern"])
-def test_inactive_or_existing_outline_treatment_is_exactly_the_no_contour_path(
-    tmp_path, monkeypatch, case,
-):
-    from chrona.presentation.layout import mark_geometry, surface_legend
+def _install_legacy_point_projection(monkeypatch):
+    """Freeze pre-#1287 projection from 8ba462d8, independent of the new builder."""
+    import chrona.presentation.layout.mark_geometry as geometry
+    import chrona.presentation.layout.surface_legend as legend
+    import chrona.presentation.scene.v05_builder as builder
 
+    def project(scene_id, source_ref, source_kind, purpose, visual_role,
+                bounds, completed_parts, primitive_ids=None, **shared):
+        base_paint_order = shared.pop("paint_order", 0)
+        order_step = shared.pop("part_order_step", 1)
+        if primitive_ids is not None and len(primitive_ids) != len(completed_parts):
+            raise builder.SceneBuildError("E_PRESENTATION_PRIMITIVE_INVALID", scene_id,
+                                          "typed lane handoff part count differs from Layout geometry")
+        return [builder.ScenePrimitive(
+            primitive_ids[index] if primitive_ids is not None else
+            f"{scene_id}:part{index}" if part.paint_mode is not None else scene_id,
+            builder.PrimitiveKind.SYMBOL, source_ref, source_kind, purpose, visual_role,
+            bounds, symbol=builder.SymbolGeometry(part.commands),
+            paint_order=base_paint_order + index * order_step,
+            glyph_paint_mode=part.paint_mode, glyph_paint_color=part.paint_color,
+            glyph_stroke_width=part.stroke_width,
+            glyph_line_cap=part.line_cap, glyph_line_join=part.line_join, **shared,
+        ) for index, part in enumerate(completed_parts)]
+
+    monkeypatch.setattr(geometry, "complete_point_outline", lambda parts, **_kwargs: parts)
+    monkeypatch.setattr(legend, "complete_point_outline", lambda parts, **_kwargs: parts)
+    monkeypatch.setattr(builder, "_symbol_primitives", project)
+
+
+@pytest.mark.parametrize("case", ["absent", "stroke-only", "outline-pattern"])
+@pytest.mark.parametrize("row_mode", ["lanes", "automatic"])
+@pytest.mark.parametrize("glyph", ["diamond", "inline"])
+def test_inactive_or_existing_outline_treatment_is_exactly_the_no_contour_path(
+    tmp_path, monkeypatch, case, row_mode, glyph,
+):
     if case == "absent":
         options = {"stroke": False, "width": False}
     elif case == "stroke-only":
@@ -230,10 +259,9 @@ def test_inactive_or_existing_outline_treatment_is_exactly_the_no_contour_path(
     else:
         options = {"stroke": True, "width": True, "outline_pattern": True}
 
-    actual = _render(tmp_path / f"actual-{case}", **options)
-    monkeypatch.setattr(mark_geometry, "complete_point_outline", lambda parts, **_kwargs: parts)
-    monkeypatch.setattr(surface_legend, "complete_point_outline", lambda parts, **_kwargs: parts)
-    legacy = _render(tmp_path / f"legacy-{case}", **options)
+    actual = _render(tmp_path / f"actual-{case}", row_mode=row_mode, glyph=glyph, **options)
+    _install_legacy_point_projection(monkeypatch)
+    legacy = _render(tmp_path / f"legacy-{case}", row_mode=row_mode, glyph=glyph, **options)
 
     assert actual.artifact.content == legacy.artifact.content
     assert serialize_scene(actual.scene) == serialize_scene(legacy.scene)
