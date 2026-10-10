@@ -13,13 +13,18 @@ from chrona.presentation.layout.surface_quality import PathCommand, ScalePlaceme
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.presentation import MarkBandFrame
 from chrona.presentation.layout.path_geometry import open_span_path, rounded_diamond_path
-from chrona.presentation.layout.rounded_outline import resolve_corner_radius
-from chrona.presentation.layout.filled_contour import ContourUnionError, union_filled_contours
-from chrona.presentation.layout.surface_quality import MarkPlacement
+from chrona.presentation.layout.rounded_outline import resolve_corner_radius, rounded_rect_commands
+from chrona.presentation.layout.filled_contour import (
+    ContourUnionError, WindowContourError, clip_span_contour, union_filled_contours,
+)
+from chrona.presentation.layout.surface_quality import MarkPlacement, PaintClip
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.layout.semantic_mark_facets import (
     ItemMarkFacetSelection, MarkFacetAbsence, select_item_mark_facets,
+)
+from chrona.presentation.layout.mark_facet_visibility import (
+    FacetDisposition, MarkFacetVisibility,
 )
 
 
@@ -87,6 +92,105 @@ class MarkItemComposition:
     diagnostics: tuple[str, ...]
     absences: tuple[MarkFacetAbsence, ...]
     diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
+
+
+@dataclass(frozen=True)
+class CompletedWindowMark:
+    """Original source mark plus its explicit-window completed geometry."""
+
+    original: MarkPlacement
+    visible: MarkPlacement | None
+    paint_clip: PaintClip | None
+    visibility: MarkFacetVisibility
+
+
+def _window_geometry_error(mark: MarkPlacement, visibility: MarkFacetVisibility,
+                           reason: str) -> LayoutError:
+    source_ref = mark.source_ref[:120] if isinstance(mark.source_ref, str) else "<invalid>"
+    facet = visibility.source.facet[:64] if isinstance(visibility.source.facet, str) else "<invalid>"
+    return LayoutError(
+        "E_LAYOUT_WINDOW_CLIP", "/layout/windowContour", node_id=source_ref,
+        detail=f"source_ref={source_ref!r} facet={facet!r} stage=geometry reason={reason}",
+    )
+
+
+def complete_mark_window_geometry(
+    mark: MarkPlacement, facet_visibility: MarkFacetVisibility,
+    scale: ScalePlacement, plot: Rect,
+) -> CompletedWindowMark:
+    """Complete one selected mark against its date visibility and plot rectangle.
+
+    Contained marks preserve object identity. Omitted facets produce no visible
+    mark. A clipped span gets a new contour and a finite plot paint clip while
+    retaining the untouched original placement for paint/progress provenance.
+    """
+    if facet_visibility.disposition == FacetDisposition.OMITTED:
+        return CompletedWindowMark(mark, None, None, facet_visibility)
+    if facet_visibility.disposition == FacetDisposition.CONTAINED:
+        return CompletedWindowMark(mark, mark, None, facet_visibility)
+    if facet_visibility.disposition != FacetDisposition.CLIPPED:
+        raise _window_geometry_error(mark, facet_visibility, "invalid-disposition")
+    if (facet_visibility.source.shape not in {"span", "open-span"}
+            or type(facet_visibility.visible_start) is not date
+            or type(facet_visibility.visible_finish) is not date
+            or facet_visibility.visible_start >= facet_visibility.visible_finish):
+        raise _window_geometry_error(mark, facet_visibility, "unsupported-facet")
+    if not isinstance(plot, Rect):
+        raise _window_geometry_error(mark, facet_visibility, "invalid-plot-or-scale")
+    try:
+        plot_left, plot_top, plot_width, plot_height = map(
+            float, (plot.inline, plot.block, plot.inline_size, plot.block_size))
+        mark_x, y, mark_width, height = map(
+            float, (mark.bounds.inline, mark.bounds.block,
+                    mark.bounds.inline_size, mark.bounds.block_size))
+        scale_values = tuple(float(value) for value in
+                             (scale.range_start, scale.range_end, scale.origin, scale.unit_ratio))
+        if any(isinstance(value, bool) for value in
+               (scale.range_start, scale.range_end, scale.origin, scale.unit_ratio)):
+            raise TypeError("boolean scale coordinate")
+        x1 = _coordinate(facet_visibility.visible_start, scale)
+        x2 = _coordinate(facet_visibility.visible_finish, scale)
+    except Exception as error:
+        raise _window_geometry_error(mark, facet_visibility, "invalid-plot-or-scale") from error
+    plot_right, plot_bottom = plot_left + plot_width, plot_top + plot_height
+    width = x2 - x1
+    if (not all(isfinite(value) for value in
+                (x1, x2, y, height, mark_x, mark_width, width,
+                 plot_left, plot_top, plot_width, plot_height,
+                 plot_right, plot_bottom, *scale_values))
+            or plot_width <= 0 or plot_height <= 0 or scale_values[3] <= 0
+            or mark_width <= 0
+            or width <= 0 or height <= 0 or x1 < plot_left or x2 > plot_right
+            or y < plot_top or y + height > plot_bottom):
+        raise _window_geometry_error(mark, facet_visibility, "host-outside-plot")
+    try:
+        visible_host = Rect(Decimal(str(x1)), mark.bounds.block,
+                            Decimal(str(width)), mark.bounds.block_size)
+        source_contour = (mark.path_commands if mark.path_commands else
+                          rounded_rect_commands(
+                              (mark_x, y, mark_width, height), mark.corner_radius))
+        contour = clip_span_contour(
+            source_contour, visible_host,
+            cut_start=facet_visibility.cut_start,
+            cut_finish=facet_visibility.cut_finish,
+            source_ref=mark.source_ref, facet=facet_visibility.source.facet,
+        )
+    except WindowContourError:
+        raise
+    except Exception as error:
+        raise _window_geometry_error(mark, facet_visibility, "contour-operation-failed") from error
+
+    closes_open_end = mark.mark_shape == "open-span" and facet_visibility.cut_finish
+    visible = replace(
+        mark, bounds=visible_host,
+        start_port=mark.start_port if facet_visibility.start_port_visible else None,
+        end_port=mark.end_port if facet_visibility.end_port_visible else None,
+        mark_shape="span" if closes_open_end else mark.mark_shape,
+        corner_radius=0.0, path_commands=contour,
+        end_treatment="closed" if closes_open_end else mark.end_treatment,
+    )
+    clip = PaintClip((plot_left, plot_top, float(plot.inline_size), float(plot.block_size)))
+    return CompletedWindowMark(mark, visible, clip, facet_visibility)
 
 
 def _coordinate(value: date, scale: ScalePlacement) -> float:
