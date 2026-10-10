@@ -69,9 +69,13 @@ def test_non_lane_candidate_keeps_native_preparation_and_natural_demand():
 
 def test_lane_candidate_replaces_prior_preflight_from_exact_candidate_inputs(monkeypatch):
     from chrona.presentation.layout import surface_preparation
+    from types import SimpleNamespace
+    from chrona.presentation.layout.surface_mark_visibility import build_item_mark_visibility_index
 
     original = _request()
-    stale, current, completed = object(), object(), object()
+    stale = SimpleNamespace(mark_visibility_index=build_item_mark_visibility_index(
+        original.projection, as_of=original.surface_content.as_of))
+    current, completed = object(), object()
     lane_item = replace(original.projection.items[0], item_id="member-view", source_kind="primary",
                         roles=("planned",))
     source_row = ReviewRowProjection("source-row", "Activity", "group", "member-view", (lane_item,))
@@ -101,17 +105,23 @@ def test_lane_candidate_replaces_prior_preflight_from_exact_candidate_inputs(mon
     monkeypatch.setattr(surface_preparation, "preflight_fixed_lane_layout", preflight)
     monkeypatch.setattr(surface_preparation, "prepare_surface_content", prepare)
     assert prepare_surface_candidate(candidate) is completed
+    assert len(calls) == 1
+    passed_index = calls[0]["mark_visibility_index"]
+    assert passed_index is not None
+    assert passed_index.projection is candidate.projection
     assert calls == [dict(
         projection=candidate.projection, layout_manifest=candidate.layout_manifest,
         surface_content=candidate.surface_content, theme_tokens=candidate.theme_tokens,
         metric_values=candidate.measured_sources.metric_values,
         icon_assets=candidate.icon_assets, visual_requests=candidate.visual_requests,
-        font_metrics=candidate.font_metrics)]
+        font_metrics=candidate.font_metrics, mark_visibility_index=passed_index)]
     assert candidate.fixed_lane_preflight is stale
     assert candidate.mark_visibility_index is None
 
 
-def test_width_changed_lane_candidate_closes_real_preflight_and_scene_from_same_manifest():
+def test_width_changed_lane_candidate_reuses_one_selection_index_for_preflight_and_scene(monkeypatch):
+    from chrona.presentation.layout import surface_mark_visibility
+    from chrona.presentation.layout.lane_projection import close_lane_projection
     from chrona.presentation.model.projection import build_review_projection
     from chrona.presentation.scene.v05_builder import build_scene_input, compose_review_surface
     from tests.unit.chrona.presentation.scene.test_relation_ghost_endpoints import (
@@ -120,12 +130,30 @@ def test_width_changed_lane_candidate_closes_real_preflight_and_scene_from_same_
 
     projection = build_review_projection(PROJECT, PLACED, MODES["lanes"], None,
                                          snapshot_project=PROJECT, snapshot_placements=SNAPSHOT)
+    selected = []
+    original_selector = surface_mark_visibility.select_item_mark_facets
+
+    def counted_selector(**kwargs):
+        selected.append((kwargs["item"].object_id, kwargs["source_kind"]))
+        return original_selector(**kwargs)
+
+    monkeypatch.setattr(surface_mark_visibility, "select_item_mark_facets", counted_selector)
     original = replace(_request(), projection=projection)
     original = replace(original, measured_sources=replace(original.measured_sources, metric_values={
         **original.measured_sources.metric_values,
         "text.body.size": Decimal(14), "text.body.lineHeight": Decimal("1.4")}))
     initial = prepare_surface_candidate(original)
     assert initial.inline.request.fixed_lane_preflight is not None
+    initial_index = initial.inline.request.mark_visibility_index
+    assert initial_index is initial.inline.request.fixed_lane_preflight.mark_visibility_index
+    inline_from_preflight = prepare_surface_inline(replace(
+        original, fixed_lane_preflight=initial.inline.request.fixed_lane_preflight,
+        mark_visibility_index=None))
+    assert inline_from_preflight.request.mark_visibility_index is initial_index
+    expected_occurrences = (len(close_lane_projection(
+        projection, as_of=original.surface_content.as_of).instances)
+        + sum(len(folded.all_items) for folded in projection.folded_points))
+    assert len(selected) == expected_occurrences
     manifest = replace(original.layout_manifest, decisions=tuple(
         replace(item, bounds=replace(item.bounds, inline_size=Decimal(250)))
         if item.source in {"timeline", "timeline-axis"} else item
@@ -138,6 +166,9 @@ def test_width_changed_lane_candidate_closes_real_preflight_and_scene_from_same_
     assert preflight.seed_inline_frame.timeline_inline_size == Decimal(250)
     assert candidate.fixed_lane_preflight.seed_inline_frame.timeline_inline_size == Decimal(500)
     assert current.inline.scale is preflight.scale
+    assert current.inline.request.mark_visibility_index is initial_index
+    assert preflight.mark_visibility_index is initial_index
+    assert len(selected) == expected_occurrences
     value = build_scene_input(
         projection=projection, surface_content=candidate.surface_content, layout_manifest=manifest,
         resolved_theme=_theme(), font_metrics=candidate.font_metrics,

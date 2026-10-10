@@ -113,6 +113,7 @@ def _request_with_candidate_lane_preflight(request: SurfaceLayoutRequest) -> Sur
             metric_values=request.measured_sources.metric_values,
             icon_assets=request.icon_assets, visual_requests=request.visual_requests,
             font_metrics=request.font_metrics,
+            mark_visibility_index=request.mark_visibility_index,
         )
         return replace(request, fixed_lane_preflight=preflight)
     return request

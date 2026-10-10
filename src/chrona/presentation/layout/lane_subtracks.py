@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from chrona.presentation.layout.mark_band_allocation import MarkBandAllocation
     from chrona.presentation.layout.lane_label_intent import MeasuredLaneMemberLabel
     from chrona.presentation.layout.surface_quality import ScalePlacement
+    from chrona.presentation.layout.surface_mark_visibility import ItemMarkVisibilityIndex
 
 LaneFootprint: TypeAlias = ObstacleRect | ObstacleSegment
 
@@ -129,6 +130,7 @@ class FixedLanePreflight:
     resolved_visual_requests: tuple[object, ...] = ()
     row_requirements: tuple[tuple[str, float], ...] = ()
     mark_band_allocation: MarkBandAllocation | None = None
+    mark_visibility_index: ItemMarkVisibilityIndex | None = None
 
     def __post_init__(self) -> None:
         if (not self.natural_block_requirement.is_finite()

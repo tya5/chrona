@@ -175,6 +175,20 @@ def build_item_mark_visibility_index(
     return ItemMarkVisibilityIndex(projection, as_of, entries)
 
 
+def ensure_item_mark_visibility_index(
+    projection: ReviewProjection, *, as_of: date | None,
+    index: ItemMarkVisibilityIndex | None = None,
+) -> ItemMarkVisibilityIndex:
+    """Reuse a matching prepared index or build the direct-call closure once."""
+    if index is None:
+        return build_item_mark_visibility_index(projection, as_of=as_of)
+    if not isinstance(index, ItemMarkVisibilityIndex):
+        raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/window",
+                          detail="stage=index; reason=invalid-request-cache")
+    index.require_match(projection, as_of)
+    return index
+
+
 def ensure_request_mark_visibility_index(request: SurfaceLayoutRequest) -> SurfaceLayoutRequest:
     """Attach one request-lifetime index, or reject a stale cached binding."""
     projection = request.projection
@@ -186,8 +200,18 @@ def ensure_request_mark_visibility_index(request: SurfaceLayoutRequest) -> Surfa
     as_of = getattr(getattr(request, "surface_content", None), "as_of", None)
     index = request.mark_visibility_index
     if index is None:
-        return replace(request, mark_visibility_index=build_item_mark_visibility_index(
-            projection, as_of=as_of))
+        # A prior direct lane preflight is reusable only when it was built for
+        # this exact projection object and observation date. Stale preflights
+        # are not inherited into candidate-specific preparation.
+        preflight_index = getattr(request.fixed_lane_preflight, "mark_visibility_index", None)
+        if preflight_index is not None:
+            if (not isinstance(preflight_index, ItemMarkVisibilityIndex)
+                    or preflight_index.projection is not projection
+                    or preflight_index.as_of != as_of):
+                preflight_index = None
+        index = ensure_item_mark_visibility_index(
+            projection, as_of=as_of, index=preflight_index)
+        return replace(request, mark_visibility_index=index)
     if not isinstance(index, ItemMarkVisibilityIndex):
         raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/window",
                           detail="stage=index; reason=invalid-request-cache")

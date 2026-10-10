@@ -28,6 +28,9 @@ from chrona.presentation.layout.lane_mark_facets import (
     _mark_facets, _overlay_compound_facets, _with_mark_visuals,
 )
 from chrona.presentation.layout.obstacles import ObstacleRect
+from chrona.presentation.layout.surface_mark_visibility import (
+    ItemMarkVisibilityIndex, ensure_item_mark_visibility_index,
+)
 from chrona.presentation.layout.surface_geometry import bounds_from_rect as _bounds
 from chrona.presentation.layout.surface_quality import (
     IconPlacement, LaneEmissionFacet, LaneEmissionPlacement, MarkPlacement, ShapePlacement, TextPlacement,
@@ -129,11 +132,15 @@ def resolved_lane_visual_requests(projection: Any, visual_requests: tuple[Any, .
 def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
                                 surface_content: Any, theme_tokens: Any,
                                 metric_values: dict[str, Decimal], icon_assets: Mapping[str, Any],
-                                visual_requests: tuple[Any, ...], font_metrics: Any) -> FixedLanePreflight:
+                                visual_requests: tuple[Any, ...], font_metrics: Any,
+                                mark_visibility_index: ItemMarkVisibilityIndex | None = None
+                                ) -> FixedLanePreflight:
     """Close fixed-lane tracks before final allocation from fixed View rows and Layout inputs."""
     membership = getattr(projection, "lane_membership", None)
     if membership is None:
         raise LayoutError("E_LAYOUT_LANE_PREFLIGHT_INVALID", "/projection/laneRows")
+    mark_visibility_index = ensure_item_mark_visibility_index(
+        projection, as_of=surface_content.as_of, index=mark_visibility_index)
     start, end = projection.window
     rows = review_rows(projection)
     frame = lane_inline_frame_for_manifest(layout_manifest, window=(start, end))
@@ -152,6 +159,7 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
         mark_band_allocation=mark_band_allocation,
         icon_assets=icon_assets, visual_requests=visual_requests,
         progress_fill_source=surface_content.progress_fill_source,
+        mark_visibility_index=mark_visibility_index,
     )
     provisional_footprints = compose_lane_item_footprints(scale=provisional_scale, **footprint_inputs)
     point_facets = []
@@ -193,7 +201,7 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
     return FixedLanePreflight(subtracks, frame, required, surface_content.as_of, scale,
                               measured_labels, resolved_visuals,
                               tuple(zip((row.row_id for row in rows), requirements, strict=True)),
-                              mark_band_allocation)
+                              mark_band_allocation, mark_visibility_index)
 
 
 def build_lane_emissions(projection: Any, review_rows: tuple[Any, ...], marks: list[MarkPlacement],
