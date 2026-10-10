@@ -61,7 +61,7 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
         if value is None and missing == "in-progress" and _is_actual_source(column.source):
             core = _missing_actual_display(item, as_of)
         else:
-            core = display_value(value, missing, column.format, locale=locale)
+            core = display_value(value, missing, column.format, locale=locale, zero=column.zero)
         affix = column.affixes.for_state(affix_state(value, column.format)) if column.affixes is not None else None
         return (affix.prefix, core, affix.suffix) if affix is not None else ("", core, "")
 

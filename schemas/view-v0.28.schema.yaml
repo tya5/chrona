@@ -465,6 +465,9 @@ allOf:
                       oneOf:
                         - {enum: [blank, em-dash, unknown]}
                         - {$ref: "#/$defs/missingText"}
+                zero:
+                  description: "How a zero value of a `signedNumber` or `signedDays` column reads: `signed` (the default) keeps the sign (`+0`, `+0d`), `plain` draws it without one (`0`, `0d`); non-zero values keep their sign either way (#1289). An `onTime` affix still wraps the text."
+                  enum: [signed, plain]
                 affixes:
                   description: "Per-state text affixes (#588) wrapped around the formatted cell text: slip, onTime and ahead for a signed format (a value above, at and below zero), missing for an absent value. Absent, the cell is the formatted text."
                   examples: [{slip: {suffix: "!"}, missing: {suffix: "?"}}]
