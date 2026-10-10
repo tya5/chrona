@@ -367,6 +367,20 @@ Scene/SVG bytes remain unchanged. See the [L3b route-evidence correction](../des
 
 ### 3.4 Groups and legend
 
+**Horizontal header inset (#1284).** `groupHeader.labelInset` names a finite,
+nonnegative font-size ratio. Layout places plain and role-marked header text
+at the header band start plus that ratio times `groupHeader`'s font size;
+absent keeps existing placement. Completed header-content bounds include this
+leading inset and the measured, nonsuppressed text/run ends, without inflating
+glyph bounds. Baselines, authored run gaps and untabbed visible-overflow policy
+remain unchanged. A start tab requires the absolute inset to cover its
+`tabInlineSize + tabGap`; an end tab requires inset plus its reservation not
+to exceed the header width. Incompatible declarations fail with
+`E_LAYOUT_GROUP_TAB_SIZE` at `/body/roles/groupHeader/labelInset`, reporting
+the actual inset and required reservation. Negative ratios fail there with
+`E_THEME_TOKEN_TYPE`. Vertical tags refuse this horizontal property there with
+`E_THEME_ROLE_PROPERTY_UNSUPPORTED` and retain `tabGap`.
+
 Horizontal plain and role-marked group headers centre the `groupHeader` role's
 line box in `header_bounds`, using the same Layout baseline function as table
 cells (#1271). Vertical tags and folded-point header extent allocation are
