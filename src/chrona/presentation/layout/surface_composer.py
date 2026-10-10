@@ -27,7 +27,8 @@ from chrona.presentation.layout.surface_content import (
     validate_detail_panel_placement,
 )
 from chrona.presentation.layout.surface_legend import SurfaceLegendContext, place_legend
-from chrona.presentation.layout.slot_heading import SlotHeadings, content_slot, full_slot
+from chrona.presentation.layout.slot_heading import (SlotHeadings, content_slot, full_slot, inline_content_slot,
+                                                    inline_full_slot)
 from chrona.presentation.layout.surface_completion import (
     SurfaceCompletionContext, SurfaceLayoutComposition, complete_surface_layout,
 )
@@ -291,13 +292,15 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     legend = by_source.get("legend")
     if legend:
         legend_batch = place_legend(SurfaceLegendContext(
-            request, content_slot(legend, headings.reserved("legend")), metric_values, metric_for))
+            request, inline_content_slot(content_slot(legend, headings.reserved("legend")),
+                                         headings.reserved_inline("legend")), metric_values, metric_for))
         marks.extend(legend_batch.marks)
         shapes.extend(legend_batch.shapes)
         relations.extend(legend_batch.relations)
         text.extend(legend_batch.text)
         side_content_warnings.extend(legend_batch.warnings)
-        legend_slot = full_slot(legend, legend_batch.slot, headings.reserved("legend"))
+        legend_slot = inline_full_slot(legend, full_slot(legend, legend_batch.slot, headings.reserved("legend")),
+                                       headings.reserved_inline("legend"))
         slots = tuple(legend_slot if slot.source_ref == "legend" else slot for slot in slots)
     notes = by_source.get("notes")
     if notes:
