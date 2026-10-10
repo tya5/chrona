@@ -211,6 +211,7 @@ body:
     presentation: header
     tint:
       scale: owner
+      domain: firstAppearance
   ordering:
     by: source
     direction: ascending
