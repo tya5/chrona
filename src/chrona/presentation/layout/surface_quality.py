@@ -8,7 +8,7 @@ from math import hypot, isfinite
 from typing import TYPE_CHECKING, Any
 
 from chrona.presentation.layout.model import Rect
-from chrona.presentation.layout.pattern_placement import PatternedPlacement
+from chrona.presentation.layout.pattern_placement import PatternedPlacement, PatternPathCommand
 from chrona.presentation.layout.obstacles import ObstacleGeometry
 from chrona.presentation.layout.lane_subtracks import FixedLanePreflight
 from chrona.presentation.model.info_diagnostics import PresentationInfo, SuppressedPlotLabels
@@ -328,6 +328,7 @@ class MarkPlacement:
     lane_source_kind: str | None = None
     subjects: tuple[DiagnosticSubject, ...] = ()
     paint_clip: PaintClip | None = None
+    pattern_origin: tuple[float, float] | None = None
 
 
 @dataclass(frozen=True)
@@ -378,6 +379,7 @@ class ShapePlacement:
     # Completed visible frame, when nonrect paint extends beyond nominal bounds.
     collision_bounds: Rect | None = None
     paint_clip: PaintClip | None = None
+    pattern_origin: tuple[float, float] | None = None
 
 
 @dataclass(frozen=True)
@@ -878,8 +880,16 @@ class SurfacePlacement:
             mark = marks_by_id.get(item.placement_id)
             shape = shapes_by_id.get(item.placement_id)
             if not ((mark is not None and mark.mark_shape == "span")
-                    or (shape is not None and shape.kind == "Rect")):
+                    or (shape is not None and shape.kind == "Rect")
+                    or (shape is not None and shape.kind == "Symbol" and item.pattern.cut_contour)):
                 raise ValueError(f"E_LAYOUT_PATTERN_REGION_INVALID:{item.placement_id}")
+            if item.pattern.cut_contour:
+                host = mark if mark is not None else shape
+                contour = tuple(PatternPathCommand(command.kind, command.points) for command in host.path_commands)
+                if (host.paint_clip is None or host.pattern_origin != item.pattern.origin
+                        or contour != item.pattern.cut_contour or host.bounds != item.pattern.region
+                        or host.semantic_id not in {"missing-actual", "progressFill", "summaryBar"}):
+                    raise ValueError(f"E_LAYOUT_PATTERN_REGION_INVALID:{item.placement_id}")
         hosts = {item.placement_id: item for item in self.marks}
         hosts.update({item.placement_id: item for item in self.shapes})
         emitted_mark_hosts = {

@@ -150,6 +150,7 @@ def complete_mark_window_geometry(
         corner_radius=0.0, path_commands=contour,
         end_treatment="closed" if closes_open_end else mark.end_treatment,
         paint_clip=clip,
+        pattern_origin=(float(mark.bounds.inline), float(mark.bounds.block)),
         symbol_parts=tuple(completed_parts),
     )
     return CompletedWindowMark(mark, visible, clip, facet_visibility)

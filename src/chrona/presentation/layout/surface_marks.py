@@ -141,6 +141,7 @@ def complete_progress_shape(host: MarkPlacement, *, original_host: MarkPlacement
     if bounds is None or bounds.inline_size <= 0:
         return None
     radius = float(radius_ratio) * float(min(bounds.inline_size, bounds.block_size))
+    pattern_origin = (float(bounds.inline), float(bounds.block)) if host.paint_clip is not None else None
     commands, kind = (), "Rect"
     if host.paint_clip is not None:
         original = rounded_rect_commands(tuple(map(float, (
@@ -154,7 +155,8 @@ def complete_progress_shape(host: MarkPlacement, *, original_host: MarkPlacement
         f"progress-fill:{host.placement_id}", host.source_ref, kind, bounds,
         required=False, slot_id=host.slot_id, clip_host_id=host.placement_id,
         paint_order=host.paint_order + 1, corner_radius=radius,
-        semantic_id="progressFill", path_commands=commands, paint_clip=host.paint_clip)
+        semantic_id="progressFill", path_commands=commands, paint_clip=host.paint_clip,
+        pattern_origin=pattern_origin)
 
 
 def compose_surface_marks(base: SurfaceBaseGeometry, *,
@@ -356,13 +358,16 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
         bounds = Rect(Decimal(str(x1)), row.bounds.block,
                       Decimal(str(max(1.0, x2 - x1))), Decimal(str(height)))
         commands, kind, paint_clip = (), "Rect", None
+        pattern_origin = None
         if planned_visibility is not None and planned_visibility.disposition == FacetDisposition.CLIPPED:
+            pattern_origin = (float(bounds.inline), float(bounds.block))
             geometry = complete_clipped_span_geometry(
                 bounds, (), 0.0, planned_visibility, scale, base.plot, source_ref=subject.object_id)
             bounds, commands, kind, paint_clip = geometry.bounds, geometry.contour, "Symbol", geometry.paint_clip
         summary_shapes.append(ShapePlacement(
             f"summary-bar:{review_row.row_id}", subject.object_id, kind,
-            bounds, semantic_id="summaryBar", path_commands=commands, paint_clip=paint_clip))
+            bounds, semantic_id="summaryBar", path_commands=commands, paint_clip=paint_clip,
+            pattern_origin=pattern_origin))
     return SurfaceMarksBatch(tuple(marks), tuple(progress_shapes), tuple(summary_shapes), groups,
                              tuple(updates), tuple(diagnostics), tuple(absences),
                              tuple(visible_header_overflows), tuple(diagnostic_provenance),

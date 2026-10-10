@@ -12,7 +12,7 @@ from chrona.presentation.layout.canvas_viewport import canvas_viewport_warning
 from chrona.presentation.layout.icon_geometry import complete_icon_paths
 from chrona.presentation.layout.mark_geometry import MarkFacetAbsence
 from chrona.presentation.layout.model import (LayoutError, Rect)
-from chrona.presentation.layout.pattern_placement import (PatternedPlacement, complete_pattern_placement)
+from chrona.presentation.layout.pattern_placement import (PatternedPlacement, PatternPathCommand, complete_pattern_placement)
 from chrona.presentation.layout.presentation import TrackPlacement
 from chrona.presentation.layout.surface_backgrounds import (
     BACKGROUND_SEMANTIC_IDS, validate_background_shapes, validate_group_header_strip_order,
@@ -151,13 +151,22 @@ def complete_catalog_patterns(marks: tuple[MarkPlacement, ...],
         role = (shape.source_ref if shape.placement_id.startswith("legend-swatch:")
                 and shape.source_ref in _RECT_PATTERN_THEME_ROLES.values()
                 else _RECT_PATTERN_THEME_ROLES.get(shape.semantic_id))
-        if shape.kind != "Rect" or role is None:
+        cut = (shape.kind == "Symbol" and shape.paint_clip is not None
+               and bool(shape.path_commands)
+               and shape.semantic_id in {"progressFill", "summaryBar"})
+        if (shape.kind != "Rect" and not cut) or role is None:
             continue
         pattern = optional_pattern(role)
         if isinstance(pattern, Mapping) and pattern.get("kind") == "catalog":
+            if cut and shape.pattern_origin is None:
+                raise LayoutError("E_LAYOUT_WINDOW_CLIP", shape.source_ref,
+                                  detail="stage=pattern; reason=missing-original-origin")
             result.append(PatternedPlacement(
                 shape.placement_id,
-                complete_pattern_placement(pattern, shape.bounds, shape.corner_radius),
+                complete_pattern_placement(pattern, shape.bounds, shape.corner_radius,
+                    origin=shape.pattern_origin if cut else None,
+                    cut_contour=tuple(PatternPathCommand(command.kind, command.points)
+                                      for command in shape.path_commands) if cut else ()),
             ))
     for mark in marks:
         role = _RECT_PATTERN_THEME_ROLES.get(mark.semantic_id)
@@ -165,9 +174,16 @@ def complete_catalog_patterns(marks: tuple[MarkPlacement, ...],
             continue
         pattern = optional_pattern(role)
         if isinstance(pattern, Mapping) and pattern.get("kind") == "catalog":
+            cut = mark.paint_clip is not None and bool(mark.path_commands)
+            if cut and mark.pattern_origin is None:
+                raise LayoutError("E_LAYOUT_WINDOW_CLIP", mark.source_ref,
+                                  detail="stage=pattern; reason=missing-original-origin")
             result.append(PatternedPlacement(
                 mark.placement_id,
-                complete_pattern_placement(pattern, mark.bounds, mark.corner_radius),
+                complete_pattern_placement(pattern, mark.bounds, mark.corner_radius,
+                    origin=mark.pattern_origin if cut else None,
+                    cut_contour=tuple(PatternPathCommand(command.kind, command.points)
+                                      for command in mark.path_commands) if cut else ()),
             ))
     return tuple(result)
 
