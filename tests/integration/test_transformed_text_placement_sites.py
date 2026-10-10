@@ -76,16 +76,16 @@ def _rendered_sites(tmp_path_factory, request):
     original = text_layout.place_text
     placements = {}
     resources = {}
+    sources = {}
 
     def checked_place_text(**kwargs):
         placement = original(**kwargs)
-        treatment = kwargs["theme_tokens"].text_treatment(kwargs["typography_role"])
-        if treatment.transform != "none":
-            expected = _as_drawn_width(placement, kwargs["theme_tokens"], kwargs["font_metrics"])
-            assert float(placement.bounds.inline_size) == pytest.approx(expected, abs=0.002), (
-                placement.placement_id, placement.content, placement.bounds.inline_size, expected)
         placements[placement.placement_id] = placement
-        resources[placement.placement_id] = (kwargs["theme_tokens"], kwargs["font_metrics"])
+        resources[placement.placement_id] = (
+            kwargs["theme_tokens"],
+            metric_for_role(kwargs["theme_tokens"], kwargs["typography_role"], kwargs["font_metrics"]),
+        )
+        sources[placement.placement_id] = tuple(kwargs.get("lines") or (kwargs["content"],))
         return placement
 
     # Layout modules bind the shared function at import time; observe each real call site.
@@ -101,6 +101,10 @@ def _rendered_sites(tmp_path_factory, request):
     ak.with_view_notes(parts, source)
     ak.with_kind_theme(parts)
     _uppercase_compressed_theme(parts)
+    # A month label includes lowercase letters whose advances differ from their uppercase forms;
+    # a numeric year/quarter label would not reliably exercise transformed measurement.
+    parts["view"]["body"]["axis"]["tiers"][2].update({"unit": "month"})
+    parts["view"]["body"]["axis"]["tiers"][2]["label"]["form"] = "short-month"
 
     # A real slot heading and note rail exercise the caption caller alongside the native content.
     sr.with_note_rail(parts, 300)
@@ -129,17 +133,18 @@ def _rendered_sites(tmp_path_factory, request):
         "kind-bar": next(name for name in placements if name.startswith("annotation-kind-text:")),
     }
     assert set(selected.values()) <= placements.keys()
-    return rendered, placements, resources, selected, primitives
+    return rendered, placements, resources, sources, selected, primitives
 
 
 @pytest.mark.parametrize("site", ["axis", "table-header", "table-cell", "legend", "slot-heading", "kind-bar"])
 def test_each_text_site_transports_the_transformed_compressed_width(_rendered_sites, site):
     """Audit each caller separately while reusing the same synthetic render."""
-    _rendered, placements, resources, selected, primitives = _rendered_sites
+    _rendered, placements, resources, sources, selected, primitives = _rendered_sites
     placement_id = selected[site]
     placement = placements[placement_id]
     tokens, font_metrics = resources[placement_id]
     primitive = primitives[placement_id]
+    source_lines = sources[placement_id]
 
     treatment = tokens.text_treatment(placement.typography_role)
     assert placement.text_transform == "uppercase"
@@ -149,5 +154,21 @@ def test_each_text_site_transports_the_transformed_compressed_width(_rendered_si
     assert primitive.bounds[2] == pytest.approx(float(placement.bounds.inline_size), abs=0.002)
     assert primitive.text == placement.content
 
+    def width(lines):
+        return max(measure_text_width(
+            line,
+            font_size=placement.font_size,
+            font_metrics=font_metrics,
+            letter_spacing=float(treatment.letter_spacing),
+            numeric_spacing=treatment.numeric_spacing,
+        ) for line in lines)
+
+    source_width = width(source_lines)
+    painted_lines = tuple(paint_text(line, text_transform=treatment.transform) for line in source_lines)
+    painted_width = width(painted_lines)
+    assert any(source != painted for source, painted in zip(source_lines, painted_lines)), (
+        site, placement_id, source_lines, painted_lines)
+    assert source_width != pytest.approx(painted_width, abs=0.002), (
+        site, placement_id, source_lines, source_width, painted_width)
     assert float(placement.bounds.inline_size) == pytest.approx(
         _as_drawn_width(placement, tokens, font_metrics), abs=0.002), placement_id

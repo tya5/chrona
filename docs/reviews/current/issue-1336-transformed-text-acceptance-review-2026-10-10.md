@@ -35,7 +35,11 @@ and small-caps run payload remain intact; compression is applied exactly once.
 [Six caller-specific tests](../../../tests/integration/test_transformed_text_placement_sites.py)
 share one synthetic render, observe actual native composers and assert each
 axis/table-header/table-cell/legend/slot-heading/kind-bar placement and Scene
-transport against its painted width. Final fixture cleanup check: six pass (1.61s).
+transport against its painted width. Each case uses source text with demonstrably
+different casing-dependent advances; the synthetic axis uses short-month labels.
+Replaying the baseline ordinary-text measurement causes **six independent
+assertion failures (1.92s)**, not a shared fixture error; restoring the correction
+passes all six. These repeated regression checks are not counted as new tests.
 Existing group/row/table/slot-heading regressions: **135 pass (137.81s)**;
 two existing Pillow deprecation warnings remain unrelated. Across the three
 non-overlapping batches, **233 tests pass**; the repeated fixture check is not
