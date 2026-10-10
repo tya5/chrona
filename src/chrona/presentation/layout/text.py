@@ -4,8 +4,9 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import Any, Literal
 
-from chrona.presentation.layout.model import Rect
-from chrona.presentation.layout.surface_quality import AnnotationPresentation, CollisionDomain, TextPlacement
+from chrona.presentation.layout.model import Rect, geometry_sum
+from chrona.presentation.layout.surface_quality import (AnnotationPresentation, CollisionDomain, TextPlacement,
+                                                        TextRunPlacement)
 
 
 def _text_error(code: str, owner: str, **operands: object) -> ValueError:
@@ -16,8 +17,30 @@ def _text_error(code: str, owner: str, **operands: object) -> ValueError:
     return ValueError(f"{code}: {owner} " + ", ".join(fields))
 
 
+def small_caps_scale(text_transform: str) -> float | None:
+    """The scale of a resolved `small-caps:<scale>` transform, or None for any other transform (#1285)."""
+    kind, _, scale = text_transform.partition(":")
+    return float(scale) if kind == "small-caps" and scale else None
+
+
+def small_caps_runs(content: str, scale: float) -> tuple[tuple[str, float], ...]:
+    """Split `content` into capital runs and their size factors: a former lowercase letter is set at `scale`, every
+    other character (a capital, a digit, a space) at the role size (factor 1); equal neighbours merge (#1285)."""
+    runs: list[tuple[str, float]] = []
+    for character in content:
+        factor = scale if character.upper() != character else 1.0
+        painted = character.upper()
+        if runs and runs[-1][1] == factor:
+            runs[-1] = (runs[-1][0] + painted, factor)
+        else:
+            runs.append((painted, factor))
+    return tuple(runs)
+
+
 def paint_text(content: str, *, text_transform: str = "none") -> str:
     """Apply the finite treatment before it becomes measured display text."""
+    if small_caps_scale(text_transform) is not None:
+        return content.upper()
     return {
         "none": content,
         "uppercase": content.upper(),
@@ -71,6 +94,13 @@ def measure_text_width(content: str, *, font_size: float, font_metrics: Any,
                        letter_spacing: float = 0, text_transform: str = "none",
                        numeric_spacing: str = "proportional") -> float:
     """Measure text width at the Layout boundary."""
+    scale = small_caps_scale(text_transform)
+    if scale is not None:
+        # Each run is measured at its own size; the letter spacing between runs completes the (n - 1) of the whole.
+        runs = small_caps_runs(content, scale)
+        return geometry_sum([*(measure_text_width(text, font_size=font_size * factor, font_metrics=font_metrics,
+                                                  letter_spacing=letter_spacing, numeric_spacing=numeric_spacing)
+                               for text, factor in runs), letter_spacing * max(0, len(runs) - 1)])
     content = paint_text(content, text_transform=text_transform)
     supports_numeric_spacing = hasattr(font_metrics, "ensure_numeric_spacing")
     if supports_numeric_spacing:
@@ -219,10 +249,19 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
     resolved_lines = tuple(paint_text(line, text_transform=treatment.transform) for line in (lines or (content,)))
     painted_content = paint_text(content, text_transform=treatment.transform)
     letter_spacing = float(treatment.letter_spacing)
+    caps = small_caps_scale(treatment.transform)
     width = max(measure_text_width(line, font_size=font_size, font_metrics=font_metrics,
                                    letter_spacing=letter_spacing,
+                                   text_transform=treatment.transform,
                                    numeric_spacing=treatment.numeric_spacing)
                 for line in (lines or (content,)))
+    runs: tuple[tuple[TextRunPlacement, ...], ...] = ()
+    if caps is not None:
+        # Each run is measured at its own size; the line's width is their sum plus the spacing between runs (#1285).
+        runs = tuple(tuple(TextRunPlacement(text, font_size * factor, measure_text_width(
+            text, font_size=font_size * factor, font_metrics=font_metrics, letter_spacing=letter_spacing,
+            numeric_spacing=treatment.numeric_spacing)) for text, factor in small_caps_runs(line, caps))
+            for line in (lines or (content,)))
     scale = float(treatment.horizontal_scale)
     rotation = {"horizontal": 0, "rotate-cw": 90, "rotate-ccw": -90}.get(orientation)
     if rotation is None:
@@ -251,4 +290,5 @@ def place_text(*, placement_id: str, source_ref: str, content: str,
         lane_row_id=lane_row_id,
         lane_member_id=lane_member_id,
         lane_source_kind=lane_source_kind,
+        runs=runs,
     )

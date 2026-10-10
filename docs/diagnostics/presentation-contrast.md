@@ -6,64 +6,64 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 
 | Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors | Warnings |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| actual | `actual` | required | 3.000 | 42 | 282 | 1.000 | 7.583 | 0 | 4 |
+| actual | `actual` | required | 3.000 | 43 | 284 | 1.000 | 7.583 | 0 | 4 |
 | annotation-artwork | `annotation-artwork` | enabled | 1.100 | 3 | 19 | 1.493 | 5.241 | 0 | 0 |
 | annotation-artwork | `annotation-artwork-rods` | enabled | 1.100 | 1 | 12 | 2.262 | 2.262 | 0 | 0 |
 | annotation-border-bottom | `annotation-border-bottom` | enabled | 1.100 | 2 | 3 | 15.434 | 15.434 | 0 | 0 |
 | annotation-border-end | `annotation-border-end` | enabled | 1.100 | 2 | 2 | 15.434 | 15.434 | 0 | 0 |
 | annotation-border-start | `annotation-border-start` | enabled | 1.100 | 2 | 2 | 15.434 | 15.434 | 0 | 0 |
 | annotation-border-top | `annotation-border-top` | enabled | 1.100 | 2 | 2 | 15.434 | 15.434 | 0 | 0 |
-| annotation-box | `annotation-note-box` | enabled | 1.100 | 14 | 34 | 1.000 | 1.435 | 0 | 1 |
+| annotation-box | `annotation-note-box` | enabled | 1.100 | 15 | 37 | 1.000 | 1.435 | 0 | 1 |
 | annotation-heading | `annotation-heading` | required | 4.500 | 3 | 9 | 4.747 | 15.382 | 0 | 0 |
-| annotation-kind-accent | `annotation-kind-accent` | enabled | 1.100 | 5 | 19 | 4.837 | 6.720 | 0 | 0 |
+| annotation-kind-accent | `annotation-kind-accent` | enabled | 1.100 | 6 | 22 | 4.837 | 6.720 | 0 | 0 |
 | annotation-kind-bar | `annotation-kind-bar` | enabled | 1.100 | 4 | 9 | 5.258 | 6.833 | 0 | 0 |
-| annotation-kind-label | `annotation-kind-label` | required | 4.500 | 8 | 21 | 4.747 | 7.583 | 0 | 0 |
+| annotation-kind-label | `annotation-kind-label` | required | 4.500 | 9 | 24 | 4.747 | 7.583 | 0 | 0 |
 | annotation-kind-secondary | `annotation-kind-secondary` | required | 4.500 | 3 | 6 | 7.583 | 7.583 | 0 | 0 |
 | annotation-kind-stamp | `annotation-kind-stamp` | enabled | 1.100 | 5 | 97 | 5.675 | 6.833 | 0 | 0 |
 | annotation-list-text | `text` | required | 4.500 | 2 | 5 | 11.935 | 11.935 | 0 | 0 |
 | annotation-text | `annotation-arrow-text` | required | 4.500 | 1 | 2 | 14.191 | 14.191 | 0 | 0 |
 | annotation-text | `annotation-callout-text` | required | 4.500 | 5 | 6 | 14.191 | 15.434 | 0 | 0 |
 | annotation-text | `annotation-highlight-text` | required | 4.500 | 2 | 2 | 16.268 | 16.698 | 0 | 0 |
-| annotation-text | `annotation-note-text` | required | 4.500 | 14 | 34 | 5.859 | 13.973 | 0 | 0 |
-| as-of-label | `as-of-label` | required | 4.500 | 5 | 5 | 3.717 | 5.112 | 0 | 1 |
+| annotation-text | `annotation-note-text` | required | 4.500 | 15 | 37 | 5.859 | 13.973 | 0 | 0 |
+| as-of-label | `as-of-label` | required | 4.500 | 6 | 6 | 3.717 | 4.929 | 0 | 2 |
 | as-of-label | `text` | required | 4.500 | 35 | 35 | 9.223 | 14.573 | 0 | 0 |
-| axis-band | `axis-band-decoration` | enabled | 1.100 | 44 | 118 | 1.053 | 1.579 | 0 | 4 |
-| axis-band | `axis-band-decoration2` | absent | 1.100 | 5 | 0 | — | — | 0 | 0 |
+| axis-band | `axis-band-decoration` | enabled | 1.100 | 45 | 121 | 1.053 | 1.579 | 0 | 4 |
+| axis-band | `axis-band-decoration2` | absent | 1.100 | 6 | 0 | — | — | 0 | 0 |
 | axis-band | `axis-band-decoration2` | enabled | 1.100 | 5 | 33 | 1.146 | 1.154 | 0 | 0 |
-| axis-label | `axis-label2` | required | 4.500 | 10 | 34 | 5.727 | 10.019 | 0 | 0 |
+| axis-label | `axis-label2` | required | 4.500 | 11 | 37 | 5.727 | 10.019 | 0 | 0 |
 | axis-label | `axis-label3` | required | 4.500 | 10 | 87 | 5.448 | 8.683 | 0 | 0 |
 | axis-label | `text` | required | 4.500 | 34 | 289 | 8.629 | 10.306 | 0 | 0 |
 | calendar-closed | `calendar-closed` | absent | 1.100 | 1 | 0 | — | — | 0 | 0 |
-| calendar-closed | `calendar-closed` | enabled | 1.100 | 43 | 1858 | 1.050 | 1.414 | 0 | 234 |
+| calendar-closed | `calendar-closed` | enabled | 1.100 | 44 | 1880 | 1.050 | 1.414 | 0 | 256 |
 | calendar-exception | `calendar-exception` | enabled | 1.100 | 5 | 20 | 1.216 | 1.270 | 0 | 0 |
 | finish-delta | `variance-ahead` | deemphasized | 3.000 | 1 | 3 | 7.708 | 7.708 | 0 | 0 |
 | finish-delta | `variance-behind` | required | 4.500 | 26 | 54 | 4.562 | 5.571 | 0 | 0 |
 | finish-delta | `variance-on-track` | required | 4.500 | 2 | 5 | 5.692 | 5.692 | 0 | 0 |
-| group-decoration | `group-band` | absent | 1.100 | 11 | 0 | — | — | 0 | 0 |
+| group-decoration | `group-band` | absent | 1.100 | 12 | 0 | — | — | 0 | 0 |
 | group-decoration | `group-band` | enabled | 1.100 | 32 | 96 | 1.116 | 1.116 | 0 | 0 |
 | group-detail | `text` | required | 4.500 | 24 | 72 | 11.935 | 16.268 | 0 | 0 |
 | group-header | `group-gloss` | required | 4.500 | 1 | 3 | 9.402 | 9.402 | 0 | 0 |
 | group-header | `group-header` | required | 4.500 | 1 | 12 | 7.627 | 7.627 | 0 | 0 |
 | group-header | `group-ordinal` | required | 4.500 | 3 | 15 | 6.982 | 7.583 | 0 | 0 |
-| group-header | `text` | required | 4.500 | 32 | 122 | 6.703 | 16.268 | 0 | 0 |
+| group-header | `text` | required | 4.500 | 33 | 128 | 6.703 | 16.268 | 0 | 0 |
 | group-header-band | `group-header-band` | absent | 1.100 | 6 | 0 | — | — | 0 | 0 |
-| group-header-band | `group-header-band` | enabled | 1.100 | 4 | 24 | 1.119 | 1.194 | 0 | 0 |
+| group-header-band | `group-header-band` | enabled | 1.100 | 5 | 30 | 1.119 | 1.183 | 0 | 0 |
 | group-tab | `group-tab` | enabled | 1.100 | 3 | 30 | 1.119 | 6.982 | 0 | 0 |
 | kicker-text | `kicker` | required | 4.500 | 3 | 3 | 9.106 | 15.260 | 0 | 0 |
-| legend-label | `legend` | required | 4.500 | 6 | 40 | 5.448 | 13.415 | 0 | 0 |
+| legend-label | `legend` | required | 4.500 | 7 | 48 | 5.448 | 7.557 | 0 | 0 |
 | legend-label | `text` | required | 4.500 | 32 | 108 | 10.019 | 16.268 | 0 | 0 |
-| legend-swatch | `actual` | required | 3.000 | 37 | 37 | 4.747 | 16.268 | 0 | 0 |
-| legend-swatch | `calendar-closed` | enabled | 1.100 | 6 | 6 | 1.050 | 1.297 | 0 | 2 |
-| legend-swatch | `calendar-exception` | enabled | 1.100 | 4 | 4 | 1.216 | 1.255 | 0 | 0 |
-| legend-swatch | `gate` | required | 3.000 | 5 | 5 | 1.539 | 6.667 | 0 | 1 |
-| legend-swatch | `missing-actual` | required | 3.000 | 6 | 10 | 1.000 | 5.227 | 0 | 2 |
+| legend-swatch | `actual` | required | 3.000 | 38 | 38 | 4.747 | 16.268 | 0 | 0 |
+| legend-swatch | `calendar-closed` | enabled | 1.100 | 7 | 7 | 1.050 | 1.134 | 0 | 3 |
+| legend-swatch | `calendar-exception` | enabled | 1.100 | 5 | 5 | 1.216 | 1.240 | 0 | 0 |
+| legend-swatch | `gate` | required | 3.000 | 6 | 6 | 1.539 | 7.886 | 0 | 1 |
+| legend-swatch | `missing-actual` | required | 3.000 | 7 | 11 | 1.000 | 5.817 | 0 | 2 |
 | legend-swatch | `period-band` | enabled | 1.100 | 1 | 3 | 1.163 | 2.217 | 0 | 0 |
-| legend-swatch | `planned` | required | 3.000 | 38 | 65 | 4.637 | 16.268 | 0 | 0 |
-| legend-swatch | `snapshot` | required | 3.000 | 6 | 6 | 2.594 | 5.663 | 0 | 1 |
+| legend-swatch | `planned` | required | 3.000 | 39 | 66 | 4.637 | 16.268 | 0 | 0 |
+| legend-swatch | `snapshot` | required | 3.000 | 7 | 7 | 2.594 | 5.817 | 0 | 1 |
 | member-label | `member-label-inside-planned` | required | 4.500 | 19 | 19 | 4.651 | 5.727 | 0 | 0 |
 | member-label | `text` | required | 4.500 | 35 | 342 | 10.019 | 14.573 | 0 | 0 |
 | milestone-digest-entry | `text` | required | 4.500 | 24 | 48 | 11.935 | 16.268 | 0 | 0 |
-| missingActual | `missing-actual` | required | 3.000 | 34 | 44 | 1.491 | 13.556 | 0 | 3 |
+| missingActual | `missing-actual` | required | 3.000 | 35 | 49 | 1.491 | 13.556 | 0 | 3 |
 | network-node | `network-node` | required | 3.000 | 1 | 16 | 17.747 | 17.747 | 0 | 0 |
 | note-index | `note-index` | required | 4.500 | 2 | 4 | 6.157 | 6.463 | 0 | 0 |
 | observation-cell | `text` | required | 4.500 | 24 | 72 | 11.935 | 16.268 | 0 | 0 |
@@ -72,16 +72,16 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | observation-source | `text` | required | 4.500 | 24 | 48 | 11.935 | 16.268 | 0 | 0 |
 | period-band | `period-band` | enabled | 1.100 | 9 | 15 | 1.000 | 1.337 | 0 | 1 |
 | period-label | `period-label` | required | 4.500 | 9 | 9 | 1.692 | 10.661 | 0 | 3 |
-| planned | `gate` | required | 3.000 | 5 | 40 | 1.000 | 6.667 | 0 | 10 |
-| planned | `planned` | required | 3.000 | 44 | 530 | 1.163 | 13.238 | 0 | 2 |
+| planned | `gate` | required | 3.000 | 6 | 46 | 1.000 | 6.667 | 0 | 10 |
+| planned | `planned` | required | 3.000 | 45 | 550 | 1.163 | 13.238 | 0 | 2 |
 | progress-fill | `progress-fill` | required | 3.000 | 30 | 94 | 3.216 | 4.789 | 0 | 0 |
 | project-note | `text` | required | 4.500 | 28 | 62 | 10.019 | 16.268 | 0 | 0 |
 | relation-label | `text` | required | 4.500 | 16 | 107 | 11.934 | 14.573 | 0 | 0 |
-| row-decoration | `row-band` | absent | 1.100 | 11 | 0 | — | — | 0 | 0 |
+| row-decoration | `row-band` | absent | 1.100 | 12 | 0 | — | — | 0 | 0 |
 | row-decoration | `row-band` | enabled | 1.100 | 14 | 56 | 1.000 | 1.116 | 0 | 4 |
-| slot-heading | `slot-heading` | required | 4.500 | 6 | 6 | 5.448 | 7.886 | 0 | 0 |
+| slot-heading | `slot-heading` | required | 4.500 | 7 | 7 | 5.448 | 6.667 | 0 | 0 |
 | snapshot | `snapshot` | required | 3.000 | 8 | 48 | 2.469 | 6.091 | 0 | 6 |
-| subtitle-text | `subtitle` | required | 4.500 | 5 | 5 | 4.747 | 6.667 | 0 | 0 |
+| subtitle-text | `subtitle` | required | 4.500 | 6 | 6 | 4.747 | 6.058 | 0 | 0 |
 | subtitle-text | `text` | required | 4.500 | 1 | 1 | 16.268 | 16.268 | 0 | 0 |
 | summary-bar | `summary-bar` | required | 3.000 | 2 | 2 | 5.817 | 6.712 | 0 | 0 |
 | summary-caption | `summary-caption` | required | 4.500 | 1 | 1 | 15.382 | 15.382 | 0 | 0 |
@@ -91,15 +91,15 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | summary-metric | `text` | required | 4.500 | 1 | 1 | 16.354 | 16.354 | 0 | 0 |
 | summary-unit | `summary-unit` | required | 4.500 | 1 | 1 | 6.720 | 6.720 | 0 | 0 |
 | table-cell | `missing-actual-cell` | required | 4.500 | 1 | 1 | 5.448 | 5.448 | 0 | 0 |
-| table-cell | `table-cell-secondary` | required | 4.500 | 6 | 138 | 5.184 | 7.149 | 0 | 0 |
-| table-cell | `text` | required | 4.500 | 44 | 866 | 8.683 | 16.268 | 0 | 0 |
-| table-cell | `variance-ahead` | deemphasized | 3.000 | 6 | 18 | 4.312 | 7.940 | 0 | 0 |
+| table-cell | `table-cell-secondary` | required | 4.500 | 7 | 164 | 5.184 | 6.959 | 0 | 0 |
+| table-cell | `text` | required | 4.500 | 45 | 916 | 8.683 | 16.268 | 0 | 0 |
+| table-cell | `variance-ahead` | deemphasized | 3.000 | 7 | 20 | 4.312 | 6.357 | 0 | 0 |
 | table-cell | `variance-behind` | required | 4.500 | 11 | 48 | 5.022 | 5.669 | 0 | 0 |
 | table-cell | `variance-on-track` | required | 4.500 | 8 | 24 | 5.184 | 7.032 | 0 | 0 |
-| table-column-label | `tableColumnLabel` | required | 4.500 | 5 | 15 | 5.184 | 6.667 | 0 | 0 |
+| table-column-label | `tableColumnLabel` | required | 4.500 | 6 | 18 | 5.184 | 6.058 | 0 | 0 |
 | table-column-label | `text` | required | 4.500 | 39 | 69 | 10.019 | 16.268 | 0 | 0 |
 | title-text | `heading` | required | 4.500 | 4 | 4 | 7.959 | 14.219 | 0 | 0 |
-| title-text | `text` | required | 4.500 | 41 | 57 | 10.019 | 16.268 | 0 | 0 |
+| title-text | `text` | required | 4.500 | 42 | 58 | 10.019 | 16.268 | 0 | 0 |
 
 ## Per-primitive grounds
 
@@ -233,6 +233,191 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/aster-ssd/generated/overview.scene.json` | `cell:security-exit:Work package / gate` | `text` | 77.186, 256.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/aster-ssd/generated/overview.scene.json` | `column:Work package / gate` | `text` | 91.655, 78.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/aster-ssd/generated/overview.scene.json` | `title` | `text` | 800.000, 42.456 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `actual:target-b:target-b` | `actual` | 481.921, 164.752 | `canvas` | canvas | `#FFFFFF` | stroke | 17.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `actual:yuya:yuya` | `actual` | 509.224, 186.606 | `calendar-closed:2026-10-04` | flat | `#F4F6F9` | fill | 16.392 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-box:station-note` | `annotation-note-box` | 1447.000, 567.263 | `canvas` | canvas | `#FFFFFF` | fill | 1.124 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-box:tvac-note` | `annotation-note-box` | 1447.000, 461.505 | `canvas` | canvas | `#FFFFFF` | fill | 1.124 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-box:window-note` | `annotation-note-box` | 1447.000, 202.967 | `canvas` | canvas | `#FFFFFF` | fill | 1.124 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-border:station-note:start` | `annotation-kind-accent` | 1323.500, 567.263 | `annotation-box:station-note` | flat | `#EEF2F7` | fill | 5.175 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-border:tvac-note:start` | `annotation-kind-accent` | 1323.500, 461.505 | `annotation-box:tvac-note` | flat | `#EEF2F7` | fill | 4.837 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-border:window-note:start` | `annotation-kind-accent` | 1323.500, 202.967 | `annotation-box:window-note` | flat | `#EEF2F7` | fill | 5.175 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-kind-text:station-note:0` | `annotation-kind-label` | 1381.014, 550.588 | `annotation-box:station-note` | flat | `#EEF2F7` | fill | 5.175 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-kind-text:tvac-note:0` | `annotation-kind-label` | 1389.136, 444.830 | `annotation-box:tvac-note` | flat | `#EEF2F7` | fill | 4.837 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-kind-text:window-note:0` | `annotation-kind-label` | 1380.289, 186.292 | `annotation-box:window-note` | flat | `#EEF2F7` | fill | 5.175 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-text:station-note` | `annotation-note-text` | 1448.148, 573.563 | `annotation-box:station-note` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-text:tvac-note` | `annotation-note-text` | 1440.075, 467.805 | `annotation-box:tvac-note` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `annotation-text:window-note` | `annotation-note-text` | 1431.185, 209.267 | `annotation-box:window-note` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `as-of-label` | `as-of-label` | 569.289, 828.125 | `chip:as-of-label` | flat | `#B8761F` | fill | 3.717 | 4.500 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 636.526, 96.425 | `canvas` | canvas | `#FFFFFF` | fill | 1.124 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-band-rect:0:1` | `axis-band-decoration` | 973.368, 96.425 | `canvas` | canvas | `#FFFFFF` | fill | 1.124 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-band-rect:0:2` | `axis-band-decoration` | 1222.842, 96.425 | `canvas` | canvas | `#FFFFFF` | fill | 1.124 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-label:2:0` | `axis-label2` | 640.276, 96.425 | `axis-band-rect:0:0` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-label:2:1` | `axis-label2` | 973.368, 96.425 | `axis-band-rect:0:1` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `axis-label:2:2` | `axis-label2` | 1219.092, 96.425 | `axis-band-rect:0:2` | flat | `#EEF2F7` | fill | 15.785 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-10-03` | `calendar-closed` | 498.303, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-10-04` | `calendar-closed` | 509.224, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-10-10` | `calendar-closed` | 574.750, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-10-11` | `calendar-closed` | 585.671, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-10-17` | `calendar-closed` | 651.197, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-10-18` | `calendar-closed` | 662.118, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-10-24` | `calendar-closed` | 727.645, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-10-25` | `calendar-closed` | 738.566, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-10-31` | `calendar-closed` | 804.092, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-11-01` | `calendar-closed` | 815.013, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-11-07` | `calendar-closed` | 880.539, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-11-08` | `calendar-closed` | 891.461, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-11-14` | `calendar-closed` | 956.987, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-11-15` | `calendar-closed` | 967.908, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-11-21` | `calendar-closed` | 1033.434, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-11-22` | `calendar-closed` | 1044.355, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-11-28` | `calendar-closed` | 1109.882, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-11-29` | `calendar-closed` | 1120.803, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-12-05` | `calendar-closed` | 1186.329, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-12-06` | `calendar-closed` | 1197.250, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-12-12` | `calendar-closed` | 1262.776, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `calendar-closed:2026-12-13` | `calendar-closed` | 1273.697, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `group-header:m0` | `text` | 116.704, 139.425 | `group-header-band:m0` | flat | `#E8EFFA` | fill | 15.345 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `group-header:m1` | `text` | 139.426, 290.548 | `group-header-band:m1` | flat | `#E4F4EE` | fill | 15.612 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `group-header:m2` | `text` | 98.380, 441.671 | `group-header-band:m2` | flat | `#FBF0E1` | fill | 15.763 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `group-header:m3` | `text` | 102.304, 549.087 | `group-header-band:m3` | flat | `#F1E9F8` | fill | 15.001 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `group-header:m4` | `text` | 82.624, 656.502 | `group-header-band:m4` | flat | `#FDEBEA` | fill | 15.421 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `group-header:rc` | `text` | 94.978, 763.917 | `group-header-band:rc` | flat | `#D2E9F2` | fill | 14.094 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `group-header-band:m0` | `group-header-band` | 668.000, 139.425 | `canvas` | canvas | `#FFFFFF` | fill | 1.157 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `group-header-band:m1` | `group-header-band` | 668.000, 290.548 | `canvas` | canvas | `#FFFFFF` | fill | 1.137 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `group-header-band:m2` | `group-header-band` | 668.000, 441.671 | `canvas` | canvas | `#FFFFFF` | fill | 1.126 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `group-header-band:m3` | `group-header-band` | 668.000, 549.087 | `canvas` | canvas | `#FFFFFF` | fill | 1.183 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `group-header-band:m4` | `group-header-band` | 668.000, 656.502 | `canvas` | canvas | `#FFFFFF` | fill | 1.151 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `group-header-band:rc` | `group-header-band` | 668.000, 763.917 | `canvas` | canvas | `#FFFFFF` | fill | 1.259 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend:actual` | `legend` | 297.386, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend:calendar-closed` | `legend` | 704.248, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend:calendar-exception` | `legend` | 859.420, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend:dependency` | `legend` | 1001.542, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend:milestone` | `legend` | 590.014, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend:missing-actual` | `legend` | 450.914, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend:planned` | `legend` | 191.678, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend:snapshot` | `legend` | 79.502, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend-swatch:actual` | `actual` | 263.352, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend-swatch:calendar-closed` | `calendar-closed` | 639.620, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 1.083 | 1.100 | warning |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend-swatch:calendar-exception` | `calendar-exception` | 788.876, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 1.240 | 1.100 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend-swatch:milestone:part0` | `gate` | 565.408, 858.700 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 340.420, 858.700 | `canvas` | canvas | `#FFFFFF` | stroke | 5.817 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend-swatch:planned` | `planned` | 129.004, 858.700 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `legend-swatch:snapshot` | `snapshot` | 28.000, 858.700 | `canvas` | canvas | `#FFFFFF` | stroke | 5.817 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `missing-actual:canvas-fit:canvas-fit` | `missing-actual` | 558.368, 309.395 | `planned:canvas-fit:canvas-fit` | flat | `#C7D6F3` | stroke | 3.973 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `missing-actual:flow-bugs:flow-bugs` | `missing-actual` | 536.526, 331.249 | `planned:flow-bugs:flow-bugs` | flat | `#C7D6F3` | stroke | 3.973 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `missing-actual:marquee:marquee` | `missing-actual` | 547.447, 223.833 | `planned:marquee:marquee` | flat | `#C7D6F3` | stroke | 3.973 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `missing-actual:sunday:sunday` | `missing-actual` | 558.368, 245.687 | `planned:sunday:sunday` | flat | `#C7D6F3` | stroke | 3.973 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `missing-actual:titlecard:titlecard` | `missing-actual` | 525.605, 201.980 | `planned:titlecard:titlecard` | flat | `#C7D6F3` | stroke | 3.973 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:m0-gate:m0-gate:part0` | `gate` | 678.500, 269.621 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:m1-gate:m1-gate:part0` | `gate` | 754.947, 420.744 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:m2-gate:m2-gate:part0` | `gate` | 907.842, 528.160 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:m3-gate:m3-gate:part0` | `gate` | 984.289, 635.575 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:m4-gate:m4-gate:part0` | `gate` | 1213.632, 742.990 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:rc-gate:rc-gate:part0` | `gate` | 1279.158, 806.698 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:ai-design:ai-design` | `planned` | 984.289, 697.203 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:canvas-fit:canvas-fit` | `planned` | 558.368, 309.395 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:defaults:defaults` | `planned` | 864.158, 589.787 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:docs-ci:docs-ci` | `planned` | 765.868, 567.933 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:errors:errors` | `planned` | 907.842, 611.641 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:flow-bugs:flow-bugs` | `planned` | 536.526, 331.249 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:io:io` | `planned` | 995.211, 719.057 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:japanese:japanese` | `planned` | 842.316, 504.226 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:legend-warning:legend-warning` | `planned` | 634.816, 353.103 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:marquee:marquee` | `planned` | 547.447, 223.833 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:presets:presets` | `planned` | 907.842, 675.349 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:rerun:rerun` | `planned` | 1213.632, 782.764 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:route-bound:route-bound` | `planned` | 689.421, 460.518 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:rows-headers:rows-headers` | `planned` | 602.053, 374.957 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:scene-checks:scene-checks` | `planned` | 689.421, 396.810 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:sunday:sunday` | `planned` | 558.368, 245.687 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:tall-canvas:tall-canvas` | `planned` | 754.947, 482.372 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:target-b:target-b` | `planned` | 481.921, 158.272 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:titlecard:titlecard` | `planned` | 525.605, 201.980 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `planned:yuya:yuya` | `planned` | 514.684, 180.126 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `slot-heading:annotations` | `slot-heading` | 1342.306, 107.425 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `subtitle` | `subtitle` | 371.412, 66.037 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:ai-design:Lane` | `table-cell-secondary` | 343.224, 699.283 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:canvas-fit:Lane` | `table-cell-secondary` | 343.224, 311.475 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:defaults:Lane` | `table-cell-secondary` | 334.691, 591.867 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:docs-ci:Lane` | `table-cell-secondary` | 334.691, 570.013 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:errors:Lane` | `table-cell-secondary` | 334.754, 613.721 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:flow-bugs:Lane` | `table-cell-secondary` | 334.754, 333.329 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:io:Lane` | `table-cell-secondary` | 334.754, 721.137 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:japanese:Lane` | `table-cell-secondary` | 334.754, 506.306 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:legend-warning:Lane` | `table-cell-secondary` | 334.754, 355.183 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m0-gate:Lane` | `table-cell-secondary` | 336.991, 269.621 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m1-gate:Lane` | `table-cell-secondary` | 343.224, 420.744 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m2-gate:Lane` | `table-cell-secondary` | 343.224, 528.160 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m3-gate:Lane` | `table-cell-secondary` | 343.224, 635.575 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m4-gate:Lane` | `table-cell-secondary` | 343.224, 742.990 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:marquee:Lane` | `table-cell-secondary` | 343.224, 225.913 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:presets:Lane` | `table-cell-secondary` | 343.224, 677.429 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rc-gate:Lane` | `table-cell-secondary` | 336.991, 806.698 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rerun:Lane` | `table-cell-secondary` | 343.224, 784.844 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:route-bound:Lane` | `table-cell-secondary` | 334.691, 462.598 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rows-headers:Lane` | `table-cell-secondary` | 334.691, 377.037 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:scene-checks:Lane` | `table-cell-secondary` | 334.691, 398.890 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:sunday:Lane` | `table-cell-secondary` | 343.224, 247.767 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:tall-canvas:Lane` | `table-cell-secondary` | 334.691, 484.452 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:target-b:Lane` | `table-cell-secondary` | 343.224, 160.352 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:titlecard:Lane` | `table-cell-secondary` | 343.224, 204.060 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:yuya:Lane` | `table-cell-secondary` | 343.224, 182.206 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:ai-design:Work item` | `text` | 95.588, 699.283 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:ai-design:Δ finish` | `text` | 437.500, 699.283 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:canvas-fit:Work item` | `text` | 117.562, 311.475 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:canvas-fit:Δ finish` | `text` | 431.500, 311.475 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:defaults:Work item` | `text` | 123.075, 591.867 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:defaults:Δ finish` | `text` | 437.500, 591.867 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:docs-ci:Work item` | `text` | 125.812, 570.013 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:docs-ci:Δ finish` | `text` | 437.500, 570.013 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:errors:Work item` | `text` | 129.787, 613.721 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:errors:Δ finish` | `text` | 437.500, 613.721 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:flow-bugs:Work item` | `text` | 144.850, 333.329 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:flow-bugs:Δ finish` | `text` | 431.500, 333.329 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:io:Work item` | `text` | 122.194, 721.137 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:io:Δ finish` | `text` | 437.500, 721.137 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:japanese:Work item` | `text` | 129.844, 506.306 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:japanese:Δ finish` | `text` | 437.500, 506.306 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:legend-warning:Work item` | `text` | 122.269, 355.183 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:legend-warning:Δ finish` | `text` | 437.500, 355.183 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m0-gate:Work item` | `text` | 89.194, 269.621 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m0-gate:Δ finish` | `text` | 437.500, 269.621 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m1-gate:Work item` | `text` | 97.631, 420.744 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m1-gate:Δ finish` | `text` | 437.500, 420.744 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m2-gate:Work item` | `text` | 110.106, 528.160 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m2-gate:Δ finish` | `text` | 437.500, 528.160 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m3-gate:Work item` | `text` | 137.263, 635.575 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m3-gate:Δ finish` | `text` | 437.500, 635.575 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m4-gate:Work item` | `text` | 124.575, 742.990 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:m4-gate:Δ finish` | `text` | 437.500, 742.990 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:marquee:Work item` | `text` | 85.300, 225.913 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:marquee:Δ finish` | `text` | 431.500, 225.913 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:presets:Work item` | `text` | 105.213, 677.429 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:presets:Δ finish` | `text` | 437.500, 677.429 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rc-gate:Work item` | `text` | 89.156, 806.698 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rc-gate:Δ finish` | `text` | 437.500, 806.698 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rerun:Work item` | `text` | 97.463, 784.844 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rerun:Δ finish` | `text` | 437.500, 784.844 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:route-bound:Work item` | `text` | 124.400, 462.598 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:route-bound:Δ finish` | `text` | 437.500, 462.598 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rows-headers:Work item` | `text` | 155.413, 377.037 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:rows-headers:Δ finish` | `text` | 437.500, 377.037 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:scene-checks:Work item` | `text` | 122.331, 398.890 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:scene-checks:Δ finish` | `text` | 437.500, 398.890 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:sunday:Work item` | `text` | 95.831, 247.767 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:sunday:Δ finish` | `text` | 431.500, 247.767 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:tall-canvas:Work item` | `text` | 126.469, 484.452 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:tall-canvas:Δ finish` | `text` | 437.500, 484.452 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:target-b:Work item` | `text` | 80.738, 160.352 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:titlecard:Work item` | `text` | 86.062, 204.060 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:titlecard:Δ finish` | `text` | 431.500, 204.060 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:yuya:Work item` | `text` | 71.350, 182.206 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:target-b:Δ finish` | `variance-ahead` | 428.356, 160.352 | `canvas` | canvas | `#FFFFFF` | fill | 4.312 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `cell:yuya:Δ finish` | `variance-ahead` | 428.356, 182.206 | `canvas` | canvas | `#FFFFFF` | fill | 4.312 | 3.000 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `column:Lane` | `tableColumnLabel` | 333.610, 93.400 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `column:Work item` | `tableColumnLabel` | 58.250, 93.400 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `column:Δ finish` | `tableColumnLabel` | 415.313, 93.400 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/chrona-roadmap/generated/roadmap.scene.json` | `title` | `text` | 172.914, 43.818 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `actual:evb-arrival:evb-arrival` | `actual` | 1050.112, 408.800 | `planned:evb-arrival:evb-arrival` | flat | `#FF7A1A` | stroke | 7.583 | 3.000 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `actual:firmware:firmware` | `actual` | 602.048, 244.800 | `planned:firmware:firmware` | flat | `#FF7A1A` | stroke | 7.583 | 3.000 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `actual:performance:performance` | `actual` | 1110.907, 480.800 | `planned:performance:performance` | flat | `#FF7A1A` | stroke | 7.583 | 3.000 | info |
@@ -243,8 +428,8 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-bar:pvt-note` | `annotation-kind-bar` | 1464.203, 488.500 | `annotation-box:pvt-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-text:evb-note:0` | `annotation-kind-label` | 983.482, 521.500 | `annotation-kind-bar:evb-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-text:pvt-note:0` | `annotation-kind-label` | 1451.103, 482.500 | `annotation-kind-bar:pvt-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
-| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-text:evb-note:1` | `annotation-kind-secondary` | 985.055, 536.500 | `annotation-kind-bar:evb-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
-| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-text:pvt-note:1` | `annotation-kind-secondary` | 1452.676, 497.500 | `annotation-kind-bar:pvt-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-text:evb-note:1` | `annotation-kind-secondary` | 989.495, 536.500 | `annotation-kind-bar:evb-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
+| `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-text:pvt-note:1` | `annotation-kind-secondary` | 1457.116, 497.500 | `annotation-kind-bar:pvt-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part0` | `annotation-kind-stamp` | 1058.539, 518.500 | `annotation-box:evb-note` | flat | `#18171C` | stroke | 6.833 | 1.100 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part1` | `annotation-kind-stamp` | 1083.039, 518.500 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
 | `examples/controller-z/generated/annotation-kinds.scene.json` | `annotation-kind-stamp:evb-note:part2` | `annotation-kind-stamp` | 1083.039, 518.500 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
@@ -393,8 +578,8 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/annotation-rounded.scene.json` | `annotation-kind-bar:pvt-note` | `annotation-kind-bar` | 1383.000, 661.700 | `annotation-box:pvt-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
 | `examples/controller-z/generated/annotation-rounded.scene.json` | `annotation-kind-text:evb-note:0` | `annotation-kind-label` | 1302.497, 181.500 | `annotation-kind-bar:evb-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
 | `examples/controller-z/generated/annotation-rounded.scene.json` | `annotation-kind-text:pvt-note:0` | `annotation-kind-label` | 1301.497, 655.700 | `annotation-kind-bar:pvt-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
-| `examples/controller-z/generated/annotation-rounded.scene.json` | `annotation-kind-text:evb-note:1` | `annotation-kind-secondary` | 1304.070, 196.500 | `annotation-kind-bar:evb-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
-| `examples/controller-z/generated/annotation-rounded.scene.json` | `annotation-kind-text:pvt-note:1` | `annotation-kind-secondary` | 1303.070, 670.700 | `annotation-kind-bar:pvt-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
+| `examples/controller-z/generated/annotation-rounded.scene.json` | `annotation-kind-text:evb-note:1` | `annotation-kind-secondary` | 1308.510, 196.500 | `annotation-kind-bar:evb-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
+| `examples/controller-z/generated/annotation-rounded.scene.json` | `annotation-kind-text:pvt-note:1` | `annotation-kind-secondary` | 1307.510, 670.700 | `annotation-kind-bar:pvt-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
 | `examples/controller-z/generated/annotation-rounded.scene.json` | `annotation-kind-stamp:evb-note:part0` | `annotation-kind-stamp` | 1517.200, 178.500 | `annotation-box:evb-note` | flat | `#18171C` | stroke | 6.833 | 1.100 | info |
 | `examples/controller-z/generated/annotation-rounded.scene.json` | `annotation-kind-stamp:evb-note:part1` | `annotation-kind-stamp` | 1541.700, 178.500 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
 | `examples/controller-z/generated/annotation-rounded.scene.json` | `annotation-kind-stamp:evb-note:part2` | `annotation-kind-stamp` | 1541.700, 178.500 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
@@ -1417,8 +1602,8 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/capabilities.scene.json` | `group-detail:factory-team` | `text` | 241.133, 771.800 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/capabilities.scene.json` | `group-detail:fw-team` | `text` | 231.466, 732.600 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/capabilities.scene.json` | `group-detail:validation-team` | `text` | 290.434, 752.200 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/controller-z/generated/capabilities.scene.json` | `legend:actual` | `text` | 1431.502, 762.538 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
-| `examples/controller-z/generated/capabilities.scene.json` | `legend:planned` | `text` | 1437.754, 737.338 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `legend:actual` | `text` | 1436.326, 762.538 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
+| `examples/controller-z/generated/capabilities.scene.json` | `legend:planned` | `text` | 1442.164, 737.338 | `canvas` | canvas | `#FFFFFF` | fill | 16.268 | 4.500 | info |
 | `examples/controller-z/generated/capabilities.scene.json` | `legend-swatch:actual` | `actual` | 1396.000, 762.538 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
 | `examples/controller-z/generated/capabilities.scene.json` | `legend-swatch:planned` | `planned` | 1396.000, 737.338 | `canvas` | canvas | `#FFFFFF` | stroke | 16.268 | 3.000 | info |
 | `examples/controller-z/generated/capabilities.scene.json` | `member-label:dvt:dvt` | `member-label-inside-planned` | 1288.659, 522.425 | `planned:dvt:dvt` | flat | `#3986E6` | fill | 5.727 | 4.500 | info |
@@ -2596,12 +2781,12 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/region-frames.scene.json` | `group:factory-team` | `group-band` | 1036.400, 778.500 | `region-frame:chart-panel` | flat | `#FFFCF3` | fill | 1.343 | 1.100 | info |
 | `examples/controller-z/generated/region-frames.scene.json` | `group:fw-team` | `group-band` | 1036.400, 330.250 | `region-frame:chart-panel` | flat | `#FFFCF3` | fill | 1.343 | 1.100 | info |
 | `examples/controller-z/generated/region-frames.scene.json` | `group:validation-team` | `group-band` | 1036.400, 574.750 | `region-frame:chart-panel` | flat | `#FFFCF3` | fill | 1.343 | 1.100 | info |
-| `examples/controller-z/generated/region-frames.scene.json` | `legend:actual` | `text` | 1210.314, 58.000 | `region-frame:key-panel` | flat | `#FFFCF3` | fill | 17.667 | 4.500 | info |
-| `examples/controller-z/generated/region-frames.scene.json` | `legend:calendar-closed` | `text` | 1162.012, 98.000 | `region-frame:key-panel` | flat | `#FFFCF3` | fill | 17.667 | 4.500 | info |
-| `examples/controller-z/generated/region-frames.scene.json` | `legend:dependency` | `text` | 1046.888, 98.000 | `region-frame:key-panel` | flat | `#FFFCF3` | fill | 17.667 | 4.500 | info |
-| `examples/controller-z/generated/region-frames.scene.json` | `legend:missing-actual` | `text` | 1341.728, 58.000 | `region-frame:key-panel` | flat | `#FFFCF3` | fill | 17.667 | 4.500 | info |
-| `examples/controller-z/generated/region-frames.scene.json` | `legend:planned` | `text` | 1020.812, 58.000 | `region-frame:key-panel` | flat | `#FFFCF3` | fill | 17.667 | 4.500 | info |
-| `examples/controller-z/generated/region-frames.scene.json` | `legend:snapshot` | `text` | 1111.408, 58.000 | `region-frame:key-panel` | flat | `#FFFCF3` | fill | 17.667 | 4.500 | info |
+| `examples/controller-z/generated/region-frames.scene.json` | `legend:actual` | `text` | 1215.138, 58.000 | `region-frame:key-panel` | flat | `#FFFCF3` | fill | 17.667 | 4.500 | info |
+| `examples/controller-z/generated/region-frames.scene.json` | `legend:calendar-closed` | `text` | 1166.644, 98.000 | `region-frame:key-panel` | flat | `#FFFCF3` | fill | 17.667 | 4.500 | info |
+| `examples/controller-z/generated/region-frames.scene.json` | `legend:dependency` | `text` | 1050.602, 98.000 | `region-frame:key-panel` | flat | `#FFFCF3` | fill | 17.667 | 4.500 | info |
+| `examples/controller-z/generated/region-frames.scene.json` | `legend:missing-actual` | `text` | 1349.498, 58.000 | `region-frame:key-panel` | flat | `#FFFCF3` | fill | 17.667 | 4.500 | info |
+| `examples/controller-z/generated/region-frames.scene.json` | `legend:planned` | `text` | 1023.728, 58.000 | `region-frame:key-panel` | flat | `#FFFCF3` | fill | 17.667 | 4.500 | info |
+| `examples/controller-z/generated/region-frames.scene.json` | `legend:snapshot` | `text` | 1115.134, 58.000 | `region-frame:key-panel` | flat | `#FFFCF3` | fill | 17.667 | 4.500 | info |
 | `examples/controller-z/generated/region-frames.scene.json` | `legend-swatch:actual` | `actual` | 1163.612, 58.000 | `region-frame:key-panel` | flat | `#FFFCF3` | stroke | 17.667 | 3.000 | info |
 | `examples/controller-z/generated/region-frames.scene.json` | `legend-swatch:calendar-closed` | `calendar-closed` | 1110.804, 98.000 | `region-frame:key-panel` | flat | `#FFFCF3` | stroke | 2.047 | 1.100 | info |
 | `examples/controller-z/generated/region-frames.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 1257.064, 58.000 | `region-frame:key-panel` | flat | `#FFFCF3` | stroke | 17.667 | 3.000 | info |
@@ -2680,8 +2865,8 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/slot-heading.scene.json` | `annotation-kind-bar:pvt-note` | `annotation-kind-bar` | 1384.500, 664.700 | `annotation-box:pvt-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
 | `examples/controller-z/generated/slot-heading.scene.json` | `annotation-kind-text:evb-note:0` | `annotation-kind-label` | 1302.497, 176.000 | `annotation-kind-bar:evb-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
 | `examples/controller-z/generated/slot-heading.scene.json` | `annotation-kind-text:pvt-note:0` | `annotation-kind-label` | 1301.497, 658.700 | `annotation-kind-bar:pvt-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
-| `examples/controller-z/generated/slot-heading.scene.json` | `annotation-kind-text:evb-note:1` | `annotation-kind-secondary` | 1304.070, 191.000 | `annotation-kind-bar:evb-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
-| `examples/controller-z/generated/slot-heading.scene.json` | `annotation-kind-text:pvt-note:1` | `annotation-kind-secondary` | 1303.070, 673.700 | `annotation-kind-bar:pvt-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
+| `examples/controller-z/generated/slot-heading.scene.json` | `annotation-kind-text:evb-note:1` | `annotation-kind-secondary` | 1308.510, 191.000 | `annotation-kind-bar:evb-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
+| `examples/controller-z/generated/slot-heading.scene.json` | `annotation-kind-text:pvt-note:1` | `annotation-kind-secondary` | 1307.510, 673.700 | `annotation-kind-bar:pvt-note` | flat | `#FF7A1A` | fill | 7.583 | 4.500 | info |
 | `examples/controller-z/generated/slot-heading.scene.json` | `annotation-kind-stamp:evb-note:part0` | `annotation-kind-stamp` | 1516.200, 173.000 | `annotation-box:evb-note` | flat | `#18171C` | stroke | 6.833 | 1.100 | info |
 | `examples/controller-z/generated/slot-heading.scene.json` | `annotation-kind-stamp:evb-note:part1` | `annotation-kind-stamp` | 1540.700, 173.000 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
 | `examples/controller-z/generated/slot-heading.scene.json` | `annotation-kind-stamp:evb-note:part2` | `annotation-kind-stamp` | 1540.700, 173.000 | `annotation-box:evb-note` | flat | `#18171C` | fill | 6.833 | 1.100 | info |
@@ -2803,7 +2988,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z/generated/slot-heading.scene.json` | `progress-fill:actual:firmware:firmware` | `progress-fill` | 635.584, 244.800 | `actual:firmware:firmware` | flat | `#39C97B` | fill | 9.245 | 3.000 | info |
 | `examples/controller-z/generated/slot-heading.scene.json` | `progress-fill:actual:performance:performance` | `progress-fill` | 888.753, 480.800 | `actual:performance:performance` | flat | `#39C97B` | fill | 9.245 | 3.000 | info |
 | `examples/controller-z/generated/slot-heading.scene.json` | `progress-fill:actual:silicon-bringup:silicon-bringup` | `progress-fill` | 888.221, 316.800 | `actual:silicon-bringup:silicon-bringup` | flat | `#39C97B` | fill | 9.245 | 3.000 | info |
-| `examples/controller-z/generated/slot-heading.scene.json` | `slot-heading:annotations` | `slot-heading` | 1264.541, 92.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 6.552 | 4.500 | info |
+| `examples/controller-z/generated/slot-heading.scene.json` | `slot-heading:annotations` | `slot-heading` | 1266.306, 92.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 6.552 | 4.500 | info |
 | `examples/controller-z/generated/slot-heading.scene.json` | `cell:architecture:Workstream` | `text` | 87.861, 172.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
 | `examples/controller-z/generated/slot-heading.scene.json` | `cell:dvt:Workstream` | `text` | 80.749, 552.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
 | `examples/controller-z/generated/slot-heading.scene.json` | `cell:evb-arrival:Workstream` | `text` | 59.812, 408.800 | `canvas-texture` | texture-ink | `#2F2B38` | fill | 11.935 | 4.500 | info |
@@ -3232,11 +3417,11 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `actual:silicon-bringup:silicon-bringup` | `actual` | 1069.083, 326.800 | `planned:silicon-bringup:silicon-bringup` | flat | `#3986E6` | stroke | 4.436 | 3.000 | info |
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 718.035, 97.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.579 | 1.100 | info |
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `axis-band-rect:0:1` | `axis-band-decoration` | 1252.835, 97.800 | `canvas` | canvas | `#FFFFFF` | fill | 1.579 | 1.100 | info |
-| `examples/controller-z-ja/generated/axis-secondary.scene.json` | `axis-label-secondary:3:0` | `text` | 615.656, 103.900 | `axis-band-rect:0:0` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
-| `examples/controller-z-ja/generated/axis-secondary.scene.json` | `axis-label-secondary:3:1` | `text` | 820.310, 103.900 | `axis-band-rect:0:0` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
-| `examples/controller-z-ja/generated/axis-secondary.scene.json` | `axis-label-secondary:3:2` | `text` | 1033.059, 103.900 | `axis-band-rect:0:1` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
-| `examples/controller-z-ja/generated/axis-secondary.scene.json` | `axis-label-secondary:3:3` | `text` | 1246.587, 103.900 | `axis-band-rect:0:1` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
-| `examples/controller-z-ja/generated/axis-secondary.scene.json` | `axis-label-secondary:3:4` | `text` | 1458.418, 103.900 | `axis-band-rect:0:1` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
+| `examples/controller-z-ja/generated/axis-secondary.scene.json` | `axis-label-secondary:3:0` | `text` | 615.989, 103.900 | `axis-band-rect:0:0` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
+| `examples/controller-z-ja/generated/axis-secondary.scene.json` | `axis-label-secondary:3:1` | `text` | 821.624, 103.900 | `axis-band-rect:0:0` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
+| `examples/controller-z-ja/generated/axis-secondary.scene.json` | `axis-label-secondary:3:2` | `text` | 1034.229, 103.900 | `axis-band-rect:0:1` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
+| `examples/controller-z-ja/generated/axis-secondary.scene.json` | `axis-label-secondary:3:3` | `text` | 1246.835, 103.900 | `axis-band-rect:0:1` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
+| `examples/controller-z-ja/generated/axis-secondary.scene.json` | `axis-label-secondary:3:4` | `text` | 1459.440, 103.900 | `axis-band-rect:0:1` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `axis-label:2:0` | `text` | 724.035, 76.000 | `axis-band-rect:0:0` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `axis-label:2:1` | `text` | 1246.835, 76.000 | `axis-band-rect:0:1` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
 | `examples/controller-z-ja/generated/axis-secondary.scene.json` | `axis-label:3:0` | `text` | 615.989, 90.400 | `axis-band-rect:0:0` | flat | `#C9CED8` | fill | 10.306 | 4.500 | info |
@@ -5384,7 +5569,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `legend-swatch:snapshot` | `snapshot` | 28.000, 858.700 | `canvas` | canvas | `#FFFFFF` | stroke | 5.817 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `missing-actual:tvac:tvac` | `missing-actual` | 956.927, 460.518 | `planned:tvac:tvac` | flat | `#C7D6F3` | stroke | 3.973 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `period-band:launch-window` | `period-band` | 1202.909, 473.525 | `canvas` | canvas | `#FFFFFF` | fill | 1.138 | 1.100 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `period-label:launch-window` | `period-label` | 1204.306, 139.663 | `period-band:launch-window` | translucent-over-flat | `#D6E2F6` | fill | 4.451 | 4.500 | warning |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `period-label:launch-window` | `period-label` | 1202.909, 139.663 | `period-band:launch-window` | translucent-over-flat | `#D6E2F6` | fill | 4.451 | 4.500 | warning |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:cdr:cdr:part0` | `gate` | 673.218, 269.621 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:first-light:first-light:part0` | `gate` | 1264.782, 806.698 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:frr:frr:part0` | `gate` | 1159.145, 699.283 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 3.000 | info |
@@ -5411,7 +5596,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:structure:structure` | `planned` | 492.127, 180.126 | `canvas` | canvas | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:tvac:tvac` | `planned` | 947.873, 460.518 | `planned:tvac:snapshot:tvac` | flat | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:vibration:vibration` | `planned` | 920.709, 438.664 | `planned:vibration:snapshot:vibration` | flat | `#FFFFFF` | stroke | 4.777 | 3.000 | info |
-| `examples/halcyon-1/generated/21-target-b.scene.json` | `slot-heading:annotations` | `slot-heading` | 1340.541, 107.425 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
+| `examples/halcyon-1/generated/21-target-b.scene.json` | `slot-heading:annotations` | `slot-heading` | 1342.306, 107.425 | `canvas` | canvas | `#FFFFFF` | fill | 5.448 | 4.500 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:campaign:snapshot:campaign` | `snapshot` | 1077.655, 677.429 | `calendar-closed:2027-09-18` | flat | `#F4F6F9` | stroke | 5.373 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:emc:snapshot:emc` | `snapshot` | 978.055, 484.452 | `canvas` | canvas | `#FFFFFF` | stroke | 5.817 | 3.000 | info |
 | `examples/halcyon-1/generated/21-target-b.scene.json` | `planned:integration:snapshot:integration` | `snapshot` | 854.309, 418.890 | `canvas` | canvas | `#FFFFFF` | stroke | 5.817 | 3.000 | info |
@@ -5698,7 +5883,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `period-band:launch-window` | `period-band` | 1192.906, 502.787 | `period-band:launch-window` | pattern-substrate | `#EFE3C8` | stroke | 3.597 | 1.100 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `period-band:launch-window` | `period-band` | 1192.906, 502.787 | `region-frame:board` | flat | `#EFE3C8` | stroke | 3.597 | 1.100 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `period-band:launch-window` | `period-band` | 1192.906, 502.787 | `region-frame:board` | flat | `#EFE3C8` | fill | 1.000 | 1.100 | warning |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `period-label:launch-window` | `period-label` | 1194.266, 212.188 | `period-band:launch-window` | pattern-host-ink | `#3E7F86` | fill | 1.692 | 4.500 | warning |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `period-label:launch-window` | `period-label` | 1192.906, 212.188 | `period-band:launch-window` | pattern-host-ink | `#3E7F86` | fill | 1.692 | 4.500 | warning |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `planned:cdr:cdr:part0` | `gate` | 672.135, 329.227 | `region-frame:board` | flat | `#EFE3C8` | fill | 3.061 | 3.000 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `planned:first-light:first-light:part0` | `gate` | 1253.737, 792.054 | `region-frame:board` | flat | `#EFE3C8` | fill | 3.061 | 3.000 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `planned:frr:frr:part0` | `gate` | 1149.879, 699.489 | `region-frame:board` | flat | `#EFE3C8` | fill | 3.061 | 3.000 | info |
@@ -5725,7 +5910,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `planned:structure:structure` | `planned` | 537.120, 235.062 | `region-frame:board` | flat | `#EFE3C8` | fill | 4.637 | 3.000 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `planned:tvac:tvac` | `planned` | 962.936, 489.617 | `region-frame:board` | flat | `#EFE3C8` | fill | 4.637 | 3.000 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `planned:vibration:vibration` | `planned` | 915.458, 466.475 | `planned:vibration:snapshot:vibration` | flat | `#EFE3C8` | stroke | 4.637 | 3.000 | info |
-| `examples/halcyon-1/generated/22-yuya.scene.json` | `slot-heading:annotations` | `slot-heading` | 1325.996, 179.950 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
+| `examples/halcyon-1/generated/22-yuya.scene.json` | `slot-heading:annotations` | `slot-heading` | 1328.806, 179.950 | `region-frame:board` | flat | `#EFE3C8` | fill | 13.415 | 4.500 | info |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `planned:campaign:snapshot:campaign` | `snapshot` | 1069.761, 676.348 | `calendar-closed:2027-09-18` | flat | `#E9DEC3` | stroke | 2.469 | 3.000 | warning |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `planned:emc:snapshot:emc` | `snapshot` | 971.838, 514.358 | `region-frame:board` | flat | `#EFE3C8` | stroke | 2.594 | 3.000 | warning |
 | `examples/halcyon-1/generated/22-yuya.scene.json` | `planned:integration:snapshot:integration` | `snapshot` | 850.176, 444.934 | `region-frame:board` | flat | `#EFE3C8` | stroke | 2.594 | 3.000 | warning |
@@ -5889,15 +6074,15 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `axis-label:2:1` | `axis-label2` | 587.985, 184.550 | `axis-band-rect:0:1` | flat | `#FF7A1A` | fill | 7.814 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `axis-label:2:2` | `axis-label2` | 858.613, 184.550 | `axis-band-rect:0:2` | flat | `#FF7A1A` | fill | 7.814 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `axis-label:2:3` | `axis-label2` | 1132.215, 184.550 | `axis-band-rect:0:3` | flat | `#FF7A1A` | fill | 7.814 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `axis-label-secondary:4:0` | `axis-label3` | 493.914, 207.513 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `axis-label-secondary:4:1` | `axis-label3` | 585.607, 207.513 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `axis-label-secondary:4:2` | `axis-label3` | 675.777, 207.513 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `axis-label-secondary:4:3` | `axis-label3` | 767.479, 207.513 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `axis-label-secondary:4:4` | `axis-label3` | 855.589, 207.513 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `axis-label-secondary:4:5` | `axis-label3` | 948.981, 207.513 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `axis-label-secondary:4:6` | `axis-label3` | 1041.143, 207.513 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `axis-label-secondary:4:7` | `axis-label3` | 1135.900, 207.513 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `axis-label-secondary:4:8` | `axis-label3` | 1228.843, 207.513 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `axis-label-secondary:4:0` | `axis-label3` | 494.907, 207.513 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `axis-label-secondary:4:1` | `axis-label3` | 586.491, 207.513 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `axis-label-secondary:4:2` | `axis-label3` | 675.964, 207.513 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `axis-label-secondary:4:3` | `axis-label3` | 768.251, 207.513 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `axis-label-secondary:4:4` | `axis-label3` | 856.857, 207.513 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `axis-label-secondary:4:5` | `axis-label3` | 949.794, 207.513 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `axis-label-secondary:4:6` | `axis-label3` | 1041.306, 207.513 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `axis-label-secondary:4:7` | `axis-label3` | 1137.090, 207.513 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `axis-label-secondary:4:8` | `axis-label3` | 1229.489, 207.513 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `axis-label:4:0` | `axis-label3` | 475.459, 206.550 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `axis-label:4:1` | `axis-label3` | 567.651, 206.550 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `axis-label:4:2` | `axis-label3` | 656.869, 206.550 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
@@ -5995,12 +6180,12 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:launch#run0` | `group-ordinal` | 56.502, 639.910 | `group-header-band:launch` | flat | `#171513` | fill | 6.982 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:ops#run0` | `group-ordinal` | 56.502, 752.232 | `group-header-band:ops` | flat | `#171513` | fill | 6.982 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:payload#run0` | `group-ordinal` | 56.502, 358.337 | `group-header-band:payload` | flat | `#171513` | fill | 6.982 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:ait#run1` | `text` | 162.714, 452.194 | `group-header-band:ait` | flat | `#171513` | fill | 15.981 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:bus#run1` | `text` | 114.738, 227.550 | `group-header-band:bus` | flat | `#171513` | fill | 15.981 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:ground#run1` | `text` | 119.014, 564.516 | `group-header-band:ground` | flat | `#171513` | fill | 15.981 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:launch#run1` | `text` | 123.152, 639.910 | `group-header-band:launch` | flat | `#171513` | fill | 15.981 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:ops#run1` | `text` | 126.992, 752.232 | `group-header-band:ops` | flat | `#171513` | fill | 15.981 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:payload#run1` | `text` | 119.816, 358.337 | `group-header-band:payload` | flat | `#171513` | fill | 15.981 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:ait#run1` | `text` | 174.978, 452.194 | `group-header-band:ait` | flat | `#171513` | fill | 15.981 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:bus#run1` | `text` | 121.237, 227.550 | `group-header-band:bus` | flat | `#171513` | fill | 15.981 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:ground#run1` | `text` | 124.755, 564.516 | `group-header-band:ground` | flat | `#171513` | fill | 15.981 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:launch#run1` | `text` | 129.392, 639.910 | `group-header-band:launch` | flat | `#171513` | fill | 15.981 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:ops#run1` | `text` | 135.003, 752.232 | `group-header-band:ops` | flat | `#171513` | fill | 15.981 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header:payload#run1` | `text` | 124.227, 358.337 | `group-header-band:payload` | flat | `#171513` | fill | 15.981 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header-band:ait` | `group-header-band` | 658.000, 452.194 | `canvas-texture` | flat | `#050505` | fill | 1.119 | 1.100 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header-band:bus` | `group-header-band` | 658.000, 227.550 | `canvas-texture` | flat | `#050505` | fill | 1.119 | 1.100 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-header-band:ground` | `group-header-band` | 658.000, 564.516 | `canvas-texture` | flat | `#050505` | fill | 1.119 | 1.100 | info |
@@ -6026,13 +6211,13 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-tab:payload` | `group-tab` | 35.000, 358.337 | `group-tab:payload` | pattern-substrate | `#FF7A1A` | stroke | 7.814 | 1.100 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `group-tab:payload` | `group-tab` | 35.000, 358.337 | `group-header-band:payload` | flat | `#171513` | stroke | 1.119 | 1.100 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `kicker` | `kicker` | 60.232, 47.440 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `legend:actual` | `legend` | 259.286, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `legend:calendar-closed` | `legend` | 589.568, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `legend:dependency` | `legend` | 702.947, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `legend:milestone` | `legend` | 501.360, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `legend:missing-actual` | `legend` | 385.117, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `legend:planned` | `legend` | 174.338, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `legend:snapshot` | `legend` | 80.634, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `legend:actual` | `legend` | 263.160, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `legend:calendar-closed` | `legend` | 592.813, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `legend:dependency` | `legend` | 705.904, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `legend:milestone` | `legend` | 503.318, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `legend:missing-actual` | `legend` | 392.010, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `legend:planned` | `legend` | 176.469, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `legend:snapshot` | `legend` | 83.902, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `legend-swatch:actual` | `actual` | 224.133, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 10.142 | 3.000 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `legend-swatch:calendar-closed` | `calendar-closed` | 550.805, 858.700 | `canvas-texture` | flat | `#050505` | fill | 1.134 | 1.100 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `legend-swatch:milestone:part0` | `gate` | 476.832, 858.700 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 6.667 | 3.000 | info |
@@ -6043,7 +6228,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `period-band:launch-window` | `period-band` | 1184.930, 517.587 | `canvas-texture` | flat | `#050505` | fill | 1.163 | 1.100 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `period-band:launch-window` | `period-band` | 1184.930, 517.587 | `period-band:launch-window` | pattern-substrate | `#1B1917` | stroke | 6.720 | 1.100 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `period-band:launch-window` | `period-band` | 1184.930, 517.587 | `canvas-texture` | flat | `#050505` | stroke | 7.814 | 1.100 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `period-label:launch-window` | `period-label` | 1186.290, 227.788 | `period-band:launch-window` | pattern-host-ink | `#FF7A1A` | fill | 2.289 | 4.500 | warning |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `period-label:launch-window` | `period-label` | 1184.930, 227.788 | `period-band:launch-window` | pattern-host-ink | `#FF7A1A` | fill | 2.289 | 4.500 | warning |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `planned:cdr:cdr:part0` | `gate` | 663.004, 339.104 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 6.667 | 3.000 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `planned:first-light:first-light:part0` | `gate` | 1245.896, 808.393 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 6.667 | 3.000 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `planned:frr:frr:part0` | `gate` | 1141.808, 714.535 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 6.667 | 3.000 | info |
@@ -6081,32 +6266,32 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `summary:/panels/0/title` | `summary-caption` | 1188.000, 94.960 | `region-frame:countdown` | flat | `#1B1917` | fill | 15.382 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `summary:/panels/0/metrics/0/value` | `metric` | 1272.432, 81.360 | `region-frame:countdown` | flat | `#1B1917` | fill | 6.720 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `summary:/panels/0/metrics/0/label` | `summary-unit` | 1332.696, 96.660 | `region-frame:countdown` | flat | `#1B1917` | fill | 6.720 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:avionics:Phase` | `table-cell-secondary` | 300.458, 283.711 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:bus-test:Phase` | `table-cell-secondary` | 305.766, 320.640 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:campaign:Phase` | `table-cell-secondary` | 313.043, 696.071 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:cdr:Phase` | `table-cell-secondary` | 304.395, 339.104 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:comms-test:Phase` | `table-cell-secondary` | 301.999, 620.677 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:detector:Phase` | `table-cell-secondary` | 305.766, 396.033 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:emc:Phase` | `table-cell-secondary` | 301.999, 526.820 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:eps:Phase` | `table-cell-secondary` | 305.766, 302.175 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:first-light:Phase` | `table-cell-secondary` | 307.979, 808.393 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:frr:Phase` | `table-cell-secondary` | 313.043, 714.535 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:integration:Phase` | `table-cell-secondary` | 311.484, 471.426 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:launch-contract:Phase` | `table-cell-secondary` | 304.395, 659.142 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:launch:Phase` | `table-cell-secondary` | 313.043, 733.000 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:leop:Phase` | `table-cell-secondary` | 307.979, 789.928 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:mcs:Phase` | `table-cell-secondary` | 300.458, 583.749 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:optics:Phase` | `table-cell-secondary` | 300.458, 377.569 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:payload-delivery:Phase` | `table-cell-secondary` | 305.766, 432.962 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:payload-tvac:Phase` | `table-cell-secondary` | 305.766, 414.498 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:pdr:Phase` | `table-cell-secondary` | 304.395, 246.782 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:psr:Phase` | `table-cell-secondary` | 301.999, 545.284 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:rehearsals:Phase` | `table-cell-secondary` | 301.999, 771.464 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:shipment:Phase` | `table-cell-secondary` | 313.043, 677.606 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:station:Phase` | `table-cell-secondary` | 300.458, 602.213 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:structure:Phase` | `table-cell-secondary` | 300.458, 265.247 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:tvac:Phase` | `table-cell-secondary` | 301.999, 508.355 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:vibration:Phase` | `table-cell-secondary` | 301.999, 489.891 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:avionics:Phase` | `table-cell-secondary` | 302.569, 283.711 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:bus-test:Phase` | `table-cell-secondary` | 308.862, 320.640 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:campaign:Phase` | `table-cell-secondary` | 314.170, 696.071 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:cdr:Phase` | `table-cell-secondary` | 306.323, 339.104 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:comms-test:Phase` | `table-cell-secondary` | 304.469, 620.677 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:detector:Phase` | `table-cell-secondary` | 308.862, 396.033 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:emc:Phase` | `table-cell-secondary` | 304.469, 526.820 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:eps:Phase` | `table-cell-secondary` | 308.862, 302.175 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:first-light:Phase` | `table-cell-secondary` | 310.725, 808.393 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:frr:Phase` | `table-cell-secondary` | 314.170, 714.535 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:integration:Phase` | `table-cell-secondary` | 316.286, 471.426 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:launch-contract:Phase` | `table-cell-secondary` | 306.323, 659.142 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:launch:Phase` | `table-cell-secondary` | 314.170, 733.000 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:leop:Phase` | `table-cell-secondary` | 310.725, 789.928 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:mcs:Phase` | `table-cell-secondary` | 302.569, 583.749 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:optics:Phase` | `table-cell-secondary` | 302.569, 377.569 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:payload-delivery:Phase` | `table-cell-secondary` | 308.862, 432.962 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:payload-tvac:Phase` | `table-cell-secondary` | 308.862, 414.498 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:pdr:Phase` | `table-cell-secondary` | 306.323, 246.782 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:psr:Phase` | `table-cell-secondary` | 304.469, 545.284 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:rehearsals:Phase` | `table-cell-secondary` | 304.469, 771.464 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:shipment:Phase` | `table-cell-secondary` | 314.170, 677.606 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:station:Phase` | `table-cell-secondary` | 302.569, 602.213 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:structure:Phase` | `table-cell-secondary` | 302.569, 265.247 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:tvac:Phase` | `table-cell-secondary` | 304.469, 508.355 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:vibration:Phase` | `table-cell-secondary` | 304.469, 489.891 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:avionics:Work package` | `text` | 105.967, 283.711 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:bus-test:Work package` | `text` | 103.011, 320.640 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:campaign:Work package` | `text` | 100.802, 696.071 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
@@ -6159,9 +6344,9 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:integration:Δ finish` | `variance-on-track` | 425.245, 471.426 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:structure:Δ finish` | `variance-on-track` | 425.245, 265.247 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `cell:vibration:Δ finish` | `variance-on-track` | 425.245, 489.891 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 8.886 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `column:Phase` | `tableColumnLabel` | 306.269, 182.975 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 6.667 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `column:Work package` | `tableColumnLabel` | 75.549, 182.975 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 6.667 | 4.500 | info |
-| `examples/halcyon-1/generated/23-titlecard.scene.json` | `column:Δ finish` | `tableColumnLabel` | 398.412, 182.975 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 6.667 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `column:Phase` | `tableColumnLabel` | 307.985, 182.975 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 6.667 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `column:Work package` | `tableColumnLabel` | 80.536, 182.975 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 6.667 | 4.500 | info |
+| `examples/halcyon-1/generated/23-titlecard.scene.json` | `column:Δ finish` | `tableColumnLabel` | 401.631, 182.975 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 6.667 | 4.500 | info |
 | `examples/halcyon-1/generated/23-titlecard.scene.json` | `title` | `heading` | 237.326, 106.200 | `canvas-texture` | texture-ink | `#1B1A18` | fill | 15.260 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `actual:avionics:avionics` | `actual` | 578.123, 270.834 | `canvas` | canvas | `#0D0A09` | stroke | 14.558 | 3.000 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `actual:bus-test:bus-test` | `actual` | 696.150, 308.384 | `canvas` | canvas | `#0D0A09` | stroke | 14.558 | 3.000 | info |
@@ -6186,16 +6371,16 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `annotation-box:station-note` | `annotation-note-box` | 1431.000, 594.847 | `canvas` | canvas | `#0D0A09` | fill | 14.558 | 1.100 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `annotation-box:tvac-note` | `annotation-note-box` | 1431.000, 400.646 | `canvas` | canvas | `#0D0A09` | fill | 14.558 | 1.100 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `annotation-box:window-note` | `annotation-note-box` | 1431.000, 729.498 | `canvas` | canvas | `#0D0A09` | fill | 14.558 | 1.100 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `annotation-heading:station-note` | `annotation-heading` | 1388.842, 581.948 | `annotation-box:station-note` | flat | `#EADCC0` | fill | 13.298 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `annotation-heading:tvac-note` | `annotation-heading` | 1391.961, 389.509 | `annotation-box:tvac-note` | flat | `#EADCC0` | fill | 5.540 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `annotation-heading:window-note` | `annotation-heading` | 1382.052, 718.093 | `annotation-box:window-note` | flat | `#EADCC0` | fill | 13.298 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `annotation-heading:station-note` | `annotation-heading` | 1403.305, 582.226 | `annotation-box:station-note` | flat | `#EADCC0` | fill | 13.298 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `annotation-heading:tvac-note` | `annotation-heading` | 1405.443, 389.180 | `annotation-box:tvac-note` | flat | `#EADCC0` | fill | 5.540 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `annotation-heading:window-note` | `annotation-heading` | 1393.350, 717.935 | `annotation-box:window-note` | flat | `#EADCC0` | fill | 13.298 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `annotation-kind-text:station-note:0` | `annotation-kind-label` | 1356.244, 566.657 | `annotation-box:station-note` | flat | `#EADCC0` | fill | 13.298 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `annotation-kind-text:tvac-note:0` | `annotation-kind-label` | 1352.788, 375.800 | `annotation-box:tvac-note` | flat | `#EADCC0` | fill | 5.540 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `annotation-kind-text:window-note:0` | `annotation-kind-label` | 1355.120, 703.805 | `annotation-box:window-note` | flat | `#EADCC0` | fill | 13.298 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `annotation-text:station-note` | `annotation-note-text` | 1422.882, 609.357 | `annotation-box:station-note` | flat | `#EADCC0` | fill | 13.298 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `annotation-text:tvac-note` | `annotation-note-text` | 1423.193, 415.504 | `annotation-box:tvac-note` | flat | `#EADCC0` | fill | 13.298 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `annotation-text:window-note` | `annotation-note-text` | 1424.431, 744.254 | `annotation-box:window-note` | flat | `#EADCC0` | fill | 13.298 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `as-of-label` | `as-of-label` | 975.327, 830.513 | `chip:as-of-label` | flat | `#D9A93D` | fill | 8.317 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `as-of-label` | `as-of-label` | 976.465, 830.513 | `chip:as-of-label` | flat | `#D9A93D` | fill | 8.317 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 511.376, 163.996 | `canvas` | canvas | `#0D0A09` | fill | 1.053 | 1.100 | warning |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `axis-band-rect:0:1` | `axis-band-decoration` | 694.675, 163.996 | `canvas` | canvas | `#0D0A09` | fill | 1.053 | 1.100 | warning |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `axis-band-rect:0:2` | `axis-band-decoration` | 964.662, 163.996 | `canvas` | canvas | `#0D0A09` | fill | 1.053 | 1.100 | warning |
@@ -6204,15 +6389,15 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `axis-label:2:1` | `axis-label2` | 694.675, 163.996 | `axis-band-rect:0:1` | flat | `#16110F` | fill | 8.645 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `axis-label:2:2` | `axis-label2` | 964.662, 163.996 | `axis-band-rect:0:2` | flat | `#16110F` | fill | 8.645 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `axis-label:2:3` | `axis-label2` | 1190.390, 163.996 | `axis-band-rect:0:3` | flat | `#16110F` | fill | 8.645 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `axis-label:4:0` | `axis-label3` | 513.190, 186.996 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `axis-label:4:1` | `axis-label3` | 603.700, 186.996 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `axis-label:4:2` | `axis-label3` | 693.943, 186.996 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `axis-label:4:3` | `axis-label3` | 783.341, 186.996 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `axis-label:4:4` | `axis-label3` | 872.852, 186.996 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `axis-label:4:5` | `axis-label3` | 965.159, 186.996 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `axis-label:4:6` | `axis-label3` | 1056.371, 186.996 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `axis-label:4:7` | `axis-label3` | 1144.799, 186.996 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `axis-label:4:8` | `axis-label3` | 1234.914, 186.996 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `axis-label:4:0` | `axis-label3` | 514.683, 186.996 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `axis-label:4:1` | `axis-label3` | 604.679, 186.996 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `axis-label:4:2` | `axis-label3` | 694.675, 186.996 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `axis-label:4:3` | `axis-label3` | 784.671, 186.996 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `axis-label:4:4` | `axis-label3` | 874.667, 186.996 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `axis-label:4:5` | `axis-label3` | 966.138, 186.996 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `axis-label:4:6` | `axis-label3` | 1056.134, 186.996 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `axis-label:4:7` | `axis-label3` | 1146.129, 186.996 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `axis-label:4:8` | `axis-label3` | 1236.125, 186.996 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `calendar-closed:2027-03-06` | `calendar-closed` | 485.177, 508.073 | `canvas` | canvas | `#0D0A09` | fill | 1.059 | 1.100 | warning |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `calendar-closed:2027-03-07` | `calendar-closed` | 488.127, 508.073 | `canvas` | canvas | `#0D0A09` | fill | 1.059 | 1.100 | warning |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `calendar-closed:2027-03-13` | `calendar-closed` | 505.831, 508.073 | `canvas` | canvas | `#0D0A09` | fill | 1.059 | 1.100 | warning |
@@ -6296,17 +6481,17 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `calendar-exception:2027-07-05` | `calendar-exception` | 842.209, 508.073 | `canvas` | canvas | `#0D0A09` | fill | 1.444 | 1.100 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `calendar-exception:2027-09-06` | `calendar-exception` | 1028.102, 508.073 | `canvas` | canvas | `#0D0A09` | fill | 1.444 | 1.100 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ait#run0` | `group-header` | 61.992, 440.748 | `group-header-band:ait` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ait#run2` | `group-header` | 214.502, 440.748 | `group-header-band:ait` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ait#run2` | `group-header` | 227.117, 440.748 | `group-header-band:ait` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:bus#run0` | `group-header` | 61.992, 208.996 | `group-header-band:bus` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:bus#run2` | `group-header` | 145.799, 208.996 | `group-header-band:bus` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:bus#run2` | `group-header` | 151.668, 208.996 | `group-header-band:bus` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ground#run0` | `group-header` | 61.992, 556.623 | `group-header-band:ground` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ground#run2` | `group-header` | 160.166, 556.623 | `group-header-band:ground` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ground#run2` | `group-header` | 165.998, 556.623 | `group-header-band:ground` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:launch#run0` | `group-header` | 61.992, 634.949 | `group-header-band:launch` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:launch#run2` | `group-header` | 159.075, 634.949 | `group-header-band:launch` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:launch#run2` | `group-header` | 167.024, 634.949 | `group-header-band:launch` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ops#run0` | `group-header` | 61.992, 750.825 | `group-header-band:ops` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ops#run2` | `group-header` | 169.599, 750.825 | `group-header-band:ops` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ops#run2` | `group-header` | 178.403, 750.825 | `group-header-band:ops` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:payload#run0` | `group-header` | 61.992, 343.647 | `group-header-band:payload` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:payload#run2` | `group-header` | 158.312, 343.647 | `group-header-band:payload` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:payload#run2` | `group-header` | 165.057, 343.647 | `group-header-band:payload` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ait#run1` | `group-ordinal` | 88.211, 440.748 | `group-header-band:ait` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:bus#run1` | `group-ordinal` | 82.309, 208.996 | `group-header-band:bus` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `group-header:ground#run1` | `group-ordinal` | 86.663, 556.623 | `group-header-band:ground` | flat | `#3A1115` | fill | 7.627 | 4.500 | info |
@@ -6326,13 +6511,13 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `group-tab:ops` | `group-tab` | 39.500, 750.825 | `group-header-band:ops` | flat | `#3A1115` | fill | 7.627 | 1.100 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `group-tab:payload` | `group-tab` | 39.500, 343.647 | `group-header-band:payload` | flat | `#3A1115` | fill | 7.627 | 1.100 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `kicker` | `kicker` | 413.680, 48.785 | `canvas` | canvas | `#0D0A09` | fill | 9.106 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `legend:actual` | `legend` | 281.008, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `legend:calendar-exception` | `legend` | 596.623, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `legend:dependency` | `legend` | 717.398, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `legend:milestone` | `legend` | 505.271, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `legend:missing-actual` | `legend` | 399.216, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `legend:planned` | `legend` | 191.589, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `legend:snapshot` | `legend` | 94.179, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `legend:actual` | `legend` | 285.072, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `legend:calendar-exception` | `legend` | 600.975, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `legend:dependency` | `legend` | 720.291, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `legend:milestone` | `legend` | 506.710, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `legend:missing-actual` | `legend` | 404.057, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `legend:planned` | `legend` | 194.091, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `legend:snapshot` | `legend` | 97.220, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `legend-swatch:actual` | `actual` | 242.742, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 14.558 | 3.000 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `legend-swatch:calendar-exception` | `calendar-exception` | 554.708, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 1.444 | 1.100 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `legend-swatch:milestone:part0` | `gate` | 476.712, 862.337 | `canvas` | canvas | `#0D0A09` | fill | 9.106 | 3.000 | info |
@@ -6380,32 +6565,32 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `planned:tvac:snapshot:tvac` | `snapshot` | 926.304, 498.685 | `as-of-cone` | cone-blend | `#332C21` | stroke | 6.364 | 3.000 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `planned:vibration:snapshot:vibration` | `snapshot` | 893.846, 479.910 | `canvas` | canvas | `#0D0A09` | stroke | 9.106 | 3.000 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `subtitle` | `subtitle` | 529.654, 69.129 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:avionics:Role` | `table-cell-secondary` | 296.315, 266.934 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:bus-test:Role` | `table-cell-secondary` | 302.505, 304.484 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:campaign:Role` | `table-cell-secondary` | 309.698, 692.887 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:cdr:Role` | `table-cell-secondary` | 300.957, 323.259 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:comms-test:Role` | `table-cell-secondary` | 298.875, 614.561 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:detector:Role` | `table-cell-secondary` | 302.505, 382.810 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:emc:Role` | `table-cell-secondary` | 298.875, 517.461 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:eps:Role` | `table-cell-secondary` | 302.505, 285.709 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:first-light:Role` | `table-cell-secondary` | 304.772, 808.762 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:frr:Role` | `table-cell-secondary` | 309.698, 711.662 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:integration:Role` | `table-cell-secondary` | 309.296, 461.135 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:launch-contract:Role` | `table-cell-secondary` | 300.957, 655.336 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:launch:Role` | `table-cell-secondary` | 309.698, 730.437 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:leop:Role` | `table-cell-secondary` | 304.772, 789.987 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:mcs:Role` | `table-cell-secondary` | 296.315, 577.011 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:optics:Role` | `table-cell-secondary` | 296.315, 364.034 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:payload-delivery:Role` | `table-cell-secondary` | 302.505, 420.360 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:payload-tvac:Role` | `table-cell-secondary` | 302.505, 401.585 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:pdr:Role` | `table-cell-secondary` | 300.957, 229.384 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:psr:Role` | `table-cell-secondary` | 298.875, 536.236 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:rehearsals:Role` | `table-cell-secondary` | 298.875, 771.212 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:shipment:Role` | `table-cell-secondary` | 309.698, 674.112 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:station:Role` | `table-cell-secondary` | 296.315, 595.786 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:structure:Role` | `table-cell-secondary` | 296.315, 248.159 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:tvac:Role` | `table-cell-secondary` | 298.875, 498.685 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:vibration:Role` | `table-cell-secondary` | 298.875, 479.910 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:avionics:Role` | `table-cell-secondary` | 298.830, 266.934 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:bus-test:Role` | `table-cell-secondary` | 305.968, 304.484 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:campaign:Role` | `table-cell-secondary` | 311.901, 692.887 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:cdr:Role` | `table-cell-secondary` | 302.569, 323.259 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:comms-test:Role` | `table-cell-secondary` | 301.038, 614.561 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:detector:Role` | `table-cell-secondary` | 305.968, 382.810 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:emc:Role` | `table-cell-secondary` | 301.038, 517.461 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:eps:Role` | `table-cell-secondary` | 305.968, 285.709 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:first-light:Role` | `table-cell-secondary` | 306.397, 808.762 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:frr:Role` | `table-cell-secondary` | 311.901, 711.662 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:integration:Role` | `table-cell-secondary` | 312.768, 461.135 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:launch-contract:Role` | `table-cell-secondary` | 302.569, 655.336 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:launch:Role` | `table-cell-secondary` | 311.901, 730.437 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:leop:Role` | `table-cell-secondary` | 306.397, 789.987 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:mcs:Role` | `table-cell-secondary` | 298.830, 577.011 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:optics:Role` | `table-cell-secondary` | 298.830, 364.034 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:payload-delivery:Role` | `table-cell-secondary` | 305.968, 420.360 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:payload-tvac:Role` | `table-cell-secondary` | 305.968, 401.585 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:pdr:Role` | `table-cell-secondary` | 302.569, 229.384 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:psr:Role` | `table-cell-secondary` | 301.038, 536.236 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:rehearsals:Role` | `table-cell-secondary` | 301.038, 771.212 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:shipment:Role` | `table-cell-secondary` | 311.901, 674.112 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:station:Role` | `table-cell-secondary` | 298.830, 595.786 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:structure:Role` | `table-cell-secondary` | 298.830, 248.159 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:tvac:Role` | `table-cell-secondary` | 301.038, 498.685 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:vibration:Role` | `table-cell-secondary` | 301.038, 479.910 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:avionics:The company` | `text` | 108.186, 266.934 | `canvas` | canvas | `#0D0A09` | fill | 15.659 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:bus-test:The company` | `text` | 105.047, 304.484 | `canvas` | canvas | `#0D0A09` | fill | 15.659 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:campaign:The company` | `text` | 102.731, 692.887 | `canvas` | canvas | `#0D0A09` | fill | 15.659 | 4.500 | info |
@@ -6458,9 +6643,9 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:integration:Δ finish` | `variance-on-track` | 425.733, 461.135 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:structure:Δ finish` | `variance-on-track` | 425.733, 248.159 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `cell:vibration:Δ finish` | `variance-on-track` | 425.733, 479.910 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `column:Role` | `tableColumnLabel` | 297.867, 159.971 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `column:The company` | `tableColumnLabel` | 87.786, 159.971 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
-| `examples/halcyon-1/generated/24-marquee.scene.json` | `column:Δ finish` | `tableColumnLabel` | 399.785, 159.971 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `column:Role` | `tableColumnLabel` | 300.012, 159.971 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `column:The company` | `tableColumnLabel` | 91.295, 159.971 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
+| `examples/halcyon-1/generated/24-marquee.scene.json` | `column:Δ finish` | `tableColumnLabel` | 403.465, 159.971 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `title` | `heading` | 160.936, 90.446 | `region-frame:sign` | flat | `#3A1115` | fill | 13.177 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `actual:avionics:avionics` | `actual` | 585.793, 281.910 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 4.747 | 3.000 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `actual:bus-test:bus-test` | `actual` | 748.462, 319.917 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 4.747 | 3.000 | info |
@@ -6479,16 +6664,16 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-box:station-note` | `annotation-note-box` | 668.241, 757.087 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.000 | 1.100 | warning |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-box:tvac-note` | `annotation-note-box` | 429.000, 461.425 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 1.100 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-box:window-note` | `annotation-note-box` | 1352.357, 672.612 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 1.100 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-heading:station-note` | `annotation-heading` | 643.501, 746.437 | `annotation-box:station-note` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-heading:tvac-note` | `annotation-heading` | 526.322, 450.775 | `annotation-box:tvac-note` | flat | `#FFFDF5` | fill | 4.747 | 4.500 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-heading:window-note` | `annotation-heading` | 1440.615, 661.962 | `annotation-box:window-note` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-heading:station-note` | `annotation-heading` | 658.855, 746.437 | `annotation-box:station-note` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-heading:tvac-note` | `annotation-heading` | 540.489, 450.775 | `annotation-box:tvac-note` | flat | `#FFFDF5` | fill | 4.747 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-heading:window-note` | `annotation-heading` | 1452.487, 661.962 | `annotation-box:window-note` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-kind-text:station-note:0` | `annotation-kind-label` | 578.758, 731.200 | `annotation-box:station-note` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-kind-text:tvac-note:0` | `annotation-kind-label` | 455.994, 435.538 | `annotation-box:tvac-note` | flat | `#FFFDF5` | fill | 4.747 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-kind-text:window-note:0` | `annotation-kind-label` | 1382.495, 646.725 | `annotation-box:window-note` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-text:station-note` | `annotation-note-text` | 668.241, 772.325 | `annotation-box:station-note` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-text:tvac-note` | `annotation-note-text` | 530.492, 476.663 | `annotation-box:tvac-note` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-text:window-note` | `annotation-note-text` | 1454.953, 687.850 | `annotation-box:window-note` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `as-of-label` | `as-of-label` | 1133.527, 848.800 | `chip:as-of-label` | flat | `#D13A26` | fill | 4.747 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `as-of-label` | `as-of-label` | 1134.803, 848.800 | `chip:as-of-label` | flat | `#D13A26` | fill | 4.747 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 429.000, 174.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 1.100 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `axis-band-rect:0:1` | `axis-band-decoration` | 562.892, 174.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 1.100 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `axis-band-rect:0:2` | `axis-band-decoration` | 932.966, 174.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 1.100 | info |
@@ -6588,12 +6773,12 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-exception:2027-05-31` | `calendar-exception` | 807.430, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.270 | 1.100 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-exception:2027-07-05` | `calendar-exception` | 949.766, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.270 | 1.100 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-exception:2027-09-06` | `calendar-exception` | 1205.970, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.270 | 1.100 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header:ait` | `text` | 187.373, 453.038 | `group-header-band:ait` | flat | `#F7C948` | fill | 11.108 | 4.500 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header:bus` | `text` | 106.418, 219.000 | `group-header-band:bus` | flat | `#F7C948` | fill | 11.108 | 4.500 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header:ground` | `text` | 147.324, 570.058 | `group-header-band:ground` | flat | `#F7C948` | fill | 11.108 | 4.500 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header:launch` | `text` | 150.722, 649.069 | `group-header-band:launch` | flat | `#F7C948` | fill | 11.108 | 4.500 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header:ops` | `text` | 153.706, 766.088 | `group-header-band:ops` | flat | `#F7C948` | fill | 11.108 | 4.500 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header:payload` | `text` | 147.168, 355.023 | `group-header-band:payload` | flat | `#F7C948` | fill | 11.108 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header:ait` | `text` | 210.390, 453.038 | `group-header-band:ait` | flat | `#F7C948` | fill | 11.108 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header:bus` | `text` | 116.141, 219.000 | `group-header-band:bus` | flat | `#F7C948` | fill | 11.108 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header:ground` | `text` | 162.170, 570.058 | `group-header-band:ground` | flat | `#F7C948` | fill | 11.108 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header:launch` | `text` | 166.983, 649.069 | `group-header-band:launch` | flat | `#F7C948` | fill | 11.108 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header:ops` | `text` | 171.416, 766.088 | `group-header-band:ops` | flat | `#F7C948` | fill | 11.108 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header:payload` | `text` | 162.170, 355.023 | `group-header-band:payload` | flat | `#F7C948` | fill | 11.108 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header-band:ait` | `group-header-band` | 40.000, 453.038 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 1.100 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header-band:bus` | `group-header-band` | 40.000, 219.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 1.100 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header-band:ground` | `group-header-band` | 40.000, 570.058 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 1.100 | info |
@@ -6739,9 +6924,9 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:integration:Late?` | `variance-on-track` | 396.164, 473.540 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:structure:Late?` | `variance-on-track` | 396.164, 258.506 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:vibration:Late?` | `variance-on-track` | 396.164, 492.544 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `column:Late?` | `tableColumnLabel` | 383.129, 170.450 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `column:Phase` | `tableColumnLabel` | 300.900, 170.450 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
-| `examples/halcyon-1/generated/25-sunday.scene.json` | `column:What` | `tableColumnLabel` | 56.835, 170.450 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `column:Late?` | `tableColumnLabel` | 384.852, 170.450 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `column:Phase` | `tableColumnLabel` | 302.610, 170.450 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `column:What` | `tableColumnLabel` | 59.409, 170.450 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
 | `examples/halcyon-1/generated/25-sunday.scene.json` | `title` | `heading` | 161.460, 85.888 | `region-frame:title-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
 | `examples/orion-asic/generated/gates.scene.json` | `actual:evt:evt` | `actual` | 918.061, 656.800 | `planned:evt:evt` | flat | `#3B6FB6` | stroke | 3.204 | 3.000 | info |
 | `examples/orion-asic/generated/gates.scene.json` | `actual:fab-a0:fab-a0` | `actual` | 669.069, 380.800 | `planned:fab-a0:fab-a0` | flat | `#3B6FB6` | stroke | 3.204 | 3.000 | info |
@@ -6870,6 +7055,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8): a
 | Theme | Scenes | Warnings | Errors |
 | --- | ---: | ---: | ---: |
 | `axis-color-scales` | 2 | 0 | 0 |
+| `chrona-roadmap` | 1 | 24 | 0 |
 | `group-header-runs` | 1 | 0 | 0 |
 | `marquee` | 1 | 86 | 0 |
 | `sunday` | 1 | 12 | 0 |
@@ -6882,4 +7068,4 @@ Contrast constraints are an opt-in design option (Specification 46 section 8): a
 Every non-exclusive decoration role is enabled in committed Scene evidence; group-band or group-header-band supplies the group concept, and row-band or row-rule supplies the row concept when there are no corpus errors.
 
 
-Findings: 6791; errors: 0; warnings: 279.
+Findings: 6979; errors: 0; warnings: 303.

@@ -198,9 +198,13 @@ def test_no_other_role_admits_a_tab_property(role, prop):
     assert theme_role_property_consumer(role, prop) is None
 
 
-def test_only_the_tab_among_the_group_roles_admits_a_catalogue_pattern():
-    assert theme_catalog_pattern_consumer("group-tab", "pattern") is not None
-    assert theme_catalog_pattern_consumer("group-band", "pattern") is None
+def test_the_group_roles_that_are_always_one_rect_admit_a_catalogue_pattern():
+    # #1282: the group band, the group-header band and the row band join the tab; the calendar bands do not.
+    for role in ("group-tab", "group-band", "group-header-band", "row-band"):
+        assert theme_catalog_pattern_consumer(role, "pattern") is not None, role
+        assert theme_role_property_consumer(role, "pattern") is not None, role
+    for role in ("calendar-closed", "calendar-exception"):
+        assert theme_catalog_pattern_consumer(role, "pattern") is None, role
 
 
 def _tag_tokens(**numbers):
@@ -231,4 +235,4 @@ def test_negative_tag_gap_remains_a_layout_size_error():
     with pytest.raises(LayoutError) as caught:
         resolve_group_tab(_tag_tokens(tabGap=-1))
     assert caught.value.diagnostic_id == "E_LAYOUT_GROUP_TAB_SIZE"
-    assert theme_catalog_pattern_consumer("group-header-band", "pattern") is None
+    assert theme_catalog_pattern_consumer("calendar-closed", "pattern") is None  # the calendar bands stay off the list

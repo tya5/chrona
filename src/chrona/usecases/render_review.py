@@ -25,6 +25,7 @@ from chrona.core.ports import RenderArtifact, Renderer, Scheduler
 from chrona.extensions.profiles import validate_profiles
 from chrona.presentation.layout.engine import (measure_natural_normal_flow_block,
                                                resolve_content_block_extent, solve_layout)
+from chrona.presentation.layout.canvas_viewport import DeclaredViewport
 from chrona.presentation.layout.model import LayoutError, LayoutManifest, ResolvedLayoutProfile
 from chrona.presentation.layout.group_header_runs import validate_group_header_roles
 from chrona.presentation.layout.presentation import validate_label_text_role, validate_table_text_roles
@@ -374,8 +375,12 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         raise layout_error
     _check_slot_heading_text(view, resolved_layout)
     # A declared slot heading is part of its content-sized slot's measurement (#1064).
-    measured = reserve_slot_heading_blocks(measured, resolved_layout, ThemeTokenView(theme), content=selected_content)
+    measured = reserve_slot_heading_blocks(measured, resolved_layout, ThemeTokenView(theme), content=selected_content,
+                                           font_metrics=font_metrics)
     viewport = {"inlineSize": environment.viewport_inline, "blockSize": environment.viewport_block}
+    declared_viewport = DeclaredViewport(
+        Decimal(environment.viewport_inline),
+        None if request.draft_auto_block else Decimal(environment.viewport_block))
     measurements = _slot_measurements(resolved_layout.profile["root"], measured)
     natural_block_floor = max(1, int(measure_natural_normal_flow_block(
         resolved_layout, viewport_inline=viewport["inlineSize"], measurements=measurements
@@ -405,6 +410,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
             icon_assets=icon_assets, visual_requests=visual_requests,
             capacity_short_sources=short_sources,
             as_of_chip_measurement=as_of_chip_measurement,
+            declared_viewport=declared_viewport,
         )
 
     if view.surface == "table-timeline":
@@ -458,6 +464,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         fixed_lane_preflight=fixed_lane_preflight,
         capacity_short_sources=capacity_short_sources,
         surface_preparation=surface_preparation,
+        declared_viewport=declared_viewport,
     )
 
     unused = ledger.unused()
@@ -514,6 +521,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         attachment_warnings=attachments, deadline_warnings=deadlines,
         contrast_warnings=contrast_warnings,
         surface_provenance=surface.diagnostic_provenance,
+        canvas_warning=surface.canvas_warning,
     )
     # Surface diagnostics are already in the preliminary Scene. Append only
     # the post-composition families, preserving duplicates and their order.

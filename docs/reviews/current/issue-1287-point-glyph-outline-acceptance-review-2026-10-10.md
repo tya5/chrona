@@ -2,12 +2,15 @@
 
 # Issue #1287 — point glyph outline acceptance
 
-Validation checkpoint: `ae179e4eb51f5481c9549d7966c50b12fc67be53`, adopting
-ready main `127392c426010f8381c984d8ff45f6c1e46f3791`, including #1283,
-#1327 and dev B's #1219/#1273. [Derived gate](https://github.com/tya5/chrona/actions/runs/38024326734)
-and [sync](https://github.com/tya5/chrona/actions/runs/38024074329) succeeded.
-Combined point/contour/legend/host-identity and preset regression tests: 73 passed
-(37.24s). Final exact-head PR and containing-main release are still required.
+Integration `6c6a0669` adopts main source `4d7218afe02777a9ee69ec517be6fcf2cc31783b`
+including #1336 transformed-text bounds and #1279 canvas diagnostics.
+The combined point/contour/legend/host/transformed-text batch passes all
+127 tests (130.81s); independent ownership review finds no concrete blocker.
+Ready base `6ea100c4b0126c3b253630e7af3c1a74b25154a4` has successful
+[`derived-main`](https://github.com/tya5/chrona/actions/runs/38044030668).
+Its delta from source changes only generated evidence, not product/schema/tests.
+Fresh 46-slide snapshot, exact-head checks and containing-review main release
+remain required; predecessor audits are not current-base acceptance.
 [Selected design and architecture review](https://github.com/tya5/chrona/issues/1287#issuecomment-6088427990).
 Earlier [PR CI](https://github.com/tya5/chrona/actions/runs/38022653852) exposed a
 closed-quadratic implicit-start decoding bug and a corpus-dependent hosted-note test.
@@ -33,9 +36,9 @@ Do not close.
 
 ## Programme-level criteria (optional)
 
-Current integration batch: 73 passed (37.24s), including independent frozen
-projection comparisons, the merged legend warning correction, hosted identities,
-real quadratic-hole decoding and both technical-print regressions. No schema,
+Integration covers independent frozen projection comparisons, merged legend
+and transformed-text corrections, hosted identities and real quadratic-hole
+decoding; both technical-print regressions previously pass. No schema,
 authored examples, generated or workflow changes are included. The archive batch
 and final #1327 acceptance table are separately committed documentation units.
 [Lane footprint/port test](../../../tests/unit/chrona/presentation/layout/test_point_outline.py) retains the completed gate width rather than planned-role fallback and keeps semantic ports on the original part. [Projection test](../../../tests/unit/chrona/presentation/scene/test_mark_geometry.py) separates intrinsic catalogue finish metadata from a role-bound outline.
@@ -44,11 +47,15 @@ and final #1327 acceptance table are separately committed documentation units.
 
 Layout completes union geometry, widths, footprints and clips; Scene resolves role ink and ordinary finish, forwarding catalogue width/cap/join only as an intrinsic tuple. Source parts and local geometry remain intact; an opted-in contour can enlarge the visible footprint and change downstream allocation/translation under existing rules. No Scene grammar or renderer geometry decision is added. Built-ins, stroke-only glyphs, outline-pattern ghosts and non-point consumers retain their existing treatment. Independent read-only review found no concrete ownership defect.
 
-Public effects at head `64cf66e1`: [PR count table](https://github.com/tya5/chrona/pull/1331)
-discloses six changed SVG/Scene pairs and 39 unchanged pairs, including #12's
-182px lane-height growth and `eps-bustest` suppression. All 65 added contours
-match actual SVG path/paint/width; original Symbol parts remain. These collateral
-effects require an explicit review disposition, not a no-regression claim.
+The [predecessor audit](https://github.com/tya5/chrona/issues/1287#issuecomment-6094388441)
+at `a79d9a06` / ready base `4f4ee94c` verifies 101 base blobs, seven changed
+and 39 byte-identical Scene/SVG pairs, with no added or retired paths.
+It discloses #12's 182px height growth and label/relation suppression.
+The [current review disposition](https://github.com/tya5/chrona/issues/1287#issuecomment-6093787922)
+withdraws dev A's self-imposed owner-reply prerequisite, not any literal criterion:
+requested stroke footprints may reflow under unchanged general rules. Retain
+per-slide attribution and inspect fresh output before merging; no assumed owner
+approval, corpus adjustment or blanket no-regression claim is permitted.
 
 Required release evidence: accept/dispose disclosed effects; fresh exact-head snapshot/checks;
 automatic sync and successful containing-review exact-main three-OS release.
