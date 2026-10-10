@@ -6,6 +6,7 @@ from datetime import date
 
 from chrona.presentation.layout.lane_projection import (
     ExpectedLaneMark, LaneProjectionClosure, LaneProjectionInstance, close_lane_projection,
+    lane_instance_owners,
 )
 from chrona.presentation.layout.mark_facet_visibility import FacetDisposition
 from chrona.presentation.layout.model import LayoutError
@@ -38,6 +39,59 @@ class LaneWindowMarkAccount:
         original = {mark.instance for mark in self.source.expected_marks}
         visible = {mark.instance for mark in self.admitted}
         return frozenset(original - visible)
+
+
+@dataclass(frozen=True)
+class LaneWindowPlacementAbsence:
+    """Original omitted mark joined to its final countable member, without geometry."""
+
+    row_id: str
+    member_id: str
+    expected: ExpectedLaneMark
+    source_ref: str
+    reason: str = "outside-window"
+
+    def __post_init__(self) -> None:
+        if (not all(isinstance(value, str) and value for value in
+                    (self.row_id, self.member_id, self.source_ref))
+                or not isinstance(self.expected, ExpectedLaneMark)
+                or self.reason != "outside-window"):
+            _invalid("invalid-placement-absence")
+
+
+def complete_lane_window_placement_absences(
+    account: LaneWindowMarkAccount, *, projection: ReviewProjection,
+    as_of: date | None, visibility_index: ItemMarkVisibilityIndex,
+) -> tuple[LaneWindowPlacementAbsence, ...]:
+    """Validate the cache partition, then join occurrence and member identities."""
+    validate_lane_window_mark_account(account, projection=projection, as_of=as_of,
+                                     visibility_index=visibility_index)
+    owners = lane_instance_owners(projection, account.source)
+    rows = {row.lane_id: row for row in projection.lane_rows}
+    completed = []
+    for absence in account.absences:
+        instance = absence.expected.instance
+        lane_id, occurrence_id = owners[instance]
+        row = rows[lane_id]
+        members = [member_id for item, member_id in zip(row.items, row.member_item_ids, strict=True)
+                   if (item.item_id or item.object_id, item.object_id, item.source_kind)
+                   == (instance.item_id, instance.object_id, instance.source_kind)]
+        source = visibility_index.lookup(
+            MarkOccurrence(MarkOccurrenceKind.LANE_SOURCE, instance.row_id, instance.item_id,
+                           instance.object_id, instance.source_kind),
+            projection=projection, as_of=as_of)
+        try:
+            final = visibility_index.lookup(
+                MarkOccurrence(MarkOccurrenceKind.LANE_FINAL, lane_id, occurrence_id,
+                               instance.object_id, instance.source_kind),
+                projection=projection, as_of=as_of)
+        except KeyError:
+            _invalid("missing-final-occurrence")
+        if len(members) != 1 or source is not final:
+            _invalid("placement-owner-mismatch")
+        completed.append(LaneWindowPlacementAbsence(
+            lane_id, members[0], absence.expected, absence.source_ref, absence.reason))
+    return tuple(completed)
 
 
 def _invalid(reason: str) -> None:

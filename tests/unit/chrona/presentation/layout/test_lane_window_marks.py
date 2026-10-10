@@ -4,6 +4,7 @@ from datetime import date
 import pytest
 
 from chrona.presentation.layout.lane_window_marks import (
+    complete_lane_window_placement_absences,
     complete_lane_window_mark_account, validate_lane_window_emission,
     validate_lane_window_mark_account,
 )
@@ -160,3 +161,63 @@ def test_source_kind_is_retained_in_expected_omission_identity(source_kind):
     account = _account(projection, index)
     assert all(mark.instance.source_kind == source_kind for mark in account.source.expected_marks)
     _validate(account, projection, index)
+
+
+def test_completed_absence_retains_original_mark_and_final_countable_owner():
+    projection, index = _fixture(window=(date(2026, 3, 1), date(2026, 3, 3)))
+    account = _account(projection, index)
+    completed = complete_lane_window_placement_absences(
+        account, projection=projection, as_of=None, visibility_index=index)
+    assert len(completed) == len(account.source.expected_marks) == 2
+    for original, final in zip(account.absences, completed, strict=True):
+        assert final.expected is original.expected
+        assert (final.row_id, final.member_id) == ("lane", "item")
+        assert final.source_ref == original.source_ref
+        assert final.reason == "outside-window"
+        assert not hasattr(final, "bounds")
+
+
+def test_completed_absence_joins_comparison_occurrence_to_countable_member():
+    projection, _ = _fixture(window=(date(2026, 3, 1), date(2026, 3, 3)))
+    primary = projection.rows[0].items[0]
+    snapshot = replace(primary, item_id="snapshot-item", object_id="snapshot-object",
+                       source_kind="snapshot", actual=None, roles=("planned",),
+                       observation_state=ObservationState.NOT_YET_DUE)
+    projection = replace(projection,
+        rows=(replace(projection.rows[0], items=(primary, snapshot)),),
+        lane_rows=(replace(projection.lane_rows[0], items=(primary, snapshot),
+                           member_item_ids=("item", "item")),))
+    index = build_item_mark_visibility_index(projection, as_of=None)
+    completed = complete_lane_window_placement_absences(
+        _account(projection, index), projection=projection, as_of=None, visibility_index=index)
+    snapshot_absence = next(item for item in completed if item.expected.instance.source_kind == "snapshot")
+    assert snapshot_absence.member_id == "item"
+    assert snapshot_absence.expected.instance.item_id == "snapshot-item"
+    assert snapshot_absence.expected.instance.object_id == "snapshot-object"
+
+
+def test_completed_absence_rejects_forged_partition_and_keeps_contained_inventory_empty():
+    projection, index = _fixture()
+    account = _account(projection, index)
+    with pytest.raises(LayoutError, match="account-mismatch"):
+        complete_lane_window_placement_absences(replace(account, absences=()),
+            projection=projection, as_of=None, visibility_index=index)
+    projection, index = _fixture(window=(date(2026, 1, 1), date(2026, 3, 1)))
+    assert complete_lane_window_placement_absences(_account(projection, index),
+        projection=projection, as_of=None, visibility_index=index) == ()
+
+
+@pytest.mark.parametrize("broken", ["missing", "copied"])
+def test_completed_absence_requires_the_identical_final_visibility_alias(broken):
+    projection, index = _fixture()
+    account = _account(projection, index)
+    entries = dict(index.entries)
+    key = next(key for key in entries if key.kind == "lane-final")
+    if broken == "missing":
+        del entries[key]
+    else:
+        entries[key] = replace(entries[key])
+    altered = ItemMarkVisibilityIndex(projection, None, entries)
+    with pytest.raises(LayoutError, match="missing-final-occurrence|placement-owner-mismatch"):
+        complete_lane_window_placement_absences(account, projection=projection,
+            as_of=None, visibility_index=altered)
