@@ -39,6 +39,12 @@ every omitted candidate with `W_LAYOUT_AXIS_LABEL_THINNED`, its source outcome
 and suppression decision, and each affected tier with `W_LAYOUT_AXIS_DENSITY`.
 An omitted label has no visible target or visible-overflow record.
 
+An outcome retains its measured fit even when it is omitted: use reason
+`label-does-not-fit` for a nonfitting candidate, `regular-cadence` for a fitting
+candidate outside the chosen stride, and `phase-unavailable` for a fitting
+candidate when no phase-zero subset is viable. Placement validation must not
+misreport cadence exclusion as failed text measurement.
+
 This supersedes #482's prohibition on periodic thinning. `visible-overflow`
 retains its declared policy, subject to the hard containment rule; automatic
 cadence/coarsening above applies to `thin-with-record`. View owns allowed
