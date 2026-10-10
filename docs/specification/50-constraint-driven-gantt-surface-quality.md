@@ -367,6 +367,32 @@ Scene/SVG bytes remain unchanged. See the [L3b route-evidence correction](../des
 
 ### 3.4 Groups and legend
 
+**Independent header-row strip (#1367).** A drawable Theme
+`group-header-strip` role emits one `groupHeaderStrip` Rect per completed
+group header, with purpose/visual role `group-header-strip` and identity
+`group-header-strip:<group-id>`. Optional Layout Profile
+`backgroundExtents.groupHeaderStrip` is `table | timeline | both`; omission
+means `both`, and `text` is not admitted. Clip its inline extent to the chosen
+region and use exactly the final header block extent after folded-mark
+completion. No header means no strip; body rows never receive it. Strip
+selection is independent of body-group decoration; existing header-band
+selection and geometry remain unchanged. An absent strip role preserves
+existing Scene/SVG output. Explicit treatment `none` paints no strip and
+preserves SVG output, while retaining Scene's generic declared-decoration
+absence disclosure; it has no strip-specific exception.
+
+For intersecting layers of the same group, declared orders must satisfy
+`groupBand < groupHeaderStrip < groupHeaderBand` wherever each pair exists.
+The strip must also precede hosted header text, including when no caption band
+is emitted. Layout rejects violations with `E_LAYOUT_GROUP_HEADER_STRIP_ORDER`
+at `/body/roles/group-header-strip/backgroundPaintOrder`, naming the conflicting
+placements and orders. A strictly ordered same-group strip/body or
+strip/caption pair may composite translucent fills; this is an additional
+explicit layer relation, not permission for arbitrary same-rank overlaps.
+Existing period/calendar overlay ranks and all unrelated overlap errors remain
+unchanged. Layout completes geometry and clipped pattern placements; Scene
+projects primitives/paint, and adapters never select bounds or layer order.
+
 **Text-sized header bands (#1283).** Layout Profile
 `backgroundExtents.groupHeaderBand: text` uses the completed header-content
 inline interval: band start through the last nonsuppressed measured text/run
@@ -469,6 +495,31 @@ that is illegible on a dark or patterned target fails the gate like any other te
 
 **The plot (#880).** The plot is the timeline slot down to the bottom of its last row (the last group's content when groups exist), and never past the slot; with no rows it is the slot. A slot is an allocation and the rows are the content, so a surface given more block room than its rows need has an empty strip under the last row. The ground (group and row bands) stops at the last row, and every overlay that spans the height of the plot ends there too: the full-height `grid-major` and `grid-minor` lines, each closed day, the as-of line and a period band (and the anchor of a `bottom` period label). Axis ticks and the axis rule are not plot-height overlays and are unchanged. A slot the rows fill is unchanged. Inline, the plot is the timeline slot: the scale is inset by what point marks protrude (#501), so the window maps to a range narrower than the slot, and the margin that leaves at each end belongs to the plot. An axis band cell, a closed-day cell or a period band that starts or ends at the window edge reaches the plot edge there (an axis band cell takes no `cellGap` on that outer end), so band, ground and axis rule end at the same edge. Positions inside the window (interval starts, gridlines, labels, marks, the as-of line) do not move, and a scale that fills the plot is unchanged. Layout owns the extent; Scene and adapters carry the completed primitives. A region frame (#889) around the timeline slot follows the slot's allocation, not the plot: inside a panel taller
 than its rows the ground and every plot-height overlay still end at the last row and the strip below is the panel's own paper.
+
+**Axis label containment (#1291).** Layout admits each transformed, measured
+primary/secondary run only inside its clipped logical interval, the axis block
+and the plot inline extent. A painted band for that interval in the primary's
+native block lane also constrains the run to its completed cell, including
+`cellGap` and the outer-edge rule above. Select that cell by primary block centre,
+then paint/native emission order, independently of inline-centre fit; an inline
+gap cannot bypass its containment guard. An equal calendar interval painted in
+another block lane is not the label's cell and does not constrain it.
+Paint-host attribution may cross units (month labels on a quarter band): the
+topmost painted cell under the primary's centre is its host, ordered by paint
+order then native emission order. Hosted text must fit that host's full box;
+Layout never switches to a neighbouring cell to hide overflow. Without a painted
+host the identity is absent, but logical containment still applies.
+
+A non-fitting primary is thinned with `W_LAYOUT_AXIS_LABEL_THINNED`; its typed
+outcome and suppression decision remain, but neither run, a visible target nor
+a visible-overflow record is emitted. If only the secondary cannot fit, Layout
+omits it with `W_LAYOUT_AXIS_SECONDARY_OMITTED` and recomputes the primary without
+it; a surviving secondary shares the primary's host. Candidate summaries and
+final placement use the same completed cell and admission geometry. This rule
+supersedes axis `visible-overflow`, including rotated runs and both window
+edges, without changing the window, tier/unit selection, regular thinning
+cadence or colours. Scene and adapters carry completed bounds; they do not clip,
+reformat, measure or expand the canvas to recover an axis label.
 
 A selected named period (#582; Spec 06 §7.1) completes one `Rect` background:
 placement id `period-band:<period id>`, `sourceRef` the period id, semantic

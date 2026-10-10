@@ -39,7 +39,8 @@ from chrona.presentation.layout.surface_table import (
 from chrona.presentation.layout.surface_heading import place_surface_headings
 from chrona.presentation.layout.surface_groups import (compose_group_presentation, translate_group_header_text)
 from chrona.presentation.layout.surface_backgrounds import (
-    compose_calendar_backgrounds, compose_group_tabs, compose_row_group_backgrounds, replace_group_header_band,
+    compose_calendar_backgrounds, compose_group_header_strips, compose_group_tabs,
+    compose_row_group_backgrounds, replace_group_header_band,
 )
 from chrona.presentation.layout.surface_axis import (
     complete_axis_plot,
@@ -178,6 +179,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
                                                    block_delta=block_delta))
         shapes = list(replace_group_header_band(
             tuple(shapes), update, extent=base.layout_manifest.background_extents.get("groupHeaderBand", "")))
+    shapes.extend(compose_group_header_strips(base=base, groups=tuple(groups), theme_tokens=request.theme_tokens))
     shapes.extend(compose_group_tabs(
         groups=tuple(groups), theme_tokens=request.theme_tokens,
         tag_column=(base.table_bounds[0], base.group_tag_inline_size) if base.group_tag_inline_size else None))
