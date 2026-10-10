@@ -255,6 +255,20 @@ lists it as a deliberate delta. View v0.28's annotation anchor `endpoint` gained
 canonical spelling of a span's end (as in a Project `endpointRef`) and `finish` its alias, and Layout normalises `end`
 to `finish` before any identifier is built, so the two spellings produce the same Scene.
 
+### 3.3 Project validation reports every independent mistake (#1303)
+
+Project validation does not stop at the first error. A schema error is one `E_SCHEMA` diagnostic per independent
+mistake, in JSON Pointer order, and a `oneOf` over `mode` is reported as the one branch the object's `mode` selects (the
+wrapper stays only when no branch is selected). A message for a value that fails a `pattern`, `format` or `enum` ends with
+`, got '<value>'` for a short string, and the date pattern reads `expected a YYYY-MM-DD calendar date`. When every error
+lies inside `/objects/<id>` or `/relations/<n>`, the Core rules (references, parents, cycles, endpoints, lag calendars)
+still run for the objects and relations that passed, a failed object staying a known id; an error elsewhere ends the run.
+An unknown id in a relation or a `parent` names the nearest known id by the rule of the terse compiler
+(`; did you mean 'build'?`). For a Project read from a YAML file, `chrona validate` and `chrona schedule` add `sourceRange`
+(`{line, column, endLine, endColumn}`, 1-based, one line) to every Core validation finding: the key of
+an unexpected or misplaced member, else the deepest node of the pointer that exists. Scheduler findings and the agent
+tool rows keep their shape.
+
 ## 4. Union policy and Project v0.6
 
 Use a discriminator only where a stable author-owned tag already expresses a
