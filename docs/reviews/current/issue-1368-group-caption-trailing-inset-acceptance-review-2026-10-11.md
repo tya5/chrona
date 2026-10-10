@@ -18,12 +18,12 @@ Implementation: `dbd88829`. [Current design/architecture/implementation record](
 
 ## Programme-level criteria (optional)
 
-**Release pending:** adopt the ready main containing #1367/#1366 before final publication; verify the independent strip remains unchanged. Fresh public snapshot, exact-head gates and acceptance-containing exact-main three-OS release must succeed before closure. Local completion is not published release acceptance.
+**Release pending:** ordinarily adopted READY main `02ac93ab` containing #1367/#1366. Plain/mixed-role Scene/SVG tests prove the independent strip and every non-caption primitive remain unchanged. Fresh public snapshot, exact-head gates and acceptance-containing exact-main three-OS release must succeed before closure. Local completion is not published release acceptance.
 
 ## Architecture conclusion
 
 Layout carries completed per-header band padding separately from measured content; only positive-width nonsuppressed text activates it. Background composition consumes it only for the text-sized caption and table-clamps the completed Rect. Scene/adapters do not measure or select geometry. Leading/tab/ellipsis, folded block completion, other extents and authored resource identity remain unchanged. Root and independent Luna review found no ownership or contract gap.
 
-Own-venv focused integration batch: **37 passed** (29.37s), including existing text-extent replay; adjacent leading-inset, marked-run and Scene-builder regressions: **90 passed** (19.57s). These overlap no claimed full release. Initial missing property-owner registration and test-only tuple/string assumptions were corrected before acceptance.
+Own-venv integration/strip join: **77 passed**, two added cases initially rejected their incomplete synthetic Theme (missing opacity); corrected fixtures then **2 passed** (5.14s). No product workaround. Earlier integration37 and adjacent leading-inset/run/builder90 passed. No full release claim.
 
-Schema-equivalence against ready `ff749b0b`: **PASS**, live Theme additive=1/equal=37; 482 documents/739 probes, four known invalid fixtures unchanged, L2+L3=40.4s within 60s. Incoming #1367 already owns the five stale View delta retirements; this item does not repeat them.
+Schema-equivalence against READY `02ac93ab`: live Theme additive=1/equal=37; 482 documents/739 probes, four known invalid fixtures unchanged. Structural/corpus/diagnostic comparison passed; command **failed only its runtime budget** (L2+L3=81.1s >60s). CI must verify the budget; not a current PASS claim. Earlier `ff749b0b` comparison passed in40.4s. #1367 owns the stale View delta retirements; this item does not repeat them.

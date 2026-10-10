@@ -195,6 +195,37 @@ def test_absent_and_zero_trailing_inset_keep_geometry_and_svg_but_provenance_is_
     assert absent.scene.provenance != zero.scene.provenance
 
 
+@pytest.mark.parametrize("marked", [False, True], ids=["plain", "mixed-role-runs"])
+def test_trailing_caption_inset_does_not_change_independent_header_strip(tmp_path, marked):
+    def parts(ratio):
+        value = _parts(marked=marked, inset=0.4, extent="text")
+        body = value["theme"]["body"]
+        value["layout"]["reviewSurface"]["backgroundExtents"]["groupHeaderStrip"] = "both"
+        body["values"]["header-strip-opacity"] = {"type": "number", "value": 1}
+        body["roles"]["group-header-strip"] = {
+            "backgroundTreatment": "fill", "backgroundPaintOrder": 10,
+            "opacity": "header-strip-opacity",
+        }
+        body["colorBindings"]["group-header-strip.fill"] = "warning"
+        body["roles"]["group-header-band"]["backgroundPaintOrder"] = 11
+        return value if ratio is None else _with_end_inset(value, ratio)
+
+    base = _render(tmp_path, parts(None), name="strip-base")
+    extended = _render(tmp_path, parts(0.5), name="strip-inset")
+    base_items, new_items = _by_id(base), _by_id(extended)
+    changed = {key for key in base_items if base_items[key] != new_items[key]}
+    assert base_items.keys() == new_items.keys()
+    assert changed == {"group-header-band:team-0", "group-header-band:team-1"}
+    table = next(slot.bounds for slot in extended.surface.slots if slot.slot_id == "table")
+    timeline = next(slot.bounds for slot in extended.surface.slots if slot.slot_id == "timeline")
+    for group_id in ("team-0", "team-1"):
+        strip = new_items[f"group-header-strip:{group_id}"]
+        assert strip.bounds[0] == pytest.approx(table[0])
+        assert sum((strip.bounds[0], strip.bounds[2])) == pytest.approx(timeline[0] + timeline[2])
+        _assert_svg_bounds(extended, strip.scene_id)
+        _assert_svg_bounds(extended, f"group-header-band:{group_id}")
+
+
 @pytest.mark.parametrize("token", [
     {"type": "number", "value": -0.1},
     {"type": "textTransform", "value": "uppercase"},
