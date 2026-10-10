@@ -2,12 +2,12 @@
 
 # Issue #1318 — temporary gate ref cleanup
 
-Implementation: `d49846566edd3f203fb6d8a9a228b822cbaa4dcc`; preparation
-`7aca8e4a62c96ae08ab2e6abb52a0f43d3d9fdb9` ordinarily adopts ready main
-`51bc172e746b878754afcb9209947d96e3bf4979`, then adopts the review-only ready
-main `04ca067d5bef69457eb951f8601792774b16fe30`. Helper/workflow/procedure/test
-bytes remain unchanged from the tested `9a4510c8` checkpoint and public
-`0dab30ea`; no focused-test rerun is needed for the review-only adoption.
+Implementation: `d49846566edd3f203fb6d8a9a228b822cbaa4dcc`; ordinarily adopted
+ready main `bf9313bbe19dd9a386f10bda98485f5e8d139c96`
+([trusted gate](https://github.com/tya5/chrona/actions/runs/38033174047)).
+Owned helper/workflow/procedure/test bytes remain unchanged from the tested
+`9a4510c8` checkpoint and public `0dab30ea`; the new main changes are outside
+those files. No helper-focused rerun is needed for this adoption.
 [Current design, architecture and plan](https://github.com/tya5/chrona/issues/1318#issuecomment-6093049623).
 WIP only; its PR waits for earlier M0/#1279 work. Do not close.
 
