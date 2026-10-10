@@ -68,6 +68,31 @@ def _axis_batch(tiers):
     return compose_axis(prepared.request, prepared)
 
 
+def test_equal_calendar_band_intervals_in_distinct_lanes_keep_both_label_tiers():
+    tiers = (
+        AxisTier("quarter", 1, "band"),
+        AxisTier("quarter", 1, "labels", AxisLabelIntent(
+            "quarter", (), "center", "visible-overflow", "horizontal", "en-US")),
+        AxisTier("quarter", 1, "band"),
+        AxisTier("quarter", 1, "labels", AxisLabelIntent(
+            "year-quarter", (), "center", "visible-overflow", "horizontal", "en-US")),
+    )
+    _summary, prepared, _frame, _measured = _summary_matches_native(_axis_request(tiers))
+    batch = prepared.placements
+    bands = {shape.placement_id: shape for shape in batch.shapes}
+    for tier_index, band_index in ((1, 0), (3, 2)):
+        labels = [item for item in batch.text
+                  if item.placement_id.startswith(f"axis-label:{tier_index}:")]
+        assert len(labels) == 4
+        for label in labels:
+            index = label.placement_id.rsplit(":", 1)[1]
+            assert label.host_placement_id == f"axis-band-rect:{band_index}:{index}"
+            band = bands[label.host_placement_id].bounds
+            assert band.block <= label.bounds.block
+            assert label.bounds.block + label.bounds.block_size <= band.block + band.block_size
+    assert not any(item.startswith("W_LAYOUT_AXIS_LABEL_THINNED") for item in batch.diagnostics)
+
+
 @pytest.mark.parametrize("gap", [20, 30])
 def test_painted_cell_gap_omits_secondary_or_thins_primary_without_visible_targets(gap):
     tiers = (AxisTier("month", 1, "band"), AxisTier("month", 1, "labels", AxisLabelIntent(

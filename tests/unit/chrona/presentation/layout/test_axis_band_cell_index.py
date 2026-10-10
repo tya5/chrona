@@ -71,7 +71,22 @@ def test_index_matches_global_paint_order_for_overlapping_tiers_and_repeated_int
 
     assert index.host(center) is cells[2]
     assert index.host(center) == _exhaustive(center, cells)
-    assert index.by_interval[(shared.level, shared.start, shared.end)] is cells[2]
+    assert index.own_cell(shared, center) is cells[2]
+
+
+def test_exact_interval_cell_matches_native_block_lane_even_in_an_inline_gap():
+    shared = _interval(0)
+    cells = (_cell(0, 0, 2, width=6, interval=shared),
+             _cell(1, 0, 2, width=6, y=20, paint=9, interval=shared))
+    index = AxisBandCellIndex.build(cells)
+    upper = Rect(Decimal("0"), Decimal("2"), Decimal("1"), Decimal("2"))
+    lower = Rect(Decimal("0"), Decimal("22"), Decimal("1"), Decimal("2"))
+    absent = Rect(Decimal("0"), Decimal("42"), Decimal("1"), Decimal("2"))
+
+    assert index.own_cell(shared, upper) is cells[0]
+    assert index.own_cell(shared, lower) is cells[1]
+    assert index.own_cell(shared, absent) is None
+    assert index.host(upper) is None  # Inline gaps do not bypass own-cell admission.
 
 
 class _CountedBounds:

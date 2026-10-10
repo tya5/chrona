@@ -263,21 +263,28 @@ def _axis_contains(outer: Rect, inner: Rect, *, inline_only: bool = False) -> bo
 class AxisBandCellIndex:
     """Exact-interval lookup and ordered native tier searches, built once."""
 
-    by_interval: Mapping[tuple[str, date, date], AxisBandCellGeometry]
+    by_interval: Mapping[tuple[str, date, date], tuple[tuple[int, AxisBandCellGeometry], ...]]
     by_tier: tuple[tuple[tuple[Decimal, ...], tuple[tuple[int, AxisBandCellGeometry], ...]], ...]
 
     @classmethod
     def build(cls, cells: tuple[AxisBandCellGeometry, ...]) -> AxisBandCellIndex:
-        own: dict[tuple[str, date, date], tuple[int, AxisBandCellGeometry]] = {}
+        own: dict[tuple[str, date, date], list[tuple[int, AxisBandCellGeometry]]] = {}
         tiers: dict[int, list[tuple[int, AxisBandCellGeometry]]] = {}
         for order, cell in enumerate(cells):
             key = cell.interval.level, cell.interval.start, cell.interval.end
-            previous = own.get(key)
-            if previous is None or (cell.paint_order, order) > (previous[1].paint_order, previous[0]):
-                own[key] = order, cell
+            own.setdefault(key, []).append((order, cell))
             tiers.setdefault(cell.tier_index, []).append((order, cell))
-        return cls({key: value[1] for key, value in own.items()}, tuple(
+        return cls({key: tuple(value) for key, value in own.items()}, tuple(
             (tuple(cell.bounds.inline for _, cell in items), tuple(items)) for items in tiers.values()))
+
+    def own_cell(self, interval: AxisInterval, bounds: Rect) -> AxisBandCellGeometry | None:
+        """Match an interval's native block lane, even inside an inline cell gap."""
+        block = bounds.block + bounds.block_size / 2
+        candidates = [(cell.paint_order, order, cell)
+                      for order, cell in self.by_interval.get(
+                          (interval.level, interval.start, interval.end), ())
+                      if cell.bounds.block <= block <= cell.bounds.block + cell.bounds.block_size]
+        return max(candidates, key=lambda item: item[:2])[2] if candidates else None
 
     def host(self, bounds: Rect) -> AxisBandCellGeometry | None:
         inline, block = bounds.inline + bounds.inline_size / 2, bounds.block + bounds.block_size / 2
@@ -643,7 +650,6 @@ def _resolve_axis_label_geometry(*, request: SurfaceLayoutRequest, frame: Surfac
     x, x2 = coordinate_for_date(interval.start, frame.scale), coordinate_for_date(interval.end, frame.scale)
     logical = Rect(Decimal(str(x)), frame.axis.bounds.block, Decimal(str(max(0.0, x2 - x))),
                    frame.axis.bounds.block_size)
-    own_host = cells.by_interval.get((interval.level, interval.start, interval.end))
 
     def geometry(selected: AxisIntervalOutcome) -> AxisLabelTextGeometry:
         return _axis_label_text_geometry(theme_tokens=request.theme_tokens, tier_index=tier_index,
@@ -651,6 +657,7 @@ def _resolve_axis_label_geometry(*, request: SurfaceLayoutRequest, frame: Surfac
             scale=frame.scale, axis=frame.axis, lane=lane, declared_lanes=declared_lanes)
 
     def admission(selected: AxisLabelTextGeometry) -> tuple[bool, bool, AxisBandCellGeometry | None]:
+        own_host = cells.own_cell(interval, selected.primary.bounds)
         host = cells.host(selected.primary.bounds)
         bounds = (logical, *(cell.bounds for cell in (own_host, host) if cell is not None))
         def fits(run: AxisTextRunGeometry) -> bool:
