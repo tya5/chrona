@@ -9,6 +9,7 @@ from dataclasses import dataclass, replace
 from typing import Any, Mapping
 
 from chrona.presentation.layout.dependency_network import compose_dependency_network_surface
+from chrona.presentation.layout.canvas_viewport import DeclaredViewport
 from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
 from chrona.presentation.layout.model import LayoutError, LayoutManifest
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
@@ -23,6 +24,7 @@ from chrona.presentation.model.semantic_registry import (
     axis_band_semantic_ids, axis_label_semantic_ids, ContrastClass, PrimitiveKind, contrast_binding, contrast_bindings,
     inside_member_label_semantic, semantic_binding)
 from chrona.presentation.model.projection import shared_track_member_key
+from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.info_diagnostics import PaintOmission
 from chrona.presentation.model.diagnostic_sources import DiagnosticSubject, PrimitiveProvenance, review_row_subjects
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, ThemeTokenView
@@ -71,6 +73,7 @@ class SceneBuildInput:
     fixed_lane_preflight: FixedLanePreflight | None = None
     capacity_short_sources: tuple[CapacitySourceEvidence, ...] = ()
     surface_preparation: SurfacePreRowGeometry | None = None
+    declared_viewport: DeclaredViewport | None = None
 
 
 _REQUIRED_SOURCES = {
@@ -145,7 +148,12 @@ def _symbol_primitives(scene_id: str, source_ref: str, source_kind: str, purpose
                            PrimitiveKind.SYMBOL, source_ref, source_kind, purpose, visual_role,
                            bounds, symbol=SymbolGeometry(part.commands), paint_order=base_paint_order + index * order_step,
                            glyph_paint_mode=part.paint_mode, glyph_paint_color=part.paint_color,
-                           glyph_stroke_width=part.stroke_width,
+                           # Intrinsic catalogue width and finish are one tuple.
+                           # Role outlines keep their width in Layout; paint uses
+                           # the role binding rather than a catalogue override.
+                           glyph_stroke_width=(part.stroke_width
+                                               if part.line_cap is not None and part.line_join is not None
+                                               else None),
                            glyph_line_cap=part.line_cap, glyph_line_join=part.line_join, **shared)
             for index, part in enumerate(completed_parts)]
 
@@ -385,7 +393,8 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
                       visual_requests: tuple[Any, ...] = (),
                       fixed_lane_preflight: FixedLanePreflight | None = None,
                       capacity_short_sources: tuple[CapacitySourceEvidence, ...] = (),
-                      surface_preparation: SurfacePreRowGeometry | None = None) -> SceneBuildInput:
+                      surface_preparation: SurfacePreRowGeometry | None = None,
+                      declared_viewport: DeclaredViewport | None = None) -> SceneBuildInput:
     """Bind validated v0.5 inputs without reopening authoring or legacy contracts."""
     if not isinstance(layout_manifest, LayoutManifest):
         raise SceneBuildError("E_PRESENTATION_LAYOUT_REQUIRED", "/layoutManifest")
@@ -410,7 +419,7 @@ def build_scene_input(*, projection: Any, surface_content: SurfaceContentInput,
     return SceneBuildInput(projection, surface_content, layout_manifest,
                            ThemeTokenView(resolved_theme), font_metrics, measured_sources,
                            dict(capabilities), visual_profile, viewport, icon_assets, visual_requests,
-                           fixed_lane_preflight, capacity_short_sources, surface_preparation)
+                           fixed_lane_preflight, capacity_short_sources, surface_preparation, declared_viewport)
 
 
 def compose_review_surface(value: SceneBuildInput) -> SceneSurface:
@@ -448,6 +457,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             visual_requests=value.visual_requests,
             fixed_lane_preflight=value.fixed_lane_preflight,
             capacity_short_sources=value.capacity_short_sources,
+            declared_viewport=value.declared_viewport,
         ))
         composition = compose_surface_layout(request, prepared=value.surface_preparation)
     except LayoutError as error:
@@ -709,7 +719,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             if item.source_type == "point":
                 # A Theme that declares the `gate` role paints primary gates with it (#991); a baseline or
                 # scenario gate keeps its own role.
-                gate_role = ("gate" if planned_role == "planned" and value.theme_tokens.has_role("gate") else planned_role)
+                gate_role = resolve_point_paint_role(planned_role, gate_declared=value.theme_tokens.has_role("gate"))
                 primitives.extend(_symbol_primitives(planned_id, item.object_id, "object", planned_binding.purpose, gate_role,
                                                     bounds, planned_mark.symbol_parts,
                                                     primitive_ids=planned_ids,
@@ -794,8 +804,9 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                           float(planned_mark.bounds.inline_size), float(planned_mark.bounds.block_size))
                 primitives.extend(_symbol_primitives(f"planned:{instance_id}", item.object_id, "object",
                                                     binding.purpose,
-                                                    "gate" if (binding.scene_role == "planned" and item.source_type == "point"
-                                                               and value.theme_tokens.has_role("gate")) else binding.scene_role,
+                                                    resolve_point_paint_role(binding.scene_role,
+                                                        gate_declared=value.theme_tokens.has_role("gate"))
+                                                    if item.source_type == "point" else binding.scene_role,
                                                     bounds, planned_mark.symbol_parts,
                                                     corner_radius=planned_mark.corner_radius,
                                                     path_commands=planned_mark.path_commands, href=href, link_title=link_title,
@@ -877,8 +888,9 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
             # A legend key is a miniature of the chart's own gate, including a
             # Theme-bound multi-part glyph (#427, #464).
             primitives.extend(_symbol_primitives(mark.placement_id, mark.source_ref, "legend", legend_binding.purpose,
-                                                 "gate" if (mark.source_ref == "milestone" and value.theme_tokens.has_role("gate"))
-                                                 else mark.source_ref, bounds, mark.symbol_parts,
+                                                 resolve_point_paint_role(mark.source_ref,
+                                                     gate_declared=value.theme_tokens.has_role("gate"), legend=True),
+                                                 bounds, mark.symbol_parts,
                                                  corner_radius=mark.corner_radius, slot_id=mark.slot_id,
                                                  paint_order=mark.paint_order))
         else:
@@ -1164,6 +1176,7 @@ def _compose_table_timeline_surface(value: SceneBuildInput) -> SceneSurface:
                         lane_obstacles=lane_obstacles, lane_clearance=lane_clearance,
                         diagnostic_provenance=placed_surface.diagnostic_provenance,
                         primitive_provenance=tuple(primitive_provenance))
+    surface = replace(surface, canvas_warning=placed_surface.canvas_warning)
     return project_canvas_overlays(surface, placed_surface.canvas_overlays, value.theme_tokens, value.visual_profile)
 
 
@@ -1188,7 +1201,8 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
         placed = compose_dependency_network_surface(SurfaceLayoutRequest(
             projection=projection, surface_content=value.surface_content,
             layout_manifest=value.layout_manifest, measured_sources=value.measured_sources,
-            theme_tokens=value.theme_tokens, font_metrics=value.font_metrics))
+            theme_tokens=value.theme_tokens, font_metrics=value.font_metrics,
+            declared_viewport=value.declared_viewport))
     except LayoutError as error:
         raise SceneBuildError(error.diagnostic_id, error.path) from error
     slots = tuple(SceneSlot(item.node_id, item.source, None,
@@ -1279,4 +1293,5 @@ def _compose_dependency_network_surface(value: SceneBuildInput) -> SceneSurface:
                         fit_warnings=placed.fit_warnings,
                         diagnostic_provenance=getattr(placed, "diagnostic_provenance", ()),
                         primitive_provenance=tuple(primitive_provenance))
+    surface = replace(surface, canvas_warning=placed.canvas_warning)
     return project_canvas_overlays(surface, placed.canvas_overlays, value.theme_tokens, value.visual_profile)

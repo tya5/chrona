@@ -19,6 +19,11 @@ class Diagnostic:
     message: str
     path: str | None = None
     details: Mapping[str, Any] | None = field(default=None, kw_only=True, compare=False, hash=False)
+    # The offending node's position in a YAML input: {line, column, endLine, endColumn} (#1303); not part of equality.
+    source_range: Mapping[str, int] | None = field(default=None, kw_only=True, compare=False, hash=False)
 
     def as_dict(self) -> dict[str, Any]:
-        return {key: value for key, value in asdict(self).items() if value is not None}
+        record = {key: value for key, value in asdict(self).items() if value is not None and key != "source_range"}
+        if self.source_range is not None:
+            record["sourceRange"] = dict(self.source_range)
+        return record

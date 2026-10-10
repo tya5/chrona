@@ -339,7 +339,8 @@ dispatched (it is read as YAML). The adapter compiles through the use case, then
 - A finding of the scheduler or of the presentation stage's scheduling on a compiled plan (for example
   `E_FIXED_TARGET_VIOLATION`, `E_UNSUPPORTED_CYCLE`, `E_CONTRADICTORY_BOUNDS`) is positioned through the source map and
   gets the compiler's `source`, `sourceRange` and a hint, with its own code and component. A YAML Project keeps
-  the legacy diagnostic shape exactly.
+  the legacy diagnostic shape, except that its Core validation findings (`E_SCHEMA`, `E_REFERENCE`, `E_PARENT_NOT_FOUND`, ...) carry the
+  node's `sourceRange` (Spec 56 section 3.3).
 
 Every other command (`render-review`, `render-review-gallery`, `materialize`, `review`, `baseline-*`, `command-*`,
 `actual-*`, `workspace`, `render-workspace`, `authoring-command-apply`) reads YAML only. A `.chrona` path cannot become

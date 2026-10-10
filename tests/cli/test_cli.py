@@ -1282,8 +1282,8 @@ def test_cli_schedule_fixed_target_rejection_carries_details_and_other_records_d
     assert record["details"]["earliest"] == "2027-05-10" and record["details"]["forcedBy"] == "b-l"
 
     other = run(project({"x": {"type": "task", "schedule": {"mode": "scheduled", "amount": "0d"}}}, []))
-    assert other["diagnostics"] and all(list(item) == ["code", "severity", "component", "sourceRef", "revisionRefs", "message"]
-                                        for item in other["diagnostics"])
+    assert other["diagnostics"] and all([key for key in item if key != "sourceRange"] == ["code", "severity", "component", "sourceRef", "revisionRefs", "message"]
+                                        for item in other["diagnostics"])  # a validation finding adds its sourceRange (#1303)
 
 
 def test_cli_schedule_reads_an_immutable_snapshot_without_path_fallback(tmp_path, monkeypatch, capsys):

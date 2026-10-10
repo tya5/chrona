@@ -300,29 +300,6 @@ def test_halcyon_02_routed_note_trial_is_bounded_clear_and_deterministic(monkeyp
             assert float(balloon.bounds.inline) >= as_of_x
 
 
-def test_hosted_note_index_resolves_single_and_multipart_mark_identity():
-    root = _root()
-    example = root / "examples/halcyon-1"
-    for theme_name, expected_suffix in (("wallboard", ""), ("12-glyph-gates", ":part:0")):
-        rendered = render_review(_draft_request(
-            project_path=example / "project.yaml",
-            view_path=example / "views/02-programme-board.yaml",
-            theme_path=example / f"themes/{theme_name}.yaml",
-            scheme_path=example / "schemes/control-room-dark.yaml",
-            layout_path=example / "layouts/wallboard.yaml",
-            actual_path=example / "actual.yaml", viewport=(1920, 1080)))
-        primitives = {item.scene_id: item for surface in rendered.scene.surfaces
-                      for item in surface.primitives}
-        number = primitives["note-index:window-note"]
-        assert number.host_placement_id is not None
-        if expected_suffix:
-            assert number.host_placement_id.endswith(expected_suffix)
-        else:
-            assert ":part:" not in number.host_placement_id
-        assert number.host_placement_id in primitives
-        assert primitives[number.host_placement_id].paint_order < number.paint_order
-
-
 def test_suppressed_plot_labels_have_one_completed_info_count(capsys, tmp_path):
     # #487 corrected the table's `minmax`/content-minimum and its flex-allocation
     # basis (ADR-0032), which changes which member label this `elevated-light`

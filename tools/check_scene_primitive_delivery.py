@@ -75,7 +75,7 @@ OWNERS = {
         _owner("inspection", "scene/serialization.py", "surface_id slots rows groups scale_manifest primitives canvas_paint columns canvas_bounds fit_warnings decoration_dispositions lane_mode lane_members lane_obstacles lane_clearance"),
         _owner("derived", "scene/v05_builder.py", "diagnostics info_diagnostics"),
         # Runtime warning provenance is consumed by the use case, not serialized.
-        _owner("derived", "../usecases/render_review.py", "diagnostic_provenance primitive_provenance"),
+        _owner("derived", "../usecases/render_review.py", "diagnostic_provenance primitive_provenance canvas_warning"),
     ),
     "SceneProvenance": (_owner("inspection", "scene/serialization.py", "mode chrona_version resources"),),
     "DecorationDisposition": (_owner("inspection", "scene/serialization.py", "visual_role disposition"),),

@@ -238,6 +238,14 @@ stroke color, without requiring a redundant role `strokeWidth`. Layout carries
 the completed width/finish through lane footprints and Scene projection.
 Inline #464 glyphs retain their existing Theme-width behavior.
 
+An actually filled point glyph may additionally carry the concrete role's
+declared outline (Specification 07, #1287). Layout completes the boundary of
+the nonzero-filled union, not the separate part traces, before lane footprints
+and legend projection. Original catalogue parts, source-unit stroke finishes,
+and semantic ports are unchanged. The additional part uses the role width;
+Scene supplies its ink and adapters serialize its completed geometry. This
+does not apply to annotation artwork, stamps, or other non-point consumers.
+
 A pattern is a finite repeat tile with positive dimensions, an angle in
 `[0,360)` clockwise about tile center, and an ordered list of at most 64
 bounded primitives: circles, filled rectangles and stroked lines/arcs. A circle
