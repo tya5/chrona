@@ -2,11 +2,12 @@
 
 # Issue #1287 — point glyph outline acceptance
 
-Validation checkpoint: `7a3d12472f1908db0e32b9062c2b20516693eed8`.
-Preparation now ordinarily adopts merged #1283 and ready main
-`0fd085d17422fd332c49b4b75ebdf43fe9459f93` at `dc54cc886a63cc78ece88fbdf7eaae23244e091a`.
-Product, tests, schemas, dependencies and tooling remain byte-identical to the tested checkpoint.
-Final PR publication waits for higher-priority #1327; this is not release acceptance.
+Validation checkpoint: `b68774170089050905c2085250dea889ba3f560f`.
+Preparation ordinarily adopts published main
+`eb4e83fd601f7d5a1621a6fc91323266a7ea50b4`, including merged #1283,
+#1327 and dev B's #1219. The affected regression batch passes on that tree.
+Final PR publication waits for the current main's successful derived gate;
+this is not release acceptance.
 [Selected design and architecture review](https://github.com/tya5/chrona/issues/1287#issuecomment-6088427990).
 Local acceptance is verified; public artifact and release gates remain pending. Do not close.
 
@@ -26,11 +27,10 @@ Local acceptance is verified; public artifact and release gates remain pending. 
 
 ## Programme-level criteria (optional)
 
-Current prepared-parent integration/outline/projection batch: 39 passed (36.90s),
+Current prepared-parent integration/outline/projection batch: 39 passed (34.60s),
 including the independent frozen projection comparisons.
 Independent adoption audit confirms exactly the 18 owned files relative to the
 published parent, with no schema, examples, generated or workflow changes.
-Earlier focused batch: 281 passed (29.93s); expanded integration batch: 11 passed (16.49s), including complete-Scene/SVG byte checks and catalogue finish preservation.
 [Lane footprint/port test](../../../tests/unit/chrona/presentation/layout/test_point_outline.py) retains the completed gate width rather than planned-role fallback and keeps semantic ports on the original part. [Projection test](../../../tests/unit/chrona/presentation/scene/test_mark_geometry.py) separates intrinsic catalogue finish metadata from a role-bound outline.
 
 ## Architecture conclusion
