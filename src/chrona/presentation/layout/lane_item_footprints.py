@@ -26,6 +26,8 @@ from chrona.presentation.layout.lane_subtracks import (
 )
 from chrona.presentation.layout.lane_visual_binding import bind_lane_visual_requests
 from chrona.presentation.layout.mark_geometry import compose_item_marks
+from chrona.presentation.layout.mark_facet_visibility import admitted_source_selection
+from chrona.presentation.layout.lane_window_marks import complete_lane_window_mark_account
 from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.obstacles import ObstacleRect, ObstacleSegment
 from chrona.presentation.layout.presentation import MarkBandFrame
@@ -68,10 +70,18 @@ def compose_lane_item_footprints(
     closure = close_lane_projection(projection, as_of=as_of)
     mark_visibility_index = ensure_item_mark_visibility_index(
         projection, as_of=as_of, index=mark_visibility_index)
+    window_account = complete_lane_window_mark_account(
+        projection, as_of=as_of, visibility_index=mark_visibility_index)
+    omitted_mark_keys = {(absence.expected.instance, absence.expected.purpose)
+                         for absence in window_account.absences}
     items = _item_by_instance(projection, closure)
     bound_marks: dict = {}
     if visual_requests:
         _, bound_marks = bind_lane_visual_requests(projection, closure, visual_requests)
+    # Selectors were checked against the original source inventory above.
+    # An intentionally omitted host is unpainted, not an invalid selector.
+    bound_marks = {key: value for key, value in bound_marks.items()
+                   if key not in omitted_mark_keys}
 
     member_order = tuple(item_id for lane in membership.lanes for item_id in lane.member_item_ids)
     if (len(set(member_order)) != len(member_order)
@@ -111,7 +121,7 @@ def compose_lane_item_footprints(
             source_kind=instance.source_kind, frame=frame, as_of=as_of,
             theme_tokens=theme_tokens, slot_id=slot_id,
             emit_missing_actual=lane_missing_actual_visible(projection), emit_diagnostics=False,
-            selection=visibility.selection,
+            selection=admitted_source_selection(visibility),
         )
         marks_by_instance[instance] = composition.marks
     all_marks = tuple(mark for instance in closure.instances for mark in marks_by_instance[instance])
@@ -188,7 +198,10 @@ def compose_lane_item_footprints(
                 for child in child_instances:
                     _add_overlay_pairs(collected, host, child)
 
+    wholly_omitted = window_account.wholly_omitted_instances
     if any(not any(collected.get(instance) for instance in instances_by_member.get(member_id, ()))
+           and not all(instance in wholly_omitted
+                       for instance in instances_by_member.get(member_id, ()))
            for member_id in member_order):
         raise LayoutError("E_LAYOUT_LANE_FOOTPRINT_EMPTY", "/projection/laneRows")
     return tuple(

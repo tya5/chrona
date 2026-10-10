@@ -32,6 +32,13 @@ class LaneWindowMarkAccount:
     admitted: tuple[ExpectedLaneMark, ...]
     absences: tuple[LaneWindowAbsence, ...]
 
+    @property
+    def wholly_omitted_instances(self) -> frozenset[LaneProjectionInstance]:
+        """Only original nonempty mark inventories with no admitted mark."""
+        original = {mark.instance for mark in self.source.expected_marks}
+        visible = {mark.instance for mark in self.admitted}
+        return frozenset(original - visible)
+
 
 def _invalid(reason: str) -> None:
     raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/laneRows",

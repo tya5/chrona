@@ -7,7 +7,7 @@ from decimal import Decimal
 from math import isfinite
 from typing import TYPE_CHECKING, TypeAlias
 
-from chrona.presentation.layout.lane_projection import LaneProjectionInstance
+from chrona.presentation.layout.lane_projection import LaneProjectionInstance, lane_instance_owners
 from chrona.presentation.layout.lane_preflight import LaneInlineFrame
 from chrona.presentation.layout.obstacles import (
     ObstacleGeometry,
@@ -157,6 +157,7 @@ def assign_lane_subtracks(
     mark_band_size: float,
     clearance: float = 0.0,
     reserved_band_bounds: tuple[float, float] | None = None,
+    mark_visibility_index: ItemMarkVisibilityIndex | None = None,
 ) -> LaneSubtrackPlan:
     """Place projection instances inside immutable data-only lanes.
 
@@ -173,7 +174,39 @@ def assign_lane_subtracks(
         raise _lane_error("E_LAYOUT_LANE_SUBTRACK_INPUT", "reserved band bounds",
                           bounds=reserved_band_bounds)
     lane_members, assignments = _validate_membership(membership)
-    units, overlay_pairs = _validate_footprints(item_footprints, set(assignments), assignments)
+    wholly_omitted: frozenset[LaneProjectionInstance] = frozenset()
+    if mark_visibility_index is not None:
+        # Consume the source account, never infer omission from empty geometry.
+        from chrona.presentation.layout.lane_window_marks import complete_lane_window_mark_account
+        if mark_visibility_index.projection.lane_membership is not membership:
+            raise _lane_error("E_LAYOUT_LANE_SUBTRACK_INPUT", "visibility membership mismatch")
+        account = complete_lane_window_mark_account(
+            mark_visibility_index.projection, as_of=mark_visibility_index.as_of,
+            visibility_index=mark_visibility_index)
+        wholly_omitted = account.wholly_omitted_instances
+        occurrence_owners = lane_instance_owners(mark_visibility_index.projection, account.source)
+        # A comparison occurrence has its own item identity while belonging
+        # to the primary countable member. Never conflate those two IDs.
+        member_keys = {
+            (row.lane_id, item.item_id or item.object_id, item.object_id, item.source_kind): member_id
+            for row in mark_visibility_index.projection.lane_rows
+            for item, member_id in zip(row.items, row.member_item_ids, strict=True)
+        }
+        owners = {
+            instance: (lane_id, member_keys[(lane_id, instance.item_id,
+                                           instance.object_id, instance.source_kind)])
+            for instance, (lane_id, _) in occurrence_owners.items()
+        }
+        if (not isinstance(item_footprints, tuple)
+                or any(not isinstance(unit, LaneItemFootprints) for unit in item_footprints)
+                or {unit.projection_instance_id for unit in item_footprints} != set(owners)
+                or any(unit.item_id not in assignments or
+                       owners.get(unit.projection_instance_id) !=
+                       (assignments[unit.item_id].lane_id, unit.item_id)
+                       for unit in item_footprints)):
+            raise _lane_error("E_LAYOUT_LANE_SUBTRACK_INPUT", "visibility occurrence mismatch")
+    units, overlay_pairs = _validate_footprints(
+        item_footprints, set(assignments), assignments, wholly_omitted=wholly_omitted)
     ordered_units = [unit for lane in membership.lanes for item_id in lane_members[lane.lane_id]
                      for unit in units[item_id]]
 
@@ -306,6 +339,7 @@ def _validate_membership(membership: LaneMembership) -> tuple[dict[str, tuple[st
 def _validate_footprints(
     values: tuple[LaneItemFootprints, ...], expected_ids: set[str],
     assignments: dict[str, LaneAssignment],
+    *, wholly_omitted: frozenset[LaneProjectionInstance] = frozenset(),
 ) -> tuple[dict[str, list[LaneItemFootprints]], set[frozenset[str]]]:
     if not isinstance(values, tuple):
         raise TypeError("E_LAYOUT_LANE_SUBTRACK_INPUT: footprints must be a tuple")
@@ -318,7 +352,9 @@ def _validate_footprints(
                 or not isinstance(unit.item_id, str) or unit.item_id not in expected_ids
                 or not isinstance(unit.projection_instance_id, LaneProjectionInstance)
                 or unit.projection_instance_id in instance_ids
-                or not isinstance(unit.facets, tuple) or not unit.facets):
+                or not isinstance(unit.facets, tuple)
+                or (not unit.facets and unit.projection_instance_id not in wholly_omitted)
+                or (unit.facets and unit.projection_instance_id in wholly_omitted)):
             raise _lane_error("E_LAYOUT_LANE_SUBTRACK_INPUT", "item footprints",
                               item_id=getattr(unit, "item_id", None),
                               projection_instance_id=getattr(unit, "projection_instance_id", None),

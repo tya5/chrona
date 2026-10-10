@@ -172,7 +172,8 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
     footprints = (provisional_footprints if scale is provisional_scale else
                   compose_lane_item_footprints(scale=scale, **footprint_inputs))
     subtracks = assign_lane_subtracks(membership, footprints, mark_band_size=mark_band_size,
-                                     reserved_band_bounds=mark_band_allocation.outer_bounds)
+                                     reserved_band_bounds=mark_band_allocation.outer_bounds,
+                                     mark_visibility_index=mark_visibility_index)
     resolved_visuals = resolved_lane_visual_requests(
         projection, visual_requests, as_of=surface_content.as_of)
     measured_labels = measure_lane_member_labels(

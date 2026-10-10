@@ -2,17 +2,21 @@ from dataclasses import replace
 from datetime import date
 from decimal import Decimal
 
+import pytest
+
 from chrona.presentation.layout.lane_item_footprints import compose_lane_item_footprints
 from chrona.presentation.layout.lane_subtracks import assign_lane_subtracks
 from chrona.presentation.layout.obstacles import ObstacleRect
 from chrona.presentation.layout.presentation import MarkGeometry
-from chrona.presentation.layout.surface_quality import ScalePlacement
+from chrona.presentation.layout.surface_quality import ScalePlacement, VisualRequest
+from chrona.presentation.layout.surface_mark_visibility import build_item_mark_visibility_index
 from chrona.presentation.model.projection import (
     ObservationState,
     ReviewItem,
     ReviewLaneRowProjection,
     ReviewProjection,
     ReviewRowProjection,
+    WindowMode,
 )
 from chrona.presentation.review.lane_membership import (
     Lane,
@@ -33,6 +37,113 @@ class _Theme:
 
     def progress_track(self, _role):
         return (Decimal("0.1"), Decimal(0))
+
+
+def _window_footprint_fixture(*, point=False, mode=WindowMode.EXPLICIT, all_outside=False):
+    start, end = date(2026, 1, 3), date(2026, 1, 6)
+    days = (1, 6) if all_outside else (1, 4, 6)
+    items = tuple(ReviewItem(
+        f"object-{day}", f"Item {day}", "point" if point else "span",
+        {"at": date(2026, 1, day)} if point else {
+            "start": date(2026, 1, day), "end": date(2026, 1, day + 1)},
+        None, None, ("planned",), item_id=f"item-{day}", source_kind="primary",
+    ) for day in days)
+    members = tuple(item.item_id for item in items)
+    membership = LaneMembership((Lane("lane", "group", members),), tuple(
+        LaneAssignment(member, "lane", "group", "dates", "fixed") for member in members))
+    projection = ReviewProjection(
+        items, (start, end), (), (), rows=tuple(
+            ReviewRowProjection(f"row-{item.item_id}", item.title, "group", item.item_id, (item,))
+            for item in items), lane_membership=membership,
+        lane_rows=(ReviewLaneRowProjection("lane", "group", items, members),), window_mode=mode,
+    )
+    index = build_item_mark_visibility_index(projection, as_of=None)
+    kwargs = dict(
+        projection=projection, scale=ScalePlacement("timeline", "scale", start, end, 0, 30, 0, 10),
+        as_of=None, theme_tokens=_Theme(), mark_band_size=10,
+        role_geometries={role: MarkGeometry(0.4, 0.1, 0, 0)
+                         for role in ("planned", "actual", "missing-actual")},
+        slot_id="timeline", icon_assets={}, mark_visibility_index=index,
+    )
+    return projection, index, kwargs
+
+
+@pytest.mark.parametrize("point", (False, True))
+def test_window_omissions_keep_lane_members_but_never_measure_outside_marks(point, monkeypatch):
+    projection, index, kwargs = _window_footprint_fixture(point=point)
+    from chrona.presentation.layout import lane_item_footprints as owner
+    original = owner.compose_item_marks
+    measured = []
+    def checked(**inputs):
+        measured.extend((inputs["item"].item_id, facet.facet) for facet in inputs["selection"].facets)
+        return original(**inputs)
+    monkeypatch.setattr(owner, "compose_item_marks", checked)
+    footprints = compose_lane_item_footprints(**kwargs)
+    assert measured == [("item-4", "planned")]
+    assert tuple(unit.item_id for unit in footprints) == ("item-1", "item-4", "item-6")
+    assert footprints[0].facets == footprints[2].facets == ()
+    assert footprints[1].facets
+    plan = assign_lane_subtracks(projection.lane_membership, footprints, mark_band_size=10,
+                                mark_visibility_index=index)
+    assert tuple(item.item_id for item in plan.items) == ("item-1", "item-4", "item-6")
+    assert plan.lanes[0].subtrack_count == 1
+    with pytest.raises(ValueError, match="E_LAYOUT_LANE_SUBTRACK_INPUT"):
+        assign_lane_subtracks(projection.lane_membership, footprints, mark_band_size=10)
+
+
+def test_fully_omitted_lane_keeps_ordinary_track_without_fake_obstacle():
+    projection, index, kwargs = _window_footprint_fixture(all_outside=True)
+    footprints = compose_lane_item_footprints(**kwargs)
+    assert all(unit.facets == () for unit in footprints)
+    plan = assign_lane_subtracks(projection.lane_membership, footprints, mark_band_size=10,
+                                mark_visibility_index=index)
+    assert len(plan.items) == 2
+    assert plan.lanes[0].subtrack_count == 1
+    assert plan.lanes[0].block_extent == 10
+
+
+def test_valid_visual_selector_for_omitted_host_is_unpainted():
+    _, _, kwargs = _window_footprint_fixture(all_outside=True)
+    kwargs["visual_requests"] = (VisualRequest(
+        "mark", (("object", "object-1"), ("facet", "planned")), ref="icon:user"),)
+    # There is intentionally no icon asset: an omitted host never measures or paints it.
+    assert all(not unit.facets for unit in compose_lane_item_footprints(**kwargs))
+    kwargs["visual_requests"] = (VisualRequest(
+        "mark", (("object", "unknown"), ("facet", "planned")), ref="icon:user"),)
+    with pytest.raises(ValueError, match="E_LAYOUT_VISUAL_TARGET"):
+        compose_lane_item_footprints(**kwargs)
+
+
+def test_window_account_does_not_excuse_missing_in_window_footprint_or_add_outside_ink():
+    projection, index, kwargs = _window_footprint_fixture()
+    footprints = compose_lane_item_footprints(**kwargs)
+    missing = (footprints[0], replace(footprints[1], facets=()), footprints[2])
+    outside_ink = (replace(footprints[0], facets=footprints[1].facets), *footprints[1:])
+    for invalid in (missing, outside_ink):
+        with pytest.raises(ValueError, match="E_LAYOUT_LANE_SUBTRACK_INPUT"):
+            assign_lane_subtracks(projection.lane_membership, invalid, mark_band_size=10,
+                                 mark_visibility_index=index)
+
+
+def test_derived_window_footprints_and_tracks_retain_existing_identity():
+    projection, index, kwargs = _window_footprint_fixture(mode=WindowMode.SELECTED_PLANNED)
+    footprints = compose_lane_item_footprints(**kwargs)
+    assert all(unit.facets for unit in footprints)
+    with_index = assign_lane_subtracks(projection.lane_membership, footprints, mark_band_size=10,
+                                      mark_visibility_index=index)
+    assert with_index == assign_lane_subtracks(projection.lane_membership, footprints, mark_band_size=10)
+
+
+def test_omission_proof_cannot_be_borrowed_by_another_member_or_projection():
+    projection, index, kwargs = _window_footprint_fixture()
+    footprints = compose_lane_item_footprints(**kwargs)
+    borrowed = (replace(footprints[0], item_id="item-4"), *footprints[1:])
+    with pytest.raises(ValueError, match="visibility occurrence mismatch"):
+        assign_lane_subtracks(projection.lane_membership, borrowed, mark_band_size=10,
+                             mark_visibility_index=index)
+    unrelated = replace(projection.lane_membership)
+    with pytest.raises(ValueError, match="visibility membership mismatch"):
+        assign_lane_subtracks(unrelated, footprints, mark_band_size=10, mark_visibility_index=index)
 
 
 def test_footprints_follow_fixed_lane_member_identity_and_zero_origin_geometry():
