@@ -2,7 +2,7 @@
 
 # Issue #1283 — text-sized group-header band acceptance
 
-Prepared source: `f5fc106ffb9eef37c4204e22c4b72e7282eee05e`, ordinarily adopting merged #1284 source `92fdc4cbefc7a9509328f031a15b4736a4a56394` and the batched final acceptance records. [Selected design, architecture review and publication plan](https://github.com/tya5/chrona/issues/1283#issuecomment-6087767756). Layout consumes completed geometry; Scene/adapters do not measure or fit bands. Exact ready-base adoption, PR artifact/checks and final-review-containing exact-main release remain pending; do not close.
+Validation source: `62ed63a33596e5717383f547c91d3599e3e2c2b9`, ordinarily adopting exact ready main `484f5cd83ac24e91b7d435be18dfb5be1ebade04` and the batched final acceptance records. [Selected design, architecture review and publication plan](https://github.com/tya5/chrona/issues/1283#issuecomment-6087767756). Layout consumes completed geometry; Scene/adapters do not measure or fit bands. PR artifact/checks and final-review-containing exact-main release remain pending; do not close.
 
 ## Literal issue acceptance
 
@@ -20,4 +20,4 @@ Prepared source: `f5fc106ffb9eef37c4204e22c4b72e7282eee05e`, ordinarily adopting
 
 ## Programme-level criteria (optional)
 
-None. After source adoption, integration/vocabulary batch: 83 passed (37.98s); earlier header text/run batch: 107 passed. L1 on ready e614: 37 equal and one declared group-header extent delta, no stale findings; full S0 and inventory/import/delivery checks passed earlier. Direct legacy-byte replay remains in the integration tests. Required next gates: exact ready-base adoption and L1, one product PR including separate final-record commits, exact-head artifact/checks, then final-review-containing main three-OS release. No local full pytest or authored corpus regeneration.
+None. After source adoption, integration/vocabulary batch: 83 passed (37.98s); earlier header text/run batch: 107 passed. Final ready-base adoption changes only generated diagnostic inventory, not tested product code. Fresh L1 against exact ready 484f5: 37 equal and one declared group-header extent delta, no stale findings; full S0 and inventory/import/delivery checks passed earlier. Direct legacy-byte replay remains in the integration tests. Required next gates: one product PR including separate final-record commits, exact-head artifact/checks, then final-review-containing main three-OS release. No local full pytest or authored corpus regeneration.
