@@ -754,6 +754,15 @@ fallback and typed shortage evidence; it MUST NOT claim that the host grew,
 treat completed-canvas overflow as successful reallocation, manufacture
 extra blank allocation, or refuse an otherwise valid render. The completed
 canvas still includes emitted geometry as required by Section 13.
+The least sufficient extent is the least integral extent whose complete native
+arrangement satisfies every requirement. While a block extent cannot change any
+inline demand, allocations are non-decreasing in it and one probe's deficit
+finds that extent. When a node's inline size is derived from its block size (an
+inline `aspectRatio`), a taller extent can widen a flow so that it wraps into
+fewer lines and shrinks a slot, so the requirement is not monotone in the
+extent: Layout then selects the first integral extent from the requested minimum
+up to the verified deficit extent at which the native manifest fits, never a
+later one found by bisection (#1214).
 
 For content-sized allocation, the measured natural per-row and table-timeline
 requirements MUST be established before `rowDistribution: fill` distributes

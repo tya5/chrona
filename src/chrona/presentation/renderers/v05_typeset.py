@@ -153,13 +153,16 @@ def _unsupported_details(surface: SceneSurface, target: str) -> str:
             features.append("symbol")
         if node.stroke_clip is not None:
             features.append("aligned stroke clip")
+        if node.text_layout is not None and node.text_layout.runs:
+            features.append("small-caps runs")
         if features:
             reasons.append(f"{node.scene_id!r}: {', '.join(features)}")
     return f"{target} cannot serialize completed features ({'; '.join(reasons)}); select SVG"
 
 
 def render_v05_typst(surface: SceneSurface) -> str:
-    if any(node.stroke_clip is not None for node in surface.primitives):
+    if any(node.stroke_clip is not None or (node.text_layout is not None and node.text_layout.runs)
+           for node in surface.primitives):
         raise _error("E_VISUAL_CAPABILITY_UNSUPPORTED", _unsupported_details(surface, "Typst"))
     if _requires_wobble(surface) or any(node.marker_start is not None or node.marker_end is not None or node.pattern is not None or node.symbol is not None for node in surface.primitives):
         raise _error("E_VISUAL_CAPABILITY_UNSUPPORTED", _unsupported_details(surface, "Typst"))
@@ -210,7 +213,8 @@ def render_v05_typst(surface: SceneSurface) -> str:
 
 
 def render_v05_tikz(surface: SceneSurface) -> str:
-    if any(node.stroke_clip is not None for node in surface.primitives):
+    if any(node.stroke_clip is not None or (node.text_layout is not None and node.text_layout.runs)
+           for node in surface.primitives):
         raise _error("E_VISUAL_CAPABILITY_UNSUPPORTED", _unsupported_details(surface, "TikZ"))
     if _requires_wobble(surface) or any(node.marker_start is not None or node.marker_end is not None or node.pattern is not None for node in surface.primitives):
         raise _error("E_VISUAL_CAPABILITY_UNSUPPORTED", _unsupported_details(surface, "TikZ"))

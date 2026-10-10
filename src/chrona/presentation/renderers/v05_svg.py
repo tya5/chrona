@@ -366,9 +366,18 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
                    for size in fit.line_inline_sizes]
                   if fit is not None and fit.mode == TEXT_FOLLOWS_BOX else [""] * len(lines))
         pad = " " * fit.end_pad_spaces if fit is not None and fit.mode == BOX_FOLLOWS_TEXT else ""
-        body = (escape(lines[0]) + pad if len(lines) == 1 else "".join(
+        def line_text(index: int) -> str:
+            # A small-caps line is its measured runs, each at its own size (#1285); anything else is the line itself.
+            if not layout.runs:
+                return escape(lines[index])
+            return "".join(
+                escape(run.text) if run.font_size == layout.font_size
+                else f'<tspan font-size="{number(run.font_size)}">{escape(run.text)}</tspan>'
+                for run in layout.runs[index])
+
+        body = (line_text(0) + pad if len(lines) == 1 else "".join(
             f'<tspan x="{number(node.baseline[0])}" dy="{0 if index == 0 else number(layout.font_size * layout.line_height)}"'
-            f'{fitted[index]}>{escape(line)}{pad}</tspan>' for index, line in enumerate(lines)))
+            f'{fitted[index]}>{line_text(index)}{pad}</tspan>' for index, line in enumerate(lines)))
         single = fitted[0] if len(lines) == 1 else ""
         preserve = ' xml:space="preserve"' if pad else ""
         treatment = " ".join(part for part in (
