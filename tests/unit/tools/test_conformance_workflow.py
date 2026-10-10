@@ -47,3 +47,8 @@ def test_workflow_installs_the_mcp_extra_where_the_mcp_tests_must_run_and_pins_t
     pinned = re.search(r"'mcp==([0-9.]+)'", jobs["mcp-floor"])
     assert pinned and Version(pinned.group(1)) == Version(floor.group(1)) and "tests/mcp" in jobs["mcp-floor"]
     assert "mcp-floor" not in re.search(r"derived-ready:\n    needs: \[([^\]]*)\]", workflow).group(1)
+
+
+def test_the_wheel_job_runs_the_documented_commands_against_the_built_wheel():
+    workflow = (Path(__file__).resolve().parents[3] / ".github" / "workflows" / "conformance.yml").read_text(encoding="utf-8")
+    assert "tools/wheel_doc_check.py dist/chrona-*.whl" in workflow

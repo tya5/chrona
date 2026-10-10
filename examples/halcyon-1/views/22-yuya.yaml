@@ -4,7 +4,7 @@ id: halcyon-22-yuya
 body:
   surface: table-timeline
   heading:
-    title: 計画表　HALCYON-1
+    title: 計画表　{project}
     subtitle: PROGRAMME BOARD · 二〇二七年 · 工学暦
     dateForm: day-month-year
   rows:
@@ -198,36 +198,12 @@ body:
     headerOrientation: horizontal
   selection:
     include:
-      ids:
-      - pdr
-      - structure
-      - avionics
-      - eps
-      - bus-test
-      - cdr
-      - optics
-      - detector
-      - payload-tvac
-      - payload-delivery
-      - integration
-      - vibration
-      - tvac
-      - emc
-      - psr
-      - mcs
-      - station
-      - comms-test
-      - launch-contract
-      - shipment
-      - campaign
-      - frr
-      - launch
-      - rehearsals
-      - leop
-      - first-light
       types:
       - span
       - point
+    exclude:
+      objectTypes:
+      - group
   grouping:
     by: field
     field: owner

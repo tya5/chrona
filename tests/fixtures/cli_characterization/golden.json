@@ -642,7 +642,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_VIEW_SCHEMA\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/body/surface\", \"revisionRefs\": [], \"message\": \"expected one of 'table-timeline', 'dependency-network'\", \"resourceKind\": \"view\", \"resourceIdentity\": \"halcyon-01-mission-brief\", \"phase\": \"schema\", \"rule\": \"enum\"}, {\"code\": \"E_THEME_SCHEMA\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/body/values/opacity.axis-band/type\", \"revisionRefs\": [], \"message\": \"expected one of 'number', 'radius', 'fontFamily', 'fontWeight', 'dashPattern', 'marker', 'pattern', 'symbol', 'textAlternative', 'lineCap', 'lineJoin', 'fidelity', 'textTransform', 'numericSpacing', 'annotationContainer', 'stampPlacement', 'writingMode'\", \"resourceKind\": \"theme\", \"resourceIdentity\": \"briefing\", \"phase\": \"schema\", \"rule\": \"enum\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_VIEW_SCHEMA\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/body/surface\", \"revisionRefs\": [], \"message\": \"expected one of 'table-timeline', 'dependency-network'\", \"resourceKind\": \"view\", \"resourceIdentity\": \"halcyon-01-mission-brief\", \"phase\": \"schema\", \"rule\": \"enum\"}, {\"code\": \"E_THEME_SCHEMA\", \"severity\": \"error\", \"component\": \"closure\", \"sourceRef\": \"/body/values/opacity.axis-band/type\", \"revisionRefs\": [], \"message\": \"expected one of 'number', 'radius', 'fontFamily', 'fontWeight', 'dashPattern', 'marker', 'pattern', 'symbol', 'textAlternative', 'lineCap', 'lineJoin', 'fidelity', 'textTransform', 'numericSpacing', 'annotationContainer', 'stampPlacement', 'writingMode', 'chipShape'\", \"resourceKind\": \"theme\", \"resourceIdentity\": \"briefing\", \"phase\": \"schema\", \"rule\": \"enum\"}]}\n"
  },
  "render-ingress-one-finding": {
   "argv": [
@@ -925,7 +925,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_REFERENCE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/relations/0/to/object\", \"revisionRefs\": [], \"message\": \"Unknown to object\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_REFERENCE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/relations/0/to/object\", \"revisionRefs\": [], \"message\": \"Unknown to object 'ghost'\"}]}\n"
  },
  "render-review-gallery-one-context": {
   "argv": [
@@ -1327,7 +1327,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_SCHEMA\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/objects/release/deadline\", \"revisionRefs\": [], \"message\": \"Expected ISO Date, got '2026-02-30'\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_SCHEMA\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/objects/release/deadline\", \"revisionRefs\": [], \"message\": \"Expected ISO Date, got '2026-02-30'\", \"sourceRange\": {\"line\": 6, \"column\": 41, \"endLine\": 6, \"endColumn\": 49}}]}\n"
  },
  "schedule-deadline-warning": {
   "argv": [
@@ -1376,7 +1376,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_REFERENCE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/relations/0/to/object\", \"revisionRefs\": [], \"message\": \"Unknown to object\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_REFERENCE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/relations/0/to/object\", \"revisionRefs\": [], \"message\": \"Unknown to object 'ghost'\", \"sourceRange\": {\"line\": 8, \"column\": 76, \"endLine\": 8, \"endColumn\": 82}}]}\n"
  },
  "schedule-schema-error": {
   "argv": [
@@ -1386,7 +1386,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_SCHEMA\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/objects/a\", \"revisionRefs\": [], \"message\": \"missing required property 'schedule'\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_SCHEMA\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/objects/a\", \"revisionRefs\": [], \"message\": \"missing required property 'schedule'\", \"sourceRange\": {\"line\": 4, \"column\": 3, \"endLine\": 4, \"endColumn\": 4}}]}\n"
  },
  "schedule-snapshot-ok": {
   "argv": [
@@ -1514,7 +1514,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_SCHEMA\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"a Project must be a YAML mapping with version, project and objects; found a list\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_SCHEMA\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/\", \"revisionRefs\": [], \"message\": \"a Project must be a YAML mapping with version, project and objects; found a list\", \"sourceRange\": {\"line\": 1, \"column\": 1, \"endLine\": 1, \"endColumn\": 2}}]}\n"
  },
  "validate-path-is-directory": {
   "argv": [
@@ -1534,7 +1534,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_REFERENCE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/relations/0/to/object\", \"revisionRefs\": [], \"message\": \"Unknown to object\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_REFERENCE\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/relations/0/to/object\", \"revisionRefs\": [], \"message\": \"Unknown to object 'ghost'\", \"sourceRange\": {\"line\": 8, \"column\": 76, \"endLine\": 8, \"endColumn\": 82}}]}\n"
  },
  "validate-schema-error": {
   "argv": [
@@ -1544,7 +1544,7 @@
   "exit": 1,
   "files": {},
   "stderr": "",
-  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_SCHEMA\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/objects/a\", \"revisionRefs\": [], \"message\": \"missing required property 'schedule'\"}]}\n"
+  "stdout": "{\"status\": \"rejected\", \"diagnostics\": [{\"code\": \"E_SCHEMA\", \"severity\": \"error\", \"component\": \"core\", \"sourceRef\": \"/objects/a\", \"revisionRefs\": [], \"message\": \"missing required property 'schedule'\", \"sourceRange\": {\"line\": 4, \"column\": 3, \"endLine\": 4, \"endColumn\": 4}}]}\n"
  },
  "validate-snapshot-and-project": {
   "argv": [

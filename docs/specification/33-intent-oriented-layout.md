@@ -67,7 +67,11 @@ sources are `title`, `table`, `timeline`, `timeline-axis`, `summary`, `legend`,
 A `legend` slot additionally declares `direction` (`block` stacks entries; `inline`
 flows them along the inline axis) and `gap` (space between entries, and between a
 swatch and its own label), and may declare `itemMinInlineSize` when `direction:
-inline`, wrapping exactly as a `flow` container wraps its children (#427). Each
+inline`, wrapping exactly as a `flow` container wraps its children (#427). A `legend` slot may instead declare `columns` (an integer of at least 1; #1290): the entries
+fill the columns in reading order (entry k in column k mod `columns`, row k div `columns`), each column as wide as its
+widest entry (swatch, gap and label), `gap` apart, every row as tall as the tallest key; `direction` and `itemMinInlineSize`
+are then not used. A declared grid is measured exactly at measurement time (width of its columns, `ceil(count / columns)`
+rows), so the slot is allocated its true block and a grid taller than its slot is the ordinary track overflow. Each
 entry's swatch is constructed by the same geometry its role's `primitive_kind`
 already uses for an object mark, relation, or decoration; Layout never derives a
 swatch's shape or size from the legend label's typography role.
@@ -125,7 +129,7 @@ timeline, timeline-axis, dependency-network, group-details, milestones and obser
 annotations, notes, legend and summary. `text` is literal presentation copy (one to
 eighty characters, no control character; the Theme role's text transform styles it, so a profile holds "Notes"
 and a Theme makes it "NOTES"); `align` is `start` (default), `center` or `end` within the slot's inline
-extent; `block` is `top` (default), `header-row` or `axis-tier`. The engine records the declaration with the slot's bounds;
+extent; `block` is `top` (default), `header-row`, `axis-tier` or `start-column`. The engine records the declaration with the slot's bounds;
 Layout completes one Text `slot-heading:<node id>` in the Theme text role `slot-heading` (the role `text` when
 the Theme declares none), inside the slot. The line box is the role's font size times line height and the gap
 under it half the font size. At `top` the line starts at the slot's block start. At `header-row` the line box
@@ -137,6 +141,7 @@ geometry independently of visible or thinned labels; band-only and rotated tiers
 content starts below the whole axis band and any larger caption line/gap. Without a compatible neighboring
 tier, or when that aligned caption line cannot fit inside its slot, `top` applies and Layout records
 `I_LAYOUT_SLOT_HEADING_NO_AXIS_TIER:<node>`; the baseline is never clamped while claiming tier alignment.
+At `start-column` (#1290) the caption holds the inline-start column of a `legend` slot that declares `columns`: its line starts at the slot's block start and inline start, inside the entries' block extent, and the entries start after its measured width and half the font size (the measurement of the legend slot grows by that inline extent and is at least one line tall); no entry overlaps it. On any other slot, or a legend without `columns`, `top` applies and Layout records `I_LAYOUT_SLOT_HEADING_NO_START_COLUMN:<node>`.
 The slot's content starts below the line and its gap, and below the band when the caption sits in it, so nothing
 lies under the caption; the slot keeps its full bounds. The native owner then lays out its content in that
 reduced viewport: title runs, table/timeline rows, axis tiers, dependency-network geometry and detail-panel
@@ -686,6 +691,22 @@ as well as geometry beyond its requested end; the adapter uses that completed
 viewBox without independently repositioning primitives.
 Malformed profile constraints and invalid references remain errors. Scene and
 adapters MUST NOT resolve this shortage independently.
+
+**Declared viewport overrun (#1279).** The original Render Context viewport
+declaration remains distinct from content-adjusted allocation and completed
+canvas bounds. Layout MUST emit one `W_LAYOUT_CANVAS_EXCEEDS_VIEWPORT` when the
+completed canvas starts before zero or ends beyond a declared axis, using
+Layout's coordinate tolerance. Compare full extents, not only dimensions.
+Draft auto block has no declared block constraint; its inline constraint remains.
+The warning changes no geometry, clipping or rendering eligibility. Its facts
+include declared inline/block sizes (null block for auto), actual starts/sizes,
+and the five largest native-slot contributors with positive start/end overruns
+on declared axes, ordered by descending largest overrun then slot identity,
+plus the total contributor count. Attribute completed geometry and allocated
+slots, not self-derived full-canvas textures or overlays. Both table-timeline
+and dependency-network obey the same rule. Scene carries the completed warning;
+the shared report producer formats it with stable surface/source identity and
+`sourceRef: /body/environment/viewport`. Fitting surfaces emit none.
 
 ### 13.1 Content-coherent table-timeline allocation (#468)
 

@@ -379,6 +379,7 @@ $defs:
       direction: {description: "Entry-flow direction for a legend slot's own content; meaningful only when source is legend. Absent means block, today's stacked order (#427).", enum: [block, inline]}
       gap: {description: "Space between a legend slot's own entries, and between a swatch and its label; meaningful only when source is legend. Absent means today's fixed label-derived spacing (#427).", $ref: "#/$defs/distance"}
       itemMinInlineSize: {description: "Wrap threshold for a legend slot's own entries when direction is inline, reusing the flow container's wrapping semantics; meaningless and ignored otherwise (#427).", $ref: "#/$defs/distance"}
+      columns: {description: "Declared column count of a legend slot's entries (#1290): entries fill the columns in reading order (entry k in column k mod columns), each column as wide as its widest entry, `gap` apart; `direction` and `itemMinInlineSize` are then not used. Meaningful only when source is legend; absent keeps the flow or stack.", type: integer, minimum: 1, examples: [3]}
       frame: {description: "Optional region frame: Layout completes one panel Rect behind this node; absent paint uses Theme role region-frame, otherwise region-frame-<paint> (#889, #1165).", $ref: "#/$defs/frame"}
       heading: {description: "Optional caption of this slot (#1064, #1100); available to every enumerated slot source.", $ref: "#/$defs/slotHeading"}
   slotHeading:
@@ -390,7 +391,7 @@ $defs:
     properties:
       text: {$ref: "urn:chrona:common-v0.1#/$defs/literalCaption"}
       align: {description: "Inline position of the caption within the slot; absent means start.", enum: [start, center, end]}
-      block: {description: "Block position: top; header-row centres in the neighboring axis band; axis-tier aligns to its uppermost horizontal labels tier's completed baseline. An absent or incompatible target falls back to top with a record; absent means top.", enum: [top, header-row, axis-tier]}
+      block: {description: "Block position: top; header-row centres in the neighboring axis band; axis-tier aligns to its uppermost horizontal labels tier's completed baseline; start-column puts the caption in the inline-start column of a legend slot that declares `columns`, beside its entries (#1290). An absent or incompatible target falls back to top with a record; absent means top.", enum: [top, header-row, axis-tier, start-column]}
   frame:
     type: object
     description: "Region frame declaration. The panel is drawn at the node's completed bounds deflated by inset and half the stroke; it never moves or clips content. Optional paint selects region-frame-<paint>; absent paint selects region-frame."

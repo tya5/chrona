@@ -3,7 +3,9 @@
 # Issue 1327 acceptance
 
 Source: [issue and current plan](https://github.com/tya5/chrona/issues/1327#issuecomment-6093224721).
-Published baseline: `bcc0ecbb0aaf6e52001804b8d4f68259bee1743b`.
+Merged implementation: [PR #1330](https://github.com/tya5/chrona/pull/1330), source
+`aee99e2a9ab0347ab27e050a352d4debdaec9b3c`; ready publication
+`600f04b6a79ddd2a4761bc1c586ad0916409db74` also includes dev B's #1219.
 The offending composite allowance was already retired by PR #1320; no schema or ledger edits are added here.
 The prune diagnostic preserves fail-closed proof and distinguishes pre-merge restatement from reviewed post-merge retirement.
 Independent Luna review: passed; no layer, runtime behavior, or generated-output changes.
@@ -17,12 +19,13 @@ Independent Luna review: passed; no layer, runtime behavior, or generated-output
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | `tools.schema_equivalence --base-rev origin/main` passes on main after the fix. | not met | [Local S0 result](https://github.com/tya5/chrona/issues/1327#issuecomment-6093245595): 38 equal schemas, 470 documents, 739 probes; L2+L3 35.9s against published `bcc0ecbb`. Exact published-main verification remains pending. | — |
-| 2 | A schema PR rebased onto it, such as #1326, passes S0. | not met | Requires dev B's updated [PR #1326](https://github.com/tya5/chrona/pull/1326); no old-base CI is claimed as evidence. | — |
+| 1 | `tools.schema_equivalence --base-rev origin/main` passes on main after the fix. | met | [Post-merge main S0](https://github.com/tya5/chrona/issues/1327#issuecomment-6093224721): isolated checkout adopted published `aee99e2a`, exact tracked-tree identity confirmed against origin/main before execution; 38 equal schemas, 470 documents, 739 probes, L2+L3 34.9s. | — |
+| 2 | A schema PR rebased onto it, such as #1326, passes S0. | met | [Independent dependent-PR S0 receipt](https://github.com/tya5/chrona/pull/1326#issuecomment-6093331466): public head `9cf57d63` adopts merged #1327; detached checkout's own venv passes full S0 against exact ready `600f04b6`, 37 equal/one View delta (five pointers), 470 documents/739 probes, L2+L3 36.8s. No edits or pruning. | — |
 
 ## Programme-level criteria (optional)
 
 Focused command: `.venv/bin/python -m pytest -q tests/unit/tools/test_schema_expected_delta_lifecycle.py`
 — 23 passed in 20.89s, including a real overlapping schema merge retaining the unproven record and actionable guidance.
 S0 command: `.venv/bin/python -m tools.schema_equivalence --base-rev origin/main` — PASS.
-Three-OS release CI and exact published-main evidence remain pending.
+Exact published-main and dependent-PR evidence are complete. Closure still requires
+publication of this final table and successful three-OS release CI on its exact main.

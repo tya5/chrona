@@ -16,6 +16,7 @@ from chrona.app.agent_tools import registry_document
 from chrona.app.agent_workspace import WorkspaceScope
 from chrona.core.diagnostics import Diagnostic
 from chrona.core.identity import content_identity, json_value
+from chrona.core.source_ranges import attach_ranges
 from chrona.core.validation import load_yaml
 from chrona.presentation.model.closure import DEFAULT_DRAFT_VIEWPORT, RenderClosure, resolve_guided_draft_render, resolve_render_context
 from chrona.presentation.contracts import TypesetterIdentity
@@ -82,6 +83,31 @@ def _reject(diagnostics: list[Diagnostic], component: str = "core") -> NoReturn:
         plan, source = _PLAN_SOURCE
         _compile_failure(position_findings(plan, diagnostics, source, component), to_stderr=False)
     _emit_report(rejection_report(diagnostics, component))
+
+
+# The Core validation findings (src/chrona/core/validation.py): they point at a node of the file. Scheduler findings
+# (E_FIXED_TARGET_VIOLATION, E_UNSUPPORTED_CYCLE, E_CONTRADICTORY_BOUNDS, ...) name relations by id and keep the legacy shape.
+_RANGED_CODES = frozenset({
+    "E_SCHEMA", "E_REFERENCE", "E_PARENT_NOT_FOUND", "E_PARENT_CYCLE", "E_SELF_PARENT", "E_DUPLICATE_WBS_CODE",
+    "E_CALENDAR_REQUIRED", "E_INVALID_AMOUNT", "E_INVALID_SPAN", "E_ROLLUP_EMPTY", "E_PROJECT_ATTACH_SELF",
+    "E_PROJECT_ATTACH_SOURCE_NOT_POINT", "E_PROJECT_ATTACH_TARGET_NOT_SPAN", "E_PROJECT_ATTACH_TARGET_UNKNOWN",
+    "E_PROJECT_PERIOD_OBJECT_UNKNOWN", "E_SCENARIO_INVALID", "E_SCENARIO_NOT_FOUND", "E_SCENARIO_OBJECT_NOT_FOUND",
+    "E_SCENARIO_RELATION_DUPLICATE", "E_SCENARIO_RELATION_NOT_FOUND"})
+
+
+def _with_source_ranges(args: argparse.Namespace, diagnostics: Any) -> Any:
+    """The validation findings with the line and column of their node when the input is a raw YAML Project (#1303).
+
+    Scheduler findings keep the legacy shape exactly (Spec 65 section 7)."""
+    path = getattr(args, "project", None)
+    if not path or _is_plan_path(path) or any((args.snapshot_reference, args.snapshot_root, args.store_identity)):
+        return diagnostics
+    try:
+        text = Path(path).read_text(encoding="utf-8")
+    except OSError:
+        return diagnostics
+    located = iter(attach_ranges([item for item in diagnostics if item.id in _RANGED_CODES], text))
+    return [next(located) if item.id in _RANGED_CODES else item for item in diagnostics]
 
 
 def _reject_codes(codes: list[str] | tuple[str, ...], component: str) -> NoReturn:
@@ -186,7 +212,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--icon-catalog", action="append", default=[],
                          help="explicit local icon catalog YAML path; repeatable")
     command.add_argument("--font-metrics", help="declared-metrics-v3 YAML descriptor; paths resolve beside it")
-    command.add_argument("--system-fonts", action="store_true", help="draft-only: measure and rasterize the Theme's exact installed face")
+    command.add_argument("--system-fonts", action="store_true", help="require the Theme's exact installed face through fontconfig (installed fonts are always usable; this refuses a fallback)")
     command.add_argument("--viewport", default=f"{DEFAULT_DRAFT_VIEWPORT[0]}xauto", help="Draft viewport WIDTHxHEIGHT or WIDTHxauto (default: 1600xauto)")
     command.add_argument("--locale", choices=("en-US", "ja-JP"), default="en-US",
                          help="render locale: en-US or ja-JP (default: en-US)")
@@ -730,12 +756,12 @@ def _run(args: argparse.Namespace) -> None:
     if args.command == "validate":
         validation = validate_project_mapping(project)
         if not validation.ok:
-            _reject(validation.diagnostics)
+            _reject(_with_source_ranges(args, validation.diagnostics))
         print("[]")
         return
     outcome = schedule_project_mapping(project)
     if not outcome.ok:
-        _reject(outcome.diagnostics)
+        _reject(_with_source_ranges(args, outcome.diagnostics))
     print(json.dumps(outcome.payload(), indent=2, default=_json_default))
 
 

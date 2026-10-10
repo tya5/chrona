@@ -56,11 +56,12 @@ def normalize_v05_table_content(projection: ReviewProjection, project: Mapping[s
         missing = column.missing
         if value is None and column.missing_by:
             # The text of an absent value follows the item's observation state when the column declares it (#991).
-            missing = str(column.missing_by.get(_absence_state(item), missing))
+            declared = column.missing_by.get(_absence_state(item), missing)
+            missing = declared if isinstance(declared, Mapping) else str(declared)
         if value is None and missing == "in-progress" and _is_actual_source(column.source):
             core = _missing_actual_display(item, as_of)
         else:
-            core = display_value(value, missing, column.format, locale=locale)
+            core = display_value(value, missing, column.format, locale=locale, zero=column.zero)
         affix = column.affixes.for_state(affix_state(value, column.format)) if column.affixes is not None else None
         return (affix.prefix, core, affix.suffix) if affix is not None else ("", core, "")
 

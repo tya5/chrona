@@ -10,6 +10,7 @@ from chrona.presentation.layout.surface_quality import (
     AlignedStrokePlacement, PathCommand, StrokeClip, is_closed_stroke_contour,
 )
 from chrona.presentation.model.semantic_registry import semantic_binding
+from chrona.presentation.model.point_paint import resolve_point_paint_role
 
 
 def complete_stroke_clip(*, alignment: str, bounds: tuple[float, float, float, float],
@@ -52,14 +53,13 @@ def complete_aligned_strokes(marks: tuple[Any, ...], shapes: tuple[Any, ...],
             legend = placed.placement_id.startswith("legend-swatch:")
             if legend:
                 role = semantic_binding("scaleLegendEntry").theme_role if placed.source_ref.startswith("scale:") else placed.source_ref
-                if placed.source_ref == "milestone" and tokens.has_role("gate"):
-                    role = "gate"
+                role = resolve_point_paint_role(role, gate_declared=tokens.has_role("gate"), legend=True)
             elif kind == "mark":
                 # MarkPlacement carries the mark geometry's Theme role name
                 # (including missing-actual), not a semantic-registry key.
                 role = placed.semantic_id
-                if placed.mark_shape == "point" and role == "planned" and tokens.has_role("gate"):
-                    role = "gate"
+                if placed.mark_shape == "point":
+                    role = resolve_point_paint_role(role, gate_declared=tokens.has_role("gate"))
             elif placed.visual_role:
                 role = placed.visual_role
             elif placed.semantic_id:
