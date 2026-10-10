@@ -95,7 +95,7 @@ _RANGED_CODES = frozenset({
     "E_SCENARIO_RELATION_DUPLICATE", "E_SCENARIO_RELATION_NOT_FOUND"})
 
 
-def _with_source_ranges(args: argparse.Namespace, diagnostics: Any) -> Any:
+def _with_source_ranges(args: argparse.Namespace, diagnostics: Any, codes: frozenset[str] | None = None) -> Any:
     """The validation findings with the line and column of their node when the input is a raw YAML Project (#1303).
 
     Scheduler findings keep the legacy shape exactly (Spec 65 section 7)."""
@@ -106,8 +106,32 @@ def _with_source_ranges(args: argparse.Namespace, diagnostics: Any) -> Any:
         text = Path(path).read_text(encoding="utf-8")
     except OSError:
         return diagnostics
-    located = iter(attach_ranges([item for item in diagnostics if item.id in _RANGED_CODES], text))
-    return [next(located) if item.id in _RANGED_CODES else item for item in diagnostics]
+    ranged = _RANGED_CODES if codes is None else codes
+    located = iter(attach_ranges([item for item in diagnostics if item.id in ranged], text))
+    return [next(located) if item.id in ranged else item for item in diagnostics]
+
+
+def _with_warning_positions(args: argparse.Namespace, outcome: Any) -> dict[str, Any]:
+    """The schedule document, its warnings positioned on the plan line or the YAML key they are about (#946).
+
+    A terse plan is positioned through the compiler's source map (`source`, `sourceRange`, as for its errors); a YAML Project
+    through its composed nodes (`sourceRange`)."""
+    payload = outcome.payload()
+    if not payload.get("warnings"):
+        return payload
+    if _PLAN_SOURCE is not None:
+        plan, source = _PLAN_SOURCE
+        positioned = [(item.range.as_dict() if item.range is not None else None, source)
+                      for item in position_findings(plan, outcome.warnings, source)]
+    else:
+        located = _with_source_ranges(args, outcome.warnings, codes=frozenset({"W_DEADLINE"}))
+        positioned = [(item.source_range, None) for item in located]
+    for record, (where, source) in zip(payload["warnings"], positioned):
+        if where is not None:
+            if source is not None:
+                record["source"] = source
+            record["sourceRange"] = where
+    return payload
 
 
 def _reject_codes(codes: list[str] | tuple[str, ...], component: str) -> NoReturn:
@@ -762,7 +786,7 @@ def _run(args: argparse.Namespace) -> None:
     outcome = schedule_project_mapping(project)
     if not outcome.ok:
         _reject(_with_source_ranges(args, outcome.diagnostics))
-    print(json.dumps(outcome.payload(), indent=2, default=_json_default))
+    print(json.dumps(_with_warning_positions(args, outcome), indent=2, default=_json_default))
 
 
 def _write_result(destination: Path, result: dict[str, Any]) -> None:
