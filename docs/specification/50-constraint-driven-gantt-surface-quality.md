@@ -376,8 +376,10 @@ means `both`, and `text` is not admitted. Clip its inline extent to the chosen
 region and use exactly the final header block extent after folded-mark
 completion. No header means no strip; body rows never receive it. Strip
 selection is independent of body-group decoration; existing header-band
-selection and geometry remain unchanged. Without a drawable strip role,
-existing Scene/SVG output is unchanged.
+selection and geometry remain unchanged. An absent strip role preserves
+existing Scene/SVG output. Explicit treatment `none` paints no strip and
+preserves SVG output, while retaining Scene's generic declared-decoration
+absence disclosure; it has no strip-specific exception.
 
 For intersecting layers of the same group, declared orders must satisfy
 `groupBand < groupHeaderStrip < groupHeaderBand` wherever each pair exists.
