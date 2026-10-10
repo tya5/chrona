@@ -59,7 +59,7 @@ properties:
           required: [type, value]
           additionalProperties: false
           properties:
-            type: {description: "Kind of non-color token value.", enum: [number, radius, fontFamily, fontWeight, dashPattern, marker, pattern, symbol, textAlternative, lineCap, lineJoin, fidelity, textTransform, numericSpacing, annotationContainer, stampPlacement, writingMode]}
+            type: {description: "Kind of non-color token value.", enum: [number, radius, fontFamily, fontWeight, dashPattern, marker, pattern, symbol, textAlternative, lineCap, lineJoin, fidelity, textTransform, numericSpacing, annotationContainer, stampPlacement, writingMode, chipShape]}
             value: {}
           if:
             properties: {type: {const: radius}}
@@ -68,6 +68,16 @@ properties:
             properties:
               value:
                 oneOf: [{type: number, minimum: 0}, {const: capsule}]
+          dependentSchemas:
+            type:
+              description: "The chipShape token type uses the closed chip-shape value union."
+              examples: [{type: chipShape, value: {kind: rectangle}}]
+              if:
+                properties: {type: {const: chipShape}}
+                required: [type]
+              then:
+                properties:
+                  value: {$ref: "#/$defs/chipShape"}
           allOf:
             - description: "Dash-pattern tokens use a positive numeric sequence; other tokens use scalar values."
               examples: [{type: dashPattern, value: [1]}]
@@ -194,7 +204,7 @@ properties:
               required: [type]
               then:
                 properties:
-                  value: {enum: [none, uppercase, lowercase, capitalize]}
+                  value: {enum: [none, uppercase, lowercase, capitalize, small-caps]}
             - description: "Numeric spacing is finite so Layout can select tabular figures."
               examples: [{type: numericSpacing, value: tabular}]
               if:
@@ -394,13 +404,14 @@ properties:
             symbol: {description: "Named point-symbol token for the role.", type: string, minLength: 1}
             glyphSize: {description: "Named positive physical-pixel side length of each frame-glyph mark (#888); admitted only on frame-glyph roles.", type: string, minLength: 1}
             glyphPitch: {description: "Named physical-pixel minimum centre spacing of frame-glyph marks (#888); must be at least glyphSize and is admitted only on frame-glyph roles.", type: string, minLength: 1}
-            fontFamily: {description: "Named font-family token for the role.", type: string, minLength: 1}
+            fontFamily: {description: "Named font-family token for the role. The token value is an ordered, comma-separated list of families (#1281): Layout uses the first one the Context declares or the machine has installed, then the next that covers a character, ending with the packaged Noto Sans.", type: string, minLength: 1}
             fontWeight: {description: "Named font-weight token for the role.", type: string, minLength: 1}
             fontSize: {description: "Named font-size token for the role.", type: string, minLength: 1}
             lineHeight: {description: "Named line-height token for the role.", type: string, minLength: 1}
             blockGap: {description: "Named nonnegative pixel gap below a heading kicker; admitted only on kicker. Absent is zero.", type: string, minLength: 1}
             inlineGap: {description: "Named nonnegative pixel gap after an inline summary run, except the last; admitted on summary-caption, metric and summary-unit. Absent is zero.", type: string, minLength: 1}
             letterSpacing: {description: "Named em-based letter-spacing number token measured by Layout.", type: string, minLength: 1}
+            smallCapsScale: {description: "Named number token, above 0.5 and below 1: the scale of the role size at which a `small-caps` role sets its former lowercase letters as capitals; required with, and only admitted beside, a `textTransform` of `small-caps` (#1285).", type: string, minLength: 1}
             horizontalScale: {description: "Named number token, 0.5 to 1, compressing the role's text along its own inline axis; Layout measures the compressed width (#585). Absent is 1.", type: string, minLength: 1}
             textTransform: {description: "Named finite transform token applied before Layout measurement.", type: string, minLength: 1}
             numericSpacing: {description: "Named finite numeric-spacing token selected before Layout measurement.", type: string, minLength: 1}
@@ -430,6 +441,7 @@ properties:
             tabPosition: {description: "Inline edge of the header the tab stands on; absent means start. Not used by tag targets (#882, #1166).", enum: [start, end]}
             tabTarget: {description: "Target for the group-tab Rect: header (absent, the existing header behavior) or tag (the vertical group-tag cell; requires vertical groupHeader writingMode) (#1166).", enum: [header, tag]}
             chipPadding: {description: "Named label-chip padding ratio of the label's font size (inline; half on the block axis) for a <purpose>-chip role.", type: string, minLength: 1}
+            chipShape: {description: "Named chipShape token: rectangle (the default), a text-fitting burst, or a catalogue nine-slice outline (#1286).", type: string, minLength: 1}
             chipMinBlockSize: {description: "Named length in px: the smallest block size of a <purpose>-chip label chip; a shorter chip grows equally above and below its text (#1150). Absent keeps the text block plus the chipPadding block padding.", type: string, minLength: 1}
             barWidth: {description: "Annotation-kind bar inline sizing: fill (runtime default) spans the inner container; hug uses measured bar text and padding.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/annotationBarWidth"}
             barBleed: {description: "Annotation-kind bar extent: none (runtime default) stays within content insets; border reaches the container's inner border edges.", $ref: "urn:chrona:vocabulary-v0.1#/$defs/annotationBarBleed"}
@@ -569,29 +581,35 @@ $defs:
       blockSize: {description: "Positive vertical tile extent in physical pixels.", examples: [72], type: number, exclusiveMinimum: 0}
   seededPatternCount: {description: "Number of motifs in one seeded tile (#888).", type: integer, minimum: 1, maximum: 64}
   artworkGeometry:
-    description: "One catalogue glyph and its nine-slice geometry, shared by both artwork forms."
-    type: object
-    required: [glyph, sliceInsets, unitEm]
-    properties:
-      glyph:
-        description: "Authored set:name reference to a normalized catalogue glyph."
-        examples: ["chrona-annotation-parts:scroll-rods"]
-        type: string
-        pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*$"
-      sliceInsets:
-        description: "Fixed top/right/bottom/left borders in glyph viewport units."
+    description: "One catalogue glyph and its nine-slice geometry, shared by annotation artwork and label chips."
+    $ref: "urn:chrona:graphics-v0.1#/$defs/catalogNineSliceGeometry"
+  chipShape:
+    description: "Closed outline geometry for a label chip; absence at the role selects the unchanged rectangle."
+    examples: [{kind: rectangle}, {kind: burst, points: 8, innerRatio: 0.52}]
+    oneOf:
+      - description: "The explicit legacy rectangular chip shape."
+        examples: [{kind: rectangle}]
         type: object
         additionalProperties: false
-        required: [top, right, bottom, left]
+        required: [kind]
+        properties: {kind: {description: "Select the legacy rectangular outline explicitly.", const: rectangle}}
+      - description: "A regular star polygon around the text box."
+        examples: [{kind: burst, points: 8, innerRatio: 0.52}]
+        type: object
+        additionalProperties: false
+        required: [kind, points, innerRatio]
         properties:
-          top: {description: "Fixed top border in glyph viewport units.", type: number, minimum: 0}
-          right: {description: "Fixed right border in glyph viewport units.", type: number, minimum: 0}
-          bottom: {description: "Fixed bottom border in glyph viewport units.", type: number, minimum: 0}
-          left: {description: "Fixed left border in glyph viewport units.", type: number, minimum: 0}
-      unitEm:
-        description: "Positive size of one glyph viewport unit in annotation text em."
-        type: number
-        exclusiveMinimum: 0
+          kind: {description: "Select the regular burst outline.", const: burst}
+          points: {description: "Number of outer points; the closed outline has twice this many vertices.", type: integer, minimum: 2}
+          innerRatio: {description: "Inner radius divided by outer radius.", type: number, exclusiveMinimum: 0, maximum: 1}
+      - description: "A catalogue glyph stretched over the chip text box with shared nine-slice geometry."
+        examples: [{kind: catalog, glyph: "chrona-parts:burst", sliceInsets: {top: 2, right: 2, bottom: 2, left: 2}, unitEm: 0.1}]
+        type: object
+        required: [kind]
+        properties: {kind: {description: "Select the normalized catalogue outline.", const: catalog}}
+        allOf:
+          - {$ref: "urn:chrona:graphics-v0.1#/$defs/catalogNineSliceGeometry"}
+        unevaluatedProperties: false
   artworkObject:
     description: "The unchanged legacy single-glyph declaration."
     $ref: "#/$defs/artworkGeometry"

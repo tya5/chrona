@@ -49,7 +49,8 @@ def _node(node_id, bounds, *, parent_frame=True):
 def _context(decisions, tokens):
     viewport = Rect(D(0), D(0), D(50), D(50))
     manifest = SimpleNamespace(decisions=tuple(decisions), fit_warnings=(), viewport=viewport)
-    request = SimpleNamespace(theme_tokens=tokens, font_metrics=None, layout_manifest=manifest)
+    request = SimpleNamespace(theme_tokens=tokens, font_metrics=None, layout_manifest=manifest,
+                              declared_viewport=None)
     slot = SlotPlacement("timeline", "timeline", Rect(D(0), D(0), D(50), D(50)))
     return surface_completion.SurfaceCompletionContext(
         request=request, projection=SimpleNamespace(lane_membership=None), layout_manifest=manifest,

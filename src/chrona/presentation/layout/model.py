@@ -82,7 +82,7 @@ class RegionFrame:
 
 
 SLOT_HEADING_ALIGNS = ("start", "center", "end")
-SLOT_HEADING_BLOCKS = ("top", "header-row", "axis-tier")
+SLOT_HEADING_BLOCKS = ("top", "header-row", "axis-tier", "start-column")
 
 
 @dataclass(frozen=True)
@@ -109,6 +109,7 @@ class LayoutDecision:
     item_min_inline_size: Decimal | None = None
     frame: RegionFrame | None = None
     heading: SlotHeading | None = None
+    columns: int | None = None
 
 
 @dataclass(frozen=True)

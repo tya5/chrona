@@ -90,7 +90,7 @@ def test_core_validation_uses_the_shared_explanation_and_pointer():
     assert len(diagnostics) == 1
     assert diagnostics[0].id == "E_SCHEMA"
     assert diagnostics[0].path == "/version"
-    assert diagnostics[0].message == "expected exactly 'timeline/v0.7'"
+    assert diagnostics[0].message == "expected exactly 'timeline/v0.7', got 'timeline/v0.4'"
 
 
 def test_violation_retains_explicit_ingress_context():
