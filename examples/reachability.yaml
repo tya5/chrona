@@ -5,6 +5,7 @@ supportingFiles:
   - {path: attached-milestones/project.yaml, reason: committed long-task and intermediate-gate example}
   - {path: attached-milestones/actual.yaml, reason: observed point delta example}
   - {path: aster-ssd/README.md, reason: ASTER corpus documentation}
+  - {path: chrona-roadmap/README.md, reason: chrona roadmap corpus documentation and update procedure}
   - {path: aster-ssd/themes/onboarding-variation.yaml, reason: executable five-line derived Theme tutorial source}
   - {path: controller-z/README.md, reason: Controller Z corpus and curriculum documentation}
   - {path: controller-z-ja/README.md, reason: Japanese corpus documentation}

@@ -1,0 +1,10 @@
+version: chrona/example-materializer/v0.1
+id: chrona-roadmap
+role: regression-corpus
+context: contexts/roadmap.yaml
+slides:
+- id: roadmap
+  evidence: chrona's own road to a release candidate in the target B design
+  context: contexts/roadmap.yaml
+  expectedSvg: generated/roadmap.svg
+  expectedScene: generated/roadmap.scene.json
