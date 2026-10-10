@@ -1,9 +1,9 @@
 # Issue 918 — diagnostic owners: design plan
 
-Status: PR 1276 merged at `484657736a8fa7dbc5c8668ffc20d57f6c5f23ab`;
-review follow-up implemented at `e66136cf`, release acceptance pending.
+Status: completed and closed; [final acceptance](../reviews/issue-918-diagnostic-owners-acceptance-review-2026-10-10.md)
+records the successful review-containing exact-main release.
 Selected [design](../../design/issue-918-diagnostic-owners-design-2026-10-09.md),
-[architecture review](../../reviews/current/issue-918-diagnostic-owners-architecture-review-2026-10-09.md)
+[architecture review](../reviews/issue-918-diagnostic-owners-architecture-review-2026-10-09.md)
 and [implementation plan](issue-918-diagnostic-owners-implementation-plan-2026-10-09.md)
 include published follow-up phases `32cb2940`, `dca58ecb` and `bce9556f`.
 Authority: [issue 918](https://github.com/tya5/chrona/issues/918), including
@@ -11,7 +11,7 @@ consolidated issues 919–922. Public baseline:
 `546f7c3f9e700afa7553632d8dd6ac0c94a348a0` (`derived-main` successful).
 Predecessor: [issue 829 work record](../../archive/planning/issue-829-diagnostic-owner-detail-work-record-2026-10-02.md).
 
-## Published facts and remaining verification
+## Published facts
 
 - PR 1276 closes the original inventory's 488 bare sites across 151 codes;
   the current ratchet covers 1,609 sites including Actual/snapshot tuples.
@@ -19,7 +19,7 @@ Predecessor: [issue 829 work record](../../archive/planning/issue-829-diagnostic
   producer provenance tests passed in PR CI. Scene identities/counts and all
   140 public SVG/Scene files are unchanged in artifact 11630069335.
 - Follow-up focused integration passes 124 tests on ready base `2487d752`;
-  exact-main release and the follow-up public artifact audit remain pending.
+  final artifact and exact-main release evidence is in the acceptance review.
 
 ## Design questions and review scope
 
@@ -89,11 +89,11 @@ CI identified a schema-equivalence consumer treating Scene error detail as
 part of its code; the fix splits the leading code without changing validators,
 baseline probes or expected deltas. Complete golden-to-MCP projection checks
 cover all 19 success cases and 22 warning rows (20 focused tests passed).
-CI full release and public-materializer acceptance remain pending. The local
+CI full release and public-materializer acceptance are met. The local
 conformance review found stale bot-owned inventory reports; its policy-shape
 and Scene-field ownership failures were corrected and individually rechecked.
 
-## Literal acceptance (release evidence pending)
+## Literal acceptance
 
 | ID | Criterion | Evidence owner |
 | --- | --- | --- |

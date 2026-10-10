@@ -30,9 +30,16 @@ properties:
         additionalProperties: false
         required: [rowBand, groupBand, groupHeaderBand, calendarClosed]
         properties:
-          rowBand: {$ref: "#/$defs/backgroundExtent"}
-          groupBand: {$ref: "#/$defs/backgroundExtent"}
-          groupHeaderBand: {$ref: "#/$defs/backgroundExtent"}
+          rowBand: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/backgroundExtent"}
+          groupBand: {$ref: "urn:chrona:vocabulary-v0.1#/$defs/backgroundExtent"}
+          groupHeaderBand:
+            description: "Physical region for a group-header background; text follows the completed header label within the table column."
+            examples: [text]
+            anyOf:
+              - {$ref: "urn:chrona:vocabulary-v0.1#/$defs/backgroundExtent"}
+              - description: "The measured group-header label interval, including declared leading inset, clamped to the table column."
+                examples: [text]
+                const: text
           calendarClosed:
             description: "Calendar closures are column-oriented stripes in the timeline domain."
             const: timeline
@@ -83,9 +90,6 @@ oneOf:
     not: {required: [root]}
 
 $defs:
-  backgroundExtent:
-    description: "One finite completed review-surface background region."
-    enum: [table, timeline, both]
   id: {description: "Identifier beginning with a letter and safe for node references.", examples: ["main-panel"], type: string, minLength: 1, maxLength: 256, pattern: "^[A-Za-z][A-Za-z0-9._-]*$"}
   reference:
     type: object
