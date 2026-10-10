@@ -21,6 +21,32 @@
 <rect data-scene-id="axis-band-rect:0:1" data-source-ref="timeline-axis" data-purpose="axis-band" x="573.555" y="157.95" width="262.411" height="22" opacity="1" fill="#1B1512"/>
 <rect data-scene-id="axis-band-rect:0:2" data-source-ref="timeline-axis" data-purpose="axis-band" x="836.967" y="157.95" width="265.306" height="22" opacity="1" fill="#1B1512"/>
 <rect data-scene-id="axis-band-rect:0:3" data-source-ref="timeline-axis" data-purpose="axis-band" x="1103.273" y="157.95" width="190.727" height="22" opacity="1" fill="#1B1512"/>
+<path data-scene-id="row-rule:pdr" data-source-ref="pdr" data-purpose="row-rule" d="M42 225.091L1294 225.091" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:structure" data-source-ref="structure" data-purpose="row-rule" d="M42 248.233L1294 248.233" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:avionics" data-source-ref="avionics" data-purpose="row-rule" d="M42 271.374L1294 271.374" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:eps" data-source-ref="eps" data-purpose="row-rule" d="M42 294.515L1294 294.515" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:bus-test" data-source-ref="bus-test" data-purpose="row-rule" d="M42 317.657L1294 317.657" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:cdr" data-source-ref="cdr" data-purpose="row-rule" d="M42 340.798L1294 340.798" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:optics" data-source-ref="optics" data-purpose="row-rule" d="M42 363.939L1294 363.939" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:detector" data-source-ref="detector" data-purpose="row-rule" d="M42 387.081L1294 387.081" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:payload-tvac" data-source-ref="payload-tvac" data-purpose="row-rule" d="M42 410.222L1294 410.222" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:payload-delivery" data-source-ref="payload-delivery" data-purpose="row-rule" d="M42 433.363L1294 433.363" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:integration" data-source-ref="integration" data-purpose="row-rule" d="M42 456.505L1294 456.505" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:vibration" data-source-ref="vibration" data-purpose="row-rule" d="M42 479.646L1294 479.646" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:tvac" data-source-ref="tvac" data-purpose="row-rule" d="M42 502.787L1294 502.787" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:emc" data-source-ref="emc" data-purpose="row-rule" d="M42 525.929L1294 525.929" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:psr" data-source-ref="psr" data-purpose="row-rule" d="M42 549.07L1294 549.07" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:mcs" data-source-ref="mcs" data-purpose="row-rule" d="M42 572.212L1294 572.212" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:station" data-source-ref="station" data-purpose="row-rule" d="M42 595.353L1294 595.353" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:comms-test" data-source-ref="comms-test" data-purpose="row-rule" d="M42 618.494L1294 618.494" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:launch-contract" data-source-ref="launch-contract" data-purpose="row-rule" d="M42 641.636L1294 641.636" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:shipment" data-source-ref="shipment" data-purpose="row-rule" d="M42 664.777L1294 664.777" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:campaign" data-source-ref="campaign" data-purpose="row-rule" d="M42 687.918L1294 687.918" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:frr" data-source-ref="frr" data-purpose="row-rule" d="M42 711.06L1294 711.06" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:launch" data-source-ref="launch" data-purpose="row-rule" d="M42 734.201L1294 734.201" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:rehearsals" data-source-ref="rehearsals" data-purpose="row-rule" d="M42 757.342L1294 757.342" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:leop" data-source-ref="leop" data-purpose="row-rule" d="M42 780.484L1294 780.484" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
+<path data-scene-id="row-rule:first-light" data-source-ref="first-light" data-purpose="row-rule" d="M42 803.625L1294 803.625" opacity="0.12" fill="none" stroke="#231A14" stroke-width="0.5"/>
 <rect data-scene-id="group-tab:bus" data-source-ref="bus" data-purpose="group-tab" x="45" y="204.95" width="20.3" height="132.848" opacity="1" fill="#C89A5E"/>
 <rect data-scene-id="group-tab:payload" data-source-ref="payload" data-purpose="group-tab" x="45" y="343.798" width="20.3" height="86.565" opacity="1" fill="#C89A5E"/>
 <rect data-scene-id="group-tab:ait" data-source-ref="ait" data-purpose="group-tab" x="45" y="436.363" width="20.3" height="109.707" opacity="1" fill="#C89A5E"/>

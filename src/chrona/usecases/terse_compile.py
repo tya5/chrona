@@ -8,6 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from chrona.core.validation import validate_project
+from chrona.terse.compiler import PROJECT_VERSION as PROJECT_FORMAT  # the Project format the CLI reports in `--version`
 from chrona.terse import SourceMap, TerseDiagnostic, compile_terse, decode, emit_project, locate
 
 # Hints for Core codes live here, not in Core (design 7.6).
