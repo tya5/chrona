@@ -54,7 +54,7 @@ def test_stdin_mode_compiles_dash():
 def test_the_output_validates_and_schedules_through_the_existing_commands(tmp_path):
     destination = tmp_path / "project.yaml"
     assert _run("compile", str(FIXTURES / "halcyon-1-core.chrona"), "-o", str(destination)).returncode == 0
-    assert _run("validate", str(destination)).stdout.strip() == b"[]"
+    assert _run("validate", str(destination)).stdout.strip() == b'{"status": "ok", "diagnostics": []}'
     scheduled = json.loads(_run("schedule", str(destination)).stdout)
     assert len(scheduled["placements"]) == 29 and scheduled["analysis"]["criticalObjectIds"]
 

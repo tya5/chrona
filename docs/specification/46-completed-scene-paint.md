@@ -244,6 +244,16 @@ evaluates a listed Theme with `mark`, `stateText`, `groundText` and `unsupported
 and their warnings. A Theme that declares `error` itself needs no entry, because the render that makes its Scene
 fails first. Listing a Theme is the repository's explicit choice; nothing is listed by default.
 
+**Group-ground coverage (#1367).** `group-header-strip` is a decoration, with
+the same evaluated ground and policy as other group backgrounds. Corpus
+coverage requires an enabled witness for the group-ground concept represented
+by `group-band`, `group-header-band` or `group-header-strip`; these roles may
+coexist and are not classified as mutually exclusive. Every emitted role is
+still evaluated and reported separately. A missing entire concept or an
+unrelated missing required decoration remains a coverage error. Synthetic
+tests cover each concept member and the optional layered strip; no claim that
+an unused optional role already has a committed corpus witness is made.
+
 Never governed by the policy, whatever its value: a malformed paint (`E_SCENE_CONTRAST_PAINT`), an invalid
 treatment (`E_SCENE_STATE_TEXT_CONTRAST_TREATMENT`) and a malformed Scene document: they are structural, not
 contrast constraints. A mark or text on a translucent host is judged on the host composited over its own ground
