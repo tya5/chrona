@@ -68,6 +68,61 @@ def _axis_batch(tiers):
     return compose_axis(prepared.request, prepared)
 
 
+@pytest.mark.parametrize("gap", [20, 30])
+def test_painted_cell_gap_omits_secondary_or_thins_primary_without_visible_targets(gap):
+    tiers = (AxisTier("month", 1, "band"), AxisTier("month", 1, "labels", AxisLabelIntent(
+        "short-month", (), "center", "visible-overflow", "horizontal", "en-US",
+        AxisSecondaryIntent("numeric-month", "en-US", "axisSecondary", "inline"))))
+    request = _axis_request(tiers)
+    theme = deepcopy(base._theme())
+    theme["body"]["values"].update({
+        "secondary-size": {"type": "number", "value": 8},
+        "cell-gap": {"type": "number", "value": gap},
+    })
+    theme["body"]["roles"]["axis-band-decoration"]["cellGap"] = "cell-gap"
+    theme["body"]["roles"]["axisSecondary"] = {
+        "fontFamily": "body", "fontWeight": "regular", "fontSize": "secondary-size",
+        "lineHeight": "line", "letterSpacing": "letter-spacing", "textTransform": "text-transform",
+        "numericSpacing": "numeric-spacing",
+    }
+    batch = _axis_batch_for_request(replace(request, theme_tokens=ThemeTokenView(theme)))
+    outcome = batch.tier_outcomes[1].intervals[1]
+    assert not batch.visible_label_overflows
+    if gap == 20:
+        assert outcome.disposition == "placed"
+        assert outcome.secondary_disposition == "omitted" and outcome.secondary_reason == "does-not-fit"
+        assert outcome.candidate_id in {item.placement_id for item in batch.text}
+        assert "axis-label-secondary:1:1" not in {item.placement_id for item in batch.text}
+        assert "W_LAYOUT_AXIS_SECONDARY_OMITTED:axis-label:1:1:does-not-fit" in batch.diagnostics
+    else:
+        assert outcome.disposition == "thinned" and outcome.reason == "label-does-not-fit"
+        assert outcome.candidate_id not in {item.placement_id for item in batch.text}
+        assert outcome.candidate_id not in batch.label_targets.values()
+        assert outcome.secondary_label is None and outcome.secondary_disposition is None
+
+
+def _axis_batch_for_request(request):
+    prepared = prepare_surface_base(request)
+    return compose_axis(prepared.request, prepared)
+
+
+def test_unpainted_band_keeps_logical_containment_without_inventing_a_host():
+    tiers = (AxisTier("month", 1, "band"), AxisTier("month", 1, "labels", AxisLabelIntent(
+        "long-month", (), "center", "visible-overflow", "horizontal", "en-US")))
+    request = _axis_request(tiers)
+    theme = deepcopy(base._theme())
+    theme["body"]["roles"]["axis-band-decoration"]["backgroundTreatment"] = "none"
+    request = replace(request, theme_tokens=ThemeTokenView(theme))
+    _summary, prepared, _frame, _measured = _summary_matches_native(request)
+    batch = prepared.placements
+    assert batch.text and all(item.host_placement_id is None for item in batch.text)
+    assert not any(item.placement_id.startswith("axis-band-rect:") for item in batch.shapes)
+    september = next(item for item in batch.tier_outcomes[1].intervals if item.label == "September")
+    assert september.disposition == "thinned"
+    assert september.candidate_id not in batch.label_targets.values()
+    assert not batch.visible_label_overflows
+
+
 def _summary_matches_native(request, *, axis_block_size=None):
     base_geometry = prepare_surface_base(request)
     axis_slot = base_geometry.by_source["timeline-axis"]
@@ -118,7 +173,22 @@ def test_pre_row_axis_closes_mixed_rotated_labels_and_defers_only_full_height_gr
                              base_geometry.by_source["timeline-axis"], base_geometry.metric_values)
     prepared = prepare_surface_axis(request, frame)
     rotated_measurement = measure_axis_tier(request, base_geometry.scale, 2, tiers[2])
-    assert rotated_measurement.tier_outcome == prepared.placements.tier_outcomes[2]
+    # Width-only tier measurement cannot admit September's 54px rotated
+    # block into this 48px axis host. Final geometry must thin that run.
+    completed = prepared.placements.tier_outcomes[2]
+    assert replace(completed, intervals=rotated_measurement.outcomes) == rotated_measurement.tier_outcome
+    for before, after in zip(rotated_measurement.outcomes, completed.intervals, strict=True):
+        if before.label == "September":
+            assert before.disposition == "placed" and before.label_fits
+            assert after.disposition == "thinned" and not after.label_fits
+            assert after.reason == "label-does-not-fit"
+            assert after.candidate_id not in {item.placement_id for item in prepared.placements.text}
+            decision = next(item for item in prepared.placements.decisions
+                            if item.decision_id == after.candidate_id)
+            assert decision.requested_ladder == ("axis-cell-containment", "suppress")
+            assert decision.selected_rung == "suppress" and decision.outcome == "suppressed"
+        else:
+            assert after == before
     assert set(rotated_measurement.diagnostics) <= set(prepared.placements.diagnostics)
     candidate_measurement = measure_surface_axis(request, base_geometry.scale)
     assert prepare_surface_axis(request, frame, measured=candidate_measurement) == prepared

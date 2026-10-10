@@ -1,6 +1,7 @@
 """Owns axis tiers, labels, targets and calendar intervals; reads closed Layout, Theme and fonts."""
 from __future__ import annotations
 
+from bisect import bisect_right
 from dataclasses import dataclass, replace
 from datetime import date
 from decimal import Decimal
@@ -19,7 +20,7 @@ from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.surface_base import SurfaceBaseGeometry
 from chrona.presentation.layout.surface_geometry import (
     BACKGROUND_PAINT_ORDER, GEOMETRY_TOLERANCE, HOSTED_TEXT_PAINT_ORDER,
-    bounds_from_rect, coordinate_for_date, extend_to_plot_edges,
+    coordinate_for_date, extend_to_plot_edges,
 )
 from chrona.presentation.layout.rounded_outline import resolve_corner_radius
 from chrona.presentation.layout.surface_quality import (
@@ -209,6 +210,92 @@ class AxisBandLaneGeometry:
     stack_end: float | None
 
 
+@dataclass(frozen=True)
+class AxisBandCellGeometry:
+    """A painted cell shared by native emission and label admission."""
+
+    tier_index: int
+    interval: AxisInterval
+    placement_id: str
+    bounds: Rect
+    paint_order: int
+
+
+def _axis_band_cells(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame,
+                     measured: SurfaceAxisMeasurement) -> tuple[AxisBandCellGeometry, ...]:
+    cells = []
+    tiers, tokens = request.surface_content.axis_tiers, request.theme_tokens
+    band_count = sum(tier.role == "band" for tier in tiers)
+    ordinal = 0
+    for tier_index, tier in enumerate(tiers):
+        if tier.role != "band":
+            continue
+        semantic_id = _axis_band_semantic_id(tier_index, ordinal)
+        ordinal += 1
+        role = semantic_binding(semantic_id).scene_role
+        background, paint_order = tokens.background(role)
+        if background == "none":
+            continue
+        lane = _axis_band_lane_geometry(axis=frame.axis.bounds, tier_index=tier_index,
+            tier=tier, band_count=band_count, labels=measured.labels, bands=measured.bands)
+        gap = float(tokens.optional_number(role, "cellGap") or 0)
+        for interval in measured.tiers[tier_index].intervals:
+            raw = coordinate_for_date(interval.start, frame.scale)
+            raw2 = coordinate_for_date(interval.end, frame.scale)
+            x, x2 = raw + gap / 2, max(raw + gap / 2, raw2 - gap / 2)
+            edge, edge2 = extend_to_plot_edges(raw, raw2, scale=frame.scale, plot=frame.timeline.bounds)
+            x, x2 = (edge if edge != raw else x), (edge2 if edge2 != raw2 else x2)
+            cells.append(AxisBandCellGeometry(tier_index, interval,
+                axis_band_placement_id(tier_index, interval.index),
+                _axis_band_cell_bounds(x, x2, lane.block, lane.block_size), paint_order))
+    return tuple(cells)
+
+
+def _axis_contains(outer: Rect, inner: Rect, *, inline_only: bool = False) -> bool:
+    tolerance = GEOMETRY_TOLERANCE
+    return (outer.inline - tolerance <= inner.inline
+            and inner.inline + inner.inline_size <= outer.inline + outer.inline_size + tolerance
+            and (inline_only or (outer.block - tolerance <= inner.block
+                 and inner.block + inner.block_size <= outer.block + outer.block_size + tolerance)))
+
+
+@dataclass(frozen=True)
+class AxisBandCellIndex:
+    """Exact-interval lookup and ordered native tier searches, built once."""
+
+    by_interval: Mapping[tuple[str, date, date], AxisBandCellGeometry]
+    by_tier: tuple[tuple[tuple[Decimal, ...], tuple[tuple[int, AxisBandCellGeometry], ...]], ...]
+
+    @classmethod
+    def build(cls, cells: tuple[AxisBandCellGeometry, ...]) -> AxisBandCellIndex:
+        own: dict[tuple[str, date, date], tuple[int, AxisBandCellGeometry]] = {}
+        tiers: dict[int, list[tuple[int, AxisBandCellGeometry]]] = {}
+        for order, cell in enumerate(cells):
+            key = cell.interval.level, cell.interval.start, cell.interval.end
+            previous = own.get(key)
+            if previous is None or (cell.paint_order, order) > (previous[1].paint_order, previous[0]):
+                own[key] = order, cell
+            tiers.setdefault(cell.tier_index, []).append((order, cell))
+        return cls({key: value[1] for key, value in own.items()}, tuple(
+            (tuple(cell.bounds.inline for _, cell in items), tuple(items)) for items in tiers.values()))
+
+    def host(self, bounds: Rect) -> AxisBandCellGeometry | None:
+        inline, block = bounds.inline + bounds.inline_size / 2, bounds.block + bounds.block_size / 2
+        candidates = []
+        for starts, cells in self.by_tier:
+            position = bisect_right(starts, inline) - 1
+            # Native cells do not overlap. At a shared closed boundary both
+            # adjacent cells may contain the centre; preserve emission order.
+            for index in (position - 1, position):
+                if index < 0:
+                    continue
+                order, cell = cells[index]
+                if (cell.bounds.inline <= inline <= cell.bounds.inline + cell.bounds.inline_size
+                        and cell.bounds.block <= block <= cell.bounds.block + cell.bounds.block_size):
+                    candidates.append((cell.paint_order, order, cell))
+        return max(candidates, key=lambda item: item[:2])[2] if candidates else None
+
+
 def _axis_text_run_geometry(*, content: str, inline: float, baseline_block: float,
                             treatment: TextTreatment, metrics: Any, orientation: str) -> AxisTextRunGeometry:
     font_size, line_height = float(treatment.font_size), float(treatment.line_height)
@@ -395,7 +482,7 @@ def measure_surface_axis(request: SurfaceLayoutRequest, scale: ScalePlacement) -
 
 def summarize_surface_axis_vertical(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame,
                                    measured: SurfaceAxisMeasurement) -> AxisVerticalSummary:
-    """Return candidate label lanes and the furthest native Rect end without placement or host guards."""
+    """Summarize the same admitted native geometry without emitting primitives."""
     tokens, axis, scale = request.theme_tokens, frame.axis, frame.scale
     tiers = request.surface_content.axis_tiers
     band_count = sum(tier.role == "band" for tier in tiers)
@@ -404,6 +491,8 @@ def summarize_surface_axis_vertical(request: SurfaceLayoutRequest, frame: Surfac
     ends: list[Decimal] = []
     separator_marks: list[tuple[float, float, float]] = []
     start, _end = request.projection.window
+    band_cells = _axis_band_cells(request, frame, measured)
+    cell_index = AxisBandCellIndex.build(band_cells)
     for tier_index, (tier, tier_measurement) in enumerate(zip(tiers, measured.tiers, strict=True)):
         if tier.role == "band":
             semantic_id = _axis_band_semantic_id(tier_index, band_ordinal)
@@ -436,16 +525,18 @@ def summarize_surface_axis_vertical(request: SurfaceLayoutRequest, frame: Surfac
             for interval, outcome in zip(tier_measurement.intervals, tier_measurement.outcomes, strict=True):
                 if outcome.disposition == "thinned":
                     continue
+                _outcome, geometry, _host = _resolve_axis_label_geometry(
+                    request=request, frame=frame, tier_index=tier_index, tier=tier,
+                    interval=interval, outcome=outcome, measurement=tier_measurement,
+                    lane=lane, declared_lanes=measured.labels.declared, cells=cell_index)
+                if geometry is None:
+                    continue
                 x = coordinate_for_date(interval.start, scale)
                 if interval.index > 0 or x > coordinate_for_date(start, scale) + float(GEOMETRY_TOLERANCE):
                     separator_marks.append((x, *((float(axis.bounds.block) + lane.offset,
                         float(axis.bounds.block) + lane.offset + lane.size)
                         if tier_index in measured.labels.declared
                         else (float(axis.bounds.block), float(axis.bounds.block + axis.bounds.block_size)))))
-                geometry = _axis_label_text_geometry(
-                    theme_tokens=tokens, tier_index=tier_index, tier=tier, interval=interval,
-                    outcome=outcome, measurement=tier_measurement, scale=scale, axis=axis,
-                    lane=lane, declared_lanes=measured.labels.declared)
                 ends.append(geometry.primary.bounds.block + geometry.primary.bounds.block_size)
                 if geometry.secondary is not None:
                     ends.append(geometry.secondary.bounds.block + geometry.secondary.bounds.block_size)
@@ -540,6 +631,43 @@ def _axis_label_text_geometry(*, theme_tokens: Any, tier_index: int, tier: AxisT
             baseline_block=secondary_baseline, treatment=plan.treatment, metrics=plan.metrics,
             orientation=orientation)
     return AxisLabelTextGeometry(primary, secondary, x, available)
+
+
+def _resolve_axis_label_geometry(*, request: SurfaceLayoutRequest, frame: SurfaceAxisFrame,
+                                 tier_index: int, tier: AxisTier, interval: AxisInterval,
+                                 outcome: AxisIntervalOutcome, measurement: AxisTierMeasurement,
+                                 lane: AxisLabelLaneGeometry, declared_lanes: Mapping[int, tuple[float, float]],
+                                 cells: AxisBandCellIndex
+                                 ) -> tuple[AxisIntervalOutcome, AxisLabelTextGeometry | None, str | None]:
+    """Admit measured runs to their own interval and actual painted ground."""
+    x, x2 = coordinate_for_date(interval.start, frame.scale), coordinate_for_date(interval.end, frame.scale)
+    logical = Rect(Decimal(str(x)), frame.axis.bounds.block, Decimal(str(max(0.0, x2 - x))),
+                   frame.axis.bounds.block_size)
+    own_host = cells.by_interval.get((interval.level, interval.start, interval.end))
+
+    def geometry(selected: AxisIntervalOutcome) -> AxisLabelTextGeometry:
+        return _axis_label_text_geometry(theme_tokens=request.theme_tokens, tier_index=tier_index,
+            tier=tier, interval=interval, outcome=selected, measurement=measurement,
+            scale=frame.scale, axis=frame.axis, lane=lane, declared_lanes=declared_lanes)
+
+    def admission(selected: AxisLabelTextGeometry) -> tuple[bool, bool, AxisBandCellGeometry | None]:
+        host = cells.host(selected.primary.bounds)
+        bounds = (logical, *(cell.bounds for cell in (own_host, host) if cell is not None))
+        def fits(run: AxisTextRunGeometry) -> bool:
+            return (all(_axis_contains(bound, run.bounds) for bound in bounds)
+                    and _axis_contains(frame.timeline.bounds, run.bounds, inline_only=True))
+        return fits(selected.primary), selected.secondary is None or fits(selected.secondary), host
+
+    selected = geometry(outcome)
+    primary_fits, secondary_fits, host = admission(selected)
+    if selected.secondary is not None and (not primary_fits or not secondary_fits):
+        outcome = replace(outcome, secondary_disposition="omitted", secondary_reason="does-not-fit")
+        selected = geometry(outcome)
+        primary_fits, _, host = admission(selected)
+    if not primary_fits:
+        return (replace(outcome, disposition="thinned", reason="label-does-not-fit", label_fits=False,
+                        secondary_label=None, secondary_disposition=None, secondary_reason=None), None, None)
+    return replace(outcome, label_fits=True, reason=None), selected, host.placement_id if host else None
 
 
 def _axis_label_tier_geometry(*, axis: SlotPlacement, tier_index: int, tier: AxisTier,
@@ -738,15 +866,15 @@ def prepare_surface_axis(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame,
     tiers = request.surface_content.axis_tiers
     band_tier_count = sum(item.role == "band" for item in tiers)
     if measured is None:
-        lanes = plan_label_lanes(tiers, tokens, font_metrics)
-        bands = plan_band_stack(tiers, tokens, lanes)
-    else:
-        lanes, bands = measured.labels, measured.bands
+        measured = measure_surface_axis(request, scale)
+    lanes, bands = measured.labels, measured.bands
+    band_cells = _axis_band_cells(request, frame, measured)
+    cell_index = AxisBandCellIndex.build(band_cells)
+    cells_by_id = {cell.placement_id: cell for cell in band_cells}
     declared_lanes, lane_by_unit = lanes.declared, lanes.by_unit
 
     for tier_index, tier in enumerate(tiers):
-        tier_measurement = (measure_axis_tier(request, scale, tier_index, tier)
-                            if measured is None else measured.tiers[tier_index])
+        tier_measurement = measured.tiers[tier_index]
         form = tier_measurement.form
         treatment, metrics = tier_measurement.treatment, tier_measurement.metrics
         axis_size, plan = tier_measurement.axis_size, tier_measurement.secondary
@@ -761,23 +889,15 @@ def prepare_surface_axis(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame,
             if lane.stack_end is not None and lane.stack_end > float(axis.bounds.block_size) + float(GEOMETRY_TOLERANCE):
                 raise LayoutError("E_PRESENTATION_AXIS_OVERFLOW", f"/view/body/axis/tiers/{tier_index}", detail=f"band-lane:{band_ordinal}")
             band_block, band_block_size = lane.block, lane.block_size
-            gap = float(tokens.optional_number(semantic_binding(semantic_id).scene_role, "cellGap") or 0)
             corner = _cell_corner(tokens, semantic_binding(semantic_id).scene_role, tier_index)
             for interval in intervals:
-                raw, raw2 = coordinate_for_date(interval.start, scale), coordinate_for_date(interval.end, scale)
-                x, x2 = raw, raw2
-                if gap:
-                    x, x2 = x + gap / 2, max(x + gap / 2, x2 - gap / 2)
-                # A cell at the window edge reaches the plot edge (#880); the cell gap lies between cells, so the
-                # outer edge of that cell takes no gap and ends where the axis rule ends.
-                edge, edge2 = extend_to_plot_edges(raw, raw2, scale=scale, plot=timeline.bounds)
-                x, x2 = (edge if edge != raw else x), (edge2 if edge2 != raw2 else x2)
                 placement_id = axis_band_placement_id(tier_index, interval.index)
-                treatment_bg, paint_order = tokens.background(semantic_binding(semantic_id).scene_role)
-                if treatment_bg != "none":
+                cell = cells_by_id.get(placement_id)
+                if cell is not None:
                     band_targets[("axis-band", interval.level, str(interval.index))] = placement_id
+                    x, x2 = float(cell.bounds.inline), float(cell.bounds.inline + cell.bounds.inline_size)
                     shapes.append(_band_cell(placement_id, x, x2, band_block, band_block_size, semantic_id=semantic_id,
-                                             paint_order=paint_order, corner=corner, diagnostics=diagnostics))
+                                             paint_order=cell.paint_order, corner=corner, diagnostics=diagnostics))
             band_ordinal += 1
         elif tier.role in {"grid-major", "grid-minor"}:
             semantic_id = "axisGrid" if tier.role == "grid-major" else "axisGridMinor"
@@ -795,9 +915,7 @@ def prepare_surface_axis(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame,
         elif tier.role == "labels" and form is not None:
             label_semantic_id, label_ordinal = _axis_label_semantic_id(tier_index, tier, label_ordinal)
             orientation = tier.label.orientation
-            lane = (axis_label_lane_geometry(tier_index=tier_index, tier=tier, measured=tier_measurement,
-                                             declared_lanes=declared_lanes, running_offset=label_lane_offset)
-                    if measured is None else measured.label_lane(tier_index))
+            lane = measured.label_lane(tier_index)
             label_lane_offset, lane_size, block = lane.offset, lane.size, lane.block
             lane_overflow = label_lane_offset + lane_size > float(axis.bounds.block_size)
             if plan is not None and (lane_overflow or (tier_index in declared_lanes
@@ -809,19 +927,32 @@ def prepare_surface_axis(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame,
                 label_tiers.append(_axis_label_tier_geometry(
                     axis=axis, tier_index=tier_index, tier=tier, measurement=tier_measurement,
                     lane=lane, declared_lanes=declared_lanes))
+            resolved_outcomes = []
             for interval, outcome in zip(intervals, interval_outcomes, strict=True):
                 if outcome.disposition == "thinned":
+                    resolved_outcomes.append(outcome)
                     continue
+                previous = outcome
+                outcome, geometry, host_id = _resolve_axis_label_geometry(
+                    request=request, frame=frame, tier_index=tier_index, tier=tier,
+                    interval=interval, outcome=outcome, measurement=tier_measurement,
+                    lane=lane, declared_lanes=declared_lanes, cells=cell_index)
+                resolved_outcomes.append(outcome)
+                if geometry is None:
+                    diagnostics.append(f"W_LAYOUT_AXIS_LABEL_THINNED:{outcome.candidate_id}:label-does-not-fit")
+                    decisions.append(PlacementDecision(outcome.candidate_id,
+                        f"/view/body/axis/tiers/{tier_index}", ("axis-cell-containment", "suppress"), "suppress", "suppressed"))
+                    continue
+                if previous.secondary_disposition == "placed" and outcome.secondary_disposition == "omitted":
+                    diagnostics.append(f"W_LAYOUT_AXIS_SECONDARY_OMITTED:{outcome.candidate_id}:does-not-fit")
+                    decisions.append(PlacementDecision(f"axis-label-secondary:{tier_index}:{interval.index}",
+                        f"/view/body/axis/tiers/{tier_index}", ("secondary", "suppress"), "suppress", "suppressed"))
                 label_targets[("axis-label", interval.level, str(interval.index))] = outcome.candidate_id
                 x, x2 = coordinate_for_date(interval.start, scale), coordinate_for_date(interval.end, scale)
                 if interval.index > 0 or x > coordinate_for_date(start, scale) + float(GEOMETRY_TOLERANCE):
                     separator_marks.append((x, *((float(axis.bounds.block) + label_lane_offset,
                         float(axis.bounds.block) + label_lane_offset + lane_size) if tier_index in declared_lanes
                         else (float(axis.bounds.block), float(axis.bounds.block + axis.bounds.block_size)))))
-                geometry = _axis_label_text_geometry(
-                    theme_tokens=tokens, tier_index=tier_index, tier=tier, interval=interval,
-                    outcome=outcome, measurement=tier_measurement, scale=scale, axis=axis,
-                    lane=lane, declared_lanes=declared_lanes)
                 primary = geometry.primary
                 placed = place_text(placement_id=f"axis-label:{tier_index}:{interval.index}", source_ref="timeline-axis",
                     content=primary.content, inline=primary.inline, baseline_block=primary.baseline_block,
@@ -829,8 +960,9 @@ def prepare_surface_axis(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame,
                     collision_region="timeline-axis-label", collision_domain=CollisionDomain("timeline-axis", "labels"),
                     source_content=primary.content, available_inline_start=geometry.available_inline_start,
                     available_inline_size=geometry.available_inline_size, orientation=orientation,
-                    overflow="visible-overflow" if not outcome.label_fits or lane_overflow else "fit")
-                placed = replace(placed, semantic_id=label_semantic_id)
+                    overflow="fit")
+                placed = replace(placed, semantic_id=label_semantic_id,
+                                 host_placement_id=host_id, paint_order=HOSTED_TEXT_PAINT_ORDER)
                 text.append(placed)
                 if geometry.secondary is not None:
                     secondary = geometry.secondary
@@ -842,10 +974,15 @@ def prepare_surface_axis(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame,
                         collision_region="timeline-axis-label", collision_domain=CollisionDomain("timeline-axis", "labels"),
                         source_content=secondary.content, available_inline_start=geometry.available_inline_start,
                         available_inline_size=geometry.available_inline_size,
-                        orientation=orientation, overflow="fit"), semantic_id=label_semantic_id))
-                if not outcome.label_fits or lane_overflow:
-                    visible_overflows.append((placed, LabelRect(*bounds_from_rect(axis.bounds))))
+                        orientation=orientation, overflow="fit"), semantic_id=label_semantic_id,
+                        host_placement_id=host_id, paint_order=HOSTED_TEXT_PAINT_ORDER))
             label_lane_offset = lane.next_offset
+            outcomes[-1] = replace(outcomes[-1], intervals=tuple(resolved_outcomes))
+            density_prefix = f"W_LAYOUT_AXIS_DENSITY:axis-tier:{tier_index}:thinned="
+            diagnostics = [item for item in diagnostics if not item.startswith(density_prefix)]
+            thinned = sum(item.disposition == "thinned" for item in resolved_outcomes)
+            if thinned:
+                diagnostics.append(f"{density_prefix}{thinned}")
         else:
             raise LayoutError("E_PRESENTATION_AXIS_INVALID", "/view/body/axis/tiers")
 
@@ -862,17 +999,6 @@ def prepare_surface_axis(request: SurfaceLayoutRequest, frame: SurfaceAxisFrame,
         shapes.append(ShapePlacement("axis-rule", "timeline-axis", "Path",
             bounds,
             ((left, y), (right, y)), semantic_id="axisRule", paint_order=BACKGROUND_PAINT_ORDER + 2))
-    bands = tuple(item for item in shapes if isinstance(item, ShapePlacement)
-                  and item.semantic_id in axis_band_semantic_ids())
-    def host(item: TextPlacement) -> str | None:
-        centre = item.bounds.inline + item.bounds.inline_size / 2
-        lane_centre = item.bounds.block + item.bounds.block_size / 2
-        candidates = tuple(band for band in bands
-            if band.bounds.inline <= centre <= band.bounds.inline + band.bounds.inline_size
-            and band.bounds.block <= lane_centre <= band.bounds.block + band.bounds.block_size)
-        return min(candidates, key=lambda band: band.placement_id).placement_id if candidates else None
-    text = [replace(item, host_placement_id=host(item), paint_order=HOSTED_TEXT_PAINT_ORDER)
-            if item.semantic_id in axis_label_semantic_ids() else item for item in text]
     contract = request.presentation_contract
     minimum = frame.metric_values.get("timeline.calendarClosed.minimumDayWidth")
     closed = contract.time.calendar_closed
