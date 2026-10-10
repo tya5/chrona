@@ -2,8 +2,9 @@
 
 # Issue #1306 — contributor test loop acceptance
 
-Prepared implementation: `c9936062544f8b4ca0f3ed64015674deca10b6b4` on ready
-main `4f4ee94ccc21c8d3c85021a1dc50a931d068e044`.
+Implementation: `c9936062544f8b4ca0f3ed64015674deca10b6b4`, with CI outcome
+correction `137959c2bb624ca77914740ac0bcf71c216b2d30`; ordinarily adopted
+source main `8fa3fe21aa1c6d2c0d1ee6826a833d29dc9f0461` (ready sync pending).
 [Current design, architecture review and plan](https://github.com/tya5/chrona/issues/1306#issuecomment-6094278894).
 Only contributor tooling/tests/CI change; product schemas and rendering stay unchanged.
 
@@ -27,11 +28,15 @@ None. The issue remains open until row 1 and the required release gate are prove
 
 ## Verification
 
-Public geometry/properties/ledger, View schema and import policy: 264 passed,
-45 skipped (47.22s). Setup/import/timing guards: 16 passed (8.62s).
-Documented smoke loop plus setup tests: 42 passed (2.31s).
-Schema-equivalence: 33 cases passed initially; an omitted two control-document
-decode count was corrected, and the work-count case plus two policy tests passed
-(3 cases, 40.78s). Expected-delta lifecycle: 23 passed (20.40s).
+Current adoption: contributor setup/import/timing/conformance-workflow/schema
+batch 55 passed (60.96s), including all four unit/remainder exit combinations.
+Both suites execute even after either failure; the combined pytest outcome,
+OS probe, wheel/documented-command checks and finalizer remain authoritative.
+An initial import-spy failure was a local venv missing declared `skia-pathops`;
+installing the project into that venv corrected it, and the spy then passed.
+The initial batch's other 108 tests (including View schema) passed.
+Prior unchanged discovery evidence: 342 corpus case IDs preserved; public
+geometry/properties/ledger/schema/import batch 264 passed, 45 skipped;
+expected-delta lifecycle 23 passed. No authored example or product changes.
 No local full-suite or completed CI claim. One eventual PR retains earlier
 board publication priority; current-head snapshot and exact-main release remain required.

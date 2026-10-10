@@ -17,7 +17,7 @@ python -m venv .venv
 
 On Windows replace `.venv/bin/python` with `.venv\Scripts\python.exe`.
 Keep the venv in this checkout: editable installs otherwise import another
-worktree. The local CJK provider is required; these tests do not skip missing fonts.
+worktree. The local CJK provider is required by this unit-suite setup.
 
 For a quick pre-push check (add the focused tests for your change):
 
