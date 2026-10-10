@@ -11,11 +11,11 @@ from chrona.presentation.layout.surface_geometry import BACKGROUND_PAINT_ORDER, 
 from chrona.presentation.layout.surface_groups import (
     GroupHeaderExtentUpdate, SurfaceGroupPresentation, group_tab_bounds, group_tag_bounds, resolve_group_tab,
 )
-from chrona.presentation.layout.surface_quality import GroupPlacement, ShapePlacement, intersects
+from chrona.presentation.layout.surface_quality import GroupPlacement, ShapePlacement, TextPlacement, intersects
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, semantic_binding
 
 BACKGROUND_SEMANTIC_IDS = frozenset({
-    "rowBand", "groupBand", "groupHeaderBand", "groupTab", "calendarClosed", "calendarException", "periodBand", *axis_band_semantic_ids(),
+    "rowBand", "groupBand", "groupHeaderBand", "groupHeaderStrip", "groupTab", "calendarClosed", "calendarException", "periodBand", *axis_band_semantic_ids(),
 })
 
 
@@ -64,7 +64,8 @@ def _background_shape(*, base: SurfaceBaseGeometry, theme_tokens: Any, placement
         return None
     bounds, slot_id = _background_bounds(
         semantic_id=semantic_id,
-        extent=base.layout_manifest.background_extents.get(extent_semantic or semantic_id, ""),
+        extent=base.layout_manifest.background_extents.get(
+            extent_semantic or semantic_id, "both" if semantic_id == "groupHeaderStrip" else ""),
         source_bounds=source_bounds, table_bounds=base.table_bounds,
         timeline_bounds=base.timeline_bounds, text_bounds=text_bounds, trailing_inset=trailing_inset)
     return ShapePlacement(placement_id, source_ref, "Rect", bounds, slot_id=slot_id,
@@ -132,6 +133,53 @@ def compose_row_group_backgrounds(*, base: SurfaceBaseGeometry, rows: tuple[Any,
                 ((float(left_decimal), float(bottom)), (float(right_decimal), float(bottom))),
                 slot_id="review-surface", paint_order=BACKGROUND_PAINT_ORDER, semantic_id="rowRule"))
     return tuple(shapes)
+
+
+def compose_group_header_strips(*, base: SurfaceBaseGeometry, groups: tuple[GroupPlacement, ...],
+                               theme_tokens: Any) -> tuple[ShapePlacement, ...]:
+    """Paint only completed header rows, independently of body/caption selection."""
+    declared = theme_tokens.optional_background("group-header-strip")
+    if declared is None or declared[0] == "none":
+        return ()
+    return tuple(shape for group in groups if group.header_bounds is not None
+                 if (shape := _background_shape(
+                     base=base, theme_tokens=theme_tokens,
+                     placement_id=f"group-header-strip:{group.group_id}", source_ref=group.group_id,
+                     semantic_id="groupHeaderStrip", source_bounds=group.header_bounds)) is not None)
+
+
+_GROUP_HEADER_LAYER_RANK = {"groupBand": 0, "groupHeaderStrip": 1, "groupHeaderBand": 2, "groupHeader": 3}
+
+
+def _is_ordered_group_strip_pair(first: ShapePlacement | TextPlacement,
+                                second: ShapePlacement | TextPlacement) -> bool:
+    pair = {first.semantic_id, second.semantic_id}
+    if (first.source_ref != second.source_ref or "groupHeaderStrip" not in pair
+            or len(pair) != 2 or not pair <= _GROUP_HEADER_LAYER_RANK.keys()):
+        return False
+    lower, upper = sorted((first, second), key=lambda item: _GROUP_HEADER_LAYER_RANK[item.semantic_id])
+    return lower.paint_order < upper.paint_order
+
+
+def validate_group_header_strip_order(shapes: tuple[ShapePlacement, ...] | list[ShapePlacement],
+                                     text: tuple[TextPlacement, ...] | list[TextPlacement]) -> None:
+    """Admit declared strip layers against actual same-group intersecting placements."""
+    strips = tuple(shape for shape in shapes if shape.semantic_id == "groupHeaderStrip")
+    if not strips:
+        return
+    layers: dict[str, list[ShapePlacement | TextPlacement]] = {}
+    for placement in (*shapes, *text):
+        if placement.semantic_id in {"groupBand", "groupHeaderBand", "groupHeader"}:
+            layers.setdefault(placement.source_ref, []).append(placement)
+    for strip in strips:
+        for other in layers.get(strip.source_ref, ()):
+            if not intersects(strip.bounds, other.bounds):
+                continue
+            if not _is_ordered_group_strip_pair(strip, other):
+                raise LayoutError("E_LAYOUT_GROUP_HEADER_STRIP_ORDER",
+                                  "/body/roles/group-header-strip/backgroundPaintOrder",
+                                  detail=f"{strip.placement_id} order={strip.paint_order}; "
+                                         f"{other.placement_id} order={other.paint_order}")
 
 
 def compose_group_tabs(*, groups: tuple[GroupPlacement, ...], theme_tokens: Any,
@@ -207,6 +255,8 @@ def validate_background_shapes(shapes: tuple[ShapePlacement, ...] | list[ShapePl
             if (shape.source_ref == other.source_ref
                     and {shape.semantic_id, other.semantic_id} == {"groupBand", "groupHeaderBand"}):
                 continue
+            if _is_ordered_group_strip_pair(shape, other):
+                continue
             if _is_later_overlay(shape, other, theme_tokens):
                 continue
             if _is_later_overlay(other, shape, theme_tokens):
@@ -220,7 +270,7 @@ def validate_background_shapes(shapes: tuple[ShapePlacement, ...] | list[ShapePl
 # The one explicit relation under which translucent backgrounds may intersect: a later-painted overlay over an
 # earlier background of strictly lower rank. Row, group and header bands come first, a named period (#582)
 # next, the calendar closure last; nothing else is allowed by default.
-_OVERLAY_RANK = {"rowBand": 0, "groupBand": 0, "groupHeaderBand": 0, "periodBand": 1, "calendarClosed": 2, "calendarException": 2}
+_OVERLAY_RANK = {"rowBand": 0, "groupBand": 0, "groupHeaderBand": 0, "groupHeaderStrip": 0, "periodBand": 1, "calendarClosed": 2, "calendarException": 2}
 
 
 def _is_later_overlay(upper: ShapePlacement, lower: ShapePlacement, theme_tokens: Any) -> bool:

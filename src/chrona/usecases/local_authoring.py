@@ -44,8 +44,8 @@ def initialize_project(destination: Path, *, example: str | None = None) -> Path
         raise ValueError(f"E_INIT_OUTPUT_EXISTS: {destination} already exists and is not empty; init into a new or empty directory")
     source = minimal_template_resource() if example is None else template_resource(example)
     _copy_template(source, destination)
-    if example is None:
-        return destination
+    if example is None or not (destination / "manifest.yaml").is_file():
+        return destination  # the starter, or numbered stages: plain Projects, no Contexts and so no Store
     # Contexts are immutable references.  A freshly initialized project must
     # therefore contain their snapshot closure before its Store config is
     # advertised to commands; mutable source paths are never a reader fallback.

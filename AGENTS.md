@@ -82,6 +82,21 @@ never patch generated output. When two sessions are about to merge, the one
 merging posts a one-line "Merging #N now" on its issue, and a fix that turns a
 red `main` green goes first.
 
+Every landing costs one serial ready-tip cycle (about 15 min of derived sync
+plus a re-run of CI), so spend cycles on code, not paperwork:
+
+- **Batch documents.** Literal acceptance reviews, release records and other
+  `docs/`-only changes go out as one PR per session per merge window, not one
+  PR per issue.
+- **Batch small code PRs.** When a session has three or more small, separately
+  reviewed and green PRs waiting, land them as one integration PR (each commit
+  keeps its own `Refs #N`) instead of one cycle each. Keep a PR separate when it
+  touches derived inputs another open PR also touches, or when it is large
+  enough that a failure would block the others.
+- **Reviewer PRs** (examples, docs) count in the same lane: the dev session
+  that lands next brings them to the ready tip and lands them before its own
+  next item (board #454, row 1).
+
 1. **Establish the baseline.** Read the issue body and later comments, current
    `main`, active plans, relevant specifications/ADRs, code, tests, and public
    artifacts. Record what is published, what is inferred, and what remains

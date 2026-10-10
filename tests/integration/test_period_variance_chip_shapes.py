@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 from datetime import date
+from html import escape
+from math import cos, pi, sin, sqrt
 from pathlib import Path
 import re
 
@@ -28,8 +30,9 @@ ACTUAL = {
 
 
 def _chip_shape(kind: str) -> dict:
-    if kind == "burst":
-        return {"kind": "burst", "points": 7, "innerRatio": .7}
+    if kind in {"burst", "ellipse"}:
+        fit = {"fit": "ellipse"} if kind == "ellipse" else {}
+        return {"kind": "burst", "points": 7, "innerRatio": .7, **fit}
     return {
         "kind": "catalog", "glyph": "chrona-target-parts:synthetic-chip",
         "sliceInsets": {"top": 0, "right": 0, "bottom": 0, "left": 0}, "unitEm": .4,
@@ -84,7 +87,8 @@ def _render_period(tmp_path: Path, kind: str, catalog: Path | None):
                    catalogs=(catalog,) if catalog else ())
 
 
-def _assert_chip_pair(rendered, label_purpose: str, role: str, catalog: bool):
+def _assert_chip_pair(rendered, label_purpose: str, role: str, kind: str):
+    catalog = kind == "catalog"
     label, = [item for item in rendered.surface.primitives
               if item.kind == "Text" and item.purpose == label_purpose]
     chip_id = f"chip:{label.scene_id}"
@@ -112,22 +116,66 @@ def _assert_chip_pair(rendered, label_purpose: str, role: str, catalog: bool):
     else:
         assert len(chips) == 1
         assert len(chips[0].symbol.outline) >= 8
+    if kind == "ellipse":
+        points, ratio = 7, .7
+        factor = _inradius_factor(points, ratio)
+        vertices = tuple(command.points[0] for command in chips[0].symbol.outline[:-1])
+        center = (sum(x for x, _y in vertices) / len(vertices),
+                  sum(y for _x, y in vertices) / len(vertices))
+        axis_x = max(abs(x - center[0]) for x, _y in vertices)
+        axis_y = max(abs(y - center[1]) for _x, y in vertices)
+        x, y, width, height = label.bounds
+        for corner_x in (x, x + width):
+            for corner_y in (y, y + height):
+                normalized = ((corner_x - center[0]) / axis_x) ** 2 + (
+                    (corner_y - center[1]) / axis_y) ** 2
+                assert normalized <= factor * factor + 1e-6
+                assert _inside_polygon((corner_x, corner_y), vertices)
     svg = rendered.artifact.content.decode("utf-8")
     for chip in chips:
-        match = re.search(rf'<path\b(?=[^>]*data-scene-id="{re.escape(chip.scene_id)}")[^>]*\bd="([^"]+)"', svg)
+        escaped_id = re.escape(escape(chip.scene_id, quote=True))
+        match = re.search(rf'<path\b(?=[^>]*data-scene-id="{escaped_id}")[^>]*\bd="([^"]+)"', svg)
         assert match and match.group(1)
+        commands = re.findall(r"([ML])\s*([-+]?(?:\d+\.?\d*|\.\d+))\s+([-+]?(?:\d+\.?\d*|\.\d+))",
+                              match.group(1))
+        if chip.symbol is not None:
+            expected = tuple(("M" if item.kind == "move" else "L", *item.points[0])
+                             for item in chip.symbol.outline)
+            assert len(commands) == len(expected)
+            for actual, wanted in zip(commands, expected):
+                assert actual[0] == wanted[0]
+                assert float(actual[1]) == pytest.approx(wanted[1], abs=.00051)
+                assert float(actual[2]) == pytest.approx(wanted[2], abs=.00051)
     return label, chips
 
 
-@pytest.mark.parametrize("kind", ["burst", "catalog"])
+def _inradius_factor(points, ratio):
+    theta = pi / points
+    if ratio <= cos(theta):
+        return ratio
+    return ratio * sin(theta) / sqrt(1 + ratio * ratio - 2 * ratio * cos(theta))
+
+
+def _inside_polygon(point, vertices):
+    inside = False
+    for start, end in zip(vertices, (*vertices[1:], vertices[0])):
+        if (start[1] > point[1]) != (end[1] > point[1]):
+            crossing = start[0] + ((point[1] - start[1]) * (end[0] - start[0]) /
+                                   (end[1] - start[1]))
+            if point[0] < crossing:
+                inside = not inside
+    return inside
+
+
+@pytest.mark.parametrize("kind", ["burst", "ellipse", "catalog"])
 def test_period_label_chip_shape_reaches_scene_and_svg(tmp_path, kind):
     catalog = _catalogue(tmp_path / "period-catalog.yaml") if kind == "catalog" else None
     rendered = _render_period(tmp_path, kind, catalog)
-    _assert_chip_pair(rendered, "period-label", "period-label-chip", kind == "catalog")
+    _assert_chip_pair(rendered, "period-label", "period-label-chip", kind)
 
 
-@pytest.mark.parametrize("kind", ["burst", "catalog"])
+@pytest.mark.parametrize("kind", ["burst", "ellipse", "catalog"])
 def test_finish_delta_chip_shape_reaches_scene_and_svg_with_lane_ownership(tmp_path, kind):
     catalog = _catalogue(tmp_path / "finish-catalog.yaml") if kind == "catalog" else None
     rendered = _render_finish(tmp_path, kind, catalog)
-    _assert_chip_pair(rendered, "finish-delta", "finish-delta-chip", kind == "catalog")
+    _assert_chip_pair(rendered, "finish-delta", "finish-delta-chip", kind)
