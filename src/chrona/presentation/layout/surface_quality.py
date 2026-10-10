@@ -19,6 +19,7 @@ if TYPE_CHECKING:  # avoid the runtime cycle: canvas_overlays uses SlotPlacement
     from chrona.presentation.layout.canvas_overlays import CanvasOverlays
     from chrona.presentation.layout.label_chip_measurement import MeasuredLabelChip
     from chrona.presentation.layout.canvas_viewport import CanvasViewportWarning, DeclaredViewport
+    from chrona.presentation.layout.surface_mark_visibility import ItemMarkVisibilityIndex
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, FIT_ADJUSTS, TEXT_FOLLOWS_BOX
 
 
@@ -583,6 +584,7 @@ class SurfaceLayoutRequest:
     capacity_short_sources: tuple[CapacitySourceEvidence, ...] = ()
     as_of_chip_measurement: MeasuredLabelChip | None = None
     declared_viewport: DeclaredViewport | None = None
+    mark_visibility_index: ItemMarkVisibilityIndex | None = None
 
 
 @dataclass(frozen=True)

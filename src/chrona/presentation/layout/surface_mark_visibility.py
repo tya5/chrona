@@ -1,11 +1,11 @@
 """Typed, immutable index of window-completed source mark occurrences."""
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date
 from enum import StrEnum
 from types import MappingProxyType
-from typing import Mapping as TypingMapping
+from typing import TYPE_CHECKING, Mapping as TypingMapping
 
 from chrona.presentation.layout.lane_projection import (
     LaneProjectionInstance, close_lane_projection, folded_instance_id,
@@ -14,8 +14,12 @@ from chrona.presentation.layout.lane_projection import (
 from chrona.presentation.layout.mark_facet_visibility import (
     ItemMarkVisibility, complete_item_visibility,
 )
+from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.semantic_mark_facets import select_item_mark_facets
 from chrona.presentation.model.projection import ReviewProjection
+
+if TYPE_CHECKING:
+    from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
 
 
 class MarkOccurrenceKind(StrEnum):
@@ -51,8 +55,6 @@ class ItemMarkVisibilityIndex:
 
     def require_match(self, projection: ReviewProjection, as_of: date | None) -> None:
         if projection is not self.projection or as_of != self.as_of:
-            from chrona.presentation.layout.model import LayoutError
-
             raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/window",
                               detail="stage=index; reason=request-mismatch")
 
@@ -92,8 +94,6 @@ def build_item_mark_visibility_index(
             source_ref: str, emit_missing_actual: bool = True,
             emit_diagnostics: bool = True) -> ItemMarkVisibility:
         if occurrence in entries:
-            from chrona.presentation.layout.model import LayoutError
-
             raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/items",
                               detail="stage=index; reason=duplicate-occurrence")
         result = _occurrence_visibility(
@@ -132,8 +132,6 @@ def build_item_mark_visibility_index(
                 emit_missing_actual=lane_missing_actual_visible(projection),
             )
             if final_occurrence in entries:
-                from chrona.presentation.layout.model import LayoutError
-
                 raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/laneRows",
                                   detail="stage=index; reason=duplicate-lane-alias")
             entries[final_occurrence] = visibility
@@ -175,3 +173,23 @@ def build_item_mark_visibility_index(
             )
 
     return ItemMarkVisibilityIndex(projection, as_of, entries)
+
+
+def ensure_request_mark_visibility_index(request: SurfaceLayoutRequest) -> SurfaceLayoutRequest:
+    """Attach one request-lifetime index, or reject a stale cached binding."""
+    projection = request.projection
+    if projection is None:
+        raise LayoutError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection")
+    start, end = projection.window
+    if not isinstance(start, date) or not isinstance(end, date) or start >= end:
+        raise LayoutError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection/window")
+    as_of = getattr(getattr(request, "surface_content", None), "as_of", None)
+    index = request.mark_visibility_index
+    if index is None:
+        return replace(request, mark_visibility_index=build_item_mark_visibility_index(
+            projection, as_of=as_of))
+    if not isinstance(index, ItemMarkVisibilityIndex):
+        raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/window",
+                          detail="stage=index; reason=invalid-request-cache")
+    index.require_match(projection, as_of)
+    return request

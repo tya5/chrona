@@ -2,7 +2,6 @@
 from dataclasses import FrozenInstanceError, fields, replace
 from datetime import date
 from decimal import Decimal
-from types import SimpleNamespace
 
 import pytest
 
@@ -14,6 +13,8 @@ from chrona.presentation.layout.surface_base import (
 from chrona.presentation.layout.surface_quality import SurfaceLayoutRequest
 from chrona.presentation.layout.surface_composer import prepare_surface_candidate, prepare_surface_content
 from chrona.presentation.model.projection import ReviewItem, ReviewProjection
+from chrona.presentation.model.projection import ReviewLaneRowProjection, ReviewRowProjection
+from chrona.presentation.review.lane_membership import Lane, LaneAssignment, LaneMembership
 from chrona.presentation.model.surface_content import AxisLabelIntent, AxisTier
 from chrona.presentation.model.presentation_contract import normalize_presentation_input
 from chrona.presentation.model.theme_tokens import ThemeTokenView
@@ -57,7 +58,13 @@ def test_non_lane_candidate_keeps_native_preparation_and_natural_demand():
     actual = prepare_surface_candidate(request)
     assert actual.row_viewport == expected.row_viewport
     assert actual.required_timeline_block() == expected.required_timeline_block()
-    assert actual.inline.request is request
+    prepared_request = actual.inline.request
+    assert prepared_request is not request
+    assert request.mark_visibility_index is None
+    assert prepared_request.mark_visibility_index is not None
+    assert prepared_request.mark_visibility_index.projection is request.projection
+    from chrona.presentation.layout.surface_mark_visibility import ensure_request_mark_visibility_index
+    assert ensure_request_mark_visibility_index(prepared_request) is prepared_request
 
 
 def test_lane_candidate_replaces_prior_preflight_from_exact_candidate_inputs(monkeypatch):
@@ -65,8 +72,18 @@ def test_lane_candidate_replaces_prior_preflight_from_exact_candidate_inputs(mon
 
     original = _request()
     stale, current, completed = object(), object(), object()
-    candidate = replace(original, projection=SimpleNamespace(lane_membership=object()),
-                        fixed_lane_preflight=stale)
+    lane_item = replace(original.projection.items[0], item_id="member-view", source_kind="primary",
+                        roles=("planned",))
+    source_row = ReviewRowProjection("source-row", "Activity", "group", "member-view", (lane_item,))
+    membership = LaneMembership((Lane("lane-final", "group", ("member-view",)),), (
+        LaneAssignment("member-view", "lane-final", "group", "dates", "fixed"),
+    ))
+    projection = ReviewProjection(
+        (lane_item,), original.projection.window, (), (), rows=(source_row,),
+        lane_membership=membership,
+        lane_rows=(ReviewLaneRowProjection("lane-final", "group", (lane_item,), ("member-view",)),),
+    )
+    candidate = replace(original, projection=projection, fixed_lane_preflight=stale)
     calls = []
 
     def preflight(**inputs):
@@ -77,6 +94,8 @@ def test_lane_candidate_replaces_prior_preflight_from_exact_candidate_inputs(mon
         assert request.fixed_lane_preflight is current
         assert request.layout_manifest is candidate.layout_manifest
         assert request.surface_content is candidate.surface_content
+        assert request.mark_visibility_index is not None
+        assert request.mark_visibility_index.projection is candidate.projection
         return completed
 
     monkeypatch.setattr(surface_preparation, "preflight_fixed_lane_layout", preflight)
@@ -89,6 +108,7 @@ def test_lane_candidate_replaces_prior_preflight_from_exact_candidate_inputs(mon
         icon_assets=candidate.icon_assets, visual_requests=candidate.visual_requests,
         font_metrics=candidate.font_metrics)]
     assert candidate.fixed_lane_preflight is stale
+    assert candidate.mark_visibility_index is None
 
 
 def test_width_changed_lane_candidate_closes_real_preflight_and_scene_from_same_manifest():

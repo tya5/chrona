@@ -5,6 +5,8 @@ import pytest
 
 from chrona.presentation.layout.semantic_mark_facets import select_item_mark_facets
 from chrona.presentation.layout.mark_geometry import compose_item_marks
+from chrona.presentation.layout import mark_geometry
+from chrona.presentation.layout.model import LayoutError
 from chrona.presentation.layout.presentation import MarkBandFrame, MarkGeometry
 from chrona.presentation.layout.surface_quality import ScalePlacement
 from chrona.presentation.model.projection import ObservationState
@@ -127,7 +129,7 @@ _KIND_EXPECTED = {
 
 @pytest.mark.parametrize("source_type", ("point", "span"))
 @pytest.mark.parametrize("source_kind", tuple(_KIND_EXPECTED))
-def test_composer_characterizes_each_source_kind_and_temporal_shape(source_kind, source_type):
+def test_composer_characterizes_each_source_kind_and_temporal_shape(source_kind, source_type, monkeypatch):
     origin = date(2026, 1, 1)
     planned = ({"at": date(2026, 1, 3)} if source_type == "point" else
                {"start": date(2026, 1, 3), "end": date(2026, 1, 6)})
@@ -193,3 +195,44 @@ def test_composer_characterizes_each_source_kind_and_temporal_shape(source_kind,
         for mark in result.marks
     ]
     assert actual_marks == expected
+    selected = select_item_mark_facets(item=item, source_kind=source_kind,
+                                      as_of=date(2026, 1, 10))
+
+    def no_reselection(**_kwargs):
+        pytest.fail("a prepared source selection must not be recomputed")
+
+    monkeypatch.setattr(mark_geometry, "select_item_mark_facets", no_reselection)
+    prepared = compose_item_marks(item=item, instance_id="item", source_kind=source_kind,
+                                  frame=frame, as_of=date(2026, 1, 10),
+                                  theme_tokens=_ShapeTheme(), slot_id="timeline",
+                                  selection=selected)
+    assert prepared == result
+    with pytest.raises(LayoutError, match="selection-mismatch"):
+        compose_item_marks(item=item, instance_id="item", source_kind=source_kind,
+                           frame=frame, as_of=None, theme_tokens=_ShapeTheme(),
+                           slot_id="timeline", selection=selected)
+
+
+def test_prepared_selection_suppresses_preflight_diagnostics_without_reselection(monkeypatch):
+    item = _item(actual={"start": DAY, "openUntil": "asOf"})
+    selection = select_item_mark_facets(item=item, source_kind="combined", as_of=None)
+    assert selection.diagnostics == ("W_LAYOUT_OPEN_ACTUAL_AS_OF_REQUIRED:task-17",)
+    frame = MarkBandFrame.zero_origin(
+        ScalePlacement("surface", "test", DAY, date(2026, 4, 30), 0, 100, 0, 2),
+        50, {role: MarkGeometry(.2, .1, 1, 0)
+             for role in ("planned", "actual", "missing-actual")},
+    )
+
+    def no_reselection(**_kwargs):
+        pytest.fail("preflight must reuse the prepared source selection")
+
+    monkeypatch.setattr(mark_geometry, "select_item_mark_facets", no_reselection)
+    kwargs = dict(item=item, instance_id="instance", source_kind="combined", frame=frame,
+                  as_of=None, theme_tokens=_ShapeTheme(), slot_id="timeline", selection=selection)
+    final = compose_item_marks(**kwargs)
+    preflight = compose_item_marks(**kwargs, emit_diagnostics=False)
+    assert final.diagnostics == selection.diagnostics
+    assert final.diagnostic_provenance
+    assert preflight.diagnostics == preflight.diagnostic_provenance == ()
+    assert preflight.marks == final.marks
+    assert preflight.absences == final.absences == selection.absences

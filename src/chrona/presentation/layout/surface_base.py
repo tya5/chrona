@@ -30,6 +30,7 @@ from chrona.presentation.layout.surface_quality import (
     GroupPlacement, RowPlacement, ScalePlacement, SlotPlacement, SurfaceLayoutRequest,
 )
 from chrona.presentation.layout.mark_geometry import compose_item_marks
+from chrona.presentation.layout.surface_mark_visibility import ensure_request_mark_visibility_index
 from chrona.presentation.layout.lane_mark_facets import _mark_facets
 from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS
 
@@ -209,6 +210,8 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
     start, end = projection.window
     if not isinstance(start, date) or not isinstance(end, date) or start >= end:
         raise LayoutError("E_PRESENTATION_PROJECTION_REQUIRED", "/projection/window")
+    request = ensure_request_mark_visibility_index(request)
+    projection = request.projection
     if projection.lane_membership is not None:
         preflight = request.fixed_lane_preflight
         if (preflight is None or preflight.as_of != request.surface_content.as_of

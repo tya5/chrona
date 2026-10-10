@@ -18,6 +18,7 @@ from chrona.presentation.layout.surface_axis import (
 )
 from chrona.presentation.layout.presentation import MarkGeometry, required_row_block_extents
 from chrona.presentation.layout.mark_band_allocation import MarkBandAllocation
+from chrona.presentation.layout.surface_mark_visibility import ensure_request_mark_visibility_index
 from chrona.presentation.layout.surface_quality import SlotPlacement, SurfaceLayoutRequest
 
 
@@ -104,6 +105,7 @@ class SurfaceNaturalGeometry:
 
 def _request_with_candidate_lane_preflight(request: SurfaceLayoutRequest) -> SurfaceLayoutRequest:
     """Recompute fixed-lane inputs from this candidate's exact content and manifest."""
+    request = ensure_request_mark_visibility_index(request)
     if request.projection.lane_membership is not None:
         preflight = preflight_fixed_lane_layout(
             projection=request.projection, layout_manifest=request.layout_manifest,

@@ -19,7 +19,7 @@ from chrona.presentation.layout.surface_quality import MarkPlacement
 from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.layout.semantic_mark_facets import (
-    MarkFacetAbsence, select_item_mark_facets,
+    ItemMarkFacetSelection, MarkFacetAbsence, select_item_mark_facets,
 )
 
 
@@ -98,12 +98,14 @@ def compose_item_marks(*, item: Any, instance_id: str, source_kind: str,
                        frame: MarkBandFrame, as_of: date | None,
                        theme_tokens: object, slot_id: str, paint_order_base: int = 100,
                        emit_missing_actual: bool = True,
-                       emit_diagnostics: bool = True) -> MarkItemComposition:
+                       emit_diagnostics: bool = True,
+                       selection: ItemMarkFacetSelection | None = None) -> MarkItemComposition:
     """Complete planned and observed marks for one selected Review item.
 
     The caller owns candidate identity and the mark-band frame. This function
-    owns facet selection, date mapping, local bounds/ports, visible mark
-    geometry, and the typed account of intentional omissions.
+    consumes a prepared source selection (or selects for direct callers), then
+    owns date mapping, local bounds/ports, visible mark geometry, and the typed
+    account of intentional omissions.
     """
     marks: list[MarkPlacement] = []
     planned_semantic = "snapshot" if source_kind in {"snapshot", "scenario"} else "planned"
@@ -114,9 +116,14 @@ def compose_item_marks(*, item: Any, instance_id: str, source_kind: str,
         "actual": frame.role_bounds("actual"),
         "missing-actual": frame.role_bounds("missing-actual"),
     }
-    selection = select_item_mark_facets(item=item, source_kind=source_kind, as_of=as_of,
-                                        emit_missing_actual=emit_missing_actual,
-                                        emit_diagnostics=emit_diagnostics)
+    if selection is None:
+        selection = select_item_mark_facets(item=item, source_kind=source_kind, as_of=as_of,
+                                            emit_missing_actual=emit_missing_actual,
+                                            emit_diagnostics=emit_diagnostics)
+    elif (selection.source_kind != source_kind or selection.as_of != as_of
+          or selection.missing_actual_eligible != bool(emit_missing_actual)):
+        raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/items",
+                          detail="stage=composition; reason=selection-mismatch")
     for facet in selection.facets:
         placement_id = f"{facet.facet}:{instance_id}"
         if facet.shape == "point":
@@ -167,10 +174,11 @@ def compose_item_marks(*, item: Any, instance_id: str, source_kind: str,
         ))
 
     subject = DiagnosticSubject.project_object(item.object_id, getattr(item, "title", None))
+    diagnostics = selection.diagnostics if emit_diagnostics else ()
     provenance = tuple(DiagnosticProvenance(diagnostic, (subject,))
-                       for diagnostic in selection.diagnostics)
+                       for diagnostic in diagnostics)
     marks = [replace(mark, subjects=(subject,)) for mark in marks]
-    return MarkItemComposition(tuple(marks), selection.diagnostics, selection.absences, provenance)
+    return MarkItemComposition(tuple(marks), diagnostics, selection.absences, provenance)
 
 
 def symbol_parts(value: Mapping[str, object], bounds: tuple[float, float, float, float],
