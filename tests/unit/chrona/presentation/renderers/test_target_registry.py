@@ -158,7 +158,8 @@ def test_host_face_without_tabular_digits_uses_proportional_mode_with_warning_on
     assert warning["role"] == "numeric"
 
 
-def test_system_font_resolution_is_rejected_if_a_caller_attempts_immutable_rendering():
+def test_a_font_resolution_may_render_an_immutable_context():
+    # #1281: installed and declared fonts are one normal source on every path, immutable Contexts included.
     root = _root()
     draft = resolve_draft_render(
         project_path=root / "examples/controller-z/project.yaml", view_path=root / "examples/controller-z/views/executive.yaml",
@@ -169,9 +170,10 @@ def test_system_font_resolution_is_rejected_if_a_caller_attempts_immutable_rende
     immutable_context = replace(draft.closure.context, identity=replace(draft.closure.context.identity, revision="immutable"))
     immutable = replace(draft.closure, context=immutable_context)
 
-    with pytest.raises(RenderFailed, match="E_FONT_SYSTEM_IMMUTABLE"):
-        render_review(RenderRequest(immutable, draft.asset_root, ReferenceScheduler(),
-                                    draft_font_resolution=draft.font_resolution, asset_root=draft.asset_root))
+    rendered = render_review(RenderRequest(immutable, draft.asset_root, ReferenceScheduler(),
+                                           draft_font_resolution=draft.font_resolution, asset_root=draft.asset_root))
+
+    assert rendered.artifact.content
 
 
 def _completed_surface():

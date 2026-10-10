@@ -200,6 +200,15 @@ the same `set:name` reference form is reused, but the *consumer* differs.
   Theme, exactly as an ordinary icon reference is independent of any other
   View field that might name the same entry.
 - **A vector glyph is a container backdrop too (#848).** A normalized catalogue **glyph** (§8) MAY be the backdrop artwork of a rectangle `annotationContainer` through the Theme property `artwork` (Specification 07), nine-slice stretched by Layout over the container's paint box. The glyph contributes only its viewport and parts; the fixed borders and the unit are Theme facts, the ink is each layer's selected Theme role (default `annotation-artwork`), and the packaged `chrona-target-parts` entries (`scroll-frame`, `clipping-edge`, `panel-corner`, ...) are usable as they are, with no catalogue edit. A View still cannot select it. The additive `chrona-annotation-parts` catalogue supplies independent `scroll-mounting` and `scroll-rods` layers. It is explicitly pinned through the existing `iconCatalogs` closure, not discovered. Published target-parts resource bytes and identities remain unchanged; a later catalogue is a new id and set pin, never an in-place content edit (#718 design section 6).
+- **A vector glyph may shape a label chip (#1286).** The Theme's named
+  `chipShape` catalog token uses the same normalized glyph and fixed-border
+  nine-slice geometry as annotation artwork. Layout sizes it around padded
+  measured text and requires complete filled-path coverage of that rectangle;
+  hollow, sparse or stroke-only chips fail with `E_LAYOUT_CHIP_TEXT_GROUND_INVALID`.
+  Original parts, paint order and intrinsic stroke finish remain intact;
+  no implicit rectangle underlay or catalog mutation is permitted. Glyph
+  references use the existing pinned catalog closure, not View syntax or a
+  new resource kind. See Specification 07 for the exact Theme token grammar.
 - **Nine-slice and content insets are Theme facts, not catalog facts.** The
   entry contributes only its identity, pixel viewport, and PNG payload,
   exactly as it does for an icon. `sliceInsetsEm` and `contentInsetEm` are
