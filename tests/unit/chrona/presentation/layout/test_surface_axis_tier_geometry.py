@@ -23,6 +23,27 @@ from chrona.presentation.model.semantic_registry import semantic_binding
 from tests.unit.chrona.presentation.scene import test_v05_builder as base
 
 
+@pytest.mark.parametrize("orientation,rotation", [("horizontal", 0), ("rotate-cw", 90), ("rotate-ccw", -90)])
+@pytest.mark.parametrize("scale", [1, 0.5])
+@pytest.mark.parametrize("transform,advance", [("none", 2), ("uppercase", 12)])
+def test_axis_run_bounds_measure_the_painted_glyph_at_one_compression(orientation, rotation, scale, transform, advance):
+    from chrona.presentation.layout.surface_axis import _axis_text_run_geometry
+    from chrona.presentation.layout.text import measured_text_bounds, scaled_metric
+    from chrona.presentation.model.theme_tokens import TextTreatment
+
+    class Font:
+        def width(self, content, size):
+            return sum(12 if char == "M" else 2 for char in content) * size
+
+    treatment = TextTreatment("Test", 400, 10, 1, 0, transform, "proportional", horizontal_scale=scale)
+    run = _axis_text_run_geometry(content="m", inline=20, baseline_block=30,
+        treatment=treatment, metrics=scaled_metric(Font(), scale), orientation=orientation)
+
+    assert run.content == "m"
+    assert run.bounds == measured_text_bounds(inline=20, baseline_block=30,
+        width=advance * 10 * scale, height=10, font_size=10, rotation=rotation)
+
+
 def _axis_request(tiers):
     item = base.ReviewItem("a", "A", "span", {"start": date(2026, 1, 1), "end": date(2027, 1, 1)}, None, None, ())
     projection = base.ReviewProjection((item,), (date(2026, 1, 1), date(2027, 1, 1)), (), ())
@@ -45,6 +66,86 @@ def _axis_request(tiers):
 def _axis_batch(tiers):
     prepared = prepare_surface_base(_axis_request(tiers))
     return compose_axis(prepared.request, prepared)
+
+
+def test_equal_calendar_band_intervals_in_distinct_lanes_keep_both_label_tiers():
+    tiers = (
+        AxisTier("quarter", 1, "band"),
+        AxisTier("quarter", 1, "labels", AxisLabelIntent(
+            "quarter", (), "center", "visible-overflow", "horizontal", "en-US")),
+        AxisTier("quarter", 1, "band"),
+        AxisTier("quarter", 1, "labels", AxisLabelIntent(
+            "year-quarter", (), "center", "visible-overflow", "horizontal", "en-US")),
+    )
+    _summary, prepared, _frame, _measured = _summary_matches_native(_axis_request(tiers))
+    batch = prepared.placements
+    bands = {shape.placement_id: shape for shape in batch.shapes}
+    for tier_index, band_index in ((1, 0), (3, 2)):
+        labels = [item for item in batch.text
+                  if item.placement_id.startswith(f"axis-label:{tier_index}:")]
+        assert len(labels) == 4
+        for label in labels:
+            index = label.placement_id.rsplit(":", 1)[1]
+            assert label.host_placement_id == f"axis-band-rect:{band_index}:{index}"
+            band = bands[label.host_placement_id].bounds
+            assert band.block <= label.bounds.block
+            assert label.bounds.block + label.bounds.block_size <= band.block + band.block_size
+    assert not any(item.startswith("W_LAYOUT_AXIS_LABEL_THINNED") for item in batch.diagnostics)
+
+
+@pytest.mark.parametrize("gap", [20, 30])
+def test_painted_cell_gap_omits_secondary_or_thins_primary_without_visible_targets(gap):
+    tiers = (AxisTier("month", 1, "band"), AxisTier("month", 1, "labels", AxisLabelIntent(
+        "short-month", (), "center", "visible-overflow", "horizontal", "en-US",
+        AxisSecondaryIntent("numeric-month", "en-US", "axisSecondary", "inline"))))
+    request = _axis_request(tiers)
+    theme = deepcopy(base._theme())
+    theme["body"]["values"].update({
+        "secondary-size": {"type": "number", "value": 8},
+        "cell-gap": {"type": "number", "value": gap},
+    })
+    theme["body"]["roles"]["axis-band-decoration"]["cellGap"] = "cell-gap"
+    theme["body"]["roles"]["axisSecondary"] = {
+        "fontFamily": "body", "fontWeight": "regular", "fontSize": "secondary-size",
+        "lineHeight": "line", "letterSpacing": "letter-spacing", "textTransform": "text-transform",
+        "numericSpacing": "numeric-spacing",
+    }
+    batch = _axis_batch_for_request(replace(request, theme_tokens=ThemeTokenView(theme)))
+    outcome = batch.tier_outcomes[1].intervals[1]
+    assert not batch.visible_label_overflows
+    if gap == 20:
+        assert outcome.disposition == "placed"
+        assert outcome.secondary_disposition == "omitted" and outcome.secondary_reason == "does-not-fit"
+        assert outcome.candidate_id in {item.placement_id for item in batch.text}
+        assert "axis-label-secondary:1:1" not in {item.placement_id for item in batch.text}
+        assert "W_LAYOUT_AXIS_SECONDARY_OMITTED:axis-label:1:1:does-not-fit" in batch.diagnostics
+    else:
+        assert outcome.disposition == "thinned" and outcome.reason == "label-does-not-fit"
+        assert outcome.candidate_id not in {item.placement_id for item in batch.text}
+        assert outcome.candidate_id not in batch.label_targets.values()
+        assert outcome.secondary_label is None and outcome.secondary_disposition is None
+
+
+def _axis_batch_for_request(request):
+    prepared = prepare_surface_base(request)
+    return compose_axis(prepared.request, prepared)
+
+
+def test_unpainted_band_keeps_logical_containment_without_inventing_a_host():
+    tiers = (AxisTier("month", 1, "band"), AxisTier("month", 1, "labels", AxisLabelIntent(
+        "long-month", (), "center", "visible-overflow", "horizontal", "en-US")))
+    request = _axis_request(tiers)
+    theme = deepcopy(base._theme())
+    theme["body"]["roles"]["axis-band-decoration"]["backgroundTreatment"] = "none"
+    request = replace(request, theme_tokens=ThemeTokenView(theme))
+    _summary, prepared, _frame, _measured = _summary_matches_native(request)
+    batch = prepared.placements
+    assert batch.text and all(item.host_placement_id is None for item in batch.text)
+    assert not any(item.placement_id.startswith("axis-band-rect:") for item in batch.shapes)
+    september = next(item for item in batch.tier_outcomes[1].intervals if item.label == "September")
+    assert september.disposition == "thinned"
+    assert september.candidate_id not in batch.label_targets.values()
+    assert not batch.visible_label_overflows
 
 
 def _summary_matches_native(request, *, axis_block_size=None):
@@ -97,7 +198,22 @@ def test_pre_row_axis_closes_mixed_rotated_labels_and_defers_only_full_height_gr
                              base_geometry.by_source["timeline-axis"], base_geometry.metric_values)
     prepared = prepare_surface_axis(request, frame)
     rotated_measurement = measure_axis_tier(request, base_geometry.scale, 2, tiers[2])
-    assert rotated_measurement.tier_outcome == prepared.placements.tier_outcomes[2]
+    # Width-only tier measurement cannot admit September's 54px rotated
+    # block into this 48px axis host. Final geometry must thin that run.
+    completed = prepared.placements.tier_outcomes[2]
+    assert replace(completed, intervals=rotated_measurement.outcomes) == rotated_measurement.tier_outcome
+    for before, after in zip(rotated_measurement.outcomes, completed.intervals, strict=True):
+        if before.label == "September":
+            assert before.disposition == "placed" and before.label_fits
+            assert after.disposition == "thinned" and not after.label_fits
+            assert after.reason == "label-does-not-fit"
+            assert after.candidate_id not in {item.placement_id for item in prepared.placements.text}
+            decision = next(item for item in prepared.placements.decisions
+                            if item.decision_id == after.candidate_id)
+            assert decision.requested_ladder == ("axis-cell-containment", "suppress")
+            assert decision.selected_rung == "suppress" and decision.outcome == "suppressed"
+        else:
+            assert after == before
     assert set(rotated_measurement.diagnostics) <= set(prepared.placements.diagnostics)
     candidate_measurement = measure_surface_axis(request, base_geometry.scale)
     assert prepare_surface_axis(request, frame, measured=candidate_measurement) == prepared
