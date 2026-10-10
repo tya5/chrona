@@ -199,7 +199,7 @@ body:
       every: 1
       role: labels
       label:
-        form: short-month
+        form: long-month
         align: start
         overflow: visible-overflow
         orientation: horizontal
@@ -244,9 +244,11 @@ body:
     source:
       facet: finishDelta
     format: signedNumber
+    zero: plain
     missing: blank
     missingBy:
-      inProgress: em-dash
+      inProgress:
+        text: '?'
       dueUnobserved: blank
       notYetDue: blank
     align: end
@@ -257,36 +259,12 @@ body:
         suffix: '!'
   selection:
     include:
-      ids:
-      - pdr
-      - structure
-      - avionics
-      - eps
-      - bus-test
-      - cdr
-      - optics
-      - detector
-      - payload-tvac
-      - payload-delivery
-      - integration
-      - vibration
-      - tvac
-      - emc
-      - psr
-      - mcs
-      - station
-      - comms-test
-      - launch-contract
-      - shipment
-      - campaign
-      - frr
-      - launch
-      - rehearsals
-      - leop
-      - first-light
       types:
       - span
       - point
+    exclude:
+      objectTypes:
+      - group
   grouping:
     by: field
     field: owner
