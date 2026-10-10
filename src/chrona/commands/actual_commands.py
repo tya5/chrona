@@ -11,6 +11,7 @@ import yaml
 
 from chrona.resources import safe_load
 from chrona.core.store_address import StoreAddressError, check_store_segment, resolve_store_address
+from chrona.core.suggestions import nearest
 from chrona.storage.snapshot_paths import snapshot_directory
 
 
@@ -261,6 +262,12 @@ def apply_actual_intake_batch(
     return ActualIntakeCommandResult("accepted", result, (), tuple(dispositions), result_revision)
 
 
+def _nearest_suffix(word: str, known: set[str] | frozenset[str]) -> str:
+    """`; did you mean 'x'?` when a known id is near, by the rule Project validation and the terse compiler share (#1303)."""
+    close = nearest(word, sorted(known))
+    return f"; did you mean {close!r}?" if close else ""
+
+
 def resolve_actual_observation(
     store: ActualStore,
     base_revision: str,
@@ -273,7 +280,8 @@ def resolve_actual_observation(
     if project_object_id not in project_object_ids:
         return ActualCommandResult(
             "rejected", None,
-            (f"E_REFERENCE: projectObjectId {project_object_id!r} is not present in the Project object ids",))
+            (f"E_REFERENCE: projectObjectId {project_object_id!r} is not present in the Project object ids"
+             + _nearest_suffix(project_object_id, project_object_ids),))
     revision, current = store.read()
     if revision != base_revision:
         return ActualCommandResult(

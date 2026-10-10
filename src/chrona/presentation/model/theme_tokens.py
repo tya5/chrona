@@ -112,6 +112,31 @@ class ArtworkToken:
 
 
 @dataclass(frozen=True)
+class RectangleChipShape:
+    """Explicit legacy rectangular chip; absence has the same geometry."""
+
+
+@dataclass(frozen=True)
+class BurstChipShape:
+    """Theme-owned polygon parameters; Layout completes its geometry."""
+
+    points: int
+    inner_ratio: Decimal
+
+
+@dataclass(frozen=True)
+class CatalogChipShape:
+    """Nine-slice policy over an unchanged pinned catalogue glyph."""
+
+    glyph: str
+    slice_insets: tuple[Decimal, Decimal, Decimal, Decimal]
+    unit_em: Decimal
+
+
+ChipShapeToken = RectangleChipShape | BurstChipShape | CatalogChipShape
+
+
+@dataclass(frozen=True)
 class BorderSideToken:
     """One side of a box border (#1049): a width in surface units and the ink it is drawn with.
 
@@ -249,6 +274,15 @@ class ThemeTokenView:
     def has_role(self, role: str) -> bool:
         """Whether this resolved Theme declares the exact semantic role."""
         return isinstance(self._body["roles"].get(role), Mapping)
+
+    def has_binding(self, role: str, property_name: str) -> bool:
+        """Whether this exact role declares a property binding.
+
+        This is a presence query only: it does not resolve the binding, inherit
+        from another role, or infer a value from fallback behavior.
+        """
+        binding = self._body["roles"].get(role)
+        return isinstance(binding, Mapping) and property_name in binding
 
     def declares_text_treatment(self, role: str) -> bool:
         """Whether the Theme gives `role` its own text measurement (a `fontSize`), not only a colour binding (#1110)."""
@@ -670,6 +704,45 @@ class ThemeTokenView:
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/chipMinBlockSize")
         return size
 
+    def label_chip_shape(self, role: str) -> ChipShapeToken:
+        """Resolve shape policy without activating a chip or completing geometry."""
+        if not self.has_binding(role, "chipShape"):
+            return RectangleChipShape()
+        value = self.token(role, "chipShape", "chipShape")
+        pointer = f"/body/roles/{role}/chipShape"
+        if not isinstance(value, Mapping):
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer)
+        kind = value.get("kind")
+        if kind == "rectangle" and set(value) == {"kind"}:
+            return RectangleChipShape()
+        if kind == "burst" and set(value) == {"kind", "points", "innerRatio"}:
+            points, ratio = value["points"], value["innerRatio"]
+            if (isinstance(points, bool) or not isinstance(points, (int, float)) or points < 2
+                    or isinstance(points, float) and (not math.isfinite(points) or not points.is_integer())):
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer + "/points")
+            if isinstance(ratio, bool) or not isinstance(ratio, (int, float)):
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer + "/innerRatio")
+            inner_ratio = self._decimal(ratio, role, "chipShape/innerRatio")
+            if inner_ratio is None or not 0 < inner_ratio <= 1:
+                raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer + "/innerRatio")
+            result: ChipShapeToken = BurstChipShape(int(points), inner_ratio)
+        elif kind == "catalog" and set(value) == {"kind", "glyph", "sliceInsets", "unitEm"}:
+            glyph, insets, unit = self._catalog_slice_geometry(value, role, "chipShape")
+            result = CatalogChipShape(glyph, insets, unit)
+        else:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer)
+        binding = self._body["roles"][role]
+        if binding.get("viewerFit") == BOX_FOLLOWS_TEXT:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/viewerFit")
+        radius = self.optional_token(role, "cornerRadius", "radius")
+        if radius is not None and radius != 0:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/cornerRadius")
+        if (self.optional_number(role, "markCornerRadius") or Decimal(0)) != 0:
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/markCornerRadius")
+        if self.has_binding(role, "pattern"):
+            raise ThemeTokenError("E_THEME_TOKEN_TYPE", f"/body/roles/{role}/pattern")
+        return result
+
     def annotation_container(self, role: str) -> "AnnotationContainerToken | None":
         """Return a declared annotation container's outline geometry (#466, #465).
 
@@ -826,6 +899,13 @@ class ThemeTokenView:
         paint_role = value.get("role", "annotation-artwork")
         if not is_annotation_artwork_role(paint_role):
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer + "/role")
+        glyph, insets, unit_em = self._catalog_slice_geometry(value, role, base)
+        return ArtworkToken(glyph, insets, unit_em, paint_role, pointer, index)
+
+    def _catalog_slice_geometry(self, value: Mapping[str, Any], role: str, base: str
+                                ) -> tuple[str, tuple[Decimal, Decimal, Decimal, Decimal], Decimal]:
+        """The same declared nine-slice geometry and pointers for every glyph use."""
+        pointer = f"/body/roles/{role}/{base}"
         glyph = value["glyph"]
         if not isinstance(glyph, str) or glyph.count(":") != 1 or not all(glyph.split(":")):
             raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer + "/glyph")
@@ -845,7 +925,7 @@ class ThemeTokenView:
                 raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer + "/glyph") from error
             if insets[1] + insets[3] > width or insets[0] + insets[2] > height:
                 raise ThemeTokenError("E_THEME_TOKEN_TYPE", pointer + "/sliceInsets")
-        return ArtworkToken(glyph, insets, unit_em, paint_role, pointer, index)
+        return glyph, insets, unit_em
 
     def annotation_kind(self, kind: str | None) -> "AnnotationKindToken | None":
         """Return the Theme's declaration for one Project annotation kind (#584).

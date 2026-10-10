@@ -32,6 +32,7 @@ from chrona.presentation.model.theme_inheritance import (
 )
 from chrona.presentation.model.theme_references import ThemeReferenceError, resolve_references, uses_references
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
+from chrona.presentation.fonts.resolution import resolve_theme_font_stacks
 from chrona.presentation.fonts.system import DraftFontResolution, SystemFontError, SystemFontResolver, resolve_draft_fonts, resolve_system_font
 from chrona.presentation.model.font_metrics import FontMetricsCatalog, FontMetricsError, FontTabularWarning, resolve_font_files, resolve_font_metrics
 from chrona.presentation.contracts.resources import (
@@ -467,9 +468,12 @@ def _draft_render_from_resources(
         font_metrics if font_metrics is not None else _packaged_font_metrics(asset_root),
         font_asset_root or asset_root,
     )
-                  if system_fonts else None)
-    if resolution is not None and target_kind not in {"svg", "png"}:
-        raise ClosureError("E_FONT_SYSTEM_IMMUTABLE", detail=f"draft system fonts do not support {target_kind}")
+                  if system_fonts else
+                  # Installed fonts are a normal source on every path: each Theme role's font stack resolves to a
+                  # declared, installed or packaged face (#1281); None when every role is already one declared face.
+                  resolve_theme_font_stacks(resolved_theme.resolved_input,
+                                            font_metrics if font_metrics is not None else _packaged_font_metrics(asset_root),
+                                            asset_root=font_asset_root or asset_root))
     context_value = {
             "version": RENDER_CONTEXT_VERSION, "kind": "render-context", "id": "draft-render",
         "body": {
@@ -1026,6 +1030,11 @@ def _resolve_theme_catalog_assets(theme: Mapping[str, Any],
             resolve(reference, expected_kind, pointer)
     for role, binding in roles.items():
         # The vector artwork of an annotation container (#848) is a catalogue glyph the Theme names.
+        chip_token_id = binding.get("chipShape") if isinstance(binding, Mapping) else None
+        chip_token = values.get(chip_token_id) if isinstance(chip_token_id, str) else None
+        chip_value = chip_token.get("value") if isinstance(chip_token, Mapping) else None
+        if isinstance(chip_value, Mapping) and chip_value.get("kind") == "catalog":
+            resolve(chip_value.get("glyph"), "glyph", f"/body/values/{chip_token_id}/value/glyph")
         token_id = binding.get("annotationContainer") if isinstance(binding, Mapping) else None
         token = values.get(token_id) if isinstance(token_id, str) else None
         token_value = token.get("value") if isinstance(token, Mapping) else None
@@ -1042,6 +1051,17 @@ def _resolve_theme_catalog_assets(theme: Mapping[str, Any],
         for kind, entry in declared_kinds.items():
             if isinstance(entry, Mapping) and entry.get("stamp") is not None:
                 resolve(entry["stamp"], "glyph", f"/body/annotationKinds/{kind}/stamp")
+    # Validate selected shape policy even if this render emits no such label.
+    # Assets are already closed, so catalog viewport/inset checks need no I/O.
+    tokens = None
+    for role, binding in roles.items():
+        if isinstance(binding, Mapping) and "chipShape" in binding:
+            try:
+                if tokens is None:
+                    tokens = ThemeTokenView(theme, catalog_glyphs=glyphs, catalog_patterns=patterns)
+                tokens.label_chip_shape(str(role))
+            except ThemeTokenError as error:
+                raise ClosureError(error.diagnostic_id, error.path) from error
     return glyphs, patterns
 
 

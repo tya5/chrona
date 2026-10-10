@@ -136,7 +136,8 @@ def test_row_density_fit_warning_carries_project_subject_without_changing_geomet
                       {"start": date(2026, 1, 1), "end": date(2026, 1, 2)}, None, None, ())
     review_row = ReviewRowProjection("row-obj-1", "Object title", "", "obj-1", (item,))
     manifest = SimpleNamespace(decisions=(), fit_warnings=(), viewport=viewport)
-    request = SimpleNamespace(theme_tokens=Tokens(), font_metrics=None, layout_manifest=manifest)
+    request = SimpleNamespace(theme_tokens=Tokens(), font_metrics=None, layout_manifest=manifest,
+                              declared_viewport=None)
 
     monkeypatch.setattr(surface_completion, "place_axis_band_visuals", lambda *_args, **_kwargs: SimpleNamespace(icons=()))
     monkeypatch.setattr(surface_completion, "validate_background_shapes", lambda *_args, **_kwargs: None)

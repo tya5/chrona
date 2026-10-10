@@ -74,7 +74,7 @@ def test_place_text_measures_the_transformed_spaced_painted_form():
 
 
 class _AsymmetricFont:
-    """Give case changes observably different advances; scaling must be applied once."""
+    """Case changes have different advances; compression applies exactly once."""
 
     content_identity = "sha256:asymmetric-glyph-widths"
     _advance = {"m": 1.0, "M": 8.0, "w": 2.0, "W": 9.0}
@@ -86,35 +86,37 @@ class _AsymmetricFont:
 
 
 class _AsymmetricTheme:
-    def __init__(self, *, transform, horizontal_scale):
+    def __init__(self, *, transform, horizontal_scale, letter_spacing):
         self.transform = transform
         self.horizontal_scale = Decimal(str(horizontal_scale))
+        self.letter_spacing = Decimal(str(letter_spacing))
 
     def text_treatment(self, role):
         assert role == "text"
         return TextTreatment(
-            "Asymmetric Sans", 400, Decimal(10), Decimal("1.4"), Decimal(0),
+            "Asymmetric Sans", 400, Decimal(10), Decimal("1.4"), self.letter_spacing,
             self.transform, "proportional", self.horizontal_scale,
         )
 
 
-@pytest.mark.parametrize("transform", ["none", "uppercase"])
+@pytest.mark.parametrize("transform", ["none", "uppercase", "lowercase"])
 @pytest.mark.parametrize("horizontal_scale", [1.0, 0.5])
+@pytest.mark.parametrize("letter_spacing", [0, 0.05])
 @pytest.mark.parametrize("orientation,rotation", [
     ("horizontal", 0), ("rotate-cw", 90), ("rotate-ccw", -90),
 ])
-@pytest.mark.parametrize("source_lines", [("m",), ("m", "wm")], ids=("one-line", "multi-line"))
+@pytest.mark.parametrize("source_lines", [("mW",), ("m", "wM")], ids=("one-line", "multi-line"))
 def test_place_text_bounds_match_transformed_asymmetric_runs_scaled_once(
-    transform, horizontal_scale, orientation, rotation, source_lines,
+    transform, horizontal_scale, letter_spacing, orientation, rotation, source_lines,
 ):
     source = "\n".join(source_lines)
     font = _AsymmetricFont()
-    treatment = _AsymmetricTheme(transform=transform, horizontal_scale=horizontal_scale)
-    painted_lines = tuple(line.upper() if transform == "uppercase" else line for line in source_lines)
-    painted_content = source.upper() if transform == "uppercase" else source
-    expected_width = max(
-        font.width(line, 10) * horizontal_scale for line in painted_lines
-    )
+    treatment = _AsymmetricTheme(transform=transform, horizontal_scale=horizontal_scale,
+                                 letter_spacing=letter_spacing)
+    paint = {"none": lambda text: text, "uppercase": str.upper, "lowercase": str.lower}[transform]
+    painted_lines = tuple(paint(line) for line in source_lines)
+    expected_width = max(font.width(line, 10, letter_spacing * 10) * horizontal_scale
+                         for line in painted_lines)
     expected_height = 10 * 1.4 * len(painted_lines)
 
     placed = place_text(
@@ -123,7 +125,7 @@ def test_place_text_bounds_match_transformed_asymmetric_runs_scaled_once(
         theme_tokens=treatment, font_metrics=font, orientation=orientation,
     )
 
-    assert placed.content == painted_content
+    assert placed.content == paint(source)
     assert placed.lines == painted_lines
     assert placed.source_content == source
     assert placed.font_asset_identity == font.content_identity

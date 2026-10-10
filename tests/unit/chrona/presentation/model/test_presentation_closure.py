@@ -57,6 +57,46 @@ def test_theme_catalog_reference_error_has_exact_theme_pointer_and_reference():
     assert "missing:pin" in error.value.detail
 
 
+def _chip_theme(shape, **binding):
+    return {"version": "chrona/resolved-theme/v0.2", "kind": "resolved-theme", "body": {
+        "values": {"chip": {"type": "chipShape", "value": shape}}, "metrics": {},
+        "roles": {"as-of-label-chip": {"chipShape": "chip", **binding}},
+    }}
+
+
+def test_unused_chip_shape_is_normalized_before_label_activation():
+    theme = _chip_theme({"kind": "burst", "points": 7, "innerRatio": .5},
+                        viewerFit="box-follows-text")
+    # No backgroundTreatment, actual set or label is required to reject the
+    # incompatible declaration: closure owns selected Theme normalization.
+    with pytest.raises(ClosureError) as error:
+        _resolve_theme_catalog_assets(theme, ())
+    assert error.value.diagnostic_id == "E_THEME_TOKEN_TYPE"
+    assert error.value.source_ref == "/body/roles/as-of-label-chip/viewerFit"
+
+
+def test_catalog_chip_closes_exact_glyph_without_activating_label():
+    theme = _chip_theme({"kind": "catalog", "glyph": "local:chip",
+                         "sliceInsets": dict.fromkeys(("top", "right", "bottom", "left"), 1),
+                         "unitEm": .5})
+    entry = {"viewport": {"inlineSize": 8, "blockSize": 8},
+             "parts": [{"paint": "fill", "data": "M0 0L8 0L8 8L0 8Z"}]}
+    glyphs, patterns = _resolve_theme_catalog_assets(theme, (_catalog_resource(glyphs={"chip": entry}),))
+    assert glyphs == {"local:chip": entry}
+    assert not patterns
+
+
+def test_unpinned_chip_glyph_reports_exact_authored_reference_pointer():
+    theme = _chip_theme({"kind": "catalog", "glyph": "missing:chip",
+                         "sliceInsets": dict.fromkeys(("top", "right", "bottom", "left"), 0),
+                         "unitEm": 1})
+    with pytest.raises(ClosureError) as error:
+        _resolve_theme_catalog_assets(theme, ())
+    assert error.value.diagnostic_id == "E_THEME_ASSET_REFERENCE"
+    assert error.value.source_ref == "/body/values/chip/value/glyph"
+    assert "reference=missing:chip" in error.value.detail
+
+
 def test_catalog_pattern_is_rejected_on_symbol_role_at_theme_pointer():
     theme = {"body": {"values": {"pattern": {"type": "pattern", "value": {
         "kind": "catalog", "ref": "local:hatch"}},

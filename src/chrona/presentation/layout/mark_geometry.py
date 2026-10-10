@@ -14,8 +14,10 @@ from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.presentation import MarkBandFrame
 from chrona.presentation.layout.path_geometry import open_span_path, rounded_diamond_path
 from chrona.presentation.layout.rounded_outline import resolve_corner_radius
+from chrona.presentation.layout.filled_contour import ContourUnionError, union_filled_contours
 from chrona.presentation.layout.surface_quality import MarkPlacement
 from chrona.presentation.model.projection import ObservationState
+from chrona.presentation.model.point_paint import resolve_point_paint_role
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 
 
@@ -47,6 +49,32 @@ class SymbolPartPlacement:
     stroke_width: float | None = None
     line_cap: str | None = None
     line_join: str | None = None
+
+
+def complete_point_outline(parts: tuple[SymbolPartPlacement, ...], *,
+                           paint_role: str, theme_tokens: Any) -> tuple[SymbolPartPlacement, ...]:
+    """Append a completed filled-region edge without resolving its ink in Layout."""
+    fills = tuple(part.commands for part in parts if part.paint_mode == "fill")
+    if not fills or not (theme_tokens.has_binding(paint_role, "stroke")
+                         and theme_tokens.has_binding(paint_role, "strokeWidth")):
+        return parts
+    pattern = theme_tokens.optional_pattern(paint_role)
+    if isinstance(pattern, Mapping) and pattern.get("kind") == "outline":
+        return parts
+    width = float(theme_tokens.optional_number(paint_role, "strokeWidth"))
+    pointer_role = paint_role.replace("~", "~0").replace("/", "~1")
+    source = f"/body/roles/{pointer_role}/strokeWidth"
+    if not isfinite(width):
+        raise LayoutError("E_LAYOUT_POINT_OUTLINE_INVALID", source,
+                          detail="stage=input; reason=nonfinite; operand=strokeWidth")
+    if width <= 0:
+        return parts
+    try:
+        contour = union_filled_contours(fills)
+    except ContourUnionError as error:
+        raise LayoutError("E_LAYOUT_POINT_OUTLINE_INVALID", source,
+                          detail=f"stage={error.stage}; reason={error.reason}; fillParts={len(fills)}") from error
+    return (*parts, SymbolPartPlacement(contour, paint_mode="stroke", stroke_width=width))
 
 
 @dataclass(frozen=True)
@@ -290,6 +318,11 @@ def compose_mark_placement(*, frame: MarkBandFrame, placement_id: str, source_re
             )
         except ValueError as error:
             raise LayoutError("E_LAYOUT_LANE_FOOTPRINT_UNAVAILABLE", placement_id) from error
+        if shape == "point" and any(part.paint_mode == "fill" for part in completed_symbols):
+            completed_symbols = complete_point_outline(
+                completed_symbols, paint_role=resolve_point_paint_role(
+                    semantic_id, gate_declared=theme_tokens.has_role("gate")),
+                theme_tokens=theme_tokens)
     return MarkPlacement(placement_id, source_ref, bounds, start_port, end_port,
                          mark_shape=shape, corner_radius=radius, path_commands=commands,
                          slot_id=slot_id, semantic_id=semantic_id,
