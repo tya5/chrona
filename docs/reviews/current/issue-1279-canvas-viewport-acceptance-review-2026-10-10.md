@@ -4,11 +4,11 @@
 
 Implementation `43e30d82`; source-main integration `599b75ab` adopts
 `f0c1a6fa` (#1289 plain zero), including #1285 small caps.
-Ready base `b1c65cd521fca5a538ccc9863ec355637fe275c2` is adopted;
-[trusted gate 38036901541](https://github.com/tya5/chrona/actions/runs/38036901541)
-completed successfully. Integration `d33cc28d` adopts #1282 band-pattern admission;
-86 combined band-pattern/group-tab/viewport tests pass (14.00s).
-The source-to-ready delta changes only the generated diagnostic inventory.
+Ready base `14399aabc0daaf110a531a2dc21c5fa152aeb67c` is adopted;
+[trusted gate 38038775824](https://github.com/tya5/chrona/actions/runs/38038775824)
+completed successfully. Integration `ce4f1639` adopts #1290 legend-grid/caption
+placement; 33 legend-grid/viewport/transport tests pass (13.13s).
+The source-to-ready delta changes only generated diagnostic inventory and gallery coverage.
 The recorded snapshot below passed on its exact base; a fresh final-head snapshot,
 PR checks and containing-review release remain required.
 [PR #1311](https://github.com/tya5/chrona/pull/1311)
@@ -26,7 +26,7 @@ and [implementation plan](../../planning/active/issue-1279-canvas-viewport-imple
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
 | 1 | A test where content needs more than the viewport yields the warning with correct sizes; a fitting surface yields none. | met | [Layout/Scene/SVG tests](../../../tests/integration/test_canvas_viewport_warning_render.py) cover both surfaces, fixed overflow and fitting content; [typed helper tests](../../../tests/unit/chrona/presentation/layout/test_canvas_viewport_warning.py) verify sizes and deterministic contributors. | — |
-| 2 | On current main, the warning appears for exactly the slides whose SVG viewBox differs from their declared viewport (list them in the PR). | met | [Snapshot audit receipt](https://github.com/tya5/chrona/issues/1279#issuecomment-6094637076): 46 byte-identical SVGs, 27 warning-only Scenes, 19 unchanged; 27 warnings, zero membership mismatches against original declaration/full viewBox and actual Scene surface identities. Recorded artifact base is `aebf5b57`; authored resources and generated Scene/SVG bytes are unchanged at ready `b1c65cd5`. The PR lists every slide. The new band-pattern capability is opt-in and covered by the integration batch; fresh final-head verification and release remain closure gates below. | — |
+| 2 | On current main, the warning appears for exactly the slides whose SVG viewBox differs from their declared viewport (list them in the PR). | met | [Snapshot audit receipt](https://github.com/tya5/chrona/issues/1279#issuecomment-6094637076): 46 byte-identical SVGs, 27 warning-only Scenes, 19 unchanged; 27 warnings, zero membership mismatches against original declaration/full viewBox and actual Scene surface identities. Recorded artifact base is `b1c65cd5`; the PR lists every slide. #1290 integration is focused-tested; fresh final-head/base verification and release remain closure gates below. | — |
 | 3 | Do not edit `examples/**`. | met | [Implementation diff](https://github.com/tya5/chrona/commit/43e30d82) changes Layout/runtime metadata, shared reporting, tests and specifications only. No authored examples or derived output edits. | — |
 | 4 | Acceptance note for this issue: a test with a *negative* viewBox origin (as in the first case) should also yield the warning, since the declared-vs-actual comparison must use the full extent, not only width/height. | met | [Real SVG tests](../../../tests/integration/test_canvas_viewport_warning_render.py) cover negative origins with fixed and auto block size; auto block has no invented height constraint. | — |
 
@@ -51,12 +51,12 @@ Warning-on/off tests preserve geometry and raw SVG in both rendering paths.
 Allocation, clipping, existing network-overflow policy and project resources
 are unchanged.
 
-Exact-base audit: run `38035859826`, artifact `11663781660`, head `c44f991d`,
-base `aebf5b57`; 101/101 before blobs match, no paths added/retired.
-ZIP SHA256 `4034e3125be5514b4e587f9c04cca36a5fc302d76fe4ff4ae5bce6c0861d85d1`.
+Exact-base audit: run `38037436992`, artifact `11665220151`, head `7c60afa9`,
+base `b1c65cd5`; 101/101 before blobs match, no paths added/retired.
+ZIP SHA256 `edbc10863f66000ddf85e1c4af66d69b762ea50a4fd1820d7f406655240cf742`.
 Root and independent Luna agree; all Scene changes contain only the new warning.
-All substantive checks on `c44f991d` passed; only derived-ready failed because
-main advanced to #1282. Source integration adds no authored resource or Scene/SVG edits.
+All substantive checks on `7c60afa9` passed; only derived-ready failed because
+main advanced to #1290. Source integration adds no authored resource or Scene/SVG edits.
 The artifact retains its actual head/base metadata; it is not represented as
 a fresh final-head artifact.
 
