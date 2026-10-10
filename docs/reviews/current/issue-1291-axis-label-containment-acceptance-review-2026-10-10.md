@@ -17,10 +17,14 @@ Local evidence only; no PR, current-corpus snapshot or exact-main release yet.
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
 | 1 | A test renders a window whose last band segment is narrower than its label. It asserts from the Scene that every axis-label primitive's box lies inside its band segment and inside the plot's inline extent. | met | [Synthetic Scene/SVG end-edge case](../../../tests/integration/test_axis_band_label_containment.py): surviving labels fit their own bands/plot; truncated edge is absent with the thinning diagnostic. | — |
-| 2 | The same test at the plot start (window begins a few days before a quarter ends). | met | Same parameterized test's start-edge case. | — |
-| 3 | No canvas growth for this case: the SVG width equals the requested viewport inline size. | met | Both real SVG roots remain 1600px. | — |
-| 4 | Existing axis tests pass. Corpus diffs are listed in the PR. | not met | Expanded axis/text suite: 190 passed (18.18s); Scene projection/axis suite: 122 passed (8.30s). Fresh whole-corpus PR diff is still required. | — |
-| 5 | Do not edit `examples/**`. | met | Implementation owns Layout, synthetic tests and Spec50 only; adopted reviewer/bot outputs are not authored changes. | — |
+| 2 | The same test at the plot start (window begins a few days before a quarter ends). | met | [Parameterized start-edge case](../../../tests/integration/test_axis_band_label_containment.py). | — |
+| 3 | No canvas growth for this case: the SVG width equals the requested viewport inline size. | met | [Both real SVG roots](../../../tests/integration/test_axis_band_label_containment.py) remain 1600px. | — |
+| 4 | Existing axis tests pass. Corpus diffs are listed in the PR. | not met | Expanded axis/text suite: 190 passed (18.18s); [Scene projection/axis suite](../../../tests/unit/chrona/presentation/scene/test_axis_secondary.py): 122 passed (8.30s). Fresh whole-corpus PR diff is still required. | — |
+| 5 | Do not edit `examples/**`. | met | [Implementation](https://github.com/tya5/chrona/issues/1291#issuecomment-6093419760) owns Layout, synthetic tests and Spec50 only; adopted reviewer/bot outputs are not authored changes. | — |
+
+## Programme-level criteria (optional)
+
+None; the literal rows and release gates control closure.
 
 Independent review findings addressed before this checkpoint: containment
 decisions name `axis-cell-containment`; indexed native-band lookup agrees with
