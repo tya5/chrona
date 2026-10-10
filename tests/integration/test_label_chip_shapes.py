@@ -144,6 +144,17 @@ def test_asof_burst_is_completed_symbol_text_fits_and_svg_uses_same_closed_path(
                    for warning in rendered.warning_records)
 
 
+def test_absent_shape_preserves_frozen_pre_feature_scene_and_svg_bytes(tmp_path):
+    # Independent unchanged-input rendering of public parent 127392c4, recorded
+    # in the #1286 acceptance review. No provenance/geometry normalization.
+    rendered = _render_asof(tmp_path)
+    scene = serialize_scene(rendered.scene)
+    assert len(scene) == 22949
+    assert sha256(scene).hexdigest() == "e5f8b0c395e6b891d065e9152f2aa302d51d4f5162e3680edec12d802f2b93ea"
+    assert len(rendered.artifact.content) == 6992
+    assert sha256(rendered.artifact.content).hexdigest() == "74bf8d570ca05067f0000a3002520bb237113b11ac682e21ae367ec0e82c3e0b"
+
+
 def test_absent_shape_and_explicit_rectangle_are_scene_and_svg_byte_identical(tmp_path):
     absent = _render_asof(tmp_path / "absent")
     explicit = _render_asof(tmp_path / "rectangle", {"kind": "rectangle"})
