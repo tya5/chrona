@@ -22,11 +22,6 @@ slides:
     context: contexts/elevated.yaml
     expectedSvg: generated/elevated.svg
     expectedScene: generated/elevated.scene.json
-  - id: composition-compact
-    evidence: "Same executive review under the compact Layout composition, with View, Theme, Scheme, and data fixed."
-    context: contexts/composition-compact.yaml
-    expectedSvg: generated/composition-compact.svg
-    expectedScene: generated/composition-compact.scene.json
   - id: icons
     evidence: "Immutable vector and raster catalog icons as a measured label prefix and semantic mark."
     context: contexts/icons.yaml
@@ -47,11 +42,6 @@ slides:
     context: contexts/capabilities.yaml
     expectedSvg: generated/capabilities.svg
     expectedScene: generated/capabilities.scene.json
-  - id: axis-tiers
-    evidence: "Two-tier quarter/month date band, each in its own lane with a distinct fill and label typography (#426)."
-    context: contexts/axis-tiers.yaml
-    expectedSvg: generated/axis-tiers.svg
-    expectedScene: generated/axis-tiers.scene.json
   - id: axis-alternating
     evidence: "Quarter and month band fills alternate by each tier's natural interval ordinal from exact Theme Scheme-slot mappings (#490)."
     context: contexts/axis-alternating.yaml
@@ -62,36 +52,16 @@ slides:
     context: contexts/axis-interval-scales.yaml
     expectedSvg: generated/axis-interval-scales.svg
     expectedScene: generated/axis-interval-scales.scene.json
-  - id: axis-ticks
-    evidence: "Week ticks standing on the axis rule at every week start, under month labels and quarter bands, from a Theme-declared tick length (#492)."
-    context: contexts/axis-ticks.yaml
-    expectedSvg: generated/axis-ticks.svg
-    expectedScene: generated/axis-ticks.scene.json
   - id: axis-cell-corners
-    evidence: "Quarter cells with cut (chamfered) corners and month cells with rounded corners, each separated by a cell gap, from the Theme properties cellCornerChamfer and cellCornerRadius on the two band roles (#491)."
+    evidence: "Quarter cells with cut (chamfered) corners and month cells with rounded corners, each separated by a cell gap, from the Theme properties cellCornerChamfer and cellCornerRadius on the two band roles (#491), and month ticks standing on the axis rule instead of full grid lines, from the Theme tickLength on the axis-minor role (#492)."
     context: contexts/axis-cell-corners.yaml
     expectedSvg: generated/axis-cell-corners.svg
     expectedScene: generated/axis-cell-corners.scene.json
-  - id: surface-texture
-    evidence: "A dark Theme with a faint hexagon-lattice canvas texture (the packaged target-parts pattern) under every mark and label, from the Theme role canvas-texture (#587)."
-    context: contexts/surface-texture.yaml
-    expectedSvg: generated/surface-texture.svg
-    expectedScene: generated/surface-texture.scene.json
   - id: surface-glow
     evidence: "A glow around every planned mark and gate on a dark stage, drawn as a per-element halo clipped to the canvas under the rich SVG profile, from the Theme properties glowColor, glowBlur and glowOpacity (#587)."
     context: contexts/surface-glow.yaml
     expectedSvg: generated/surface-glow.svg
     expectedScene: generated/surface-glow.scene.json
-  - id: hand-wobble
-    evidence: "Every plan, actual and missing-actual bar and every dependency drawn as a hand-inked line: a Theme-declared amplitude, wavelength and seed perturb each stroke deterministically (each primitive its own line), changing no bound, under the rich SVG profile (#588)."
-    context: contexts/hand-wobble.yaml
-    expectedSvg: generated/hand-wobble.svg
-    expectedScene: generated/hand-wobble.scene.json
-  - id: value-affixes
-    evidence: "A delta column whose slips read +4! and whose missing actuals read ? from per-state View affixes on a unit-less signed format, measured with the column, under the hand-wobble Theme (#588)."
-    context: contexts/value-affixes.yaml
-    expectedSvg: generated/value-affixes.svg
-    expectedScene: generated/value-affixes.scene.json
   - id: region-frames
     evidence: "A masthead of a title panel and, beside it, the legend in its own key panel, over one framed chart panel holding the table and the timeline, each panel an ink outline with rounded corners and a hand wobble on newsprint, a gap as the gutter between panels, from the Layout Profile frame declaration and the Theme role region-frame, with the delta affixes of #588 (#889)."
     context: contexts/region-frames.yaml
@@ -102,16 +72,6 @@ slides:
     context: contexts/annotation-kinds.yaml
     expectedSvg: generated/annotation-kinds.svg
     expectedScene: generated/annotation-kinds.scene.json
-  - id: annotation-artwork
-    evidence: "A hanging scroll behind each callout and a deckled newspaper-clipping edge on a highlight (#848): the packaged scroll-frame and clipping-edge glyphs of the target-parts catalogue stretched to the note by nine-slice from the Theme annotationContainer artwork, the paper the note box fill and the frame one ink role, the text measured into the content inset and judged on the paper, with no corpus datum edited."
-    context: contexts/annotation-artwork.yaml
-    expectedSvg: generated/annotation-artwork.svg
-    expectedScene: generated/annotation-artwork.scene.json
-  - id: annotation-border
-    evidence: "A per-side box border on the note boxes of a right-hand notes rail (#1049): a 4 px kind-coloured start border flush with the box edge at full height with the text inset measured from inside it, plus 1 px end and 2 px top and bottom ink borders with mitred corners on the note, a 3 px ink start border on the callout, each side from its own Theme role, the boxes filling the rail (#1051), with no corpus datum edited."
-    context: contexts/annotation-border.yaml
-    expectedSvg: generated/annotation-border.svg
-    expectedScene: generated/annotation-border.scene.json
   - id: viewer-fit
     evidence: "A viewer that lacks the layout font (#1050): the same notes as the artwork slide with the Theme box roles declaring how text and box absorb the missing face, a scroll-framed callout and a clipping-edge highlight pinned line by line to the width Layout measured (text-follows-box, with spacing and with spacingAndGlyphs), and a plain note whose background follows its text (box-follows-text); the SVG still names the family and embeds nothing, and PNG output draws the packaged font from the raw SVG, with no corpus datum edited."
     context: contexts/viewer-fit.yaml
@@ -122,11 +82,6 @@ slides:
     context: contexts/annotation-rounded.yaml
     expectedSvg: generated/annotation-rounded.svg
     expectedScene: generated/annotation-rounded.scene.json
-  - id: group-tabs
-    evidence: "Group headers numbered and tabbed in the Title Card manner (#882): a zero-padded ordinal from the View header template and a 56 px hazard-stripe tab with an 8 px gap from the Theme role group-tab (catalogue pattern, size, gap), from the packaged target-parts catalogue, as a new View, Theme and Context over the executive sources."
-    context: contexts/group-tabs.yaml
-    expectedSvg: generated/group-tabs.svg
-    expectedScene: generated/group-tabs.scene.json
   - id: group-header-runs
     evidence: "Role-marked spans in a group-header template (#1192): the View header template marks {ordinal} and a {figure:id} with the Theme text roles group-ordinal (bold, orange) and group-gloss (small, muted capitals), and the unmarked title keeps groupHeader; Layout measures each run with its own role and places the three runs on one baseline, from the executive sources."
     context: contexts/group-header-runs.yaml
@@ -142,11 +97,6 @@ slides:
     context: contexts/slot-heading.yaml
     expectedSvg: generated/slot-heading.svg
     expectedScene: generated/slot-heading.scene.json
-  - id: heading
-    evidence: "A declared title and subtitle (#991): the View heading templates read the Project title, the as-of date and the calendar id, and the subtitle is drawn under the title in the Theme's subtitle typography role, as a new View and Theme over the executive sources."
-    context: contexts/heading.yaml
-    expectedSvg: generated/heading.svg
-    expectedScene: generated/heading.scene.json
   - id: baseline-ghosts
     evidence: "Baseline ghosts together with field-grouped automatic rows (#991): comparison.baseline snapshot with baselineMarks ghost draws one dashed baseline ghost bar and hollow baseline gate per selected item under the group header bands, over the executive sources and a captured snapshot."
     context: contexts/baseline-ghosts.yaml
@@ -157,58 +107,13 @@ slides:
     context: contexts/as-of-foot.yaml
     expectedSvg: generated/as-of-foot.svg
     expectedScene: generated/as-of-foot.scene.json
-  - id: as-of-below-plot
-    evidence: "The as-of chip below the plot with its block reserved (#1063): the marker's placement below-plot centres the chip on the rule one gap under the last row, so it no longer covers the last row's label or marks, and the slots below the timeline sit lower by the reserved block, over the executive sources."
-    context: contexts/as-of-below-plot.yaml
-    expectedSvg: generated/as-of-below-plot.svg
-    expectedScene: generated/as-of-below-plot.scene.json
   - id: in-progress
     evidence: "Work in progress and not yet observed (#991): comparison.missingActualScope in-progress hatches a span that has an actual start and no finish from that start to the as-of date (the Theme's missing-actual hatch), and puts no mark on a due span or a gate, over the executive sources."
     context: contexts/in-progress.yaml
     expectedSvg: generated/in-progress.svg
     expectedScene: generated/in-progress.scene.json
-  - id: table-header
-    evidence: "Table column headers set apart from the cells (#991): a Theme that declares the text role tableColumnLabel gives the headers their own size, letter spacing and muted colour (here 11 px, 0.08 em, textMuted against 14 px cells), over the executive sources."
-    context: contexts/table-header.yaml
-    expectedSvg: generated/table-header.svg
-    expectedScene: generated/table-header.scene.json
   - id: text-roles
     evidence: "Text set apart per column and for the legend (#1062): a View column that names the Theme text role table-cell-secondary (here the Team column, 12 px in textMuted against 14 px cells) and a Theme that binds legend.fill (textMuted legend labels, swatches unchanged), over the executive sources."
     context: contexts/text-roles.yaml
     expectedSvg: generated/text-roles.svg
     expectedScene: generated/text-roles.scene.json
-  - id: legend-swatches
-    evidence: "Legend keys sized as the target mock draws them (#1111): a Theme that declares swatchInlineSize, swatchBlockSize, pointSwatchSize and swatchGap on the legend-swatch role gives the non-working-day key a 22 x 12 rectangle, the gate key a 12 px diamond and a 6 px distance to each label, while the slot gap (26 px) stays the distance between entries, over the executive sources."
-    context: contexts/legend-swatches.yaml
-    expectedSvg: generated/legend-swatches.svg
-    expectedScene: generated/legend-swatches.scene.json
-  - id: gate-paint
-    evidence: "Gates painted apart from the bars (#991): a Theme that declares the role gate colours the primary gates with it (here the text ink, as the target's black diamonds) while the bars keep the planned paint, over the executive sources."
-    context: contexts/gate-paint.yaml
-    expectedSvg: generated/gate-paint.svg
-    expectedScene: generated/gate-paint.scene.json
-  - id: gate-symbols
-    evidence: "A gate's actual symbol sized apart from the actual bar (#1066): a Theme that declares symbolHeight and symbolOffset on the actual role draws the actual gate as a 0.7-of-track diamond centred in the track, while the actual bars keep markHeight, over the executive sources."
-    context: contexts/gate-symbols.yaml
-    expectedSvg: generated/gate-symbols.svg
-    expectedScene: generated/gate-symbols.scene.json
-  - id: line-colour
-    evidence: "A named line colour in the Color Scheme (#991): the optional Scheme colour rule is bound by the Theme as the intent rule to the axis rule, so the rule under the axis is a light line colour instead of the text ink, over the executive sources."
-    context: contexts/line-colour.yaml
-    expectedSvg: generated/line-colour.svg
-    expectedScene: generated/line-colour.scene.json
-  - id: calendar-exception
-    evidence: "Calendar-exception days in the plot (#991): a Theme that declares the role calendar-exception with a background draws the days the Project calendar closes by an exception in their own warm fill, apart from the weekend closed days, over the executive sources."
-    context: contexts/calendar-exception.yaml
-    expectedSvg: generated/calendar-exception.svg
-    expectedScene: generated/calendar-exception.scene.json
-  - id: as-of-cone
-    evidence: "The as-of marker as a cone of light (Marquee spotlight): a gradient polygon from the top of the plot to its last row, fading from ink to transparent under the bars and gates, drawn under the rich SVG profile from the Theme role as-of-cone with a label chip (#890)."
-    context: contexts/as-of-cone.yaml
-    expectedSvg: generated/as-of-cone.svg
-    expectedScene: generated/as-of-cone.scene.json
-  - id: terminal-none
-    evidence: "A relation terminal shape `none` (#1105): the Theme declares the source terminal `none`, so no dot is drawn at the source and the line starts at the endpoint, while the target keeps its arrowhead; the executive sources otherwise unchanged."
-    context: contexts/terminal-none.yaml
-    expectedSvg: generated/terminal-none.svg
-    expectedScene: generated/terminal-none.scene.json

@@ -34,55 +34,6 @@ entries:
     comparison: {set: controller-z-treatment-ladder, dimension: appearance, axis: visual treatment}
     target: {kind: svg, capabilities: [accessibleText, semanticRoles, tableSemantics]}
     accessibility: {note: Gradient and shadow are decorative; semantic labels, source metadata, and table structure remain present.}
-  - id: controller-z-executive-composition
-    corpus: controller-z
-    slide: executive
-    narrative: {title: Executive review, audience: programme leadership, purpose: Establish the spacious table-timeline composition.}
-    comparison: {set: controller-z-executive-composition, dimension: composition, axis: Layout profile}
-    target: {kind: svg, capabilities: [accessibleText, semanticRoles, tableSemantics]}
-    accessibility: {note: Semantic labels and table structure remain present as only Layout geometry changes.}
-  - id: controller-z-compact-composition
-    corpus: controller-z
-    slide: composition-compact
-    narrative: {title: Compact executive review, audience: programme leadership, purpose: Compare denser Layout spacing over the identical review.}
-    comparison: {set: controller-z-executive-composition, dimension: composition, axis: Layout profile}
-    target: {kind: svg, capabilities: [accessibleText, semanticRoles, tableSemantics]}
-    accessibility: {note: Semantic labels and table structure remain present as only Layout geometry changes.}
-  - id: halcyon-programme-board-surface
-    corpus: halcyon-1
-    slide: programme-board
-    narrative: {title: Programme board, audience: programme office, purpose: Read the programme as a table timeline.}
-    comparison: {set: halcyon-two-surfaces, dimension: content, axis: surface, supports: [layout]}
-    target: {kind: svg, capabilities: [accessibleText, semanticRoles, tableSemantics]}
-    accessibility: {note: Structured labels and semantic roles remain available in the table timeline.}
-  - id: halcyon-dependency-network-surface
-    corpus: halcyon-1
-    slide: gallery-network-wallboard
-    narrative: {title: Dependency network, audience: programme office, purpose: Read the same programme through its dependency structure.}
-    comparison: {set: halcyon-two-surfaces, dimension: content, axis: surface, supports: [layout]}
-    target: {kind: svg, capabilities: [accessibleText, semanticRoles]}
-    accessibility: {note: Semantic labels and relation roles remain present alongside the network marks.}
-  - id: halcyon-mission-light-appearance
-    corpus: halcyon-1
-    slide: mission-brief
-    narrative: {title: Mission light, audience: programme office, purpose: Establish the light appearance for the same mission brief.}
-    comparison: {set: halcyon-mission-brief-appearance, dimension: appearance, axis: colour scheme}
-    target: {kind: svg, capabilities: [accessibleText, hierarchicalAxis, semanticRoles, tableSemantics]}
-    accessibility: {note: Semantic labels and table structure remain present in the light scheme.}
-  - id: halcyon-dark-appearance
-    corpus: halcyon-1
-    slide: gallery-dark
-    narrative: {title: Control room dark, audience: programme office, purpose: Compare the same mission brief in a dark operational scheme.}
-    comparison: {set: halcyon-mission-brief-appearance, dimension: appearance, axis: colour scheme}
-    target: {kind: svg, capabilities: [accessibleText, hierarchicalAxis, semanticRoles, tableSemantics]}
-    accessibility: {note: Semantic labels and table structure remain present in the dark scheme.}
-  - id: halcyon-mono-appearance
-    corpus: halcyon-1
-    slide: gallery-mono
-    narrative: {title: Print mono, audience: programme office, purpose: Compare the same mission brief in a monochrome scheme.}
-    comparison: {set: halcyon-mission-brief-appearance, dimension: appearance, axis: colour scheme}
-    target: {kind: svg, capabilities: [accessibleText, hierarchicalAxis, semanticRoles, tableSemantics]}
-    accessibility: {note: Semantic labels and table structure remain present without colour distinction.}
   - id: halcyon-tvac-scenario
     corpus: halcyon-1
     slide: tvac-slip
