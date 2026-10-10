@@ -324,6 +324,7 @@ class MarkPlacement:
     lane_member_id: str | None = None
     lane_source_kind: str | None = None
     subjects: tuple[DiagnosticSubject, ...] = ()
+    paint_clip: PaintClip | None = None
 
 
 @dataclass(frozen=True)
@@ -373,6 +374,7 @@ class ShapePlacement:
     subjects: tuple[DiagnosticSubject, ...] = ()
     # Completed visible frame, when nonrect paint extends beyond nominal bounds.
     collision_bounds: Rect | None = None
+    paint_clip: PaintClip | None = None
 
 
 @dataclass(frozen=True)

@@ -7,7 +7,7 @@ import pytest
 from chrona.presentation.layout.mark_facet_visibility import (
     FacetDisposition, MarkFacetVisibility,
 )
-from chrona.presentation.layout.mark_geometry import complete_mark_window_geometry
+from chrona.presentation.layout.mark_geometry import complete_mark_window_geometry, SymbolPartPlacement
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.mark_facet_visibility import complete_item_visibility
 from chrona.presentation.layout.path_geometry import open_span_path
@@ -94,6 +94,24 @@ def test_one_cut_preserves_original_rounded_opposite_edge_and_eligible_port():
                for command in result.visible.path_commands)
     assert all(2 <= point[0] <= 10 for command in result.visible.path_commands
                for point in command.points)
+
+
+def test_open_span_symbol_part_uses_completed_contour_not_original_outside_geometry():
+    original = _mark(shape="open-span", end_treatment="open")
+    part = SymbolPartPlacement(original.path_commands, paint_mode="fill", paint_color="#123456")
+    original = replace(original, symbol_parts=(part,))
+    visibility = _visibility(
+        disposition=FacetDisposition.CLIPPED, visible_start=D0 + timedelta(days=2),
+        visible_finish=D0 + timedelta(days=8), cut_start=True, cut_finish=True,
+        start_port=False, end_port=False, shape="open-span")
+    completed = complete_mark_window_geometry(original, visibility, SCALE, PLOT)
+    visible = completed.visible
+    assert visible.symbol_parts[0].commands == visible.path_commands
+    assert visible.symbol_parts[0].paint_mode == part.paint_mode
+    assert visible.symbol_parts[0].paint_color == part.paint_color
+    assert visible.symbol_parts[0].commands != part.commands
+    assert all(2 <= px <= 8 for command in visible.symbol_parts[0].commands for px, _ in command.points)
+    assert original.symbol_parts == (part,)
 
 
 def test_narrow_visible_open_span_keeps_open_end_only_when_that_end_survives():

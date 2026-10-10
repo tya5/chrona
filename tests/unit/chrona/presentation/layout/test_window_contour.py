@@ -34,7 +34,7 @@ def test_original_progress_intersects_notched_host_without_rescaling(original_fi
     host = _host(4, 0, 5, 4)
     notched = clip_span_contour(_rect(0, 0, 10, 4), host, cut_start=True,
                                 cut_finish=True, source_ref="span", facet="planned")
-    progress = contour_ops.intersect_window_progress_contour(
+    progress = contour_ops.intersect_visible_host_contour(
         _rect(0, 0, original_finish, 4), notched, host, source_ref="span", facet="progress")
     coordinates = _coordinates(progress)
     assert is_closed_stroke_contour(progress)
@@ -51,7 +51,7 @@ def test_progress_outside_visible_host_is_intentionally_empty(progress):
     host = _host(4, 0, 5, 4)
     notched = clip_span_contour(_rect(0, 0, 10, 4), host, cut_start=True,
                                 cut_finish=True, source_ref="span", facet="planned")
-    assert contour_ops.intersect_window_progress_contour(
+    assert contour_ops.intersect_visible_host_contour(
         progress, notched, host, source_ref="span", facet="progress") == ()
 
 
@@ -63,7 +63,7 @@ def test_progress_contour_failure_is_bounded_without_rectangular_fallback(monkey
         raise RuntimeError("private backend detail must not appear")
     monkeypatch.setattr(contour_ops.pathops, "op", fail)
     with pytest.raises(WindowContourError) as error:
-        contour_ops.intersect_window_progress_contour(
+        contour_ops.intersect_visible_host_contour(
             _rect(0, 0, 5, 4), notched, host, source_ref="span", facet="progress")
     assert error.value.diagnostic_id == "E_LAYOUT_WINDOW_CLIP"
     assert "stage=intersection" in error.value.detail

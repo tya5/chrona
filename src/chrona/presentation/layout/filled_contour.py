@@ -207,15 +207,16 @@ def clip_span_contour(
         raise WindowContourError(source_ref, facet, "intersection", "operation-failed") from error
 
 
-def intersect_window_progress_contour(
-    progress: tuple[PathCommand, ...], completed_host: tuple[PathCommand, ...],
+def intersect_visible_host_contour(
+    source: tuple[PathCommand, ...], completed_host: tuple[PathCommand, ...],
     visible_host: Rect, *, source_ref: str, facet: str,
 ) -> tuple[PathCommand, ...]:
-    """Intersect original progress with the already-notched visible host fill.
+    """Intersect original submark ink with the already-notched visible host.
 
-    The caller supplies original progress geometry, never a fraction reapplied
-    to the shortened host. Empty intersection is an intentional absence; no
-    second notch or substitute rectangle is introduced.
+    Progress and multipart symbols share this geometry operation. Supply the
+    original ink, never a fraction reapplied to the shortened host. Empty
+    intersection is intentional absence; no second notch or substitute
+    rectangle is introduced.
     """
     try:
         _validate(completed_host, stage="input")
@@ -224,15 +225,15 @@ def intersect_window_progress_contour(
                                float(visible_host.inline_size), float(visible_host.block_size))
         if not _control_bounds_within(completed_host, x, y, x + width, y + height):
             raise WindowContourError(source_ref, facet, "input", "outside-host")
-        if not progress:
+        if not source:
             return ()
-        _validate(progress, stage="input")
-        local_progress = _host_local(progress, x, y, width, height)
+        _validate(source, stage="input")
+        local_source = _host_local(source, x, y, width, height)
         local_host = _host_local(completed_host, x, y, width, height)
-        if any(not isfinite(value) for commands in (local_progress, local_host)
+        if any(not isfinite(value) for commands in (local_source, local_host)
                for command in commands for point in command.points for value in point):
             raise ContourUnionError("input", "nonfinite")
-        result = _window_op(_to_pathops(local_progress), _to_pathops(local_host),
+        result = _window_op(_to_pathops(local_source), _to_pathops(local_host),
                             pathops.PathOp.INTERSECTION, source_ref=source_ref,
                             facet=facet, stage="intersection")
         if not tuple(result.segments):

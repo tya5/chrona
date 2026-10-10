@@ -16,6 +16,7 @@ from chrona.presentation.layout.path_geometry import open_span_path, rounded_dia
 from chrona.presentation.layout.rounded_outline import resolve_corner_radius, rounded_rect_commands
 from chrona.presentation.layout.filled_contour import (
     ContourUnionError, WindowContourError, clip_span_contour, union_filled_contours,
+    intersect_visible_host_contour,
 )
 from chrona.presentation.layout.surface_quality import MarkPlacement, PaintClip
 from chrona.presentation.model.point_paint import resolve_point_paint_role
@@ -181,6 +182,20 @@ def complete_mark_window_geometry(
         raise _window_geometry_error(mark, facet_visibility, "contour-operation-failed") from error
 
     closes_open_end = mark.mark_shape == "open-span" and facet_visibility.cut_finish
+    completed_parts = []
+    for part in mark.symbol_parts:
+        if part.commands == source_contour:
+            completed_parts.append(replace(part, commands=contour))
+        else:
+            # Preserve each part's paint, but never project its uncut source
+            # geometry. The shared intersection fails closed on unsupported
+            # or malformed contours rather than retaining outside ink.
+            clipped_part = intersect_visible_host_contour(
+                part.commands, contour, visible_host,
+                source_ref=mark.source_ref, facet=facet_visibility.source.facet)
+            if clipped_part:
+                completed_parts.append(replace(part, commands=clipped_part))
+    clip = PaintClip((plot_left, plot_top, float(plot.inline_size), float(plot.block_size)))
     visible = replace(
         mark, bounds=visible_host,
         start_port=mark.start_port if facet_visibility.start_port_visible else None,
@@ -188,8 +203,9 @@ def complete_mark_window_geometry(
         mark_shape="span" if closes_open_end else mark.mark_shape,
         corner_radius=0.0, path_commands=contour,
         end_treatment="closed" if closes_open_end else mark.end_treatment,
+        paint_clip=clip,
+        symbol_parts=tuple(completed_parts),
     )
-    clip = PaintClip((plot_left, plot_top, float(plot.inline_size), float(plot.block_size)))
     return CompletedWindowMark(mark, visible, clip, facet_visibility)
 
 
