@@ -6,63 +6,64 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 
 | Purpose | Visual role | Disposition | Floor | Slides | Primitives | Minimum | Median | Errors | Warnings |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| actual | `actual` | required | 3.000 | 66 | 416 | 1.000 | 7.583 | 0 | 4 |
+| actual | `actual` | required | 3.000 | 67 | 430 | 1.000 | 7.583 | 0 | 4 |
 | annotation-artwork | `annotation-artwork` | enabled | 1.100 | 4 | 32 | 1.493 | 17.128 | 0 | 0 |
 | annotation-artwork | `annotation-artwork-rods` | enabled | 1.100 | 1 | 12 | 2.262 | 2.262 | 0 | 0 |
 | annotation-border-bottom | `annotation-border-bottom` | enabled | 1.100 | 3 | 4 | 15.434 | 15.434 | 0 | 0 |
 | annotation-border-end | `annotation-border-end` | enabled | 1.100 | 3 | 3 | 15.434 | 15.434 | 0 | 0 |
 | annotation-border-start | `annotation-border-start` | enabled | 1.100 | 3 | 3 | 15.434 | 15.434 | 0 | 0 |
 | annotation-border-top | `annotation-border-top` | enabled | 1.100 | 3 | 3 | 15.434 | 15.434 | 0 | 0 |
-| annotation-box | `annotation-note-box` | enabled | 1.100 | 17 | 41 | 1.110 | 1.435 | 0 | 0 |
-| annotation-heading | `annotation-heading` | required | 4.500 | 2 | 6 | 5.540 | 14.340 | 0 | 0 |
+| annotation-box | `annotation-note-box` | enabled | 1.100 | 18 | 44 | 1.000 | 1.435 | 0 | 1 |
+| annotation-heading | `annotation-heading` | required | 4.500 | 3 | 9 | 4.747 | 15.382 | 0 | 0 |
 | annotation-kind-accent | `annotation-kind-accent` | enabled | 1.100 | 7 | 23 | 4.837 | 6.720 | 0 | 0 |
 | annotation-kind-bar | `annotation-kind-bar` | enabled | 1.100 | 6 | 14 | 5.258 | 6.833 | 0 | 0 |
-| annotation-kind-label | `annotation-kind-label` | required | 4.500 | 9 | 23 | 4.837 | 7.583 | 0 | 0 |
+| annotation-kind-label | `annotation-kind-label` | required | 4.500 | 10 | 26 | 4.747 | 7.583 | 0 | 0 |
 | annotation-kind-secondary | `annotation-kind-secondary` | required | 4.500 | 5 | 11 | 6.747 | 7.583 | 0 | 0 |
 | annotation-kind-stamp | `annotation-kind-stamp` | enabled | 1.100 | 6 | 113 | 5.675 | 6.833 | 0 | 0 |
 | annotation-list-text | `text` | required | 4.500 | 3 | 8 | 11.935 | 11.935 | 0 | 0 |
 | annotation-text | `annotation-arrow-text` | required | 4.500 | 1 | 2 | 14.191 | 14.191 | 0 | 0 |
 | annotation-text | `annotation-callout-text` | required | 4.500 | 7 | 9 | 14.191 | 15.434 | 0 | 0 |
 | annotation-text | `annotation-highlight-text` | required | 4.500 | 3 | 3 | 16.268 | 17.128 | 0 | 0 |
-| annotation-text | `annotation-note-text` | required | 4.500 | 17 | 41 | 5.859 | 13.973 | 0 | 0 |
-| as-of-label | `as-of-label` | required | 4.500 | 4 | 4 | 3.717 | 6.715 | 0 | 1 |
+| annotation-text | `annotation-note-text` | required | 4.500 | 18 | 44 | 5.859 | 13.973 | 0 | 0 |
+| as-of-label | `as-of-label` | required | 4.500 | 5 | 5 | 3.717 | 5.112 | 0 | 1 |
 | as-of-label | `text` | required | 4.500 | 60 | 60 | 9.223 | 14.573 | 0 | 0 |
-| axis-band | `axis-band-decoration` | enabled | 1.100 | 68 | 176 | 1.053 | 1.579 | 0 | 4 |
-| axis-band | `axis-band-decoration2` | absent | 1.100 | 4 | 0 | — | — | 0 | 0 |
+| axis-band | `axis-band-decoration` | enabled | 1.100 | 69 | 180 | 1.053 | 1.579 | 0 | 4 |
+| axis-band | `axis-band-decoration2` | absent | 1.100 | 5 | 0 | — | — | 0 | 0 |
 | axis-band | `axis-band-decoration2` | enabled | 1.100 | 7 | 47 | 1.119 | 1.154 | 0 | 0 |
-| axis-label | `axis-label2` | required | 4.500 | 11 | 36 | 5.727 | 10.019 | 0 | 0 |
-| axis-label | `axis-label3` | required | 4.500 | 11 | 92 | 5.448 | 12.675 | 0 | 0 |
+| axis-label | `axis-label2` | required | 4.500 | 12 | 40 | 5.727 | 10.019 | 0 | 0 |
+| axis-label | `axis-label3` | required | 4.500 | 12 | 101 | 5.448 | 11.934 | 0 | 0 |
 | axis-label | `text` | required | 4.500 | 57 | 480 | 8.629 | 10.306 | 0 | 0 |
 | calendar-closed | `calendar-closed` | absent | 1.100 | 2 | 0 | — | — | 0 | 0 |
-| calendar-closed | `calendar-closed` | enabled | 1.100 | 66 | 2819 | 1.050 | 1.414 | 0 | 234 |
-| calendar-exception | `calendar-exception` | enabled | 1.100 | 5 | 21 | 1.216 | 1.397 | 0 | 0 |
+| calendar-closed | `calendar-closed` | enabled | 1.100 | 67 | 2897 | 1.050 | 1.414 | 0 | 234 |
+| calendar-exception | `calendar-exception` | enabled | 1.100 | 6 | 25 | 1.216 | 1.397 | 0 | 0 |
 | finish-delta | `variance-ahead` | deemphasized | 3.000 | 3 | 9 | 7.708 | 7.708 | 0 | 0 |
 | finish-delta | `variance-behind` | required | 4.500 | 47 | 104 | 4.562 | 5.571 | 0 | 0 |
 | finish-delta | `variance-on-track` | required | 4.500 | 4 | 11 | 5.692 | 5.692 | 0 | 0 |
-| group-decoration | `group-band` | absent | 1.100 | 15 | 0 | — | — | 0 | 0 |
+| group-decoration | `group-band` | absent | 1.100 | 16 | 0 | — | — | 0 | 0 |
 | group-decoration | `group-band` | enabled | 1.100 | 52 | 159 | 1.116 | 1.116 | 0 | 0 |
 | group-detail | `text` | required | 4.500 | 43 | 129 | 11.935 | 16.268 | 0 | 0 |
 | group-header | `group-gloss` | required | 4.500 | 1 | 3 | 9.402 | 9.402 | 0 | 0 |
 | group-header | `group-header` | required | 4.500 | 1 | 12 | 7.627 | 7.627 | 0 | 0 |
 | group-header | `group-ordinal` | required | 4.500 | 3 | 15 | 6.982 | 7.583 | 0 | 0 |
-| group-header | `text` | required | 4.500 | 52 | 205 | 6.703 | 16.268 | 0 | 0 |
+| group-header | `text` | required | 4.500 | 53 | 211 | 6.703 | 16.268 | 0 | 0 |
 | group-header-band | `group-header-band` | absent | 1.100 | 11 | 0 | — | — | 0 | 0 |
-| group-header-band | `group-header-band` | enabled | 1.100 | 3 | 18 | 1.119 | 1.154 | 0 | 0 |
+| group-header-band | `group-header-band` | enabled | 1.100 | 4 | 24 | 1.119 | 1.194 | 0 | 0 |
 | group-tab | `group-tab` | enabled | 1.100 | 4 | 39 | 1.119 | 6.982 | 0 | 0 |
-| kicker-text | `kicker` | required | 4.500 | 2 | 2 | 9.106 | 12.183 | 0 | 0 |
-| legend-label | `legend` | required | 4.500 | 5 | 32 | 5.448 | 7.557 | 0 | 0 |
+| kicker-text | `kicker` | required | 4.500 | 3 | 3 | 9.106 | 15.260 | 0 | 0 |
+| legend-label | `legend` | required | 4.500 | 6 | 40 | 5.448 | 13.415 | 0 | 0 |
 | legend-label | `text` | required | 4.500 | 55 | 181 | 10.019 | 16.268 | 0 | 0 |
-| legend-swatch | `actual` | required | 3.000 | 59 | 59 | 5.022 | 16.268 | 0 | 0 |
+| legend-swatch | `actual` | required | 3.000 | 60 | 60 | 4.747 | 16.268 | 0 | 0 |
 | legend-swatch | `calendar-closed` | enabled | 1.100 | 8 | 8 | 1.050 | 1.460 | 0 | 2 |
-| legend-swatch | `calendar-exception` | enabled | 1.100 | 3 | 3 | 1.216 | 1.240 | 0 | 0 |
-| legend-swatch | `gate` | required | 3.000 | 4 | 4 | 3.061 | 7.886 | 0 | 0 |
-| legend-swatch | `missing-actual` | required | 3.000 | 5 | 7 | 1.194 | 4.637 | 0 | 1 |
-| legend-swatch | `planned` | required | 3.000 | 60 | 105 | 4.637 | 16.268 | 0 | 0 |
-| legend-swatch | `snapshot` | required | 3.000 | 5 | 5 | 2.594 | 5.817 | 0 | 1 |
+| legend-swatch | `calendar-exception` | enabled | 1.100 | 4 | 4 | 1.216 | 1.255 | 0 | 0 |
+| legend-swatch | `gate` | required | 3.000 | 5 | 5 | 1.539 | 6.667 | 0 | 1 |
+| legend-swatch | `missing-actual` | required | 3.000 | 6 | 10 | 1.000 | 5.227 | 0 | 2 |
+| legend-swatch | `period-band` | enabled | 1.100 | 1 | 3 | 1.163 | 2.217 | 0 | 0 |
+| legend-swatch | `planned` | required | 3.000 | 61 | 106 | 4.637 | 16.311 | 0 | 0 |
+| legend-swatch | `snapshot` | required | 3.000 | 6 | 6 | 2.594 | 5.663 | 0 | 1 |
 | member-label | `member-label-inside-planned` | required | 4.500 | 37 | 37 | 4.651 | 5.727 | 0 | 0 |
 | member-label | `text` | required | 4.500 | 57 | 526 | 9.348 | 14.573 | 0 | 0 |
 | milestone-digest-entry | `text` | required | 4.500 | 43 | 86 | 11.935 | 16.268 | 0 | 0 |
-| missingActual | `missing-actual` | required | 3.000 | 57 | 68 | 1.491 | 14.573 | 0 | 2 |
+| missingActual | `missing-actual` | required | 3.000 | 58 | 71 | 1.491 | 14.573 | 0 | 3 |
 | network-node | `network-node` | required | 3.000 | 2 | 32 | 16.354 | 17.050 | 0 | 0 |
 | note-index | `note-index` | required | 4.500 | 4 | 8 | 6.157 | 6.157 | 0 | 0 |
 | observation-cell | `text` | required | 4.500 | 43 | 129 | 11.935 | 16.268 | 0 | 0 |
@@ -70,18 +71,18 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | observation-column-label | `tableColumnLabel` | required | 4.500 | 1 | 3 | 7.557 | 7.557 | 0 | 0 |
 | observation-column-label | `text` | required | 4.500 | 42 | 126 | 11.935 | 16.268 | 0 | 0 |
 | observation-source | `text` | required | 4.500 | 43 | 86 | 11.935 | 16.268 | 0 | 0 |
-| period-band | `period-band` | enabled | 1.100 | 9 | 13 | 1.000 | 1.337 | 0 | 1 |
-| period-label | `period-label` | required | 4.500 | 9 | 9 | 1.692 | 13.973 | 0 | 3 |
-| planned | `gate` | required | 3.000 | 5 | 34 | 1.000 | 8.395 | 0 | 2 |
-| planned | `planned` | required | 3.000 | 68 | 798 | 1.163 | 13.238 | 0 | 2 |
+| period-band | `period-band` | enabled | 1.100 | 10 | 16 | 1.000 | 1.337 | 0 | 1 |
+| period-label | `period-label` | required | 4.500 | 10 | 10 | 1.692 | 12.317 | 0 | 3 |
+| planned | `gate` | required | 3.000 | 6 | 42 | 1.000 | 6.667 | 0 | 10 |
+| planned | `planned` | required | 3.000 | 69 | 816 | 1.163 | 13.238 | 0 | 2 |
 | progress-fill | `progress-fill` | required | 3.000 | 52 | 154 | 3.216 | 4.789 | 0 | 0 |
 | project-note | `text` | required | 4.500 | 48 | 105 | 10.019 | 16.268 | 0 | 0 |
 | relation-label | `text` | required | 4.500 | 33 | 228 | 6.663 | 14.573 | 0 | 0 |
-| row-decoration | `row-band` | absent | 1.100 | 15 | 0 | — | — | 0 | 0 |
+| row-decoration | `row-band` | absent | 1.100 | 16 | 0 | — | — | 0 | 0 |
 | row-decoration | `row-band` | enabled | 1.100 | 28 | 112 | 1.000 | 1.116 | 0 | 8 |
-| slot-heading | `slot-heading` | required | 4.500 | 5 | 5 | 5.448 | 6.667 | 0 | 0 |
-| snapshot | `snapshot` | required | 3.000 | 7 | 42 | 2.469 | 8.851 | 0 | 6 |
-| subtitle-text | `subtitle` | required | 4.500 | 4 | 4 | 5.448 | 6.908 | 0 | 0 |
+| slot-heading | `slot-heading` | required | 4.500 | 6 | 6 | 5.448 | 7.886 | 0 | 0 |
+| snapshot | `snapshot` | required | 3.000 | 8 | 48 | 2.469 | 6.091 | 0 | 6 |
+| subtitle-text | `subtitle` | required | 4.500 | 5 | 5 | 4.747 | 6.667 | 0 | 0 |
 | subtitle-text | `text` | required | 4.500 | 3 | 3 | 16.268 | 16.268 | 0 | 0 |
 | summary-bar | `summary-bar` | required | 3.000 | 2 | 2 | 5.817 | 6.712 | 0 | 0 |
 | summary-caption | `summary-caption` | required | 4.500 | 1 | 1 | 15.382 | 15.382 | 0 | 0 |
@@ -91,14 +92,14 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | summary-metric | `text` | required | 4.500 | 1 | 1 | 16.354 | 16.354 | 0 | 0 |
 | summary-unit | `summary-unit` | required | 4.500 | 1 | 1 | 6.720 | 6.720 | 0 | 0 |
 | table-cell | `missing-actual-cell` | required | 4.500 | 3 | 3 | 5.448 | 7.032 | 0 | 0 |
-| table-cell | `table-cell-secondary` | required | 4.500 | 5 | 112 | 5.184 | 6.959 | 0 | 0 |
-| table-cell | `text` | required | 4.500 | 68 | 1396 | 8.683 | 16.354 | 0 | 0 |
-| table-cell | `variance-ahead` | deemphasized | 3.000 | 7 | 21 | 4.312 | 9.523 | 0 | 0 |
-| table-cell | `variance-behind` | required | 4.500 | 15 | 64 | 5.022 | 6.689 | 0 | 0 |
-| table-cell | `variance-on-track` | required | 4.500 | 11 | 31 | 5.184 | 7.032 | 0 | 0 |
-| table-column-label | `tableColumnLabel` | required | 4.500 | 5 | 13 | 5.184 | 6.667 | 0 | 0 |
+| table-cell | `table-cell-secondary` | required | 4.500 | 6 | 138 | 5.184 | 7.149 | 0 | 0 |
+| table-cell | `text` | required | 4.500 | 69 | 1436 | 8.683 | 16.354 | 0 | 0 |
+| table-cell | `variance-ahead` | deemphasized | 3.000 | 8 | 24 | 4.312 | 9.523 | 0 | 0 |
+| table-cell | `variance-behind` | required | 4.500 | 16 | 70 | 5.022 | 6.219 | 0 | 0 |
+| table-cell | `variance-on-track` | required | 4.500 | 12 | 34 | 5.184 | 7.032 | 0 | 0 |
+| table-column-label | `tableColumnLabel` | required | 4.500 | 6 | 16 | 5.184 | 6.667 | 0 | 0 |
 | table-column-label | `text` | required | 4.500 | 63 | 112 | 10.019 | 16.354 | 0 | 0 |
-| title-text | `heading` | required | 4.500 | 3 | 3 | 7.959 | 13.177 | 0 | 0 |
+| title-text | `heading` | required | 4.500 | 4 | 4 | 7.959 | 14.219 | 0 | 0 |
 | title-text | `text` | required | 4.500 | 67 | 99 | 10.019 | 16.268 | 0 | 0 |
 
 ## Per-primitive grounds
@@ -10251,6 +10252,287 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `column:The company` | `tableColumnLabel` | 87.786, 159.971 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `column:Δ finish` | `tableColumnLabel` | 399.785, 159.971 | `canvas` | canvas | `#0D0A09` | fill | 7.149 | 4.500 | info |
 | `examples/halcyon-1/generated/24-marquee.scene.json` | `title` | `heading` | 160.936, 90.446 | `region-frame:sign` | flat | `#3A1115` | fill | 13.177 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `actual:avionics:avionics` | `actual` | 585.793, 281.910 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 4.747 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `actual:bus-test:bus-test` | `actual` | 748.462, 319.917 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 4.747 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `actual:cdr:cdr:part0` | `actual` | 707.795, 334.521 | `planned:cdr:cdr:part0` | flat | `#F7C948` | fill | 3.085 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `actual:comms-test:comms-test` | `actual` | 785.063, 632.967 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 4.747 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `actual:detector:detector` | `actual` | 624.427, 398.929 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 4.747 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `actual:eps:eps` | `actual` | 549.192, 300.913 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 4.747 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `actual:integration:integration` | `actual` | 994.500, 477.940 | `planned:integration:snapshot:integration` | flat | `#FFFDF5` | fill | 4.747 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `actual:mcs:mcs` | `actual` | 463.791, 594.960 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 4.747 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `actual:optics:optics` | `actual` | 463.791, 379.925 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 4.747 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `actual:payload-delivery:payload-delivery:part0` | `actual` | 951.799, 432.537 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 4.747 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `actual:payload-tvac:payload-tvac` | `actual` | 677.294, 417.933 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 4.747 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `actual:station:station` | `actual` | 699.661, 613.963 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 4.747 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `actual:structure:structure` | `actual` | 522.758, 262.906 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 4.747 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `actual:vibration:vibration` | `actual` | 1041.268, 496.944 | `planned:vibration:snapshot:vibration` | flat | `#FFFDF5` | stroke | 4.747 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-box:station-note` | `annotation-note-box` | 668.241, 757.087 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.000 | 1.100 | warning |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-box:tvac-note` | `annotation-note-box` | 429.000, 461.425 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-box:window-note` | `annotation-note-box` | 1352.357, 672.612 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-heading:station-note` | `annotation-heading` | 643.501, 746.437 | `annotation-box:station-note` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-heading:tvac-note` | `annotation-heading` | 526.322, 450.775 | `annotation-box:tvac-note` | flat | `#FFFDF5` | fill | 4.747 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-heading:window-note` | `annotation-heading` | 1440.615, 661.962 | `annotation-box:window-note` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-kind-text:station-note:0` | `annotation-kind-label` | 578.758, 731.200 | `annotation-box:station-note` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-kind-text:tvac-note:0` | `annotation-kind-label` | 455.994, 435.538 | `annotation-box:tvac-note` | flat | `#FFFDF5` | fill | 4.747 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-kind-text:window-note:0` | `annotation-kind-label` | 1382.495, 646.725 | `annotation-box:window-note` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-text:station-note` | `annotation-note-text` | 668.241, 772.325 | `annotation-box:station-note` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-text:tvac-note` | `annotation-note-text` | 530.492, 476.663 | `annotation-box:tvac-note` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `annotation-text:window-note` | `annotation-note-text` | 1454.953, 687.850 | `annotation-box:window-note` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `as-of-label` | `as-of-label` | 1133.527, 848.800 | `chip:as-of-label` | flat | `#D13A26` | fill | 4.747 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 429.000, 174.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `axis-band-rect:0:1` | `axis-band-decoration` | 562.892, 174.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `axis-band-rect:0:2` | `axis-band-decoration` | 932.966, 174.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `axis-band-rect:0:3` | `axis-band-decoration` | 1307.106, 174.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `axis-label:2:0` | `axis-label2` | 498.358, 174.000 | `axis-band-rect:0:0` | flat | `#F7C948` | fill | 11.108 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `axis-label:2:1` | `axis-label2` | 746.429, 174.000 | `axis-band-rect:0:1` | flat | `#F7C948` | fill | 11.108 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `axis-label:2:2` | `axis-label2` | 1118.536, 174.000 | `axis-band-rect:0:2` | flat | `#F7C948` | fill | 11.108 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `axis-label:2:3` | `axis-label2` | 1429.641, 174.000 | `axis-band-rect:0:3` | flat | `#F7C948` | fill | 11.108 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `axis-label:4:0` | `axis-label3` | 450.950, 197.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `axis-label:4:1` | `axis-label3` | 575.739, 197.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `axis-label:4:2` | `axis-label3` | 699.601, 197.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `axis-label:4:3` | `axis-label3` | 822.866, 197.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `axis-label:4:4` | `axis-label3` | 942.715, 197.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `axis-label:4:5` | `axis-label3` | 1073.107, 197.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `axis-label:4:6` | `axis-label3` | 1198.315, 197.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `axis-label:4:7` | `axis-label3` | 1319.684, 197.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `axis-label:4:8` | `axis-label3` | 1447.253, 197.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-03-06` | `calendar-closed` | 457.690, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-03-07` | `calendar-closed` | 461.757, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-03-13` | `calendar-closed` | 486.158, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-03-14` | `calendar-closed` | 490.224, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-03-20` | `calendar-closed` | 514.625, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-03-21` | `calendar-closed` | 518.691, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-03-27` | `calendar-closed` | 543.092, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-03-28` | `calendar-closed` | 547.159, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-04-03` | `calendar-closed` | 571.559, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-04-04` | `calendar-closed` | 575.626, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-04-10` | `calendar-closed` | 600.026, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-04-11` | `calendar-closed` | 604.093, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-04-17` | `calendar-closed` | 628.493, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-04-18` | `calendar-closed` | 632.560, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-04-24` | `calendar-closed` | 656.961, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-04-25` | `calendar-closed` | 661.027, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-05-01` | `calendar-closed` | 685.428, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-05-02` | `calendar-closed` | 689.495, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-05-08` | `calendar-closed` | 713.895, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-05-09` | `calendar-closed` | 717.962, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-05-15` | `calendar-closed` | 742.362, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-05-16` | `calendar-closed` | 746.429, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-05-22` | `calendar-closed` | 770.829, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-05-23` | `calendar-closed` | 774.896, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-05-29` | `calendar-closed` | 799.297, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-05-30` | `calendar-closed` | 803.363, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-06-05` | `calendar-closed` | 827.764, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-06-06` | `calendar-closed` | 831.830, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-06-12` | `calendar-closed` | 856.231, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-06-13` | `calendar-closed` | 860.298, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-06-19` | `calendar-closed` | 884.698, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-06-20` | `calendar-closed` | 888.765, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-06-26` | `calendar-closed` | 913.165, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-06-27` | `calendar-closed` | 917.232, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-07-03` | `calendar-closed` | 941.632, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-07-04` | `calendar-closed` | 945.699, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-07-10` | `calendar-closed` | 970.100, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-07-11` | `calendar-closed` | 974.166, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-07-17` | `calendar-closed` | 998.567, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-07-18` | `calendar-closed` | 1002.633, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-07-24` | `calendar-closed` | 1027.034, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-07-25` | `calendar-closed` | 1031.101, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-07-31` | `calendar-closed` | 1055.501, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-08-01` | `calendar-closed` | 1059.568, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-08-07` | `calendar-closed` | 1083.968, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-08-08` | `calendar-closed` | 1088.035, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-08-14` | `calendar-closed` | 1112.435, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-08-15` | `calendar-closed` | 1116.502, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-08-21` | `calendar-closed` | 1140.903, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-08-22` | `calendar-closed` | 1144.969, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-08-28` | `calendar-closed` | 1169.370, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-08-29` | `calendar-closed` | 1173.437, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-09-04` | `calendar-closed` | 1197.837, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-09-05` | `calendar-closed` | 1201.904, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-09-11` | `calendar-closed` | 1226.304, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-09-12` | `calendar-closed` | 1230.371, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-09-18` | `calendar-closed` | 1254.771, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-09-19` | `calendar-closed` | 1258.838, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-09-25` | `calendar-closed` | 1283.238, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-09-26` | `calendar-closed` | 1287.305, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-10-02` | `calendar-closed` | 1311.706, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-10-03` | `calendar-closed` | 1315.772, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-10-09` | `calendar-closed` | 1340.173, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-10-10` | `calendar-closed` | 1344.240, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-10-16` | `calendar-closed` | 1368.640, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-10-17` | `calendar-closed` | 1372.707, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-10-23` | `calendar-closed` | 1397.107, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-10-24` | `calendar-closed` | 1401.174, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-10-30` | `calendar-closed` | 1425.574, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-10-31` | `calendar-closed` | 1429.641, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-11-06` | `calendar-closed` | 1454.042, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-11-07` | `calendar-closed` | 1458.108, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-11-13` | `calendar-closed` | 1482.509, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-11-14` | `calendar-closed` | 1486.575, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-11-20` | `calendar-closed` | 1510.976, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-11-21` | `calendar-closed` | 1515.043, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-11-27` | `calendar-closed` | 1539.443, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-closed:2027-11-28` | `calendar-closed` | 1543.510, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.104 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-exception:2027-04-02` | `calendar-exception` | 567.492, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.270 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-exception:2027-05-31` | `calendar-exception` | 807.430, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.270 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-exception:2027-07-05` | `calendar-exception` | 949.766, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.270 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `calendar-exception:2027-09-06` | `calendar-exception` | 1205.970, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.270 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header:ait` | `text` | 187.373, 453.038 | `group-header-band:ait` | flat | `#F7C948` | fill | 11.108 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header:bus` | `text` | 106.418, 219.000 | `group-header-band:bus` | flat | `#F7C948` | fill | 11.108 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header:ground` | `text` | 147.324, 570.058 | `group-header-band:ground` | flat | `#F7C948` | fill | 11.108 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header:launch` | `text` | 150.722, 649.069 | `group-header-band:launch` | flat | `#F7C948` | fill | 11.108 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header:ops` | `text` | 153.706, 766.088 | `group-header-band:ops` | flat | `#F7C948` | fill | 11.108 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header:payload` | `text` | 147.168, 355.023 | `group-header-band:payload` | flat | `#F7C948` | fill | 11.108 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header-band:ait` | `group-header-band` | 40.000, 453.038 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header-band:bus` | `group-header-band` | 40.000, 219.000 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header-band:ground` | `group-header-band` | 40.000, 570.058 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header-band:launch` | `group-header-band` | 40.000, 649.069 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header-band:ops` | `group-header-band` | 40.000, 766.088 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `group-header-band:payload` | `group-header-band` | 40.000, 355.023 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `kicker` | `kicker` | 423.733, 68.951 | `region-frame:title-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:actual` | `legend` | 964.267, 75.700 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:calendar-exception` | `legend` | 1265.963, 75.700 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:dependency` | `legend` | 1507.844, 75.700 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:milestone` | `legend` | 1185.215, 75.700 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:missing-actual` | `legend` | 1079.695, 75.700 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:period-band` | `legend` | 1379.827, 75.700 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:planned` | `legend` | 887.742, 75.700 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend:snapshot` | `legend` | 804.048, 75.700 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:actual` | `actual` | 928.388, 75.700 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 4.747 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:calendar-exception` | `calendar-exception` | 1226.186, 75.700 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 1.270 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:milestone:part0` | `gate` | 1156.743, 75.700 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 1.539 | 3.000 | warning |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 1010.146, 75.700 | `legend-swatch:missing-actual` | pattern-substrate | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 1010.146, 75.700 | `region-frame:key-panel` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:missing-actual` | `missing-actual` | 1010.146, 75.700 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 1.000 | 3.000 | warning |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:period-band` | `period-band` | 1315.739, 75.700 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 1.163 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:period-band` | `period-band` | 1315.739, 75.700 | `legend-swatch:period-band` | pattern-substrate | `#E4F0D6` | stroke | 2.217 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:period-band` | `period-band` | 1315.739, 75.700 | `region-frame:key-panel` | flat | `#FFFDF5` | stroke | 2.578 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:planned` | `planned` | 846.096, 75.700 | `region-frame:key-panel` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `legend-swatch:snapshot` | `snapshot` | 750.000, 75.700 | `region-frame:key-panel` | flat | `#FFFDF5` | stroke | 3.454 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `missing-actual:tvac:tvac` | `missing-actual` | 1112.435, 509.788 | `missing-actual:tvac:tvac` | pattern-substrate | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `missing-actual:tvac:tvac` | `missing-actual` | 1112.435, 509.788 | `planned:tvac:tvac` | flat | `#7EC8E3` | stroke | 9.330 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `missing-actual:tvac:tvac` | `missing-actual` | 1112.435, 509.788 | `planned:tvac:tvac` | flat | `#7EC8E3` | fill | 1.832 | 3.000 | warning |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `period-band:launch-window` | `period-band` | 1421.508, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.163 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `period-band:launch-window` | `period-band` | 1421.508, 521.050 | `period-band:launch-window` | pattern-substrate | `#E4F0D6` | stroke | 2.217 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `period-band:launch-window` | `period-band` | 1421.508, 521.050 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 2.578 | 1.100 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `period-label:launch-window` | `period-label` | 1421.508, 217.450 | `period-band:launch-window` | pattern-host-ink | `#6FB04F` | fill | 6.629 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:cdr:cdr:part0` | `gate` | 707.795, 334.521 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.539 | 3.000 | warning |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:first-light:first-light:part0` | `gate` | 1504.876, 824.598 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.539 | 3.000 | warning |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:frr:frr:part0` | `gate` | 1362.540, 726.583 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.539 | 3.000 | warning |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:launch-contract:launch-contract:part0` | `gate` | 622.393, 669.571 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.539 | 3.000 | warning |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:launch:launch:part0` | `gate` | 1391.007, 745.587 | `period-band:launch-window` | pattern-host-substrate | `#E4F0D6` | fill | 1.323 | 3.000 | warning |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:payload-delivery:payload-delivery:part0` | `gate` | 935.532, 432.537 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.539 | 3.000 | warning |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:pdr:pdr:part0` | `gate` | 451.590, 239.502 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.539 | 3.000 | warning |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:psr:psr:part0` | `gate` | 1220.204, 549.556 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 1.539 | 3.000 | warning |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:avionics:avionics` | `planned` | 581.726, 275.750 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:bus-test:bus-test` | `planned` | 675.261, 313.757 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:campaign:campaign` | `planned` | 1264.938, 705.819 | `planned:campaign:snapshot:campaign` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:comms-test:comms-test` | `planned` | 809.463, 626.807 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:detector:detector` | `planned` | 577.659, 392.769 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:emc:emc` | `planned` | 1147.003, 528.792 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:eps:eps` | `planned` | 520.725, 294.753 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:integration:integration` | `planned` | 951.799, 471.780 | `planned:integration:snapshot:integration` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:leop:leop` | `planned` | 1391.007, 803.834 | `period-band:launch-window` | pattern-host-ink | `#6FB04F` | stroke | 6.629 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:mcs:mcs` | `planned` | 463.791, 588.800 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:optics:optics` | `planned` | 463.791, 373.765 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:payload-tvac:payload-tvac` | `planned` | 634.594, 411.773 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:rehearsals:rehearsals` | `planned` | 1175.470, 784.830 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:shipment:shipment` | `planned` | 1236.471, 686.815 | `planned:shipment:snapshot:shipment` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:station:station` | `planned` | 634.594, 607.803 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:structure:structure` | `planned` | 463.791, 256.746 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:tvac:tvac` | `planned` | 1077.868, 509.788 | `planned:tvac:snapshot:tvac` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:vibration:vibration` | `planned` | 1041.268, 490.784 | `planned:vibration:snapshot:vibration` | flat | `#FFFDF5` | stroke | 17.090 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `slot-heading:legend` | `slot-heading` | 784.799, 47.050 | `region-frame:key-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:campaign:snapshot:campaign` | `snapshot` | 1252.738, 707.579 | `calendar-closed:2027-09-18` | translucent-over-flat | `#F4F2EA` | stroke | 3.138 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:emc:snapshot:emc` | `snapshot` | 1118.536, 530.552 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 3.454 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:integration:snapshot:integration` | `snapshot` | 951.799, 473.540 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 3.454 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:shipment:snapshot:shipment` | `snapshot` | 1236.471, 688.575 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 3.454 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:tvac:snapshot:tvac` | `snapshot` | 1065.668, 511.548 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 3.454 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `planned:vibration:snapshot:vibration` | `snapshot` | 1020.934, 492.544 | `region-frame:chart-panel` | flat | `#FFFDF5` | stroke | 3.454 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `subtitle` | `subtitle` | 425.347, 101.767 | `region-frame:title-panel` | flat | `#FFFDF5` | fill | 4.747 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:avionics:Phase` | `table-cell-secondary` | 296.299, 277.510 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:bus-test:Phase` | `table-cell-secondary` | 302.048, 315.517 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:campaign:Phase` | `table-cell-secondary` | 311.094, 707.579 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:cdr:Phase` | `table-cell-secondary` | 301.640, 334.521 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:comms-test:Phase` | `table-cell-secondary` | 298.089, 628.567 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:detector:Phase` | `table-cell-secondary` | 302.048, 394.529 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:emc:Phase` | `table-cell-secondary` | 298.089, 530.552 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:eps:Phase` | `table-cell-secondary` | 302.048, 296.513 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:first-light:Phase` | `table-cell-secondary` | 305.314, 824.598 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:frr:Phase` | `table-cell-secondary` | 311.094, 726.583 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:integration:Phase` | `table-cell-secondary` | 308.630, 473.540 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:launch-contract:Phase` | `table-cell-secondary` | 301.640, 669.571 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:launch:Phase` | `table-cell-secondary` | 311.094, 745.587 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:leop:Phase` | `table-cell-secondary` | 305.314, 805.594 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:mcs:Phase` | `table-cell-secondary` | 296.299, 590.560 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:optics:Phase` | `table-cell-secondary` | 296.299, 375.525 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:payload-delivery:Phase` | `table-cell-secondary` | 302.048, 432.537 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:payload-tvac:Phase` | `table-cell-secondary` | 302.048, 413.533 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:pdr:Phase` | `table-cell-secondary` | 301.640, 239.502 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:psr:Phase` | `table-cell-secondary` | 298.089, 549.556 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:rehearsals:Phase` | `table-cell-secondary` | 298.089, 786.590 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:shipment:Phase` | `table-cell-secondary` | 311.094, 688.575 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:station:Phase` | `table-cell-secondary` | 296.299, 609.563 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:structure:Phase` | `table-cell-secondary` | 296.299, 258.506 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:tvac:Phase` | `table-cell-secondary` | 298.089, 511.548 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:vibration:Phase` | `table-cell-secondary` | 298.089, 492.544 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:avionics:What` | `text` | 107.874, 277.510 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:bus-test:What` | `text` | 104.129, 315.517 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:campaign:Late?` | `text` | 403.500, 707.579 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:campaign:What` | `text` | 101.365, 707.579 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:cdr:Late?` | `text` | 403.500, 334.521 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:cdr:What` | `text` | 112.016, 334.521 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:comms-test:What` | `text` | 106.668, 628.567 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:detector:What` | `text` | 107.803, 394.529 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:emc:Late?` | `text` | 403.500, 530.552 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:emc:What` | `text` | 124.213, 530.552 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:eps:What` | `text` | 128.900, 296.513 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:first-light:Late?` | `text` | 403.500, 824.598 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:first-light:What` | `text` | 76.215, 824.598 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:frr:Late?` | `text` | 403.500, 726.583 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:frr:What` | `text` | 117.210, 726.583 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:integration:What` | `text` | 114.818, 473.540 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:launch-contract:Late?` | `text` | 403.500, 669.571 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:launch-contract:What` | `text` | 128.259, 669.571 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:launch:Late?` | `text` | 403.500, 745.587 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:launch:What` | `text` | 115.254, 745.587 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:leop:Late?` | `text` | 403.500, 805.594 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:leop:What` | `text` | 124.456, 805.594 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:mcs:What` | `text` | 122.238, 590.560 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:optics:What` | `text` | 121.955, 375.525 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:payload-delivery:Late?` | `text` | 403.500, 432.537 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:payload-delivery:What` | `text` | 101.442, 432.537 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:payload-tvac:What` | `text` | 123.199, 413.533 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:pdr:Late?` | `text` | 403.500, 239.502 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:pdr:What` | `text` | 125.944, 239.502 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:psr:Late?` | `text` | 403.500, 549.556 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:psr:What` | `text` | 94.343, 549.556 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:rehearsals:Late?` | `text` | 403.500, 786.590 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:rehearsals:What` | `text` | 114.850, 786.590 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:shipment:Late?` | `text` | 403.500, 688.575 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:shipment:What` | `text` | 88.380, 688.575 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:station:What` | `text` | 120.852, 609.563 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:structure:What` | `text` | 135.184, 258.506 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:tvac:Late?` | `text` | 397.088, 511.548 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:tvac:What` | `text` | 121.167, 511.548 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:vibration:What` | `text` | 107.758, 492.544 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:comms-test:Late?` | `variance-ahead` | 394.112, 628.567 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 6.357 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:eps:Late?` | `variance-ahead` | 397.780, 296.513 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 6.357 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:station:Late?` | `variance-ahead` | 394.112, 609.563 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 6.357 | 3.000 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:avionics:Late?` | `variance-behind` | 394.356, 277.510 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 5.926 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:bus-test:Late?` | `variance-behind` | 390.688, 315.517 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 5.926 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:detector:Late?` | `variance-behind` | 394.356, 394.529 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 5.926 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:mcs:Late?` | `variance-behind` | 394.356, 590.560 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 5.926 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:optics:Late?` | `variance-behind` | 394.356, 375.525 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 5.926 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:payload-tvac:Late?` | `variance-behind` | 390.688, 413.533 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 5.926 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:integration:Late?` | `variance-on-track` | 396.164, 473.540 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:structure:Late?` | `variance-on-track` | 396.164, 258.506 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `cell:vibration:Late?` | `variance-on-track` | 396.164, 492.544 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `column:Late?` | `tableColumnLabel` | 383.129, 170.450 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `column:Phase` | `tableColumnLabel` | 300.900, 170.450 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `column:What` | `tableColumnLabel` | 56.835, 170.450 | `region-frame:chart-panel` | flat | `#FFFDF5` | fill | 7.265 | 4.500 | info |
+| `examples/halcyon-1/generated/25-sunday.scene.json` | `title` | `heading` | 161.460, 85.888 | `region-frame:title-panel` | flat | `#FFFDF5` | fill | 17.090 | 4.500 | info |
 | `examples/orion-asic/generated/gates.scene.json` | `actual:evt:evt` | `actual` | 918.061, 656.800 | `planned:evt:evt` | flat | `#3B6FB6` | stroke | 3.204 | 3.000 | info |
 | `examples/orion-asic/generated/gates.scene.json` | `actual:fab-a0:fab-a0` | `actual` | 669.069, 380.800 | `planned:fab-a0:fab-a0` | flat | `#3B6FB6` | stroke | 3.204 | 3.000 | info |
 | `examples/orion-asic/generated/gates.scene.json` | `actual:rtl-freeze:rtl-freeze` | `actual` | 538.210, 168.800 | `planned:rtl-freeze:rtl-freeze` | flat | `#3B6FB6` | stroke | 3.204 | 3.000 | info |
@@ -10380,6 +10662,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8): a
 | `axis-color-scales` | 2 | 0 | 0 |
 | `group-header-runs` | 1 | 0 | 0 |
 | `marquee` | 1 | 86 | 0 |
+| `sunday` | 1 | 12 | 0 |
 | `target-b` | 1 | 82 | 0 |
 | `titlecard` | 1 | 4 | 0 |
 | `yuya` | 1 | 91 | 0 |
@@ -10389,4 +10672,4 @@ Contrast constraints are an opt-in design option (Specification 46 section 8): a
 Every non-exclusive decoration role is enabled in committed Scene evidence; group-band or group-header-band supplies the group concept, and row-band or row-rule supplies the row concept when there are no corpus errors.
 
 
-Findings: 10312; errors: 0; warnings: 271.
+Findings: 10596; errors: 0; warnings: 283.
