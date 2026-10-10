@@ -32,7 +32,7 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | axis-band | `axis-band-decoration2` | enabled | 1.100 | 5 | 33 | 1.146 | 1.154 | 0 | 0 |
 | axis-label | `axis-label2` | required | 4.500 | 11 | 37 | 5.727 | 10.019 | 0 | 0 |
 | axis-label | `axis-label3` | required | 4.500 | 10 | 87 | 5.448 | 8.683 | 0 | 0 |
-| axis-label | `text` | required | 4.500 | 34 | 289 | 8.629 | 10.306 | 0 | 0 |
+| axis-label | `text` | required | 4.500 | 34 | 287 | 8.629 | 10.306 | 0 | 0 |
 | calendar-closed | `calendar-closed` | absent | 1.100 | 1 | 0 | — | — | 0 | 0 |
 | calendar-closed | `calendar-closed` | enabled | 1.100 | 44 | 1880 | 1.050 | 1.414 | 0 | 256 |
 | calendar-exception | `calendar-exception` | enabled | 1.100 | 5 | 20 | 1.216 | 1.270 | 0 | 0 |
@@ -4294,8 +4294,6 @@ Contrast constraints are an opt-in design option (Specification 46 section 8). F
 | `examples/halcyon-1/generated/05-dependency-network.scene.json` | `title` | `text` | 133.325, 55.550 | `canvas` | canvas | `#FFFFFF` | fill | 17.747 | 4.500 | info |
 | `examples/halcyon-1/generated/06-flight-readiness.scene.json` | `axis-band-rect:0:0` | `axis-band-decoration` | 1389.818, 116.100 | `canvas` | canvas | `#FFFFFF` | fill | 1.574 | 1.100 | info |
 | `examples/halcyon-1/generated/06-flight-readiness.scene.json` | `axis-label:2:0` | `text` | 1389.818, 104.200 | `axis-band-rect:0:0` | flat | `#C6CFDA` | fill | 11.272 | 4.500 | info |
-| `examples/halcyon-1/generated/06-flight-readiness.scene.json` | `axis-label:3:0` | `text` | 904.536, 124.617 | `axis-band-rect:0:0` | flat | `#C6CFDA` | fill | 11.272 | 4.500 | info |
-| `examples/halcyon-1/generated/06-flight-readiness.scene.json` | `axis-label:3:1` | `text` | 1401.738, 126.359 | `axis-band-rect:0:0` | flat | `#C6CFDA` | fill | 11.272 | 4.500 | info |
 | `examples/halcyon-1/generated/06-flight-readiness.scene.json` | `calendar-closed:2027-10-02` | `calendar-closed` | 916.675, 212.100 | `group:` | flat | `#EEF2F7` | stroke | 1.400 | 1.100 | info |
 | `examples/halcyon-1/generated/06-flight-readiness.scene.json` | `calendar-closed:2027-10-03` | `calendar-closed` | 932.714, 212.100 | `group:` | flat | `#EEF2F7` | stroke | 1.400 | 1.100 | info |
 | `examples/halcyon-1/generated/06-flight-readiness.scene.json` | `calendar-closed:2027-10-09` | `calendar-closed` | 1028.946, 212.100 | `group:` | flat | `#EEF2F7` | stroke | 1.400 | 1.100 | info |
@@ -7175,4 +7173,4 @@ Contrast constraints are an opt-in design option (Specification 46 section 8): a
 Every non-exclusive decoration role is enabled in committed Scene evidence; group-band or group-header-band supplies the group concept, and row-band or row-rule supplies the row concept when there are no corpus errors.
 
 
-Findings: 7085; errors: 0; warnings: 301.
+Findings: 7083; errors: 0; warnings: 301.
