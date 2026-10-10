@@ -1,0 +1,13 @@
+version: chrona/actual-set/v0.3
+kind: actual-set
+id: chrona-roadmap-observed
+body:
+  asOf: '2026-10-10'
+  observations:
+    - {id: tb, sequence: 1, projectObjectId: target-b, actual: {start: '2026-10-02', finish: '2026-10-05', progress: 1}}
+    - {id: yy, sequence: 1, projectObjectId: yuya, actual: {start: '2026-10-03', finish: '2026-10-06', progress: 1}}
+    - {id: tc, sequence: 1, projectObjectId: titlecard, actual: {start: '2026-10-06', progress: 0.9}}
+    - {id: mq, sequence: 1, projectObjectId: marquee, actual: {start: '2026-10-08', progress: 0.8}}
+    - {id: su, sequence: 1, projectObjectId: sunday, actual: {start: '2026-10-09', progress: 0.4}}
+    - {id: cf, sequence: 1, projectObjectId: canvas-fit, actual: {start: '2026-10-09', progress: 0.9}}
+    - {id: fb, sequence: 1, projectObjectId: flow-bugs, actual: {start: '2026-10-07', progress: 0.3}}

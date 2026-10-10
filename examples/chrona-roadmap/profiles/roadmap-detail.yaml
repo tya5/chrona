@@ -1,0 +1,12 @@
+version: chrona/review-detail-profile/v0.1
+id: chrona-roadmap
+body:
+  legend:
+    - {role: snapshot, label: baseline}
+    - {role: planned, label: current plan}
+    - {role: actual, label: actual}
+    - {role: missing-actual, label: "in progress, not yet observed"}
+    - {role: milestone, label: gate}
+    - {role: calendar-closed, label: non-working day}
+    - {role: calendar-exception, label: calendar exception}
+    - {role: dependency, label: dependency}

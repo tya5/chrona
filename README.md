@@ -32,12 +32,13 @@ Date-only scheduling profile; successor DateTime, capacity, collaboration, and
 presentation capabilities are opt-in versioned profiles rather than changes to
 Date-only meaning.
 
-![Programme board rendered by Chrona: HALCYON-1's 26 work packages grouped and tinted by team,
-a two-tier quarter and month axis, current plan with observed actuals, a labelled launch window,
-an as-of marker and a notes rail](examples/halcyon-1/generated/21-target-b.svg)
+![chrona's own road to a release candidate, drawn by chrona: milestones M0–M4 and RC grouped
+and tinted, work items with plan and observed actuals from GitHub issues, gates, dependencies,
+an as-of marker and a notes rail](examples/chrona-roadmap/generated/roadmap.svg)
 
-<sup>Rendered by Chrona from [`examples/halcyon-1`](examples/halcyon-1) with View, Theme and Layout
-YAML only. Edit the project, re-run the materializer, and this SVG follows.</sup>
+<sup>Rendered by Chrona from [`examples/chrona-roadmap`](examples/chrona-roadmap), chrona's own
+roadmap, in the target B design (View, Theme and Layout YAML only). Each update to the plan or
+to the issue dates re-renders it.</sup>
 
 ## What is usable today
 
