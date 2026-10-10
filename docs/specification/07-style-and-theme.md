@@ -296,8 +296,10 @@ must be `fill`. These conflicts fail at the exact Theme role-property pointer;
 they are never silently ignored by Scene or an adapter.
 The completed pattern preserves both effective paint channels for
 perceptibility and contrast checks; adapters cannot add a fallback color.
-Catalogue pattern tokens are admitted only on roles whose current completed
-primitive is always Rect: `missing-actual.pattern`, `network-node.pattern`,
+Catalogue pattern tokens are admitted only on the following roles whose uncut
+consumer is Rect. An explicit-window cut may turn an already-admitted missing-Actual,
+progress or summary Rect into its Layout-completed Symbol contour (Spec 50),
+without admitting any new role/property pair: `missing-actual.pattern`, `network-node.pattern`,
 `progress-fill.pattern`, `summary-bar.pattern`,
 `annotation-highlight-box.pattern`, `axis-band-decoration.pattern`,
 `axis-band-decoration2.pattern`, `period-band.pattern` (#582), `group-tab.pattern` (#882),

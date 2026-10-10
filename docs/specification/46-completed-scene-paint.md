@@ -188,6 +188,40 @@ Scene value according to this specification. No renderer may repair or
 reinterpret a completed obstacle, and no obstacle may feed back into lane
 membership.
 
+### 7.1 Completed plot paint containment (#1292)
+
+Layout may provide an optional `paintClip: {bounds}` on a completed primitive.
+Its finite positive bounds are the completed plot rectangle, not an adapter
+inference. Primitive geometry and bounds must already lie inside it; this is
+not permission to retain raw out-of-window coordinates behind a viewport clip.
+Scene validates and projects this geometry without selecting visibility,
+moving endpoints, or changing paint. No clip is serialized when absent.
+Malformed clip data fails with `E_PRESENTATION_PRIMITIVE_INVALID` before
+artifact creation. The optional Scene field is added in place; absence keeps
+existing serialized inputs unchanged. Its additive contract belongs to Scene
+v0.7; feature detection selects that version when present, and older versions
+remain strict. Model, schema, serializer, validator and inspection consumers
+recognize the same typed value. Layout proves the clip equals its plot; Scene
+validates containment against the supplied clip, not an inferred plot boundary.
+
+An adapter applies the supplied paint clip outside the completed primitive's
+effects, so fill, stroke, terminals, shadow and glow remain inside it. It must
+not substitute the stroke-alignment-only `strokeClip` or a visible host
+primitive. An unsupported target rejects the combination with
+`E_PRESENTATION_PAINT_UNSUPPORTED:<target>` before artifact creation instead
+of silently dropping containment.
+
+An existing patterned Rect consumer cut by an explicit window may carry a
+Layout-completed Symbol contour and its unchanged paint channels. Its repeat
+origin remains the original uncut anchor; visible region/clip bounds enclose
+the completed contour, whose own commands carry the uncut rounding and cut
+notches. Scene's pattern contact/contrast evidence uses that actual contour.
+The pattern contract decouples original repeat origin from visible region and
+clip bounds, and permits this completed Symbol in model/schema, serialization,
+SVG/PNG and contour-aware pattern observation; ordinary glyph Symbols are not
+new pattern-authoring sites.
+Ordinary Rect pattern identity and Theme applicability remain unchanged.
+
 ## 8. Completed contrast evidence (#459)
 
 For finite classified text, decoration and data-mark roles, contrast is

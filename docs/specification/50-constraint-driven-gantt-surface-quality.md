@@ -209,6 +209,41 @@ Scene output and produce no outside-window warning. Neither Scene nor an
 adapter chooses visibility, remeasures geometry, or changes the viewport to
 accommodate omitted geometry.
 
+For a partially visible span, Layout intersects its original filled contour
+with the visible host and completes a closed inward V notch at each cut edge.
+With pre-notch visible-host inline size `W`, block size `H`, and that span's
+temporal cut count `C` (one or two), notch depth is `min(H / 4, W / (4 * C))`.
+Its mouth is flush with and centered on the cut edge, opens `H / 2` in the
+block direction, and points inward by that inline depth. This general,
+dimension-relative rule has no pixel minimum or project-specific tuning. The
+uncut edge retains its original rounding. A window cut is not Actual's open-end
+treatment and does not change the source interval or endpoint identity.
+Original progress is intersected with this completed host contour, including
+its notches, rather than repainting a rectangular track over the cue.
+Unavailable, non-finite or failed contour operations fail closed with
+`E_LAYOUT_WINDOW_CLIP`, carrying bounded source/facet identity and operation
+stage/reason, never backend exception text or a rectangular fallback.
+
+Layout supplies a completed optional plot paint clip for cut geometry and
+surviving relation paint that needs boundary containment (Spec 46). Filled
+contours, points, terminal geometry and primitive bounds are completed inside
+the plot before Scene projection; the paint clip additionally contains stroke
+and effects. Date-admitted points retain full glyph/icon geometry through
+existing painted-footprint insets, not a substituted span contour. A required
+glyph that cannot fit retains the existing mark-overflow failure.
+Relations keep their original ports and complete terminal contours; if no
+route can contain the whole geometry, suppress it with
+`W_LAYOUT_RELATION_SUPPRESSED` and reason `plot-containment`. Do not move a port
+or truncate a terminal to force acceptance. The paint clip contains stroke
+and effects around otherwise contained terminal geometry.
+Contained and derived-window marks acquire no new clip or contour metadata.
+
+An already-admitted patterned Rect consumer may project the completed cut
+contour as a Symbol. Layout preserves the original uncut repeat origin while
+completing the visible region and contour clip; pattern observation tests actual
+contour ink, not its rectangular envelope. This does not extend Theme pattern
+admission to additional roles (Spec 07).
+
 The timeline as-of label is a constrained exception to generic
 visible-overflow behavior. Layout measures its text and any declared chip
 footprint, then tries the plot top margin beside the as-of rule followed by
