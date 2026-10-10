@@ -57,6 +57,8 @@ OWNERS = {
         _owner("inspection", "scene/serialization.py", "from_instance_id to_instance_id fan_in"),
         _owner("adapter", "renderers/v05_svg.py", "viewer_fit"),
         _owner("adapter", "renderers/v05_svg.py", "stroke_clip"),
+        _owner("inspection", "scene/serialization.py", "paint_clip"),
+        _owner("adapter", "renderers/v05_svg.py", "paint_clip"),
         _owner("derived", "scene/visual_capabilities.py", "visual_capability_source_ref"),
         _owner("derived", "scene/v05_builder.py", "image_fill_pending"),
     ),

@@ -33,6 +33,7 @@ from chrona.presentation.layout.viewer_fit import stamp_surface_fits
 from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject, table_row_subjects, review_row_subjects
+from chrona.presentation.layout.window_label_admission import WindowLabelAbsence
 
 
 @dataclass(frozen=True)
@@ -82,6 +83,7 @@ class SurfaceCompletionContext:
     lane_label_suppressions: list[LaneLabelSuppression]
     diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
     visible_label_subjects: Mapping[str, tuple[DiagnosticSubject, ...]] = field(default_factory=dict)
+    window_label_absences: tuple[WindowLabelAbsence, ...] = ()
 
 
 def contains_block_interval(*, container_start: Decimal, container_end: Decimal,
@@ -363,6 +365,7 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
                            ((relation.slot_id, Rect(Decimal(str(inline)), Decimal(str(block)), Decimal(0), Decimal(0)))
                             for relation in relations for inline, block in relation.points)))
     suppressed_plot_labels = sum(item.semantic_id == "memberLabel" and item.overflow == "suppressed" for item in text)
+    suppressed_plot_labels += sum(item.semantic_id == "memberLabel" for item in context.window_label_absences)
     completed_icons = tuple(replace(icon, completed_paths=complete_icon_paths(
         icon.payload, (float(icon.bounds.inline), float(icon.bounds.block),
                        float(icon.bounds.inline_size), float(icon.bounds.block_size)), icon.stroke_scale))
@@ -423,6 +426,7 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
                                                                         lane_emissions, request.theme_tokens),
                                  canvas_overlays=canvas_overlays,
                                  diagnostic_provenance=context.diagnostic_provenance,
-                                 canvas_warning=canvas_warning)
+                                 canvas_warning=canvas_warning,
+                                 window_label_absences=context.window_label_absences)
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks, tuple(mark_absences))

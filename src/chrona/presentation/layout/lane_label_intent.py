@@ -10,6 +10,10 @@ from chrona.presentation.layout.label_visual_measurement import resolve_label_vi
 from chrona.presentation.layout.model import geometry_sum
 from chrona.presentation.layout.text import measure_text_width, metric_for_role, wrap_text
 from chrona.presentation.model.semantic_registry import label_chip_semantic
+from chrona.presentation.model.projection import WindowMode
+from chrona.presentation.layout.surface_mark_visibility import (
+    MarkOccurrence, MarkOccurrenceKind, ensure_item_mark_visibility_index,
+)
 
 
 @dataclass(frozen=True)
@@ -63,13 +67,18 @@ def _candidates(side: str, fallback: tuple[str, ...], preferred: str | None) -> 
 def measure_lane_member_labels(projection: Any, surface_content: Any, *,
                                timeline_inline_size: float, theme_tokens: Any,
                                font_metrics: Any, visual_requests: tuple[Any, ...],
-                               icon_assets: dict[str, Any]) -> tuple[MeasuredLaneMemberLabel, ...]:
+                               icon_assets: dict[str, Any],
+                               mark_visibility_index: Any = None) -> tuple[MeasuredLaneMemberLabel, ...]:
     """Normalize lane member text once and measure the exact placement box.
 
     The wrap allowance, Theme text treatment, selected icon advances, chip
     footprint, and end-gap inset intentionally match surface composition.
     """
     attached_labels = dict(surface_content.attached_labels)
+    explicit = getattr(projection, "window_mode", None) == WindowMode.EXPLICIT
+    if explicit:
+        mark_visibility_index = ensure_item_mark_visibility_index(
+            projection, as_of=surface_content.as_of, index=mark_visibility_index)
     labels = []
     for lane_row in projection.lane_rows:
         for item, member_id in zip(lane_row.items, lane_row.member_item_ids, strict=True):
@@ -77,16 +86,23 @@ def measure_lane_member_labels(projection: Any, surface_content: Any, *,
                            if getattr(projection, "rows", ()) else item.object_id)
             placement_id = f"member-label:{instance_id}"
             attached = attached_labels.get(item.object_id) if getattr(item, "attached_to", None) else None
-            parts = []
+            components = []
             if attached is not None:
-                parts.append(attached)
+                components.append(("attached", attached))
             elif not surface_content.show_member_labels:
                 continue
             if attached is None and "title" in surface_content.label_content:
-                parts.append(item.title)
+                components.append(("title", item.title))
             if (attached is None and "finishDelta" in surface_content.label_content
                     and item.finish_delta is not None):
-                parts.append(f"{item.finish_delta:+d}d")
+                components.append(("finishDelta", f"{item.finish_delta:+d}d"))
+            parts = tuple(value for _, value in components)
+            if explicit:
+                occurrence = MarkOccurrence(MarkOccurrenceKind.LANE_FINAL, lane_row.lane_id,
+                    item.item_id or item.object_id, item.object_id, item.source_kind)
+                admission = mark_visibility_index.lookup_label(occurrence, projection=projection,
+                                                               as_of=surface_content.as_of)
+                parts = admission.admit_components(tuple(components))
             if not parts:
                 continue
             intent = item.presentation or {}

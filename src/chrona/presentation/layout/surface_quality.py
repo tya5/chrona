@@ -21,6 +21,7 @@ if TYPE_CHECKING:  # avoid the runtime cycle: canvas_overlays uses SlotPlacement
     from chrona.presentation.layout.canvas_viewport import CanvasViewportWarning, DeclaredViewport
     from chrona.presentation.layout.surface_mark_visibility import ItemMarkVisibilityIndex
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, FIT_ADJUSTS, TEXT_FOLLOWS_BOX
+from chrona.presentation.layout.window_label_admission import WindowLabelAbsence
 
 
 def _diagnostic_value(value: Any) -> str:
@@ -739,11 +740,21 @@ class SurfacePlacement:
     canvas_overlays: CanvasOverlays | None = None
     diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
     canvas_warning: CanvasViewportWarning | None = None
+    window_label_absences: tuple[WindowLabelAbsence, ...] = ()
 
     def assert_valid(self) -> None:
         """Reject invalid required geometry before a renderer receives it."""
         suppressed_members = {item.placement_id for item in self.text
                               if item.semantic_id == "memberLabel" and item.overflow == "suppressed"}
+        if any(not isinstance(item, WindowLabelAbsence) for item in self.window_label_absences):
+            raise ValueError("E_LAYOUT_SUPPRESSION_COUNT_INVALID: invalid temporal label type")
+        temporal_ids = {item.placement_id for item in self.window_label_absences}
+        if (len(temporal_ids) != len(self.window_label_absences)
+                or temporal_ids.intersection(item.placement_id for item in self.text)
+                or any(item.diagnostic not in self.diagnostics for item in self.window_label_absences)):
+            raise ValueError("E_LAYOUT_SUPPRESSION_COUNT_INVALID: invalid temporal label account")
+        suppressed_members.update(item.placement_id for item in self.window_label_absences
+                                  if item.semantic_id == "memberLabel")
         suppressed_lane_members = {item.placement_id for item in self.text
                                    if item.semantic_id == "memberLabel" and item.overflow == "suppressed"
                                    and item.lane_row_id is not None}

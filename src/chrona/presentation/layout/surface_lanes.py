@@ -179,7 +179,8 @@ def preflight_fixed_lane_layout(*, projection: Any, layout_manifest: Any,
     measured_labels = measure_lane_member_labels(
         projection, surface_content, timeline_inline_size=float(frame.timeline_inline_size),
         theme_tokens=theme_tokens, font_metrics=font_metrics,
-        visual_requests=resolved_visuals, icon_assets=dict(icon_assets))
+        visual_requests=resolved_visuals, icon_assets=dict(icon_assets),
+        mark_visibility_index=mark_visibility_index)
     row_padding = float(metric_values["timeline.row.paddingBlock"])
     lane_requirements = (lane_label_row_requirements(
         measured_labels, scale, subtracks, footprints,

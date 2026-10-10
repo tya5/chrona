@@ -49,7 +49,7 @@ from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT_FALLBACK
 from chrona.presentation.layout.as_of_cone import complete_as_of_cone
 from chrona.presentation.layout.surface_deadlines import compose_deadline_marks
 from chrona.presentation.layout.surface_periods import compose_period_bands, period_label_requests
-from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance
+from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.layout.text import metric_for_role
 from chrona.presentation.layout.labels import (LabelRect, LabelRequest)
 from chrona.presentation.layout.obstacles import (
@@ -201,6 +201,10 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     if base.as_of_foot_fallback and as_of_label is not None:
         diagnostics.append(f"{BELOW_PLOT_FALLBACK}:as-of-label")
     member_label_requests = build_member_label_requests(member_label_context)
+    for absence in member_label_requests.window_absences:
+        diagnostics.append(absence.diagnostic)
+        diagnostic_provenance.append(DiagnosticProvenance(absence.diagnostic,
+            (DiagnosticSubject.project_object(absence.source_ref),)))
     member_label_subjects = {
         item.placement_id: item.subjects
         for item in (*member_label_requests.pre_route, *member_label_requests.post_route)
@@ -377,4 +381,5 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
         visible_route_fallbacks=visible_route_fallbacks, visible_group_header_overflows=visible_group_header_overflows,
         lane_label_suppressions=lane_label_suppressions,
         diagnostic_provenance=tuple(diagnostic_provenance),
+        window_label_absences=member_label_requests.window_absences,
         visible_label_subjects=visible_label_subjects))

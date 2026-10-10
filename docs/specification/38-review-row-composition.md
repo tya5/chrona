@@ -274,7 +274,7 @@ absolute block displacement, smaller block coordinate, and stable identity;
 no lattice cap or remote full-row label position is permitted. `pack` lanes
 and non-lane labels retain their established bounded side-neighborhood search.
 
-Each suppressed name has a typed Layout fact with lane/member, final row extent,
+Each spatially suppressed name has a typed Layout fact with lane/member, final row extent,
 remaining row capacity and reason `capacity` or `obstruction`, checked against
 its suppressed `TextPlacement` and aggregate count. “Cannot grow” means `fill`
 has no unallocated timeline block after headers and other row minima. A
