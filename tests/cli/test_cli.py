@@ -1,3 +1,5 @@
+import contextlib
+import io
 import json
 from collections import Counter
 from datetime import date, timedelta
@@ -389,13 +391,14 @@ def test_cli_halcyon_default_draft_has_coherent_slots_and_month_axis(tmp_path, m
                 if item.code == "E_SCENE_TEXT_INTERSECTION"]
 
 
-def test_cli_init_default_starter_renders_with_the_packaged_draft_preset(tmp_path, monkeypatch):
+def test_cli_init_default_starter_renders_with_the_packaged_draft_preset(tmp_path, monkeypatch, capsys):
     destination = tmp_path / "first-plan"
     output = destination / "plan.svg"
     scene_path = destination / "plan.scene.json"
 
     monkeypatch.setattr(sys, "argv", ["chrona", "init", str(destination)])
     main()
+    capsys.readouterr()  # the success result of the setup command (#1304)
     monkeypatch.setattr(sys, "argv", [
         "chrona", "render", str(destination / "project.yaml"), "--actual", str(destination / "actual.yaml"),
         "--viewport", "1600xauto", "--output", str(output), "--emit-scene", str(scene_path),
@@ -436,15 +439,17 @@ def test_cli_init_default_starter_renders_with_the_packaged_draft_preset(tmp_pat
     "preset_id",
     [entry["id"] for entry in yaml.safe_load(builtin_preset_library_resource().read_text(encoding="utf-8"))["entries"]],
 )
-def test_cli_copied_builtin_preset_renders_every_minimal_starter_object(tmp_path, monkeypatch, preset_id):
+def test_cli_copied_builtin_preset_renders_every_minimal_starter_object(tmp_path, monkeypatch, preset_id, capsys):
     project = tmp_path / "starter"
     preset = tmp_path / preset_id
     output = tmp_path / f"{preset_id}.svg"
 
     monkeypatch.setattr(sys, "argv", ["chrona", "init", str(project)])
     main()
+    capsys.readouterr()  # the success result of the setup command (#1304)
     monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", preset_id, "--output", str(preset)])
     main()
+    capsys.readouterr()  # the success result of the setup command (#1304)
     command = [
         "chrona", "render", str(project / "project.yaml"),
         "--preset", str(preset / "preset.yaml"), "--output", str(output),
@@ -472,7 +477,8 @@ def test_cli_copied_builtin_preset_rejects_unsupported_member_version(
     preset_id = "mission-light"
     preset = tmp_path / "copied-preset"
     monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", preset_id, "--output", str(preset)])
-    main()
+    with contextlib.redirect_stdout(io.StringIO()):  # the success result of the setup command (#1304)
+        main()
 
     member = preset / filename
     resource = yaml.safe_load(member.read_text(encoding="utf-8"))
@@ -505,6 +511,7 @@ def test_cli_stale_explicit_override_with_current_preset_has_no_copy_remedy(tmp_
     preset = tmp_path / "copied-preset"
     monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", preset_id, "--output", str(preset)])
     main()
+    capsys.readouterr()  # the success result of the setup command (#1304)
 
     override = yaml.safe_load((preset / "view.yaml").read_text(encoding="utf-8"))
     override["version"] = "chrona/view/v0.22"
@@ -552,7 +559,8 @@ def _margin_days_preset(tmp_path, monkeypatch, preset_id):
     """The preset copy the #482 sweep renders: a 7-day margin with thin-with-record month labels."""
     preset = tmp_path / preset_id
     monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", preset_id, "--output", str(preset)])
-    main()
+    with contextlib.redirect_stdout(io.StringIO()):  # the success result of the setup command (#1304)
+        main()
     view_path = preset / "view.yaml"
     view = yaml.safe_load(view_path.read_text(encoding="utf-8"))
     view["body"]["window"] = {"mode": "selected-planned", "marginDays": 7}
@@ -598,6 +606,7 @@ def test_cli_margin_days_produces_no_axis_warning_on_every_catalogue_preset(tmp_
     starter = tmp_path / "starter"
     monkeypatch.setattr(sys, "argv", ["chrona", "init", str(starter)])
     main()
+    capsys.readouterr()  # the success result of the setup command (#1304)
     for label, project in (("starter", starter / "project.yaml"), ("synthetic", _synthetic_axis_project(tmp_path))):
         _assert_no_axis_warning(tmp_path, monkeypatch, capsys, preset_id, preset, label, project)
 
@@ -617,6 +626,7 @@ def test_cli_content_sized_table_slot_holds_the_print_theme_delta_column(tmp_pat
     preset = tmp_path / "print-mono"
     monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", "print-mono", "--output", str(preset)])
     main()
+    capsys.readouterr()  # the success result of the setup command (#1304)
     view_path = preset / "view.yaml"
     view = yaml.safe_load(view_path.read_text(encoding="utf-8"))
     # Keep this a regression of content-sized conventional table columns;
@@ -666,6 +676,7 @@ def test_cli_row_height_is_derived_from_the_table_text_it_holds(tmp_path, monkey
     preset = tmp_path / "print-mono"
     monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", "print-mono", "--output", str(preset)])
     main()
+    capsys.readouterr()  # the success result of the setup command (#1304)
     theme_path = preset / "theme.yaml"
     theme = yaml.safe_load(theme_path.read_text(encoding="utf-8"))
     theme["body"]["values"]["timeline-row-height"]["value"] = 26
@@ -710,6 +721,7 @@ def test_cli_builtin_preset_copy_rejects_unknown_or_nonempty_output(tmp_path, mo
         monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", preset_id, "--output", str(destination)])
         with pytest.raises(SystemExit) as exited:
             main()
+            capsys.readouterr()  # the success result of the setup command (#1304)
         assert exited.value.code == 1
         assert json.loads(capsys.readouterr().out)["diagnostics"][0]["code"] == expected
 
@@ -730,12 +742,13 @@ def test_cli_preset_list_reports_every_catalogue_entry_in_order(monkeypatch, cap
     "preset_id",
     [entry["id"] for entry in yaml.safe_load(builtin_preset_library_resource().read_text(encoding="utf-8"))["entries"]],
 )
-def test_cli_render_preset_by_name_is_byte_identical_to_copy_then_path(tmp_path, monkeypatch, preset_id):
+def test_cli_render_preset_by_name_is_byte_identical_to_copy_then_path(tmp_path, monkeypatch, preset_id, capsys):
     """#429: a preset can be selected by name, and it renders exactly what copying it and
     pointing --preset at the copy would render."""
     project = tmp_path / "starter"
     monkeypatch.setattr(sys, "argv", ["chrona", "init", str(project)])
     main()
+    capsys.readouterr()  # the success result of the setup command (#1304)
 
     by_name = tmp_path / f"{preset_id}-by-name.svg"
     monkeypatch.setattr(sys, "argv", [
@@ -747,6 +760,7 @@ def test_cli_render_preset_by_name_is_byte_identical_to_copy_then_path(tmp_path,
     copied = tmp_path / f"{preset_id}-copy"
     monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", preset_id, "--output", str(copied)])
     main()
+    capsys.readouterr()  # the success result of the setup command (#1304)
     by_path = tmp_path / f"{preset_id}-by-path.svg"
     monkeypatch.setattr(sys, "argv", [
         "chrona", "render", str(project / "project.yaml"), "--actual", str(project / "actual.yaml"),
@@ -761,6 +775,7 @@ def test_cli_render_preset_by_name_rejects_unknown_id(tmp_path, monkeypatch, cap
     project = tmp_path / "starter"
     monkeypatch.setattr(sys, "argv", ["chrona", "init", str(project)])
     main()
+    capsys.readouterr()
 
     monkeypatch.setattr(sys, "argv", [
         "chrona", "render", str(project / "project.yaml"),
@@ -773,15 +788,17 @@ def test_cli_render_preset_by_name_rejects_unknown_id(tmp_path, monkeypatch, cap
     assert not (tmp_path / "out.svg").exists()
 
 
-def test_cli_render_preset_path_is_never_looked_up_as_a_builtin_id(tmp_path, monkeypatch):
+def test_cli_render_preset_path_is_never_looked_up_as_a_builtin_id(tmp_path, monkeypatch, capsys):
     """A preset file path is always distinguishable from a catalogue id (#429): it always
     contains a path separator or a YAML suffix, neither of which a library.yaml id can hold."""
     project = tmp_path / "starter"
     monkeypatch.setattr(sys, "argv", ["chrona", "init", str(project)])
     main()
+    capsys.readouterr()  # the success result of the setup command (#1304)
     copied = tmp_path / "mission-light"
     monkeypatch.setattr(sys, "argv", ["chrona", "preset", "copy", "mission-light", "--output", str(copied)])
     main()
+    capsys.readouterr()  # the success result of the setup command (#1304)
 
     # A bare filename with no "/" but a YAML suffix must still resolve as a path, not a name;
     # copy every sibling file the preset manifest points at, not just the manifest.
@@ -1347,7 +1364,7 @@ def test_cli_help_describes_all_commands(monkeypatch, capsys):
     except SystemExit as exit:
         assert exit.code == 0
     help_text = capsys.readouterr().out
-    for phrase in ("immutable Project snapshot", "draft review surface", "immutable Render Context v0.8"):
+    for phrase in ("a Project (a YAML file or a saved snapshot)", "a draft for review", "a saved render context"):
         assert phrase in help_text
 
 
