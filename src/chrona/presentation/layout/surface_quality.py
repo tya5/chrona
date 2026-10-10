@@ -17,6 +17,7 @@ from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, 
 
 if TYPE_CHECKING:  # avoid the runtime cycle: canvas_overlays uses SlotPlacement.
     from chrona.presentation.layout.canvas_overlays import CanvasOverlays
+    from chrona.presentation.layout.label_chip_measurement import MeasuredLabelChip
     from chrona.presentation.layout.canvas_viewport import CanvasViewportWarning, DeclaredViewport
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, FIT_ADJUSTS, TEXT_FOLLOWS_BOX
 
@@ -350,6 +351,8 @@ class ShapePlacement:
     # Selected Theme role for completed named region frames; absent keeps the legacy Scene role.
     visual_role: str | None = None
     subjects: tuple[DiagnosticSubject, ...] = ()
+    # Completed visible frame, when nonrect paint extends beyond nominal bounds.
+    collision_bounds: Rect | None = None
 
 
 @dataclass(frozen=True)
@@ -578,6 +581,7 @@ class SurfaceLayoutRequest:
     visual_requests: tuple[VisualRequest, ...] = ()
     fixed_lane_preflight: FixedLanePreflight | None = None
     capacity_short_sources: tuple[CapacitySourceEvidence, ...] = ()
+    as_of_chip_measurement: MeasuredLabelChip | None = None
     declared_viewport: DeclaredViewport | None = None
 
 

@@ -10,9 +10,10 @@ from chrona.presentation.model.semantic_registry import (
     contrast_binding_for,
     is_annotation_artwork_role,
     is_frame_glyph_role,
+    is_label_chip_role,
 )
 from chrona.presentation.scene.cone_ground import AS_OF_CONE_ROLE, ConeGround, cones_in
-from chrona.presentation.scene.ink_touch import InkTouchError
+from chrona.presentation.scene.ink_touch import InkTouchError, fill_touches
 from chrona.presentation.scene.paint_analysis import (
     blend_over,
     composited_contrast,
@@ -620,11 +621,11 @@ def _sample_point(primitive: Mapping[str, Any], channel: str) -> tuple[float | N
 
 
 def _host_under(subject: Mapping[str, Any], primitives: list[Any], index: int,
-                sample: tuple[float, float]) -> tuple[int, Mapping[str, Any]] | None:
+                sample: tuple[float, float]) -> tuple[int, Mapping[str, Any], bool] | None:
     """The topmost Rect or Symbol with a fill, painted before `subject`, that covers the sample point."""
     x, y = sample
     order = subject.get("paintOrder", 0)
-    candidates: list[tuple[int, int, Mapping[str, Any]]] = []
+    candidates: list[tuple[int, int, Mapping[str, Any], bool]] = []
     for prior_index, prior in enumerate(primitives):
         # A Rect is an ordinary painted ground. A Symbol is also accepted: a multi-part
         # glyph gate (#464) paints several sibling Symbol primitives over the same
@@ -656,12 +657,24 @@ def _host_under(subject: Mapping[str, Any], primitives: list[Any], index: int,
                       and float(box["block"]) <= y < float(box["block"]) + float(box["blockSize"]))
         except (KeyError, TypeError, ValueError):
             inside = False
+        unreadable = False
+        if inside and prior.get("kind") == "Symbol" and is_label_chip_role(prior.get("visualRole")):
+            symbol = prior.get("symbol")
+            outline = symbol.get("outline") if isinstance(symbol, Mapping) else None
+            try:
+                if not isinstance(outline, list) or not outline:
+                    raise InkTouchError("unreadable chip fill")
+                # The same nonzero completed-path inspector used for sparse
+                # artwork; zero-area bounds ask about this actual sample.
+                inside = fill_touches(outline, (x, y, 0.0, 0.0))
+            except InkTouchError:
+                unreadable = True
         if inside:
-            candidates.append((prior_order, prior_index, prior))
+            candidates.append((prior_order, prior_index, prior, unreadable))
     if not candidates:
         return None
-    _, position, host = max(candidates, key=lambda item: item[:2])
-    return position, host
+    _, position, host, unreadable = max(candidates, key=lambda item: item[:2])
+    return position, host, unreadable
 
 
 # One ground a primitive lies on: its colour, its kind (the finding's `groundKind`) and the ground's identifier.
@@ -774,8 +787,10 @@ def _grounds_under(subject: Mapping[str, Any], primitives: list[Any], index: int
         groups, unreadable = _sparse_ground_layers(
             [[(canvas, "canvas", "canvas")]], "canvas", label, primitives, index, cones)
         return (unreadable, None, True) if unreadable is not None else ("canvas", groups, False)
-    host_index, host = found
+    host_index, host, unreadable = found
     host_id = host.get("id") if isinstance(host.get("id"), str) else None
+    if unreadable:
+        return host_id, None, True
     paint = host["paint"]
     opacity = paint.get("opacity", 1.0)
     if opacity != 1.0 and not (composite and _opacity(opacity)):
