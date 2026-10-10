@@ -424,7 +424,8 @@ def test_a_preset_value_with_a_separator_must_be_a_yaml_path(scope):
 def test_a_real_render_warning_is_normalised_into_the_envelope_shape(scope):
     result = run(scope, "render_draft", project="launch.yaml", viewport="300x300", inline="none")
     warnings = result.structured["warnings"]
-    assert {"W_LAYOUT_LABEL_SUPPRESSED", "W_LAYOUT_LABEL_OVERFLOW", "I_LAYOUT_PLOT_LABELS_SUPPRESSED"} <= {
+    # Nonfitting axis labels are thinned, not emitted as visible overflow.
+    assert {"W_LAYOUT_LABEL_SUPPRESSED", "W_LAYOUT_AXIS_LABEL_THINNED", "I_LAYOUT_PLOT_LABELS_SUPPRESSED"} <= {
         item["code"] for item in warnings}
     assert {item["severity"] for item in warnings} == {"warning", "info"}
     assert all(item["component"] == "render" and isinstance(item["detail"], dict) and item["detail"] for item in warnings)

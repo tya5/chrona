@@ -487,6 +487,31 @@ that is illegible on a dark or patterned target fails the gate like any other te
 **The plot (#880).** The plot is the timeline slot down to the bottom of its last row (the last group's content when groups exist), and never past the slot; with no rows it is the slot. A slot is an allocation and the rows are the content, so a surface given more block room than its rows need has an empty strip under the last row. The ground (group and row bands) stops at the last row, and every overlay that spans the height of the plot ends there too: the full-height `grid-major` and `grid-minor` lines, each closed day, the as-of line and a period band (and the anchor of a `bottom` period label). Axis ticks and the axis rule are not plot-height overlays and are unchanged. A slot the rows fill is unchanged. Inline, the plot is the timeline slot: the scale is inset by what point marks protrude (#501), so the window maps to a range narrower than the slot, and the margin that leaves at each end belongs to the plot. An axis band cell, a closed-day cell or a period band that starts or ends at the window edge reaches the plot edge there (an axis band cell takes no `cellGap` on that outer end), so band, ground and axis rule end at the same edge. Positions inside the window (interval starts, gridlines, labels, marks, the as-of line) do not move, and a scale that fills the plot is unchanged. Layout owns the extent; Scene and adapters carry the completed primitives. A region frame (#889) around the timeline slot follows the slot's allocation, not the plot: inside a panel taller
 than its rows the ground and every plot-height overlay still end at the last row and the strip below is the panel's own paper.
 
+**Axis label containment (#1291).** Layout admits each transformed, measured
+primary/secondary run only inside its clipped logical interval, the axis block
+and the plot inline extent. A painted band for that interval in the primary's
+native block lane also constrains the run to its completed cell, including
+`cellGap` and the outer-edge rule above. Select that cell by primary block centre,
+then paint/native emission order, independently of inline-centre fit; an inline
+gap cannot bypass its containment guard. An equal calendar interval painted in
+another block lane is not the label's cell and does not constrain it.
+Paint-host attribution may cross units (month labels on a quarter band): the
+topmost painted cell under the primary's centre is its host, ordered by paint
+order then native emission order. Hosted text must fit that host's full box;
+Layout never switches to a neighbouring cell to hide overflow. Without a painted
+host the identity is absent, but logical containment still applies.
+
+A non-fitting primary is thinned with `W_LAYOUT_AXIS_LABEL_THINNED`; its typed
+outcome and suppression decision remain, but neither run, a visible target nor
+a visible-overflow record is emitted. If only the secondary cannot fit, Layout
+omits it with `W_LAYOUT_AXIS_SECONDARY_OMITTED` and recomputes the primary without
+it; a surviving secondary shares the primary's host. Candidate summaries and
+final placement use the same completed cell and admission geometry. This rule
+supersedes axis `visible-overflow`, including rotated runs and both window
+edges, without changing the window, tier/unit selection, regular thinning
+cadence or colours. Scene and adapters carry completed bounds; they do not clip,
+reformat, measure or expand the canvas to recover an axis label.
+
 A selected named period (#582; Spec 06 §7.1) completes one `Rect` background:
 placement id `period-band:<period id>`, `sourceRef` the period id, semantic
 `periodBand`, slot `timeline`. Its inline extent is the period's half-open range
