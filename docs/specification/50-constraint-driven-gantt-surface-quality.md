@@ -193,6 +193,13 @@ host; applying its fraction to an already shortened host is forbidden. Delta
 facts remain original. Summary and missing-Actual geometry use the same
 closure, not separate date-coordinate fallbacks.
 
+A complete Actual interval must satisfy `start < finish` (Specs 03 and 06).
+Before explicit-window intersection, a nonpositive source interval fails closed
+with `E_LAYOUT_WINDOW_CLIP`, source/facet identity, `stage: visibility` and
+`reason: nonpositive-source-interval`; it is neither omitted nor converted to
+a point. Incomplete and open observations retain their existing policy. This
+guard does not change derived-window behavior or validate Actual ingestion.
+
 Only original temporal endpoints that remain visible provide dependency ports:
 span starts are in `[start, end)`, span exclusive ends in `(start, end]`, and
 points in `[start, end)`. A window cut does not invent a temporal endpoint at
@@ -200,6 +207,11 @@ its edge. A relation lacking a required visible endpoint is suppressed with
 `W_LAYOUT_RELATION_SUPPRESSED` and typed outside-window cause/source facts;
 raw relation-anchor fallback is forbidden. Surviving route paint must remain
 inside the completed plot.
+
+The same original-endpoint eligibility gates a `finishDelta` label candidate:
+span terminals use `(start, end]`, point anchors use `[start, end)`. An outside
+anchor suppresses the label through the existing source-associated suppression
+path, without changing its delta fact or falling back to raw coordinates.
 
 Layout aggregates clipped or omitted object-backed facets into one
 `W_LAYOUT_OUTSIDE_WINDOW` per surface, with deterministic deduplicated object
