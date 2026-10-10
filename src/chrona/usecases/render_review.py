@@ -375,7 +375,8 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         raise layout_error
     _check_slot_heading_text(view, resolved_layout)
     # A declared slot heading is part of its content-sized slot's measurement (#1064).
-    measured = reserve_slot_heading_blocks(measured, resolved_layout, ThemeTokenView(theme), content=selected_content)
+    measured = reserve_slot_heading_blocks(measured, resolved_layout, ThemeTokenView(theme), content=selected_content,
+                                           font_metrics=font_metrics)
     viewport = {"inlineSize": environment.viewport_inline, "blockSize": environment.viewport_block}
     declared_viewport = DeclaredViewport(
         Decimal(environment.viewport_inline),

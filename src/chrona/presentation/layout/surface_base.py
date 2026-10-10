@@ -88,7 +88,7 @@ def prepare_surface_slots(request: SurfaceLayoutRequest) -> SurfaceSlotAllocatio
         SlotPlacement(source, source, item.bounds, item.priority or "required",
                       item.overflow or "visible-overflow",
                       "primary" if source in {"timeline", "timeline-axis"} else None,
-                      item.direction or "block", item.gap, item.item_min_inline_size)
+                      item.direction or "block", item.gap, item.item_min_inline_size, item.columns)
         for source, item in sorted(decisions.items())
     )
     by_source = {slot.source_ref: slot for slot in slots}
