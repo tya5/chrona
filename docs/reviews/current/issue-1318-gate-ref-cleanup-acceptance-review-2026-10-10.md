@@ -3,8 +3,8 @@
 # Issue #1318 — temporary gate ref cleanup
 
 Implementation: `d49846566edd3f203fb6d8a9a228b822cbaa4dcc`; ordinarily adopted
-ready main `bf9313bbe19dd9a386f10bda98485f5e8d139c96`
-([trusted gate](https://github.com/tya5/chrona/actions/runs/38033174047)).
+ready main `14399aabc0daaf110a531a2dc21c5fa152aeb67c`
+([trusted gate](https://github.com/tya5/chrona/actions/runs/38038775824)).
 Owned helper/workflow/procedure/test bytes remain unchanged from the tested
 `9a4510c8` checkpoint and public `0dab30ea`; the new main changes are outside
 those files. No helper-focused rerun is needed for this adoption.
@@ -30,5 +30,9 @@ Current helper/workflow batch: 43 passed (12.29s); previous unchanged trusted-ga
 candidate inspection on ready `fed97274` returned `would-delete`; no ref changed.
 Independent review found no unsafe deletion, gate weakening or ownership defect.
 Unknown/active/incomplete evidence preserves refs; only 404 is idempotent.
+Deletion assumes the existing immutable-candidate protocol: only `derived-sync`
+publishes exact-SHA refs, and publication/sweep share one non-cancelling queue.
+The API delete is not compare-and-swap; an external manual repoint between
+recheck and delete violates that protocol and is not covered by these checks.
 Required release: fresh exact-head checks, normal sync cleanup/live evidence,
 and exact-main three-OS conformance/pytest/wheel containing this review.
