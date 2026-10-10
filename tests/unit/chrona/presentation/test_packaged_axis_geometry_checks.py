@@ -4,7 +4,9 @@ from datetime import date
 
 import pytest
 
-from tests.support.preset_checks import check_bounded_axis_cells, check_centered_fixed_axis_labels
+from tests.support.preset_checks import (
+    check_bounded_axis_cells, check_centered_fixed_axis_labels, check_start_aligned_month_labels,
+)
 from tests.support.legacy_axis import use_legacy_six_tier_axis
 from tests.support import synthetic_review as sr
 from chrona.presentation.scene.serialization import scene_document
@@ -42,6 +44,16 @@ def test_fixed_axis_centering_remains_covered_with_explicit_legacy_declarations(
     rendered = sr.render(tmp_path, sr.project({"a": sr.span("a", date(2026, 2, 1), 120)}),
                          presentation=parts)
     check_centered_fixed_axis_labels(scene_document(rendered.scene))
+
+
+def test_start_aligned_month_insets_remain_covered_with_explicit_legacy_declarations(tmp_path):
+    parts = use_legacy_six_tier_axis(sr.bundle("mission-light"))
+    parts["view"]["body"]["window"] = {
+        "mode": "explicit", "start": "2026-04-01", "end": "2026-07-01",
+    }
+    rendered = sr.render(tmp_path, sr.project({"a": sr.span("a", date(2026, 4, 5), 40)}),
+                         presentation=parts)
+    check_start_aligned_month_labels(scene_document(rendered.scene))
 
 
 def test_the_fixed_axis_centering_checker_rejects_an_off_center_label():
