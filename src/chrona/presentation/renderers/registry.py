@@ -62,25 +62,32 @@ class ReportLabPdfRenderer:
     target_kind = "pdf"
 
     def __init__(self, descriptor: dict[str, Any], font_metrics: dict[str, Any] | None, asset_root: Path | None,
-                 asset_resolver: FontAssetResolver | None = None):
+                 asset_resolver: FontAssetResolver | None = None, font_files: tuple[FontFile, ...] | None = None):
         self._descriptor = descriptor
         self._font_metrics = font_metrics
         self._asset_root = asset_root
         self._asset_resolver = asset_resolver
+        self._font_files_override = font_files
 
     def render(self, surface: object) -> RenderArtifact:
         _verify_reportlab(self._descriptor)
-        files, identities = _font_files(self._font_metrics, self._asset_root,
-                                        asset_resolver=self._asset_resolver)
+        files, identities = _font_files(self._font_metrics, self._asset_root, self._font_files_override,
+                                        self._asset_resolver)
         svg = V05SvgRenderer(viewer_fit=False).render(surface).content
         try:
             from reportlab import rl_config
             from reportlab.pdfbase import pdfmetrics
-            from reportlab.pdfbase.ttfonts import TTFont
+            from reportlab.pdfbase.ttfonts import TTFError, TTFont
             from reportlab.graphics import renderPDF
             from svglib.svglib import svg2rlg
             for item in files:
-                pdfmetrics.registerFont(TTFont(_reportlab_font_name(item.family, item.weight), str(item.path)))
+                try:
+                    pdfmetrics.registerFont(TTFont(_reportlab_font_name(item.family, item.weight), str(item.path),
+                                                   subfontIndex=item.index))
+                except TTFError as error:
+                    # The PDF adapter embeds TrueType outlines only; a PostScript-outline installed face is refused by name.
+                    raise _failure("E_RENDER_FONT_CLOSURE", f"PDF cannot embed {item.family}/{item.weight} from "
+                                   f"{item.path.name}: {error}; choose a TrueType face, or render SVG or PNG") from error
             for family in {item.family for item in files}:
                 faces = {item.weight: _reportlab_font_name(item.family, item.weight)
                          for item in files if item.family == family}
@@ -121,7 +128,7 @@ def renderer_for(target: dict[str, Any], environment: dict[str, Any], *, asset_r
         descriptor = environment.get("rasterizer")
         if not isinstance(descriptor, dict):
             raise _failure("E_RENDER_RASTERIZER_IDENTITY", "target PDF requires an environment rasterizer descriptor mapping")
-        return ReportLabPdfRenderer(descriptor, environment.get("fontMetrics"), asset_root, asset_resolver)
+        return ReportLabPdfRenderer(descriptor, environment.get("fontMetrics"), asset_root, asset_resolver, font_files)
     if kind in {"typst", "tikz"}:
         descriptor = environment.get("typesetter")
         expected = ("typst", "chrona-typst/v0.1") if kind == "typst" else ("tectonic", "chrona-tikz/v0.1")

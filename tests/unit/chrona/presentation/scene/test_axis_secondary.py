@@ -210,16 +210,25 @@ def test_an_omitted_secondary_is_a_suppressed_decision_naming_the_secondary():
     assert all(item.startswith("axis-label-secondary:0:") for item in suppressed)
 
 
-def test_a_primary_that_overflows_its_cell_gets_no_secondary_and_the_reason_says_so():
-    # Long month primaries under visible-overflow: the primary is placed overflowing; the secondary is not added.
+def test_a_primary_that_cannot_fit_is_thinned_and_keeps_its_secondary_diagnostic():
+    # Hard cell containment supersedes visible-overflow without losing the
+    # earlier secondary diagnostic; neither run may paint outside the cell.
     surface = _scene(_tier("stacked", form="long-month", overflow="visible-overflow"))
 
-    reasons = {index: outcome.secondary_reason for index, outcome in enumerate(_outcomes(surface).intervals)
-               if not outcome.label_fits}
-    assert reasons and set(reasons.values()) == {"primary-does-not-fit"}
-    for index in reasons:
+    rejected = {index: outcome for index, outcome in enumerate(_outcomes(surface).intervals)
+                if not outcome.label_fits}
+    assert rejected
+    ids = {node.scene_id for node in surface.primitives}
+    for index, outcome in rejected.items():
+        assert outcome.disposition == "thinned" and outcome.reason == "label-does-not-fit"
+        assert outcome.secondary_label is None and outcome.secondary_disposition is None
         assert f"W_LAYOUT_AXIS_SECONDARY_OMITTED:axis-label:0:{index}:primary-does-not-fit" in surface.diagnostics
-        assert f"axis-label-secondary:0:{index}" not in {node.scene_id for node in surface.primitives}
+        assert f"W_LAYOUT_AXIS_LABEL_THINNED:axis-label:0:{index}:label-does-not-fit" in surface.diagnostics
+        assert f"axis-label:0:{index}" not in ids and f"axis-label-secondary:0:{index}" not in ids
+        decision = next(item for item in surface.placement.decisions
+                        if item.decision_id == outcome.candidate_id)
+        assert decision.requested_ladder == ("axis-cell-containment", "suppress")
+        assert decision.outcome == "suppressed"
 
 
 def test_a_thinned_primary_draws_neither_text_and_no_secondary_record():

@@ -133,7 +133,7 @@ def _add_draft_target_arguments(command: argparse.ArgumentParser) -> None:
     command.add_argument("--format", choices=("svg", "png", "pdf", "typst", "tikz"),
                          help="output target (default: infer from .svg/.png/.pdf/.typ/.tex; SVG without a suffix)")
     command.add_argument("--visual-profile", default=None,
-                         choices=("chrona-output/visual/v0.5-baseline", "chrona-output/visual/v0.6-svg", "chrona-output/visual/v0.6-png", "chrona-output/visual/v0.7-svg", "chrona-output/visual/v0.7-png"),
+                         choices=VISUAL_PROFILES,
                          help="exact visual capability profile (default: the preset's preferred profile, else baseline)")
     command.add_argument("--typesetter-engine", help="required with --format typst or tikz")
     command.add_argument("--typesetter-version", help="required exact engine version with --format typst or tikz")
@@ -188,18 +188,101 @@ def _load_primary_project(args: argparse.Namespace) -> dict[str, Any]:
     return load_yaml(args.project)
 
 
+VISUAL_PROFILES = ("chrona-output/visual/v0.5-baseline", "chrona-output/visual/v0.6-svg", "chrona-output/visual/v0.6-png",
+                   "chrona-output/visual/v0.7-svg", "chrona-output/visual/v0.7-png")
+
+# `chrona --help` lists the commands by task. A command missing here lands in "More commands" (a test keeps it empty).
+COMMAND_GROUPS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("Author a plan", ("init", "compile", "validate", "schedule")),
+    ("Render a slide", ("render", "preset", "render-workspace", "icon-catalog", "font")),
+    ("Keep reviewed history (stores, snapshots, baselines)",
+     ("render-review", "render-review-gallery", "materialize", "review", "baseline-compare", "baseline-capture")),
+    ("Agents", ("mcp", "skill")),
+    ("Maintenance and advanced",
+     ("identity", "workspace", "authoring-command-apply", "materialize-presentation-preset", "command-check", "command-apply",
+      "actual-intake", "actual-resolve")),
+)
+
+OPERATION_SUMMARIES = {
+    "command-check": "check a stored-plan command against its store without changing anything",
+    "command-apply": "apply a stored-plan command and record the result",
+    "actual-intake": "record observed dates from an intake batch in the store",
+    "actual-resolve": "resolve observed dates that need a decision",
+    "baseline-capture": "save the current plan as a named baseline",
+}
+
+
+def _version_text() -> str:
+    from importlib import metadata
+    try:
+        package = metadata.version("chrona")
+    except metadata.PackageNotFoundError:
+        package = "unknown"
+    from chrona.usecases.terse_compile import PROJECT_FORMAT
+    return "\n".join((f"chrona {package}", f"project format: {PROJECT_FORMAT}",
+                      "visual profiles: " + ", ".join(item.rpartition("/")[2] for item in VISUAL_PROFILES)))
+
+
+def _group_command_help(parser: argparse.ArgumentParser, action: argparse.Action) -> None:
+    """Replace argparse's flat command list with the task groups of COMMAND_GROUPS (every summary comes from its parser)."""
+    summaries = {item.dest: item.help for item in action._choices_actions}
+    action._choices_actions.clear()
+    grouped = {name for _title, names in COMMAND_GROUPS for name in names}
+    groups = [*COMMAND_GROUPS, ("More commands", tuple(name for name in summaries if name not in grouped))]
+    lines = ["commands, by task:"]
+    for title, names in groups:
+        names = tuple(name for name in names if name in summaries)
+        if not names:
+            continue
+        lines.append(f"\n  {title}")
+        lines.extend(f"    {name:<32}{summaries[name]}" for name in names)
+    parser.description = "\n".join(lines) + "\n\nRun `chrona COMMAND --help` for the options of one command."
+    parser.formatter_class = argparse.RawDescriptionHelpFormatter
+
+
+_DEFAULT_FLAG_HELP = {
+    "--output": "where to write the result; an existing file is not replaced",
+    "--workspace": "guided authoring workspace YAML path",
+    "--command": "command document YAML path",
+    "--result": "where to write the result document; an existing file is not replaced",
+    "--snapshot-root": "directory of the local snapshot store",
+    "--store-identity": "expected identity of the snapshot store",
+    "--output-directory": "empty directory for the rendered gallery",
+    "--baseline-reference": "reference YAML of the baseline version",
+    "--candidate-reference": "reference YAML of the candidate version",
+    "--store-config": "Store config YAML (for example .chrona/store.yaml)",
+}
+
+
+def _describe_all(parser: argparse.ArgumentParser) -> None:
+    """Every command has a description (its summary by default) and every flag a help text (#1304)."""
+    for action in parser._actions:
+        if isinstance(action, argparse._SubParsersAction):
+            for pseudo in action._choices_actions:
+                child = action.choices[pseudo.dest]
+                if not child.description:
+                    child.description = pseudo.help
+        elif not action.help and action.option_strings and not isinstance(action, argparse._HelpAction):
+            action.help = next((_DEFAULT_FLAG_HELP[item] for item in action.option_strings if item in _DEFAULT_FLAG_HELP), None)
+    for action in parser._actions:
+        if isinstance(action, argparse._SubParsersAction):
+            for child in action.choices.values():
+                _describe_all(child)
+
+
 def _parser() -> JsonArgumentParser:
-    parser = JsonArgumentParser(prog="chrona")
-    sub = parser.add_subparsers(dest="command", required=True, parser_class=JsonArgumentParser)
+    parser = JsonArgumentParser(prog="chrona", usage="chrona [--version] [-h] COMMAND ...")
+    parser.add_argument("--version", action="version", version=_version_text())
+    sub = parser.add_subparsers(dest="command", required=True, parser_class=JsonArgumentParser, metavar="COMMAND")
     commands = {
-        "validate": "validate a raw Draft or immutable Project snapshot",
-        "schedule": "derive a Date-only schedule from a raw Draft or immutable snapshot",
+        "validate": "check a Project (a YAML file or a saved snapshot) and list its mistakes",
+        "schedule": "compute the dates of a Project from its dependencies and working calendars",
     }
     for name, help_text in commands.items():
         command = sub.add_parser(name, help=help_text, description=help_text)
         _add_snapshot_arguments(command)
-    command = sub.add_parser("render", help="render a draft review surface (not reproducible evidence)",
-                              description="render a draft review surface (not reproducible evidence)")
+    command = sub.add_parser("render", help="draw a slide from a Project (a draft for review, not reproducible evidence)",
+                              description="draw a slide from a Project: SVG, PNG, PDF, Typst or TikZ by the output suffix. A draft for review, not reproducible evidence")
     command.add_argument("project", help="Draft Project YAML path, or a terse .chrona plan")
     command.add_argument("--preset", help="Presentation preset YAML path, or a builtin catalogue id (see `chrona preset list`); omit it to use bundled chrona-default-draft; explicit resource flags override its members")
     command.add_argument("--view", help="View YAML path")
@@ -212,7 +295,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--icon-catalog", action="append", default=[],
                          help="explicit local icon catalog YAML path; repeatable")
     command.add_argument("--font-metrics", help="declared-metrics-v3 YAML descriptor; paths resolve beside it")
-    command.add_argument("--system-fonts", action="store_true", help="draft-only: measure and rasterize the Theme's exact installed face")
+    command.add_argument("--system-fonts", action="store_true", help="require the Theme's exact installed face through fontconfig (installed fonts are always usable; this refuses a fallback)")
     command.add_argument("--viewport", default=f"{DEFAULT_DRAFT_VIEWPORT[0]}xauto", help="Draft viewport WIDTHxHEIGHT or WIDTHxauto (default: 1600xauto)")
     command.add_argument("--locale", choices=("en-US", "ja-JP"), default="en-US",
                          help="render locale: en-US or ja-JP (default: en-US)")
@@ -220,7 +303,7 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--output", "-o", required=True)
     command.add_argument("--emit-scene", help="write a schema-validated inspection Scene JSON without replacing an existing file")
 
-    icon = sub.add_parser("icon-catalog", help="create a normalized local icon catalog")
+    icon = sub.add_parser("icon-catalog", help="build an icon catalog from icon files")
     icon_sub = icon.add_subparsers(dest="icon_command", required=True, parser_class=JsonArgumentParser)
     command = icon_sub.add_parser("import", help="import a local Iconify JSON collection or declared Theme assets")
     command.add_argument("source", nargs="?", help="local Iconify JSON collection (omit with --theme-assets)")
@@ -235,7 +318,7 @@ def _parser() -> JsonArgumentParser:
     command = icon_sub.add_parser("material-default", help="copy the bundled Material Symbols Outline Rounded catalog")
     command.add_argument("--output", required=True, help="new explicit local catalog YAML")
 
-    font = sub.add_parser("font", help="create a declared local font closure")
+    font = sub.add_parser("font", help="package a font file so slides can use it")
     font_sub = font.add_subparsers(dest="font_command", required=True, parser_class=JsonArgumentParser)
     command = font_sub.add_parser("import", help="import one static, TTC, or instantiated variable font")
     command.add_argument("source", help="local TTF, OTF, or TTC font")
@@ -245,76 +328,76 @@ def _parser() -> JsonArgumentParser:
     command.add_argument("--index", type=int, default=0, help="TTC face index (default: 0)")
     command.add_argument("--axis", action="append", default=[], metavar="TAG=VALUE", help="instantiate one variable-font axis; repeatable")
 
-    workspace = sub.add_parser("workspace", help="inspect a guided authoring workspace")
+    workspace = sub.add_parser("workspace", help="show the current revision of a guided authoring workspace")
     workspace_sub = workspace.add_subparsers(dest="workspace_command", required=True, parser_class=JsonArgumentParser)
     command = workspace_sub.add_parser("revision", help="print the current guided workspace revision")
     command.add_argument("workspace", help="guided authoring workspace YAML path")
 
-    identity = sub.add_parser("identity", help="inspect an immutable identity without changing input")
+    identity = sub.add_parser("identity", help="print the SHA-256 identity of a file or a document")
     identity_sub = identity.add_subparsers(dest="identity_kind", required=True, parser_class=JsonArgumentParser)
     command = identity_sub.add_parser("bytes", help="print the SHA-256 identity of exact file bytes")
     command.add_argument("path", help="local file path")
     command = identity_sub.add_parser("document", help="print the canonical identity of one YAML or JSON document")
     command.add_argument("path", help="local YAML or JSON document path")
 
-    command = sub.add_parser("authoring-command-apply", help="apply one revision-bound guided workspace command")
+    command = sub.add_parser("authoring-command-apply", help="apply one edit command to a guided authoring workspace")
     command.add_argument("--workspace", required=True)
     command.add_argument("--command", dest="authoring_command", required=True)
     command.add_argument("--result", required=True)
 
-    command = sub.add_parser("materialize-presentation-preset", help="apply one revision-bound Stage-3 materialization command")
+    command = sub.add_parser("materialize-presentation-preset", help="apply a preset-materialization command to a guided authoring workspace")
     command.add_argument("--workspace", required=True)
     command.add_argument("--command", dest="authoring_command", required=True)
     command.add_argument("--result", required=True)
 
-    command = sub.add_parser("render-workspace", help="render a guided authoring workspace Draft (not reproducible evidence)")
+    command = sub.add_parser("render-workspace", help="draw a slide from a guided authoring workspace (a draft)")
     command.add_argument("workspace", help="guided authoring workspace YAML path")
     command.add_argument("--viewport", default=f"{DEFAULT_DRAFT_VIEWPORT[0]}xauto", help="Draft viewport WIDTHxHEIGHT or WIDTHxauto (default: 1600xauto)")
     command.add_argument("--locale", choices=("en-US", "ja-JP"), default="en-US",
                          help="render locale: en-US or ja-JP (default: en-US)")
     _add_draft_target_arguments(command)
-    command.add_argument("--provenance", help="write non-Scene guided closure provenance JSON")
+    command.add_argument("--provenance", help="write a JSON record of which inputs the render used")
     command.add_argument("--output", "-o", required=True)
 
-    command = sub.add_parser("render-review", help="render an immutable Render Context v0.8", description="render an immutable Render Context v0.8")
-    command.add_argument("--context-reference", required=True, help="immutable Render Context resource-reference YAML")
+    command = sub.add_parser("render-review", help="draw a slide from a saved render context (reproducible)", description="draw a slide from a saved render context; the same inputs always give the same slide")
+    command.add_argument("--context-reference", required=True, help="saved render context reference YAML")
     command.add_argument("--store-config", help="Store config YAML (for example .chrona/store.yaml); its integrity setting applies and replaces --snapshot-root/--store-identity")
     command.add_argument("--snapshot-root", help="local snapshot adapter root (required without --store-config)")
     command.add_argument("--store-identity", help="expected local snapshot store identity (required without --store-config)")
     command.add_argument("--allow-missing-content-identity", action="store_true", help="accept references without an exact content identity (explicit opt-out)")
-    command.add_argument("--reject-unused-closure-inputs", action="store_true", help="reject a render whose Context declares inputs the render never reads")
+    command.add_argument("--reject-unused-closure-inputs", action="store_true", help="reject a render whose context lists inputs the render never reads")
     command.add_argument("--format", choices=("svg", "png", "pdf", "typst", "tikz"), help="assert the Context target format")
     command.add_argument("--output", "-o", required=True)
     command.add_argument("--emit-scene", help="write a schema-validated inspection Scene JSON without replacing an existing file")
 
-    command = sub.add_parser("materialize", help="materialize one declared immutable example Context")
+    command = sub.add_parser("materialize", help="rebuild one slide of an example from its manifest")
     command.add_argument("manifest", help="example materializer manifest")
     command.add_argument("--slide", required=True, help="declared slide identifier")
     command.add_argument("--output", "-o", required=True, help="empty output directory")
     command.add_argument("--write", action="store_true", help="replace the manifest-declared generated artifact")
 
-    command = sub.add_parser("compile", help="compile a terse plan to Project YAML",
+    command = sub.add_parser("compile", help="turn a terse plan (.chrona) into Project YAML",
                              description="compile a terse plan (.chrona) to Project YAML; the YAML is the authority afterwards")
     command.add_argument("plan", help="terse plan path, or - for standard input")
     command.add_argument("--output", "-o", help="write the Project YAML here and refuse to replace an existing file (default: standard output)")
 
-    command = sub.add_parser("init", help="create a non-overwriting local Chrona project")
+    command = sub.add_parser("init", help="create a new editable project in a new directory")
     command.add_argument("directory", nargs="?", default=".")
     command.add_argument("--example", choices=example_ids(),
                          help="create a full named corpus example instead of the editable minimal starter")
 
-    skill = sub.add_parser("skill", help="copy the packaged chrona agent skill")
+    skill = sub.add_parser("skill", help="install the chrona skill for an AI coding agent")
     skill_sub = skill.add_subparsers(dest="skill_command", required=True, parser_class=JsonArgumentParser)
     command = skill_sub.add_parser("copy", help="copy the agent skill into an empty directory")
     command.add_argument("--output", "-o", required=True, help="empty or absent output directory")
 
-    command = sub.add_parser("mcp", help="serve the agent tools over MCP on standard input and output; read-only unless --allow-write",
+    command = sub.add_parser("mcp", help="serve chrona to an AI agent over MCP (read-only unless --allow-write)",
                              description="serve validate_project, schedule_project, render_draft, list_presets, render_review, compare_baseline, check_command and apply_command to an MCP client; render_review and compare_baseline read a Store inside the workspace; apply_command writes a Store only with --allow-write; needs the optional chrona[mcp] extra")
     command.add_argument("--workspace", help="the only directory the tools may read, and below which a Store may be written (default: the current directory)")
     command.add_argument("--allow-write", action="store_true", help="let apply_command write the Store (configuration, not approval: it has no approval step); without it the server is read-only and the call is refused with E_MCP_WRITE_DISABLED")
     command.add_argument("--list-tools", action="store_true", help="print the tool registry as JSON and exit (needs no MCP SDK)")
 
-    preset = sub.add_parser("preset", help="copy or list a builtin presentation preset")
+    preset = sub.add_parser("preset", help="list the built-in looks or copy one to edit")
     preset_sub = preset.add_subparsers(dest="preset_command", required=True, parser_class=JsonArgumentParser)
     command = preset_sub.add_parser("copy", help="copy one named builtin preset")
     command.add_argument("id", help="builtin preset identifier")
@@ -322,32 +405,34 @@ def _parser() -> JsonArgumentParser:
     preset_sub.add_parser("list", help="list every builtin preset id and its gallery set")
 
 
-    command = sub.add_parser("render-review-gallery", help="render deterministic Color Scheme comparison gallery")
-    command.add_argument("--context-reference", required=True, action="append", help="immutable Render Context v0.8 resource-reference YAML; repeat for each scheme")
+    command = sub.add_parser("render-review-gallery", help="draw the same slide in several color schemes for comparison")
+    command.add_argument("--context-reference", required=True, action="append", help="saved render context reference YAML; repeat for each scheme")
     command.add_argument("--snapshot-root", required=True)
     command.add_argument("--store-identity", required=True)
     command.add_argument("--allow-missing-content-identity", action="store_true", help="accept references without an exact content identity (explicit opt-out)")
     command.add_argument("--output-directory", required=True)
 
-    command = sub.add_parser("review", help="compare two immutable Project snapshots", description="compare two immutable Project snapshots")
+    command = sub.add_parser("review", help="compare two saved versions of a Project", description="compare two saved versions of a Project and list what changed")
     command.add_argument("before_reference")
     command.add_argument("candidate_reference")
     command.add_argument("--snapshot-root", required=True)
     command.add_argument("--store-identity", required=True)
     command.add_argument("--allow-missing-content-identity", action="store_true", help="accept references without an exact content identity (explicit opt-out)")
 
-    command = sub.add_parser("baseline-compare", help="compare a named baseline and immutable candidate")
+    command = sub.add_parser("baseline-compare", help="compare a saved baseline with a candidate version")
     command.add_argument("--baseline-reference", required=True)
     command.add_argument("--candidate-reference", required=True)
     command.add_argument("--store-config")
     command.add_argument("--result", required=True)
 
     for name in OPERATIONS:
-        command = sub.add_parser(name, help=f"run M26 {name} command")
+        command = sub.add_parser(name, help=OPERATION_SUMMARIES[name], description=OPERATION_SUMMARIES[name])
         command.add_argument("--command", dest="command_path", required=True)
         command.add_argument("--store-config")
         command.add_argument("--result", required=True)
 
+    _describe_all(parser)
+    _group_command_help(parser, sub)
     return parser
 
 
@@ -486,8 +571,18 @@ def _run_draft_render_of_plan(args: argparse.Namespace) -> None:
         tmp.cleanup()
 
 
+def _created(directory: Path) -> list[str]:
+    """The files under a directory the command just made, relative and sorted: what a success result states it wrote."""
+    return sorted(item.relative_to(directory).as_posix() for item in directory.rglob("*") if item.is_file())
+
+
+def _print_created(directory: Path) -> None:
+    print(json.dumps({"status": "ok", "directory": str(directory), "created": _created(directory)}))
+
+
 def _run_init(args: argparse.Namespace) -> None:
     initialize_project(Path(args.directory), example=args.example)
+    _print_created(Path(args.directory))
 
 
 def _mcp_sdk_installed() -> bool:
@@ -514,6 +609,7 @@ def _run_mcp(args: argparse.Namespace) -> None:
 
 def _run_preset_copy(args: argparse.Namespace) -> None:
     copy_builtin_preset(args.id, Path(args.output))
+    _print_created(Path(args.output))
 
 
 def _run_preset_list(_args: argparse.Namespace) -> None:
@@ -672,6 +768,7 @@ def _run(args: argparse.Namespace) -> None:
             raise CliFailure("E_AUTOMATION_RESULT_IO", str(error), "automation", exit_code=3) from error
         result = run_store_command(args.command, command, reader)
         _write_result(Path(args.result), result)
+        print(json.dumps({"status": result["status"], "result": args.result}))
         if result["status"] != "accepted":
             raise SystemExit(2)
         return
@@ -684,6 +781,7 @@ def _run(args: argparse.Namespace) -> None:
             raise CliFailure("E_AUTOMATION_RESULT_IO", str(error), "automation", exit_code=3) from error
         result = compare_store_baseline(reader, baseline_reference, candidate_reference)
         _write_result(Path(args.result), result)
+        print(json.dumps({"status": result["status"], "result": args.result}))
         if result["status"] != "accepted":
             raise SystemExit(2)
         return
@@ -701,6 +799,7 @@ def _run(args: argparse.Namespace) -> None:
         return
     if args.command == "skill":
         copy_skill(Path(args.output))
+        _print_created(Path(args.output))
         return
     if args.command == "mcp":
         _run_mcp(args)
@@ -757,7 +856,7 @@ def _run(args: argparse.Namespace) -> None:
         validation = validate_project_mapping(project)
         if not validation.ok:
             _reject(_with_source_ranges(args, validation.diagnostics))
-        print("[]")
+        print(json.dumps({"status": "ok", "diagnostics": []}))
         return
     outcome = schedule_project_mapping(project)
     if not outcome.ok:
@@ -781,6 +880,9 @@ def _write_result(destination: Path, result: dict[str, Any]) -> None:
 def main() -> None:
     global _PLAN_SOURCE
     _PLAN_SOURCE = None
+    if len(sys.argv) == 1:  # a bare `chrona` is a question, not a mistake: usage on stderr, exit 2, no JSON (#1304)
+        print(_parser().format_help(), file=sys.stderr, end="")
+        raise SystemExit(2)
     try:
         args = _parser().parse_args()
         _run(args)

@@ -285,6 +285,9 @@ jobs:
           smoke_dir="$(mktemp -d)"
           cd "$smoke_dir"
           python "$GITHUB_WORKSPACE/tools/wheel_smoke.py"
+          cd "$GITHUB_WORKSPACE"
+          # the documented commands, as a user runs them: the wheel in a fresh venv, no -e, no font package, an empty directory
+          python tools/wheel_doc_check.py dist/chrona-*.whl
       - name: Finalize independent CI outcomes
         if: ${{ always() }}
         run: >-

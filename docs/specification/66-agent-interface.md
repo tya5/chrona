@@ -224,8 +224,8 @@ it, and `apply_command` writes a Store below it. A filesystem root is refused (`
 ## 5. Determinism
 
 A result is a pure function of the workspace file bytes, the arguments, the chrona version and the pinned renderer
-versions: no timestamp, duration, process id or host path; locale is `en-US` unless given; system fonts are never
-consulted; every mapping the tool returns is sorted by key (`placements`, `totalFloat`, `detail`), and a result does
+versions: no timestamp, duration, process id or host path; locale is `en-US` unless given; installed fonts are consulted only for a Theme family the workspace's declared fonts do not
+cover (#1281), so a workspace that declares every font it uses is host-independent; every mapping the tool returns is sorted by key (`placements`, `totalFloat`, `detail`), and a result does
 not depend on the hash seed. The SVG bytes equal those of the command's output file. PNG bytes depend on the pinned
 rasterizer of the `render` extra.
 
@@ -260,3 +260,17 @@ and the registry is unchanged. The binding is the one module that imports the SD
   (the body of `SKILL.md`) and `chrona://guide/diagnostics` (`references/diagnostics.md`); without a packaged skill they
   are omitted. No prompts, subscriptions, sampling or other capability is offered.
 - There is no HTTP transport, listener, authentication or background task.
+
+## 8. Command-line surface (#1304)
+
+- `chrona --version` prints the package version, the Project format and the visual profiles it supports, one per line, and exits 0.
+- `chrona` with no arguments prints the usage text (commands grouped by task) to standard error and exits 2; there is no JSON. A
+  wrong or missing argument elsewhere stays a typed `E_COMMAND_SYNTAX` result.
+- `chrona --help` groups the commands by task (author, render, reviewed history, agents, maintenance). Every command has a
+  description and every flag a help text, in user terms; none names a milestone (`M26`) or stage. `docs/guides/cli-reference.md` is
+  generated from the same definitions.
+- A command that succeeds prints one JSON object that states what it did: `{"status": "ok", ...}`. `validate` prints
+  `{"status": "ok", "diagnostics": []}`; `init`, `preset copy` and `skill copy` add `directory` and the sorted `created` files;
+  the store commands (`command-check`, `command-apply`, `actual-intake`, `actual-resolve`,
+  `baseline-capture`, `baseline-compare`) print `{"status": <result status>, "result": <path>}` before their exit code.
+  Commands whose result is the artifact itself (`compile`, with or without `--output`, `schedule`, `render`) are unchanged.
