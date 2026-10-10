@@ -12,8 +12,10 @@ and [implementation plan](../../planning/active/issue-1279-canvas-viewport-imple
 
 ## Literal issue acceptance
 
-Source: [issue body and negative-origin acceptance note](https://github.com/tya5/chrona/issues/1279).
-Observed: 2026-10-10.
+### Issue #1279
+
+- Source: [issue body and negative-origin acceptance note](https://github.com/tya5/chrona/issues/1279).
+- Observed: 2026-10-10
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
@@ -21,6 +23,10 @@ Observed: 2026-10-10.
 | 2 | On current main, the warning appears for exactly the slides whose SVG viewBox differs from their declared viewport (list them in the PR). | not met | [Exact-base audit](https://github.com/tya5/chrona/issues/1279#issuecomment-6094485533): all 46 SVGs byte-identical, 27 warning-only Scene changes, 19 unchanged; 27 warnings and zero membership mismatches. The PR lists every slide. This proves base `4f4ee94c`, not the subsequently advanced main; final ready-base snapshot remains required. | — |
 | 3 | Do not edit `examples/**`. | met | [Implementation diff](https://github.com/tya5/chrona/commit/43e30d82) changes Layout/runtime metadata, shared reporting, tests and specifications only. No authored examples or derived output edits. | — |
 | 4 | Acceptance note for this issue: a test with a *negative* viewBox origin (as in the first case) should also yield the warning, since the declared-vs-actual comparison must use the full extent, not only width/height. | met | [Real SVG tests](../../../tests/integration/test_canvas_viewport_warning_render.py) cover negative origins with fixed and auto block size; auto block has no invented height constraint. | — |
+
+## Programme-level criteria (optional)
+
+None; the literal acceptance and release gates control closure.
 
 ## Verification and architecture
 
