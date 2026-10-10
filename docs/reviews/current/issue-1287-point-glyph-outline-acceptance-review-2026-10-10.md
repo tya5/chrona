@@ -2,7 +2,10 @@
 
 # Issue #1287 — point glyph outline acceptance
 
-Implementation through `049ad0ccf422712ad16cc16a34d74d16380317cb`, based on ready main `94981ebda16c75d985aa85c830b5480ea2133e42`.
+Published preparation: `d4215dcca0138de90329829caa44f7497bd8b14d`, ordinarily
+adopting #1283's pending PR head `8ba462d826e1fc18a47070350a844a84c0ade8b1`
+and ready main `484f5cd83ac24e91b7d435be18dfb5be1ebade04`.
+This is a preparation checkpoint, not a merged dependency or release base.
 [Selected design and architecture review](https://github.com/tya5/chrona/issues/1287#issuecomment-6088427990).
 Local acceptance is verified; public artifact and release gates remain pending. Do not close.
 
@@ -22,7 +25,8 @@ Local acceptance is verified; public artifact and release gates remain pending. 
 
 ## Programme-level criteria (optional)
 
-Focused batch: 281 passed (29.93s); final expanded integration batch: 11 passed (16.49s), including complete-Scene/SVG byte checks and catalogue finish preservation.
+Current prepared-parent integration/outline/projection batch: 30 passed (17.30s).
+Earlier focused batch: 281 passed (29.93s); expanded integration batch: 11 passed (16.49s), including complete-Scene/SVG byte checks and catalogue finish preservation.
 [Lane footprint/port test](../../../tests/unit/chrona/presentation/layout/test_point_outline.py) retains the completed gate width rather than planned-role fallback and keeps semantic ports on the original part. [Projection test](../../../tests/unit/chrona/presentation/scene/test_mark_geometry.py) separates intrinsic catalogue finish metadata from a role-bound outline.
 
 ## Architecture conclusion
