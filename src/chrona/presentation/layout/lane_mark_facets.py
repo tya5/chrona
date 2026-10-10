@@ -580,13 +580,13 @@ def _facet(instance: LaneProjectionInstance, item: Any, mark: MarkPlacement | No
     ports: tuple[LaneFacetPort, ...] = ()
     host_bounds = None
     if port_mark is not None:
-        ports = (
-            LaneFacetPort(f"{instance.placement_key}:{quote(primitive_id, safe='-._~')}:start",
-                          "start", port_mark.start_port),
-            LaneFacetPort(f"{instance.placement_key}:{quote(primitive_id, safe='-._~')}:end",
-                          "end", port_mark.end_port),
-        )
-        host_bounds = _bounds(port_mark.bounds)
+        port_prefix = f"{instance.placement_key}:{quote(primitive_id, safe='-._~')}"
+        ports = tuple(LaneFacetPort(f"{port_prefix}:{suffix}", suffix, position)
+                      for suffix, position in (("start", port_mark.start_port),
+                                               ("end", port_mark.end_port))
+                      if position is not None)
+        if ports:
+            host_bounds = _bounds(port_mark.bounds)
     return LaneMarkFacet(
         facet_id, instance.placement_key, source_item, item.object_id,
         "primary" if item.source_kind == "combined" else item.source_kind,

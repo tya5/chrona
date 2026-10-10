@@ -5,12 +5,13 @@ from decimal import Decimal
 
 import pytest
 
-from chrona.presentation.layout.model import Rect
+from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.obstacles import (
     ObstacleRect, ObstacleSegment, SurfaceObstacle, SurfaceObstacleIndex,
 )
 from chrona.presentation.layout.ports import (
-    coincident_endpoint_port_ids, connector_boundary_ports, connector_egress_candidates,
+    coincident_endpoint_port_ids, connector_boundary_port, connector_boundary_ports,
+    connector_egress_candidates,
 )
 from chrona.presentation.layout.surface_quality import MarkPlacement
 
@@ -25,6 +26,35 @@ def test_span_start_finish_are_fixed_completed_ports() -> None:
     assert connector_boundary_ports(mark, "start", (100, 100)) == (("start", (10, 24)),)
     assert connector_boundary_ports(mark, "finish", (0, 0)) == (("end", (18, 24)),)
     assert connector_boundary_ports(mark, "end", (0, 0)) == (("end", (18, 24)),)
+
+
+@pytest.mark.parametrize(("endpoint", "start", "finish", "expected"), [
+    ("start", None, (18, 24), ()),
+    ("finish", (10, 24), None, ()),
+    ("end", (10, 24), None, ()),
+    ("finish", None, (18, 24), (("end", (18, 24)),)),
+    ("start", (10, 24), None, (("start", (10, 24)),)),
+])
+def test_temporally_unavailable_span_endpoint_has_no_boundary_candidate(
+        endpoint, start, finish, expected):
+    mark = MarkPlacement("actual:item", "item", Rect(Decimal(10), Decimal(20), Decimal(8), Decimal(8)),
+                         start, finish)
+    assert connector_boundary_ports(mark, endpoint, (0, 0)) == expected
+    candidates = connector_egress_candidates(mark, endpoint, (0, 0), ())
+    if not expected:
+        assert candidates == ()
+    else:
+        semantic = expected[0][1]
+        assert candidates and all(candidate.semantic_port == semantic for candidate in candidates)
+
+
+def test_direct_temporal_port_helper_raises_bounded_anchor_diagnostic_when_absent():
+    mark = MarkPlacement("actual:item", "item", Rect(Decimal(10), Decimal(20), Decimal(8), Decimal(8)),
+                         None, (18, 24))
+    with pytest.raises(LayoutError) as caught:
+        connector_boundary_port(mark, "start", (0, 0))
+    assert caught.value.diagnostic_id == "E_PRESENTATION_ANCHOR_MISSING"
+    assert caught.value.path == "/layout/connectorPort"
 
 
 def test_point_ports_are_finite_deterministic_and_not_center() -> None:

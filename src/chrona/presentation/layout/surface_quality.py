@@ -290,8 +290,9 @@ class MarkPlacement:
     placement_id: str
     source_ref: str
     bounds: Rect
-    start_port: tuple[float, float]
-    end_port: tuple[float, float]
+    # None means the original temporal endpoint is unavailable, never a cut-edge port.
+    start_port: tuple[float, float] | None
+    end_port: tuple[float, float] | None
     required: bool = True
     mark_shape: str = "span"
     corner_radius: float = 0.0
