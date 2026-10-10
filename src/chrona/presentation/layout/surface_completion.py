@@ -15,7 +15,7 @@ from chrona.presentation.layout.model import (LayoutError, Rect)
 from chrona.presentation.layout.pattern_placement import (PatternedPlacement, complete_pattern_placement)
 from chrona.presentation.layout.presentation import TrackPlacement
 from chrona.presentation.layout.surface_backgrounds import (
-    BACKGROUND_SEMANTIC_IDS, validate_background_shapes,
+    BACKGROUND_SEMANTIC_IDS, validate_background_shapes, validate_group_header_strip_order,
 )
 from chrona.presentation.layout.surface_geometry import GEOMETRY_TOLERANCE
 from chrona.presentation.layout.surface_lanes import build_lane_emissions, complete_hosted_text_identity
@@ -127,6 +127,7 @@ _RECT_PATTERN_THEME_ROLES = {
     "groupBand": "group-band",
     "rowBand": "row-band",
     "groupHeaderBand": "group-header-band",
+    "groupHeaderStrip": "group-header-strip",
     "groupTab": "group-tab",
     "asOfLabelChip": "as-of-label-chip",
     "memberLabelChip": "member-label-chip",
@@ -227,6 +228,7 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
                                         else by_source["legend"].slot_id
                                         if item.relation_id.startswith("legend-swatch:")
                                         else timeline.slot_id)) for item in relations]
+    validate_group_header_strip_order(shapes, text)
     validate_background_shapes(shapes, request.theme_tokens)
 
     # Complete the observable fallback records at the same point as completed

@@ -3,3 +3,6 @@ examples:
   - id: halcyon-1
     path: examples/halcyon-1
     purpose: Full corpus example of a small launch programme, with Contexts, views and slides.
+  - id: onboarding
+    path: examples/onboarding
+    purpose: Seven numbered tutorial stages (spans, a gate, relations, a calendar, constraints, a rollup, actuals), each a Project to render.
