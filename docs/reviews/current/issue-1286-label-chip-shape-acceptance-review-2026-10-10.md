@@ -2,10 +2,10 @@
 
 # Issue #1286 — label chip shape acceptance
 
-Validation checkpoint: `8799fc137edc1db5f87ed0f1b9a7f22bdaa455a8`, ordinarily
-adopting published #1287 head `88729d8e76d34b12ff4144441e29e79f5bf5d9bb`
-and ready main `127392c426010f8381c984d8ff45f6c1e46f3791`, including the
-shared contour correction and dev B's legend fix. #1287 is not yet merged.
+Validation checkpoint: `1d99c5d2620efbf63d0b949a527fd2db221cdcca`, ordinarily
+adopting ready main `612c1449d68e4abf2267f1bad7db10360cbf7b05`, including
+merged #1287, #1336, #1279 and dev B's legend fix. The exact base's
+[derived-main gate](https://github.com/tya5/chrona/actions/runs/38046325711) succeeded.
 No chip PR is open.
 [Current design, architecture review and plan](https://github.com/tya5/chrona/issues/1286#issuecomment-6088639263).
 Local acceptance only: no PR, public artifact or exact-main release gate is complete. Do not close.
@@ -26,18 +26,34 @@ Local acceptance only: no PR, public artifact or exact-main release gate is comp
 
 ## Programme-level criteria (optional)
 
-Synthetic render evidence: 12 cases across both integration files; the final as-of file passed 8 tests and the period/variance file passed 4. Final focused closure/measurement/lane/ground/period batch: 43 passed; builder/geometry/lane/ground batch: 88 passed; legacy chip/as-of/viewer-fit batch: 48 passed. Independent absent-token replay: Scene 22,949 bytes, SHA256 `e5f8b0c395e6b891d065e9152f2aa302d51d4f5162e3680edec12d802f2b93ea`; SVG 6,992 bytes, SHA256 `74bf8d570ca05067f0000a3002520bb237113b11ac682e21ae367ec0e82c3e0b`; root verified both complete streams with `cmp`.
+Combined chip/point/legend/viewport/host integration batch: 190 passed (103.75s).
+Supplementary filled-contour, label-intent, diagnostic-provenance, presentation
+closure, graphics-schema and viewport tests: 98 passed (29.60s).
+The added frozen absent-token regression and existing rectangle comparison
+both passed (4.43s): 289 unique focused tests in total.
+Independent unchanged-input replay against public pre-feature parent `127392c4`
+matches raw Scene 22,949 bytes, SHA256 `e5f8b0c395e6b891d065e9152f2aa302d51d4f5162e3680edec12d802f2b93ea`,
+and SVG 6,992 bytes, SHA256 `74bf8d570ca05067f0000a3002520bb237113b11ac682e21ae367ec0e82c3e0b`.
+`test_absent_shape_preserves_frozen_pre_feature_scene_and_svg_bytes` retains
+both lengths and hashes without geometry or provenance normalization.
 
-Current adopted-parent batch: 40 passed (12.08s) for chip, contour, hosted-note,
-legend and host-identity tests; remaining period/variance and schema tests:
-9 passed (3.76s). Full S0 against exact ready `127392c4` passes: L1 37 equal,
-one declared Theme expansion; L2 470 tracked/367 mapped/4 unchanged invalid
-documents; L3 739 probes (462 reject/277 accept). L2+L3: 32.5s within 60s.
-The inherited landed group-header allowance remains unchanged and nonblocking.
-Final-base S0, CI and artifact evidence remain required after #1287 merges.
+Final-base S0 (`python -m tools.schema_equivalence --base-rev origin/main`)
+against exact ready `612c1449` passed: L1 37 equal / one Theme expansion
+(three declared pointers); L2 482 tracked / 378 mapped / four unchanged invalid
+documents / zero unparseable; L3 739 probes (462 reject / 277 accept).
+L2+L3 took 36.6s within the 60s budget. Baseline absence notes and inherited
+five Layout L2 allowances are disclosed; the latter have zero later schema
+merges and are nonblocking. No pruning or timing waiver was used.
+Only three pending chipShape L1 allowances remain; the unrelated landed
+group-header L1 allowance was already retired by public commit `b982d583`.
+No authored examples, workflows or generated outputs differ from the ready base.
 
 ## Architecture conclusion
 
 Layout owns one immutable completed shape, text-safe rectangle and once-expanded visible footprint, reused by lane demand, early as-of reserve and final placement. Scene projects canonical parent/part IDs and resolves paint; adapters serialize completed paths. Catalog coverage uses exact filled-path boolean difference, not bounding boxes or samples. Independent review found and verified correction of a numeric-spacing mismatch. Legacy rectangular geometry remains unchanged; catalog parts and declared text-follows-box remain intact.
 
-Release remains pending: #1287 ready-main adoption, fresh exact-head PR checks, public before/after artifact inspection, automatic derived sync and successful three-OS pytest/conformance/wheel on the exact main containing the final review.
+Independent integration review verified that chip coverage retains the merged
+point-outline contour decoder and that measured-chip transport retains declared
+viewport warnings, small caps, completed collision bounds and slot headings.
+
+Release remains pending: fresh exact-head PR checks, public before/after artifact inspection, automatic derived sync and successful three-OS pytest/conformance/wheel on the exact main containing the final review.
