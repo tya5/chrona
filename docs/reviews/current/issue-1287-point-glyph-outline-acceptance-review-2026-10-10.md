@@ -2,16 +2,16 @@
 
 # Issue #1287 — point glyph outline acceptance
 
-Current adoption: ready main `8388f8158da881a3bb1c2d93f0b175a7e3cc0a07`,
-including #1283, #1327, dev B's #1219/#1273 and the reviewer's roadmap.
-[Derived gate](https://github.com/tya5/chrona/actions/runs/38025875433) succeeded.
-Product, unit/integration/CLI test, schema, tool and workflow bytes are unchanged
-from verified head `88729d8e76d34b12ff4144441e29e79f5bf5d9bb`; its
-[CI](https://github.com/tya5/chrona/actions/runs/38024838660) passed all substantive
-checks, with only derived-ready failing after main advanced. Focused tests at
-`ae179e4e`: 73 passed (37.24s). Fresh 46-slide snapshot, exact-ready-base PR checks
-and containing-main release are still required; the old 45-slide audit is not
-current-corpus evidence.
+Current adoption: ready main `4f4ee94ccc21c8d3c85021a1dc50a931d068e044`,
+including #1283, #1327, dev B's #1219/#1273/#1214 and the reviewer's roadmap.
+[Derived gate](https://github.com/tya5/chrona/actions/runs/38027686440) succeeded.
+Integration after source adoption `73405aa1`: 77 focused tests pass (41.72s)
+and both technical-print regressions pass (2.86s). Bot adoption `9e35aaf5`
+changes no product/test bytes. Previous head `b55e10ed`
+[CI](https://github.com/tya5/chrona/actions/runs/38026333704) passes every
+substantive check; only exact-base readiness fails after main advances.
+Fresh 46-slide snapshot, current exact-head checks and containing-main release
+remain required; predecessor audits are not current-base acceptance.
 [Selected design and architecture review](https://github.com/tya5/chrona/issues/1287#issuecomment-6088427990).
 Earlier [PR CI](https://github.com/tya5/chrona/actions/runs/38022653852) exposed a
 closed-quadratic implicit-start decoding bug and a corpus-dependent hosted-note test.
@@ -37,7 +37,7 @@ Do not close.
 
 ## Programme-level criteria (optional)
 
-Current integration batch: 73 passed (37.24s), including independent frozen
+Current integration batch: 79 passed (44.58s), including independent frozen
 projection comparisons, the merged legend warning correction, hosted identities,
 real quadratic-hole decoding and both technical-print regressions. No schema,
 authored examples, generated or workflow changes are included. The archive batch
@@ -55,6 +55,10 @@ discloses six changed SVG/Scene pairs and 39 unchanged pairs, including #12's
 182px lane-height growth and `eps-bustest` suppression. All 65 added contours
 match actual SVG path/paint/width; original Symbol parts remain. These collateral
 effects require an explicit review disposition, not a no-regression claim.
+[The subsequent b55 audit](https://github.com/tya5/chrona/pull/1331#issuecomment-6094139996)
+on base8388 checks 101 paths / 46 slides: seven changed pairs and 39 unchanged,
+including seven roadmap outlines and 14 rerouted relations. It too is predecessor
+evidence after the #1214 adoption; fresh current-head comparison is required.
 
 Required release evidence: accept/dispose disclosed effects; fresh exact-head snapshot/checks;
 automatic sync and successful containing-review exact-main three-OS release.
