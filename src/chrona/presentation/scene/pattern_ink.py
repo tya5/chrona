@@ -1,11 +1,11 @@
-"""Actual periodic-pattern ink contact for completed Scene Rects."""
+"""Actual periodic-pattern ink contact for completed Rect and cut-Symbol hosts."""
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from math import ceil, cos, floor, hypot, isfinite, radians, sin
 from typing import Any
 
-from chrona.presentation.scene.ink_touch import InkTouchError, subpaths
+from chrona.presentation.scene.ink_touch import InkTouchError, filled_trapezoids, subpaths
 from chrona.presentation.scene.paint_analysis import is_hex_color
 
 MAX_PATTERN_COPIES = 4096
@@ -34,7 +34,7 @@ def pattern_ink_touches(primitive: Mapping[str, Any],
         primitive_bounds = _bounds(primitive.get("bounds"))
         if (clip != region or primitive_bounds != region
                 or region[2] <= 0 or region[3] <= 0):
-            raise InkTouchError("pattern region and clip do not match the completed Rect")
+            raise InkTouchError("pattern region and clip do not match the completed host")
         ink = paint.get("stroke")
         opacity = paint.get("opacity", 1.0)
         if not is_hex_color(ink) or not _unit_interval(opacity):
@@ -44,6 +44,18 @@ def pattern_ink_touches(primitive: Mapping[str, Any],
             raise InkTouchError("unreadable pattern primitives")
         # Validate all declared tile geometry before any possible false result.
         primitives = tuple(_tile_primitive(item) for item in raw_primitives)
+        host_cells = None
+        if primitive.get("kind") == "Symbol":
+            symbol = primitive.get("symbol")
+            if not isinstance(symbol, Mapping) or not isinstance(symbol.get("outline"), (list, tuple)):
+                raise InkTouchError("unreadable completed pattern host contour")
+            outline = symbol["outline"]
+            host_cells = filled_trapezoids(outline)
+            x, y, width, height = region
+            if any(not (x <= px <= x + width and y <= py <= y + height)
+                   for command in outline for point in command["points"]
+                   for px, py in (_pair(point),)):
+                raise InkTouchError("pattern host contour is outside its completed region")
         subject = _bounds(subject_bounds)
         clipped_subject = _intersect_rect(subject, clip)
         if clipped_subject is None:
@@ -62,12 +74,17 @@ def pattern_ink_touches(primitive: Mapping[str, Any],
             raise InkTouchError("pattern contact candidate tile-copy limit exceeded")
         if float(opacity) == 0:
             return False
+        query_polygons = (world_corners,) if host_cells is None else tuple(
+            polygon for cell in host_cells if (polygon := _clip_polygon_rect(cell, clipped_subject)))
+        tile_polygons = tuple(tuple(_inverse(point, origin, tile_w, tile_h, angle) for point in polygon)
+                              for polygon in query_polygons)
         for tile_i in range(first_i, last_i + 1):
             for tile_j in range(first_j, last_j + 1):
-                local = tuple((px - tile_i * tile_w, py - tile_j * tile_h) for px, py in tile_corners)
-                cell = _clip_polygon_rect(local, (0.0, 0.0, tile_w, tile_h))
-                if cell and any(_primitive_touches(item, cell) for item in primitives):
-                    return True
+                for polygon in tile_polygons:
+                    local = tuple((px - tile_i * tile_w, py - tile_j * tile_h) for px, py in polygon)
+                    cell = _clip_polygon_rect(local, (0.0, 0.0, tile_w, tile_h))
+                    if cell and any(_primitive_touches(item, cell) for item in primitives):
+                        return True
         return False
     except InkTouchError:
         raise

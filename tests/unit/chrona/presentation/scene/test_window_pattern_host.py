@@ -121,3 +121,10 @@ def test_multiple_closed_subpaths_retain_hole_contour():
         ("move", ((20, 22),)), ("line", ((20, 25),)), ("line", ((23, 25),)),
         ("line", ((23, 22),)), ("line", ((20, 22),))))
     assert serialize_scene(_scene(_host(symbol=SymbolGeometry(OUTLINE + hole))))
+
+
+def test_closed_quadratic_segment_and_return_line_is_a_valid_curved_contour():
+    outline = (PathCommand("move", ((10, 32),)),
+               PathCommand("quadratic", ((10, 20), (40, 20))),
+               PathCommand("line", ((10, 32),)))
+    assert serialize_scene(_scene(_host(symbol=SymbolGeometry(outline))))

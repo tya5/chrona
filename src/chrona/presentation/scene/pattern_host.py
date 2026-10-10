@@ -60,7 +60,7 @@ def completed_pattern_host_valid(*, kind: str, purpose: str, visual_role: str,
         else:
             end = command.points[-1]
         if command.kind != "move":
-            count += 1
+            count += len(command.points) if command.kind != "close" else 1
         if any(not (isfinite(px) and isfinite(py) and x <= px <= x + width
                     and y <= py <= y + height) for px, py in command.points):
             return False
