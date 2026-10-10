@@ -734,7 +734,12 @@ allocation rule, while multi-span shortage retains its visible fallback.
 Flow uses lines at the resolved inline extent, a flow item is measured at the
 inline extent it is arranged at (its natural width, never shrunk to the line:
 section 13 keeps natural sizes and diagnoses the overflow), so a content-sized
-nested flow wraps the same way in measurement and in arrangement (#1206), and anchored overlay
+nested flow wraps the same way in measurement and in arrangement (#1206), a
+content-sized flow is allocated by its parent row or column at the line stack it
+wraps into at the inline extent the parent gives it (never the tallest child
+alone: #1219; a `fitContent` or `minmax` host is bounded by that stack as a
+grid or overlay host is, a fixed host keeps its declared extent and an honest
+`W_LAYOUT_VISIBLE_OVERFLOW`), and anchored overlay
 decoration does not enlarge the normal-flow minimum. A fixed or capped track
 contributes its declared capacity rather than a promise to absorb more
 content; its shortage follows the visible fallback above.
@@ -749,6 +754,15 @@ fallback and typed shortage evidence; it MUST NOT claim that the host grew,
 treat completed-canvas overflow as successful reallocation, manufacture
 extra blank allocation, or refuse an otherwise valid render. The completed
 canvas still includes emitted geometry as required by Section 13.
+The least sufficient extent is the least integral extent whose complete native
+arrangement satisfies every requirement. While a block extent cannot change any
+inline demand, allocations are non-decreasing in it and one probe's deficit
+finds that extent. When a node's inline size is derived from its block size (an
+inline `aspectRatio`), a taller extent can widen a flow so that it wraps into
+fewer lines and shrinks a slot, so the requirement is not monotone in the
+extent: Layout then selects the first integral extent from the requested minimum
+up to the verified deficit extent at which the native manifest fits, never a
+later one found by bisection (#1214).
 
 For content-sized allocation, the measured natural per-row and table-timeline
 requirements MUST be established before `rowDistribution: fill` distributes

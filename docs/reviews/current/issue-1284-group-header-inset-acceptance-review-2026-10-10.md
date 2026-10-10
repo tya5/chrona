@@ -2,7 +2,9 @@
 
 # Issue #1284 — group-header inset acceptance
 
-Source: `058b3e7822d9f0e8a939fb6055e2bc2b39496d3d`, refreshed by an ordinary merge of ready main `0617e671c51ed14fe0d242a37a18a744bd85b7e8`. [Published contract and architecture review](https://github.com/tya5/chrona/issues/1284#issuecomment-6087491029). Layout owns the offset and measured content extent; glyph bounds and Scene projection are unchanged. [PR #1312](https://github.com/tya5/chrona/pull/1312) needs fresh readiness checks: the previous head passed functional checks but failed readiness on its stale main base. Public artifact and release gates remain pending; do not close.
+Source PR: [#1312](https://github.com/tya5/chrona/pull/1312), head `c82a335935eb80352dbe94277da341bbf5a0783c`, base `e614aae4a8c891546e1863c609d03fac9a707002`. Public contract and design: [Status](https://github.com/tya5/chrona/issues/1284#issuecomment-6087491029). Layout owns the offset and measured text extent; glyph geometry and Scene projection remain unchanged.
+
+PR checks: [run 38006132465](https://github.com/tya5/chrona/actions/runs/38006132465) succeeded, including all pytest shards, newest-Python reproduction, conformance, MCP and derived readiness. [Artifact audit](https://github.com/tya5/chrona/pull/1312#issuecomment-6091376674): 151 safe paths verified against the exact base; all 71 SVGs and 71 Scenes byte-identical; no additions or removals; only the diagnostic inventory changed. Current-base focused batch: 16 passed; S0: 38 schema structures equal. PR #1312 merged as `92fdc4cbefc7a9509328f031a15b4736a4a56394`.
 
 ## Literal issue acceptance
 
@@ -13,11 +15,15 @@ Source: `058b3e7822d9f0e8a939fb6055e2bc2b39496d3d`, refreshed by an ordinary mer
 
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
-| 1 | With `labelInset: i` the header text's inline start equals the band start plus `i` times the font size, Scene-checkable per group; absent is today's output. | not met | [Synthetic tests](../../../tests/integration/test_group_header_label_inset.py) check both groups, plain/marked Scene and SVG starts, and absent/zero equality. Exact public before/after byte audit remains pending. | — |
-| 2 | The measured header width includes the inset, so `groupHeaderBand: text` (if present) encloses it. | met | [Extent tests](../../../tests/integration/test_group_header_label_inset.py) verify plain/marked completed Layout content extents from band start through measured glyph/run ends. Text-sized bands are not present in this slice; #1283 consumes that closure. | — |
-| 3 | Synthetic fixture test. | met | [New integration tests](../../../tests/integration/test_group_header_label_inset.py) and capability batch: 14 passed (6.14s). Existing group/tab/Theme regression batch: 248 passed (51.55s). | — |
-| 4 | Do not edit `examples/**`; the reviewer adopts it in slide 25. | met | [Source diff](https://github.com/tya5/chrona/compare/7503e53076e4e0b924051b89759a9ece6ca9d038...264f27afdff894899b19c754de500b9f82987c1f) contains only Layout, capability admission, schema description, specification and synthetic tests. | — |
+| 1 | With `labelInset: i` the header text's inline start equals the band start plus `i` times the font size, Scene-checkable per group; absent is today's output. | met | [Synthetic integration tests at the PR head](https://github.com/tya5/chrona/blob/c82a335935eb80352dbe94277da341bbf5a0783c/tests/integration/test_group_header_label_inset.py) check both groups, plain and marked Scene/SVG positions, and absent/zero equality. The [artifact audit](https://github.com/tya5/chrona/pull/1312#issuecomment-6091376674) confirms all 71 public SVG/Scene outputs remain byte-identical. | — |
+| 2 | The measured header width includes the inset, so `groupHeaderBand: text` (if present) encloses it. | met | The same [integration tests at the PR head](https://github.com/tya5/chrona/blob/c82a335935eb80352dbe94277da341bbf5a0783c/tests/integration/test_group_header_label_inset.py) verify the completed Layout content extent from the band start through the inset and shown glyph/run ends; #1283 consumes that extent for the optional text-sized band. | — |
+| 3 | Synthetic fixture test. | met | [Integration tests at the PR head](https://github.com/tya5/chrona/blob/c82a335935eb80352dbe94277da341bbf5a0783c/tests/integration/test_group_header_label_inset.py) and the current-base focused batch: 16 passed. | — |
+| 4 | Do not edit `examples/**`; the reviewer adopts it in slide 25. | met | PR diff has no `examples/**` changes. [Board #454, Lanes](https://github.com/tya5/chrona/issues/454) assigns target adoption to the reviewer and states it is not a dev closing condition. | — |
 
 ## Programme-level criteria (optional)
 
-None. After the base refresh, the 14 inset/capability tests passed again and S0 passed with 38 schema structures equal (four unchanged baseline-invalid fixtures). Earlier broader evidence: 248 group/tab/Theme tests, 451 mapped documents/739 probes, and Scene delivery ownership (31 dataclasses/225 fields). Required next evidence: exact-head PR artifact/checks, then exact-main three-OS pytest/conformance/wheel with this review published.
+None.
+
+## Architecture conclusion
+
+Layout owns the offset and measured content extent. Source implementation is merged; the exact-main full release gate for a commit containing this final review remains pending. No issue closure is claimed.

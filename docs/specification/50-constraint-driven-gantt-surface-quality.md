@@ -367,6 +367,20 @@ Scene/SVG bytes remain unchanged. See the [L3b route-evidence correction](../des
 
 ### 3.4 Groups and legend
 
+**Text-sized header bands (#1283).** Layout Profile
+`backgroundExtents.groupHeaderBand: text` uses the completed header-content
+inline interval: band start through the last nonsuppressed measured text/run
+end, including the leading `labelInset` or existing tab reservation. It adds
+no trailing or symmetric padding and clamps the interval to the table column.
+The existing text overflow policy and band block extent are unchanged. With
+all runs suppressed the interval contains only its leading inset (zero width
+when that inset is zero); missing horizontal content bounds fail with
+`E_LAYOUT_BACKGROUND_EXTENT`. Folded-point completion updates only the text
+band's block extent, retaining its completed inline interval. Other background
+extents, group-decoration selection and vertical tag cells remain unchanged.
+`text` is not admitted for other background roles. Layout owns the completed
+Rect; Scene and adapters do not measure or fit the band.
+
 **Horizontal header inset (#1284).** `groupHeader.labelInset` names a finite,
 nonnegative font-size ratio. Layout places plain and role-marked header text
 at the header band start plus that ratio times `groupHeader`'s font size;

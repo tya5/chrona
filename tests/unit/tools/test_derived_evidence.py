@@ -35,12 +35,15 @@ def test_inventory_is_stable_and_matches_tracked_public_materializers():
     assert scene_paths() == tuple(sorted(scene_paths()))
     # A PR never authors declared evidence (the snapshot writes it into the work tree), so a
     # slide a PR adds is untracked until the main sync commits it: count untracked, unignored files.
+    # Likewise a slide a PR removes keeps its tracked outputs until that sync retires them; the snapshot
+    # deletes them from the work tree, so count only files that are present.
     tracked = subprocess.run(
         ("git", "ls-files", "-z", "--cached", "--others", "--exclude-standard", "examples"),
         check=True, capture_output=True,
     ).stdout.split(b"\0")
     tracked_outputs = tuple(sorted(
-        path.decode() for path in tracked if path.endswith((b".svg", b".scene.json"))
+        path.decode() for path in tracked
+        if path.endswith((b".svg", b".scene.json")) and Path(path.decode()).is_file()
     ))
     assert tuple(sorted(path.relative_to(Path.cwd()).as_posix()
                          for path in outputs)) == tracked_outputs

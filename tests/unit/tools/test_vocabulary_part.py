@@ -81,6 +81,33 @@ def test_a_vocabulary_definition_is_an_untyped_enum_so_a_site_keeps_its_derefere
         assert len(set(definition["enum"])) == len(definition["enum"]), name
 
 
+def test_background_extent_is_shared_and_text_is_only_group_header_extension():
+    expected = ["table", "timeline", "both"]
+    assert _defs()["backgroundExtent"]["enum"] == expected
+    layout = _schema("layout-profile-v0.10.schema.yaml")
+    extents = layout["properties"]["reviewSurface"]["properties"]["backgroundExtents"]["properties"]
+    vocabulary_ref = f"{VOCABULARY_ID}#/$defs/backgroundExtent"
+    assert extents["rowBand"] == {"$ref": vocabulary_ref}
+    assert extents["groupBand"] == {"$ref": vocabulary_ref}
+    assert extents["groupHeaderBand"]["anyOf"] == [
+        {"$ref": vocabulary_ref},
+        {"description": "The measured group-header label interval, including declared leading inset, clamped to the table column.",
+         "examples": ["text"], "const": "text"},
+    ]
+
+    for role in ("rowBand", "groupBand"):
+        validator = _site_validator(
+            "layout-profile-v0.10.schema.yaml",
+            f"/properties/reviewSurface/properties/backgroundExtents/properties/{role}",
+        )
+        assert all(validator.is_valid(value) for value in expected)
+        assert not validator.is_valid("text"), role
+
+    validator = _site_validator("layout-profile-v0.10.schema.yaml", "/properties/reviewSurface/properties/backgroundExtents/properties/groupHeaderBand")
+    assert all(validator.is_valid(value) for value in (*expected, "text"))
+    assert not any(validator.is_valid(value) for value in ("Text", "table ", "none", None, 3))
+
+
 # --------------------------------------------------------------------------------------------
 # No live entry outside the parts spells out a vocabulary the part defines
 # --------------------------------------------------------------------------------------------
