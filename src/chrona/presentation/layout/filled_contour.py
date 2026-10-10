@@ -207,6 +207,49 @@ def clip_span_contour(
         raise WindowContourError(source_ref, facet, "intersection", "operation-failed") from error
 
 
+def intersect_window_progress_contour(
+    progress: tuple[PathCommand, ...], completed_host: tuple[PathCommand, ...],
+    visible_host: Rect, *, source_ref: str, facet: str,
+) -> tuple[PathCommand, ...]:
+    """Intersect original progress with the already-notched visible host fill.
+
+    The caller supplies original progress geometry, never a fraction reapplied
+    to the shortened host. Empty intersection is an intentional absence; no
+    second notch or substitute rectangle is introduced.
+    """
+    try:
+        _validate(completed_host, stage="input")
+        _rectangle_commands(visible_host)
+        x, y, width, height = (float(visible_host.inline), float(visible_host.block),
+                               float(visible_host.inline_size), float(visible_host.block_size))
+        if not _control_bounds_within(completed_host, x, y, x + width, y + height):
+            raise WindowContourError(source_ref, facet, "input", "outside-host")
+        if not progress:
+            return ()
+        _validate(progress, stage="input")
+        local_progress = _host_local(progress, x, y, width, height)
+        local_host = _host_local(completed_host, x, y, width, height)
+        if any(not isfinite(value) for commands in (local_progress, local_host)
+               for command in commands for point in command.points for value in point):
+            raise ContourUnionError("input", "nonfinite")
+        result = _window_op(_to_pathops(local_progress), _to_pathops(local_host),
+                            pathops.PathOp.INTERSECTION, source_ref=source_ref,
+                            facet=facet, stage="intersection")
+        if not tuple(result.segments):
+            return ()
+        completed = _host_world(_from_pathops(result), x, y, width, height)
+        if not _control_bounds_within(completed, x, y, x + width, y + height):
+            raise WindowContourError(source_ref, facet, "output", "outside-host")
+        return completed
+    except WindowContourError:
+        raise
+    except ContourUnionError as error:
+        raise WindowContourError(source_ref, facet,
+                                 "output" if error.stage == "output" else "input", error.reason) from error
+    except Exception as error:
+        raise WindowContourError(source_ref, facet, "intersection", "operation-failed") from error
+
+
 def _quadratic_commands(current: tuple[float, float], points: tuple[tuple[float, float], ...]
                         ) -> tuple[PathCommand, ...]:
     """Expand a qCurve-style control sequence using exact implied midpoints."""

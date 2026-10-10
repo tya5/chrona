@@ -29,6 +29,47 @@ def _rounded():
             C("line", ((0.0, 2.0),)))
 
 
+@pytest.mark.parametrize("original_finish,expected_finish", [(5, 5), (10, 9)])
+def test_original_progress_intersects_notched_host_without_rescaling(original_finish, expected_finish):
+    host = _host(4, 0, 5, 4)
+    notched = clip_span_contour(_rect(0, 0, 10, 4), host, cut_start=True,
+                                cut_finish=True, source_ref="span", facet="planned")
+    progress = contour_ops.intersect_window_progress_contour(
+        _rect(0, 0, original_finish, 4), notched, host, source_ref="span", facet="progress")
+    coordinates = _coordinates(progress)
+    assert is_closed_stroke_contour(progress)
+    assert min(x for x, _ in coordinates) == 4
+    assert max(x for x, _ in coordinates) == pytest.approx(expected_finish)
+    assert (4.625, 2) in coordinates  # completed host notch, not a new progress notch
+    assert all(4 <= x <= 9 and 0 <= y <= 4 for x, y in coordinates)
+    if original_finish == 10:
+        assert (8.375, 2) in coordinates
+
+
+@pytest.mark.parametrize("progress", [(), _rect(0, 0, 2, 4), _rect(10, 0, 2, 4)])
+def test_progress_outside_visible_host_is_intentionally_empty(progress):
+    host = _host(4, 0, 5, 4)
+    notched = clip_span_contour(_rect(0, 0, 10, 4), host, cut_start=True,
+                                cut_finish=True, source_ref="span", facet="planned")
+    assert contour_ops.intersect_window_progress_contour(
+        progress, notched, host, source_ref="span", facet="progress") == ()
+
+
+def test_progress_contour_failure_is_bounded_without_rectangular_fallback(monkeypatch):
+    host = _host(4, 0, 5, 4)
+    notched = clip_span_contour(_rect(0, 0, 10, 4), host, cut_start=True,
+                                cut_finish=True, source_ref="span", facet="planned")
+    def fail(*args, **kwargs):
+        raise RuntimeError("private backend detail must not appear")
+    monkeypatch.setattr(contour_ops.pathops, "op", fail)
+    with pytest.raises(WindowContourError) as error:
+        contour_ops.intersect_window_progress_contour(
+            _rect(0, 0, 5, 4), notched, host, source_ref="span", facet="progress")
+    assert error.value.diagnostic_id == "E_LAYOUT_WINDOW_CLIP"
+    assert "stage=intersection" in error.value.detail
+    assert "private" not in error.value.detail
+
+
 @pytest.mark.parametrize(
     ("cut_start", "cut_finish", "expected_apices"),
     [(True, False, ((2.5, 5.0),)), (False, True, ((17.5, 5.0),)),
