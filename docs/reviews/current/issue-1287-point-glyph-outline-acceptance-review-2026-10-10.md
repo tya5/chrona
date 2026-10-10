@@ -2,10 +2,11 @@
 
 # Issue #1287 — point glyph outline acceptance
 
-Validation checkpoint: `7a3d12472f1908db0e32b9062c2b20516693eed8`, ordinarily
-adopting #1283's published pending PR head `018efae2556ee3faada55f08d9ebfb32ae6c0b00`
-and ready main `fed9727461e6fefa5b092cdea638bf3a722dfcef`.
-This is a preparation checkpoint, not a merged dependency or release base.
+Validation checkpoint: `7a3d12472f1908db0e32b9062c2b20516693eed8`.
+Preparation now ordinarily adopts merged #1283 and ready main
+`0fd085d17422fd332c49b4b75ebdf43fe9459f93` at `dc54cc886a63cc78ece88fbdf7eaae23244e091a`.
+Product, tests, schemas, dependencies and tooling remain byte-identical to the tested checkpoint.
+Final PR publication waits for higher-priority #1327; this is not release acceptance.
 [Selected design and architecture review](https://github.com/tya5/chrona/issues/1287#issuecomment-6088427990).
 Local acceptance is verified; public artifact and release gates remain pending. Do not close.
 
