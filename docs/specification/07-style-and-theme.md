@@ -307,6 +307,28 @@ role's `stroke`, the `fill` is the substrate, and the pattern is clipped to the 
 `finish-delta-chip.pattern`. Other pattern values and all other
 role/property pairs retain their current contracts.
 
+**Label-chip shapes (#1286).** The four chip roles (`as-of-label-chip`,
+`member-label-chip`, `finish-delta-chip`, `period-label-chip`) MAY name a
+`chipShape` token. Its closed value is `{kind: rectangle}`, `{kind: burst,
+points: N, innerRatio: q}`, or `{kind: catalog, glyph, sliceInsets, unitEm}`.
+Absent and explicit rectangle retain the existing chip geometry, paint and
+SVG output; Scene provenance still records each authored Theme's real content
+identity. Absent-token backward byte checks use unchanged resource inputs.
+Shape selection does not activate a chip without `backgroundTreatment: fill`.
+Burst requires integer `N >= 2` and finite `0 < q <= 1`. Its `2N` alternating
+vertices have outer/inner radii `R`/`qR`, with an outer tip at the top. Layout
+encloses the padded text in the polygon's inscribed disk, retains the actual
+vertex envelope and asymmetric text inset, and uses that completed geometry
+for allocation, candidate placement and collision obstacles. Catalogue chips
+use the existing nine-slice geometry over padded text plus fixed borders;
+the nonzero union of their completed fill paths MUST cover the padded text
+rectangle (`E_LAYOUT_CHIP_TEXT_GROUND_INVALID` at the selected `chipShape`
+property otherwise). No implicit rectangular substrate is added. Nonrect
+chips exclude patterned paint, nonzero/capsule corner rounding and
+`box-follows-text` (`E_THEME_TOKEN_TYPE` at the conflicting property);
+`text-follows-box` remains valid. Scene projects completed Symbol parts and
+Text, and contrast reads their actual fill rather than their enclosing bounds.
+
 **Group header runs (#1192).** A View's group-header template may mark a placeholder with a Theme text role (`{ordinal|group-ordinal}`); the role is an ordinary declared text role (typography properties and a `fill` binding, as a View-named `textRole`) and is a consumer for the #1117 check. Header ink (#1244): a Theme MAY bind `group-header.fill`; the header text that is not a marked span (the unmarked runs of a marked template, an unmarked template's whole header and a vertical tag) is then painted with it in scene role `group-header`, so the ground-text contrast gate judges it over the header band under the Theme contrast policy, and a marked span keeps its own role ink. Without the binding the header takes the `text` ink as before. No Theme schema changes: `group-header` was already a registered role whose `fill` nothing read. The rule is Specification 50 section 3.4.
 
 **Group tab (#882, #1166).** Theme role `group-tab` declares a tab Rect targeted at group-header text (`tabTarget: header`, the default and today's behavior) or at the vertical group-tag cell (`tabTarget: tag`). `tabTarget` is an optional `header | tag` enum in the live `theme-v0.15` schema (Specification 56 section 3.2); absence preserves existing header output byte-for-byte. A tag target requires `groupHeader.writingMode: vertical`, including when the role is not drawable. Header-only `tabInlineSize`, `tabBlockSize` and `tabPosition` are invalid on a tag target rather than silently ignored. `tabGap` remains a named number token in px: it separates a header tab from its text, while for a tag plate it insets all four sides of the allocated cell. The vertical tag's natural text line-box remains `fontSize × lineHeight`; the allocated column adds `2 × tabGap` so a quarter-turned sideways run fits within the inset plate. A Theme without the role is unchanged. Geometry, failures and contrast are Specification 50 section 3.4.

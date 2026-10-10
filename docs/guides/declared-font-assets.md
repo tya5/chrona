@@ -60,32 +60,41 @@ private user's PNG/PDF, or its metrics may be shared for SVG layout, but a
 materialized raster snapshot copies its bytes and must not be redistributed
 unless its license permits that use.
 
-### Installed font for a private draft PNG
+### Installed fonts are a normal source
 
-For a one-off SVG or PNG that is not evidence, `chrona render --system-fonts`
-can use the exact installed faces named by the Theme. It is an explicit,
-machine-local opt-in: Chrona uses exact packaged or `--font-metrics`-declared
-faces first, then resolves only missing Theme family/weight pairs through
-fontconfig. The selected collection face, when applicable, supplies Layout
-metrics; PNG receives the matching file with renderer-wide system fallback
-disabled. A selected face must support each numeric-spacing mode the Theme
-actually requests; unsupported tabular figures are never simulated.
+Fonts installed on the machine are used on every render path: `chrona render`, `render-review` through a Render
+Context, and SVG, PNG and PDF output. Output therefore depends on the fonts installed where it is rendered, and that
+is intended: someone who owns a face and wants to design with it can, and reproducibility across machines is not a
+goal of this path. Chrona ships no new fonts; declared `package` or `context` metrics keep working and take
+precedence when a Theme names a declared family.
 
-<!-- chrona:doc-check skip: requires a host with the Theme's installed face and fontconfig bridge -->
-```sh
-chrona render project.yaml --view view.yaml --theme theme.yaml --scheme scheme.yaml \
-  --layout layout.yaml --system-fonts --format png --output private-review.png
-```
+A Theme `fontFamily` is an ordered list, for example `Hiragino Sans, Yu Gothic, Noto Sans JP`:
 
-The host bridge is `fc-match` from fontconfig. Install it with
-`brew install fontconfig` on macOS, your distribution's fontconfig package on
-Linux, or a fontconfig installation on Windows. A missing bridge, absent face,
-or mismatched face reports `E_FONT_SYSTEM_UNAVAILABLE`,
-`E_FONT_SYSTEM_MISSING`, or `E_FONT_SYSTEM_MISMATCH`; it never substitutes.
-Draft system fonts support SVG and PNG only. PDF, Typst, TikZ, immutable
-`render-review`, Context serialization, and `materialize` reject this volatile
-state with `E_FONT_SYSTEM_IMMUTABLE`. The emitted image may be shared, but the
-host path and font-resolution state are not written to Scene provenance.
+1. Layout uses the first family that is declared by the Context's font descriptor or installed here. An installed
+   face is found by family name (the typographic and the legacy name, collection files included) and the weight
+   nearest the role's by the CSS font-weight rule.
+2. If a character is missing from that face, the next family of the list that has it supplies it, as in a browser,
+   and the packaged Noto Sans comes last. Text that no listed or packaged face covers fails with
+   `E_FONT_GLYPH_UNAVAILABLE` naming the character and the faces tried.
+3. If no listed family is declared or installed, the role uses the packaged Noto Sans at the role's weight. CSS
+   generic names (`sans-serif`, `monospace`) end a list and are not resolved.
+
+The Scene records the face each role resolved to (`textLayout.family`), and the render reports one note per role whose
+list was resolved: `I_FONT_ROLE_RESOLVED:role=...;requested=<list>;face=<family>`, or the warning
+`W_FONT_FALLBACK_PACKAGED:role=...;requested=<list>;face=Noto Sans` when it fell back. SVG names the resolved family
+and embeds nothing; PNG and PDF rasterize with the resolved files (the PDF adapter embeds TrueType outlines only: an installed
+face with PostScript outlines, such as the macOS Hiragino collections, is refused for PDF with `E_RENDER_FONT_CLOSURE` naming the
+face, and renders to SVG and PNG). A selected face must support each numeric-spacing
+mode the Theme requests: unsupported tabular figures are never simulated (the role degrades to proportional and
+says so).
+
+No fontconfig is needed. Chrona scans the standard font directories and reads each file's family and weight with
+fontTools: macOS `/System/Library/Fonts`, `/Library/Fonts` and `~/Library/Fonts`; Windows `%WINDIR%\Fonts` and
+`%LOCALAPPDATA%\Microsoft\Windows\Fonts`; Linux fontconfig's file list when `fc-list` is present, else the XDG
+font directories. `CHRONA_FONT_PATH` adds directories (separated like `PATH`). The index is built once per process.
+
+`--system-fonts` is still accepted. It asks for the stricter exact-face lookup through fontconfig's `fc-match` (a
+missing face is `E_FONT_SYSTEM_MISSING`, not a fallback) and is no longer limited to SVG and PNG.
 
 ## Bring your own pair
 
