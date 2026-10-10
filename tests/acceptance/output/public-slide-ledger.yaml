@@ -7,6 +7,7 @@
 version: chrona/public-slide-ledger/v0.1
 slides:
   aster-ssd/overview: {axisLabels: 11}
+  chrona-roadmap/roadmap: {axisLabels: 3, chips: ['chip:as-of-label']}
   controller-z-ja/axis-secondary: {axisLabels: 12}
   controller-z-ja/executive: {axisLabels: 7}
   controller-z/annotation-kinds: {axisLabels: 7, dvtHosted: true}

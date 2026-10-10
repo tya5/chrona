@@ -1,0 +1,805 @@
+version: chrona/theme/v0.15
+kind: theme
+id: chrona-roadmap
+body:
+  values:
+    radius-plan:
+      type: radius
+      value: 1.5
+    radius-actual:
+      type: radius
+      value: 1
+    radius-ghost:
+      type: radius
+      value: 2
+    radius-chip:
+      type: radius
+      value: 3
+    comparison-gap:
+      type: number
+      value: 0.8
+    ghost-padding:
+      type: number
+      value: 0.72
+    chip-padding:
+      type: number
+      value: 0.35
+    opacity.axis-band:
+      type: number
+      value: 1
+    relation-source-terminal:
+      type: marker
+      value:
+        shape: none
+        headLength: 5
+        headWidth: 5
+        attachmentOffset: 0
+    dash.as-of:
+      type: dashPattern
+      value:
+      - 4
+      - 3
+    editorial:
+      type: fontFamily
+      value: Noto Sans, sans-serif
+    weight.regular:
+      type: fontWeight
+      value: '400'
+    weight.bold:
+      type: fontWeight
+      value: '700'
+    size.heading:
+      type: number
+      value: 22
+    size.subtitle:
+      type: number
+      value: {ref: size.body}
+    size.body:
+      type: number
+      value: 12.5
+    size.group:
+      type: number
+      value: 12
+    size.numeric:
+      type: number
+      value: 12
+    size.period:
+      type: number
+      value: 10.5
+    size.axis-quarter:
+      type: number
+      value: {ref: size.note}
+    size.axis:
+      type: number
+      value: 12
+    size.legend:
+      type: number
+      value: 12
+    size.asof:
+      type: number
+      value: 10.5
+    size.note:
+      type: number
+      value: 11.5
+    leading.tight:
+      type: number
+      value: 1.15
+    leading.body:
+      type: number
+      value: 1.45
+    icon-scale:
+      type: number
+      value: 1
+    icon-gap:
+      type: number
+      value: 0.25
+    letter-spacing:
+      type: number
+      value: 0
+    text-transform:
+      type: textTransform
+      value: none
+    numeric-spacing:
+      type: numericSpacing
+      value: proportional
+    tabular-spacing:
+      type: numericSpacing
+      value: tabular
+    arrow:
+      type: marker
+      value:
+        shape: triangle
+        headLength: 6
+        headWidth: 6
+        attachmentOffset: 1
+    milestone-symbol:
+      type: symbol
+      value:
+        shape: glyph
+        viewBox:
+        - 100
+        - 100
+        parts:
+        - d: M50 0L100 50L50 100L0 50Z
+          paint: fill
+    milestone-symbol-baseline:
+      type: symbol
+      value:
+        shape: glyph
+        viewBox:
+        - 100
+        - 100
+        parts:
+        - d: M50 4L96 50L50 96L4 50Z
+          paint: stroke
+    stroke-width:
+      type: number
+      value: 1
+    header-size:
+      type: number
+      value: 11
+    header-spacing:
+      type: number
+      value: 0.08
+    opacity.calendar-exception:
+      type: number
+      value: 1
+    note-container:
+      type: annotationContainer
+      value:
+        outline: rectangle
+        cornerRadius: 0.26
+        contentInsetEm: {top: 0.7, right: 0.7, bottom: 0.7, left: 0.7}
+        inlineSize: fill
+        border:
+          start:
+            width: 3
+            paint: kind
+    hatch:
+      type: pattern
+      value:
+        kind: diagonal-hatch
+        tileInlineSize: 5
+        tileBlockSize: 5
+        angle: 45
+        strokeWidth: 1.2
+    spacing.none:
+      type: number
+      value: 0
+    spacing.m:
+      type: number
+      value: 14
+    spacing.l:
+      type: number
+      value: {expr: "2 * {spacing.m}"}
+    panel.side:
+      type: number
+      value: 420
+    panel.review.block:
+      type: number
+      value: 960
+    timeline-day-width:
+      type: number
+      value: 2
+    timeline-calendar-closed-min-day-width:
+      type: number
+      value: 2
+    timeline-row-height:
+      type: number
+      value: 21.846
+    timeline-row-padding:
+      type: number
+      value: 3
+    timeline-mark-size:
+      type: number
+      value: 16
+    timeline-axis-height:
+      type: number
+      value: {expr: "{axis-lane-quarter} + {axis-lane-month}"}
+    network-node-min-inline:
+      type: number
+      value: 120
+    network-node-min-block:
+      type: number
+      value: 36
+    network-rank-gap:
+      type: number
+      value: 24
+    table-column-width:
+      type: number
+      value: 120
+    table-column-gutter:
+      type: number
+      value: {ref: spacing.m}
+    table-indent:
+      type: number
+      value: 8
+    timeline-relation-radius:
+      type: number
+      value: 4
+    size.secondary:
+      type: number
+      value: {ref: size.note}
+    slot-heading-size:
+      type: number
+      value: {ref: header-size}
+    slot-heading-spacing:
+      type: number
+      value: 0.1
+    symbol-height-actual:
+      type: number
+      value: 0.875
+    symbol-height-ghost:
+      type: number
+      value: 0.8125
+    table-header-height:
+      type: number
+      value: {ref: timeline-axis-height}
+    timeline-group-header-size:
+      type: number
+      value: 20
+    opacity.group-band:
+      type: number
+      value: 1
+    opacity.group-header-band:
+      type: number
+      value: 1
+    opacity.calendar-closed:
+      type: number
+      value: 1
+    mark-height-container:
+      type: number
+      value: 1
+    mark-height-content:
+      type: number
+      value: 0.6
+    summary-bar-height:
+      type: number
+      value: 0.3333333333333333
+    mark-offset-start:
+      type: number
+      value: 0
+    mark-offset-nested:
+      type: number
+      value: 0.2
+    mark-paint-back:
+      type: number
+      value: 0
+    mark-paint-middle:
+      type: number
+      value: 1
+    mark-paint-front:
+      type: number
+      value: 2
+    mark-radius-square:
+      type: number
+      value: 0
+    mark-radius-rounded:
+      type: number
+      value: 0.25
+    icon-mark-scale:
+      type: number
+      value: 0.55
+    icon-mark-gap:
+      type: number
+      value: 0
+    kind-label-size:
+      type: number
+      value: 10.5
+    kind-label-leading:
+      type: number
+      value: 1.2
+    kind-secondary-size:
+      type: number
+      value: 9
+    kind-secondary-leading:
+      type: number
+      value: 1.2
+    kind-bar-padding:
+      type: number
+      value: 0.6
+    kind-label-spacing:
+      type: number
+      value: 0.08
+    kind-secondary-spacing:
+      type: number
+      value: 0.16
+    note-rail-width:
+      type: number
+      value: 250
+    kind-upper:
+      type: textTransform
+      value: uppercase
+    axis-lane-quarter:
+      type: number
+      value: 22
+    axis-lane-month:
+      type: number
+      value: 22
+    axis-cell-gap:
+      type: number
+      value: 1
+    axis-label-inset:
+      type: number
+      value: 0
+    opacity.period-band:
+      type: number
+      value: 0.09
+    text-transform-lower:
+      type: textTransform
+      value: lowercase
+    period-spacing:
+      type: number
+      value: 0.04
+    period-stroke-width:
+      type: number
+      value: 1
+    dash.leader:
+      type: dashPattern
+      value:
+      - 2
+      - 3
+    legend-item-min:
+      type: number
+      value: 100
+    mark-height-planned:
+      type: number
+      value: 0.5
+    mark-height-ghost:
+      type: number
+      value: 0.85
+    mark-height-actual:
+      type: number
+      value: 0.21
+    dash.ghost:
+      type: dashPattern
+      value:
+      - 3
+      - 2
+    legend-swatch-inline-size:
+      type: number
+      value: 22
+    legend-gap:
+      type: number
+      value: 26
+    legend-swatch-gap:
+      type: number
+      value: 6
+    legend-swatch-block-size:
+      type: number
+      value: 12
+    legend-point-swatch-size:
+      type: number
+      value: 12
+    legend-block:
+      type: number
+      value: 22
+  markStack:
+    members: [[planned, missing-actual], [actual]]
+    gap: comparison-gap
+    frame: {roles: [snapshot], padding: ghost-padding}
+  roles:
+    legend-swatch:
+      swatchInlineSize: legend-swatch-inline-size
+      swatchGap: legend-swatch-gap
+      swatchBlockSize: legend-swatch-block-size
+      pointSwatchSize: legend-point-swatch-size
+    axis-rule:
+      strokeWidth: stroke-width
+    as-of-label-chip:
+      backgroundTreatment: fill
+      chipPadding: chip-padding
+      viewerFit: text-follows-box
+      cornerRadius: radius-chip
+    group-band:
+      backgroundTreatment: none
+      backgroundPaintOrder: 10
+    row-band:
+      backgroundTreatment: none
+      backgroundPaintOrder: 10
+    group-header-band:
+      backgroundTreatment: fill
+      backgroundPaintOrder: 13
+      opacity: opacity.group-header-band
+    calendar-closed:
+      backgroundTreatment: fill
+      backgroundPaintOrder: 12
+      opacity: opacity.calendar-closed
+    axis-band-decoration:
+      backgroundTreatment: fill
+      backgroundPaintOrder: 10
+      opacity: opacity.axis-band
+      cellGap: axis-cell-gap
+    text:
+      fontFamily: editorial
+      fontWeight: weight.regular
+      fontSize: size.body
+      lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+      viewerFit: text-follows-box
+    numeric:
+      fontFamily: editorial
+      fontWeight: weight.bold
+      fontSize: size.numeric
+      lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: tabular-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+      viewerFit: text-follows-box
+    heading:
+      fontFamily: editorial
+      fontWeight: weight.bold
+      fontSize: size.heading
+      lineHeight: leading.tight
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+      viewerFit: text-follows-box
+    subtitle:
+      fontFamily: editorial
+      fontWeight: weight.regular
+      fontSize: size.subtitle
+      lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+      viewerFit: text-follows-box
+    axis:
+      fontFamily: editorial
+      fontWeight: weight.bold
+      fontSize: size.axis
+      lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+      viewerFit: text-follows-box
+    as-of-label:
+      fontFamily: editorial
+      fontWeight: weight.bold
+      fontSize: size.asof
+      lineHeight: leading.tight
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+    legend:
+      fontFamily: editorial
+      fontWeight: weight.regular
+      fontSize: size.legend
+      lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+      viewerFit: text-follows-box
+    annotation:
+      fontFamily: editorial
+      fontWeight: weight.regular
+      fontSize: size.note
+      lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+    annotation-note-box:
+      strokeWidth: stroke-width
+      annotationContainer: note-container
+      viewerFit: text-follows-box
+    annotation-note-text:
+      contrastTreatment: required
+      fontFamily: editorial
+      fontWeight: weight.regular
+      fontSize: size.note
+      lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+    table-cell-secondary:
+      fontFamily: editorial
+      fontWeight: weight.regular
+      fontSize: size.secondary
+      lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      viewerFit: text-follows-box
+    slot-heading:
+      fontFamily: editorial
+      fontWeight: weight.bold
+      fontSize: slot-heading-size
+      lineHeight: leading.body
+      letterSpacing: slot-heading-spacing
+      textTransform: kind-upper
+      numericSpacing: numeric-spacing
+    summary:
+      fontFamily: editorial
+      fontWeight: weight.regular
+      fontSize: size.legend
+      lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+      viewerFit: text-follows-box
+    metric:
+      fontFamily: editorial
+      fontWeight: weight.bold
+      fontSize: size.heading
+      lineHeight: leading.tight
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+      viewerFit: text-follows-box
+    groupHeader:
+      fontFamily: editorial
+      fontWeight: weight.bold
+      fontSize: size.group
+      lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+      viewerFit: text-follows-box
+    gate:
+      strokeWidth: stroke-width
+    tableColumnLabel:
+      fontFamily: editorial
+      fontWeight: weight.regular
+      fontSize: header-size
+      lineHeight: leading.body
+      letterSpacing: header-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+      viewerFit: text-follows-box
+    calendar-exception:
+      backgroundTreatment: fill
+      backgroundPaintOrder: 12
+      opacity: opacity.calendar-exception
+    milestoneSymbol:
+      symbol: milestone-symbol
+    milestoneSymbolActual:
+      symbol: milestone-symbol
+    milestoneSymbolBaseline:
+      symbol: milestone-symbol-baseline
+    relationSourceTerminal:
+      marker: relation-source-terminal
+    relationTargetTerminal:
+      marker: arrow
+    dependency:
+      marker: arrow
+      strokeWidth: stroke-width
+    missing-actual:
+      pattern: hatch
+      markHeight: mark-height-planned
+      markPaintOrder: mark-paint-front
+      strokeWidth: stroke-width
+      cornerRadius: radius-plan
+    axis-major:
+      strokeWidth: stroke-width
+    axis-minor:
+      strokeWidth: stroke-width
+    network-edge:
+      strokeWidth: stroke-width
+    critical-edge:
+      strokeWidth: stroke-width
+    variance-behind:
+      contrastTreatment: required
+    variance-ahead:
+      contrastTreatment: deemphasized
+    variance-on-track:
+      contrastTreatment: required
+    missing-actual-cell:
+      contrastTreatment: required
+    asOf:
+      strokeWidth: stroke-width
+      dash: dash.as-of
+    as-of:
+      strokeWidth: stroke-width
+      dash: dash.as-of
+    snapshot:
+      strokeWidth: stroke-width
+      markHeight: mark-height-ghost
+      markPaintOrder: mark-paint-back
+      symbolHeight: symbol-height-ghost
+      dash: dash.ghost
+      cornerRadius: radius-ghost
+    scenario:
+      markHeight: mark-height-container
+      markOffset: mark-offset-start
+      markPaintOrder: mark-paint-back
+      markCornerRadius: mark-radius-square
+    planned:
+      strokeWidth: stroke-width
+      markHeight: mark-height-planned
+      markPaintOrder: mark-paint-middle
+      symbolHeight: symbol-height-actual
+      cornerRadius: radius-plan
+    actual:
+      strokeWidth: stroke-width
+      markHeight: mark-height-actual
+      markPaintOrder: mark-paint-front
+      symbolHeight: symbol-height-actual
+      cornerRadius: radius-actual
+    network-node:
+      strokeWidth: stroke-width
+    progress-fill:
+      strokeWidth: stroke-width
+    summary-bar:
+      markHeight: summary-bar-height
+    icon-mark:
+      iconScale: icon-mark-scale
+      iconGap: icon-mark-gap
+    annotation-kind-label:
+      contrastTreatment: required
+      fontFamily: editorial
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      fontWeight: weight.bold
+      fontSize: kind-label-size
+      lineHeight: kind-label-leading
+      letterSpacing: kind-label-spacing
+    annotation-kind-accent: {}
+    axisQuarter:
+      fontFamily: editorial
+      fontWeight: weight.bold
+      fontSize: size.axis-quarter
+      lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+      laneBlockSize: axis-lane-quarter
+      viewerFit: text-follows-box
+    axisMonth:
+      fontFamily: editorial
+      fontWeight: weight.regular
+      fontSize: size.axis
+      lineHeight: leading.body
+      letterSpacing: letter-spacing
+      textTransform: text-transform
+      numericSpacing: numeric-spacing
+      iconScale: icon-scale
+      iconGap: icon-gap
+      laneBlockSize: axis-lane-month
+      labelInset: axis-label-inset
+      viewerFit: text-follows-box
+    axis-band-decoration2:
+      backgroundTreatment: none
+      backgroundPaintOrder: 10
+      opacity: opacity.axis-band
+      cellGap: axis-cell-gap
+    axis-label2: {}
+    axis-label3: {}
+    axis-cell-separator:
+      strokeWidth: stroke-width
+    period-band:
+      backgroundTreatment: fill
+      backgroundPaintOrder: 14
+      opacity: opacity.period-band
+    period-label:
+      contrastTreatment: required
+      fontFamily: editorial
+      fontWeight: weight.regular
+      fontSize: size.period
+      lineHeight: leading.body
+      letterSpacing: period-spacing
+      textTransform: text-transform-lower
+      numericSpacing: numeric-spacing
+    annotation-note-leader:
+      strokeWidth: stroke-width
+      dash: dash.leader
+  colorBindings:
+    axis-rule.stroke: rule
+    background.fill: surface
+    text.fill: text
+    member-label-inside-planned.fill: insideLabelPlanned
+    member-label-inside-actual.fill: insideLabelActual
+    member-label-inside-snapshot.fill: insideLabelSnapshot
+    member-label-inside-scenario.fill: insideLabelScenario
+    subtitle.fill: textMuted
+    table-cell-secondary.fill: textMuted
+    legend.fill: textMuted
+    slot-heading.fill: textMuted
+    annotation.fill: surfaceRaised
+    note-index.fill: accent
+    annotation-note-box.fill: surfaceRaised
+    annotation-note-box.stroke: surfaceRaised
+    annotation-note-text.fill: text
+    metric.fill: text
+    axis-major.stroke: neutral
+    axis-minor.stroke: surfaceRaised
+    axis-band-decoration.fill: surfaceRaised
+    group-band.fill: category:default
+    row-band.fill: category:default
+    group-header-band.fill: surfaceRaised
+    planned.fill: category:bar
+    planned.stroke: category:barEdge
+    network-node.fill: surfaceRaised
+    network-node.stroke: text
+    network-edge.stroke: textMuted
+    critical-edge.stroke: negative
+    snapshot.fill: surface
+    snapshot.stroke: accent
+    summary-bar.fill: accent
+    actual.fill: category:actualInk
+    actual.stroke: category:actualInk
+    milestone.fill: text
+    missing-actual.fill: surface
+    missing-actual.stroke: accent
+    variance-ahead.fill: positive
+    variance-on-track.fill: textMuted
+    variance-behind.fill: negative
+    missing-actual-cell.fill: textMuted
+    dependency.stroke: category:relationInk
+    calendar-closed.fill: category:closed
+    calendar-exception.fill: category:exception
+    gate.fill: text
+    gate.stroke: text
+    tableColumnLabel.fill: textMuted
+    as-of.stroke: warning
+    as-of-label-chip.fill: category:asofChip
+    as-of-label.fill: category:asofInk
+    progress-fill.fill: warning
+    progress-fill.stroke: surface
+    icon-mark.fill: surface
+    annotation-kind-label.fill: text
+    annotation-kind-accent.fill: warning
+    axis-band-decoration2.fill: surfaceRaised
+    axis-label2.fill: text
+    axis-label3.fill: textMuted
+    axis-cell-separator.stroke: rule
+    period-band.fill: category:window
+    period-label.fill: accent
+    annotation-note-leader.stroke: textMuted
+  metrics:
+    text.body.size: size.body
+    text.body.lineHeight: leading.body
+    timeline.dayWidth: timeline-day-width
+    timeline.calendarClosed.minimumDayWidth: timeline-calendar-closed-min-day-width
+    timeline.row.minBlockSize: timeline-row-height
+    timeline.row.paddingBlock: timeline-row-padding
+    timeline.mark.blockSize: timeline-mark-size
+    timeline.axis.blockSize: timeline-axis-height
+    network.node.minInlineSize: network-node-min-inline
+    network.node.minBlockSize: network-node-min-block
+    network.rank.gap: network-rank-gap
+    table.column.minInlineSize: table-column-width
+    table.column.gutter.inlineSize: table-column-gutter
+    table.indent.inlineSize: table-indent
+    table.header.blockSize: table-header-height
+    timeline.groupHeader.blockSize: timeline-group-header-size
+    timeline.relation.cornerRadius: timeline-relation-radius
+  colorScales:
+    owner:
+      palette: [bus, payload, ait, ground, launch, ops]
+  annotationKinds:
+    risk:
+      label: RISK
+      title: '{label} · {subjectId}'
+      color: negative
+      colorAlso: [header, leader]
+    note:
+      label: NOTE
+      title: '{label} · {subjectId}'
+      color: accent
+      colorAlso: [header, leader]
