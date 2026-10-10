@@ -244,9 +244,11 @@ body:
     source:
       facet: finishDelta
     format: signedNumber
+    zero: plain
     missing: blank
     missingBy:
-      inProgress: em-dash
+      inProgress:
+        text: '?'
       dueUnobserved: blank
       notYetDue: blank
     align: end
