@@ -301,7 +301,7 @@ def _parser() -> JsonArgumentParser:
     command = sub.add_parser("init", help="create a non-overwriting local Chrona project")
     command.add_argument("directory", nargs="?", default=".")
     command.add_argument("--example", choices=example_ids(),
-                         help="create a full named corpus example instead of the editable minimal starter")
+                         help="create a named example instead of the editable minimal starter: halcyon-1 is the full corpus, onboarding the seven numbered tutorial stages")
 
     skill = sub.add_parser("skill", help="copy the packaged chrona agent skill")
     skill_sub = skill.add_subparsers(dest="skill_command", required=True, parser_class=JsonArgumentParser)
