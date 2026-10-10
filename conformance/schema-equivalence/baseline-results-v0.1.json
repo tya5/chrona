@@ -2468,19 +2468,7 @@
   },
   {
    "error": null,
-   "path": "examples/controller-z/contexts/axis-tiers.yaml",
-   "schema": "render-context-v0.16.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
    "path": "examples/controller-z/contexts/capabilities.yaml",
-   "schema": "render-context-v0.16.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
-   "path": "examples/controller-z/contexts/composition-compact.yaml",
    "schema": "render-context-v0.16.schema.yaml",
    "valid": true
   },
@@ -2546,19 +2534,7 @@
   },
   {
    "error": null,
-   "path": "examples/controller-z/generated/axis-tiers.scene.json",
-   "schema": "scene-v0.6.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
    "path": "examples/controller-z/generated/capabilities.scene.json",
-   "schema": "scene-v0.6.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
-   "path": "examples/controller-z/generated/composition-compact.scene.json",
    "schema": "scene-v0.6.schema.yaml",
    "valid": true
   },
@@ -2624,12 +2600,6 @@
   },
   {
    "error": null,
-   "path": "examples/controller-z/layouts/executive-review-compact.yaml",
-   "schema": "layout-profile-v0.9.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
    "path": "examples/controller-z/layouts/executive-review.yaml",
    "schema": "layout-profile-v0.9.schema.yaml",
    "valid": true
@@ -2659,12 +2629,6 @@
    "error": null,
    "path": "examples/controller-z/schemes/executive-light.yaml",
    "schema": "color-scheme-v0.2.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
-   "path": "examples/controller-z/themes/axis-tiers.yaml",
-   "schema": "theme-v0.11.schema.yaml",
    "valid": true
   },
   {
@@ -2700,12 +2664,6 @@
   {
    "error": null,
    "path": "examples/controller-z/views/annotations.yaml",
-   "schema": "view-v0.27.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
-   "path": "examples/controller-z/views/axis-tiers.yaml",
    "schema": "view-v0.27.schema.yaml",
    "valid": true
   },
@@ -2789,24 +2747,6 @@
   },
   {
    "error": null,
-   "path": "examples/halcyon-1/contexts/08-gallery-dark.yaml",
-   "schema": "render-context-v0.16.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
-   "path": "examples/halcyon-1/contexts/09-gallery-mono.yaml",
-   "schema": "render-context-v0.16.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
-   "path": "examples/halcyon-1/contexts/10-gallery-network-wallboard.yaml",
-   "schema": "render-context-v0.16.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
    "path": "examples/halcyon-1/contexts/11-overlay-briefing.yaml",
    "schema": "render-context-v0.16.schema.yaml",
    "valid": true
@@ -2820,12 +2760,6 @@
   {
    "error": null,
    "path": "examples/halcyon-1/contexts/13-gallery-editorial.yaml",
-   "schema": "render-context-v0.16.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
-   "path": "examples/halcyon-1/contexts/14-gallery-technical-print.yaml",
    "schema": "render-context-v0.16.schema.yaml",
    "valid": true
   },
@@ -2885,24 +2819,6 @@
   },
   {
    "error": null,
-   "path": "examples/halcyon-1/generated/08-gallery-dark.scene.json",
-   "schema": "scene-v0.6.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
-   "path": "examples/halcyon-1/generated/09-gallery-mono.scene.json",
-   "schema": "scene-v0.6.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
-   "path": "examples/halcyon-1/generated/10-gallery-network-wallboard.scene.json",
-   "schema": "scene-v0.6.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
    "path": "examples/halcyon-1/generated/11-overlay-briefing.scene.json",
    "schema": "scene-v0.6.schema.yaml",
    "valid": true
@@ -2916,12 +2832,6 @@
   {
    "error": null,
    "path": "examples/halcyon-1/generated/13-gallery-editorial.scene.json",
-   "schema": "scene-v0.6.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
-   "path": "examples/halcyon-1/generated/14-gallery-technical-print.scene.json",
    "schema": "scene-v0.6.schema.yaml",
    "valid": true
   },
@@ -2975,12 +2885,6 @@
   },
   {
    "error": null,
-   "path": "examples/halcyon-1/layouts/technical-print.yaml",
-   "schema": "layout-profile-v0.9.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
    "path": "examples/halcyon-1/layouts/wallboard-programme-board.yaml",
    "schema": "layout-profile-v0.9.schema.yaml",
    "valid": true
@@ -3023,12 +2927,6 @@
   },
   {
    "error": null,
-   "path": "examples/halcyon-1/profiles/technical-print-detail.yaml",
-   "schema": "review-detail-profile-v0.1.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
    "path": "examples/halcyon-1/project.yaml",
    "schema": "project-v0.7.schema.yaml",
    "valid": true
@@ -3054,12 +2952,6 @@
   {
    "error": null,
    "path": "examples/halcyon-1/schemes/print-mono.yaml",
-   "schema": "color-scheme-v0.2.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
-   "path": "examples/halcyon-1/schemes/technical-print.yaml",
    "schema": "color-scheme-v0.2.schema.yaml",
    "valid": true
   },
@@ -3102,12 +2994,6 @@
   {
    "error": null,
    "path": "examples/halcyon-1/themes/print.yaml",
-   "schema": "theme-v0.11.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
-   "path": "examples/halcyon-1/themes/technical-print.yaml",
    "schema": "theme-v0.11.schema.yaml",
    "valid": true
   },
@@ -3192,12 +3078,6 @@
   {
    "error": null,
    "path": "examples/halcyon-1/views/editorial.yaml",
-   "schema": "view-v0.27.schema.yaml",
-   "valid": true
-  },
-  {
-   "error": null,
-   "path": "examples/halcyon-1/views/technical-print.yaml",
    "schema": "view-v0.27.schema.yaml",
    "valid": true
   },

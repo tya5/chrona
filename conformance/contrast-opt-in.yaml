@@ -10,17 +10,11 @@
 # decision, #987 and #1126). Ids are Theme resource ids, not file names.
 version: chrona/contrast-opt-in/v0.1
 themes:
-  - annotation-artwork
-  - annotation-border
   - annotation-kinds
   - annotation-rounded
-  - as-of-cone
   - axis-cell-corners
   - axis-secondary-ja
-  - axis-ticks
-  - axis-tiers
   - briefing
-  - calendar-exception
   - capabilities
   - chrona-builtin-control-room-dark
   - chrona-builtin-editorial
@@ -33,15 +27,9 @@ themes:
   - elevated-light
   - executive-light
   - executive-light-ja
-  - gate-paint
-  - gate-symbols
   - glyph-gates
-  - group-tabs
-  - hand-wobble
   - heading
   - in-progress
-  - legend-swatches
-  - line-colour
   - material-icons-light
   - orion-light
   - print
@@ -49,15 +37,8 @@ themes:
   - region-frames
   - slot-heading
   - surface-glow
-  - surface-texture
-  - table-header
-  - terminal-none
   - text-roles
-  - value-affixes
   - viewer-fit
   - wallboard
-  - wallboard-annotation-kinds
-  - wallboard-annotation-tilt
   - wallboard-image-notes
   - wallboard-text-compression
-  - wallboard-vertical-group-tags
