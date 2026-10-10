@@ -2,15 +2,14 @@
 
 # Issue #1287 — point glyph outline acceptance
 
-Current adoption: ready main `4f4ee94ccc21c8d3c85021a1dc50a931d068e044`,
-including #1283, #1327, dev B's #1219/#1273/#1214 and the reviewer's roadmap.
-[Derived gate](https://github.com/tya5/chrona/actions/runs/38027686440) succeeded.
-Integration after source adoption `73405aa1`: 77 focused tests pass (41.72s)
-and both technical-print regressions pass (2.86s). Bot adoption `9e35aaf5`
-changes no product/test bytes. Previous head `b55e10ed`
-[CI](https://github.com/tya5/chrona/actions/runs/38026333704) passes every
-substantive check; only exact-base readiness fails after main advances.
-Fresh 46-slide snapshot, current exact-head checks and containing-main release
+Integration `6c6a0669` adopts main source `4d7218afe02777a9ee69ec517be6fcf2cc31783b`
+including #1336 transformed-text bounds and #1279 canvas diagnostics.
+The combined point/contour/legend/host/transformed-text batch passes all
+127 tests (130.81s); independent ownership review finds no concrete blocker.
+Ready base `6ea100c4b0126c3b253630e7af3c1a74b25154a4` has successful
+[`derived-main`](https://github.com/tya5/chrona/actions/runs/38044030668).
+Its delta from source changes only generated evidence, not product/schema/tests.
+Fresh 46-slide snapshot, exact-head checks and containing-review main release
 remain required; predecessor audits are not current-base acceptance.
 [Selected design and architecture review](https://github.com/tya5/chrona/issues/1287#issuecomment-6088427990).
 Earlier [PR CI](https://github.com/tya5/chrona/actions/runs/38022653852) exposed a
@@ -37,9 +36,9 @@ Do not close.
 
 ## Programme-level criteria (optional)
 
-Current integration batch: 79 passed (44.58s), including independent frozen
-projection comparisons, the merged legend warning correction, hosted identities,
-real quadratic-hole decoding and both technical-print regressions. No schema,
+Integration covers independent frozen projection comparisons, merged legend
+and transformed-text corrections, hosted identities and real quadratic-hole
+decoding; both technical-print regressions previously pass. No schema,
 authored examples, generated or workflow changes are included. The archive batch
 and final #1327 acceptance table are separately committed documentation units.
 [Lane footprint/port test](../../../tests/unit/chrona/presentation/layout/test_point_outline.py) retains the completed gate width rather than planned-role fallback and keeps semantic ports on the original part. [Projection test](../../../tests/unit/chrona/presentation/scene/test_mark_geometry.py) separates intrinsic catalogue finish metadata from a role-bound outline.
@@ -48,17 +47,15 @@ and final #1327 acceptance table are separately committed documentation units.
 
 Layout completes union geometry, widths, footprints and clips; Scene resolves role ink and ordinary finish, forwarding catalogue width/cap/join only as an intrinsic tuple. Source parts and local geometry remain intact; an opted-in contour can enlarge the visible footprint and change downstream allocation/translation under existing rules. No Scene grammar or renderer geometry decision is added. Built-ins, stroke-only glyphs, outline-pattern ghosts and non-point consumers retain their existing treatment. Independent read-only review found no concrete ownership defect.
 
-Predecessor public effects at head `88729d8e` on base `127392c4`:
-[independent audit](https://github.com/tya5/chrona/pull/1331#issuecomment-6093939225)
-and [PR count table](https://github.com/tya5/chrona/pull/1331)
-discloses six changed SVG/Scene pairs and 39 unchanged pairs, including #12's
-182px lane-height growth and `eps-bustest` suppression. All 65 added contours
-match actual SVG path/paint/width; original Symbol parts remain. These collateral
-effects require an explicit review disposition, not a no-regression claim.
-[The subsequent b55 audit](https://github.com/tya5/chrona/pull/1331#issuecomment-6094139996)
-on base8388 checks 101 paths / 46 slides: seven changed pairs and 39 unchanged,
-including seven roadmap outlines and 14 rerouted relations. It too is predecessor
-evidence after the #1214 adoption; fresh current-head comparison is required.
+The [predecessor audit](https://github.com/tya5/chrona/issues/1287#issuecomment-6094388441)
+at `a79d9a06` / ready base `4f4ee94c` verifies 101 base blobs, seven changed
+and 39 byte-identical Scene/SVG pairs, with no added or retired paths.
+It discloses #12's 182px height growth and label/relation suppression.
+The [current review disposition](https://github.com/tya5/chrona/issues/1287#issuecomment-6093787922)
+withdraws dev A's self-imposed owner-reply prerequisite, not any literal criterion:
+requested stroke footprints may reflow under unchanged general rules. Retain
+per-slide attribution and inspect fresh output before merging; no assumed owner
+approval, corpus adjustment or blanket no-regression claim is permitted.
 
 Required release evidence: accept/dispose disclosed effects; fresh exact-head snapshot/checks;
 automatic sync and successful containing-review exact-main three-OS release.
