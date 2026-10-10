@@ -24,6 +24,6 @@ Implementation: `dbd88829`. [Current design/architecture/implementation record](
 
 Layout carries completed per-header band padding separately from measured content; only positive-width nonsuppressed text activates it. Background composition consumes it only for the text-sized caption and table-clamps the completed Rect. Scene/adapters do not measure or select geometry. Leading/tab/ellipsis, folded block completion, other extents and authored resource identity remain unchanged. Root and independent Luna review found no ownership or contract gap.
 
-Own-venv integration/strip join: **77 passed**, two added cases initially rejected their incomplete synthetic Theme (missing opacity); corrected fixtures then **2 passed** (5.14s). No product workaround. Earlier integration37 and adjacent leading-inset/run/builder90 passed. No full release claim.
+Own-venv caption/text-extent integration: **39 passed** (44.10s), including plain/mixed-role independent-strip joins. Broader integration/strip join77 and adjacent leading-inset/run/builder90 passed. No full release claim.
 
-Schema-equivalence against READY `02ac93ab`: live Theme additive=1/equal=37; 482 documents/739 probes, four known invalid fixtures unchanged. Structural/corpus/diagnostic comparison passed; command **failed only its runtime budget** (L2+L3=81.1s >60s). CI must verify the budget; not a current PASS claim. Earlier `ff749b0b` comparison passed in40.4s. #1367 owns the stale View delta retirements; this item does not repeat them.
+Schema-equivalence against source main `39d6cc9a`: **PASS**, live Theme additive=1/equal=37; 482 documents/739 probes, four known invalid fixtures unchanged. L2+L3=58.8s within the60s budget. #1367 owns the stale View delta retirements; this item does not repeat them.
