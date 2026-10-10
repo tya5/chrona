@@ -3,13 +3,13 @@
 # Issue #1279 — canvas viewport acceptance
 
 Implementation: `43e30d82`, validated after ordinary merge
-`236600176a9c703f0440bf24e4d5bddd968a9e65`, adopting ready main
-`8388f8158da881a3bb1c2d93f0b175a7e3cc0a07` (roadmap included;
-exact `derived-main` completed/success). Combined viewport, transport, content-flow, footer and inline
-legend tests: 42 passed (9.72s). All 31 Scene dataclasses / 226 fields have
-explicit delivery owners. This preparation is not the published PR head.
-The fresh 46-slide audit, refreshed PR publication and exact-main release remain
-pending behind M0; do not close.
+`79c0a30fc8e5e9afe0c6a8d229d164c59faf2e7e`, adopting ready main
+`4f4ee94ccc21c8d3c85021a1dc50a931d068e044` (exact `derived-main`
+38027686440 completed/success). Combined viewport, transport, frame, provenance,
+coupled-flow and legend tests: 47 passed (12.12s). All 31 Scene dataclasses /
+226 fields have explicit delivery owners. The fresh 46-slide artifact audit and
+exact-main release remain pending; do not close. #1287 is explicitly parked
+for owner disposition; this diagnostic-only item is independent.
 Authority: [design](../../design/issue-1279-canvas-viewport-design-2026-10-10.md)
 and [implementation plan](../../planning/active/issue-1279-canvas-viewport-implementation-plan-2026-10-10.md).
 
@@ -81,6 +81,8 @@ tests/integration/test_canvas_viewport_warning_render.py
 tests/unit/chrona/usecases/test_canvas_viewport_warning_transport.py` (11 passed).
 Delivery command: `.venv/bin/python tools/check_scene_primitive_delivery.py`.
 
+Current integration includes #1214 coupled-flow extent completion; 47 focused
+tests pass and no allocation, rendering or warning policy was changed to adopt it.
 Required release evidence: exact-head PR checks and generated snapshot audit,
 then automatic exact-main three-OS pytest/conformance/wheel smoke. Neither a
 focused pass nor an old green run satisfies that gate.
