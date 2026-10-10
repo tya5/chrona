@@ -310,7 +310,8 @@ role/property pairs retain their current contracts.
 **Label-chip shapes (#1286).** The four chip roles (`as-of-label-chip`,
 `member-label-chip`, `finish-delta-chip`, `period-label-chip`) MAY name a
 `chipShape` token. Its closed value is `{kind: rectangle}`, `{kind: burst,
-points: N, innerRatio: q}`, or `{kind: catalog, glyph, sliceInsets, unitEm}`.
+points: N, innerRatio: q, fit?: circle | ellipse}`, or
+`{kind: catalog, glyph, sliceInsets, unitEm}`.
 Absent and explicit rectangle retain the existing chip geometry, paint and
 SVG output; Scene provenance still records each authored Theme's real content
 identity. Absent-token backward byte checks use unchanged resource inputs.
@@ -319,7 +320,32 @@ Burst requires integer `N >= 2` and finite `0 < q <= 1`. Its `2N` alternating
 vertices have outer/inner radii `R`/`qR`, with an outer tip at the top. Layout
 encloses the padded text in the polygon's inscribed disk, retains the actual
 vertex envelope and asymmetric text inset, and uses that completed geometry
-for allocation, candidate placement and collision obstacles. Catalogue chips
+for allocation, candidate placement and collision obstacles. Optional burst
+`fit` defaults to `circle`, preserving the current calculation and vertex
+envelope; `ellipse` independently scales inline and block coordinates (#1366).
+`innerRatio: 1` is a regular polygon and uses the same fit contract; no separate
+shape kind is introduced. Rectangle and catalogue shapes do not accept `fit`.
+
+For padded text dimensions `W = textInline + 2 × insetInline` and
+`H = textBlock + 2 × insetBlock`, let `theta = pi/N`. The true unit inradius is
+`f = q` when `q <= cos(theta)`, otherwise
+`f = q × sin(theta) / hypot(1-q, 2 × sqrt(q) × sin(theta/2))`.
+Ellipse fit scales the existing alternating unit vertices by semiaxes
+`a = W / (sqrt(2) × f)` and `b = H / (sqrt(2) × f)`, without changing their
+angles. The affine image of the inscribed disk contains the entire padded
+text rectangle, including its corners. The actual nominal vertex envelope
+has block extent at most `(sqrt(2)/f) × H`, independently of text inline size;
+retain its asymmetric text inset rather than allocating a fictitious ellipse
+box. The existing once-completed visible stroke envelope remains additional
+to nominal geometry (Specification 46); it is not hidden inside this ratio.
+Ellipse fit requires positive padded dimensions; a zero axis fails with
+`E_LAYOUT_CHIP_TEXT_GROUND_INVALID` at the selected role's `chipShape`, reason
+`invalid-measurement`. Nonfinite completion retains its existing reason. No
+epsilon, circle fallback, text shrink or project-specific limit is introduced.
+Layout completes the geometry once for all four chip roles; allocation,
+placement and collision use that result, and Scene/adapters never refit it.
+
+Catalogue chips
 use the existing nine-slice geometry over padded text plus fixed borders;
 the nonzero union of their completed fill paths MUST cover the padded text
 rectangle (`E_LAYOUT_CHIP_TEXT_GROUND_INVALID` at the selected `chipShape`
