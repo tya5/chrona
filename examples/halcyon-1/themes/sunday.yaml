@@ -331,6 +331,9 @@ body:
     axis-label-inset:
       type: number
       value: 0.3
+    group-header.inset:
+      type: number
+      value: 0.8
     legend-item-min:
       type: number
       value: 90
@@ -555,7 +558,7 @@ body:
       fontSize: size.axis
       lineHeight: leading.body
       letterSpacing: header-spacing
-      textTransform: text-transform
+      textTransform: kind-upper
       numericSpacing: numeric-spacing
       iconScale: icon-scale
       iconGap: icon-gap
@@ -695,6 +698,7 @@ body:
       iconScale: icon-scale
       iconGap: icon-gap
       horizontalScale: squeeze.label
+      labelInset: group-header.inset
     gate:
       strokeWidth: stroke-width
     milestoneSymbol:
