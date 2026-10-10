@@ -13,6 +13,7 @@ from chrona.presentation.scene.model import (
     TextLayout, requires_lane_member_provenance, MarkerGeometry, PathCommand, completed_marker_outline,
 )
 from chrona.resources import schema_validator
+from chrona.presentation.scene.pattern_host import completed_pattern_host_valid
 
 
 class SceneSerializationError(ValueError):
@@ -153,6 +154,35 @@ def validate_scene_document(document: Mapping[str, Any]) -> None:
         raise _scene_error("surface cross-references must resolve among declared slots, rows, columns, primitives, and lane facts")
     if not _paint_clips_are_closed(document):
         raise _scene_error("E_PRESENTATION_PRIMITIVE_INVALID: completed primitive geometry must be contained by its paintClip bounds")
+    if not _pattern_hosts_are_closed(document):
+        raise _scene_error("E_PRESENTATION_PRIMITIVE_INVALID: pattern requires an unchanged Rect phase or a closed window-cut Symbol host")
+
+
+def _pattern_hosts_are_closed(document: Mapping[str, Any]) -> bool:
+    """Apply the typed completed-host contract to schema-validated public facts."""
+    def bounds(value: Mapping[str, Any] | None) -> tuple[float, ...] | None:
+        return tuple(value[key] for key in ("inline", "block", "inlineSize", "blockSize")) if value is not None else None
+
+    for surface in document["surfaces"]:
+        for primitive in surface["primitives"]:
+            pattern = primitive.get("pattern")
+            if pattern is None:
+                continue
+            try:
+                outline = tuple(PathCommand(command["kind"], tuple(tuple(point) for point in command["points"]))
+                                for command in primitive.get("symbol", {}).get("outline", ()))
+            except ValueError:
+                return False
+            if not completed_pattern_host_valid(
+                    kind=primitive["kind"], purpose=primitive["purpose"], visual_role=primitive["visualRole"],
+                    bounds=bounds(primitive["bounds"]), catalog=bool(pattern.get("primitives")),
+                    origin=tuple(pattern["origin"]) if "origin" in pattern else None,
+                    region=bounds(pattern.get("regionBounds")), clip=bounds(pattern.get("clipBounds")),
+                    radius=pattern.get("cornerRadius"), outline=outline,
+                    paint_clipped="paintClip" in primitive,
+                    end_treatment=primitive.get("endTreatment", "closed")):
+                return False
+    return True
 
 
 def _paint_clips_are_closed(document: Mapping[str, Any]) -> bool:

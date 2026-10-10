@@ -15,6 +15,7 @@ from chrona.presentation.model.info_diagnostics import PresentationInfo
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, PrimitiveProvenance
 from chrona.presentation.model.semantic_registry import ContrastClass, contrast_binding, semantic_binding
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, TEXT_FOLLOWS_BOX, VIEWER_FIT_MODES
+from chrona.presentation.scene.pattern_host import completed_pattern_host_valid
 
 
 LANE_MEMBER_BINDING_IDS = (
@@ -470,7 +471,14 @@ class ScenePrimitive:
                     or self.clip_source_id is not None or self.image_fill_pending is not None))):
             raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} viewer_fit/pattern/clip_source_id/image_fill_pending; expected a known fit mode on Rect or Symbol, with box-follows-text only on a plain Rect; found mode={_brief(self.viewer_fit)}, kind={_brief(self.kind)}, pattern={_brief(self.pattern)}, clip_source_id={_brief(self.clip_source_id)}, image_fill_pending={_brief(self.image_fill_pending)}")
         if (((self.marker_start is not None or self.marker_end is not None) and self.kind != "Path")
-                or (self.pattern is not None and self.kind != "Rect")
+                or (self.pattern is not None and not completed_pattern_host_valid(
+                    kind=self.kind, purpose=self.purpose, visual_role=self.visual_role,
+                    bounds=self.bounds, catalog=bool(self.pattern.primitives),
+                    origin=self.pattern.origin, region=self.pattern.region_bounds,
+                    clip=self.pattern.clip_bounds, radius=self.pattern.corner_radius,
+                    outline=self.symbol.outline if isinstance(self.symbol, SymbolGeometry) else (),
+                    paint_clipped=self.paint_clip is not None, end_treatment=self.end_treatment,
+                    glyph=self.glyph_paint_mode is not None))
                 or (self.image_fill_pending is not None and self.kind not in {"Rect", "Symbol"})
                 or (self.paint is not None and self.paint.radial_gradient is not None and (
                     self.kind != "Rect" or self.pattern is not None
@@ -512,7 +520,7 @@ class ScenePrimitive:
                                                or self.icon_viewport is None
                                                or any(item <= 0 for item in self.icon_viewport)))
                 or (self.kind != "Icon" and self.icon_viewport is not None)):
-            raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} has incompatible completed fields; expected marker_start/marker_end only on Path, pattern only on Rect, symbol exactly on Symbol, radial paint only on plain filled Rect, glyph paint only on Symbol, table/lane/relation fields consistent with purpose/kind, and icon viewport only on Icon; found sourceRef={_brief(self.source_ref)}, kind={_brief(self.kind)}, purpose={_brief(self.purpose)}, marker_start={_brief(self.marker_start)}, marker_end={_brief(self.marker_end)}, pattern={_brief(self.pattern)}, symbol={_brief(self.symbol)}, radial_gradient={_brief(getattr(self.paint, 'radial_gradient', self.paint) if self.paint is not None else None)}, glyph_mode={_brief(self.glyph_paint_mode)}, table_row_id={_brief(self.table_row_id)}, table_column_id={_brief(self.table_column_id)}, lane_row_id={_brief(self.lane_row_id)}, lane_member_id={_brief(self.lane_member_id)}, from_instance_id={_brief(self.from_instance_id)}, to_instance_id={_brief(self.to_instance_id)}, icon_kind={_brief(self.icon_kind)}, icon_viewport={_brief(self.icon_viewport)}")
+            raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} has incompatible completed fields; expected marker_start/marker_end only on Path, pattern only on a phase-preserving Rect or completed closed window-cut Symbol, symbol exactly on Symbol, radial paint only on plain filled Rect, glyph paint only on Symbol, table/lane/relation fields consistent with purpose/kind, and icon viewport only on Icon; found sourceRef={_brief(self.source_ref)}, kind={_brief(self.kind)}, purpose={_brief(self.purpose)}, marker_start={_brief(self.marker_start)}, marker_end={_brief(self.marker_end)}, pattern={_brief(self.pattern)}, symbol={_brief(self.symbol)}, radial_gradient={_brief(getattr(self.paint, 'radial_gradient', self.paint) if self.paint is not None else None)}, glyph_mode={_brief(self.glyph_paint_mode)}, table_row_id={_brief(self.table_row_id)}, table_column_id={_brief(self.table_column_id)}, lane_row_id={_brief(self.lane_row_id)}, lane_member_id={_brief(self.lane_member_id)}, from_instance_id={_brief(self.from_instance_id)}, to_instance_id={_brief(self.to_instance_id)}, icon_kind={_brief(self.icon_kind)}, icon_viewport={_brief(self.icon_viewport)}")
         if self.end_treatment not in {"closed", "open"}:
             raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} end_treatment; expected 'closed' or 'open'; found {_brief(self.end_treatment)}")
         classified = contrast_binding(self.visual_role)

@@ -461,8 +461,10 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
                     source_data = commands_data(node.symbol.outline)
                 else:
                     source_data = path_data(node)
-                if paint.fill is not None:
-                    fill_attrs = attrs(paint, fill=True, stroke=False, opacity=False, effects=False)
+                fill_override = f"url(#{pattern_id(node.pattern, paint)})" if node.pattern is not None else None
+                if paint.fill is not None or fill_override is not None:
+                    fill_attrs = attrs(paint, fill=fill_override is None, stroke=False,
+                                       fill_override=fill_override, opacity=False, effects=False)
                     content += f'<path d="{source_data}" {fill_attrs}/>'
                 stroke_attrs = attrs(paint, fill=False, stroke=True, opacity=False, effects=False)
                 contour_data = commands_data(node.stroke_clip.outline) if node.stroke_clip.outline else source_data
@@ -512,7 +514,10 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
             append(node, text_markup(node))
         elif node.kind == "Symbol":
             if node.symbol is None or paint.image is not None: raise _failure("E_PRESENTATION_PRIMITIVE_INVALID", f"Symbol scene_id={node.scene_id!r} requires completed symbol geometry and no image paint")
-            appearance = attrs(paint, fill=paint.fill is not None, stroke=paint.stroke is not None)
+            appearance = (attrs(paint, fill=False, stroke=False,
+                                fill_override=f"url(#{pattern_id(node.pattern, paint)})")
+                          if node.pattern is not None else
+                          attrs(paint, fill=paint.fill is not None, stroke=paint.stroke is not None))
             append(node, f'<path {common} d="{commands_data(node.symbol.outline)}" {appearance}/>')
         elif node.kind == "Path":
             if len(node.points) < 2 or paint.stroke is None: raise _failure("E_PRESENTATION_PRIMITIVE_INVALID", f"Path scene_id={node.scene_id!r} requires at least two points and completed stroke; points={len(node.points)}, stroke_present={paint.stroke is not None}")
