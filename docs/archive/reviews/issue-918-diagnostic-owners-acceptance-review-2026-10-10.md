@@ -2,8 +2,7 @@
 
 # Issue 918 — diagnostic owner acceptance
 
-Status: implementation and evidence are met; publish this refreshed review and
-pass the exact-main release gate containing it before closing.
+Status: acceptance met and issue closed after the review-containing exact-main release.
 Source: [issue 918](https://github.com/tya5/chrona/issues/918), observed
 2026-10-10, including the consolidated 919–922 bodies.
 Merged implementation: [PR 1276](https://github.com/tya5/chrona/pull/1276)
@@ -15,13 +14,12 @@ Its [snapshot proof](https://github.com/tya5/chrona/pull/1309#issuecomment-60867
 audited artifact 11635094621 (`sha256:aa486b92a0a701cf5656cbb2c6e95b3d3d0b22c2e1b017888c31322ba368be19`):
 149 before/after paths, all 140 SVG/Scene files unchanged, and only the
 diagnostic inventory changed.
-The exact-main release on ready main `7503e53076e4e0b924051b89759a9ece6ca9d038`
-passed [run 37975649612](https://github.com/tya5/chrona/actions/runs/37975649612),
-including all three OS pytest/conformance/wheel jobs, MCP floor and newest-Python
-reproduction. This refreshed review still needs publication followed by the
-automatic exact-main release on the commit containing it.
+The review was published in `d4c93f64ae888d335c0aa4b412e05686894bf76b`.
+The exact-main release on that commit passed [run 37987979274](https://github.com/tya5/chrona/actions/runs/37987979274),
+including Ubuntu, macOS and Windows pytest/conformance/wheel-smoke, MCP floor
+and newest-Python public-materializer reproduction.
 Authorities: [design](../../design/issue-918-diagnostic-owners-design-2026-10-09.md)
-and [work record](../../planning/active/issue-918-diagnostic-owners-design-plan-2026-10-09.md).
+and [work record](../planning/issue-918-diagnostic-owners-design-plan-2026-10-09.md).
 
 ## Literal issue acceptance
 
@@ -66,7 +64,7 @@ CLI failed-node batch: 11 passed (42.95s), including three successive-command
 captures, exact warning fields, multiplicity and importer operands.
 Render consumers: three focused nodes passed before an interrupted slow batch;
 the skill-envelope node passed separately. Updated collision, legend, attachment
-and platform-specific font consumers await CI; no complete corpus run is claimed.
+and platform-specific font consumers passed the final release CI; no local full corpus run is claimed.
 Latest-main lane/inventory/render-envelope focused batch: 29 passed (8.57s).
 These are focused checks, not a substitute for full release CI.
 
@@ -152,9 +150,8 @@ SVG/Scene files are byte-identical. Every before-file matches ready main
 `5360a127`; the only changed path is the diagnostic inventory report.
 Archive members and the declared changed-path list were checked as a batch
 without extracting into the worktree. Corrected-head PR checks passed, followed
-by the three-OS release on ready main `7503e530`. Final
-acceptance-review publication and its exact-main release remain required before
-closure.
+by the three-OS release on ready main `7503e530`. The final review-containing
+release on `d4c93f64` also passed, as linked above.
 
 ### Every successful-render warning row
 
@@ -190,6 +187,4 @@ registration failures were corrected and individually checked. Do not edit
 generated inventories manually or count this local run as green. The CI
 schema-equivalence fix only separates code from owner detail; it does not
 reclassify the four known invalid corpus documents or relax an expected delta.
-The issue
-stays open until this refreshed review is published and the exact-main release
-on the commit containing it succeeds.
+The refreshed review and exact-main release are published; issue 918 is closed.
