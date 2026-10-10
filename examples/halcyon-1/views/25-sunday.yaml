@@ -199,7 +199,7 @@ body:
       every: 1
       role: labels
       label:
-        form: short-month
+        form: long-month
         align: start
         overflow: visible-overflow
         orientation: horizontal

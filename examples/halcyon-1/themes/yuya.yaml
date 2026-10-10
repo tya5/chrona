@@ -238,6 +238,12 @@ body:
     opacity.group-header-band:
       type: number
       value: 1
+    row-rule.width:
+      type: number
+      value: 0.5
+    opacity.row-rule:
+      type: number
+      value: 0.12
     opacity.calendar-closed:
       type: number
       value: 1
@@ -453,6 +459,9 @@ body:
       backgroundTreatment: fill
       backgroundPaintOrder: 13
       opacity: opacity.group-header-band
+    row-rule:
+      strokeWidth: row-rule.width
+      opacity: opacity.row-rule
     calendar-closed:
       backgroundTreatment: fill
       backgroundPaintOrder: 12
@@ -810,6 +819,7 @@ body:
     group-band.fill: category:default
     row-band.fill: category:default
     group-header-band.fill: category:default
+    row-rule.stroke: text
     group:bus.fill: category:bus
     group:payload.fill: category:payload
     group:ait.fill: category:ait
