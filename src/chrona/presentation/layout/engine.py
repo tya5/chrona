@@ -403,6 +403,7 @@ class _Arranger:
             (_distance(self.profile, f"{path}/gap") if is_slot and "gap" in node else None),
             (_distance(self.profile, f"{path}/itemMinInlineSize") if is_slot and "itemMinInlineSize" in node else None),
             heading=_slot_heading(node) if is_slot else None,
+            columns=int(node["columns"]) if is_slot and "columns" in node else None,
         ))
         if kind == "slot":
             measure = _slot_measurement(node, self.measurements, path)
