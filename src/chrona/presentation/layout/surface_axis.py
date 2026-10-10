@@ -317,6 +317,38 @@ def _axis_text_run_geometry(*, content: str, inline: float, baseline_block: floa
     return AxisTextRunGeometry(content, inline, baseline_block, bounds)
 
 
+def _axis_primary_outcomes(*, intervals: tuple[AxisInterval, ...], form: str,
+                           name_table: Any, tier_index: int, tier: AxisTier,
+                           scale: ScalePlacement, tokens: Any,
+                           treatment: TextTreatment, metrics: Any
+                           ) -> tuple[AxisIntervalOutcome, ...]:
+    """Measure each native candidate once, before clipped-host admission."""
+    inset = _axis_label_inset(tokens, tier, float(treatment.font_size))
+    outcomes = []
+    for item in intervals:
+        content = format_axis_tier_label(item, form, name_table)
+        if tier.label.overflow == "thin-with-record":
+            available = max(0.0, (item.natural_end - item.natural_start).days
+                            * scale.unit_ratio - inset)
+            run = _axis_text_run_geometry(
+                content=content, inline=0.0, baseline_block=0.0,
+                treatment=treatment, metrics=metrics, orientation=tier.label.orientation)
+            fits = float(run.bounds.inline_size) <= available
+        else:
+            fits = axis_label_fits(
+                content=content,
+                available_inline=max(0.0, coordinate_for_date(item.end, scale)
+                                     - coordinate_for_date(item.start, scale) - inset),
+                font_size=float(treatment.font_size), font_metrics=metrics,
+                letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
+                numeric_spacing=treatment.numeric_spacing, orientation=tier.label.orientation,
+                line_height=float(treatment.line_height))
+        outcomes.append(AxisIntervalOutcome(
+            f"axis-label:{tier_index}:{item.index}", item.start, item.end,
+            item.natural_start, item.natural_end, content, fits))
+    return tuple(outcomes)
+
+
 def measure_axis_tier(request: SurfaceLayoutRequest, scale: ScalePlacement, tier_index: int,
                       tier: AxisTier) -> AxisTierMeasurement:
     """Measure native tier choices and labels without admitting them to an axis host."""
@@ -332,6 +364,7 @@ def measure_axis_tier(request: SurfaceLayoutRequest, scale: ScalePlacement, tier
                        if tier.unit == "auto" and tier.label else (tier.unit,))
     diagnostics: list[str] = []
     decisions: list[PlacementDecision] = []
+    interval_outcomes = None
     try:
         if tier.unit == "auto":
             selected = None
@@ -341,21 +374,18 @@ def measure_axis_tier(request: SurfaceLayoutRequest, scale: ScalePlacement, tier
                     continue
                 trial = axis_intervals(start, end, candidate, tick_step=tier.every,
                                        fiscal_start_month=request.surface_content.axis_fiscal_start_month)
-                fits = all(axis_label_fits(
-                    content=format_axis_tier_label(item, forms[candidate], name_table),
-                    available_inline=(item.end - item.start).days * scale.unit_ratio,
-                    font_size=axis_size, font_metrics=metrics,
-                    letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
-                    numeric_spacing=treatment.numeric_spacing, orientation=tier.label.orientation,
-                    line_height=float(treatment.line_height)) for item in trial)
-                if fits or tier.label.overflow == "visible-overflow":
-                    selected, form = trial, forms[candidate]
+                trial_outcomes = _axis_primary_outcomes(
+                    intervals=trial, form=forms[candidate], name_table=name_table,
+                    tier_index=tier_index, tier=tier, scale=scale, tokens=tokens,
+                    treatment=treatment, metrics=metrics)
+                # Preserve the last declared trial on exhaustion: it is the
+                # coarsest unit, with honest omitted-candidate evidence.
+                selected, form, interval_outcomes = trial, forms[candidate], trial_outcomes
+                viable = (bool(thinning_schedule(tuple(bool(item.label_fits)
+                                                       for item in trial_outcomes)).retained_positions)
+                          if tier.label.overflow == "thin-with-record" else True)
+                if viable:
                     break
-            if selected is None:
-                candidate = next(item for item in ("day", "week", "month", "quarter", "half", "year")
-                                 if item in forms)
-                selected, form = axis_intervals(start, end, candidate, tick_step=tier.every,
-                                                fiscal_start_month=request.surface_content.axis_fiscal_start_month), forms[candidate]
             intervals = selected
         else:
             intervals = axis_intervals(start, end, tier.unit, tick_step=tier.every,
@@ -363,42 +393,29 @@ def measure_axis_tier(request: SurfaceLayoutRequest, scale: ScalePlacement, tier
     except ValueError as error:
         raise LayoutError(str(error), "/view/body/axis/tiers") from error
     if tier.role == "labels" and form is not None:
-        interval_outcomes = tuple(AxisIntervalOutcome(
-            f"axis-label:{tier_index}:{item.index}", item.start, item.end,
-            item.natural_start, item.natural_end,
-            format_axis_tier_label(item, form, name_table),
-            axis_label_fits(
-                content=format_axis_tier_label(item, form, name_table),
-                available_inline=max(0.0, coordinate_for_date(item.end, scale)
-                                     - coordinate_for_date(item.start, scale)
-                                     - _axis_label_inset(tokens, tier, axis_size)),
-                font_size=axis_size, font_metrics=metrics,
-                letter_spacing=float(treatment.letter_spacing), text_transform=treatment.transform,
-                numeric_spacing=treatment.numeric_spacing, orientation=tier.label.orientation,
-                line_height=float(treatment.line_height))) for item in intervals)
+        if interval_outcomes is None:
+            interval_outcomes = _axis_primary_outcomes(
+                intervals=intervals, form=form, name_table=name_table,
+                tier_index=tier_index, tier=tier, scale=scale, tokens=tokens,
+                treatment=treatment, metrics=metrics)
         fits = tuple(bool(item.label_fits) for item in interval_outcomes)
         if not all(fits) and tier.label.overflow == "thin-with-record":
-            try:
-                schedule = thinning_schedule(fits)
-            except ValueError:
-                interval_outcomes = tuple(replace(
-                    item, disposition="placed", reason=None if item.label_fits else "visible-overflow")
-                    for item in interval_outcomes)
-            else:
-                retained = set(schedule.retained_positions)
-                updated = []
-                for position, outcome in enumerate(interval_outcomes):
-                    if position in retained:
-                        updated.append(replace(outcome, disposition="placed"))
-                    else:
-                        updated.append(replace(
-                            outcome, disposition="thinned", reason="label-does-not-fit"))
-                        diagnostics.append(f"W_LAYOUT_AXIS_LABEL_THINNED:{outcome.candidate_id}:label-does-not-fit")
-                        decisions.append(PlacementDecision(
-                            outcome.candidate_id, f"/view/body/axis/tiers/{tier_index}",
-                            ("thin-with-record", "suppress"), "suppress", "suppressed"))
-                interval_outcomes = tuple(updated)
-                diagnostics.append(f"W_LAYOUT_AXIS_DENSITY:axis-tier:{tier_index}:thinned={len(schedule.thinned_positions)}")
+            schedule = thinning_schedule(fits)
+            retained = set(schedule.retained_positions)
+            updated = []
+            for position, outcome in enumerate(interval_outcomes):
+                if position in retained:
+                    updated.append(replace(outcome, disposition="placed"))
+                else:
+                    reason = ("label-does-not-fit" if not outcome.label_fits
+                              else "regular-cadence" if retained else "phase-unavailable")
+                    updated.append(replace(outcome, disposition="thinned", reason=reason))
+                    diagnostics.append(f"W_LAYOUT_AXIS_LABEL_THINNED:{outcome.candidate_id}:{reason}")
+                    decisions.append(PlacementDecision(
+                        outcome.candidate_id, f"/view/body/axis/tiers/{tier_index}",
+                        ("thin-with-record", "suppress"), "suppress", "suppressed"))
+            interval_outcomes = tuple(updated)
+            diagnostics.append(f"W_LAYOUT_AXIS_DENSITY:axis-tier:{tier_index}:thinned={len(schedule.thinned_positions)}")
         else:
             interval_outcomes = tuple(replace(
                 item, disposition="placed", reason=None if item.label_fits else "visible-overflow")
