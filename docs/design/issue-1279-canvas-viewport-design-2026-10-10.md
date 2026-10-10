@@ -1,6 +1,6 @@
 # Issue #1279 — declared canvas extent diagnostic
 
-[Plan](../planning/active/issue-1279-canvas-viewport-design-plan-2026-10-10.md).
+[Plan](../archive/planning/issue-1279-canvas-viewport-design-plan-2026-10-10.md).
 Normative authority: Specification 33 §13; report transport: Specs 08 §8 and 66 §3.
 
 ## Contract
