@@ -135,9 +135,9 @@ def _add_draft_target_arguments(command: argparse.ArgumentParser) -> None:
     command.add_argument("--visual-profile", default=None,
                          choices=("chrona-output/visual/v0.5-baseline", "chrona-output/visual/v0.6-svg", "chrona-output/visual/v0.6-png", "chrona-output/visual/v0.7-svg", "chrona-output/visual/v0.7-png"),
                          help="exact visual capability profile (default: the preset's preferred profile, else baseline)")
-    command.add_argument("--typesetter-engine", help="required with --format typst or tikz")
-    command.add_argument("--typesetter-version", help="required exact engine version with --format typst or tikz")
-    command.add_argument("--typesetter-adapter-grammar", help="required adapter grammar with --format typst or tikz")
+    command.add_argument("--typesetter-engine", help="the engine that will compile the output; required with --format typst or tikz: typst (for .typ) or tectonic (for .tex)")
+    command.add_argument("--typesetter-version", help="the exact engine version you will compile with (for example 0.13.1 for typst); recorded in the result, never looked up on this machine; required with --format typst or tikz")
+    command.add_argument("--typesetter-adapter-grammar", help="the output grammar: chrona-typst/v0.1 for typst, chrona-tikz/v0.1 for tectonic; required with --format typst or tikz")
 
 
 _OUTPUT_SUFFIX_TARGETS = {".svg": "svg", ".png": "png", ".pdf": "pdf", ".typ": "typst", ".tex": "tikz"}
