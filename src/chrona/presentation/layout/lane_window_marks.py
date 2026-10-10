@@ -3,6 +3,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from chrona.presentation.layout.surface_quality import MarkPlacement
 
 from chrona.presentation.layout.lane_projection import (
     ExpectedLaneMark, LaneProjectionClosure, LaneProjectionInstance, close_lane_projection,
@@ -97,6 +101,50 @@ def complete_lane_window_placement_absences(
 def _invalid(reason: str) -> None:
     raise LayoutError("E_LAYOUT_WINDOW_CLIP", "/projection/laneRows",
                       detail=f"stage=expected-mark-account; reason={reason}")
+
+
+def complete_lane_window_handoff(
+    marks: tuple[MarkPlacement, ...], *, projection: ReviewProjection, as_of: date | None,
+    visibility_index: ItemMarkVisibilityIndex,
+) -> tuple[tuple[LaneWindowPlacementAbsence, ...], frozenset[str]]:
+    """Close original expected marks against final placements, without parsing IDs."""
+    from chrona.presentation.layout.surface_quality import MarkPlacement
+    if not isinstance(marks, tuple) or any(not isinstance(mark, MarkPlacement) for mark in marks):
+        _invalid("invalid-final-placement")
+    account = complete_lane_window_mark_account(
+        projection, as_of=as_of, visibility_index=visibility_index)
+    absences = complete_lane_window_placement_absences(
+        account, projection=projection, as_of=as_of, visibility_index=visibility_index)
+    owners = lane_instance_owners(projection, account.source)
+    source_rows = {row.row_id: row for row in projection.rows}
+    expected_keys = []
+    admitted_rows = set()
+    for mark in account.admitted:
+        instance = mark.instance
+        lane_id, occurrence_id = owners[instance]
+        first = source_rows[instance.row_id].items[0]
+        member_id = first.item_id or first.object_id
+        original = visibility_index.lookup(
+            MarkOccurrence(MarkOccurrenceKind.LANE_SOURCE, instance.row_id, instance.item_id,
+                           instance.object_id, instance.source_kind), projection=projection, as_of=as_of)
+        try:
+            final = visibility_index.lookup(
+                MarkOccurrence(MarkOccurrenceKind.LANE_FINAL, lane_id, occurrence_id,
+                               instance.object_id, instance.source_kind), projection=projection, as_of=as_of)
+        except KeyError:
+            _invalid("missing-final-occurrence")
+        if original is not final:
+            _invalid("placement-owner-mismatch")
+        facet = next(item for item in original.facets if item.source.facet == mark.purpose)
+        expected_keys.append((f"{mark.purpose}:{lane_id}:{occurrence_id}", instance.object_id,
+                              lane_id, member_id, instance.source_kind, facet.source.semantic_id))
+        admitted_rows.add(lane_id)
+    actual = [(mark.placement_id, mark.source_ref, mark.lane_row_id, mark.lane_member_id,
+               mark.lane_source_kind, mark.semantic_id) for mark in marks]
+    if len(actual) != len(expected_keys) or set(actual) != set(expected_keys):
+        _invalid("final-emission-mismatch")
+    original_rows = {owners[mark.instance][0] for mark in account.source.expected_marks}
+    return absences, frozenset(original_rows - admitted_rows)
 
 
 def complete_lane_window_mark_account(

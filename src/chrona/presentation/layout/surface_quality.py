@@ -20,6 +20,7 @@ if TYPE_CHECKING:  # avoid the runtime cycle: canvas_overlays uses SlotPlacement
     from chrona.presentation.layout.label_chip_measurement import MeasuredLabelChip
     from chrona.presentation.layout.canvas_viewport import CanvasViewportWarning, DeclaredViewport
     from chrona.presentation.layout.surface_mark_visibility import ItemMarkVisibilityIndex
+    from chrona.presentation.layout.lane_window_marks import LaneWindowPlacementAbsence
 from chrona.presentation.model.theme_tokens import BOX_FOLLOWS_TEXT, FIT_ADJUSTS, TEXT_FOLLOWS_BOX
 from chrona.presentation.layout.window_label_admission import WindowLabelAbsence
 
@@ -741,9 +742,22 @@ class SurfacePlacement:
     diagnostic_provenance: tuple[DiagnosticProvenance, ...] = ()
     canvas_warning: CanvasViewportWarning | None = None
     window_label_absences: tuple[WindowLabelAbsence, ...] = ()
+    lane_window_absences: tuple[LaneWindowPlacementAbsence, ...] = ()
 
     def assert_valid(self) -> None:
         """Reject invalid required geometry before a renderer receives it."""
+        from chrona.presentation.layout.lane_window_marks import LaneWindowPlacementAbsence
+        if any(not isinstance(item, LaneWindowPlacementAbsence) for item in self.lane_window_absences):
+            raise ValueError("E_LAYOUT_WINDOW_CLIP: invalid completed lane absence")
+        keys = {(item.row_id, item.member_id, item.expected.placement_id)
+                for item in self.lane_window_absences}
+        emitted_ids = {mark.placement_id for mark in self.marks}
+        rows = {row.row_id for row in self.rows}
+        if (len(keys) != len(self.lane_window_absences)
+                or any(item.row_id not in rows or
+                       f"{item.expected.purpose}:{item.row_id}:{item.expected.instance.item_id}" in emitted_ids
+                       for item in self.lane_window_absences)):
+            raise ValueError("E_LAYOUT_WINDOW_CLIP: duplicate, unowned or also-emitted lane absence")
         suppressed_members = {item.placement_id for item in self.text
                               if item.semantic_id == "memberLabel" and item.overflow == "suppressed"}
         if any(not isinstance(item, WindowLabelAbsence) for item in self.window_label_absences):

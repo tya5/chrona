@@ -34,6 +34,7 @@ from chrona.presentation.model.info_diagnostics import SuppressedPlotLabels
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject, table_row_subjects, review_row_subjects
 from chrona.presentation.layout.window_label_admission import WindowLabelAbsence
+from chrona.presentation.layout.lane_window_marks import complete_lane_window_handoff
 
 
 @dataclass(frozen=True)
@@ -370,12 +371,25 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
         icon.payload, (float(icon.bounds.inline), float(icon.bounds.block),
                        float(icon.bounds.inline_size), float(icon.bounds.block_size)), icon.stroke_scale))
         if icon.kind == "vector" else icon for icon in icons)
+    lane_window_absences = ()
     if projection.lane_membership is not None:
+        lane_window_absences, omitted_rows = complete_lane_window_handoff(
+            tuple(marks), projection=projection, as_of=request.surface_content.as_of,
+            visibility_index=request.mark_visibility_index)
         lane_mark_blocks: dict[str, Decimal] = {}
         for mark in marks:
             if mark.lane_row_id is not None:
                 lane_mark_blocks[mark.lane_row_id] = min(
                     lane_mark_blocks.get(mark.lane_row_id, mark.bounds.block), mark.bounds.block)
+        by_track = {track.instance_id: track for track in tracks}
+        for review_row in review_rows:
+            if review_row.row_id not in omitted_rows:
+                continue
+            row_tracks = [by_track.get(f"{review_row.row_id}:{item.item_id or item.object_id}")
+                          for item in review_row.items]
+            if not row_tracks or any(track is None for track in row_tracks):
+                raise LayoutError("E_LAYOUT_LANE_ROW_ANCHOR_INVALID", "/layout/rows")
+            lane_mark_blocks[review_row.row_id] = min(Decimal(str(track.block)) for track in row_tracks)
         if any(row.row_id not in lane_mark_blocks for row in rows):
             raise LayoutError("E_LAYOUT_LANE_ROW_ANCHOR_INVALID", "/layout/rows")
         try:
@@ -427,6 +441,7 @@ def complete_surface_layout(context: SurfaceCompletionContext) -> SurfaceLayoutC
                                  canvas_overlays=canvas_overlays,
                                  diagnostic_provenance=context.diagnostic_provenance,
                                  canvas_warning=canvas_warning,
-                                 window_label_absences=context.window_label_absences)
+                                 window_label_absences=context.window_label_absences,
+                                 lane_window_absences=lane_window_absences)
     placement.assert_valid()
     return SurfaceLayoutComposition(placement, tuple(review_rows), tracks, tuple(mark_absences))
