@@ -28,6 +28,7 @@ Contexts never accept `auto`.
 Run the 30-row Draft with the Controller Z executive presentation inputs and
 its required Actual Set:
 
+<!-- chrona:doc-check requires: clone the commands read files that only a clone of the repository has (examples/ is not in the wheel) -->
 ```sh
 chrona render examples/controller-z/curriculum/scale-30.yaml \
   --view examples/controller-z/views/executive.yaml \

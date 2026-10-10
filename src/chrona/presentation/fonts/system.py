@@ -44,6 +44,8 @@ class DraftFontResolution:
     metrics: FontMetricsCatalog
     font_files: tuple[FontFile, ...]
     tabular_warnings: tuple["FontTabularWarning", ...] = ()
+    # One note per Theme role whose font stack was resolved or fell back (#1281): info, or a warning for the fallback.
+    notes: tuple[str, ...] = ()
 
 
 def _names(font: TTFont) -> tuple[str, ...]:

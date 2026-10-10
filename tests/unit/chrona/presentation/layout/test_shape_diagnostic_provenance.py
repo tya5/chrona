@@ -41,6 +41,10 @@ class _Theme:
     def label_chip_min_block(self, _role):
         return None
 
+    def label_chip_shape(self, _role):
+        from chrona.presentation.model.theme_tokens import RectangleChipShape
+        return RectangleChipShape()
+
     def optional_token(self, *_args):
         return None
 

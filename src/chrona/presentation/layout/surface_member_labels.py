@@ -17,7 +17,9 @@ from chrona.presentation.layout.obstacles import (
 from chrona.presentation.layout.presentation import TrackPlacement
 from chrona.presentation.layout.rounded_outline import resolve_corner_radius
 from chrona.presentation.layout.chip_geometry import chip_padding
+from chrona.presentation.layout.label_chip_measurement import MeasuredLabelChip, measure_label_chip
 from chrona.presentation.model.semantic_registry import label_chip_semantic, semantic_binding
+from chrona.presentation.model.theme_tokens import RectangleChipShape
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 from chrona.presentation.layout.surface_quality import (
     CollisionDomain, GroupPlacement, IconPlacement, LaneLabelSuppression,
@@ -51,6 +53,7 @@ class SurfaceMemberLabelContext:
     # #1063: Layout reserved the block under the last row for a `below-plot` chip; `rows_bottom` is where the plot ends.
     as_of_below_plot: bool = False
     rows_bottom: float = 0.0
+    as_of_chip_measurement: MeasuredLabelChip | None = None
 
 
 @dataclass(frozen=True)
@@ -299,28 +302,51 @@ def place_member_labels(context: SurfaceMemberLabelContext,
         handled.update(visual.source_ref for visual, _, _, _ in visuals)
         leading = geometry_sum(width + gap for visual, _, width, gap in visuals if visual.side == "leading")
         trailing = geometry_sum(width + gap for visual, _, width, gap in visuals if visual.side == "trailing")
+        chip_semantic = label_chip_semantic(label_request.semantic_id) or ""
+        chip_role = semantic_binding(chip_semantic).theme_role if chip_semantic else None
+        chip = request.theme_tokens.label_chip(chip_role) if chip_role else None
+        nonrect_chip = chip is not None and not isinstance(
+            request.theme_tokens.label_chip_shape(chip_role), RectangleChipShape)
+        # New completed geometry must measure the same typography as its Text.
+        # Legacy rectangular/no-chip paths retain their established arithmetic.
+        numeric_spacing = label_treatment.numeric_spacing if nonrect_chip else "proportional"
         available = max(1.0, timeline_rect.width * 0.4 - leading - trailing)
         lines = (lane_measure.lines if lane_measure is not None else
             wrap_text(label_request.content, available_inline=available, font_size=float(font_size),
                       font_metrics=label_metrics, letter_spacing=float(label_treatment.letter_spacing),
-                      text_transform=label_treatment.transform)
+                      text_transform=label_treatment.transform, numeric_spacing=numeric_spacing)
             if label_request.wrap == "allow" else (label_request.content,))
         placement_bounds = label_request.bounds or timeline_rect
         text_width = (lane_measure.text_width if lane_measure is not None else
             max(measure_text_width(line, font_size=float(font_size), font_metrics=label_metrics,
                 letter_spacing=float(label_treatment.letter_spacing),
-                text_transform=label_treatment.transform) for line in lines))
+                text_transform=label_treatment.transform, numeric_spacing=numeric_spacing) for line in lines))
         label_size = (leading + text_width + trailing, float(font_size) * float(line_height) * len(lines))
-        chip_semantic = label_chip_semantic(label_request.semantic_id) or ""
-        chip = request.theme_tokens.label_chip(semantic_binding(chip_semantic).theme_role) if chip_semantic else None
         chip_pad = chip_padding(request.theme_tokens, chip_semantic, float(font_size), label_size[1])
+        if lane_measure is not None:
+            chip_measurement = lane_measure.chip_measurement
+        elif label_request.semantic_id == "asOfLabel" and context.as_of_chip_measurement is not None:
+            chip_measurement = context.as_of_chip_measurement
+        else:
+            chip_measurement = measure_label_chip(request.theme_tokens, label_request.semantic_id,
+                text_inline=label_size[0], text_block=label_size[1], font_size=float(font_size), padding=chip_pad)
         label_size = (label_size[0] + 2 * chip_pad[0], label_size[1] + 2 * chip_pad[1])
         if lane_measure is not None:
             label_size = (lane_measure.width, lane_measure.height)
             chip_pad = lane_measure.chip_padding
+        if chip_measurement is not None:
+            label_size = (float(chip_measurement.footprint.inline_size), float(chip_measurement.footprint.block_size))
+        text_insets = ((chip_measurement.text_inline_inset, chip_measurement.text_block_inset)
+                       if chip_measurement is not None else chip_pad)
         if label_request.bounds is not None and chip is not None:
-            placement_bounds = LabelRect(placement_bounds.x - chip_pad[0], placement_bounds.y - chip_pad[1],
-                placement_bounds.width + 2 * chip_pad[0], placement_bounds.height + 2 * chip_pad[1])
+            if chip_measurement is None:
+                placement_bounds = LabelRect(placement_bounds.x - chip_pad[0], placement_bounds.y - chip_pad[1],
+                    placement_bounds.width + 2 * chip_pad[0], placement_bounds.height + 2 * chip_pad[1])
+            else:
+                safe = chip_measurement.geometry.text_bounds
+                placement_bounds = LabelRect(placement_bounds.x - text_insets[0], placement_bounds.y - text_insets[1],
+                    placement_bounds.width + label_size[0] - float(safe.inline_size),
+                    placement_bounds.height + label_size[1] - float(safe.block_size))
         label_gap = lane_measure.gap if lane_measure is not None else max(1.0, float(font_size) * 0.25)
         label_classes = (("mark", "text", "label-visual", "rule") if label_request.rule_host_obstacle_id
                          else ("mark", "text", "label-visual", "dependency-route", ROUTE_RESERVE_CLASS))
@@ -339,8 +365,8 @@ def place_member_labels(context: SurfaceMemberLabelContext,
         own_marks = _own_marks(host, marks) if associated_member else ()
         own_mark_right = (max(bounds_from_rect(mark.bounds)[0] + bounds_from_rect(mark.bounds)[2]
                               for mark in own_marks) if own_marks else None)
-        association = (MemberNameAssociation(LabelRect(*bounds_from_rect(host.bounds)), leading + chip_pad[0],
-            chip_pad[1], float(provisional.bounds.inline_size), float(provisional.bounds.block_size),
+        association = (MemberNameAssociation(LabelRect(*bounds_from_rect(host.bounds)), leading + text_insets[0],
+            text_insets[1], float(provisional.bounds.inline_size), float(provisional.bounds.block_size),
             reach) if associated_member else None)
         final_association = (replace(association, also_marks=tuple(
             LabelRect(*bounds_from_rect(mark.bounds)) for mark in own_marks[1:]))
@@ -359,7 +385,7 @@ def place_member_labels(context: SurfaceMemberLabelContext,
         elif associated_member:
             candidate = place_member_name(label_request.anchor, label_size, label_request.candidates,
                 bounds=placement_bounds, obstacles=placement_obstacles, gap=label_gap, maximum_end_gap=reach,
-                text_inline_inset=leading + chip_pad[0], inside_host_obstacle_id=label_request.inside_host_obstacle_id,
+                text_inline_inset=leading + text_insets[0], inside_host_obstacle_id=label_request.inside_host_obstacle_id,
                 classes=label_classes,
                 full_band=full_band,
                 association=association,
@@ -407,8 +433,13 @@ def place_member_labels(context: SurfaceMemberLabelContext,
             continue
         chip_box = candidate.bounds
         if chip is not None:
-            candidate = replace(candidate, bounds=LabelRect(chip_box.x + chip_pad[0], chip_box.y + chip_pad[1],
-                chip_box.width - 2 * chip_pad[0], chip_box.height - 2 * chip_pad[1]))
+            if chip_measurement is None:
+                candidate = replace(candidate, bounds=LabelRect(chip_box.x + chip_pad[0], chip_box.y + chip_pad[1],
+                    chip_box.width - 2 * chip_pad[0], chip_box.height - 2 * chip_pad[1]))
+            else:
+                safe = chip_measurement.geometry.text_bounds
+                candidate = replace(candidate, bounds=LabelRect(chip_box.x + text_insets[0], chip_box.y + text_insets[1],
+                    float(safe.inline_size), float(safe.block_size)))
         slot = context.by_source.get(label_request.collision_domain.slot)
         slot_bounds = LabelRect(*bounds_from_rect(slot.bounds)) if slot is not None else placement_bounds
         crosses_slot = (candidate.bounds.x < slot_bounds.x or candidate.bounds.y < slot_bounds.y or
@@ -436,15 +467,29 @@ def place_member_labels(context: SurfaceMemberLabelContext,
         obstacles.add(SurfaceObstacle(f"label-footprint:{placed_text.placement_id}", "label-visual",
             placed_text.collision_domain.slot, ObstacleRect(chip_box.x, chip_box.y, chip_box.right, chip_box.bottom)))
         if chip is not None:
-            shapes.append(ShapePlacement(f"chip:{placed_text.placement_id}", placed_text.source_ref, "Rect",
-                Rect(Decimal(str(chip_box.x)), Decimal(str(chip_box.y)), Decimal(str(chip_box.width)),
-                     Decimal(str(chip_box.height))), required=False, slot_id=context.text_slot(placed_text),
+            paint_bounds = Rect(Decimal(str(chip_box.x)), Decimal(str(chip_box.y)), Decimal(str(chip_box.width)),
+                                Decimal(str(chip_box.height)))
+            symbol_parts = ()
+            if chip_measurement is not None:
+                geometry, footprint = chip_measurement.geometry, chip_measurement.footprint
+                origin_x, origin_y = chip_box.x - float(footprint.inline), chip_box.y - float(footprint.block)
+                paint_bounds = Rect(Decimal(str(origin_x)), Decimal(str(origin_y)),
+                                    geometry.outer_bounds.inline_size, geometry.outer_bounds.block_size)
+                symbol_parts = tuple(replace(part, commands=tuple(replace(command, points=tuple(
+                    (x + origin_x, y + origin_y) for x, y in command.points)) for command in part.commands))
+                    for part in geometry.symbol_parts)
+            shapes.append(ShapePlacement(f"chip:{placed_text.placement_id}", placed_text.source_ref,
+                "Symbol" if chip_measurement is not None else "Rect", paint_bounds,
+                required=False, slot_id=context.text_slot(placed_text),
                 paint_order=placed_text.paint_order - 1, semantic_id=chip_semantic,
-                corner_radius=resolve_corner_radius(request.theme_tokens.optional_token(
+                corner_radius=0.0 if chip_measurement is not None else resolve_corner_radius(request.theme_tokens.optional_token(
                     semantic_binding(chip_semantic).theme_role, "cornerRadius", "radius"),
                     width=chip_box.width, height=chip_box.height, legacy_radius=float(chip[1]) * chip_box.height),
                 lane_row_id=placed_text.lane_row_id, lane_member_id=placed_text.lane_member_id,
-                subjects=label_request.subjects))
+                subjects=label_request.subjects, symbol_parts=symbol_parts,
+                collision_bounds=(Rect(Decimal(str(chip_box.x)), Decimal(str(chip_box.y)),
+                    Decimal(str(chip_box.width)), Decimal(str(chip_box.height)))
+                    if chip_measurement is not None else None)))
         if visible_overflow:
             overflows.append((placed_text, slot_bounds))
             if label_request.subjects:
