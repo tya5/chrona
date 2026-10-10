@@ -32,6 +32,7 @@ from chrona.presentation.model.theme_inheritance import (
 )
 from chrona.presentation.model.theme_references import ThemeReferenceError, resolve_references, uses_references
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView
+from chrona.presentation.fonts.resolution import resolve_theme_font_stacks
 from chrona.presentation.fonts.system import DraftFontResolution, SystemFontError, SystemFontResolver, resolve_draft_fonts, resolve_system_font
 from chrona.presentation.model.font_metrics import FontMetricsCatalog, FontMetricsError, FontTabularWarning, resolve_font_files, resolve_font_metrics
 from chrona.presentation.contracts.resources import (
@@ -467,9 +468,12 @@ def _draft_render_from_resources(
         font_metrics if font_metrics is not None else _packaged_font_metrics(asset_root),
         font_asset_root or asset_root,
     )
-                  if system_fonts else None)
-    if resolution is not None and target_kind not in {"svg", "png"}:
-        raise ClosureError("E_FONT_SYSTEM_IMMUTABLE", detail=f"draft system fonts do not support {target_kind}")
+                  if system_fonts else
+                  # Installed fonts are a normal source on every path: each Theme role's font stack resolves to a
+                  # declared, installed or packaged face (#1281); None when every role is already one declared face.
+                  resolve_theme_font_stacks(resolved_theme.resolved_input,
+                                            font_metrics if font_metrics is not None else _packaged_font_metrics(asset_root),
+                                            asset_root=font_asset_root or asset_root))
     context_value = {
             "version": RENDER_CONTEXT_VERSION, "kind": "render-context", "id": "draft-render",
         "body": {

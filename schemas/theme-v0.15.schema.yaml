@@ -394,7 +394,7 @@ properties:
             symbol: {description: "Named point-symbol token for the role.", type: string, minLength: 1}
             glyphSize: {description: "Named positive physical-pixel side length of each frame-glyph mark (#888); admitted only on frame-glyph roles.", type: string, minLength: 1}
             glyphPitch: {description: "Named physical-pixel minimum centre spacing of frame-glyph marks (#888); must be at least glyphSize and is admitted only on frame-glyph roles.", type: string, minLength: 1}
-            fontFamily: {description: "Named font-family token for the role.", type: string, minLength: 1}
+            fontFamily: {description: "Named font-family token for the role. The token value is an ordered, comma-separated list of families (#1281): Layout uses the first one the Context declares or the machine has installed, then the next that covers a character, ending with the packaged Noto Sans.", type: string, minLength: 1}
             fontWeight: {description: "Named font-weight token for the role.", type: string, minLength: 1}
             fontSize: {description: "Named font-size token for the role.", type: string, minLength: 1}
             lineHeight: {description: "Named line-height token for the role.", type: string, minLength: 1}
