@@ -16,9 +16,11 @@ editable Draft renders, not byte-pinned published evidence.
 | 6 | Parent/child hierarchy and rollup schedule | [Project](../../examples/onboarding/06-rollup/project.yaml) |
 | 7 | Observed dates and progress | [Project](../../examples/onboarding/07-actuals/project.yaml), [Actual Set](../../examples/onboarding/07-actuals/actual.yaml), [progress View](../../examples/onboarding/07-actuals/view.yaml) |
 
-Run each command, compare the result with the preceding stage, and edit a
+Run each command from a clone of the repository (the stages live under `examples/`, which a
+`pip install` does not ship), compare the result with the preceding stage, and edit a
 title or date in that stage's Project before rendering it again:
 
+<!-- chrona:doc-check requires: clone the commands read files that only a clone of the repository has (examples/ is not in the wheel) -->
 ```bash
 chrona render examples/onboarding/01-spans/project.yaml --output tutorial-01.svg
 chrona render examples/onboarding/02-gate/project.yaml --output tutorial-02.svg
@@ -77,6 +79,7 @@ These are excerpts for learning; the linked full sources are the runnable
 documents. In particular, do not treat the Context excerpt as a standalone
 unversioned reference.
 
+<!-- chrona:doc-check requires: clone the commands read files that only a clone of the repository has (examples/ is not in the wheel) -->
 ```bash
 chrona materialize examples/halcyon-1/manifest.yaml --slide flight-readiness --output tutorial-scenario
 chrona materialize examples/halcyon-1/manifest.yaml --slide replan-baseline --output tutorial-snapshot
