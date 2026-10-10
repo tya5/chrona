@@ -86,4 +86,3 @@ def test_note_index_scene_and_svg_reference_exact_emitted_mark_host(
     svg_ids = {item.get("data-scene-id") for item in svg.iter()}
     assert host_id in svg_ids
     assert index.scene_id in svg_ids
-
