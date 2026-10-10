@@ -70,8 +70,8 @@ def complete_chip_geometry(*, text_inline: float, text_block: float,
     ``padding`` is (inline, block) per side. Rectangle completion reproduces
     the existing symmetric chip footprint; burst completion contains the
     padded text rectangle in the selected regular star polygon's true
-    inscribed circle; catalog completion uses the shared nine-slice warp and
-    requires the padded text rectangle to be covered by its filled paths.
+    inscribed circle or its affine ellipse; catalog completion uses the shared
+    nine-slice warp and requires the padded rectangle to be covered by its fill.
     """
     if (not isinstance(padding, tuple) or len(padding) != 2
             or any(isinstance(value, bool) or not isinstance(value, (int, float)) for value in padding)
@@ -104,7 +104,7 @@ def complete_chip_geometry(*, text_inline: float, text_block: float,
         except (OverflowError, TypeError, ValueError) as error:
             raise ChipGeometryError("nonfinite-geometry") from error
         return _burst_geometry(padded_width, padded_height, pad_inline, pad_block,
-                               text_width, text_height, shape.points, inner_ratio)
+                               text_width, text_height, shape.points, inner_ratio, shape.fit)
     if isinstance(shape, CatalogChipShape):
         if not isinstance(glyph, Mapping):
             raise ChipGeometryError("catalog-geometry")
@@ -137,9 +137,13 @@ def _geometry(outer_width: float, outer_height: float, text_x: float, text_y: fl
 
 def _burst_geometry(padded_width: float, padded_height: float, pad_inline: float, pad_block: float,
                     text_width: float, text_height: float,
-                    points: int, inner_ratio: float) -> ChipGeometry:
+                    points: int, inner_ratio: float, fit: str) -> ChipGeometry:
     if (isinstance(points, bool) or not isinstance(points, int) or points < 2
             or not isfinite(inner_ratio) or not 0 < inner_ratio <= 1):
+        raise ChipGeometryError("invalid-measurement")
+    if fit not in ("circle", "ellipse"):
+        raise ChipGeometryError("unsupported-shape")
+    if fit == "ellipse" and (padded_width <= 0 or padded_height <= 0):
         raise ChipGeometryError("invalid-measurement")
     try:
         theta = pi / points
@@ -154,17 +158,24 @@ def _burst_geometry(padded_width: float, padded_height: float, pad_inline: float
         inradius_factor = inner_ratio * sin(theta) / denominator if denominator > 0 else 0.0
     if not isfinite(inradius_factor) or inradius_factor <= 0:
         raise ChipGeometryError("nonfinite-geometry")
-    try:
-        farthest_corner = hypot(padded_width / 2, padded_height / 2)
-        radius = farthest_corner / inradius_factor
-    except (OverflowError, ValueError, ZeroDivisionError) as error:
-        raise ChipGeometryError("nonfinite-geometry") from error
-    if not isfinite(radius) or radius <= 0:
+    if fit == "ellipse":
+        radius_inline = padded_width / (sqrt(2) * inradius_factor)
+        radius_block = padded_height / (sqrt(2) * inradius_factor)
+    else:
+        # Keep the existing circle calculation and operation order unchanged.
+        try:
+            farthest_corner = hypot(padded_width / 2, padded_height / 2)
+            radius = farthest_corner / inradius_factor
+        except (OverflowError, ValueError, ZeroDivisionError) as error:
+            raise ChipGeometryError("nonfinite-geometry") from error
+        radius_inline = radius_block = radius
+    if (not isfinite(radius_inline) or not isfinite(radius_block)
+            or radius_inline <= 0 or radius_block <= 0):
         raise ChipGeometryError("nonfinite-geometry")
     try:
-        vertices = tuple((radius * (inner_ratio if index % 2 else 1.0) *
+        vertices = tuple((radius_inline * (inner_ratio if index % 2 else 1.0) *
                           cos(-pi / 2 + index * theta),
-                          radius * (inner_ratio if index % 2 else 1.0) *
+                          radius_block * (inner_ratio if index % 2 else 1.0) *
                           sin(-pi / 2 + index * theta))
                          for index in range(2 * points))
     except (OverflowError, ValueError, MemoryError) as error:
