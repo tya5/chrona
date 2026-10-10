@@ -2,11 +2,13 @@
 
 # Issue #1279 — canvas viewport acceptance
 
-Implementation: `43e30d82`, validated after ordinary merge `c40440e8` on ready main
-`0fd085d17422fd332c49b4b75ebdf43fe9459f93`. Current viewport integration,
-Layout and transport tests: 26 passed (8.84s); all 31 Scene dataclasses / 226 fields
-have explicit delivery owners. This preparation is not yet the published PR head.
-The current 45-slide audit and exact-main release remain
+Implementation: `43e30d82`, validated after ordinary merge
+`9c7fc22b2c88971bfce2266950de26aaeb233d7e`, adopting public source
+`ca93bc4d57b35075d43b7dae191acfd445f45d49` (roadmap added; derived readiness
+still pending). Combined viewport, transport, content-flow, footer and inline
+legend tests: 42 passed (9.72s). All 31 Scene dataclasses / 226 fields have
+explicit delivery owners. This preparation is not the published PR head.
+The fresh 46-slide audit, ready-base publication and exact-main release remain
 pending behind M0; do not close.
 Authority: [design](../../design/issue-1279-canvas-viewport-design-2026-10-10.md)
 and [implementation plan](../../planning/active/issue-1279-canvas-viewport-implementation-plan-2026-10-10.md).
@@ -21,7 +23,7 @@ and [implementation plan](../../planning/active/issue-1279-canvas-viewport-imple
 | # | Literal acceptance criterion | Disposition | Evidence | Successor |
 | ---: | --- | --- | --- | --- |
 | 1 | A test where content needs more than the viewport yields the warning with correct sizes; a fitting surface yields none. | met | [Real Layout/Scene/SVG tests](../../../tests/integration/test_canvas_viewport_warning_render.py) cover fixed overflow, fitting content and both surfaces; [typed helper tests](../../../tests/unit/chrona/presentation/layout/test_canvas_viewport_warning.py) verify full-edge sizes and deterministic contributors. | — |
-| 2 | On current main, the warning appears for exactly the slides whose SVG viewBox differs from their declared viewport (list them in the PR). | not met | [Predecessor public-materializer batch](#public-materializer-batch): 70/70 checked, 49 warnings / 21 fitting surfaces. The current corpus has 45 slides after reviewer retirement; a fresh exact-parent snapshot audit and updated PR list are required. | — |
+| 2 | On current main, the warning appears for exactly the slides whose SVG viewBox differs from their declared viewport (list them in the PR). | not met | [Predecessor public-materializer batch](#public-materializer-batch): 70/70 checked, 49 warnings / 21 fitting surfaces. The current corpus has 46 slides after roadmap publication; a fresh exact-parent snapshot audit and updated PR list are required. | — |
 | 3 | Do not edit `examples/**`. | met | [Implementation diff](https://github.com/tya5/chrona/commit/43e30d82) changes Layout/runtime metadata, the shared report, tests and specifications only; no authored examples or derived paths. | — |
 | 4 | Acceptance note for this issue: a test with a *negative* viewBox origin (as in the first case) should also yield the warning, since the declared-vs-actual comparison must use the full extent, not only width/height. | met | [Real SVG negative-origin tests](../../../tests/integration/test_canvas_viewport_warning_render.py) cover fixed and auto block; auto block has no invented height constraint. | — |
 
