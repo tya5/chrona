@@ -100,6 +100,9 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
         return "fit-" + sha256(repr((paint.fill, paint.opacity)).encode()).hexdigest()[:12]
     def stroke_clip_id(node: ScenePrimitive) -> str:
         return "stroke-clip-" + sha256(repr((node.scene_id, node.stroke_clip)).encode()).hexdigest()[:12]
+    def paint_clip_id(node: ScenePrimitive) -> str:
+        assert node.paint_clip is not None
+        return "paint-clip-" + sha256(repr(node.paint_clip.bounds).encode()).hexdigest()[:12]
     def commands_data(commands: tuple[object, ...]) -> str:
         parts: list[str] = []
         for command in commands:
@@ -205,6 +208,7 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
     shadows = {shadow_id(paint): paint.shadow for paint in paints if paint.shadow}
     glows = {glow_id(paint): paint.glow for paint in paints if paint.glow}
     stroke_clip_nodes = {stroke_clip_id(node): node for node in surface.primitives if node.stroke_clip is not None}
+    paint_clip_nodes = {paint_clip_id(node): node for node in surface.primitives if node.paint_clip is not None}
     clip_hosts = {node.scene_id: node for node in surface.primitives
                   if any(item.clip_source_id == node.scene_id for item in surface.primitives)}
     # A box that follows its text (#1050) is painted by one flood filter per distinct fill, over the group's
@@ -215,8 +219,12 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
     fit_floods = {fit_filter_id(completed(node)): completed(node) for node in surface.primitives
                   if viewer_fit and node.viewer_fit == BOX_FOLLOWS_TEXT and completed(node).fill is not None}
     if (marker_pairs or patterns or gradients or radial_gradients or shadows or glows
-            or clip_hosts or fit_floods or stroke_clip_nodes or canvas_overlay_nodes):
+            or clip_hosts or fit_floods or stroke_clip_nodes or paint_clip_nodes or canvas_overlay_nodes):
         definitions: list[str] = []
+        for identifier, node in sorted(paint_clip_nodes.items()):
+            assert node.paint_clip is not None
+            x, y, w, h = node.paint_clip.bounds
+            definitions.append(f'<clipPath id="{identifier}" clipPathUnits="userSpaceOnUse"><rect x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}"/></clipPath>')
         if canvas_overlay_nodes:
             x, y, w, h = surface.canvas_bounds
             definitions.append(f'<clipPath id="{canvas_overlay_clip_id()}" clipPathUnits="userSpaceOnUse"><rect x="{number(x)}" y="{number(y)}" width="{number(w)}" height="{number(h)}"/></clipPath>')
@@ -306,8 +314,13 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
             definitions.append(f'<clipPath id="clip-{escape(identifier, quote=True)}">{clip_content}</clipPath>')
         parts.append("<defs>" + "".join(definitions) + "</defs>")
     rendered: list[tuple[ScenePrimitive, str]] = []
+    def paint_clipped(node: ScenePrimitive, content: str) -> str:
+        # Outside all primitive effects: this contains fill, stroke and terminal paint,
+        # unlike the independent stroke-alignment mask or a visible clip host.
+        return (f'<g clip-path="url(#{paint_clip_id(node)})">{content}</g>'
+                if node.paint_clip is not None else content)
     def append(node: ScenePrimitive, content: str) -> None:
-        rendered.append((node, content))
+        rendered.append((node, paint_clipped(node, content)))
     def link(node: ScenePrimitive, content: str) -> str:
         if node.href is None:
             return content
@@ -470,7 +483,7 @@ def render_v05_svg(surface: SceneSurface, *, viewer_fit: bool = True) -> str:
             pin = (f'<rect data-scene-id="{escape(node.scene_id)}-extent" x="{number(x)}" y="{number(y)}" '
                    f'width="{number(max(text_node.baseline[0] - x, 1.0))}" height="{number(h)}" fill="none"/>')
             flood = f' filter="url(#{fit_filter_id(paint)})"' if paint.fill is not None else ""
-            append(node, f'<g {common} data-viewer-fit="{BOX_FOLLOWS_TEXT}"{flood}>{pin}{text_markup(text_node)}</g>')
+            append(node, f'<g {common} data-viewer-fit="{BOX_FOLLOWS_TEXT}"{flood}>{pin}{paint_clipped(text_node, text_markup(text_node))}</g>')
         elif node.kind == "Rect":
             if node.pattern is not None and node.pattern.primitives:
                 if (node.pattern.region_bounds != node.bounds or node.pattern.clip_bounds != node.bounds

@@ -6,7 +6,8 @@ from datetime import date
 import math
 from typing import Any
 
-from chrona.presentation.layout.surface_quality import FitWarning, MarkerGeometry, PathCommand, RelationFanIn, StrokeClip, TextFit
+from chrona.presentation.layout.surface_quality import FitWarning, MarkerGeometry, PaintClip, PathCommand, RelationFanIn, StrokeClip, TextFit
+from chrona.presentation.layout.relation_terminals import project_marker_outline
 from chrona.presentation.layout.canvas_viewport import CanvasViewportWarning
 from chrona.presentation.layout.pattern_placement import PatternTilePrimitive
 from chrona.presentation.model.font_metrics import FontTabularWarning
@@ -61,6 +62,40 @@ def _pair_brief(value: object) -> str:
 
 def _invalid(field: str, value: object, expected: str, *, owner: str = "Scene") -> ValueError:
     return ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: {owner}.{field}; expected {expected}; found {_brief(value)}")
+
+
+def _paint_clip_contains(clip: PaintClip, bounds: object, points: object) -> bool:
+    """Check completed absolute geometry against a supplied clip, without interpreting routes."""
+    if not isinstance(bounds, tuple) or len(bounds) != 4 or not all(_finite_number(value) for value in bounds):
+        return False
+    left, top, width, height = bounds
+    if width < 0 or height < 0 or not math.isfinite(left + width) or not math.isfinite(top + height):
+        return False
+    x0, y0, clip_width, clip_height = clip.bounds
+    x1, y1 = x0 + clip_width, y0 + clip_height
+    if not math.isfinite(x1) or not math.isfinite(y1):
+        return False
+    if left < x0 or top < y0 or left + width > x1 or top + height > y1:
+        return False
+    if not isinstance(points, tuple):
+        return False
+    for point in points:
+        if (not isinstance(point, tuple) or len(point) != 2
+                or not all(_finite_number(value) for value in point)
+                or not (x0 <= point[0] <= x1 and y0 <= point[1] <= y1)):
+            return False
+    return True
+
+
+def _path_points(commands: object) -> tuple[object, ...] | None:
+    if not isinstance(commands, tuple):
+        return None
+    points: list[object] = []
+    for command in commands:
+        if not isinstance(command, PathCommand) or not isinstance(command.points, tuple):
+            return None
+        points.extend(command.points)
+    return tuple(points)
 
 
 def requires_lane_member_provenance(kind: str, purpose: str) -> bool:
@@ -406,6 +441,7 @@ class ScenePrimitive:
     # The viewer-fit mode of a text-bearing box (#1050); `raw` is today's output.
     viewer_fit: str = "raw"
     stroke_clip: StrokeClip | None = None
+    paint_clip: PaintClip | None = None
 
     def __post_init__(self) -> None:
         if self.stroke_clip is not None and (self.kind not in {"Rect", "Symbol", "Path"}
@@ -477,6 +513,71 @@ class ScenePrimitive:
             raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} paint_order; expected a non-negative integer; found {_brief(self.paint_order)}")
         if self.end_treatment == "open" and (self.kind != "Symbol" or self.symbol is None or self.purpose != "actual"):
             raise ValueError(f"E_PRESENTATION_PRIMITIVE_INVALID: primitive {_brief(self.scene_id)} end_treatment/kind/symbol/purpose; expected open treatment only on an actual Symbol with completed symbol geometry; found treatment={_brief(self.end_treatment)}, kind={_brief(self.kind)}, symbol={_brief(self.symbol)}, purpose={_brief(self.purpose)}")
+        if self.paint_clip is not None:
+            if not isinstance(self.paint_clip, PaintClip):
+                raise _invalid("paint_clip", self.paint_clip, "a completed finite positive PaintClip", owner=f"primitive {_brief(self.scene_id)}")
+            if not isinstance(self.bounds, tuple) or len(self.bounds) != 4:
+                raise _invalid("bounds", self.bounds, "four completed coordinates", owner=f"primitive {_brief(self.scene_id)} paint_clip")
+            geometry = [("bounds", self.bounds, ())]
+            geometry.append(("points", (self.bounds[0], self.bounds[1], 0, 0), self.points))
+            path_points = _path_points(self.path_commands)
+            if path_points is None:
+                raise _invalid("path_commands", self.path_commands, "completed path commands", owner=f"primitive {_brief(self.scene_id)} paint_clip")
+            if path_points:
+                geometry.append(("path_commands", (self.bounds[0], self.bounds[1], 0, 0), path_points))
+            if self.symbol is not None:
+                symbol_points = _path_points(self.symbol.outline)
+                if symbol_points is None:
+                    raise _invalid("symbol.outline", self.symbol.outline, "completed absolute path commands", owner=f"primitive {_brief(self.scene_id)} paint_clip")
+                geometry.append(("symbol.outline", (self.bounds[0], self.bounds[1], 0, 0), symbol_points))
+            for index, icon_path in enumerate(self.icon_paths):
+                if not isinstance(icon_path, SceneIconPath) or not isinstance(icon_path.commands, tuple):
+                    raise _invalid(f"icon_paths[{index}]", icon_path, "completed absolute icon path geometry",
+                                   owner=f"primitive {_brief(self.scene_id)} paint_clip")
+                icon_points: list[object] = []
+                for command in icon_path.commands:
+                    if (not isinstance(command, tuple) or len(command) != 2
+                            or not isinstance(command[1], tuple)):
+                        raise _invalid(f"icon_paths[{index}].commands", command,
+                                       "completed command kind and absolute point tuples",
+                                       owner=f"primitive {_brief(self.scene_id)} paint_clip")
+                    icon_points.extend(command[1])
+                geometry.append((f"icon_paths[{index}]", (self.bounds[0], self.bounds[1], 0, 0),
+                                 tuple(icon_points)))
+            for index, icon_path in enumerate(self.icon_path_geometry):
+                commands = getattr(icon_path, "commands", None)
+                if not isinstance(commands, tuple):
+                    raise _invalid(f"icon_path_geometry[{index}]", icon_path,
+                                   "Layout-completed absolute icon path commands",
+                                   owner=f"primitive {_brief(self.scene_id)} paint_clip")
+                icon_points = []
+                for command in commands:
+                    if (not isinstance(command, tuple) or len(command) != 2
+                            or not isinstance(command[1], tuple)):
+                        raise _invalid(f"icon_path_geometry[{index}].commands", command,
+                                       "completed command kind and absolute point tuples",
+                                       owner=f"primitive {_brief(self.scene_id)} paint_clip")
+                    icon_points.extend(command[1])
+                geometry.append((f"icon_path_geometry[{index}]", (self.bounds[0], self.bounds[1], 0, 0),
+                                 tuple(icon_points)))
+            for field_name, marker, side in (("marker_start", self.marker_start, "start"),
+                                             ("marker_end", self.marker_end, "end")):
+                if marker is None:
+                    continue
+                try:
+                    projected = project_marker_outline(
+                        marker, side=side, points=self.points, path_commands=self.path_commands,
+                        stroke_width=self.paint.stroke_width if self.paint is not None else None)
+                except ValueError as error:
+                    raise _invalid(field_name, marker, "a finite completed terminal projection within paint_clip",
+                                   owner=f"primitive {_brief(self.scene_id)}") from error
+                marker_points = _path_points(projected)
+                geometry.append((field_name, (self.bounds[0], self.bounds[1], 0, 0), marker_points or ()))
+            for field_name, bounds, points in geometry:
+                if not _paint_clip_contains(self.paint_clip, bounds, points):
+                    raise _invalid(field_name, self.paint_clip.bounds,
+                                   "completed absolute geometry contained by paint_clip.bounds",
+                                   owner=f"primitive {_brief(self.scene_id)}")
 
 @dataclass(frozen=True)
 class SceneSlot:

@@ -122,6 +122,7 @@ $defs:
       paint: {$ref: "#/$defs/paint"}
       cornerRadius: {$ref: "#/$defs/nonnegative"}
       strokeClip: {$ref: "#/$defs/strokeClip"}
+      paintClip: {$ref: "#/$defs/paintClip"}
       pathCommands: {$ref: "#/$defs/pathCommands"}
       points: {$ref: "#/$defs/points"}
       href: {$ref: "#/$defs/text"}
@@ -148,6 +149,7 @@ $defs:
   endTreatment: {description: "Layout-selected terminal treatment for a completed mark.", enum: [closed, open]}
   primitiveKind: {description: "One closed renderer-neutral primitive kind.", enum: [Rect, Text, Symbol, Path, Icon]}
   bounds: {description: "A completed rectangle; path extents may be zero.", type: object, required: [inline, block, inlineSize, blockSize], additionalProperties: false, properties: {inline: {$ref: "#/$defs/number"}, block: {$ref: "#/$defs/number"}, inlineSize: {$ref: "#/$defs/nonnegative"}, blockSize: {$ref: "#/$defs/nonnegative"}}}
+  paintClip: {description: "An optional Layout-completed finite positive paint clip; primitive geometry is already contained by these bounds.", type: object, required: [bounds], additionalProperties: false, properties: {bounds: {allOf: [{$ref: "#/$defs/bounds"}, {type: object, properties: {inlineSize: {$ref: "#/$defs/positive"}, blockSize: {$ref: "#/$defs/positive"}}}]}}}
   manifest: {description: "Derived role, content, font, and scale inspection evidence.", type: object, required: [version, settingsVersion, viewport, selectedObjectIds, fontAssetIdentities, contentFamilyCounts, surfaceScales, visualRoleCounts], additionalProperties: false, properties: {version: {$ref: "#/$defs/manifestVersion"}, settingsVersion: {$ref: "#/$defs/string"}, viewport: {$ref: "#/$defs/viewport"}, selectedObjectIds: {$ref: "#/$defs/strings"}, fontAssetIdentities: {$ref: "#/$defs/identities"}, contentFamilyCounts: {$ref: "#/$defs/contentCounts"}, surfaceScales: {$ref: "#/$defs/scales"}, visualRoleCounts: {$ref: "#/$defs/roleCounts"}}}
   manifestVersion: {description: "The supported derived Scene manifest version.", const: chrona/scene-manifest/v0.1}
   diagnostics: {description: "Non-fatal diagnostic strings retained as inspection evidence.", type: array, items: {$ref: "#/$defs/string"}}

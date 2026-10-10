@@ -69,6 +69,24 @@ def is_closed_stroke_contour(commands: tuple[PathCommand, ...]) -> bool:
 
 
 @dataclass(frozen=True)
+class PaintClip:
+    """A finite positive completed paint-clip rectangle in surface coordinates."""
+
+    bounds: tuple[float, float, float, float]
+
+    def __post_init__(self) -> None:
+        if (not isinstance(self.bounds, tuple) or len(self.bounds) != 4
+                or any(isinstance(value, bool) or not isinstance(value, (int, float))
+                       or not isfinite(value) for value in self.bounds)
+                or self.bounds[2] <= 0 or self.bounds[3] <= 0
+                or not isfinite(self.bounds[0] + self.bounds[2])
+                or not isfinite(self.bounds[1] + self.bounds[3])):
+            raise ValueError(
+                f"E_PRESENTATION_PRIMITIVE_INVALID: PaintClip.bounds={_diagnostic_value(self.bounds)}; "
+                "expected finite inline/block coordinates and positive inline/block extents")
+
+
+@dataclass(frozen=True)
 class StrokeClip:
     """Completed contour and finite clip region, never inferred by an adapter."""
 
