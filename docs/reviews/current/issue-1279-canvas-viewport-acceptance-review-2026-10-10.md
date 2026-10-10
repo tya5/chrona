@@ -2,9 +2,9 @@
 
 # Issue #1279 — canvas viewport acceptance
 
-Implementation: `43e30d82`, validated after ordinary merge `813775fc` on ready main
-`fed9727461e6fefa5b092cdea638bf3a722dfcef`. Current viewport integration,
-Layout and transport tests: 26 passed (7.22s); all 31 Scene dataclasses / 226 fields
+Implementation: `43e30d82`, validated after ordinary merge `c40440e8` on ready main
+`0fd085d17422fd332c49b4b75ebdf43fe9459f93`. Current viewport integration,
+Layout and transport tests: 26 passed (8.84s); all 31 Scene dataclasses / 226 fields
 have explicit delivery owners. This preparation is not yet the published PR head.
 The current 45-slide audit and exact-main release remain
 pending behind M0; do not close.
