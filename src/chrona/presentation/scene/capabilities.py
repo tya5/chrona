@@ -319,8 +319,12 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              _RECT_PAINT, scene_kinds=frozenset(("Rect", "Symbol")))
     register("annotation-artwork", "Layout annotation-container artwork glyph and Scene Symbol",
              _ARTWORK_PAINT, scene_kinds=frozenset(("Symbol",)))
-    register("group-band row-band group-header-band calendar-closed calendar-exception", "Layout background and Scene Rect",
+    register("calendar-closed calendar-exception", "Layout background and Scene Rect",
              _RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder")),
+             scene_kinds=frozenset(("Rect",)))
+    # The group, row and group-header bands are always one Rect, so they admit a catalogue pattern (#1282).
+    register("group-band row-band group-header-band", "Layout background and Scene Rect",
+             _PATTERNED_RECT_PAINT | frozenset(("backgroundTreatment", "backgroundPaintOrder")),
              scene_kinds=frozenset(("Rect",)))
     register("group-tab", "Layout group header tab and Scene Rect",
              _PATTERNED_RECT_PAINT | _GROUP_TAB | frozenset(("backgroundTreatment", "backgroundPaintOrder")),
@@ -370,7 +374,7 @@ _OPEN_LEGEND_PROPERTIES = _RECT_PAINT
 _CATALOG_PATTERN_ROLES = frozenset((
     "missing-actual", "network-node", "progress-fill", "summary-bar",
     "annotation-highlight-box", "axis-band-decoration", "axis-band-decoration2", "period-band", "group-tab",
-    "as-of-label-chip", "member-label-chip", "finish-delta-chip", "canvas-texture", "canvas-overlay", "region-frame",
+    "group-band", "row-band", "group-header-band", "as-of-label-chip", "member-label-chip", "finish-delta-chip", "canvas-texture", "canvas-overlay", "region-frame",
 ))
 
 
