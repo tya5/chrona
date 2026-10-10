@@ -3,12 +3,12 @@
 # Issue #1279 — canvas viewport acceptance
 
 Implementation: `43e30d82`, validated after ordinary merge
-`9c7fc22b2c88971bfce2266950de26aaeb233d7e`, adopting public source
-`ca93bc4d57b35075d43b7dae191acfd445f45d49` (roadmap added; derived readiness
-still pending). Combined viewport, transport, content-flow, footer and inline
+`236600176a9c703f0440bf24e4d5bddd968a9e65`, adopting ready main
+`8388f8158da881a3bb1c2d93f0b175a7e3cc0a07` (roadmap included;
+exact `derived-main` completed/success). Combined viewport, transport, content-flow, footer and inline
 legend tests: 42 passed (9.72s). All 31 Scene dataclasses / 226 fields have
 explicit delivery owners. This preparation is not the published PR head.
-The fresh 46-slide audit, ready-base publication and exact-main release remain
+The fresh 46-slide audit, refreshed PR publication and exact-main release remain
 pending behind M0; do not close.
 Authority: [design](../../design/issue-1279-canvas-viewport-design-2026-10-10.md)
 and [implementation plan](../../planning/active/issue-1279-canvas-viewport-implementation-plan-2026-10-10.md).
