@@ -3,8 +3,10 @@
 # Issue #1336 — transformed text bounds
 
 Authority: [current design, architecture and implementation plan](https://github.com/tya5/chrona/issues/1336#issuecomment-6094661552).
-Implementation `3a257021` on ready main `04ca067d`; published WIP
-`wip/issue-1336-transformed-text` (initial checkpoint `a49713ee`).
+Implementation `3a257021`; integrated ready main
+`bf9313bbe19dd9a386f10bda98485f5e8d139c96`
+([trusted gate](https://github.com/tya5/chrona/actions/runs/38033174047)).
+Published WIP: `wip/issue-1336-transformed-text`.
 No PR or public-artifact acceptance yet.
 
 ## Literal issue acceptance
@@ -51,6 +53,10 @@ measurement argument with every role explicitly untransformed and compares
 serialized Scene and SVG bytes: **one pass (1.60s)**. Total unique focused
 coverage is **234 passing tests**; this synthetic identity proof does not
 replace the pending public-artifact attribution.
+After adopting #1289 source main on `0a3e96a8`, the combined group-header,
+six-caller, small-caps and plain-zero integration batch passes **27 tests (16.94s)**.
+The source-to-ready delta changes managed reports only; these are repeat
+integration checks, not additional unique coverage.
 
 Closure requires final focused/caller tests, current-base artifact attribution,
 exact-head PR checks and successful three-OS release CI on the exact published
