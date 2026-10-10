@@ -3,7 +3,8 @@
 # Issue #1336 — transformed text bounds
 
 Authority: [current design, architecture and implementation plan](https://github.com/tya5/chrona/issues/1336#issuecomment-6094661552).
-Implementation `3a257021` on source main `04ca067d`; local preparation only.
+Implementation `3a257021` on ready main `04ca067d`; published WIP
+`wip/issue-1336-transformed-text` (initial checkpoint `a49713ee`).
 No PR or public-artifact acceptance yet.
 
 ## Literal issue acceptance
@@ -40,6 +41,12 @@ two existing Pillow deprecation warnings remain unrelated. Across the three
 non-overlapping batches, **233 tests pass**; the repeated fixture check is not
 counted again. These focused checks do not substitute for public output or full
 release evidence.
+
+An additional no-transform regression replays the previous source-case
+measurement argument with every role explicitly untransformed and compares
+serialized Scene and SVG bytes: **one pass (1.60s)**. Total unique focused
+coverage is **234 passing tests**; this synthetic identity proof does not
+replace the pending public-artifact attribution.
 
 Closure requires final focused/caller tests, current-base artifact attribution,
 exact-head PR checks and successful three-OS release CI on the exact published

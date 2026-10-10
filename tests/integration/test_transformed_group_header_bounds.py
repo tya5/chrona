@@ -108,3 +108,31 @@ def test_transform_none_width_includes_declared_spacing_and_compression(tmp_path
     assert band.bounds[0] + band.bounds[2] == pytest.approx(
         min(table[0] + table[2], text.bounds[0] + text.bounds[2]), abs=1e-6)
     _assert_svg_bounds(rendered, "group-header-band:team-0")
+
+
+def test_no_transform_preserves_scene_and_svg_bytes(tmp_path, monkeypatch):
+    from chrona.presentation.layout import text as text_layout
+    from chrona.presentation.scene.serialization import serialize_scene
+
+    parts = _transformed_parts(marked=True, transform="none")
+    body = parts["theme"]["body"]
+    for role in body["roles"].values():
+        if isinstance(role, dict) and "textTransform" in role:
+            role["textTransform"] = "measure-transform"
+    current = _render(tmp_path, parts, name="current-none")
+    original_measure = text_layout.measure_text_width
+    observed = []
+
+    def source_case_measure(content, **kwargs):
+        # Replay the old ordinary-text measurement argument, not current bounds.
+        # All roles are explicitly untransformed, so no small-caps path is involved.
+        observed.append(kwargs.get("text_transform", "none"))
+        assert observed[-1] == "none"
+        return original_measure(content, **{**kwargs, "text_transform": "none"})
+
+    with monkeypatch.context() as patch:
+        patch.setattr(text_layout, "measure_text_width", source_case_measure)
+        legacy = _render(tmp_path, parts, name="source-case-none")
+    assert observed
+    assert serialize_scene(current.scene) == serialize_scene(legacy.scene)
+    assert current.artifact.content == legacy.artifact.content
