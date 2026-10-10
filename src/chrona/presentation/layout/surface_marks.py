@@ -20,6 +20,9 @@ from chrona.presentation.layout.surface_geometry import coordinate_for_date
 from chrona.presentation.layout.lane_projection import (
     folded_instance_id, lane_missing_actual_visible,
 )
+from chrona.presentation.layout.surface_mark_visibility import (
+    MarkOccurrence, MarkOccurrenceKind,
+)
 from chrona.presentation.model.diagnostic_sources import DiagnosticProvenance, DiagnosticSubject
 
 if TYPE_CHECKING:
@@ -132,6 +135,17 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
     role_geometries = base.role_geometries
     mark_block_size = base.mark_block_size
     contract = request.presentation_contract
+    visibility_index = getattr(request, "mark_visibility_index", None)
+
+    def prepared_selection(item: Any, *, kind: MarkOccurrenceKind,
+                           container_id: str, source_kind: str, as_of: date | None):
+        if visibility_index is None:
+            return None
+        occurrence = MarkOccurrence(kind, container_id, item.item_id or item.object_id,
+                                    item.object_id, source_kind)
+        return visibility_index.lookup(occurrence, projection=projection,
+                                       as_of=as_of).selection
+
     diagnostics: list[str] = []
     diagnostic_provenance: list[DiagnosticProvenance] = []
     absences: list[MarkFacetAbsence] = []
@@ -150,12 +164,19 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
             track = track_by_id[layout_id]
             frame = MarkBandFrame.from_track(track, scale, role_geometries, allocation)
             source_kind = item.source_kind if projection.rows else "combined"
+            occurrence_kind = (MarkOccurrenceKind.LANE_FINAL if owner is not None else
+                               MarkOccurrenceKind.ROW if projection.rows else MarkOccurrenceKind.AUTO)
+            occurrence_container = owner[0] if owner is not None else (
+                review_row.row_id if projection.rows else item.object_id)
             composition = compose_item_marks(
                 item=item, instance_id=instance_id, source_kind=source_kind, frame=frame,
                 as_of=contract.time.as_of, theme_tokens=request.theme_tokens,
                 slot_id=timeline.slot_id, paint_order_base=MARK_PAINT_ORDER_BASE,
                 emit_missing_actual=(lane_missing_actual_visible(projection)
                     if owner is not None else True),
+                selection=prepared_selection(
+                    item, kind=occurrence_kind, container_id=occurrence_container,
+                    source_kind=source_kind, as_of=contract.time.as_of),
             )
             marks.extend(replace(mark, lane_row_id=owner[0], lane_member_id=owner[1],
                                  lane_source_kind=source_kind) if owner is not None else mark
@@ -205,6 +226,9 @@ def compose_surface_marks(base: SurfaceBaseGeometry, *,
                     as_of=contract.time.as_of, theme_tokens=request.theme_tokens,
                     slot_id=timeline.slot_id, paint_order_base=MARK_PAINT_ORDER_BASE,
                     emit_missing_actual=False, emit_diagnostics=False,
+                    selection=prepared_selection(
+                        item, kind=MarkOccurrenceKind.FOLDED, container_id=folded.group_id,
+                        source_kind=item.source_kind, as_of=contract.time.as_of),
                 )
                 marks.extend(composition.marks)
                 diagnostics.extend(composition.diagnostics)

@@ -30,7 +30,10 @@ from chrona.presentation.layout.surface_quality import (
     GroupPlacement, RowPlacement, ScalePlacement, SlotPlacement, SurfaceLayoutRequest,
 )
 from chrona.presentation.layout.mark_geometry import compose_item_marks
-from chrona.presentation.layout.surface_mark_visibility import ensure_request_mark_visibility_index
+from chrona.presentation.layout.surface_mark_visibility import (
+    ItemMarkVisibilityIndex, MarkOccurrence, MarkOccurrenceKind,
+    ensure_request_mark_visibility_index,
+)
 from chrona.presentation.layout.lane_mark_facets import _mark_facets
 from chrona.presentation.model.semantic_registry import REQUIRED_SLOTS
 
@@ -157,17 +160,31 @@ def _provisional_point_facets(*, projection: Any, rows: tuple[Any, ...], scale: 
                               as_of: date | None, theme_tokens: Any, slot_id: str,
                               mark_block_size: float,
                               role_geometries: Mapping[str, MarkGeometry],
-                              mark_band_allocation: MarkBandAllocation | None = None) -> tuple[PointMarkFootprint, ...]:
+                              mark_band_allocation: MarkBandAllocation | None = None,
+                              mark_visibility_index: ItemMarkVisibilityIndex | None = None,
+                              ) -> tuple[PointMarkFootprint, ...]:
     """Measure visible point-mark horizontal footprints for completed base scale."""
     frame = MarkBandFrame.zero_origin(scale, mark_block_size, role_geometries, mark_band_allocation)
     result: list[PointMarkFootprint] = []
 
     def include(item: Any, instance_id: str, source_kind: str, row_id: str,
-                *, emit_missing_actual: bool = True) -> None:
+                *, emit_missing_actual: bool = True,
+                occurrence_kind: MarkOccurrenceKind | None = None,
+                container_id: str | None = None) -> None:
+        kind = (occurrence_kind if occurrence_kind is not None else
+                MarkOccurrenceKind.LANE_SOURCE if projection.lane_membership is not None else
+                MarkOccurrenceKind.ROW if projection.rows else MarkOccurrenceKind.AUTO)
         composition = compose_item_marks(
             item=item, instance_id=instance_id, source_kind=source_kind, frame=frame,
             as_of=as_of, theme_tokens=theme_tokens, slot_id=slot_id,
             emit_missing_actual=emit_missing_actual, emit_diagnostics=False,
+            selection=(mark_visibility_index.lookup(
+                MarkOccurrence(
+                    kind, (container_id if container_id is not None else
+                           row_id if projection.rows else item.object_id),
+                    item.item_id or item.object_id, item.object_id, source_kind,
+                ), projection=projection, as_of=as_of,
+            ).selection if mark_visibility_index is not None else None),
         )
         instance = LaneProjectionInstance(row_id, item.item_id or item.object_id,
                                           item.object_id, item.source_kind)
@@ -192,7 +209,9 @@ def _provisional_point_facets(*, projection: Any, rows: tuple[Any, ...], scale: 
     for folded in getattr(projection, "folded_points", ()):
         for item in folded.all_items:
             include(item, folded_instance_id(folded, item), item.source_kind,
-                    f"folded:{folded.group_id}", emit_missing_actual=False)
+                    f"folded:{folded.group_id}", emit_missing_actual=False,
+                    occurrence_kind=MarkOccurrenceKind.FOLDED,
+                    container_id=folded.group_id)
     return tuple(result)
 
 
@@ -256,6 +275,7 @@ def prepare_surface_inline(request: SurfaceLayoutRequest, *,
             slot_id=timeline.slot_id, mark_block_size=mark_block_size,
             role_geometries=role_geometries,
             mark_band_allocation=mark_band_allocation,
+            mark_visibility_index=request.mark_visibility_index,
         )
         scale = inset_scale_for_point_facets(provisional_scale, point_facets)
     row_padding = float(metric_values["timeline.row.paddingBlock"])
