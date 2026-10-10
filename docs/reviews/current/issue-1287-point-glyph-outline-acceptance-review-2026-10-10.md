@@ -12,7 +12,12 @@ remain identical to the tested checkpoint. [Derived gate](https://github.com/tya
 and [sync](https://github.com/tya5/chrona/actions/runs/38021812361) succeeded.
 This is not release acceptance.
 [Selected design and architecture review](https://github.com/tya5/chrona/issues/1287#issuecomment-6088427990).
-Local acceptance is verified; public artifact and release gates remain pending. Do not close.
+Merge is paused: [PR CI](https://github.com/tya5/chrona/actions/runs/38022653852)
+found two technical-print contour decoder failures and a hosted-note identity test failure.
+The shared decoder correction `6599b65f` passes 26 tests (4.58s), including both
+failing preset cases and real PathOps closed-quadratic hole regression; independent
+review found no defect. The note test and final integration/release remain pending.
+Do not close.
 
 ## Literal issue acceptance
 
@@ -40,4 +45,12 @@ published parent, with no schema, examples, generated or workflow changes.
 
 Layout completes union geometry, widths, footprints and clips; Scene resolves role ink and ordinary finish, forwarding catalogue width/cap/join only as an intrinsic tuple. Source parts and local geometry remain intact; an opted-in contour can enlarge the visible footprint and change downstream allocation/translation under existing rules. No Scene grammar or renderer geometry decision is added. Built-ins, stroke-only glyphs, outline-pattern ghosts and non-point consumers retain their existing treatment. Independent read-only review found no concrete ownership defect.
 
-Required release evidence: adoption of the current ready main after earlier M0 slices, fresh before/after public artifact counts and inspection, exact-head PR checks, automatic derived sync and successful three-OS pytest/conformance/wheel on the exact published main containing this review.
+Public effects at head `64cf66e1`: [PR count table](https://github.com/tya5/chrona/pull/1331)
+discloses six changed SVG/Scene pairs and 39 unchanged pairs, including #12's
+182px lane-height growth and `eps-bustest` suppression. All 65 added contours
+match actual SVG path/paint/width; original Symbol parts remain. These collateral
+effects require an explicit review disposition, not a no-regression claim.
+
+Required release evidence: adopt dev B's merged #1324 on current ready main;
+resolve red tests and disclosed effects; fresh exact-head snapshot/checks;
+automatic sync and successful containing-review exact-main three-OS release.
