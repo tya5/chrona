@@ -19,7 +19,7 @@ Implementation: `f0e300d978a9196bc9869d53bc49420fbbd52b83`. [Current design/arch
 
 ## Programme-level criteria (optional)
 
-**Release pending:** public byte evidence is complete on the stated base. Adopt #1367 READY main, verify its join, then publish this item's single PR with this final review. Fresh exact-head snapshot/gates and acceptance-containing exact-main three-OS release are required before closure.
+**Release pending:** ordinary adoption of #1367 READY main `26e9db96805ace211ad8aa0c8eeafa3a44996a02` is complete; joined token/geometry/measurement/Scene/SVG/period tests: **119 passed** (28.72s). Publish this item's single PR; fresh exact-head snapshot/gates and acceptance-containing exact-main three-OS release remain required before closure.
 
 ## Architecture conclusion
 
