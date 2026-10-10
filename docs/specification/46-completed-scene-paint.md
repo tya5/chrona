@@ -220,8 +220,9 @@ the additive optional metadata selects Scene v0.7, leaving v0.6 strict.
 The inventory is optional `windowAbsences` on each `laneMembers` entry, omitted
 when empty. Each record carries `placementId`, `instanceId`, `facet`, `sourceRef`,
 `sourceKind`, `semanticRole` and `reason: outside-window` from the original
-expected mark. Identifiers are opaque, nonempty and unique within that member;
-Scene does not decode them into dates, members or geometry. Layout joins the
+expected mark. Identifiers are opaque and nonempty; placement IDs and
+`(instanceId, facet)` pairs are unique within that member. Scene does not
+decode them into dates, members or geometry. Layout joins the
 original occurrence to the final countable member and proves the complete
 expected/admitted/absent partition before projecting these records. Missing
 primary IDs require an absence for an expected primary mark, not merely an
