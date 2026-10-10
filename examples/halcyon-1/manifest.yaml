@@ -38,21 +38,6 @@ slides:
     context: contexts/07-replan-baseline.yaml
     expectedSvg: generated/07-replan-baseline.svg
     expectedScene: generated/07-replan-baseline.scene.json
-  - id: gallery-dark
-    evidence: "Mission brief under the existing control-room-dark colour scheme."
-    context: contexts/08-gallery-dark.yaml
-    expectedSvg: generated/08-gallery-dark.svg
-    expectedScene: generated/08-gallery-dark.scene.json
-  - id: gallery-mono
-    evidence: "Mission brief under the existing print-mono colour scheme."
-    context: contexts/09-gallery-mono.yaml
-    expectedSvg: generated/09-gallery-mono.svg
-    expectedScene: generated/09-gallery-mono.scene.json
-  - id: gallery-network-wallboard
-    evidence: "Dependency network under the programme board appearance, isolating View and Layout surface changes."
-    context: contexts/10-gallery-network-wallboard.yaml
-    expectedSvg: generated/10-gallery-network-wallboard.svg
-    expectedScene: generated/10-gallery-network-wallboard.scene.json
   - id: overlay-briefing
     evidence: "Programme board with a bounded overlay guide, barriers, and anchored review slots."
     context: contexts/11-overlay-briefing.yaml
@@ -68,11 +53,6 @@ slides:
     context: contexts/13-gallery-editorial.yaml
     expectedSvg: generated/13-gallery-editorial.svg
     expectedScene: generated/13-gallery-editorial.scene.json
-  - id: gallery-technical-print
-    evidence: "Mission brief under the packaged Technical print preset (#429): black-on-white ground, numbered rows, square-ended outline bars with a solid inner actual bar, and a hairline two-tier axis band."
-    context: contexts/14-gallery-technical-print.yaml
-    expectedSvg: generated/14-gallery-technical-print.svg
-    expectedScene: generated/14-gallery-technical-print.scene.json
   - id: gallery-image-notes
     evidence: "Programme board notes drawn over a Theme-bound, nine-slice-stretched image container (#465), derived from 02-programme-board without editing it."
     context: contexts/15-gallery-image-notes.yaml
@@ -83,26 +63,11 @@ slides:
     context: contexts/16-gallery-editorial-lanes.yaml
     expectedSvg: generated/16-gallery-editorial-lanes.svg
     expectedScene: generated/16-gallery-editorial-lanes.scene.json
-  - id: gallery-annotation-kinds
-    evidence: "Programme board notes dressed by Project annotation kind (#584): a kind-coloured title bar with a label, the anchored object and a secondary line, and an accent edge, from the Theme annotationKinds and kind roles, derived from 15-gallery-image-notes without editing it."
-    context: contexts/17-gallery-annotation-kinds.yaml
-    expectedSvg: generated/17-gallery-annotation-kinds.svg
-    expectedScene: generated/17-gallery-annotation-kinds.scene.json
-  - id: gallery-annotation-tilt
-    evidence: "Programme board notes tilted by a deterministic Theme cycle (#584): a three-angle cycle on the rectangle note container, rotated bounds for the search and the obstacles, with a new View id and Theme over the 15-gallery-image-notes sources, no corpus datum edited."
-    context: contexts/18-gallery-annotation-tilt.yaml
-    expectedSvg: generated/18-gallery-annotation-tilt.svg
-    expectedScene: generated/18-gallery-annotation-tilt.scene.json
   - id: gallery-text-compression
     evidence: "Programme board text compressed horizontally by a declared, measured Theme scale (#585): the title at 0.7 and the group headers and axis at 0.8, set in Noto Sans JP (the packaged CJK face; no Mincho face is packaged) with a Japanese locale and a CJK group-header template, as a new View id, Theme and Context over the 02-programme-board sources, no corpus datum edited."
     context: contexts/19-gallery-text-compression.yaml
     expectedSvg: generated/19-gallery-text-compression.svg
     expectedScene: generated/19-gallery-text-compression.scene.json
-  - id: gallery-vertical-group-tags
-    evidence: "Programme board group labels written vertically (#585): a tag column at the table's start, each tag spanning its group's rows, kanji-formal ordinal and the group title (CJK upright, Latin turned sideways, ellipsis cut by measured extent) from a Theme writingMode on the groupHeader role and the #583 header template, set in Noto Sans JP, as a new View id, Theme and Context over the 02-programme-board sources, no corpus datum edited."
-    context: contexts/20-gallery-vertical-group-tags.yaml
-    expectedSvg: generated/20-gallery-vertical-group-tags.svg
-    expectedScene: generated/20-gallery-vertical-group-tags.scene.json
   - id: target-b
     evidence: "Issue #987: YAML-only reproduction of the owner-approved hand-drawn programme-board mock (target B)."
     context: contexts/21-target-b.yaml
@@ -123,3 +88,8 @@ slides:
     context: contexts/24-marquee.yaml
     expectedSvg: generated/24-marquee.svg
     expectedScene: generated/24-marquee.scene.json
+  - id: sunday
+    evidence: "Issue #1269: YAML-only assembly of the owner-approved hand-drawn Sunday Strip target (newsprint canvas, inked panels, caption-box group headers, in-plot speech balloons, Ben-Day dots, as-of starburst)."
+    context: contexts/25-sunday.yaml
+    expectedSvg: generated/25-sunday.svg
+    expectedScene: generated/25-sunday.scene.json

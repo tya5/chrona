@@ -36,7 +36,7 @@ from chrona.presentation.layout.surface_table import (
     compose_table,
 )
 from chrona.presentation.layout.surface_heading import place_surface_headings
-from chrona.presentation.layout.surface_groups import (compose_group_presentation)
+from chrona.presentation.layout.surface_groups import (compose_group_presentation, translate_group_header_text)
 from chrona.presentation.layout.surface_backgrounds import (
     compose_calendar_backgrounds, compose_group_tabs, compose_row_group_backgrounds, replace_group_header_band,
 )
@@ -125,6 +125,7 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     shapes: list[ShapePlacement] = []
     shapes.extend(compose_row_group_backgrounds(
         base=base, rows=rows, groups=groups, theme_tokens=request.theme_tokens,
+        group_presentation=group_batch,
         row_decoration=request.surface_content.row_decoration,
         group_decoration=request.surface_content.group_decoration))
     axis = by_source["timeline-axis"]
@@ -168,7 +169,14 @@ def compose_surface_layout(request: SurfaceLayoutRequest, *,
     visible_group_header_overflows = list(mark_batch.visible_group_header_overflows)
     groups = list(mark_batch.groups)
     for update in mark_batch.group_header_updates:
-        shapes = list(replace_group_header_band(tuple(shapes), update))
+        old_bounds, final_bounds = update.source.header_bounds, update.header_bounds
+        if old_bounds is not None:
+            block_delta = (float(final_bounds.block - old_bounds.block)
+                           + (float(final_bounds.block_size - old_bounds.block_size) / 2))
+            text = list(translate_group_header_text(tuple(text), group_id=update.source.group_id,
+                                                   block_delta=block_delta))
+        shapes = list(replace_group_header_band(
+            tuple(shapes), update, extent=base.layout_manifest.background_extents.get("groupHeaderBand", "")))
     shapes.extend(compose_group_tabs(
         groups=tuple(groups), theme_tokens=request.theme_tokens,
         tag_column=(base.table_bounds[0], base.group_tag_inline_size) if base.group_tag_inline_size else None))

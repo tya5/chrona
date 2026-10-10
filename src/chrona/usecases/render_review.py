@@ -47,7 +47,7 @@ from chrona.presentation.model.theme_role_consumers import unread_diagnostics as
 from chrona.presentation.model.theme_tokens import ThemeTokenError, ThemeTokenView, effective_draft_numeric_theme
 from chrona.core.attachments import AttachmentWarning, attachment_warnings
 from chrona.core.deadlines import deadline_statuses, deadline_warnings
-from chrona.core.figures import resolve_figures
+from chrona.core.figures import FigureCounts, resolve_figures
 from chrona.core.periods import period_range_diagnostics, resolve_periods
 from chrona.core.temporal import Calendar
 from chrona.presentation.model.color_scale import ColorScaleError, resolve_color_scale
@@ -58,6 +58,9 @@ from chrona.presentation.model.projection import ReviewDeadline, ReviewPeriod, b
 from chrona.presentation.model.surface_content import HeadingContent, SummaryContent, SurfaceContentInput, TableContent
 from chrona.presentation.contracts.resources import ReviewDetailInput, ViewInput, ViewRowMode
 from chrona.presentation.review.detail import ReviewDetailError
+from chrona.presentation.review.figure_facts import projected_counts
+from chrona.presentation.annotation_kind_text import AnnotationKindTextError, header_lines, heading_text
+from chrona.presentation.figure_text import FigureTextError, resolve_figure_text
 from chrona.presentation.layout.asof_foot_reserve import BELOW_PLOT, below_plot_reserve
 from chrona.presentation.review.v05_content import (
     compose_heading, normalize_summary_content, normalize_v05_surface_content, normalize_v05_table_content)
@@ -217,6 +220,8 @@ def render_review(request: RenderRequest) -> RenderedReview:
     """Transport detector-owned presentation pointers across the use-case boundary."""
     try:
         return _render_review(request)
+    except ColorScaleError as error:
+        raise RenderFailed(error.code, error.detail, "presentation", error.source_ref) from error
     except (LayoutError, ThemeTokenError, ScenePaintError) as error:
         message = error_message(error.diagnostic_id, getattr(error, "detail", None))
         node = getattr(error, "node_id", None)  # a Layout finding names the offending token or node here
@@ -259,14 +264,11 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     if manifests:
         ledger.packages()
     projection, scenario_provenance, attachments, deadlines = _project_review(project, view, render_closure, manifests, request.scheduler)
-    try:
-        color_scale = resolve_color_scale(view.color_encoding, theme["body"].get("colorScales"),
-                                          theme["body"].get("categorySlots"),
-                                          color_vision=tuple(theme["body"].get("colorVision", ())),
-                                          observed=_observed_scale_values(view.color_encoding, projection))
-        group_tints, group_tint_collisions = _resolve_group_tints(view, projection, theme)
-    except ColorScaleError as error:
-        raise RenderFailed(str(error), str(error), "presentation") from error
+    color_scale = resolve_color_scale(view.color_encoding, theme["body"].get("colorScales"),
+                                      theme["body"].get("categorySlots"),
+                                      color_vision=tuple(theme["body"].get("colorVision", ())),
+                                      observed=_observed_scale_values(view.color_encoding, projection))
+    group_tints, group_tint_collisions = _resolve_group_tints(view, projection, theme)
     if render_closure.actual_set is not None:
         ledger.actual()
     if render_closure.snapshot is not None:
@@ -283,7 +285,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
         theme = effective_draft_numeric_theme(theme, tuple(item.role for item in resolution.tabular_warnings))
     font_metrics = resolution.metrics if resolution is not None else _font_metrics(
         theme, environment.font_metrics, asset_root, request.asset_resolver)
-    _check_summary_figures(render_closure.summary_profile.summary if render_closure.summary_profile else None, projection)
+    _check_summary_figures(render_closure.summary_profile.summary if render_closure.summary_profile else None, projection, view)
     summary = normalize_summary_content(render_closure.summary_profile.summary if render_closure.summary_profile else None,
                                         projection, render_closure.actual_set.observations_input if render_closure.actual_set else None,
                                         project)
@@ -324,6 +326,7 @@ def _render_review(request: RenderRequest) -> RenderedReview:
     except AxisBandScaleError as error:
         raise RenderFailed(error.code, error.detail, "presentation", error.path) from error
     selected_content = replace(selected_content, axis_band_paints=axis_band_scale.paints)
+    selected_content = _complete_annotation_headers(selected_content, theme, projection)
     heading_content = (compose_heading(view, project, actual_observations, environment.locale)
                        if view.surface == "table-timeline" else None)
     source_inputs = _source_inputs(project, view, projection, summary,
@@ -670,6 +673,7 @@ def _resolve_group_tints(view: Any, projection: Any, theme: Mapping[str, Any]
         {"scale": tint.scale, "target": "group", "source": {"field": view.grouping.field},
          "domain": list(tint.domain) if tint.domain is not None else "firstAppearance"},
         theme["body"].get("colorScales"), theme["body"].get("categorySlots"),
+        source_ref="/body/grouping/tint",
         color_vision=tuple(theme["body"].get("colorVision", ())), observed=groups)
     if scale is None:
         return (), ()
@@ -750,8 +754,23 @@ def _project_review(project: dict[str, Any], view: ViewInput, closure: RenderClo
         analysis=result.analysis,
         snapshot_analysis=snapshot_result.analysis if snapshot_result is not None else None,
     )
-    projection = replace(projection, periods=_selected_periods(project, result.placements, view),
-                         figures=_resolved_figures(project, result.placements, view, actual),
+    global_figures, group_figures = (), ()
+    figure_diagnostics = []
+    try:
+        global_figures = _resolved_figures(project, result.placements,
+            replace(view, figures=tuple(item for item in view.figures if item.scope == "global")), actual,
+            counts=projected_counts(projection.items, as_of_available=
+                                   ((actual or {}).get("body") or {}).get("asOf") is not None))
+    except RenderRejected as error:
+        figure_diagnostics.extend(error.diagnostics)
+    try:
+        group_figures = _resolved_group_figures(project, result.placements, view, actual, projection)
+    except RenderRejected as error:
+        figure_diagnostics.extend(error.diagnostics)
+    if figure_diagnostics:
+        raise RenderRejected(figure_diagnostics)
+    projection = replace(projection, periods=_selected_periods(project, result.placements, view, dict(global_figures)),
+                         figures=global_figures, group_figures=group_figures,
                          deadlines=_shown_deadlines(project, result.placements, view))
     return projection, tuple(provenance), attachment_warnings(project, result.placements), deadline_warnings(project, result.placements)
 
@@ -770,9 +789,45 @@ def _check_slot_heading_text(view: ViewInput, resolved_layout: ResolvedLayoutPro
                                "view", f"/body/slotHeadingText/{escaped}")
 
 
-def _check_summary_figures(summary: Any, projection: Any) -> None:
+def _complete_annotation_headers(content: SurfaceContentInput, theme: Mapping[str, Any],
+                                 projection: Any) -> SurfaceContentInput:
+    """Compose kind text with explicit View facts before source measurement or Layout."""
+    tokens = ThemeTokenView(theme)
+    figures = dict(projection.figures)
+    scoped = {figure_id for _, values in projection.group_figures for figure_id, _ in values}
+    annotations = []
+    for annotation in content.annotations:
+        token = tokens.annotation_kind(annotation.kind)
+        if token is None:
+            annotations.append(annotation)
+            continue
+        escaped_kind = annotation.kind.replace("~", "~0").replace("/", "~1")
+        for field, parts in (("title", token.header.parts), ("heading", token.header.heading_parts)):
+            for kind, value in parts:
+                if kind != "field" or not value.startswith("figure:"):
+                    continue
+                figure_id = value[len("figure:"):]
+                if figure_id not in figures:
+                    code = "E_FIGURE_SCOPE_UNAVAILABLE" if figure_id in scoped else "E_VIEW_FIGURE_UNKNOWN"
+                    raise RenderFailed(code, f"annotation kind {annotation.kind} {field} cannot read global figure "
+                                       f"{figure_id}; declared global figures: {', '.join(figures) or 'none'}",
+                                       "presentation", f"/body/annotationKinds/{escaped_kind}/{field}")
+        try:
+            annotations.append(replace(annotation,
+                kind_header_lines=header_lines(token.header, subject=annotation.subject,
+                                               subject_id=annotation.subject_id, figures=figures),
+                kind_heading_text=heading_text(token.header, subject=annotation.subject,
+                                                subject_id=annotation.subject_id, figures=figures)))
+        except AnnotationKindTextError as error:
+            raise RenderFailed(error.code, error.detail, "presentation",
+                               f"/body/annotationKinds/{escaped_kind}") from error
+    return replace(content, annotations=tuple(annotations))
+
+
+def _check_summary_figures(summary: Any, projection: Any, view: ViewInput) -> None:
     """A Summary Profile metric naming a figure must name one the View declared, in a format an integer has (#586)."""
     declared = dict(projection.figures)
+    kinds = {item.figure_id: item.kind for item in view.figures}
     for panel in summary.panels if summary is not None else ():
         for metric in panel.metrics:
             source = getattr(metric, "source", None)
@@ -780,18 +835,26 @@ def _check_summary_figures(summary: Any, projection: Any) -> None:
                 continue
             path = f"/body/panels/{panel.id}/metrics/{metric.id}"
             if source["figure"] not in declared:
+                scoped = {figure_id for _, values in projection.group_figures for figure_id, _ in values}
+                if source["figure"] in scoped:
+                    raise RenderFailed("E_FIGURE_SCOPE_UNAVAILABLE",
+                                       f"summary metric {metric.id} names group-scoped figure {source['figure']} without a current group",
+                                       "presentation", path)
                 known = ", ".join(declared) if declared else "none"
                 raise RenderFailed("E_VIEW_FIGURE_UNKNOWN",
                                    f"summary metric {metric.id} names figure {source['figure']}, which the View does not declare (declared: {known})",
                                    "presentation", path)
-            if metric.format == "date":
+            if metric.format == "date" or (metric.format == "signedDays" and kinds.get(source["figure"]) == "count"):
                 raise RenderFailed("E_PRESENTATION_SUMMARY_FORMAT",
-                                   f"summary metric {metric.id} formats figure {source['figure']} as a date, but a figure is a number of days",
+                                   f"summary metric {metric.id} cannot format {kinds.get(source['figure'])} figure "
+                                   f"{source['figure']} as {metric.format}",
                                    "presentation", f"{path}/format")
 
 
 def _resolved_figures(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput,
-                      actual: Mapping[str, Any] | None) -> tuple[tuple[str, int], ...]:
+                      actual: Mapping[str, Any] | None, *,
+                      group_first_start: date | None = None,
+                      counts: FigureCounts | None = None) -> tuple[tuple[str, int], ...]:
     """Every figure the View declares, computed by the Core from the facts gathered here (#586).
 
     This is the one place the as-of, the placements, the resolved periods and the Project calendars are
@@ -805,10 +868,47 @@ def _resolved_figures(project: dict[str, Any], placements: dict[str, dict[str, A
         view.figures, as_of=date.fromisoformat(as_of) if isinstance(as_of, str) else None, placements=placements,
         periods=resolve_periods(project, placements),
         calendars={key: Calendar.from_mapping(value) for key, value in (project.get("calendars") or {}).items()},
-        default_calendar=(project.get("project") or {}).get("calendar"))
+        default_calendar=(project.get("project") or {}).get("calendar"), group_first_start=group_first_start,
+        counts=counts)
     if resolution.diagnostics:
         raise RenderRejected(list(resolution.diagnostics))
     return tuple(resolution.values.items())
+
+
+def _resolved_group_figures(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput,
+                            actual: Mapping[str, Any] | None, projection: Any
+                            ) -> tuple[tuple[str, tuple[tuple[str, int], ...]], ...]:
+    """Gather selected Primary dates per semantic group; Core only receives neutral dates."""
+    specs = tuple(item for item in view.figures if item.scope == "group")
+    if not specs:
+        return ()
+    group_ids = tuple(dict.fromkeys(row.group_id for row in projection.rows if row.group_id))
+    if not group_ids:
+        raise RenderRejected([Diagnostic("E_FIGURE_GROUP_UNAVAILABLE",
+                                         f"Figure {item.figure_id} requires a current group, but the View projects none",
+                                         f"{item.path}/scope") for item in specs])
+    scoped_view = replace(view, figures=specs)
+    values = []
+    diagnostics = []
+    for group_id in group_ids:
+        member_ids = {item.object_id for row in projection.rows if row.group_id == group_id
+                      for item in row.items if item.source_kind in {"primary", "combined"}}
+        members = tuple(item for item in projection.items
+                        if item.source_kind == "primary" and item.object_id in member_ids)
+        starts = tuple(item.planned.get("start", item.planned.get("at")) for item in members)
+        dates = tuple(item for item in starts if isinstance(item, date))
+        try:
+            resolved = _resolved_figures(project, placements, scoped_view, actual,
+                                         group_first_start=min(dates) if dates else None,
+                                         counts=projected_counts(members, as_of_available=
+                                             ((actual or {}).get("body") or {}).get("asOf") is not None))
+            values.append((group_id, resolved))
+        except RenderRejected as error:
+            diagnostics.extend(replace(item, message=f"Group {group_id}: {item.message}")
+                               for item in error.diagnostics)
+    if diagnostics:
+        raise RenderRejected(diagnostics)
+    return tuple(values)
 
 
 def _shown_deadlines(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput) -> tuple[ReviewDeadline, ...]:
@@ -823,7 +923,8 @@ def _shown_deadlines(project: dict[str, Any], placements: dict[str, dict[str, An
                  for item in deadline_statuses(project, placements) if item.slipped or view.deadlines == "all")
 
 
-def _selected_periods(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput) -> tuple[ReviewPeriod, ...]:
+def _selected_periods(project: dict[str, Any], placements: dict[str, dict[str, Any]], view: ViewInput,
+                      figures: Mapping[str, int] | None = None) -> tuple[ReviewPeriod, ...]:
     """The Project periods the View names, as dates, in the View's order (#582).
 
     A View naming a period the Project does not declare is refused with the declared identifiers, never
@@ -838,9 +939,16 @@ def _selected_periods(project: dict[str, Any], placements: dict[str, dict[str, A
             raise RenderFailed("E_VIEW_PERIOD_UNKNOWN",
                                f"the View selects period {selected.period_id}, which the Project does not declare (declared: {known})",
                                "presentation", f"/body/periods/{index}/id")
-    return tuple(ReviewPeriod(item.period_id, selected.label_text or item.title, item.start, item.end,
+    def caption(selected: Any, item: Any, index: int) -> str:
+        if selected.label_template is None:
+            return selected.label_text if selected.label_text is not None else item.title
+        try:
+            return resolve_figure_text(selected.label_template, figures or {}, strict=True)
+        except FigureTextError as error:
+            raise RenderFailed(error.code, error.detail, "presentation", f"/body/periods/{index}/label/template") from error
+    return tuple(ReviewPeriod(item.period_id, caption(selected, item, index), item.start, item.end,
                               selected.label_placement, selected.label_overflow)
-                 for selected, item in ((selected, declared[selected.period_id]) for selected in view.periods))
+                 for index, (selected, item) in enumerate((selected, declared[selected.period_id]) for selected in view.periods))
 
 
 def _font_metrics(theme: dict[str, Any], font_metrics: dict[str, Any], asset_root: Path,

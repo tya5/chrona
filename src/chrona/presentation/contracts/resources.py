@@ -9,7 +9,8 @@ import re
 from typing import Any, Mapping
 
 
-from chrona.core.figures import AsOfFact, FigureSpec, ObjectFact, PeriodFact
+from chrona.core.figures import AsOfFact, FigureSpec, GroupStartFact, ObjectFact, PeriodFact
+from chrona.presentation.figure_text import FigureTextError, figure_ids
 from chrona.core.store_address import StoreAddressError, check_store_address
 from chrona.resources import schema_validator
 from chrona.schema_diagnostics import SchemaViolation, explain_all_errors, explain_errors
@@ -345,6 +346,7 @@ class ViewPeriod:
     label_placement: str | None = None
     label_overflow: str = "visible-overflow"
     label_text: str | None = None
+    label_template: str | None = None
 
 
 @dataclass(frozen=True)
@@ -927,6 +929,8 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
     _validate_view_table_intent(table_columns, grouping, row_items, hierarchy_column)
     figures = _view_figures(body.get("figures", ()))
     _validate_header_figures(grouping, figures)
+    periods = _view_periods(body.get("periods", ()))
+    _validate_period_figures(periods, figures)
     labels = visibility.labels
     if (isinstance(labels, Mapping) and labels.get("placement") == "both"
             and not any(column.source == "title" for column in table_columns)):
@@ -956,7 +960,7 @@ def _view_input(body: FrozenDict, version: str) -> ViewInput:
         hierarchy_column=hierarchy_column,
         background_decoration=(str(body.get("backgroundDecoration", FrozenDict()).get("rows", "none")),
                                str(body.get("backgroundDecoration", FrozenDict()).get("groups", "all"))),
-        periods=_view_periods(body.get("periods", ())),
+        periods=periods,
         figures=figures,
         deadlines=str(body["deadlines"]["show"]) if "deadlines" in body else None,
         heading=_view_heading(body.get("heading")),
@@ -968,12 +972,36 @@ def _view_periods(raw: Any) -> tuple[ViewPeriod, ...]:
     periods = tuple(ViewPeriod(str(item["id"]),
                                str(item["label"]["placement"]) if "label" in item else None,
                                str(item["label"].get("overflow", "visible-overflow")) if "label" in item else "visible-overflow",
-                               str(item["label"]["text"]) if "label" in item and "text" in item["label"] else None)
+                               str(item["label"]["text"]) if "label" in item and "text" in item["label"] else None,
+                               str(item["label"]["template"]) if "label" in item and "template" in item["label"] else None)
                     for item in raw)
+    for index, period in enumerate(periods):
+        if period.label_text is not None and period.label_template is not None:
+            raise ContractError("E_VIEW_PERIOD_LABEL_SOURCE", "period label chooses text or template, not both",
+                                f"/body/periods/{index}/label")
     if len({item.period_id for item in periods}) != len(periods):
         repeated = sorted({item.period_id for item in periods if [p.period_id for p in periods].count(item.period_id) > 1})
         raise ContractError("E_VIEW_PERIOD_DUPLICATE", f"periods selects a Project period more than once: {repeated}")
     return periods
+
+
+def _validate_period_figures(periods: tuple[ViewPeriod, ...], figures: tuple[FigureSpec, ...]) -> None:
+    declared = {item.figure_id: item.scope for item in figures}
+    for index, period in enumerate(periods):
+        if period.label_template is None:
+            continue
+        path = f"/body/periods/{index}/label/template"
+        try:
+            references = figure_ids(period.label_template, strict=True)
+        except FigureTextError as error:
+            raise ContractError(error.code, error.detail, path) from error
+        for figure_id in sorted(references):
+            if figure_id not in declared:
+                raise ContractError("E_VIEW_FIGURE_UNKNOWN",
+                                    f"period label names figure {figure_id}; declared figures: {', '.join(declared) or 'none'}", path)
+            if declared[figure_id] != "global":
+                raise ContractError("E_FIGURE_SCOPE_UNAVAILABLE",
+                                    f"period label has no current group for figure {figure_id}", path)
 
 
 def _validate_header_figures(grouping: ViewGrouping | None, figures: tuple[FigureSpec, ...]) -> None:
@@ -1007,9 +1035,17 @@ def _view_figures(raw: Any) -> tuple[FigureSpec, ...]:
         if calendar is not None and days != "working":
             raise ContractError("E_VIEW_FIGURE_INVALID", f"figure {figure_id} names a calendar but counts calendar days", f"{path}/calendar")
         if item["kind"] == "daysUntil":
-            specs.append(FigureSpec(figure_id, "daysUntil", to=_figure_fact(item["to"]),
-                                    origin=_figure_fact(item["from"]) if "from" in item else AsOfFact(),
-                                    days=days, calendar_id=calendar, path=path))
+            scope = str(item.get("scope", "global"))
+            target = _figure_fact(item["to"])
+            origin = _figure_fact(item["from"]) if "from" in item else AsOfFact()
+            if scope != "group" and any(isinstance(fact, GroupStartFact) for fact in (origin, target)):
+                raise ContractError("E_VIEW_FIGURE_INVALID",
+                                    f"figure {figure_id} reads a current-group fact without scope group", f"{path}/scope")
+            specs.append(FigureSpec(figure_id, "daysUntil", to=target, origin=origin,
+                                    days=days, calendar_id=calendar, path=path, scope=scope))
+        elif item["kind"] == "count":
+            specs.append(FigureSpec(figure_id, "count", source=str(item["source"]),
+                                    scope=str(item.get("scope", "global")), path=path))
         else:
             specs.append(FigureSpec(figure_id, "daysIn", period_id=str(item["period"]), days=days, calendar_id=calendar, path=path))
     if len({item.figure_id for item in specs}) != len(specs):
@@ -1017,11 +1053,13 @@ def _view_figures(raw: Any) -> tuple[FigureSpec, ...]:
     return tuple(specs)
 
 
-def _figure_fact(raw: Any) -> AsOfFact | PeriodFact | ObjectFact:
+def _figure_fact(raw: Any) -> AsOfFact | PeriodFact | ObjectFact | GroupStartFact:
     if raw == "asOf":
         return AsOfFact()
     if "period" in raw:
         return PeriodFact(str(raw["period"]), str(raw["side"]))
+    if "group" in raw:
+        return GroupStartFact()
     return ObjectFact(str(raw["object"]), str(raw["endpoint"]))
 
 

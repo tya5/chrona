@@ -244,6 +244,13 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
                           * typography.text_treatment(run.typography_role).line_height for run in runs), Decimal(0))
         if not runs:
             text_block = text_line
+        # The preferred block of a wrapping line keeps the conservative stack (a content-sized slot is unchanged), but
+        # its minimum is one row: how many rows it really needs is known only once the slot's inline size is, and
+        # the legend placement pass checks that and reports the true required block (#1273).
+        minimum_text_block = text_block
+        if value.run_flow == "line" and runs:
+            minimum_text_block = max(typography.text_treatment(run.typography_role).font_size
+                                     * typography.text_treatment(run.typography_role).line_height for run in runs)
         stack = None
         if value.run_flow == "block" and measured_runs:
             stack = measure_text_stack(measured_runs, tuple(
@@ -306,7 +313,7 @@ def measure_sources(inputs: Mapping[str, SourceInput], theme: Mapping[str, Any],
                 minimum_inline = min(preferred_inline, value.min_inline)
         result[source] = Measurement(
             minimum_inline, preferred_inline, preferred_inline * 2,
-            min(preferred_block, text_block), preferred_block, preferred_block * 2,
+            min(preferred_block, minimum_text_block), preferred_block, preferred_block * 2,
             (summary_flow.runs[0].baseline if summary_flow and summary_flow.runs else
              stack.baselines[0] if stack else Decimal(str(first_metrics.baseline(0, float(font_size), float(line_height))))),
             (summary_flow.runs[-1].baseline if summary_flow and summary_flow.runs else

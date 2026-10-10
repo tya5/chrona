@@ -10,61 +10,35 @@ slides:
   chrona-roadmap/roadmap: {axisLabels: 3, chips: ['chip:as-of-label']}
   controller-z-ja/axis-secondary: {axisLabels: 12}
   controller-z-ja/executive: {axisLabels: 7}
-  controller-z/annotation-artwork: {axisLabels: 7, dvtHosted: true}
-  controller-z/annotation-border: {axisLabels: 7, dvtHosted: true}
   controller-z/annotation-kinds: {axisLabels: 7, dvtHosted: true}
   controller-z/annotation-rounded: {axisLabels: 7, dvtHosted: true}
   controller-z/annotations: {axisLabels: 7, dvtHosted: true}
-  controller-z/as-of-below-plot: {axisLabels: 7, dvtHosted: true}
-  controller-z/as-of-cone: {axisLabels: 7, dvtHosted: true, chips: ['chip:as-of-label']}
   controller-z/as-of-foot: {axisLabels: 7, dvtHosted: true}
   controller-z/axis-alternating: {axisLabels: 7, dvtHosted: true}
   controller-z/axis-cell-corners: {axisLabels: 7, dvtHosted: true}
   controller-z/axis-interval-scales: {axisLabels: 7, dvtHosted: true}
-  controller-z/axis-ticks: {axisLabels: 7, dvtHosted: true}
-  controller-z/axis-tiers: {axisLabels: 7, dvtHosted: true}
   controller-z/baseline-ghosts: {axisLabels: 7, dvtHosted: true}
-  controller-z/calendar-exception: {axisLabels: 7, dvtHosted: true}
   controller-z/capabilities: {axisLabels: 7, dvtHosted: true}
-  controller-z/composition-compact: {axisLabels: 7, dvtHosted: true}
   controller-z/elevated: {axisLabels: 7, dvtHosted: true}
   controller-z/executive: {axisLabels: 7, dvtHosted: true}
-  controller-z/gate-paint: {axisLabels: 7, dvtHosted: true}
-  controller-z/gate-symbols: {axisLabels: 7, dvtHosted: true}
   controller-z/group-child-indent: {axisLabels: 7, dvtHosted: true}
   controller-z/group-header-runs: {axisLabels: 7, dvtHosted: true}
-  controller-z/group-tabs: {axisLabels: 7, dvtHosted: true}
-  controller-z/hand-wobble: {axisLabels: 7, dvtHosted: true}
-  controller-z/heading: {axisLabels: 7, dvtHosted: true}
   controller-z/icons: {axisLabels: 7, dvtHosted: true}
   controller-z/in-progress: {axisLabels: 7, dvtHosted: true}
-  controller-z/legend-swatches: {axisLabels: 7, dvtHosted: true}
-  controller-z/line-colour: {axisLabels: 7, dvtHosted: true}
   controller-z/material-icons: {axisLabels: 7, dvtHosted: true}
   controller-z/plan-only: {axisLabels: 6}
   controller-z/progress-track: {axisLabels: 7, dvtHosted: true}
   controller-z/region-frames: {axisLabels: 7, dvtHosted: true}
   controller-z/slot-heading: {axisLabels: 7, dvtHosted: true}
   controller-z/surface-glow: {axisLabels: 7, dvtHosted: true}
-  controller-z/surface-texture: {axisLabels: 7, dvtHosted: true}
-  controller-z/table-header: {axisLabels: 7, dvtHosted: true}
-  controller-z/terminal-none: {axisLabels: 7, dvtHosted: true}
   controller-z/text-roles: {axisLabels: 7, dvtHosted: true}
-  controller-z/value-affixes: {axisLabels: 7, dvtHosted: true}
   controller-z/viewer-fit: {axisLabels: 7, dvtHosted: true}
   halcyon-1/dependency-network: {axisLabels: 0}
   halcyon-1/flight-readiness: {axisLabels: 3}
-  halcyon-1/gallery-annotation-kinds: {axisLabels: 13, chips: ['chip:as-of-label']}
-  halcyon-1/gallery-annotation-tilt: {axisLabels: 13, chips: ['chip:as-of-label']}
-  halcyon-1/gallery-dark: {axisLabels: 13}
   halcyon-1/gallery-editorial: {axisLabels: 13}
   halcyon-1/gallery-editorial-lanes: {axisLabels: 13}
   halcyon-1/gallery-image-notes: {axisLabels: 13, chips: ['chip:as-of-label']}
-  halcyon-1/gallery-mono: {axisLabels: 13}
-  halcyon-1/gallery-network-wallboard: {axisLabels: 0}
-  halcyon-1/gallery-technical-print: {axisLabels: 13}
   halcyon-1/gallery-text-compression: {axisLabels: 13, chips: ['chip:as-of-label', 'chip:period-label:launch-window']}
-  halcyon-1/gallery-vertical-group-tags: {axisLabels: 13, chips: ['chip:as-of-label', 'chip:period-label:launch-window']}
   halcyon-1/glyph-gates: {axisLabels: 13, chips: ['chip:as-of-label', 'chip:period-label:launch-window']}
   halcyon-1/launch-campaign: {axisLabels: 7}
   halcyon-1/marquee: {axisLabels: 13, chips: ['chip:as-of-label']}
@@ -72,6 +46,7 @@ slides:
   halcyon-1/overlay-briefing: {axisLabels: 13, chips: ['chip:as-of-label', 'chip:period-label:launch-window']}
   halcyon-1/programme-board: {axisLabels: 13, chips: ['chip:as-of-label', 'chip:period-label:launch-window']}
   halcyon-1/replan-baseline: {axisLabels: 7, chips: ['chip:as-of-label']}
+  halcyon-1/sunday: {axisLabels: 13, chips: ['chip:as-of-label']}
   halcyon-1/target-b: {axisLabels: 13, chips: ['chip:as-of-label']}
   halcyon-1/titlecard: {axisLabels: 22, chips: ['chip:as-of-label']}
   halcyon-1/tvac-slip: {axisLabels: 7, chips: ['chip:as-of-label']}

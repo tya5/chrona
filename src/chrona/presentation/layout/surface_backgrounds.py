@@ -7,8 +7,10 @@ from typing import Any
 
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.surface_base import SurfaceBaseGeometry
-from chrona.presentation.layout.surface_geometry import extend_to_plot_edges
-from chrona.presentation.layout.surface_groups import GroupHeaderExtentUpdate, group_tab_bounds, group_tag_bounds, resolve_group_tab
+from chrona.presentation.layout.surface_geometry import BACKGROUND_PAINT_ORDER, extend_to_plot_edges
+from chrona.presentation.layout.surface_groups import (
+    GroupHeaderExtentUpdate, SurfaceGroupPresentation, group_tab_bounds, group_tag_bounds, resolve_group_tab,
+)
 from chrona.presentation.layout.surface_quality import GroupPlacement, ShapePlacement, intersects
 from chrona.presentation.model.semantic_registry import axis_band_semantic_ids, semantic_binding
 
@@ -19,7 +21,8 @@ BACKGROUND_SEMANTIC_IDS = frozenset({
 
 def _background_bounds(*, semantic_id: str, extent: str, source_bounds: Rect,
                        table_bounds: tuple[float, float, float, float],
-                       timeline_bounds: tuple[float, float, float, float]) -> tuple[Rect, str]:
+                       timeline_bounds: tuple[float, float, float, float],
+                       text_bounds: Rect | None = None) -> tuple[Rect, str]:
     """Resolve one finite source background extent without exposing coordinates to View."""
     if semantic_id in {"calendarClosed", "calendarException"}:
         if extent != "timeline":
@@ -27,6 +30,15 @@ def _background_bounds(*, semantic_id: str, extent: str, source_bounds: Rect,
         return source_bounds, "timeline"
     table_inline, _, table_inline_size, _ = table_bounds
     timeline_inline, _, timeline_inline_size, _ = timeline_bounds
+    if extent == "text" and semantic_id == "groupHeaderBand":
+        if text_bounds is None:
+            raise LayoutError("E_LAYOUT_BACKGROUND_EXTENT", "/layoutManifest/reviewSurface/backgroundExtents",
+                              detail="groupHeaderBand:text requires completed header-content bounds")
+        table_start = Decimal(str(table_inline))
+        table_end = table_start + Decimal(str(table_inline_size))
+        left = min(table_end, max(table_start, text_bounds.inline))
+        right = min(table_end, max(left, text_bounds.inline + text_bounds.inline_size))
+        return Rect(left, source_bounds.block, right - left, source_bounds.block_size), "table"
     if extent == "table":
         return Rect(Decimal(str(table_inline)), source_bounds.block,
                     Decimal(str(table_inline_size)), source_bounds.block_size), "table"
@@ -42,7 +54,8 @@ def _background_bounds(*, semantic_id: str, extent: str, source_bounds: Rect,
 
 def _background_shape(*, base: SurfaceBaseGeometry, theme_tokens: Any, placement_id: str,
                       source_ref: str, semantic_id: str, source_bounds: Rect,
-                      extent_semantic: str | None = None) -> ShapePlacement | None:
+                      extent_semantic: str | None = None,
+                      text_bounds: Rect | None = None) -> ShapePlacement | None:
     role = semantic_binding(semantic_id).scene_role
     treatment, paint_order = theme_tokens.background(role)
     if treatment == "none":
@@ -51,16 +64,18 @@ def _background_shape(*, base: SurfaceBaseGeometry, theme_tokens: Any, placement
         semantic_id=semantic_id,
         extent=base.layout_manifest.background_extents.get(extent_semantic or semantic_id, ""),
         source_bounds=source_bounds, table_bounds=base.table_bounds,
-        timeline_bounds=base.timeline_bounds)
+        timeline_bounds=base.timeline_bounds, text_bounds=text_bounds)
     return ShapePlacement(placement_id, source_ref, "Rect", bounds, slot_id=slot_id,
                           paint_order=paint_order, semantic_id=semantic_id)
 
 
 def compose_row_group_backgrounds(*, base: SurfaceBaseGeometry, rows: tuple[Any, ...],
                                   groups: tuple[GroupPlacement, ...], theme_tokens: Any,
+                                  group_presentation: SurfaceGroupPresentation,
                                   row_decoration: str, group_decoration: str) -> tuple[ShapePlacement, ...]:
-    """Complete group bands/header accents and alternating row stripes in legacy order."""
+    """Complete group bands/header accents and the selected row decoration."""
     shapes: list[ShapePlacement] = []
+    header_content_bounds = dict(group_presentation.header_content_bounds)
     for index, group in enumerate(groups):
         banded = group_decoration in {"all", "alternate"} and (
             group_decoration == "all" or index % 2 == 0)
@@ -78,7 +93,8 @@ def compose_row_group_backgrounds(*, base: SurfaceBaseGeometry, rows: tuple[Any,
             shape = _background_shape(
                 base=base, theme_tokens=theme_tokens,
                 placement_id=f"group-header-band:{group.group_id}", source_ref=group.group_id,
-                semantic_id="groupHeaderBand", source_bounds=group.header_bounds)
+                semantic_id="groupHeaderBand", source_bounds=group.header_bounds,
+                text_bounds=header_content_bounds.get(group.group_id))
             if shape is not None:
                 shapes.append(shape)
     if row_decoration == "alternate":
@@ -89,6 +105,28 @@ def compose_row_group_backgrounds(*, base: SurfaceBaseGeometry, rows: tuple[Any,
                     source_ref=row.row_id, semantic_id="rowBand", source_bounds=row.bounds)
                 if shape is not None:
                     shapes.append(shape)
+    elif row_decoration == "rules":
+        if not theme_tokens.has_role("row-rule"):
+            raise LayoutError("E_THEME_ROLE_REQUIRED", "/body/backgroundDecoration/rows",
+                              detail="rules need Theme role /body/roles/row-rule")
+        for shape in shapes:
+            if shape.semantic_id not in {"rowBand", "groupBand", "groupHeaderBand"}:
+                continue
+            role = semantic_binding(shape.semantic_id).scene_role
+            if shape.paint_order >= 10:
+                raise LayoutError("E_LAYOUT_ROW_RULE_ORDER", "/body/backgroundDecoration/rows",
+                                  detail=f"{shape.placement_id}: role={role}, order={shape.paint_order}; required <10")
+        table_inline, _, _, _ = base.table_bounds
+        timeline_inline, _, timeline_inline_size, _ = base.timeline_bounds
+        right = timeline_inline + timeline_inline_size
+        left_decimal, right_decimal = Decimal(str(table_inline)), Decimal(str(right))
+        for row in rows:
+            bottom = row.bounds.block + row.bounds.block_size
+            shapes.append(ShapePlacement(
+                f"row-rule:{row.row_id}", row.row_id, "Path",
+                Rect(left_decimal, bottom, right_decimal - left_decimal, Decimal(0)),
+                ((float(left_decimal), float(bottom)), (float(right_decimal), float(bottom))),
+                slot_id="review-surface", paint_order=BACKGROUND_PAINT_ORDER, semantic_id="rowRule"))
     return tuple(shapes)
 
 
@@ -137,10 +175,15 @@ def compose_calendar_backgrounds(*, base: SurfaceBaseGeometry, theme_tokens: Any
 
 
 def replace_group_header_band(shapes: tuple[ShapePlacement, ...],
-                              update: GroupHeaderExtentUpdate) -> tuple[ShapePlacement, ...]:
+                              update: GroupHeaderExtentUpdate, *, extent: str = "both") -> tuple[ShapePlacement, ...]:
     """Purely replace an existing header-band extent when folded marks enlarge its host."""
     placement_id = f"group-header-band:{update.source.group_id}"
-    return tuple(replace(shape, bounds=update.header_bounds) if shape.placement_id == placement_id else shape
+    def completed_bounds(shape: ShapePlacement) -> Rect:
+        if extent == "text":
+            return Rect(shape.bounds.inline, update.header_bounds.block,
+                        shape.bounds.inline_size, update.header_bounds.block_size)
+        return update.header_bounds
+    return tuple(replace(shape, bounds=completed_bounds(shape)) if shape.placement_id == placement_id else shape
                  for shape in shapes)
 
 

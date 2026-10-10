@@ -71,6 +71,96 @@ def test_a_countdown_shows_the_days_from_the_as_of_to_the_period_start_over_its_
     assert texts["summary:key:countdown:caption"] == "DAYS"
 
 
+def test_period_last_flows_through_the_view_contract_into_rendered_summary_text(tmp_path):
+    figure = dict(COUNTDOWN, to={"period": "window", "side": "last"})
+    rendered = _render(tmp_path, _parts(figure), _summary(_metric(metric_id="countdown")))
+    # [March 20, March 30) closes on March 29: 37 days after February 20.
+    assert _texts(rendered)["summary:key:countdown:value"] == "37"
+    assert b">37<" in rendered.artifact.content
+
+
+GROUP_COUNTDOWN = {"id": "group-countdown", "kind": "daysUntil", "scope": "group",
+                   "to": {"group": "firstPlannedStart"}}
+
+
+def test_group_countdowns_use_each_groups_selected_start_in_actual_svg(tmp_path):
+    parts = _parts(COUNTDOWN, GROUP_COUNTDOWN, slot=False)
+    parts["view"]["body"]["grouping"]["header"] = {
+        "text": "{title} {figure:group-countdown} / {figure:countdown}", "ordinal": "arabic"}
+    rendered = _render(tmp_path, parts, None)
+    headers = {item.scene_id: item.text for item in rendered.surface.primitives if item.purpose == "group-header"}
+    assert headers == {"group-header:a": "Team a -46 / 28", "group-header:b": "Team b 28 / 28"}
+    assert b"Team a -46 / 28" in rendered.artifact.content
+    assert b"Team b 28 / 28" in rendered.artifact.content
+
+
+def test_current_group_facts_require_an_explicit_group_scope(tmp_path):
+    figure = dict(GROUP_COUNTDOWN)
+    del figure["scope"]
+    error = _refused(tmp_path, figure)
+    assert error.diagnostic_id == "E_VIEW_FIGURE_INVALID"
+    assert error.source_ref == "/body/figures/0/scope"
+
+
+def test_group_figures_cannot_be_shown_by_an_unscoped_summary(tmp_path):
+    with pytest.raises(RenderFailed) as failure:
+        _render(tmp_path, _parts(GROUP_COUNTDOWN), _summary(_metric("group-countdown")))
+    assert failure.value.code == "E_FIGURE_SCOPE_UNAVAILABLE"
+
+
+@pytest.mark.parametrize(("source", "expected"), [
+    ("selected", "3"), ("recorded", "0"), ("dueUnobserved", "1"),
+    ("notYetDue", "2"), ("unavailable", "0"), ("missingActual", "1"),
+    ("knownFinishVariance", "0"), ("behind", "0"), ("ahead", "0"),
+])
+def test_every_closed_count_source_reaches_the_summary_svg(tmp_path, source, expected):
+    figure = {"id": "n", "kind": "count", "source": source}
+    rendered = _render(tmp_path, _parts(figure), _summary(_metric("n", metric_id="n")))
+    assert _texts(rendered)["summary:key:n:value"] == expected
+    assert f">{expected}<".encode() in rendered.artifact.content
+
+
+def test_finish_delta_counts_use_observed_signs_not_a_forecast(tmp_path):
+    actual = deepcopy(ACTUAL)
+    actual["body"]["observations"] = [
+        {"id": "a-observed", "sequence": 1, "projectObjectId": "a",
+         "actual": {"start": "2026-01-05", "finish": "2026-02-16"}},
+        {"id": "build-observed", "sequence": 1, "projectObjectId": "build",
+         "actual": {"start": "2026-03-02", "finish": "2026-03-15"}},
+    ]
+    figures = tuple({"id": name, "kind": "count", "source": name}
+                    for name in ("knownFinishVariance", "behind", "ahead"))
+    rendered = _render(tmp_path, _parts(*figures),
+                       _summary(*(_metric(f["id"], metric_id=f["id"]) for f in figures)), actual=actual)
+    texts = _texts(rendered)
+    assert texts["summary:key:knownFinishVariance:value"] == "2"
+    assert texts["summary:key:behind:value"] == texts["summary:key:ahead:value"] == "1"
+
+
+def test_missing_actual_count_without_as_of_refuses_the_render(tmp_path):
+    with pytest.raises(RenderRejected) as failure:
+        _render(tmp_path, _parts({"id": "n", "kind": "count", "source": "missingActual"}),
+                _summary(_metric("n")), actual=None)
+    assert [(d.id, d.path) for d in failure.value.diagnostics] == [
+        ("E_FIGURE_COUNT_UNAVAILABLE", "/body/figures/0/source")]
+
+
+@pytest.mark.parametrize("formatter", ["date", "signedDays"])
+def test_count_figures_cannot_claim_date_or_day_units(tmp_path, formatter):
+    with pytest.raises(RenderFailed) as failure:
+        _render(tmp_path, _parts({"id": "n", "kind": "count", "source": "selected"}),
+                _summary(_metric("n", format=formatter)))
+    assert failure.value.code == "E_PRESENTATION_SUMMARY_FORMAT"
+
+
+def test_count_figures_are_group_relative_without_counting_lane_occurrences(tmp_path):
+    parts = _parts({"id": "n", "kind": "count", "source": "selected", "scope": "group"}, slot=False)
+    parts["view"]["body"]["grouping"]["header"] = {"text": "{title} {figure:n}", "ordinal": "arabic"}
+    rendered = _render(tmp_path, parts, None)
+    assert {item.scene_id: item.text for item in rendered.surface.primitives if item.purpose == "group-header"} == {
+        "group-header:a": "Team a 2", "group-header:b": "Team b 1"}
+
+
 @pytest.mark.parametrize(("format", "expected"), [("count", "28"), ("text", "28"), ("signedDays", "+28d")])
 def test_the_metric_format_applies_to_a_figure(tmp_path, format, expected):
     texts = _texts(_render(tmp_path, _parts(COUNTDOWN), _summary(_metric(format=format, metric_id="countdown"))))
@@ -118,6 +208,7 @@ def test_declared_figures_that_nothing_shows_leave_the_scene_unchanged(tmp_path)
     declared = _render(tmp_path / "declared", _parts(COUNTDOWN, slot=False), None)
     plain = _render(tmp_path / "plain", _parts(slot=False), None)
     assert declared.surface.primitives == plain.surface.primitives
+    assert declared.artifact.content == plain.artifact.content
 
 
 def test_a_summary_without_a_figure_source_is_unchanged_by_a_figure_declaration(tmp_path):
@@ -127,6 +218,7 @@ def test_a_summary_without_a_figure_source_is_unchanged_by_a_figure_declaration(
     with_figures = _render(tmp_path / "with", _parts(COUNTDOWN), _summary(metric))
     without = _render(tmp_path / "without", _parts(), _summary(metric))
     assert with_figures.surface.primitives == without.surface.primitives
+    assert with_figures.artifact.content == without.artifact.content
 
 
 # ---------------------------------------------------------------- missing facts

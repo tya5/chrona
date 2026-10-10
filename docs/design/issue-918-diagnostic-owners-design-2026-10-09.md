@@ -1,6 +1,6 @@
 # Issue 918 — diagnostic owner and transport design
 
-Plan: [design plan](../planning/active/issue-918-diagnostic-owners-design-plan-2026-10-09.md).
+Plan: [design plan](../archive/planning/issue-918-diagnostic-owners-design-plan-2026-10-09.md).
 Normative authorities: Specs 08, 35, 50, 56 and 66.
 
 ## Owner detail and result contracts
@@ -80,6 +80,47 @@ order/cap and every Scene per-placement fact. No metadata may enter Scene
 serialization, SVG/PNG content or layout input metrics.
 
 ## Verification and migration
+
+### Additional failure-path closure (review 6085291520)
+
+Color-scale errors retain the `ValueError` family but expose stable `code`,
+bounded `detail`, and canonical `source_ref`. The resolver names scale and
+missing/extra keys; Theme slot failures point to
+`/body/colorScales/<escaped-id>/slots` (the actual schema property, not the
+review's illustrative `scales`). Encoding failures carry the caller's View
+pointer, including `/body/grouping/tint` for group tint. The outer
+`render_review` boundary catches `ColorScaleError` around all of `_render_review`,
+replacing the inner resolver-only catch; this covers later normalization's
+`color_for` too. The resolved model scale retains the caller's encoding pointer
+as non-identity runtime provenance. Never use a formatted exception string as
+a diagnostic code. A dangling Theme slot reference belongs to that slot;
+malformed Scheme categories retain their existing Scheme-owned code/pointer,
+not a fabricated Theme source.
+
+View normalization captures `/body/annotations/<index>/anchor` on the typed
+annotation intent. This optional runtime provenance is excluded from equality,
+hash and repr and is not a schema, geometry, Scene or cache-identity field.
+Layout uses it for typed `LayoutError` anchor failures, naming annotation,
+object, facet/endpoint and why the selected mark or endpoint is unavailable.
+Post-resolution anchor failures use the same provenance. Synthetic intents
+without a declared source use `/`, never an invented index. Do not substitute
+a planned mark for an absent actual or change mark eligibility.
+
+Only `tools/materialize_example.py:main` maps failures through the existing
+pure `report_failure` service: one stdout `{status, diagnostics}` envelope and
+its mapped exit code, preserving all typed diagnostic rows and source data.
+Successful standalone materialization stays silent; library calls still raise
+their typed exceptions and never print. This intentionally replaces the
+standalone failure traceback as its usable machine interface. Unexpected
+exceptions use the existing `E_TOOL_FAILURE` mapping, not a new taxonomy.
+The test cache reads fresh warning rows from stdout; no stderr fallback.
+
+These changes add diagnostic provenance/transport only. No resource migration,
+schema version, color allocation, anchor fallback, geometry or artifact byte
+change is authorized. Direct owner tests and use-case/adapter tests must prove
+stable codes separately from messages, canonical escaped pointers, explicit
+absence reasons, complete rejected diagnostics, silent success and warning
+mutation isolation; CI audits generated artifacts as one batch.
 
 Tests provoke each fixed code with distinctive operands; named detail-removal
 or operand-replacement mutations must fail those assertions. Test escaped IDs,

@@ -235,7 +235,7 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _SHARED_TEXT_ICON_PAINT | _VIEWER_FIT,
              scene_kinds=frozenset(("Text",)))
     register("groupHeader", "Layout text measurement and group tag column",
-             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("writingMode", "align")) | _VIEWER_FIT)
+             _TEXT_MEASUREMENT | _ICON_MEASUREMENT | frozenset(("writingMode", "align", "labelInset")) | _VIEWER_FIT)
     register("axis", "Layout axis-tier measurement and inline visual reservation",
              _TEXT_MEASUREMENT | _ICON_MEASUREMENT | _AXIS_MEASUREMENT | _VIEWER_FIT)
     register("axisMonth axisQuarter axisSecondary axis2 axis3", "Layout axis-tier measurement",
@@ -289,6 +289,8 @@ def _role_contracts() -> dict[str, RolePropertyContract]:
              scene_kinds=frozenset(("Icon",)))
     register("axis-major axis-minor", "Layout axis grid or tick and Scene Path", _PATH_PAINT | _AXIS_TICK,
              scene_kinds=frozenset(("Path",)))
+    register("row-rule", "Layout row rule and Scene Path",
+             frozenset(("stroke", "strokeWidth", "opacity")), scene_kinds=frozenset(("Path",)))
     register("dependency-critical network-edge critical-edge axis-rule axis-cell-separator as-of",
              "Layout relation and Scene Path", _PATH_PAINT, scene_kinds=frozenset(("Path",)))
     register("dependency", "Scene Path and Layout legend swatch marker", _PATH_PAINT | frozenset(("marker",)),

@@ -8,7 +8,8 @@ from typing import Any
 from chrona.presentation.layout.group_header_runs import place_group_header_runs
 from chrona.presentation.layout.model import LayoutError, Rect
 from chrona.presentation.layout.surface_quality import CollisionDomain, FitWarning, GroupPlacement, TextPlacement
-from chrona.presentation.layout.text import ellipsize_text, measure_text_width, metric_for_role, place_text
+from chrona.presentation.layout.text import (centred_text_baseline, ellipsize_text, measure_text_width,
+                                             metric_for_role, place_text)
 from chrona.presentation.layout.vertical_text import place_vertical_label_fit
 from chrona.presentation.model.theme_tokens import ThemeTokenError
 
@@ -18,6 +19,7 @@ class SurfaceGroupPresentation:
     """Ordered group-header text derived from immutable base group extents."""
     text: tuple[TextPlacement, ...]
     warnings: tuple[FitWarning, ...] = ()
+    header_content_bounds: tuple[tuple[str, Rect], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -48,6 +50,16 @@ _TAB_ROLE = "group-tab"
 def _tab_error(prop: str, value: Any, available: Any = None) -> LayoutError:
     detail = f"{_TAB_ROLE}:{prop}:{value}" + (f":{available}" if available is not None else "")
     return LayoutError("E_LAYOUT_GROUP_TAB_SIZE", f"/body/roles/{_TAB_ROLE}/{prop}", detail=detail)
+
+
+def _header_content_extent(group: GroupPlacement, start: Decimal,
+                           placements: tuple[TextPlacement, ...] | list[TextPlacement]) -> Rect:
+    """Retain the band-start inset and the furthest actually shown glyph end, without remeasurement."""
+    header = group.header_bounds
+    assert header is not None
+    right = max((item.bounds.inline + item.bounds.inline_size
+                 for item in placements if item.overflow != "suppressed"), default=start)
+    return Rect(header.inline, header.block, max(Decimal(0), right - header.inline), header.block_size)
 
 
 def resolve_group_tab(theme_tokens: Any) -> GroupTabSpec | None:
@@ -120,6 +132,9 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
     labels.update(dict(request.surface_content.group_headers))
     marked = dict(request.surface_content.group_header_runs)
     if tag_column is not None:
+        if request.theme_tokens.optional_number("groupHeader", "labelInset") is not None:
+            raise LayoutError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", "/body/roles/groupHeader/labelInset",
+                              detail="labelInset is horizontal; vertical groupHeader tags use tabGap")
         if any(group_id in marked for group_id in labels):
             # A vertical tag is one rotated label: runs on one baseline have no meaning there (#1192).
             raise LayoutError("E_LAYOUT_GROUP_HEADER_RUNS_VERTICAL", "/body/grouping/header",
@@ -159,27 +174,55 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
         # `align` places a vertical tag in its rows; on a horizontal header it would be silently ignored (#981).
         raise LayoutError("E_THEME_ROLE_PROPERTY_UNSUPPORTED", "/body/roles/groupHeader/align",
                           detail="align on groupHeader needs a vertical writingMode")
-    group_header_font_size = (float(request.theme_tokens.text_treatment("groupHeader").font_size)
-                              if any(group.header_bounds is not None for group in groups) else body_size)
-    text, warnings = [], []
+    group_header_treatment = (request.theme_tokens.text_treatment("groupHeader")
+                              if any(group.header_bounds is not None for group in groups) else None)
+    def group_header_baseline(bounds: Rect) -> float:
+        assert group_header_treatment is not None
+        return centred_text_baseline(bounds, font_size=group_header_treatment.font_size,
+                                     line_height=group_header_treatment.line_height)
+    label_inset_ratio = (request.theme_tokens.optional_number("groupHeader", "labelInset")
+                         if any(group.header_bounds is not None for group in groups) else None)
+    if label_inset_ratio is not None and label_inset_ratio < 0:
+        raise ThemeTokenError("E_THEME_TOKEN_TYPE", "/body/roles/groupHeader/labelInset",
+                              f"labelInset={label_inset_ratio}; expected a finite nonnegative ratio")
+    label_inset = (label_inset_ratio * group_header_treatment.font_size
+                   if label_inset_ratio is not None else Decimal(0))
+    text, warnings, content_bounds = [], [], []
     tab = resolve_group_tab(request.theme_tokens) if any(group.header_bounds is not None for group in groups) else None
     for group in groups:
         if group.header_bounds is not None:
             start, size = group.header_bounds.inline, group.header_bounds.inline_size
+            if label_inset_ratio is not None:
+                start += label_inset
+                size = max(Decimal(0), size - label_inset)
             if tab is not None:
                 # The text never lies on the tab (#882): it starts after a start tab and gives an end tab its room.
                 check_group_tab_inline(tab, group.header_bounds)
-                size -= tab.reserved
-                start += tab.reserved if tab.position == "start" else Decimal(0)
+                if label_inset_ratio is None:
+                    size -= tab.reserved
+                    start += tab.reserved if tab.position == "start" else Decimal(0)
+                elif tab.position == "start":
+                    if label_inset < tab.reserved:
+                        raise LayoutError(
+                            "E_LAYOUT_GROUP_TAB_SIZE", "/body/roles/groupHeader/labelInset",
+                            detail=f"actual offset={label_inset}; required reservation={tab.reserved}")
+                else:
+                    if label_inset + tab.reserved > group.header_bounds.inline_size:
+                        raise LayoutError(
+                            "E_LAYOUT_GROUP_TAB_SIZE", "/body/roles/groupHeader/labelInset",
+                            detail=(f"actual offset={label_inset}; required reservation={tab.reserved}; "
+                                    f"available={group.header_bounds.inline_size}"))
+                    size = max(Decimal(0), size - tab.reserved)
             if group.group_id in marked:
                 # Role-marked runs share the header's baseline, each measured with its own role (#1192).
                 placed, run_warnings = place_group_header_runs(
                     group_id=group.group_id, runs=marked[group.group_id], start=start, size=size, bounded=tab is not None,
-                    baseline_block=float(group.header_bounds.block) + group_header_font_size,
+                    baseline_block=group_header_baseline(group.header_bounds),
                     header_block_size=float(group.header_bounds.block_size), theme_tokens=request.theme_tokens,
                     font_metrics=request.font_metrics)
                 text.extend(placed)
                 warnings.extend(run_warnings)
+                content_bounds.append((group.group_id, _header_content_extent(group, start, placed)))
                 continue
             content, disposition = labels[group.group_id], "fit"
             if tab is not None:
@@ -197,17 +240,19 @@ def compose_group_presentation(*, request: Any, rows: tuple[Any, ...],
                         "W_LAYOUT_TEXT_ELLIPSIZED", f"group-header:{group.group_id}", group.group_id,
                         "group-header-text", "ellipsize-with-source", natural, float(group.header_bounds.block_size),
                         float(size), float(group.header_bounds.block_size)))
-            text.append(place_text(
+            placed = place_text(
                 placement_id=f"group-header:{group.group_id}", source_ref=group.group_id,
                 content=content, overflow=disposition, inline=float(start),
-                baseline_block=float(group.header_bounds.block) + group_header_font_size,
+                baseline_block=group_header_baseline(group.header_bounds),
                 typography_role="groupHeader", theme_tokens=request.theme_tokens,
                 font_metrics=request.font_metrics, collision_region=f"group:{group.group_id}",
                 collision_domain=CollisionDomain("group-header", group.group_id),
                 source_content=labels[group.group_id], semantic_id="groupHeader",
                 available_inline_start=float(start),
-                available_inline_size=float(size)))
-    return SurfaceGroupPresentation(tuple(text), tuple(warnings))
+                available_inline_size=float(size))
+            text.append(placed)
+            content_bounds.append((group.group_id, _header_content_extent(group, start, [placed])))
+    return SurfaceGroupPresentation(tuple(text), tuple(warnings), tuple(content_bounds))
 
 
 def replace_group_header_extent(groups: tuple[GroupPlacement, ...],
@@ -215,3 +260,18 @@ def replace_group_header_extent(groups: tuple[GroupPlacement, ...],
     """Return a group tuple with one folded-point header extent replaced."""
     index = groups.index(update.source)
     return groups[:index] + (replace(update.source, header_bounds=update.header_bounds),) + groups[index + 1:]
+
+
+def translate_group_header_text(text: tuple[TextPlacement, ...], *, group_id: str,
+                                block_delta: float) -> tuple[TextPlacement, ...]:
+    """Translate already-measured horizontal header runs with their finalized band."""
+    prefix = f"group-header:{group_id}"
+    return tuple(
+        replace(item,
+                bounds=Rect(item.bounds.inline, item.bounds.block + Decimal(str(block_delta)),
+                            item.bounds.inline_size, item.bounds.block_size),
+                baseline=(item.baseline[0], item.baseline[1] + block_delta))
+        if item.baseline is not None and (item.placement_id == prefix or item.placement_id.startswith(prefix + "#run"))
+        else item
+        for item in text
+    )
