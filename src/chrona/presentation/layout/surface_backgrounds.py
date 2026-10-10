@@ -22,7 +22,8 @@ BACKGROUND_SEMANTIC_IDS = frozenset({
 def _background_bounds(*, semantic_id: str, extent: str, source_bounds: Rect,
                        table_bounds: tuple[float, float, float, float],
                        timeline_bounds: tuple[float, float, float, float],
-                       text_bounds: Rect | None = None) -> tuple[Rect, str]:
+                       text_bounds: Rect | None = None,
+                       trailing_inset: Decimal = Decimal(0)) -> tuple[Rect, str]:
     """Resolve one finite source background extent without exposing coordinates to View."""
     if semantic_id in {"calendarClosed", "calendarException"}:
         if extent != "timeline":
@@ -37,7 +38,7 @@ def _background_bounds(*, semantic_id: str, extent: str, source_bounds: Rect,
         table_start = Decimal(str(table_inline))
         table_end = table_start + Decimal(str(table_inline_size))
         left = min(table_end, max(table_start, text_bounds.inline))
-        right = min(table_end, max(left, text_bounds.inline + text_bounds.inline_size))
+        right = min(table_end, max(left, text_bounds.inline + text_bounds.inline_size + trailing_inset))
         return Rect(left, source_bounds.block, right - left, source_bounds.block_size), "table"
     if extent == "table":
         return Rect(Decimal(str(table_inline)), source_bounds.block,
@@ -55,7 +56,8 @@ def _background_bounds(*, semantic_id: str, extent: str, source_bounds: Rect,
 def _background_shape(*, base: SurfaceBaseGeometry, theme_tokens: Any, placement_id: str,
                       source_ref: str, semantic_id: str, source_bounds: Rect,
                       extent_semantic: str | None = None,
-                      text_bounds: Rect | None = None) -> ShapePlacement | None:
+                      text_bounds: Rect | None = None,
+                      trailing_inset: Decimal = Decimal(0)) -> ShapePlacement | None:
     role = semantic_binding(semantic_id).scene_role
     treatment, paint_order = theme_tokens.background(role)
     if treatment == "none":
@@ -64,7 +66,7 @@ def _background_shape(*, base: SurfaceBaseGeometry, theme_tokens: Any, placement
         semantic_id=semantic_id,
         extent=base.layout_manifest.background_extents.get(extent_semantic or semantic_id, ""),
         source_bounds=source_bounds, table_bounds=base.table_bounds,
-        timeline_bounds=base.timeline_bounds, text_bounds=text_bounds)
+        timeline_bounds=base.timeline_bounds, text_bounds=text_bounds, trailing_inset=trailing_inset)
     return ShapePlacement(placement_id, source_ref, "Rect", bounds, slot_id=slot_id,
                           paint_order=paint_order, semantic_id=semantic_id)
 
@@ -76,6 +78,7 @@ def compose_row_group_backgrounds(*, base: SurfaceBaseGeometry, rows: tuple[Any,
     """Complete group bands/header accents and the selected row decoration."""
     shapes: list[ShapePlacement] = []
     header_content_bounds = dict(group_presentation.header_content_bounds)
+    header_trailing_insets = dict(group_presentation.header_band_trailing_insets)
     for index, group in enumerate(groups):
         banded = group_decoration in {"all", "alternate"} and (
             group_decoration == "all" or index % 2 == 0)
@@ -94,7 +97,8 @@ def compose_row_group_backgrounds(*, base: SurfaceBaseGeometry, rows: tuple[Any,
                 base=base, theme_tokens=theme_tokens,
                 placement_id=f"group-header-band:{group.group_id}", source_ref=group.group_id,
                 semantic_id="groupHeaderBand", source_bounds=group.header_bounds,
-                text_bounds=header_content_bounds.get(group.group_id))
+                text_bounds=header_content_bounds.get(group.group_id),
+                trailing_inset=header_trailing_insets.get(group.group_id, Decimal(0)))
             if shape is not None:
                 shapes.append(shape)
     if row_decoration == "alternate":
