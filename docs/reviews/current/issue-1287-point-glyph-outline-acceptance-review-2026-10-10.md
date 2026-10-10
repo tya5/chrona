@@ -2,21 +2,19 @@
 
 # Issue #1287 — point glyph outline acceptance
 
-Validation checkpoint: `b68774170089050905c2085250dea889ba3f560f`.
-Preparation ordinarily adopts published main
-`eb4e83fd601f7d5a1621a6fc91323266a7ea50b4`, including merged #1283,
-#1327 and dev B's #1219. The affected regression batch passes on that tree.
-Final preparation `d72e67509295ebe14c2a5b88726bc15956f3e57b` adopts ready main
-`600f04b6a79ddd2a4761bc1c586ad0916409db74`; product/test/schema/tool bytes
-remain identical to the tested checkpoint. [Derived gate](https://github.com/tya5/chrona/actions/runs/38022236107)
-and [sync](https://github.com/tya5/chrona/actions/runs/38021812361) succeeded.
-This is not release acceptance.
+Validation checkpoint: `ae179e4eb51f5481c9549d7966c50b12fc67be53`, adopting
+ready main `127392c426010f8381c984d8ff45f6c1e46f3791`, including #1283,
+#1327 and dev B's #1219/#1273. [Derived gate](https://github.com/tya5/chrona/actions/runs/38024326734)
+and [sync](https://github.com/tya5/chrona/actions/runs/38024074329) succeeded.
+Combined point/contour/legend/host-identity and preset regression tests: 73 passed
+(37.24s). Final exact-head PR and containing-main release are still required.
 [Selected design and architecture review](https://github.com/tya5/chrona/issues/1287#issuecomment-6088427990).
-Merge is paused: [PR CI](https://github.com/tya5/chrona/actions/runs/38022653852)
-found two technical-print contour decoder failures and a hosted-note identity test failure.
-The shared decoder correction `6599b65f` passes 26 tests (4.58s), including both
-failing preset cases and real PathOps closed-quadratic hole regression; independent
-review found no defect. The note test and final integration/release remain pending.
+Earlier [PR CI](https://github.com/tya5/chrona/actions/runs/38022653852) exposed a
+closed-quadratic implicit-start decoding bug and a corpus-dependent hosted-note test.
+The shared decoder preserves exact curves/holes; independent review found no defect.
+[Synthetic full-pipeline identity tests](../../../tests/integration/test_hosted_note_index_identity.py)
+replace the dense-corpus identity fixture without relaxing host existence, exact
+single/multipart identity or paint-order assertions, and check actual SVG IDs.
 Do not close.
 
 ## Literal issue acceptance
@@ -35,10 +33,11 @@ Do not close.
 
 ## Programme-level criteria (optional)
 
-Current prepared-parent integration/outline/projection batch: 39 passed (34.60s),
-including the independent frozen projection comparisons.
-Independent adoption audit confirms exactly the 18 owned files relative to the
-published parent, with no schema, examples, generated or workflow changes.
+Current integration batch: 73 passed (37.24s), including independent frozen
+projection comparisons, the merged legend warning correction, hosted identities,
+real quadratic-hole decoding and both technical-print regressions. No schema,
+authored examples, generated or workflow changes are included. The archive batch
+and final #1327 acceptance table are separately committed documentation units.
 [Lane footprint/port test](../../../tests/unit/chrona/presentation/layout/test_point_outline.py) retains the completed gate width rather than planned-role fallback and keeps semantic ports on the original part. [Projection test](../../../tests/unit/chrona/presentation/scene/test_mark_geometry.py) separates intrinsic catalogue finish metadata from a role-bound outline.
 
 ## Architecture conclusion
@@ -51,6 +50,5 @@ discloses six changed SVG/Scene pairs and 39 unchanged pairs, including #12's
 match actual SVG path/paint/width; original Symbol parts remain. These collateral
 effects require an explicit review disposition, not a no-regression claim.
 
-Required release evidence: adopt dev B's merged #1324 on current ready main;
-resolve red tests and disclosed effects; fresh exact-head snapshot/checks;
+Required release evidence: accept/dispose disclosed effects; fresh exact-head snapshot/checks;
 automatic sync and successful containing-review exact-main three-OS release.
